@@ -4,3 +4,4 @@ artifact
 ui-audit
 .DS_Store
 *.local
+.vercel
