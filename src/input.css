@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+  body { overflow-x: clip; }
+  body { @apply bg-paper text-ink font-body text-body antialiased m-0; }
+  h1,h2,h3,h4 { @apply font-display m-0; text-wrap: balance; }
+  p { @apply m-0 max-w-measure; }
+  img { @apply block max-w-full; }
+  /* one focus treatment, everywhere */
+  :where(a,button,summary,input,[tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+}
+@layer components {
+  .wrap { @apply mx-auto w-full max-w-[1240px] px-[22px] sm:px-11; }
+  /* Editorial pages keep a reading measure. Data views use the monitor:
+     on a 1920 display the 1240px shell wastes a third of the screen. */
+  :root[data-wide="true"] .wrap { @apply max-w-[1560px]; }
+  .lab  { @apply font-mono text-label uppercase text-ink-3; }
+}

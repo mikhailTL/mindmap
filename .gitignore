@@ -1,0 +1,6 @@
+node_modules
+dist
+artifact
+ui-audit
+.DS_Store
+*.local
