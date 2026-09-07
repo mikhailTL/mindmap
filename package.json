@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "artifact": "node build.mjs && npx tailwindcss -i src/input.css -o artifact/app.css --minify && python3 assemble.py"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "1.1.2",
@@ -18,21 +19,21 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "^1.0.4",
+    "framer-motion": "^11.15.0",
     "gsap": "^3.12.5",
     "lenis": "^1.1.18",
     "lucide-react": "0.469.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwind-merge": "2.6.0"
+    "tailwind-merge": "2.6.0",
+    "three": "^0.173.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "4.3.4",
     "autoprefixer": "10.4.20",
+    "esbuild": "0.24.0",
     "postcss": "8.4.49",
     "tailwindcss": "3.4.17",
     "vite": "6.0.7"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }

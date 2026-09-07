@@ -1,71 +1,79 @@
 import React from 'react'
 import { Overview } from './Overview'
+import { PatchPage } from './PatchPage'
 import { Hub } from './Hub'
 import { Student, Parent } from './Monitor'
 import { Pro } from './Pro'
 import { CheckIn } from './CheckIn'
 import { Index } from './Index'
 import { Palette, PaletteHint } from '../ui/palette'
+import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
-const VIEWS = ['site','hub','student','parent','pro','check','index']
-const TAB    = { site:'site', hub:'hub', student:'hub', parent:'hub', pro:'hub', check:'hub', index:'index' }
-const TABS   = [['site','Overview','Overview'],['hub','Open the app','App'],['index','Everything it does','Index']]
+const VIEWS = ['site','patch','hub','student','parent','check','pro','index']
 
-function Header({ view, go }){
-  const bar = React.useRef(null)
-  React.useEffect(()=>{
-    if(!window.gsap||!window.ScrollTrigger||!bar.current) return
-    const t = gsap.to(bar.current,{scaleX:1,ease:'none',
-      scrollTrigger:{trigger:document.documentElement,start:'top top',end:'bottom bottom',scrub:.3}})
-    return ()=>t.kill()
-  },[])
+/* A section per subject, the way a device site is normally organised, rather
+   than one marketing page and one door into everything else. */
+const NAV = [
+  ['site',  'Overview'],
+  ['patch', 'The patch'],
+  ['hub',   'The app'],
+  ['pro',   'For schools'],
+  ['index', 'All features'],
+]
+/* Which top-level section each view belongs under. */
+const SECTION = { site:'site', patch:'patch', hub:'hub', student:'hub', parent:'hub',
+                  check:'hub', pro:'pro', index:'index' }
+
+function Header({ view, go }) {
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-paper/90 backdrop-blur-[14px]">
-      <div className="wrap flex flex-wrap items-center gap-3.5 py-3">
-        <span className="font-display text-[1.4375rem] font-extrabold tracking-tight text-ink">MindMap</span>
+      <div className="wrap flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
+        <button onClick={() => go('site')}
+          className="font-display text-[1.4375rem] font-extrabold tracking-tight text-ink">MindMap</button>
         <PaletteHint/>
-        <nav aria-label="Sections" className="ml-auto flex basis-full justify-between gap-0.5 rounded-xs
-          border border-rule p-0.5 sm:basis-auto sm:justify-start">
-          {TABS.map(([id,label,short])=>{
-            const on = TAB[view]===id
+        <nav aria-label="Sections" className="-mx-1 ml-auto flex basis-full gap-x-1 overflow-x-auto sm:basis-auto">
+          {NAV.map(([id, label]) => {
+            const on = SECTION[view] === id
             return (
-              <button key={id} onClick={()=>go(id)} aria-current={on?'page':undefined}
-                className={cn('min-h-[46px] flex-1 whitespace-nowrap rounded-[1px] px-3 font-display text-[1rem]',
-                  'font-medium transition-colors duration-150 sm:flex-none sm:px-5',
-                  on ? 'bg-ink text-paper' : 'text-ink-2 hover:bg-sage')}>
-                <span className="sm:hidden">{short}</span>
-                <span className="hidden sm:inline">{label}</span>
+              <button key={id} onClick={() => go(id)} aria-current={on ? 'page' : undefined}
+                className={cn('relative min-h-[48px] whitespace-nowrap px-3 font-display text-meta',
+                  'font-medium transition-colors duration-150',
+                  on ? 'text-ink' : 'text-ink-2 hover:text-ink')}>
+                {label}
+                {on && <span aria-hidden className="absolute inset-x-3 bottom-0 h-0.5 bg-accent"/>}
               </button>
             )
           })}
         </nav>
       </div>
-      <div ref={bar} aria-hidden className="absolute inset-x-0 -bottom-px h-px origin-left scale-x-0 bg-accent"/>
+      <ScrollProgress/>
     </header>
   )
 }
 
 const fromHash = () => {
-  const h = location.hash.replace(/^#\/?/,'')
+  const h = location.hash.replace(/^#\/?/, '')
   return VIEWS.includes(h) ? h : 'site'
 }
-export function App(){
-  const [view,setView] = React.useState(fromHash)
-  const go = React.useCallback(v=>{
-    if(location.hash !== '#/'+v) history.pushState(null,'','#/'+v)
-    setView(v); window.scrollTo(0,0)
-    requestAnimationFrame(()=>window.ScrollTrigger?.refresh())
-  },[])
-  React.useEffect(()=>{
-    const onPop = ()=>{ setView(fromHash()); window.scrollTo(0,0) }
-    addEventListener('hashchange',onPop); addEventListener('popstate',onPop)
-    return ()=>{ removeEventListener('hashchange',onPop); removeEventListener('popstate',onPop) }
-  },[])
-  const V = { site:Overview, hub:Hub, student:Student, parent:Parent, pro:Pro, check:CheckIn, index:Index }[view]
-  /* Editorial pages hold a reading measure; the app views use the monitor. */
-  const wide = view!=='site' && view!=='index'
-  React.useEffect(()=>{ document.documentElement.dataset.wide = String(wide) },[wide])
+
+export function App() {
+  const [view, setView] = React.useState(fromHash)
+  const go = React.useCallback(v => {
+    if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
+    setView(v); window.scrollTo(0, 0)
+    requestAnimationFrame(() => window.ScrollTrigger?.refresh())
+  }, [])
+  React.useEffect(() => {
+    const onPop = () => { setView(fromHash()); window.scrollTo(0, 0) }
+    addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
+    return () => { removeEventListener('hashchange', onPop); removeEventListener('popstate', onPop) }
+  }, [])
+  const wide = view !== 'site' && view !== 'index'
+  React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
+
+  const V = { site:Overview, patch:PatchPage, hub:Hub, student:Student, parent:Parent,
+              check:CheckIn, pro:Pro, index:Index }[view]
   return (
     <>
       <Header view={view} go={go}/>

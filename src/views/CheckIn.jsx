@@ -1,9 +1,8 @@
 import React from 'react'
 import { Bluetooth, ClipboardList } from 'lucide-react'
-import { Back, Verdict, Because } from './Monitor'
+import { Back, Headline, ScoreDial, AllDetail } from './Monitor'
 import { Button } from '../ui/button'
 import { Scale } from '../ui/radio-scale'
-import { Disclosure } from '../ui/collapsible'
 import { Label } from '../ui/misc'
 import { FigHead } from '../charts/primitives'
 import { Diverge } from '../charts/diverge'
@@ -40,8 +39,8 @@ export function CheckIn({ go }){
       <Back go={go}/>
       <Label>Live reading</Label>
       <h1 className="mt-3 max-w-[16ch] font-display font-bold text-view text-ink">Take a reading now.</h1>
-      <Because>The patch and the six questions below feed the same scale. Answer them and the app
-        scores you the same way it scores a wearer.</Because>
+      <p className="mt-5 max-w-[48ch] text-body leading-[1.5] text-ink-2">The patch and the six questions
+        below are scored the same way. Answer them and you get the same number a wearer gets.</p>
 
       <div className="mt-8 grid gap-3.5 lg:grid-cols-2">
         <Route icon={Bluetooth} title="Connect a patch"
@@ -81,19 +80,19 @@ export function CheckIn({ go }){
         )}
         {done && (
           <>
-            <Verdict pre={s.pre} word={s.word} calm={s.calm} tail={s.tail}/>
-            <Disclosure label="More details" className="mt-8">
-              <FigHead title="Your score" note="0 is calm, 100 is peak. Against your own scale, not a population."/>
-              <div className="mt-1.5 font-display font-bold text-fig text-ink">{r.score}
-                <span className="ml-1.5 text-row font-normal tracking-normal text-ink-3">/100</span></div>
+            <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
+              <ScoreDial value={r.score} band={s.calm ? 'ok' : 'high'} size={176}/>
+              <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
+            </div>
+            <AllDetail label="See what moved the score">
               <FigHead title="What moved it" note="Right of the line raised the score, left of it lowered it."/>
               <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),
                 x: Math.max(-1, Math.min(1, c.raw)) }))}/>
-              <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Each answer is centred on its
-                midpoint, weighted, averaged, and put through a logistic curve. The patch runs the same
-                last step on heart rhythm, sweat, temperature and movement instead of answers, so the
-                two routes land on one number.</p>
-            </Disclosure>
+              <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Each answer is measured from its
+                middle option, weighted, averaged, and turned into a score out of 100. The patch does the
+                same last step using heart rate, sweat, temperature and movement instead of answers, so
+                both give one number on one scale.</p>
+            </AllDetail>
           </>
         )}
       </div>

@@ -23,7 +23,7 @@ export function Disclosure({ label, children, className, openOnWide=false }){
   return (
     <C.Root open={open} onOpenChange={setOpen} className={cn('border-t border-rule',className)}>
       <C.Trigger className="group flex w-full items-center gap-3 min-h-[56px] font-display
-        font-medium text-meta text-ink hover:text-accent transition-colors duration-150">
+        font-medium text-[1.0625rem] text-ink hover:text-accent transition-colors duration-150">
         <ChevronRight aria-hidden className="size-4 transition-transform duration-200 ease-out
           group-data-[state=open]:rotate-90" />
         {label}

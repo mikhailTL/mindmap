@@ -48,10 +48,10 @@ export const Face = (
   </svg>)
 
 export const LAYERS = [
-  { i:0, art:Shell, title:'Printed shell',
+  { i:0, part:'pod', art:Shell, title:'Printed shell',
     body:'A 3D-printed enclosure over the electronics. It gets reprinted when the board changes.' },
-  { i:1, art:Board, title:'XIAO nRF52840 Sense',
+  { i:1, part:'pcb', art:Board, title:'XIAO nRF52840 Sense',
     body:'Carries its own motion sensor and microphone. Talks to the phone over Bluetooth.' },
-  { i:2, art:Face,  title:'Sensor face',
+  { i:2, part:'base', art:Face,  title:'Sensor face',
     body:'Pulse, sweat and temperature against the skin. Sweat runs through a constant-voltage front end.' },
 ]

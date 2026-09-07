@@ -15,7 +15,7 @@ const INDEX = [
     ['Alerts','Only when something needs you'],
     ['School and wellbeing','How grades and stress move together'],
     ['How to help','Conversation starters · crisis lines']]],
-  ['For professionals', [
+  ['For school counselors', [
     ['Triage','Ordered by how fast a student is changing'],
     ['One student','The full picture, for consented students'],
     ['Year groups','Cohort patterns · groups under five suppressed'],
@@ -25,9 +25,9 @@ export function Index(){
   return (
     <main className="wrap py-14 sm:py-[7vw]">
       <Label>Index</Label>
-      <h1 className="mt-3.5 font-display font-bold text-sect text-ink">Everything it does.</h1>
+      <h1 className="mt-3.5 font-display font-bold text-sect text-ink">All features.</h1>
       <p className="mt-5 text-[clamp(1.3125rem,1.5vw,1.5rem)] leading-[1.55] text-ink-2">
-        Every screen in the product, listed.</p>
+        Every screen in the app, listed.</p>
       <div className="mt-3.5 border-t border-ink">
         {INDEX.map(([group,rows])=>(
           <section key={group} className="grid gap-4.5 border-b border-rule py-9 lg:grid-cols-[230px_1fr] lg:gap-11">

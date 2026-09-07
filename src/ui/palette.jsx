@@ -1,19 +1,20 @@
 import React from 'react'
 import { Command } from 'cmdk'
 import * as Dialog from '@radix-ui/react-dialog'
-import { LayoutGrid, LineChart, Users, Stethoscope, Activity, ListTree, Home } from 'lucide-react'
+import { LayoutGrid, LineChart, Users, Stethoscope, Activity, ListTree, Home, Cpu } from 'lucide-react'
 
 /* shadcn's Command component (cmdk + Radix Dialog), adapted: the registry demo
    list is replaced by this product's views, and it is a desktop affordance —
    pointer hardware only, since a touch user has the tab bar. */
 const CMDS = [
-  { id:'site',    label:'Overview',           icon:Home,       hint:'The marketing page' },
-  { id:'hub',     label:'Open the app',       icon:LayoutGrid, hint:'All views' },
-  { id:'check',   label:'Take a reading',     icon:Activity,   hint:'Patch or six questions' },
-  { id:'student', label:'Student view',       icon:LineChart,  hint:'Today, and why' },
-  { id:'parent',  label:'Parent view',        icon:Users,      hint:'The week in one sentence' },
-  { id:'pro',     label:'Professional view',  icon:Stethoscope,hint:'Caseload by velocity' },
-  { id:'index',   label:'Everything it does', icon:ListTree,   hint:'Every screen, listed' },
+  { id:'site',    label:'Overview',        icon:Home,        hint:'What MindMap is' },
+  { id:'patch',   label:'The patch',       icon:Cpu,         hint:'The device, in 3D' },
+  { id:'hub',     label:'The app',         icon:LayoutGrid,  hint:'Student, parent, school' },
+  { id:'check',   label:'Take a reading',  icon:Activity,    hint:'Patch or six questions' },
+  { id:'student', label:'Student view',    icon:LineChart,   hint:'Today' },
+  { id:'parent',  label:'Parent view',     icon:Users,       hint:'This week' },
+  { id:'pro',     label:'For schools',     icon:Stethoscope, hint:'Counselors and psychologists' },
+  { id:'index',   label:'All features',    icon:ListTree,    hint:'Every screen, listed' },
 ]
 export function Palette({ go }){
   const [open,setOpen] = React.useState(false)

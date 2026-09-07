@@ -4,10 +4,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { IMAGES, MOSAIC_LIST } from './lib/images'
 import { CHART_DATA } from './lib/chartdata'
+import { POS } from './lib/images'
 
 globalThis.__IMG = IMAGES
 globalThis.__MOSAIC = MOSAIC_LIST
 globalThis.__DATA = CHART_DATA
+globalThis.__POS = POS
+globalThis.__CAD = '/MindMap-Patch-colored.glb'
 globalThis.gsap = gsap
 globalThis.ScrollTrigger = ScrollTrigger
 

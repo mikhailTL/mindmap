@@ -1,121 +1,242 @@
 import React from 'react'
-import { ArrowLeft } from 'lucide-react'
-import { Disclosure } from '../ui/collapsible'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
+import * as C from '@radix-ui/react-collapsible'
 import { Label } from '../ui/misc'
-import { FigHead, Stat } from '../charts/primitives'
+import { Spark } from '../charts/primitives'
 import { DayChart } from '../charts/day'
 import { WeekChart } from '../charts/week'
 import { DATA } from '../lib/assets'
+import { RevealRow } from '../s21/motion'
+import { cn } from '../lib/utils'
 
-export function Back({ go }){
+/* The dashboard shows one number, one sentence, and three reasons.
+   Everything else is behind a control the reader chooses to open — the pattern
+   the Oura app uses, and the reason a parent can read this in five seconds. */
+
+export function Back({ go, to = 'hub', label = 'All views' }) {
   return (
-    <button onClick={()=>go('hub')}
-      className="mb-6 flex w-fit min-h-[44px] items-center gap-2 py-2 font-display text-[1.0625rem]
+    <button onClick={() => go(to)}
+      className="mb-8 flex w-fit min-h-[44px] items-center gap-2 py-2 font-display text-[1.0625rem]
         font-medium text-accent transition-colors duration-150 hover:text-accent-ink">
-      <ArrowLeft aria-hidden className="size-4"/> All views
+      <ArrowLeft aria-hidden className="size-4"/> {label}
     </button>
   )
 }
-export function Who({ name, meta }){
-  return <div className="flex flex-wrap items-baseline gap-3.5">
-    <h1 className="font-display text-row font-bold text-ink">{name}</h1>
-    <Label>{meta}</Label>
-  </div>
-}
-/* The sentence is the interface. The number is a detail of it. */
-export function Verdict({ pre, word, calm, tail }){
+
+/* The score, drawn as a quiet arc. Colour never carries the reading on its
+   own — the number and the word beside it say the same thing. */
+export function ScoreDial({ value, band, size = 200 }) {
+  const r = 84, C0 = 2 * Math.PI * r, span = 0.74
+  const [shown, setShown] = React.useState(0)
+  React.useEffect(() => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setShown(value); return }
+    let raf, t0
+    const step = t => { t0 ??= t
+      const p = Math.min(1, (t - t0) / 900)
+      setShown(value * (1 - Math.pow(1 - p, 3)))
+      if (p < 1) raf = requestAnimationFrame(step) }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  const tone = band === 'high' ? 'stroke-warn' : band === 'up' ? 'stroke-warn' : 'stroke-accent'
   return (
-    <p className="mt-6 max-w-[22ch] font-display font-bold text-view text-ink">
-      {pre}<b className={`font-bold ${calm?'text-calm':'text-warn'}`}>{word}</b>{tail}
-    </p>
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 200 200" className="size-full -rotate-[133deg]" aria-hidden>
+        <circle cx="100" cy="100" r={r} fill="none" strokeWidth="10" strokeLinecap="round"
+          className="stroke-sage" strokeDasharray={`${C0 * span} ${C0}`}/>
+        <circle cx="100" cy="100" r={r} fill="none" strokeWidth="10" strokeLinecap="round"
+          className={cn(tone, 'transition-colors')}
+          strokeDasharray={`${C0 * span * (shown / 100)} ${C0}`}/>
+      </svg>
+      <div className="absolute inset-0 grid place-content-center text-center">
+        <span className="font-display text-[3.25rem] font-bold leading-none tracking-tight text-ink">
+          {Math.round(shown)}</span>
+        <span className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">of 100</span>
+      </div>
+    </div>
   )
 }
-export function Because({ children }){
-  return <p className="mt-5 max-w-[48ch] text-body leading-[1.5] text-ink-2">{children}</p>
-}
-export function NextUp({ children }){
-  return <div className="mt-7 border-l-2 border-accent py-1 pl-5"><p className="text-sec text-ink-2">{children}</p></div>
-}
-const GRID = 'grid border-t border-rule sm:grid-cols-2 lg:grid-cols-3'
-/* On a monitor the sentence and the evidence sit side by side instead of
-   stacking into a scroll. Below that the order is sentence, then evidence. */
-const SPLIT = 'xl:grid xl:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] xl:gap-14 2xl:gap-20 xl:items-start'
-const STICKY = 'xl:sticky xl:top-[92px]'
 
-export function Student({ go }){
+export function Headline({ children }) {
+  return <p className="max-w-[24ch] font-display text-[clamp(1.75rem,3.2vw,2.5rem)] font-bold
+    leading-[1.15] tracking-tight text-ink">{children}</p>
+}
+
+/* One reason. Closed it is a single line; opened it explains the measurement
+   in words a parent has not had to look up. */
+export function Reason({ claim, plain, source, index }) {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <RevealRow as="div" index={index}>
+      <C.Root open={open} onOpenChange={setOpen} className="border-b border-rule">
+        <C.Trigger className="group flex w-full items-center gap-4 py-5 text-left">
+          <span className="font-mono text-label tabular-nums text-ink-3">0{index + 1}</span>
+          <span className="flex-1 text-body text-ink">{claim}</span>
+          <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-3 transition-transform
+            duration-200 ease-out group-data-[state=open]:rotate-90"/>
+        </C.Trigger>
+        <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
+          <div className="pb-6 pl-10">
+            <p className="max-w-[58ch] text-sec text-ink-2">{plain}</p>
+            <p className="mt-3 font-mono text-label uppercase tracking-[0.12em] text-ink-3">{source}</p>
+          </div>
+        </C.Content>
+      </C.Root>
+    </RevealRow>
+  )
+}
+
+/* Everything a reader might want and almost none of them will open. */
+export function AllDetail({ label = 'See every reading', children }) {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <C.Root open={open} onOpenChange={setOpen} className="mt-10">
+      <C.Trigger className="group flex min-h-[56px] w-full items-center justify-between gap-4
+        border-y border-rule font-display text-[1.0625rem] font-medium text-ink
+        transition-colors hover:text-accent">
+        {label}
+        <ChevronRight aria-hidden className="size-4 transition-transform duration-200 ease-out
+          group-data-[state=open]:rotate-90"/>
+      </C.Trigger>
+      <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
+        <div className="py-8">{children}</div>
+      </C.Content>
+    </C.Root>
+  )
+}
+
+const STATS = 'grid gap-x-8 border-t border-rule sm:grid-cols-2 lg:grid-cols-3'
+function Stat({ label, value, unit, trend, children }) {
+  return (
+    <div className="border-b border-rule py-6">
+      <div className="lab">{label}</div>
+      <div className="mt-2 font-mono font-medium tabular-nums text-[1.875rem] leading-none text-ink">
+        {value}{unit && <span className="ml-1 text-meta text-ink-3">{unit}</span>}
+      </div>
+      {trend && <Spark data={trend}/>}
+      <p className="mt-1.5 max-w-[36ch] text-meta text-ink-2">{children}</p>
+    </div>
+  )
+}
+
+/* ── Student ────────────────────────────────────────────────────────────── */
+export function Student({ go }) {
   return (
     <main className="wrap py-9 sm:py-14">
       <Back go={go}/>
-      <div className={SPLIT}>
-        <div className={STICKY}>
-          <Who name="Today" meta="Thursday · 4:10 pm"/>
-          <Verdict pre="Today is running " word="a little high" tail=" for you, and it started in third period."/>
-          <Because>Your pulse has been about six beats above your own resting median since 11 am, and it
-            has not come back down between classes.</Because>
-          <NextUp>Chemistry is your hardest period four weeks running. A two-minute breathing prompt is
-            set for before it tomorrow.</NextUp>
-          <div className="mt-8 hidden xl:block">
-            <FigHead title="Your score" note="Against your own scale, not a population."/>
-            <div className="mt-1.5 font-display font-bold text-fig text-ink">51
-              <span className="ml-1.5 text-row font-normal tracking-normal text-ink-3">/100</span></div>
-          </div>
-        </div>
-        <div className="mt-9 xl:mt-0">
-      <Disclosure label="More details" openOnWide className="xl:border-t-0">
-        <div className="xl:hidden">
-          <FigHead title="Your score" note="Against your own scale, not a population."/>
-          <div className="mt-1.5 font-display font-bold text-fig text-ink">51
-            <span className="ml-1.5 text-row font-normal tracking-normal text-ink-3">/100</span></div>
-        </div>
-        <FigHead title="Across today" note="The shaded band is your own usual range. Hover the line."/>
-        <DayChart data={DATA.day} band={DATA.band}/>
-        <FigHead title="Each sensor, the last hour"/>
-        <div className={GRID}>
-          <Stat label="Heart rate" value="70" unit="bpm" trend={DATA.spark.hr}>Resting median 64. Up 6.</Stat>
-          <Stat label="HRV (RMSSD)" value="60" unit="ms" trend={DATA.spark.hrv}>Down 1% against your fourteen-day baseline.</Stat>
-          <Stat label="Skin conductance" value="3.00" unit="µS" trend={DATA.spark.eda}>Four responses in the last ten minutes.</Stat>
-          <Stat label="Skin temperature" value="33.5" unit="°C" trend={DATA.spark.temp}>Flat. No fever signal.</Stat>
-          <Stat label="Movement" value="0.01" unit="g" trend={DATA.spark.mot}>Sitting still, so the reading is not exercise.</Stat>
-        </div>
-        <p className="mt-6 text-meta text-ink-2">Scored on 60-second windows, stepped every 30 seconds,
-          against your own fourteen-day median.</p>
-      </Disclosure>
+      <div className="flex flex-wrap items-baseline gap-3.5">
+        <h1 className="font-display text-row font-bold text-ink">Today</h1>
+        <Label>Thursday · 4:10 pm</Label>
+      </div>
+
+      <div className="mt-8 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-12">
+        <ScoreDial value={51} band="up"/>
+        <div>
+          <Headline>Today is a little higher than your normal.</Headline>
+          <p className="mt-4 max-w-[42ch] text-body text-ink-2">It went up in third period and has stayed
+            there.</p>
         </div>
       </div>
+
+      <section className="mt-12">
+        <h2 className="lab font-normal">Three reasons</h2>
+        <div className="mt-2 border-t border-rule">
+          <Reason index={0}
+            claim="Your heart rate has not come back down between classes."
+            plain="Most days it drops back to about 64 in the ten minutes after a lesson. Today it stayed near 70 through three of those breaks."
+            source="Heart rate against your own resting level"/>
+          <Reason index={1}
+            claim="The time between your heartbeats got more even."
+            plain="When you are settled, the gaps between beats vary. They even out before you notice feeling tense, which is why this changed before your heart rate did."
+            source="Heart rate variability, 1% below your normal"/>
+          <Reason index={2}
+            claim="You were sitting still, so this is not exercise."
+            plain="The movement sensor read 0.01 g. Above 0.35 g the score is held back, because running and a hard day can look the same in heart rate alone."
+            source="Movement sensor"/>
+        </div>
+      </section>
+
+      <div className="mt-10 border-l-2 border-accent py-1 pl-5">
+        <p className="max-w-[52ch] text-sec text-ink-2">Chemistry has been your hardest lesson for four weeks.
+          A two-minute breathing exercise is set for before it tomorrow.</p>
+      </div>
+
+      <AllDetail>
+        <h3 className="lab font-normal">Across today</h3>
+        <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range. Hover the line.</p>
+        <DayChart data={DATA.day} band={DATA.band}/>
+        <h3 className="lab mt-10 font-normal">Each sensor, the last hour</h3>
+        <div className={cn(STATS, 'mt-3')}>
+          <Stat label="Heart rate" value="70" unit="bpm" trend={DATA.spark.hr}>Your resting level is 64.</Stat>
+          <Stat label="Heart rate variability" value="60" unit="ms" trend={DATA.spark.hrv}>1% below your normal.</Stat>
+          <Stat label="Sweat response" value="3.00" unit="µS" trend={DATA.spark.eda}>Four responses in ten minutes.</Stat>
+          <Stat label="Skin temperature" value="33.5" unit="°C" trend={DATA.spark.temp}>Steady. No sign of fever.</Stat>
+          <Stat label="Movement" value="0.01" unit="g" trend={DATA.spark.mot}>Sitting still.</Stat>
+        </div>
+        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds from
+          the previous minute of readings, and compared with your own last two weeks.</p>
+      </AllDetail>
     </main>
   )
 }
 
-export function Parent({ go }){
+/* ── Parent ─────────────────────────────────────────────────────────────── */
+export function Parent({ go }) {
   return (
     <main className="wrap py-9 sm:py-14">
       <Back go={go}/>
-      <div className={SPLIT}>
-        <div className={STICKY}>
-          <Who name="Maya" meta="Grade 11 · shared since March"/>
-          <Verdict pre="Maya has had " word="a harder week than usual" tail=", mostly on school mornings."/>
-          <Because>Three of the last five school days ran above her normal range before lunch. Weekends
-            were normal. She has not flagged anything herself.</Because>
-          <NextUp>Worth asking about Thursday morning. You are not told what she wrote or where she was,
-            only that the week ran high.</NextUp>
-        </div>
-        <div className="mt-9 xl:mt-0">
-      <Disclosure label="More details" openOnWide className="xl:border-t-0">
-        <FigHead title="The last seven days" note="The shaded band is her usual range."/>
-        <WeekChart data={DATA.week} band={DATA.weekBand}/>
-        <div className={GRID}>
-          <Stat label="Days above range" value="3" unit="of 5">Monday, Wednesday, Thursday. All before 12 pm.</Stat>
-          <Stat label="Week average" value="58" unit="/100">Her twelve-week average is 47.</Stat>
-          <Stat label="Weekend" value="44" unit="/100">Inside her normal range both days.</Stat>
-          <Stat label="Sleep window" value="5.4" unit="h">Estimated from movement. Her usual is 7.9.</Stat>
-          <Stat label="Patch worn" value="94" unit="%">Off the skin for 41 minutes on Tuesday.</Stat>
-          <Stat label="Check-ins" value="6" unit="of 7">She skipped Saturday.</Stat>
-        </div>
-        <p className="mt-6 text-meta text-ink-2">Maya sees this page. Her raw readings, her notes and
-          her locations stay on her account.</p>
-      </Disclosure>
+      <div className="flex flex-wrap items-baseline gap-3.5">
+        <h1 className="font-display text-row font-bold text-ink">Maya</h1>
+        <Label>This week · shared since March</Label>
+      </div>
+
+      <div className="mt-8 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-12">
+        <ScoreDial value={58} band="up"/>
+        <div>
+          <Headline>Maya had a harder week than usual.</Headline>
+          <p className="mt-4 max-w-[42ch] text-body text-ink-2">Three school mornings were above her normal.
+            The weekend was normal.</p>
         </div>
       </div>
+
+      <section className="mt-12">
+        <h2 className="lab font-normal">Three reasons</h2>
+        <div className="mt-2 border-t border-rule">
+          <Reason index={0}
+            claim="Three of five school days were above her normal before lunch."
+            plain="Monday, Wednesday and Thursday. Her normal is worked out from her own last two weeks. She is never compared with other students."
+            source="Daily average against her own normal range"/>
+          <Reason index={1}
+            claim="The weekend was normal, so this is about school hours."
+            plain="Saturday and Sunday were both inside her normal range. A week that was high every day would point to something else."
+            source="School days and weekend, compared"/>
+          <Reason index={2}
+            claim="She slept less on the same three nights."
+            plain="About 5 and a half hours of still time, against her usual 8. This is worked out from movement, not from anything she wrote."
+            source="Movement sensor overnight"/>
+        </div>
+      </section>
+
+      <div className="mt-10 border-l-2 border-accent py-1 pl-5">
+        <p className="max-w-[52ch] text-sec text-ink-2">Thursday morning is worth asking about. You are not
+          told what she wrote or where she was.</p>
+      </div>
+
+      <AllDetail label="See the whole week">
+        <h3 className="lab font-normal">The last seven days</h3>
+        <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is her normal range.</p>
+        <WeekChart data={DATA.week} band={DATA.weekBand}/>
+        <div className={cn(STATS, 'mt-8')}>
+          <Stat label="Days above normal" value="3" unit="of 5">Monday, Wednesday, Thursday. All before noon.</Stat>
+          <Stat label="Week average" value="58" unit="of 100">Her usual average is 47.</Stat>
+          <Stat label="Weekend" value="44" unit="of 100">Inside her normal range both days.</Stat>
+          <Stat label="Sleep" value="5.4" unit="h">Her usual is 7.9 hours.</Stat>
+          <Stat label="Patch worn" value="94" unit="%">Off her skin for 41 minutes on Tuesday.</Stat>
+          <Stat label="Check-ins" value="6" unit="of 7">She skipped Saturday.</Stat>
+        </div>
+        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Maya sees this page too. Her second-by-second
+          readings, her notes and her location stay on her account.</p>
+      </AllDetail>
     </main>
   )
 }

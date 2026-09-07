@@ -2,17 +2,17 @@ import React from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardBody } from '../ui/card'
 import { Label } from '../ui/misc'
-import { IMG } from '../lib/assets'
+import { IMG, POS } from '../lib/assets'
 
 const PEOPLE = [
-  { to:'check',   img:IMG.phone,  alt:'Hands holding a phone', h:'Take a reading',
+  { to:'check',   img:IMG.phone, pos:POS.phone,  alt:'Hands holding a phone', h:'Take a reading',
     p:'Score yourself now, with a patch or with six questions.' },
-  { to:'student', img:IMG.teen,   alt:'A teenager on the walk home from school', h:'Student',
+  { to:'student', img:IMG.teen, pos:POS.teen,   alt:'A teenager on the walk home from school', h:'Student',
     p:'Your own reading, why it moved, and what tends to help.' },
-  { to:'parent',  img:IMG.family, alt:'A parent and teenager at the kitchen table', h:'Parent',
+  { to:'parent',  img:IMG.family, pos:POS.family, alt:'A parent and teenager at the kitchen table', h:'Parent',
     p:'How your child is doing this week, in one sentence.' },
-  { to:'pro',     img:IMG.pro,    alt:'A counselor at their desk', h:'Professional',
-    p:'Caseload by rate of change, with the statistics and the consent trail.' },
+  { to:'pro',     img:IMG.pro, pos:POS.pro,    alt:'A school counselor at their desk', h:'School counselor',
+    p:'Students ordered by how fast they are changing, with the consent record.' },
 ]
 const MORE = [
   ['The hours ahead','Which periods usually run hard, and a prompt before them.'],
@@ -31,13 +31,13 @@ export function Hub({ go }){
         Who is this for?
       </h1>
       <p className="mt-5 max-w-read text-[clamp(1.3125rem,1.5vw,1.5rem)] leading-[1.55] text-ink-2">
-        Pick the person using it. Each one opens on a sentence.
+        Pick the person using the app. Each view opens on one sentence.
       </p>
       <div className="mt-8 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {PEOPLE.map(t=>(
           <Card key={t.h} as="button" interactive onClick={()=>go(t.to)}>
             <img src={t.img} alt={t.alt} loading="lazy" width="1200" height="720"
-              className="aspect-[5/3] w-full object-cover"/>
+              style={{ objectPosition: t.pos }} className="aspect-[5/3] w-full object-cover"/>
             <CardBody>
               <h2 className="font-display text-[1.625rem] font-bold leading-tight tracking-tight text-ink">{t.h}</h2>
               <p className="mt-2 max-w-[34ch] text-sec text-ink-2">{t.p}</p>
