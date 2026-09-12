@@ -39,9 +39,9 @@ export function Hub({ go }){
             <img src={t.img} alt={t.alt} loading="lazy" width="1200" height="720"
               style={{ objectPosition: t.pos }} className="aspect-[5/3] w-full object-cover"/>
             <CardBody>
-              <h2 className="font-display text-[1.625rem] font-bold leading-tight tracking-tight text-ink">{t.h}</h2>
+              <h2 className="font-display text-head font-bold leading-tight tracking-tight text-ink">{t.h}</h2>
               <p className="mt-2 max-w-[34ch] text-sec text-ink-2">{t.p}</p>
-              <span className="mt-4 inline-flex items-center gap-2 font-display text-[1.0625rem] font-medium text-accent">
+              <span className="mt-4 inline-flex items-center gap-2 font-display text-ui font-medium text-accent">
                 Open <ArrowRight aria-hidden className="size-4"/>
               </span>
             </CardBody>
@@ -52,11 +52,18 @@ export function Hub({ go }){
         Everything else
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {MORE.map(([h,p])=>(
-          <Card key={h}><CardBody className="p-6">
-            <h3 className="font-display text-[1.25rem] font-bold tracking-tight text-ink">{h}</h3>
-            <p className="mt-1.5 text-meta text-ink-2">{p}</p>
-          </CardBody></Card>
+        {MORE.map(([h,p,to])=>(
+          <Card key={h} as={to ? 'button' : 'div'} interactive={!!to}
+            onClick={to ? () => go(to) : undefined}>
+            <CardBody className="p-6">
+              <h3 className="font-display text-row font-bold tracking-tight text-ink">{h}</h3>
+              <p className="mt-1.5 text-meta text-ink-2">{p}</p>
+              <span className={to
+                ? 'mt-3 inline-flex items-center gap-1.5 font-mono text-label uppercase tracking-[0.12em] text-accent'
+                : 'mt-3 inline-block font-mono text-label uppercase tracking-[0.12em] text-ink-3'}>
+                {to ? <>Open <ArrowRight aria-hidden className="size-3.5"/></> : 'Planned'}</span>
+            </CardBody>
+          </Card>
         ))}
       </div>
     </main>

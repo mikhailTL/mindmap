@@ -47,11 +47,18 @@ export const Face = (
     <text x="200" y="283" textAnchor="middle" style={T} fontSize="16" fill="#3f5754">TEMP</text>
   </svg>)
 
+/* `title`/`body` describe the physical stack and label the drawing. `cad`
+   names what the model actually isolates, which is not the same thing: the CAD
+   is three printed parts, and the board is not one of them. Calling part two
+   "XIAO nRF52840 Sense" put a chip's name on a plastic tray. */
 export const LAYERS = [
   { i:0, part:'pod', art:Shell, title:'Printed shell',
-    body:'A 3D-printed enclosure over the electronics. It gets reprinted when the board changes.' },
-  { i:1, part:'pcb', art:Board, title:'XIAO nRF52840 Sense',
-    body:'Carries its own motion sensor and microphone. Talks to the phone over Bluetooth.' },
-  { i:2, part:'base', art:Face,  title:'Sensor face',
-    body:'Pulse, sweat and temperature against the skin. Sweat runs through a constant-voltage front end.' },
+    body:'The outer cover, 3D-printed. The slot in the side is the charging port.',
+    cad:'In the model: the cover on its own.' },
+  { i:1, part:'pcb', art:Board, title:'Electronics pod',
+    body:'The tray a XIAO nRF52840 Sense board drops into. Four posts locate the board, which carries the motion sensor, the microphone and the Bluetooth radio.',
+    cad:'In the model: the tray and its posts. The board itself is a separate part and is not printed.' },
+  { i:2, part:'base', art:Face,  title:'Skin-side base',
+    body:'The ring that holds the sensor window and the adhesive. Pulse, sweat and temperature are read through it.',
+    cad:'In the model: the base ring on its own.' },
 ]

@@ -6,14 +6,21 @@ import { Student, Parent } from './Monitor'
 import { Pro } from './Pro'
 import { CheckIn } from './CheckIn'
 import { Index } from './Index'
+import { Privacy } from './Privacy'
 import { Palette, PaletteHint } from '../ui/palette'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
-const VIEWS = ['site','patch','hub','student','parent','check','pro','index']
+const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','index']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
+const TITLE = {
+  site:'MindMap — one number, one sentence', patch:'The patch — MindMap',
+  hub:'Open the app — MindMap', student:'Today — MindMap', parent:'This week — MindMap',
+  check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
+  pro:'For school counselors — MindMap', index:'All features — MindMap',
+}
 const NAV = [
   ['site',  'Overview'],
   ['patch', 'The patch'],
@@ -23,22 +30,25 @@ const NAV = [
 ]
 /* Which top-level section each view belongs under. */
 const SECTION = { site:'site', patch:'patch', hub:'hub', student:'hub', parent:'hub',
-                  check:'hub', pro:'pro', index:'index' }
+                  check:'hub', privacy:'hub', pro:'pro', index:'index' }
 
 function Header({ view, go }) {
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-paper/90 backdrop-blur-[14px]">
       <div className="wrap flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
         <button onClick={() => go('site')}
-          className="font-display text-[1.4375rem] font-extrabold tracking-tight text-ink">MindMap</button>
+          className="font-display text-head font-extrabold tracking-tight text-ink">MindMap</button>
         <PaletteHint/>
-        <nav aria-label="Sections" className="-mx-1 ml-auto flex basis-full gap-x-1 overflow-x-auto sm:basis-auto">
+        {/* Two testers never found "For schools" or "All features": the bar
+            scrolled horizontally with no fade or arrow, hiding 41% of itself.
+            It wraps now — every destination is on screen at every width. */}
+        <nav aria-label="Sections" className="-mx-1 ml-auto flex basis-full flex-wrap gap-x-1 sm:basis-auto sm:flex-nowrap">
           {NAV.map(([id, label]) => {
             const on = SECTION[view] === id
             return (
               <button key={id} onClick={() => go(id)} aria-current={on ? 'page' : undefined}
-                className={cn('relative min-h-[48px] whitespace-nowrap px-3 font-display text-meta',
-                  'font-medium transition-colors duration-150',
+                className={cn('relative min-h-[48px] whitespace-nowrap px-2.5 font-display',
+                  'text-ui font-medium transition-colors duration-150 sm:px-3 sm:text-meta',
                   on ? 'text-ink' : 'text-ink-2 hover:text-ink')}>
                 {label}
                 {on && <span aria-hidden className="absolute inset-x-3 bottom-0 h-0.5 bg-accent"/>}
@@ -59,29 +69,54 @@ const fromHash = () => {
 
 export function App() {
   const [view, setView] = React.useState(fromHash)
+  const mainRef = React.useRef(null)
+  const [said, setSaid] = React.useState('')
+  /* A keyboard user lost their place on every navigation: focus fell back to
+     <body>, the title never changed, and the scroll position carried over from
+     the previous screen. */
+  const land = React.useCallback(v => {
+    window.scrollTo(0, 0)
+    document.title = TITLE[v] || 'MindMap'
+    setSaid(TITLE[v] || 'MindMap')
+    requestAnimationFrame(() => {
+      mainRef.current?.focus({ preventScroll: true })
+      window.ScrollTrigger?.refresh()
+    })
+  }, [])
   const go = React.useCallback(v => {
     if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
-    setView(v); window.scrollTo(0, 0)
-    requestAnimationFrame(() => window.ScrollTrigger?.refresh())
-  }, [])
+    setView(v); land(v)
+  }, [land])
+  React.useEffect(() => { land(view) }, [])
   React.useEffect(() => {
-    const onPop = () => { setView(fromHash()); window.scrollTo(0, 0) }
+    const onPop = () => { const v = fromHash(); setView(v); land(v) }
     addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
     return () => { removeEventListener('hashchange', onPop); removeEventListener('popstate', onPop) }
-  }, [])
+  }, [land])
   const wide = view !== 'site' && view !== 'index'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
 
   const V = { site:Overview, patch:PatchPage, hub:Hub, student:Student, parent:Parent,
-              check:CheckIn, pro:Pro, index:Index }[view]
+              check:CheckIn, privacy:Privacy, pro:Pro, index:Index }[view]
   return (
     <>
+      {/* sr-only clips this to a 1x1 box, which an audit reads as a 1px tap
+          target and a keyboard user gets no real hit area from. Full size,
+          parked above the viewport, sliding down on focus. */}
+      <a href="#main"
+        onClick={e => { e.preventDefault(); mainRef.current?.focus() }}
+        className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-xs bg-ink px-5 py-3
+          font-display text-meta font-medium text-paper transition-transform duration-150
+          focus:translate-y-4">Skip to the main content</a>
       <Header view={view} go={go}/>
       <Palette go={go}/>
-      <V go={go} key={view}/>
+      <p aria-live="polite" className="sr-only text-sec">{said}</p>
+      <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
+        <V go={go} key={view}/>
+      </div>
       <footer className="border-t border-rule py-11">
         <div className="wrap">
-          <p className="text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
+          <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
             medical device and does not diagnose or treat any condition. If you need urgent help, contact your
             local emergency number or a crisis line.</p>
           <p className="lab mt-3.5">MindMap · Solace Innovation</p>

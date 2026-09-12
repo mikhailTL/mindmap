@@ -33,7 +33,7 @@ export function Stat({ label, value, unit, trend, children, className }){
       'first:sm:pl-0 first:sm:border-l-0 lg:[&:nth-child(3n+1)]:pl-0 lg:[&:nth-child(3n+1)]:border-l-0',
       className)}>
       <div className="lab">{label}</div>
-      <div className="mt-2 font-mono font-medium text-[2rem] leading-none tabular-nums text-ink">
+      <div className="mt-2 font-mono font-medium text-stat leading-none tabular-nums text-ink">
         {value}{unit && <span className="ml-1 text-meta text-ink-3">{unit}</span>}
       </div>
       {trend && <Spark data={trend}/>}

@@ -35,7 +35,7 @@ export function Palette({ go }){
           <Dialog.Description className="sr-only">Search the views in MindMap and press Enter to open one.</Dialog.Description>
           <Command loop>
             <Command.Input autoFocus placeholder="Go to…"
-              className="w-full border-b border-rule bg-transparent px-5 py-4 font-body text-[1.1875rem]
+              className="w-full border-b border-rule bg-transparent px-5 py-4 font-body text-sec
                 text-ink outline-none placeholder:text-ink-3"/>
             <Command.List className="max-h-[52vh] overflow-y-auto p-2">
               <Command.Empty className="px-3 py-6 text-sec text-ink-3">Nothing matches that.</Command.Empty>
@@ -59,7 +59,7 @@ export function Palette({ go }){
 /* The hint only shows where the shortcut exists. */
 export function PaletteHint(){
   return (
-    <span className="ml-3 hidden items-center gap-1.5 font-mono text-[0.9375rem] text-ink-3
+    <span className="ml-3 hidden items-center gap-1.5 font-mono text-tiny text-ink-3
       [@media(hover:hover)and(pointer:fine)]:inline-flex">
       <kbd className="rounded-xs border border-rule px-1.5 py-0.5">⌘K</kbd>
     </span>

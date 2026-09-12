@@ -5,16 +5,17 @@ import { LAYERS } from './Patch'
 import { PatchCAD } from '../charts/cad'
 import { RevealLines, Reveal, RevealRow } from '../s21/motion'
 import { DotPattern } from '../s21/texture'
+import { SignalTrace } from '../charts/infographics'
 import { cn } from '../lib/utils'
 
 const CAD_SRC = (globalThis.__CAD || '/MindMap-Patch-colored.glb')
 
 /* What the patch measures, named the way a parent would say it. */
 const SENSORS = [
-  ['Heart',       'Counts your heartbeat and the small gaps between beats.'],
-  ['Sweat',       'Measures sweat far too small to feel, which rises when you are tense.'],
-  ['Temperature', 'Reads skin temperature, which drifts as your body settles or braces.'],
-  ['Movement',    'Tells sitting still apart from running, so exercise is not read as stress.'],
+  { k:'pulse', name:'Heart',       unit:'bpm', note:'Beats, and the gaps between them.' },
+  { k:'sweat', name:'Sweat',       unit:'µS',  note:'Too small to feel. Rises when you tense.' },
+  { k:'temp',  name:'Temperature', unit:'°C',  note:'Drifts as your body settles.' },
+  { k:'move',  name:'Movement',    unit:'g',   note:'Tells still apart from running.' },
 ]
 
 export function PatchPage() {
@@ -48,13 +49,24 @@ export function PatchPage() {
             className="mt-3 max-w-[14ch] font-display font-bold text-[clamp(2.25rem,4.4vw,3.75rem)] leading-[1.05] tracking-tight text-ink"
             lines={['A sticker on', 'the forearm.']}/>
           <Reveal className="mt-5">
-            <p className="max-w-[52ch] text-[clamp(1.3125rem,1.6vw,1.5rem)] leading-[1.5] text-ink-2">
-              It reads four things from the skin, once a second, and sends them to the phone.
-              It is about the size of a plaster and is changed once a week.
+            <p className="max-w-[46ch] text-[clamp(1.3125rem,1.6vw,1.5rem)] leading-[1.5] text-ink-2">
+              Four readings from the skin, once a second, sent to the phone. Changed once a week.
             </p>
           </Reveal>
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-12">
+          {/* Plain words before the engineering labels. Two testers hit
+              EDA / PPG / nRF52840 first and stopped reading. */}
+          <dl className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {SENSORS.map((s2, i) => (
+              <RevealRow key={s2.k} index={i} className="rounded-xs border border-rule bg-paper p-5">
+                <div className="rounded-xs bg-sage px-3 py-4"><SignalTrace kind={s2.k}/></div>
+                <dt className="mt-4 font-display text-row font-bold text-ink">{s2.name}</dt>
+                <dd className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{s2.note}</dd>
+              </RevealRow>
+            ))}
+          </dl>
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-2 lg:gap-12">
             <div className="relative h-[min(46vh,420px)] overflow-x-clip [perspective:1500px]">
               <div id="stack" className="absolute inset-0 [transform-style:preserve-3d]"
                 style={{ transform: 'rotateX(58deg) rotateZ(-32deg)' }}>
@@ -68,13 +80,17 @@ export function PatchPage() {
                   </figure>
                 ))}
               </div>
-              <span className="lab absolute inset-x-0 bottom-0 text-center">Drawing</span>
+              <span className="lab absolute inset-x-0 bottom-0 text-center">
+                Drawing · engineering labels</span>
             </div>
 
             <div className="relative h-[min(46vh,420px)] rounded-xs border border-rule bg-paper">
               <PatchCAD src={CAD_SRC} exploded={exploded} selected={picked} onSelect={setPicked}/>
+              {/* It was labelled "the real model", which a reviewer read as a
+                  photograph of a built unit. It is our own CAD, and it is the
+                  enclosure only. */}
               <span className="lab pointer-events-none absolute inset-x-0 bottom-3 text-center">
-                The real model · drag to turn</span>
+                CAD model · drag to turn</span>
               <div className="absolute right-3 top-3">
                 <Button variant={exploded ? 'solid' : 'outline'} size="sm"
                   aria-pressed={exploded} onClick={() => setExploded(v => !v)}>
@@ -83,25 +99,19 @@ export function PatchPage() {
               </div>
             </div>
           </div>
+          <p className="mt-4 max-w-[70ch] text-meta text-ink-3">
+            Left: the engineering drawing, which shows what each layer does. Right: our CAD assembly,
+            the file the enclosure is printed from — cover, electronics pod and base ring, with the
+            charging-port cutout and the board posts. The circuit board is bought, not printed, so it
+            is not in this file. There is no photograph of an assembled unit on this site yet, and
+            nothing on this page is a measurement taken from one.</p>
         </div>
-      </section>
-
-      <section className="wrap py-12 sm:py-16">
-        <h2 className="lab font-normal">What the patch measures</h2>
-        <dl className="mt-3 grid border-t border-rule sm:grid-cols-2 lg:grid-cols-4">
-          {SENSORS.map(([k, v], i) => (
-            <RevealRow key={k} index={i}
-              className={cn('border-b border-rule py-6 lg:border-b-0 lg:border-l lg:px-7',
-                i === 0 && 'lg:border-l-0 lg:pl-0')}>
-              <dt className="font-display text-row font-bold text-ink">{k}</dt>
-              <dd className="mt-2 max-w-[34ch] text-sec text-ink-2">{v}</dd>
-            </RevealRow>
-          ))}
-        </dl>
       </section>
 
       <section className="wrap pb-14 sm:pb-20">
         <h2 className="lab font-normal">Three layers</h2>
+        <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one and the model keeps that layer and
+          drops the other two.</p>
         <ol className="mt-3 grid list-none gap-x-10 p-0 lg:grid-cols-3">
           {LAYERS.map(l => {
             const on = picked === l.part
@@ -115,6 +125,7 @@ export function PatchPage() {
                   <div>
                     <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
                     <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
+                    <p className="mt-1.5 text-meta text-ink-3">{l.cad}</p>
                     <span className="mt-2 block font-mono text-label uppercase tracking-[0.12em] text-accent">
                       {on ? 'Showing only this' : 'Show only this'}</span>
                   </div>

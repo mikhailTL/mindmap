@@ -18,7 +18,7 @@ const button = cva(
                  'hover:shadow-[inset_0_0_0_1px_theme(colors.ink.3)] hover:bg-sage/40',
         ghost:   'bg-transparent text-accent hover:bg-accent-wash',
       },
-      size: { md:'min-h-[54px] px-7 text-[1.0625rem]', sm:'min-h-[46px] px-4 text-[1.0625rem]' },
+      size: { md:'min-h-[54px] px-7 text-ui', sm:'min-h-[46px] px-4 text-ui' },
     },
     defaultVariants: { variant:'solid', size:'md' },
   }

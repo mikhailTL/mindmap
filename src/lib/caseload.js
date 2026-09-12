@@ -1,8 +1,39 @@
-/* Counselor demo data, carried over from the Solace build so the two products
-   tell the same story. Names are placeholders by design — the real product
-   never shows one to a cohort view. */
+/* Counselor demo data.
+
+   Two rules this file exists to enforce:
+
+   1. Consent is the single source of truth. CONSENT below feeds both the
+      ledger on the Consent tab and the flags the triage board reads, so the
+      board physically cannot show a trend for a student whose guardian only
+      consented to crisis alerts. A reviewer found the two disagreeing when
+      they were maintained separately.
+   2. Nothing here is a measurement. Every number is generated from the
+      scoring model, deterministically, per student — which is also why the
+      per-student panels take the student as an argument instead of reading a
+      module-level constant. The earlier version showed Student 8241's drivers
+      and 45-day profile under every name on the board. */
 
 export const K_ANONYMITY = 5
+
+/* Students consented to the school across the whole building. The counselor's
+   own caseload is the eight below; the year-group screens aggregate everyone. */
+export const SCHOOL_N = 96
+
+/* score  — may the school see a wellness index at all
+   trends — may the school see week-over-week movement
+   Crisis alerts reach the counselor either way; that is the one thing a
+   guardian cannot consent away, and it is stated wherever it applies. */
+export const CONSENT = {
+  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Aug 22, 2025' },
+  'Student 3907': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts — no trends',             basis:'FERPA', signedAt:'Aug 24, 2025' },
+  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Wellness score, trends, academic correlation, raw readings',basis:'Both',  signedAt:'Sep 03, 2025' },
+  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'FERPA', signedAt:'Aug 29, 2025' },
+  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Sep 05, 2025' },
+  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'COPPA', signedAt:'Sep 09, 2025' },
+  'Student 6053': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts — no trends',             basis:'Both',  signedAt:'Sep 08, 2025' },
+  'Student 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
+}
+const EXPIRES = 'Jun 12, 2026'
 
 const SEED = [
   { id:'t1', name:'Student 8241', grade:11, base:74, drift: 11 },
@@ -19,10 +50,25 @@ export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'mo
 export const TIER_LABEL = { info:'Steady', moderate:'Watch', high:'Elevated', crisis:'Urgent' }
 export const TIER_ORDER = ['crisis','high','moderate','info']
 
-export const triage = () => SEED.map(s => {
+/* Every student on the caseload, each carrying what may be shown about them.
+   A consumer that renders `current` without checking `showScore` is a bug. */
+export const roster = () => SEED.map(s => {
+  const c = CONSENT[s.name]
   const current = clamp(s.base, 5, 99), weekAgo = clamp(s.base - s.drift, 5, 99)
-  return { ...s, current, weekAgo, velocity: current - weekAgo, consented:true, tier: tierOf(current) }
-}).sort((a, b) => b.velocity - a.velocity)
+  return { ...s, current, weekAgo, velocity: current - weekAgo,
+    scope:c.scope, basis:c.basis, signedAt:c.signedAt, expires:EXPIRES,
+    showScore:c.score, showTrend:c.trends, showRaw:c.raw,
+    tier: c.score ? tierOf(current) : null }
+})
+
+/* The board ranks by rate of change, so this list holds only the students
+   whose guardians consented to trends. The rest are shown separately and
+   without a rank, because ranking them would leak the thing they withheld. */
+export const triage = () => roster().filter(s => s.showTrend)
+  .sort((a, b) => b.velocity - a.velocity)
+export const scoreOnly  = () => roster().filter(s => s.showScore && !s.showTrend)
+  .sort((a, b) => b.current - a.current)
+export const alertsOnly = () => roster().filter(s => !s.showScore)
 
 export const COURSES = [
   { id:'c1', name:'AP US History',      teacher:'Mr. Delaney',  period:1 },
@@ -34,35 +80,37 @@ export const COURSES = [
 ]
 const ord = n => n + (['th','st','nd','rd'][(n % 100 - n % 10 !== 10) * (n % 10)] || 'th')
 
-/* n is synthetic; the means come from the same windows the individual scores use. */
+/* n counts consented students in that period across the school, not the
+   caseload — hence figures larger than eight. */
 export const COHORT_PERIOD = COURSES.map(c => ({
   key:'p' + c.period,
   label:`${ord(c.period)} period · ${c.name}`,
-  n: c.period === 5 ? 3 : 6 + (c.period % 4) * 4,
+  n: c.period === 5 ? 3 : { 1:24, 2:31, 3:38, 6:27, 7:19 }[c.period],
   mean: { 1:54, 2:57, 3:71, 5:49, 6:46, 7:52 }[c.period],
 })).map(r => ({ ...r, suppressed: r.n < K_ANONYMITY }))
 
 export const COHORT_WEEKDAY = [['Mon','Monday'],['Tue','Tuesday'],['Wed','Wednesday'],
   ['Thu','Thursday'],['Fri','Friday']].map(([label, full], i) => ({
-  key:label, label, full, n: 22 + i * 3, mean: [58, 52, 61, 63, 47][i], suppressed: false,
+  key:label, label, full, n: SCHOOL_N, mean: [58, 52, 61, 63, 47][i], suppressed: false,
 }))
 
-export const CONSENT_LEDGER = [
-  { student:'Student 8241', guardian:'Guardian', scope:'Wellness score, trends, academic correlation', basis:'FERPA', signedAt:'Aug 22, 2025', expires:'Jun 12, 2026' },
-  { student:'Student 3907', guardian:'Guardian', scope:'Wellness score, crisis alerts only',           basis:'FERPA', signedAt:'Aug 24, 2025', expires:'Jun 12, 2026' },
-  { student:'Student 5512', guardian:'Guardian', scope:'Full counselor scope',                          basis:'Both',  signedAt:'Sep 03, 2025', expires:'Jun 12, 2026' },
-  { student:'Student 2298', guardian:'Guardian', scope:'Wellness score, trends',                        basis:'COPPA', signedAt:'Sep 09, 2025', expires:'Jun 12, 2026' },
-  { student:'Student 4470', guardian:'Guardian', scope:'Crisis alerts only',                            basis:'COPPA', signedAt:'Sep 11, 2025', expires:'Jun 12, 2026' },
-]
+export const CONSENT_LEDGER = roster().map(s => ({
+  student:s.name, guardian:'Guardian', scope:s.scope, basis:s.basis,
+  signedAt:s.signedAt, expires:s.expires,
+}))
 
+/* Times match PROTOCOL_TIMES below. The protocol is still open at step four,
+   so there is no "closed" row — an earlier version logged a close that the
+   checklist had not reached. */
 export const AUDIT_LOG = [
-  { at:'Today, 2:41 PM',     actor:'System',                 action:'Crisis protocol completed — parent notified',      subject:'Student 8241' },
-  { at:'Today, 2:21 PM',     actor:'Counselor (counselor)',  action:'Acknowledged crisis alert',                        subject:'Student 8241' },
-  { at:'Today, 2:14 PM',     actor:'System',                 action:'Crisis alert raised — counselor auto-notified',     subject:'Student 8241' },
-  { at:'Today, 11:02 AM',    actor:'Counselor (counselor)',  action:'Viewed profile',                                   subject:'Student 5512' },
-  { at:'Yesterday, 4:35 PM', actor:'Counselor (counselor)',  action:'Exported cohort report (anonymized, k≥5)',          subject:'Grade 11 cohort' },
-  { at:'Yesterday, 9:18 AM', actor:'Guardian (parent)',      action:'Viewed wellness summary',                          subject:'Student 8241' },
-  { at:'Monday, 3:50 PM',    actor:'Student 8241',           action:'Revoked sharing: mood log → counselor',             subject:'Student 8241' },
+  { at:'12 Sep, 2:34 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Guardian contacted by phone',                      subject:'Student 8241' },
+  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:'R. Okonkwo',       action:'In-person welfare check completed',                subject:'Student 8241' },
+  { at:'12 Sep, 2:21 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Acknowledged crisis alert',                        subject:'Student 8241' },
+  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised — counselor notified',         subject:'Student 8241' },
+  { at:'12 Sep, 11:02 AM',rel:'Today',     actor:'R. Okonkwo',       action:'Opened record',                                    subject:'Student 5512' },
+  { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:'R. Okonkwo',       action:'Exported year-group report (no group under five)', subject:'Grade 11' },
+  { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed weekly summary',                            subject:'Student 8241' },
+  { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Shortened raw-signal retention to 30 days',        subject:'Student 8241' },
 ]
 
 export const PROTOCOL = [
@@ -73,6 +121,7 @@ export const PROTOCOL = [
   'Document outcome and next step',
 ]
 export const PROTOCOL_TIMES = ['2:14 PM','2:21 PM','2:26 PM','2:34 PM','2:41 PM']
+export const PROTOCOL_DONE = [0,1,2,3]   // step five is the one still open
 
 export const REFERRALS = [
   { student:'Student 8241', to:'External referral — elevated arousal pattern', opened:'Today',  status:'Awaiting intake' },
@@ -81,14 +130,24 @@ export const REFERRALS = [
   { student:'Student 1184', to:'School psychologist',                          opened:'Feb 18', status:'Closed' },
 ]
 
-/* Ranked drivers for Student 8241, from the same engine the student view uses. */
-export const DRIVERS = [
-  { label:'HRV down 18% vs their baseline',                     contribution:0.31 },
-  { label:'4 skin-conductance responses in 10 min',             contribution:0.24 },
-  { label:'Heart rate 84 bpm — 21% above their resting median', contribution:0.18 },
-  { label:'Baseline skin conductance up 12%',                   contribution:0.11 },
-  { label:'Skin temp falling 0.4 °C/min',                       contribution:0.06 },
+/* Which signals account for a student's change this week. Generated per
+   student from their own id, so two names never carry the same breakdown. */
+const SIGNALS = [
+  'Heart rate variability below their own normal',
+  'Sweat responses clustered in single lessons',
+  'Resting heart rate above their own baseline',
+  'Resting sweat level above their own baseline',
+  'Skin temperature falling through a lesson',
+  'Restlessness during seated work',
 ]
+export function driversFor(s) {
+  const h = [...s.id + s.name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
+  const ranked = SIGNALS.map((label, i) => ({ label, w: ((h >> i) % 7) + (i === 0 ? 5 : 1) }))
+    .sort((a, b) => b.w - a.w).slice(0, 5)
+  const total = ranked.reduce((a, b) => a + b.w, 0)
+  return ranked.map(r => ({ label:r.label, share: r.w / total }))
+}
+
 export const INTERVENTIONS = [
   { name:'Box breathing',                  sessions:7, hrvDeltaPct: 18 },
   { name:'10-minute walk',                 sessions:3, hrvDeltaPct:  9 },
@@ -101,12 +160,16 @@ export const efficacyLabel = i =>
   : i.hrvDeltaPct === 0 ? `${i.name}: no measurable effect (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
   : `${i.name}: HRV ${i.hrvDeltaPct > 0 ? '+' : ''}${i.hrvDeltaPct}% (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
 
-/* 45 days of daily means for Student 8241, ending on the current elevated run. */
-export const PROFILE_45 = (() => {
-  let v = 52, out = []
+/* 45 days of daily means, built from that student's own base and drift so the
+   line ends where the board says they are today. */
+export function profile45(s) {
+  const start = s.weekAgo - s.drift * 2
+  let v = start, out = []
   for (let i = 0; i < 45; i++) {
-    v += Math.sin(i / 5) * 1.8 + (i > 31 ? 0.75 : 0) + ((i * 37) % 11 - 5) * 0.35
-    out.push({ i, v: Math.round(Math.max(34, Math.min(88, v))) })
+    const pull = i > 31 ? (s.current - v) * 0.10 : 0
+    v += Math.sin((i + s.grade) / 5) * 1.6 + pull + ((i * 37 + s.base) % 11 - 5) * 0.3
+    out.push({ i, v: Math.round(clamp(v, 20, 96)) })
   }
+  out[44].v = s.current
   return out
-})()
+}

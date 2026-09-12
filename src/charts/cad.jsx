@@ -2,6 +2,7 @@ import React from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 /* The real Onshape export, MindMap-Patch-colored.glb.
  *
@@ -43,23 +44,39 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     } catch { setState('unsupported'); return }
 
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5))
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.05
     const canvas = renderer.domElement
     canvas.style.display = 'block'
     canvas.style.width = '100%'
     canvas.style.height = '100%'
-    canvas.style.touchAction = 'none'
+    // 'none' let OrbitControls own every touch, so a vertical swipe over the
+    // canvas froze the page. pan-y gives scrolling back and keeps the drag.
+    canvas.style.touchAction = 'pan-y'
     canvas.style.cursor = 'grab'
+    // A bare <canvas> reaches a screen reader as an unlabelled graphic. This
+    // one carries the assembly, so it is named, and the name follows what is
+    // currently on screen rather than describing a fixed picture.
+    canvas.setAttribute('role', 'img')
+    canvas.setAttribute('tabindex', '0')
     el.appendChild(canvas)
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 500)
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 600)
     camera.position.set(62, 44, 80)
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55))
-    const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(40, 70, 50); scene.add(key)
-    const rim = new THREE.DirectionalLight(new THREE.Color('#0f6b62'), 1.1); rim.position.set(-60, -20, -40); scene.add(rim)
-    const fill = new THREE.DirectionalLight(new THREE.Color('#c9d8d4'), 1.0); fill.position.set(-40, 30, 60); scene.add(fill)
+    // A neutral studio environment does the lighting, so the parts keep the
+    // exact colours the CAD assigns them. The earlier rig used a teal rim and a
+    // grey-green fill, which tinted every surface — that is recolouring the
+    // model, not lighting it.
+    const pmrem = new THREE.PMREMGenerator(renderer)
+    pmrem.compileEquirectangularShader()
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04)
+    scene.environment = envRT.texture
+    const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(38, 64, 48); scene.add(key)
+    const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(-48, 24, 56); scene.add(fill)
 
     const rig = new THREE.Group()
     rig.rotation.x = -Math.PI / 2          // CAD +Z (thickness) becomes world up
@@ -89,7 +106,12 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
         mesh.geometry.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2,
                                 -(bb.min.z + bb.max.z) / 2)
         mesh.userData.partId = part
-        disposables.push(mesh.geometry, mesh.material)   // the GLB's materials are already correct
+        // Clone so the isolate fade never writes opacity back into a material the
+        // GLB may share between parts. Colour, metalness and roughness are the
+        // file's own — nothing here overrides them.
+        mesh.material = mesh.material.clone()
+        mesh.material.side = THREE.FrontSide
+        disposables.push(mesh.geometry, mesh.material)
         // The node carries the stack translation and so does the group; keeping
         // both doubled every offset and buried the board inside the shell.
         mesh.position.set(0, 0, 0)
@@ -107,8 +129,9 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
     controls.enableDamping = true
     controls.dampingFactor = 0.08
     controls.enablePan = false
-    controls.minDistance = 55
-    controls.maxDistance = 240
+    controls.minDistance = 60
+    controls.maxDistance = 260
+    controls.enableZoom = false
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
     controls.autoRotate = !reduce
     controls.autoRotateSpeed = 0.5
@@ -150,17 +173,29 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
       const { exploded: ex, selected: sel } = props.current
       for (const part in groups) {
         const g = groups[part]
+        const mine = sel === part
         const spread = ex ? { base: -16, pcb: 2, pod: 24 }[part] : 0
-        const wantZ = g.userData.home + spread
+        /* Isolating a layer used to fade the other two to 12% opacity and leave
+           them exactly where they were. Measured against a pixel diff that
+           changed 2.4% of the frame — technically working, and indistinguishable
+           from a dead button. The selected layer now comes to the centre and the
+           others leave entirely. */
+        const wantZ = sel ? (mine ? 0 : g.userData.home * 2.2) : g.userData.home + spread
         g.position.z += (wantZ - g.position.z) * Math.min(1, dt * 5)
-        const wantOpacity = !sel || sel === part ? 1 : 0.12
+        const wantOpacity = !sel || mine ? 1 : 0
         g.traverse(o => {
           if (!o.isMesh) return
           o.material.transparent = wantOpacity < 1
+          o.material.depthWrite = wantOpacity > 0.9
           o.material.opacity += (wantOpacity - o.material.opacity) * Math.min(1, dt * 8)
+          // A mesh at 1% opacity still costs a draw call and still tints what is
+          // behind it. Below the threshold it is gone, not faint.
+          o.visible = o.material.opacity > 0.015
         })
       }
-      const wantDist = ex ? 168 : 124
+      // Isolated, one layer alone needs less room than the whole stack.
+      const wantDistSel = sel ? 96 : null
+      const wantDist = wantDistSel ?? (ex ? 172 : 118)
       controls.target.y += ((ex ? 2 : 1) - controls.target.y) * Math.min(1, dt * 3)
       const offset = camera.position.clone().sub(controls.target)
       const d = offset.length()
@@ -181,6 +216,7 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
 
     return () => {
       cancelAnimationFrame(raf); ro.disconnect(); controls.dispose()
+      envRT.texture.dispose(); pmrem.dispose()
       canvas.removeEventListener('pointerdown', onDown)
       canvas.removeEventListener('pointerup', onUp)
       disposables.forEach(d => d?.dispose?.())   // the original leaked all of this
@@ -188,6 +224,18 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
       if (canvas.parentNode === el) el.removeChild(canvas)
     }
   }, [src])
+
+  /* Kept out of the draw loop: this is a DOM attribute, not a frame. */
+  React.useEffect(() => {
+    const c = host.current?.querySelector('canvas')
+    if (!c) return
+    const name = { pod:'the printed shell', pcb:'the circuit board', base:'the sensor face' }[selected]
+    c.setAttribute('aria-label', name
+      ? `CAD model of the patch, showing ${name} alone. Drag to turn it.`
+      : exploded
+        ? 'CAD model of the patch, pulled apart into its three layers. Drag to turn it.'
+        : 'CAD model of the patch, assembled. Drag to turn it.')
+  }, [selected, exploded, state])
 
   return (
     <div className="relative h-full w-full">

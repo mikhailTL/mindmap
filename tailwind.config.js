@@ -1,3 +1,5 @@
+import { TYPE_SCALE } from './src/lib/type-scale.js'
+
 /** Tokens derived from the product, not from a palette generator.
  *  Clinical vernacular: red is reserved for critical and is unavailable as a
  *  brand accent; amber means out-of-range. */
@@ -22,17 +24,7 @@ export default {
         mono:    ['"JetBrains Mono"','ui-monospace','monospace'],
       },
       /* nine steps because the content has nine levels of meaning */
-      fontSize: {
-        label: ['1rem',   { lineHeight:'1.4',  letterSpacing:'0.12em' }],
-        meta:  ['1.125rem',{ lineHeight:'1.5' }],
-        sec:   ['1.1875rem',{ lineHeight:'1.55' }],
-        body:  ['1.3125rem',{ lineHeight:'1.6' }],
-        row:   ['1.375rem',{ lineHeight:'1.25', letterSpacing:'-0.02em' }],
-        view:  ['clamp(1.875rem,4.4vw,3.375rem)', { lineHeight:'1.1',  letterSpacing:'-0.03em' }],
-        sect:  ['clamp(2.25rem,4.4vw,3.875rem)',  { lineHeight:'1.05', letterSpacing:'-0.03em' }],
-        fig:   ['clamp(3.5rem,8vw,5.5rem)',       { lineHeight:'1',    letterSpacing:'-0.04em' }],
-        page:  ['clamp(3rem,7.4vw,6.5rem)',       { lineHeight:'1.02', letterSpacing:'-0.035em' }],
-      },
+      fontSize: TYPE_SCALE,
       borderRadius: { xs:'2px', sm:'3px', DEFAULT:'4px', lg:'6px' },
       boxShadow: {
         /* two layers, one light source */

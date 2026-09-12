@@ -30,7 +30,7 @@ export function Progress({ value = 0, label, className }) {
   </div>
 }
 export function Kbd({ children, className }) {
-  return <kbd className={cn('rounded-xs border border-rule px-1.5 py-0.5 font-mono text-[0.9375rem] text-ink-3', className)}>{children}</kbd>
+  return <kbd className={cn('rounded-xs border border-rule px-1.5 py-0.5 font-mono text-label text-ink-3', className)}>{children}</kbd>
 }
 export function EmptyState({ title, body, className }) {
   return <div className={cn('rounded border border-dashed border-rule bg-sage/30 p-8 text-center', className)}>

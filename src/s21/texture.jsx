@@ -572,7 +572,8 @@ export function ShaderBackground({ className }) {
   }, [reduced])
 
   return (
-    <canvas ref={canvasRef} className={className} style={{ display: 'block', width: '100%', height: '100%' }} />
+    <canvas ref={canvasRef} aria-hidden="true"
+      className={className} style={{ display: 'block', width: '100%', height: '100%' }} />
   )
 }
 
@@ -873,7 +874,8 @@ export default function KineticGrid({ children, className, globalColor = 'defaul
         className,
       )}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 z-0 h-full w-full pointer-events-none" />
+      <canvas ref={canvasRef} aria-hidden="true"
+        className="absolute inset-0 z-0 h-full w-full pointer-events-none" />
       <div className="relative z-10 w-full h-full">{children}</div>
     </div>
   )
