@@ -36,7 +36,7 @@ import { cn } from '../lib/utils'
  * The interior of the arch is a half-disc of radius 76, which is what holds the
  * score. A three-digit number at the display step needs about 87px of the 152
  * that radius gives at the default width. */
-const VW = 320, VH = 190, CX = 160, CY = 168
+const VW = 320, VH = 206, CX = 160, CY = 168
 const BAND = 18
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
 
@@ -72,11 +72,11 @@ function Band({ id, r, glow, pct, dim }) {
       <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-sage" opacity="0.55"/>
       {/* the bloom is the band again, blurred, sitting under it */}
       <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} stroke={glow}
-        filter="url(#mm-bloom)" opacity="0.85"/>
+        filter="url(#mm-bloom)" opacity="0.42"/>
       <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} stroke={`url(#mm-g-${id})`}/>
       {/* the hot end: a bright core with its own halo, so the band reads as
           lit from its leading edge rather than painted flat */}
-      <circle cx={x} cy={y} r={7} fill={glow} opacity="0.5" filter="url(#mm-bloom)"/>
+      <circle cx={x} cy={y} r={6} fill={glow} opacity="0.3" filter="url(#mm-bloom)"/>
       <circle cx={x} cy={y} r={3} className="fill-paper"/>
     </g>
   )
@@ -114,7 +114,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
           <defs>
             <filter id="mm-bloom" x="-25%" y="-25%" width="150%" height="150%">
-              <feGaussianBlur stdDeviation="6"/>
+              <feGaussianBlur stdDeviation="3.5"/>
             </filter>
             {/* the arch sweeps left to right, so a horizontal ramp across each
                 band's own box runs along it: deep at the foot, hot at the tip */}
@@ -122,7 +122,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
               const s2 = SENSORS[r.id] || r
               return (
                 <linearGradient key={r.id} id={`mm-g-${r.id}`} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%"   stopColor={s2.color || s2.glow}/>
+                  <stop offset="0%"   stopColor={s2.deep || s2.color || s2.glow}/>
                   <stop offset="62%"  stopColor={s2.glow || s2.color}/>
                   <stop offset="100%" stopColor={s2.glow || s2.color}/>
                 </linearGradient>
@@ -130,7 +130,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
             })}
             {/* something for the bloom to fall on; pure paper swallows it */}
             <radialGradient id="mm-ground" cx="50%" cy="88%" r="62%">
-              <stop offset="0%"   stopColor="#e7efeb" stopOpacity="0.85"/>
+              <stop offset="0%"   stopColor="#e7efeb" stopOpacity="0.5"/>
               <stop offset="100%" stopColor="#e7efeb" stopOpacity="0"/>
             </radialGradient>
           </defs>
@@ -154,15 +154,18 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         {/* the score rides over the arch in real HTML, so it uses the display
             face and a step off the scale rather than a size the viewBox
             invented at this particular width */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[11%]
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[18%]
           flex flex-col items-center">
           <span className="font-display text-dial font-bold leading-none tracking-tight text-ink">{shown}</span>
           <span className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">out of 100</span>
         </div>
         {/* the arch is a scale; its feet say so */}
-        <span aria-hidden className="absolute bottom-[3%] left-0 font-mono text-label uppercase
+        {/* their own strip below the feet. Sitting level with the arch put
+            them under the shortest band, which is exactly where a low reading
+            draws the eye. */}
+        <span aria-hidden className="absolute bottom-0 left-0 font-mono text-label uppercase
           tracking-[0.12em] text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-[3%] right-0 font-mono text-label uppercase
+        <span aria-hidden className="absolute bottom-0 right-0 font-mono text-label uppercase
           tracking-[0.12em] text-ink-3">peak</span>
       </div>
       {usual != null && (
@@ -173,35 +176,43 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
   )
 }
 
-/* One row per ring. This is the real control: full width, 56px, focusable. */
+/* One tile per band. These are the real control: the arch is aria-hidden, so
+   everything a keyboard or a screen reader needs is here. Tiles rather than
+   list rows because a reader has to be able to pick one out and read it from
+   arm's length — a colour bar down the side, the name at heading size, the
+   figure at figure size. */
 export function RainbowKey({ rings, picked, onPick, className }) {
   return (
-    <ul className={cn('list-none border-t border-rule p-0', className)}>
+    <ul className={cn('grid list-none gap-3 p-0 sm:grid-cols-2', className)}>
       {rings.map(r => {
         const s = SENSORS[r.id] || r
         const on = picked === r.id
         const Icon = s.icon
+        const tone = s.glow || s.color
         return (
           <li key={r.id}>
             <button onClick={() => onPick(on ? null : r.id)} aria-expanded={on}
-              className={cn('flex min-h-[56px] w-full items-center gap-3 border-b border-rule px-1 py-3',
-                'text-left transition-colors duration-150 hover:bg-sage/50 focus-visible:bg-sage/50')}>
-              {/* the dot is the key back to the ring; the icon gives the row a
-                  shape as well as a hue, for anyone who cannot use the hue */}
-              <span aria-hidden className="size-3 shrink-0 rounded-full"
-                style={{ background: s.glow || s.color, boxShadow: `0 0 0 3px ${(s.glow || s.color)}22` }}/>
-              {Icon && <Icon aria-hidden className="size-[1.125rem] shrink-0" style={{ color: s.glow || s.color }}/>}
-              <span className="min-w-0 flex-1">
-                <span className="block text-meta text-ink">{s.name}</span>
-                <span className="block text-sec text-ink-2">{r.reading}</span>
+              style={{ borderLeftColor: tone, background: on ? `${tone}12` : undefined }}
+              className={cn('flex min-h-[104px] w-full flex-col justify-between gap-3 rounded-xs',
+                'border border-l-4 border-rule p-4 text-left transition-colors duration-150',
+                'hover:bg-sage/50 focus-visible:bg-sage/50')}>
+              <span className="flex w-full items-start justify-between gap-3">
+                <span className="flex items-center gap-2.5">
+                  {Icon && <Icon aria-hidden className="size-5 shrink-0" style={{ color: tone }}/>}
+                  <span className="font-display text-row font-bold text-ink">{s.name}</span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block font-mono text-num font-medium tabular-nums leading-none text-ink">
+                    {r.value}</span>
+                  <span className="mt-1 block font-mono text-label text-ink-3">of 100</span>
+                </span>
               </span>
-              <span className="shrink-0 text-right">
-                <span className="block font-mono text-row font-medium tabular-nums" style={{ color: s.color }}>
-                  {r.value}</span>
-                <span className="block font-mono text-label text-ink-3">of 100</span>
+              <span className="flex w-full items-end justify-between gap-3">
+                <span className="text-sec text-ink-2">{r.reading}</span>
+                <ChevronRight aria-hidden
+                  className={cn('size-5 shrink-0 text-ink-3 transition-transform duration-200',
+                    on && 'rotate-90')}/>
               </span>
-              <ChevronRight aria-hidden
-                className={cn('size-4 shrink-0 text-ink-3 transition-transform duration-200', on && 'rotate-90')}/>
             </button>
           </li>
         )
@@ -234,7 +245,7 @@ export function SensorTrace({ data, color, h = 96, className }) {
         </filter>
       </defs>
       <path d={`${d} L${W - p} ${h} L${p} ${h} Z`} fill={`url(#mm-fill-${color.slice(1)})`}/>
-      <path d={d} fill="none" stroke={color} strokeWidth="3" opacity="0.55"
+      <path d={d} fill="none" stroke={color} strokeWidth="3" opacity="0.3"
         filter={`url(#mm-line-${color.slice(1)})`} vectorEffect="non-scaling-stroke"/>
       <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
@@ -255,14 +266,14 @@ export function SensorDetail({ ring, onClose }) {
   return (
     <section ref={ref} tabIndex={-1} className="mt-6 rounded-xs border border-rule bg-paper p-5 sm:p-7">
       <span aria-hidden className="mb-4 block h-1 w-14 rounded-full"
-        style={{ background: s.glow || s.color, boxShadow: `0 0 12px 1px ${(s.glow || s.color)}66` }}/>
+        style={{ background: s.glow || s.color }}/>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
           <h3 className="font-display text-head font-bold text-ink">{s.name}</h3>
           <p className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">
             {ring.value} out of 100 · {ring.window || 'last hour'}</p>
         </div>
-        <p className="font-mono font-medium tabular-nums text-stat leading-none" style={{ color: s.color }}>
+        <p className="font-mono font-medium tabular-nums text-stat leading-none text-ink">
           {ring.big}<span className="ml-1.5 text-meta text-ink-3">{s.unit}</span></p>
       </div>
 

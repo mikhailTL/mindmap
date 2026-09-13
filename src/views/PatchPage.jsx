@@ -56,7 +56,7 @@ export function PatchPage() {
                 {/* the same colour this signal wears on the dashboard rings */}
                 <dt className="mt-4 flex items-center gap-2.5 font-display text-row font-bold text-ink">
                   <span aria-hidden className="size-3 shrink-0 rounded-full"
-                    style={{ background: s2.glow, boxShadow: `0 0 0 3px ${s2.glow}22` }}/>
+                    style={{ background: s2.glow }}/>
                   {s2.name}</dt>
                 <dd className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{s2.short}</dd>
               </RevealRow>

@@ -126,13 +126,13 @@ function Rings({ score, usual, rings, children }) {
   const open = rings.find(r => r.id === picked)
   return (
     <>
-      <div className="mt-8 grid gap-9 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-14">
-        <RainbowDial score={score} usual={usual} rings={rings} size={340}
+      <div className="mt-8 grid gap-9 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-14">
+        <RainbowDial score={score} usual={usual} rings={rings} size={376}
           picked={picked} onPick={id => setPicked(p => p === id ? null : id)}/>
         <div className="min-w-0">
           {children}
-          <h2 className="mt-7 lab font-normal">Each signal, out of 100</h2>
-          <RainbowKey className="mt-2" rings={rings} picked={picked}
+          <h2 className="mt-8 lab font-normal">Each signal, out of 100</h2>
+          <RainbowKey className="mt-3" rings={rings} picked={picked}
             onPick={setPicked}/>
         </div>
       </div>
