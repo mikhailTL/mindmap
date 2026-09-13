@@ -1,6 +1,5 @@
 import React from 'react'
-import { Back } from './Monitor'
-import { Label } from '../ui/misc'
+import { ScrollIn } from '../s21/motion'
 import { WhoSeesWhat } from '../charts/infographics'
 
 /* Three of the site's own pages promised this screen and none of them opened
@@ -19,17 +18,15 @@ const YOU_NEVER = [
   'Anything they say — the microphone is never recorded or sent',
 ]
 
-export function Privacy({ go }) {
+export function PrivacyBody({ go }) {
   return (
-    <main className="wrap py-9 sm:py-14">
-      <Back go={go} to="hub"/>
-      <Label>Who can see what</Label>
-      <h1 className="mt-3 max-w-[16ch] font-display font-bold text-view text-ink">
-        What a parent can see.</h1>
+    <>
+      <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">
+        What a parent can see.</h2>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-14">
-        <section className="border-t-2 border-accent pt-5">
-          <h2 className="font-display text-row font-bold text-ink">What a parent sees</h2>
+      <div className="mt-8 grid gap-8 lg:grid-cols-2 lg:gap-14">
+        <ScrollIn as="section" className="border-t-2 border-accent pt-5">
+          <h3 className="font-display text-row font-bold text-ink">What a parent sees</h3>
           <ul className="mt-4 list-none space-y-3 p-0">
             {YOU_SEE.map(t => (
               <li key={t} className="flex items-start gap-3 text-body text-ink">
@@ -41,9 +38,9 @@ export function Privacy({ go }) {
               </li>
             ))}
           </ul>
-        </section>
-        <section className="border-t-2 border-rule pt-5">
-          <h2 className="font-display text-row font-bold text-ink">What a parent never sees</h2>
+        </ScrollIn>
+        <ScrollIn as="section" delay={0.08} className="border-t-2 border-rule pt-5">
+          <h3 className="font-display text-row font-bold text-ink">What a parent never sees</h3>
           <ul className="mt-4 list-none space-y-3 p-0">
             {YOU_NEVER.map(t => (
               <li key={t} className="flex items-start gap-3 text-body text-ink-2">
@@ -54,12 +51,14 @@ export function Privacy({ go }) {
               </li>
             ))}
           </ul>
-        </section>
+        </ScrollIn>
       </div>
 
-      <h2 className="mt-14 font-display text-sub font-bold tracking-tight text-ink">
-        Everyone, side by side</h2>
-      <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
-    </main>
+      <ScrollIn>
+        <h3 className="mt-14 font-display text-sub font-bold tracking-tight text-ink">
+          Everyone, side by side</h3>
+        <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
+      </ScrollIn>
+    </>
   )
 }

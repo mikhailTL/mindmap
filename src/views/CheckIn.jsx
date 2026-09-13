@@ -1,10 +1,10 @@
 import React from 'react'
+import { ScrollIn, ScrollRow } from '../s21/motion'
 import { Bluetooth, ClipboardList } from 'lucide-react'
-import { Back, Headline, AllDetail, SampleTag } from './Monitor'
+import { Headline, AllDetail, SampleTag } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { Button } from '../ui/button'
 import { Scale } from '../ui/radio-scale'
-import { Label } from '../ui/misc'
 import { FigHead } from '../charts/primitives'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
@@ -22,7 +22,7 @@ function Route({ icon:Icon, title, children, foot }){
   )
 }
 
-export function CheckIn({ go }){
+export function CheckInBody({ go }){
   const resultRef = React.useRef(null)
   const [ans,setAns] = React.useState({})
   const [pair,setPair] = React.useState(null)
@@ -44,31 +44,29 @@ export function CheckIn({ go }){
     setPair(await connectPatch()); setBusy(false)
   }
   return (
-    <main className="wrap py-9 sm:py-14">
-      <Back go={go}/>
-      <Label>Live reading</Label>
-      <div className="mt-3 flex flex-wrap items-baseline gap-4">
-        <h1 className="max-w-[16ch] font-display font-bold text-view text-ink">Take a reading now.</h1>
+    <>
+      <div className="flex flex-wrap items-baseline gap-4">
+        <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">Take a reading now.</h2>
         <SampleTag>Live — scored from your own answers</SampleTag>
       </div>
-      <p className="mt-5 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
+      <p className="mt-4 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
         same model the patch uses. About thirty seconds.</p>
 
       <div className="mt-8 grid gap-3.5 lg:grid-cols-2">
-        <Route icon={ClipboardList} title="Answer six questions"
+        <ScrollRow index={0} className="h-full"><Route icon={ClipboardList} title="Answer six questions"
           foot={<p className="mt-4 min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Your answers stay on this device. Nothing is stored or sent.</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">No patch needed.</p>
           <p className="mt-5 flex min-h-[46px] items-center font-mono text-meta tabular-nums text-ink-3">
             {answered} of {ITEMS.length} answered</p>
-        </Route>
-        <Route icon={Bluetooth} title="Connect a patch"
+        </Route></ScrollRow>
+        <ScrollRow index={1} className="h-full"><Route icon={Bluetooth} title="Connect a patch"
           foot={<p aria-live="polite" className="mt-4 min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">{pair?.msg}</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">Pairs over Bluetooth with a MindMap patch and streams at 1 Hz.</p>
           <Button variant="outline" size="sm" className="mt-5" onClick={pairUp} disabled={busy}>
             {busy ? 'Connecting…' : 'Connect a patch'}
           </Button>
-        </Route>
+        </Route></ScrollRow>
       </div>
 
       {/* On a monitor the six questions and the running result sit side by side,
@@ -76,8 +74,8 @@ export function CheckIn({ go }){
       <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
         <div className="border-t border-ink">
           {ITEMS.map((it,i)=>(
-            <Scale key={it.id} legend={`${i+1}. ${it.q}`} low={it.lo} high={it.hi}
-              value={ans[it.id]} onChange={v=>setAns(a=>({...a,[it.id]:v}))}/>
+            <ScrollRow key={it.id} index={i}><Scale legend={`${i+1}. ${it.q}`} low={it.lo} high={it.hi}
+              value={ans[it.id]} onChange={v=>setAns(a=>({...a,[it.id]:v}))}/></ScrollRow>
           ))}
         </div>
 
@@ -118,6 +116,6 @@ export function CheckIn({ go }){
         )}
       </div>
       </div>
-    </main>
+    </>
   )
 }

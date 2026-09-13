@@ -217,6 +217,62 @@ export function SensorTrace({ data, color, h = 96, className }) {
   )
 }
 
+/* Where this signal sat in each class period. The tallest bar carries a label
+   so the shape has a fact attached to it. */
+export function Bars({ data, color, unit = 'class period', className }) {
+  if (!data?.length) return null
+  const hi = Math.max(...data.map(d => d.v))
+  return (
+    <figure className={cn('m-0', className)}>
+      <figcaption className="lab mb-3 font-normal">By {unit}</figcaption>
+      <div className="flex h-[132px] items-end gap-2" role="img"
+        aria-label={data.map(d => `${d.label} ${d.v}`).join(', ') + ' out of 100'}>
+        {data.map(d => {
+          const top = d.v === hi
+          return (
+            <div key={d.label} className="flex flex-1 flex-col items-center justify-end gap-2">
+              <span className={cn('font-mono text-label tabular-nums',
+                top ? 'text-ink' : 'text-ink-3')}>{d.v}</span>
+              <div className="w-full rounded-t-lg transition-[height] duration-500"
+                style={{ height: Math.max(4, (d.v / 100) * 96), background: color,
+                         opacity: top ? 1 : 0.42 }}/>
+              <span className={cn('font-mono text-label', top ? 'text-ink' : 'text-ink-3')}>{d.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </figure>
+  )
+}
+
+/* Where today sits against this person's own fortnight. The band is the normal
+   range; the marker is now. A number on its own cannot show "outside". */
+export function RangeBar({ band, color, className }) {
+  if (!band) return null
+  const { lo, hi, now } = band
+  const out = now > hi || now < lo
+  return (
+    <figure className={cn('m-0', className)}>
+      <figcaption className="lab mb-3 font-normal">Against their own normal</figcaption>
+      <div className="relative h-10" role="img"
+        aria-label={`Normal range ${lo} to ${hi}. Now ${now}, ${out ? 'outside it' : 'inside it'}.`}>
+        <div className="absolute inset-x-0 top-4 h-2.5 rounded-full bg-sage"/>
+        <div className="absolute top-4 h-2.5 rounded-full bg-ink-3/35"
+          style={{ left: lo + '%', width: (hi - lo) + '%' }}/>
+        <div className="absolute top-[9px] h-[22px] w-[5px] -translate-x-1/2 rounded-full"
+          style={{ left: now + '%', background: color }}/>
+        <span className="absolute top-0 -translate-x-1/2 font-mono text-label tabular-nums text-ink"
+          style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
+      </div>
+      <p className="mt-1 flex justify-between font-mono text-label text-ink-3">
+        <span>calm</span>
+        <span>{out ? 'above their usual range' : 'inside their usual range'}</span>
+        <span>peak</span>
+      </p>
+    </figure>
+  )
+}
+
 /* Apple Fitness opens a sheet on a ring. A sheet on a page this short would
    cover the thing it is explaining, so this expands underneath instead. */
 export function SensorDetail({ ring, onClose }) {
@@ -234,27 +290,23 @@ export function SensorDetail({ ring, onClose }) {
         <div>
           <h3 className="font-display text-head font-bold text-ink">{s.name}</h3>
           <p className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">
-            {ring.value} out of 100 · {ring.window || 'last hour'}</p>
+            {ring.value} out of 100</p>
         </div>
         <p className="font-mono font-medium tabular-nums text-stat leading-none text-ink">
           {ring.big}<span className="ml-1.5 text-meta text-ink-3">{s.unit}</span></p>
       </div>
 
-      <SensorTrace data={ring.series} color={s.glow || s.color} className="mt-5"/>
+      <figure className="m-0 mt-5">
+        <figcaption className="lab mb-3 font-normal">{ring.window || 'The last hour'}</figcaption>
+        <SensorTrace data={ring.series} color={s.glow || s.color}/>
+      </figure>
 
-      {ring.rows?.length > 0 && (
-        <ul className="mt-5 list-none divide-y divide-rule border-t border-rule p-0">
-          {ring.rows.map(r => (
-            <li key={r.label} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3">
-              <span className="text-meta text-ink-2">{r.label}</span>
-              <span className="font-mono text-meta tabular-nums text-ink">{r.value}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="mt-7 grid gap-7 border-t border-rule pt-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
+        <Bars data={ring.bars} color={s.glow || s.color} unit={ring.barUnit}/>
+        <RangeBar band={ring.band} color={s.glow || s.color}/>
+      </div>
 
-      <p className="mt-5 max-w-[62ch] text-sec text-ink-2">{s.about}</p>
-      {ring.note && <p className="mt-2.5 max-w-[62ch] text-sec text-ink-2">{ring.note}</p>}
+      <p className="mt-7 max-w-[60ch] border-t border-rule pt-5 text-sec text-ink-2">{ring.note || s.about}</p>
 
       <button onClick={onClose}
         className="mt-5 min-h-[44px] font-display text-meta font-medium text-accent underline

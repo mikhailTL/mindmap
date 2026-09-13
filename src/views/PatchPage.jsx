@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/misc'
 import { LAYERS } from './Patch'
 import { PatchCAD } from '../charts/cad'
-import { RevealLines, Reveal, RevealRow } from '../s21/motion'
+import { RevealLines, ScrollIn, ScrollRow } from '../s21/motion'
 import { DotPattern } from '../s21/texture'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
@@ -41,17 +41,17 @@ export function PatchPage() {
           <RevealLines as="h1"
             className="mt-3 max-w-[14ch] font-display font-bold text-sect leading-[1.05] tracking-tight text-ink"
             lines={['A sticker on', 'the forearm.']}/>
-          <Reveal className="mt-5">
+          <ScrollIn className="mt-5">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
               Four readings from the skin, once a second, sent to the phone. Changed once a week.
             </p>
-          </Reveal>
+          </ScrollIn>
 
           {/* Plain words before the engineering labels. Two testers hit
               EDA / PPG / nRF52840 first and stopped reading. */}
           <dl className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {RAINBOW.map((s2, i) => (
-              <RevealRow key={s2.id} index={i} className="rounded-xs border border-rule bg-paper p-5">
+              <ScrollRow key={s2.id} index={i} className="rounded-xs border border-rule bg-paper p-5">
                 <div className="rounded-xs bg-sage px-3 py-4"><SignalTrace kind={s2.id}/></div>
                 {/* the same colour this signal wears on the dashboard rings */}
                 <dt className="mt-4 flex items-center gap-2.5 font-display text-row font-bold text-ink">
@@ -59,7 +59,7 @@ export function PatchPage() {
                     style={{ background: s2.glow }}/>
                   {s2.name}</dt>
                 <dd className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{s2.short}</dd>
-              </RevealRow>
+              </ScrollRow>
             ))}
           </dl>
 
@@ -82,7 +82,7 @@ export function PatchPage() {
             </div>
 
             <div className="relative h-[min(46vh,420px)] rounded-xs border border-rule bg-paper">
-              <PatchCAD src={CAD_SRC} exploded={exploded} selected={picked} onSelect={setPicked}/>
+              <PatchCAD src={CAD_SRC} scrollSpin exploded={exploded} selected={picked} onSelect={setPicked}/>
               {/* It was labelled "the real model", which a reviewer read as a
                   photograph of a built unit. It is our own CAD, and it is the
                   enclosure only. */}

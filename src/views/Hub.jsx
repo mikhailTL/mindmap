@@ -1,4 +1,5 @@
 import React from 'react'
+import { ScrollRow } from '../s21/motion'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardBody } from '../ui/card'
 import { Label } from '../ui/misc'
@@ -34,8 +35,9 @@ export function Hub({ go }){
         Pick the person using the app. Each view opens on one sentence.
       </p>
       <div className="mt-8 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        {PEOPLE.map(t=>(
-          <Card key={t.h} as="button" interactive onClick={()=>go(t.to)}>
+        {PEOPLE.map((t,i)=>(
+          <ScrollRow key={t.h} index={i} className="h-full">
+          <Card as="button" interactive onClick={()=>go(t.to)}>
             <img src={t.img} alt={t.alt} loading="lazy" width="1200" height="720"
               style={{ objectPosition: t.pos }} className="aspect-[5/3] w-full object-cover"/>
             <CardBody>
@@ -46,14 +48,16 @@ export function Hub({ go }){
               </span>
             </CardBody>
           </Card>
+          </ScrollRow>
         ))}
       </div>
       <h2 className="mt-12 font-display text-sub font-bold tracking-tight text-ink sm:mt-[5vw]">
         Everything else
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {MORE.map(([h,p,to])=>(
-          <Card key={h} as={to ? 'button' : 'div'} interactive={!!to}
+        {MORE.map(([h,p,to],i)=>(
+          <ScrollRow key={h} index={i} className="h-full">
+          <Card as={to ? 'button' : 'div'} interactive={!!to}
             onClick={to ? () => go(to) : undefined}>
             <CardBody className="p-6">
               <h3 className="font-display text-row font-bold tracking-tight text-ink">{h}</h3>
@@ -64,6 +68,7 @@ export function Hub({ go }){
                 {to ? <>Open <ArrowRight aria-hidden className="size-3.5"/></> : 'Planned'}</span>
             </CardBody>
           </Card>
+          </ScrollRow>
         ))}
       </div>
     </main>

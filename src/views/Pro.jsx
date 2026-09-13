@@ -3,7 +3,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { Back } from './Monitor'
 import { Panel, StatusPill, Badge, Progress, EmptyState } from '../s21/display'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
-import { Reveal, RevealRow, RuleDraw } from '../s21/motion'
+import { RuleDraw, ScrollIn, ScrollRow } from '../s21/motion'
 import { Spark, FigHead } from '../charts/primitives'
 import { Button } from '../ui/button'
 import { DATA } from '../lib/assets'
@@ -329,7 +329,7 @@ function Cohort() {
         <section className="lg:col-span-2">
           <h3 className="lab font-normal">School-wide pattern</h3>
           <RuleDraw className="mt-2.5"/>
-          <Reveal className="mt-6">
+          <ScrollIn className="mt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {top.label} shows a school-wide stress spike.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
@@ -339,8 +339,8 @@ function Cohort() {
               <li>Across {top.n} consented students in that period</li>
               <li>Holds across every year group taking it</li>
             </ul>
-          </Reveal>
-          <Reveal delay={0.08} className="mt-6 border-t border-rule pt-6">
+          </ScrollIn>
+          <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {hardest.full} is the hardest day of the week, school-wide.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
@@ -349,7 +349,7 @@ function Cohort() {
               <li>Exam weeks in junior year run <b className="font-medium text-warn">2.4×</b> the
                 non-exam baseline</li>
             </ul>
-          </Reveal>
+          </ScrollIn>
           <Note>Consented students only, from the same windows the individual scores use.</Note>
         </section>
 

@@ -29,6 +29,48 @@ export function RevealRow({ children, index = 0, className, as = 'div' }) {
   return <Reveal as={as} className={className} delay={Math.min(index, 12) * 0.035} y={14}>{children}</Reveal>
 }
 
+/* A reveal that actually fires on scroll, without the failure mode that made
+   the plain one run on mount.
+ *
+ * The rule: anything already on screen at mount is never hidden. Only elements
+ * that start below the fold get the hidden state, so a stalled observer, a
+ * missing API or a slow hydrate can leave content invisible above the fold —
+ * which is the blank landing page we had before. Below the fold, the worst case
+ * is a block that is already visible when you reach it. */
+export function ScrollIn({ children, className, y = 26, delay = 0, once = true, as = 'div' }) {
+  const reduced = useReducedMotion()
+  const Comp = motion[as]
+  const ref = React.useRef(null)
+  const [state, setState] = React.useState('unset')   // unset | hidden | shown
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') { setState('shown'); return }
+    const r = el.getBoundingClientRect()
+    if (r.top < window.innerHeight * 0.9) { setState('shown'); return }   // already here
+    setState('hidden')
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) { setState('shown'); if (once) io.disconnect() }
+      else if (!once) setState('hidden')
+    }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [once])
+  if (reduced) return <Comp ref={ref} className={className}>{children}</Comp>
+  return (
+    <Comp ref={ref} className={className}
+      initial={false}
+      animate={state === 'hidden' ? { opacity: 0, y } : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: EASE, delay: state === 'hidden' ? 0 : delay }}>
+      {children}
+    </Comp>
+  )
+}
+
+/** Children revealed one after another as the group enters. */
+export function ScrollRow({ children, index = 0, className, as = 'div' }) {
+  return <ScrollIn as={as} className={className} delay={Math.min(index, 10) * 0.06} y={20}>{children}</ScrollIn>
+}
+
 function useInView(once = true) {
   const ref = React.useRef(null)
   const [inView, setInView] = React.useState(false)
@@ -74,6 +116,24 @@ export function Parallax({ children, distance = 60, className }) {
 }
 
 /** Hairline that draws itself across as it enters. */
+/* A photograph that drifts against the scroll. Separate from Parallax because
+   an <img> needs the transform on itself — wrapping it in a moving div moves
+   the layout box and opens gaps at the edges of the crop. */
+export function ParallaxImage({ src, alt, className, pos, distance = 40, scale = 1.12, ...rest }) {
+  const reduced = useReducedMotion()
+  const ref = React.useRef(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], [-distance / 2, distance / 2])
+  const smooth = useSpring(y, { stiffness: 120, damping: 26, mass: 0.4 })
+  return (
+    <div ref={ref} className={cn('overflow-hidden', className)}>
+      <motion.img src={src} alt={alt} loading="lazy" decoding="async"
+        style={{ objectPosition: pos, y: reduced ? 0 : smooth, scale: reduced ? 1 : scale }}
+        className="h-full w-full object-cover" {...rest}/>
+    </div>
+  )
+}
+
 export function RuleDraw({ className }) {
   const reduced = useReducedMotion()
   return (

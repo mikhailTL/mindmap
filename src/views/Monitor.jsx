@@ -6,7 +6,7 @@ import { Spark } from '../charts/primitives'
 import { DayChart } from '../charts/day'
 import { WeekChart } from '../charts/week'
 import { DATA } from '../lib/assets'
-import { RevealRow } from '../s21/motion'
+import { ScrollIn, ScrollRow } from '../s21/motion'
 import { WeekStrip } from '../charts/infographics'
 import { RainbowDial, RainbowKey, SensorDetail } from '../charts/rainbow'
 import { studentRings, parentRings } from '../lib/readings'
@@ -45,7 +45,7 @@ export function Reason({ claim, plain, source, index, chart }) {
     return () => clearTimeout(t)
   }, [open])
   return (
-    <RevealRow as="div" index={index}>
+    <ScrollRow as="div" index={index}>
       <C.Root ref={ref} open={open} onOpenChange={setOpen}
         className="border-b border-rule transition-colors data-[state=open]:bg-sage/40">
         <C.Trigger className="group flex min-h-[64px] w-full items-center gap-4 px-3 py-5 text-left
@@ -69,7 +69,7 @@ export function Reason({ claim, plain, source, index, chart }) {
           </div>
         </C.Content>
       </C.Root>
-    </RevealRow>
+    </ScrollRow>
   )
 }
 
@@ -142,12 +142,11 @@ function Rings({ score, usual, rings, children }) {
 }
 
 /* ── Student ────────────────────────────────────────────────────────────── */
-export function Student({ go }) {
+export function StudentBody({ go, openTab }) {
   return (
-    <main className="wrap py-9 sm:py-14">
-      <Back go={go}/>
+    <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h1 className="font-display text-row font-bold text-ink">Today</h1>
+        <h2 className="font-display text-row font-bold text-ink">Today</h2>
         <Label>Thursday · 4:10 pm</Label>
         <SampleTag/>
       </div>
@@ -158,20 +157,20 @@ export function Student({ go }) {
           there.</p>
       </Rings>
 
-      <div className="mt-10 border-l-2 border-accent py-1 pl-5">
+      <ScrollIn className="mt-10 border-l-2 border-accent py-1 pl-5">
         <p className="max-w-[52ch] text-sec text-ink-2">Chemistry has been your hardest lesson for four weeks.
           A two-minute breathing exercise is set for before it tomorrow.</p>
-      </div>
+      </ScrollIn>
 
       {/* A teen tester went looking for this first and had to read it off a
           parent's screen, in the third person. It belongs here, in first person. */}
-      <button onClick={() => go('privacy')}
+      <ScrollIn as="div"><button onClick={() => openTab ? openTab('shared') : go('privacy')}
         className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
           border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
         <span className="text-body text-ink">What you write in the app stays on your device.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button>
+      </button></ScrollIn>
 
       <AllDetail>
         <h3 className="lab font-normal">Across today</h3>
@@ -182,17 +181,16 @@ export function Student({ go }) {
           one signal's own distance from that baseline; the number in the middle is the model's blend of
           all four, so the rings do not add up to it.</p>
       </AllDetail>
-    </main>
+    </>
   )
 }
 
 /* ── Parent ─────────────────────────────────────────────────────────────── */
-export function Parent({ go }) {
+export function ParentBody({ go, openTab }) {
   return (
-    <main className="wrap py-9 sm:py-14">
-      <Back go={go}/>
+    <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h1 className="font-display text-row font-bold text-ink">Maya</h1>
+        <h2 className="font-display text-row font-bold text-ink">Maya</h2>
         <Label>This week · shared since March</Label>
         <SampleTag/>
       </div>
@@ -204,7 +202,7 @@ export function Parent({ go }) {
         <WeekStrip days={DATA.week} band={DATA.weekBand} className="mt-6 max-w-[22rem]"/>
       </Rings>
 
-      <section className="mt-12">
+      <ScrollIn as="section" className="mt-12">
         <h2 className="lab font-normal">What the week looked like</h2>
         <div className="mt-2 border-t border-rule">
           <Reason index={0}
@@ -220,19 +218,19 @@ export function Parent({ go }) {
             chart={<><WeekStrip days={DATA.week.slice(5)} band={DATA.weekBand}/>
               <p className="mt-2 font-mono text-label tabular-nums text-ink-3">Sat 43 · Sun 45</p></>}/>
         </div>
-      </section>
+      </ScrollIn>
 
-      <div className="mt-10 border-l-2 border-accent py-1 pl-5">
+      <ScrollIn className="mt-10 border-l-2 border-accent py-1 pl-5">
         <p className="max-w-[52ch] text-sec text-ink-2">Thursday morning is worth asking about.</p>
-      </div>
+      </ScrollIn>
 
-      <button onClick={() => go('privacy')}
+      <ScrollIn as="div"><button onClick={() => openTab ? openTab('shared') : go('privacy')}
         className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
           border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
         <span className="text-body text-ink">Her notes and her location are never shared with you.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button>
+      </button></ScrollIn>
 
       <AllDetail label="See the whole week">
         <h3 className="lab font-normal">The last seven days</h3>
@@ -249,6 +247,6 @@ export function Parent({ go }) {
         <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Maya sees this page too. Her second-by-second
           readings, her notes and her location stay on her account.</p>
       </AllDetail>
-    </main>
+    </>
   )
 }

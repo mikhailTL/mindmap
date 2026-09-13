@@ -26,11 +26,33 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 const NAME_TO_PART = { AdhesiveBase: 'base', SensorBoard: 'pcb', ElectronicsPod: 'pod' }
 const STACK = { base: 0, pcb: 4.5, pod: 8.25 }        // millimetres
 
-export function PatchCAD({ src, exploded = false, selected = null, onSelect, className }) {
+export function PatchCAD({ src, exploded = false, selected = null, onSelect, scrollSpin = false, className }) {
   const host = React.useRef(null)
   const [state, setState] = React.useState('loading')
   const props = React.useRef({ exploded, selected })
   props.current = { exploded, selected }
+  /* How far the model has travelled through the viewport, 0 at the bottom edge
+     and 1 at the top. Written by a listener and read by the draw loop, never
+     by React — a state update per scroll event would re-run the effect that
+     builds the scene. */
+  const spin = React.useRef(0)
+  const dragged = React.useRef(false)
+  React.useEffect(() => {
+    if (!scrollSpin) return
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const el = host.current
+    if (!el) return
+    const read = () => {
+      const r = el.getBoundingClientRect()
+      const span = innerHeight + r.height
+      spin.current = Math.max(0, Math.min(1, (innerHeight - r.top) / span))
+      el.dataset.spin = spin.current.toFixed(3)
+    }
+    read()
+    addEventListener('scroll', read, { passive: true })
+    addEventListener('resize', read)
+    return () => { removeEventListener('scroll', read); removeEventListener('resize', read) }
+  }, [scrollSpin])
   const onSelectRef = React.useRef(onSelect)
   onSelectRef.current = onSelect
 
@@ -133,10 +155,14 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
     controls.maxDistance = 260
     controls.enableZoom = false
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
-    controls.autoRotate = !reduce
+    // Scroll drives the rotation on the hardware page, so the idle spin would
+    // fight it. One or the other, never both.
+    controls.autoRotate = !reduce && !scrollSpin
     controls.autoRotateSpeed = 0.5
     // Stop auto-rotating the moment a human takes over. It is their object now.
-    controls.addEventListener('start', () => { controls.autoRotate = false; canvas.style.cursor = 'grabbing' })
+    // Once a human turns it, it is theirs — scroll stops driving it.
+    controls.addEventListener('start', () => {
+      controls.autoRotate = false; dragged.current = true; canvas.style.cursor = 'grabbing' })
     controls.addEventListener('end', () => { canvas.style.cursor = 'grab' })
 
     const resize = () => {
@@ -195,6 +221,18 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, cla
       }
       // Isolated, one layer alone needs less room than the whole stack.
       const wantDistSel = sel ? 96 : null
+      /* The object turns because you scrolled past it, not on a timer.
+         A bounded sweep, not a free spin: a full revolution lands the model at
+         whatever angle the scroll position happens to give, and most of those
+         angles are flat-on and unflattering. This runs three-quarter view to
+         three-quarter view the other way, so it is always readable. */
+      if (scrollSpin && !dragged.current) {
+        const t = spin.current
+        const wantY = -0.85 + t * 1.7           // about 97 degrees, centred on front
+        const wantX = 0.02 + (t - 0.5) * 0.30   // tips down as it rises
+        rig.rotation.y += (wantY - rig.rotation.y) * Math.min(1, dt * 5)
+        rig.rotation.x += (wantX - rig.rotation.x) * Math.min(1, dt * 5)
+      }
       const wantDist = wantDistSel ?? (ex ? 172 : 118)
       controls.target.y += ((ex ? 2 : 1) - controls.target.y) * Math.min(1, dt * 3)
       const offset = camera.position.clone().sub(controls.target)

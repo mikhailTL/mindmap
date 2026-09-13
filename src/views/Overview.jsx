@@ -3,16 +3,29 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/misc'
 import { LAYERS } from './Patch'
 import { IMG, MOSAIC, POS } from '../lib/assets'
-import { Reveal, RevealRow, RevealLines, Parallax, RuleDraw } from '../s21/motion'
+import { RevealLines, RuleDraw, ScrollIn, ScrollRow, Tally } from '../s21/motion'
 import { CompareReveal } from '../s21/compare'
-import { CoverflowCarousel } from '../s21/carousels'
-import { CredibilityRail } from '../s21/rail'
 import { HowItWorks, WhoSeesWhat } from '../charts/infographics'
-import { ShaderBackground } from '../s21/texture'
-import { PatchCAD } from '../charts/cad'
 import { cn } from '../lib/utils'
 
-const CAD_SRC = (globalThis.__CAD || '/MindMap-Patch-colored.glb')
+const FACTS = [
+  { n:1,  suffix:' Hz', label:'Read once a second',   line:'All day, on the forearm.' },
+  { n:4,  suffix:'',    label:'Signals',              line:'Heart, sweat, temperature, movement.' },
+  { n:5,  suffix:'',    label:'Smallest group shown', line:'Anything smaller returns nothing.' },
+  { n:0,  suffix:'',    label:'Raw readings a parent sees', line:'One number and one sentence.' },
+]
+
+const DOORS = [
+  { id:'student', kicker:'For students', title:'Today, in one number.',
+    line:'Your own reading, what moved it, and what never leaves your phone.',
+    cta:'Open the student view' },
+  { id:'parent',  kicker:'For parents',  title:'This week, in one sentence.',
+    line:'How the week went, and the line the app will not cross.',
+    cta:'Open the parent view' },
+  { id:'pro',     kicker:'For schools',  title:'Who to see first.',
+    line:'Ranked by how fast a student is changing, and only as far as a guardian agreed.',
+    cta:'Open the counselor console' },
+]
 
 export function Overview({ go }){
   const [exploded, setExploded] = React.useState(false)
@@ -44,13 +57,13 @@ export function Overview({ go }){
         <div>
           <RevealLines as="h1" className="font-display font-extrabold text-sect text-ink"
             lines={['One number.', <>One <em className="not-italic text-accent">sentence</em>.</>]}/>
-          <Reveal as="p" className="mt-6 max-w-read text-lead leading-[1.55] text-ink-2">
+          <ScrollIn as="p" className="mt-6 max-w-read text-lead leading-[1.55] text-ink-2">
             A small patch on the forearm reads the body once a second. The app turns that into a plain
             sentence — and the reasons behind it, if you want them.
-          </Reveal>
+          </ScrollIn>
           {/* Testers tapped the loudest button first and landed in a
               questionnaire about themselves. The front door now asks who you are. */}
-          <Reveal className="mt-9">
+          <ScrollIn className="mt-9">
             <p className="lab">Open the app as</p>
             <div className="mt-3 flex flex-wrap gap-2.5">
               <Button onClick={()=>go('student')}>A student<span aria-hidden>→</span></Button>
@@ -62,7 +75,7 @@ export function Overview({ go }){
                 underline-offset-4 hover:text-accent-ink">
               Or try it on yourself — six questions, no patch needed
             </button>
-          </Reveal>
+          </ScrollIn>
         </div>
         <figure className="m-0 overflow-hidden">
           <img src={IMG.hero} alt="A student outside her school in the late afternoon"
@@ -102,9 +115,9 @@ export function Overview({ go }){
       <section className="wrap py-14 sm:py-[7vw]">
         <RevealLines className="max-w-[18ch] font-display font-bold text-sect text-ink"
           lines={['Nothing shows', 'on the outside.']}/>
-        <Reveal as="p" className="mt-5 text-lead leading-[1.55] text-ink-2">
+        <ScrollIn as="p" className="mt-5 text-lead leading-[1.55] text-ink-2">
           The patch reads the difference hours before anyone thinks to ask.
-        </Reveal>
+        </ScrollIn>
         <figure className="m-0 mt-9">
           <CompareReveal className="aspect-[16/9] w-full" 
             labels={['A hard day', 'A good day']}
@@ -118,29 +131,52 @@ export function Overview({ go }){
             Drag across. Nothing was said on either day.
           </figcaption>
         </figure>
-        <div className="mt-4 grid auto-rows-[180px] grid-cols-1 gap-2.5 sm:auto-rows-[200px] sm:grid-cols-3">
-          {MOSAIC.slice(0, 3).map(m=>(
-            <figure key={m.k} className="mosfig m-0 overflow-hidden">
-              <img src={m.src} alt={m.alt} loading="lazy" decoding="async" width="1200" height="800"
-                style={{ objectPosition: m.pos }}
-                className="h-full w-full object-cover transition-transform duration-700 ease-out hover:scale-105"/>
-            </figure>
+      </section>
+
+      {/* Four figures the rest of the site spends paragraphs on. */}
+      <section className="border-y border-rule bg-sage">
+        <div className="wrap grid gap-x-10 gap-y-8 py-11 sm:grid-cols-2 lg:grid-cols-4">
+          {FACTS.map((f, i) => (
+            <ScrollRow key={f.label} index={i}>
+              <p className="font-mono font-medium tabular-nums text-fig leading-none text-ink">
+                <Tally to={f.n} suffix={f.suffix}/></p>
+              <p className="mt-3 font-display text-row font-bold text-ink">{f.label}</p>
+              <p className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{f.line}</p>
+            </ScrollRow>
           ))}
         </div>
       </section>
 
+      {/* This was a carousel of screenshots of the three pages. Nobody wants a
+          picture of a page they can open. */}
       <section id="views" className="wrap py-14 sm:py-[7vw]">
-        <Label>The app</Label>
-        <h2 className="mt-3 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
-          One reading, three views.
-        </h2>
-        <CoverflowCarousel className="mt-9" showCaption showNavigation label="The three views"
-          cardWidth="clamp(260px, 34vw, 520px)"
-          slides={[
-            { src: IMG.appStudent, alt:'The student view', caption:'Student — one number for the day, and the reasons behind it.' },
-            { src: IMG.appParent,  alt:'The parent view',  caption:'Parent — one sentence a week, once their child approves the link.' },
-            { src: IMG.appPro,     alt:'The school counselor view', caption:'School counselor — students ordered by how fast they are changing.' },
-          ]}/>
+        <RevealLines className="max-w-[20ch] font-display font-bold text-sect text-ink"
+          lines={['One reading.', 'Three people.']}/>
+        <div className="mt-9 grid gap-4 lg:grid-cols-3">
+          {DOORS.map((d, i) => (
+            <ScrollRow key={d.id} index={i} className="h-full">
+              <button onClick={() => go(d.id)}
+                className="group flex h-full w-full flex-col justify-between gap-12 rounded-xs border
+                  border-rule bg-paper p-7 text-left transition-[border-color,box-shadow,transform]
+                  duration-200 hover:-translate-y-0.5 hover:border-ink hover:shadow-raise
+                  focus-visible:-translate-y-0.5 focus-visible:border-ink">
+                <span>
+                  <span className="lab">{d.kicker}</span>
+                  <span className="mt-3.5 block font-display text-sub font-bold tracking-tight text-ink">
+                    {d.title}</span>
+                  <span className="mt-3 block max-w-[30ch] text-sec text-ink-2">{d.line}</span>
+                </span>
+                <span className="flex items-center gap-2 font-display text-meta font-medium text-accent">
+                  {d.cta}
+                  <svg viewBox="0 0 20 20" aria-hidden
+                    className="size-4 transition-transform duration-200 group-hover:translate-x-1">
+                    <path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+              </button>
+            </ScrollRow>
+          ))}
+        </div>
       </section>
 
       <section className="wrap pb-14 sm:pb-20">

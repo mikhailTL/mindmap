@@ -22,9 +22,12 @@
   }
 }
 @layer components {
-  .wrap { @apply mx-auto w-full max-w-[1240px] px-[22px] sm:px-11; }
+  /* 1240px on a 1920 display leaves a third of the screen empty and the whole
+     site reads as a column floating in the middle. Prose keeps its own measure
+     with max-w-[Nch], so widening the page widens layout, not line length. */
+  .wrap { @apply mx-auto w-full max-w-[1680px] px-[22px] sm:px-10 lg:px-14; }
   /* Editorial pages keep a reading measure. Data views use the monitor:
      on a 1920 display the 1240px shell wastes a third of the screen. */
-  :root[data-wide="true"] .wrap { @apply max-w-[1560px]; }
+  :root[data-wide="true"] .wrap { @apply max-w-[1680px]; }
   .lab  { @apply font-mono text-label uppercase text-ink-3; }
 }

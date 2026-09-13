@@ -2,11 +2,10 @@ import React from 'react'
 import { Overview } from './Overview'
 import { PatchPage } from './PatchPage'
 import { Hub } from './Hub'
-import { Student, Parent } from './Monitor'
+import { Students } from './Students'
+import { Parents } from './Parents'
 import { Pro } from './Pro'
-import { CheckIn } from './CheckIn'
 import { Index } from './Index'
-import { Privacy } from './Privacy'
 import { Palette, PaletteHint } from '../ui/palette'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
@@ -17,20 +16,25 @@ const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','
    than one marketing page and one door into everything else. */
 const TITLE = {
   site:'MindMap — one number, one sentence', patch:'The patch — MindMap',
-  hub:'Open the app — MindMap', student:'Today — MindMap', parent:'This week — MindMap',
+  hub:'Open the app — MindMap', student:'For students — MindMap', parent:'For parents — MindMap',
   check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
   pro:'For school counselors — MindMap', index:'All features — MindMap',
 }
+/* One entry per audience, in the order a visitor meets them: the person
+   wearing it, the person it reports to, then the school. "The app" is gone —
+   it was a door to three pages that are now sections of their own, so it sat
+   in the bar naming a place rather than a reader. */
 const NAV = [
-  ['site',  'Overview'],
-  ['patch', 'The patch'],
-  ['hub',   'The app'],
-  ['pro',   'For schools'],
-  ['index', 'All features'],
+  ['site',    'Overview'],
+  ['patch',   'The patch'],
+  ['student', 'For students'],
+  ['parent',  'For parents'],
+  ['pro',     'For schools'],
+  ['index',   'All features'],
 ]
 /* Which top-level section each view belongs under. */
-const SECTION = { site:'site', patch:'patch', hub:'hub', student:'hub', parent:'hub',
-                  check:'hub', privacy:'hub', pro:'pro', index:'index' }
+const SECTION = { site:'site', patch:'patch', student:'student', check:'student',
+                  parent:'parent', privacy:'parent', pro:'pro', index:'index', hub:'index' }
 
 function Header({ view, go }) {
   return (
@@ -96,8 +100,13 @@ export function App() {
   const wide = view !== 'site' && view !== 'index'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
 
-  const V = { site:Overview, patch:PatchPage, hub:Hub, student:Student, parent:Parent,
-              check:CheckIn, privacy:Privacy, pro:Pro, index:Index }[view]
+  /* Three routes are tabs inside a section rather than pages of their own, and
+     they keep their URLs so every existing link still lands in the right place. */
+  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro, index:Index,
+              student: p => <Students {...p} tab="today"/>,
+              check:   p => <Students {...p} tab="check"/>,
+              parent:  p => <Parents  {...p} tab="week"/>,
+              privacy: p => <Parents  {...p} tab="shared"/> }[view]
   return (
     <>
       {/* sr-only clips this to a 1x1 box, which an audit reads as a 1px tap
