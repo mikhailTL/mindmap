@@ -50,14 +50,14 @@ export function CheckIn({ go }){
         <h1 className="max-w-[16ch] font-display font-bold text-view text-ink">Take a reading now.</h1>
         <SampleTag>Live — scored from your own answers</SampleTag>
       </div>
-      <p className="mt-5 max-w-[48ch] text-body leading-[1.5] text-ink-2">The patch and the six questions
-        below are scored the same way. Answer them and you get the same number a wearer gets.</p>
+      <p className="mt-5 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
+        same model the patch uses. About thirty seconds.</p>
 
       <div className="mt-8 grid gap-3.5 lg:grid-cols-2">
         <Route icon={ClipboardList} title="Answer six questions"
           foot={<p className="mt-4 min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Your answers stay on this device. Nothing is stored or sent.</p>}>
-          <p className="max-w-[38ch] text-sec text-ink-2">No patch needed. About thirty seconds.</p>
+          <p className="max-w-[38ch] text-sec text-ink-2">No patch needed.</p>
           <p className="mt-5 flex min-h-[46px] items-center font-mono text-meta tabular-nums text-ink-3">
             {answered} of {ITEMS.length} answered</p>
         </Route>

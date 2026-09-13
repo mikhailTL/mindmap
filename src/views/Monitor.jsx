@@ -74,7 +74,7 @@ export function ScoreDial({ value, band, usual, size = 200 }) {
 }
 
 export function Headline({ children }) {
-  return <p className="max-w-[24ch] font-display text-[clamp(1.75rem,3.2vw,2.5rem)] font-bold
+  return <p className="max-w-[24ch] font-display text-major font-bold
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
@@ -200,7 +200,7 @@ export function Student({ go }) {
             chart={<><MiniSpark data={DATA.spark.hrv} className="!mt-0 w-full"/>
               <p className="mt-1 font-mono text-label tabular-nums text-ink-3">60 ms, −1%</p></>}/>
           <Reason index={2}
-            claim="You were sitting still, so this is not exercise."
+            claim="You were sitting still — 0.01 g of movement."
             plain="The movement sensor read 0.01 g. Above 0.35 g the score is held back, because running and a hard day can look the same in heart rate alone."
             source="Movement sensor"
             chart={<><MiniSpark data={DATA.spark.mot} className="!mt-0 w-full"/>
@@ -218,8 +218,8 @@ export function Student({ go }) {
       <button onClick={() => go('privacy')}
         className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
           border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
-        <span className="text-body text-ink">Nobody can read what you write. Not your parent, not your
-          counselor.</span>
+        <span className="text-body text-ink">What you write in the app stays on your device.
+          <span className="block text-meta text-ink-2">See who can see what</span></span>
         <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
       </button>
 
@@ -294,8 +294,8 @@ export function Parent({ go }) {
       <button onClick={() => go('privacy')}
         className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
           border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
-        <span className="text-body text-ink">You are not told what she wrote or where she was.
-          See exactly what you can and cannot see.</span>
+        <span className="text-body text-ink">Her notes and her location are never shared with you.
+          <span className="block text-meta text-ink-2">See who can see what</span></span>
         <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
       </button>
 

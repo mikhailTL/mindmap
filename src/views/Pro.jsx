@@ -35,7 +35,7 @@ function Row({ s, rank, onOpen }) {
       <button onClick={() => onOpen(s.name)}
         className="grid w-full grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 border-t
           border-rule py-4 text-left transition-colors duration-150 hover:bg-sage/60
-          focus-visible:bg-sage/60 sm:grid-cols-[2rem_minmax(0,13rem)_7rem_minmax(0,1fr)] sm:items-center">
+          focus-visible:bg-sage/60 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)] sm:items-center">
         <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{rank}</span>
         <span className="min-w-0">
           <span className="block truncate text-row text-ink">{s.name}</span>
@@ -105,8 +105,8 @@ function Triage({ onOpen }) {
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">Who to see first</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <Sub><b className="font-medium text-ink">Stress index, 0 to 100, higher is worse.</b> Ranked by
-          how fast each student is changing — not by who scores highest today.</Sub>
+        <Sub><b className="font-medium text-ink">Stress index, 0 to 100. Higher is worse.</b>
+          {' '}Ranked by weekly rate of change.</Sub>
         <span className="font-mono text-label uppercase tracking-[0.12em] text-ink-3">
           {total} consented · {ranked.length} ranked</span>
       </div>
@@ -134,27 +134,25 @@ function Triage({ onOpen }) {
         <div className="border-l-2 border-accent pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-warn">+{fastest.velocity}
             <span className="ml-2 text-label text-ink-3">{fastest.name} · first on the list</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">Scores {fastest.current}, which is {place} highest
-            of the {scored.length} today. Ranking by score would have put them near the bottom.</p>
+          <p className="mt-1.5 text-sec text-ink-2">{place[0].toUpperCase() + place.slice(1)} highest
+            score of {scored.length}. Ranked first here on velocity.</p>
         </div>
         <div className="border-l-2 border-rule pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-ink">{highest.current}
             <span className="ml-2 text-label text-ink-3">{highest.name} · highest score</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">Already open with you, already referred. A high score
-            you knew about yesterday is not news.</p>
+          <p className="mt-1.5 text-sec text-ink-2">Flat week. Referral already open since Feb 18.</p>
         </div>
       </div>
 
       <ol className="mt-7 list-none p-0">
         {ranked.map((s, i) => <Row key={s.id} s={s} rank={i + 1} onOpen={onOpen}/>)}
       </ol>
-      <p className="mt-3 border-t border-ink pt-3 text-meta text-ink-3">The figure beside each name is the
-        change in their seven-day average, per week. Right of the centre line is worse; left is better.</p>
+      <p className="mt-3 border-t border-ink pt-3 text-meta text-ink-3">Change in the seven-day average,
+        per week. Right of centre is worse.</p>
 
       <div className="mt-9 grid gap-5 lg:grid-cols-2">
         <Limited heading="Score only — no trends shared"
-          note={`Their guardian consented to a wellness score and crisis alerts, and not to
-            week-over-week movement. These students carry no rank, because a rank is a trend.`}>
+          note="Guardian consented to a score only. No rank is shown for these students.">
           {scoreOnly().map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <button onClick={() => onOpen(s.name)} className="min-h-[44px] text-left text-meta text-ink
@@ -165,9 +163,7 @@ function Triage({ onOpen }) {
           ))}
         </Limited>
         <Limited heading="Crisis alerts only"
-          note={`Their guardian consented to crisis alerts and nothing else. No score, no trend, no tier —
-            the board shows you that this student exists and that you would be called if they were in
-            crisis. That is the whole record.`}>
+          note="Guardian consented to crisis alerts only. No score, trend or tier is shown.">
           {quiet.map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <span className="text-meta text-ink">{s.name}</span>
@@ -213,19 +209,21 @@ function OneStudent({ who, setWho }) {
       {!s.showScore && (
         <div className="mt-7 rounded-xs border border-rule bg-sage/40 p-6">
           <h3 className="font-display text-row font-bold text-ink">Nothing to show, by consent</h3>
-          <p className="mt-2 max-w-[58ch] text-sec text-ink-2">This student's guardian consented to crisis
-            alerts only. There is no score, no trend and no breakdown for you to open. If their readings
-            crossed the crisis threshold you would be paged, and that page is the only thing this record
-            can ever contain.</p>
+          <ul className="mt-3 max-w-[46ch] space-y-1.5 text-sec text-ink-2">
+            <li>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></li>
+            <li>You are paged if their readings cross the crisis threshold</li>
+            <li>Everything else on this screen stays empty</li>
+          </ul>
         </div>
       )}
 
       {s.showScore && !s.showTrend && (
         <div className="mt-7 rounded-xs border border-rule bg-sage/40 p-6">
           <h3 className="font-display text-row font-bold text-ink">Score today: {s.current} out of 100</h3>
-          <p className="mt-2 max-w-[58ch] text-sec text-ink-2">Their guardian consented to a score and to
-            crisis alerts, not to trends. The week-over-week panels, the driver breakdown and the 45-day
-            line are withheld on this record — not blurred, withheld.</p>
+          <ul className="mt-3 max-w-[46ch] space-y-1.5 text-sec text-ink-2">
+            <li>Consent scope: <b className="font-medium text-ink">score and crisis alerts</b></li>
+            <li>Weekly change, driver breakdown and the 45-day line are withheld</li>
+          </ul>
         </div>
       )}
 
@@ -237,9 +235,9 @@ function OneStudent({ who, setWho }) {
             {s.velocity > 0 ? '+' : ''}{s.velocity}</div>
           <p className="mt-1 text-sec text-ink-3">vs the week before</p>
           <ul className="mt-4 space-y-2.5 border-t border-rule pt-4 text-meta text-ink-2">
-            <li>Mean index moved from {s.weekAgo} to {s.current}.</li>
-            <li>Changing {s.velocity > 0 ? 'for the worse' : 'for the better'} by {Math.abs(s.velocity)} points a week.</li>
-            <li>The change keeps landing in the same lesson: AP Chemistry.</li>
+            <li>Moved from {s.weekAgo} to {s.current}.</li>
+            <li>{Math.abs(s.velocity)} points a week, {s.velocity > 0 ? 'worse' : 'better'}.</li>
+            <li>The change keeps landing in one lesson: AP Chemistry.</li>
           </ul>
         </Panel>
 
@@ -263,7 +261,7 @@ function OneStudent({ who, setWho }) {
           <ul className="space-y-2.5 text-meta text-ink-2">
             {INTERVENTIONS.filter(i => i.sessions > 0).map(i => <li key={i.name}>{efficacyLabel(i)}</li>)}
           </ul>
-          <Note>Measured on their own physiology, not self-reported.</Note>
+          <Note>Measured from physiology.</Note>
         </Panel>
       </div>
 
@@ -289,7 +287,7 @@ function OneStudent({ who, setWho }) {
             <text x="40" y="209" className="fill-ink-3 font-mono text-[16px]">45 days ago</text>
             <text x="710" y="209" textAnchor="end" className="fill-ink-3 font-mono text-[16px]">today</text>
           </svg>
-          <Note>The coloured stretch is the last two weeks — the run that put them on this board.</Note>
+          <Note>The coloured stretch is the last two weeks.</Note>
         </Panel>
 
         <Panel label="Counselor notes">
@@ -325,8 +323,8 @@ function Cohort() {
       {/* A reviewer read "8 students" on the triage board and "18 consented
           students" here and concluded one of them was invented. Both are true
           and neither said which population it meant. */}
-      <Sub className="mt-2">These screens aggregate all {SCHOOL_N} consented students in the building,
-        not the eight on your caseload. No individual is identifiable in anything below.</Sub>
+      <Sub className="mt-2">All {SCHOOL_N} consented students in the building, not the eight on your
+        caseload. Nobody here is identifiable.</Sub>
       <div className="mt-8 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <h3 className="lab font-normal">School-wide pattern</h3>
@@ -334,32 +332,36 @@ function Cohort() {
           <Reveal className="mt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {top.label} shows a school-wide stress spike.</h4>
-            <p className="mt-2 max-w-[70ch] text-sec text-ink-2">
-              Mean index {top.mean} against a school average of {avg} —
-              {' '}{Math.round(((top.mean - avg) / avg) * 100)}% higher, across {top.n} consented students.
-              This is not one struggling student. It is a timetable problem.</p>
+            <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
+              <li>Mean <b className="font-medium text-ink">{top.mean}</b> against a school average
+                of {avg} — <b className="font-medium text-warn">
+                {Math.round(((top.mean - avg) / avg) * 100)}% higher</b></li>
+              <li>Across {top.n} consented students in that period</li>
+              <li>Holds across every year group taking it</li>
+            </ul>
           </Reveal>
           <Reveal delay={0.08} className="mt-6 border-t border-rule pt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {hardest.full} is the hardest day of the week, school-wide.</h4>
-            <p className="mt-2 max-w-[70ch] text-sec text-ink-2">
-              Mean index {hardest.mean} against {wAvg} on an average day, across all {SCHOOL_N} consented
-              students. Exam weeks in junior year run about 2.4× the non-exam baseline.</p>
+            <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
+              <li>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
+                average day</li>
+              <li>Exam weeks in junior year run <b className="font-medium text-warn">2.4×</b> the
+                non-exam baseline</li>
+            </ul>
           </Reveal>
-          <Note>Aggregated across consented students only, and computed from the same windows the
-            individual scores use. Nothing here is a projection.</Note>
+          <Note>Consented students only, from the same windows the individual scores use.</Note>
         </section>
 
         <Panel as="h3" label="Privacy floor">
           <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
           <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
           <p className="mt-4 text-meta text-ink-2">
-            Any group smaller than {K_ANONYMITY} students is suppressed before it reaches this screen —
-            not blurred, not rounded. Suppressed.</p>
+            Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen.</p>
           {suppressed > 0 && (
             <p className="mt-4 border-t border-rule pt-4 text-meta text-ink-2">
-              {suppressed} cell{suppressed === 1 ? '' : 's'} hidden on this page for exactly that reason.
-              In a class of three, an “anonymous” average is a name.</p>
+              <b className="font-medium text-ink">{suppressed} cell{suppressed === 1 ? '' : 's'}</b>
+              {' '}hidden on this page for that reason.</p>
           )}
         </Panel>
       </div>
@@ -404,11 +406,11 @@ function Cohort() {
       </div>
 
       <Panel className="mt-10" label="What a school does with this">
-        <p className="max-w-[80ch] text-sec text-ink-2">
-          A counselor cannot move a hundred students one at a time. But a third-period spike that shows up
-          across an entire grade is not a hundred individual problems — it is one scheduling decision, and it
-          can be changed by one person in one meeting. That is the difference between a wellness app and an
-          intervention.</p>
+        <ul className="max-w-[64ch] space-y-2 text-sec text-ink-2">
+          <li>Third period runs <b className="font-medium text-warn">31% above</b> the school average.</li>
+          <li>Moving one lab section is a single timetable change.</li>
+          <li>The same screen shows whether the mean came down four weeks later.</li>
+        </ul>
       </Panel>
     </>
   )
@@ -486,9 +488,8 @@ function Escalation() {
             ))}
           </TBody>
         </Table>
-        <Note>The last row is a student changing their own settings. It is logged exactly like any staff
-          action. The top row is where this crisis currently stands — step five of the protocol is still
-          open, so there is no closing entry yet.</Note>
+        <Note>A student changing their own settings is logged exactly like a staff action. Step five is
+          still open, so there is no closing entry yet.</Note>
       </Panel>
     </>
   )
@@ -523,10 +524,8 @@ function Consent() {
             ))}
           </TBody>
         </Table>
-        <Note>Consent is scoped, not blanket, and the triage board reads this table directly. Two students
-          here share a score and not trends, so they carry no rank on the board. One shares crisis alerts
-          only, so the board shows their name and nothing else. Every scope except a crisis alert can be
-          narrowed or withdrawn by the student at any time.</Note>
+        <Note>The triage board reads this table directly: two students here carry no rank, one shows no
+          score. A student can narrow or withdraw any scope except a crisis alert, at any time.</Note>
       </Panel>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -534,9 +533,8 @@ function Consent() {
           <div className="font-mono text-stat font-medium tabular-nums text-ink">90</div>
           <p className="mt-1 text-sec text-ink-3">days, raw signals</p>
           <p className="mt-4 max-w-[52ch] text-meta text-ink-2">
-            Set by each student, not by the district. After the window closes, the second-by-second readings
-            are deleted; only the derived summaries remain. There is no archive, and no backup that quietly
-            keeps them.</p>
+            Set by each student. After the window closes the second-by-second readings are deleted.
+            No archive, no backup.</p>
           <ul className="mt-5 divide-y divide-rule border-t border-rule">
             {FACTS.map(([k, v]) => (
               <li key={k} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
@@ -562,8 +560,8 @@ function Consent() {
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-rule pt-4">
             <Button variant="outline" size="sm" disabled>Export audit log (CSV)</Button>
             <Button variant="outline" size="sm" disabled>Export consent ledger</Button>
-            <span className="text-sec text-ink-3">Exports are disabled in this demo. In the product every
-              export writes its own row above.</span>
+            <span className="text-sec text-ink-3">Disabled in this demo. In the product every export
+              writes its own row above.</span>
           </div>
         </Panel>
       </div>
@@ -593,7 +591,7 @@ export function Pro({ go }) {
         <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
         <div className="wrap relative py-6 sm:py-8">
           <Back go={go} to="site" label="Overview"/>
-          <h1 className="font-display font-bold text-[clamp(1.875rem,3.4vw,2.75rem)] leading-[1.05] tracking-tight text-ink">
+          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
             For school counselors and psychologists</h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
@@ -601,8 +599,7 @@ export function Pro({ go }) {
           <p className="mt-4 inline-flex max-w-[60ch] items-baseline gap-2 border-l-2 border-warn bg-paper/70
             py-2 pl-3 pr-4 text-meta text-ink-2">
             <b className="font-mono text-label font-medium uppercase tracking-[0.12em] text-warn">Demo</b>
-            Every name, score and timestamp on this screen is generated by the scoring model. No student
-            was measured to build it.</p>
+            Every figure here is generated. No student was measured.</p>
         </div>
       </div>
       <div className="wrap py-9 sm:py-12">

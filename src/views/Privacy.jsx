@@ -25,7 +25,7 @@ export function Privacy({ go }) {
       <Back go={go} to="hub"/>
       <Label>Who can see what</Label>
       <h1 className="mt-3 max-w-[16ch] font-display font-bold text-view text-ink">
-        A parent sees a number, not a diary.</h1>
+        What a parent can see.</h1>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-14">
         <section className="border-t-2 border-accent pt-5">
@@ -57,15 +57,9 @@ export function Privacy({ go }) {
         </section>
       </div>
 
-      <h2 className="mt-14 font-display text-[clamp(1.625rem,2.6vw,2.125rem)] font-bold tracking-tight text-ink">
+      <h2 className="mt-14 font-display text-sub font-bold tracking-tight text-ink">
         Everyone, side by side</h2>
       <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
-
-      <div className="mt-12 border-l-2 border-accent py-1 pl-5">
-        <p className="max-w-[54ch] text-sec text-ink-2">A student can stop sharing at any time, and does not
-          have to say why. The only thing they cannot switch off is a crisis alert, and they are told that
-          before they start.</p>
-      </div>
     </main>
   )
 }

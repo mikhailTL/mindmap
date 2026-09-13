@@ -30,7 +30,7 @@ export function Index({ go }){
     <main className="wrap py-14 sm:py-[7vw]">
       <Label>Index</Label>
       <h1 className="mt-3.5 font-display font-bold text-sect text-ink">All features.</h1>
-      <p className="mt-5 text-[clamp(1.3125rem,1.5vw,1.5rem)] leading-[1.55] text-ink-2">
+      <p className="mt-5 text-lead leading-[1.55] text-ink-2">
         Screens marked Open are built. The rest are planned.</p>
       <div className="mt-3.5 border-t border-ink">
         {INDEX.map(([group,rows])=>(

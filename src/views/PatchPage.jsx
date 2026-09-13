@@ -46,10 +46,10 @@ export function PatchPage() {
         <div className="wrap relative py-12 sm:py-16">
           <Label>The patch</Label>
           <RevealLines as="h1"
-            className="mt-3 max-w-[14ch] font-display font-bold text-[clamp(2.25rem,4.4vw,3.75rem)] leading-[1.05] tracking-tight text-ink"
+            className="mt-3 max-w-[14ch] font-display font-bold text-sect leading-[1.05] tracking-tight text-ink"
             lines={['A sticker on', 'the forearm.']}/>
           <Reveal className="mt-5">
-            <p className="max-w-[46ch] text-[clamp(1.3125rem,1.6vw,1.5rem)] leading-[1.5] text-ink-2">
+            <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
               Four readings from the skin, once a second, sent to the phone. Changed once a week.
             </p>
           </Reveal>
@@ -99,19 +99,16 @@ export function PatchPage() {
               </div>
             </div>
           </div>
-          <p className="mt-4 max-w-[70ch] text-meta text-ink-3">
-            Left: the engineering drawing, which shows what each layer does. Right: our CAD assembly,
-            the file the enclosure is printed from — cover, electronics pod and base ring, with the
-            charging-port cutout and the board posts. The circuit board is bought, not printed, so it
-            is not in this file. There is no photograph of an assembled unit on this site yet, and
-            nothing on this page is a measurement taken from one.</p>
+          <p className="mt-4 max-w-[68ch] text-meta text-ink-3">
+            Left: the drawing, showing what each layer does. Right: our CAD — the file the enclosure is
+            printed from. No photograph of an assembled unit exists yet, and no figure on this page was
+            measured from one.</p>
         </div>
       </section>
 
       <section className="wrap pb-14 sm:pb-20">
         <h2 className="lab font-normal">Three layers</h2>
-        <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one and the model keeps that layer and
-          drops the other two.</p>
+        <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one to see it alone in the model.</p>
         <ol className="mt-3 grid list-none gap-x-10 p-0 lg:grid-cols-3">
           {LAYERS.map(l => {
             const on = picked === l.part
@@ -125,7 +122,6 @@ export function PatchPage() {
                   <div>
                     <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
                     <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
-                    <p className="mt-1.5 text-meta text-ink-3">{l.cad}</p>
                     <span className="mt-2 block font-mono text-label uppercase tracking-[0.12em] text-accent">
                       {on ? 'Showing only this' : 'Show only this'}</span>
                   </div>

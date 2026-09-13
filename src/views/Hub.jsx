@@ -27,10 +27,10 @@ export function Hub({ go }){
   return (
     <main className="wrap py-10 sm:py-[5vw]">
       <Label>Open the app</Label>
-      <h1 className="mt-3.5 font-display font-bold text-[clamp(2.125rem,4vw,3.5rem)] leading-[1.05] tracking-tight text-ink">
+      <h1 className="mt-3.5 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
         Who is this for?
       </h1>
-      <p className="mt-5 max-w-read text-[clamp(1.3125rem,1.5vw,1.5rem)] leading-[1.55] text-ink-2">
+      <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
         Pick the person using the app. Each view opens on one sentence.
       </p>
       <div className="mt-8 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
@@ -48,7 +48,7 @@ export function Hub({ go }){
           </Card>
         ))}
       </div>
-      <h2 className="mt-12 font-display text-[clamp(1.625rem,2.6vw,2.125rem)] font-bold tracking-tight text-ink sm:mt-[5vw]">
+      <h2 className="mt-12 font-display text-sub font-bold tracking-tight text-ink sm:mt-[5vw]">
         Everything else
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

@@ -37,13 +37,16 @@ export function Overview({ go }){
 
   return (
     <main>
-      <section className="wrap grid gap-8 py-12 sm:py-[7vw] lg:grid-cols-[1.05fr_.95fr] lg:items-end lg:gap-14">
+      {/* Three lines at text-page rendered as five in this column and pushed
+          the three doors below the fold on a laptop — the one thing a first
+          visitor is meant to do was off screen. */}
+      <section className="wrap grid gap-8 py-10 sm:py-[4.5vw] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14">
         <div>
-          <RevealLines as="h1" className="font-display font-extrabold text-page text-ink"
-            lines={['One number.', 'One sentence.', <>The <em className="not-italic text-accent">reasons</em> behind it.</>]}/>
-          <Reveal as="p" className="mt-6 max-w-read text-[clamp(1.3125rem,1.6vw,1.5625rem)] leading-[1.55] text-ink-2">
-            A small patch on the forearm reads the body once a second. The app turns that into one
-            plain sentence, and the numbers behind it if you want them.
+          <RevealLines as="h1" className="font-display font-extrabold text-sect text-ink"
+            lines={['One number.', <>One <em className="not-italic text-accent">sentence</em>.</>]}/>
+          <Reveal as="p" className="mt-6 max-w-read text-lead leading-[1.55] text-ink-2">
+            A small patch on the forearm reads the body once a second. The app turns that into a plain
+            sentence — and the reasons behind it, if you want them.
           </Reveal>
           {/* Testers tapped the loudest button first and landed in a
               questionnaire about themselves. The front door now asks who you are. */}
@@ -83,13 +86,13 @@ export function Overview({ go }){
       <div className="border-y border-rule">
         <div className="wrap grid sm:grid-cols-4">
           {[['Every second','Heart, sweat, temperature and movement, all day.'],
-            ['Their own normal','Compared with their own last two weeks, never with other students.'],
+            ['Their own normal','Compared with their own last two weeks only.'],
             ['Under five, nothing','A class smaller than five students returns no number at all.'],
-            ['Exercise is not stress','A hard run and a hard day look different to the patch.']
+            ['Exercise filtered out','Above 0.35 g of movement the score is held back.']
           ].map(([n,t],i)=>(
             <div key={n} className={`border-b border-rule py-8 last:border-b-0 sm:border-b-0 sm:border-l
               sm:px-6 sm:py-9 ${i===0?'sm:border-l-0 sm:pl-0':''}`}>
-              <div className="font-display font-bold text-[clamp(1.5rem,2.2vw,1.875rem)] leading-tight tracking-tight text-ink">{n}</div>
+              <div className="font-display font-bold text-sub leading-tight tracking-tight text-ink">{n}</div>
               <p className="mt-2.5 text-sec text-ink-2">{t}</p>
             </div>
           ))}
@@ -98,10 +101,9 @@ export function Overview({ go }){
 
       <section className="wrap py-14 sm:py-[7vw]">
         <RevealLines className="max-w-[18ch] font-display font-bold text-sect text-ink"
-          lines={['Most of it happens', 'where nobody', 'can see it.']}/>
-        <Reveal as="p" className="mt-5 text-[clamp(1.3125rem,1.5vw,1.5rem)] leading-[1.55] text-ink-2">
-          From the outside there is nothing to see. The patch reads the difference, hours before
-          anyone thinks to ask.
+          lines={['Nothing shows', 'on the outside.']}/>
+        <Reveal as="p" className="mt-5 text-lead leading-[1.55] text-ink-2">
+          The patch reads the difference hours before anyone thinks to ask.
         </Reveal>
         <figure className="m-0 mt-9">
           <CompareReveal className="aspect-[16/9] w-full" 
@@ -129,7 +131,7 @@ export function Overview({ go }){
 
       <section id="views" className="wrap py-14 sm:py-[7vw]">
         <Label>The app</Label>
-        <h2 className="mt-3 font-display font-bold text-[clamp(2rem,3.6vw,3.125rem)] leading-[1.05] tracking-tight text-ink">
+        <h2 className="mt-3 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
           One reading, three views.
         </h2>
         <CoverflowCarousel className="mt-9" showCaption showNavigation label="The three views"
@@ -142,7 +144,7 @@ export function Overview({ go }){
       </section>
 
       <section className="wrap pb-14 sm:pb-20">
-        <h2 className="font-display font-bold text-[clamp(2rem,3.6vw,3.125rem)] leading-[1.05] tracking-tight text-ink">
+        <h2 className="font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
           Who sees what.</h2>
         <WhoSeesWhat className="mt-8 max-w-[62rem]"/>
       </section>
@@ -151,7 +153,7 @@ export function Overview({ go }){
           are the strongest sentences on the site; a marquee cannot be read. */}
       <section className="border-t border-rule bg-sage">
         <div className="wrap py-10">
-          <h2 className="lab font-normal">The rules it is built to</h2>
+          <h2 className="lab font-normal">The rules</h2>
           <ul className="mt-5 grid list-none gap-x-10 gap-y-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
             {[
               'A parent never sees a raw reading',
@@ -159,7 +161,7 @@ export function Overview({ go }){
               'The student sets how long data is kept',
               'Every time anyone opens a record, it is logged',
               'Nothing is sold or shared with anyone else',
-              'Not a medical device, and it says so',
+              'Not a medical device',
             ].map(t => (
               <li key={t} className="flex items-start gap-3 text-meta text-ink">
                 <svg viewBox="0 0 20 20" aria-hidden className="mt-1 size-4 shrink-0 text-accent">

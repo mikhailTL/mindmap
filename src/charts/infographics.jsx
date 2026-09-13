@@ -125,9 +125,8 @@ export function WhoSeesWhat({ className }) {
           ))}
         </tbody>
       </table>
-      <figcaption className="mt-4 text-sec text-ink-3">A student can change every row above at any time.
-        The one thing they cannot switch off is a crisis alert, and they are told that before they
-        start.</figcaption>
+      <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">Students can change every row at any
+        time. Crisis alerts are the exception, and students are told so before they start.</figcaption>
     </figure>
   )
 }

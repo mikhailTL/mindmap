@@ -53,12 +53,9 @@ export const Face = (
    "XIAO nRF52840 Sense" put a chip's name on a plastic tray. */
 export const LAYERS = [
   { i:0, part:'pod', art:Shell, title:'Printed shell',
-    body:'The outer cover, 3D-printed. The slot in the side is the charging port.',
-    cad:'In the model: the cover on its own.' },
+    body:'The outer cover. The slot in the side is the charging port.' },
   { i:1, part:'pcb', art:Board, title:'Electronics pod',
-    body:'The tray a XIAO nRF52840 Sense board drops into. Four posts locate the board, which carries the motion sensor, the microphone and the Bluetooth radio.',
-    cad:'In the model: the tray and its posts. The board itself is a separate part and is not printed.' },
+    body:'The tray a XIAO nRF52840 Sense board drops into. The board is bought separately.' },
   { i:2, part:'base', art:Face,  title:'Skin-side base',
-    body:'The ring that holds the sensor window and the adhesive. Pulse, sweat and temperature are read through it.',
-    cad:'In the model: the base ring on its own.' },
+    body:'Holds the sensor window and the adhesive. Pulse, sweat and temperature read through it.' },
 ]
