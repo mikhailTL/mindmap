@@ -4,34 +4,35 @@ import { Heart, Droplets, Thermometer, Activity } from 'lucide-react'
    appears: the band on the arch, the trace on the patch page, the sparkline in
    its detail panel, the chip in the list.
 
-   `glow` is the only colour each sensor has, and it is used flat at full
-   strength for every graphic — no gradient, no blur, no partial opacity. It
-   clears the 3:1 that non-text graphics need.
+   These are rainbow hues, in rainbow order — red, orange, green, blue at 0°,
+   27°, 120° and 218°. An earlier set drifted to pink-crimson at 336° and a
+   gold at 44°, which are not colours in a rainbow; they were picked for
+   contrast and it showed.
 
-   Neither is used for text. Four differently-coloured numbers down a list read
-   as four different statuses, and the deep amber is close enough to warn
-   #9a4a18 to be misread as "out of range". Every number on these screens is
-   ink; the dot and the icon beside it carry the identity.
+   Each is used flat, at full strength, for graphics only — no gradient, no
+   blur, no partial opacity. Every one clears the 3:1 that non-text graphics
+   need against paper:
 
-     heart  #f50f6b  336°  3.96 on paper
-     sweat  #e8590c   21°  3.49
-     temp   #1d9c4b  142°  3.46
-     move   #2f6bf0  221°  4.56
+     heart  #e11919  red      0°   4.70
+     sweat  #e86a05  orange  27°   3.15
+     temp   #199e19  green  120°   3.44
+     move   #1560e0  blue   218°   5.41
 
-   Hues sit 45° or more apart, and the previous amber (#8a6500, hue 44) is gone
-   — at that value and hue it read as brown rather than as a colour in a
-   rainbow. */
+   Colour never touches text. Four coloured figures down a list read as four
+   statuses, and this red is the reserved crisis red's own hue — so no number,
+   label or word on these screens is ever painted a sensor colour. The bar, the
+   icon and the dot carry identity; the figure beside them is always ink. */
 export const SENSORS = {
-  heart: { id:'heart', name:'Heart',       unit:'bpm', icon:Heart,       glow:'#f50f6b',
+  heart: { id:'heart', name:'Heart',       unit:'bpm', icon:Heart,       glow:'#e11919',
            short:'Beats, and the gaps between them.',
            about:'Beats, and the gaps between them. Rises with effort and with pressure, so the gaps matter more than the rate.' },
-  sweat: { id:'sweat', name:'Sweat',       unit:'µS',  icon:Droplets,    glow:'#e8590c',
+  sweat: { id:'sweat', name:'Sweat',       unit:'µS',  icon:Droplets,    glow:'#e86a05',
            short:'Too small to feel. Rises when you tense.',
            about:'Changes in skin conductance far too small to feel. It is the fastest of the four to react.' },
-  temp:  { id:'temp',  name:'Temperature', unit:'°C',  icon:Thermometer, glow:'#1d9c4b',
+  temp:  { id:'temp',  name:'Temperature', unit:'°C',  icon:Thermometer, glow:'#199e19',
            short:'Drifts as your body settles.',
            about:'Skin temperature drifts down as blood moves away from the hands under strain, and back up as you settle.' },
-  move:  { id:'move',  name:'Movement',    unit:'g',   icon:Activity,    glow:'#2f6bf0',
+  move:  { id:'move',  name:'Movement',    unit:'g',   icon:Activity,    glow:'#1560e0',
            short:'Tells still apart from running.',
            about:'Separates a hard run from a hard day. Above 0.35 g the score is held back rather than counted as stress.' },
 }

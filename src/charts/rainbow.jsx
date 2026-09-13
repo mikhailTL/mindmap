@@ -37,7 +37,7 @@ import { cn } from '../lib/utils'
  * score. A three-digit number at the display step needs about 87px of the 152
  * that radius gives at the default width. */
 const VW = 320, VH = 206, CX = 160, CY = 168
-const BAND = 18
+const BAND = 16
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
