@@ -5,12 +5,12 @@ import { Hub } from './Hub'
 import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro } from './Pro'
-import { Index } from './Index'
+import { Demo } from './Demo'
 import { Palette, PaletteHint } from '../ui/palette'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
-const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','index']
+const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','demo']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
@@ -18,7 +18,7 @@ const TITLE = {
   site:'MindMap — one number, one sentence', patch:'The patch — MindMap',
   hub:'Open the app — MindMap', student:'For students — MindMap', parent:'For parents — MindMap',
   check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
-  pro:'For school counselors — MindMap', index:'All features — MindMap',
+  pro:'For school counselors — MindMap', demo:'Judge demo — MindMap',
 }
 /* One entry per audience, in the order a visitor meets them: the person
    wearing it, the person it reports to, then the school. "The app" is gone —
@@ -30,11 +30,11 @@ const NAV = [
   ['student', 'For students'],
   ['parent',  'For parents'],
   ['pro',     'For schools'],
-  ['index',   'All features'],
+  ['demo',    'Judge demo'],
 ]
 /* Which top-level section each view belongs under. */
 const SECTION = { site:'site', patch:'patch', student:'student', check:'student',
-                  parent:'parent', privacy:'parent', pro:'pro', index:'index', hub:'index' }
+                  parent:'parent', privacy:'parent', pro:'pro', demo:'demo', hub:'demo' }
 
 function Header({ view, go }) {
   return (
@@ -97,12 +97,12 @@ export function App() {
     addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
     return () => { removeEventListener('hashchange', onPop); removeEventListener('popstate', onPop) }
   }, [land])
-  const wide = view !== 'site' && view !== 'index'
+  const wide = view !== 'site' && view !== 'demo'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
-  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro, index:Index,
+  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro, demo:Demo,
               student: p => <Students {...p} tab="today"/>,
               check:   p => <Students {...p} tab="check"/>,
               parent:  p => <Parents  {...p} tab="week"/>,

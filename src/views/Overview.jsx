@@ -9,7 +9,7 @@ import { HowItWorks, WhoSeesWhat } from '../charts/infographics'
 import { cn } from '../lib/utils'
 
 const FACTS = [
-  { n:1,  suffix:' Hz', label:'Read once a second',   line:'All day, on the forearm.' },
+  { n:1,  suffix:'Hz',  label:'Read once a second',   line:'All day, on the forearm.' },
   { n:4,  suffix:'',    label:'Signals',              line:'Heart, sweat, temperature, movement.' },
   { n:5,  suffix:'',    label:'Smallest group shown', line:'Anything smaller returns nothing.' },
   { n:0,  suffix:'',    label:'Raw readings a parent sees', line:'One number and one sentence.' },
@@ -95,22 +95,6 @@ export function Overview({ go }){
         <h2 className="lab font-normal">How it works</h2>
         <HowItWorks className="mt-4"/>
       </section>
-
-      <div className="border-y border-rule">
-        <div className="wrap grid sm:grid-cols-4">
-          {[['Every second','Heart, sweat, temperature and movement, all day.'],
-            ['Their own normal','Compared with their own last two weeks only.'],
-            ['Under five, nothing','A class smaller than five students returns no number at all.'],
-            ['Exercise filtered out','Above 0.35 g of movement the score is held back.']
-          ].map(([n,t],i)=>(
-            <div key={n} className={`border-b border-rule py-8 last:border-b-0 sm:border-b-0 sm:border-l
-              sm:px-6 sm:py-9 ${i===0?'sm:border-l-0 sm:pl-0':''}`}>
-              <div className="font-display font-bold text-sub leading-tight tracking-tight text-ink">{n}</div>
-              <p className="mt-2.5 text-sec text-ink-2">{t}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <section className="wrap py-14 sm:py-[7vw]">
         <RevealLines className="max-w-[18ch] font-display font-bold text-sect text-ink"

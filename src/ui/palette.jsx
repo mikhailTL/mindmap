@@ -14,7 +14,7 @@ const CMDS = [
   { id:'student', label:'Student view',    icon:LineChart,   hint:'Today' },
   { id:'parent',  label:'Parent view',     icon:Users,       hint:'This week' },
   { id:'pro',     label:'For schools',     icon:Stethoscope, hint:'Counselors and psychologists' },
-  { id:'index',   label:'All features',    icon:ListTree,    hint:'Every screen, listed' },
+  { id:'demo',    label:'Judge demo',      icon:ListTree,    hint:'Watch it run, then try it' },
 ]
 export function Palette({ go }){
   const [open,setOpen] = React.useState(false)
