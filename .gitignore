@@ -7,3 +7,5 @@ ui-audit
 
 # transfer artifacts
 *.zip
+.vercel
+.env*
