@@ -6,17 +6,10 @@ import { PatchCAD } from '../charts/cad'
 import { RevealLines, Reveal, RevealRow } from '../s21/motion'
 import { DotPattern } from '../s21/texture'
 import { SignalTrace } from '../charts/infographics'
+import { RAINBOW } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
 const CAD_SRC = (globalThis.__CAD || '/MindMap-Patch-colored.glb')
-
-/* What the patch measures, named the way a parent would say it. */
-const SENSORS = [
-  { k:'pulse', name:'Heart',       unit:'bpm', note:'Beats, and the gaps between them.' },
-  { k:'sweat', name:'Sweat',       unit:'µS',  note:'Too small to feel. Rises when you tense.' },
-  { k:'temp',  name:'Temperature', unit:'°C',  note:'Drifts as your body settles.' },
-  { k:'move',  name:'Movement',    unit:'g',   note:'Tells still apart from running.' },
-]
 
 export function PatchPage() {
   const [exploded, setExploded] = React.useState(false)
@@ -57,11 +50,15 @@ export function PatchPage() {
           {/* Plain words before the engineering labels. Two testers hit
               EDA / PPG / nRF52840 first and stopped reading. */}
           <dl className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SENSORS.map((s2, i) => (
-              <RevealRow key={s2.k} index={i} className="rounded-xs border border-rule bg-paper p-5">
-                <div className="rounded-xs bg-sage px-3 py-4"><SignalTrace kind={s2.k}/></div>
-                <dt className="mt-4 font-display text-row font-bold text-ink">{s2.name}</dt>
-                <dd className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{s2.note}</dd>
+            {RAINBOW.map((s2, i) => (
+              <RevealRow key={s2.id} index={i} className="rounded-xs border border-rule bg-paper p-5">
+                <div className="rounded-xs bg-sage px-3 py-4"><SignalTrace kind={s2.id}/></div>
+                {/* the same colour this signal wears on the dashboard rings */}
+                <dt className="mt-4 flex items-center gap-2.5 font-display text-row font-bold text-ink">
+                  <span aria-hidden className="size-3 shrink-0 rounded-full"
+                    style={{ background: s2.glow, boxShadow: `0 0 0 3px ${s2.glow}22` }}/>
+                  {s2.name}</dt>
+                <dd className="mt-1.5 max-w-[26ch] text-sec text-ink-2">{s2.short}</dd>
               </RevealRow>
             ))}
           </dl>

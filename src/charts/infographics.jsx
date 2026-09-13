@@ -1,4 +1,5 @@
 import React from 'react'
+import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
 /* Pictures that replace paragraphs. Every one of these was a block of prose
@@ -6,17 +7,18 @@ import { cn } from '../lib/utils'
 
 /* ── The four signals, drawn as the shapes they actually make ───────────── */
 const TRACE = {
-  pulse: 'M0 20 L8 20 L11 8 L14 30 L17 20 L26 20 L34 20 L37 9 L40 31 L43 20 L52 20 L60 20 L63 8 L66 30 L69 20 L80 20',
+  heart: 'M0 20 L8 20 L11 8 L14 30 L17 20 L26 20 L34 20 L37 9 L40 31 L43 20 L52 20 L60 20 L63 8 L66 30 L69 20 L80 20',
   sweat: 'M0 30 L10 30 L14 30 Q18 30 20 14 Q22 6 26 12 Q30 18 33 28 L40 30 Q46 30 48 16 Q51 8 55 15 Q58 22 62 29 L80 30',
   temp:  'M0 12 C12 12 18 14 26 17 C36 21 44 22 54 21 C64 20 72 18 80 15',
   move:  'M0 20 L6 20 L8 17 L10 23 L12 20 L30 20 L32 19 L34 21 L36 20 L60 20 L62 16 L64 24 L66 20 L80 20',
 }
 export function SignalTrace({ kind, className }) {
+  const color = SENSORS[kind]?.glow || SENSORS[kind]?.color
   return (
     <svg viewBox="0 0 80 36" aria-hidden preserveAspectRatio="none"
       className={cn('h-10 w-full', className)}>
       <path d={TRACE[kind]} fill="none" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        className="stroke-accent" vectorEffect="non-scaling-stroke"/>
+        stroke={color} vectorEffect="non-scaling-stroke"/>
     </svg>
   )
 }

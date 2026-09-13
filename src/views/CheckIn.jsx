@@ -1,6 +1,7 @@
 import React from 'react'
 import { Bluetooth, ClipboardList } from 'lucide-react'
-import { Back, Headline, ScoreDial, AllDetail, SampleTag } from './Monitor'
+import { Back, Headline, AllDetail, SampleTag } from './Monitor'
+import { RainbowDial } from '../charts/rainbow'
 import { Button } from '../ui/button'
 import { Scale } from '../ui/radio-scale'
 import { Label } from '../ui/misc'
@@ -90,9 +91,19 @@ export function CheckIn({ go }){
         )}
         {done && (
           <>
-            <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
-              <ScoreDial value={r.score} band={s.calm ? 'ok' : 'high'} size={176}/>
-              <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
+            {/* One ring, because six answers are one signal. A patch fills
+                four — the dashboards show what that looks like. */}
+            {/* this column is 34rem wide, so the arch and the sentence stack;
+                side by side left the sentence breaking every two words */}
+            <div className="flex flex-col items-start gap-7">
+              <RainbowDial score={r.score} size={288}
+                rings={[{ id:'self', name:'Your answers', color:'#0f6b62', glow:'#13897c',
+                          value:r.score, reading:'Six questions' }]}/>
+              <div>
+                <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
+                <p className="mt-4 max-w-[40ch] text-sec text-ink-3">One ring, from your answers. A patch
+                  fills four — heart, sweat, temperature and movement.</p>
+              </div>
             </div>
             <AllDetail label="See what moved the score">
               <FigHead title="What moved it" note="Right of the line raised the score, left of it lowered it."/>
