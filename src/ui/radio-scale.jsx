@@ -7,7 +7,7 @@ import { cn } from '../lib/utils'
 export function Scale({ name, legend, low, high, value, onChange }){
   return (
     <fieldset className="py-6 border-b border-rule">
-      <legend className="font-display font-bold text-row text-ink p-0">{legend}</legend>
+      <legend className="font-display font-medium text-row text-ink p-0">{legend}</legend>
       <R.Root value={value==null?undefined:String(value)}
         onValueChange={v=>onChange(Number(v))}
         aria-label={legend}
@@ -16,9 +16,11 @@ export function Scale({ name, legend, low, high, value, onChange }){
           <R.Item key={v} value={String(v)}
             aria-label={`${v} — ${v===0?low:v===4?high:'between'}`}
             className={cn(
-              'min-h-[56px] rounded-xs border border-rule bg-paper font-mono text-meta text-ink-2',
+              /* rounded-xs was the old green system's one-size radius; in this
+                 system a tappable field is rounded-field. */
+              'min-h-[56px] rounded-field border border-rule bg-paper font-mono text-meta text-ink-2',
               'transition-[background-color,color,border-color] duration-150 ease-out',
-              'hover:border-ink-3 hover:bg-sage/50',
+              'hover:border-ink-3 hover:bg-mist/50',
               'data-[state=checked]:bg-ink data-[state=checked]:text-paper data-[state=checked]:border-ink')}>
             {v}
           </R.Item>

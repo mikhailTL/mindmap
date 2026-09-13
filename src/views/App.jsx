@@ -5,12 +5,11 @@ import { Hub } from './Hub'
 import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro } from './Pro'
-import { Demo } from './Demo'
 import { Palette, PaletteHint } from '../ui/palette'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
-const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','demo']
+const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
@@ -18,7 +17,7 @@ const TITLE = {
   site:'MindMap — one number, one sentence', patch:'The patch — MindMap',
   hub:'Open the app — MindMap', student:'For students — MindMap', parent:'For parents — MindMap',
   check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
-  pro:'For school counselors — MindMap', demo:'Judge demo — MindMap',
+  pro:'For school counselors — MindMap',
 }
 /* One entry per audience, in the order a visitor meets them: the person
    wearing it, the person it reports to, then the school. "The app" is gone —
@@ -30,32 +29,37 @@ const NAV = [
   ['student', 'For students'],
   ['parent',  'For parents'],
   ['pro',     'For schools'],
-  ['demo',    'Judge demo'],
 ]
 /* Which top-level section each view belongs under. */
 const SECTION = { site:'site', patch:'patch', student:'student', check:'student',
-                  parent:'parent', privacy:'parent', pro:'pro', demo:'demo', hub:'demo' }
+                  parent:'parent', privacy:'parent', pro:'pro', hub:'pro' }
 
+/* The single most conventional thing left on this site was this: a sticky bar
+   with a wordmark on the left and a row of links on the right, which is the
+   shape of every website ever made. It is a numbered index now — the band
+   index down the top of a chart. The destinations are the same and all six
+   stay visible at 390px, which is what testers needed; what changed is that
+   they are numbered, ruled, and the active one is filled ink rather than
+   underlined in an accent. */
 function Header({ view, go }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-rule bg-paper/90 backdrop-blur-[14px]">
-      <div className="wrap flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
+    <header className="sticky top-0 z-50 border-b-2 border-ink bg-paper">
+      <div className="wrap flex flex-wrap items-stretch gap-x-6 gap-y-0">
         <button onClick={() => go('site')}
-          className="font-display text-head font-extrabold tracking-tight text-ink">MindMap</button>
+          className="lift shrink-0 self-center py-3 pr-2 font-display text-head font-medium
+            tracking-tight text-ink">MindMap</button>
         <PaletteHint/>
-        {/* Two testers never found "For schools" or "All features": the bar
-            scrolled horizontally with no fade or arrow, hiding 41% of itself.
-            It wraps now — every destination is on screen at every width. */}
-        <nav aria-label="Sections" className="-mx-1 ml-auto flex basis-full flex-wrap gap-x-1 sm:basis-auto sm:flex-nowrap">
-          {NAV.map(([id, label]) => {
+        <nav aria-label="Sections" className="-mx-1 flex basis-full flex-wrap sm:ml-auto sm:basis-auto sm:flex-nowrap">
+          {NAV.map(([id, label], i) => {
             const on = SECTION[view] === id
             return (
               <button key={id} onClick={() => go(id)} aria-current={on ? 'page' : undefined}
-                className={cn('relative min-h-[48px] whitespace-nowrap px-2.5 font-display',
-                  'text-ui font-medium transition-colors duration-150 sm:px-3 sm:text-meta',
-                  on ? 'text-ink' : 'text-ink-2 hover:text-ink')}>
-                {label}
-                {on && <span aria-hidden className="absolute inset-x-3 bottom-0 h-0.5 bg-accent"/>}
+                className={cn('group relative flex min-h-[50px] items-baseline gap-2 whitespace-nowrap',
+                  'border-l border-rule px-3 pb-2 pt-3.5 transition-colors duration-150 first:border-l-0',
+                  'sm:px-4', on ? 'bg-ink text-paper' : 'text-ink-2 hover:bg-mist')}>
+                <span className={cn('font-mono text-fine font-light tabular-nums',
+                  on ? 'text-paper/55' : 'text-ink-3')}>{String(i + 1).padStart(2, '0')}</span>
+                <span className="font-display text-ui font-medium sm:text-meta">{label}</span>
               </button>
             )
           })}
@@ -97,12 +101,12 @@ export function App() {
     addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
     return () => { removeEventListener('hashchange', onPop); removeEventListener('popstate', onPop) }
   }, [land])
-  const wide = view !== 'site' && view !== 'demo'
+  const wide = view !== 'site'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
-  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro, demo:Demo,
+  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro,
               student: p => <Students {...p} tab="today"/>,
               check:   p => <Students {...p} tab="check"/>,
               parent:  p => <Parents  {...p} tab="week"/>,
@@ -114,7 +118,7 @@ export function App() {
           parked above the viewport, sliding down on focus. */}
       <a href="#main"
         onClick={e => { e.preventDefault(); mainRef.current?.focus() }}
-        className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-xs bg-ink px-5 py-3
+        className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-field bg-ink px-5 py-3
           font-display text-meta font-medium text-paper transition-transform duration-150
           focus:translate-y-4">Skip to the main content</a>
       <Header view={view} go={go}/>
@@ -128,7 +132,7 @@ export function App() {
           <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
             medical device and does not diagnose or treat any condition. If you need urgent help, contact your
             local emergency number or a crisis line.</p>
-          <p className="lab mt-3.5">MindMap · Solace Innovation</p>
+          <p className="note mt-3.5">MindMap · Solace Innovation</p>
         </div>
       </footer>
     </>

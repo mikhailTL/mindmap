@@ -13,9 +13,23 @@
   h1,h2,h3,h4 { @apply font-display m-0; text-wrap: balance; }
   p { @apply m-0 max-w-measure; }
   img { @apply block max-w-full; }
-  /* one focus treatment, everywhere */
-  :where(a,button,summary,input,[tabindex]):focus-visible {
-    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper;
+  /* One focus treatment for the whole site, and only one. What this replaces
+     was two: an accent-wash underline plus an accent baseline for most
+     controls, and a separate inset ring for tabs and radios. The underline
+     was the real failure — accent-wash #dde3f6 sits at 1.20 : 1 on card
+     #f8f6fc, so on any card surface the focused control was indistinguishable
+     from the unfocused one.
+
+     An accent outline replaces both. #3d52a0 measures 5.93 : 1 on paper and
+     6.65 : 1 on card, so it clears the 3 : 1 graphics minimum on either
+     surface. It is an outline rather than a box-shadow on purpose: box-shadow
+     is now carrying depth on .lift, and a focus ring drawn in the same
+     property would be overwritten by any shadow utility on the same element.
+     Outline follows border-radius, so it fits the new panel/field/chip radii
+     without a per-shape rule. */
+  :where(a,button,summary,input,select,textarea,[role="tab"],[role="radio"],[tabindex]):focus-visible {
+    outline: 2px solid theme('colors.accent.DEFAULT');
+    outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
@@ -29,5 +43,44 @@
   /* Editorial pages keep a reading measure. Data views use the monitor:
      on a 1920 display the 1240px shell wastes a third of the screen. */
   :root[data-wide="true"] .wrap { @apply max-w-[1680px]; }
-  .lab  { @apply font-mono text-label uppercase text-ink-3; }
+  /* Hierarchy comes from scale, weight, position and rule. The uppercase
+     letterspaced eyebrow that used to sit above every section is gone; these
+     are its replacements and none of them shout.
+
+     `.mark` is a section's opening: a hairline the full width of its column
+     with the label sitting on the rule in the left margin, which is how an
+     observation chart separates one band of readings from the next.
+     Deliberately square: it is a ruled line across the column, not a panel,
+     so the new radius scale does not apply to it. font-medium and not
+     font-bold because Quicksand loads 300 and 500 only — a 700 here would be
+     a synthesised smear. */
+  .mark {
+    @apply relative block rounded-none border-t border-ink pt-3 font-display
+           text-tick font-medium text-ink-2;
+  }
+  /* A caption or an annotation. Body face, sentence case, no tracking games.
+     ink-3 #4c5a8e is 5.24 : 1 on paper and 4.86 : 1 on mist, so a caption
+     still clears 4.5 : 1 wherever it lands. */
+  .note { @apply font-body text-note text-ink-3; }
+  /* A figure's unit or scale label. Typed, not set. No box, so no radius —
+     .mark, .note and .tick are marks on the sheet, not objects on it. */
+  .tick { @apply font-mono text-tick font-light tabular-nums text-ink-3; }
+  /* The one containment pattern that uses a border: a bordered field on card
+     stock. Everything else groups with rules, space or a background field.
+     rounded-field, because a 0px corner was inherited from the old green
+     system and now fights Quicksand's round terminals — a field is the 6px
+     step in the radius scale, the same corner an input gets. */
+  .field { @apply rounded-field border border-rule bg-card; }
+  /* Depth, and the only way it is expressed on this site: a hard offset with
+     no blur and no spread, deepening on hover, plus the surface shifting to
+     mist underneath. The old comment said "no shadow anywhere" — that was
+     true of the square green system, and it is the reason this class had no
+     radius. It is a panel now, so it takes the 10px panel corner and the
+     raise/lift offsets the tokens were cut for. No glow, no blur, no second
+     light source; focus is an outline and cannot be clobbered by this. */
+  .lift {
+    @apply rounded-panel shadow-raise
+           transition-[background-color,border-color,box-shadow,padding-left] duration-150;
+  }
+  .lift:hover, .lift:focus-visible { @apply bg-mist/70 shadow-lift; }
 }

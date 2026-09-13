@@ -1,5 +1,7 @@
 import React from 'react'
-import { ChevronRight } from 'lucide-react'
+import { Chevron } from '../ui/marks'
+import { Card, CardTitle } from '../ui/card'
+import { Progress } from '../ui/progress'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
@@ -19,12 +21,10 @@ import { cn } from '../lib/utils'
  *    contradiction, so the panel says what the number actually is.
  */
 
-/* Geometry is tight in both directions and both edges bite. Too large and the
-   outer stroke runs past the viewBox and gets clipped; too thick and the hole
-   in the middle cannot hold a three-digit score at the display step. Outer
-   edge is 85 + SW/2 = 90 against a half-box of 100, and the hole is 38 units
-   across the radius — 110px at the default size, where "100" needs 87px. */
-/* Geometry of the arch.
+/* Geometry of the arch. (A second geometry note used to sit above this one,
+   still describing the concentric dial and its 85-unit outer edge — numbers
+   that no longer exist in this file. Two contradictory specs for the same
+   constants is worse than one, so the dead one is gone.)
  *
  * Four bands that TOUCH — 18 units thick, centres 18 apart, so band edges meet
  * exactly and the whole thing reads as one object rather than four rings with
@@ -72,7 +72,7 @@ function Band({ r, glow, pct, dim }) {
   return (
     <g opacity={dim ? 0.24 : 1} className="transition-opacity duration-200"
       style={{ pointerEvents: 'none' }}>
-      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-sage"/>
+      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-mist"/>
       <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} strokeLinecap="round" stroke={glow}/>
     </g>
   )
@@ -124,17 +124,17 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
             invented at this particular width */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[18%]
           flex flex-col items-center">
-          <span className="font-display text-dial font-bold leading-none tracking-tight text-ink">{shown}</span>
-          <span className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">out of 100</span>
+          <span className="font-display text-dial font-medium leading-none tracking-tight text-ink">{shown}</span>
+          <span className="mt-1 font-mono text-tick text-ink-3">out of 100</span>
         </div>
         {/* the arch is a scale; its feet say so */}
         {/* their own strip below the feet. Sitting level with the arch put
             them under the shortest band, which is exactly where a low reading
             draws the eye. */}
-        <span aria-hidden className="absolute bottom-0 left-0 font-mono text-label uppercase
-          tracking-[0.12em] text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-0 right-0 font-mono text-label uppercase
-          tracking-[0.12em] text-ink-3">peak</span>
+        <span aria-hidden className="absolute bottom-0 left-0 font-mono text-tick
+          text-ink-3">calm</span>
+        <span aria-hidden className="absolute bottom-0 right-0 font-mono text-tick
+          text-ink-3">peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
@@ -159,29 +159,36 @@ export function RainbowKey({ rings, picked, onPick, className }) {
         const tone = s.glow || s.color
         return (
           <li key={r.id} className="h-full">
-            <button onClick={() => onPick(on ? null : r.id)} aria-expanded={on}
+            {/* Card `interactive` replaces the hand-rolled border / hover /
+                focus-visible stack this tile used to carry, and its left rule
+                is the one the old `border-l-4` was drawing — repainted inline
+                in the signal's colour, which beats the accent hover so the
+                band identity survives the pointer. */}
+            <Card interactive as="button" aria-expanded={on}
+              onClick={() => onPick(on ? null : r.id)}
               style={{ borderLeftColor: tone, background: on ? `${tone}12` : undefined }}
-              className={cn('flex h-full min-h-[104px] w-full flex-col justify-between gap-3 rounded-xs',
-                'border border-l-4 border-rule p-4 text-left transition-colors duration-150',
-                'hover:bg-sage/50 focus-visible:bg-sage/50')}>
+              className="flex h-full min-h-[104px] flex-col justify-between gap-3 p-4">
               <span className="flex w-full items-start justify-between gap-3">
                 <span className="flex items-center gap-2.5">
                   {Icon && <Icon aria-hidden className="size-5 shrink-0" style={{ color: tone }}/>}
-                  <span className="font-display text-row font-bold text-ink">{s.name}</span>
+                  <CardTitle as="span" className="text-row">{s.name}</CardTitle>
                 </span>
-                <span className="shrink-0 text-right">
-                  <span className="block font-mono text-num font-medium tabular-nums leading-none text-ink">
-                    {r.value}</span>
-                  <span className="mt-1 block font-mono text-label text-ink-3">of 100</span>
-                </span>
+                <span className="shrink-0 font-mono text-num font-medium tabular-nums leading-none text-ink">
+                  {r.value}</span>
               </span>
+              {/* One reading against its scale, which is the whole of what the
+                  "of 100" caption under each figure said — and it said it four
+                  times under a heading that already says it. Bar instead of
+                  caption; aria-hidden because the figure beside it is the
+                  announced one. */}
+              <Progress aria-hidden value={r.value} tone={tone} className="h-1.5"/>
               <span className="flex w-full items-end justify-between gap-3">
                 <span className="text-sec text-ink-2">{r.reading}</span>
-                <ChevronRight aria-hidden
+                <Chevron aria-hidden
                   className={cn('size-5 shrink-0 text-ink-3 transition-transform duration-200',
                     on && 'rotate-90')}/>
               </span>
-            </button>
+            </Card>
           </li>
         )
       })}
@@ -224,19 +231,19 @@ export function Bars({ data, color, unit = 'class period', className }) {
   const hi = Math.max(...data.map(d => d.v))
   return (
     <figure className={cn('m-0', className)}>
-      <figcaption className="lab mb-3 font-normal">By {unit}</figcaption>
+      <figcaption className="mark mb-3 ">By {unit}</figcaption>
       <div className="flex h-[132px] items-end gap-2" role="img"
         aria-label={data.map(d => `${d.label} ${d.v}`).join(', ') + ' out of 100'}>
         {data.map(d => {
           const top = d.v === hi
           return (
             <div key={d.label} className="flex flex-1 flex-col items-center justify-end gap-2">
-              <span className={cn('font-mono text-label tabular-nums',
+              <span className={cn('font-mono text-tick tabular-nums',
                 top ? 'text-ink' : 'text-ink-3')}>{d.v}</span>
               <div className="w-full rounded-t-lg transition-[height] duration-500"
                 style={{ height: Math.max(4, (d.v / 100) * 96), background: color,
                          opacity: top ? 1 : 0.42 }}/>
-              <span className={cn('font-mono text-label', top ? 'text-ink' : 'text-ink-3')}>{d.label}</span>
+              <span className={cn('font-mono text-tick', top ? 'text-ink' : 'text-ink-3')}>{d.label}</span>
             </div>
           )
         })}
@@ -253,18 +260,18 @@ export function RangeBar({ band, color, className }) {
   const out = now > hi || now < lo
   return (
     <figure className={cn('m-0', className)}>
-      <figcaption className="lab mb-3 font-normal">Against their own normal</figcaption>
+      <figcaption className="mark mb-3 ">Against their own normal</figcaption>
       <div className="relative h-10" role="img"
         aria-label={`Normal range ${lo} to ${hi}. Now ${now}, ${out ? 'outside it' : 'inside it'}.`}>
-        <div className="absolute inset-x-0 top-4 h-2.5 rounded-full bg-sage"/>
-        <div className="absolute top-4 h-2.5 rounded-full bg-ink-3/35"
+        <div className="absolute inset-x-0 top-4 h-2.5 rounded-xs bg-mist"/>
+        <div className="absolute top-4 h-2.5 rounded-xs bg-ink-3/35"
           style={{ left: lo + '%', width: (hi - lo) + '%' }}/>
-        <div className="absolute top-[9px] h-[22px] w-[5px] -translate-x-1/2 rounded-full"
+        <div className="absolute top-[9px] h-[22px] w-[5px] -translate-x-1/2 rounded-none"
           style={{ left: now + '%', background: color }}/>
-        <span className="absolute top-0 -translate-x-1/2 font-mono text-label tabular-nums text-ink"
+        <span className="absolute top-0 -translate-x-1/2 font-mono text-tick tabular-nums text-ink"
           style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
       </div>
-      <p className="mt-1 flex justify-between font-mono text-label text-ink-3">
+      <p className="mt-1 flex justify-between font-mono text-tick text-ink-3">
         <span>calm</span>
         <span>{out ? 'above their usual range' : 'inside their usual range'}</span>
         <span>peak</span>
@@ -284,12 +291,12 @@ export function SensorDetail({ ring, onClose }) {
   }, [ring.id])
   return (
     <section ref={ref} tabIndex={-1} className="mt-6 rounded-xs border border-rule bg-paper p-5 sm:p-7">
-      <span aria-hidden className="mb-4 block h-1 w-14 rounded-full"
+      <span aria-hidden className="mb-4 block h-1 w-14 rounded-none"
         style={{ background: s.glow || s.color }}/>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
-          <h3 className="font-display text-head font-bold text-ink">{s.name}</h3>
-          <p className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+          <h3 className="font-display text-head font-medium text-ink">{s.name}</h3>
+          <p className="mt-1 font-mono text-tick text-ink-3">
             {ring.value} out of 100</p>
         </div>
         <p className="font-mono font-medium tabular-nums text-stat leading-none text-ink">
@@ -297,7 +304,7 @@ export function SensorDetail({ ring, onClose }) {
       </div>
 
       <figure className="m-0 mt-5">
-        <figcaption className="lab mb-3 font-normal">{ring.window || 'The last hour'}</figcaption>
+        <figcaption className="mark mb-3 ">{ring.window || 'The last hour'}</figcaption>
         <SensorTrace data={ring.series} color={s.glow || s.color}/>
       </figure>
 

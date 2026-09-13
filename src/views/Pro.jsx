@@ -1,12 +1,17 @@
 import React from 'react'
-import * as Tabs from '@radix-ui/react-tabs'
 import { Back } from './Monitor'
-import { Panel, StatusPill, Badge, Progress, EmptyState } from '../s21/display'
+import { Panel } from '../s21/display'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
-import { RuleDraw, ScrollIn, ScrollRow } from '../s21/motion'
-import { Spark, FigHead } from '../charts/primitives'
+import { RuleDraw, ScrollIn } from '../s21/motion'
 import { Button } from '../ui/button'
-import { DATA } from '../lib/assets'
+import { ConfirmClose } from '../ui/confirm'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
+import { Badge } from '../ui/badge'
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '../ui/hover-card'
+/* ui/hover-card ships no Portal, and the only triggers on this page sit inside
+   a <p>; an unportaled panel would put a <div> in a paragraph and split it. */
+import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card'
 import {
   K_ANONYMITY, TIER_LABEL, TIER_ORDER, triage, scoreOnly, alertsOnly, roster,
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY,
@@ -24,6 +29,18 @@ const Sub = ({ children, className }) =>
   <p className={cn('max-w-[68ch] text-sec text-ink-2', className)}>{children}</p>
 const Note = ({ children }) => <p className="mt-5 max-w-[70ch] border-t border-rule pt-4 text-meta text-ink-3">{children}</p>
 
+/* A counselor who does not know what a column means had to scroll past the
+   list to the footnote to find out. The definition sits on the word now. */
+const Term = ({ label, def }) => (
+  <HoverCard openDelay={180}>
+    <HoverCardTrigger asChild>
+      <button type="button" className="underline decoration-dotted decoration-ink-3
+        underline-offset-4 hover:decoration-accent focus-visible:decoration-accent">{label}</button>
+    </HoverCardTrigger>
+    <HoverCardPortal><HoverCardContent>{def}</HoverCardContent></HoverCardPortal>
+  </HoverCard>
+)
+
 /* ── Triage ─────────────────────────────────────────────────────────────── */
 /* One list, ranked by rate of change, because that is what the page claims
    the ranking is. The previous version sorted by velocity and then rendered
@@ -32,21 +49,24 @@ function Row({ s, rank, onOpen }) {
   const dir = s.velocity > 0 ? 'worse' : s.velocity < 0 ? 'better' : 'flat'
   return (
     <li>
-      <button onClick={() => onOpen(s.name)}
-        className="grid w-full grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 border-t
-          border-rule py-4 text-left transition-colors duration-150 hover:bg-sage/60
-          focus-visible:bg-sage/60 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)] sm:items-center">
+      {/* Was a bare <button> carrying its own hover and focus classes. A row
+          that opens a record is the same affordance as any other clickable
+          surface here, so it is the sourced Card's `interactive` state — which
+          also gives it the leading accent rule the hand-rolled row never had. */}
+      <Card as="button" interactive type="button" onClick={() => onOpen(s.name)}
+        className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 p-4
+          sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)] sm:items-center">
         <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{rank}</span>
         <span className="min-w-0">
           <span className="block truncate text-row text-ink">{s.name}</span>
-          <span className="mt-0.5 block font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+          <span className="mt-0.5 block font-mono text-tick text-ink-3">
             Grade {s.grade} · {TIER_LABEL[s.tier]}</span>
         </span>
         <span className="flex items-baseline gap-2 sm:block">
           <span className={cn('font-mono text-num font-medium leading-none tabular-nums',
             s.tier === 'crisis' ? 'text-crit' : s.tier === 'high' ? 'text-warn' : 'text-ink')}>
             {s.current}</span>
-          <span className="whitespace-nowrap font-mono text-label text-ink-3 sm:mt-1 sm:block">out of 100</span>
+          <span className="whitespace-nowrap font-mono text-tick text-ink-3 sm:mt-1 sm:block">out of 100</span>
         </span>
         <span className="col-span-full sm:col-span-1">
           <span className="flex items-center gap-3">
@@ -58,13 +78,13 @@ function Row({ s, rank, onOpen }) {
                 look worse than the worsening one. */}
             <span className="flex h-1.5 max-w-[13rem] flex-1 items-stretch" role="img"
               aria-label={`${dir === 'worse' ? 'Worse' : dir === 'better' ? 'Better' : 'Unchanged'} by ${Math.abs(s.velocity)} points this week`}>
-              <span className="flex flex-1 justify-end overflow-hidden rounded-l-full bg-sage">
-                {s.velocity < 0 && <span className="rounded-full bg-calm"
+              <span className="flex flex-1 justify-end overflow-hidden rounded-none bg-mist">
+                {s.velocity < 0 && <span className="rounded-none bg-calm"
                   style={{ width: Math.min(100, Math.abs(s.velocity) * 6) + '%' }}/>}
               </span>
               <span className="w-px bg-ink-3"/>
-              <span className="flex flex-1 overflow-hidden rounded-r-full bg-sage">
-                {s.velocity > 0 && <span className="rounded-full bg-warn"
+              <span className="flex flex-1 overflow-hidden rounded-none bg-mist">
+                {s.velocity > 0 && <span className="rounded-none bg-warn"
                   style={{ width: Math.min(100, s.velocity * 6) + '%' }}/>}
               </span>
             </span>
@@ -76,18 +96,25 @@ function Row({ s, rank, onOpen }) {
             <span className="font-medium text-accent">Open record</span>
           </span>
         </span>
-      </button>
+      </Card>
     </li>
   )
 }
 
+/* The consent-limited groups were a tinted band with a left rule; they sit
+   beside the triage list, so they are cards like everything else on the board.
+   The ruling-coloured leading edge is what still marks them as withheld. */
 function Limited({ heading, note, children }) {
   return (
-    <section className="rounded-xs border border-rule bg-sage/40 p-5">
-      <h3 className="font-display text-row font-bold text-ink">{heading}</h3>
-      <p className="mt-1.5 max-w-[52ch] text-sec text-ink-2">{note}</p>
-      <ul className="mt-4 divide-y divide-rule border-t border-rule">{children}</ul>
-    </section>
+    <Card as="section" className="border-l-[3px] border-l-ruling">
+      <CardHeader className="p-5 pb-0">
+        <CardTitle as="h3" className="text-row">{heading}</CardTitle>
+        <CardDescription className="max-w-[52ch]">{note}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-5 pt-4">
+        <ul className="divide-y divide-rule border-t border-rule">{children}</ul>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -103,15 +130,20 @@ function Triage({ onOpen }) {
     byScore.findIndex(x => x.id === fastest.id)]
   return (
     <>
-      <h2 className="font-display text-head font-bold tracking-tight text-ink">Who to see first</h2>
+      <h2 className="font-display text-head font-medium tracking-tight text-ink">Who to see first</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <Sub><b className="font-medium text-ink">Stress index, 0 to 100. Higher is worse.</b>
-          {' '}Ranked by weekly rate of change.</Sub>
-        <span className="font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+        <Sub><b className="font-medium text-ink">
+          <Term label="Stress index"
+            def="One score a day per student, 0 to 100, read against that student's own baseline rather than against the year group."/>,
+          {' '}0 to 100. Higher is worse.</b>
+          {' '}Ranked by weekly{' '}
+          <Term label="velocity"
+            def="The change in a student's seven-day average from one week to the next. It is what orders this list, so a rising student at 55 sits above a level one at 70."/>.</Sub>
+        <span className="font-mono text-tick text-ink-3">
           {total} consented · {ranked.length} ranked</span>
       </div>
 
-      <div className="mt-6 flex h-3 overflow-hidden rounded-full" role="img"
+      <div className="mt-6 flex h-3 overflow-hidden rounded-xs" role="img"
         aria-label={TIER_ORDER.map(t => `${scored.filter(s2 => s2.tier === t).length} ${TIER_LABEL[t]}`).join(', ')}>
         {TIER_ORDER.map(t => {
           const n = scored.filter(s2 => s2.tier === t).length
@@ -123,7 +155,7 @@ function Triage({ onOpen }) {
       </div>
       <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
         {TIER_ORDER.map(t => (
-          <span key={t} className="font-mono text-label tabular-nums text-ink-3">
+          <span key={t} className="font-mono text-tick tabular-nums text-ink-3">
             {scored.filter(s2 => s2.tier === t).length} {TIER_LABEL[t]}</span>
         ))}
       </div>
@@ -133,22 +165,24 @@ function Triage({ onOpen }) {
       <div className="mt-7 grid gap-x-10 gap-y-4 border-y border-rule py-5 sm:grid-cols-2">
         <div className="border-l-2 border-accent pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-warn">+{fastest.velocity}
-            <span className="ml-2 text-label text-ink-3">{fastest.name} · first on the list</span></p>
+            <span className="ml-2 text-tick text-ink-3">{fastest.name} · first on the list</span></p>
           <p className="mt-1.5 text-sec text-ink-2">{place[0].toUpperCase() + place.slice(1)} highest
             score of {scored.length}. Ranked first here on velocity.</p>
         </div>
         <div className="border-l-2 border-rule pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-ink">{highest.current}
-            <span className="ml-2 text-label text-ink-3">{highest.name} · highest score</span></p>
+            <span className="ml-2 text-tick text-ink-3">{highest.name} · highest score</span></p>
           <p className="mt-1.5 text-sec text-ink-2">Flat week. Referral already open since Feb 18.</p>
         </div>
       </div>
 
-      <ol className="mt-7 list-none p-0">
+      <ol className="mt-7 list-none space-y-2 p-0">
         {ranked.map((s, i) => <Row key={s.id} s={s} rank={i + 1} onOpen={onOpen}/>)}
       </ol>
-      <p className="mt-3 border-t border-ink pt-3 text-meta text-ink-3">Change in the seven-day average,
-        per week. Right of centre is worse.</p>
+      {/* The first half of this footnote defined velocity; that definition is
+          on the word itself now, and what is left is the bar's legend. */}
+      <p className="mt-4 border-t border-ink pt-3 text-meta text-ink-3">
+        Right of centre on the bar is worse.</p>
 
       <div className="mt-9 grid gap-5 lg:grid-cols-2">
         <Limited heading="Score only — no trends shared"
@@ -190,41 +224,51 @@ function OneStudent({ who, setWho }) {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-head font-bold tracking-tight text-ink">{s.name}</h2>
-          <p className="mt-1 font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+          <h2 className="font-display text-head font-medium tracking-tight text-ink">{s.name}</h2>
+          <p className="mt-1 font-mono text-tick text-ink-3">
             Grade {s.grade}{s.showScore ? ` · ${TIER_LABEL[s.tier]}` : ''}</p>
           <p className="mt-2 max-w-[46ch] text-sec text-ink-2">Consented: {s.scope}.</p>
         </div>
         <div>
-          <label htmlFor="pick" className="lab block">Open a different student</label>
+          <label htmlFor="pick" className="note block">Open a different student</label>
           <select id="pick" value={s.name} onChange={e => setWho(e.target.value)}
-            className="mt-1.5 min-h-[48px] rounded-xs border border-rule bg-paper px-3 font-body
-              text-meta text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+            className="mt-1.5 min-h-[48px] rounded-field border-0 border-b-2 border-ink bg-transparent
+              px-1 font-body text-meta text-ink focus-visible:outline-none">
             {all.map(x => <option key={x.id} value={x.name}>
               {x.name} · G{x.grade}{x.showScore ? ` · ${x.current}` : ' · not shared'}</option>)}
           </select>
         </div>
       </div>
 
+      {/* Both withheld-consent states were tinted bands with a left rule. They
+          are the record for this student, so they are the same card the record
+          would have been, with the ruling edge marking what is withheld. */}
       {!s.showScore && (
-        <div className="mt-7 rounded-xs border border-rule bg-sage/40 p-6">
-          <h3 className="font-display text-row font-bold text-ink">Nothing to show, by consent</h3>
-          <ul className="mt-3 max-w-[46ch] space-y-1.5 text-sec text-ink-2">
-            <li>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></li>
-            <li>You are paged if their readings cross the crisis threshold</li>
-            <li>Everything else on this screen stays empty</li>
-          </ul>
-        </div>
+        <Card as="section" className="mt-7 border-l-[3px] border-l-ruling">
+          <CardHeader className="p-6 pb-0">
+            <CardTitle as="h3" className="text-row">Nothing to show, by consent</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 pt-3">
+            <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
+              <li>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></li>
+              <li>You are paged if their readings cross the crisis threshold</li>
+            </ul>
+          </CardContent>
+        </Card>
       )}
 
       {s.showScore && !s.showTrend && (
-        <div className="mt-7 rounded-xs border border-rule bg-sage/40 p-6">
-          <h3 className="font-display text-row font-bold text-ink">Score today: {s.current} out of 100</h3>
-          <ul className="mt-3 max-w-[46ch] space-y-1.5 text-sec text-ink-2">
-            <li>Consent scope: <b className="font-medium text-ink">score and crisis alerts</b></li>
-            <li>Weekly change, driver breakdown and the 45-day line are withheld</li>
-          </ul>
-        </div>
+        <Card as="section" className="mt-7 border-l-[3px] border-l-ruling">
+          <CardHeader className="p-6 pb-0">
+            <CardTitle as="h3" className="text-row">Score today: {s.current} out of 100</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 pt-3">
+            <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
+              <li>Consent scope: <b className="font-medium text-ink">score and crisis alerts</b></li>
+              <li>Weekly change, driver breakdown and the 45-day line are withheld</li>
+            </ul>
+          </CardContent>
+        </Card>
       )}
 
       {s.showTrend && <>
@@ -234,9 +278,10 @@ function OneStudent({ who, setWho }) {
             s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
             {s.velocity > 0 ? '+' : ''}{s.velocity}</div>
           <p className="mt-1 text-sec text-ink-3">vs the week before</p>
+          {/* "N points a week, worse" said the same thing as the figure above
+              it and the caption under that, in a third wording. */}
           <ul className="mt-4 space-y-2.5 border-t border-rule pt-4 text-meta text-ink-2">
             <li>Moved from {s.weekAgo} to {s.current}.</li>
-            <li>{Math.abs(s.velocity)} points a week, {s.velocity > 0 ? 'worse' : 'better'}.</li>
             <li>The change keeps landing in one lesson: AP Chemistry.</li>
           </ul>
         </Panel>
@@ -247,10 +292,10 @@ function OneStudent({ who, setWho }) {
               <li key={d.label}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-meta text-ink-2">{d.label}</span>
-                  <span className="font-mono text-label tabular-nums text-ink">{Math.round(d.share * 100)}%</span>
+                  <span className="font-mono text-tick tabular-nums text-ink">{Math.round(d.share * 100)}%</span>
                 </div>
-                <div className="mt-1.5 h-1.5 w-full rounded-full bg-sage">
-                  <div className="h-full rounded-full bg-warn" style={{ width: d.share * 100 + '%' }}/>
+                <div className="mt-1.5 h-1.5 w-full rounded-xs bg-mist">
+                  <div className="h-full rounded-xs bg-warn" style={{ width: d.share * 100 + '%' }}/>
                 </div>
               </li>
             ))}
@@ -294,8 +339,8 @@ function OneStudent({ who, setWho }) {
           <label htmlFor="cnote" className="sr-only">Counselor note for {s.name}</label>
           <textarea id="cnote" rows={5} value={note} onChange={e => setNote(e.target.value)}
             placeholder="Add a note…"
-            className="w-full resize-none rounded-xs border border-rule bg-paper p-3.5 text-meta text-ink
-              placeholder:text-ink-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"/>
+            className="w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40 p-3.5
+              text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink focus-visible:outline-none"/>
           <div className="mt-3 flex items-center justify-between gap-3">
             <span className="text-sec text-ink-3">Saving writes a row to the log</span>
             <Button size="sm" disabled={!note.trim()}>Save note</Button>
@@ -318,7 +363,7 @@ function Cohort() {
   const suppressed = COHORT_PERIOD.filter(p => p.suppressed).length
   return (
     <>
-      <h2 className="font-display text-head font-bold tracking-tight text-ink">
+      <h2 className="font-display text-head font-medium tracking-tight text-ink">
         Patterns across the whole school</h2>
       {/* A reviewer read "8 students" on the triage board and "18 consented
           students" here and concluded one of them was invented. Both are true
@@ -327,10 +372,10 @@ function Cohort() {
         caseload. Nobody here is identifiable.</Sub>
       <div className="mt-8 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <h3 className="lab font-normal">School-wide pattern</h3>
+          <h3 className="mark">School-wide pattern</h3>
           <RuleDraw className="mt-2.5"/>
           <ScrollIn className="mt-6">
-            <h4 className="font-display text-row font-bold tracking-tight text-ink">
+            <h4 className="font-display text-row font-medium tracking-tight text-ink">
               {top.label} shows a school-wide stress spike.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
               <li>Mean <b className="font-medium text-ink">{top.mean}</b> against a school average
@@ -341,7 +386,7 @@ function Cohort() {
             </ul>
           </ScrollIn>
           <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
-            <h4 className="font-display text-row font-bold tracking-tight text-ink">
+            <h4 className="font-display text-row font-medium tracking-tight text-ink">
               {hardest.full} is the hardest day of the week, school-wide.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
               <li>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
@@ -376,12 +421,12 @@ function Cohort() {
                   <span className="font-mono text-sec tabular-nums text-ink-3">
                     {p.suppressed ? 'suppressed' : p.mean} · n={p.n}</span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sage">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-xs bg-mist">
                   {p.suppressed ? (
                     <div className="h-full w-full" role="img" aria-label="Suppressed for k-anonymity"
-                      style={{ backgroundImage:'repeating-linear-gradient(45deg,#dde5e2,#dde5e2 4px,transparent 4px,transparent 8px)' }}/>
+                      style={{ backgroundImage:'repeating-linear-gradient(45deg,#cdd6ea,#cdd6ea 4px,transparent 4px,transparent 8px)' }}/>
                   ) : (
-                    <div className={cn('h-full rounded-full', p.mean >= 65 ? 'bg-warn' : 'bg-accent')}
+                    <div className={cn('h-full rounded-xs', p.mean >= 65 ? 'bg-warn' : 'bg-accent')}
                       style={{ width: 20 + ((p.mean - lo) / (hi - lo || 1)) * 80 + '%' }}/>
                   )}
                 </div>
@@ -395,9 +440,9 @@ function Cohort() {
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
                 <span className="font-mono text-sec tabular-nums text-ink-3">{d.mean}</span>
-                <div className={cn('w-full rounded-t-lg', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
+                <div className={cn('w-full rounded-t-xs', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
                   style={{ height: (d.mean / 100) * 120 + 'px' }}/>
-                <span className="font-mono text-label text-ink-3">{d.label}</span>
+                <span className="font-mono text-tick text-ink-3">{d.label}</span>
               </div>
             ))}
           </div>
@@ -406,8 +451,10 @@ function Cohort() {
       </div>
 
       <Panel className="mt-10" label="What a school does with this">
+        {/* The first bullet restated the period figure from the top of the tab
+            and hard-coded 31% while the panel above computes it, so the two
+            would disagree the moment the data moved. */}
         <ul className="max-w-[64ch] space-y-2 text-sec text-ink-2">
-          <li>Third period runs <b className="font-medium text-warn">31% above</b> the school average.</li>
           <li>Moving one lab section is a single timetable change.</li>
           <li>The same screen shows whether the mean came down four weeks later.</li>
         </ul>
@@ -419,27 +466,36 @@ function Cohort() {
 /* ── Escalation ─────────────────────────────────────────────────────────── */
 function Escalation() {
   const [done, setDone] = React.useState(PROTOCOL_DONE)
+  const [closing, setClosing] = React.useState(false)
+  const [closed, setClosed] = React.useState(null)
   const toggle = i => setDone(d => d.includes(i) ? d.filter(x => x !== i) : [...d, i])
   return (
     <>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <section className="border-t-2 border-crit/40 pt-4">
-          <h2 className="lab font-normal text-crit">Crisis queue</h2>
-          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3">
-            <h3 className="font-display text-row font-bold tracking-tight text-ink">Student 8241</h3>
+        {/* The queue sat in a bare section while the referral list beside it was
+            a Panel, so the two halves of one row were different objects. Both
+            are cards now; the crit rule on the top edge is what still says
+            which one is the alarm. */}
+        <Card as="section" className="border-t-2 border-t-crit/40">
+          <CardHeader className="p-5 pb-0">
+            <CardTitle as="h2" className="text-tick text-crit">Crisis queue</CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h3 className="font-display text-row font-medium tracking-tight text-ink">Student 8241</h3>
             <span className="font-mono text-sec tabular-nums text-ink-3">2:14 PM</span>
           </div>
           <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
             Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The escalation
             protocol ran automatically.</p>
           <div className="mt-5 border-t border-rule pt-4">
-            <h4 className="lab font-normal">Protocol</h4>
+            <h4 className="mark">Protocol</h4>
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
                 <li key={step}>
                   <label className="flex min-h-[44px] cursor-pointer items-center gap-3">
                     <input type="checkbox" checked={done.includes(i)} onChange={() => toggle(i)}
-                      className="size-4 accent-[#0f6b62]"/>
+                      className="size-4 accent-[#3d52a0]"/>
                     <span className={cn('text-meta', done.includes(i) ? 'text-ink-3 line-through decoration-rule' : 'text-ink')}>
                       {step}</span>
                     <span className="ml-auto font-mono text-sec tabular-nums text-ink-3">
@@ -450,11 +506,14 @@ function Escalation() {
             </ul>
           </div>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4">
-            <Button size="sm" disabled={done.length < PROTOCOL.length}>Close with outcome</Button>
+            <Button size="sm" disabled={done.length < PROTOCOL.length || !!closed}
+              onClick={() => setClosing(true)}>
+              {closed ? 'Closed' : 'Close with outcome'}</Button>
             <span className="font-mono text-sec tabular-nums text-ink-3">
               {done.length} of {PROTOCOL.length} steps complete</span>
           </div>
-        </section>
+          </CardContent>
+        </Card>
 
         <Panel as="h3" label="Referrals">
           <ul className="divide-y divide-rule">
@@ -462,7 +521,7 @@ function Escalation() {
               <li key={r.student + r.opened} className="py-3.5 first:pt-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-meta text-ink">{r.student}</span>
-                  <Badge tone={r.status === 'Closed' ? 'quiet' : 'accent'}>{r.status}</Badge>
+                  <Badge variant="state">{r.status}</Badge>
                 </div>
                 <p className="mt-1 text-sec text-ink-3">{r.to} · opened {r.opened}</p>
               </li>
@@ -473,6 +532,16 @@ function Escalation() {
           </div>
         </Panel>
       </div>
+
+      <ConfirmClose open={closing} onOpenChange={setClosing} subject="Student 8241"
+        steps={PROTOCOL.length} onConfirm={o => setClosed(o)}/>
+
+      {closed && (
+        <p className="mt-6 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
+          Written to the log at 2:41 PM. The escalation clock has stopped.
+          <span className="mt-1 block text-meta text-ink-3">“{closed}”</span>
+        </p>
+      )}
 
       <Panel as="h3" className="mt-10" label="Audit log" action="Append-only · cannot be edited or deleted">
         <Table>
@@ -505,7 +574,7 @@ const FACTS = [
 function Consent() {
   return (
     <>
-      <h2 className="mb-7 font-display text-head font-bold tracking-tight text-ink">
+      <h2 className="mb-7 font-display text-head font-medium tracking-tight text-ink">
         What each guardian agreed to</h2>
       <Panel as="h3" label="Consent ledger" action={`${CONSENT_LEDGER.length} active · FERPA / COPPA`}>
         <Table>
@@ -517,7 +586,7 @@ function Consent() {
                 <TD num>{r.student}</TD>
                 <TD>{r.guardian}</TD>
                 <TD>{r.scope}</TD>
-                <TD><Badge>{r.basis}</Badge></TD>
+                <TD><Badge variant="state">{r.basis}</Badge></TD>
                 <TD num>{r.signedAt}</TD>
                 <TD num>{r.expires}</TD>
               </TR>
@@ -586,41 +655,37 @@ export function Pro({ go }) {
   }
   return (
     <main>
-      <div className="relative overflow-hidden border-b border-rule bg-sage">
+      <div className="relative overflow-hidden border-b border-rule bg-mist">
         {/* decoration: it carries no information a reader needs */}
         <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
         <div className="wrap relative py-6 sm:py-8">
           <Back go={go} to="site" label="Overview"/>
-          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
+          <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">
             For school counselors and psychologists</h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
           <p className="mt-4 inline-flex max-w-[60ch] items-baseline gap-2 border-l-2 border-warn bg-paper/70
             py-2 pl-3 pr-4 text-meta text-ink-2">
-            <b className="font-mono text-label font-medium uppercase tracking-[0.12em] text-warn">Demo</b>
+            <Badge variant="demo">Demo</Badge>
             Every figure here is generated. No student was measured.</p>
         </div>
       </div>
       <div className="wrap py-9 sm:py-12">
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      <Tabs.Root value={tab} onValueChange={onTab}>
-        <Tabs.List aria-label="Monitoring views"
-          className="flex flex-wrap gap-x-1 gap-y-1 overflow-x-auto border-b border-ink pb-px">
+      {/* Was a second hand-classed copy of the tab strip in views/shell.jsx.
+          One definition in ui/tabs now, so the two consoles cannot drift. */}
+      <Tabs value={tab} onValueChange={onTab}>
+        <TabsList aria-label="Monitoring views">
           {TABS.map(([v, label]) => (
-            <Tabs.Trigger key={v} value={v}
-              className="min-h-[48px] whitespace-nowrap px-4 font-display text-meta font-medium text-ink-2
-                transition-colors duration-150 hover:text-ink data-[state=active]:border-b-2
-                data-[state=active]:border-accent data-[state=active]:text-ink">
-              {label}
-            </Tabs.Trigger>
+            <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
           ))}
-        </Tabs.List>
+        </TabsList>
         {TABS.map(([v]) => {
           const Pane = PANES[v]
-          return <Tabs.Content key={v} value={v} className="pt-9 focus-visible:outline-none"><Pane/></Tabs.Content>
+          return <TabsContent key={v} value={v}><Pane/></TabsContent>
         })}
-      </Tabs.Root>
+      </Tabs>
       </div>
     </main>
   )

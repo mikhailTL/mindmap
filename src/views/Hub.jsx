@@ -1,7 +1,7 @@
 import React from 'react'
 import { ScrollRow } from '../s21/motion'
-import { ArrowRight } from 'lucide-react'
-import { Card, CardBody } from '../ui/card'
+import { ArrowRight } from '../ui/marks'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/misc'
 import { IMG, POS } from '../lib/assets'
 
@@ -28,11 +28,11 @@ export function Hub({ go }){
   return (
     <main className="wrap py-10 sm:py-[5vw]">
       <Label>Open the app</Label>
-      <h1 className="mt-3.5 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
+      <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
         Who is this for?
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        Pick the person using the app. Each view opens on one sentence.
+        Each view opens on one sentence.
       </p>
       <div className="mt-8 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {PEOPLE.map((t,i)=>(
@@ -40,18 +40,23 @@ export function Hub({ go }){
           <Card as="button" interactive onClick={()=>go(t.to)}>
             <img src={t.img} alt={t.alt} loading="lazy" width="1200" height="720"
               style={{ objectPosition: t.pos }} className="aspect-[5/3] w-full object-cover"/>
-            <CardBody>
-              <h2 className="font-display text-head font-bold leading-tight tracking-tight text-ink">{t.h}</h2>
-              <p className="mt-2 max-w-[34ch] text-sec text-ink-2">{t.p}</p>
-              <span className="mt-4 inline-flex items-center gap-2 font-display text-ui font-medium text-accent">
+            {/* heading and blurb were a raw h2 and p re-typing the Card's own
+                type ramp inside CardContent; CardHeader/CardTitle carry it now,
+                and CardTitle's `as` keeps the h2 so the page outline is unchanged */}
+            <CardHeader>
+              <CardTitle as="h2" className="leading-tight tracking-tight">{t.h}</CardTitle>
+              <CardDescription className="max-w-[34ch]">{t.p}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <span className="inline-flex items-center gap-2 font-display text-ui font-medium text-accent">
                 Open <ArrowRight aria-hidden className="size-4"/>
               </span>
-            </CardBody>
+            </CardContent>
           </Card>
           </ScrollRow>
         ))}
       </div>
-      <h2 className="mt-12 font-display text-sub font-bold tracking-tight text-ink sm:mt-[5vw]">
+      <h2 className="mt-12 font-display text-sub font-medium tracking-tight text-ink sm:mt-[5vw]">
         Everything else
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -59,14 +64,18 @@ export function Hub({ go }){
           <ScrollRow key={h} index={i} className="h-full">
           <Card as={to ? 'button' : 'div'} interactive={!!to}
             onClick={to ? () => go(to) : undefined}>
-            <CardBody className="p-6">
-              <h3 className="font-display text-row font-bold tracking-tight text-ink">{h}</h3>
-              <p className="mt-1.5 text-meta text-ink-2">{p}</p>
+            <CardHeader>
+              <CardTitle as="h3" className="text-row tracking-tight">{h}</CardTitle>
+              <CardDescription className="text-meta">{p}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-3">
+              {/* built and not-built separate by indent and rule, not by a
+                  badge chip in the corner */}
               <span className={to
-                ? 'mt-3 inline-flex items-center gap-1.5 font-mono text-label uppercase tracking-[0.12em] text-accent'
-                : 'mt-3 inline-block font-mono text-label uppercase tracking-[0.12em] text-ink-3'}>
-                {to ? <>Open <ArrowRight aria-hidden className="size-3.5"/></> : 'Planned'}</span>
-            </CardBody>
+                ? 'inline-flex items-center gap-1.5 font-mono text-tick text-accent'
+                : 'inline-block border-t border-rule pt-2 font-mono text-tick italic text-ink-3'}>
+                {to ? <>Open <ArrowRight aria-hidden className="size-3.5"/></> : '— not built'}</span>
+            </CardContent>
           </Card>
           </ScrollRow>
         ))}

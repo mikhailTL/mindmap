@@ -1,8 +1,8 @@
 import React from 'react'
-import * as Tabs from '@radix-ui/react-tabs'
 import { Back } from './Monitor'
 import KineticGrid from '../s21/texture'
-import { cn } from '../lib/utils'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
+import { Badge } from '../ui/badge'
 
 /* One section shell for the three audiences.
  *
@@ -22,16 +22,19 @@ export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, ch
   const pick = v => { onTab(v); announce(v) }
   return (
     <main>
-      <div className="relative overflow-hidden border-b border-rule bg-sage">
+      <div className="relative overflow-hidden border-b border-rule bg-mist">
         <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
         <div className="wrap relative py-6 sm:py-8">
           <Back go={go} to="site" label="Overview"/>
-          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
+          <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
           {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
           {note && (
             <p className="mt-4 inline-flex max-w-[60ch] items-baseline gap-2 border-l-2 border-warn
               bg-paper/70 py-2 pl-3 pr-4 text-meta text-ink-2">
-              <b className="font-mono text-label font-medium uppercase tracking-[0.12em] text-warn">Demo</b>
+              {/* The sample-data disclosure used to be a hand-set <b> in warn;
+                  it is the one thing the sourced badge's `demo` variant exists
+                  for, and it now reads the same here and on the pro console. */}
+              <Badge variant="demo">Demo</Badge>
               {note}</p>
           )}
         </div>
@@ -39,27 +42,24 @@ export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, ch
       <div className="wrap py-9 sm:py-12">
         <p aria-live="polite" className="sr-only text-sec">{said}</p>
         {tabs ? (
-          <Tabs.Root value={tab} onValueChange={pick}>
-            <Tabs.List aria-label={`${title} views`}
-              className="flex flex-wrap gap-x-1 gap-y-1 border-b border-ink pb-px">
+          /* Was a hand-classed @radix-ui/react-tabs tree repeating the trigger
+             string this shell shared with the pro console; both now come from
+             ui/tabs, so the selected-tab rule is defined in one place. */
+          <Tabs value={tab} onValueChange={pick}>
+            <TabsList aria-label={`${title} views`}>
               {tabs.map(([v, label]) => (
-                <Tabs.Trigger key={v} value={v}
-                  className="min-h-[48px] whitespace-nowrap px-4 font-display text-meta font-medium text-ink-2
-                    transition-colors duration-150 hover:text-ink data-[state=active]:border-b-2
-                    data-[state=active]:border-accent data-[state=active]:text-ink">
-                  {label}
-                </Tabs.Trigger>
+                <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
               ))}
-            </Tabs.List>
+            </TabsList>
             {tabs.map(([v]) => {
               const Pane = panes[v]
               return (
-                <Tabs.Content key={v} value={v} className="pt-9 focus-visible:outline-none">
+                <TabsContent key={v} value={v}>
                   <Pane go={go} openTab={pick}/>
-                </Tabs.Content>
+                </TabsContent>
               )
             })}
-          </Tabs.Root>
+          </Tabs>
         ) : children}
       </div>
     </main>

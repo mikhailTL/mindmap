@@ -24,30 +24,39 @@ export function SignalTrace({ kind, className }) {
 }
 
 /* ── Patch → phone → sentence. Three steps, no paragraph. ──────────────── */
+/* Three steps in a row of equal boxes reads as three options. These are not
+   options; the second cannot happen without the first. So: one rule running
+   the length of the sequence, three blocks of different widths hanging off it,
+   each offset a little further down than the last. The descriptions are
+   different lengths on purpose — matched sub-lines under matched headings is
+   a cadence, not writing. */
 export function HowItWorks({ className }) {
   const steps = [
-    { n: '1', t: 'The patch reads', s: 'Four signals from the skin, once a second.', art: 'patch' },
-    { n: '2', t: 'The phone scores', s: 'Compared with your own last two weeks.',   art: 'phone' },
-    { n: '3', t: 'You get a sentence', s: 'Plus the numbers, if you want them.',    art: 'card'  },
+    { n:'01', t:'Skin', art:'patch', w:'lg:w-[34%]', drop:'lg:mt-0',
+      s:<>Four signals off the forearm, once a second, all day. Pulse, sweat, skin temperature and
+        movement — the four an autonomic response actually moves.</> },
+    { n:'02', t:'Phone', art:'phone', w:'lg:w-[28%]', drop:'lg:mt-12',
+      s:<>Scored against your own last two weeks.</> },
+    { n:'03', t:'Sentence', art:'card', w:'lg:w-[38%]', drop:'lg:mt-6',
+      s:<>One line in plain words. The four signals sit underneath it, and the working sits under
+        those, and you can stop reading at any of the three.</> },
   ]
   return (
-    <ol className={cn('grid list-none gap-4 p-0 sm:grid-cols-3', className)}>
-      {steps.map((s, i) => (
-        <li key={s.n} className="relative border-t-2 border-ink pt-5">
-          <div className="flex h-24 items-center justify-center rounded-xs bg-sage">
-            <StepArt kind={s.art}/>
+    <ol className={cn('relative m-0 list-none p-0 lg:flex lg:items-start lg:gap-10', className)}>
+      {/* the rule the sequence hangs from */}
+      <span aria-hidden className="absolute left-0 right-0 top-0 hidden border-t-2 border-ink lg:block"/>
+      {steps.map((s2, i) => (
+        <li key={s2.n} className={cn('border-t-2 border-ink pt-5 lg:border-t-0 lg:pt-7',
+          i > 0 && 'mt-9 lg:mt-0', s2.w, s2.drop)}>
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-num font-light tabular-nums text-ink-3">{s2.n}</span>
+            <h3 className="font-display text-head font-medium text-ink">{s2.t}</h3>
           </div>
-          <div className="mt-4 flex items-baseline gap-2.5">
-            <span className="font-mono text-label tabular-nums text-ink-3">0{s.n}</span>
-            <h3 className="font-display text-row font-bold text-ink">{s.t}</h3>
+          <div className={cn('mt-5 flex items-center bg-mist/70 px-4',
+            i === 0 ? 'h-28' : i === 1 ? 'h-20' : 'h-24')}>
+            <StepArt kind={s2.art}/>
           </div>
-          <p className="mt-1.5 max-w-[30ch] text-sec text-ink-2">{s.s}</p>
-          {i < 2 && (
-            <svg aria-hidden viewBox="0 0 24 24" className="absolute -right-3 top-16 hidden size-5 text-ink-3 sm:block">
-              <path d="M4 12h16M14 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.75"
-                strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
+          <p className="mt-4 max-w-[38ch] text-sec text-ink-2">{s2.s}</p>
         </li>
       ))}
     </ol>
@@ -91,7 +100,10 @@ function Mark({ v }) {
       <span className="sr-only">{label}</span>
       {v === 2 && <svg viewBox="0 0 20 20" aria-hidden className="size-5 text-accent">
         <circle cx="10" cy="10" r="8" fill="currentColor"/>
-        <path d="M6 10.5l2.6 2.6L14 8" fill="none" stroke="#fcfcfb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+        {/* The tick is knocked out of the filled accent disc. It was a raw
+            literal of the retired green system's near-white; card #f8f6fc is
+            the equivalent sheet colour and reads 6.65 : 1 on accent. */}
+        <path d="M6 10.5l2.6 2.6L14 8" fill="none" className="stroke-card" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
       {v === 1 && <svg viewBox="0 0 20 20" aria-hidden className="size-5 text-accent">
         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2"/>
         <path d="M10 2a8 8 0 010 16z" fill="currentColor"/></svg>}
@@ -113,9 +125,9 @@ export function WhoSeesWhat({ className }) {
         <caption className="sr-only">What each person can see</caption>
         <thead>
           <tr>
-            <th className="sticky top-[7rem] z-10 w-1/2 border-b border-ink bg-paper py-3 pr-4 lab font-normal">What</th>
+            <th className="sticky top-[7rem] z-10 w-1/2 border-b border-ink bg-paper py-3 pr-4 font-display text-tick font-medium text-ink-2">What</th>
             {WHO.map(w => <th key={w}
-              className="sticky top-[7rem] z-10 border-b border-ink bg-paper py-3 text-center lab font-normal">{w}</th>)}
+              className="sticky top-[7rem] z-10 border-b border-ink bg-paper py-3 text-center font-display text-tick font-medium text-ink-2">{w}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -142,8 +154,8 @@ export function WeekStrip({ days, band, className }) {
         const over = d.v > band.hi
         return (
           <div key={d.d} className="flex-1 text-center">
-            <div className={cn('h-2 rounded-full', over ? 'bg-warn' : 'bg-accent/45')}/>
-            <span className="mt-1.5 block font-mono text-label text-ink-3">{d.d[0]}</span>
+            <div className={cn('h-2 rounded-xs', over ? 'bg-warn' : 'bg-accent/45')}/>
+            <span className="mt-1.5 block font-mono text-tick text-ink-3">{d.d[0]}</span>
           </div>
         )
       })}

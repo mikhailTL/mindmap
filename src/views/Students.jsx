@@ -13,7 +13,7 @@ export function Students({ go, tab = 'today', setTab }) {
   return (
     <SectionShell go={go} tabs={TABS} panes={PANES} tab={local} onTab={setTab || setLocal}
       title="For students"
-      sub="Your own reading, what moved it, and exactly what leaves your phone."
+      sub="Your own reading, what moved it, and what leaves your phone."
       note="Every figure on the Today tab is generated. Take a reading scores your own answers for real."/>
   )
 }

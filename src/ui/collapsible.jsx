@@ -1,6 +1,6 @@
 import React from 'react'
 import * as C from '@radix-ui/react-collapsible'
-import { ChevronRight } from 'lucide-react'
+import { Chevron } from './marks'
 import { cn } from '../lib/utils'
 
 /* Radix Collapsible replaces the native <details>: it gives a real
@@ -24,7 +24,7 @@ export function Disclosure({ label, children, className, openOnWide=false }){
     <C.Root open={open} onOpenChange={setOpen} className={cn('border-t border-rule',className)}>
       <C.Trigger className="group flex w-full items-center gap-3 min-h-[56px] font-display
         font-medium text-ui text-ink hover:text-accent transition-colors duration-150">
-        <ChevronRight aria-hidden className="size-4 transition-transform duration-200 ease-out
+        <Chevron aria-hidden className="size-4 transition-transform duration-200 ease-out
           group-data-[state=open]:rotate-90" />
         {label}
       </C.Trigger>

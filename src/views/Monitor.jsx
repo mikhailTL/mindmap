@@ -1,6 +1,8 @@
 import React from 'react'
-import { ArrowLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Chevron } from '../ui/marks'
 import * as C from '@radix-ui/react-collapsible'
+import { Badge } from '../ui/badge'
+import { Card } from '../ui/card'
 import { Label } from '../ui/misc'
 import { Spark } from '../charts/primitives'
 import { DayChart } from '../charts/day'
@@ -13,9 +15,11 @@ import { studentRings, parentRings } from '../lib/readings'
 import { Spark as MiniSpark } from '../charts/primitives'
 import { cn } from '../lib/utils'
 
-/* The dashboard shows one number, one sentence, and three reasons.
-   Everything else is behind a control the reader chooses to open — the pattern
-   the Oura app uses, and the reason a parent can read this in five seconds. */
+/* The dashboard shows one number, one sentence, and the reasons under it.
+   Everything else is behind a control the reader chooses to open. (This note
+   used to say "three reasons" — there are two — and to claim a five-second
+   read nobody timed. A comment that miscounts the code is worse than no
+   comment.) */
 
 export function Back({ go, to = 'hub', label = 'All views' }) {
   return (
@@ -28,7 +32,7 @@ export function Back({ go, to = 'hub', label = 'All views' }) {
 }
 
 export function Headline({ children }) {
-  return <p className="max-w-[24ch] font-display text-major font-bold
+  return <p className="max-w-[24ch] font-display text-major font-medium
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
@@ -47,15 +51,15 @@ export function Reason({ claim, plain, source, index, chart }) {
   return (
     <ScrollRow as="div" index={index}>
       <C.Root ref={ref} open={open} onOpenChange={setOpen}
-        className="border-b border-rule transition-colors data-[state=open]:bg-sage/40">
+        className="border-b border-rule transition-colors data-[state=open]:bg-mist/40">
         <C.Trigger className="group flex min-h-[64px] w-full items-center gap-4 px-3 py-5 text-left
-          transition-colors hover:bg-sage/60">
-          <span className="font-mono text-label tabular-nums text-ink-3">0{index + 1}</span>
+          transition-colors hover:bg-mist/60">
+          <span className="font-mono text-tick tabular-nums text-ink-3">0{index + 1}</span>
           <span className="flex-1 text-body text-ink">{claim}</span>
-          <span className="flex shrink-0 items-center gap-1.5 font-mono text-label uppercase
-            tracking-[0.12em] text-accent">
+          <span className="flex shrink-0 items-center gap-1.5 font-mono text-tick
+            text-accent">
             <span className="hidden sm:inline group-data-[state=open]:sm:hidden">Why</span>
-            <ChevronRight aria-hidden className="size-4 transition-transform duration-200 ease-out
+            <Chevron aria-hidden className="size-4 transition-transform duration-200 ease-out
               group-data-[state=open]:rotate-90"/>
           </span>
         </C.Trigger>
@@ -63,9 +67,9 @@ export function Reason({ claim, plain, source, index, chart }) {
           <div className="grid gap-6 px-3 pb-6 pl-10 sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-start">
             <div>
               <p className="max-w-[52ch] text-sec text-ink-2">{plain}</p>
-              <p className="mt-3 font-mono text-label uppercase tracking-[0.12em] text-ink-3">{source}</p>
+              <p className="mt-3 font-mono text-tick text-ink-3">{source}</p>
             </div>
-            {chart && <div className="rounded-xs bg-sage px-3 py-3">{chart}</div>}
+            {chart && <div className="rounded-xs bg-mist px-3 py-3">{chart}</div>}
           </div>
         </C.Content>
       </C.Root>
@@ -73,7 +77,8 @@ export function Reason({ claim, plain, source, index, chart }) {
   )
 }
 
-/* Everything a reader might want and almost none of them will open. */
+/* The full record, reachable without it occupying the default view. (The note
+   here used to guess at how many readers open it; nobody counted.) */
 export function AllDetail({ label = 'See every reading', children }) {
   const [open, setOpen] = React.useState(false)
   return (
@@ -82,7 +87,7 @@ export function AllDetail({ label = 'See every reading', children }) {
         border-y border-rule font-display text-ui font-medium text-ink
         transition-colors hover:text-accent">
         {label}
-        <ChevronRight aria-hidden className="size-4 transition-transform duration-200 ease-out
+        <Chevron aria-hidden className="size-4 transition-transform duration-200 ease-out
           group-data-[state=open]:rotate-90"/>
       </C.Trigger>
       <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
@@ -96,7 +101,7 @@ const STATS = 'grid gap-x-8 border-t border-rule sm:grid-cols-2 lg:grid-cols-3'
 function Stat({ label, value, unit, trend, children }) {
   return (
     <div className="border-b border-rule py-6">
-      <div className="lab">{label}</div>
+      <div className="note">{label}</div>
       <div className="mt-2 font-mono font-medium tabular-nums text-num leading-none text-ink">
         {value}{unit && <span className="ml-1 text-meta text-ink-3">{unit}</span>}
       </div>
@@ -110,12 +115,10 @@ function Stat({ label, value, unit, trend, children }) {
    all of them as measurements of a real child. Saying so once, at the top, is
    cheaper than a disclaimer under each figure. */
 export function SampleTag({ children = 'Sample data — not a real person' }) {
-  return (
-    <span className="inline-flex items-baseline gap-2 rounded-full border border-rule bg-sage/60 px-3 py-1
-      font-mono text-label uppercase tracking-[0.12em] text-ink-2">
-      <span aria-hidden className="mt-[0.35em] size-1.5 shrink-0 rounded-full bg-warn"/>{children}
-    </span>
-  )
+  /* Badge's `demo` variant is this disclosure's own variant: it carries the
+     warn hue in the border, bed and text, so the hand-rolled mist pill with a
+     warn dot glued to it — one colour doing the work of three — is gone. */
+  return <Badge variant="demo">{children}</Badge>
 }
 
 /* The dial, the sentence and the four rows are one unit on every screen that
@@ -131,7 +134,7 @@ function Rings({ score, usual, rings, children }) {
           picked={picked} onPick={id => setPicked(p => p === id ? null : id)}/>
         <div className="min-w-0">
           {children}
-          <h2 className="mt-8 lab font-normal">Each signal, out of 100</h2>
+          <h2 className="mark mt-8">Each signal, out of 100</h2>
           <RainbowKey className="mt-3" rings={rings} picked={picked}
             onPick={setPicked}/>
         </div>
@@ -146,7 +149,7 @@ export function StudentBody({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-bold text-ink">Today</h2>
+        <h2 className="font-display text-row font-medium text-ink">Today</h2>
         <Label>Thursday · 4:10 pm</Label>
         <SampleTag/>
       </div>
@@ -164,17 +167,20 @@ export function StudentBody({ go, openTab }) {
 
       {/* A teen tester went looking for this first and had to read it off a
           parent's screen, in the third person. It belongs here, in first person. */}
-      <ScrollIn as="div"><button onClick={() => openTab ? openTab('shared') : go('privacy')}
-        className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
-          border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
+      {/* Card `interactive` in place of the hand-rolled border / hover stack
+          this row carried — the same eight classes were copied onto the parent
+          screen's row below, so the two could drift apart on any edit. */}
+      <ScrollIn as="div"><Card interactive as="button"
+        onClick={() => openTab ? openTab('shared') : go('privacy')}
+        className="mt-8 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
         <span className="text-body text-ink">What you write in the app stays on your device.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
-        <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button></ScrollIn>
+        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+      </Card></ScrollIn>
 
       <AllDetail>
-        <h3 className="lab font-normal">Across today</h3>
-        <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range. Hover the line.</p>
+        <h3 className="mark">Across today</h3>
+        <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range.</p>
         <DayChart data={DATA.day} band={DATA.band}/>
         <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds from
           the previous minute of readings, and compared with your own last two weeks. Each ring above is
@@ -190,7 +196,7 @@ export function ParentBody({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-bold text-ink">Maya</h2>
+        <h2 className="font-display text-row font-medium text-ink">Maya</h2>
         <Label>This week · shared since March</Label>
         <SampleTag/>
       </div>
@@ -203,20 +209,20 @@ export function ParentBody({ go, openTab }) {
       </Rings>
 
       <ScrollIn as="section" className="mt-12">
-        <h2 className="lab font-normal">What the week looked like</h2>
+        <h2 className="mark">What the week looked like</h2>
         <div className="mt-2 border-t border-rule">
           <Reason index={0}
             claim="Three of five school days were above her normal before lunch."
             plain="Monday, Wednesday and Thursday. Her normal is worked out from her own last two weeks. She is never compared with other students."
             source="Daily average against her own normal range"
             chart={<><WeekStrip days={DATA.week} band={DATA.weekBand}/>
-              <p className="mt-2 font-mono text-label tabular-nums text-ink-3">3 of 7 above</p></>}/>
+              <p className="mt-2 font-mono text-tick tabular-nums text-ink-3">3 of 7 above</p></>}/>
           <Reason index={1}
             claim="The weekend was normal, so this is about school hours."
             plain="Saturday and Sunday were both inside her normal range. A week that was high every day would point to something else."
             source="School days and weekend, compared"
             chart={<><WeekStrip days={DATA.week.slice(5)} band={DATA.weekBand}/>
-              <p className="mt-2 font-mono text-label tabular-nums text-ink-3">Sat 43 · Sun 45</p></>}/>
+              <p className="mt-2 font-mono text-tick tabular-nums text-ink-3">Sat 43 · Sun 45</p></>}/>
         </div>
       </ScrollIn>
 
@@ -224,16 +230,16 @@ export function ParentBody({ go, openTab }) {
         <p className="max-w-[52ch] text-sec text-ink-2">Thursday morning is worth asking about.</p>
       </ScrollIn>
 
-      <ScrollIn as="div"><button onClick={() => openTab ? openTab('shared') : go('privacy')}
-        className="mt-8 flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xs
-          border border-rule px-5 py-4 text-left transition-colors hover:border-ink hover:bg-sage/60">
+      <ScrollIn as="div"><Card interactive as="button"
+        onClick={() => openTab ? openTab('shared') : go('privacy')}
+        className="mt-8 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
         <span className="text-body text-ink">Her notes and her location are never shared with you.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
-        <ChevronRight aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button></ScrollIn>
+        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+      </Card></ScrollIn>
 
       <AllDetail label="See the whole week">
-        <h3 className="lab font-normal">The last seven days</h3>
+        <h3 className="mark">The last seven days</h3>
         <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is her normal range.</p>
         <WeekChart data={DATA.week} band={DATA.weekBand}/>
         <div className={cn(STATS, 'mt-8')}>

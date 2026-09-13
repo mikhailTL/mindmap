@@ -12,7 +12,7 @@ export function Parents({ go, tab = 'week', setTab }) {
   return (
     <SectionShell go={go} tabs={TABS} panes={PANES} tab={local} onTab={setTab || setLocal}
       title="For parents"
-      sub="How your child's week went, in one sentence, and the line you cannot cross."
+      sub="How your child's week went, in one sentence, and what you are never shown."
       note="Maya is not a real person and every number on this screen is generated."/>
   )
 }

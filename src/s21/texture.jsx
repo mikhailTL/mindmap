@@ -12,10 +12,10 @@ import { cn } from '../lib/utils'
  * Canvas colours have to be literal strings, so the two constants below mirror
  * tailwind.config.js. They are the only place a hex appears in this file. */
 const T = {
-  paper:  '#fcfcfb',
-  sage:   '#e7efeb',
-  ink:    [13, 43, 39],    // #0d2b27
-  accent: [15, 107, 98],   // #0f6b62
+  paper:  '#f8f6fc',
+  mist:   '#dce2f1',
+  ink:    [23, 31, 60],    // #171f3c
+  accent: [61, 82, 160],   // #3d52a0
 }
 
 /* ───────────────────────────── DOT PATTERN ───────────────────────────── */
@@ -303,7 +303,7 @@ void main() {
  * per-pixel noise reads as dirt rather than film. */
 const UNIFORMS = {
   colors: [
-    [0.9882, 0.9882, 0.9843], // paper  #fcfcfb — the ground
+    [0.9294, 0.9098, 0.9608], // paper  #ede8f5 — the ground
     [0.9554, 0.9595, 0.9552], // ink   @ 3.5%
     [0.9273, 0.9349, 0.9303], // ink   @ 6.5%
     [0.8953, 0.9313, 0.9243], // accent @ 10%
@@ -672,7 +672,7 @@ export default function KineticGrid({ children, className, globalColor = 'defaul
 
       /* Retokenised: the field is ink on paper. `default` warms toward the
        * teal accent as the pointer nears; `monochrome` stays pure ink on the
-       * sage surface. Neither state glows — the response is a darkening. */
+       * mist surface. Neither state glows — the response is a darkening. */
       const theme = {
         default: {
           bg: T.paper,
@@ -682,7 +682,7 @@ export default function KineticGrid({ children, className, globalColor = 'defaul
           ripple: T.accent.join(','),
         },
         monochrome: {
-          bg: T.sage,
+          bg: T.mist,
           lineActive: { r: T.ink[0], g: T.ink[1], b: T.ink[2], a: 0.28 },
           nodeActive: { r: T.ink[0], g: T.ink[1], b: T.ink[2], a: 0.5 },
           halo: T.ink.join(','),
@@ -870,7 +870,7 @@ export default function KineticGrid({ children, className, globalColor = 'defaul
       ref={wrapRef}
       className={cn(
         'relative w-full min-h-screen overflow-hidden',
-        globalColor === 'monochrome' ? 'bg-sage' : 'bg-paper',
+        globalColor === 'monochrome' ? 'bg-mist' : 'bg-paper',
         className,
       )}
     >

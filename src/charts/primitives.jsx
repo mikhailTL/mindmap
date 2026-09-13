@@ -20,7 +20,7 @@ export const scale = (v,d0,d1,r0,r1)=> d1===d0 ? r0 : r0+(v-d0)/(d1-d0)*(r1-r0)
 export function FigHead({ title, note }){
   return (
     <div className="mt-8 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-      <h2 className="font-display font-bold text-row text-ink">{title}</h2>
+      <h2 className="font-display font-medium text-row text-ink">{title}</h2>
       {note && <span className="text-sec text-ink-3">{note}</span>}
     </div>
   )
@@ -32,7 +32,7 @@ export function Stat({ label, value, unit, trend, children, className }){
     <div className={cn('py-6 border-b border-rule sm:px-6 sm:border-l sm:border-b-0',
       'first:sm:pl-0 first:sm:border-l-0 lg:[&:nth-child(3n+1)]:pl-0 lg:[&:nth-child(3n+1)]:border-l-0',
       className)}>
-      <div className="lab">{label}</div>
+      <div className="note">{label}</div>
       <div className="mt-2 font-mono font-medium text-stat leading-none tabular-nums text-ink">
         {value}{unit && <span className="ml-1 text-meta text-ink-3">{unit}</span>}
       </div>

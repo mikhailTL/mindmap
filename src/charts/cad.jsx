@@ -280,7 +280,7 @@ export function PatchCAD({ src, exploded = false, selected = null, onSelect, scr
       <div ref={host} className={className} style={{ height: '100%', width: '100%' }}/>
       {state !== 'ready' && (
         <div className="pointer-events-none absolute inset-0 grid place-content-center px-6 text-center">
-          <p className="font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+          <p className="font-mono text-tick text-ink-3">
             {state === 'loading' ? 'Loading the model…'
               : state === 'unsupported' ? 'This browser cannot draw 3D. The diagram beside it carries the same information.'
               : 'The model did not load. The diagram beside it carries the same information.'}

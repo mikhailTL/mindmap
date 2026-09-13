@@ -15,9 +15,6 @@ const KEY_STEP = 2
 const KEY_STEP_LARGE = 10
 const LABEL_FADE = 12
 
-/* Canvas-free, but the divider needs a literal colour for the ring shadow. */
-const ACCENT_RGB = '15 107 98' // accent #0f6b62
-
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v)
 const lerp = (a, b, t) => a + (b - a) * t
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -327,8 +324,8 @@ export function CompareReveal({
            * dark hole in the frame. */
           className={cn(
             'pointer-events-none absolute top-4 z-[8] rounded-full px-3 py-1 transition-opacity duration-300',
-            'border border-rule bg-paper/85 backdrop-blur-[6px]',
-            'font-mono text-label uppercase tracking-[0.12em] text-ink-2',
+            'border border-ink bg-paper',
+            'font-mono text-tick text-ink-2',
             i === 0 ? 'left-4' : 'right-4',
           )}
         >
@@ -353,13 +350,16 @@ export function CompareReveal({
           onKeyDown={onKeyDown}
           className={cn(
             'pointer-events-auto absolute left-1/2 top-1/2 grid size-11 -translate-x-1/2 -translate-y-1/2',
-            'cursor-ew-resize place-items-center rounded-full p-0 backdrop-blur-[4px] transition-shadow duration-200',
-            'border-2 border-accent text-accent bg-paper/85',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+            'cursor-ew-resize place-items-center rounded-field p-0 transition-colors duration-200',
+            /* The handle sat on a 6px halo built from a hand-written rgb
+             * triple of the retired green accent — stale, and a spread ring
+             * besides, which is the one shadow shape this system does not
+             * have. It is now a flat accent-wash bed under the same 2px
+             * accent border: the chevrons read at 5.56 : 1 on #dde3f6 and
+             * nothing glows. The local focus ring went with it — the site has
+             * exactly one focus treatment and it lives in input.css. */
+            'border-2 border-accent text-accent bg-accent-wash',
           )}
-          /* One accent halo instead of the original's two-layer glow: on paper
-           * the outer 26px bloom just looked like a printing error. */
-          style={{ boxShadow: `0 0 0 6px rgb(${ACCENT_RGB} / 0.14)` }}
         >
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
             <path d="M6 1 L1 7 L6 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
