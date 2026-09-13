@@ -58,13 +58,13 @@ function Row({ s, rank, onOpen }) {
                 look worse than the worsening one. */}
             <span className="flex h-1.5 max-w-[13rem] flex-1 items-stretch" role="img"
               aria-label={`${dir === 'worse' ? 'Worse' : dir === 'better' ? 'Better' : 'Unchanged'} by ${Math.abs(s.velocity)} points this week`}>
-              <span className="flex flex-1 justify-end bg-sage">
-                {s.velocity < 0 && <span className="bg-calm"
+              <span className="flex flex-1 justify-end overflow-hidden rounded-l-full bg-sage">
+                {s.velocity < 0 && <span className="rounded-full bg-calm"
                   style={{ width: Math.min(100, Math.abs(s.velocity) * 6) + '%' }}/>}
               </span>
               <span className="w-px bg-ink-3"/>
-              <span className="flex flex-1 bg-sage">
-                {s.velocity > 0 && <span className="bg-warn"
+              <span className="flex flex-1 overflow-hidden rounded-r-full bg-sage">
+                {s.velocity > 0 && <span className="rounded-full bg-warn"
                   style={{ width: Math.min(100, s.velocity * 6) + '%' }}/>}
               </span>
             </span>
@@ -395,7 +395,7 @@ function Cohort() {
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
                 <span className="font-mono text-sec tabular-nums text-ink-3">{d.mean}</span>
-                <div className={cn('w-full rounded-t-sm', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
+                <div className={cn('w-full rounded-t-lg', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
                   style={{ height: (d.mean / 100) * 120 + 'px' }}/>
                 <span className="font-mono text-label text-ink-3">{d.label}</span>
               </div>

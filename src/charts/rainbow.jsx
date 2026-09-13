@@ -63,21 +63,17 @@ function useCount(value, on = true) {
   return shown
 }
 
-function Band({ id, r, glow, pct, dim }) {
+/* Flat, opaque, round-ended. No blur, no gradient, no partial opacity: a
+   blurred copy under a band makes the edge look out of focus, and a gradient
+   spends half the band's length being a duller version of its own colour.
+   One solid paint at full strength is both brighter and sharper. */
+function Band({ r, glow, pct, dim }) {
   const shown = useCount(pct)
-  const [x, y] = pol(r, 180 + 180 * Math.max(0.0001, Math.min(1, shown / 100)))
   return (
-    <g opacity={dim ? 0.22 : 1} className="transition-opacity duration-200"
+    <g opacity={dim ? 0.24 : 1} className="transition-opacity duration-200"
       style={{ pointerEvents: 'none' }}>
-      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-sage" opacity="0.55"/>
-      {/* the bloom is the band again, blurred, sitting under it */}
-      <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} stroke={glow}
-        filter="url(#mm-bloom)" opacity="0.42"/>
-      <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} stroke={`url(#mm-g-${id})`}/>
-      {/* the hot end: a bright core with its own halo, so the band reads as
-          lit from its leading edge rather than painted flat */}
-      <circle cx={x} cy={y} r={6} fill={glow} opacity="0.3" filter="url(#mm-bloom)"/>
-      <circle cx={x} cy={y} r={3} className="fill-paper"/>
+      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-sage"/>
+      <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} strokeLinecap="round" stroke={glow}/>
     </g>
   )
 }
@@ -112,41 +108,13 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         aria-label={`${score} out of 100${usual != null ? `, usually ${usual}` : ''}. 0 is calm, 100 is peak.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
-          <defs>
-            <filter id="mm-bloom" x="-25%" y="-25%" width="150%" height="150%">
-              <feGaussianBlur stdDeviation="3.5"/>
-            </filter>
-            {/* the arch sweeps left to right, so a horizontal ramp across each
-                band's own box runs along it: deep at the foot, hot at the tip */}
-            {rings.map(r => {
-              const s2 = SENSORS[r.id] || r
-              return (
-                <linearGradient key={r.id} id={`mm-g-${r.id}`} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%"   stopColor={s2.deep || s2.color || s2.glow}/>
-                  <stop offset="62%"  stopColor={s2.glow || s2.color}/>
-                  <stop offset="100%" stopColor={s2.glow || s2.color}/>
-                </linearGradient>
-              )
-            })}
-            {/* something for the bloom to fall on; pure paper swallows it */}
-            <radialGradient id="mm-ground" cx="50%" cy="88%" r="62%">
-              <stop offset="0%"   stopColor="#e7efeb" stopOpacity="0.5"/>
-              <stop offset="100%" stopColor="#e7efeb" stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          <rect x="0" y="0" width={VW} height={VH} fill="url(#mm-ground)" style={{ pointerEvents:'none' }}/>
+
           {rings.map((r, i) => {
             const s = SENSORS[r.id] || r
             return (
               <React.Fragment key={r.id}>
-                <Band id={r.id} r={RADII[i]} glow={s.glow || s.color} pct={r.value}
+                <Band r={RADII[i]} glow={s.glow || s.color} pct={r.value}
                   dim={picked != null && picked !== r.id}/>
-                {/* hairline between touching bands, so the boundary shows
-                    without opening the gap that makes this look like rings */}
-                {i < rings.length - 1 && (
-                  <path d={arcPath(RADII[i] - BAND / 2, 100)} fill="none" strokeWidth="1"
-                    className="stroke-paper" style={{ pointerEvents:'none' }}/>
-                )}
               </React.Fragment>
             )
           })}
@@ -190,10 +158,10 @@ export function RainbowKey({ rings, picked, onPick, className }) {
         const Icon = s.icon
         const tone = s.glow || s.color
         return (
-          <li key={r.id}>
+          <li key={r.id} className="h-full">
             <button onClick={() => onPick(on ? null : r.id)} aria-expanded={on}
               style={{ borderLeftColor: tone, background: on ? `${tone}12` : undefined }}
-              className={cn('flex min-h-[104px] w-full flex-col justify-between gap-3 rounded-xs',
+              className={cn('flex h-full min-h-[104px] w-full flex-col justify-between gap-3 rounded-xs',
                 'border border-l-4 border-rule p-4 text-left transition-colors duration-150',
                 'hover:bg-sage/50 focus-visible:bg-sage/50')}>
               <span className="flex w-full items-start justify-between gap-3">
@@ -237,19 +205,14 @@ export function SensorTrace({ data, color, h = 96, className }) {
       className={cn('block h-24 w-full', className)}>
       <defs>
         <linearGradient id={`mm-fill-${color.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.30"/>
+          <stop offset="0%" stopColor={color} stopOpacity="0.16"/>
           <stop offset="100%" stopColor={color} stopOpacity="0"/>
         </linearGradient>
-        <filter id={`mm-line-${color.slice(1)}`} x="-10%" y="-40%" width="120%" height="180%">
-          <feGaussianBlur stdDeviation="3"/>
-        </filter>
       </defs>
       <path d={`${d} L${W - p} ${h} L${p} ${h} Z`} fill={`url(#mm-fill-${color.slice(1)})`}/>
-      <path d={d} fill="none" stroke={color} strokeWidth="3" opacity="0.3"
-        filter={`url(#mm-line-${color.slice(1)})`} vectorEffect="non-scaling-stroke"/>
-      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
+      <path d={d} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-      <circle cx={last[0]} cy={last[1]} r="3.5" fill={color} vectorEffect="non-scaling-stroke"/>
+      <circle cx={last[0]} cy={last[1]} r="4" fill={color} vectorEffect="non-scaling-stroke"/>
     </svg>
   )
 }
