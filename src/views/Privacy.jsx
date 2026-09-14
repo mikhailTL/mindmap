@@ -34,7 +34,9 @@ export function PrivacyBody({ go }) {
           the pair already had a border, a heading and a body, which is a card
           drawn by hand. The top rule is the only thing that survives the swap,
           because it is what tells the two columns apart at a glance. */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-2 lg:gap-14">
+      {/* mt was 8; the vertical scale across these views is three fixed steps
+          — 10 inside a section, 14 between sections, 20 between page regions. */}
+      <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-14">
         <ScrollIn as="section" className="h-full">
           <Card className="h-full border-t-2 border-t-accent">
             <CardHeader>
@@ -79,8 +81,10 @@ export function PrivacyBody({ go }) {
       </div>
 
       <ScrollIn>
+        {/* Was "Everyone, side by side", which named a layout rather than its
+            subject. */}
         <h3 className="mt-14 font-display text-sub font-medium tracking-tight text-ink">
-          Everyone, side by side</h3>
+          Student, parent and counselor compared</h3>
         <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </ScrollIn>
     </>

@@ -2,143 +2,216 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
-import { IMG, POS } from '../lib/assets'
 import { RevealLines, ScrollIn, ScrollRow, Tally } from '../s21/motion'
 import { ArrowRight, Check } from '../ui/marks'
 import { ExplodedStack } from './Patch'
-import { RAINBOW } from '../lib/sensors'
-import { CompareReveal } from '../s21/compare'
-import { HowItWorks, WhoSeesWhat } from '../charts/infographics'
+import { Onboarding } from '../s21/onboarding'
+import { RainbowDial } from '../charts/rainbow'
+import { studentRings } from '../lib/readings'
+import { triage, tierOf, TIER_LABEL } from '../lib/caseload'
+import { DATA } from '../lib/assets'
+import { HowItWorks, WhoSeesWhat, WeekStrip } from '../charts/infographics'
 import { cn } from '../lib/utils'
 
+/* The homepage used to be a marketing page with the three app doors buried
+   two screens down, under a stock photograph of students on some steps and a
+   drag-to-compare pair of more stock photographs. A first visitor scrolled
+   past two images of nobody in particular before reaching the only thing the
+   page is for.
+ *
+ * It is a launcher now. Hero, then twenty seconds of animation that says what
+ * MindMap is, then the three screens as the largest thing on the page. The
+ * stock photography is gone entirely — every picture here is either the
+ * product drawn or the product's own data.
+ *
+ * Vertical rhythm: 14 between sections, 20 between page regions, 10 inside a
+ * section. The old file used py-[4.5vw] / py-[7vw] / my-[6vw], which on a
+ * 1920 display opened 134px gaps that no content asked for and which differed
+ * section to section. Viewport-relative vertical space is how a page ends up
+ * with holes in it. */
 
 const FACTS = [
-  { n:1,  suffix:'Hz',  label:'Read once a second',   line:'All day, on the forearm.' },
-  { n:4,  suffix:'',    label:'Signals',              line:'Heart, sweat, temperature, movement.' },
-  { n:5,  suffix:'',    label:'Smallest group shown', line:'Anything smaller returns nothing.' },
+  { n:1,  suffix:'Hz',  label:'One reading a second', line:'All day, from the forearm.' },
+  { n:4,  suffix:'',    label:'Signals measured',     line:'Heart, sweat, temperature, movement.' },
+  { n:5,  suffix:'',    label:'Smallest group a school can see', line:'Under five students returns nothing.' },
   { n:0,  suffix:'',    label:'Raw readings a parent sees', line:'One number and one sentence.' },
 ]
 
-const DOORS = [
-  { id:'student', kicker:'For students', title:'Today, in one number.',
-    line:'Your own reading, what moved it, and what never leaves your phone.',
-    cta:'Open the student view' },
-  { id:'parent',  kicker:'For parents',  title:'This week, in one sentence.',
-    line:'How the week went, and the line the app will not cross.',
-    cta:'Open the parent view' },
-  { id:'pro',     kicker:'For schools',  title:'Who to see first.',
-    line:'Ranked by how fast a student is changing, and only as far as a guardian agreed.',
+/* The three screens, in the order a person meets them: the one wearing it,
+   the one it reports to, then the school. Each tile shows that screen's own
+   real chart rather than a photograph of somebody looking at a phone. */
+const SCREENS = [
+  { id:'student', who:'Student',
+    title:'Your own reading, today',
+    line:'One number out of 100, the four signals behind it, and what leaves your phone.',
+    cta:'Open the student screen' },
+  { id:'parent',  who:'Parent',
+    title:'How the week went',
+    line:'One sentence a week, the days that ran high, and the things you are never shown.',
+    cta:'Open the parent screen' },
+  { id:'pro',     who:'School counselor',
+    title:'Who to see on Monday',
+    line:'Your caseload ranked by how fast a student is changing — only as far as a guardian agreed.',
     cta:'Open the counselor console' },
 ]
 
-export function Overview({ go }){
-  React.useEffect(()=>{
-    if(!window.gsap || !window.ScrollTrigger) return
-    const mm = gsap.matchMedia()
-    // The drawing separates and tips as the section crosses the viewport.
+/* Each preview is the live component that screen actually uses, on that
+   screen's own data. A screenshot would go stale the first time a chart
+   changed, and a photograph of somebody holding a phone shows nothing at all. */
+function Preview({ id }) {
+  if (id === 'student') {
+    /* 190 was too small: the dial draws its score, its unit and both end
+       labels inside the same box, and at that size they collided. */
+    return <RainbowDial score={51} usual={46} rings={studentRings()} size={268}/>
+  }
+  if (id === 'parent') {
+    return (
+      <div className="w-full max-w-[17rem]">
+        <WeekStrip days={DATA.week} band={DATA.weekBand}/>
+        <p className="mt-4 text-sec text-ink-2">Two days above her usual range.</p>
+      </div>
+    )
+  }
+  /* The counselor screen is a ranked list, so the preview is the ranking:
+     four rows at their real scores, in the real order, in the tier colour. */
+  /* `roster()` calls the reading `current`, not `score` — reading `s.score`
+     gave every row undefined, which tierOf floors to 'info', so the preview
+     rendered four identical "Steady" rows and four zero-width bars. */
+  const rows = triage().slice(0, 4)
+  return (
+    <ul className="m-0 w-full max-w-[17rem] list-none space-y-3 p-0">
+      {rows.map(s => {
+        const tier = tierOf(s.current)
+        return (
+          <li key={s.id} className="grid grid-cols-[1fr_4.5rem] items-center gap-3">
+            <span className="block h-2.5 w-full rounded-bar bg-rule/70">
+              <span className={cn('block h-2.5 rounded-bar',
+                tier === 'crisis' ? 'bg-crit' : tier === 'high' ? 'bg-warn' : 'bg-accent')}
+                style={{ width: `${s.current}%` }}/>
+            </span>
+            <span className="font-mono text-fine tabular-nums text-ink-2">{TIER_LABEL[tier]}</span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+export function Overview({ go }) {
+  React.useEffect(() => {
+    if (!window.gsap || !window.ScrollTrigger) return
+    /* The drawing separates and tips as the hero crosses the viewport. */
     gsap.utils.toArray('.lyr').forEach(l =>
       gsap.set(l, { z: { '0':128, '1':20, '2':-88 }[l.dataset.i] }))
-    gsap.fromTo('#stack', { rotateX:70, rotateZ:-42 }, { rotateX:50, rotateZ:-22, ease:'none',
-      scrollTrigger:{ trigger:'#build', start:'top bottom', end:'bottom top', scrub:.6 }})
-    gsap.utils.toArray('.par').forEach(img=>
-      gsap.fromTo(img,{scale:1.1,yPercent:-3},{scale:1,yPercent:3,ease:'none',
-        scrollTrigger:{trigger:img.parentElement,start:'top bottom',end:'bottom top',scrub:true}}))
-    gsap.utils.toArray('.mosfig').forEach((f,i)=>
-      gsap.fromTo(f,{yPercent:14,rotate:i%2?2.4:-2.4,scale:.94,opacity:0},
-        {yPercent:0,rotate:0,scale:1,opacity:1,duration:1,ease:'expo.out',delay:(i%4)*.06,
-         scrollTrigger:{trigger:f,start:'top 94%',once:true}}))
-    return ()=>mm.revert()
-  },[])
+    gsap.fromTo('#stack', { rotateX:50, rotateZ:-26 }, { rotateX:30, rotateZ:-14, ease:'none',
+      scrollTrigger:{ trigger:'#hero', start:'top top', end:'bottom top', scrub:.6 } })
+  }, [])
 
   return (
     <main>
-      {/* Three lines at text-page rendered as five in this column and pushed
-          the three doors below the fold on a laptop — the one thing a first
-          visitor is meant to do was off screen. */}
-      <section className="wrap grid gap-8 py-10 sm:py-[4.5vw] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-14">
+      {/* "One number. One sentence." told a visitor nothing about what this is.
+          The heading now names the product and the mechanism in one line. */}
+      <section id="hero" className="wrap grid items-center gap-10 py-14
+        lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-20">
         <div>
           <RevealLines as="h1" className="font-display font-medium text-sect text-ink"
-            lines={['One number.', <>One <em className="not-italic text-accent">sentence</em>.</>]}/>
-          <ScrollIn as="p" className="mt-6 max-w-read text-lead leading-[1.55] text-ink-2">
-            A small patch on the forearm reads the body once a second. The app turns that into a
-            sentence, and the reasons behind it if you want them.
+            lines={['A patch reads your body.', <>The app says <em className="not-italic text-accent">what changed</em>.</>]}/>
+          <ScrollIn as="p" className="mt-6 max-w-read text-lead leading-[1.5] text-ink-2">
+            MindMap is a sticker-sized patch for the forearm and a phone app. It measures four
+            signals once a second and reports one number and one plain sentence a day.
           </ScrollIn>
-          {/* Testers tapped the loudest button first and landed in a
-              questionnaire about themselves. The front door now asks who you are. */}
-          <ScrollIn className="mt-9">
-            <p className="note">Open the app as</p>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              <Button onClick={()=>go('student')}>A student<span aria-hidden>→</span></Button>
-              <Button onClick={()=>go('parent')}>A parent<span aria-hidden>→</span></Button>
-              <Button variant="outline" onClick={()=>go('pro')}>A school counselor</Button>
+          <ScrollIn className="mt-10">
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => go('student')}>Open the app<span aria-hidden>→</span></Button>
+              <Button variant="outline" onClick={() => go('patch')}>See the hardware</Button>
             </div>
-            <button onClick={()=>go('check')}
+            <button onClick={() => go('check')}
               className="mt-4 min-h-[44px] font-display text-meta font-medium text-accent underline
                 underline-offset-4 hover:text-accent-ink">
-              Or try it on yourself — six questions, no patch needed
+              Or score yourself in six questions — no patch needed
             </button>
           </ScrollIn>
         </div>
-        {/* A stock photograph of a teenager looking thoughtfully off-camera is
-            the image every wellbeing product opens on. This is the thing
-            itself, drawn: the three layers of the patch pulled apart, which
-            says what it is made of in one look and does not need WebGL, a
-            363 KB download or a GPU to say it. */}
+        {/* The stock photograph of a teenager looking thoughtfully off-camera
+            is the image every wellbeing product opens on. This is the thing
+            itself, drawn: the three layers of the patch pulled apart. */}
         <figure className="relative m-0">
-          <ExplodedStack className="h-[min(56vh,460px)] w-full" caption={null} shift="-7%, 9%"/>
-          <figcaption className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <span className="note">Three layers: shell, board, sensor face.</span>
-            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              {RAINBOW.map(s2 => (
-                <span key={s2.id} className="inline-flex items-baseline gap-1.5 font-mono text-fine text-ink-3">
-                  <span aria-hidden className="size-2 translate-y-[-0.1em] rounded-chip"
-                    style={{ background: s2.glow }}/>{s2.name}
-                </span>
-              ))}
-            </span>
+          <ExplodedStack className="h-[min(52vh,440px)] w-full" caption={null}
+            size="w-[min(96%,470px)]"/>
+          <figcaption className="note mt-2 text-center">
+            The patch, in three layers: shell, board, sensor face.
           </figcaption>
         </figure>
       </section>
 
-      <div className="my-12 overflow-hidden sm:my-[6vw]">
-        <img src={IMG.steps} alt="Students sitting together on the steps outside school"
-          width="1200" height="514" style={{ objectPosition: POS.steps }}
-          className="par aspect-[21/9] w-full object-cover"/>
-      </div>
+      <Separator weight="ink"/>
 
-      <section className="wrap pb-4 pt-2 sm:pb-8">
-        <h2 className="mark">Skin, phone, sentence</h2>
-        <HowItWorks className="mt-4"/>
+      {/* Twenty seconds that carry the whole idea, for the visitor who will not
+          read four paragraphs to find out what this is. */}
+      <section className="wrap py-14">
+        <h2 className="mark">What MindMap does</h2>
+        <Onboarding className="mt-8"/>
       </section>
 
-      <section className="wrap py-14 sm:py-[7vw]">
-        <RevealLines className="max-w-[18ch] font-display font-medium text-sect text-ink"
-          lines={['Nothing shows', 'on the outside.']}/>
-        <ScrollIn as="p" className="mt-5 text-lead leading-[1.55] text-ink-2">
-          The patch reads the difference hours before anyone thinks to ask.
-        </ScrollIn>
-        <figure className="m-0 mt-9">
-          <CompareReveal className="aspect-[16/9] w-full" 
-            labels={['A hard day', 'A good day']}
-            before={<img src={IMG.quiet} alt="A teenager alone by a window on a grey afternoon"
-              width="1200" height="675" style={{ objectPosition: POS.quiet }}
-              className="size-full object-cover"/>}
-            after={<img src={IMG.bright} alt="Two teenagers laughing outdoors in the sun"
-              width="1200" height="675" style={{ objectPosition: POS.bright }}
-              className="size-full object-cover"/>}/>
-          <figcaption className="mt-4 max-w-[54ch] text-sec text-ink-2">
-            Drag across. Nothing was said on either day.
-          </figcaption>
-        </figure>
+      <Separator/>
+
+      {/* The reason this page exists, and now the largest thing on it.
+          Landing a first-time visitor straight into a screen full of readings
+          was the complaint: they arrived inside somebody's data with no idea
+          whose it was or why. They pick a person first. */}
+      <section id="screens" className="bg-mist/60">
+        <div className="wrap py-20">
+          <h2 className="font-display font-medium text-view leading-[1.1] text-ink">
+            Three screens. Pick whose you want to see.</h2>
+          <p className="mt-3 max-w-[56ch] text-lead text-ink-2">
+            The same second of physiology, cut three ways. Nobody downstream sees more than the
+            person wearing the patch agreed to.
+          </p>
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {SCREENS.map((s, i) => (
+              <ScrollRow key={s.id} index={i}>
+                <Card interactive as="button" type="button" onClick={() => go(s.id)}
+                  className="flex h-full flex-col">
+                  {/* The preview is the screen's own chart, sized down. A tile
+                      that shows nothing of its destination is a link with a
+                      picture on it. */}
+                  {/* place-content-center sizes the grid track to its content,
+                      so a preview asking for w-full collapsed to the width of
+                      its own labels and the bars measured zero. place-items
+                      keeps the track full-width and centres the child in it. */}
+                  <div className="grid min-h-[232px] place-items-center border-b border-rule
+                    bg-card px-6 py-7" aria-hidden>
+                    <Preview id={s.id}/>
+                  </div>
+                  <CardHeader className="pb-0 pt-5">
+                    <span className="font-mono text-fine uppercase tracking-[0.08em] text-ink-3">
+                      {String(i + 1).padStart(2, '0')} · {s.who}</span>
+                    <CardTitle as="span" className="text-head">{s.title}</CardTitle>
+                    <CardDescription>{s.line}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="mt-auto flex items-center gap-2.5 pt-5
+                    font-display text-meta font-medium text-accent">
+                    {s.cta}
+                    <ArrowRight className="size-[1.1rem] transition-transform duration-200
+                      group-hover:translate-x-1.5"/>
+                  </CardContent>
+                </Card>
+              </ScrollRow>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Four figures the rest of the site spends paragraphs on.
-          The band's edges were a hand-rolled `border-y border-rule`; the sourced
-          Separator draws the same hairline but names its rank, so a rule inside
-          a band and a rule between bands can no longer drift apart by hand. */}
+      <section className="wrap py-14">
+        <h2 className="mark">From skin to sentence</h2>
+        <HowItWorks className="mt-8"/>
+      </section>
+
+      <Separator/>
+
+      {/* Four figures the rest of the site spends paragraphs on. */}
       <section className="bg-mist">
-        <Separator/>
-        <div className="wrap grid gap-x-10 gap-y-8 py-11 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="wrap grid gap-x-10 gap-y-8 py-14 sm:grid-cols-2 lg:grid-cols-4">
           {FACTS.map((f, i) => (
             <ScrollRow key={f.label} index={i}>
               <p className="font-mono font-medium tabular-nums text-fig leading-none text-ink">
@@ -148,94 +221,32 @@ export function Overview({ go }){
             </ScrollRow>
           ))}
         </div>
-        <Separator/>
       </section>
 
-      {/* Three equal bordered cards in a row is the shape every landing page
-          reaches for, and these three are not equal: a student opens this
-          every day, a parent once a week, a counselor on a Monday morning.
-          Full-bleed rows, sized by how often each one is used, numbered down
-          the margin the way a chart numbers its bands. The third breaks the
-          measure and runs past the grid on the right. */}
-      <section id="views" className="border-y border-ink">
-        <div className="wrap pb-16 pt-12 sm:pb-24 sm:pt-16">
-          <div className="grid gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:items-end lg:gap-x-16">
-            <RevealLines className="max-w-[16ch] font-display font-medium text-sect text-ink"
-              lines={['One reading.', 'Three people.']}/>
-            {/* set against the headline's baseline rather than under it, so the
-                band reads as two columns of a chart rather than a stacked hero */}
-            <p className="max-w-[44ch] border-l-2 border-ruling pl-6 text-lead text-ink-2 lg:pb-2">
-              Nobody downstream sees more than the person wearing it agreed to.
-            </p>
-          </div>
-        </div>
-        <ol className="m-0 list-none p-0">
-          {DOORS.map((d, i) => (
-            <ScrollRow as="li" key={d.id} index={i}
-              className={cn('border-t border-rule', i === 0 && 'border-t-2 border-t-ink')}>
-              {/* Was a `.lift` button that re-declared by hand the leading accent
-                  rule, the mist wash and the focus state the sourced Card already
-                  ships under `interactive`. The card shell is flattened back to a
-                  full-bleed row — the panel radius and the box border belong to a
-                  card sitting on the sheet, not to a band running edge to edge —
-                  so the row inherits the state machine and nothing else. */}
-              <Card as="button" interactive onClick={() => go(d.id)}
-                className={cn('group block rounded-none border-y-0 border-r-0 bg-transparent',
-                  /* density varies by how often the screen is opened: daily
-                     gets the room, Monday-morning gets a line */
-                  i === 0 ? 'py-11 sm:py-14' : i === 1 ? 'py-9 sm:py-11' : 'py-7 sm:py-9')}>
-                <div className="wrap grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-5
-                  gap-y-3 lg:grid-cols-[4rem_minmax(0,32rem)_minmax(0,24rem)_auto] lg:gap-x-12">
-                  <span className="font-mono text-stat font-light tabular-nums text-ink-3">
-                    {String(i + 1).padStart(2, '0')}</span>
-                  <CardHeader className="min-w-0 gap-1.5 p-0">
-                    <span className="font-display text-tick font-medium text-ink-3">{d.kicker}</span>
-                    {/* CardTitle renders a span here: the row is inside a button,
-                        so a heading element would put a heading in the outline
-                        that no page section actually starts. */}
-                    <CardTitle as="span" className={cn('block', i === 0 ? 'text-major' : 'text-sub')}>
-                      {d.title}</CardTitle>
-                  </CardHeader>
-                  <CardDescription className="col-span-full max-w-[42ch] lg:col-span-1">
-                    {d.line}</CardDescription>
-                  <CardContent className="col-span-full flex items-center gap-2.5 p-0 font-display
-                    text-meta font-medium text-accent lg:col-span-1 lg:justify-self-end">
-                    {d.cta}
-                    <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                      group-hover:translate-x-1.5"/>
-                  </CardContent>
-                </div>
-              </Card>
-            </ScrollRow>
-          ))}
-        </ol>
-      </section>
-
-      <section className="wrap pb-14 sm:pb-20">
-        <h2 className="font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-          Who sees what.</h2>
+      <section className="wrap py-20">
+        <h2 className="font-display font-medium text-view leading-[1.1] text-ink">
+          Who can see what</h2>
         <WhoSeesWhat className="mt-8 max-w-[62rem]"/>
       </section>
+
+      <Separator/>
 
       {/* This was a moving marquee showing one or two items at a time. These
           are the strongest sentences on the site; a marquee cannot be read. */}
       <section className="bg-mist">
-        <Separator/>
-        <div className="wrap py-10">
-          <h2 className="mark">The rules</h2>
-          <ul className="mt-5 grid list-none gap-x-10 gap-y-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="wrap py-14">
+          <h2 className="mark">What MindMap will never do</h2>
+          <ul className="mt-6 grid list-none gap-x-10 gap-y-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              'A parent never sees a raw reading',
-              'A class under five students returns nothing',
-              'The student sets how long data is kept',
-              'Every time anyone opens a record, it is logged',
-              'Nothing is sold or shared with anyone else',
-              'Not a medical device',
+              'Show a parent a raw reading',
+              'Report on a class of under five students',
+              'Keep data longer than the student chooses',
+              'Open a record without logging it',
+              'Sell or share anything with anyone else',
+              'Diagnose — this is not a medical device',
             ].map(t => (
               <li key={t} className="flex items-start gap-3 text-meta text-ink">
-                {/* was an inline 20-box path at stroke 2.4, the one mark on this
-                    page drawn heavier than the rules around it */}
-                <Check className="mt-1 size-4 text-accent"/>
+                <Check className="mt-1 size-4 shrink-0 text-accent"/>
                 {t}
               </li>
             ))}

@@ -18,7 +18,7 @@ const PEOPLE = [
 const MORE = [
   ['The hours ahead','Which periods usually run hard, and a prompt before them.'],
   ['Your history','Ninety days. The worst stretches, and what ended them.'],
-  ['School','Readings by class, against the timetable.'],
+  ['Readings by class','Every class you take, laid against the timetable.'],
   ['What helps','The measured effect of each thing you have tried.'],
   ['Who can see what','Sharing, and the exact page a parent sees.'],
   ['Your patch','Pairing, placement, battery.'],
@@ -26,15 +26,20 @@ const MORE = [
 
 export function Hub({ go }){
   return (
-    <main className="wrap py-10 sm:py-[5vw]">
+    /* Was py-10 sm:py-[5vw]: on a 2560px display that resolved to 128px of
+       padding for no reason anyone could name. Fixed steps now — 10 inside a
+       section, 14 between sections, 20 between page regions. */
+    <main className="wrap py-14">
       <Label>Open the app</Label>
+      {/* Was "Who is this for?" — a question the page answers below rather than
+          a label for what is below. */}
       <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-        Who is this for?
+        Four views, one per person
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        Each view opens on one sentence.
+        Each one opens on a single sentence about the person it is for.
       </p>
-      <div className="mt-8 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {PEOPLE.map((t,i)=>(
           <ScrollRow key={t.h} index={i} className="h-full">
           <Card as="button" interactive onClick={()=>go(t.to)}>
@@ -56,8 +61,12 @@ export function Hub({ go }){
           </ScrollRow>
         ))}
       </div>
-      <h2 className="mt-12 font-display text-sub font-medium tracking-tight text-ink sm:mt-[5vw]">
-        Everything else
+      {/* "Everything else" said nothing about the six cards under it, all of
+          which are marked not built. The heading says that now, so the reader
+          knows before reading six cards. mt was 12 / [5vw]; this is the break
+          between the two regions of the page, so it is the largest step. */}
+      <h2 className="mt-20 font-display text-sub font-medium tracking-tight text-ink">
+        Planned screens, not built yet
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {MORE.map(([h,p,to],i)=>(

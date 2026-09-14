@@ -130,13 +130,19 @@ function Triage({ onOpen }) {
     byScore.findIndex(x => x.id === fastest.id)]
   return (
     <>
-      <h2 className="font-display text-head font-medium tracking-tight text-ink">Who to see first</h2>
+      {/* Was "Who to see first", which posed the board's question without
+          naming the board. The question is worth keeping, so it leads the
+          paragraph instead. */}
+      <h2 className="font-display text-head font-medium tracking-tight text-ink">
+        Your caseload, ranked by weekly change</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <Sub><b className="font-medium text-ink">
+        {/* "Ranked by weekly velocity" was a second sentence saying what the
+            heading now says, so the two terms are folded into one line and the
+            hover definitions are unchanged. */}
+        <Sub>Who to see first. <b className="font-medium text-ink">
           <Term label="Stress index"
             def="One score a day per student, 0 to 100, read against that student's own baseline rather than against the year group."/>,
-          {' '}0 to 100. Higher is worse.</b>
-          {' '}Ranked by weekly{' '}
+          {' '}0 to 100, higher is worse</b>, ordered by weekly{' '}
           <Term label="velocity"
             def="The change in a student's seven-day average from one week to the next. It is what orders this list, so a rising student at 55 sits above a level one at 70."/>.</Sub>
         <span className="font-mono text-tick text-ink-3">
@@ -162,7 +168,10 @@ function Triage({ onOpen }) {
 
       {/* "Why this order" was the most useful thing on the screen and sat 240px
           below the fold. It leads now. */}
-      <div className="mt-7 grid gap-x-10 gap-y-4 border-y border-rule py-5 sm:grid-cols-2">
+      {/* mt was 7. The scale here is three fixed steps — 10 inside a section,
+          14 between sections, 20 between page regions — so blocks at the same
+          level of the outline no longer each pick their own number. */}
+      <div className="mt-10 grid gap-x-10 gap-y-4 border-y border-rule py-5 sm:grid-cols-2">
         <div className="border-l-2 border-accent pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-warn">+{fastest.velocity}
             <span className="ml-2 text-tick text-ink-3">{fastest.name} · first on the list</span></p>
@@ -176,7 +185,7 @@ function Triage({ onOpen }) {
         </div>
       </div>
 
-      <ol className="mt-7 list-none space-y-2 p-0">
+      <ol className="mt-10 list-none space-y-2 p-0">
         {ranked.map((s, i) => <Row key={s.id} s={s} rank={i + 1} onOpen={onOpen}/>)}
       </ol>
       {/* The first half of this footnote defined velocity; that definition is
@@ -184,7 +193,7 @@ function Triage({ onOpen }) {
       <p className="mt-4 border-t border-ink pt-3 text-meta text-ink-3">
         Right of centre on the bar is worse.</p>
 
-      <div className="mt-9 grid gap-5 lg:grid-cols-2">
+      <div className="mt-14 grid gap-5 lg:grid-cols-2">
         <Limited heading="Score only — no trends shared"
           note="Guardian consented to a score only. No rank is shown for these students.">
           {scoreOnly().map(s => (
@@ -244,9 +253,11 @@ function OneStudent({ who, setWho }) {
           are the record for this student, so they are the same card the record
           would have been, with the ruling edge marking what is withheld. */}
       {!s.showScore && (
-        <Card as="section" className="mt-7 border-l-[3px] border-l-ruling">
+        <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
           <CardHeader className="p-6 pb-0">
-            <CardTitle as="h3" className="text-row">Nothing to show, by consent</CardTitle>
+            {/* "Nothing to show, by consent" read as an error state. It is a
+                consent scope, and the card says which one. */}
+            <CardTitle as="h3" className="text-row">No readings shared for this student</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-3">
             <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
@@ -258,7 +269,7 @@ function OneStudent({ who, setWho }) {
       )}
 
       {s.showScore && !s.showTrend && (
-        <Card as="section" className="mt-7 border-l-[3px] border-l-ruling">
+        <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
           <CardHeader className="p-6 pb-0">
             <CardTitle as="h3" className="text-row">Score today: {s.current} out of 100</CardTitle>
           </CardHeader>
@@ -272,7 +283,7 @@ function OneStudent({ who, setWho }) {
       )}
 
       {s.showTrend && <>
-      <div className="mt-7 grid gap-8 lg:grid-cols-3">
+      <div className="mt-10 grid gap-8 lg:grid-cols-3">
         <Panel label="What changed this week">
           <div className={cn('font-mono text-stat font-medium tabular-nums',
             s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
@@ -286,7 +297,7 @@ function OneStudent({ who, setWho }) {
           </ul>
         </Panel>
 
-        <Panel label="What is driving it" action="share of this week's rise">
+        <Panel label="What is driving the rise" action="share of this week's rise">
           <ul className="space-y-3.5">
             {drivers.map(d => (
               <li key={d.label}>
@@ -310,7 +321,7 @@ function OneStudent({ who, setWho }) {
         </Panel>
       </div>
 
-      <div className="mt-9 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Panel label="The last 45 days">
           <svg viewBox="0 0 720 214" className="block w-full overflow-visible" role="img"
             aria-label="Daily mean stress index over 45 days, rising through the last two weeks.">
@@ -370,9 +381,11 @@ function Cohort() {
           and neither said which population it meant. */}
       <Sub className="mt-2">All {SCHOOL_N} consented students in the building, not the eight on your
         caseload. Nobody here is identifiable.</Sub>
-      <div className="mt-8 grid gap-x-12 gap-y-10 lg:grid-cols-3">
+      <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <h3 className="mark">School-wide pattern</h3>
+          {/* "School-wide pattern" repeated the h2 directly above it. The two
+              findings under it are what the section actually is. */}
+          <h3 className="mark">The two clearest patterns</h3>
           <RuleDraw className="mt-2.5"/>
           <ScrollIn className="mt-6">
             <h4 className="font-display text-row font-medium tracking-tight text-ink">
@@ -398,7 +411,9 @@ function Cohort() {
           <Note>Consented students only, from the same windows the individual scores use.</Note>
         </section>
 
-        <Panel as="h3" label="Privacy floor">
+        {/* "Privacy floor" named a policy in a term nobody outside the team
+            uses. The rule itself is unchanged. */}
+        <Panel as="h3" label="Smallest group we will show">
           <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
           <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
           <p className="mt-4 text-meta text-ink-2">
@@ -411,7 +426,7 @@ function Cohort() {
         </Panel>
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <Panel label="Stress by class period — school-wide">
           <ul className="space-y-4">
             {COHORT_PERIOD.map(p => (
@@ -435,7 +450,7 @@ function Cohort() {
           </ul>
         </Panel>
 
-        <Panel label="By weekday">
+        <Panel label="Stress by weekday — school-wide">
           <div className="flex h-[170px] items-end justify-between gap-3">
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
@@ -450,7 +465,7 @@ function Cohort() {
         </Panel>
       </div>
 
-      <Panel className="mt-10" label="What a school does with this">
+      <Panel className="mt-14" label="What a school does with this">
         {/* The first bullet restated the period figure from the top of the tab
             and hard-coded 31% while the panel above computes it, so the two
             would disagree the moment the data moved. */}
@@ -489,7 +504,9 @@ function Escalation() {
             Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The escalation
             protocol ran automatically.</p>
           <div className="mt-5 border-t border-rule pt-4">
-            <h4 className="mark">Protocol</h4>
+            {/* "Protocol" named the document, not the five checkboxes under
+                it. */}
+            <h4 className="mark">Escalation steps</h4>
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
                 <li key={step}>
@@ -515,7 +532,7 @@ function Escalation() {
           </CardContent>
         </Card>
 
-        <Panel as="h3" label="Referrals">
+        <Panel as="h3" label="Referrals already open">
           <ul className="divide-y divide-rule">
             {REFERRALS.map(r => (
               <li key={r.student + r.opened} className="py-3.5 first:pt-0">
@@ -537,13 +554,13 @@ function Escalation() {
         steps={PROTOCOL.length} onConfirm={o => setClosed(o)}/>
 
       {closed && (
-        <p className="mt-6 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
+        <p className="mt-10 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
           Written to the log at 2:41 PM. The escalation clock has stopped.
           <span className="mt-1 block text-meta text-ink-3">“{closed}”</span>
         </p>
       )}
 
-      <Panel as="h3" className="mt-10" label="Audit log" action="Append-only · cannot be edited or deleted">
+      <Panel as="h3" className="mt-14" label="Audit log" action="Append-only · cannot be edited or deleted">
         <Table>
           <THead><TR>{['When','Actor','Action','Subject'].map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
@@ -597,7 +614,7 @@ function Consent() {
           score. A student can narrow or withdraw any scope except a crisis alert, at any time.</Note>
       </Panel>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <Panel as="h3" label="Data retention">
           <div className="font-mono text-stat font-medium tabular-nums text-ink">90</div>
           <p className="mt-1 text-sec text-ink-3">days, raw signals</p>
@@ -614,7 +631,8 @@ function Consent() {
           </ul>
         </Panel>
 
-        <Panel as="h3" label="The same log, most recent first">
+        {/* "The same log, most recent first" said what it was not. */}
+        <Panel as="h3" label="Recent activity in the log">
           <ul className="divide-y divide-rule">
             {AUDIT_LOG.map(r => (
               <li key={r.at + r.action} className="flex items-baseline justify-between gap-4 py-3.5 first:pt-0">
@@ -658,10 +676,14 @@ export function Pro({ go }) {
       <div className="relative overflow-hidden border-b border-rule bg-mist">
         {/* decoration: it carries no information a reader needs */}
         <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
-        <div className="wrap relative py-6 sm:py-8">
+        {/* Was py-6 sm:py-8; the header band is the smallest of the three
+            fixed steps, and matches the band in views/shell.jsx. */}
+        <div className="wrap relative py-10">
           <Back go={go} to="site" label="Overview"/>
+          {/* Was "For school counselors and psychologists" — an audience, not a
+              screen. The three audience views are named the same way now. */}
           <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">
-            For school counselors and psychologists</h1>
+            What a school counselor sees</h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
@@ -671,7 +693,8 @@ export function Pro({ go }) {
             Every figure here is generated. No student was measured.</p>
         </div>
       </div>
-      <div className="wrap py-9 sm:py-12">
+      {/* Was py-9 sm:py-12; the tab body is a section, the middle step. */}
+      <div className="wrap py-14">
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {/* Was a second hand-classed copy of the tab strip in views/shell.jsx.
           One definition in ui/tabs now, so the two consoles cannot drift. */}

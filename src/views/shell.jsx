@@ -24,7 +24,12 @@ export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, ch
     <main>
       <div className="relative overflow-hidden border-b border-rule bg-mist">
         <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
-        <div className="wrap relative py-6 sm:py-8">
+        {/* Was py-6 sm:py-8. The site's vertical rhythm is now three fixed
+            steps — 10 inside a section, 14 between sections, 20 between page
+            regions — instead of per-section numbers that each said something
+            different about the same kind of break. A header band is the
+            smallest step. */}
+        <div className="wrap relative py-10">
           <Back go={go} to="site" label="Overview"/>
           <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
           {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
@@ -39,7 +44,9 @@ export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, ch
           )}
         </div>
       </div>
-      <div className="wrap py-9 sm:py-12">
+      {/* Was py-9 sm:py-12. The tab body is a section, so it takes the middle
+          step of the same three. */}
+      <div className="wrap py-14">
         <p aria-live="polite" className="sr-only text-sec">{said}</p>
         {tabs ? (
           /* Was a hand-classed @radix-ui/react-tabs tree repeating the trigger

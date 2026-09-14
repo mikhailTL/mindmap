@@ -82,6 +82,9 @@ export function Reason({ claim, plain, source, index, chart }) {
 export function AllDetail({ label = 'See every reading', children }) {
   const [open, setOpen] = React.useState(false)
   return (
+    /* mt-10 / py-10: the vertical scale on these views is three fixed steps —
+       10 inside a section, 14 between sections, 20 between page regions. This
+       panel and its body are both inside-a-section breaks; py was 8. */
     <C.Root open={open} onOpenChange={setOpen} className="mt-10">
       <C.Trigger className="group flex min-h-[56px] w-full items-center justify-between gap-4
         border-y border-rule font-display text-ui font-medium text-ink
@@ -91,7 +94,7 @@ export function AllDetail({ label = 'See every reading', children }) {
           group-data-[state=open]:rotate-90"/>
       </C.Trigger>
       <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
-        <div className="py-8">{children}</div>
+        <div className="py-10">{children}</div>
       </C.Content>
     </C.Root>
   )
@@ -129,12 +132,12 @@ function Rings({ score, usual, rings, children }) {
   const open = rings.find(r => r.id === picked)
   return (
     <>
-      <div className="mt-8 grid gap-9 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-14">
+      <div className="mt-10 grid gap-9 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-14">
         <RainbowDial score={score} usual={usual} rings={rings} size={376}
           picked={picked} onPick={id => setPicked(p => p === id ? null : id)}/>
         <div className="min-w-0">
           {children}
-          <h2 className="mark mt-8">Each signal, out of 100</h2>
+          <h2 className="mark mt-10">Each signal, out of 100</h2>
           <RainbowKey className="mt-3" rings={rings} picked={picked}
             onPick={setPicked}/>
         </div>
@@ -149,7 +152,9 @@ export function StudentBody({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-medium text-ink">Today</h2>
+        {/* "Today" alone did not say today's what; the date badge beside it
+            reads as the answer and is not. */}
+        <h2 className="font-display text-row font-medium text-ink">Your reading today</h2>
         <Label>Thursday · 4:10 pm</Label>
         <SampleTag/>
       </div>
@@ -172,14 +177,14 @@ export function StudentBody({ go, openTab }) {
           screen's row below, so the two could drift apart on any edit. */}
       <ScrollIn as="div"><Card interactive as="button"
         onClick={() => openTab ? openTab('shared') : go('privacy')}
-        className="mt-8 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
+        className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
         <span className="text-body text-ink">What you write in the app stays on your device.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </Card></ScrollIn>
 
       <AllDetail>
-        <h3 className="mark">Across today</h3>
+        <h3 className="mark">Your score across today</h3>
         <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range.</p>
         <DayChart data={DATA.day} band={DATA.band}/>
         <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds from
@@ -208,8 +213,12 @@ export function ParentBody({ go, openTab }) {
         <WeekStrip days={DATA.week} band={DATA.weekBand} className="mt-6 max-w-[22rem]"/>
       </Rings>
 
-      <ScrollIn as="section" className="mt-12">
-        <h2 className="mark">What the week looked like</h2>
+      {/* mt was 12; this is a section break, which is the middle step. */}
+      <ScrollIn as="section" className="mt-14">
+        {/* "What the week looked like" described the week without saying what
+            the two rows under it do, which is give the evidence for the
+            sentence above. */}
+        <h2 className="mark">Why her week reads higher</h2>
         <div className="mt-2 border-t border-rule">
           <Reason index={0}
             claim="Three of five school days were above her normal before lunch."
@@ -232,7 +241,7 @@ export function ParentBody({ go, openTab }) {
 
       <ScrollIn as="div"><Card interactive as="button"
         onClick={() => openTab ? openTab('shared') : go('privacy')}
-        className="mt-8 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
+        className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
         <span className="text-body text-ink">Her notes and her location are never shared with you.
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
@@ -242,7 +251,7 @@ export function ParentBody({ go, openTab }) {
         <h3 className="mark">The last seven days</h3>
         <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is her normal range.</p>
         <WeekChart data={DATA.week} band={DATA.weekBand}/>
-        <div className={cn(STATS, 'mt-8')}>
+        <div className={cn(STATS, 'mt-10')}>
           <Stat label="Days above normal" value="3" unit="of 5">Monday, Wednesday, Thursday. All before noon.</Stat>
           <Stat label="Week average" value="58" unit="of 100">Her usual average is 47.</Stat>
           <Stat label="Weekend" value="44" unit="of 100">Inside her normal range both days.</Stat>

@@ -58,7 +58,9 @@ export function CheckInBody({ go }){
       <p className="mt-4 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
         same model the patch uses. About thirty seconds.</p>
 
-      <div className="mt-8 grid gap-3.5 lg:grid-cols-2">
+      {/* mt was 8. Three fixed steps across these views — 10 inside a section,
+          14 between sections, 20 between page regions. */}
+      <div className="mt-10 grid gap-3.5 lg:grid-cols-2">
         <ScrollRow index={0} className="h-full"><Route n="01" title="Answer six questions"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Your answers stay on this device — nothing is stored or sent.</p>}>
@@ -83,7 +85,10 @@ export function CheckInBody({ go }){
 
       {/* On a monitor the six questions and the running result sit side by side,
           so the reading appears without the answers scrolling out of view. */}
-      <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
+      {/* mt was 8 as well, which made the break between "how to take a reading"
+          and the reading itself the same size as the gap inside it. This is a
+          section break. */}
+      <div className="mt-14 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
         {/* The six sat on the sheet under a single ink rule, which read as the
             start of a section rather than as one form. One Card holds them and
             each question keeps its own hairline as a row rule inside it. */}
@@ -101,7 +106,7 @@ export function CheckInBody({ go }){
 
       {/* the result region is announced, and its space is reserved so nothing jumps */}
       <Card ref={resultRef} aria-live="polite" data-anchor
-        className="mt-9 min-h-[12rem] xl:mt-0 xl:sticky xl:top-[92px]">
+        className="mt-10 min-h-[12rem] xl:mt-0 xl:sticky xl:top-[92px]">
         <CardContent>
         {!done && (
           <p className="max-w-[40ch] text-sec text-ink-3">

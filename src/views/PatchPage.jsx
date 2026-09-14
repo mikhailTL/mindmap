@@ -37,14 +37,22 @@ export function PatchPage() {
       {/* A dot grid sat over this band at 70%. It was texture standing in for
           hierarchy, and the palette rebuild left the band reading as itself. */}
       <section className="relative overflow-hidden border-b border-rule bg-mist">
-        <div className="wrap relative py-12 sm:py-16">
+        {/* Was py-12 sm:py-16. Vertical rhythm is three fixed steps now — 10
+            inside a section, 14 between sections, 20 between page regions — so
+            the same kind of break is the same size everywhere. This band is a
+            whole page region. */}
+        <div className="wrap relative py-20">
           <Label>The patch</Label>
+          {/* Was "A sticker on the forearm." — true, and it named the object
+              rather than the section, which is four signal cards and a model.
+              The image is still worth having, so it leads the paragraph. */}
           <RevealLines as="h1"
-            className="mt-3 max-w-[14ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
-            lines={['A sticker on', 'the forearm.']}/>
+            className="mt-3 max-w-[18ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
+            lines={['What the patch', 'measures.']}/>
           <ScrollIn className="mt-5">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
-              Four readings from the skin, once a second, sent to the phone. Changed once a week.
+              A sticker on the forearm. Four readings from the skin, once a second, sent to the
+              phone. Changed once a week.
             </p>
           </ScrollIn>
 
@@ -65,13 +73,24 @@ export function PatchPage() {
               use; the dot went, because the rule already says it. Each pair is
               its own <dl> so the term/definition reading is kept inside the
               card rather than lost to the grid. */}
-          <div className="mt-9 grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,4fr)]">
+          {/* Placement is explicit per signal. It used to be auto-placement plus
+              two col-starts, and because RAINBOW runs heart-first, heart took
+              the lead column and pushed sweat's row span sideways: on a wide
+              screen the 3x2 grid rendered with four empty cells and a stray
+              third row. The intended reading — sweat tall on the left, heart
+              and temperature stacked as a pair, movement alongside — is now
+              stated in the classes rather than left to source order. */}
+          <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,4fr)] lg:grid-rows-2">
             {RAINBOW.map((s2, i) => {
               const lead = s2.id === 'sweat'
+              const place = {
+                sweat: 'lg:col-start-1 lg:row-start-1 lg:row-span-2',
+                heart: 'lg:col-start-2 lg:row-start-1',
+                temp:  'lg:col-start-2 lg:row-start-2',
+                move:  'lg:col-start-3 lg:row-start-1 lg:row-span-2',
+              }[s2.id]
               return (
-                <ScrollRow key={s2.id} index={i}
-                  className={cn('h-full', lead && 'lg:row-span-2',
-                    s2.id === 'temp' && 'lg:col-start-2', s2.id === 'move' && 'lg:col-start-3')}>
+                <ScrollRow key={s2.id} index={i} className={cn('h-full', place)}>
                   <Card className="h-full border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
                     <div className={cn('bg-mist/70 px-4', lead ? 'py-8' : 'py-4')}>
                       <SignalTrace kind={s2.id}/>
@@ -100,7 +119,7 @@ export function PatchPage() {
             })}
           </div>
 
-          <div className="mt-12 grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="mt-14 grid gap-8 lg:grid-cols-2 lg:gap-12">
             <ExplodedStack className="h-[min(46vh,420px)]"/>
 
             <div className="relative h-[min(46vh,420px)] border-t-2 border-ink bg-card">
@@ -125,8 +144,12 @@ export function PatchPage() {
         </div>
       </section>
 
-      <section className="wrap pb-14 sm:pb-20">
-        <h2 className="mark">Three layers</h2>
+      {/* Was pb-14 sm:pb-20 with no top padding at all, so the heading sat on
+          the band's border. One page-region step, both edges. */}
+      <section className="wrap py-20">
+        {/* "Three layers" counted the list without saying what the list was
+            of. */}
+        <h2 className="mark">What is inside the patch</h2>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one to see it alone in the model.</p>
         {/* Three hand-built toggles, each re-declaring its own border, hover and
             pressed rule. They are the sourced Card in its `interactive` form
