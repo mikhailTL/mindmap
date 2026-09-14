@@ -109,32 +109,35 @@ export function Overview({ go }) {
 
   return (
     <main>
-      {/* A visitor who reads only the h1 has to come away knowing what the
-          object is. Every earlier version described the mechanism instead —
-          "A patch reads your body" names no product, no wearer and no output —
-          so the heading is now the plain definition and the paragraph under it
-          carries what each of the three people actually gets. */}
+      {/* "MindMap is a patch for the forearm" made the hardware the whole
+          product, and it is not: the six-question check-in scores a real person
+          with nothing on their arm, and that is the half of MindMap most
+          visitors can actually use today. The heading now leads with what the
+          thing is for — teen wellness — and the paragraph names both ways in,
+          worn and unworn. */}
       <section id="hero" className="wrap grid items-center gap-10 py-14
         lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-20">
         <div>
-          {/* text-view below lg: at the `sect` step "MindMap is a patch" is
-              wider than a 390px column and breaks across three lines. */}
+          {/* text-view below lg: at the `sect` step a line this long breaks
+              across three lines in a 390px column. */}
           <RevealLines as="h1" className="font-display font-medium text-view lg:text-sect text-ink"
-            lines={['MindMap is a patch', <>for the <em className="not-italic text-accent">forearm</em>.</>]}/>
+            lines={['Making your stress', <><em className="not-italic text-accent">readable</em>.</>]}/>
           <ScrollIn as="p" className="mt-6 max-w-read text-lead leading-[1.5] text-ink-2">
-            It reads four body signals once a second and turns each day into one score out of 100
-            and one plain sentence — for the student wearing it, their parent, and their school
-            counselor.
+            A versatile app that turns daily stress signals into one score and a single
+            sentence — for a student, their parents, or a counselor.
+          </ScrollIn>
+          <ScrollIn as="p" className="mt-4 max-w-read text-sec text-ink-2">
+            Read it from a patch on your forearm, or from six questions with nothing on your arm.
           </ScrollIn>
           <ScrollIn className="mt-10">
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-              <Button variant="outline" onClick={() => go('patch')}>See the hardware</Button>
+              <Button variant="outline" onClick={() => go('check')}>Score yourself — no patch</Button>
             </div>
-            <button onClick={() => go('check')}
+            <button onClick={() => go('patch')}
               className="mt-4 min-h-[44px] font-display text-meta font-medium text-accent underline
                 underline-offset-4 hover:text-accent-ink">
-              Or score yourself in six questions — no patch needed
+              Or see what the patch actually is
             </button>
           </ScrollIn>
         </div>
