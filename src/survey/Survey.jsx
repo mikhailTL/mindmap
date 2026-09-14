@@ -83,6 +83,39 @@ function ScaleControl({ q, value, onPick }) {
   )
 }
 
+/* A multiple choice. Same radio-group mechanics as the scale, but the options
+   are named alternatives rather than points on a line, so they carry no
+   numeral and no implied order — numbering "On the forearm / On the chest"
+   would suggest one is higher than another. */
+function ChoiceControl({ q, value, onPick }) {
+  return (
+    <div className="mt-4 grid gap-2" role="radiogroup" aria-label={q.prompt}>
+      {q.options.map(opt => {
+        const on = value === opt
+        return (
+          <button
+            key={opt}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onPick(opt, opt)}
+            className={cn(
+              'flex min-h-[44px] items-center rounded-field border px-3.5 py-2 text-left',
+              'font-display text-ui font-medium',
+              'transition-[background-color,border-color,color] duration-150 ease-out',
+              on
+                ? 'border-ink bg-ink text-paper'
+                : 'border-rule bg-paper text-ink-2 hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
+            )}
+          >
+            {opt}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
   const [text, setText] = React.useState(initial)
   const empty = !text.trim()
@@ -165,12 +198,16 @@ function ImpactControl({ q, initial, onSave, onSkip }) {
   )
 }
 
-/* One question, whichever of the four kinds it is. Page cards and the final
+/* One question, whichever of the five kinds it is. Page cards and the final
  * block share it so a wording or spacing change cannot apply to one and not
  * the other. */
 function Question({ q, answer, onAnswer, onSkip }) {
   if (q.kind === 'scale') {
     return <ScaleControl q={q} value={answer?.value ?? null} onPick={(v, l) => onAnswer(v, l)} />
+  }
+  if (q.kind === 'choice') {
+    return <ChoiceControl q={q} value={typeof answer?.value === 'string' ? answer.value : null}
+      onPick={(v, l) => onAnswer(v, l)} />
   }
   if (q.kind === 'text') {
     return (
