@@ -23,6 +23,15 @@
  *    answer ("Where is the patch worn?", "Can a parent see a raw reading?").
  *    A page can feel clear and still not land — asking what they took away
  *    catches that, and a rating alone never does.
+ *
+ * The keys are route ids, and they are the route ids the site actually has.
+ * When the app moved behind Launch, `student`/`parent`/`pro` stopped being the
+ * dashboards and became the walkthroughs that explain them, `hub` was deleted,
+ * and `app` plus the three `app-*` dashboards appeared with no questions at
+ * all — so the survey was asking about screens the reviewer was not looking at
+ * and asking nothing about the four screens that matter most. Every question
+ * below is answerable from what is on the page it is keyed to; a comprehension
+ * check whose answer is not on the page measures nothing.
  */
 
 const pts = (...labels) => labels.map((label, i) => ({ value: i + 1, label }))
@@ -57,13 +66,18 @@ export const QUESTIONS = {
     ]),
   ],
 
+  /* ── The three walkthroughs ──────────────────────────────────────────────
+     Nothing is operated on these pages, so nothing here asks how easy a task
+     was. They are explanations, and the only thing worth measuring about an
+     explanation is whether it was clear and what the reader took from it. */
+
   student: [
-    agree('student-control', 'I could tell what a student is able to share, hide, or delete.'),
-    choice('student-useful', 'Which part of this screen was most useful?', [
-      'The score for today',
-      'The four signals behind it',
-      'What gets shared',
-      'None of them',
+    agree('student-clear', 'This page made it clear what a student gets from MindMap.'),
+    choice('student-baseline', 'A student’s score is measured against:', [
+      'Their own last two weeks',
+      'Other students in their class',
+      'A national average',
+      'Not sure',
     ]),
   ],
 
@@ -77,10 +91,54 @@ export const QUESTIONS = {
   ],
 
   pro: [
-    ease('pro-ease', 'How easy was it to tell which student to see first?'),
-    choice('pro-order', 'Students are ordered on this list by:', [
-      'Highest score',
-      'Fastest change week to week',
+    agree('pro-limits', 'The limits a school counselor works inside were clear.'),
+    choice('pro-floor', 'For a group of fewer than five students, the console returns:', [
+      'Nothing at all',
+      'An estimate',
+      'A rounded figure',
+      'Not sure',
+    ]),
+  ],
+
+  /* ── The app ─────────────────────────────────────────────────────────────
+     One door and three screens behind it. These are the screens a reviewer is
+     being asked to judge, so all four are SEQ: there is a task on each one. */
+
+  app: [
+    ease('app-ease', 'How easy was it to tell which of the three screens is yours?'),
+    choice('app-differ', 'The three screens differ because:', [
+      'They show different slices of the same day',
+      'Each one reads a different patch',
+      'Each one belongs to a different school',
+      'Not sure',
+    ]),
+  ],
+
+  'app-student': [
+    ease('app-student-ease', 'How easy was it to find what moved today’s score?'),
+    choice('app-student-sees', 'On this screen, a student can reach:', [
+      'Every reading the patch took',
+      'Only the day’s score',
+      'Only what they agreed to share',
+      'Not sure',
+    ]),
+  ],
+
+  'app-parent': [
+    ease('app-parent-ease', 'How easy was it to tell how the week had gone?'),
+    choice('app-parent-day', 'Each day of the week is marked as:', [
+      'Above or inside her usual range',
+      'A score out of 100',
+      'Her heart rate',
+      'Not sure',
+    ]),
+  ],
+
+  'app-pro': [
+    ease('app-pro-ease', 'How easy was it to tell which student to see first?'),
+    choice('app-pro-order', 'The caseload is ordered by:', [
+      'How fast a student is changing',
+      'Highest score first',
       'Alphabetical order',
       'Not sure',
     ]),
@@ -97,20 +155,11 @@ export const QUESTIONS = {
 
   privacy: [
     agree('privacy-trust', 'I would trust this product with a student’s data.'),
-    choice('privacy-who', 'Who decides how long the data is kept?', [
-      'The school',
-      'The parent',
-      'The student',
+    choice('privacy-never', 'Which of these is never shared with a parent?', [
+      'Where the student was',
+      'Whether the patch was worn',
+      'Whether a day was above their usual',
       'Not sure',
-    ]),
-  ],
-
-  hub: [
-    ease('hub-ease', 'How easy was it to pick the right view for you?'),
-    choice('hub-first', 'Which view did you want to open first?', [
-      'Student',
-      'Parent',
-      'School counselor',
     ]),
   ],
 
@@ -165,7 +214,31 @@ export const QUESTIONS = {
   ],
 }
 
-export const SURVEY_PAGES = Object.keys(QUESTIONS).filter(p => p !== 'final')
+/* The page names, beside the questions rather than in the page that reports
+   them: they were kept in Responses.jsx, so adding a route meant editing two
+   files and the second one was the one that got forgotten — which is how a
+   live route ended up labelled with its own id. */
+const PAGE_LABEL = {
+  site: 'Overview', patch: 'The patch',
+  student: 'For students', parent: 'For parents', pro: 'For schools',
+  app: 'Launch the app',
+  'app-student': 'Student screen', 'app-parent': 'Parent screen',
+  'app-pro': 'Counselor console',
+  check: 'Take a reading', privacy: 'Who can see what', tour: 'The tour',
+  final: 'Last questions',
+}
+
+/* Routes that no longer exist. Answers recorded against them are still in
+   reviewers' browsers and still in the store, and they have to read as English
+   on the responses page rather than as a bare id — deleting a route does not
+   delete the answers somebody already gave. */
+const RETIRED_LABEL = {
+  hub: 'Open the app — retired',
+}
+
+export function pageLabel(page) {
+  return PAGE_LABEL[page] || RETIRED_LABEL[page] || page
+}
 
 export function questionsFor(page) {
   return QUESTIONS[page] || []

@@ -21,7 +21,7 @@ const LABEL = { demo: 'Demo', real: 'Real' }
  * source" is exactly what a radio group means, and screen-reader users get the
  * "1 of 2" position and the arrow-key behaviour for free — behaviour that has
  * to be hand-written and is usually half-written on a segmented control. */
-export function ModeToggle({ className }) {
+export function ModeToggle({ className, compact = false }) {
   const [mode, setMode] = useMode()
   const refs = React.useRef([])
   const helpId = React.useId()
@@ -65,7 +65,11 @@ export function ModeToggle({ className }) {
               onClick={() => setMode(m)}
               onKeyDown={onKeyDown}
               className={cn(
-                'min-h-[44px] px-4 font-display text-ui',
+                /* Compact is the header size: it sits beside the Launch
+                 * control and next to it the full-size switch read as a second
+                 * primary action rather than a setting. 44px is still the
+                 * touch floor, so only the padding and the step move. */
+                compact ? 'min-h-[36px] px-3 font-display text-fine' : 'min-h-[44px] px-4 font-display text-ui',
                 'transition-[background-color,color] duration-150 ease-out',
                 'disabled:pointer-events-none disabled:opacity-45',
                 /* The dividing rule belongs to the second cell so the outer
@@ -86,7 +90,7 @@ export function ModeToggle({ className }) {
        * sentence that makes "Real" mean anything is set as text, and the group
        * points at it with aria-describedby so it is announced with the
        * control rather than found afterwards. */}
-      <p id={helpId} className="note hidden max-w-[30ch] lg:block">
+      <p id={helpId} className={cn('note max-w-[30ch]', compact ? 'sr-only' : 'hidden lg:block')}>
         Real shows the app with no patch paired — what a visitor gets today.
       </p>
     </div>

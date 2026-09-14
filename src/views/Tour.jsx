@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { DemoNotice } from '../ui/notice'
 import { Separator } from '../ui/separator'
+import { FinalSurvey } from '../survey/Survey'
 import { Card, CardTitle } from '../ui/card'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
@@ -556,12 +557,22 @@ export function Tour({ go }) {
           Open the app yourself
         </h2>
         <p className="mt-3 max-w-[54ch] text-lead text-ink-2">
-          The dashboard opens the student screen, the parent screen and the counselor console.
+          The launcher opens the student screen, the parent screen and the counselor console.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <Button onClick={() => go('hub')}>Open the dashboard<ArrowRight aria-hidden/></Button>
+          <Button onClick={() => go('app')}>Open the app<ArrowRight aria-hidden/></Button>
           <Button variant="outline" onClick={() => go('check')}>Score yourself in six questions</Button>
         </div>
+      </section>
+
+      {/* The closing questions — the star rating, the impact question and the
+          one free-text box — had been written, built and then mounted nowhere,
+          so no reviewer had ever been asked any of them. The end of the tour is
+          where they belong: it is the only screen a person reaches having seen
+          the whole thing. */}
+      <Separator className="mt-14"/>
+      <section className="py-14">
+        <FinalSurvey/>
       </section>
     </main>
   )

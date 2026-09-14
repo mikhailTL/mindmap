@@ -259,12 +259,6 @@ const ROLES = [
     name:'Open the school counselor console: a caseload ranked by who is changing fastest.' },
 ]
 
-const MODES = [
-  { id:'demo', name:'Demo',
-    line:'Generated readings from an invented week, so every screen is full. Nobody has been measured.' },
-  { id:'real', name:'Real',
-    line:'Your own patch. The screens stay empty until one is paired and sending.' },
-]
 
 function Door({ role, go, active, setActive, real, still }) {
   const focused = active === role.id
@@ -292,12 +286,19 @@ function Door({ role, go, active, setActive, real, still }) {
         <Preview cycle={cycle} real={real} still={still}/>
       </div>
       <CardContent className="flex flex-1 flex-col gap-4">
-        <span className="font-mono text-fine uppercase tracking-[0.08em] text-ink-3">
-          {role.ord} · {role.who}
+        {/* The role is what a visitor is scanning for, so the role is the
+            title. It used to be a mono eyebrow over a sentence — three cards
+            each headed by a different sentence meant reading all three to find
+            out which one was yours. */}
+        <span className="flex items-baseline gap-3">
+          <span className="font-mono text-fine tabular-nums text-ink-3">{role.ord}</span>
+          {/* a span, not a heading: a button's content model is phrasing, and
+              an h2 inside it puts a heading-shaped thing outside the outline */}
+          <span className="block font-display text-sub font-medium leading-[1.12] tracking-tight text-ink">
+            {role.who}
+          </span>
         </span>
-        {/* a span, not a heading: a button's content model is phrasing, and an
-            h2 inside it puts a heading-shaped thing outside the outline */}
-        <span className="block font-display text-sub font-medium leading-[1.12] tracking-tight text-ink">
+        <span className="-mt-2 block font-display text-meta font-medium text-ink-2">
           {role.title}
         </span>
         <p className="text-sec text-ink-2">{role.body}</p>
@@ -311,7 +312,7 @@ function Door({ role, go, active, setActive, real, still }) {
 }
 
 export function Launch({ go }) {
-  const [mode, setMode] = useMode()
+  const [mode] = useMode()
   const [active, setActive] = React.useState(null)
   const still = useStill()
   const real = mode === 'real'
@@ -335,43 +336,6 @@ export function Launch({ go }) {
         Three screens read the same day of measurements and show three different slices of it.
         Each panel below is the screen itself, running. Pick the one that is yours.
       </p>
-
-      {/* Before the doors, not inside them. A visitor who picks a role and then
-          discovers the numbers were invented has been told the wrong thing
-          first; the order of these two blocks is the honesty. */}
-      <section className="mt-14">
-        <h2 className="mark">What the screens are showing</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:max-w-[54rem]">
-          {MODES.map(m => {
-            const on = mode === m.id
-            return (
-              <div key={m.id} className="relative">
-                <input type="radio" id={`launch-mode-${m.id}`} name="launch-mode" value={m.id}
-                  checked={on} onChange={() => setMode(m.id)} className="peer sr-only"/>
-                {/* A real radio, visually hidden, so arrow keys and the checked
-                    state come from the platform rather than from a div wearing
-                    role="radio". The ring is borrowed onto the label because
-                    the input it belongs to has no box to draw on. */}
-                <label htmlFor={`launch-mode-${m.id}`}
-                  className={cn('flex h-full min-h-[44px] cursor-pointer flex-col gap-1.5 rounded-field border p-4',
-                    'transition-colors duration-150',
-                    'peer-focus-visible:outline peer-focus-visible:outline-2',
-                    'peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent',
-                    on ? 'border-ink bg-mist' : 'border-rule bg-card hover:bg-mist/60')}>
-                  <span className="flex items-center gap-2.5 font-display text-meta font-medium text-ink">
-                    <span aria-hidden className={cn('grid size-[18px] shrink-0 place-items-center rounded-chip border',
-                      on ? 'border-accent' : 'border-ink-3')}>
-                      {on && <span className="size-2.5 rounded-chip bg-accent"/>}
-                    </span>
-                    {m.name}
-                  </span>
-                  <span className="text-sec text-ink-2">{m.line}</span>
-                </label>
-              </div>
-            )
-          })}
-        </div>
-      </section>
 
       <section className="mt-14">
         <h2 className="mark">Three screens</h2>

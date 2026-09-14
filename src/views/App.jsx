@@ -1,7 +1,6 @@
 import React from 'react'
 import { Overview } from './Overview'
 import { PatchPage } from './PatchPage'
-import { Hub } from './Hub'
 import { Tour } from './Tour'
 import { Responses } from './Responses'
 import { Intro, introSuppressed } from './Intro'
@@ -26,7 +25,7 @@ import { cn } from '../lib/utils'
    explanations of them. The old `check` and `privacy` urls still resolve, so
    nothing that was ever linked is broken. */
 const VIEWS = ['site','patch','student','parent','pro','app','app-student','app-parent',
-               'app-pro','check','privacy','hub','tour','responses']
+               'app-pro','check','privacy','tour','responses']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
@@ -39,7 +38,7 @@ const TITLE = {
   'app-student':'Student screen — MindMap', 'app-parent':'Parent screen — MindMap',
   'app-pro':'Counselor console — MindMap',
   check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
-  hub:'Dashboard — MindMap', tour:'Guided tour — MindMap',
+  tour:'Guided tour — MindMap',
   responses:'Review responses — MindMap',
 }
 /* One entry per audience, in the order a visitor meets them: the person
@@ -59,7 +58,7 @@ const SECTION = { site:'site', patch:'patch',
                   /* the app lives under no tab — it is reached through Launch,
                      so no nav entry should light up while you are inside it */
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
-                  check:null, privacy:null, hub:null, tour:null, responses:null }
+                  check:null, privacy:null, tour:null, responses:null }
 
 /* The single most conventional thing left on this site was this: a sticky bar
    with a wordmark on the left and a row of links on the right, which is the
@@ -99,10 +98,11 @@ function Header({ view, go }) {
             the thing itself, so it is the only filled control in the bar. */}
         <div className="flex basis-full items-center justify-between gap-4 border-t border-rule
           py-2 sm:basis-auto sm:border-l sm:border-t-0 sm:pl-5">
-          {/* The launcher carries its own Demo/Real block with a sentence for
-              each mode, which is the better place to make the choice. Two
-              controls for one setting on one screen is just clutter. */}
-          {view !== 'app' && <ModeToggle className="min-w-0"/>}
+          {/* Demo/Real is a setting inside the app, not a claim on the front
+              of the site. A visitor reading the overview has no screen for it
+              to act on, and a full-size switch beside Launch read as a second
+              primary action. It appears once you are through the door, small. */}
+          {view.startsWith('app') ? <ModeToggle compact className="min-w-0"/> : <span/>}
           <button onClick={() => go('app')} aria-current={view.startsWith('app') ? 'page' : undefined}
             className={cn('inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-field px-4',
               'font-display text-meta font-medium transition-colors duration-150',
@@ -175,7 +175,7 @@ export function App() {
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
-  const V = { site:Overview, patch:PatchPage, hub:Hub, tour:Tour, responses:Responses,
+  const V = { site:Overview, patch:PatchPage, tour:Tour, responses:Responses,
               /* the three nav tabs: what MindMap does for each audience */
               student:ForStudents, parent:ForParents, pro:ForSchools,
               /* the app, behind Launch */

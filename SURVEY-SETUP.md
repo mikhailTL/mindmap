@@ -4,25 +4,31 @@ The site asks peer reviewers a few questions as they read, and `/api/responses`
 collects the answers. Without a store attached, nothing is collected centrally.
 These are the steps to change that.
 
-## 1. Create the KV store
+## 1. Create the store
+
+Vercel KV as a first-party product is retired; the store now comes from the
+Marketplace and is Upstash Redis underneath. It still sets the same two
+environment variables, which is all the function looks for.
 
 1. Open the Vercel dashboard, project **mindmappaitent**.
-2. **Storage** → **Create Database** → **KV** (Upstash Redis). Name it
-   `mindmap-responses`. Pick the region closest to you.
-3. On the new store, **Connect Project** → select **mindmappaitent** → connect
-   to **Production**, **Preview** and **Development**.
+2. **Storage** → **Create Database** → **Marketplace Database Providers** →
+   **Upstash** → **Redis**. Name it `mindmap-responses`, region closest to you.
+3. On the new store, **Connect Project** → **mindmappaitent** → connect to
+   **Production**, **Preview** and **Development**.
 
-Connecting sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` as environment
-variables on the project. The function checks for exactly those two names and
-uses the KV store only when both are present.
+Connecting sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` on the project. The
+function checks for exactly those two names and uses the store only when both
+are present.
 
-## 2. Install the client
+## 2. The client is already installed
+
+`@vercel/kv` is in `package.json`. npm prints a deprecation warning on install
+— that notice is about the hosted product moving to the Marketplace, not about
+the client, which still speaks the same REST protocol Upstash exposes through
+those two variables. Nothing to do here unless the install was skipped:
 
 ```
 npm i @vercel/kv
-git add package.json package-lock.json
-git commit -m "Add @vercel/kv for survey responses"
-git push
 ```
 
 The import in `api/responses.js` is a dynamic `import()` inside a `try`, so the

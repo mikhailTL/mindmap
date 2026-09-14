@@ -23,7 +23,7 @@ import { cn } from '../lib/utils'
    read nobody timed. A comment that miscounts the code is worse than no
    comment.) */
 
-export function Back({ go, to = 'hub', label = 'All views' }) {
+export function Back({ go, to = 'site', label = 'Overview' }) {
   return (
     <button onClick={() => go(to)}
       className="mb-8 flex w-fit min-h-[44px] items-center gap-2 py-2 font-display text-meta
@@ -309,77 +309,7 @@ export function StudentBody({ go, openTab }) {
   )
 }
 
-/* ── Parent ─────────────────────────────────────────────────────────────── */
-export function ParentBody({ go, openTab }) {
-  return (
-    <>
-      <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-medium text-ink">Maya</h2>
-        <Label>This week · shared since March</Label>
-        <DemoNotice inline>Sample data — not a real person.</DemoNotice>
-      </div>
-
-      <Rings score={58} usual={47} rings={parentRings()}>
-        <Headline>Maya had a harder week than usual.</Headline>
-        <p className="mt-4 max-w-[42ch] text-body text-ink-2">Three school mornings were above her normal.
-          The weekend was normal.</p>
-        <WeekStrip days={DATA.week} band={DATA.weekBand} className="mt-6 max-w-[22rem]"/>
-      </Rings>
-
-      {/* mt was 12; this is a section break, which is the middle step. */}
-      <ScrollIn as="section" className="mt-14">
-        {/* "What the week looked like" described the week without saying what
-            the two rows under it do, which is give the evidence for the
-            sentence above. */}
-        <h2 className="mark">Why her week reads higher</h2>
-        <div className="mt-2 border-t border-rule">
-          <Reason index={0}
-            claim="Three of five school days were above her normal before lunch."
-            plain="Monday, Wednesday and Thursday. Her normal is worked out from her own last two weeks. She is never compared with other students."
-            source="Daily average against her own normal range"
-            chart={<><WeekStrip days={DATA.week} band={DATA.weekBand}/>
-              <p className="mt-2 font-mono text-tick tabular-nums text-ink-3">3 of 7 above</p></>}/>
-          <Reason index={1}
-            claim="The weekend was normal, so this is about school hours."
-            plain="Saturday and Sunday were both inside her normal range. A week that was high every day would point to something else."
-            source="School days and weekend, compared"
-            chart={<><WeekStrip days={DATA.week.slice(5)} band={DATA.weekBand}/>
-              <p className="mt-2 font-mono text-tick tabular-nums text-ink-3">Sat 43 · Sun 45</p></>}/>
-        </div>
-      </ScrollIn>
-
-      <ScrollIn className="mt-10 border-l-2 border-accent py-1 pl-5">
-        <p className="max-w-[52ch] text-sec text-ink-2">Thursday morning is worth asking about.</p>
-      </ScrollIn>
-
-      <ScrollIn as="div"><Card interactive as="button"
-        onClick={() => openTab ? openTab('shared') : go('privacy')}
-        className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
-        <span className="text-body text-ink">Her notes and her location are never shared with you.
-          <span className="block text-meta text-ink-2">See who can see what</span></span>
-        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
-      </Card></ScrollIn>
-
-      <AllDetail label="See the whole week">
-        <h3 className="mark">The last seven days</h3>
-        <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is her normal range.</p>
-        <WeekChart data={DATA.week} band={DATA.weekBand}/>
-        <div className={cn(STATS, 'mt-10')}>
-          <Stat label="Days above normal" value="3" unit="of 5">Monday, Wednesday, Thursday. All before noon.</Stat>
-          {/* Was labelled "Week average", directly under a chart whose seven
-              days average 55. 58 is the model's blended score for the week —
-              the number the dial at the top of this screen shows — so the tile
-              is named for what it actually is. */}
-          <Stat label="Score this week" value="58" unit="of 100">Her usual is 47.</Stat>
-          <Stat label="Weekend" value="44" unit="of 100">Inside her normal range both days.</Stat>
-          {/* Was 5.4 h against "about 5 h 30" in the movement ring's detail. */}
-          <Stat label="Sleep" value="5.5" unit="h">Her usual is 7.9 hours.</Stat>
-          <Stat label="Patch worn" value="94" unit="%">Off her skin for 41 minutes on Tuesday.</Stat>
-          <Stat label="Check-ins" value="6" unit="of 7">She skipped Saturday.</Stat>
-        </div>
-        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Maya sees this page too. Her second-by-second
-          readings, her notes and her location stay on her account.</p>
-      </AllDetail>
-    </>
-  )
-}
+/* ParentBody lived here: StudentBody with the nouns swapped — same dial, same
+   four signal tiles, same layout, for a reader who opens the screen once a
+   week rather than daily. It was replaced by src/views/parent-dash.jsx, which
+   is built around the week's one sentence instead of an instrument panel. */

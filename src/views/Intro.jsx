@@ -2,7 +2,7 @@ import React from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { Button } from '../ui/button'
-import { Logo, LogoMark } from '../ui/logo'
+import { Logo } from '../ui/logo'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { LAYERS } from './Patch'
 
@@ -40,9 +40,10 @@ import { LAYERS } from './Patch'
  * did object had a button at the bottom of the screen the whole time.
  */
 
-/* Written and read here rather than through survey/store.js, whose seenIntro
-   flag means "has watched", not "has refused". Two different questions, and
-   one of them must not be set by simply reaching the end. */
+/* This key means "has refused", not "has watched" — the two are different
+   questions and only one of them suppresses the sequence. Reaching the end
+   sets nothing; the intro plays again on the next load, which is what was
+   asked for. Only Skip (or Esc, which is the same action) writes it. */
 const OFF_KEY = 'mindmap.intro.off'
 
 /** True when the visitor has pressed Skip at some point, in which case the
@@ -520,8 +521,7 @@ const CSS = `
 .iv-root .iv-lyr{animation-name:iv-land,iv-close;animation-duration:1.4s,.6s;animation-delay:var(--t),var(--t2);animation-fill-mode:both,forwards;animation-timing-function:cubic-bezier(.2,.7,.3,1),cubic-bezier(.55,0,.25,1)}
 .iv-root .iv-stage{animation:iv-stage .55s cubic-bezier(.2,.7,.3,1) both}
 .iv-root .iv-out{animation:iv-out ${OUT_MS}ms cubic-bezier(.55,0,.25,1) both}
-.iv-root .iv-wipe{animation:iv-wipe .9s cubic-bezier(.55,0,.25,1) both}
-.iv-root .iv-wipemark{animation:iv-wipemark .9s cubic-bezier(.2,.7,.3,1) both}
+.iv-root .iv-wipe{animation:iv-wipe .62s cubic-bezier(.65,0,.35,1) both}
 @keyframes iv-draw{from{stroke-dashoffset:var(--len)}}
 @keyframes iv-rise{from{opacity:0;transform:translateY(10px)}}
 @keyframes iv-pop{from{opacity:0;transform:scale(.35)}}
@@ -540,12 +540,7 @@ to{transform:translate(-50%,-50%) translateZ(var(--z2))}}
 to{transform:translate(136px,125.2px) scale(5.2);stroke-width:.5px}}
 @keyframes iv-stage{from{opacity:0;transform:translateY(16px)}}
 @keyframes iv-out{to{opacity:0;transform:translateY(-14px)}}
-@keyframes iv-wipe{0%{transform:translateX(-152%)}
-38%,64%{transform:translateX(-33%)}
-100%{transform:translateX(102%)}}
-@keyframes iv-wipemark{0%,34%{opacity:0;transform:translateX(-5%) scale(.82)}
-46%,60%{opacity:1;transform:translateX(0) scale(1)}
-72%,100%{opacity:0;transform:translateX(5%) scale(1.1)}}
+@keyframes iv-wipe{from{transform:translateX(-152%)}to{transform:translateX(102%)}}
 @media (prefers-reduced-motion:reduce){.iv-root [class*="iv-"]{animation:none !important}}
 `
 
@@ -738,23 +733,22 @@ export function Intro({ onDone }) {
           </div>
         </div>
 
-        {/* The transition, and the mark's third job: a band crosses the stage at
-            every boundary carrying the logo, so a beat change is an event in
-            the film rather than one picture being replaced by another. */}
+        {/* The transition: one band crosses the stage at every boundary, so a
+            beat change reads as an event rather than one picture replacing
+            another.
+
+            It used to hold full-frame for ~230ms with the logo mark popping in
+            and back out inside it. Six beats meant six of those, and at that
+            duration a mark appearing and vanishing does not read as branding —
+            it reads as a flicker, which is exactly what it was reported as.
+            The band now travels straight through without pausing and carries
+            nothing. The brand is the whole film; it does not need stamping on
+            every seam. */}
         {!reduced && (
           <div key={'w' + beat} aria-hidden
             className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-            {/* The mark is NOT a child of the band. Anything pinned to a
-                150%-wide element travelling 380% of the viewport is on screen
-                for about 200ms whatever its keyframes say; held at the centre
-                of the frame with its own timing, it lands while the band is
-                holding over the stage. */}
             <div className="iv-wipe absolute inset-y-0 left-0 w-[150%] border-r-2 border-beam
               bg-accent-ink"/>
-            <div style={PEAK} className="iv-wipemark absolute inset-0 flex items-center
-              justify-center text-paper">
-              <LogoMark className="h-[clamp(2.5rem,8vw,5rem)] w-auto"/>
-            </div>
           </div>
         )}
       </main>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
-import { QUESTIONS, questionText } from '../survey/questions'
+import { QUESTIONS, pageLabel, questionText } from '../survey/questions'
 import { exportRows, toCSV, getVisitor } from '../survey/store'
 
 /* The page Mikhail opens to read what peer reviewers actually said.
@@ -19,10 +19,10 @@ import { exportRows, toCSV, getVisitor } from '../survey/store'
  * the bundle (where anyone can read the secret). Both are theatre, and theatre
  * is worse than an honest gap because it stops you from closing the real one.
  *
- * What is here instead: the route is not in the nav and not in VIEWS, and when
- * VITE_RESPONSES_KEY is set the page takes a key out of the URL query string
- * and forwards it as a header for the API to check against its own server-side
- * env var. The key is never a build-time constant — VITE_RESPONSES_KEY is read
+ * What is here instead: the route resolves but sits in no nav bar and is
+ * linked from nowhere on the site, and when VITE_RESPONSES_KEY is set the page
+ * takes a key out of the URL query string and forwards it as a header for the
+ * API to check against its own server-side env var. The key is never a build-time constant — VITE_RESPONSES_KEY is read
  * only as a flag meaning "this deployment expects a key", never as the key
  * itself, so nothing secret lands in dist/.
  *
@@ -55,13 +55,6 @@ function urlKey() {
 /* ------------------------------------------------------------ question map */
 
 const PAGE_ORDER = Object.keys(QUESTIONS)
-
-const PAGE_LABEL = {
-  site: 'Overview', patch: 'The patch', hub: 'Open the app',
-  student: 'For students', check: 'Take a reading', parent: 'For parents',
-  privacy: 'Who can see what', pro: 'For schools', tour: 'The tour',
-  final: 'Last questions',
-}
 
 /* Sorting a reviewer's answers by the order they were asked, not by the clock:
  * someone who went back and changed one answer should not have it jump to the
@@ -231,7 +224,7 @@ function Distribution({ q, counts, total }) {
       <figcaption className="max-w-read font-display text-ui font-medium text-ink">
         {q.prompt}
       </figcaption>
-      <p className="note mt-1">{PAGE_LABEL[q.page] || q.page} · {total} answered</p>
+      <p className="note mt-1">{pageLabel(q.page)} · {total} answered</p>
       <div className="mt-3 flex flex-col gap-2">
         {q.points.map(p => {
           const n = counts[p.value] || 0
@@ -302,11 +295,6 @@ function Field({ label, children }) {
   )
 }
 
-/* A drawn stand-in while the fetch is out. Not a spinner: a spinner says "wait"
- * and says nothing else, where this says what shape the thing being fetched is,
- * and it holds the layout so nothing jumps when the answers land. It does not
- * move, which is also how it satisfies reduced motion. */
-
 function Notice({ title, children }) {
   return (
     <div className="mt-8 max-w-measure border-l-2 border-warn bg-warn-wash py-3 pl-4 pr-5">
@@ -332,14 +320,20 @@ function Respondent({ p }) {
         <p className="mt-5 text-meta text-ink-2">Gave a name and then answered nothing.</p>
       ) : (
         <dl className="mt-6 flex flex-col gap-5">
-          {p.rows.map(r => (
+          {p.rows.map(r => {
+            /* questionText falls back to the question's own id when the
+               question is gone, which is what an answer to a retired route
+               looks like by the time it reaches here. Saying so is the
+               difference between a stale answer and a rendering fault. */
+            const retired = r.question === r.questionId
+            return (
             <div key={r.page + '/' + r.questionId} className="border-t border-rule pt-4">
               <dt className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-mono text-fine tabular-nums text-ink-3">
-                  {PAGE_LABEL[r.page] || r.page}
+                  {pageLabel(r.page)}
                 </span>
                 <span className="max-w-read font-display text-ui font-medium text-ink-2">
-                  {r.question}
+                  {retired ? 'This question is no longer asked' : r.question}
                 </span>
               </dt>
               {/* Prose is never clamped, ellipsised or scrolled: a reviewer's
@@ -353,8 +347,10 @@ function Respondent({ p }) {
               {r.label && String(r.label) !== String(r.value) && (
                 <p className="note mt-1">Picked: {r.label}</p>
               )}
+              {retired && <p className="note mt-1">Recorded as {r.questionId}.</p>}
             </div>
-          ))}
+            )
+          })}
         </dl>
       )}
     </article>
@@ -480,12 +476,11 @@ export function Responses() {
         </div>
       </div>
 
-      {/* The skeleton, the two notices and the summary all occupy this slot in
-          turn. Without a floor under it the swap moved the whole page — measured
-          at CLS 0.32 on a 1280px viewport, well past the 0.1 the audit allows.
-          The floor is the tallest of the three, so nothing below it ever moves. */}
+      {/* Either notice, or neither, occupies this slot. Without a floor under
+          it the swap moved the whole page — measured at CLS 0.32 on a 1280px
+          viewport, well past the 0.1 the audit allows. The floor is the taller
+          of the two, so nothing below it ever moves. */}
       <div className="wrap min-h-[16rem]">
-        
         {status === 'local' && (
           <Notice title="Showing this browser's records only">
             <p>{problem}</p>
@@ -510,162 +505,158 @@ export function Responses() {
           </Notice>
         )}
 
-        {(
-          <>
-            <section aria-label="Summary" className="mt-14">
-              <p className="mark">Summary</p>
-              <div className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <div className="note">Respondents</div>
-                  <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                    {people.length}
-                  </div>
-                  <p className="mt-1.5 text-meta text-ink-2">
-                    {summary.answers} answers between them.
-                  </p>
-                </div>
-                <div>
-                  <div className="note">Mean rating</div>
-                  <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                    {summary.mean == null ? '—' : summary.mean.toFixed(2)}
-                  </div>
-                  <p className="mt-1.5 text-meta text-ink-2">
-                    {summary.rated === 0
-                      ? 'Nobody has rated the site yet.'
-                      : `From ${summary.rated} rating${summary.rated === 1 ? '' : 's'}, out of 5.`}
-                  </p>
-                </div>
-                <div>
-                  <div className="note">Left a comment</div>
-                  <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                    {summary.commented}
-                  </div>
-                  <p className="mt-1.5 text-meta text-ink-2">
-                    Wrote at least one sentence, not just a score.
-                  </p>
-                </div>
-                <div>
-                  <div className="note">Source</div>
-                  <div className="mt-2 font-display text-head font-medium text-ink">
-                    {status === 'server' ? (ephemeral ? 'Server, in memory' : 'Server store') : 'This browser'}
-                  </div>
-                  <p className="mt-1.5 text-meta text-ink-2">
-                    {status === 'server'
-                      ? 'Read live from the API.'
-                      : 'Read from local storage on this machine.'}
-                  </p>
-                </div>
+        <section aria-label="Summary" className="mt-14">
+          <p className="mark">Summary</p>
+          <div className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <div className="note">Respondents</div>
+              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
+                {people.length}
               </div>
-
-              {summary.dist.length > 0 && (
-                <div className="mt-12 grid gap-x-12 gap-y-8 lg:grid-cols-2">
-                  {summary.dist.map(d => (
-                    <Distribution key={d.q.id} q={d.q} counts={d.counts} total={d.total} />
-                  ))}
-                </div>
-              )}
-              {summary.silent > 0 && (
-                <p className="note mt-6">
-                  {summary.silent} scale question{summary.silent === 1 ? ' has' : 's have'} no
-                  answers yet, so {summary.silent === 1 ? 'it is' : 'they are'} not charted.
-                </p>
-              )}
-            </section>
-
-            <section aria-label="Responses" className="mt-20">
-              <p className="mark">Responses</p>
-
-              <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
-                <Field label="Find a name">
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder="Any part of a name"
-                    className={cn(CONTROL, 'w-[15rem] max-w-full font-body font-normal placeholder:text-ink-3')}
-                  />
-                </Field>
-                <Field label="Sort by">
-                  <select value={sort} onChange={e => setSort(e.target.value)} className={CONTROL}>
-                    <option value="name">Name, A to Z</option>
-                    <option value="newest">Most recent answer first</option>
-                    <option value="oldest">First to start</option>
-                    <option value="most">Most questions answered</option>
-                  </select>
-                </Field>
-                {/* aria-pressed rather than a checkbox: it is a view filter that
-                    takes effect immediately, not a value being submitted. */}
-                <button
-                  type="button"
-                  aria-pressed={onlyCommented}
-                  onClick={() => setOnlyCommented(v => !v)}
-                  className={cn(
-                    'min-h-[46px] rounded-field border px-4 font-display text-ui font-medium',
-                    'transition-[background-color,border-color,color] duration-150 ease-out',
-                    'disabled:pointer-events-none disabled:opacity-45',
-                    onlyCommented
-                      ? 'border-ink bg-ink text-paper hover:bg-accent-ink active:bg-accent-ink'
-                      : 'border-rule bg-card text-ink hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
-                  )}
-                >
-                  Left a comment{onlyCommented ? ' — on' : ''}
-                </button>
-                <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-3">
-                  <Button size="sm" type="button" variant="outline" onClick={load}>
-                    Refresh
-                  </Button>
-                  <Button size="sm" type="button" disabled={nothing} onClick={downloadCSV}>
-                    Download CSV
-                  </Button>
-                  <Button size="sm" type="button" variant="ghost" disabled={nothing} onClick={downloadJSON}>
-                    Download JSON
-                  </Button>
-                </div>
+              <p className="mt-1.5 text-meta text-ink-2">
+                {summary.answers} answers between them.
+              </p>
+            </div>
+            <div>
+              <div className="note">Mean rating</div>
+              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
+                {summary.mean == null ? '—' : summary.mean.toFixed(2)}
               </div>
+              <p className="mt-1.5 text-meta text-ink-2">
+                {summary.rated === 0
+                  ? 'Nobody has rated the site yet.'
+                  : `From ${summary.rated} rating${summary.rated === 1 ? '' : 's'}, out of 5.`}
+              </p>
+            </div>
+            <div>
+              <div className="note">Left a comment</div>
+              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
+                {summary.commented}
+              </div>
+              <p className="mt-1.5 text-meta text-ink-2">
+                Wrote at least one sentence, not just a score.
+              </p>
+            </div>
+            <div>
+              <div className="note">Source</div>
+              <div className="mt-2 font-display text-head font-medium text-ink">
+                {status === 'server' ? (ephemeral ? 'Server, in memory' : 'Server store') : 'This browser'}
+              </div>
+              <p className="mt-1.5 text-meta text-ink-2">
+                {status === 'server'
+                  ? 'Read live from the API.'
+                  : 'Read from local storage on this machine.'}
+              </p>
+            </div>
+          </div>
 
-              {nothing ? (
-                /* Drawn, and it says which of the two very different things it
-                   means — nobody has answered, or nobody's answers can reach
-                   this page. Those need different actions from Mikhail. */
-                <div className="mt-8 rounded-panel border border-rule bg-card p-8">
-                  <h2 className="font-display text-head font-medium text-ink">
-                    {status === 'server' ? 'Nobody has answered yet' : 'Nothing recorded in this browser'}
-                  </h2>
-                  <p className="mt-3 max-w-measure text-sec text-ink-2">
-                    {status === 'server'
-                      ? 'The API answered and its store is empty. Send the site to a reviewer and this fills in as they read.'
-                      : 'This machine has no saved answers, and the server could not be reached, so there is genuinely nothing to show — not an empty result from a working backend.'}
-                  </p>
-                </div>
-              ) : shown.length === 0 ? (
-                <div className="mt-8 rounded-panel border border-rule bg-card p-8">
-                  <h2 className="font-display text-head font-medium text-ink">
-                    No one matches that
-                  </h2>
-                  <p className="mt-3 max-w-measure text-sec text-ink-2">
-                    {people.length} respondent{people.length === 1 ? '' : 's'} recorded, none of
-                    them matching the current name and comment filter.
-                  </p>
-                  <div className="mt-5">
-                    <Button size="sm" type="button" variant="outline"
-                      onClick={() => { setQuery(''); setOnlyCommented(false) }}>
-                      Clear the filter
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="note mt-6">
-                    Showing {shown.length} of {people.length}.
-                  </p>
-                  <div className="mt-4 flex flex-col gap-6">
-                    {shown.map(p => <Respondent key={p.id} p={p} />)}
-                  </div>
-                </>
+          {summary.dist.length > 0 && (
+            <div className="mt-12 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+              {summary.dist.map(d => (
+                <Distribution key={d.q.id} q={d.q} counts={d.counts} total={d.total} />
+              ))}
+            </div>
+          )}
+          {summary.silent > 0 && (
+            <p className="note mt-6">
+              {summary.silent} scale question{summary.silent === 1 ? ' has' : 's have'} no
+              answers yet, so {summary.silent === 1 ? 'it is' : 'they are'} not charted.
+            </p>
+          )}
+        </section>
+
+        <section aria-label="Responses" className="mt-20">
+          <p className="mark">Responses</p>
+
+          <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+            <Field label="Find a name">
+              <input
+                type="search"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Any part of a name"
+                className={cn(CONTROL, 'w-[15rem] max-w-full font-body font-normal placeholder:text-ink-3')}
+              />
+            </Field>
+            <Field label="Sort by">
+              <select value={sort} onChange={e => setSort(e.target.value)} className={CONTROL}>
+                <option value="name">Name, A to Z</option>
+                <option value="newest">Most recent answer first</option>
+                <option value="oldest">First to start</option>
+                <option value="most">Most questions answered</option>
+              </select>
+            </Field>
+            {/* aria-pressed rather than a checkbox: it is a view filter that
+                takes effect immediately, not a value being submitted. */}
+            <button
+              type="button"
+              aria-pressed={onlyCommented}
+              onClick={() => setOnlyCommented(v => !v)}
+              className={cn(
+                'min-h-[46px] rounded-field border px-4 font-display text-ui font-medium',
+                'transition-[background-color,border-color,color] duration-150 ease-out',
+                'disabled:pointer-events-none disabled:opacity-45',
+                onlyCommented
+                  ? 'border-ink bg-ink text-paper hover:bg-accent-ink active:bg-accent-ink'
+                  : 'border-rule bg-card text-ink hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
               )}
-            </section>
-          </>
-        )}
+            >
+              Left a comment{onlyCommented ? ' — on' : ''}
+            </button>
+            <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Button size="sm" type="button" variant="outline" onClick={load}>
+                Refresh
+              </Button>
+              <Button size="sm" type="button" disabled={nothing} onClick={downloadCSV}>
+                Download CSV
+              </Button>
+              <Button size="sm" type="button" variant="ghost" disabled={nothing} onClick={downloadJSON}>
+                Download JSON
+              </Button>
+            </div>
+          </div>
+
+          {nothing ? (
+            /* Drawn, and it says which of the two very different things it
+               means — nobody has answered, or nobody's answers can reach
+               this page. Those need different actions from Mikhail. */
+            <div className="mt-8 rounded-panel border border-rule bg-card p-8">
+              <h2 className="font-display text-head font-medium text-ink">
+                {status === 'server' ? 'Nobody has answered yet' : 'Nothing recorded in this browser'}
+              </h2>
+              <p className="mt-3 max-w-measure text-sec text-ink-2">
+                {status === 'server'
+                  ? 'The API answered and its store is empty. Send the site to a reviewer and this fills in as they read.'
+                  : 'This machine has no saved answers, and the server could not be reached, so there is genuinely nothing to show — not an empty result from a working backend.'}
+              </p>
+            </div>
+          ) : shown.length === 0 ? (
+            <div className="mt-8 rounded-panel border border-rule bg-card p-8">
+              <h2 className="font-display text-head font-medium text-ink">
+                No one matches that
+              </h2>
+              <p className="mt-3 max-w-measure text-sec text-ink-2">
+                {people.length} respondent{people.length === 1 ? '' : 's'} recorded, none of
+                them matching the current name and comment filter.
+              </p>
+              <div className="mt-5">
+                <Button size="sm" type="button" variant="outline"
+                  onClick={() => { setQuery(''); setOnlyCommented(false) }}>
+                  Clear the filter
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="note mt-6">
+                Showing {shown.length} of {people.length}.
+              </p>
+              <div className="mt-4 flex flex-col gap-6">
+                {shown.map(p => <Respondent key={p.id} p={p} />)}
+              </div>
+            </>
+          )}
+        </section>
       </div>
     </main>
   )

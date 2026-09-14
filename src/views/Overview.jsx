@@ -19,10 +19,10 @@ import { cn } from '../lib/utils'
    past two images of nobody in particular before reaching the only thing the
    page is for.
  *
- * It is a launcher now. Hero, then twenty seconds of animation that says what
- * MindMap is, then the three screens as the largest thing on the page. The
- * stock photography is gone entirely — every picture here is either the
- * product drawn or the product's own data.
+ * It is a launcher now. Hero, then the two things the title sequence does not
+ * cover, then the three audiences as the largest thing on the page. The stock
+ * photography is gone entirely — every picture here is either the product
+ * drawn or the product's own data.
  *
  * Vertical rhythm: 14 between sections, 20 between page regions, 10 inside a
  * section. The old file used py-[4.5vw] / py-[7vw] / my-[6vw], which on a
@@ -44,15 +44,15 @@ const SCREENS = [
   { id:'student', who:'Student',
     title:'One score out of 100, today',
     line:'The student sees the score, the four signals behind it, and every reading the patch has taken.',
-    cta:'Open the student screen' },
+    cta:'What a student gets' },
   { id:'parent',  who:'Parent',
     title:'One sentence a week, and which days ran high',
     line:'A parent sees the shape of the week. Never a raw reading, never a note, never a location.',
-    cta:'Open the parent screen' },
+    cta:'What a parent gets' },
   { id:'pro',     who:'School counselor',
     title:'A caseload ranked by who is changing fastest',
     line:'A counselor sees a score and a rank, for the students whose guardian agreed to share trends.',
-    cta:'Open the counselor console' },
+    cta:'What a school gets' },
 ]
 
 /* Each preview is the live component that screen actually uses, on that
@@ -128,7 +128,7 @@ export function Overview({ go }) {
           </ScrollIn>
           <ScrollIn className="mt-10">
             <div className="flex flex-wrap gap-3">
-              <Button onClick={() => go('student')}>Open the app<span aria-hidden>→</span></Button>
+              <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
               <Button variant="outline" onClick={() => go('patch')}>See the hardware</Button>
             </div>
             <button onClick={() => go('check')}
@@ -152,10 +152,13 @@ export function Overview({ go }) {
 
       <Separator weight="ink"/>
 
-      {/* Twenty seconds that carry the whole idea, for the visitor who will not
-          read four paragraphs to find out what this is. */}
+      {/* Not what MindMap is — the title sequence on load spends six beats on
+          that, and the figure two sections down draws the mechanism. These are
+          the two things neither of them says: why it exists, and what somebody
+          does with it. They are also the only explanation on the page for a
+          visitor who pressed Skip, which turns the sequence off for good. */}
       <section className="wrap py-14">
-        <h2 className="mark">What MindMap does, in four steps</h2>
+        <h2 className="mark">Why it exists, and what you do with it</h2>
         <Onboarding className="mt-8"/>
       </section>
 
@@ -164,7 +167,8 @@ export function Overview({ go }) {
       {/* The reason this page exists, and now the largest thing on it.
           Landing a first-time visitor straight into a screen full of readings
           was the complaint: they arrived inside somebody's data with no idea
-          whose it was or why. They pick a person first. */}
+          whose it was or why. Each tile opens that audience's walkthrough, and
+          the app itself is one deliberate door further on. */}
       <section id="screens" className="bg-mist/60">
         <div className="wrap py-20">
           <h2 className="font-display font-medium text-view leading-[1.1] text-ink">
