@@ -1,12 +1,14 @@
 import React from 'react'
 import { ScrollRow } from '../s21/motion'
 
-import { Headline, AllDetail, SampleTag } from './Monitor'
+import { Headline, AllDetail } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card'
 import { Progress } from '../ui/progress'
 import { Scale } from '../ui/radio-scale'
+import { DemoNotice, RealNotice } from '../ui/notice'
+import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 
@@ -29,6 +31,7 @@ function Route({ n, title, children, foot }){
 }
 
 export function CheckInBody({ go }){
+  const [mode] = useMode()
   const resultRef = React.useRef(null)
   const [ans,setAns] = React.useState({})
   const [pair,setPair] = React.useState(null)
@@ -53,7 +56,14 @@ export function CheckInBody({ go }){
     <>
       <div className="flex flex-wrap items-baseline gap-4">
         <h2 className="max-w-[18ch] font-display font-medium text-head text-ink">Take a reading now.</h2>
-        <SampleTag>Live — scored from your own answers</SampleTag>
+        {/* This screen is the exception in both modes — it scores whoever is
+            reading it, from their own answers, with or without hardware — so
+            the annotation states what is true of the screens around it rather
+            than of this one. Neither stamp can be dropped: in demo the
+            surrounding figures are invented, and in real there is no patch. */}
+        {mode === 'real'
+          ? <RealNotice inline>No patch is paired, and these six questions do not need one.</RealNotice>
+          : <DemoNotice inline>Every other screen is generated. These six are not.</DemoNotice>}
       </div>
       <p className="mt-4 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
         same model the patch uses. About thirty seconds.</p>
@@ -76,7 +86,8 @@ export function CheckInBody({ go }){
         </Route></ScrollRow>
         <ScrollRow index={1} className="h-full"><Route n="02" title="Connect a patch"
           foot={<p aria-live="polite" className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">{pair?.msg}</p>}>
-          <p className="max-w-[38ch] text-sec text-ink-2">Pairs over Bluetooth with a MindMap patch and streams at 1 Hz.</p>
+          <p className="max-w-[38ch] text-sec text-ink-2">Pairs over Bluetooth with a MindMap patch and streams at 1 Hz.
+            {mode === 'real' && ' Nothing is paired to this account, so the dashboard has no reading to show yet.'}</p>
           <Button variant="outline" size="sm" className="mt-5" onClick={pairUp} disabled={busy}>
             {busy ? 'Connecting…' : 'Connect a patch'}
           </Button>

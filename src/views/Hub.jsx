@@ -33,17 +33,17 @@ import { cn } from '../lib/utils'
  * the page a visitor uses to pick a side of it. */
 const ROLES = [
   { id:'student', who:'Student', ord:'01',
-    title:'Your own reading, today',
+    title:'One score out of 100, today',
     sees:'Sees every reading the patch takes, and everything written in the app.',
     never:'Nothing on this screen is withheld from them — they are the one who decides what leaves it.',
     cta:'Open the student screen' },
   { id:'parent', who:'Parent', ord:'02',
-    title:'How the week went',
-    sees:'Sees one number a day, one sentence a week, and which days ran high.',
+    title:'One sentence a week, and which days ran high',
+    sees:'Sees one number a day, and which of the seven days sat above their child\'s own range.',
     never:'Never a raw reading, never a note, never a location.',
     cta:'Open the parent screen' },
   { id:'pro', who:'School counselor', ord:'03',
-    title:'Who to see on Monday',
+    title:'A caseload ranked by who is changing fastest',
     sees:'Sees a score and a rank, for the students whose guardian consented to trends.',
     never:'Never raw readings unless the student switches them on, and never a group under five.',
     cta:'Open the counselor console' },
@@ -52,10 +52,10 @@ const ROLES = [
 /* Built, and reachable from here. Kept apart from the planned list below by a
    heading and an ink rule rather than by a badge in a corner. */
 const ELSEWHERE = [
-  ['check',   'Take a reading',   'Score yourself now — six questions, no patch needed.'],
-  ['privacy', 'Who can see what', 'The three audiences against every row of data.'],
-  ['patch',   'The patch',        'The three printed parts, the board, and what reads through the base.'],
-  ['tour',    'Guided tour',      'Eight stops: the problem, the build, and what is demonstration.'],
+  ['check',   'Score yourself in six questions', 'No patch needed. You get one number and one sentence.'],
+  ['privacy', 'Who can see what',                'Every row of data, against the student, the parent and the counselor.'],
+  ['patch',   'The patch, in three parts',       'The printed shell, the board inside, and what reads through the base.'],
+  ['tour',    'Guided tour, eight stops',        'The problem, what we built, and what is still demonstration.'],
 ]
 
 /* Screens that do not exist. Two entries left this list when the pages they
@@ -124,10 +124,11 @@ export function Hub({ go }) {
     <main className="wrap py-14">
       <Label>Open the app</Label>
       <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-        Three people see three different things
+        MindMap has three screens: student, parent, counselor
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        The same second of physiology, cut three ways. Pick whose screen you want to open.
+        All three read the same day of measurements from the patch. The student sees every reading;
+        the other two see only what the student agreed to share. Open any of them.
       </p>
 
       {/* The three doors, and the largest thing on the page. Equal columns,
@@ -168,7 +169,7 @@ export function Hub({ go }) {
       {/* Second rank, and it looks like one: no preview, one line each, a
           smaller title step. */}
       <section className="mt-20">
-        <h2 className="mark">Elsewhere in the working demo</h2>
+        <h2 className="mark">Four more pages that open and run</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {ELSEWHERE.map(([to, h, p], i) => (
             <ScrollRow key={to} index={i} className="h-full">

@@ -2,7 +2,8 @@ import React from 'react'
 import { Back } from './Monitor'
 import KineticGrid from '../s21/texture'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
-import { Badge } from '../ui/badge'
+import { DemoNotice, RealNotice } from '../ui/notice'
+import { useMode } from '../lib/mode'
 
 /* One section shell for the three audiences.
  *
@@ -11,7 +12,8 @@ import { Badge } from '../ui/badge'
  * heading saying who the page was for. All three are sections now, built from
  * the same piece, so the difference between them is their content and nothing
  * else. */
-export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, children }) {
+export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab, onTab, children }) {
+  const [mode] = useMode()
   const [said, setSaid] = React.useState('')
   /* Switching a tab replaces the panel with focus still on <body>. */
   const announce = v => {
@@ -33,15 +35,14 @@ export function SectionShell({ title, sub, note, tabs, panes, go, tab, onTab, ch
           <Back go={go} to="site" label="Overview"/>
           <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
           {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
-          {note && (
-            <p className="mt-4 inline-flex max-w-[60ch] items-baseline gap-2 border-l-2 border-warn
-              bg-paper/70 py-2 pl-3 pr-4 text-meta text-ink-2">
-              {/* The sample-data disclosure used to be a hand-set <b> in warn;
-                  it is the one thing the sourced badge's `demo` variant exists
-                  for, and it now reads the same here and on the pro console. */}
-              <Badge variant="demo">Demo</Badge>
-              {note}</p>
-          )}
+          {/* One ruled annotation, and which one depends on what the panes below
+              are actually showing: the sample-data caveat over fixtures, the
+              no-patch fault when the app is running on nothing. The hand-rolled
+              paragraph this replaces wrapped a capsule badge inside a bordered
+              tinted box — three containers for one sentence. */}
+          {note && (mode === 'real'
+            ? <RealNotice className="mt-4">{realNote}</RealNotice>
+            : <DemoNotice className="mt-4">{note}</DemoNotice>)}
         </div>
       </div>
       {/* Was py-9 sm:py-12. The tab body is a section, so it takes the middle

@@ -218,21 +218,21 @@ function StageWeek() {
 }
 
 const BEATS = [
-  { tab: 'Before it shows',
-    head: 'Stress builds for hours before it shows.',
-    sub:  'The body reacts long before the person notices.',
+  { tab: 'The problem',
+    head: 'A hard day shows in the body before anyone talks about it.',
+    sub:  'Heart rate, sweating and skin temperature move first. Nobody writes any of it down.',
     Stage: StageDay },
-  { tab: 'Four signals',
+  { tab: 'The patch',
     head: 'A patch on the forearm reads four signals, once a second.',
     sub:  'Heart, sweat, skin temperature and movement — read off the arm, not typed into an app.',
     Stage: StagePatch },
-  { tab: 'One number',
-    head: 'The app turns the day into one number and one plain sentence.',
+  { tab: 'The score',
+    head: 'The app turns the day into one score out of 100 and one plain sentence.',
     sub:  'No charts to interpret, and nothing that needs a clinician to read it.',
     Stage: StageScore },
-  { tab: 'On Tuesday',
-    head: 'So the conversation happens on Tuesday, not after a crisis.',
-    sub:  'A small early conversation, in place of a late one.',
+  { tab: 'The week',
+    head: 'A parent sees which day ran high, and can ask about it that evening.',
+    sub:  'One day named, while it is still the same week — not after a crisis.',
     Stage: StageWeek },
 ]
 

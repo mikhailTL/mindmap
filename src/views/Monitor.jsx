@@ -1,8 +1,9 @@
 import React from 'react'
 import { ArrowLeft, Chevron } from '../ui/marks'
 import * as C from '@radix-ui/react-collapsible'
-import { Badge } from '../ui/badge'
-import { Card } from '../ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
+import { Button } from '../ui/button'
+import { DemoNotice, RealNotice } from '../ui/notice'
 import { Label } from '../ui/misc'
 import { Spark } from '../charts/primitives'
 import { DayChart } from '../charts/day'
@@ -12,6 +13,8 @@ import { ScrollIn, ScrollRow } from '../s21/motion'
 import { WeekStrip } from '../charts/infographics'
 import { RainbowDial, RainbowKey, SensorDetail } from '../charts/rainbow'
 import { studentRings, parentRings } from '../lib/readings'
+import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
+import { useMode } from '../lib/mode'
 import { cn } from '../lib/utils'
 
 /* The dashboard shows one number, one sentence, and the reasons under it.
@@ -113,15 +116,12 @@ function Stat({ label, value, unit, trend, children }) {
   )
 }
 
-/* Every number on these two screens comes from a fixture, and a reviewer read
-   all of them as measurements of a real child. Saying so once, at the top, is
-   cheaper than a disclaimer under each figure. */
-export function SampleTag({ children = 'Sample data — not a real person' }) {
-  /* Badge's `demo` variant is this disclosure's own variant: it carries the
-     warn hue in the border, bed and text, so the hand-rolled mist pill with a
-     warn dot glued to it — one colour doing the work of three — is gone. */
-  return <Badge variant="demo">{children}</Badge>
-}
+/* SampleTag is gone. It was one component whose whole body was `<Badge
+   variant="demo">`, so it bought an indirection and nothing else, and the
+   badge it wrapped was a capsule — the disclosure it carried is a sentence
+   about the figures beside it, not a label on them. Call sites set
+   `<DemoNotice inline>` directly now; the sentence they were passing is the
+   same sentence, set in the ruled annotation from ui/notice.jsx. */
 
 /* The dial, the sentence and the four rows are one unit on every screen that
    has a score, so they are built once. `picked` lives here because the detail
@@ -146,8 +146,122 @@ function Rings({ score, usual, rings, children }) {
   )
 }
 
+/* ── Student, with nothing paired ───────────────────────────────────────── */
+/* Four lanes of chart paper with the pen never lowered.
+ *
+ * The alternative was a dial at zero, and it is unusable here: zero on this
+ * scale means a calm day, so an empty dial would be a reading — the one number
+ * on the screen, stating something false with total confidence. This figure
+ * cannot be misread as a measurement, and it occupies the column the dial
+ * occupies in demo, so flipping modes exchanges one drawn object for another
+ * instead of collapsing the layout. */
+function SilentChannels() {
+  return (
+    <figure className="m-0">
+      <div className="border-t border-ink">
+        {SENSOR_ORDER.map(id => {
+          const s = SENSORS[id]
+          return (
+            <div key={id} className="flex items-center gap-4 border-b border-rule py-5">
+              <span className="w-[10ch] shrink-0 font-display text-meta font-medium text-ink">{s.name}</span>
+              <span className="tick w-[4ch] shrink-0">{s.unit}</span>
+              {/* The lane itself: ruled, dashed, empty. */}
+              <span aria-hidden className="flex-1 border-t border-dashed border-ruling"/>
+              <span className="shrink-0 whitespace-nowrap font-mono text-tick text-ink-3">no signal</span>
+            </div>
+          )
+        })}
+      </div>
+      <figcaption className="note mt-4 max-w-[36ch]">
+        Four channels, nothing written on any of them. A paired patch fills each one once a second.
+      </figcaption>
+    </figure>
+  )
+}
+
+/* Written as requirements rather than as a three-step wizard: nothing here can
+   be completed by clicking, so numbering them as actions would be a promise
+   the screen cannot keep. */
+const PAIRING = [
+  ['A patch, charged', 'One MindMap patch on the inside of the forearm. None exists to send you yet — the hardware is drawn and printed, not manufactured.'],
+  ['A phone with Bluetooth', 'The app pairs over Bluetooth LE and reads the four channels above once a second.'],
+  ['About two weeks of wear', 'The score is a comparison with your own normal, and the first fortnight is what builds that normal. Before it, there is no baseline to compare against.'],
+]
+
+function StudentUnpaired({ go, openTab }) {
+  const toCheck = () => openTab ? openTab('check') : go('check')
+  return (
+    <>
+      <div className="flex flex-wrap items-baseline gap-3.5">
+        <h2 className="font-display text-row font-medium text-ink">Your reading today</h2>
+        <Label>No patch paired</Label>
+        <RealNotice inline>Nothing has been measured, so there is no score.</RealNotice>
+      </div>
+
+      <div className="mt-10 grid gap-9 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-14">
+        <SilentChannels/>
+        <div className="min-w-0">
+          <Headline>No patch is paired to this account.</Headline>
+          <p className="mt-4 max-w-[42ch] text-body text-ink-2">The screen fills the moment one is.
+            Until then there is nothing to read, and nothing has gone wrong.</p>
+          <h3 className="mark mt-10">What a reading from the patch needs</h3>
+          <ol className="m-0 mt-3 list-none p-0">
+            {PAIRING.map(([what, why], i) => (
+              <li key={what} className="flex gap-4 border-b border-rule py-4">
+                <span className="pt-0.5 font-mono text-tick tabular-nums text-ink-3">0{i + 1}</span>
+                <span>
+                  <span className="block font-display text-ui font-medium text-ink">{what}</span>
+                  <span className="mt-1 block max-w-[46ch] text-sec text-ink-2">{why}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      {/* This outranks the pairing requirements above on purpose. A visitor has
+          no patch and cannot get one, but the six questions score a real person
+          on the same scale with no hardware at all — so the screen's one
+          working route out is a key, not a footnote. */}
+      <ScrollIn as="div">
+        <Card as="section" className="mt-10 border-l-[3px] border-l-accent">
+          <CardHeader className="p-6 pb-0">
+            <CardTitle as="h3" className="text-row">You can take a reading now, without a patch.</CardTitle>
+            <CardDescription className="max-w-[56ch]">Six questions, scored by the same model the
+              patch feeds, on the same scale out of 100 — one ring instead of four. It is the only
+              screen on this site that measures the person reading it.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 pt-5">
+            <Button onClick={toCheck}>Answer six questions</Button>
+          </CardContent>
+        </Card>
+      </ScrollIn>
+
+      {/* Unchanged from the paired screen: what leaves the phone does not
+          depend on whether anything is measuring. */}
+      <ScrollIn as="div"><Card interactive as="button"
+        onClick={() => openTab ? openTab('shared') : go('privacy')}
+        className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
+        <span className="text-body text-ink">What you write in the app stays on your device.
+          <span className="block text-meta text-ink-2">See who can see what</span></span>
+        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+      </Card></ScrollIn>
+
+      <p className="mt-10 max-w-[64ch] text-meta text-ink-2">Once a patch is paired the score is
+        worked out every 30 seconds from the previous minute of readings, and compared with your own
+        last two weeks. Each ring is one signal's own distance from that baseline; the number in the
+        middle is the model's blend of all four, so the rings do not add up to it.</p>
+    </>
+  )
+}
+
 /* ── Student ────────────────────────────────────────────────────────────── */
 export function StudentBody({ go, openTab }) {
+  const [mode] = useMode()
+  /* The whole screen swaps rather than each figure emptying in place: a score,
+     a dial and four rings have no honest empty form, and a page of blanks
+     reads as a failure rather than as a product waiting for a device. */
+  if (mode === 'real') return <StudentUnpaired go={go} openTab={openTab}/>
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
@@ -155,7 +269,7 @@ export function StudentBody({ go, openTab }) {
             reads as the answer and is not. */}
         <h2 className="font-display text-row font-medium text-ink">Your reading today</h2>
         <Label>Thursday · 4:10 pm</Label>
-        <SampleTag/>
+        <DemoNotice inline>Sample data — not a real person.</DemoNotice>
       </div>
 
       <Rings score={51} usual={46} rings={studentRings()}>
@@ -202,7 +316,7 @@ export function ParentBody({ go, openTab }) {
       <div className="flex flex-wrap items-baseline gap-3.5">
         <h2 className="font-display text-row font-medium text-ink">Maya</h2>
         <Label>This week · shared since March</Label>
-        <SampleTag/>
+        <DemoNotice inline>Sample data — not a real person.</DemoNotice>
       </div>
 
       <Rings score={58} usual={47} rings={parentRings()}>

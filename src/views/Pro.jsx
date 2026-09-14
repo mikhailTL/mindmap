@@ -8,6 +8,8 @@ import { ConfirmClose } from '../ui/confirm'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
+import { DemoNotice, RealNotice } from '../ui/notice'
+import { useMode } from '../lib/mode'
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../ui/hover-card'
 /* ui/hover-card ships no Portal, and the only triggers on this page sit inside
    a <p>; an unportaled panel would put a <div> in a paragraph and split it. */
@@ -28,6 +30,42 @@ const TABS = [
 const Sub = ({ children, className }) =>
   <p className={cn('max-w-[68ch] text-sec text-ink-2', className)}>{children}</p>
 const Note = ({ children }) => <p className="mt-5 max-w-[70ch] border-t border-rule pt-4 text-meta text-ink-3">{children}</p>
+
+/* ── Empty, drawn ───────────────────────────────────────────────────────── */
+/* With no student paired and no guardian consented, this console has no rows —
+ * which is its true state for every visitor today, and it is not a fault. So
+ * an empty region here keeps the form and loses only the entries: the rules
+ * stay, the columns keep their names, the blank is drawn as a ruled lane and
+ * annotated. A bare sentence in the middle of a blank panel reads as a page
+ * that failed to load, which is the one thing this console cannot afford to
+ * look like.
+ *
+ * Dashed rather than solid: a drawn rule on this site means a real division,
+ * so a lane that is waiting for content has to be visibly a different mark. */
+const BlankLane = ({ className }) =>
+  <span aria-hidden className={cn('border-t border-dashed border-ruling', className)}/>
+
+const BlankRow = ({ children }) => (
+  <li className="flex items-center gap-4 py-3.5">
+    <BlankLane className="w-10 shrink-0"/>
+    <span className="text-sec text-ink-3">{children}</span>
+  </li>
+)
+
+/* A table keeps its header row when it has no data. The columns are the
+   schema, and the schema is real whether or not anything has been written to
+   it — a counselor evaluating this product needs to see what would be logged
+   about them before there is anything to log. */
+const EmptyBand = ({ cols, children }) => (
+  <TR>
+    <TD colSpan={cols}>
+      <span className="flex items-center gap-5 py-6">
+        <BlankLane className="w-16 shrink-0"/>
+        <span className="max-w-[62ch] text-sec text-ink-2">{children}</span>
+      </span>
+    </TD>
+  </TR>
+)
 
 /* A counselor who does not know what a column means had to scroll past the
    list to the footnote to find out. The definition sits on the word now. */
@@ -118,7 +156,122 @@ function Limited({ heading, note, children }) {
   )
 }
 
-function Triage({ onOpen }) {
+/* The three conditions, in the order they happen. A school reads this tab
+   first, and "why is it empty" is the question it asks — so the answer is the
+   content of the empty board rather than a line under it. */
+const CASELOAD_NEEDS = [
+  ['A student pairs a patch',
+   'Nothing reaches the school from an unpaired account. The student pairs it themselves, on their own phone, and can unpair it the same way.'],
+  ['A guardian signs a consent scope',
+   'The scope decides what this board may show about that student: a wellness score, a score with weekly trends, or crisis alerts and nothing else.'],
+  ['The scope is applied here, and never widened',
+   'A student consented to alerts only carries no score on this screen and no rank. Ranking them anyway would leak exactly the thing they withheld.'],
+]
+
+/* The row the board draws, with its four fields named and none of them filled.
+   Not a loading skeleton — the fields are labelled in words, because the point
+   is to show a counselor what will appear here and what each part of it means,
+   which a shimmering grey bar cannot do. */
+function BlankBoardRow() {
+  return (
+    <figure className="m-0 mt-3">
+      <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-panel
+        border border-dashed border-rule p-4 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)]">
+        <span className="font-mono text-meta text-ink-3">—</span>
+        <span className="font-mono text-tick text-ink-3">student · grade · tier</span>
+        <span className="font-mono text-tick text-ink-3">score</span>
+        <span className="col-span-full sm:col-span-1">
+          <span className="block font-mono text-tick text-ink-3">change this week</span>
+          {/* The velocity track, drawn empty: centre line, worse to the right.
+              Without it the legend under this figure legends nothing. */}
+          <span aria-hidden className="mt-1.5 flex h-1.5 max-w-[13rem] items-stretch">
+            <span className="flex-1 bg-mist"/>
+            <span className="w-px bg-ink-3"/>
+            <span className="flex-1 bg-mist"/>
+          </span>
+        </span>
+      </div>
+      <figcaption className="note mt-3 max-w-[62ch]">
+        One row per consented student, ordered by how fast they are moving rather than by how high
+        they are. Right of centre on the track is worse.
+      </figcaption>
+    </figure>
+  )
+}
+
+/* The ranking rule, with both definitions on the words. It is the same
+   sentence on a full board and an empty one, so it is written once. */
+const RankRule = () => (
+  <Sub>Who to see first. <b className="font-medium text-ink">
+    <Term label="Stress index"
+      def="One score a day per student, 0 to 100, read against that student's own baseline rather than against the year group."/>,
+    {' '}0 to 100, higher is worse</b>, ordered by weekly{' '}
+    <Term label="velocity"
+      def="The change in a student's seven-day average from one week to the next. It is what orders this list, so a rising student at 55 sits above a level one at 70."/>.</Sub>
+)
+
+function EmptyTriage() {
+  return (
+    <>
+      <h2 className="font-display text-head font-medium tracking-tight text-ink">
+        Your caseload, ranked by weekly change</h2>
+      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+        <RankRule/>
+        <span className="font-mono text-tick text-ink-3">0 consented · 0 ranked</span>
+      </div>
+
+      {/* No wrapper rule: both columns open with a `.mark`, which draws its
+          own, and a second hairline 20px above it reads as a rendering fault. */}
+      <div className="mt-10 grid gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <section>
+          <h3 className="mark">What puts a name on this board</h3>
+          <ol className="m-0 mt-3 list-none p-0">
+            {CASELOAD_NEEDS.map(([what, why], i) => (
+              <li key={what} className="flex gap-4 border-b border-rule py-4 last:border-b-0 last:pb-0">
+                <span className="pt-0.5 font-mono text-tick tabular-nums text-ink-3">0{i + 1}</span>
+                <span>
+                  <span className="block font-display text-ui font-medium text-ink">{what}</span>
+                  <span className="mt-1 block max-w-[62ch] text-sec text-ink-2">{why}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+        {/* The floor is stated before there is any data to suppress, which is
+            the only order in which a school can weigh it. */}
+        <section>
+          <h3 className="mark">Smallest group we will show</h3>
+          <p className="mt-3 font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</p>
+          <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
+          <p className="mt-4 max-w-[46ch] text-meta text-ink-2">
+            Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen, however
+            many students in it consented.</p>
+        </section>
+      </div>
+
+      <BlankBoardRow/>
+
+      {/* Both limited groups keep their headings with no rows under them: what
+          a narrowed consent scope withholds is worth reading before a school
+          has signed one. */}
+      <div className="mt-14 grid gap-5 lg:grid-cols-2">
+        {/* Written as scope definitions rather than as statements about
+            guardians who have signed: none has. */}
+        <Limited heading="Score only — no trends shared"
+          note="Where a guardian consents to a score alone, no rank is ever shown for that student.">
+          <BlankRow>No student is at this scope.</BlankRow>
+        </Limited>
+        <Limited heading="Crisis alerts only"
+          note="Where a guardian consents to crisis alerts alone, no score, trend or tier is ever shown.">
+          <BlankRow>No student is at this scope.</BlankRow>
+        </Limited>
+      </div>
+    </>
+  )
+}
+
+function Triage({ onOpen, real }) {
+  if (real) return <EmptyTriage/>
   const ranked = triage()
   const scored = [...ranked, ...scoreOnly()]
   const quiet = alertsOnly()
@@ -145,12 +298,7 @@ function Triage({ onOpen }) {
         {/* "Ranked by weekly velocity" was a second sentence saying what the
             heading now says, so the two terms are folded into one line and the
             hover definitions are unchanged. */}
-        <Sub>Who to see first. <b className="font-medium text-ink">
-          <Term label="Stress index"
-            def="One score a day per student, 0 to 100, read against that student's own baseline rather than against the year group."/>,
-          {' '}0 to 100, higher is worse</b>, ordered by weekly{' '}
-          <Term label="velocity"
-            def="The change in a student's seven-day average from one week to the next. It is what orders this list, so a rising student at 55 sits above a level one at 70."/>.</Sub>
+        <RankRule/>
         <span className="font-mono text-tick text-ink-3">
           {total} consented · {ranked.length} ranked</span>
       </div>
@@ -230,10 +378,76 @@ function Triage({ onOpen }) {
 }
 
 /* ── One student ────────────────────────────────────────────────────────── */
-function OneStudent({ who, setWho }) {
+/* What a record holds, and the consent scope that unlocks each part of it. The
+   list is the empty tab's whole content because a record's shape is the thing
+   a school has to agree to before any of it exists. */
+const RECORD_FIELDS = [
+  ['Score today, out of 100', 'Shown when a guardian consents to a wellness score.'],
+  ['Weekly change, and a rank on the board', 'Shown when that consent extends to trends.'],
+  ['What is driving the rise', 'Shown with trends. Shares of the change per signal — never a raw reading.'],
+  ['The last 45 days', 'Shown with trends.'],
+  ['Counselor notes', 'Yours to write, at any scope. Saving writes a row to the audit log.'],
+]
+
+function EmptyRecord() {
+  return (
+    <>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-head font-medium tracking-tight text-ink">
+            No student record open</h2>
+          <p className="mt-1 font-mono text-tick text-ink-3">Grade — · scope —</p>
+          <Sub className="mt-2">A record opens from the triage board, and the board is empty until a
+            guardian signs a scope for a student with a paired patch.</Sub>
+        </div>
+        {/* The control stays, disabled and empty. Removing it would hide how a
+            counselor moves between students, which is a real part of the
+            console whether or not there is anyone to move between. */}
+        <div>
+          <label htmlFor="pick" className="note block">Open a different student</label>
+          <select id="pick" disabled defaultValue="none"
+            className="mt-1.5 min-h-[48px] rounded-field border-0 border-b-2 border-rule bg-transparent
+              px-1 font-body text-meta text-ink-3">
+            <option value="none">No students consented</option>
+          </select>
+        </div>
+      </div>
+
+      <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
+        <CardHeader className="p-6 pb-0">
+          <CardTitle as="h3" className="text-row">What a record holds, at the scope consented</CardTitle>
+          <CardDescription className="max-w-[56ch]">Each line appears only if the guardian agreed to
+            it. Crisis alerts reach the counselor in every case — that is the one thing a guardian
+            cannot consent away, and students are told so before they start wearing a patch.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 pt-5">
+          <ul className="m-0 list-none border-t border-rule p-0">
+            {/* Ruled as a two-column table rather than a wrapping row: the
+                field and the consent that unlocks it are a pair, and ragged
+                starts made them read as one sentence per line instead. */}
+            {RECORD_FIELDS.map(([field, when]) => (
+              <li key={field} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-5
+                gap-y-1 border-b border-rule py-3.5
+                sm:grid-cols-[2.5rem_minmax(0,19rem)_minmax(0,1fr)]">
+                <BlankLane className="w-10"/>
+                <span className="font-display text-meta font-medium text-ink">{field}</span>
+                <span className="col-start-2 max-w-[52ch] text-sec text-ink-3 sm:col-start-3">{when}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </>
+  )
+}
+
+function OneStudent({ who, setWho, real }) {
+  /* Hooks first, then the branch: the two states are different screens, and
+     returning before this line would change the hook order on a mode flip. */
+  const [note, setNote] = React.useState('')
+  if (real) return <EmptyRecord/>
   const all = roster()
   const s = all.find(x => x.name === who) || all[0]
-  const [note, setNote] = React.useState('')
   /* Both of these used to be module constants, so every student on the board
      showed Student 8241's drivers and Student 8241's 45-day line. */
   const drivers = driversFor(s)
@@ -374,7 +588,74 @@ function OneStudent({ who, setWho }) {
 }
 
 /* ── Year groups ────────────────────────────────────────────────────────── */
-function Cohort() {
+/* The hatch that marks a suppressed cell, drawn once as a legend. Its own
+   pattern id: the bars below each define `hatch` inside their own svg, and a
+   second element with the same id in one document is a real collision. */
+const SuppressedSwatch = ({ className }) => (
+  <svg className={cn('h-2 w-full', className)} preserveAspectRatio="none" role="img"
+    aria-label="Suppressed for k-anonymity">
+    <defs>
+      <pattern id="hatch-legend" width="8" height="8" patternUnits="userSpaceOnUse"
+        patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" className="stroke-ruling" strokeWidth="4"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#hatch-legend)"/>
+  </svg>
+)
+
+/* Both halves of this tab aggregate consented students, so with none consented
+   there is nothing to aggregate — but the rule that governs the aggregation is
+   policy, and it is the half a school weighs before it signs anything. */
+const COHORT_REPORTS = [
+  ['Stress by class period', 'A mean per period across the building. A period with fewer than five consented students returns nothing at all.'],
+  ['Stress by weekday', 'The same figure per weekday, read school-wide rather than per class.'],
+]
+
+function EmptyCohort() {
+  return (
+    <>
+      <h2 className="font-display text-head font-medium tracking-tight text-ink">
+        Patterns across the whole school</h2>
+      <Sub className="mt-2">No student in the building has consented, so there is nothing to
+        aggregate. Nobody on this tab is ever identifiable, at any roll.</Sub>
+
+      <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
+        <section className="lg:col-span-2">
+          <h3 className="mark">What this tab reports</h3>
+          <RuleDraw className="mt-2.5"/>
+          <ul className="m-0 mt-5 list-none p-0">
+            {/* The dashed lane is this row's rule as well as its blank: a solid
+                border under it put two hairlines 12px apart. */}
+            {COHORT_REPORTS.map(([what, how]) => (
+              <li key={what} className="py-4 first:pt-0">
+                <h4 className="font-display text-row font-medium tracking-tight text-ink">{what}</h4>
+                <p className="mt-1.5 max-w-[58ch] text-sec text-ink-2">{how}</p>
+                <BlankLane className="mt-3.5 block w-full"/>
+              </li>
+            ))}
+          </ul>
+          <Note>Consented students only, from the same windows the individual scores use.</Note>
+        </section>
+
+        <Panel as="h3" label="Smallest group we will show">
+          <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
+          <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
+          <p className="mt-4 text-meta text-ink-2">
+            Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen.</p>
+          <div className="mt-5 border-t border-rule pt-4">
+            <p className="text-meta text-ink-2">A suppressed cell is drawn, not hidden — it is
+              hatched, so a counselor can see that a figure exists and is being withheld.</p>
+            <SuppressedSwatch className="mt-3"/>
+          </div>
+        </Panel>
+      </div>
+    </>
+  )
+}
+
+function Cohort({ real }) {
+  if (real) return <EmptyCohort/>
   const visible = COHORT_PERIOD.filter(p => !p.suppressed)
   const lo = Math.min(...visible.map(p => p.mean)), hi = Math.max(...visible.map(p => p.mean))
   const avg = Math.round(visible.reduce((a, b) => a + b.mean, 0) / visible.length)
@@ -500,11 +781,17 @@ function Cohort() {
 }
 
 /* ── Escalation ─────────────────────────────────────────────────────────── */
-function Escalation() {
+function Escalation({ real }) {
   const [done, setDone] = React.useState(PROTOCOL_DONE)
   const [closing, setClosing] = React.useState(false)
   const [closed, setClosed] = React.useState(null)
   const toggle = i => setDone(d => d.includes(i) ? d.filter(x => x !== i) : [...d, i])
+  /* Derived rather than branched on at the top: the protocol is the school's
+     own document and stays on the screen either way — with no alert to run it
+     against, every step is simply unticked and untouchable. */
+  const ticked = real ? [] : done
+  const referrals = real ? [] : REFERRALS
+  const log = real ? [] : AUDIT_LOG
   return (
     <>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -518,12 +805,20 @@ function Escalation() {
           </CardHeader>
           <CardContent className="p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h3 className="font-display text-row font-medium tracking-tight text-ink">Student 8241</h3>
-            <span className="font-mono text-sec tabular-nums text-ink-3">2:14 PM</span>
+            <h3 className="font-display text-row font-medium tracking-tight text-ink">
+              {real ? 'Nothing in the queue' : 'Student 8241'}</h3>
+            <span className="font-mono text-sec tabular-nums text-ink-3">{real ? '—' : '2:14 PM'}</span>
           </div>
-          <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
-            Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The escalation
-            protocol ran automatically.</p>
+          {real
+            /* An empty crisis queue is the good state, and it has to read as
+               one. It is also the only thing on this console nobody can put a
+               row into by hand, which is worth saying while it is empty. */
+            ? <p className="mt-2 max-w-[60ch] text-meta text-ink-2">An entry is written here only when
+                a paired patch crosses the crisis threshold. No counselor, parent or administrator can
+                raise one by hand, and none has been raised.</p>
+            : <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
+                Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The
+                escalation protocol ran automatically.</p>}
           {/* The wrapper already draws the rule that separates the steps from
               the alert above; `.mark` draws its own, so the two stacked into a
               pair of hairlines 16px apart that read as a rendering fault. */}
@@ -534,24 +829,25 @@ function Escalation() {
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
                 <li key={step}>
-                  <label className="flex min-h-[44px] cursor-pointer items-center gap-3">
-                    <input type="checkbox" checked={done.includes(i)} onChange={() => toggle(i)}
-                      className="size-4 accent-accent"/>
-                    <span className={cn('text-meta', done.includes(i) ? 'text-ink-3 line-through decoration-rule' : 'text-ink')}>
+                  <label className={cn('flex min-h-[44px] items-center gap-3',
+                    real ? 'cursor-default' : 'cursor-pointer')}>
+                    <input type="checkbox" checked={ticked.includes(i)} disabled={real}
+                      onChange={() => toggle(i)} className="size-4 accent-accent"/>
+                    <span className={cn('text-meta', ticked.includes(i) ? 'text-ink-3 line-through decoration-rule' : 'text-ink')}>
                       {step}</span>
                     <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-sec
-                      tabular-nums text-ink-3">{done.includes(i) ? PROTOCOL_TIMES[i] : ''}</span>
+                      tabular-nums text-ink-3">{ticked.includes(i) ? PROTOCOL_TIMES[i] : real ? '—' : ''}</span>
                   </label>
                 </li>
               ))}
             </ul>
           </div>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4">
-            <Button size="sm" disabled={done.length < PROTOCOL.length || !!closed}
+            <Button size="sm" disabled={real || ticked.length < PROTOCOL.length || !!closed}
               onClick={() => setClosing(true)}>
               {closed ? 'Closed' : 'Close with outcome'}</Button>
             <span className="font-mono text-sec tabular-nums text-ink-3">
-              {done.length} of {PROTOCOL.length} steps complete</span>
+              {ticked.length} of {PROTOCOL.length} steps complete</span>
           </div>
           </CardContent>
         </Card>
@@ -560,7 +856,9 @@ function Escalation() {
             Closed sitting under it. */}
         <Panel as="h3" label="Referrals on this caseload">
           <ul className="divide-y divide-rule">
-            {REFERRALS.map(r => (
+            {real && <BlankRow>No referral has been opened. A referral is written from a student's
+              record, so the first one follows the first consent.</BlankRow>}
+            {referrals.map(r => (
               <li key={r.student + r.opened} className="py-3.5 first:pt-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-meta text-ink">{r.student}</span>
@@ -590,7 +888,10 @@ function Escalation() {
         <Table>
           <THead><TR>{['When','Actor','Action','Subject'].map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
-            {AUDIT_LOG.map(r => (
+            {real && <EmptyBand cols={4}>Nothing has been logged. The first row is written the moment
+              anyone opens a record, exports a figure or changes a setting — including a student
+              changing their own.</EmptyBand>}
+            {log.map(r => (
               <TR key={r.at + r.action}>
                 <TD num className="w-44 whitespace-nowrap">{r.at}
                   <span className="mt-0.5 block text-ink-3">{r.rel}</span></TD>
@@ -601,8 +902,9 @@ function Escalation() {
             ))}
           </TBody>
         </Table>
-        <Note>A student changing their own settings is logged exactly like a staff action. Step five is
-          still open, so there is no closing entry yet.</Note>
+        <Note>A student changing their own settings is logged exactly like a staff action.{' '}
+          {real ? 'The log cannot be edited or deleted, so an empty one stays empty only until the first action.'
+                : 'Step five is still open, so there is no closing entry yet.'}</Note>
       </Panel>
     </>
   )
@@ -615,17 +917,26 @@ const FACTS = [
   ['Data sold or shared with third parties', 'Never'],
   ['Location collected by default', 'No'],
 ]
-function Consent() {
+function Consent({ real }) {
+  /* Only the rows are conditional. Every statement on this tab — the ledger's
+     columns, the retention window, the four facts, the export behaviour — is
+     policy, and policy is as true of a school with nobody enrolled as of a
+     full one. It is also the tab a school reads before it enrolls anyone. */
+  const ledger = real ? [] : CONSENT_LEDGER
+  const log = real ? [] : AUDIT_LOG
   return (
     <>
       <h2 className="mb-7 font-display text-head font-medium tracking-tight text-ink">
         What each guardian agreed to</h2>
-      <Panel as="h3" label="Consent ledger" action={`${CONSENT_LEDGER.length} active · FERPA / COPPA`}>
+      <Panel as="h3" label="Consent ledger" action={`${ledger.length} active · FERPA / COPPA`}>
         <Table>
           <THead><TR>{['Student','Guardian','Scope consented','Basis','Signed','Expires']
             .map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
-            {CONSENT_LEDGER.map(r => (
+            {real && <EmptyBand cols={6}>No guardian has signed a scope. Every row is one signature,
+              revocable by the guardian and narrowable by the student at any time — except a crisis
+              alert, which neither can switch off.</EmptyBand>}
+            {ledger.map(r => (
               <TR key={r.student}>
                 <TD num>{r.student}</TD>
                 <TD>{r.guardian}</TD>
@@ -637,8 +948,9 @@ function Consent() {
             ))}
           </TBody>
         </Table>
-        <Note>The triage board reads this table directly: two students here carry no rank, one shows no
-          score. A student can narrow or withdraw any scope except a crisis alert, at any time.</Note>
+        <Note>The triage board reads this table directly — a student with no row here cannot appear
+          there, and a narrowed scope narrows the board.{real ? '' : ' Two students here carry no rank, one shows no score.'} A
+          student can narrow or withdraw any scope except a crisis alert, at any time.</Note>
       </Panel>
 
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -661,7 +973,8 @@ function Consent() {
         {/* "The same log, most recent first" said what it was not. */}
         <Panel as="h3" label="Recent activity in the log">
           <ul className="divide-y divide-rule">
-            {AUDIT_LOG.map(r => (
+            {real && <BlankRow>Nothing has happened on this console yet.</BlankRow>}
+            {log.map(r => (
               <li key={r.at + r.action}
                 className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3.5 first:pt-0">
                 <div className="min-w-0 flex-1 basis-[15rem]">
@@ -675,8 +988,9 @@ function Consent() {
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-rule pt-4">
             <Button variant="outline" size="sm" disabled>Export audit log (CSV)</Button>
             <Button variant="outline" size="sm" disabled>Export consent ledger</Button>
-            <span className="text-sec text-ink-3">Disabled in this demo. In the product every export
-              writes its own row above.</span>
+            <span className="text-sec text-ink-3">{real
+              ? 'Nothing to export yet. In the product every export writes its own row above.'
+              : 'Disabled in this demo. In the product every export writes its own row above.'}</span>
           </div>
         </Panel>
       </div>
@@ -685,6 +999,8 @@ function Consent() {
 }
 
 export function Pro({ go }) {
+  const [mode] = useMode()
+  const real = mode === 'real'
   const [tab, setTab] = React.useState('triage')
   const [who, setWho] = React.useState('Student 8241')
   const [said, setSaid] = React.useState('')
@@ -694,10 +1010,15 @@ export function Pro({ go }) {
   const announce = msg => { setSaid(''); requestAnimationFrame(() => setSaid(msg)) }
   const onTab = v => { setTab(v); announce(`${TABS.find(t => t[0] === v)[1]} — showing now`) }
   const openStudent = name => { setWho(name); setTab('student'); announce(`Opened the record for ${name}`) }
+  /* Every tab takes the flag rather than the console swapping wholesale: the
+     consent, retention, k-anonymity and audit statements are policy, and they
+     are as true of an empty school as of a full one. Only the rows go. */
   const PANES = {
-    triage: () => <Triage onOpen={openStudent}/>,
-    student: () => <OneStudent who={who} setWho={setWho}/>,
-    cohort: Cohort, escalation: Escalation, consent: Consent,
+    triage: () => <Triage onOpen={openStudent} real={real}/>,
+    student: () => <OneStudent who={who} setWho={setWho} real={real}/>,
+    cohort: () => <Cohort real={real}/>,
+    escalation: () => <Escalation real={real}/>,
+    consent: () => <Consent real={real}/>,
   }
   return (
     <main>
@@ -715,10 +1036,13 @@ export function Pro({ go }) {
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
-          <p className="mt-4 inline-flex max-w-[60ch] items-baseline gap-2 border-l-2 border-warn bg-paper/70
-            py-2 pl-3 pr-4 text-meta text-ink-2">
-            <Badge variant="demo">Demo</Badge>
-            Every figure here is generated. No student was measured.</p>
+          {/* The hand-rolled tinted box around a capsule badge is gone; one
+              ruled annotation carries the sentence, and which sentence depends
+              on what the tabs below are actually showing. */}
+          {real
+            ? <RealNotice className="mt-4">No student has paired a patch and no guardian has signed a
+                consent scope, so this caseload is empty.</RealNotice>
+            : <DemoNotice className="mt-4">Every figure here is generated. No student was measured.</DemoNotice>}
         </div>
       </div>
       {/* Was py-9 sm:py-12; the tab body is a section, the middle step. */}

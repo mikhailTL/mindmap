@@ -43,16 +43,19 @@ export function PatchPage() {
             whole page region. */}
         <div className="wrap relative py-20">
           <Label>The patch</Label>
-          {/* Was "A sticker on the forearm." — true, and it named the object
-              rather than the section, which is four signal cards and a model.
-              The sentence is still worth having, so it leads the paragraph. */}
+          {/* "What the patch measures." named the section but not the object, so
+              a reader who landed here first still did not know what a patch is.
+              The heading states the thing; the paragraph states what it does.
+              The measure widens from 18ch because the longer line needs it, and
+              the break falls after "sticker-sized" so a 390px column cannot
+              hyphen-break that word across two lines. */}
           <RevealLines as="h1"
-            className="mt-3 max-w-[18ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
-            lines={['What the patch', 'measures.']}/>
+            className="mt-3 max-w-[22ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
+            lines={['A sticker-sized', 'patch for the forearm.']}/>
           <ScrollIn className="mt-5">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
-              A sticker on the forearm. Four readings from the skin, once a second, sent to the
-              phone. Changed once a week.
+              It reads four signals off the skin — heart, sweat, skin temperature and movement —
+              once a second, and sends them to the phone. One patch is worn for a week.
             </p>
           </ScrollIn>
 
@@ -151,7 +154,7 @@ export function PatchPage() {
       <section className="wrap py-20">
         {/* "Three layers" counted the list without saying what the list was
             of. */}
-        <h2 className="mark">What is inside the patch</h2>
+        <h2 className="mark">The three parts a patch is made of</h2>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one to see it alone in the model.</p>
         {/* Three hand-built toggles, each re-declaring its own border, hover and
             pressed rule. They are the sourced Card in its `interactive` form

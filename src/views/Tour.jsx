@@ -2,6 +2,7 @@ import React from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
+import { DemoNotice } from '../ui/notice'
 import { Separator } from '../ui/separator'
 import { Card, CardTitle } from '../ui/card'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
@@ -181,8 +182,15 @@ function Caseload() {
 }
 
 /* ── 07 ─────────────────────────────────────────────────────────────────── */
+/* Third column is the cell treatment, not a badge variant. Five of these rows
+   used to pass `demo` straight into <Badge variant="demo">, which was the
+   capsule; a ruled annotation is the wrong shape inside a table cell, so a
+   generated row gets a stamp instead — the mono uppercase word on a warn rule,
+   the same mark the annotation carries, sized to a cell. A stated fact keeps
+   the bordered `state` badge. The two differ by shape, face and weight before
+   they differ by hue, so the column still separates in grayscale. */
 const HONESTY = [
-  ['The screens on this site', 'Built', 'state',
+  ['The screens on this site', 'Built', 'fact',
     'Hash-routed React. Every chart on this tour is the component the real screen runs, on the same fixtures.'],
   ['Every figure on them', 'Generated', 'demo',
     'Produced by the scoring model from invented baselines. Nobody has worn a patch and nobody has been measured.'],
@@ -194,7 +202,7 @@ const HONESTY = [
     'No study, no participants, no error rate. Any accuracy figure quoted for this device would be one we made up.'],
   ['The eight students', 'Invented', 'demo',
     'Student 8241 and the rest are numbers, carrying consent records we wrote ourselves.'],
-  ['Regulatory status', 'Not a medical device', 'state',
+  ['Regulatory status', 'Not a medical device', 'fact',
     'It does not diagnose, treat or screen for any condition, and nothing on this site should be read as saying it does.'],
 ]
 
@@ -205,17 +213,18 @@ const HONESTY = [
 const STOPS = [
   {
     id: 'problem', nav: 'The problem',
-    title: 'The days between the conversations are blank',
+    title: 'A counselor hears about a student once, then nothing for days',
     body: (
       <>
         <Lede>
-          A counselor's record of a student is a conversation, when one happens, plus whatever a
-          teacher passes on. Ask a teenager how the week went and the answer is fine.
+          A counselor's record of a student is one conversation, when one happens, plus whatever a
+          teacher passes on. Between those, nothing about that student gets written down.
         </Lede>
         <Lede>
-          MindMap makes one narrow claim: measure four body signals continuously and the days in
-          between stop being blank. It does not claim to know why a day ran high, and it never
-          compares one student against another — only against their own last two weeks.
+          MindMap makes one narrow claim: measure four body signals continuously and there is a
+          record of every day, not only the days someone spoke up. It does not claim to know why a
+          day ran high, and it never compares one student against another — only against their own
+          last two weeks.
         </Lede>
       </>
     ),
@@ -249,7 +258,7 @@ const STOPS = [
   },
   {
     id: 'signals', nav: 'Four signals',
-    title: 'Four signals, and what each one moves with',
+    title: 'What each of the four signals measures',
     body: (
       <>
         <Lede>
@@ -268,7 +277,7 @@ const STOPS = [
   },
   {
     id: 'student', nav: 'Student screen',
-    title: 'The student screen, running',
+    title: 'The student sees one score out of 100, and every reading behind it',
     body: (
       <>
         <Lede>
@@ -289,14 +298,14 @@ const STOPS = [
           Today is a little higher than your normal.</p>
         <p className="mt-2 max-w-[34ch] text-sec text-ink-2">
           It went up in third period and has stayed there.</p>
-        <Badge variant="demo" className="mt-4">Sample data — not a real person</Badge>
+        <DemoNotice className="mt-4">Sample data — not a real person.</DemoNotice>
       </div>
     ),
     go: ['student', 'Open the student screen'],
   },
   {
     id: 'parent', nav: 'Parent screen',
-    title: 'The parent screen, and the line it does not cross',
+    title: 'The parent sees the week, and never a raw reading',
     body: (
       <>
         <Lede>
@@ -337,7 +346,7 @@ const STOPS = [
   },
   {
     id: 'counselor', nav: 'Counselor console',
-    title: 'The counselor list, cut down by consent',
+    title: 'The counselor sees only the students whose guardian agreed',
     body: null,   /* built below, from the fixture, so the counts cannot drift */
     art: Caseload,
     go: ['pro', 'Open the counselor console'],
@@ -367,10 +376,15 @@ const STOPS = [
           </TR>
         </THead>
         <TBody>
-          {HONESTY.map(([what, status, tone, means]) => (
+          {HONESTY.map(([what, status, kind, means]) => (
             <TR key={what}>
               <TD className="font-display font-medium text-ink">{what}</TD>
-              <TD><Badge variant={tone}>{status}</Badge></TD>
+              <TD>
+                {kind === 'demo'
+                  ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5
+                      font-mono text-fine uppercase tracking-[0.09em] text-warn">{status}</span>
+                  : <Badge variant="state">{status}</Badge>}
+              </TD>
               <TD className="text-sec text-ink-2">{means}</TD>
             </TR>
           ))}
@@ -381,7 +395,7 @@ const STOPS = [
   },
   {
     id: 'scale', nav: 'At scale',
-    title: 'What it would change, if it were real',
+    title: 'What would change in one school, if this were real',
     body: (
       <>
         <Lede>
@@ -469,11 +483,12 @@ export function Tour({ go }) {
     <main className="wrap py-14">
       <p className="note">Guided tour · {STOPS.length} stops</p>
       <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-        Five minutes, start to finish
+        What we built, what it does, and what is still a demo
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        What the problem is, what we built, what works, and what is demonstration. Every screen on
-        the way is the live thing, not a recording of it.
+        {STOPS.length} stops, about five minutes: the patch, the four signals, the three screens,
+        and the list of everything here that is generated. Every chart on the way is the live
+        component the real screen runs, not a recording of it.
       </p>
 
       <Tabs value={stop.id} onValueChange={v => setI(STOPS.findIndex(s => s.id === v))}
@@ -538,10 +553,10 @@ export function Tour({ go }) {
       <Separator weight="ink" className="mt-20"/>
       <section className="py-10">
         <h2 className="font-display font-medium text-sub leading-[1.12] tracking-tight text-ink">
-          Now open it yourself
+          Open the app yourself
         </h2>
         <p className="mt-3 max-w-[54ch] text-lead text-ink-2">
-          The dashboard is where you pick which of the three people you want to be.
+          The dashboard opens the student screen, the parent screen and the counselor console.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button onClick={() => go('hub')}>Open the dashboard<ArrowRight aria-hidden/></Button>

@@ -4,26 +4,42 @@ import { PatchPage } from './PatchPage'
 import { Hub } from './Hub'
 import { Tour } from './Tour'
 import { Responses } from './Responses'
-import { Intro } from './Intro'
+import { Intro, introSuppressed } from './Intro'
 import { NameGate } from '../survey/NameGate'
 import { PageSurvey } from '../survey/Survey'
-import { getVisitor, hasSeenIntro, setSeenIntro } from '../survey/store'
+import { getVisitor } from '../survey/store'
 import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro } from './Pro'
+import { Launch } from './Launch'
+import { ForStudents, ForParents, ForSchools } from './audience'
+import { ModeToggle } from '../ui/mode-toggle'
 import { Palette, PaletteHint } from '../ui/palette'
+import { Logo } from '../ui/logo'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
-const VIEWS = ['site','patch','hub','student','parent','check','privacy','pro','tour','responses']
+/* The nav tabs used to drop a first-time visitor straight into a screen full
+   of somebody else's readings. They now open a walkthrough of what MindMap
+   does for that audience, and the app itself is behind one deliberate door:
+   Launch. `app-*` are the real dashboards; `student`/`parent`/`pro` are the
+   explanations of them. The old `check` and `privacy` urls still resolve, so
+   nothing that was ever linked is broken. */
+const VIEWS = ['site','patch','student','parent','pro','app','app-student','app-parent',
+               'app-pro','check','privacy','hub','tour','responses']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
 const TITLE = {
-  site:'MindMap — one number, one sentence', patch:'The patch — MindMap',
-  hub:'Open the app — MindMap', student:'For students — MindMap', parent:'For parents — MindMap',
+  site:'MindMap — a patch for the forearm', patch:'The patch — MindMap',
+  student:'What MindMap does for students — MindMap',
+  parent:'What MindMap does for parents — MindMap',
+  pro:'What MindMap does for schools — MindMap',
+  app:'Open the app — MindMap',
+  'app-student':'Student screen — MindMap', 'app-parent':'Parent screen — MindMap',
+  'app-pro':'Counselor console — MindMap',
   check:'Take a reading — MindMap', privacy:'Who can see what — MindMap',
-  pro:'For school counselors — MindMap', tour:'Guided tour — MindMap',
+  hub:'Dashboard — MindMap', tour:'Guided tour — MindMap',
   responses:'Review responses — MindMap',
 }
 /* One entry per audience, in the order a visitor meets them: the person
@@ -36,12 +52,14 @@ const NAV = [
   ['student', 'For students'],
   ['parent',  'For parents'],
   ['pro',     'For schools'],
-  ['hub',     'Dashboard'],
 ]
 /* Which top-level section each view belongs under. */
-const SECTION = { site:'site', patch:'patch', student:'student', check:'student',
-                  parent:'parent', privacy:'parent', pro:'pro', hub:'hub', tour:'hub',
-                  responses:'hub' }
+const SECTION = { site:'site', patch:'patch',
+                  student:'student', parent:'parent', pro:'pro',
+                  /* the app lives under no tab — it is reached through Launch,
+                     so no nav entry should light up while you are inside it */
+                  app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
+                  check:null, privacy:null, hub:null, tour:null, responses:null }
 
 /* The single most conventional thing left on this site was this: a sticky bar
    with a wordmark on the left and a row of links on the right, which is the
@@ -54,9 +72,12 @@ function Header({ view, go }) {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-ink bg-paper">
       <div className="wrap flex flex-wrap items-stretch gap-x-6 gap-y-0">
-        <button onClick={() => go('site')}
-          className="lift shrink-0 self-center py-3 pr-2 font-display text-head font-medium
-            tracking-tight text-ink">MindMap</button>
+        {/* Was the word alone. The mark carries the product's own silhouette,
+            so the header now says what the thing is before the nav does. */}
+        <button onClick={() => go('site')} aria-label="MindMap — go to the overview"
+          className="lift shrink-0 self-center py-3 pr-2 text-head text-ink">
+          <Logo/>
+        </button>
         <PaletteHint/>
         <nav aria-label="Sections" className="-mx-1 flex basis-full flex-wrap sm:ml-auto sm:basis-auto sm:flex-nowrap">
           {NAV.map(([id, label], i) => {
@@ -73,6 +94,25 @@ function Header({ view, go }) {
             )
           })}
         </nav>
+        {/* The app is one deliberate door, not five. The nav tabs explain what
+            MindMap does for each audience; this is the only control that opens
+            the thing itself, so it is the only filled control in the bar. */}
+        <div className="flex basis-full items-center justify-between gap-4 border-t border-rule
+          py-2 sm:basis-auto sm:border-l sm:border-t-0 sm:pl-5">
+          {/* The launcher carries its own Demo/Real block with a sentence for
+              each mode, which is the better place to make the choice. Two
+              controls for one setting on one screen is just clutter. */}
+          {view !== 'app' && <ModeToggle className="min-w-0"/>}
+          <button onClick={() => go('app')} aria-current={view.startsWith('app') ? 'page' : undefined}
+            className={cn('inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-field px-4',
+              'font-display text-meta font-medium transition-colors duration-150',
+              view.startsWith('app')
+                ? 'bg-accent-ink text-paper'
+                : 'bg-accent text-paper hover:bg-accent-ink')}>
+            Launch the app
+            <span aria-hidden>→</span>
+          </button>
+        </div>
       </div>
       <ScrollProgress/>
     </header>
@@ -95,16 +135,19 @@ export function App() {
      excluded from all of it: Mikhail reading the results is not a respondent,
      and a survey card over the data he came to read would be absurd. */
   const admin = view === 'responses'
+  /* Plays on every load, not once ever. Only the Skip control suppresses it,
+     and it suppresses it permanently — watching to the end does not, because a
+     visitor who watched it may well want it again and a visitor who skipped it
+     has told you exactly what they want. */
   const [showIntro, setShowIntro] = React.useState(() => {
-    try { return !admin && !hasSeenIntro() } catch { return false }
+    try { return !admin && !introSuppressed() } catch { return false }
   })
   const [visitor, setVisitorState] = React.useState(() => {
     try { return getVisitor() } catch { return null }
   })
-  const endIntro = React.useCallback(() => {
-    try { setSeenIntro() } catch {}
-    setShowIntro(false)
-  }, [])
+  /* Intro writes its own suppression key when Skip or Esc is used, so this
+     only has to take the overlay down. */
+  const endIntro = React.useCallback(() => setShowIntro(false), [])
   /* A keyboard user lost their place on every navigation: focus fell back to
      <body>, the title never changed, and the scroll position carried over from
      the previous screen. */
@@ -132,11 +175,15 @@ export function App() {
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
-  const V = { site:Overview, patch:PatchPage, hub:Hub, pro:Pro, tour:Tour, responses:Responses,
-              student: p => <Students {...p} tab="today"/>,
-              check:   p => <Students {...p} tab="check"/>,
-              parent:  p => <Parents  {...p} tab="week"/>,
-              privacy: p => <Parents  {...p} tab="shared"/> }[view]
+  const V = { site:Overview, patch:PatchPage, hub:Hub, tour:Tour, responses:Responses,
+              /* the three nav tabs: what MindMap does for each audience */
+              student:ForStudents, parent:ForParents, pro:ForSchools,
+              /* the app, behind Launch */
+              app:Launch, 'app-pro':Pro,
+              'app-student': p => <Students {...p} tab="today"/>,
+              'app-parent':  p => <Parents  {...p} tab="week"/>,
+              check:         p => <Students {...p} tab="check"/>,
+              privacy:       p => <Parents  {...p} tab="shared"/> }[view]
   return (
     <>
       {/* sr-only clips this to a 1x1 box, which an audit reads as a 1px tap

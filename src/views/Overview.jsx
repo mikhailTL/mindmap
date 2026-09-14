@@ -32,7 +32,7 @@ import { cn } from '../lib/utils'
 
 const FACTS = [
   { n:1,  suffix:'Hz',  label:'One reading a second', line:'All day, from the forearm.' },
-  { n:4,  suffix:'',    label:'Signals measured',     line:'Heart, sweat, temperature, movement.' },
+  { n:4,  suffix:'',    label:'Signals the patch reads', line:'Heart, sweat, skin temperature, movement.' },
   { n:5,  suffix:'',    label:'Smallest group a school can see', line:'Under five students returns nothing.' },
   { n:0,  suffix:'',    label:'Raw readings a parent sees', line:'One number and one sentence.' },
 ]
@@ -42,16 +42,16 @@ const FACTS = [
    real chart rather than a photograph of somebody looking at a phone. */
 const SCREENS = [
   { id:'student', who:'Student',
-    title:'Your own reading, today',
-    line:'One number out of 100, the four signals behind it, and what leaves your phone.',
+    title:'One score out of 100, today',
+    line:'The student sees the score, the four signals behind it, and every reading the patch has taken.',
     cta:'Open the student screen' },
   { id:'parent',  who:'Parent',
-    title:'How the week went',
-    line:'One sentence a week, the days that ran high, and the things you are never shown.',
+    title:'One sentence a week, and which days ran high',
+    line:'A parent sees the shape of the week. Never a raw reading, never a note, never a location.',
     cta:'Open the parent screen' },
   { id:'pro',     who:'School counselor',
-    title:'Who to see on Monday',
-    line:'Your caseload ranked by how fast a student is changing — only as far as a guardian agreed.',
+    title:'A caseload ranked by who is changing fastest',
+    line:'A counselor sees a score and a rank, for the students whose guardian agreed to share trends.',
     cta:'Open the counselor console' },
 ]
 
@@ -109,16 +109,22 @@ export function Overview({ go }) {
 
   return (
     <main>
-      {/* "One number. One sentence." told a visitor nothing about what this is.
-          The heading now names the product and the mechanism in one line. */}
+      {/* A visitor who reads only the h1 has to come away knowing what the
+          object is. Every earlier version described the mechanism instead —
+          "A patch reads your body" names no product, no wearer and no output —
+          so the heading is now the plain definition and the paragraph under it
+          carries what each of the three people actually gets. */}
       <section id="hero" className="wrap grid items-center gap-10 py-14
         lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-20">
         <div>
-          <RevealLines as="h1" className="font-display font-medium text-sect text-ink"
-            lines={['A patch reads your body.', <>The app says <em className="not-italic text-accent">what changed</em>.</>]}/>
+          {/* text-view below lg: at the `sect` step "MindMap is a patch" is
+              wider than a 390px column and breaks across three lines. */}
+          <RevealLines as="h1" className="font-display font-medium text-view lg:text-sect text-ink"
+            lines={['MindMap is a patch', <>for the <em className="not-italic text-accent">forearm</em>.</>]}/>
           <ScrollIn as="p" className="mt-6 max-w-read text-lead leading-[1.5] text-ink-2">
-            MindMap is a sticker-sized patch for the forearm and a phone app. It measures four
-            signals once a second and reports one number and one plain sentence a day.
+            It reads four body signals once a second and turns each day into one score out of 100
+            and one plain sentence — for the student wearing it, their parent, and their school
+            counselor.
           </ScrollIn>
           <ScrollIn className="mt-10">
             <div className="flex flex-wrap gap-3">
@@ -149,7 +155,7 @@ export function Overview({ go }) {
       {/* Twenty seconds that carry the whole idea, for the visitor who will not
           read four paragraphs to find out what this is. */}
       <section className="wrap py-14">
-        <h2 className="mark">What MindMap does</h2>
+        <h2 className="mark">What MindMap does, in four steps</h2>
         <Onboarding className="mt-8"/>
       </section>
 
@@ -162,10 +168,10 @@ export function Overview({ go }) {
       <section id="screens" className="bg-mist/60">
         <div className="wrap py-20">
           <h2 className="font-display font-medium text-view leading-[1.1] text-ink">
-            Three screens. Pick whose you want to see.</h2>
+            A student, a parent and a counselor see three different screens</h2>
           <p className="mt-3 max-w-[56ch] text-lead text-ink-2">
-            The same second of physiology, cut three ways. Nobody downstream sees more than the
-            person wearing the patch agreed to.
+            All three read the same day of measurements. The student sees all of it; the other two
+            see only what the student agreed to share.
           </p>
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {SCREENS.map((s, i) => (
@@ -203,7 +209,7 @@ export function Overview({ go }) {
       </section>
 
       <section className="wrap py-14">
-        <h2 className="mark">From skin to sentence</h2>
+        <h2 className="mark">How four signals become one score</h2>
         <HowItWorks className="mt-8"/>
       </section>
 
