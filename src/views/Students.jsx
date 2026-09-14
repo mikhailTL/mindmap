@@ -19,6 +19,6 @@ export function Students({ go, tab = 'today', setTab }) {
     <SectionShell go={go} tabs={TABS} panes={PANES} tab={local} onTab={setTab || setLocal}
       title="What a student sees"
       sub="Your own reading, what moved it, and what leaves your phone."
-      note="Every figure on the Today tab is generated. Take a reading scores your own answers for real."/>
+      note="Every figure on the Today tab is generated. The Take a reading tab scores your own answers for real."/>
   )
 }

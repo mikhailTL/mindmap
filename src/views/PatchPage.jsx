@@ -45,7 +45,7 @@ export function PatchPage() {
           <Label>The patch</Label>
           {/* Was "A sticker on the forearm." — true, and it named the object
               rather than the section, which is four signal cards and a model.
-              The image is still worth having, so it leads the paragraph. */}
+              The sentence is still worth having, so it leads the paragraph. */}
           <RevealLines as="h1"
             className="mt-3 max-w-[18ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
             lines={['What the patch', 'measures.']}/>
@@ -73,27 +73,29 @@ export function PatchPage() {
               use; the dot went, because the rule already says it. Each pair is
               its own <dl> so the term/definition reading is kept inside the
               card rather than lost to the grid. */}
-          {/* Placement is explicit per signal. It used to be auto-placement plus
-              two col-starts, and because RAINBOW runs heart-first, heart took
-              the lead column and pushed sweat's row span sideways: on a wide
-              screen the 3x2 grid rendered with four empty cells and a stray
-              third row. The intended reading — sweat tall on the left, heart
-              and temperature stacked as a pair, movement alongside — is now
-              stated in the classes rather than left to source order. */}
-          <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,4fr)] lg:grid-rows-2">
+          {/* Placement is explicit per signal, because RAINBOW runs heart-first
+              and auto-placement therefore gave heart the lead position.
+
+              Sweat is the one that moves first, so it takes the full width and
+              the long trace; the other three sit as a row of equals beneath it.
+              This was a 3x2 grid with sweat and movement each spanning both
+              rows, which gave those two ~400px cards holding ~130px of text
+              over an empty field — and stretching the trace to fill the void
+              only distorted the waveform it exists to show. */}
+          <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-3">
             {RAINBOW.map((s2, i) => {
               const lead = s2.id === 'sweat'
               const place = {
-                sweat: 'lg:col-start-1 lg:row-start-1 lg:row-span-2',
-                heart: 'lg:col-start-2 lg:row-start-1',
+                sweat: 'lg:col-start-1 lg:col-span-3 lg:row-start-1',
+                heart: 'lg:col-start-1 lg:row-start-2',
                 temp:  'lg:col-start-2 lg:row-start-2',
-                move:  'lg:col-start-3 lg:row-start-1 lg:row-span-2',
+                move:  'lg:col-start-3 lg:row-start-2',
               }[s2.id]
               return (
                 <ScrollRow key={s2.id} index={i} className={cn('h-full', place)}>
-                  <Card className="h-full border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
-                    <div className={cn('bg-mist/70 px-4', lead ? 'py-8' : 'py-4')}>
-                      <SignalTrace kind={s2.id}/>
+                  <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
+                    <div className={cn('bg-mist/70 px-4', lead ? 'py-6' : 'py-4')}>
+                      <SignalTrace kind={s2.id} className={lead ? 'h-16' : undefined}/>
                     </div>
                     <dl className="m-0 px-5 pb-5 pt-4">
                       <dt className={cn('flex items-baseline gap-2.5 font-display font-medium text-ink',

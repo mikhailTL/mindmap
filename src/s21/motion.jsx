@@ -106,7 +106,8 @@ export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) 
   )
 }
 
-/** Slow counter-scroll drift. Used on the quiet right-hand column. */
+/** Slow counter-scroll drift. A generic wrapper: it moves whatever is put
+    inside it. */
 export function Parallax({ children, distance = 60, className }) {
   const ref = React.useRef(null)
   const reduced = useReducedMotion()
@@ -116,24 +117,6 @@ export function Parallax({ children, distance = 60, className }) {
 }
 
 /** Hairline that draws itself across as it enters. */
-/* A photograph that drifts against the scroll. Separate from Parallax because
-   an <img> needs the transform on itself — wrapping it in a moving div moves
-   the layout box and opens gaps at the edges of the crop. */
-export function ParallaxImage({ src, alt, className, pos, distance = 40, scale = 1.12, ...rest }) {
-  const reduced = useReducedMotion()
-  const ref = React.useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], [-distance / 2, distance / 2])
-  const smooth = useSpring(y, { stiffness: 120, damping: 26, mass: 0.4 })
-  return (
-    <div ref={ref} className={cn('overflow-hidden', className)}>
-      <motion.img src={src} alt={alt} loading="lazy" decoding="async"
-        style={{ objectPosition: pos, y: reduced ? 0 : smooth, scale: reduced ? 1 : scale }}
-        className="h-full w-full object-cover" {...rest}/>
-    </div>
-  )
-}
-
 export function RuleDraw({ className }) {
   const reduced = useReducedMotion()
   return (

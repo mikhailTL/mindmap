@@ -126,6 +126,12 @@ function Triage({ onOpen }) {
   const fastest = ranked[0]
   const byScore = [...scored].sort((a, b) => b.current - a.current)
   const highest = byScore[0]
+  /* This card used to read "Flat week. Referral already open since Feb 18."
+     for whoever came out highest. Both halves were wrong on the fixture: the
+     highest scorer consented to a score only, so the board may not state their
+     weekly change at all, and Feb 18 is a different student's referral — one
+     the Escalation tab shows as closed. Both come off the data now. */
+  const ref = REFERRALS.find(r => r.student === highest.name && r.status !== 'Closed')
   const place = ['first','second','third','fourth','fifth','sixth','seventh','eighth'][
     byScore.findIndex(x => x.id === fastest.id)]
   return (
@@ -181,7 +187,11 @@ function Triage({ onOpen }) {
         <div className="border-l-2 border-rule pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-ink">{highest.current}
             <span className="ml-2 text-tick text-ink-3">{highest.name} · highest score</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">Flat week. Referral already open since Feb 18.</p>
+          <p className="mt-1.5 text-sec text-ink-2">
+            {highest.showTrend
+              ? `Weekly change ${highest.velocity > 0 ? '+' : ''}${highest.velocity}. `
+              : 'Score only — no weekly change shared. '}
+            {ref ? `Referral open since ${ref.opened}.` : 'No referral open.'}</p>
         </div>
       </div>
 
@@ -352,7 +362,7 @@ function OneStudent({ who, setWho }) {
             placeholder="Add a note…"
             className="w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40 p-3.5
               text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink focus-visible:outline-none"/>
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <span className="text-sec text-ink-3">Saving writes a row to the log</span>
             <Button size="sm" disabled={!note.trim()}>Save note</Button>
           </div>
@@ -438,8 +448,19 @@ function Cohort() {
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-xs bg-mist">
                   {p.suppressed ? (
-                    <div className="h-full w-full" role="img" aria-label="Suppressed for k-anonymity"
-                      style={{ backgroundImage:'repeating-linear-gradient(45deg,#cdd6ea,#cdd6ea 4px,transparent 4px,transparent 8px)' }}/>
+                    /* Was a repeating-linear-gradient of a raw hex. Gradients
+                       are out of the system and the colour was not a token, so
+                       the hatch is drawn instead, ruled in `ruling`. */
+                    <svg className="h-full w-full" preserveAspectRatio="none" role="img"
+                      aria-label="Suppressed for k-anonymity">
+                      <defs>
+                        <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse"
+                          patternTransform="rotate(45)">
+                          <line x1="0" y1="0" x2="0" y2="8" className="stroke-ruling" strokeWidth="4"/>
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#hatch)"/>
+                    </svg>
                   ) : (
                     <div className={cn('h-full rounded-xs', p.mean >= 65 ? 'bg-warn' : 'bg-accent')}
                       style={{ width: 20 + ((p.mean - lo) / (hi - lo || 1)) * 80 + '%' }}/>
@@ -503,20 +524,23 @@ function Escalation() {
           <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
             Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The escalation
             protocol ran automatically.</p>
+          {/* The wrapper already draws the rule that separates the steps from
+              the alert above; `.mark` draws its own, so the two stacked into a
+              pair of hairlines 16px apart that read as a rendering fault. */}
           <div className="mt-5 border-t border-rule pt-4">
             {/* "Protocol" named the document, not the five checkboxes under
                 it. */}
-            <h4 className="mark">Escalation steps</h4>
+            <h4 className="font-display text-tick font-medium text-ink-2">Escalation steps</h4>
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
                 <li key={step}>
                   <label className="flex min-h-[44px] cursor-pointer items-center gap-3">
                     <input type="checkbox" checked={done.includes(i)} onChange={() => toggle(i)}
-                      className="size-4 accent-[#3d52a0]"/>
+                      className="size-4 accent-accent"/>
                     <span className={cn('text-meta', done.includes(i) ? 'text-ink-3 line-through decoration-rule' : 'text-ink')}>
                       {step}</span>
-                    <span className="ml-auto font-mono text-sec tabular-nums text-ink-3">
-                      {done.includes(i) ? PROTOCOL_TIMES[i] : ''}</span>
+                    <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-sec
+                      tabular-nums text-ink-3">{done.includes(i) ? PROTOCOL_TIMES[i] : ''}</span>
                   </label>
                 </li>
               ))}
@@ -532,7 +556,9 @@ function Escalation() {
           </CardContent>
         </Card>
 
-        <Panel as="h3" label="Referrals already open">
+        {/* Was "Referrals already open", with a row the status badge marks
+            Closed sitting under it. */}
+        <Panel as="h3" label="Referrals on this caseload">
           <ul className="divide-y divide-rule">
             {REFERRALS.map(r => (
               <li key={r.student + r.opened} className="py-3.5 first:pt-0">
@@ -566,7 +592,8 @@ function Escalation() {
           <TBody>
             {AUDIT_LOG.map(r => (
               <TR key={r.at + r.action}>
-                <TD num className="w-44">{r.at}<span className="ml-2 text-ink-3">{r.rel}</span></TD>
+                <TD num className="w-44 whitespace-nowrap">{r.at}
+                  <span className="mt-0.5 block text-ink-3">{r.rel}</span></TD>
                 <TD className="w-44">{r.actor}</TD>
                 <TD>{r.action}</TD>
                 <TD className="w-44">{r.subject}</TD>
@@ -635,9 +662,10 @@ function Consent() {
         <Panel as="h3" label="Recent activity in the log">
           <ul className="divide-y divide-rule">
             {AUDIT_LOG.map(r => (
-              <li key={r.at + r.action} className="flex items-baseline justify-between gap-4 py-3.5 first:pt-0">
-                <div className="min-w-0">
-                  <p className="truncate text-meta text-ink">{r.action}</p>
+              <li key={r.at + r.action}
+                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3.5 first:pt-0">
+                <div className="min-w-0 flex-1 basis-[15rem]">
+                  <p className="text-meta text-ink">{r.action}</p>
                   <p className="mt-0.5 text-sec text-ink-3">{r.actor} · {r.subject}</p>
                 </div>
                 <span className="shrink-0 font-mono text-sec tabular-nums text-ink-3">{r.at}</span>

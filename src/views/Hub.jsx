@@ -1,93 +1,213 @@
 import React from 'react'
 import { ScrollRow } from '../s21/motion'
 import { ArrowRight } from '../ui/marks'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/misc'
-import { IMG, POS } from '../lib/assets'
+import { Separator } from '../ui/separator'
+import { RainbowDial } from '../charts/rainbow'
+import { WeekStrip } from '../charts/infographics'
+import { studentRings } from '../lib/readings'
+import { roster, triage, tierOf, TIER_LABEL } from '../lib/caseload'
+import { DATA } from '../lib/assets'
+import { cn } from '../lib/utils'
 
-const PEOPLE = [
-  { to:'check',   img:IMG.phone, pos:POS.phone,  alt:'Hands holding a phone', h:'Take a reading',
-    p:'Score yourself now, with a patch or with six questions.' },
-  { to:'student', img:IMG.teen, pos:POS.teen,   alt:'A teenager on the walk home from school', h:'Student',
-    p:'Your own reading, why it moved, and what tends to help.' },
-  { to:'parent',  img:IMG.family, pos:POS.family, alt:'A parent and teenager at the kitchen table', h:'Parent',
-    p:'How your child is doing this week, in one sentence.' },
-  { to:'pro',     img:IMG.pro, pos:POS.pro,    alt:'A school counselor at their desk', h:'School counselor',
-    p:'Students ordered by how fast they are changing, with the consent record.' },
-]
-const MORE = [
-  ['The hours ahead','Which periods usually run hard, and a prompt before them.'],
-  ['Your history','Ninety days. The worst stretches, and what ended them.'],
-  ['Readings by class','Every class you take, laid against the timetable.'],
-  ['What helps','The measured effect of each thing you have tried.'],
-  ['Who can see what','Sharing, and the exact page a parent sees.'],
-  ['Your patch','Pairing, placement, battery.'],
+/* This page was four tiles with a stock photograph on each: a phone in
+ * somebody's hands, a teenager on a pavement, a family at a table, a counselor
+ * at a desk. Every photograph on this site is being deleted, and the tiles were
+ * the reason to rebuild rather than just unhook the images — a picture of a
+ * person holding a phone told a visitor nothing about the screen behind it.
+ *
+ * What replaces them is the screen itself. Each role panel runs the live
+ * component that role's page runs, on that page's own data, so a preview can
+ * never go stale against the thing it previews and a visitor can see what they
+ * are choosing before they choose it.
+ *
+ * The other change is rank. "Take a reading" used to sit first, level with the
+ * three audiences, which made four equal doors out of one question (who are
+ * you?) and three side trips. The three roles are now the page; everything else
+ * is a ruled row underneath at a smaller step.
+ */
+
+/* One line per role saying what that person is shown and what they are not.
+ * This is the product's whole claim, and it was previously stated nowhere on
+ * the page a visitor uses to pick a side of it. */
+const ROLES = [
+  { id:'student', who:'Student', ord:'01',
+    title:'Your own reading, today',
+    sees:'Sees every reading the patch takes, and everything written in the app.',
+    never:'Nothing on this screen is withheld from them — they are the one who decides what leaves it.',
+    cta:'Open the student screen' },
+  { id:'parent', who:'Parent', ord:'02',
+    title:'How the week went',
+    sees:'Sees one number a day, one sentence a week, and which days ran high.',
+    never:'Never a raw reading, never a note, never a location.',
+    cta:'Open the parent screen' },
+  { id:'pro', who:'School counselor', ord:'03',
+    title:'Who to see on Monday',
+    sees:'Sees a score and a rank, for the students whose guardian consented to trends.',
+    never:'Never raw readings unless the student switches them on, and never a group under five.',
+    cta:'Open the counselor console' },
 ]
 
-export function Hub({ go }){
+/* Built, and reachable from here. Kept apart from the planned list below by a
+   heading and an ink rule rather than by a badge in a corner. */
+const ELSEWHERE = [
+  ['check',   'Take a reading',   'Score yourself now — six questions, no patch needed.'],
+  ['privacy', 'Who can see what', 'The three audiences against every row of data.'],
+  ['patch',   'The patch',        'The three printed parts, the board, and what reads through the base.'],
+  ['tour',    'Guided tour',      'Eight stops: the problem, the build, and what is demonstration.'],
+]
+
+/* Screens that do not exist. Two entries left this list when the pages they
+   described were built — "Who can see what" and "Your patch" are above now, and
+   leaving them here while they worked was the dishonest half of the list. */
+const PLANNED = [
+  ['The hours ahead',    'Which periods usually run hard, and a prompt before them.'],
+  ['Your history',       'Ninety days. The worst stretches, and what ended them.'],
+  ['Readings by class',  'Every class you take, laid against the timetable.'],
+  ['What helps',         'The measured effect of each thing you have tried.'],
+]
+
+/* The parent line is counted off the same fixture the strip draws, so the
+   sentence and the picture cannot disagree. A hard-coded "two days" was already
+   contradicting the counter on the parent screen. */
+function daysOver() {
+  const band = DATA.weekBand || { hi: 1 }
+  return (DATA.week || []).filter(d => d.v > band.hi).length
+}
+
+function Preview({ id }) {
+  if (id === 'student') {
+    /* Below about 250 the dial's score, its unit and both foot labels collide
+       inside the same box; this is the smallest size that stays legible. */
+    return <RainbowDial score={51} usual={46} rings={studentRings()} size={258}/>
+  }
+  if (id === 'parent') {
+    const n = daysOver()
+    return (
+      <div className="w-full max-w-[17rem]">
+        <WeekStrip days={DATA.week} band={DATA.weekBand}/>
+        <p className="mt-4 text-sec text-ink-2">
+          {n === 1 ? 'One day' : `${n} days`} above her usual range.
+        </p>
+      </div>
+    )
+  }
+  /* The counselor's screen is a ranking, so the preview is the ranking — real
+     order, real scores, real tier colours. `roster()` names the reading
+     `current`; reading `score` here returns undefined, which tierOf floors to
+     'info', and the preview becomes four identical rows. */
+  const rows = triage().slice(0, 4)
   return (
-    /* Was py-10 sm:py-[5vw]: on a 2560px display that resolved to 128px of
-       padding for no reason anyone could name. Fixed steps now — 10 inside a
-       section, 14 between sections, 20 between page regions. */
+    <ul className="m-0 w-full max-w-[17rem] list-none space-y-3 p-0">
+      {rows.map((s, i) => {
+        const tier = tierOf(s.current)
+        return (
+          <li key={s.id} className="grid grid-cols-[1.25rem_1fr_4.5rem] items-center gap-2.5">
+            <span className="font-mono text-fine tabular-nums text-ink-3">{i + 1}</span>
+            <span className="block h-2.5 w-full rounded-bar bg-rule/70">
+              <span className={cn('block h-2.5 rounded-bar',
+                tier === 'crisis' ? 'bg-crit' : tier === 'high' ? 'bg-warn' : 'bg-accent')}
+                style={{ width: `${s.current}%` }}/>
+            </span>
+            <span className="font-mono text-fine tabular-nums text-ink-2">{TIER_LABEL[tier]}</span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+export function Hub({ go }) {
+  const total = roster().length
+  return (
     <main className="wrap py-14">
       <Label>Open the app</Label>
-      {/* Was "Who is this for?" — a question the page answers below rather than
-          a label for what is below. */}
       <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-        Four views, one per person
+        Three people see three different things
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        Each one opens on a single sentence about the person it is for.
+        The same second of physiology, cut three ways. Pick whose screen you want to open.
       </p>
-      <div className="mt-10 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        {PEOPLE.map((t,i)=>(
-          <ScrollRow key={t.h} index={i} className="h-full">
-          <Card as="button" interactive onClick={()=>go(t.to)}>
-            <img src={t.img} alt={t.alt} loading="lazy" width="1200" height="720"
-              style={{ objectPosition: t.pos }} className="aspect-[5/3] w-full object-cover"/>
-            {/* heading and blurb were a raw h2 and p re-typing the Card's own
-                type ramp inside CardContent; CardHeader/CardTitle carry it now,
-                and CardTitle's `as` keeps the h2 so the page outline is unchanged */}
-            <CardHeader>
-              <CardTitle as="h2" className="leading-tight tracking-tight">{t.h}</CardTitle>
-              <CardDescription className="max-w-[34ch]">{t.p}</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <span className="inline-flex items-center gap-2 font-display text-ui font-medium text-accent">
-                Open <ArrowRight aria-hidden className="size-4"/>
-              </span>
-            </CardContent>
-          </Card>
+
+      {/* The three doors, and the largest thing on the page. Equal columns,
+          equal preview height, one CTA each — a role that got a taller tile or
+          a second button would read as the recommended answer to a question
+          that has no recommended answer. */}
+      <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        {ROLES.map((r, i) => (
+          <ScrollRow key={r.id} index={i} className="h-full">
+            <Card interactive as="button" type="button" onClick={() => go(r.id)}
+              className="flex h-full flex-col">
+              {/* place-items, not place-content: a content-sized grid track
+                  collapses a w-full preview to the width of its own labels and
+                  the parent's bars measure zero. */}
+              <div aria-hidden className="grid min-h-[268px] place-items-center border-b border-rule
+                bg-card px-6 py-8">
+                <Preview id={r.id}/>
+              </div>
+              <CardHeader className="pb-0 pt-6">
+                <span className="font-mono text-fine uppercase tracking-[0.08em] text-ink-3">
+                  {r.ord} · {r.who}</span>
+                <CardTitle as="h2" className="text-sub leading-[1.12] tracking-tight">{r.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-4 pt-4">
+                <p className="text-sec text-ink-2">
+                  <span className="font-medium text-ink">{r.sees}</span>{' '}{r.never}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-2.5 pt-2 font-display
+                  text-meta font-medium text-accent">
+                  {r.cta}<ArrowRight aria-hidden className="size-[1.1rem]"/>
+                </span>
+              </CardContent>
+            </Card>
           </ScrollRow>
         ))}
       </div>
-      {/* "Everything else" said nothing about the six cards under it, all of
-          which are marked not built. The heading says that now, so the reader
-          knows before reading six cards. mt was 12 / [5vw]; this is the break
-          between the two regions of the page, so it is the largest step. */}
-      <h2 className="mt-20 font-display text-sub font-medium tracking-tight text-ink">
-        Planned screens, not built yet
-      </h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {MORE.map(([h,p,to],i)=>(
-          <ScrollRow key={h} index={i} className="h-full">
-          <Card as={to ? 'button' : 'div'} interactive={!!to}
-            onClick={to ? () => go(to) : undefined}>
-            <CardHeader>
-              <CardTitle as="h3" className="text-row tracking-tight">{h}</CardTitle>
-              <CardDescription className="text-meta">{p}</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-3">
-              {/* built and not-built separate by indent and rule, not by a
-                  badge chip in the corner */}
-              <span className={to
-                ? 'inline-flex items-center gap-1.5 font-mono text-tick text-accent'
-                : 'inline-block border-t border-rule pt-2 font-mono text-tick italic text-ink-3'}>
-                {to ? <>Open <ArrowRight aria-hidden className="size-3.5"/></> : '— not built'}</span>
-            </CardContent>
-          </Card>
-          </ScrollRow>
-        ))}
+
+      {/* Second rank, and it looks like one: no preview, one line each, a
+          smaller title step. */}
+      <section className="mt-20">
+        <h2 className="mark">Elsewhere in the working demo</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {ELSEWHERE.map(([to, h, p], i) => (
+            <ScrollRow key={to} index={i} className="h-full">
+              <Card interactive as="button" type="button" onClick={() => go(to)}
+                className="flex h-full flex-col gap-3 p-5">
+                <CardTitle as="h3" className="text-row tracking-tight">{h}</CardTitle>
+                <p className="text-sec text-ink-2">{p}</p>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-1 font-mono
+                  text-tick text-accent">
+                  Open <ArrowRight aria-hidden className="size-3.5"/>
+                </span>
+              </Card>
+            </ScrollRow>
+          ))}
+        </div>
+      </section>
+
+      {/* The ink rule is the page's own break between what runs and what does
+          not, and the sentence under it says which side is which — a reader
+          should not have to reach the sixth card to find out. */}
+      <div className="mt-20">
+        <Separator weight="ink"/>
+        <h2 className="mt-8 font-display text-sub font-medium tracking-tight text-ink">
+          Planned screens, not built yet
+        </h2>
+        <p className="mt-3 max-w-[62ch] text-meta text-ink-2">
+          Everything above this rule opens and runs, on generated data — the {total} students on the
+          counselor screen are invented, and nobody has been measured. Nothing below this rule exists:
+          these four are written down and nothing more.
+        </p>
+        <ul className="mt-6 grid list-none gap-x-10 gap-y-5 p-0 sm:grid-cols-2 xl:grid-cols-4">
+          {PLANNED.map(([h, p]) => (
+            <li key={h} className="border-t border-rule pt-4">
+              <h3 className="font-display text-row font-medium tracking-tight text-ink-2">{h}</h3>
+              <p className="mt-1.5 text-sec text-ink-3">{p}</p>
+              <p className="mt-2.5 font-mono text-tick italic text-ink-3">— not built</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </main>
   )

@@ -19,10 +19,10 @@ const YOU_NEVER = [
   'Anything they say — the microphone is never recorded or sent',
 ]
 
-/* The tick is knocked out of the accent disc, so it has to be the surface
-   colour behind it. It was #f8f6fc, the paper of the palette this one
-   replaced, and it went grey against the card. */
-const KNOCKOUT = '#f8f6fc'
+/* The tick is knocked out of the filled accent disc, so it has to be painted
+   in the surface colour sitting behind it. It was a raw literal of the retired
+   palette's near-white, which went grey against this one's card; `stroke-card`
+   is the token for that surface and follows any future change to it. */
 
 export function PrivacyBody({ go }) {
   return (
@@ -49,7 +49,7 @@ export function PrivacyBody({ go }) {
                   <li key={t} className="flex items-start gap-3 text-body text-ink">
                     <svg viewBox="0 0 20 20" aria-hidden className="mt-1.5 size-5 shrink-0 text-accent">
                       <circle cx="10" cy="10" r="8" fill="currentColor"/>
-                      <path d="M6 10.5l2.6 2.6L14 8" fill="none" stroke={KNOCKOUT} strokeWidth="2"
+                      <path d="M6 10.5l2.6 2.6L14 8" fill="none" className="stroke-card" strokeWidth="2"
                         strokeLinecap="round" strokeLinejoin="round"/></svg>
                     {t}
                   </li>

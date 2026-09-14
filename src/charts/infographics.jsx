@@ -92,7 +92,7 @@ const ROWS = [
   ['Anything they wrote',       2, 0, 0],
   ['Where they were',           2, 0, 0],
 ]
-const WHO = ['The student', 'A parent', 'A counselor']
+const WHO = ['Student', 'Parent', 'Counselor']
 function Mark({ v }) {
   const label = v === 2 ? 'Always' : v === 1 ? 'Only if the student agrees' : 'Never'
   return (
@@ -125,16 +125,19 @@ export function WhoSeesWhat({ className }) {
         <caption className="sr-only">What each person can see</caption>
         <thead>
           <tr>
-            <th className="sticky top-[7rem] z-10 w-1/2 border-b border-ink bg-paper py-3 pr-4 font-display text-tick font-medium text-ink-2">What</th>
+            <th className="sticky top-[7rem] z-10 w-[38%] border-b border-ink bg-paper py-3 pr-3
+              font-display text-fine font-medium text-ink-2 sm:w-1/2 sm:pr-4 sm:text-tick">What</th>
             {WHO.map(w => <th key={w}
-              className="sticky top-[7rem] z-10 border-b border-ink bg-paper py-3 text-center font-display text-tick font-medium text-ink-2">{w}</th>)}
+              className="sticky top-[7rem] z-10 border-b border-ink bg-paper px-1 py-3 text-center
+                font-display text-fine font-medium text-ink-2 sm:text-tick">{w}</th>)}
           </tr>
         </thead>
         <tbody>
           {ROWS.map(([what, a, b, c]) => (
             <tr key={what}>
-              <th scope="row" className="border-b border-rule py-4 pr-4 text-left text-meta font-normal text-ink">{what}</th>
-              {[a, b, c].map((v, i) => <td key={i} className="border-b border-rule py-4"><Mark v={v}/></td>)}
+              <th scope="row" className="border-b border-rule py-4 pr-3 text-left text-sec font-normal
+                text-ink sm:pr-4 sm:text-meta">{what}</th>
+              {[a, b, c].map((v, i) => <td key={i} className="border-b border-rule px-1 py-4"><Mark v={v}/></td>)}
             </tr>
           ))}
         </tbody>

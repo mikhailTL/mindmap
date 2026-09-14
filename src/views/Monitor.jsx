@@ -12,7 +12,6 @@ import { ScrollIn, ScrollRow } from '../s21/motion'
 import { WeekStrip } from '../charts/infographics'
 import { RainbowDial, RainbowKey, SensorDetail } from '../charts/rainbow'
 import { studentRings, parentRings } from '../lib/readings'
-import { Spark as MiniSpark } from '../charts/primitives'
 import { cn } from '../lib/utils'
 
 /* The dashboard shows one number, one sentence, and the reasons under it.
@@ -253,9 +252,14 @@ export function ParentBody({ go, openTab }) {
         <WeekChart data={DATA.week} band={DATA.weekBand}/>
         <div className={cn(STATS, 'mt-10')}>
           <Stat label="Days above normal" value="3" unit="of 5">Monday, Wednesday, Thursday. All before noon.</Stat>
-          <Stat label="Week average" value="58" unit="of 100">Her usual average is 47.</Stat>
+          {/* Was labelled "Week average", directly under a chart whose seven
+              days average 55. 58 is the model's blended score for the week —
+              the number the dial at the top of this screen shows — so the tile
+              is named for what it actually is. */}
+          <Stat label="Score this week" value="58" unit="of 100">Her usual is 47.</Stat>
           <Stat label="Weekend" value="44" unit="of 100">Inside her normal range both days.</Stat>
-          <Stat label="Sleep" value="5.4" unit="h">Her usual is 7.9 hours.</Stat>
+          {/* Was 5.4 h against "about 5 h 30" in the movement ring's detail. */}
+          <Stat label="Sleep" value="5.5" unit="h">Her usual is 7.9 hours.</Stat>
           <Stat label="Patch worn" value="94" unit="%">Off her skin for 41 minutes on Tuesday.</Stat>
           <Stat label="Check-ins" value="6" unit="of 7">She skipped Saturday.</Stat>
         </div>
