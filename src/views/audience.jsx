@@ -723,7 +723,7 @@ const AUDIENCES = {
   pro: {
     label: 'For school counselors',
     title: 'A caseload ordered by who changed this week.',
-    lede: 'MindMap ranks the students whose families consented by how fast they are moving, holds every row inside what was agreed, and logs every record you open.',
+    lede: 'MindMap puts the students whose families consented into a list ordered by change, holds every row inside what was agreed, and logs every record you open.',
     steps: [
       { kind:'svg', Art:ArtRank, tag:'Ranked by change',
         head:'The list is ranked by change, not by score.',

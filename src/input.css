@@ -27,7 +27,11 @@
      property would be overwritten by any shadow utility on the same element.
      Outline follows border-radius, so it fits the new panel/field/chip radii
      without a per-shape rule. */
-  :where(a,button,summary,input,select,textarea,[role="tab"],[role="radio"],[tabindex]):focus-visible {
+  /* `video` joined this list when the hardware page started carrying the DI-03
+     animation: a <video controls> is focusable by default but matches none of
+     the other selectors, so it was the one control on the site a keyboard user
+     could reach and not see. */
+  :where(a,button,summary,input,select,textarea,video,[role="tab"],[role="radio"],[tabindex]):focus-visible {
     outline: 2px solid theme('colors.accent.DEFAULT');
     outline-offset: 2px;
   }

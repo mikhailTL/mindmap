@@ -4,7 +4,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { CHART_DATA } from './lib/chartdata'
 
 globalThis.__DATA = CHART_DATA
-globalThis.__CAD = '/MindMap-Patch-colored.glb'
+/* The DI-03 CAD, for any view that wants the live model rather than a still.
+   `__CAD` is the patch on its own; `__CAD_ARM` is the same assembly on a
+   forearm, which is the one that shows the thing at the size it is worn. Both
+   are meshopt-compressed, and both are design intent — no unit has been
+   built, and nothing in either file was measured from hardware. */
+globalThis.__CAD = '/di/models/mindmap.glb'
+globalThis.__CAD_ARM = '/di/models/mindmap-onarm.glb'
 globalThis.gsap = gsap
 globalThis.ScrollTrigger = ScrollTrigger
 
