@@ -76,14 +76,9 @@ const BEATS = [
   { ms: 4400,
     head: 'There are two ways to take a reading.',
     sub:  'Wear the patch, or answer six questions. One model scores both.' },
-  /* Beat three is the only beat that describes something that does not exist
-     yet, so it is the only beat whose sub carries its own provenance. The
-     drawing beside it is an abstraction of the DI-03 package, and a viewer who
-     hears nothing but "the patch is seven layers" will reasonably assume seven
-     layers were held in somebody's hand. */
   { ms: 4000,
-    head: 'The patch is drawn as seven layers.',
-    sub:  'Design intent, not a built unit: a 64 × 42 mm lozenge whose skin-side face carries the electrodes.' },
+    head: 'The patch is a thin sticker for your forearm.',
+    sub:  'Three printed parts around one small board. Pulse, sweat, skin temperature and micro-movements read through the face against your skin.' },
   { ms: 4200,
     head: 'A whole day of readings comes back as one score out of 100.',
     sub:  'Under the score, one sentence in plain words.' },
@@ -317,79 +312,29 @@ function StageRoutes() {
 }
 
 /* ── The stack ──────────────────────────────────────────────────────────────
-   Not ExplodedStack. That is now a page component: a vendor custom element in
-   its own shadow root with its own stage, its own caption, its own explode
-   slider and a height floor of 608px that rises to a 2000px column of face-on
-   sheets below 560px. Dropping it into a four-second beat inside a fixed
-   overlay would mean either clipping it or rebuilding the beat around a figure
-   this file cannot cue, cannot time and cannot make leave — and a title card
-   whose middle beat is a static engineering sheet with a slider on it has
-   stopped being a title card. So the beat keeps its own stack and imports the
-   one thing that must never drift from the CAD: LAYERS itself, its names, its
-   count and its order, outermost first.
-
-   What it draws is deliberately less than the package draws. Seven identical
-   planes in the package's own silhouette — nothing on a plane says which layer
-   it is, because this file does not know what any of them look like and seven
-   invented sheets would claim a fidelity it has not got. The claim here is
-   "seven layers, this outline, this thin", and the legend beside it carries
-   the names. Everything else belongs to the drawing on the hardware page.
-
-   Depths are derived from the layer index rather than tabulated, so adding or
-   removing a layer in Patch.jsx cannot leave a plane sitting at `undefined px`
-   — which is exactly how the three-entry version of this failed.
+   The same three drawings the hardware page uses, on their own preserve-3d
+   parent rather than through ExplodedStack. Two reasons: the page underneath
+   drives `#stack` and `.lyr` with GSAP by selector, so reusing those hooks
+   would let two components fight over one transform; and the assembly needs
+   per-layer start and end depths, which ExplodedStack has no way to express.
 
    `--z2` is also written as the figure's inline transform, so with the
    animation removed the stack renders closed instead of stacked at zero. */
-
-/* The silhouette: a continuous-curvature lozenge at the package's nominal
-   64 x 42 mm, drawn 1 unit = 1 mm inside a 2mm margin for the stroke. Sampled
-   off a superellipse rather than typed as arcs, because a stadium's ends are a
-   constant radius and being-not-a-stadium is the whole point of the shape.
-   Deterministic and computed once — a path rebuilt per render is per-frame
-   work for a curve that never changes. */
-const LOZENGE = (() => {
-  const A = 32, B = 21, K = 2 / 3.4, N = 88
-  let d = ''
-  for (let i = 0; i < N; i++) {
-    const t = (i / N) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t)
-    d += (i ? 'L' : 'M')
-      + (34 + A * Math.sign(c) * Math.abs(c) ** K).toFixed(2) + ' '
-      + (23 + B * Math.sign(s) * Math.abs(s) ** K).toFixed(2)
-  }
-  return d + 'Z'
-})()
-
-const MID = (LAYERS.length - 1) / 2
-/* Outermost layer nearest the viewer, so the stack's top-to-bottom order on
-   screen is the legend's 01-to-07 order. Every depth is scaled by --zk, which
-   the caller sets per breakpoint: a separation that reads at 1440 is a stack
-   taller than the phone's whole stage, and seven layers in a fixed box is one
-   of the few things that genuinely has to shrink rather than reflow. */
-const depth = (i, gap) => `calc(var(--zk) * ${(MID - i) * gap}px)`
-
-function Stack({ close, width, className }) {
+function Stack({ z0, z1, z2, close, width, className }) {
   return (
     <div className={cn('relative [perspective:1400px]', className)}>
       <div className="iv-sway absolute inset-0 [transform-style:preserve-3d]"
         style={{ transform: 'rotateX(30deg) rotateZ(-22deg)', '--t': `${parseFloat(close) + 0.5}s` }}>
         {[...LAYERS].reverse().map(l => (
-          <figure key={l.part} className={cn('iv-lyr absolute left-1/2 top-1/2 m-0',
-            '[&_svg]:h-auto [&_svg]:w-full', width)}
+          <figure key={l.i} className={cn('iv-lyr absolute left-1/2 top-1/2 m-0 [transform-style:preserve-3d]',
+            '[&_svg]:h-auto [&_svg]:w-full [&_svg]:overflow-visible',
+            '[&_svg]:drop-shadow-[0_16px_16px_rgba(0,0,0,0.5)]', width)}
             style={{
-              '--z0': depth(l.i, 86), '--z1': depth(l.i, 66), '--z2': depth(l.i, 5),
-              '--t': `${0.12 + l.i * 0.09}s`, '--t2': close,
-              transform: `translate(-50%,-50%) translateZ(${depth(l.i, 5)})`,
+              '--z0': `${z0[l.i]}px`, '--z1': `${z1[l.i]}px`, '--z2': `${z2[l.i]}px`,
+              '--t': `${[0.75, 0.1, 0.42][l.i]}s`, '--t2': close,
+              transform: `translate(-50%,-50%) translateZ(${z2[l.i]}px)`,
             }}>
-            <svg {...svgProps} viewBox="0 0 68 46">
-              {/* Opaque, so a plane in front hides the one behind it and the
-                  stack reads as solid rather than as seven overlaid outlines.
-                  The edge is mist at 12.8:1 on this field; the fill only has to
-                  block, so it can be the one plate colour dark enough not to
-                  turn seven layers into a lightbox. */}
-              <path d={LOZENGE} className="fill-accent-ink stroke-mist"
-                strokeWidth="0.75" strokeLinejoin="round"/>
-            </svg>
+            {l.art}
           </figure>
         ))}
       </div>
@@ -397,43 +342,38 @@ function Stack({ close, width, className }) {
   )
 }
 
-/* ── Beat 3 ── seven layers fall in, name themselves, then close ─────────── */
+/* ── Beat 3 ── the three parts fall together, name themselves, then close ─── */
+const PART_NOTE = {
+  pod:  'The outer cover. The slot in its wall is the charging port.',
+  pcb:  'A printed tray. The XIAO nRF52840 Sense board drops into it.',
+  base: 'The face that touches the skin, ringed by the adhesive flange.',
+}
+
 function StageStack() {
   return (
     <div className="grid h-full w-full grid-rows-[minmax(0,1fr)_auto] items-center gap-3
-      lg:grid-cols-[1.15fr_1fr] lg:grid-rows-1 lg:gap-10">
-      {/* Three depths, not two: landing straight onto a closed stack would make
-          seven layers arrive as one lozenge. They land at a readable
-          separation, hold while the legend names them, and only then close to
-          the thickness the package is — and then never stop moving, because a
-          still frame in the middle of a title sequence reads as a stall.
-
-          The first of the three is only a little beyond the second, and that is
-          a measurement rather than a taste: a layer starting far in front of the
-          stack is both offset and scaled up by the perspective, and at 390px it
-          crossed the top of its own box and arrived with its curve sliced off by
-          the frame. The fly-in is as long as the box can hold. */}
-      <div className="flex h-full min-h-0 flex-col justify-center">
-        <Stack className="min-h-[110px] w-full max-w-[520px] flex-1 self-center overflow-hidden
-            [--zk:0.34] sm:[--zk:0.78] lg:[--zk:1]" close="2.7s"
-          width="w-[min(44%,124px)] sm:w-[min(60%,230px)] lg:w-[min(74%,296px)]" />
-        {/* The package stamps every dimension it carries, and a drawing lifted
-            out of it keeps the stamp. Said in the beat's sub as well, because
-            this line is not in the live region a screen reader hears. */}
-        <p className="iv-a iv-fade mt-2 shrink-0 text-center font-mono text-fine text-rule"
-          style={{ '--d': '.5s', '--t': '.9s' }}>
-          Design intent — not as-built
-        </p>
-      </div>
+      lg:grid-cols-[1.3fr_1fr] lg:grid-rows-1 lg:gap-10">
+      {/* Three depths, not two. Landing straight onto a closed stack buries the
+          board under the shell's opaque pod, so the only layer with a part
+          number printed on it is the one nobody ever sees. It lands at a
+          readable separation, holds while the legend names the parts, and only
+          then closes — and then never stops moving, because a still frame in
+          the middle of a title sequence reads as a stall. */}
+      <Stack className="h-full min-h-[190px] w-full overflow-hidden"
+        width="w-[min(72%,230px)] sm:w-[min(90%,420px)] lg:w-[min(94%,500px)]" close="2.9s"
+        z0={{ 0: 340, 1: 0, 2: -340 }} z1={{ 0: 116, 1: 6, 2: -100 }} z2={{ 0: 12, 1: 0, 2: -12 }} />
       <ol className="m-0 grid list-none gap-0 p-0" aria-hidden>
         {LAYERS.map((l, i) => (
           <li key={l.part}
-            className="iv-a iv-rise grid grid-cols-[2rem_1fr] items-baseline gap-x-2
-              border-t border-paper/25 py-0.5 last:border-b sm:py-1.5"
-            style={{ '--d': '.5s', '--t': `${1.55 + i * 0.12}s` }}>
+            className="iv-a iv-rise grid grid-cols-[2.25rem_1fr] gap-x-2 border-t border-paper/25 py-1.5
+              last:border-b sm:py-2.5"
+            style={{ '--d': '.5s', '--t': `${1.95 + i * 0.2}s` }}>
             <span className="font-mono text-fine tabular-nums text-beam">
               {String(i + 1).padStart(2, '0')}</span>
-            <span className="font-display text-fine font-medium text-paper sm:text-ui">{l.title}</span>
+            <span>
+              <span className="block font-display text-ui font-medium text-paper">{l.title}</span>
+              <span className="mt-0.5 hidden text-fine text-mist sm:block">{PART_NOTE[l.part]}</span>
+            </span>
           </li>
         ))}
       </ol>
@@ -644,11 +584,19 @@ const CSS = `
 .iv-root .iv-sway{animation:iv-sway 8s cubic-bezier(.45,0,.55,1) var(--t,0s) infinite both}
 .iv-root .iv-morph{animation-name:iv-morph;animation-timing-function:cubic-bezier(.55,0,.25,1)}
 .iv-root .iv-lyr{animation-name:iv-land,iv-close;animation-duration:1.4s,.6s;animation-delay:var(--t),var(--t2);animation-fill-mode:both,forwards;animation-timing-function:cubic-bezier(.2,.7,.3,1),cubic-bezier(.55,0,.25,1)}
-/* No rule suppressing text inside .iv-lyr any more: the planes carry none.
-   The one that used to live here hid the engineering labels on the old layer
-   drawings, which collided with each other under the tip and across layers
-   once the stack closed. Labelling is the legend's job, out in page text where
-   it cannot be foreshortened onto itself. */
+/* The layer drawings are the hardware page's, and their engineering labels are
+   correct there — that page tips the stack far less and never closes it. Here
+   two separate things break them. Within the board, "nRF52840" and "IMU · PDM
+   MIC" are 18 SVG units apart on a drawing held at rotateX(30deg) and swaying
+   to 20deg, and the foreshortened vertical axis pulls those two lines onto each
+   other. Between layers, the stack closes to 12px of separation, which puts
+   "PPG" on the face directly over the board's part number in screen space.
+   Suppressing the labels answers both at once, and costs this beat nothing:
+   the numbered legend beside the drawing already names all three parts, and the
+   claim here is "three parts stack up", not the name of a microcontroller.
+   Scoped to .iv-lyr, which exists only inside this file — the hardware page's
+   own .lyr figures are untouched. */
+.iv-root .iv-lyr svg text{display:none}
 .iv-root .iv-stage{animation:iv-stage .55s cubic-bezier(.2,.7,.3,1) both}
 .iv-root .iv-out{animation:iv-out ${OUT_MS}ms cubic-bezier(.55,0,.25,1) both}
 .iv-root .iv-wipe{animation:iv-wipe .62s cubic-bezier(.65,0,.35,1) both}

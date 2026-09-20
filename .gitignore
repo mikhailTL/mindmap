@@ -4,3 +4,6 @@ artifact
 ui-audit
 .DS_Store
 *.local
+_stale
+_unused
+_revert

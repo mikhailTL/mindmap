@@ -1,170 +1,161 @@
 import React from 'react'
+const T = { fontFamily:'ui-monospace,monospace' }
 
-/* The exploded drawing is DI-03 now: a CAD-derived assembly delivered as a
-   self-contained custom element with its own shadow root.
+/* All three drawings share one wide viewBox and one set of coordinates, so the
+   exploded layers register on top of each other without per-layer nudging.
 
-   What used to live here — `Shell`, `Board` and `Face`, three hand-drawn SVGs
-   on a 440x260 canvas — was made before any CAD existed and disagrees with the
-   package on every point that matters: the silhouette is a continuous spline
-   lozenge at 64 x 42 mm, not a 2.8:1 stadium; there are seven layers, not
-   three; and the electronics layer is a flex-rigid PCB with a rigid island and
-   a polyimide flex bend, not a tray with a board dropped into it. Keeping a
-   second, wrong drawing beside the real one is how a reader ends up believing
-   the wrong one, so the three constants are deleted rather than deprecated.
-   `<mindmap-exploded>` replaces all three, and LAYERS below is the written
-   account of that drawing rather than the drawing itself.
+   What changed: every layer used to be drawn on a 400x400 square as a 308x228
+   rounded rectangle — a 4:3 block that read as a pebble or a games console,
+   not as something you stick on a forearm. A skin patch is a thin, wide
+   lozenge: a stadium-shaped adhesive flange with a raised pod in the middle.
+   So the canvas is 440x260 and the silhouette below is a 412x148 stadium
+   (2.8:1, fully radiused ends) with a 216x108 pod centred in it. The ring left
+   between the two IS the adhesive flange, which is why it is never drawn as a
+   shape of its own — it is the part of the flange the pod does not cover. */
+const FL  = { x:14,  y:56, width:412, height:148, rx:74 }  /* adhesive flange, stadium */
+const POD = { x:112, y:76, width:216, height:108, rx:44 }  /* the raised body */
 
-   DESIGN INTENT — NOT AS-BUILT. Every dimension and material named here is
-   assigned in the design-intent CAD. Nothing on this page was measured from
-   hardware, no unit has been assembled, and no performance figure follows from
-   any of it. */
+export const Shell = (
+  <svg viewBox="0 0 440 260" role="img" aria-label="The printed shell, seen face on">
+    <defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#171f3c" strokeOpacity=".14" strokeWidth="1"/></pattern></defs>
+    <rect {...FL} fill="#f8f6fc" fillOpacity=".93" stroke="#171f3c" strokeWidth="1.6"/>
+    {/* The hatch covers the whole stadium and is then masked by the opaque pod,
+        so it survives only in the flange ring. That is cheaper and steadier
+        than an even-odd ring path, and it means the adhesive zone can never
+        drift out of register with the body sitting on it. */}
+    <rect {...FL} fill="url(#hatch)"/>
+    <rect x="25" y="67" width="390" height="126" rx="63" fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+    <rect {...POD} fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.5"/>
+    <rect x="124" y="88" width="192" height="84" rx="36" fill="none" stroke="#171f3c" strokeOpacity=".28" strokeWidth="1"/>
+    {/* The charging slot straddles the pod wall rather than sitting inside it,
+        because a port that does not break the outline is a sticker, not a port. */}
+    <rect x="310" y="116" width="30" height="28" rx="9" fill="url(#hatch)" stroke="#171f3c" strokeOpacity=".45" strokeWidth="1"/>
+    <circle cx="220" cy="130" r="30" fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+    <circle cx="220" cy="130" r="7" fill="#3d52a0"/>
+    <path d="M14 130H0M426 130h14" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+  </svg>)
 
-const TAG = 'mindmap-exploded'
-const SCRIPT = '/di/exploded/mindmap-exploded.js'
+export const Board = (
+  <svg viewBox="0 0 440 260" role="img" aria-label="The XIAO nRF52840 Sense board">
+    <defs><pattern id="keep" width="6" height="6" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="6" x2="6" y2="0" stroke="#3d52a0" strokeOpacity=".35" strokeWidth="1"/></pattern></defs>
+    {/* The middle layer used to be a bare rectangle floating at a different
+        width from the other two, so mid-explode it looked like a stray part.
+        This dashed ghost is the flange the tray lands inside — it carries no
+        information beyond registration, which is why it is a construction line. */}
+    <rect {...FL} fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1" strokeDasharray="6 6"/>
+    <rect x="116" y="80" width="208" height="100" rx="16" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.6"/>
+    <rect x="132" y="92" width="176" height="76" rx="6" fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.3"/>
+    <rect x="132" y="92" width="176" height="20" fill="url(#keep)"/>
+    <rect x="132" y="92" width="176" height="20" fill="none" stroke="#3d52a0" strokeOpacity=".5" strokeWidth="1" strokeDasharray="4 3"/>
+    <rect x="196" y="84" width="48" height="12" rx="3" fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.2"/>
+    <text x="220" y="136" textAnchor="middle" style={T} fontSize="18" fill="#171f3c">nRF52840</text>
+    <text x="220" y="154" textAnchor="middle" style={T} fontSize="13" fill="#30417e">IMU · PDM MIC</text>
+    <g fill="#3d52a0">{[120,132,144,156].flatMap(y=>[
+      <rect key={'l'+y} x="138" y={y} width="14" height="6" rx="1.5"/>,
+      <rect key={'r'+y} x="294" y={y} width="14" height="6" rx="1.5"/>])}</g>
+    <g fill="#171f3c" fillOpacity=".55">{[176,196,216,236,256].map(x=>
+      <rect key={x} x={x} y="173" width="12" height="6" rx="1"/>)}</g>
+  </svg>)
 
-/* The only <img> anywhere on this site, and only when the script does not
-   arrive: the same drawing exported flat. A drawing that fails to load should
-   degrade to a picture of itself, not to a hole where the mechanism was. */
-const FLAT = '/di/exploded/MindMap-Exploded-Technical.svg'
+export const Face = (
+  <svg viewBox="0 0 440 260" role="img" aria-label="The sensor face that sits against the skin">
+    <rect {...FL} fill="#f8f6fc" fillOpacity=".85" stroke="#171f3c" strokeOpacity=".55" strokeWidth="1.4"/>
+    {/* No inset trim line on this layer, unlike the shell. It was drawn here
+        too, for symmetry, and at this size it ran horizontally straight
+        through "EDA" and "TEMP" — a decorative rule cancelling four labels.
+        The pod outline already separates flange from body, so the trim had
+        nothing left to say. */}
+    <rect {...POD} fill="none" stroke="#171f3c" strokeOpacity=".35" strokeWidth="1.2"/>
+    {/* The two EDA electrodes moved out onto the wings, outside the pod
+        outline. They were inboard on the old square drawing, which put both
+        skin contacts under the thickest part of the enclosure — the wide
+        silhouette is what makes the real placement drawable. */}
+    {[66,374].map(cx=>(<g key={cx}>
+      <circle cx={cx} cy="124" r="34" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.5"/>
+      <circle cx={cx} cy="124" r="22" fill="none" stroke="#171f3c" strokeOpacity=".35" strokeWidth="1"/>
+      <path d={`M${cx} 158v13`} stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+      <text x={cx} y="185" textAnchor="middle" style={T} fontSize="15" fill="#30417e">EDA</text></g>))}
+    <rect x="186" y="102" width="68" height="52" rx="14" fill="#171f3c"/>
+    <circle cx="204" cy="120" r="6" fill="#3d52a0"/><circle cx="236" cy="120" r="6" fill="#3d52a0"/>
+    <rect x="206" y="134" width="28" height="12" rx="3" fill="#f8f6fc" fillOpacity=".85"/>
+    <rect x="206" y="162" width="28" height="12" rx="3" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.2"/>
+    <path d="M220 174v10" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+    <text x="220" y="94" textAnchor="middle" style={T} fontSize="15" fill="#30417e">PPG</text>
+    <text x="220" y="199" textAnchor="middle" style={T} fontSize="15" fill="#30417e">TEMP</text>
+  </svg>)
 
-/* Seven layers, outermost first, named and described from the package's
-   GEOMETRY.md so the prose beside the drawing cannot drift from the drawing.
-   `part` is the layer's own slug. It is no longer a body in the DI-01
-   enclosure GLB — that model holds three printed parts and this stack has
-   seven — so a caller that feeds `part` to the CAD viewer will be asking it to
-   isolate something it does not contain. */
+/* `title`/`body` describe the physical stack and label the drawing. `cad`
+   names what the model actually isolates, which is not the same thing: the CAD
+   is three printed parts, and the board is not one of them. Calling part two
+   "XIAO nRF52840 Sense" put a chip's name on a plastic tray. */
 export const LAYERS = [
-  { i: 0, part: 'shell-core', title: 'Shell rigid core',
-    body: 'Encloses the stack; the bonded TPE band, the pre-weld director and the port door stay in its assembly group.' },
-  { i: 1, part: 'light-guide', title: 'PMMA status light guide',
-    body: 'Routes the status LED out to the slot in the perimeter.' },
-  { i: 2, part: 'battery', title: 'Conformal LiPo pouch',
-    body: 'Supplies the modelled battery volume, with its seal flange and welded tabs.' },
-  { i: 3, part: 'pcb', title: 'Flex-rigid PCB rigid island',
-    body: 'Carries the XIAO, the MAX30102 optical sensor, the analog front end, passives, routing and the flex bend as one soldered subassembly.' },
-  { i: 4, part: 'thermal-pocket', title: 'Thermal foam isolation pocket',
-    body: 'Isolates the modelled thermal contact path and its conductive epoxy layer.' },
-  { i: 5, part: 'skin-shell', title: 'Skin-side shell',
-    body: 'Holds the electrodes, the two optical windows, the opaque rib, the gasket and the pressure and acoustic features.' },
-  { i: 6, part: 'adhesive-base', title: 'Medical PU adhesive base',
-    body: 'Carries the conforming attachment layer and the modelled clearances around the sensing interfaces.' },
+  { i:0, part:'pod', art:Shell, title:'Printed shell',
+    body:'The outer cover. The slot in the side is the charging port.' },
+  { i:1, part:'pcb', art:Board, title:'Electronics pod',
+    body:'The tray a XIAO nRF52840 Sense board drops into. The board is bought separately.' },
+  { i:2, part:'base', art:Face,  title:'Skin-side base',
+    body:'Holds the sensor window and the adhesive. Pulse, sweat and temperature read through it.' },
 ]
 
-/* Built from LAYERS rather than typed out, so the name a screen reader hears
-   cannot fall out of step with the list the page prints. */
-const NAME = 'Exploded assembly drawing, design intent rather than as-built: seven layers, outermost first — '
-  + LAYERS.map(l => l.title.toLowerCase()).join(', ') + '.'
+/* The exploded drawing, lifted out of PatchPage so the homepage hero can use
+   the same one. It was inline markup in a single view; the hero needed it and
+   copying forty lines of transform classes into a second file is how two
+   drawings drift apart. The id stays `stack` because both the hero and the
+   hardware page drive it with the same ScrollTrigger, and only one of the two
+   is mounted at a time under hash routing.
 
-/* One <script> for the whole application, tracked by a promise at module scope
-   AND by an attribute on the tag itself. StrictMode invokes every effect twice
-   and a page can mount more than one of these; a second `customElements.define`
-   of a name that is already taken throws, and the throw would take the whole
-   render down with it. */
-let loading = null
-function loadDrawing() {
-  if (loading) return loading
-  if (typeof document === 'undefined') return Promise.reject(new Error(TAG))
-  loading = new Promise((resolve, reject) => {
-    if (customElements.get(TAG)) return resolve()
-    let el = document.querySelector(`script[data-di="${TAG}"]`)
-    if (!el) {
-      el = document.createElement('script')
-      el.src = SCRIPT
-      el.async = true
-      el.dataset.di = TAG
-      document.head.append(el)
-    }
-    el.addEventListener('load', () => resolve(), { once: true })
-    el.addEventListener('error', () => reject(new Error(TAG)), { once: true })
-  }).then(() => customElements.whenDefined(TAG))
-  return loading
-}
-
-/* The component measures its own width and derives everything else from it: a
-   layer drawn at 0.64x that width clamped to 270-470px, a stage 2.25x the layer,
-   and below 560px a column of seven face-on sheets at the SVG's own 360:260
-   with 24px between them, inside 8px of stage padding. Running the same
-   arithmetic here holds the box open from the first paint, so the page does not
-   jump when the element upgrades.
-
-   CHROME is the component's header and caption, which is the one part that
-   cannot be derived: both wrap inside the shadow root at widths we do not
-   control, and measuring across 300-1328px put them between 140px and 218px.
-   The floor takes the top of that range rather than the average. A floor that
-   is never shorter than the drawing cannot produce a jump; a floor fitted to
-   the mean would jump at every width it missed, and the price is at most 80px
-   of paper under a drawing that is already 1200px tall. */
-const CHROME = 224
-const reserveFor = w => Math.round(w < 560
-  ? 7 * w * (260 / 360) + 6 * 24 + 16 + CHROME
-  : 2.25 * Math.min(470, Math.max(270, w * 0.64)) + CHROME)
-
-/* Callers still size this figure with a fixed height left over from the old
-   three-layer stack — `h-[min(52vh,440px)]` and friends. The DI-03 drawing
-   cannot fit in 440px: its own floor is a 270px layer, which is a 608px stage
-   before the header, and on a narrow column it is a 2000px sheet column. A
-   height that small would either clip the drawing or overlap whatever follows
-   it, so height classes are dropped and the reserved height above stands in
-   their place. Everything else the caller passes is kept. */
-const dropHeight = (s = '') =>
-  s.split(/\s+/).filter(c => c && !/(^|:)(h|min-h|max-h)-/.test(c)).join(' ')
-
-/* Signature is unchanged because four views import it. `shift` and `size` are
-   now accepted and ignored: both addressed a stack this file drew and no
-   longer owns. `shift` recentred a tipped three-layer stack that drifted off
-   its own bounding box, and `size` set a per-layer width — the component
-   centres itself and derives its layer width from its own box, capping at the
-   same 470px the hero used to ask for. `caption` still prints, but it defaults
-   to nothing now: the drawing already carries its own caption inside the
-   shadow root, and a second one underneath says the same thing twice. */
-export function ExplodedStack({ className, caption = null, shift, size }) {
-  const box = React.useRef(null)
-  const [failed, setFailed] = React.useState(false)
-  const [reserve, setReserve] = React.useState(null)
-
-  React.useEffect(() => {
-    let live = true
-    loadDrawing().catch(() => { if (live) setFailed(true) })
-    return () => { live = false }
-  }, [])
-
-  React.useLayoutEffect(() => {
-    const el = box.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-    const measure = () => { if (el.clientWidth) setReserve(reserveFor(el.clientWidth)) }
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
+   `size` exists because one width served two very different boxes: at
+   `w-[min(84%,400px)]` the drawing sat correctly beside the CAD viewer but
+   floated inside the much larger hero column with a ring of dead space around
+   it, which is what read as "shrunken". The default is the hardware page's
+   old value, so only the hero has to say anything, and what it should say is
+   `size="w-[min(96%,470px)]"` — measured, not guessed: at the hero's 604x460
+   column that is the largest width whose projected ink still clears the
+   figcaption at the steepest point of the scrub. Naming it here also keeps
+   Tailwind generating the class even before the hero passes it. */
+export function ExplodedStack({
+  className,
+  caption = 'Drawing · engineering labels',
+  shift = '0%, 0%',
+  size = 'w-[min(84%,400px)]',
+}) {
   return (
-    /* All four palette properties are declared on the wrapper and inherit
-       across the shadow boundary, which is also how the package's own
-       integration note binds them. Two reasons they cannot go on the element:
-       React 18 does not map `className` onto a custom element at all, so the
-       classes would silently never land; and the component's own :host rule is
-       `color: var(--fig-ink, inherit)`, so `--fig-ink: currentColor` declared
-       on the element would make its colour refer to itself. One level up it
-       resolves against `text-ink`, and the component gets a real ink value to
-       measure its own faint-line contrast against. */
-    <div ref={box} style={reserve ? { minHeight: reserve } : undefined}
-      className={`relative text-ink [--fig-ink:currentColor]
-        [--fig-accent:theme(colors.accent.DEFAULT)] [--fig-face:theme(colors.card)]
-        [--fig-recess:theme(colors.mist)] ${dropHeight(className)}`}>
-      {/* The name lives out here and the drawing is hidden beneath it. The
-          component ships an explode slider inside its shadow root, and a
-          control that can take focus inside an aria-hidden subtree is
-          unreachable to a screen reader while still being tabbable — so the
-          drawing is presented as a figure and `inert` withdraws the control
-          rather than leaving it half-exposed. The seven layers are named in
-          page text by every view that uses this. */}
-      <div role="img" aria-label={NAME}>
-        {failed
-          ? <img src={FLAT} alt="" aria-hidden="true" className="block w-full"/>
-          : <mindmap-exploded aria-hidden="true" inert=""/>}
+    <div className={'relative overflow-x-clip [perspective:1500px] ' + (className || '')}>
+      {/* A fixed counter-tilt wrapped around `#stack`, not folded into it.
+          The stack sat at rotateX 58deg statically and Overview/PatchPage
+          scrub it between 70deg and 50deg, which foreshortened every face to
+          about a third of its height — three slivers, no readable patch. The
+          corrective rotation cannot go on `#stack` itself because GSAP
+          overwrites that transform wholesale, and it has to sit OUTSIDE the
+          stack's own rotateZ so the two rotateX terms stay adjacent in the
+          matrix and simply subtract. Net result: 50deg at first paint easing
+          to 30deg across the scrub — faces readable throughout, and the layers
+          still separate in depth exactly as before. */}
+      <div className="absolute inset-0 [transform-style:preserve-3d] [transform:rotateX(-20deg)]">
+        <div id="stack" className="absolute inset-0 [transform-style:preserve-3d]"
+          /* The stack tips away from its own centre, so at hero size it drifts
+             up and right and leaves a hole under it. `shift` recentres the
+             optical mass rather than the bounding box. */
+          style={{ transform: `translate(${shift}) rotateX(50deg) rotateZ(-26deg)` }}>
+          {[...LAYERS].reverse().map(l => (
+            <figure key={l.i} data-i={l.i}
+              /* `aspect-square` went with the square viewBox: on a 440x260
+                 drawing it padded every layer with 40% empty height and pushed
+                 the artwork off the centre the -translate-y-1/2 assumes.
+                 Height now comes from the SVG, which is identical for all
+                 three, so registration is free. */
+              className={`lyr absolute left-1/2 top-1/2 m-0 ${size}
+                -translate-x-1/2 -translate-y-1/2 [transform-style:preserve-3d]
+                [&_svg]:h-auto [&_svg]:w-full [&_svg]:overflow-visible
+                [&_svg]:drop-shadow-[0_26px_34px_rgba(23,31,60,0.16)]`}>
+              {l.art}
+            </figure>
+          ))}
+        </div>
       </div>
-      {caption && <span className="note mt-2 block text-center">{caption}</span>}
+      {caption && <span className="note absolute inset-x-0 bottom-0 text-center">{caption}</span>}
     </div>
   )
 }

@@ -11,6 +11,7 @@ import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
+import { PhoneCheck } from './PhoneCheck'
 
 /* Two ways in, numbered. A bluetooth glyph and a clipboard glyph were two
    pictures of nouns standing in for an order that a numeral states outright.
@@ -65,13 +66,20 @@ export function CheckInBody({ go }){
           ? <RealNotice inline>No patch is paired, and these six questions do not need one.</RealNotice>
           : <DemoNotice inline>Every other screen is generated. These six are not.</DemoNotice>}
       </div>
-      <p className="mt-4 max-w-[48ch] text-body leading-[1.5] text-ink-2">Six questions, scored by the
-        same model the patch uses. About thirty seconds.</p>
+      <p className="mt-4 max-w-[52ch] text-body leading-[1.5] text-ink-2">Three ways in, one score.
+        The phone's own camera and microphone, a paired patch, or six questions.</p>
 
       {/* mt was 8. Three fixed steps across these views — 10 inside a section,
           14 between sections, 20 between page regions. */}
-      <div className="mt-10 grid gap-3.5 lg:grid-cols-2">
-        <ScrollRow index={0} className="h-full"><Route n="01" title="Answer six questions"
+      <div className="mt-10 grid gap-3.5 lg:grid-cols-3">
+        <ScrollRow index={0} className="h-full"><Route n="01" title="Use the phone's sensors"
+          foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
+            Frames and audio are reduced to numbers here and dropped. Neither is stored or sent.</p>}>
+          <p className="max-w-[38ch] text-sec text-ink-2">Forty-five seconds. A fingertip on the camera
+            gives heart rate and beat-to-beat variation; one spoken sentence gives pitch and steadiness.
+            Three of the four signals a patch reads.</p>
+        </Route></ScrollRow>
+        <ScrollRow index={1} className="h-full"><Route n="03" title="Answer six questions"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Your answers stay on this device — nothing is stored or sent.</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">No patch needed.</p>
@@ -84,7 +92,7 @@ export function CheckInBody({ go }){
               label={`${answered} of ${ITEMS.length} questions answered`}/>
           </div>
         </Route></ScrollRow>
-        <ScrollRow index={1} className="h-full"><Route n="02" title="Connect a patch"
+        <ScrollRow index={2} className="h-full"><Route n="02" title="Connect a patch"
           foot={<p aria-live="polite" className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">{pair?.msg}</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">Pairs over Bluetooth with a MindMap patch and streams at 1 Hz.
             {mode === 'real' && ' Nothing is paired to this account, so the dashboard has no reading to show yet.'}</p>
@@ -94,12 +102,25 @@ export function CheckInBody({ go }){
         </Route></ScrollRow>
       </div>
 
+      {/* The measured route first, because it is the one that produces a
+          reading rather than a self-assessment. The six questions keep their
+          place underneath, unchanged: they are the fallback when a camera is
+          refused, and they are the only route that works with no hands free. */}
+      <section className="mt-14">
+        <h3 className="mark">Read it off the phone</h3>
+        <p className="mt-2 max-w-[56ch] text-sec text-ink-2">
+          No patch, no questions. The same scoring model, given measurements instead of answers.
+        </p>
+        <div className="mt-6"><PhoneCheck/></div>
+      </section>
+
       {/* On a monitor the six questions and the running result sit side by side,
           so the reading appears without the answers scrolling out of view. */}
       {/* mt was 8 as well, which made the break between "how to take a reading"
           and the reading itself the same size as the gap inside it. This is a
           section break. */}
-      <div className="mt-14 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
+      <h3 className="mt-20 mark">Or answer six questions</h3>
+      <div className="mt-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
         {/* The six sat on the sheet under a single ink rule, which read as the
             start of a section rather than as one form. One Card holds them and
             each question keeps its own hairline as a row rule inside it. */}

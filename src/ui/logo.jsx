@@ -1,17 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* The MindMap mark — now the authoritative geometry, not a lookalike.
- *
- * The DI-03 hardware package ships `brand/mindmap-logo-trace.svg`: the capsule,
- * ridge and endpoint fitted to the supplied artwork and engraved 0.25 mm deep
- * into the shell at 11.5 mm nominal width. The numbers below are that trace,
- * verbatim, so the mark on the website and the mark moulded into the product
- * are one drawing rather than two drawings that agree approximately.
- *
- * viewBox is the capsule's own bounds plus half a stroke. The trace file is
- * 81 x 42 because the raster it was fitted to included the wordmark; cropping
- * to the capsule is what lets the mark sit on a text baseline.
+/* The MindMap mark.
  *
  * Two ideas had to land in one shape, and the shape had to survive 16px.
  *
@@ -37,15 +27,19 @@ import { cn } from '../lib/utils'
 
 export function LogoMark({ className, title }) {
   return (
-    <svg viewBox="18.24 5.02 52.96 30.78" className={className} role={title ? 'img' : undefined}
+    <svg viewBox="0 0 40 28" className={className} role={title ? 'img' : undefined}
       aria-hidden={title ? undefined : true} aria-label={title}>
-      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="19.7713" y="6.54038" width="49.9005" height="27.72706" rx="13.86353"
-          strokeWidth="3.04576"/>
-        <polyline points="31.59159,26.20790 37.77524,15.11859 44.67690,22.87136
-          52.17522,16.26416 57.88540,25.38775" strokeWidth="3.21289"/>
-      </g>
-      <circle cx="57.8854" cy="25.38775" r="3.38146" fill="var(--logo-peak, currentColor)"/>
+      {/* the patch: a 36 x 20 stadium, the same 1.8:1 the hardware drawing uses */}
+      <rect x="2" y="4" width="36" height="20" rx="10"
+        fill="none" stroke="currentColor" strokeWidth="2.2"/>
+      {/* one stroke: the day, the ridge, the M. Round joins so it stays soft
+          next to Quicksand rather than turning into a zigzag. */}
+      <path d="M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6"
+        fill="none" stroke="currentColor" strokeWidth="2.3"
+        strokeLinecap="round" strokeLinejoin="round"/>
+      {/* where it lands today — held off the stadium wall, because at 96px a
+          dot tangent to the outline reads as a clipped stroke, not a marker */}
+      <circle cx="29.5" cy="17.6" r="2.4" fill="var(--logo-peak, currentColor)"/>
     </svg>
   )
 }

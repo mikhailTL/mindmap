@@ -1,7 +1,6 @@
 import React from 'react'
 import { Overview } from './Overview'
 import { PatchPage } from './PatchPage'
-import { Cad } from './Cad'
 import { Tour } from './Tour'
 import { Responses } from './Responses'
 import { Intro, introSuppressed } from './Intro'
@@ -25,14 +24,13 @@ import { cn } from '../lib/utils'
    Launch. `app-*` are the real dashboards; `student`/`parent`/`pro` are the
    explanations of them. The old `check` and `privacy` urls still resolve, so
    nothing that was ever linked is broken. */
-const VIEWS = ['site','patch','cad','student','parent','pro','app','app-student','app-parent',
+const VIEWS = ['site','patch','student','parent','pro','app','app-student','app-parent',
                'app-pro','check','privacy','tour','responses']
 
 /* A section per subject, the way a device site is normally organised, rather
    than one marketing page and one door into everything else. */
 const TITLE = {
   site:'MindMap — a patch for the forearm', patch:'The patch — MindMap',
-  cad:'Interactive CAD — MindMap',
   student:'What MindMap does for students — MindMap',
   parent:'What MindMap does for parents — MindMap',
   pro:'What MindMap does for schools — MindMap',
@@ -57,9 +55,6 @@ const NAV = [
 /* Which top-level section each view belongs under. */
 const SECTION = { site:'site', patch:'patch',
                   student:'student', parent:'parent', pro:'pro',
-                  /* the 9 MB viewer is reached from the hardware page, not from
-                     the bar, so no tab lights up while you are inside it */
-                  cad:null,
                   /* the app lives under no tab — it is reached through Launch,
                      so no nav entry should light up while you are inside it */
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
@@ -180,7 +175,7 @@ export function App() {
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
-  const V = { site:Overview, patch:PatchPage, cad:Cad, tour:Tour, responses:Responses,
+  const V = { site:Overview, patch:PatchPage, tour:Tour, responses:Responses,
               /* the three nav tabs: what MindMap does for each audience */
               student:ForStudents, parent:ForParents, pro:ForSchools,
               /* the app, behind Launch */

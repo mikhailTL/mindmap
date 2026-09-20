@@ -82,16 +82,30 @@ function EvidenceGap() {
 }
 
 /* ── 02 ─────────────────────────────────────────────────────────────────── */
-/* This used to hand-place three layers in depth: a per-layer translateZ keyed
-   off `data-i`, written straight onto `.lyr` because the old stack registered
-   its layers on top of each other and left the separation to the host. The
-   DI-03 drawing is a custom element with its own shadow root, its own stage and
-   its own explode control, so there is no `.lyr` left to reach and a host that
-   reached in would be fighting it. The rig is deleted, not defended.
-   No caption here either — the component prints its own inside the shadow
-   root, and a second one underneath would say the same thing twice. */
+/* ExplodedStack draws its three layers registered exactly on top of each other
+   and expects its host page to push them apart in depth — the overview and the
+   hardware page each do it with GSAP on scroll. This page has no scroll
+   animation, so the separation is set once, statically, which also means there
+   is nothing here to suppress for reduced motion. The centring translate is
+   written back in because the layers get theirs from a Tailwind class and an
+   inline `transform` replaces it wholesale. */
+const LAYER_Z = { '0': 128, '1': 20, '2': -88 }
 function Hardware() {
-  return <ExplodedStack className="w-full"/>
+  const ref = React.useRef(null)
+  React.useEffect(() => {
+    ref.current?.querySelectorAll('.lyr').forEach(l => {
+      l.style.transform = `translate(-50%, -50%) translateZ(${LAYER_Z[l.dataset.i] ?? 0}px)`
+    })
+  }, [])
+  return (
+    <figure ref={ref} className="m-0">
+      <ExplodedStack className="h-[min(46vh,400px)] w-full" caption={null}
+        size="w-[min(94%,440px)]"/>
+      <figcaption className="note mt-2 text-center">
+        Shell, electronics pod, skin-side base.
+      </figcaption>
+    </figure>
+  )
 }
 
 /* ── 03 ─────────────────────────────────────────────────────────────────── */
@@ -146,8 +160,8 @@ function Caseload() {
                 </span>
               </span>
               <span className="font-mono text-fine text-ink-2">{TIER_LABEL[tier]}</span>
-              {/* Change is what the list is ordered on, so it is the figure on
-                  the row — the score alone would make the order look wrong. */}
+              {/* Rate of change is what the board ranks on, so it is the figure
+                  on the row — the score alone would make the order look wrong. */}
               <span className="text-right font-mono text-fine tabular-nums text-ink">
                 {s.velocity > 0 ? '+' : ''}{s.velocity}</span>
             </li>
@@ -182,18 +196,7 @@ const HONESTY = [
   ['Every figure on them', 'Generated', 'demo',
     'Produced by the scoring model from invented baselines. Nobody has worn a patch and nobody has been measured.'],
   ['The patch', 'Drawn, not built', 'demo',
-    'Design-intent CAD, revision DI-03: seven layers inside a 64 × 42 mm spline lozenge. Every render in the package is stamped DESIGN INTENT — NOT AS-BUILT. There is no photograph of an assembled unit anywhere on this site, because there is not one.'],
-  /* The three rows below are the package's own self-audit, compressed to the
-     wording of its answers. They are the most useful rows in the table: a
-     reviewer who finds a team's failures already written down does not have to
-     wonder what else was not written down. Resolving any of them here would
-     mean inventing a result the model does not have. */
-  ["The CAD's own audit", 'Two of ten fail', 'demo',
-    'Ten questions, our answers, published unresolved. The provisional antenna volume intersects 38 body entries, including about 477.3 mm³ of the battery. Red and IR cones overlap 0.326 mm³ outside tissue, and optical crosstalk is unproven.'],
-  ['The tooling', 'Unverified', 'demo',
-    'Global 1.5° / 3° draft and tool release are unverified, and the service port and the bent acoustic channel need a resolved tool scheme. A valid solid is not proof that the part comes out of a tool.'],
-  ['The dimensions', 'Unverifiable', 'demo',
-    'No engineering CAD, schematic, approved BOM, netlist, tolerance stack or prototype measurement was available, so there is no baseline to check the model against. The shell footprint is assigned for this layout.'],
+    'A CAD model, three printed parts and a bought board. There is no photograph of an assembled unit anywhere on this site, because there is not one.'],
   ['The scoring model', 'Written, not validated', 'demo',
     'Four signals scored against a fourteen-day baseline and blended through a logistic. It has never been compared with any clinical measure.'],
   ['Accuracy', 'None claimed', 'demo',
@@ -203,54 +206,6 @@ const HONESTY = [
   ['Regulatory status', 'Not a medical device', 'fact',
     'It does not diagnose, treat or screen for any condition, and nothing on this site should be read as saying it does.'],
 ]
-
-const Status = ({ kind, children }) =>
-  kind === 'demo'
-    ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5
-        font-mono text-fine uppercase tracking-[0.09em] text-warn">{children}</span>
-    : <Badge variant="state">{children}</Badge>
-
-/* Two renderings of one list, because the phone cannot have the table. Three
-   columns need about 480px of intrinsic width — the status cells and the
-   `Thing` column do not fold — so at 390px the table scrolls sideways inside
-   its own box and the column that scrolls out of sight is the third one, which
-   is the column carrying the admission. A table nobody drags is a table nobody
-   reads, so below `sm` the same rows stack. HONESTY stays the single source. */
-function Honesty() {
-  return (
-    <>
-      <ul className="m-0 list-none space-y-5 p-0 sm:hidden">
-        {HONESTY.map(([what, status, kind, means]) => (
-          <li key={what} className="border-t border-rule pt-3.5">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-              <span className="font-display text-ui font-medium text-ink">{what}</span>
-              <Status kind={kind}>{status}</Status>
-            </div>
-            <p className="mt-2.5 text-sec text-ink-2">{means}</p>
-          </li>
-        ))}
-      </ul>
-      <Table className="hidden sm:block">
-        <THead>
-          <TR>
-            <TH>Thing</TH>
-            <TH>Status</TH>
-            <TH>What that means</TH>
-          </TR>
-        </THead>
-        <TBody>
-          {HONESTY.map(([what, status, kind, means]) => (
-            <TR key={what}>
-              <TD className="font-display font-medium text-ink">{what}</TD>
-              <TD><Status kind={kind}>{status}</Status></TD>
-              <TD className="text-sec text-ink-2">{means}</TD>
-            </TR>
-          ))}
-        </TBody>
-      </Table>
-    </>
-  )
-}
 
 /* ── The stops ──────────────────────────────────────────────────────────── */
 /* `art` is a function, not an element, so each stop's components mount fresh
@@ -278,20 +233,13 @@ const STOPS = [
   },
   {
     id: 'hardware', nav: 'The hardware',
-    title: 'A sealed lozenge, 64 × 42 mm, seven layers deep',
+    title: 'A sticker-sized patch in three printed parts',
     body: (
       <>
         <Lede>
-          The shell is one continuous spline lozenge — not a stadium, not a rounded rectangle —
-          64 × 42 mm nominal, worn along the forearm. Inside it the stack is seven layers, and the
-          electronics are a single flex-rigid PCB: a rigid island carrying a Seeed XIAO nRF52840,
-          a MAX30102 optical sensor and the analog front end, with a polyimide flex bend arching
-          over the island. The XIAO is bought; the carrier around it is ours.
-        </Lede>
-        <Lede>
-          Two Ag/AgCl electrodes sit 28.0 mm apart, the optical centre is at X 0 / Y −8.0, and the
-          skin side follows an R42 curve. Those are coordinates assigned in the model, not figures
-          taken off a part.
+          A stadium-shaped adhesive base carries the sensor window; a tray holds a Seeed XIAO
+          nRF52840 Sense board; a printed shell closes over it with a slot for charging. The board
+          is bought, not designed by us.
         </Lede>
         <ul className="mt-6 m-0 list-none space-y-4 p-0">
           {LAYERS.map(l => (
@@ -303,14 +251,11 @@ const STOPS = [
             </li>
           ))}
         </ul>
-        <Note>Design intent, not as-built. Every dimension above is assigned in the CAD; no
-          MindMap engineering drawing, approved BOM or prototype measurement existed to check
-          them against. No unit has been assembled and photographed, so no photograph of one
-          appears here.</Note>
+        <Note>This is the CAD, drawn to the real dimensions. No unit has been assembled and
+          photographed, so no photograph of one appears here.</Note>
       </>
     ),
     art: Hardware,
-    go: ['patch', 'Open the hardware page'],
   },
   {
     id: 'signals', nav: 'Four signals',
@@ -417,14 +362,36 @@ const STOPS = [
           written it out. Nothing on this site has been measured on a person.
         </Lede>
         <Lede>
-          Everything marked below as generated, drawn or invented is exactly that. Three of the
-          rows are the CAD package's own self-audit, and two of its ten answers are failures —
-          they are printed here in the words the audit used, unresolved, because a failure we
-          found ourselves is worth more on this page than a claim we cannot back.
+          Everything marked below as generated, drawn or invented is exactly that. We would rather
+          be judged on a working demonstration that says so than on a prototype that implies more.
         </Lede>
       </>
     ),
-    art: Honesty,
+    art: () => (
+      <Table>
+        <THead>
+          <TR>
+            <TH>Thing</TH>
+            <TH>Status</TH>
+            <TH>What that means</TH>
+          </TR>
+        </THead>
+        <TBody>
+          {HONESTY.map(([what, status, kind, means]) => (
+            <TR key={what}>
+              <TD className="font-display font-medium text-ink">{what}</TD>
+              <TD>
+                {kind === 'demo'
+                  ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5
+                      font-mono text-fine uppercase tracking-[0.09em] text-warn">{status}</span>
+                  : <Badge variant="state">{status}</Badge>}
+              </TD>
+              <TD className="text-sec text-ink-2">{means}</TD>
+            </TR>
+          ))}
+        </TBody>
+      </Table>
+    ),
     wide: true,
   },
   {
@@ -481,8 +448,8 @@ function CaseloadBody() {
   return (
     <>
       <Lede>
-        {all} students on this caseload, in a list ordered by change rather than by how high the
-        score is — a student who has been steady at 86 for a month is not the emergency.
+        {all} students on this caseload, ranked by how fast each one is changing rather than by how
+        high they are — a student who has been steady at 86 for a month is not the emergency.
       </Lede>
       <Lede>
         Consent decides who can appear. {ranked} guardians agreed to trends, so {ranked} students
