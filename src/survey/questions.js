@@ -55,9 +55,12 @@ export const SUS_ITEMS = [
 
 export const ABOUT_ITEMS = [
   choice('about-age', 'Your age range', [
-    'Under 18', '18–24', '25–34', '35–44', '45–54', '55–64', '65 or over',
+    /* Hyphens, not en dashes. Set in a grotesque at 17px an en dash between
+       two figures reads as a long rule and the pair stops looking like one
+       range. */
+    'Under 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65 or over',
   ], { optional: true }),
-  choice('about-education', 'Highest level of education finished', [
+  choice('about-education', 'How far you got in school', [
     'Still in school', 'High school', 'Some college', 'Bachelor’s degree',
     'Master’s degree', 'Doctorate or professional degree',
   ], { optional: true }),
@@ -74,10 +77,10 @@ export const ABOUT_ITEMS = [
      counselor who deals with this every week and a stranger who has never
      thought about it are both useful reviewers and they are not the same
      reviewer. */
-  choice('about-closeness', 'How close is teen stress to your day-to-day?', [
+  choice('about-closeness', 'How close is teen stress to your own life?', [
     'Not close at all',
-    'Somewhat, it comes up occasionally',
-    'Close, it affects someone I know well',
+    'It comes up now and then',
+    'It affects someone I know well',
     'It is part of my work',
   ], { optional: true }),
 ]
@@ -93,7 +96,7 @@ export const RATING_ITEMS = [
   {
     id: 'stars',
     kind: 'stars',
-    prompt: 'Taking the whole thing together, how would you rate it?',
+    prompt: 'Overall, how would you rate MindMap?',
     max: 5,
     step: 0.5,
   },
@@ -101,7 +104,7 @@ export const RATING_ITEMS = [
     id: 'impact',
     kind: 'impact',
     optional: true,
-    prompt: 'If this existed and schools used it, how much difference could it make?',
+    prompt: 'If schools actually used this, how much difference would it make?',
     points: pts(
       'None at all',
       'A little, for a few people',
@@ -110,7 +113,7 @@ export const RATING_ITEMS = [
       'It would change how schools work'
     ),
     sentence: {
-      prompt: 'If you want to say why, one sentence.',
+      prompt: 'Say why, if you want to.',
       placeholder: 'It would matter most because…',
       maxLength: 240,
     },
@@ -119,7 +122,7 @@ export const RATING_ITEMS = [
     id: 'change',
     kind: 'text',
     optional: true,
-    prompt: 'Anything that confused you, or that you would change?',
+    prompt: 'What confused you, or what would you change?',
     placeholder: 'The thing I kept tripping over was…',
     maxLength: 400,
   },
@@ -130,10 +133,12 @@ export const RATING_ITEMS = [
    what gets the rest answered. */
 export const SECTIONS = [
   { id: 'about',   title: 'About you',
-    note: 'Every question here is optional. None of it identifies you.',
+    note: 'All four are optional and none of them name you.',
     items: ABOUT_ITEMS },
   { id: 'usability', title: 'Using the app',
-    note: 'The standard ten. Answer quickly, first reaction is the useful one.',
+    /* "The standard ten" told a reviewer nothing: they have no reason to know
+       there is a standard set of ten. It says what the ten are for instead. */
+    note: 'Ten set questions, the same ten every app gets asked. First reaction is the useful one.',
     items: SUS_ITEMS },
   { id: 'overall', title: 'Overall',
     note: null,

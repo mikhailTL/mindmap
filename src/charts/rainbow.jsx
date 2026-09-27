@@ -68,55 +68,103 @@ function arcPath(r, pct) {
    ends they belong to, so the association still reads.
 
    Both animations stop under reduced motion. The clouds stay. */
-/* One silhouette, not three overlapping ellipses. The ellipse version needed
-   an outline to be visible on near-white paper, and outlining three ellipses
-   draws the seams where they overlap: the calm cloud came out looking like a
-   pair of spectacles. A single closed path has one edge. */
-const CLOUD = 'M0 18 C0 12 5 9 9 10 C10 3 18 0 24 4 C28 0 36 2 37 8 C43 8 46 13 44 18 Z'
+/* ── Weather on the arch ────────────────────────────────────────────────
+   A cloud sits on each foot and the arch springs out of it. The calm end gets
+   a white one, the peak end a grey one with rain falling out of it.
 
-/* Weather is grey and blue, not green. The first pass painted the storm cloud
-   in ink-2 and the rain in the turquoise, which put two more greens next to an
-   arch whose entire job is to be red, orange, green and blue in that order,
-   and the green cloud read as a fifth band. These four values belong to no
-   token and are not meant to: like the sensor hues in lib/sensors.js they are
-   drawing colours, chosen against paper and used flat.
-     rule  #6f7d88  4.03 on paper, the calm cloud's edge
+   Three attempts got here. The first masked the clouds to the band, which a
+   single-band arch would want, but this arch is four concentric bands each
+   painting a full-length track, so the clouds were invisible behind them and
+   obstructive in front. The second parked them in the upper corners, which
+   read as two balloons. The third drew each as one stiff closed path with a
+   flat base and a heavy outline, and the note back was that they looked
+   "rigid" and "like a pasted image". They did: a single symmetric outline with
+   one flat fill is a sticker.
+
+   So a cloud is now a pile of circles of deliberately unequal size, drawn
+   twice. Pass one strokes every circle in the edge colour and fills it the
+   same, which paints the union's outer boundary and nothing else. Pass two
+   fills the same circles on top, so no seam where two lobes overlap ever
+   shows. The fill is a soft vertical gradient rather than a flat colour, the
+   edge is a hairline rather than a border, and neither pile is symmetric.
+
+   Weather is grey and blue, never green: an earlier pass used ink-2 and the
+   turquoise, which put two more greens beside a graphic whose entire job is to
+   be red, orange, green and blue in that order. Like the sensor hues in
+   lib/sensors.js these belong to no token and are not meant to.
+     edge  #97a3a0  a hairline, not a border
      storm #5a6773  5.52 on paper
      rain  #2f7fd0  3.94 on paper, clear of the 3 : 1 a graphic needs */
-const SKY = { edge:'#6f7d88', storm:'#5a6773', rain:'#2f7fd0' }
+const SKY = { edge:'#97a3a0', storm:'#5a6773', rain:'#2f7fd0' }
 
-function Cloud({ x, y, k, fill, stroke }) {
+/* [cx, cy, r], bottoms roughly level so the pile reads as one cloud resting on
+   something. Neither set is a mirror of the other, and no two radii in a set
+   are equal, because a row of same-sized bumps is the thing that looked
+   stamped. */
+const PUFFS = {
+  calm: [[17,30,13],[33,20,17],[52,26,14],[66,31,10],[41,33,13],[25,34,11]],
+  peak: [[15,32,11],[30,22,16],[49,18,19],[68,28,13],[40,34,12],[58,34,10]],
+}
+const BASE = { x:4, y:28, w:66, h:16, r:8 }
+
+function Cloud({ x, y, k, kind, fill, edge, id }) {
+  const puffs = PUFFS[kind]
+  /* One <g> per pass, and the shapes are identical in both. */
+  const shapes = (props) => (
+    <>
+      <rect x={BASE.x} y={BASE.y} width={BASE.w} height={BASE.h} rx={BASE.r} {...props}/>
+      {puffs.map(([cx, cy, r], i) => <circle key={i} cx={cx} cy={cy} r={r} {...props}/>)}
+    </>
+  )
   return (
-    <path d={CLOUD} fill={fill} stroke={stroke} strokeWidth={stroke ? 1.6 / k : 0}
-      strokeLinejoin="round" transform={`translate(${x} ${y}) scale(${k})`}/>
+    <g transform={`translate(${x} ${y}) scale(${k})`}>
+      {edge && <g fill={edge} stroke={edge} strokeWidth={1.3 / k}>{shapes({})}</g>}
+      <g fill={`url(#${id})`}>{shapes({})}</g>
+    </g>
   )
 }
 
 export function ArchWeather() {
+  /* Two dials share a page on the overview, so the gradient ids cannot be
+     constants: the second <defs> would silently lose to the first. */
+  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const calm = `mm-calm-${uid}`, peak = `mm-peak-${uid}`
   return (
     <g aria-hidden style={{ pointerEvents:'none' }}>
-      {/* Both clouds sit ON the feet, wide enough to swallow the ends of all
-          four bands, which is the shape the drawing is quoting: the arch
-          springs out of a cloud at each end rather than floating above two of
-          them. They are drawn after the bands for exactly that reason, so a
-          band terminates inside its cloud instead of running past it.
+      <defs>
+        {/* Light at the top, settling a little at the base.
 
-          The left foot spans x 13 to 83 and the right 237 to 307. Each cloud
-          is 85 wide and overhangs its own foot on the outside, because the
-          coloured arcs are round capped and a cap bulges half a band past the
-          end of the arc. An earlier pass sized the clouds to the feet exactly
-          and the red band's cap printed below the left one. */}
+            userSpaceOnUse, not the default objectBoundingBox. With the
+            default, each of the seven shapes in a cloud gets its own copy of
+            the ramp scaled to its own box, so every lobe printed as a separate
+            shaded disc and the pile read as a bunch of balls. In user space
+            the ramp is one ramp across the whole cloud, which is the only way
+            a union of circles lights like one object. The stops are the
+            cloud's own y range in viewBox units. */}
+        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="196">
+          <stop offset="0" stopColor="#ffffff"/>
+          <stop offset="1" stopColor="#eef3f1"/>
+        </linearGradient>
+        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="196">
+          <stop offset="0" stopColor="#7a8894"/>
+          <stop offset="1" stopColor="#4f5c68"/>
+        </linearGradient>
+      </defs>
+      {/* The left foot spans x 13 to 83 and the right 237 to 307. Each cloud is
+          about 92 wide and overhangs its own foot outward, because the coloured
+          arcs are round capped and a cap bulges half a band past the end. */}
       <g className="mm-drift">
-        <Cloud x={1} y={149} k={1.85} fill="#ffffff" stroke={SKY.edge}/>
+        <Cloud x={-2} y={141} k={1.18} kind="calm" edge={SKY.edge} id={calm}/>
       </g>
       <g className="mm-drift mm-drift-slow">
-        <Cloud x={234} y={149} k={1.85} fill={SKY.storm}/>
+        <Cloud x={230} y={141} k={1.18} kind="peak" id={peak}/>
       </g>
-      {/* Rain, in the strip the taller box opened up under the peak foot. */}
-      <g className="mm-rain" stroke={SKY.rain} strokeWidth="3.4" strokeLinecap="round">
-        <line x1="252" y1="184" x2="248" y2="196"/>
-        <line x1="270" y1="186" x2="266" y2="198"/>
-        <line x1="288" y1="184" x2="284" y2="196"/>
+      {/* Rain, in the strip under the peak foot. Three drops at three lengths;
+          three identical ones looked printed on. */}
+      <g className="mm-rain" stroke={SKY.rain} strokeLinecap="round">
+        <line x1="253" y1="196" x2="250" y2="204" strokeWidth="3"/>
+        <line x1="270" y1="198" x2="267" y2="207" strokeWidth="3.4"/>
+        <line x1="288" y1="196" x2="285" y2="203" strokeWidth="2.6"/>
       </g>
     </g>
   )

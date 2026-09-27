@@ -373,7 +373,7 @@ const STOPS = [
               <TD>
                 {kind === 'demo'
                   ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5
-                      font-mono text-fine uppercase tracking-[0.09em] text-warn">{status}</span>
+                      font-mono text-fine text-warn">{status}</span>
                   : <Badge variant="state">{status}</Badge>}
               </TD>
               <TD className="text-sec text-ink-2">{means}</TD>

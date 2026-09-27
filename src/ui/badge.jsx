@@ -23,13 +23,18 @@ import { cn } from '@/lib/utils'
  * idiom as .mark and .note. Put the disclosure there; do not re-add a
  * variant here.
  */
+/* Both variants were carrying a generated-interface tell of their own. `count`
+ * was a full pill in the mono face, which is the capsule `demo` was deleted
+ * for wearing, at a smaller size. The two are told apart by fill and weight
+ * now, which survives grayscale on its own, and both take the same 6px field
+ * corner as every other small container on the site. */
 const badge = cva(
   'inline-flex items-center gap-1.5 whitespace-nowrap border align-middle',
   {
     variants: {
       variant: {
-        state: 'rounded-field border-rule bg-mist px-2.5 py-0.5 font-display text-fine font-medium text-ink-2',
-        count: 'rounded-chip border-transparent bg-accent px-2.5 py-0.5 font-mono text-fine tabular-nums text-paper',
+        state: 'rounded-field border-rule bg-mist px-2 py-0.5 font-display text-fine font-medium text-ink-2',
+        count: 'rounded-field border-transparent bg-accent px-2 py-0.5 font-display text-fine font-bold tabular-nums text-paper',
       },
     },
     defaultVariants: { variant: 'state' },

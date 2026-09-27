@@ -35,12 +35,12 @@ export function NameGate({ onDone }) {
     /* The button stays live and explains itself. A disabled button with no
      * message is the commonest way a form silently blames the reader. */
     if (!clean) {
-      setError('Type something to be called, or choose Skip to stay anonymous.')
+      setError('Type a name, or skip and stay anonymous.')
       ref.current?.focus()
       return
     }
     if (clean.length > MAX) {
-      setError(`That is ${clean.length} characters. Sixty is the most this field holds, and a first name is plenty.`)
+      setError(`That is ${clean.length} characters. Sixty is the limit, and a first name is plenty.`)
       ref.current?.focus()
       return
     }
@@ -58,14 +58,17 @@ export function NameGate({ onDone }) {
         onSubmit={submit}
         className="w-full max-w-[34rem] rounded-panel border border-rule bg-card p-6 shadow-lift sm:p-8"
       >
-        <h2 className="font-display text-sub font-bold text-ink">What should we call you?</h2>
+        {/* "We" was one student. There is no team behind this and pretending
+            otherwise on the one panel that asks for a name is the worst place
+            on the site to do it. */}
+        <h2 className="font-display text-sub font-bold text-ink">What should I call you?</h2>
 
         <p className="mt-3 text-sec text-ink-2">
-          Your name and your answers are saved and read by Mikhail, who is building this
-          for a school project. Nothing else about you is collected.
+          I am Mikhail. I built this for a school project, and I am the only person who
+          reads the names and the answers. Nothing else about you is collected.
         </p>
 
-        <label htmlFor="namegate-field" className="mt-6 block font-display text-ui font-medium text-ink">
+        <label htmlFor="namegate-field" className="mt-5 block font-display text-ui font-medium text-ink">
           Your name
         </label>
         <input
@@ -90,12 +93,12 @@ export function NameGate({ onDone }) {
           {error
             ? <p id="namegate-error" role="alert" className="font-body text-note text-crit">{error}</p>
             : <p id="namegate-hint" className="note">Sixty characters or fewer.</p>}
-          <span className={cn('font-mono text-fine tabular-nums', over ? 'text-crit' : 'text-ink-3')}>
+          <span className={cn('text-fine tabular-nums', over ? 'text-crit' : 'text-ink-3')}>
             {name.trim().length}/{MAX}
           </span>
         </div>
 
-        <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
           <Button type="submit">Start</Button>
           <Button type="button" variant="ghost" onClick={() => finish('')}>
             Skip and stay anonymous

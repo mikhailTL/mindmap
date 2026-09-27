@@ -5,18 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MindMap, a wellness app for teenagers</title>
 <meta name="description" content="MindMap turns everyday stress signals into one score and one plain sentence, from a patch on the forearm or from the phone already in your pocket.">
-<!-- Self-hosted: latin and latin-ext only, 184 KB for all three families.
-     The Google stylesheet cost a round trip to two more hosts before a single
-     glyph could be measured, and the audit timed out on it every run. -->
-<link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/6xKtdSZaM9iE8KbpRA_hK1QNYuDyPw.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/va9I4kzIxd1KFrBoQeNVkqDO.woff2">
+<!-- Self-hosted, one variable file, 43 KB. A webfont stylesheet on another
+     host costs a round trip before a single glyph can be measured, and the
+     audit timed out on it every run. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/satoshi-var.woff2">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 28'%3E%3Crect x='2' y='4' width='36' height='20' rx='10' fill='none' stroke='%230d2b1e' stroke-width='2.6'/%3E%3Cpath d='M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6' fill='none' stroke='%230d2b1e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='29.5' cy='17.6' r='2.4' fill='%23157446'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/fonts/fonts.css">
 </head>
 <body>
-<div id="root"><div style="min-height:60vh;display:grid;place-content:center;gap:14px;text-align:center;font-family:Quicksand,system-ui,sans-serif">
+<div id="root"><div style="min-height:60vh;display:grid;place-content:center;gap:14px;text-align:center;font-family:Satoshi,system-ui,sans-serif">
 <div style="display:flex;align-items:center;gap:9px;font-size:23px;font-weight:500;letter-spacing:-.02em;color:#0d2b1e"><svg viewBox="0 0 40 28" style="height:1.15em;width:auto" aria-hidden="true"><rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="29.5" cy="17.6" r="2.4" fill="#157446"/></svg><span>Mind<span style="color:#157446">Map</span></span></div>
-<div style="font-family:'Chivo Mono',ui-monospace,monospace;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:#47705e">Loading</div>
+<div style="font-family:Satoshi,system-ui,sans-serif;font-size:15px;font-weight:500;color:#47705e">Loading</div>
 </div></div>
 <script type="module" src="/src/entry.jsx"></script>
 </body>

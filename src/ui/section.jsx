@@ -36,13 +36,16 @@ const NAME = {
 }
 
 /* Padding is two steps, not a number per section. `tight` is for a band that
-   is mostly picture; the default is for one that is mostly read. Both shrink
-   on a phone, because the review's loudest note was that a phone could not be
-   scrolled past a section quickly. */
+   is mostly picture; the default is for one that is mostly read.
+
+   Both came down by about a quarter. Generous padding was doing the work of
+   hierarchy, and the review named it: bands "filled with nothing", and a page
+   that needed too much scrolling to get through. Space between things is not
+   free, and on a phone it is the most expensive thing on the page. */
 export function Section({ name, tone = 'paper', id, className, children, bleed = false, tight = false }) {
   return (
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
-      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-10 lg:py-14' : 'py-12 lg:py-20')}>
+      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-7 lg:py-10' : 'py-9 lg:py-14')}>
         {name && (
           <p className={cn('font-display text-tick font-bold tracking-[0.01em]', NAME[tone])}>{name}</p>
         )}

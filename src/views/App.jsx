@@ -50,7 +50,7 @@ const VIEWS = ['site','patch','without-patch','student','parent','pro','app','ap
 const TITLE = {
   site:'MindMap, a wellness app for teenagers',
   patch:'The MindMap patch',
-  'without-patch':'Using MindMap without a patch',
+  'without-patch':'MindMap with just a phone',
   student:'MindMap for students',
   parent:'MindMap for parents',
   pro:'MindMap for schools',
@@ -62,7 +62,7 @@ const TITLE = {
   privacy:'Who can see what in MindMap',
   tour:'A guided tour of MindMap',
   responses:'Survey responses in MindMap',
-  survey:'The MindMap usability survey',
+  survey:'Give feedback on MindMap',
 }
 
 /* The bar carried six flat tabs, three of which were "For students", "For
@@ -70,11 +70,15 @@ const TITLE = {
    word, is a list that should have been a list: they are one question, "who
    is this for", and they belong behind one control. What is left at the top
    level is the three things a stranger reads in order, then that question,
-   then the survey. */
+   then the survey.
+
+   "No patch" was the label on the phone-only route, and read as an error
+   state: the same two words the app prints when no hardware is paired. It
+   names the thing you do use now, not the thing you do not. */
 const MAIN = [
   ['site',          'Overview'],
   ['patch',         'The patch'],
-  ['without-patch', 'No patch'],
+  ['without-patch', 'Phone only'],
 ]
 
 /* The audience menu. Each one gets a line of its own, because "Students" on
@@ -175,12 +179,12 @@ function AudienceMenu({ view, go }) {
         onKeyDown={onTriggerKey}
         className={cn(linkClass(on), 'gap-1.5')}
       >
-        Who it is for
+        Who uses it
         <ChevronDown aria-hidden
           className={cn('size-3.5 transition-transform duration-150', open && 'rotate-180')}/>
       </button>
       {open && (
-        <div role="menu" aria-label="Who it is for"
+        <div role="menu" aria-label="Who uses it"
           className="absolute left-0 top-full z-50 mt-px w-[19rem] overflow-hidden rounded-panel
             border border-rule bg-card py-1.5 shadow-lift">
           {AUDIENCE.map(([id, label, hint], i) => (
@@ -244,7 +248,7 @@ function Drawer({ view, go, onClose }) {
     }
   }, [onClose])
 
-  const rows = [...MAIN, ...AUDIENCE.map(([id, label]) => [id, label]), ['survey', 'Survey']]
+  const rows = [...MAIN, ...AUDIENCE.map(([id, label]) => [id, label]), ['survey', 'Give feedback']]
 
   return (
     <div className="fixed inset-0 z-[60] xl:hidden">
@@ -330,7 +334,7 @@ function Header({ view, go }) {
               one thing with no way to reach it. It is a destination now. */}
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
-            className={linkClass(view === 'survey')}>Survey</button>
+            className={linkClass(view === 'survey')}>Give feedback</button>
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
@@ -383,11 +387,26 @@ function useSurveyStore() {
   return React.useSyncExternalStore(subscribe, getVersion, () => 0)
 }
 
+/* An answer is a row on a ruled list, not a card.
+ *
+ * Every choice here used to be a bordered rounded box, so a seven-option
+ * question was seven identical capsules stacked in a column and a twenty
+ * question survey was a hundred and forty of them. That is the shape a
+ * generated interface reaches for when it has a list and no idea what the list
+ * is: the box adds nothing the hairline above the row does not already do, and
+ * a column of them buries which one is picked under the sameness of the rest.
+ * Rules separate; a bar, a fill and a weight say which one is chosen. */
 const pickClass = on => cn(
-  'flex min-h-[44px] w-full items-center gap-3 rounded-field border px-3.5 py-2 text-left',
-  'transition-colors duration-150 ease-out',
-  on ? 'border-ink bg-ink text-paper'
-     : 'border-rule bg-card text-ink-2 hover:border-ink-3 hover:bg-mist'
+  'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
+  'font-display text-ui transition-colors duration-150 ease-out',
+  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hover:bg-mist hover:text-ink'
+)
+
+/* The selected marker, and the same one the phone drawer uses for the page you
+   are on, so "picked" looks the same everywhere on the site. */
+const Bar = ({ on }) => (
+  <span aria-hidden className={cn('mr-3 h-5 w-[3px] shrink-0 rounded-bar',
+    on ? 'bg-accent' : 'bg-transparent')}/>
 )
 
 const fieldClass = cn(
@@ -397,13 +416,13 @@ const fieldClass = cn(
 
 function ScaleField({ q, value, onPick }) {
   return (
-    <div role="radiogroup" aria-label={q.prompt} className="mt-4 flex flex-col gap-1.5">
+    <div role="radiogroup" aria-label={q.prompt} className="mt-3 flex flex-col">
       {q.points.map(p => {
         const on = value === p.value
         return (
           <button key={p.value} type="button" role="radio" aria-checked={on}
             onClick={() => onPick(p.value, p.label)} className={pickClass(on)}>
-            <span className="font-display text-ui font-medium">{p.label}</span>
+            <Bar on={on}/>{p.label}
           </button>
         )
       })}
@@ -413,11 +432,11 @@ function ScaleField({ q, value, onPick }) {
 
 function ChoiceField({ q, value, onPick }) {
   return (
-    <div role="radiogroup" aria-label={q.prompt} className="mt-4 grid gap-2">
+    <div role="radiogroup" aria-label={q.prompt} className="mt-3 flex flex-col">
       {q.options.map(opt => (
         <button key={opt} type="button" role="radio" aria-checked={value === opt}
           onClick={() => onPick(opt, opt)} className={pickClass(value === opt)}>
-          <span className="font-display text-ui font-medium">{opt}</span>
+          <Bar on={value === opt}/>{opt}
         </button>
       ))}
     </div>
@@ -426,16 +445,19 @@ function ChoiceField({ q, value, onPick }) {
 
 /* Eleven buttons wrap on a phone, so the ends are labelled. An unlabelled
    0 to 10 row gets answered backwards by the people you least want to
-   misread. */
+   misread. The only bordered cells left in the survey: a horizontal scale of
+   single figures has nothing else to hold it together. */
 function NpsField({ q, value, onPick }) {
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <div role="radiogroup" aria-label={q.prompt} className="flex flex-wrap gap-1.5">
         {Array.from({ length: 11 }, (_, n) => (
           <button key={n} type="button" role="radio" aria-checked={value === n}
             aria-label={`${n} out of 10`} onClick={() => onPick(n, String(n))}
-            className={cn(pickClass(value === n),
-              'min-w-[44px] flex-1 justify-center px-0 font-mono text-ui tabular-nums')}>
+            className={cn('min-h-[44px] min-w-[44px] flex-1 rounded-field border text-ui tabular-nums',
+              'transition-colors duration-150 ease-out',
+              value === n ? 'border-ink bg-ink font-bold text-paper'
+                          : 'border-rule font-medium text-ink-2 hover:border-ink-3 hover:bg-mist')}>
             {n}
           </button>
         ))}
@@ -451,16 +473,19 @@ function TextField({ q, initial = '', onSave, onSkip }) {
   const [text, setText] = React.useState(initial)
   const empty = !text.trim()
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <textarea rows={3} value={text} maxLength={q.maxLength} placeholder={q.placeholder}
         aria-label={q.prompt} onChange={e => setText(e.target.value)} className={fieldClass}/>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <span className="note">{empty ? 'Write a line, then save it.' : 'Ready to save.'}</span>
-        <span className="font-mono text-fine tabular-nums text-ink-3">{text.length}/{q.maxLength}</span>
+      {/* "Ready to save." used to sit here the moment a character was typed,
+          which is a line of text that reports the obvious. The hint now only
+          exists while Save is off, saying why it is off. */}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
+        <span className="text-fine tabular-nums text-ink-3">{text.length}/{q.maxLength}</span>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-3">
         <Button size="sm" type="button" disabled={empty} onClick={() => onSave(text.trim())}>Save</Button>
-        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip this one</Button>}
+        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>}
       </div>
     </div>
   )
@@ -480,9 +505,9 @@ function ImpactField({ q, initial, onSave, onSkip }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
         <Button size="sm" type="button" disabled={score == null}
           onClick={() => onSave({ score, note: note.trim() }, label)}>Save</Button>
-        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip this one</Button>}
+        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>}
       </div>
-      {score == null && <p className="note mt-2">Pick a point on the scale to save this.</p>}
+      {score == null && <p className="note mt-2">Pick a point above first.</p>}
     </div>
   )
 }
@@ -495,7 +520,7 @@ function SurveyField({ q, answer, onAnswer, onSkip }) {
   if (q.kind === 'text')   return <TextField q={q} initial={typeof v === 'string' ? v : ''}
                                     onSave={t => onAnswer(t, null)} onSkip={q.optional ? onSkip : undefined}/>
   if (q.kind === 'stars')  return (
-    <div className="mt-4">
+    <div className="mt-3">
       <StarRating label={q.prompt} max={q.max} step={q.step}
         value={typeof v === 'number' ? v : null}
         onChange={n => onAnswer(n, `${n} of ${q.max}`)}/>
@@ -537,32 +562,60 @@ function SurveyPage() {
 
   return (
     <>
-      <Section tone="paper" name="Usability survey" tight>
-        <SectionHead>Tell us where this falls down</SectionHead>
+      {/* "Tell us where this falls down" was the heading here. There is no
+          "us": one student reads these. And "where this falls down" is not a
+          phrase anybody says out loud, which is why it read as filler. */}
+      <Section tone="paper" name="Feedback" tight>
+        <SectionHead>Tell me what to fix</SectionHead>
         <SectionLede>
-          {visitor ? `Thanks for walking through it, ${visitor.name}. ` : ''}
-          About three minutes. Every answer saves the moment you give it, so you can leave
-          and come back. Everything is stored against the name you gave and nothing else.
+          {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
+          so you can stop halfway and come back. The only thing kept alongside them is the
+          name you gave.
         </SectionLede>
-        <p className="mt-5 font-mono text-fine tabular-nums text-ink-3">
+        <p className="mt-3.5 text-fine font-medium tabular-nums text-ink-3">
           {done} of {total} answered
         </p>
       </Section>
 
-      <Section tone="card">
-        <div className="max-w-[46rem]">
+      {/* tight, because the default section padding put about a hundred pixels
+          of nothing between "0 of 12 answered" and the first question, and the
+          rule between the two bands already says a new thing has started. */}
+      <Section tone="card" tight>
+        <div>
+          {/* Twenty questions down one column, so the vertical rhythm is the
+              whole layout. It was mt-12 between sections and gap-8 with pt-6
+              inside them, which put a band of nothing between every question
+              and cost four extra scrolls to reach the end. The rule above each
+              prompt is what separates them; the space only has to keep the
+              rule off the answer above it.
+
+              From lg the section's name moves into a rail beside the questions
+              instead of sitting above them. The answers keep a 44rem reading
+              measure whatever the window does, so on a wide screen the column
+              was a strip of questions with half the page empty to the right of
+              it. The rail fills that with the one thing worth having on screen
+              while you answer ten statements in a row: which ten they are.
+              It sticks, so it is still there at the tenth. */}
           {SECTIONS.map(section => (
-            <section key={section.id} className="mt-12 first:mt-0">
-              <h2 className="mark">{section.title}</h2>
-              {section.note && <p className="mt-2 max-w-[52ch] text-sec text-ink-3">{section.note}</p>}
-              <div className="mt-6 flex flex-col gap-8">
+            <section key={section.id}
+              className="mt-9 border-t border-ink pt-3 first:mt-0
+                lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
+              <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
+                <h2 className="font-display text-tick font-bold text-ink-2">{section.title}</h2>
+                {section.note && <p className="mt-1.5 max-w-[36ch] text-meta text-ink-3">{section.note}</p>}
+              </div>
+              <div className="mt-5 flex flex-col gap-6 lg:mt-0">
                 {section.items.map(q => {
                   const a = byId.get(q.id)
                   const off = skipped.has(q.id)
                   return (
-                    <div key={q.id} className="border-t border-rule pt-6">
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                        <p className="max-w-[44ch] font-display text-ui font-medium text-ink">{q.prompt}</p>
+                    <div key={q.id} className="border-t border-rule pt-4">
+                      {/* "Optional" sits next to the prompt, not flung to the
+                          far side of the column: pushed apart by a
+                          justify-between it reads as a heading in a table
+                          rather than a note about this one question. */}
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
                       </div>
                       {off && !a ? <p className="note mt-3">Skipped.</p> : (
@@ -571,7 +624,7 @@ function SurveyPage() {
                           onSkip={() => setSkipped(new Set(skipped).add(q.id))}/>
                       )}
                       {a && (
-                        <p className="mt-3 font-mono text-fine text-calm">
+                        <p className="mt-2.5 text-fine font-medium text-calm">
                           Saved{a.label ? `, ${a.label}` : ''}
                         </p>
                       )}
@@ -581,9 +634,14 @@ function SurveyPage() {
               </div>
             </section>
           ))}
-          <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-6">
-            <p className="note">{done >= total ? 'That is everything. Thank you.' : `${total - done} left.`}</p>
-            <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>Download my answers</Button>
+          {/* Same grid as a section, so the closing row lines up under the
+              answers rather than under the rail. */}
+          <div className="mt-9 lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
+            <div aria-hidden/>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-5">
+              <p className="note">{done >= total ? 'That is all of them. Thanks.' : `${total - done} to go.`}</p>
+              <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>Download my answers</Button>
+            </div>
           </div>
         </div>
       </Section>
@@ -650,7 +708,7 @@ export function App() {
      they keep their URLs so every existing link still lands in the right place. */
   const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
               tour:Tour, responses:Responses, survey:SurveyPage,
-              /* what MindMap does for each audience, behind the Who it is for menu */
+              /* what MindMap does for each audience, behind the Who uses it menu */
               student:ForStudents, parent:ForParents, pro:ForSchools,
               /* the app, behind Open the app */
               app:Launch, 'app-pro':Pro,

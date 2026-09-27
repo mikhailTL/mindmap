@@ -24,9 +24,34 @@ import {
  * closing it half-done loses nothing.
  */
 
+/* An answer is a row on a ruled list, not a card.
+ *
+ * Every option here used to be a bordered rounded box, so a seven-option
+ * question was seven identical capsules in a column and the whole survey was a
+ * hundred and forty of them. The box adds nothing the hairline above the row
+ * does not already do, and a column of them buries which one is picked under
+ * the sameness of the rest. Rules separate; a bar, a fill and a weight say
+ * which one is chosen. Kept byte for byte the same as the page version in
+ * views/App.jsx, so an answer looks identical whichever way it is opened.
+ *
+ * The point's number used to be printed in front of its label in the mono
+ * face, a stamp on every row of a five-row group. The label already says which
+ * end of the scale it is. The value still goes to the store; it is only off
+ * the screen. */
+const pickClass = on => cn(
+  'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
+  'font-display text-ui transition-colors duration-150 ease-out',
+  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hover:bg-mist hover:text-ink'
+)
+
+const Bar = ({ on }) => (
+  <span aria-hidden className={cn('mr-3 h-5 w-[3px] shrink-0 rounded-bar',
+    on ? 'bg-accent' : 'bg-transparent')}/>
+)
+
 function ScaleControl({ q, value, onPick }) {
   return (
-    <div role="radiogroup" aria-label={q.prompt} className="mt-4 flex flex-col gap-1.5">
+    <div role="radiogroup" aria-label={q.prompt} className="mt-3 flex flex-col">
       {q.points.map(p => {
         const on = value === p.value
         return (
@@ -36,18 +61,9 @@ function ScaleControl({ q, value, onPick }) {
             role="radio"
             aria-checked={on}
             onClick={() => onPick(p.value, p.label)}
-            className={cn(
-              'flex min-h-[44px] items-center gap-3 rounded-field border px-3 py-2 text-left',
-              'transition-[background-color,border-color,color] duration-150 ease-out',
-              on
-                ? 'border-ink bg-ink text-paper'
-                : 'border-rule bg-paper text-ink-2 hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
-            )}
+            className={pickClass(on)}
           >
-            <span className={cn('font-mono text-fine tabular-nums', on ? 'text-paper/70' : 'text-ink-3')}>
-              {p.value}
-            </span>
-            <span className="font-display text-ui font-medium">{p.label}</span>
+            <Bar on={on}/>{p.label}
           </button>
         )
       })}
@@ -57,11 +73,11 @@ function ScaleControl({ q, value, onPick }) {
 
 /* A multiple choice. Same radio-group mechanics as the scale, but the options
    are named alternatives rather than points on a line, so they carry no
-   numeral and no implied order — numbering "On the forearm / On the chest"
+   numeral and no implied order: numbering "On the forearm / On the chest"
    would suggest one is higher than another. */
 function ChoiceControl({ q, value, onPick }) {
   return (
-    <div className="mt-4 grid gap-2" role="radiogroup" aria-label={q.prompt}>
+    <div className="mt-3 flex flex-col" role="radiogroup" aria-label={q.prompt}>
       {q.options.map(opt => {
         const on = value === opt
         return (
@@ -71,16 +87,9 @@ function ChoiceControl({ q, value, onPick }) {
             role="radio"
             aria-checked={on}
             onClick={() => onPick(opt, opt)}
-            className={cn(
-              'flex min-h-[44px] items-center rounded-field border px-3.5 py-2 text-left',
-              'font-display text-ui font-medium',
-              'transition-[background-color,border-color,color] duration-150 ease-out',
-              on
-                ? 'border-ink bg-ink text-paper'
-                : 'border-rule bg-paper text-ink-2 hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
-            )}
+            className={pickClass(on)}
           >
-            {opt}
+            <Bar on={on}/>{opt}
           </button>
         )
       })}
@@ -89,11 +98,13 @@ function ChoiceControl({ q, value, onPick }) {
 }
 
 /* Zero to ten in a row. Eleven buttons is a lot for a phone, so they wrap and
-   the two ends carry their own labels — an unlabelled 0-10 row gets answered
-   backwards by roughly the people you least want to misread. */
+   the two ends carry their own labels: an unlabelled 0-10 row gets answered
+   backwards by roughly the people you least want to misread. The only bordered
+   cells left in the survey, because a horizontal scale of single figures has
+   nothing else to hold it together. */
 function NpsControl({ q, value, onPick }) {
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <div role="radiogroup" aria-label={q.prompt} className="flex flex-wrap gap-1.5">
         {Array.from({ length: 11 }, (_, n) => {
           const on = value === n
@@ -106,11 +117,11 @@ function NpsControl({ q, value, onPick }) {
               aria-label={`${n} out of 10`}
               onClick={() => onPick(n, String(n))}
               className={cn(
-                'min-h-[44px] min-w-[44px] flex-1 rounded-field border font-mono text-ui tabular-nums',
+                'min-h-[44px] min-w-[44px] flex-1 rounded-field border text-ui tabular-nums',
                 'transition-[background-color,border-color,color] duration-150 ease-out',
                 on
-                  ? 'border-ink bg-ink text-paper'
-                  : 'border-rule bg-paper text-ink-2 hover:border-ink-3 hover:bg-mist'
+                  ? 'border-ink bg-ink font-bold text-paper'
+                  : 'border-rule font-medium text-ink-2 hover:border-ink-3 hover:bg-mist'
               )}
             >
               {n}
@@ -131,7 +142,7 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
   const empty = !text.trim()
   const id = React.useId()
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <textarea
         id={id}
         rows={3}
@@ -147,20 +158,21 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
           'hover:border-ink-3 focus:bg-card'
         )}
       />
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        {/* The disabled Save says why it is disabled, rather than leaving the
-            reader to work out what the control wants from them. */}
-        <span className="note">{empty ? 'Write a line, then save it.' : 'Ready to save.'}</span>
-        <span className="font-mono text-fine tabular-nums text-ink-3">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        {/* The disabled Save says why it is disabled. The old pair also printed
+            "Ready to save." the instant a key was pressed, which is a sentence
+            that reports what the reader just did. */}
+        <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
+        <span className="text-fine tabular-nums text-ink-3">
           {text.length}/{q.maxLength}
         </span>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-3">
         <Button size="sm" type="button" disabled={empty} onClick={() => onSave(text.trim())}>
           {saveLabel}
         </Button>
         {onSkip && (
-          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip this one</Button>
+          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>
         )}
       </div>
     </div>
@@ -200,10 +212,10 @@ function ImpactControl({ q, initial, onSave, onSkip }) {
           Save
         </Button>
         {onSkip && (
-          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip this one</Button>
+          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>
         )}
       </div>
-      {score == null && <p className="note mt-2">Pick a point on the scale to save this.</p>}
+      {score == null && <p className="note mt-2">Pick a point above first.</p>}
     </div>
   )
 }
@@ -235,7 +247,7 @@ function Question({ q, answer, onAnswer, onSkip }) {
   }
   if (q.kind === 'stars') {
     return (
-      <div className="mt-4">
+      <div className="mt-3">
         <StarRating
           label={q.prompt}
           max={q.max}
@@ -318,7 +330,7 @@ function countAnswered() {
 
 /* The corner box. Fixed, small, and out of the way of everything: it never
    covers page content on a phone because it sits above the safe area and the
-   page is not padded for it — it is 56px of chrome, not a sheet. */
+   page is not padded for it: it is 56px of chrome, not a sheet. */
 export function ReviewLauncher({ page }) {
   useSurvey()
   const [open, setOpen] = React.useState(false)
@@ -345,16 +357,18 @@ export function ReviewLauncher({ page }) {
             onClick={() => setOpen(true)}
             className="flex min-h-[48px] items-center gap-3 px-4 text-left hover:bg-mist"
           >
+            {/* "Review sent" was a lie: nothing is sent anywhere, the answers
+                sit in this browser until the CSV is taken. */}
             <span className="font-display text-ui font-medium text-ink">
-              {finished ? 'Review sent' : started ? 'Finish your review' : 'Review this site'}
+              {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Tell me what to fix'}
             </span>
-            <span className="font-mono text-fine tabular-nums text-ink-3">
+            <span className="text-fine font-medium tabular-nums text-ink-3">
               {started ? `${done}/${total}` : '3 min'}
             </span>
           </button>
           <button
             type="button"
-            aria-label="Put the review away"
+            aria-label="Put this away"
             onClick={() => { putAway(); setHidden(true) }}
             className="grid w-11 place-items-center border-l border-rule text-ink-3 hover:bg-mist hover:text-ink"
           >
@@ -399,38 +413,42 @@ function ReviewDialog({ onClose }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Review this site"
+        aria-label="Tell me what to fix"
         tabIndex={-1}
         ref={ref}
         className="mx-auto min-h-full w-full max-w-[42rem] bg-paper sm:min-h-0 sm:rounded-panel"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-4 sm:rounded-t-panel sm:px-8">
+        {/* The count under the heading was the line the review pointed at:
+            "12 of 12 answered · saved as you go", set in the mono face, saying
+            the same thing twice. The tally is worth a line. That every answer
+            saves itself belongs in the sentence below, once. */}
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-3.5 sm:rounded-t-panel sm:px-8">
           <div>
-            <h2 className="font-display text-sub font-bold text-ink">Review this site</h2>
-            <p className="mt-0.5 font-mono text-fine tabular-nums text-ink-3">
-              {done} of {total} answered · saved as you go
+            <h2 className="font-display text-sub font-bold text-ink">Tell me what to fix</h2>
+            <p className="mt-0.5 text-fine font-medium tabular-nums text-ink-3">
+              {done} of {total} answered
             </p>
           </div>
           <Button size="sm" variant="outline" onClick={onClose}>Close</Button>
         </div>
 
-        <div className="px-5 pb-10 pt-6 sm:px-8">
+        <div className="px-5 pb-9 pt-5 sm:px-8">
           <p className="max-w-[52ch] text-sec text-ink-2">
-            {visitor ? `Thanks for walking through it, ${visitor.name}. ` : ''}
-            About three minutes. Everything is stored against the name you gave and nothing else.
+            {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
+            so closing this loses nothing. The only thing kept alongside them is the name you gave.
           </p>
 
           {SECTIONS.map(section => (
-            <section key={section.id} className="mt-10">
+            <section key={section.id} className="mt-8">
               <h3 className="mark">{section.title}</h3>
-              {section.note && <p className="mt-2 max-w-[52ch] text-sec text-ink-3">{section.note}</p>}
-              <div className="mt-6 flex flex-col gap-8">
+              {section.note && <p className="mt-1.5 max-w-[52ch] text-meta text-ink-3">{section.note}</p>}
+              <div className="mt-5 flex flex-col gap-6">
                 {section.items.map(q => {
                   const a = byId.get(q.id)
                   const isSkipped = skipped.has(q.id)
                   return (
-                    <div key={q.id} className="border-t border-rule pt-6">
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <div key={q.id} className="border-t border-rule pt-4">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
                       </div>
@@ -445,8 +463,8 @@ function ReviewDialog({ onClose }) {
                         />
                       )}
                       {a && (
-                        <p className="mt-3 font-mono text-fine text-calm">
-                          Saved{a.label ? `: ${a.label}` : ''}
+                        <p className="mt-2.5 text-fine font-medium text-calm">
+                          Saved{a.label ? `, ${a.label}` : ''}
                         </p>
                       )}
                     </div>
@@ -456,11 +474,11 @@ function ReviewDialog({ onClose }) {
             </section>
           ))}
 
-          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-6">
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-5">
             <p className="note">
               {done >= total
-                ? 'That is everything. Thank you.'
-                : `${total - done} left.`}
+                ? 'That is all of them. Thanks.'
+                : `${total - done} to go.`}
             </p>
             <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>
               Download my answers

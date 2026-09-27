@@ -43,11 +43,11 @@ export function PatchPage() {
       {/* A dot grid sat over this band at 70%. It was texture standing in for
           hierarchy, and the palette rebuild left the band reading as itself. */}
       <section className="relative overflow-hidden border-b border-rule bg-mist">
-        {/* Was py-12 sm:py-16. Vertical rhythm is three fixed steps now — 10
-            inside a section, 14 between sections, 20 between page regions — so
-            the same kind of break is the same size everywhere. This band is a
-            whole page region. */}
-        <div className="wrap relative py-20">
+        {/* Was py-20, a page-region step at both edges: 160px of nothing on a
+            band that already opens with a label, a heading and a paragraph.
+            This is Section's own padding, which is the site's default break and
+            the one the review's "filled with nothing" was measured against. */}
+        <div className="wrap relative py-10 lg:py-14">
           <Label>The patch</Label>
           {/* "What the patch measures." named the section but not the object, so
               a reader who landed here first still did not know what a patch is.
@@ -91,7 +91,7 @@ export function PatchPage() {
               rows, which gave those two ~400px cards holding ~130px of text
               over an empty field — and stretching the trace to fill the void
               only distorted the waveform it exists to show. */}
-          <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-3">
+          <div className="mt-8 grid gap-x-6 gap-y-5 lg:grid-cols-3">
             {RAINBOW.map((s2, i) => {
               const lead = s2.id === 'sweat'
               const place = {
@@ -101,12 +101,15 @@ export function PatchPage() {
                 move:  'lg:col-start-3 lg:row-start-2',
               }[s2.id]
               return (
-                <ScrollRow key={s2.id} index={i} className={cn('h-full', place)}>
-                  <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
-                    <div className={cn('bg-mist/70 px-4', lead ? 'py-6' : 'py-4')}>
-                      <SignalTrace kind={s2.id} className={lead ? 'h-16' : undefined}/>
+                /* No h-full on either: stretching the row to the tallest card
+                   left the two short ones holding eighty pixels of nothing
+                   under two lines of text. They end where their text ends. */
+                <ScrollRow key={s2.id} index={i} className={place}>
+                  <Card className="flex flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
+                    <div className={cn('bg-mist/70 px-4', lead ? 'py-5' : 'py-3')}>
+                      <SignalTrace kind={s2.id} className={lead ? 'h-14' : undefined}/>
                     </div>
-                    <dl className="m-0 px-5 pb-5 pt-4">
+                    <dl className="m-0 px-4 pb-4 pt-3">
                       <dt className={cn('flex items-baseline gap-2.5 font-display font-bold text-ink',
                         lead ? 'text-head' : 'text-row')}>
                         {s2.name}
@@ -130,26 +133,41 @@ export function PatchPage() {
             })}
           </div>
 
-          {/* The model column is wider than the drawing column because the
-              viewer carries its own control panel; at an even split the panel
-              took half the picture. The drawing keeps the height it had. */}
-          <div className="mt-14 grid items-center gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:gap-12">
-            <ExplodedStack className="h-[min(46vh,420px)]"/>
+          {/* One figure, two halves of it. The drawing and the model were a
+              drawing beside a boxed widget: the model sat in a white card with
+              its own heading, its own sidebar and its own frame, which is what
+              read as an embed. The card is gone, the viewer's own furniture is
+              hidden in arena.jsx, and both halves now stand on the band's own
+              ground under one caption.
 
-            <div className="relative h-[min(76vh,600px)] border-t-2 border-ink bg-card">
+              The drawing keeps the narrower column because the model is the
+              half you operate. Both came down in height: the two of them used
+              to run past a laptop's screen on their own. */}
+          <figure className="mt-8 m-0 grid items-center gap-7 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:gap-10">
+            {/* The column is wider than the old 360px because the drawing was
+                coming out at 268px beside a 350px model. ExplodedStack's own 84%
+                is the widest the rotated sheet can be without its corners
+                crossing the clip on its container, so the width has to come
+                from the column rather than from `size`. */}
+            <ExplodedStack caption="" className="h-[min(30vh,260px)] lg:h-[min(36vh,320px)]"/>
+
+            {/* No height here: the viewer sets the one its own framing needs. */}
+            <div className="min-w-0">
               <PatchArena ref={model} onPlay={() => setPicked(null)}/>
             </div>
-          </div>
-          <p className="mt-4 max-w-[68ch] text-meta text-ink-3">
-            Left: the drawing, showing what each layer does. Right: the model. Turn it, take it apart,
-            make the shell see-through, or cut a section through it. No assembled unit has been
-            photographed yet, and no figure on this page was measured from one.</p>
+
+            <figcaption className="max-w-[72ch] text-meta text-ink-3 lg:col-span-2">
+              The drawing names what each layer does. The model is the same patch, turnable and
+              sectionable. No assembled unit has been photographed yet, and no figure on this page
+              was measured from one.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
-      {/* Was pb-14 sm:pb-20 with no top padding at all, so the heading sat on
-          the band's border. One page-region step, both edges. */}
-      <section className="wrap py-20">
+      {/* Was py-20, which put 80px of empty paper between the band's border and
+          a heading with three cards under it. Same step as the band above. */}
+      <section className="wrap py-10 lg:py-14">
         {/* "Three layers" counted the list without saying what the list was
             of. */}
         <h2 className="mark">The three parts of a patch</h2>

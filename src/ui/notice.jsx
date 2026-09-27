@@ -13,9 +13,15 @@ import { cn } from '../lib/utils'
  * So it is a ruled annotation now, which is the idiom this site already runs
  * on. `.mark` opens a section with a rule and sets its label on it; `.note` is
  * the caption voice. This is the same construction turned ninety degrees: the
- * rule is on the leading edge, the tag is a mono uppercase stamp set against
- * it, and the disclosure is ordinary body text beside it. Square corners, no
- * fill, no shadow — it is a mark on the sheet, not a thing lying on top of it.
+ * rule is on the leading edge, the tag sits against it, and the disclosure is
+ * ordinary body text beside it. Square corners, no fill, no shadow: it is a
+ * mark on the sheet, not a thing lying on top of it.
+ *
+ * The tag was set in the mono face and read as a stamp: a small grey monospace
+ * word at the head of a line is the badge every component library ships, and
+ * with one grotesque across the site the face no longer separates it from the
+ * sentence anyway. It is the same family now at a heavier weight, which is the
+ * separation that was wanted, and its own colour still carries the severity.
  *
  * No background, deliberately. A bed would make it an object again, and it
  * also frees the note to sit on paper, card or mist without a contrast audit
@@ -40,9 +46,10 @@ function Notice({ tag, tone, rule, inline, children, className }) {
         className
       )}
     >
-      {/* Written in sentence case and raised by CSS: some screen readers spell
-       * out a literal all-caps word letter by letter. */}
-      <span className={cn('shrink-0 font-mono uppercase tracking-[0.09em]', tone, inline ? 'text-fine' : 'text-tick')}>
+      {/* Sentence case, and no letterspacing: an all-caps tracked-out word is
+       * read letter by letter by some screen readers, and looked like a chip
+       * even after the capsule around it went. */}
+      <span className={cn('shrink-0 font-display font-bold', tone, inline ? 'text-fine' : 'text-tick')}>
         {tag}
       </span>
       <span className={cn('text-ink-2', inline ? 'text-fine' : 'max-w-[62ch] text-meta')}>
