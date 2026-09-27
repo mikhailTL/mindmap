@@ -7,16 +7,16 @@ import { cn } from '../lib/utils'
 export function Scale({ name, legend, low, high, value, onChange }){
   return (
     <fieldset className="py-6 border-b border-rule">
-      <legend className="font-display font-medium text-row text-ink p-0">{legend}</legend>
+      <legend className="font-display font-bold text-row text-ink p-0">{legend}</legend>
       <R.Root value={value==null?undefined:String(value)}
         onValueChange={v=>onChange(Number(v))}
         aria-label={legend}
         className="mt-4 grid grid-cols-5 gap-1.5">
         {[0,1,2,3,4].map(v=>(
           <R.Item key={v} value={String(v)}
-            aria-label={`${v} — ${v===0?low:v===4?high:'between'}`}
+            aria-label={`${v}, ${v===0?low:v===4?high:'between'}`}
             className={cn(
-              /* rounded-xs was the old green system's one-size radius; in this
+              /* rounded-xs was the retired palette's one-size radius; in this
                  system a tappable field is rounded-field. */
               'min-h-[56px] rounded-field border border-rule bg-paper font-mono text-meta text-ink-2',
               'transition-[background-color,color,border-color] duration-150 ease-out',

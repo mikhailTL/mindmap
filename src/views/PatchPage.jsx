@@ -56,12 +56,12 @@ export function PatchPage() {
               the break falls after "sticker-sized" so a 390px column cannot
               hyphen-break that word across two lines. */}
           <RevealLines as="h1"
-            className="mt-3 max-w-[22ch] font-display font-medium text-sect leading-[1.05] tracking-tight text-ink"
+            className="mt-3 max-w-[22ch] font-display font-bold text-sect leading-[1.05] tracking-tight text-ink"
             lines={['A sticker-sized', 'patch for the forearm.']}/>
           <ScrollIn className="mt-5">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
-              It reads four signals off the skin — heart, sweat, skin temperature and movement —
-              once a second, and sends them to the phone. One patch is worn for a week.
+              It reads four signals off the skin once a second and sends them to the phone: heart,
+              sweat, skin temperature and movement. One patch is worn for a week.
             </p>
           </ScrollIn>
 
@@ -107,7 +107,7 @@ export function PatchPage() {
                       <SignalTrace kind={s2.id} className={lead ? 'h-16' : undefined}/>
                     </div>
                     <dl className="m-0 px-5 pb-5 pt-4">
-                      <dt className={cn('flex items-baseline gap-2.5 font-display font-medium text-ink',
+                      <dt className={cn('flex items-baseline gap-2.5 font-display font-bold text-ink',
                         lead ? 'text-head' : 'text-row')}>
                         {s2.name}
                         {lead && <span className="font-body text-note font-normal italic text-ink-3">
@@ -137,13 +137,13 @@ export function PatchPage() {
             <ExplodedStack className="h-[min(46vh,420px)]"/>
 
             <div className="relative h-[min(76vh,600px)] border-t-2 border-ink bg-card">
-              <PatchArena ref={model}/>
+              <PatchArena ref={model} onPlay={() => setPicked(null)}/>
             </div>
           </div>
           <p className="mt-4 max-w-[68ch] text-meta text-ink-3">
-            Left: the drawing, showing what each layer does. Right: the model itself — turn it, take it
-            apart, make the shell see-through, or cut a section through it. No photograph of an assembled
-            unit exists yet, and no figure on this page was measured from one.</p>
+            Left: the drawing, showing what each layer does. Right: the model. Turn it, take it apart,
+            make the shell see-through, or cut a section through it. No assembled unit has been
+            photographed yet, and no figure on this page was measured from one.</p>
         </div>
       </section>
 
@@ -152,7 +152,7 @@ export function PatchPage() {
       <section className="wrap py-20">
         {/* "Three layers" counted the list without saying what the list was
             of. */}
-        <h2 className="mark">The three parts a patch is made of</h2>
+        <h2 className="mark">The three parts of a patch</h2>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one to see it alone in the model.</p>
         {/* Three hand-built toggles, each re-declaring its own border, hover and
             pressed rule. They are the sourced Card in its `interactive` form
@@ -166,11 +166,10 @@ export function PatchPage() {
               <li key={l.i} className="h-full">
                 <Card interactive as="button" aria-pressed={on}
                   onClick={() => setPicked(on ? null : l.part)}
-                  className={cn('grid h-full grid-cols-[36px_1fr] items-start gap-4 p-5',
+                  className={cn('grid h-full items-start gap-4 p-5',
                     on && 'border-l-accent bg-mist/60')}>
-                  <span className="pt-1.5 font-mono text-tick text-ink-3">0{l.i + 1}</span>
                   <div>
-                    <h3 className="font-display text-row font-medium text-ink">{l.title}</h3>
+                    <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
                     <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
                     <span className="mt-2 block font-mono text-tick text-accent">
                       {on ? 'Showing only this' : 'Show only this'}</span>

@@ -146,7 +146,7 @@ function flatten(value) {
   if (typeof value === 'object') {
     const score = value.score ?? ''
     const note = value.note ?? ''
-    return note ? `${score} — ${note}` : String(score)
+    return note ? `${score}: ${note}` : String(score)
   }
   return String(value)
 }
@@ -159,7 +159,7 @@ export function exportRows() {
     visitorId: v.id,
     page: a.page,
     questionId: a.qid,
-    question: questionText(a.page, a.qid),
+    question: questionText(a.qid),
     kind: a.kind,
     value: flatten(a.value),
     label: a.label ?? '',

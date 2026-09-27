@@ -44,7 +44,7 @@ export const CardHeader = React.forwardRef(function CardHeader({ className, ...p
 
 export const CardTitle = React.forwardRef(function CardTitle(
   { className, as: As = 'h3', ...props }, ref) {
-  return <As ref={ref} className={cn('font-display font-medium text-head text-ink', className)} {...props} />
+  return <As ref={ref} className={cn('font-display font-bold text-head text-ink', className)} {...props} />
 })
 
 export const CardDescription = React.forwardRef(function CardDescription({ className, ...props }, ref) {

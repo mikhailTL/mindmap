@@ -146,7 +146,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline() })
     quality: ppg?.quality ?? 0,
     held,
     holdReason: held
-      ? `You were moving — ${motion.peak.toFixed(2)} g, over the ${MOVE_LIMIT_G} g line. The reading is kept but not counted as stress.`
+      ? `You were moving at ${motion.peak.toFixed(2)} g, over the ${MOVE_LIMIT_G} g line. The reading is kept but not counted as stress.`
       : null,
   }
 }
@@ -167,7 +167,7 @@ export function sentenceFor(r) {
   const verb = b.key === 'usual' ? 'sitting' : 'running'
   const tail = Math.abs(top.raw) < 0.3
     ? 'Nothing in the reading stands out on its own.'
-    : `${top.label} is the biggest single part of that — ${fmtZ(top.z)} your own average.`
+    : `${top.label} is the biggest single part of that: ${fmtZ(top.z)} your own average.`
   return { lead: `Right now you are ${verb} `, word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
 }
 

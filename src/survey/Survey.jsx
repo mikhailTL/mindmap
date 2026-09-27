@@ -3,54 +3,26 @@ import { Button } from '../ui/button'
 import { Cross } from '../ui/marks'
 import { StarRating } from '../ui/stars'
 import { cn } from '../lib/utils'
-import { questionsFor } from './questions'
+import { PAGE, REQUIRED, SECTIONS } from './questions'
 import {
   answersFor, getVersion, getVisitor, recordAnswer,
   subscribe, syncPending, exportRows, toCSV,
 } from './store'
 
-/* The survey, asked where the answer is still in the reader's head.
+/* One survey, opened from a small box in the corner.
  *
- * The timing is the whole design. A card that appears on load is a pop-up and
- * gets closed as one; a card that appears after the reader has demonstrably
- * been on the page — twelve seconds, or forty per cent of the scroll, whichever
- * comes first — is a question from someone who watched them read. It shows one
- * question at a time because two questions in a 360px card is a form, and a
- * form at the corner of a page does not get filled in.
+ * What was here: a card that armed itself after twelve seconds or forty per
+ * cent of a scroll and then asked two questions, on every page, eight times a
+ * visit. It was dismissed as a pop-up because it was one. A reviewer's words
+ * for it were "very annoying", which is the correct review of any element that
+ * appears over the thing a person is reading without being asked for.
  *
- * It is fixed, so it cannot shift the layout; it traps nothing, so Tab leaves
- * it; Esc closes it; and on a phone the page gets bottom padding for exactly as
- * long as the sheet is up, so the sheet can never be the thing standing between
- * a reader and a button.
+ * What replaces it interrupts nothing. A small box sits in the corner once the
+ * reviewer has actually been around the site; it can be put away and it stays
+ * away; and the survey itself opens as a dialog they chose to open, holds every
+ * question in one place, and saves each answer the moment it is given so
+ * closing it half-done loses nothing.
  */
-
-/* Dismissal is per session, not per browser: "not now" means not now, and a
- * reviewer who comes back tomorrow should be asked again. sessionStorage is
- * mirrored into a module Set so the answer survives a reload but never needs
- * storage to work at all. */
-const dismissed = new Set()
-const SKEY = 'mindmap.survey.dismissed'
-
-function loadDismissed() {
-  try {
-    const raw = window.sessionStorage.getItem(SKEY)
-    if (raw) JSON.parse(raw).forEach(p => dismissed.add(p))
-  } catch {}
-}
-function dismiss(page) {
-  dismissed.add(page)
-  try { window.sessionStorage.setItem(SKEY, JSON.stringify([...dismissed])) } catch {}
-}
-if (typeof window !== 'undefined') loadDismissed()
-
-/* Subscribing to the store rather than lifting state: a page survey, the final
- * block and any export button can all be mounted at once, and each has to see
- * an answer the moment another one records it. */
-function useSurvey() {
-  return React.useSyncExternalStore(subscribe, getVersion, () => 0)
-}
-
-/* ---------------------------------------------------------------- controls */
 
 function ScaleControl({ q, value, onPick }) {
   return (
@@ -112,6 +84,44 @@ function ChoiceControl({ q, value, onPick }) {
           </button>
         )
       })}
+    </div>
+  )
+}
+
+/* Zero to ten in a row. Eleven buttons is a lot for a phone, so they wrap and
+   the two ends carry their own labels — an unlabelled 0-10 row gets answered
+   backwards by roughly the people you least want to misread. */
+function NpsControl({ q, value, onPick }) {
+  return (
+    <div className="mt-4">
+      <div role="radiogroup" aria-label={q.prompt} className="flex flex-wrap gap-1.5">
+        {Array.from({ length: 11 }, (_, n) => {
+          const on = value === n
+          return (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              aria-label={`${n} out of 10`}
+              onClick={() => onPick(n, String(n))}
+              className={cn(
+                'min-h-[44px] min-w-[44px] flex-1 rounded-field border font-mono text-ui tabular-nums',
+                'transition-[background-color,border-color,color] duration-150 ease-out',
+                on
+                  ? 'border-ink bg-ink text-paper'
+                  : 'border-rule bg-paper text-ink-2 hover:border-ink-3 hover:bg-mist'
+              )}
+            >
+              {n}
+            </button>
+          )
+        })}
+      </div>
+      <div className="mt-2 flex justify-between text-fine text-ink-3">
+        <span>{q.low}</span>
+        <span>{q.high}</span>
+      </div>
     </div>
   )
 }
@@ -219,6 +229,10 @@ function Question({ q, answer, onAnswer, onSkip }) {
       />
     )
   }
+  if (q.kind === 'nps') {
+    return <NpsControl q={q} value={typeof answer?.value === 'number' ? answer.value : null}
+      onPick={(v, l) => onAnswer(v, l)} />
+  }
   if (q.kind === 'stars') {
     return (
       <div className="mt-4">
@@ -246,157 +260,6 @@ function Question({ q, answer, onAnswer, onSkip }) {
   return null
 }
 
-/* --------------------------------------------------------- floating survey */
-
-const ARM_MS = 12000
-const ARM_SCROLL = 0.4
-
-export function PageSurvey({ page }) {
-  useSurvey()
-  const all = questionsFor(page)
-
-  /* The queue is frozen at mount. If it were recomputed from the store, the
-     question the reader is answering would vanish out from under their hand
-     the instant it was recorded. */
-  const [queue] = React.useState(() => {
-    const done = new Set(answersFor(page).map(a => a.qid))
-    return all.filter(q => !done.has(q.id))
-  })
-
-  const [idx, setIdx] = React.useState(0)
-  const [armed, setArmed] = React.useState(false)
-  const [open, setOpen] = React.useState(false)
-  const [thanks, setThanks] = React.useState(false)
-  const [closed, setClosed] = React.useState(() => dismissed.has(page))
-  const cardRef = React.useRef(null)
-
-  const idle = closed || !queue.length || !getVisitor()
-  const live = armed && !idle
-
-  React.useEffect(() => {
-    if (idle) return
-    let fired = false
-    function stop() {
-      clearTimeout(timer)
-      window.removeEventListener('scroll', onScroll)
-    }
-    function arm() {
-      if (fired) return
-      fired = true
-      setArmed(true)
-      stop()
-    }
-    function onScroll() {
-      const range = document.documentElement.scrollHeight - window.innerHeight
-      if (range > 0 && window.scrollY / range >= ARM_SCROLL) arm()
-    }
-    const timer = setTimeout(arm, ARM_MS)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return stop
-  }, [idle, page])
-
-  /* Mounted first at rest, then flipped a frame later, so the card animates in
-     from its own start state instead of appearing mid-transition. Under
-     reduced motion the global duration override makes this a straight cut. */
-  React.useEffect(() => {
-    if (!live) return
-    const f = requestAnimationFrame(() => setOpen(true))
-    return () => cancelAnimationFrame(f)
-  }, [live])
-
-  React.useEffect(() => {
-    if (!live) return
-    const onKey = e => { if (e.key === 'Escape') { dismiss(page); setClosed(true) } }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [live, page])
-
-  /* On a phone the card is a bottom sheet, and a bottom sheet over a fixed
-     footer control is the reason survey widgets get hated. The page grows by
-     the sheet's height while it is up — scroll range only, nothing on screen
-     moves — so every control can be reached past it. */
-  React.useEffect(() => {
-    if (!live || typeof window === 'undefined') return
-    if (window.matchMedia('(min-width: 640px)').matches) return
-    const h = cardRef.current?.offsetHeight || 0
-    let prev = ''
-    try {
-      prev = document.body.style.paddingBottom
-      document.body.style.paddingBottom = `${h}px`
-    } catch {}
-    return () => { try { document.body.style.paddingBottom = prev } catch {} }
-  }, [live, idx])
-
-  React.useEffect(() => {
-    if (!thanks) return
-    const t = setTimeout(() => setClosed(true), 1500)
-    return () => clearTimeout(t)
-  }, [thanks])
-
-  React.useEffect(() => { if (live) syncPending() }, [live])
-
-  if (idle || !armed) return null
-
-  const q = queue[Math.min(idx, queue.length - 1)]
-
-  const answer = (value, label) => {
-    recordAnswer({ page, qid: q.id, kind: q.kind, value, label })
-    if (idx + 1 >= queue.length) setThanks(true)
-    else setIdx(idx + 1)
-  }
-
-  const skip = () => {
-    if (idx + 1 >= queue.length) setThanks(true)
-    else setIdx(idx + 1)
-  }
-
-  return (
-    <aside
-      ref={cardRef}
-      aria-label="Question about this page"
-      className={cn(
-        'fixed z-40 border border-ink bg-card shadow-lift',
-        'inset-x-0 bottom-0 rounded-t-panel',
-        'pb-[max(1.25rem,env(safe-area-inset-bottom))]',
-        'sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[23.5rem] sm:rounded-panel sm:pb-0',
-        'transition-[transform,opacity] duration-300 ease-out',
-        open ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
-      )}
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-rule px-5 py-3">
-        <span className="font-mono text-fine tabular-nums text-ink-3">
-          {thanks ? 'Done' : `${idx + 1} of ${queue.length}`}
-        </span>
-        <button
-          type="button"
-          onClick={() => { dismiss(page); setClosed(true) }}
-          className={cn(
-            'flex min-h-[44px] items-center gap-2 rounded-field px-2 font-display text-ui font-medium text-ink-2',
-            'transition-colors duration-150 ease-out hover:bg-mist hover:text-ink active:bg-accent-wash'
-          )}
-        >
-          Not now <Cross size={16} />
-        </button>
-      </div>
-
-      <div className="px-5 pb-5 pt-4">
-        {thanks ? (
-          <p className="font-display text-ui font-medium text-ink">
-            Thank you — that is this page done.
-          </p>
-        ) : (
-          <>
-            <p className="font-display text-ui font-medium text-ink">{q.prompt}</p>
-            <Question q={q} answer={null} onAnswer={answer} onSkip={skip} />
-          </>
-        )}
-      </div>
-    </aside>
-  )
-}
-
-/* ------------------------------------------------------------ final survey */
-
 function csvName() {
   const n = getVisitor()?.name || 'anon'
   return 'mindmap-review-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.csv'
@@ -420,78 +283,196 @@ function downloadCSV() {
   } catch {}
 }
 
-export function FinalSurvey({ className }) {
+/* Subscribing to the store rather than lifting state: the corner box and the
+   open survey both have to see an answer the moment the other records it. */
+function useSurvey() {
+  return React.useSyncExternalStore(subscribe, getVersion, () => 0)
+}
+
+/* ------------------------------------------------------------ the survey */
+
+const OFF_KEY = 'mindmap.review.off'
+const SEEN_KEY = 'mindmap.review.seen'
+
+const putAway = () => { try { sessionStorage.setItem(OFF_KEY, '1') } catch {} }
+const isPutAway = () => { try { return sessionStorage.getItem(OFF_KEY) === '1' } catch { return false } }
+
+/* The box waits until the reviewer has actually been somewhere. Asking someone
+   to review a site they have seen one page of produces an answer about one
+   page. Three distinct routes is the threshold, which on this site means they
+   have at least left the overview and opened something. */
+const SEEN_MIN = 3
+function noteVisit(page) {
+  try {
+    const seen = new Set(JSON.parse(sessionStorage.getItem(SEEN_KEY) || '[]'))
+    seen.add(page)
+    sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seen]))
+    return seen.size
+  } catch { return 0 }
+}
+
+function countAnswered() {
+  const have = new Set(answersFor(PAGE).map(a => a.qid))
+  return REQUIRED.filter(q => have.has(q.id)).length
+}
+
+/* The corner box. Fixed, small, and out of the way of everything: it never
+   covers page content on a phone because it sits above the safe area and the
+   page is not padded for it — it is 56px of chrome, not a sheet. */
+export function ReviewLauncher({ page }) {
   useSurvey()
-  const questions = questionsFor('final')
-  const answers = answersFor('final')
-  const byId = new Map(answers.map(a => [a.qid, a]))
-  const [skipped, setSkipped] = React.useState(() => new Set())
+  const [open, setOpen] = React.useState(false)
+  const [hidden, setHidden] = React.useState(true)
+  const [seen, setSeen] = React.useState(0)
 
-  React.useEffect(() => { syncPending() }, [])
+  React.useEffect(() => {
+    setSeen(noteVisit(page))
+    setHidden(isPutAway())
+  }, [page])
 
-  const answer = (q, value, label) =>
-    recordAnswer({ page: 'final', qid: q.id, kind: q.kind, value, label })
-
-  const required = questions.filter(q => !q.optional)
-  const left = required.filter(q => !byId.has(q.id)).length
-  const visitor = getVisitor()
+  const done = countAnswered()
+  const total = REQUIRED.length
+  const started = done > 0
+  const finished = done >= total
+  if (hidden || (seen < SEEN_MIN && !started)) return null
 
   return (
-    <section
-      aria-label="Final questions"
-      className={cn('rounded-panel border border-rule bg-card p-6 sm:p-8', className)}
-    >
-      <h2 className="font-display text-sub font-medium text-ink">Last few questions</h2>
-      <p className="mt-2 max-w-measure text-sec text-ink-2">
-        {visitor
-          ? `These are the last ones, ${visitor.name}. Answers are saved as you go.`
-          : 'These are the last ones. Answers are saved as you go.'}
-      </p>
-
-      <div className="mt-8 flex flex-col gap-8">
-        {questions.map(q => {
-          const a = byId.get(q.id)
-          const isSkipped = skipped.has(q.id)
-          return (
-            <div key={q.id} className="border-t border-rule pt-6">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <p className="max-w-read font-display text-ui font-medium text-ink">{q.prompt}</p>
-                {q.optional && <span className="note">Optional</span>}
-              </div>
-
-              {isSkipped && !a ? (
-                <p className="note mt-3">Skipped.</p>
-              ) : (
-                <Question
-                  q={q}
-                  answer={a}
-                  onAnswer={(v, l) => answer(q, v, l)}
-                  onSkip={() => setSkipped(new Set(skipped).add(q.id))}
-                />
-              )}
-
-              {a && (
-                <p className="mt-3 font-mono text-fine text-calm">
-                  Saved{a.label ? ` — ${a.label}` : ''}
-                </p>
-              )}
-            </div>
-          )
-        })}
+    <>
+      <div className="fixed bottom-4 right-4 z-40 print:hidden sm:bottom-6 sm:right-6">
+        <div className="flex items-stretch overflow-hidden rounded-panel border border-ink bg-card shadow-lift">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex min-h-[48px] items-center gap-3 px-4 text-left hover:bg-mist"
+          >
+            <span className="font-display text-ui font-medium text-ink">
+              {finished ? 'Review sent' : started ? 'Finish your review' : 'Review this site'}
+            </span>
+            <span className="font-mono text-fine tabular-nums text-ink-3">
+              {started ? `${done}/${total}` : '3 min'}
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label="Put the review away"
+            onClick={() => { putAway(); setHidden(true) }}
+            className="grid w-11 place-items-center border-l border-rule text-ink-3 hover:bg-mist hover:text-ink"
+          >
+            <Cross className="size-3.5"/>
+          </button>
+        </div>
       </div>
-
-      <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-6">
-        <p className="note">
-          {left === 0
-            ? 'That is everything. Thank you for walking the whole thing.'
-            : `${left} question${left === 1 ? '' : 's'} left.`}
-        </p>
-        <Button size="sm" type="button" variant="ghost" onClick={downloadCSV}>
-          Download my answers
-        </Button>
-      </div>
-    </section>
+      {open && <ReviewDialog onClose={() => setOpen(false)}/>}
+    </>
   )
 }
 
-export default PageSurvey
+function ReviewDialog({ onClose }) {
+  useSurvey()
+  const ref = React.useRef(null)
+  const [skipped, setSkipped] = React.useState(() => new Set())
+
+  React.useEffect(() => { syncPending() }, [])
+  React.useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    ref.current?.focus()
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+
+  const answers = answersFor(PAGE)
+  const byId = new Map(answers.map(a => [a.qid, a]))
+  const done = REQUIRED.filter(q => byId.has(q.id)).length
+  const total = REQUIRED.length
+  const visitor = getVisitor()
+
+  const answer = (q, value, label) =>
+    recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/45 p-0 sm:p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Review this site"
+        tabIndex={-1}
+        ref={ref}
+        className="mx-auto min-h-full w-full max-w-[42rem] bg-paper sm:min-h-0 sm:rounded-panel"
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-4 sm:rounded-t-panel sm:px-8">
+          <div>
+            <h2 className="font-display text-sub font-bold text-ink">Review this site</h2>
+            <p className="mt-0.5 font-mono text-fine tabular-nums text-ink-3">
+              {done} of {total} answered · saved as you go
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={onClose}>Close</Button>
+        </div>
+
+        <div className="px-5 pb-10 pt-6 sm:px-8">
+          <p className="max-w-[52ch] text-sec text-ink-2">
+            {visitor ? `Thanks for walking through it, ${visitor.name}. ` : ''}
+            About three minutes. Everything is stored against the name you gave and nothing else.
+          </p>
+
+          {SECTIONS.map(section => (
+            <section key={section.id} className="mt-10">
+              <h3 className="mark">{section.title}</h3>
+              {section.note && <p className="mt-2 max-w-[52ch] text-sec text-ink-3">{section.note}</p>}
+              <div className="mt-6 flex flex-col gap-8">
+                {section.items.map(q => {
+                  const a = byId.get(q.id)
+                  const isSkipped = skipped.has(q.id)
+                  return (
+                    <div key={q.id} className="border-t border-rule pt-6">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
+                        {q.optional && <span className="note">Optional</span>}
+                      </div>
+                      {isSkipped && !a ? (
+                        <p className="note mt-3">Skipped.</p>
+                      ) : (
+                        <Question
+                          q={q}
+                          answer={a}
+                          onAnswer={(v, l) => answer(q, v, l)}
+                          onSkip={() => setSkipped(new Set(skipped).add(q.id))}
+                        />
+                      )}
+                      {a && (
+                        <p className="mt-3 font-mono text-fine text-calm">
+                          Saved{a.label ? `: ${a.label}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-6">
+            <p className="note">
+              {done >= total
+                ? 'That is everything. Thank you.'
+                : `${total - done} left.`}
+            </p>
+            <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>
+              Download my answers
+            </Button>
+            <Button size="sm" className="ml-auto" onClick={onClose}>
+              {done >= total ? 'Done' : 'Come back to it'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default ReviewLauncher

@@ -138,19 +138,19 @@ function AskAbout({ w }) {
   }
   return (
     <>
-      <p className="mt-4 font-display text-sub font-medium tracking-tight text-ink">{w.peak.name}.</p>
+      <p className="mt-4 font-display text-sub font-bold tracking-tight text-ink">{w.peak.name}.</p>
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] lg:gap-14">
         <div>
           <h3 className="mark">Why it is flagged</h3>
           <p className="mt-3 max-w-[48ch] text-sec text-ink-2">
             {w.peak.name} sat further above her usual range than any other day this week
-            {w.over.length > 1 && <>, one of {word(w.over.length)} days that were above it at all</>}.
-            It means her body was working harder that day than it usually does. It does not say why,
-            and it is not a diagnosis.
+            {w.over.length > 1 && <>, one of {word(w.over.length)} days above it at all</>}.
+            Her body was working harder that day than it usually does. It does not say why, and it
+            is not a diagnosis.
           </p>
         </div>
         <div>
-          <h3 className="mark">How to raise it</h3>
+          <h3 className="mark">How to bring it up</h3>
           <ul className="mt-3 list-none space-y-3 p-0">
             {openers(w.peak.name).map(o => (
               <li key={o} className="border-l-2 border-accent py-0.5 pl-4 text-sec text-ink">
@@ -158,11 +158,10 @@ function AskAbout({ w }) {
               </li>
             ))}
           </ul>
-          {/* The failure mode testers described, written down as itself. */}
-          {/* The counter-example takes the same ruled form as the openers in
-              the warn hue rather than a heavier weight: Chivo loads 300, 400
-              and 700 and the site sets none of them bold, so weight is not an
-              emphasis this system has. */}
+          {/* The failure mode testers described, written down as itself. The
+              counter-example takes the same ruled form as the openers, in the
+              warn hue: bold is carrying headings now, so it cannot also be the
+              mark that separates a warning from a suggestion. */}
           <p className="mt-5 max-w-[48ch] border-l-2 border-warn py-0.5 pl-4 text-sec text-ink-2">
             Not this: &ldquo;Your patch says you were stressed on {w.peak.name}.&rdquo; She can see
             this page too, and leading with it turns a conversation into a review.</p>
@@ -275,8 +274,8 @@ function SchoolSharing({ real }) {
           </dl>
           <p className="mt-5 max-w-[62ch] text-sec text-ink-2">{CHILD} can narrow any of these further
             from her own phone. She cannot widen them, and neither can the school. Second-by-second
-            readings are kept only for the window she sets; when it closes they are deleted, with no
-            archive and no backup — and you are not shown them at any point in it.</p>
+            readings are kept only for the window she sets, then deleted, with no archive and no
+            backup. You are never shown them.</p>
           <p className="mt-3 max-w-[62ch] text-sec text-ink-3">In this demo a switch changes this page
             only. In the product it writes a dated row in the school&rsquo;s consent log, and {CHILD} is
             told the same day.</p>
@@ -298,7 +297,7 @@ function PatchStatus({ real, w }) {
        ['Last reading', 'None', 'No patch has ever been paired to this account.']]
     : [['Status', 'Reporting', null],
        ['Days with readings this week', `${w.days.length} of ${w.days.length}`, null],
-       ['Most recent day with readings', w.last?.name ?? '—', null]]
+       ['Most recent day with readings', w.last?.name ?? 'None', null]]
   return (
     <Card className={cn('mt-4', real && 'border-l-[3px] border-l-crit')}>
       <div className="p-6">
@@ -316,16 +315,13 @@ function PatchStatus({ real, w }) {
         {real ? (
           <>
             <h3 className="mark mt-10">What to do about it</h3>
-            <ol className="mt-3 list-none space-y-2.5 p-0">
+            <ul className="mt-3 list-none space-y-2.5 p-0">
               {['Open MindMap on your child’s phone and pair a patch.',
                 'Check the patch is charged and sitting on the forearm.',
-                'This page fills in at the end of the first full week it reports.'].map((s, i) => (
-                <li key={s} className="flex gap-4 text-sec text-ink-2">
-                  <span className="font-mono text-tick tabular-nums text-ink-3">0{i + 1}</span>
-                  <span className="max-w-[52ch]">{s}</span>
-                </li>
+                'This page fills in at the end of the first full week it reports.'].map(s => (
+                <li key={s} className="max-w-[52ch] text-sec text-ink-2">{s}</li>
               ))}
-            </ol>
+            </ul>
           </>
         ) : (
           <p className="mt-6 max-w-[62ch] text-sec text-ink-2">If a day is missing from the row above,
@@ -347,7 +343,7 @@ export function ParentDash({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h2 className="font-display text-row font-medium text-ink">
+        <h2 className="font-display text-row font-bold text-ink">
           {real ? 'No patch paired' : CHILD}</h2>
         {!real && <span className="note">This week · {w.days[0]?.name} to {w.last?.name}</span>}
       </div>
@@ -372,7 +368,7 @@ export function ParentDash({ go, openTab }) {
             ? <p className="mt-5 max-w-[34ch] text-body text-ink-2">Nothing was measured, so there is
                 no week to report. The seven days are empty for that reason and no other.</p>
             : <>
-                <p className="mt-5 max-w-[22ch] font-display text-major font-medium leading-[1.1]
+                <p className="mt-5 max-w-[22ch] font-display text-major font-bold leading-[1.1]
                   tracking-tight text-ink">{headline(w)}</p>
                 <p className="mt-5 max-w-[40ch] text-body text-ink-2">{detail(w)}</p>
                 <p className="mt-5 max-w-[44ch] text-sec text-ink-3">Her usual range is worked out from
@@ -385,14 +381,14 @@ export function ParentDash({ go, openTab }) {
           <p className="mt-4 max-w-[52ch] text-sec text-ink-2">
             {real
               ? 'Seven days, none of them measured. These stay empty until a patch reports.'
-              : 'Above or inside her own range, and that is the whole of it — no daily score here to watch, and no hour, minute or reading behind these cells for anyone to open.'}
+              : 'Above or inside her own range, and that is the whole of it. There is no daily score to watch, and no hour, minute or reading behind these cells for anyone to open.'}
           </p>
         </div>
       </ScrollIn>
 
       {/* 3. One thing worth asking about */}
       <ScrollIn as="section" className="mt-14">
-        <h2 className="mark">Worth asking about</h2>
+        <h2 className="mark">What to ask about</h2>
         {real
           ? <p className="mt-4 max-w-[56ch] text-body text-ink-2">Nothing is flagged, because nothing
               was measured. That is not the same as a week with nothing in it.</p>
@@ -402,8 +398,8 @@ export function ParentDash({ go, openTab }) {
       {/* 4. What you are never shown */}
       <ScrollIn as="section" className="mt-14">
         <h2 className="mark">What this screen never shows you</h2>
-        <p className="mt-4 max-w-[62ch] text-sec text-ink-2">True in both modes and at every depth of
-          this page. There is no drawer, no export and no link that opens any of it.</p>
+        <p className="mt-4 max-w-[62ch] text-sec text-ink-2">There is no drawer, no export and no
+          link that opens any of it.</p>
         <ul className="mt-5 list-none divide-y divide-rule border-y border-rule p-0">
           {NEVER.map(([t, s]) => (
             <li key={t} className="flex items-start gap-3 py-4">
@@ -426,7 +422,7 @@ export function ParentDash({ go, openTab }) {
 
       {/* 5. What the school may see, and how to change it */}
       <ScrollIn as="section" className="mt-14">
-        <h2 className="mark">What you have allowed the school to see</h2>
+        <h2 className="mark">What the school can see</h2>
         <SchoolSharing real={real}/>
       </ScrollIn>
 

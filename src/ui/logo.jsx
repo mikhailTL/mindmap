@@ -47,13 +47,24 @@ export function LogoMark({ className, title }) {
 /* The lockup. `tone` picks which colour the second half of the word takes: on
    paper it is the accent, on an ink field both halves stay in the field's own
    foreground, because accent on ink does not clear 4.5:1. */
-export function Logo({ className, markClassName, tone = 'paper', title = 'MindMap' }) {
+export function Logo({ className, markClassName, tone = 'paper', title = 'MindMap', motto = false }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark className={cn('h-[1.15em] w-auto shrink-0', markClassName)}/>
       <span className="font-display font-medium leading-none tracking-[-0.015em]">
         Mind<span className={tone === 'paper' ? 'text-accent' : undefined}>Map</span>
       </span>
+      {/* The review asked for the motto on the mark. It sits beside the
+          wordmark rather than under the whole lockup: centred underneath it
+          starts reading as a tagline inside a logo, which is the thing that
+          dates a mark fastest. Hidden below sm — at 390 the bar has six tabs
+          to fit and four words of explanation is what gives way first. */}
+      {motto && (
+        <span className={cn('hidden whitespace-nowrap font-body text-meta font-normal leading-none sm:inline',
+          tone === 'paper' ? 'text-ink-3' : 'text-rule')}>
+          teen wellness app
+        </span>
+      )}
       <span className="sr-only">{title}</span>
     </span>
   )

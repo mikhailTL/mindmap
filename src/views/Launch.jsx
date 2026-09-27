@@ -107,13 +107,14 @@ function Console({ children }) {
 }
 
 /* The one thing Real mode must never do is show a figure. A dial sitting at 0
-   is not an empty state on this scale — 0 is calm, the best day a person can
-   have — so the place where the number goes holds an em dash instead. */
-function Waiting({ children, big = '—' }) {
+   is not an empty state on this scale: 0 is calm, the best day a person can
+   have. So the slot the number would fill holds a drawn blank instead of any
+   glyph, which cannot be mistaken for a reading or for punctuation. */
+function Waiting({ children }) {
   return (
     <>
-      <span aria-hidden className="font-display text-dial font-medium leading-none text-ink-3">{big}</span>
-      <span aria-hidden className="mt-1 font-mono text-tick text-ink-3">out of 100</span>
+      <span aria-hidden className="block h-[3px] w-14 bg-ink-3"/>
+      <span aria-hidden className="mt-3 font-mono text-tick text-ink-3">out of 100</span>
       <p className="mt-4 max-w-[24ch] text-center text-sec text-ink-2">{children}</p>
     </>
   )
@@ -242,18 +243,18 @@ function ProRanking({ still }) {
 /* ── The doors ───────────────────────────────────────────────────────────── */
 
 const ROLES = [
-  { id:'app-student', ord:'01', who:'Student', Preview: StudentPreview,
-    title:'Your score, and the working under it',
+  { id:'app-student', who:'Student', Preview: StudentPreview,
+    title:'Your score, and how it was worked out',
     body:'Every reading the patch took today, what moved the number, and what you wrote. Nothing here is withheld from you.',
     cta:'Open the student dashboard',
     name:'Open the student dashboard: one score out of 100 for today, with every reading underneath it.' },
-  { id:'app-parent', ord:'02', who:'Parent', Preview: ParentPreview,
-    title:'The week, and one sentence',
+  { id:'app-parent', who:'Parent', Preview: ParentPreview,
+    title:'The week in one sentence',
     body:'One number a day, which days sat above her own range, and a line in plain words. Never a raw reading, never a note.',
     cta:'Open the parent dashboard',
     name:'Open the parent dashboard: the week at a glance and one plain sentence.' },
-  { id:'app-pro', ord:'03', who:'School professional', Preview: ProPreview,
-    title:'A caseload ranked by who is changing fastest',
+  { id:'app-pro', who:'School professional', Preview: ProPreview,
+    title:'Students ranked by who is changing fastest',
     body:'A score and a rank for the students whose guardian consented to trends. Never a group under five.',
     cta:'Open the counselor console',
     name:'Open the school counselor console: a caseload ranked by who is changing fastest.' },
@@ -287,16 +288,13 @@ function Door({ role, go, active, setActive, real, still }) {
       </div>
       <CardContent className="flex flex-1 flex-col gap-4">
         {/* The role is what a visitor is scanning for, so the role is the
-            title. It used to be a mono eyebrow over a sentence — three cards
+            title. It used to be a mono eyebrow over a sentence: three cards
             each headed by a different sentence meant reading all three to find
             out which one was yours. */}
-        <span className="flex items-baseline gap-3">
-          <span className="font-mono text-fine tabular-nums text-ink-3">{role.ord}</span>
-          {/* a span, not a heading: a button's content model is phrasing, and
-              an h2 inside it puts a heading-shaped thing outside the outline */}
-          <span className="block font-display text-sub font-medium leading-[1.12] tracking-tight text-ink">
-            {role.who}
-          </span>
+        {/* a span, not a heading: a button's content model is phrasing, and
+            an h2 inside it puts a heading-shaped thing outside the outline */}
+        <span className="block font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
+          {role.who}
         </span>
         <span className="-mt-2 block font-display text-meta font-medium text-ink-2">
           {role.title}
@@ -326,15 +324,15 @@ export function Launch({ go }) {
           by saying "open it", so it is the one place the product introduces
           itself rather than sitting in a corner of a bar. */}
       <div className="mt-10 flex items-center gap-4">
-        <Logo className="text-sub text-ink" title="MindMap"/>
+        <Logo motto className="text-sub text-ink" title="MindMap"/>
       </div>
       <Label className="mt-8 block">Launch the app</Label>
-      <h1 className="mt-3.5 font-display text-view font-medium leading-[1.05] tracking-tight text-ink">
+      <h1 className="mt-3.5 font-display text-view font-bold leading-[1.05] tracking-tight text-ink">
         Who is opening the app?
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        Three screens read the same day of measurements and show three different slices of it.
-        Each panel below is the screen itself, running. Pick the one that is yours.
+        Three screens read the same day of measurements and show three different parts of it.
+        Pick the one that is yours.
       </p>
 
       <section className="mt-14">

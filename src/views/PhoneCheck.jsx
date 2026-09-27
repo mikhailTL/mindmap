@@ -19,7 +19,7 @@ import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateB
  * a measurement: they produce an opinion, scored. This screen puts a fingertip
  * on the camera for thirty seconds and one spoken sentence into the microphone
  * for fifteen, and hands the same model the same kind of features the patch
- * hands it — rate, beat-to-beat variation, and the way a voice is carrying.
+ * hands it: rate, beat-to-beat variation, and the way a voice is carrying.
  *
  * Nothing is uploaded. The frames are reduced to one number each as they
  * arrive and the audio is turned into six numbers and dropped; neither the
@@ -61,13 +61,19 @@ function Trace({ samples, className }) {
   )
 }
 
-function Step({ n, title, children, on }) {
+/* The step marker was the numeral 01, 02, 03, which is one of the counting
+   labels the review asked to see the back of. It was also doing a second job:
+   dimming ahead of the capture and lighting as each stage passes. A dot keeps
+   the state and drops the count, and the order is already carried by the
+   stack. */
+function Step({ title, children, on }) {
   return (
     <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-4',
       !on && 'opacity-45')}>
-      <span className="font-mono text-tick tabular-nums text-ink-3">0{n}</span>
+      <span aria-hidden className={cn('mt-2 size-3 rounded-chip justify-self-center',
+        on ? 'bg-accent' : 'border-2 border-ruling')}/>
       <div>
-        <p className="font-display text-ui font-medium text-ink">{title}</p>
+        <p className="font-display text-ui font-bold text-ink">{title}</p>
         <p className="mt-1 max-w-[42ch] text-sec text-ink-2">{children}</p>
       </div>
     </div>
@@ -144,7 +150,7 @@ export function PhoneCheck() {
     } catch (e) {
       stopStream(cam?.stream)
       setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. A reading needs it; the six questions below do not.'
+        ? 'The camera was not allowed. A reading needs it; the questions do not.'
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
@@ -158,22 +164,19 @@ export function PhoneCheck() {
       <div>
         <Card>
           <CardContent>
-            <p className="max-w-[46ch] text-sec text-ink-2">
-              Forty-five seconds. The camera reads your pulse through a fingertip; the microphone reads
-              how your voice is carrying. Both are turned into numbers on this device and thrown away.
+            <p className="max-w-[42ch] text-sec text-ink-2">
+              Forty five seconds. Everything is worked out on this phone and thrown away.
             </p>
 
             <div className="mt-6">
-              <Step n={1} on={PHASES[phase] >= 1} title={`Fingertip over the camera · ${PPG_SECONDS}s`}>
-                Cover the rear lens and the flash with one fingertip. Rest your hand on something.
+              <Step on={PHASES[phase] >= 1} title={`Fingertip over the camera · ${PPG_SECONDS}s`}>
+                Rest your hand on something.
               </Step>
-              <Step n={2} on={PHASES[phase] >= 2} title={`Say one sentence · ${VOICE_SECONDS}s`}>
-                Anything at all — what you did today. The words are never kept, only the pitch and
-                steadiness.
+              <Step on={PHASES[phase] >= 2} title={`Say one sentence · ${VOICE_SECONDS}s`}>
+                Anything at all. Only the pitch is kept.
               </Step>
-              <Step n={3} on={PHASES[phase] >= 3} title="One score, with a band">
-                The band is how sure the reading is. It starts wide and tightens as the app learns your
-                own normal.
+              <Step on={PHASES[phase] >= 3} title="One score, with a band">
+                The band is how sure the reading is.
               </Step>
             </div>
 
@@ -230,7 +233,7 @@ export function PhoneCheck() {
             </div>
             {!supported && (
               <p className="mt-4 max-w-[46ch] text-meta text-ink-2">
-                This browser will not hand over a camera here. The six questions below still work.
+                This browser will not hand over a camera. The questions still work.
               </p>
             )}
           </CardContent>
@@ -240,22 +243,22 @@ export function PhoneCheck() {
       <Card aria-live="polite" className="min-h-[14rem] xl:sticky xl:top-[92px]">
         <CardContent>
           {!result && (
-            <p className="max-w-[40ch] text-sec text-ink-3">
-              Your reading appears here, as a sentence first, then the number and how sure it is.
+            <p className="max-w-[36ch] text-sec text-ink-3">
+              Your reading appears here: a sentence first, then the number.
             </p>
           )}
           {result && (
             <>
               <div className="flex flex-col items-start gap-7">
                 <RainbowDial score={result.score} size={288}
-                  rings={[{ id:'phone', name:'Phone sensors', color:'#3d52a0', glow:'#7091e6',
+                  rings={[{ id:'phone', name:'Phone sensors', color:'#157446', glow:'#0e9c9c',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div>
                   {/* The verdict alone at display size. The reason follows at
                       reading size: set in the same face and weight it ran to
                       six lines of 48px type, which is a paragraph pretending
                       to be a headline. */}
-                  <Headline>{s.lead}<b className={cn('font-medium', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
+                  <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
                   <p className="mt-4 max-w-[42ch] text-sec text-ink-2">{s.tail}</p>
 
                   {/* The band is the honest part of the whole screen, so it is
@@ -274,7 +277,7 @@ export function PhoneCheck() {
                     </dd>
                     <dt className="text-ink-3">Your history</dt>
                     <dd className="m-0 text-ink">{result.baselineDays === 0
-                      ? 'none yet — the band is wide on purpose'
+                      ? 'none yet, so the band is wide on purpose'
                       : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
@@ -313,9 +316,9 @@ function Readings({ detail, result }) {
   rows.push(['Heart rate', `${ppg.hr.toFixed(0)} bpm`])
   rows.push(['Beats used', `${ppg.beats}${ppg.dropped ? ` · ${ppg.dropped} rejected as artefact` : ''}`])
   rows.push(['Beat-to-beat index',
-    !ppg.hrvOk ? `withheld — beat timing was uncertain to ${ppg.jitterMs.toFixed(0)} ms`
+    !ppg.hrvOk ? `withheld. Beat timing was uncertain to ${ppg.jitterMs.toFixed(0)} ms`
     : ppg.hrvResolved ? `${ppg.rmssd.toFixed(0)} ms ± ${ppg.rmssdBand.toFixed(0)}`
-    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms — steadier than this can resolve`])
+    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms, steadier than this can resolve`])
   rows.push(['Signal quality', `${Math.round(ppg.quality * 100)}%${torch ? '' : ' · no torch on this device'}`])
   if (voice?.ok) {
     rows.push(['Pitch', `${voice.f0Mean.toFixed(0)} Hz`])
@@ -335,11 +338,11 @@ function Readings({ detail, result }) {
         ))}
       </dl>
       <p className="mt-6 max-w-[64ch] text-meta text-ink-2">
-        The camera gives heart rate and a beat-to-beat index on a scale of its own — narrowing the filter
-        that steadies beat timing also trims some real variation, so it runs about a fifth below a
-        clinical RMSSD and is never called one. Every feature is scored against your own history captured
-        the same way, which is what lets a phone reading and a patch reading share one scale. Nothing here
-        has been validated against a person.
+        The camera gives heart rate and a beat-to-beat index on a scale of its own. The filter that
+        steadies beat timing also trims some real variation, so the index runs about a fifth below a
+        clinical RMSSD and is never called one. Every feature is scored against your own history, which
+        is what lets a phone reading and a patch reading share one scale. Nothing here has been
+        validated against a person.
       </p>
     </>
   )

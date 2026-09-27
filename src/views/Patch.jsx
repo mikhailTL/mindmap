@@ -18,72 +18,72 @@ const POD = { x:112, y:76, width:216, height:108, rx:44 }  /* the raised body */
 export const Shell = (
   <svg viewBox="0 0 440 260" role="img" aria-label="The printed shell, seen face on">
     <defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="0" x2="0" y2="7" stroke="#171f3c" strokeOpacity=".14" strokeWidth="1"/></pattern></defs>
-    <rect {...FL} fill="#f8f6fc" fillOpacity=".93" stroke="#171f3c" strokeWidth="1.6"/>
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#0d2b1e" strokeOpacity=".14" strokeWidth="1"/></pattern></defs>
+    <rect {...FL} fill="#ffffff" fillOpacity=".93" stroke="#0d2b1e" strokeWidth="1.6"/>
     {/* The hatch covers the whole stadium and is then masked by the opaque pod,
         so it survives only in the flange ring. That is cheaper and steadier
         than an even-odd ring path, and it means the adhesive zone can never
         drift out of register with the body sitting on it. */}
     <rect {...FL} fill="url(#hatch)"/>
-    <rect x="25" y="67" width="390" height="126" rx="63" fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
-    <rect {...POD} fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.5"/>
-    <rect x="124" y="88" width="192" height="84" rx="36" fill="none" stroke="#171f3c" strokeOpacity=".28" strokeWidth="1"/>
+    <rect x="25" y="67" width="390" height="126" rx="63" fill="none" stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1"/>
+    <rect {...POD} fill="#ffffff" stroke="#0d2b1e" strokeWidth="1.5"/>
+    <rect x="124" y="88" width="192" height="84" rx="36" fill="none" stroke="#0d2b1e" strokeOpacity=".28" strokeWidth="1"/>
     {/* The charging slot straddles the pod wall rather than sitting inside it,
         because a port that does not break the outline is a sticker, not a port. */}
-    <rect x="310" y="116" width="30" height="28" rx="9" fill="url(#hatch)" stroke="#171f3c" strokeOpacity=".45" strokeWidth="1"/>
-    <circle cx="220" cy="130" r="30" fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
-    <circle cx="220" cy="130" r="7" fill="#3d52a0"/>
-    <path d="M14 130H0M426 130h14" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
+    <rect x="310" y="116" width="30" height="28" rx="9" fill="url(#hatch)" stroke="#0d2b1e" strokeOpacity=".45" strokeWidth="1"/>
+    <circle cx="220" cy="130" r="30" fill="none" stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1"/>
+    <circle cx="220" cy="130" r="7" fill="#157446"/>
+    <path d="M14 130H0M426 130h14" stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1"/>
   </svg>)
 
 export const Board = (
   <svg viewBox="0 0 440 260" role="img" aria-label="The XIAO nRF52840 Sense board">
     <defs><pattern id="keep" width="6" height="6" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="6" x2="6" y2="0" stroke="#3d52a0" strokeOpacity=".35" strokeWidth="1"/></pattern></defs>
+      <line x1="0" y1="6" x2="6" y2="0" stroke="#157446" strokeOpacity=".35" strokeWidth="1"/></pattern></defs>
     {/* The middle layer used to be a bare rectangle floating at a different
         width from the other two, so mid-explode it looked like a stray part.
         This dashed ghost is the flange the tray lands inside — it carries no
         information beyond registration, which is why it is a construction line. */}
-    <rect {...FL} fill="none" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1" strokeDasharray="6 6"/>
-    <rect x="116" y="80" width="208" height="100" rx="16" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.6"/>
-    <rect x="132" y="92" width="176" height="76" rx="6" fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.3"/>
+    <rect {...FL} fill="none" stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1" strokeDasharray="6 6"/>
+    <rect x="116" y="80" width="208" height="100" rx="16" fill="#e3ede7" stroke="#0d2b1e" strokeWidth="1.6"/>
+    <rect x="132" y="92" width="176" height="76" rx="6" fill="#ffffff" stroke="#0d2b1e" strokeWidth="1.3"/>
     <rect x="132" y="92" width="176" height="20" fill="url(#keep)"/>
-    <rect x="132" y="92" width="176" height="20" fill="none" stroke="#3d52a0" strokeOpacity=".5" strokeWidth="1" strokeDasharray="4 3"/>
-    <rect x="196" y="84" width="48" height="12" rx="3" fill="#f8f6fc" stroke="#171f3c" strokeWidth="1.2"/>
-    <text x="220" y="136" textAnchor="middle" style={T} fontSize="18" fill="#171f3c">nRF52840</text>
-    <text x="220" y="154" textAnchor="middle" style={T} fontSize="13" fill="#30417e">IMU · PDM MIC</text>
-    <g fill="#3d52a0">{[120,132,144,156].flatMap(y=>[
+    <rect x="132" y="92" width="176" height="20" fill="none" stroke="#157446" strokeOpacity=".5" strokeWidth="1" strokeDasharray="4 3"/>
+    <rect x="196" y="84" width="48" height="12" rx="3" fill="#ffffff" stroke="#0d2b1e" strokeWidth="1.2"/>
+    <text x="220" y="136" textAnchor="middle" style={T} fontSize="18" fill="#0d2b1e">nRF52840</text>
+    <text x="220" y="154" textAnchor="middle" style={T} fontSize="13" fill="#2a5744">IMU · PDM MIC</text>
+    <g fill="#157446">{[120,132,144,156].flatMap(y=>[
       <rect key={'l'+y} x="138" y={y} width="14" height="6" rx="1.5"/>,
       <rect key={'r'+y} x="294" y={y} width="14" height="6" rx="1.5"/>])}</g>
-    <g fill="#171f3c" fillOpacity=".55">{[176,196,216,236,256].map(x=>
+    <g fill="#0d2b1e" fillOpacity=".55">{[176,196,216,236,256].map(x=>
       <rect key={x} x={x} y="173" width="12" height="6" rx="1"/>)}</g>
   </svg>)
 
 export const Face = (
   <svg viewBox="0 0 440 260" role="img" aria-label="The sensor face that sits against the skin">
-    <rect {...FL} fill="#f8f6fc" fillOpacity=".85" stroke="#171f3c" strokeOpacity=".55" strokeWidth="1.4"/>
+    <rect {...FL} fill="#ffffff" fillOpacity=".85" stroke="#0d2b1e" strokeOpacity=".55" strokeWidth="1.4"/>
     {/* No inset trim line on this layer, unlike the shell. It was drawn here
         too, for symmetry, and at this size it ran horizontally straight
         through "EDA" and "TEMP" — a decorative rule cancelling four labels.
         The pod outline already separates flange from body, so the trim had
         nothing left to say. */}
-    <rect {...POD} fill="none" stroke="#171f3c" strokeOpacity=".35" strokeWidth="1.2"/>
+    <rect {...POD} fill="none" stroke="#0d2b1e" strokeOpacity=".35" strokeWidth="1.2"/>
     {/* The two EDA electrodes moved out onto the wings, outside the pod
         outline. They were inboard on the old square drawing, which put both
         skin contacts under the thickest part of the enclosure — the wide
         silhouette is what makes the real placement drawable. */}
     {[66,374].map(cx=>(<g key={cx}>
-      <circle cx={cx} cy="124" r="34" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.5"/>
-      <circle cx={cx} cy="124" r="22" fill="none" stroke="#171f3c" strokeOpacity=".35" strokeWidth="1"/>
-      <path d={`M${cx} 158v13`} stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
-      <text x={cx} y="185" textAnchor="middle" style={T} fontSize="15" fill="#30417e">EDA</text></g>))}
-    <rect x="186" y="102" width="68" height="52" rx="14" fill="#171f3c"/>
-    <circle cx="204" cy="120" r="6" fill="#3d52a0"/><circle cx="236" cy="120" r="6" fill="#3d52a0"/>
-    <rect x="206" y="134" width="28" height="12" rx="3" fill="#f8f6fc" fillOpacity=".85"/>
-    <rect x="206" y="162" width="28" height="12" rx="3" fill="#dce2f1" stroke="#171f3c" strokeWidth="1.2"/>
-    <path d="M220 174v10" stroke="#171f3c" strokeOpacity=".3" strokeWidth="1"/>
-    <text x="220" y="94" textAnchor="middle" style={T} fontSize="15" fill="#30417e">PPG</text>
-    <text x="220" y="199" textAnchor="middle" style={T} fontSize="15" fill="#30417e">TEMP</text>
+      <circle cx={cx} cy="124" r="34" fill="#e3ede7" stroke="#0d2b1e" strokeWidth="1.5"/>
+      <circle cx={cx} cy="124" r="22" fill="none" stroke="#0d2b1e" strokeOpacity=".35" strokeWidth="1"/>
+      <path d={`M${cx} 158v13`} stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1"/>
+      <text x={cx} y="185" textAnchor="middle" style={T} fontSize="15" fill="#2a5744">EDA</text></g>))}
+    <rect x="186" y="102" width="68" height="52" rx="14" fill="#0d2b1e"/>
+    <circle cx="204" cy="120" r="6" fill="#157446"/><circle cx="236" cy="120" r="6" fill="#157446"/>
+    <rect x="206" y="134" width="28" height="12" rx="3" fill="#ffffff" fillOpacity=".85"/>
+    <rect x="206" y="162" width="28" height="12" rx="3" fill="#e3ede7" stroke="#0d2b1e" strokeWidth="1.2"/>
+    <path d="M220 174v10" stroke="#0d2b1e" strokeOpacity=".3" strokeWidth="1"/>
+    <text x="220" y="94" textAnchor="middle" style={T} fontSize="15" fill="#2a5744">PPG</text>
+    <text x="220" y="199" textAnchor="middle" style={T} fontSize="15" fill="#2a5744">TEMP</text>
   </svg>)
 
 /* `title`/`body` describe the physical stack and label the drawing. `cad`

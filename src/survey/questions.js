@@ -1,250 +1,221 @@
-/* The questions, one page at a time.
+/* One survey, at the end, off a button in the corner.
  *
- * Rewritten against the standard instruments rather than invented from
- * scratch. The first draft asked things like "Working out what MindMap
- * actually is — a patch, an app, or both — from this page was…", which is a
- * reviewer reading a sentence twice before they can answer it. Usability
- * research has settled wording for this and there is no reason to reinvent it:
+ * What was here before: two questions on every page, fired mid-browse after a
+ * scroll and a timer, eight times over a visit. That design was answering a
+ * question nobody asked — it measured each page in isolation and interrupted
+ * the thing it was measuring, and a reviewer who is mid-sentence on the
+ * hardware page is the worst possible moment to ask them to rate the hardware
+ * page. It is gone. Nothing pops up over a page now.
  *
- *   SEQ  — the Single Ease Question, asked immediately after a task:
- *          "How easy or difficult was …", very difficult → very easy.
- *   SUS  — five-point agreement with a flat statement, strongly disagree →
- *          strongly agree. Every per-page rating here is one or the other.
- *   UMUX-Lite — the two-item capability/ease pair, asked once at the end.
+ * What replaces it is one instrument, opened when the reviewer decides, built
+ * out of scales that already have published scoring and published benchmarks,
+ * because the point of a review is a number that can be compared with
+ * something rather than a shelf of bespoke five-point questions that can only
+ * be compared with themselves.
  *
- * Two structural rules:
+ *   SUS   — the System Usability Scale, Brooke 1986. Ten statements, five-point
+ *           agreement, alternating positive and negative. Scores 0-100, and
+ *           the population mean across hundreds of published studies is 68,
+ *           which is what makes the number mean anything. Wording is kept as
+ *           close to canonical as substituting "this app" allows; changing the
+ *           statements is what invalidates the benchmark.
+ *   NPS   — one 0-10 item. Coarse, but universally understood.
+ *   Stars — 1-5 in half steps.
+ *   Impact — five points, and the one place a sentence is invited.
  *
- * 1. Per page: exactly one rating and one multiple choice. No free text. A
- *    reviewer mid-browse will pick an option; they will not compose a
- *    sentence, and asking them to eight times is how a survey gets abandoned.
- *    Every written answer is collected once, at the end, where the reviewer
- *    has finished and has something to say.
- * 2. Most of the choice questions are comprehension checks with a real right
- *    answer ("Where is the patch worn?", "Can a parent see a raw reading?").
- *    A page can feel clear and still not land — asking what they took away
- *    catches that, and a rating alone never does.
- *
- * The keys are route ids, and they are the route ids the site actually has.
- * When the app moved behind Launch, `student`/`parent`/`pro` stopped being the
- * dashboards and became the walkthroughs that explain them, `hub` was deleted,
- * and `app` plus the three `app-*` dashboards appeared with no questions at
- * all — so the survey was asking about screens the reviewer was not looking at
- * and asking nothing about the four screens that matter most. Every question
- * below is answerable from what is on the page it is keyed to; a comprehension
- * check whose answer is not on the page measures nothing.
+ * Demographics come first and are all optional. They exist so a SUS of 71 can
+ * be split by whether the respondent was a student, a parent or a counselor —
+ * one number for everybody hides exactly the disagreement worth knowing about.
  */
 
 const pts = (...labels) => labels.map((label, i) => ({ value: i + 1, label }))
 
-/* The two standard five-point scales, both running negative → positive so the
-   direction is learned once and never re-read. */
-const EASE  = pts('Very difficult', 'Difficult', 'Neutral', 'Easy', 'Very easy')
-const AGREE = pts('Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree')
+/* Five-point agreement, negative to positive. One scale, learned once. */
+export const AGREE = pts('Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree')
 
-const ease   = (id, prompt) => ({ id, kind:'scale', prompt, points: EASE })
-const agree  = (id, prompt) => ({ id, kind:'scale', prompt, points: AGREE })
-const choice = (id, prompt, options) => ({ id, kind:'choice', prompt, options })
+const agree  = (id, prompt, tone) => ({ id, kind:'scale', prompt, points: AGREE, sus: tone })
+const choice = (id, prompt, options, extra = {}) => ({ id, kind:'choice', prompt, options, ...extra })
 
-export const QUESTIONS = {
-  site: [
-    ease('site-ease', 'How easy was it to understand what MindMap does?'),
-    choice('site-what', 'From this page, MindMap is:', [
-      'A patch you wear',
-      'A phone app',
-      'A patch and an app together',
-      'Still not sure',
-    ]),
-  ],
+/* The ten SUS statements, in their published order. `sus` marks the direction:
+   odd-numbered items are worded positively and even-numbered negatively, and
+   the scoring below depends on that alternation being intact. Reordering them
+   or dropping one produces a number that is not a SUS score. */
+export const SUS_ITEMS = [
+  agree('sus-1',  'I think that I would want to use MindMap regularly.', 'pos'),
+  agree('sus-2',  'I found MindMap unnecessarily complex.', 'neg'),
+  agree('sus-3',  'I thought MindMap was easy to use.', 'pos'),
+  agree('sus-4',  'I think I would need help from someone technical to use MindMap.', 'neg'),
+  agree('sus-5',  'I found the various parts of MindMap were well put together.', 'pos'),
+  agree('sus-6',  'I thought there was too much inconsistency in MindMap.', 'neg'),
+  agree('sus-7',  'I would imagine that most people would learn to use MindMap very quickly.', 'pos'),
+  agree('sus-8',  'I found MindMap very awkward to use.', 'neg'),
+  agree('sus-9',  'I felt confident using MindMap.', 'pos'),
+  agree('sus-10', 'I needed to learn a lot of things before I could get going with MindMap.', 'neg'),
+]
 
-  patch: [
-    ease('patch-ease', 'How easy was it to understand what the patch measures?'),
-    choice('patch-where', 'Where is the patch worn?', [
-      'On the forearm',
-      'On the chest',
-      'On the wrist',
-      'Not sure',
-    ]),
-  ],
+export const ABOUT_ITEMS = [
+  choice('about-age', 'Your age range', [
+    'Under 18', '18–24', '25–34', '35–44', '45–54', '55–64', '65 or over',
+  ], { optional: true }),
+  choice('about-education', 'Highest level of education finished', [
+    'Still in school', 'High school', 'Some college', 'Bachelor’s degree',
+    'Master’s degree', 'Doctorate or professional degree',
+  ], { optional: true }),
+  choice('about-role', 'Which describes you best?', [
+    'Student',
+    'Parent or guardian',
+    'Teacher or school staff',
+    'School counselor or psychologist',
+    'Clinician or healthcare worker',
+    'Engineer, designer or researcher',
+    'Something else',
+  ], { optional: true }),
+  /* The segmentation that actually changes how an answer should be read. A
+     counselor who deals with this every week and a stranger who has never
+     thought about it are both useful reviewers and they are not the same
+     reviewer. */
+  choice('about-closeness', 'How close is teen stress to your day-to-day?', [
+    'Not close at all',
+    'Somewhat, it comes up occasionally',
+    'Close, it affects someone I know well',
+    'It is part of my work',
+  ], { optional: true }),
+]
 
-  /* ── The three walkthroughs ──────────────────────────────────────────────
-     Nothing is operated on these pages, so nothing here asks how easy a task
-     was. They are explanations, and the only thing worth measuring about an
-     explanation is whether it was clear and what the reader took from it. */
-
-  student: [
-    agree('student-clear', 'This page made it clear what a student gets from MindMap.'),
-    choice('student-baseline', 'A student’s score is measured against:', [
-      'Their own last two weeks',
-      'Other students in their class',
-      'A national average',
-      'Not sure',
-    ]),
-  ],
-
-  parent: [
-    agree('parent-limits', 'I understood what a parent can and cannot see.'),
-    choice('parent-raw', 'Can a parent see a raw, second-by-second reading?', [
-      'Yes',
-      'No',
-      'Not sure',
-    ]),
-  ],
-
-  pro: [
-    agree('pro-limits', 'The limits a school counselor works inside were clear.'),
-    choice('pro-floor', 'For a group of fewer than five students, the console returns:', [
-      'Nothing at all',
-      'An estimate',
-      'A rounded figure',
-      'Not sure',
-    ]),
-  ],
-
-  /* ── The app ─────────────────────────────────────────────────────────────
-     One door and three screens behind it. These are the screens a reviewer is
-     being asked to judge, so all four are SEQ: there is a task on each one. */
-
-  app: [
-    ease('app-ease', 'How easy was it to tell which of the three screens is yours?'),
-    choice('app-differ', 'The three screens differ because:', [
-      'They show different slices of the same day',
-      'Each one reads a different patch',
-      'Each one belongs to a different school',
-      'Not sure',
-    ]),
-  ],
-
-  'app-student': [
-    ease('app-student-ease', 'How easy was it to find what moved today’s score?'),
-    choice('app-student-sees', 'On this screen, a student can reach:', [
-      'Every reading the patch took',
-      'Only the day’s score',
-      'Only what they agreed to share',
-      'Not sure',
-    ]),
-  ],
-
-  'app-parent': [
-    ease('app-parent-ease', 'How easy was it to tell how the week had gone?'),
-    choice('app-parent-day', 'Each day of the week is marked as:', [
-      'Above or inside her usual range',
-      'A score out of 100',
-      'Her heart rate',
-      'Not sure',
-    ]),
-  ],
-
-  'app-pro': [
-    ease('app-pro-ease', 'How easy was it to tell which student to see first?'),
-    choice('app-pro-order', 'The caseload is ordered by:', [
-      'How fast a student is changing',
-      'Highest score first',
-      'Alphabetical order',
-      'Not sure',
-    ]),
-  ],
-
-  check: [
-    ease('check-ease', 'How easy was the check-in to complete?'),
-    choice('check-length', 'The length of the check-in was:', [
-      'Too short',
-      'About right',
-      'Too long',
-    ]),
-  ],
-
-  privacy: [
-    agree('privacy-trust', 'I would trust this product with a student’s data.'),
-    choice('privacy-never', 'Which of these is never shared with a parent?', [
-      'Where the student was',
-      'Whether the patch was worn',
-      'Whether a day was above their usual',
-      'Not sure',
-    ]),
-  ],
-
-  tour: [
-    agree('tour-built', 'The tour made it clear what has actually been built.'),
-    choice('tour-length', 'The tour length was:', [
-      'Too short',
-      'About right',
-      'Too long',
-    ]),
-  ],
-
-  /* Everything written is collected here, once, at the end. The three
-     agreement items are UMUX-Lite's capability/ease pair plus a recommendation
-     item — the shortest set that still reports like a standard score. */
-  final: [
-    agree('final-needs',   'MindMap’s features meet what a school would need.'),
-    agree('final-easy',    'MindMap is easy to use.'),
-    agree('final-recommend', 'I would be comfortable recommending this to a school.'),
-    {
-      id: 'final-stars',
-      kind: 'stars',
-      prompt: 'Taking the whole site together, how would you rate it?',
-      max: 5,
-      step: 0.5,
+export const RATING_ITEMS = [
+  {
+    id: 'nps',
+    kind: 'nps',
+    prompt: 'How likely are you to recommend MindMap to a school or a family?',
+    low: 'Not at all likely',
+    high: 'Extremely likely',
+  },
+  {
+    id: 'stars',
+    kind: 'stars',
+    prompt: 'Taking the whole thing together, how would you rate it?',
+    max: 5,
+    step: 0.5,
+  },
+  {
+    id: 'impact',
+    kind: 'impact',
+    optional: true,
+    prompt: 'If this existed and schools used it, how much difference could it make?',
+    points: pts(
+      'None at all',
+      'A little, for a few people',
+      'A real difference for some',
+      'A large difference',
+      'It would change how schools work'
+    ),
+    sentence: {
+      prompt: 'If you want to say why, one sentence.',
+      placeholder: 'It would matter most because…',
+      maxLength: 240,
     },
-    {
-      id: 'final-impact',
-      kind: 'impact',
-      optional: true,
-      prompt: 'If this existed and schools used it, how much difference could it make?',
-      points: pts(
-        'None at all',
-        'A little, for a few people',
-        'A real difference for some',
-        'A large difference',
-        'It would change how schools work'
-      ),
-      sentence: {
-        prompt: 'If you want to say why — one sentence.',
-        placeholder: 'It would matter most because…',
-        maxLength: 240,
-      },
-    },
-    {
-      id: 'final-change',
-      kind: 'text',
-      prompt: 'Anything that confused you, or that you would change?',
-      placeholder: 'The thing I kept tripping over was…',
-      maxLength: 400,
-    },
-  ],
+  },
+  {
+    id: 'change',
+    kind: 'text',
+    optional: true,
+    prompt: 'Anything that confused you, or that you would change?',
+    placeholder: 'The thing I kept tripping over was…',
+    maxLength: 400,
+  },
+]
+
+/* Three sections, in the order they are asked. Demographics first because they
+   are the easiest thing in the survey and finishing something immediately is
+   what gets the rest answered. */
+export const SECTIONS = [
+  { id: 'about',   title: 'About you',
+    note: 'Every question here is optional. None of it identifies you.',
+    items: ABOUT_ITEMS },
+  { id: 'usability', title: 'Using the app',
+    note: 'The standard ten. Answer quickly, first reaction is the useful one.',
+    items: SUS_ITEMS },
+  { id: 'overall', title: 'Overall',
+    note: null,
+    items: RATING_ITEMS },
+]
+
+export const PAGE = 'review'
+export const ALL_ITEMS = SECTIONS.flatMap(s => s.items)
+export const REQUIRED = ALL_ITEMS.filter(q => !q.optional)
+
+/* ── Scoring ──────────────────────────────────────────────────────────────
+   Published formulas, not house ones.
+
+   SUS: positively worded items score (answer - 1), negatively worded items
+   score (5 - answer); sum the ten and multiply by 2.5. Range 0-100, mean of
+   published studies 68. It is not a percentage and saying "71%" is the most
+   common way to misreport it.
+
+   NPS: promoters (9-10) minus detractors (0-6) as a percentage of all
+   respondents, ignoring passives. Range -100 to +100. */
+export function susScore(answers) {
+  let sum = 0, n = 0
+  for (const item of SUS_ITEMS) {
+    const a = answers.get(item.id)
+    if (a == null) continue
+    sum += item.sus === 'pos' ? a - 1 : 5 - a
+    n++
+  }
+  if (n < SUS_ITEMS.length) return null
+  return Math.round(sum * 2.5 * 10) / 10
 }
 
-/* The page names, beside the questions rather than in the page that reports
-   them: they were kept in Responses.jsx, so adding a route meant editing two
-   files and the second one was the one that got forgotten — which is how a
-   live route ended up labelled with its own id. */
-const PAGE_LABEL = {
-  site: 'Overview', patch: 'The patch',
-  student: 'For students', parent: 'For parents', pro: 'For schools',
-  app: 'Launch the app',
-  'app-student': 'Student screen', 'app-parent': 'Parent screen',
-  'app-pro': 'Counselor console',
-  check: 'Take a reading', privacy: 'Who can see what', tour: 'The tour',
-  final: 'Last questions',
+/* Sauro and Lewis's curved grade, which is the reason a 71 is a C and not a
+   "71 out of 100 so nearly an A". */
+export function susGrade(score) {
+  if (score == null) return null
+  if (score >= 84.1) return { grade: 'A', word: 'excellent' }
+  if (score >= 78.9) return { grade: 'B', word: 'good' }
+  if (score >= 68)   return { grade: 'C', word: 'about average' }
+  if (score >= 51.7) return { grade: 'D', word: 'below average' }
+  return { grade: 'F', word: 'poor' }
 }
 
-/* Routes that no longer exist. Answers recorded against them are still in
-   reviewers' browsers and still in the store, and they have to read as English
-   on the responses page rather than as a bare id — deleting a route does not
-   delete the answers somebody already gave. */
-const RETIRED_LABEL = {
-  hub: 'Open the app — retired',
+export function npsBucket(value) {
+  if (value == null) return null
+  if (value >= 9) return 'promoter'
+  if (value >= 7) return 'passive'
+  return 'detractor'
+}
+
+export function npsScore(values) {
+  const v = values.filter(x => x != null)
+  if (!v.length) return null
+  const p = v.filter(x => x >= 9).length
+  const d = v.filter(x => x <= 6).length
+  return Math.round(((p - d) / v.length) * 100)
+}
+
+export function questionText(qid) {
+  const q = ALL_ITEMS.find(x => x.id === qid)
+  return q ? q.prompt : qid
+}
+
+export function itemById(qid) {
+  return ALL_ITEMS.find(x => x.id === qid) || null
+}
+
+/* Answers recorded under the old per-page scheme are still in reviewers'
+   browsers and still on the responses page. They keep their English labels
+   rather than showing as bare route ids. */
+const RETIRED = {
+  site: 'Overview (no longer asked)', patch: 'The patch (no longer asked)',
+  student: 'For students (no longer asked)', parent: 'For parents (no longer asked)',
+  pro: 'For schools (no longer asked)', app: 'Launch (no longer asked)',
+  'app-student': 'Student screen (no longer asked)',
+  'app-parent': 'Parent screen (no longer asked)',
+  'app-pro': 'Counselor console (no longer asked)',
+  check: 'Take a reading (no longer asked)',
+  privacy: 'Who can see what (no longer asked)', tour: 'The tour (no longer asked)',
+  hub: 'Open the app (no longer asked)', final: 'Last questions (no longer asked)',
 }
 
 export function pageLabel(page) {
-  return PAGE_LABEL[page] || RETIRED_LABEL[page] || page
-}
-
-export function questionsFor(page) {
-  return QUESTIONS[page] || []
-}
-
-export function questionText(page, qid) {
-  const q = (QUESTIONS[page] || []).find(x => x.id === qid)
-  return q ? q.prompt : qid
+  return page === PAGE ? 'Site review' : (RETIRED[page] || page)
 }

@@ -123,10 +123,13 @@ export function StarRating({
           )
         })}
       </div>
-      {/* The rating in words and figures, so it never depends on the fill. */}
+      {/* The rating in words and figures, so it never depends on the fill.
+          Unrated says so in words: a placeholder glyph in the figure's slot
+          reads as a value the reader cannot make out. */}
       <span className="font-mono text-meta tabular-nums text-ink">
-        {shown == null ? '—' : shown.toFixed(1)}
-        <span className="text-ink-3"> / {max}</span>
+        {shown == null ? <span className="text-ink-3">Not rated</span> : <>
+          {shown.toFixed(1)}<span className="text-ink-3"> / {max}</span>
+        </>}
       </span>
     </div>
   )

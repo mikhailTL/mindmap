@@ -161,11 +161,11 @@ function Limited({ heading, note, children }) {
    content of the empty board rather than a line under it. */
 const CASELOAD_NEEDS = [
   ['A student pairs a patch',
-   'Nothing reaches the school from an unpaired account. The student pairs it themselves, on their own phone, and can unpair it the same way.'],
+   'Nothing reaches the school until the student pairs it, on their own phone. They can unpair it the same way.'],
   ['A guardian signs a consent scope',
-   'The scope decides what this board may show about that student: a wellness score, a score with weekly trends, or crisis alerts and nothing else.'],
+   'The scope decides what this board may show: a score, a score with weekly trends, or crisis alerts only.'],
   ['The scope is applied here, and never widened',
-   'A student consented to alerts only carries no score on this screen and no rank. Ranking them anyway would leak exactly the thing they withheld.'],
+   'A student consented to alerts only carries no score and no rank here.'],
 ]
 
 /* The row the board draws, with its four fields named and none of them filled.
@@ -177,7 +177,7 @@ function BlankBoardRow() {
     <figure className="m-0 mt-3">
       <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-panel
         border border-dashed border-rule p-4 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)]">
-        <span className="font-mono text-meta text-ink-3">—</span>
+        <span className="font-mono text-tick text-ink-3">rank</span>
         <span className="font-mono text-tick text-ink-3">student · grade · tier</span>
         <span className="font-mono text-tick text-ink-3">score</span>
         <span className="col-span-full sm:col-span-1">
@@ -192,8 +192,8 @@ function BlankBoardRow() {
         </span>
       </div>
       <figcaption className="note mt-3 max-w-[62ch]">
-        One row per consented student, ordered by how fast they are moving rather than by how high
-        they are. Right of centre on the track is worse.
+        One row per consented student, ordered by how fast they are moving. Right of centre is
+        worse.
       </figcaption>
     </figure>
   )
@@ -204,48 +204,33 @@ function BlankBoardRow() {
 const RankRule = () => (
   <Sub>Who to see first. <b className="font-medium text-ink">
     <Term label="Stress index"
-      def="One score a day per student, 0 to 100, read against that student's own baseline rather than against the year group."/>,
+      def="One score a day per student, 0 to 100, read against that student's own baseline, not against the year group."/>,
     {' '}0 to 100, higher is worse</b>, ordered by weekly{' '}
     <Term label="velocity"
-      def="The change in a student's seven-day average from one week to the next. It is what orders this list, so a rising student at 55 sits above a level one at 70."/>.</Sub>
+      def="The change in a student's seven-day average from one week to the next. A rising student at 55 sits above a level one at 70."/>.</Sub>
 )
 
 function EmptyTriage() {
   return (
     <>
-      <h2 className="font-display text-head font-medium tracking-tight text-ink">
-        Your caseload, ranked by weekly change</h2>
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">
+        Your caseload</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
         <RankRule/>
         <span className="font-mono text-tick text-ink-3">0 consented · 0 ranked</span>
       </div>
 
-      {/* No wrapper rule: both columns open with a `.mark`, which draws its
-          own, and a second hairline 20px above it reads as a rendering fault. */}
-      <div className="mt-10 grid gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <div className="mt-10">
         <section>
-          <h3 className="mark">What puts a name on this board</h3>
+          <h3 className="mark">How a student gets on this board</h3>
           <ol className="m-0 mt-3 list-none p-0">
-            {CASELOAD_NEEDS.map(([what, why], i) => (
-              <li key={what} className="flex gap-4 border-b border-rule py-4 last:border-b-0 last:pb-0">
-                <span className="pt-0.5 font-mono text-tick tabular-nums text-ink-3">0{i + 1}</span>
-                <span>
-                  <span className="block font-display text-ui font-medium text-ink">{what}</span>
-                  <span className="mt-1 block max-w-[62ch] text-sec text-ink-2">{why}</span>
-                </span>
+            {CASELOAD_NEEDS.map(([what, why]) => (
+              <li key={what} className="border-b border-rule py-4 last:border-b-0 last:pb-0">
+                <p className="font-display text-ui font-bold text-ink">{what}</p>
+                <p className="mt-1 max-w-[62ch] text-sec text-ink-2">{why}</p>
               </li>
             ))}
           </ol>
-        </section>
-        {/* The floor is stated before there is any data to suppress, which is
-            the only order in which a school can weigh it. */}
-        <section>
-          <h3 className="mark">Smallest group we will show</h3>
-          <p className="mt-3 font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</p>
-          <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
-          <p className="mt-4 max-w-[46ch] text-meta text-ink-2">
-            Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen, however
-            many students in it consented.</p>
         </section>
       </div>
 
@@ -257,12 +242,12 @@ function EmptyTriage() {
       <div className="mt-14 grid gap-5 lg:grid-cols-2">
         {/* Written as scope definitions rather than as statements about
             guardians who have signed: none has. */}
-        <Limited heading="Score only — no trends shared"
-          note="Where a guardian consents to a score alone, no rank is ever shown for that student.">
+        <Limited heading="Score only, no trends"
+          note="No rank is ever shown for these students.">
           <BlankRow>No student is at this scope.</BlankRow>
         </Limited>
         <Limited heading="Crisis alerts only"
-          note="Where a guardian consents to crisis alerts alone, no score, trend or tier is ever shown.">
+          note="No score, trend or tier is ever shown.">
           <BlankRow>No student is at this scope.</BlankRow>
         </Limited>
       </div>
@@ -289,15 +274,11 @@ function Triage({ onOpen, real }) {
     byScore.findIndex(x => x.id === fastest.id)]
   return (
     <>
-      {/* Was "Who to see first", which posed the board's question without
-          naming the board. The question is worth keeping, so it leads the
-          paragraph instead. */}
-      <h2 className="font-display text-head font-medium tracking-tight text-ink">
-        Your caseload, ranked by weekly change</h2>
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">
+        Your caseload</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        {/* "Ranked by weekly velocity" was a second sentence saying what the
-            heading now says, so the two terms are folded into one line and the
-            hover definitions are unchanged. */}
+        {/* The heading names the board; the ranking rule and both hover
+            definitions ride on this one line under it. */}
         <RankRule/>
         <span className="font-mono text-tick text-ink-3">
           {total} consented · {ranked.length} ranked</span>
@@ -338,7 +319,7 @@ function Triage({ onOpen, real }) {
           <p className="mt-1.5 text-sec text-ink-2">
             {highest.showTrend
               ? `Weekly change ${highest.velocity > 0 ? '+' : ''}${highest.velocity}. `
-              : 'Score only — no weekly change shared. '}
+              : 'Score only. No weekly change shared. '}
             {ref ? `Referral open since ${ref.opened}.` : 'No referral open.'}</p>
         </div>
       </div>
@@ -352,8 +333,8 @@ function Triage({ onOpen, real }) {
         Right of centre on the bar is worse.</p>
 
       <div className="mt-14 grid gap-5 lg:grid-cols-2">
-        <Limited heading="Score only — no trends shared"
-          note="Guardian consented to a score only. No rank is shown for these students.">
+        <Limited heading="Score only, no trends"
+          note="No rank is shown for these students.">
           {scoreOnly().map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <button onClick={() => onOpen(s.name)} className="min-h-[44px] text-left text-meta text-ink
@@ -364,7 +345,7 @@ function Triage({ onOpen, real }) {
           ))}
         </Limited>
         <Limited heading="Crisis alerts only"
-          note="Guardian consented to crisis alerts only. No score, trend or tier is shown.">
+          note="No score, trend or tier is shown.">
           {quiet.map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <span className="text-meta text-ink">{s.name}</span>
@@ -382,11 +363,11 @@ function Triage({ onOpen, real }) {
    list is the empty tab's whole content because a record's shape is the thing
    a school has to agree to before any of it exists. */
 const RECORD_FIELDS = [
-  ['Score today, out of 100', 'Shown when a guardian consents to a wellness score.'],
-  ['Weekly change, and a rank on the board', 'Shown when that consent extends to trends.'],
-  ['What is driving the rise', 'Shown with trends. Shares of the change per signal — never a raw reading.'],
-  ['The last 45 days', 'Shown with trends.'],
-  ['Counselor notes', 'Yours to write, at any scope. Saving writes a row to the audit log.'],
+  ['Score today, out of 100', 'With score consent.'],
+  ['Weekly change, and a rank on the board', 'With trend consent.'],
+  ['What is driving the rise', 'With trend consent. Shares per signal, never a raw reading.'],
+  ['The last 45 days', 'With trend consent.'],
+  ['Counselor notes', 'Any scope. Saving writes a row to the audit log.'],
 ]
 
 function EmptyRecord() {
@@ -394,11 +375,11 @@ function EmptyRecord() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-head font-medium tracking-tight text-ink">
+          <h2 className="font-display text-head font-bold tracking-tight text-ink">
             No student record open</h2>
-          <p className="mt-1 font-mono text-tick text-ink-3">Grade — · scope —</p>
-          <Sub className="mt-2">A record opens from the triage board, and the board is empty until a
-            guardian signs a scope for a student with a paired patch.</Sub>
+          <p className="mt-1 font-mono text-tick text-ink-3">no grade · no scope</p>
+          <Sub className="mt-2">A record opens from the triage board, which stays empty until a
+            guardian signs a scope.</Sub>
         </div>
         {/* The control stays, disabled and empty. Removing it would hide how a
             counselor moves between students, which is a real part of the
@@ -415,10 +396,10 @@ function EmptyRecord() {
 
       <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
         <CardHeader className="p-6 pb-0">
-          <CardTitle as="h3" className="text-row">What a record holds, at the scope consented</CardTitle>
+          <CardTitle as="h3" className="text-row">What a record holds</CardTitle>
           <CardDescription className="max-w-[56ch]">Each line appears only if the guardian agreed to
-            it. Crisis alerts reach the counselor in every case — that is the one thing a guardian
-            cannot consent away, and students are told so before they start wearing a patch.</CardDescription>
+            it. Crisis alerts reach the counselor in every case, and no guardian can switch them
+            off.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-5">
           <ul className="m-0 list-none border-t border-rule p-0">
@@ -430,7 +411,7 @@ function EmptyRecord() {
                 gap-y-1 border-b border-rule py-3.5
                 sm:grid-cols-[2.5rem_minmax(0,19rem)_minmax(0,1fr)]">
                 <BlankLane className="w-10"/>
-                <span className="font-display text-meta font-medium text-ink">{field}</span>
+                <span className="font-display text-meta font-bold text-ink">{field}</span>
                 <span className="col-start-2 max-w-[52ch] text-sec text-ink-3 sm:col-start-3">{when}</span>
               </li>
             ))}
@@ -457,7 +438,7 @@ function OneStudent({ who, setWho, real }) {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-head font-medium tracking-tight text-ink">{s.name}</h2>
+          <h2 className="font-display text-head font-bold tracking-tight text-ink">{s.name}</h2>
           <p className="mt-1 font-mono text-tick text-ink-3">
             Grade {s.grade}{s.showScore ? ` · ${TIER_LABEL[s.tier]}` : ''}</p>
           <p className="mt-2 max-w-[46ch] text-sec text-ink-2">Consented: {s.scope}.</p>
@@ -608,28 +589,28 @@ const SuppressedSwatch = ({ className }) => (
    there is nothing to aggregate — but the rule that governs the aggregation is
    policy, and it is the half a school weighs before it signs anything. */
 const COHORT_REPORTS = [
-  ['Stress by class period', 'A mean per period across the building. A period with fewer than five consented students returns nothing at all.'],
-  ['Stress by weekday', 'The same figure per weekday, read school-wide rather than per class.'],
+  ['Stress by class period', 'A mean per period across the building. Fewer than five consented students returns nothing.'],
+  ['Stress by weekday', 'The same figure per weekday, school-wide.'],
 ]
 
 function EmptyCohort() {
   return (
     <>
-      <h2 className="font-display text-head font-medium tracking-tight text-ink">
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">
         Patterns across the whole school</h2>
-      <Sub className="mt-2">No student in the building has consented, so there is nothing to
-        aggregate. Nobody on this tab is ever identifiable, at any roll.</Sub>
+      <Sub className="mt-2">Nobody has consented, so there is nothing to aggregate. Nobody on this
+        tab is ever identifiable.</Sub>
 
       <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <h3 className="mark">What this tab reports</h3>
+          <h3 className="mark">What this tab shows</h3>
           <RuleDraw className="mt-2.5"/>
           <ul className="m-0 mt-5 list-none p-0">
             {/* The dashed lane is this row's rule as well as its blank: a solid
                 border under it put two hairlines 12px apart. */}
             {COHORT_REPORTS.map(([what, how]) => (
               <li key={what} className="py-4 first:pt-0">
-                <h4 className="font-display text-row font-medium tracking-tight text-ink">{what}</h4>
+                <h4 className="font-display text-row font-bold tracking-tight text-ink">{what}</h4>
                 <p className="mt-1.5 max-w-[58ch] text-sec text-ink-2">{how}</p>
                 <BlankLane className="mt-3.5 block w-full"/>
               </li>
@@ -644,8 +625,8 @@ function EmptyCohort() {
           <p className="mt-4 text-meta text-ink-2">
             Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen.</p>
           <div className="mt-5 border-t border-rule pt-4">
-            <p className="text-meta text-ink-2">A suppressed cell is drawn, not hidden — it is
-              hatched, so a counselor can see that a figure exists and is being withheld.</p>
+            <p className="text-meta text-ink-2">A suppressed cell is hatched, not hidden, so a
+              counselor can see a figure exists and is withheld.</p>
             <SuppressedSwatch className="mt-3"/>
           </div>
         </Panel>
@@ -665,7 +646,7 @@ function Cohort({ real }) {
   const suppressed = COHORT_PERIOD.filter(p => p.suppressed).length
   return (
     <>
-      <h2 className="font-display text-head font-medium tracking-tight text-ink">
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">
         Patterns across the whole school</h2>
       {/* A reviewer read "8 students" on the triage board and "18 consented
           students" here and concluded one of them was invented. Both are true
@@ -679,18 +660,18 @@ function Cohort({ real }) {
           <h3 className="mark">The two clearest patterns</h3>
           <RuleDraw className="mt-2.5"/>
           <ScrollIn className="mt-6">
-            <h4 className="font-display text-row font-medium tracking-tight text-ink">
+            <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {top.label} shows a school-wide stress spike.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
               <li>Mean <b className="font-medium text-ink">{top.mean}</b> against a school average
-                of {avg} — <b className="font-medium text-warn">
+                of {avg}, <b className="font-medium text-warn">
                 {Math.round(((top.mean - avg) / avg) * 100)}% higher</b></li>
               <li>Across {top.n} consented students in that period</li>
               <li>Holds across every year group taking it</li>
             </ul>
           </ScrollIn>
           <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
-            <h4 className="font-display text-row font-medium tracking-tight text-ink">
+            <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {hardest.full} is the hardest day of the week, school-wide.</h4>
             <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
               <li>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
@@ -718,7 +699,7 @@ function Cohort({ real }) {
       </div>
 
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Panel label="Stress by class period — school-wide">
+        <Panel label="Stress by class period">
           <ul className="space-y-4">
             {COHORT_PERIOD.map(p => (
               <li key={p.key}>
@@ -752,7 +733,7 @@ function Cohort({ real }) {
           </ul>
         </Panel>
 
-        <Panel label="Stress by weekday — school-wide">
+        <Panel label="Stress by weekday">
           <div className="flex h-[170px] items-end justify-between gap-3">
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
@@ -805,27 +786,27 @@ function Escalation({ real }) {
           </CardHeader>
           <CardContent className="p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h3 className="font-display text-row font-medium tracking-tight text-ink">
+            <h3 className="font-display text-row font-bold tracking-tight text-ink">
               {real ? 'Nothing in the queue' : 'Student 8241'}</h3>
-            <span className="font-mono text-sec tabular-nums text-ink-3">{real ? '—' : '2:14 PM'}</span>
+            <span className="font-mono text-sec tabular-nums text-ink-3">{real ? '' : '2:14 PM'}</span>
           </div>
           {real
             /* An empty crisis queue is the good state, and it has to read as
                one. It is also the only thing on this console nobody can put a
                row into by hand, which is worth saying while it is empty. */
-            ? <p className="mt-2 max-w-[60ch] text-meta text-ink-2">An entry is written here only when
-                a paired patch crosses the crisis threshold. No counselor, parent or administrator can
-                raise one by hand, and none has been raised.</p>
+            ? <p className="mt-2 max-w-[60ch] text-meta text-ink-2">An entry appears only when a
+                paired patch crosses the crisis threshold. Nobody can raise one by hand, and none
+                has been raised.</p>
             : <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
-                Student 8241’s physiology crossed the crisis threshold during AP Chemistry. The
-                escalation protocol ran automatically.</p>}
+                Student 8241 crossed the crisis threshold during AP Chemistry. The protocol ran
+                automatically.</p>}
           {/* The wrapper already draws the rule that separates the steps from
               the alert above; `.mark` draws its own, so the two stacked into a
               pair of hairlines 16px apart that read as a rendering fault. */}
           <div className="mt-5 border-t border-rule pt-4">
             {/* "Protocol" named the document, not the five checkboxes under
                 it. */}
-            <h4 className="font-display text-tick font-medium text-ink-2">Escalation steps</h4>
+            <h4 className="font-display text-tick font-bold text-ink-2">Escalation steps</h4>
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
                 <li key={step}>
@@ -836,7 +817,7 @@ function Escalation({ real }) {
                     <span className={cn('text-meta', ticked.includes(i) ? 'text-ink-3 line-through decoration-rule' : 'text-ink')}>
                       {step}</span>
                     <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-sec
-                      tabular-nums text-ink-3">{ticked.includes(i) ? PROTOCOL_TIMES[i] : real ? '—' : ''}</span>
+                      tabular-nums text-ink-3">{ticked.includes(i) ? PROTOCOL_TIMES[i] : ''}</span>
                   </label>
                 </li>
               ))}
@@ -856,8 +837,8 @@ function Escalation({ real }) {
             Closed sitting under it. */}
         <Panel as="h3" label="Referrals on this caseload">
           <ul className="divide-y divide-rule">
-            {real && <BlankRow>No referral has been opened. A referral is written from a student's
-              record, so the first one follows the first consent.</BlankRow>}
+            {real && <BlankRow>No referral has been opened. A referral is written from a
+              student's record.</BlankRow>}
             {referrals.map(r => (
               <li key={r.student + r.opened} className="py-3.5 first:pt-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -884,13 +865,12 @@ function Escalation({ real }) {
         </p>
       )}
 
-      <Panel as="h3" className="mt-14" label="Audit log" action="Append-only · cannot be edited or deleted">
+      <Panel as="h3" className="mt-14" label="Audit log" action="Cannot be edited or deleted">
         <Table>
           <THead><TR>{['When','Actor','Action','Subject'].map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
-            {real && <EmptyBand cols={4}>Nothing has been logged. The first row is written the moment
-              anyone opens a record, exports a figure or changes a setting — including a student
-              changing their own.</EmptyBand>}
+            {real && <EmptyBand cols={4}>Nothing has been logged. A row is written whenever anyone
+              opens a record, exports a figure or changes a setting.</EmptyBand>}
             {log.map(r => (
               <TR key={r.at + r.action}>
                 <TD num className="w-44 whitespace-nowrap">{r.at}
@@ -903,7 +883,7 @@ function Escalation({ real }) {
           </TBody>
         </Table>
         <Note>A student changing their own settings is logged exactly like a staff action.{' '}
-          {real ? 'The log cannot be edited or deleted, so an empty one stays empty only until the first action.'
+          {real ? 'The log cannot be edited or deleted.'
                 : 'Step five is still open, so there is no closing entry yet.'}</Note>
       </Panel>
     </>
@@ -926,16 +906,15 @@ function Consent({ real }) {
   const log = real ? [] : AUDIT_LOG
   return (
     <>
-      <h2 className="mb-7 font-display text-head font-medium tracking-tight text-ink">
+      <h2 className="mb-7 font-display text-head font-bold tracking-tight text-ink">
         What each guardian agreed to</h2>
       <Panel as="h3" label="Consent ledger" action={`${ledger.length} active · FERPA / COPPA`}>
         <Table>
           <THead><TR>{['Student','Guardian','Scope consented','Basis','Signed','Expires']
             .map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
-            {real && <EmptyBand cols={6}>No guardian has signed a scope. Every row is one signature,
-              revocable by the guardian and narrowable by the student at any time — except a crisis
-              alert, which neither can switch off.</EmptyBand>}
+            {real && <EmptyBand cols={6}>No guardian has signed a scope. Every row is one
+              signature, revocable at any time except a crisis alert.</EmptyBand>}
             {ledger.map(r => (
               <TR key={r.student}>
                 <TD num>{r.student}</TD>
@@ -948,9 +927,8 @@ function Consent({ real }) {
             ))}
           </TBody>
         </Table>
-        <Note>The triage board reads this table directly — a student with no row here cannot appear
-          there, and a narrowed scope narrows the board.{real ? '' : ' Two students here carry no rank, one shows no score.'} A
-          student can narrow or withdraw any scope except a crisis alert, at any time.</Note>
+        <Note>The triage board reads this table directly, so a narrowed scope narrows the
+          board.{real ? '' : ' Two students here carry no rank, one shows no score.'}</Note>
       </Panel>
 
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -958,8 +936,8 @@ function Consent({ real }) {
           <div className="font-mono text-stat font-medium tabular-nums text-ink">90</div>
           <p className="mt-1 text-sec text-ink-3">days, raw signals</p>
           <p className="mt-4 max-w-[52ch] text-meta text-ink-2">
-            Set by each student. After the window closes the second-by-second readings are deleted.
-            No archive, no backup.</p>
+            Set by each student. After the window closes the raw readings are deleted. No archive,
+            no backup.</p>
           <ul className="mt-5 divide-y divide-rule border-t border-rule">
             {FACTS.map(([k, v]) => (
               <li key={k} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
@@ -989,8 +967,8 @@ function Consent({ real }) {
             <Button variant="outline" size="sm" disabled>Export audit log (CSV)</Button>
             <Button variant="outline" size="sm" disabled>Export consent ledger</Button>
             <span className="text-sec text-ink-3">{real
-              ? 'Nothing to export yet. In the product every export writes its own row above.'
-              : 'Disabled in this demo. In the product every export writes its own row above.'}</span>
+              ? 'Nothing to export yet. Every export writes its own row above.'
+              : 'Disabled in this demo. Every export writes its own row above.'}</span>
           </div>
         </Panel>
       </div>
@@ -1008,7 +986,7 @@ export function Pro({ go }) {
      panel with focus still on <body> and nothing announced. A screen-reader
      user had no way to know the page had changed under them. */
   const announce = msg => { setSaid(''); requestAnimationFrame(() => setSaid(msg)) }
-  const onTab = v => { setTab(v); announce(`${TABS.find(t => t[0] === v)[1]} — showing now`) }
+  const onTab = v => { setTab(v); announce(`Showing ${TABS.find(t => t[0] === v)[1]}`) }
   const openStudent = name => { setWho(name); setTab('student'); announce(`Opened the record for ${name}`) }
   /* Every tab takes the flag rather than the console swapping wholesale: the
      consent, retention, k-anonymity and audit statements are policy, and they
@@ -1031,7 +1009,7 @@ export function Pro({ go }) {
           <Back go={go} to="site" label="Overview"/>
           {/* Was "For school counselors and psychologists" — an audience, not a
               screen. The three audience views are named the same way now. */}
-          <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">
+          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
             What a school counselor sees</h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
@@ -1040,8 +1018,8 @@ export function Pro({ go }) {
               ruled annotation carries the sentence, and which sentence depends
               on what the tabs below are actually showing. */}
           {real
-            ? <RealNotice className="mt-4">No student has paired a patch and no guardian has signed a
-                consent scope, so this caseload is empty.</RealNotice>
+            ? <RealNotice className="mt-4">No student has paired a patch and no guardian has signed
+                a scope, so this caseload is empty.</RealNotice>
             : <DemoNotice className="mt-4">Every figure here is generated. No student was measured.</DemoNotice>}
         </div>
       </div>

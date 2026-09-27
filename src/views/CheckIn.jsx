@@ -13,16 +13,15 @@ import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
 
-/* Two ways in, numbered. A bluetooth glyph and a clipboard glyph were two
-   pictures of nouns standing in for an order that a numeral states outright.
-   The panel was a bare top rule on the sheet; it is the project Card now, so
-   the two routes read as two objects side by side rather than as two
-   paragraphs that happen to have a line above them. */
-function Route({ n, title, children, foot }){
+/* One route per card. The counters that used to head these ran 01, 03, 02 down
+   the row and nobody noticed, which is the argument against them: a numeral
+   that is wrong still looks like an order. The panel was a bare top rule on
+   the sheet; it is the project Card now, so the three routes read as three
+   objects side by side rather than as three paragraphs under a line. */
+function Route({ title, children, foot }){
   return (
     <Card className="flex h-full flex-col">
-      <CardHeader className="flex-row items-baseline gap-4">
-        <span className="font-mono text-num font-light tabular-nums text-ink-3">{n}</span>
+      <CardHeader>
         <CardTitle as="h2" className="text-row">{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">{children}</CardContent>
@@ -56,7 +55,7 @@ export function CheckInBody({ go }){
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-4">
-        <h2 className="max-w-[18ch] font-display font-medium text-head text-ink">Take a reading now.</h2>
+        <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">Take a reading now</h2>
         {/* This screen is the exception in both modes — it scores whoever is
             reading it, from their own answers, with or without hardware — so
             the annotation states what is true of the screens around it rather
@@ -72,16 +71,16 @@ export function CheckInBody({ go }){
       {/* mt was 8. Three fixed steps across these views — 10 inside a section,
           14 between sections, 20 between page regions. */}
       <div className="mt-10 grid gap-3.5 lg:grid-cols-3">
-        <ScrollRow index={0} className="h-full"><Route n="01" title="Use the phone's sensors"
+        <ScrollRow index={0} className="h-full"><Route title="Use the phone's sensors"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
-            Frames and audio are reduced to numbers here and dropped. Neither is stored or sent.</p>}>
+            Frames and audio are turned into numbers here and dropped. Neither is stored or sent.</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">Forty-five seconds. A fingertip on the camera
-            gives heart rate and beat-to-beat variation; one spoken sentence gives pitch and steadiness.
-            Three of the four signals a patch reads.</p>
+            gives heart rate and beat-to-beat variation. One spoken sentence gives pitch and
+            steadiness.</p>
         </Route></ScrollRow>
-        <ScrollRow index={1} className="h-full"><Route n="03" title="Answer six questions"
+        <ScrollRow index={1} className="h-full"><Route title="Answer six questions"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
-            Your answers stay on this device — nothing is stored or sent.</p>}>
+            Your answers stay on this device. Nothing is stored or sent.</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">No patch needed.</p>
           {/* The count was the only sign the six were finite, and it only moved
               once a question was answered. The bar states the remainder up
@@ -92,7 +91,7 @@ export function CheckInBody({ go }){
               label={`${answered} of ${ITEMS.length} questions answered`}/>
           </div>
         </Route></ScrollRow>
-        <ScrollRow index={2} className="h-full"><Route n="02" title="Connect a patch"
+        <ScrollRow index={2} className="h-full"><Route title="Connect a patch"
           foot={<p aria-live="polite" className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">{pair?.msg}</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">Pairs over Bluetooth with a MindMap patch and streams at 1 Hz.
             {mode === 'real' && ' Nothing is paired to this account, so the dashboard has no reading to show yet.'}</p>
@@ -107,7 +106,7 @@ export function CheckInBody({ go }){
           place underneath, unchanged: they are the fallback when a camera is
           refused, and they are the only route that works with no hands free. */}
       <section className="mt-14">
-        <h3 className="mark">Read it off the phone</h3>
+        <h3 className="mark">Use your phone's camera and microphone</h3>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">
           No patch, no questions. The same scoring model, given measurements instead of answers.
         </p>
@@ -129,7 +128,7 @@ export function CheckInBody({ go }){
             {ITEMS.map((it,i)=>(
               <ScrollRow key={it.id} index={i}
                 className={i === ITEMS.length - 1 ? '[&_fieldset]:border-b-0' : undefined}>
-                <Scale legend={`${i+1}. ${it.q}`} low={it.lo} high={it.hi}
+                <Scale legend={it.q} low={it.lo} high={it.hi}
                   value={ans[it.id]} onChange={v=>setAns(a=>({...a,[it.id]:v}))}/>
               </ScrollRow>
             ))}
@@ -153,16 +152,16 @@ export function CheckInBody({ go }){
                 side by side left the sentence breaking every two words */}
             <div className="flex flex-col items-start gap-7">
               {/* Both hexes are palette tokens, checked against the rebuild:
-                  #3d52a0 is accent, #7091e6 is beam. Beam paints the band on a
+                  #157446 is accent, #0e9c9c is beam. Beam paints the band on a
                   mist track — a fill, which is the only job it has — and the
                   ring never carries the reading on its own, so neither is
                   being asked to clear a text ratio. */}
               <RainbowDial score={r.score} size={288}
-                rings={[{ id:'self', name:'Your answers', color:'#3d52a0', glow:'#7091e6',
+                rings={[{ id:'self', name:'Your answers', color:'#157446', glow:'#0e9c9c',
                           value:r.score, reading:'Six questions' }]}/>
               <div>
-                <Headline>{s.pre}<b className={`font-medium ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
-                <p className="mt-4 max-w-[40ch] text-sec text-ink-3">A patch fills four rings — heart,
+                <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
+                <p className="mt-4 max-w-[40ch] text-sec text-ink-3">A patch fills four rings: heart,
                   sweat, temperature and movement.</p>
               </div>
             </div>

@@ -120,10 +120,10 @@ function StageWeek() {
 
 const BEATS = [
   { head: 'A hard day shows in the body before anyone talks about it.',
-    sub:  'Heart rate, sweating and skin temperature move first, hours before it is something a student could put into words. Nobody writes any of it down.',
+    sub:  'Heart rate, sweating and skin temperature move first, hours before a student could put it into words. Nobody writes any of it down.',
     Stage: StageDay },
   { head: 'A parent sees which day ran high, and can ask about it that evening.',
-    sub:  'One day named, while it is still the same week — not after a crisis, and not in a report that arrives at the end of term.',
+    sub:  'One day named, while it is still the same week. Not after a crisis, and not in a report at the end of term.',
     Stage: StageWeek },
 ]
 
@@ -171,7 +171,7 @@ function Beat({ beat }) {
     <section ref={ref} data-play={String(run > 0)}
       className="flex flex-col overflow-hidden rounded-panel border border-rule bg-card shadow-raise">
       <div className="px-5 py-6 sm:px-7">
-        <h3 className="max-w-[30ch] font-display text-sub font-medium leading-[1.16] text-ink">
+        <h3 className="max-w-[30ch] font-display text-sub font-bold leading-[1.16] text-ink">
           {beat.head}</h3>
         <p className="mt-3 max-w-[46ch] text-sec text-ink-2">{beat.sub}</p>
       </div>

@@ -40,7 +40,7 @@ export function NameGate({ onDone }) {
       return
     }
     if (clean.length > MAX) {
-      setError(`That is ${clean.length} characters. Sixty is the most this field holds — a first name is plenty.`)
+      setError(`That is ${clean.length} characters. Sixty is the most this field holds, and a first name is plenty.`)
       ref.current?.focus()
       return
     }
@@ -58,7 +58,7 @@ export function NameGate({ onDone }) {
         onSubmit={submit}
         className="w-full max-w-[34rem] rounded-panel border border-rule bg-card p-6 shadow-lift sm:p-8"
       >
-        <h2 className="font-display text-sub font-medium text-ink">What should we call you?</h2>
+        <h2 className="font-display text-sub font-bold text-ink">What should we call you?</h2>
 
         <p className="mt-3 text-sec text-ink-2">
           Your name and your answers are saved and read by Mikhail, who is building this
@@ -98,7 +98,7 @@ export function NameGate({ onDone }) {
         <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
           <Button type="submit">Start</Button>
           <Button type="button" variant="ghost" onClick={() => finish('')}>
-            Skip — answer anonymously
+            Skip and stay anonymous
           </Button>
         </div>
       </form>

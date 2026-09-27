@@ -1,5 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
+import { Button } from '../ui/button'
+import { createCinematic } from './cinematic'
 
 /* The interactive CAD, mounted inside the hardware page's model box.
  *
@@ -19,6 +21,10 @@ const SCRIPT = '/di/arena/mindmap-arena.js'
 const DATA   = '/di/arena/mindmap-arena.json'
 const BASE   = '/di/arena/'
 
+const reducedMotion = () => {
+  try { return matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false }
+}
+
 /* The element registers itself globally, so a second mount must not inject a
    second copy of a 620 KB script. One promise, shared. */
 let pending = null
@@ -37,9 +43,14 @@ function loadViewer() {
   return pending
 }
 
-export const PatchArena = React.forwardRef(function PatchArena({ className, view = 'closed' }, ref) {
+export const PatchArena = React.forwardRef(function PatchArena({ className, view = 'closed', onPlay }, ref) {
   const host = React.useRef(null)
   const el = React.useRef(null)
+  /* the walkthrough, once the geometry is in and the box is on screen */
+  const cine = React.useRef(null)
+  const [playing, setPlaying] = React.useState(false)
+  const [armed, setArmed] = React.useState(false)   /* geometry in, sequence available */
+  const [seen, setSeen] = React.useState(false)
   /* 'wait' until the box is near the viewport, 'fetch' while the script is in
      flight, 'live' once the element is mounted and showing its own progress,
      'error' if either the script or WebGL2 is unavailable. */
@@ -53,6 +64,8 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
     isolateGroup(group) {
       const a = el.current
       if (!a || !a.D) return
+      /* a part card is the user taking hold of the model as much as a drag is */
+      cine.current?.stop()
       try {
         const ids = a.D.parts.filter(p => p.group === group).map(p => p.id)
         if (!ids.length) return
@@ -68,7 +81,11 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
         try { a.select(a.D.parts.find(p => p.group === group)?.name) } catch {}
       }
     },
-    showAll() { try { el.current?.showAll() } catch {} },
+    showAll() {
+      if (!el.current) return
+      cine.current?.stop()
+      try { el.current.showAll() } catch {}
+    },
   }), [])
 
   React.useEffect(() => {
@@ -91,6 +108,19 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
         el.current = a
         node.append(a)
         setPhase('live')
+        /* `ready` settles once the 178 bodies are in the scene. The sequence
+           cannot be armed before that: it writes state.explode, and applyState
+           has nothing to write it onto until the geometry is there. */
+        a.ready.then(() => {
+          if (dead) return
+          const c = createCinematic(a, on => { if (!dead) { setPlaying(on); if (on) setSeen(true) } })
+          if (!c) return
+          cine.current = c
+          setArmed(true)
+          /* reduce: the model stays closed and still, and the button is the
+             only thing that will ever move it */
+          if (!reducedMotion()) c.start()
+        }, () => {})
       }, () => { if (!dead) setPhase('error') })
     }
 
@@ -102,14 +132,41 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
     return () => {
       dead = true
       io.disconnect()
+      cine.current?.dispose()
+      cine.current = null
       /* disconnectedCallback disposes the renderer and every buffer. */
       el.current?.remove()
       el.current = null
     }
   }, [view])
 
+  /* The element is appended imperatively, so it is already in the box when
+     React first inserts the button — and React, which does not know that node,
+     appends after it. That put the button behind the viewer's own fifteen
+     tabbable controls: a keyboard user reaching for "play again" had to pass
+     through Reset, Save view and all eight named views first. The button is
+     therefore a sibling ahead of the box rather than a child of it, which is
+     the only thing that fixes the order. */
   return (
-    <div ref={host} className={cn('relative h-full w-full', className)}>
+    <div className={cn('relative h-full w-full', className)}>
+      {/* The sequence yields to the first touch and then stays yielded, so this
+          is the way back to it. It sits clear of the viewer's own furniture:
+          the panel and the selection card are on the left, the activity card is
+          top right at 100px, and the status line runs along the bottom of the
+          stage above a notice bar that is one line wide and two lines narrow —
+          hence the two offsets, because at 390 a single one sat on the line
+          that tells the user they can drag the model.
+          Hidden while the sequence is running so it is not covering the model
+          for the twelve-thirteenths of the time nobody needs it. */}
+      {phase === 'live' && armed && !playing && (
+        <Button variant="outline" size="sm"
+          onClick={() => { onPlay?.(); cine.current?.start() }}
+          className="absolute bottom-[88px] right-5 z-10 bg-card/95 text-ui shadow-lift
+            backdrop-blur-[2px] hover:bg-mist sm:bottom-[76px]">
+          {seen ? 'Play again' : 'Play the walkthrough'}
+        </Button>
+      )}
+      <div ref={host} className="h-full w-full"/>
       {phase !== 'live' && (
         <div className="absolute inset-0 grid place-items-center p-6 text-center">
           {phase === 'error' ? (

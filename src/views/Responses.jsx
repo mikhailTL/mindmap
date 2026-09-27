@@ -1,16 +1,30 @@
 import React from 'react'
 import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import { cn } from '../lib/utils'
-import { QUESTIONS, pageLabel, questionText } from '../survey/questions'
+import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
+import {
+  PAGE, ABOUT_ITEMS, SUS_ITEMS, ALL_ITEMS, REQUIRED,
+  susScore, susGrade, npsScore, npsBucket,
+  questionText, itemById, pageLabel,
+} from '../survey/questions'
 import { exportRows, toCSV, getVisitor } from '../survey/store'
 
 /* The page Mikhail opens to read what peer reviewers actually said.
  *
- * Grouped by person, not by question, because the question that was asked of
- * this page is "what did the reviewers say" and a reviewer is a person with an
- * opinion that hangs together. A table of forty rows sorted by question id
- * answers a different question — it tells you the mean of item 4 and loses the
- * one reviewer who said the same thing three different ways.
+ * It used to be a list of raw answers grouped by person. That was the right
+ * shape for eight little per-page surveys, where there was nothing to compute:
+ * two bespoke five-point questions per route can only be read one at a time.
+ * The survey is now one instrument — SUS, NPS, stars, impact — and every one
+ * of those has a published score and a published benchmark, so the page leads
+ * with the arithmetic and keeps the raw answers underneath it. A competition
+ * writeup needs "SUS 74.5, a B, above the 68 population mean, n = 11", and no
+ * amount of scrolling a list of answers produces that sentence.
+ *
+ * The one figure that matters most is the least obvious: SUS split by who the
+ * respondent was. A single mean over everybody hides the disagreement, and the
+ * disagreement is the finding — a counselor and a stranger rating the same
+ * build 55 and 88 is a far more useful result than "71".
  *
  * ─── On access ──────────────────────────────────────────────────────────────
  * This page is UNLISTED, WHICH IS NOT SECURITY. There is no login here on
@@ -37,6 +51,23 @@ const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
  * sent; only its presence switches the header on. */
 const KEY_EXPECTED = !!import.meta.env?.VITE_RESPONSES_KEY
 
+const STORE_KEY = 'mindmap.survey'
+
+/* The published population mean for SUS across several hundred studies. It is
+ * the only reason a SUS number means anything on its own, so it is a named
+ * constant and it is printed next to every SUS figure on the page. */
+const BENCHMARK = 68
+
+/* Below this, a mean is one or two people's opinion wearing a mean's clothes.
+ * Sauro's own guidance for SUS is that small samples move the number by more
+ * than the differences anyone is trying to detect; three is not a defensible
+ * sample either, it is simply the floor under which the page refuses to print
+ * a number at all. */
+const MIN_MEAN = 3
+
+const REQUIRED_IDS = REQUIRED.map(q => q.id)
+const REQUIRED_COUNT = REQUIRED_IDS.length
+
 /* The app routes on the hash, so a shared link can carry its query on either
  * side of the '#'. Both are read rather than making Mikhail remember which. */
 function urlKey() {
@@ -54,25 +85,17 @@ function urlKey() {
 
 /* ------------------------------------------------------------ question map */
 
-const PAGE_ORDER = Object.keys(QUESTIONS)
-
 /* Sorting a reviewer's answers by the order they were asked, not by the clock:
  * someone who went back and changed one answer should not have it jump to the
  * bottom of their card away from the question it belongs beside. */
 const ASK_ORDER = new Map()
-PAGE_ORDER.forEach((page, pi) => {
-  ;(QUESTIONS[page] || []).forEach((q, qi) => ASK_ORDER.set(page + '/' + q.id, pi * 100 + qi))
-})
-const askIndex = r => ASK_ORDER.get(r.page + '/' + r.questionId) ?? 9999
+ALL_ITEMS.forEach((item, i) => ASK_ORDER.set(item.id, i))
+const askIndex = r => ASK_ORDER.get(r.questionId) ?? 9999
 
-const TOTAL_QUESTIONS = PAGE_ORDER.reduce((n, p) => n + (QUESTIONS[p] || []).length, 0)
-
-/* Every question that produces a number worth counting, in the order asked. */
-const SCALED = PAGE_ORDER.flatMap(page =>
-  (QUESTIONS[page] || [])
-    .filter(q => (q.kind === 'scale' || q.kind === 'impact') && Array.isArray(q.points))
-    .map(q => ({ page, id: q.id, prompt: q.prompt, points: q.points }))
-)
+const IMPACT = itemById('impact')
+const STARS_ITEM = itemById('stars')
+const STAR_MAX = STARS_ITEM?.max || 5
+const STAR_STEP = STARS_ITEM?.step || 0.5
 
 /* ------------------------------------------------------------- normalising */
 
@@ -86,7 +109,7 @@ function flat(value) {
   if (typeof value === 'object') {
     const score = value.score ?? ''
     const note = value.note ?? ''
-    return note ? `${score} — ${note}` : String(score)
+    return note ? `${score}: ${note}` : String(score)
   }
   return String(value)
 }
@@ -96,33 +119,94 @@ function num(v) {
   return Number.isFinite(n) ? n : null
 }
 
+function mean(list) {
+  const v = list.filter(x => x != null)
+  if (!v.length) return null
+  return v.reduce((a, b) => a + b, 0) / v.length
+}
+
 /* The sentence a reviewer typed, pulled clear of the score it was attached to:
- * the impact answer flattens to "4 — because…" and only the tail is prose. */
+ * the impact answer flattens to "4: because…" and only the tail is prose. */
 function prose(row) {
+  if (!row) return ''
   if (row.kind === 'text') return String(row.value || '').trim()
   if (row.kind === 'impact') {
     const s = String(row.value || '')
-    const i = s.indexOf('—')
+    const i = s.indexOf(':')
     return i >= 0 ? s.slice(i + 1).trim() : ''
   }
   return ''
 }
 
 /* One respondent, built from rows already in exportRows() shape so the server
- * path and the local path converge before anything renders or downloads. */
+ * path and the local path converge before anything renders or downloads.
+ *
+ * Answers recorded under the retired per-page scheme are split off here and
+ * never reach a figure. They are real answers a real person gave and they are
+ * kept, but they were given to different questions on a different instrument,
+ * and averaging them in would be inventing a number. */
 function build(id, name, rows, startedAt) {
   const sorted = rows.slice().sort((a, b) => askIndex(a) - askIndex(b))
+  const current = sorted.filter(r => r.page === PAGE)
+  const retired = sorted.filter(r => r.page !== PAGE)
   const times = rows.map(r => r.at).filter(Boolean).sort()
-  const stars = num(rows.find(r => r.questionId === 'final-stars')?.value)
+
+  const by = new Map(current.map(r => [r.questionId, r]))
+  const value = qid => (by.has(qid) ? num(by.get(qid).value) : null)
+  const pick = qid => {
+    const r = by.get(qid)
+    if (!r) return null
+    const s = String(r.label ?? '').trim() || String(r.value ?? '').trim()
+    return s || null
+  }
+
+  /* susScore returns null unless all ten are present, which is the whole
+     point of it — nine items scored and multiplied by 2.5 is not a SUS
+     score, it is a smaller number that looks like one. */
+  const susAnswers = new Map()
+  let susAnswered = 0
+  SUS_ITEMS.forEach(item => {
+    const v = value(item.id)
+    if (v == null) return
+    susAnswers.set(item.id, v)
+    susAnswered += 1
+  })
+  const sus = susScore(susAnswers)
+
+  const nps = value('nps')
+  const impactRow = by.get('impact')
+  const changeRow = by.get('change')
+  const impactNote = prose(impactRow)
+  const change = prose(changeRow)
+
+  const done = REQUIRED_IDS.filter(qid => {
+    const r = by.get(qid)
+    return !!r && String(r.value ?? '').trim() !== ''
+  }).length
+
   return {
     id,
     name: name || 'Anonymous',
     startedAt: startedAt || times[0] || null,
     lastAt: times[times.length - 1] || null,
-    rows: sorted,
+    rows: current,
+    retired,
     answered: rows.length,
-    stars: stars == null ? null : stars,
-    commented: sorted.some(r => prose(r).length > 0),
+    sus,
+    susAnswered,
+    nps,
+    npsBucket: npsBucket(nps),
+    stars: value('stars'),
+    impact: value('impact'),
+    impactLabel: pick('impact'),
+    impactNote,
+    change,
+    age: pick('about-age'),
+    education: pick('about-education'),
+    role: pick('about-role'),
+    closeness: pick('about-closeness'),
+    done,
+    commented: !!(impactNote || change),
   }
 }
 
@@ -137,14 +221,15 @@ function group(rows, startedFor) {
     build(id, rs[0]?.visitorName, rs, startedFor ? startedFor(id) : null))
 }
 
-function fromLocal() {
-  const me = getVisitor()
-  return group(exportRows(), id => (me && me.id === id ? me.startedAt : null))
+/* questionText now takes only a question id, and returns the id back when the
+ * question no longer exists — which is exactly what an answer to a retired
+ * route looks like by the time it reaches here. */
+function textFor(qid) {
+  return itemById(qid) ? questionText(qid) : ''
 }
 
-function fromServer(payload) {
-  const list = Array.isArray(payload?.respondents) ? payload.respondents : []
-  return list.map(r => {
+function fromRespondents(list) {
+  return (Array.isArray(list) ? list : []).map(r => {
     const name = String(r?.name || 'Anonymous')
     const id = String(r?.id || '')
     const rows = (Array.isArray(r?.answers) ? r.answers : []).map(a => ({
@@ -152,7 +237,7 @@ function fromServer(payload) {
       visitorId: id,
       page: String(a?.page || ''),
       questionId: String(a?.qid || ''),
-      question: questionText(a?.page, a?.qid),
+      question: textFor(String(a?.qid || '')),
       kind: String(a?.kind || ''),
       value: flat(a?.value),
       label: a?.label ?? '',
@@ -162,12 +247,167 @@ function fromServer(payload) {
   })
 }
 
+/* The store keeps one visitor per browser, because a browser normally has one
+ * reviewer in front of it. A stored record can also carry a `respondents`
+ * array in precisely the shape the API returns and this page's own JSON
+ * download writes — an archive pasted back in to read offline. Both are read,
+ * and the store's own copy wins on a clash of ids, so nothing is shown twice.
+ * Guarded throughout: in a private window the first property access throws. */
+function archived() {
+  try {
+    const raw = window.localStorage.getItem(STORE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return fromRespondents(parsed?.respondents)
+  } catch {
+    return []
+  }
+}
+
+function fromLocal() {
+  const me = getVisitor()
+  const mine = group(
+    exportRows().map(r => ({ ...r, question: textFor(r.questionId) })),
+    id => (me && me.id === id ? me.startedAt : null)
+  ).filter(p => p.answered > 0 || (me && me.id === p.id))
+  const seen = new Set(mine.map(p => p.id))
+  return [...mine, ...archived().filter(p => !seen.has(p.id))]
+}
+
+function fromServer(payload) {
+  return fromRespondents(payload?.respondents)
+}
+
+/* ------------------------------------------------------------- aggregating */
+
+function distribution(people, valueOf, points) {
+  const counts = {}
+  let total = 0
+  people.forEach(p => {
+    const v = valueOf(p)
+    if (v == null) return
+    counts[v] = (counts[v] || 0) + 1
+    total += 1
+  })
+  return { points, counts, total }
+}
+
+/* A segment is only ever printed as a mean when it has MIN_MEAN complete SUS
+ * respondents in it. Below that the row still appears — knowing that four
+ * counselors looked at this and only one finished the scale is itself worth
+ * seeing — but it says so in words instead of printing a mean of one. */
+function segments(people, pickKey) {
+  const by = new Map()
+  people.forEach(p => {
+    const k = pickKey(p) || 'Did not say'
+    if (!by.has(k)) by.set(k, [])
+    by.get(k).push(p)
+  })
+  return [...by.entries()]
+    .map(([label, list]) => {
+      const complete = list.filter(p => p.sus != null)
+      return {
+        label,
+        n: list.length,
+        complete: complete.length,
+        mean: complete.length >= MIN_MEAN ? mean(complete.map(p => p.sus)) : null,
+      }
+    })
+    .sort((a, b) => b.complete - a.complete || b.n - a.n || a.label.localeCompare(b.label))
+}
+
+function summarise(people) {
+  const completeSus = people.filter(p => p.sus != null)
+  const partialSus = people.filter(p => p.sus == null && p.susAnswered > 0)
+  const susMean = mean(completeSus.map(p => p.sus))
+  const npsValues = people.map(p => p.nps).filter(v => v != null)
+  const starValues = people.map(p => p.stars).filter(v => v != null)
+
+  const starPoints = []
+  for (let v = STAR_STEP; v <= STAR_MAX + 1e-9; v += STAR_STEP) {
+    const n = Math.round(v * 10) / 10
+    starPoints.push({ value: n, label: `${n.toFixed(1)} star${n === 1 ? '' : 's'}` })
+  }
+
+  return {
+    people: people.length,
+    answers: people.reduce((n, p) => n + p.answered, 0),
+    completeSus: completeSus.length,
+    partialSus: partialSus.length,
+    untouchedSus: people.length - completeSus.length - partialSus.length,
+    susMean,
+    susGrade: susMean == null ? null : susGrade(susMean),
+    susBest: completeSus.length ? Math.max(...completeSus.map(p => p.sus)) : null,
+    susWorst: completeSus.length ? Math.min(...completeSus.map(p => p.sus)) : null,
+    nps: npsScore(npsValues),
+    npsAnswered: npsValues.length,
+    promoters: npsValues.filter(v => v >= 9).length,
+    passives: npsValues.filter(v => v >= 7 && v <= 8).length,
+    detractors: npsValues.filter(v => v <= 6).length,
+    starMean: mean(starValues),
+    starsAnswered: starValues.length,
+    starDist: distribution(people, p => p.stars, starPoints),
+    impactDist: distribution(people, p => p.impact, IMPACT?.points || []),
+    byRole: segments(people, p => p.role),
+    byCloseness: segments(people, p => p.closeness),
+    commented: people.filter(p => p.commented).length,
+    retired: people.reduce((n, p) => n + p.retired.length, 0),
+  }
+}
+
 /* ---------------------------------------------------------------- download */
 
 function stamp() {
   const d = new Date()
   const p = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+/* RFC4180, restated for the second file. The store's own serialiser is bound
+ * to the one answer-row header it exports, and the per-respondent sheet has a
+ * different shape entirely; sharing it would mean widening the store's header
+ * constant, which is the column order Mikhail's existing spreadsheet expects. */
+function cell(v) {
+  const s = v == null ? '' : String(v)
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+}
+
+function csv(head, rows) {
+  const body = rows.map(r => head.map(k => cell(r[k])).join(','))
+  return [head.join(','), ...body].join('\r\n')
+}
+
+const PERSON_HEAD = [
+  'name', 'visitorId', 'startedAt', 'lastAt',
+  'susScore', 'susGrade', 'susItemsAnswered',
+  'nps', 'npsBucket', 'stars', 'impact', 'impactLabel',
+  'role', 'closeness', 'age', 'education',
+  'requiredAnswered', 'requiredTotal', 'impactSentence', 'wouldChange',
+]
+
+function personRows(people) {
+  return people.map(p => ({
+    name: p.name,
+    visitorId: p.id,
+    startedAt: p.startedAt || '',
+    lastAt: p.lastAt || '',
+    susScore: p.sus == null ? '' : p.sus,
+    susGrade: p.sus == null ? '' : susGrade(p.sus).grade,
+    susItemsAnswered: p.susAnswered,
+    nps: p.nps == null ? '' : p.nps,
+    npsBucket: p.npsBucket || '',
+    stars: p.stars == null ? '' : p.stars,
+    impact: p.impact == null ? '' : p.impact,
+    impactLabel: p.impactLabel || '',
+    role: p.role || '',
+    closeness: p.closeness || '',
+    age: p.age || '',
+    education: p.education || '',
+    requiredAnswered: p.done,
+    requiredTotal: REQUIRED_COUNT,
+    impactSentence: p.impactNote || '',
+    wouldChange: p.change || '',
+  }))
 }
 
 /* Same mechanism the survey card uses. Wrapped because a blocked blob URL or a
@@ -204,6 +444,17 @@ function when(iso) {
   }
 }
 
+function shortWhen(iso) {
+  if (!iso) return 'not recorded'
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return 'not recorded'
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  } catch {
+    return 'not recorded'
+  }
+}
+
 /* A drawn bar, the way every other figure on this site is drawn: a rect in a
  * viewBox, no library, no rounded end to distort under a non-uniform scale.
  * accent on mist clears the 3:1 graphics minimum, and the count is printed
@@ -218,25 +469,107 @@ function Bar({ frac }) {
   )
 }
 
-function Distribution({ q, counts, total }) {
+/* The same bar, fixed to the 0–100 SUS range, with the 68 benchmark drawn on
+ * it as an ink rule. The comparison is stated in words beside every one of
+ * these — the rule is a second way of reading it, never the only way. */
+function Meter({ value }) {
+  const w = value == null ? 0 : Math.max(0, Math.min(100, value))
+  return (
+    <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden
+      className="block h-2.5 w-full border border-rule bg-mist">
+      {w > 0 && <rect x="0" y="0" width={w} height="10" className="fill-accent" />}
+      <rect x={BENCHMARK - 0.35} y="0" width="0.7" height="10" className="fill-ink" />
+    </svg>
+  )
+}
+
+function Figure({ label, value, unit, children }) {
+  return (
+    <div>
+      <div className="note">{label}</div>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="font-mono text-stat font-medium leading-none tabular-nums text-ink">
+          {value}
+        </span>
+        {unit && <span className="font-mono text-fine tabular-nums text-ink-3">{unit}</span>}
+      </div>
+      <div className="mt-1.5 max-w-read text-meta text-ink-2">{children}</div>
+    </div>
+  )
+}
+
+function Rows({ points, counts, total, unit = 'answered' }) {
+  /* A row of empty bars for every point on a scale nobody has answered yet is
+     six blocks of nothing on a page with no responses. The caption stays so
+     the page keeps its structure; the bars wait until there is something to
+     draw. */
+  if (!total) return <p className="note mt-3">Nothing answered here yet.</p>
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {points.map(p => {
+        const n = counts[p.value] || 0
+        return (
+          <div key={p.value}
+            className="grid grid-cols-[1fr_minmax(60px,30%)_2.5rem] items-center gap-3">
+            <span className="text-meta text-ink-2">{p.label}</span>
+            <Bar frac={total ? n / total : 0} />
+            <span className="text-right font-mono text-fine tabular-nums text-ink">{n}</span>
+          </div>
+        )
+      })}
+      <p className="note mt-1">{total} {unit}.</p>
+    </div>
+  )
+}
+
+function Distribution({ title, note, points, counts, total, children }) {
   return (
     <figure className="m-0 border-t border-rule pt-4">
-      <figcaption className="max-w-read font-display text-ui font-medium text-ink">
-        {q.prompt}
+      <figcaption className="max-w-read font-display text-ui font-bold text-ink">
+        {title}
       </figcaption>
-      <p className="note mt-1">{pageLabel(q.page)} · {total} answered</p>
-      <div className="mt-3 flex flex-col gap-2">
-        {q.points.map(p => {
-          const n = counts[p.value] || 0
-          return (
-            <div key={p.value} className="grid grid-cols-[1fr_minmax(70px,32%)_2.5rem] items-center gap-3">
-              <span className="text-meta text-ink-2">{p.label}</span>
-              <Bar frac={total ? n / total : 0} />
-              <span className="text-right font-mono text-fine tabular-nums text-ink">{n}</span>
+      {note && <p className="note mt-1">{note}</p>}
+      <Rows points={points} counts={counts} total={total} />
+      {children}
+    </figure>
+  )
+}
+
+function Segment({ title, note, rows }) {
+  return (
+    <figure className="m-0 border-t border-rule pt-4">
+      <figcaption className="max-w-read font-display text-ui font-bold text-ink">
+        {title}
+      </figcaption>
+      <p className="note mt-1">{note}</p>
+      {rows.length === 0 ? (
+        <p className="mt-3 text-meta text-ink-2">No answers to split on yet.</p>
+      ) : (
+        <div className="mt-3 flex flex-col gap-3">
+          {rows.map(r => (
+            <div key={r.label} className="grid grid-cols-[1fr] gap-1.5 sm:grid-cols-[minmax(0,1fr)_minmax(80px,28%)_6rem] sm:items-center sm:gap-3">
+              <span className="text-meta text-ink-2">{r.label}</span>
+              {r.mean == null ? (
+                <>
+                  <span className="text-fine text-ink-3 sm:col-span-2 sm:text-right">
+                    {r.complete === 0
+                      ? `${r.n} here, none finished`
+                      : `${r.complete} of ${r.n} finished, too few`}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Meter value={r.mean} />
+                  <span className="whitespace-nowrap font-mono text-fine tabular-nums text-ink sm:text-right">
+                    {r.mean.toFixed(1)}
+                    <span className="text-ink-3"> · n{r.complete}</span>
+                  </span>
+                </>
+              )}
             </div>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </figure>
   )
 }
@@ -247,7 +580,7 @@ function Distribution({ q, counts, total }) {
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
 
-function Stars({ value, max = 5 }) {
+function Stars({ value, max = STAR_MAX }) {
   const uid = React.useId()
   if (value == null) {
     return <span className="font-mono text-fine text-ink-3">no rating</span>
@@ -298,9 +631,37 @@ function Field({ label, children }) {
 function Notice({ title, children }) {
   return (
     <div className="mt-8 max-w-measure border-l-2 border-warn bg-warn-wash py-3 pl-4 pr-5">
-      <p className="font-display text-ui font-medium text-ink">{title}</p>
+      <p className="font-display text-ui font-bold text-ink">{title}</p>
       <div className="mt-1.5 text-meta text-ink-2">{children}</div>
     </div>
+  )
+}
+
+/* A disclosure, not an accordion component: these two sections are long, cold
+ * and read once, and a native <details> is keyboard-operable, findable by the
+ * browser's own in-page search when open, and has no state to get wrong. */
+function Fold({ summary, note, children }) {
+  return (
+    <details className="group mt-6 rounded-panel border border-rule bg-card">
+      <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 px-6 py-4 font-display text-ui font-bold text-ink hover:bg-mist [&::-webkit-details-marker]:hidden">
+        <span className="font-mono text-fine tabular-nums text-ink-3 group-open:hidden">Show</span>
+        <span className="hidden font-mono text-fine tabular-nums text-ink-3 group-open:inline">Hide</span>
+        {summary}
+        {note && <span className="note">{note}</span>}
+      </summary>
+      <div className="border-t border-rule px-6 pb-6 pt-5">{children}</div>
+    </details>
+  )
+}
+
+function Quote({ name, at, children }) {
+  return (
+    <figure className="m-0 border-t border-rule pt-4">
+      <blockquote className="max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
+        {children}
+      </blockquote>
+      <figcaption className="note mt-2">{name} · {when(at)}</figcaption>
+    </figure>
   )
 }
 
@@ -308,11 +669,14 @@ function Respondent({ p }) {
   return (
     <article className="rounded-panel border border-rule bg-card p-6 sm:p-8">
       <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h3 className="font-display text-row font-medium text-ink">{p.name}</h3>
+        <h3 className="font-display text-row font-bold text-ink">{p.name}</h3>
         <Stars value={p.stars} />
       </header>
       <p className="note mt-1.5">
-        Started {when(p.startedAt)} · answered {p.answered} of {TOTAL_QUESTIONS}
+        Started {when(p.startedAt)} · {p.done} of {REQUIRED_COUNT} required answered
+        {p.sus == null
+          ? ` · SUS not scorable (${p.susAnswered} of ${SUS_ITEMS.length} statements)`
+          : ` · SUS ${p.sus.toFixed(1)}`}
         {p.commented ? ' · left a comment' : ''}
       </p>
 
@@ -320,20 +684,14 @@ function Respondent({ p }) {
         <p className="mt-5 text-meta text-ink-2">Gave a name and then answered nothing.</p>
       ) : (
         <dl className="mt-6 flex flex-col gap-5">
-          {p.rows.map(r => {
-            /* questionText falls back to the question's own id when the
-               question is gone, which is what an answer to a retired route
-               looks like by the time it reaches here. Saying so is the
-               difference between a stale answer and a rendering fault. */
-            const retired = r.question === r.questionId
-            return (
+          {p.rows.map(r => (
             <div key={r.page + '/' + r.questionId} className="border-t border-rule pt-4">
               <dt className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-mono text-fine tabular-nums text-ink-3">
-                  {pageLabel(r.page)}
+                  {r.questionId}
                 </span>
-                <span className="max-w-read font-display text-ui font-medium text-ink-2">
-                  {retired ? 'This question is no longer asked' : r.question}
+                <span className="max-w-read font-display text-ui font-bold text-ink-2">
+                  {textFor(r.questionId) || 'This question is no longer asked'}
                 </span>
               </dt>
               {/* Prose is never clamped, ellipsised or scrolled: a reviewer's
@@ -347,10 +705,8 @@ function Respondent({ p }) {
               {r.label && String(r.label) !== String(r.value) && (
                 <p className="note mt-1">Picked: {r.label}</p>
               )}
-              {retired && <p className="note mt-1">Recorded as {r.questionId}.</p>}
             </div>
-            )
-          })}
+          ))}
         </dl>
       )}
     </article>
@@ -358,6 +714,16 @@ function Respondent({ p }) {
 }
 
 /* -------------------------------------------------------------------- page */
+
+const SORTS = {
+  name:  (a, b) => a.name.localeCompare(b.name),
+  when:  (a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')),
+  sus:   (a, b) => (b.sus ?? -1) - (a.sus ?? -1),
+  nps:   (a, b) => (b.nps ?? -1) - (a.nps ?? -1),
+  stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
+  role:  (a, b) => String(a.role || 'zzz').localeCompare(String(b.role || 'zzz')),
+  done:  (a, b) => b.done - a.done,
+}
 
 export function Responses() {
   /* This browser's own records are available synchronously, so the page paints
@@ -404,7 +770,7 @@ export function Responses() {
       setEphemeral(!!data?.ephemeral)
       setStatus('server')
     } catch {
-      fallback('No response endpoint answered — either this is a local build with no functions running, or the API is not deployed.')
+      fallback('No response endpoint answered. Either this is a local build with no functions running, or the API is not deployed.')
     }
   }, [])
 
@@ -415,63 +781,70 @@ export function Responses() {
     const list = people.filter(p =>
       (!q || p.name.toLowerCase().includes(q)) && (!onlyCommented || p.commented))
     const byName = (a, b) => a.name.localeCompare(b.name)
-    if (sort === 'name') list.sort(byName)
-    if (sort === 'newest') list.sort((a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')) || byName(a, b))
-    if (sort === 'oldest') list.sort((a, b) => String(a.startedAt || '').localeCompare(String(b.startedAt || '')) || byName(a, b))
-    if (sort === 'most') list.sort((a, b) => b.answered - a.answered || byName(a, b))
+    list.sort((a, b) => (SORTS[sort] || byName)(a, b) || byName(a, b))
     return list
   }, [people, query, sort, onlyCommented])
 
-  /* Summary is computed over everyone, not over the filter: a mean that moves
-     when you type in a search box is a mean of nothing. */
-  const summary = React.useMemo(() => {
-    const rated = people.map(p => p.stars).filter(v => v != null)
-    const mean = rated.length ? rated.reduce((a, b) => a + b, 0) / rated.length : null
-    const dist = SCALED.map(q => {
-      const counts = {}
-      let total = 0
-      people.forEach(p => {
-        const row = p.rows.find(r => r.questionId === q.id)
-        if (!row) return
-        const v = num(row.value)
-        if (v == null) return
-        counts[v] = (counts[v] || 0) + 1
-        total += 1
-      })
-      return { q, counts, total }
+  /* Every figure is computed over everyone, not over the filter: a mean that
+     moves when you type in a search box is a mean of nothing. */
+  const s = React.useMemo(() => summarise(people), [people])
+
+  const comments = React.useMemo(() => {
+    const out = []
+    people.forEach(p => {
+      if (p.change) out.push({ key: p.id + '/change', name: p.name, at: p.lastAt, kind: 'Would change', text: p.change })
+      if (p.impactNote) out.push({ key: p.id + '/impact', name: p.name, at: p.lastAt, kind: 'On impact', text: p.impactNote })
     })
-    return {
-      mean,
-      rated: rated.length,
-      commented: people.filter(p => p.commented).length,
-      answers: people.reduce((n, p) => n + p.answered, 0),
-      dist: dist.filter(d => d.total > 0),
-      silent: dist.filter(d => d.total === 0).length,
-    }
+    return out
+  }, [people])
+
+  const retiredByPage = React.useMemo(() => {
+    const by = new Map()
+    people.forEach(p => p.retired.forEach(r => {
+      if (!by.has(r.page)) by.set(r.page, [])
+      by.get(r.page).push({ ...r, name: p.name })
+    }))
+    return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [people])
 
   /* Both downloads carry everyone, not the filtered view — the file is the
      archive, and a CSV that silently omits the people you had filtered out is
      the worst kind of wrong. */
-  const rows = React.useMemo(() => people.flatMap(p => p.rows), [people])
-  const downloadCSV = () => save(toCSV(rows), `mindmap-responses-${stamp()}.csv`, 'text/csv;charset=utf-8')
+  /* The question column is filled in here rather than trusted from the row:
+     a retired question has no text left to look up, and an empty cell in a
+     spreadsheet reads as a missing value rather than a deliberate one. */
+  const rows = React.useMemo(() => people.flatMap(p =>
+    [...p.rows, ...p.retired].map(r => ({
+      ...r,
+      question: textFor(r.questionId) || 'Question no longer asked',
+    }))), [people])
+  const downloadCSV = () => save(toCSV(rows), `mindmap-answers-${stamp()}.csv`, 'text/csv;charset=utf-8')
+  const downloadPeople = () => save(
+    csv(PERSON_HEAD, personRows(people)),
+    `mindmap-respondents-${stamp()}.csv`, 'text/csv;charset=utf-8')
   const downloadJSON = () => save(
     JSON.stringify({ source: status, ephemeral, exportedAt: new Date().toISOString(), respondents: people }, null, 2),
     `mindmap-responses-${stamp()}.json`, 'application/json')
 
   const nothing = people.length === 0
 
+  /* One respondent is a respondent, not a sample. The label above the figure
+     changes with it so the page never prints the word "mean" over a single
+     person's answer. */
+  const susLabel = s.completeSus === 1 ? 'SUS score (one respondent)' : 'Mean SUS'
+  const smallSample = s.completeSus > 0 && s.completeSus < MIN_MEAN
+
   return (
     <main className="pb-20">
       <div className="border-b border-rule bg-mist">
         <div className="wrap py-10">
-          <h1 className="font-display text-major font-medium leading-[1.05] tracking-tight text-ink">
+          <h1 className="font-display text-major font-bold leading-[1.05] tracking-tight text-ink">
             What the reviewers said
           </h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
-            Every answer left on the site, grouped by the person who left it.
-            This page is unlisted, not protected — treat anything here as readable
-            by anyone who has the link.
+            The scored survey first, then every answer underneath it, grouped by
+            the person who left it. This page is unlisted, not protected: treat
+            anything here as readable by anyone who has the link.
           </p>
         </div>
       </div>
@@ -486,9 +859,8 @@ export function Responses() {
             <p>{problem}</p>
             <p className="mt-2">
               What is below is what <em>you</em> answered in this browser. Other
-              reviewers' answers are sitting in their own browsers and cannot be
-              read from here until the API and its store are deployed — see
-              SURVEY-SETUP.md.
+              reviewers' answers are in their own browsers and cannot be read from
+              here until the API and its store are deployed. See SURVEY-SETUP.md.
             </p>
           </Notice>
         )}
@@ -497,76 +869,212 @@ export function Responses() {
           <Notice title="The server is not keeping these">
             <p>
               The API answered, but it has no store attached, so it is holding
-              responses in memory on one instance. They will disappear on the next
-              deploy, the next cold start, or whenever that instance is recycled.
-              Download the CSV now, and set up the KV store before asking anyone
-              else to review.
+              responses in memory on one instance. They disappear on the next
+              deploy or cold start. Download the CSV now, and set up the KV store
+              before asking anyone else to review.
             </p>
           </Notice>
         )}
 
-        <section aria-label="Summary" className="mt-14">
-          <p className="mark">Summary</p>
-          <div className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <div className="note">Respondents</div>
-              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                {people.length}
-              </div>
-              <p className="mt-1.5 text-meta text-ink-2">
-                {summary.answers} answers between them.
-              </p>
-            </div>
-            <div>
-              <div className="note">Mean rating</div>
-              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                {summary.mean == null ? '—' : summary.mean.toFixed(2)}
-              </div>
-              <p className="mt-1.5 text-meta text-ink-2">
-                {summary.rated === 0
-                  ? 'Nobody has rated the site yet.'
-                  : `From ${summary.rated} rating${summary.rated === 1 ? '' : 's'}, out of 5.`}
-              </p>
-            </div>
-            <div>
-              <div className="note">Left a comment</div>
-              <div className="mt-2 font-mono text-stat font-medium leading-none tabular-nums text-ink">
-                {summary.commented}
-              </div>
-              <p className="mt-1.5 text-meta text-ink-2">
-                Wrote at least one sentence, not just a score.
-              </p>
-            </div>
-            <div>
-              <div className="note">Source</div>
-              <div className="mt-2 font-display text-head font-medium text-ink">
-                {status === 'server' ? (ephemeral ? 'Server, in memory' : 'Server store') : 'This browser'}
-              </div>
-              <p className="mt-1.5 text-meta text-ink-2">
-                {status === 'server'
-                  ? 'Read live from the API.'
-                  : 'Read from local storage on this machine.'}
-              </p>
-            </div>
+        {/* ------------------------------------------------------- headline */}
+        <section aria-label="Headline figures" className="mt-14">
+          <p className="mark">The numbers</p>
+
+          <div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            <Figure
+              label={susLabel}
+              value={s.susMean == null ? 'No data' : s.susMean.toFixed(1)}
+              unit={s.susMean == null ? null : 'of 100'}
+            >
+              {s.susMean == null ? (
+                <>Nobody has finished all {SUS_ITEMS.length} usability statements yet.</>
+              ) : (
+                <>
+                  Grade {s.susGrade.grade}, {s.susGrade.word}.{' '}
+                  {s.susMean >= BENCHMARK
+                    ? `${(s.susMean - BENCHMARK).toFixed(1)} above`
+                    : `${(BENCHMARK - s.susMean).toFixed(1)} below`}{' '}
+                  the published average of {BENCHMARK}.
+                </>
+              )}
+            </Figure>
+
+            <Figure
+              label="Net Promoter Score"
+              value={s.nps == null ? 'No data' : (s.nps > 0 ? `+${s.nps}` : String(s.nps))}
+              unit={s.nps == null ? null : 'of ±100'}
+            >
+              {s.nps == null
+                ? 'Nobody has answered the recommendation question yet.'
+                : `${s.promoters} promoter${s.promoters === 1 ? '' : 's'}, ${s.passives} passive, ${s.detractors} detractor${s.detractors === 1 ? '' : 's'}, from ${s.npsAnswered} answer${s.npsAnswered === 1 ? '' : 's'}.`}
+            </Figure>
+
+            <Figure
+              label={s.starsAnswered === 1 ? 'Rating (one respondent)' : 'Mean rating'}
+              value={s.starMean == null ? 'No data' : s.starMean.toFixed(2)}
+              unit={s.starMean == null ? null : `of ${STAR_MAX}`}
+            >
+              {s.starsAnswered === 0
+                ? 'Nobody has rated the whole thing yet.'
+                : `From ${s.starsAnswered} rating${s.starsAnswered === 1 ? '' : 's'}, given in half stars.`}
+            </Figure>
+
+            <Figure label="Respondents" value={s.people}>
+              {s.people === 0
+                ? 'Send the site to a reviewer and this fills in as they read.'
+                : `${s.completeSus} finished the usability scale, ${s.partialSus} started it, ${s.untouchedSus} did not. ${s.answers} answers in total.`}
+            </Figure>
           </div>
 
-          {summary.dist.length > 0 && (
-            <div className="mt-12 grid gap-x-12 gap-y-8 lg:grid-cols-2">
-              {summary.dist.map(d => (
-                <Distribution key={d.q.id} q={d.q} counts={d.counts} total={d.total} />
-              ))}
-            </div>
-          )}
-          {summary.silent > 0 && (
-            <p className="note mt-6">
-              {summary.silent} scale question{summary.silent === 1 ? ' has' : 's have'} no
-              answers yet, so {summary.silent === 1 ? 'it is' : 'they are'} not charted.
-            </p>
-          )}
+          {/* How to read the SUS number. Stated once, here, next to the
+              number it qualifies, rather than as a footnote nobody reaches. */}
+          <div className="mt-10 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+            <figure className="m-0 border-t border-rule pt-4">
+              <figcaption className="max-w-read font-display text-ui font-medium text-ink">
+                {susLabel} against the benchmark
+              </figcaption>
+              <div className="mt-3">
+                <Meter value={s.susMean} />
+                {/* The 68 tick sits at 68% of the track, not in the middle of a
+                    justified row: a benchmark label that does not line up with
+                    the rule it names is worse than no label. */}
+                <div className="relative mt-1.5 h-[1.5em] font-mono text-tick tabular-nums text-ink-3">
+                  <span className="absolute left-0">0</span>
+                  <span className="absolute -translate-x-1/2 text-ink" style={{ left: `${BENCHMARK}%` }}>
+                    {BENCHMARK}
+                  </span>
+                  <span className="absolute right-0">100</span>
+                </div>
+                <p className="note mt-1">The ink rule at {BENCHMARK} is the published average.</p>
+              </div>
+              <p className="mt-4 max-w-measure text-meta text-ink-2">
+                The System Usability Scale runs 0 to 100 and <strong>is not a
+                percentage</strong>. A 71 is a 71 on a curve whose population mean
+                across hundreds of published studies is 68. The letter grade is
+                Sauro and Lewis's curve: 68 is a C, 78.9 a B, 84.1 an A.
+              </p>
+              {s.completeSus > 0 && (
+                <p className="note mt-2">
+                  Range {s.susWorst.toFixed(1)} to {s.susBest.toFixed(1)} across{' '}
+                  {s.completeSus} complete respondent{s.completeSus === 1 ? '' : 's'}.
+                  {s.partialSus > 0 && ` ${s.partialSus} more answered some of the ten and are not scored. A partial SUS is not a smaller SUS, it is no SUS.`}
+                </p>
+              )}
+              {smallSample && (
+                <p className="note mt-2">
+                  {s.completeSus === 1
+                    ? 'This is one person’s score. It is not an average and it should not be reported as one.'
+                    : `Only ${s.completeSus} complete responses. Far too few to average with any confidence, so read it as an early signal, not a result.`}
+                </p>
+              )}
+            </figure>
+
+            <figure className="m-0 border-t border-rule pt-4">
+              <figcaption className="max-w-read font-display text-ui font-medium text-ink">
+                Who would recommend it
+              </figcaption>
+              <p className="note mt-1">
+                One 0–10 question. Promoters are 9–10, passives 7–8, detractors
+                0–6; the score is the promoter share minus the detractor share,
+                so it runs −100 to +100 and passives count only by diluting both.
+              </p>
+              <Rows
+                points={[
+                  { value: 'promoter', label: 'Promoters (9–10)' },
+                  { value: 'passive', label: 'Passives (7–8)' },
+                  { value: 'detractor', label: 'Detractors (0–6)' },
+                ]}
+                counts={{ promoter: s.promoters, passive: s.passives, detractor: s.detractors }}
+                total={s.npsAnswered}
+              />
+              <p className="mt-3 max-w-measure text-meta text-ink-2">
+                Anything above 0 means more people would recommend it than would
+                warn someone off it. It is a coarse instrument on a sample this
+                size.
+              </p>
+            </figure>
+          </div>
         </section>
 
-        <section aria-label="Responses" className="mt-20">
-          <p className="mark">Responses</p>
+        {/* --------------------------------------------------- segmentation */}
+        <section aria-label="Usability by who answered" className="mt-20">
+          <p className="mark">Split by who answered</p>
+          <p className="mt-4 max-w-measure text-sec text-ink-2">
+            One mean over everybody hides the disagreement, and the disagreement
+            is usually the finding. A segment gets a printed mean only once{' '}
+            {MIN_MEAN} people in it have finished all ten statements.
+          </p>
+          <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+            <Segment
+              title="Mean SUS by role"
+              note={`Rule marks the ${BENCHMARK} benchmark. "Finished" means all ten statements; n is how many.`}
+              rows={s.byRole}
+            />
+            <Segment
+              title="Mean SUS by closeness to teen stress"
+              note="Same scale, same benchmark rule."
+              rows={s.byCloseness}
+            />
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------ the rest */}
+        <section aria-label="Ratings and impact" className="mt-20">
+          <p className="mark">Rating and impact</p>
+          <div className="mt-6 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+            <Distribution
+              title="Overall rating"
+              note={`Out of ${STAR_MAX}, in half stars.`}
+              points={s.starDist.points}
+              counts={s.starDist.counts}
+              total={s.starDist.total}
+            />
+            <Distribution
+              title={IMPACT ? IMPACT.prompt : 'Impact'}
+              note="Optional, and the one place a sentence was invited."
+              points={s.impactDist.points}
+              counts={s.impactDist.counts}
+              total={s.impactDist.total}
+            />
+          </div>
+        </section>
+
+        <section aria-label="Who answered" className="mt-20">
+          <p className="mark">Who answered</p>
+          <p className="mt-4 max-w-measure text-sec text-ink-2">
+            Every question here was optional, so these counts are of people who
+            chose to say. "Did not say" is counted as an answer.
+          </p>
+          <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+            {ABOUT_ITEMS.map(item => {
+              const counts = {}
+              let total = 0
+              people.forEach(p => {
+                const r = p.rows.find(x => x.questionId === item.id)
+                const v = r ? (String(r.label ?? '').trim() || String(r.value ?? '').trim()) : ''
+                const k = v || 'Did not say'
+                counts[k] = (counts[k] || 0) + 1
+                total += 1
+              })
+              const points = [...item.options.map(o => ({ value: o, label: o })),
+                              { value: 'Did not say', label: 'Did not say' }]
+              return (
+                <Distribution
+                  key={item.id}
+                  title={item.prompt}
+                  note="Optional question."
+                  points={points}
+                  counts={counts}
+                  total={total}
+                />
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------ the table */}
+        <section aria-label="Respondents" className="mt-20">
+          <p className="mark">Each respondent</p>
 
           <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
             <Field label="Find a name">
@@ -581,9 +1089,12 @@ export function Responses() {
             <Field label="Sort by">
               <select value={sort} onChange={e => setSort(e.target.value)} className={CONTROL}>
                 <option value="name">Name, A to Z</option>
-                <option value="newest">Most recent answer first</option>
-                <option value="oldest">First to start</option>
-                <option value="most">Most questions answered</option>
+                <option value="when">Most recent answer first</option>
+                <option value="sus">Highest SUS first</option>
+                <option value="nps">Highest NPS first</option>
+                <option value="stars">Highest rating first</option>
+                <option value="role">Role</option>
+                <option value="done">Most complete first</option>
               </select>
             </Field>
             {/* aria-pressed rather than a checkbox: it is a view filter that
@@ -601,38 +1112,51 @@ export function Responses() {
                   : 'border-rule bg-card text-ink hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
               )}
             >
-              Left a comment{onlyCommented ? ' — on' : ''}
+              Left a comment{onlyCommented ? ' (on)' : ''}
             </button>
             <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-3">
               <Button size="sm" type="button" variant="outline" onClick={load}>
                 Refresh
               </Button>
-              <Button size="sm" type="button" disabled={nothing} onClick={downloadCSV}>
-                Download CSV
+              <Button size="sm" type="button" disabled={nothing} onClick={downloadPeople}>
+                Respondents CSV
+              </Button>
+              <Button size="sm" type="button" variant="outline" disabled={nothing} onClick={downloadCSV}>
+                Answers CSV
               </Button>
               <Button size="sm" type="button" variant="ghost" disabled={nothing} onClick={downloadJSON}>
-                Download JSON
+                JSON
               </Button>
             </div>
           </div>
+          <p className="note mt-3 max-w-measure">
+            Two sheets. <em>Respondents</em> is one row per person with the computed
+            SUS, NPS bucket, rating, role and closeness, the sheet that gets pasted
+            into a spreadsheet. <em>Answers</em> is one row per answer, the full
+            archive, older questions included.
+          </p>
 
           {nothing ? (
             /* Drawn, and it says which of the two very different things it
                means — nobody has answered, or nobody's answers can reach
                this page. Those need different actions from Mikhail. */
             <div className="mt-8 rounded-panel border border-rule bg-card p-8">
-              <h2 className="font-display text-head font-medium text-ink">
+              <h2 className="font-display text-head font-bold text-ink">
                 {status === 'server' ? 'Nobody has answered yet' : 'Nothing recorded in this browser'}
               </h2>
               <p className="mt-3 max-w-measure text-sec text-ink-2">
                 {status === 'server'
-                  ? 'The API answered and its store is empty. Send the site to a reviewer and this fills in as they read.'
-                  : 'This machine has no saved answers, and the server could not be reached, so there is genuinely nothing to show — not an empty result from a working backend.'}
+                  ? 'The API answered and its store is empty. Send the site to a reviewer and this page fills in as they read.'
+                  : 'This machine has no saved answers and the server could not be reached, so there is genuinely nothing to show, not an empty result from a working backend.'}
+              </p>
+              <p className="note mt-3">
+                The figures above read “No data” because there is nothing to
+                compute, not because anything failed.
               </p>
             </div>
           ) : shown.length === 0 ? (
             <div className="mt-8 rounded-panel border border-rule bg-card p-8">
-              <h2 className="font-display text-head font-medium text-ink">
+              <h2 className="font-display text-head font-bold text-ink">
                 No one matches that
               </h2>
               <p className="mt-3 max-w-measure text-sec text-ink-2">
@@ -649,14 +1173,149 @@ export function Responses() {
           ) : (
             <>
               <p className="note mt-6">
-                Showing {shown.length} of {people.length}.
+                Showing {shown.length} of {people.length}. SUS is blank where fewer
+                than all {SUS_ITEMS.length} statements were answered. On a narrow
+                screen the table scrolls sideways: a row here is one person.
               </p>
-              <div className="mt-4 flex flex-col gap-6">
-                {shown.map(p => <Respondent key={p.id} p={p} />)}
+              <div className="mt-4 rounded-panel border border-rule bg-card px-5 py-1 sm:px-6">
+                <Table>
+                  <THead>
+                    <TR>
+                      <TH>Name</TH>
+                      <TH>When</TH>
+                      <TH align="right">SUS</TH>
+                      <TH align="right">Grade</TH>
+                      <TH align="right">NPS</TH>
+                      <TH align="right">Stars</TH>
+                      <TH>Role</TH>
+                      <TH align="right">Done</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {shown.map(p => (
+                      <TR key={p.id}>
+                        <TD className="font-display font-medium text-ink">{p.name}</TD>
+                        <TD className="whitespace-nowrap text-ink-2">{shortWhen(p.lastAt)}</TD>
+                        <TD num align="right" className="text-ink">
+                          {p.sus == null
+                            ? <span className="text-ink-3">none</span>
+                            : p.sus.toFixed(1)}
+                        </TD>
+                        <TD align="right">
+                          {p.sus == null
+                            ? <span className="font-mono text-ink-3">none</span>
+                            : <Badge>{susGrade(p.sus).grade}</Badge>}
+                        </TD>
+                        <TD num align="right" className="text-ink">
+                          {p.nps == null ? <span className="text-ink-3">none</span> : p.nps}
+                        </TD>
+                        <TD num align="right" className="text-ink">
+                          {p.stars == null ? <span className="text-ink-3">none</span> : p.stars.toFixed(1)}
+                        </TD>
+                        <TD className="text-ink-2">{p.role || <span className="text-ink-3">not said</span>}</TD>
+                        <TD num align="right" className="text-ink">
+                          {p.done}<span className="text-ink-3">/{REQUIRED_COUNT}</span>
+                        </TD>
+                      </TR>
+                    ))}
+                  </TBody>
+                </Table>
+              </div>
+              <p className="note mt-3">
+                “Done” counts the {REQUIRED_COUNT} questions that were not optional:
+                the ten usability statements, the recommendation question and the
+                rating.
+              </p>
+            </>
+          )}
+        </section>
+
+        {/* ------------------------------------------------------ free text */}
+        <section aria-label="What people wrote" className="mt-20">
+          <p className="mark">What people wrote</p>
+          {comments.length === 0 ? (
+            <p className="mt-4 max-w-measure text-sec text-ink-2">
+              Nobody has written a sentence yet. Both written questions are
+              optional, so this section stays empty until someone uses one.
+            </p>
+          ) : (
+            <>
+              <p className="mt-4 max-w-measure text-sec text-ink-2">
+                Quoted in full. {comments.length} sentence
+                {comments.length === 1 ? '' : 's'} from {s.commented} of {s.people}{' '}
+                respondent{s.people === 1 ? '' : 's'}.
+              </p>
+              <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+                {comments.map(c => (
+                  <div key={c.key}>
+                    <p className="note">{c.kind}</p>
+                    <Quote name={c.name} at={c.at}>{c.text}</Quote>
+                  </div>
+                ))}
               </div>
             </>
           )}
         </section>
+
+        {/* ---------------------------------------------------- the archive */}
+        {!nothing && (
+          <section aria-label="Every answer" className="mt-20">
+            <p className="mark">Every answer</p>
+            <Fold
+              summary="Every answer as it was given"
+              note={`${shown.length} shown, in the order the questions were asked`}
+            >
+              <div className="flex flex-col gap-6">
+                {shown.map(p => <Respondent key={p.id} p={p} />)}
+              </div>
+            </Fold>
+          </section>
+        )}
+
+        {retiredByPage.length > 0 && (
+          <section aria-label="Retired answers" className="mt-20">
+            <p className="mark">Older answers we no longer ask</p>
+            <p className="mt-4 max-w-measure text-sec text-ink-2">
+              The survey used to ask two questions on every page. Those answers are
+              real and are kept here, but they were given to different questions on
+              a different instrument, so none of them is counted in any figure
+              above.
+            </p>
+            <Fold
+              summary="The older answers"
+              note={`${s.retired} answer${s.retired === 1 ? '' : 's'} across ${retiredByPage.length} retired page${retiredByPage.length === 1 ? '' : 's'}`}
+            >
+              <div className="flex flex-col gap-8">
+                {retiredByPage.map(([page, rs]) => (
+                  <div key={page}>
+                    <h3 className="font-display text-ui font-bold text-ink">
+                      {pageLabel(page)}
+                    </h3>
+                    <dl className="mt-3 flex flex-col gap-4">
+                      {rs.map((r, i) => (
+                        <div key={page + '/' + r.questionId + '/' + i}
+                          className="border-t border-rule pt-3">
+                          <dt className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="font-mono text-fine tabular-nums text-ink-3">
+                              {r.questionId}
+                            </span>
+                            <span className="font-display text-ui font-bold text-ink-2">
+                              {r.name}
+                            </span>
+                          </dt>
+                          <dd className="mt-1.5 max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
+                            {String(r.label || r.value || '').trim() ||
+                              <span className="text-ink-3">left blank</span>}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </Fold>
+          </section>
+        )}
       </div>
     </main>
   )

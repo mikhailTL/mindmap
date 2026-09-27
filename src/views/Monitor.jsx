@@ -34,7 +34,7 @@ export function Back({ go, to = 'site', label = 'Overview' }) {
 }
 
 export function Headline({ children }) {
-  return <p className="max-w-[24ch] font-display text-major font-medium
+  return <p className="max-w-[24ch] font-display text-major font-bold
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
@@ -56,7 +56,6 @@ export function Reason({ claim, plain, source, index, chart }) {
         className="border-b border-rule transition-colors data-[state=open]:bg-mist/40">
         <C.Trigger className="group flex min-h-[64px] w-full items-center gap-4 px-3 py-5 text-left
           transition-colors hover:bg-mist/60">
-          <span className="font-mono text-tick tabular-nums text-ink-3">0{index + 1}</span>
           <span className="flex-1 text-body text-ink">{claim}</span>
           <span className="flex shrink-0 items-center gap-1.5 font-mono text-tick
             text-accent">
@@ -66,7 +65,7 @@ export function Reason({ claim, plain, source, index, chart }) {
           </span>
         </C.Trigger>
         <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
-          <div className="grid gap-6 px-3 pb-6 pl-10 sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-start">
+          <div className="grid gap-6 px-3 pb-6 sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-start">
             <div>
               <p className="max-w-[52ch] text-sec text-ink-2">{plain}</p>
               <p className="mt-3 font-mono text-tick text-ink-3">{source}</p>
@@ -136,7 +135,7 @@ function Rings({ score, usual, rings, children }) {
           picked={picked} onPick={id => setPicked(p => p === id ? null : id)}/>
         <div className="min-w-0">
           {children}
-          <h2 className="mark mt-10">Each signal, out of 100</h2>
+          <h2 className="mark mt-10">Each signal, scored out of 100</h2>
           <RainbowKey className="mt-3" rings={rings} picked={picked}
             onPick={setPicked}/>
         </div>
@@ -179,13 +178,13 @@ function SilentChannels() {
   )
 }
 
-/* Written as requirements rather than as a three-step wizard: nothing here can
-   be completed by clicking, so numbering them as actions would be a promise
-   the screen cannot keep. */
+/* Written as requirements, not as a wizard: nothing here can be completed by
+   clicking, so presenting them as steps would be a promise the screen cannot
+   keep. */
 const PAIRING = [
-  ['A patch, charged', 'One MindMap patch on the inside of the forearm. None exists to send you yet — the hardware is drawn and printed, not manufactured.'],
+  ['A charged patch', 'One MindMap patch on the inside of the forearm. None exists to send you yet. The hardware is drawn and printed, not manufactured.'],
   ['A phone with Bluetooth', 'The app pairs over Bluetooth LE and reads the four channels above once a second.'],
-  ['About two weeks of wear', 'The score is a comparison with your own normal, and the first fortnight is what builds that normal. Before it, there is no baseline to compare against.'],
+  ['About two weeks of wear', 'The score compares you with your own normal, and the first two weeks are what build that normal.'],
 ]
 
 function StudentUnpaired({ go, openTab }) {
@@ -193,7 +192,7 @@ function StudentUnpaired({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-medium text-ink">Your reading today</h2>
+        <h2 className="font-display text-row font-bold text-ink">Your reading today</h2>
         <Label>No patch paired</Label>
         <RealNotice inline>Nothing has been measured, so there is no score.</RealNotice>
       </div>
@@ -202,20 +201,17 @@ function StudentUnpaired({ go, openTab }) {
         <SilentChannels/>
         <div className="min-w-0">
           <Headline>No patch is paired to this account.</Headline>
-          <p className="mt-4 max-w-[42ch] text-body text-ink-2">The screen fills the moment one is.
-            Until then there is nothing to read, and nothing has gone wrong.</p>
-          <h3 className="mark mt-10">What a reading from the patch needs</h3>
-          <ol className="m-0 mt-3 list-none p-0">
-            {PAIRING.map(([what, why], i) => (
-              <li key={what} className="flex gap-4 border-b border-rule py-4">
-                <span className="pt-0.5 font-mono text-tick tabular-nums text-ink-3">0{i + 1}</span>
-                <span>
-                  <span className="block font-display text-ui font-medium text-ink">{what}</span>
-                  <span className="mt-1 block max-w-[46ch] text-sec text-ink-2">{why}</span>
-                </span>
+          <p className="mt-4 max-w-[42ch] text-body text-ink-2">It fills as soon as one is paired.
+            Nothing has gone wrong.</p>
+          <h3 className="mark mt-10">What you need to take a reading</h3>
+          <ul className="m-0 mt-3 list-none p-0">
+            {PAIRING.map(([what, why]) => (
+              <li key={what} className="border-b border-rule py-4">
+                <span className="block font-display text-ui font-bold text-ink">{what}</span>
+                <span className="mt-1 block max-w-[46ch] text-sec text-ink-2">{why}</span>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </div>
 
@@ -226,10 +222,10 @@ function StudentUnpaired({ go, openTab }) {
       <ScrollIn as="div">
         <Card as="section" className="mt-10 border-l-[3px] border-l-accent">
           <CardHeader className="p-6 pb-0">
-            <CardTitle as="h3" className="text-row">You can take a reading now, without a patch.</CardTitle>
+            <CardTitle as="h3" className="text-row">Take a reading without a patch</CardTitle>
             <CardDescription className="max-w-[56ch]">Six questions, scored by the same model the
-              patch feeds, on the same scale out of 100 — one ring instead of four. It is the only
-              screen on this site that measures the person reading it.</CardDescription>
+              patch feeds, on the same scale out of 100. It is the only screen here that measures
+              the person reading it.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 pt-5">
             <Button onClick={toCheck}>Answer six questions</Button>
@@ -248,9 +244,9 @@ function StudentUnpaired({ go, openTab }) {
       </Card></ScrollIn>
 
       <p className="mt-10 max-w-[64ch] text-meta text-ink-2">Once a patch is paired the score is
-        worked out every 30 seconds from the previous minute of readings, and compared with your own
-        last two weeks. Each ring is one signal's own distance from that baseline; the number in the
-        middle is the model's blend of all four, so the rings do not add up to it.</p>
+        worked out every 30 seconds from the last minute of readings, and compared with your own
+        last two weeks. Each ring is one signal's distance from that baseline. The middle number
+        blends all four, so the rings do not add up to it.</p>
     </>
   )
 }
@@ -267,9 +263,9 @@ export function StudentBody({ go, openTab }) {
       <div className="flex flex-wrap items-baseline gap-3.5">
         {/* "Today" alone did not say today's what; the date badge beside it
             reads as the answer and is not. */}
-        <h2 className="font-display text-row font-medium text-ink">Your reading today</h2>
+        <h2 className="font-display text-row font-bold text-ink">Your reading today</h2>
         <Label>Thursday · 4:10 pm</Label>
-        <DemoNotice inline>Sample data — not a real person.</DemoNotice>
+        <DemoNotice inline>Sample data. Not a real person.</DemoNotice>
       </div>
 
       <Rings score={51} usual={46} rings={studentRings()}>
@@ -297,13 +293,13 @@ export function StudentBody({ go, openTab }) {
       </Card></ScrollIn>
 
       <AllDetail>
-        <h3 className="mark">Your score across today</h3>
+        <h3 className="mark">Your score through the day</h3>
         <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range.</p>
         <DayChart data={DATA.day} band={DATA.band}/>
-        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds from
-          the previous minute of readings, and compared with your own last two weeks. Each ring above is
-          one signal's own distance from that baseline; the number in the middle is the model's blend of
-          all four, so the rings do not add up to it.</p>
+        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds
+          from the last minute of readings, and compared with your own last two weeks. Each ring above
+          is one signal's distance from that baseline. The middle number blends all four, so the rings
+          do not add up to it.</p>
       </AllDetail>
     </>
   )

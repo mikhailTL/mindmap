@@ -48,6 +48,55 @@ function arcPath(r, pct) {
   return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
 
+/* ── Weather on the arch ────────────────────────────────────────────────
+   The two ends of the scale get weather: a white cloud sitting still over the
+   calm foot, a dark one raining over the peak foot. It is the one piece of the
+   interface that is there to be liked rather than read, which is why it is
+   drawn last, announced to nobody, and never placed where a figure goes.
+
+   It sits in the two upper corners, not on the arch. The first attempt masked
+   the clouds to the band, which is what a single-band arch would want; this
+   arch is four concentric bands filling the whole annulus, and every band
+   paints its own full-length mist track, so a cloud behind them was invisible
+   and a cloud in front of them covered the reading. The corners above each
+   foot are the only empty space in the box, and they are directly above the
+   ends they belong to, so the association still reads.
+
+   Both animations stop under reduced motion. The clouds stay. */
+/* One silhouette, not three overlapping ellipses. The ellipse version needed
+   an outline to be visible on near-white paper, and outlining three ellipses
+   draws the seams where they overlap: the calm cloud came out looking like a
+   pair of spectacles. A single closed path has one edge. */
+const CLOUD = 'M0 18 C0 12 5 9 9 10 C10 3 18 0 24 4 C28 0 36 2 37 8 C43 8 46 13 44 18 Z'
+
+function Cloud({ x, y, k, fill, stroke }) {
+  return (
+    <path d={CLOUD} fill={fill} stroke={stroke} strokeWidth={stroke ? 1.6 / k : 0}
+      strokeLinejoin="round" transform={`translate(${x} ${y}) scale(${k})`}/>
+  )
+}
+
+export function ArchWeather() {
+  return (
+    <g aria-hidden style={{ pointerEvents:'none' }}>
+      {/* calm: white, still, drifting a few units and back. It carries a rule
+          because a white cloud on near-white paper is otherwise a hole. */}
+      <g className="mm-drift">
+        <Cloud x={8} y={30} k={1.05} fill="#ffffff" stroke="#93b2a1"/>
+      </g>
+      {/* peak: dark, and it is raining on the high end */}
+      <g className="mm-drift mm-drift-slow">
+        <Cloud x={252} y={22} k={1.15} fill="#2a5744"/>
+      </g>
+      <g className="mm-rain" stroke="#0e9c9c" strokeWidth="3" strokeLinecap="round">
+        <line x1="266" y1="46" x2="262" y2="57"/>
+        <line x1="281" y1="48" x2="277" y2="59"/>
+        <line x1="296" y1="46" x2="292" y2="57"/>
+      </g>
+    </g>
+  )
+}
+
 function useCount(value, on = true) {
   const [shown, setShown] = React.useState(on ? 0 : value)
   React.useEffect(() => {
@@ -108,7 +157,6 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         aria-label={`${score} out of 100${usual != null ? `, usually ${usual}` : ''}. 0 is calm, 100 is peak.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
-
           {rings.map((r, i) => {
             const s = SENSORS[r.id] || r
             return (
@@ -118,6 +166,9 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
               </React.Fragment>
             )
           })}
+          {/* last, because every band paints a full-length mist track and
+              anything drawn before them is painted out */}
+          <ArchWeather/>
         </svg>
         {/* the score rides over the arch in real HTML, so it uses the display
             face and a step off the scale rather than a size the viewBox

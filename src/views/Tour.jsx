@@ -4,7 +4,6 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { DemoNotice } from '../ui/notice'
 import { Separator } from '../ui/separator'
-import { FinalSurvey } from '../survey/Survey'
 import { Card, CardTitle } from '../ui/card'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
@@ -73,7 +72,7 @@ function EvidenceGap() {
         </div>
       ))}
       <figcaption className="note mt-5 max-w-[46ch]">
-        A drawing, not data. The lower row is one reading a second — {' '}
+        A drawing, not data. The lower row is one reading a second:{' '}
         <span className="font-mono tabular-nums text-ink-2">{PER_DAY.toLocaleString('en-US')}</span>{' '}
         readings in a {SCHOOL_HOURS}-hour school day, per student.
       </figcaption>
@@ -192,15 +191,15 @@ function Caseload() {
    they differ by hue, so the column still separates in grayscale. */
 const HONESTY = [
   ['The screens on this site', 'Built', 'fact',
-    'Hash-routed React. Every chart on this tour is the component the real screen runs, on the same fixtures.'],
+    'Hash-routed React, running on fixture data.'],
   ['Every figure on them', 'Generated', 'demo',
-    'Produced by the scoring model from invented baselines. Nobody has worn a patch and nobody has been measured.'],
+    'Produced by the scoring model from invented baselines. Nobody has been measured.'],
   ['The patch', 'Drawn, not built', 'demo',
-    'A CAD model, three printed parts and a bought board. There is no photograph of an assembled unit anywhere on this site, because there is not one.'],
+    'A CAD model, three printed parts and a bought board. No assembled unit exists to photograph.'],
   ['The scoring model', 'Written, not validated', 'demo',
     'Four signals scored against a fourteen-day baseline and blended through a logistic. It has never been compared with any clinical measure.'],
   ['Accuracy', 'None claimed', 'demo',
-    'No study, no participants, no error rate. Any accuracy figure quoted for this device would be one we made up.'],
+    'No study, no participants, no error rate.'],
   ['The eight students', 'Invented', 'demo',
     'Student 8241 and the rest are numbers, carrying consent records we wrote ourselves.'],
   ['Regulatory status', 'Not a medical device', 'fact',
@@ -214,18 +213,17 @@ const HONESTY = [
 const STOPS = [
   {
     id: 'problem', nav: 'The problem',
-    title: 'A counselor hears about a student once, then nothing for days',
+    title: 'The problem',
     body: (
       <>
         <Lede>
           A counselor's record of a student is one conversation, when one happens, plus whatever a
-          teacher passes on. Between those, nothing about that student gets written down.
+          teacher passes on. Between those, nothing gets written down.
         </Lede>
         <Lede>
-          MindMap makes one narrow claim: measure four body signals continuously and there is a
-          record of every day, not only the days someone spoke up. It does not claim to know why a
-          day ran high, and it never compares one student against another — only against their own
-          last two weeks.
+          MindMap measures four body signals continuously, so there is a record of every day, not
+          only the days someone spoke up. It never explains why a day ran high, and never compares
+          a student against anyone but their own last two weeks.
         </Lede>
       </>
     ),
@@ -233,43 +231,40 @@ const STOPS = [
   },
   {
     id: 'hardware', nav: 'The hardware',
-    title: 'A sticker-sized patch in three printed parts',
+    title: 'The patch',
     body: (
       <>
         <Lede>
-          A stadium-shaped adhesive base carries the sensor window; a tray holds a Seeed XIAO
-          nRF52840 Sense board; a printed shell closes over it with a slot for charging. The board
-          is bought, not designed by us.
+          A stadium-shaped adhesive base, a tray for a Seeed XIAO nRF52840 Sense board, and a
+          printed shell over the top. The board is bought, not designed by us.
         </Lede>
         <ul className="mt-6 m-0 list-none space-y-4 p-0">
           {LAYERS.map(l => (
             <li key={l.i} className="border-t border-rule pt-3">
-              <p className="font-display text-ui font-medium text-ink">
-                <span className="mr-2.5 font-mono text-tick text-ink-3">
-                  {String(l.i + 1).padStart(2, '0')}</span>{l.title}</p>
+              <p className="font-display text-ui font-bold text-ink">{l.title}</p>
               <p className="mt-1 text-sec text-ink-2">{l.body}</p>
             </li>
           ))}
         </ul>
-        <Note>This is the CAD, drawn to the real dimensions. No unit has been assembled and
-          photographed, so no photograph of one appears here.</Note>
+        <Note>Drawn to the real dimensions. No unit has been assembled, so there is no
+          photograph of one.</Note>
       </>
     ),
     art: Hardware,
   },
   {
     id: 'signals', nav: 'Four signals',
-    title: 'What each of the four signals measures',
+    title: 'The four signals',
     body: (
       <>
         <Lede>
           Pulse, sweat, skin temperature and movement, off the forearm, once a second. Sweat moves
-          first and heart-rate variability moves furthest; skin temperature drifts slowly enough to
-          rule illness in or out.
+          first, heart-rate variability moves furthest, and skin temperature drifts slowly enough
+          to rule illness in or out.
         </Lede>
         <Lede>
-          Movement is the control rather than a fifth reading. Above 0.35 g the score is held back,
-          so a hard run cannot be scored as a hard day.
+          Movement is a control, not a fifth reading. Above 0.35 g the score is held back, so a
+          hard run cannot be scored as a hard day.
         </Lede>
       </>
     ),
@@ -278,45 +273,44 @@ const STOPS = [
   },
   {
     id: 'student', nav: 'Student screen',
-    title: 'The student sees one score out of 100, and every reading behind it',
+    title: 'What the student sees',
     body: (
       <>
         <Lede>
-          One number out of 100 and one plain sentence. The four rings are each signal's own
-          distance from this person's fourteen-day baseline; the number in the middle is the
-          model's blend of all four, so the rings deliberately do not add up to it.
+          One number out of 100 and one plain sentence. Each ring is one signal's distance from
+          this person's fourteen-day baseline; the number in the middle blends all four.
         </Lede>
         <Lede>
-          The student sees everything: every reading, second by second, and everything they write.
-          Nothing on their own screen is withheld from them.
+          The student sees every reading, second by second, and everything they write. Nothing on
+          their own screen is withheld from them.
         </Lede>
       </>
     ),
     art: () => (
       <div>
         <RainbowDial score={51} usual={46} rings={studentRings()} size={340}/>
-        <p className="mt-6 max-w-[34ch] font-display text-head font-medium text-ink">
+        <p className="mt-6 max-w-[34ch] font-display text-head font-bold text-ink">
           Today is a little higher than your normal.</p>
         <p className="mt-2 max-w-[34ch] text-sec text-ink-2">
           It went up in third period and has stayed there.</p>
-        <DemoNotice className="mt-4">Sample data — not a real person.</DemoNotice>
+        <DemoNotice className="mt-4">Sample data, not a real person.</DemoNotice>
       </div>
     ),
     go: ['student', 'Open the student screen'],
   },
   {
     id: 'parent', nav: 'Parent screen',
-    title: 'The parent sees the week, and never a raw reading',
+    title: 'What the parent sees',
     body: (
       <>
         <Lede>
           A parent gets one number a day, one sentence a week, and which days sat above their
-          child's own range. That is the whole of it.
+          child's own range. That is all.
         </Lede>
         <Lede>
-          The line the product will not cross is here: a parent never sees a raw reading, never
-          sees anything the student wrote, and never sees where they were. A product that showed a
-          parent the raw stream would be a surveillance tool, and a teenager would stop wearing it.
+          A parent never sees a raw reading, anything the student wrote, or where they were.
+          Showing a parent the raw stream would make it a surveillance tool, and a teenager would
+          stop wearing it.
         </Lede>
       </>
     ),
@@ -327,7 +321,7 @@ const STOPS = [
         'Anything said near the microphone']
       return (
         <div>
-          <p className="max-w-[30ch] font-display text-head font-medium text-ink">
+          <p className="max-w-[30ch] font-display text-head font-bold text-ink">
             Maya had a harder week than usual.</p>
           <WeekStrip days={DATA.week} band={DATA.weekBand} className="mt-5 max-w-[22rem]"/>
           <p className="mt-3 font-mono text-tick tabular-nums text-ink-3">
@@ -347,23 +341,19 @@ const STOPS = [
   },
   {
     id: 'counselor', nav: 'Counselor console',
-    title: 'The counselor sees only the students whose guardian agreed',
+    title: 'What the counselor sees',
     body: null,   /* built below, from the fixture, so the counts cannot drift */
     art: Caseload,
     go: ['pro', 'Open the counselor console'],
   },
   {
     id: 'honest', nav: 'Real vs demo',
-    title: 'What is real and what is demonstration',
+    title: 'What is real and what is a demo',
     body: (
       <>
         <Lede>
-          This is the list a reviewer would otherwise have to assemble themselves, so we have
-          written it out. Nothing on this site has been measured on a person.
-        </Lede>
-        <Lede>
-          Everything marked below as generated, drawn or invented is exactly that. We would rather
-          be judged on a working demonstration that says so than on a prototype that implies more.
+          Nothing on this site has been measured on a person. We would rather be judged on a
+          demonstration that says so than on a prototype that implies more.
         </Lede>
       </>
     ),
@@ -396,43 +386,39 @@ const STOPS = [
   },
   {
     id: 'scale', nav: 'At scale',
-    title: 'What would change in one school, if this were real',
+    title: 'What this would change in a school',
     body: (
       <>
         <Lede>
-          This is arithmetic and an argument. It is a projection, not a finding: there is no
-          adoption figure here, no effect size and no trial, because we have run none.
+          A projection, not a finding: no adoption figure, no effect size, no trial.
         </Lede>
         <Lede>
-          The argument is about the order of a queue. A counselor's queue today is ordered by who
-          asked, or who a teacher mentioned. This orders it by who moved fastest this week.
+          A counselor's queue today is ordered by who asked, or who a teacher mentioned. This
+          orders it by who moved fastest this week.
         </Lede>
       </>
     ),
     art: () => (
       <div>
-        <p className="mark">The assumptions, named</p>
+        <p className="mark">The assumptions</p>
         <ol className="m-0 mt-3 list-none space-y-3 p-0">
           {[
-            'A secondary school of about 1,200 students with three counselors — roughly 400 names each. That ratio is an assumption; we did not survey schools.',
+            'A secondary school of about 1,200 students with three counselors, roughly 400 names each. That ratio is an assumption.',
             `Each wearer reports at 1 Hz through a ${SCHOOL_HOURS}-hour school day: ${PER_DAY.toLocaleString('en-US')} readings per student per day.`,
-            'Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. Both are unknown, and the split shown on the counselor screen is invented.',
-            'Groups under five are never reported, so small classes return nothing however many students consent.',
+            'Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. The split shown on the counselor screen is invented.',
+            'Groups under five are never reported.',
           ].map((t, i) => (
-            <li key={i} className="flex gap-3 border-t border-rule pt-3 text-sec text-ink-2">
-              <span className="font-mono text-tick tabular-nums text-ink-3">
-                {String(i + 1).padStart(2, '0')}</span>{t}
-            </li>
+            <li key={i} className="border-t border-rule pt-3 text-sec text-ink-2">{t}</li>
           ))}
         </ol>
         <p className="mt-8 max-w-[54ch] text-meta text-ink">
-          At 400 students a counselor cannot read 400 charts, which is why the output is a rank and
-          a sentence rather than a dashboard. If the ranking is right, the student who is falling
-          fastest is seen first instead of fourth.
+          A counselor cannot read 400 charts, which is why the output is a rank and a sentence
+          rather than a dashboard. If the ranking is right, the student falling fastest is seen
+          first.
         </p>
-        <Note>What would prove this wrong: a trial in which counselors working from the ranked list
-          reach students no earlier than counselors working from their existing referral queue. We
-          have not run it, and until someone does, the paragraph above is a hypothesis.</Note>
+        <Note>What would prove this wrong: a trial in which counselors using the ranked list reach
+          students no earlier than counselors using their existing referral queue. We have not run
+          it.</Note>
       </div>
     ),
     wide: true,
@@ -449,16 +435,15 @@ function CaseloadBody() {
     <>
       <Lede>
         {all} students on this caseload, ranked by how fast each one is changing rather than by how
-        high they are — a student who has been steady at 86 for a month is not the emergency.
+        high they are. A student steady at 86 for a month is not the emergency.
       </Lede>
       <Lede>
         Consent decides who can appear. {ranked} guardians agreed to trends, so {ranked} students
         can be ranked; {partial} agreed to a score without trends and are listed unranked; the
-        remaining {alerts} agreed to crisis alerts only, and that record carries no score at all.
-        Ranking those {partial + alerts} anyway would leak exactly the thing they withheld.
+        remaining {alerts} agreed to crisis alerts only, which carries no score at all.
       </Lede>
-      <Note>Crisis alerts reach the counselor in every case. That is the one thing a guardian
-        cannot consent away, and students are told so before they start wearing it.</Note>
+      <Note>Crisis alerts reach the counselor in every case. No guardian can consent that away,
+        and students are told so before they wear it.</Note>
     </>
   )
 }
@@ -483,13 +468,12 @@ export function Tour({ go }) {
   return (
     <main className="wrap py-14">
       <p className="note">Guided tour · {STOPS.length} stops</p>
-      <h1 className="mt-3.5 font-display font-medium text-view leading-[1.05] tracking-tight text-ink">
-        What we built, what it does, and what is still a demo
+      <h1 className="mt-3.5 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
+        What we built and how it works
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
-        {STOPS.length} stops, about five minutes: the patch, the four signals, the three screens,
-        and the list of everything here that is generated. Every chart on the way is the live
-        component the real screen runs, not a recording of it.
+        About five minutes. Every chart is the live component the real screen runs, not a
+        recording.
       </p>
 
       <Tabs value={stop.id} onValueChange={v => setI(STOPS.findIndex(s => s.id === v))}
@@ -499,12 +483,8 @@ export function Tour({ go }) {
             moving through in order and should not have to aim at a tab. */}
         <div ref={anchor} data-anchor>
           <TabsList aria-label="Tour stops" className="gap-x-6">
-            {STOPS.map((s, n) => (
-              <TabsTrigger key={s.id} value={s.id} className="gap-2 text-ui">
-                <span className="font-mono text-fine tabular-nums text-ink-3">
-                  {String(n + 1).padStart(2, '0')}</span>
-                {s.nav}
-              </TabsTrigger>
+            {STOPS.map(s => (
+              <TabsTrigger key={s.id} value={s.id} className="text-ui">{s.nav}</TabsTrigger>
             ))}
           </TabsList>
         </div>
@@ -516,7 +496,7 @@ export function Tour({ go }) {
               <section className={cn('grid gap-10',
                 !s.wide && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-14')}>
                 <div>
-                  <h2 className="font-display font-medium text-sub leading-[1.12] tracking-tight text-ink">
+                  <h2 className="font-display font-bold text-sub leading-[1.12] tracking-tight text-ink">
                     {s.title}</h2>
                   {s.id === 'counselor' ? <CaseloadBody/> : s.body}
                   {s.go && (
@@ -553,7 +533,7 @@ export function Tour({ go }) {
 
       <Separator weight="ink" className="mt-20"/>
       <section className="py-10">
-        <h2 className="font-display font-medium text-sub leading-[1.12] tracking-tight text-ink">
+        <h2 className="font-display font-bold text-sub leading-[1.12] tracking-tight text-ink">
           Open the app yourself
         </h2>
         <p className="mt-3 max-w-[54ch] text-lead text-ink-2">
@@ -565,15 +545,6 @@ export function Tour({ go }) {
         </div>
       </section>
 
-      {/* The closing questions — the star rating, the impact question and the
-          one free-text box — had been written, built and then mounted nowhere,
-          so no reviewer had ever been asked any of them. The end of the tour is
-          where they belong: it is the only screen a person reaches having seen
-          the whole thing. */}
-      <Separator className="mt-14"/>
-      <section className="py-14">
-        <FinalSurvey/>
-      </section>
     </main>
   )
 }

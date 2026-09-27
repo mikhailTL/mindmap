@@ -19,7 +19,7 @@ export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab,
   const announce = v => {
     const label = tabs?.find(t => t[0] === v)?.[1]
     setSaid('')
-    requestAnimationFrame(() => setSaid(label ? `${label} — showing now` : ''))
+    requestAnimationFrame(() => setSaid(label ? `${label}, showing now` : ''))
   }
   const pick = v => { onTab(v); announce(v) }
   return (
@@ -33,7 +33,7 @@ export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab,
             smallest step. */}
         <div className="wrap relative py-10">
           <Back go={go} to="site" label="Overview"/>
-          <h1 className="font-display font-medium text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
+          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
           {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
           {/* One ruled annotation, and which one depends on what the panes below
               are actually showing: the sample-data caveat over fixtures, the

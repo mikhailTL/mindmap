@@ -25,12 +25,12 @@ export const SCHOOL_N = 96
    guardian cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
   'Student 8241': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Aug 22, 2025' },
-  'Student 3907': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts — no trends',             basis:'FERPA', signedAt:'Aug 24, 2025' },
+  'Student 3907': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts, no trends',             basis:'FERPA', signedAt:'Aug 24, 2025' },
   'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Wellness score, trends, academic correlation, raw readings',basis:'Both',  signedAt:'Sep 03, 2025' },
   'Student 1184': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'FERPA', signedAt:'Aug 29, 2025' },
   'Student 7736': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Sep 05, 2025' },
   'Student 2298': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'COPPA', signedAt:'Sep 09, 2025' },
-  'Student 6053': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts — no trends',             basis:'Both',  signedAt:'Sep 08, 2025' },
+  'Student 6053': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts, no trends',             basis:'Both',  signedAt:'Sep 08, 2025' },
   'Student 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
 }
 const EXPIRES = 'Jun 12, 2026'
@@ -106,7 +106,7 @@ export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Guardian contacted by phone',                      subject:'Student 8241' },
   { at:'12 Sep, 2:26 PM', rel:'Today',     actor:'R. Okonkwo',       action:'In-person welfare check completed',                subject:'Student 8241' },
   { at:'12 Sep, 2:21 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Acknowledged crisis alert',                        subject:'Student 8241' },
-  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised — counselor notified',         subject:'Student 8241' },
+  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised, counselor notified',         subject:'Student 8241' },
   { at:'12 Sep, 11:02 AM',rel:'Today',     actor:'R. Okonkwo',       action:'Opened record',                                    subject:'Student 5512' },
   { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:'R. Okonkwo',       action:'Exported year-group report (no group under five)', subject:'Grade 11' },
   { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed weekly summary',                            subject:'Student 8241' },
@@ -124,7 +124,7 @@ export const PROTOCOL_TIMES = ['2:14 PM','2:21 PM','2:26 PM','2:34 PM','2:41 PM'
 export const PROTOCOL_DONE = [0,1,2,3]   // step five is the one still open
 
 export const REFERRALS = [
-  { student:'Student 8241', to:'External referral — elevated arousal pattern', opened:'Today',  status:'Awaiting intake' },
+  { student:'Student 8241', to:'External referral: elevated arousal pattern', opened:'Today',  status:'Awaiting intake' },
   { student:'Student 5512', to:'School psychologist',                          opened:'Monday', status:'Scheduled' },
   { student:'Student 3907', to:'External counseling service',                  opened:'Mar 04', status:'In progress' },
   { student:'Student 1184', to:'School psychologist',                          opened:'Feb 18', status:'Closed' },

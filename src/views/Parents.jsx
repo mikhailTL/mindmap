@@ -23,6 +23,6 @@ export function Parents({ go, tab = 'week', setTab }) {
        which of the two things is actually the case. */
     <SectionShell go={go} tabs={TABS} panes={PANES} tab={local} onTab={setTab || setLocal}
       title="What a parent sees"
-      sub="A week in one sentence, the one thing worth asking about tonight, and — stated on the screen rather than in a policy — everything this page will never show you."/>
+      sub="The week in one sentence, the one thing worth asking about tonight, and everything this page will never show you."/>
   )
 }

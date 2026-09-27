@@ -12,7 +12,8 @@ import { MODES, useMode } from '../lib/mode'
  * The selection is carried by fill *and* weight, never by hue: the chosen cell
  * is an ink block with paper text at Quicksand 500, the other is unfilled at
  * 300. Desaturate the screenshot and you can still read which side is live.
- * (Quicksand loads 300 and 500 only; there is no bolder step to reach for.)
+ * (700 is loaded now, but it belongs to headings; a control that shouts as
+ * loudly as a section head is a control competing with the page.)
  */
 
 const LABEL = { demo: 'Demo', real: 'Real' }
@@ -91,7 +92,7 @@ export function ModeToggle({ className, compact = false }) {
        * points at it with aria-describedby so it is announced with the
        * control rather than found afterwards. */}
       <p id={helpId} className={cn('note max-w-[30ch]', compact ? 'sr-only' : 'hidden lg:block')}>
-        Real shows the app with no patch paired — what a visitor gets today.
+        Real shows the app with no patch paired. That is what a visitor gets today.
       </p>
     </div>
   )

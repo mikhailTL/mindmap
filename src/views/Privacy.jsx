@@ -16,7 +16,7 @@ const YOU_NEVER = [
   'Anything they write in the app',
   'Where they were',
   'Their second-by-second readings',
-  'Anything they say — the microphone is never recorded or sent',
+  'Anything they say. The microphone is never recorded or sent',
 ]
 
 /* The tick is knocked out of the filled accent disc, so it has to be painted
@@ -27,8 +27,8 @@ const YOU_NEVER = [
 export function PrivacyBody({ go }) {
   return (
     <>
-      <h2 className="max-w-[18ch] font-display font-medium text-head text-ink">
-        What a parent can see.</h2>
+      <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">
+        What a parent can see</h2>
 
       {/* Two ruled columns became two Cards when the sourced component landed:
           the pair already had a border, a heading and a body, which is a card
@@ -83,7 +83,7 @@ export function PrivacyBody({ go }) {
       <ScrollIn>
         {/* Was "Everyone, side by side", which named a layout rather than its
             subject. */}
-        <h3 className="mt-14 font-display text-sub font-medium tracking-tight text-ink">
+        <h3 className="mt-14 font-display text-sub font-bold tracking-tight text-ink">
           Student, parent and counselor compared</h3>
         <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </ScrollIn>
