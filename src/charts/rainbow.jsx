@@ -141,30 +141,33 @@ export function ArchWeather() {
             the ramp is one ramp across the whole cloud, which is the only way
             a union of circles lights like one object. The stops are the
             cloud's own y range in viewBox units. */}
-        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="196">
+        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="152" x2="0" y2="196">
           <stop offset="0" stopColor="#ffffff"/>
           <stop offset="1" stopColor="#eef3f1"/>
         </linearGradient>
-        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="196">
+        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="152" x2="0" y2="196">
           <stop offset="0" stopColor="#7a8894"/>
           <stop offset="1" stopColor="#4f5c68"/>
         </linearGradient>
       </defs>
-      {/* The left foot spans x 13 to 83 and the right 237 to 307. Each cloud is
-          about 92 wide and overhangs its own foot outward, because the coloured
-          arcs are round capped and a cap bulges half a band past the end. */}
+      {/* The left foot spans x 13 to 83 and the right 237 to 307, and the box
+          is 320 wide. Each cloud is 74 wide and sits inside its own foot's
+          span, which is the constraint an earlier pass broke: at 92 wide both
+          clouds ran past the edges of the viewBox and printed with a straight
+          vertical cut down the outer side of each. Nothing may leave the
+          box. */}
       <g className="mm-drift">
-        <Cloud x={-2} y={141} k={1.18} kind="calm" edge={SKY.edge} id={calm}/>
+        <Cloud x={7} y={152} k={0.95} kind="calm" edge={SKY.edge} id={calm}/>
       </g>
       <g className="mm-drift mm-drift-slow">
-        <Cloud x={230} y={141} k={1.18} kind="peak" id={peak}/>
+        <Cloud x={237} y={152} k={0.95} kind="peak" id={peak}/>
       </g>
       {/* Rain, in the strip under the peak foot. Three drops at three lengths;
           three identical ones looked printed on. */}
       <g className="mm-rain" stroke={SKY.rain} strokeLinecap="round">
-        <line x1="253" y1="196" x2="250" y2="204" strokeWidth="3"/>
-        <line x1="270" y1="198" x2="267" y2="207" strokeWidth="3.4"/>
-        <line x1="288" y1="196" x2="285" y2="203" strokeWidth="2.6"/>
+        <line x1="255" y1="197" x2="252" y2="205" strokeWidth="2.6"/>
+        <line x1="271" y1="199" x2="268" y2="208" strokeWidth="3"/>
+        <line x1="287" y1="197" x2="284" y2="204" strokeWidth="2.3"/>
       </g>
     </g>
   )
@@ -249,7 +252,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[26%]
           flex flex-col items-center">
           <span className="font-display text-dial font-medium leading-none tracking-tight text-ink">{shown}</span>
-          <span className="mt-1 font-mono text-tick text-ink-3">out of 100</span>
+          <span className="mt-1 text-tick text-ink-3">out of 100</span>
         </div>
         {/* the arch is a scale; its feet say so */}
         {/* their own strip below the feet. Sitting level with the arch put
@@ -259,10 +262,8 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
             clouds now occupy those corners, and "calm" was printing on top of
             the white one. 15% and 85% are the feet's own centres in the
             viewBox, so the words track the ends they name at any size. */}
-        <span aria-hidden className="absolute bottom-0 left-[15%] -translate-x-1/2 font-mono
-          text-tick text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-0 left-[85%] -translate-x-1/2 font-mono
-          text-tick text-ink-3">peak</span>
+        <span aria-hidden className="absolute bottom-0 left-[15%] -translate-x-1/2 text-tick text-ink-3">calm</span>
+        <span aria-hidden className="absolute bottom-0 left-[85%] -translate-x-1/2 text-tick text-ink-3">peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
@@ -399,7 +400,7 @@ export function RangeBar({ band, color, className }) {
         <span className="absolute top-0 -translate-x-1/2 font-mono text-tick tabular-nums text-ink"
           style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
       </div>
-      <p className="mt-1 flex justify-between font-mono text-tick text-ink-3">
+      <p className="mt-1 flex justify-between text-tick text-ink-3">
         <span>calm</span>
         <span>{out ? 'above their usual range' : 'inside their usual range'}</span>
         <span>peak</span>
@@ -424,7 +425,7 @@ export function SensorDetail({ ring, onClose }) {
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
           <h3 className="font-display text-head font-medium text-ink">{s.name}</h3>
-          <p className="mt-1 font-mono text-tick text-ink-3">
+          <p className="mt-1 text-tick text-ink-3">
             {ring.value} out of 100</p>
         </div>
         <p className="font-mono font-medium tabular-nums text-stat leading-none text-ink">

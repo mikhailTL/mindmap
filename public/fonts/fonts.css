@@ -1,29 +1,66 @@
-/* One family, two files, 86 KB.
- *
- * The site ran on three: Quicksand for headings, Chivo for body, Chivo Mono
- * for every figure, eyebrow and caption. The review's word for the result was
- * "AI slop", and the screenshot attached to it was a line of Chivo Mono. It
- * was right: a monospace caption under every heading is one of the half dozen
- * tells that a page was assembled rather than designed, and a geometric
- * display face over a grotesque body face is another.
- *
- * Satoshi is one variable grotesque across 300 to 900, so weight carries the
- * whole hierarchy and nothing on the page is a different designer's work.
- * Licensed free for commercial use by the Indian Type Foundry via Fontshare.
- */
+/* The project's own kit, restored: Quicksand for display, Chivo for body,
+   Chivo Mono for figures. It was briefly swapped wholesale for Satoshi and
+   that was the wrong read of the note behind it. What was actually wrong was
+   one habit, not the kit: a monospace caption sitting under every heading.
+   The kit is back; that habit is not, and `font-mono` now means Chivo Mono
+   only where figures have to line up.
+
+   All three are variable files, so one download per family covers every
+   weight the site uses, including the 700 headings need. latin and latin-ext
+   only, six files, 180 KB. Self-hosted because the Google stylesheet cost a
+   round trip to two more hosts before a single glyph could be measured, and
+   the audit timed out on it every run. */
+/* latin */
 @font-face {
-  font-family: 'Satoshi';
-  src: url(/fonts/satoshi-var.woff2) format('woff2-variations'),
-       url(/fonts/satoshi-var.woff2) format('woff2');
-  font-weight: 300 900;
+  font-family: 'Quicksand';
   font-style: normal;
+  font-weight: 300 700;
   font-display: swap;
+  src: url(/fonts/6xKtdSZaM9iE8KbpRA_hK1QNYuDyPw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+/* latin-ext */
 @font-face {
-  font-family: 'Satoshi';
-  src: url(/fonts/satoshi-var-italic.woff2) format('woff2-variations'),
-       url(/fonts/satoshi-var-italic.woff2) format('woff2');
-  font-weight: 300 900;
-  font-style: italic;
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 300 700;
   font-display: swap;
+  src: url(/fonts/6xKtdSZaM9iE8KbpRA_hJVQNYuDyP7bh.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Chivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/va9I4kzIxd1KFrBoQeNVkqDO.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Chivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/va9I4kzIxd1KFrBmQeNVkqDOeTY.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Chivo Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/mFT0WbgRxKvF_Z5eQMO9gx8D1WB4m9w.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Chivo Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/mFT0WbgRxKvF_Z5eQMO9gxED1WB4m9xv3Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }

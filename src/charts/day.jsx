@@ -31,11 +31,11 @@ export function DayChart({ data, band }){
         {[30,45,60,75].map(v=>(
           <g key={v}>
             <line x1={L} x2={W-R} y1={y(v)} y2={y(v)} className="stroke-rule" strokeWidth="1"/>
-            <text x={L-10} y={y(v)+5} textAnchor="end" className="fill-ink-3 font-mono text-[16px]">{v}</text>
+            <text x={L-10} y={y(v)+5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
           </g>
         ))}
         {data.map((d,i)=> d.t.slice(3)==='00' && +d.t.slice(0,2)%every===1 ? (
-          <text key={d.t} x={x(i)} y={H-9} textAnchor="middle" className="fill-ink-3 font-mono text-[16px]">{d.t}</text>
+          <text key={d.t} x={x(i)} y={H-9} textAnchor="middle" className="fill-ink-3 text-[16px]">{d.t}</text>
         ):null)}
         <path d={line(pts)} fill="none" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
           className="stroke-ink-3" vectorEffect="non-scaling-stroke"/>
@@ -47,8 +47,7 @@ export function DayChart({ data, band }){
         </>}
       </svg>
       {hit!=null && (
-        <div className="pointer-events-none absolute -top-1 -translate-x-1/2 rounded-xs bg-ink px-2.5 py-1
-          font-mono text-[15px] text-paper whitespace-nowrap"
+        <div className="pointer-events-none absolute -top-1 -translate-x-1/2 rounded-xs bg-ink px-2.5 py-1 text-[15px] text-paper whitespace-nowrap"
           style={{left:`${x(hit)/W*100}%`}}>{data[hit].t} · {Math.round(data[hit].v)}</div>
       )}
     </div>

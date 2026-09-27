@@ -10,8 +10,8 @@ import { cn } from '../lib/utils'
  * described, and photoplethysmography is something a judge can read off the
  * drawing without being told the word.
  *
- * Two earlier versions were rejected, and the faults are worth keeping written
- * down because both are easy to walk back into.
+ * Three earlier versions were rejected, and the faults are worth keeping
+ * written down because every one of them is easy to walk back into.
  *
  * The first drew the layers as isometric diamonds with numbered badges down
  * the right. A square rotated 45 degrees stops reading as a camera island and
@@ -22,20 +22,29 @@ import { cn } from '../lib/utils'
  * The second named six parts and defined each one: cover glass, the window you
  * touch. That is a bill of materials. A reader finished it knowing what the
  * pieces are called and still not knowing how a phone measures a heartbeat,
- * which is the only thing this figure is for. It also ran 790 units tall on
- * six widely spaced rows with an empty left column, so it pushed the rest of
- * the page off the screen to say less.
+ * which is the only thing this figure is for.
  *
- * So the figure is now a procedure. The column on the left is the light's
- * journey in order, numbered, each step on a leader line into the part it
- * happens in, and the turquoise ray runs through the stack with an arrowhead
- * at every crossing so the direction of travel is legible before a word is
- * read. The numerals are information here rather than decoration: they are the
- * reading order, which is the whole point of the redraw.
+ * The third is the one this pass replaces. It had the right content, six
+ * steps following the light each on a leader line, and set them as six
+ * ragged paragraphs of two and three lines stacked in a column with nothing
+ * between them. Read as a picture it was one grey block of text: there was no
+ * edge where step three ended and step four began, the leaders left from
+ * wherever a sentence happened to finish, and a hairline in the drawing's own
+ * pale grey was not enough to follow from a word to a plate.
  *
- * Everything is 0.71 of its old size and the rows sit 56 apart instead of 95,
- * which is what took 790 units down to 500 without dropping below the 15 unit
- * floor on type.
+ * So the column is now a ruled table. Six rows of one fixed height, a banded
+ * ground alternating white and mist, a hairline between every pair, and the
+ * numeral in its own cell behind a divider. Every sentence is re-cut to
+ * exactly two lines so the rows are identical and the banding reads as
+ * banding rather than as an accident of wrapping. The leader leaves each row
+ * from a dot on the band's right edge and arrives on its plate's left edge
+ * horizontally, by way of a staircase, which is how an orthographic drawing
+ * points at a thing: the last segment is parallel to the edge it names, so
+ * there is no question which plate is meant.
+ *
+ * The drawing itself lost 38 units of finger and 34 of stack gap, and the
+ * caption moved into a rail beside the figure instead of a band under it.
+ * That is 500 units of height down to 462 and about 250 pixels off the page.
  */
 
 /* Palette by hand, not by class: these are SVG paint attributes and Tailwind
@@ -95,8 +104,13 @@ const LENS_R = 20
 const FLASH_HOLE = [33, -24], FLASH_R = 10
 const TINY = [33, -47], TINY_R = 4.5
 
-const ROW = { glass: 176, lens: 232, ir: 288, sensor: 344 }
-const PHONE = 422, ISLAND = 416        // phone body face, island top face
+/* Four plates 56 apart, which is the closest they can sit and still leave a
+   gap the beam's arrowhead fits in. What came out of the height was the
+   finger, which was 142 units of mostly empty tube above a pad at 136, and
+   the 30-unit hold between the sensor and the phone body. */
+const ROW = { glass: 144, lens: 200, ir: 256, sensor: 312 }
+const PHONE = 388, ISLAND = 382        // phone body face, island top face
+const VB_H = 462                       // the drawing's own height, in its own units
 
 /* The light uses the top-left camera, so the whole ray is one vertical line:
    travelling along the stack's normal is straight down in this projection,
@@ -106,54 +120,77 @@ const faceY = cy => py(cy, LENSES[0][1])
 
 /* The finger, once, because the outline and the clip that keeps the vessels
    inside the skin have to be the same path. Cut off at the top edge on
-   purpose: a finger that starts at the frame has somewhere to come from. */
-const FINGER = 'M471.5,0 C467,40 468.5,86 476,113 C482,131 492.5,141.5 512.8,142.6'
-  + ' C533,141.5 543.5,131 549.5,113 C557,86 558.5,40 554,0 Z'
+   purpose: a finger that starts at the frame has somewhere to come from.
+   Every y is the old path's at 0.74, which is the compression that bought the
+   page most of its scroll back without losing the vessels or the detour. */
+const FINGER = 'M471.5,0 C467,29.6 468.5,63.6 476,83.6 C482,97 492.5,104.7 512.8,105.5'
+  + ' C533,104.7 543.5,97 549.5,83.6 C557,63.6 558.5,29.6 554,0 Z'
 
-const PAD = { x: 513.2, y: 136, r: 16 }        // the skin actually against the glass
-const FLASH = { cx: 424, cy: 108, a: 23, r: 9, t: 5 }
+const PAD = { x: 513.2, y: 100, r: 16 }        // the skin actually against the glass
+const FLASH = { cx: 420, cy: 76, a: 22, r: 9, t: 5 }
 
-/* The light's journey, in order, and where each step's leader line lands.
-   `lines` is pre-wrapped because SVG text does not wrap and the column is 270
-   units wide; joining them back up is what the phone-width list renders, so
-   the two can never say different things.
+/* ── The step table ───────────────────────────────────────────────────────
+ * Six rows, one height, and the sentences cut to exactly two lines each so
+ * that height can be one number. `to` is the point each leader arrives at,
+ * and every one of them is a part's left edge at its own mid height, so the
+ * arrow comes in parallel to the edge it is naming. `elbow` is where the
+ * leader turns out of its row; they differ per step only to keep the vertical
+ * runs off the flash and off each other.
+ *
+ * The table's top is set so four of the six rows come out within a few units
+ * of the part they point at, which is what lets most leaders read as one
+ * straight line across the gap rather than as a staircase to be traced.
+ *
+ * Step two is the exception, and it is drawn as a plain diagonal instead.
+ * Its target is tissue rather than a plate edge, and a staircase into it
+ * arrived at the same height as the cover glass leader one row below: two
+ * horizontals ten pixels apart, each pointing somewhere else. A diagonal is
+ * the one line in the figure that is not orthogonal, so it cannot be read as
+ * belonging to the stack.
+ *
+ * Step three owns two plates, which is why its leader forks: the light
+ * crosses the cover glass and the lens in one move and splitting that into
+ * two steps would invent a stage that is not there.
+ */
+const TBL_X = 8, TBL_W = 344, TBL_TOP = 44, ROWH = 62
+const NUM_W = 40                       // the numeral's own cell, behind a divider
+const TXT_X = TBL_X + NUM_W + 10
+const TBL_R = TBL_X + TBL_W            // where every leader leaves from
+const LEAD = 21                        // line leading inside a row
 
-   `at` is the leader's height and the text block is centred on it, so a step
-   sits beside the part it names rather than above or below it. Step three owns
-   two plates, which is why its leader forks: the light crosses the cover glass
-   and the lens in one move and splitting that into two steps would invent a
-   stage that is not there. */
 export const CAMERA_STEPS = [
-  { id: 'flash', n: '01', at: 52,
+  { id: 'flash', n: '01', elbow: 378,
     lines: ['The flash shines into the side', 'of your fingertip.'],
-    /* An elbow, because the flash sits low and left of the text: a straight
-       diagonal from the label would have crossed the ray leaving the flash. */
-    lead: ['M330,52 H372 V112 H393'] },
-  { id: 'blood', n: '02', at: 130,
-    lines: ['Blood in the tissue absorbs', 'some of that light. Every',
-      'heartbeat changes how much.'],
-    /* Runs flat under the flash, then turns up into the tissue and stops on a
-       vessel. Stopped at the outline it read as pointing at the contact pad,
-       which is the next step's business, not this one's. */
-    lead: ['M330,130 H455 L488,110'] },
-  { id: 'optics', n: '03', at: 218,
-    lines: ['What comes back out passes', 'through the cover glass. The',
-      'lens focuses it.'],
-    lead: ['M330,218 H398 L444,192', 'M330,218 H398 L449,244'] },
-  { id: 'ir', n: '04', at: 296,
+    to: [[396, 76]] },
+  { id: 'blood', n: '02', diagonal: true,
+    lines: ['Blood absorbs some of that light.', 'Every heartbeat changes how much.'],
+    to: [[486, 82]] },
+  { id: 'optics', n: '03', elbow: 400,
+    lines: ['What comes back out crosses the', 'cover glass. The lens focuses it.'],
+    to: [[460, ROW.glass], [460, ROW.lens]] },
+  { id: 'ir', n: '04', elbow: 408,
     lines: ['The infrared filter drops the', 'light your eye cannot see.'],
-    lead: ['M330,296 H453'] },
-  { id: 'sensor', n: '05', at: 356,
-    lines: ['The image sensor turns what', 'lands on it into a number,',
-      'thirty times a second.'],
-    lead: ['M330,356 H448'] },
-  { id: 'pulse', n: '06', at: 428,
+    to: [[460, ROW.ir]] },
+  { id: 'sensor', n: '05', elbow: 408,
+    lines: ['The sensor turns it into a number,', 'thirty times a second.'],
+    to: [[460, ROW.sensor]] },
+  { id: 'pulse', n: '06', elbow: 420,
     lines: ['That number rising and falling', 'is your pulse.'],
-    /* Down onto the phone body rather than level into the island's corner:
-       at label height the two silhouettes meet, and the number is the whole
-       device's output, not the island's. */
-    lead: ['M330,428 H390 L420,450'] },
+    to: [[452, PHONE]] },
 ]
+
+const rowTop = i => TBL_TOP + i * ROWH
+const rowMid = i => rowTop(i) + ROWH / 2
+/* Two lines centred on the row, so the numeral and the first line share a
+   baseline and the block never drifts off the leader it belongs to. */
+const baseY = i => rowMid(i) - (LEAD / 2) + 5
+/* Out of the row, along, then in: the last segment is horizontal and lands on
+   a plate's left edge, which is the only part of a leader a reader actually
+   uses to decide what is being pointed at. */
+const leadD = (s, i, [tx, ty]) =>
+  s.diagonal ? `M${TBL_R},${rowMid(i)} L${tx},${ty}`
+    : Math.abs(ty - rowMid(i)) < 1 ? `M${TBL_R},${rowMid(i)} H${tx}`
+      : `M${TBL_R},${rowMid(i)} H${s.elbow} V${ty} H${tx}`
 
 /* Body, then face, so the offset copy showing below the face is the layer's
    thickness. Cheaper than three faces per plate and it cannot fall out of
@@ -217,8 +254,8 @@ function Stack({ p }) {
           layers were closed up. Convention, and it is the line that says the
           five plates and the phone are one part rather than six drawings. */}
       <g stroke={RULING} strokeWidth="1" strokeDasharray="2 6">
-        <line x1={px(CX, -A, A)} y1="200" x2={px(CX, -A, A)} y2={py(ISLAND, A)}/>
-        <line x1={px(CX, A, -A)} y1="156" x2={px(CX, A, -A)} y2="390"/>
+        <line x1={px(CX, -A, A)} y1="168" x2={px(CX, -A, A)} y2={py(ISLAND, A)}/>
+        <line x1={px(CX, A, -A)} y1="124" x2={px(CX, A, -A)} y2="358"/>
       </g>
 
       {/* The flash, exploded out to the side because it is not in the optical
@@ -228,27 +265,27 @@ function Stack({ p }) {
         fill={MIST} stroke={INK} strokeWidth="1.2"/>
       <path d={plateD(FLASH.cx, FLASH.cy, FLASH.a, FLASH.a, FLASH.r)}
         fill={CARD} stroke={INK} strokeWidth="1.4"/>
-      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 12)} fill={WASH} stroke={INK2} strokeWidth="1.1"/>
-      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 6)} fill={ACCENT}/>
+      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 11.5)} fill={WASH} stroke={INK2} strokeWidth="1.1"/>
+      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 5.8)} fill={ACCENT}/>
 
       {/* Out of the flash and into the side of the finger. */}
-      <path d="M417,100 C425,84 436,70 464,74" {...glow}/>
-      <path d="M417,100 C425,84 436,70 464,74" {...ray} className={`${p}-ray`}/>
+      <path d="M424,68 C432,52 444,42 468,49" {...glow}/>
+      <path d="M424,68 C432,52 444,42 468,49" {...ray} className={`${p}-ray`}/>
 
       {/* The fingertip. The contact outline inside it is the patch of skin
           actually against the glass, which is the thing a reader has to
           locate, and an outline finds it faster than a caption would. */}
       <path d={FINGER} fill={MIST} stroke={INK} strokeWidth="1.4" strokeLinejoin="round"/>
       <g clipPath={`url(#${p}-finger)`}>
-        <path d="M485,0 C488.5,34 492,75 490,129" fill="none" stroke={BLOOD}
+        <path d="M485,0 C488.5,25.2 492,55.5 490,95.5" fill="none" stroke={BLOOD}
           strokeWidth="2.1" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
-        <path d="M533,0 C529,32 534.5,75 538,126" fill="none" stroke={BLOOD}
+        <path d="M533,0 C529,23.7 534.5,55.5 538,93.2" fill="none" stroke={BLOOD}
           strokeWidth="1.8" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
         {/* Inside the tissue, across both vessels and back down to the pad.
             This detour is the whole reason the drawing exists: what reaches
             the sensor is what the blood did not absorb on the way. */}
-        <path d="M466,74 C486,88 518,97 536,111 C534,125 526,133 513,138" {...glow}/>
-        <path d="M466,74 C486,88 518,97 536,111 C534,125 526,133 513,138"
+        <path d="M468,49 C488,63 518,70 536,81 C534,91 526,97 513,101" {...glow}/>
+        <path d="M468,49 C488,63 518,70 536,81 C534,91 526,97 513,101"
           {...ray} className={`${p}-ray`}/>
       </g>
       <path d={holeD(PAD.x, PAD.y, 0, 0, PAD.r)} fill={WASH} fillOpacity="0.8"
@@ -323,7 +360,7 @@ function Stack({ p }) {
           now, not just the last one: the figure is read as a sequence, and one
           arrow at the bottom was the only thing saying which way down was. */}
       <g stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" className={`${p}-ray`}>
-        <line x1={RAYX} y1="143" x2={RAYX} y2={faceY(ROW.glass) - 4}
+        <line x1={RAYX} y1="106" x2={RAYX} y2={faceY(ROW.glass) - 4}
           markerEnd={`url(#${p}-tip)`}/>
         <line x1={RAYX} y1={faceY(ROW.glass) + T + 3} x2={RAYX} y2={faceY(ROW.lens) - 4}
           markerEnd={`url(#${p}-tip)`}/>
@@ -343,11 +380,14 @@ function Defs({ p }) {
         markerWidth="4" markerHeight="4" orient="auto-start-reverse">
         <path d="M0 1 L9 5 L0 9 Z" fill={BEAM}/>
       </marker>
-      {/* Leader arrows are the same shape in the drawing's grey, so a label
-          pointing at a part cannot be mistaken for the light travelling. */}
+      {/* Leader arrows are the same shape in the drawing's own dark grey-green,
+          not in the pale ruling grey they used to be: a line a reader is
+          expected to follow across 250 units has to survive being looked at,
+          and ruling did not. It is still nowhere near the turquoise, so a
+          label pointing at a part cannot be read as the light travelling. */}
       <marker id={`${p}-lead`} viewBox="0 0 10 10" refX="8" refY="5"
         markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M0 2 L9 5 L0 8 Z" fill={RULING}/>
+        <path d="M0 2 L9 5 L0 8 Z" fill={INK3}/>
       </marker>
       <clipPath id={`${p}-finger`}><path d={FINGER}/></clipPath>
       <pattern id={`${p}-hatch`} width="7" height="7" patternTransform="rotate(45)"
@@ -377,11 +417,47 @@ export function useNarrow(q = '(max-width: 767px)') {
   return v
 }
 
-/* Line leading, and the offset that centres an n-line block on its own leader.
-   Text hung from a fixed top would drift away from the part it points at as
-   soon as one step needed a third line. */
-const LEAD = 21
-const baseY = s => s.at - (s.lines.length - 1) * (LEAD / 2) + 6
+/* The ruled table the six steps sit in. Bands first, then rules, then the
+   text, so nothing is drawn over a sentence. The mist band is the site's own
+   second surface rather than a tint invented here, which is why it can be
+   read at a glance next to white and why it matches the page band the figure
+   sits on. */
+function StepTable({ p }) {
+  return (
+    <g>
+      {CAMERA_STEPS.map((s, i) => (
+        <rect key={s.id} x={TBL_X} y={rowTop(i)} width={TBL_W} height={ROWH}
+          fill={i % 2 ? MIST : CARD}/>
+      ))}
+      <g stroke={RULE} strokeWidth="1">
+        {CAMERA_STEPS.map((s, i) => (
+          <line key={s.id} x1={TBL_X} y1={rowTop(i)} x2={TBL_R} y2={rowTop(i)}/>
+        ))}
+        <line x1={TBL_X} y1={rowTop(CAMERA_STEPS.length)} x2={TBL_R}
+          y2={rowTop(CAMERA_STEPS.length)}/>
+        {/* The numeral's cell. A divider is what turns a number in front of a
+            sentence into a column of numbers. */}
+        <line x1={TBL_X + NUM_W} y1={TBL_TOP} x2={TBL_X + NUM_W}
+          y2={rowTop(CAMERA_STEPS.length)}/>
+      </g>
+      {CAMERA_STEPS.map((s, i) => (
+        <g key={s.id}>
+          {s.to.map((t, j) => (
+            <path key={j} d={leadD(s, i, t)} fill="none" stroke={INK3}
+              strokeWidth="1.1" strokeLinejoin="round" markerEnd={`url(#${p}-lead)`}/>
+          ))}
+          <circle cx={TBL_R} cy={rowMid(i)} r="2.8" fill={INK3}/>
+          <text x={TBL_X + NUM_W / 2} y={baseY(i)} fill={ACCENT} textAnchor="middle"
+            fontFamily="ui-monospace, monospace" fontSize="15">{s.n}</text>
+          {s.lines.map((l, j) => (
+            <text key={j} x={TXT_X} y={baseY(i) + j * LEAD} fill={INK}
+              fontFamily="Chivo, sans-serif" fontSize="16">{l}</text>
+          ))}
+        </g>
+      ))}
+    </g>
+  )
+}
 
 export function CameraModule({ className }) {
   const raw = React.useId()
@@ -389,87 +465,82 @@ export function CameraModule({ className }) {
   const narrow = useNarrow()
   return (
     <figure className={cn('m-0', className)}>
-      <svg
-        /* Narrow crops to the drawing rather than redrawing it, so the phone
-           and the desktop are the same picture and cannot drift apart. */
-        viewBox={narrow ? '386 0 314 500' : '0 0 700 500'}
-        className="block w-full"
-        role="img"
-        aria-label="An exploded view of a phone's rear camera, numbered along the path the
-          light takes. The flash shines into the side of a fingertip. Blood in the tissue
-          absorbs some of that light, and every heartbeat changes how much. What comes back
-          out passes through the cover glass and the lens, which focuses it. The infrared
-          filter drops the light the eye cannot see. The image sensor turns what lands on it
-          into a number thirty times a second, and that number rising and falling is the
-          pulse.">
-        {/* The animation lives in the drawing rather than in input.css because
-            the class names are namespaced per instance; two of these on one
-            page must not share a keyframe name. */}
-        <style>{`
-          @keyframes ${p}-flow { to { stroke-dashoffset: -26 } }
-          @keyframes ${p}-beat { 0%,100% { opacity:.34 } 42% { opacity:.95 } }
-          .${p}-ray  { stroke-dasharray: 7 6; animation: ${p}-flow 1.15s linear infinite; }
-          .${p}-vein { animation: ${p}-beat 1.15s ease-in-out infinite; }
-          @media (prefers-reduced-motion: reduce) {
-            .${p}-ray { stroke-dasharray: none; animation: none }
-            .${p}-vein { animation: none; opacity: .7 }
-          }
-        `}</style>
-        <Defs p={p}/>
-        <g aria-hidden="true">
-          <Stack p={p}/>
-          <text x={CX} y="492" textAnchor="middle" fill={INK2}
-            fontFamily="ui-monospace, monospace" fontSize="15">camera island</text>
-
-          {/* The steps, in order, each on a leader into the part it happens in.
-              A numeral and a sentence beside the thing itself, rather than a
-              badge on the drawing and a key underneath it: the badge version
-              was three eye movements per part and taught nothing about order. */}
-          {!narrow && CAMERA_STEPS.map(s => (
-            <g key={s.id}>
-              {s.lead.map((d, i) => (
-                <path key={i} d={d} fill="none" stroke={RULING} strokeWidth="1.1"
-                  markerEnd={`url(#${p}-lead)`}/>
-              ))}
-              <text x="22" y={baseY(s)} fill={ACCENT}
-                fontFamily="ui-monospace, monospace" fontSize="15">{s.n}</text>
-              {s.lines.map((l, i) => (
-                <text key={i} x="50" y={baseY(s) + i * LEAD} fill={INK}
-                  fontFamily="Chivo, sans-serif" fontSize="17">{l}</text>
-              ))}
+      {/* The caption used to be a band under the drawing, which cost its own
+          height on every screen while a wide one carried 300 empty pixels
+          down each side of the figure. On xl it is a rail in that dead space
+          instead, so the same words cost nothing to scroll past. */}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-center xl:gap-9">
+        <div>
+          <svg
+            /* Narrow crops to the drawing rather than redrawing it, so the
+               phone and the desktop are the same picture and cannot drift
+               apart. */
+            viewBox={narrow ? `390 -4 300 ${VB_H + 8}` : `0 0 700 ${VB_H}`}
+            className="block w-full"
+            role="img"
+            aria-label="An exploded view of a phone's rear camera, numbered along the path the
+              light takes. The flash shines into the side of a fingertip. Blood absorbs some of
+              that light, and every heartbeat changes how much. What comes back out crosses the
+              cover glass, and the lens focuses it. The infrared filter drops the light the eye
+              cannot see. The image sensor turns it into a number thirty times a second, and that
+              number rising and falling is the pulse.">
+            {/* The animation lives in the drawing rather than in input.css
+                because the class names are namespaced per instance; two of
+                these on one page must not share a keyframe name. */}
+            <style>{`
+              @keyframes ${p}-flow { to { stroke-dashoffset: -26 } }
+              @keyframes ${p}-beat { 0%,100% { opacity:.34 } 42% { opacity:.95 } }
+              .${p}-ray  { stroke-dasharray: 7 6; animation: ${p}-flow 1.15s linear infinite; }
+              .${p}-vein { animation: ${p}-beat 1.15s ease-in-out infinite; }
+              @media (prefers-reduced-motion: reduce) {
+                .${p}-ray { stroke-dasharray: none; animation: none }
+                .${p}-vein { animation: none; opacity: .7 }
+              }
+            `}</style>
+            <Defs p={p}/>
+            <g aria-hidden="true">
+              <Stack p={p}/>
+              <text x={CX} y={VB_H - 12} textAnchor="middle" fill={INK2}
+                fontFamily="ui-monospace, monospace" fontSize="15">camera island</text>
+              {!narrow && <StepTable p={p}/>}
             </g>
-          ))}
-        </g>
-      </svg>
+          </svg>
 
-      {/* The steps again, as HTML, for the narrow crop. At 390px a 17 unit
-          sentence inside a 700 unit viewBox renders at nine pixels, so the
-          words come out of the drawing and the ordered list carries the
-          sequence the leader lines were carrying. */}
-      {narrow && (
-        <ol className="mt-6 m-0 grid list-none grid-cols-1 gap-y-3 p-0">
-          {CAMERA_STEPS.map(s => (
-            <li key={s.id} className="grid grid-cols-[1.9rem_1fr] gap-x-1">
-              <span className="font-mono text-fine tabular-nums text-accent">{s.n}</span>
-              <span className="text-sec leading-[1.45] text-ink-2">{s.lines.join(' ')}</span>
-            </li>
-          ))}
-        </ol>
-      )}
+          {/* The steps again, as HTML, for the narrow crop. At 390px a 16 unit
+              sentence inside a 700 unit viewBox renders at nine pixels, so the
+              words come out of the drawing. The banding comes with them: a
+              list of six sentences with nothing between them is the same grey
+              block on a phone that it was in the figure. */}
+          {narrow && (
+            <ol className="m-0 mt-5 list-none border-y border-rule p-0">
+              {CAMERA_STEPS.map((s, i) => (
+                <li key={s.id}
+                  className={cn('grid grid-cols-[2.25rem_1fr] gap-x-2 px-2 py-2.5',
+                    i && 'border-t border-rule', i % 2 && 'bg-mist')}>
+                  <span className="border-r border-rule pr-2 text-right font-mono
+                    text-fine tabular-nums text-accent">{s.n}</span>
+                  <span className="text-sec leading-[1.4] text-ink">{s.lines.join(' ')}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
 
-      <figcaption className="mt-7 flex flex-col gap-4 border-t border-rule pt-5
-        sm:flex-row sm:items-center sm:gap-7">
-        <p className="m-0 max-w-[46ch] text-sec leading-[1.5] text-ink-2">
-          One number per frame, thirty frames a second. Each beat lets less light
-          through, so the number dips once per beat.
-        </p>
-        <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px]">
-          <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
-                   L142 14 L150 30 L158 14 L180 14 L202 14 L210 30 L218 14"
-            fill="none" stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="11">one dip, one beat</text>
-        </svg>
-      </figcaption>
+        <figcaption className="m-0 flex flex-col gap-3 border-t border-rule pt-4
+          sm:flex-row sm:items-center sm:gap-6
+          xl:flex-col xl:items-start xl:gap-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
+          <p className="m-0 max-w-[46ch] text-sec leading-[1.45] text-ink-2">
+            One number per frame, thirty frames a second. Each beat lets less light
+            through, so the number dips once per beat.
+          </p>
+          <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px] xl:w-full">
+            <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
+                     L142 14 L150 30 L158 14 L180 14 L202 14 L210 30 L218 14"
+              fill="none" stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="13">one dip, one beat</text>
+          </svg>
+        </figcaption>
+      </div>
     </figure>
   )
 }
@@ -489,15 +560,15 @@ const COVERAGE = [
 
 export function SignalCoverage({ className }) {
   return (
-    <ul className={cn('m-0 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4 lg:gap-4', className)}>
+    <ul className={cn('m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-3.5', className)}>
       {COVERAGE.map(s => (
         <li key={s.id}
-          className={cn('rounded-panel border p-4',
+          className={cn('rounded-panel border px-3.5 py-3',
             s.on ? 'border-rule bg-card' : 'border-dashed border-ruling bg-transparent')}>
           <div className={cn(!s.on && 'opacity-45')}>
             <SignalTrace kind={s.id}/>
           </div>
-          <p className={cn('mt-2 font-display text-ui font-bold',
+          <p className={cn('mt-1.5 font-display text-ui font-bold',
             s.on ? 'text-ink' : 'text-ink-3')}>{s.name}</p>
           <p className={cn('mt-0.5 text-fine', s.on ? 'text-accent' : 'text-ink-3')}>{s.note}</p>
         </li>
@@ -512,8 +583,8 @@ export function SignalCoverage({ className }) {
  * faster and would be wrong the first time the app changed.
  */
 const F_TITLE = { margin:0, fontFamily:'Quicksand, sans-serif', fontWeight:700,
-  fontSize:30, letterSpacing:'-0.02em', color:INK }
-const F_SUB = { margin:'8px 0 0', fontFamily:'Chivo, sans-serif', fontSize:17, color:INK2 }
+  fontSize:34, letterSpacing:'-0.02em', color:INK }
+const F_SUB = { margin:'8px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }
 
 function Pad() {
   return (
@@ -547,7 +618,7 @@ function Still() {
             fill="none" stroke="#3ecf9a" strokeWidth="3.4" strokeLinecap="round"
             strokeLinejoin="round" className="mm-trace"/>
         </svg>
-        <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:17, color:'#c2d7ca' }}>
+        <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:'#c2d7ca' }}>
           72 bpm · signal good</p>
       </div>
     </div>
@@ -565,7 +636,7 @@ function Say() {
             background: i % 3 === 0 ? BEAM : ACCENT, opacity: 0.55 + (v / 240) }}/>
         ))}
       </div>
-      <p style={{ margin:'16px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:16, color:INK3 }}>
+      <p style={{ margin:'16px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:INK3 }}>
         15s · listening</p>
     </div>
   )
@@ -579,13 +650,13 @@ function Got() {
       <div style={{ marginTop:26, borderRadius:16, background:CARD, border:`1px solid ${RULE}`,
         padding:'24px 20px' }}>
         <p style={{ margin:0, fontFamily:'Chivo Mono, monospace', fontSize:64, lineHeight:1, color:INK }}>38</p>
-        <p style={{ margin:'6px 0 0', fontFamily:'Chivo, sans-serif', fontSize:16, color:INK3 }}>
+        <p style={{ margin:'6px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK3 }}>
           out of 100</p>
         <div style={{ marginTop:22, height:12, borderRadius:999, background:MIST, position:'relative' }}>
           <span style={{ position:'absolute', left:'22%', width:'26%', top:0, bottom:0,
             borderRadius:999, background:ACCENT }}/>
         </div>
-        <p style={{ margin:'10px 0 0', fontFamily:'Chivo, sans-serif', fontSize:16, color:INK2 }}>
+        <p style={{ margin:'10px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }}>
           Somewhere in the green band.</p>
       </div>
     </div>

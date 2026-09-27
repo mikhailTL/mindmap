@@ -99,7 +99,7 @@ function WeekDays({ days, empty }) {
               'sm:flex-col sm:items-stretch sm:gap-2.5 sm:px-2 sm:text-center',
               state === 'over' ? 'border-warn bg-warn-wash'
                 : state === 'none' ? 'border-dashed border-rule bg-paper' : 'border-rule bg-card')}>
-            <span className="font-mono text-tick text-ink-2">
+            <span className="text-tick text-ink-2">
               <span className="sm:hidden">{d.name}</span>
               <span className="hidden sm:inline">{d.key}</span>
             </span>

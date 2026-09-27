@@ -50,7 +50,7 @@ const VIEWS = ['site','patch','without-patch','student','parent','pro','app','ap
 const TITLE = {
   site:'MindMap, a wellness app for teenagers',
   patch:'The MindMap patch',
-  'without-patch':'MindMap with just a phone',
+  'without-patch':'MindMap without the patch',
   student:'MindMap for students',
   parent:'MindMap for parents',
   pro:'MindMap for schools',
@@ -78,7 +78,7 @@ const TITLE = {
 const MAIN = [
   ['site',          'Overview'],
   ['patch',         'The patch'],
-  ['without-patch', 'Phone only'],
+  ['without-patch', 'Without the patch'],
 ]
 
 /* The audience menu. Each one gets a line of its own, because "Students" on

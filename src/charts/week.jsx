@@ -19,7 +19,7 @@ export function WeekChart({ data, band }){
         {[25,50,75].map(v=>(
           <g key={v}>
             <line x1={L} x2={W-R} y1={y(v)} y2={y(v)} className="stroke-rule" strokeWidth="1"/>
-            <text x={L-10} y={y(v)+5} textAnchor="end" className="fill-ink-3 font-mono text-[16px]">{v}</text>
+            <text x={L-10} y={y(v)+5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
           </g>
         ))}
         {data.map((d,i)=>{
@@ -32,7 +32,7 @@ export function WeekChart({ data, band }){
                 className={`font-mono text-[17px] ${over?'fill-warn font-medium':'fill-ink-2'}`}>
                 {over?'▲ ':''}{d.v}
               </text>
-              <text x={cx} y={H-11} textAnchor="middle" className="fill-ink-3 font-mono text-[16px]">{d.d}</text>
+              <text x={cx} y={H-11} textAnchor="middle" className="fill-ink-3 text-[16px]">{d.d}</text>
             </g>
           )
         })}

@@ -68,7 +68,7 @@ function Trace({ samples, className }) {
    stack. */
 function Step({ title, children, on }) {
   return (
-    <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-4',
+    <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3',
       !on && 'opacity-45')}>
       <span aria-hidden className={cn('mt-2 size-3 rounded-chip justify-self-center',
         on ? 'bg-accent' : 'border-2 border-ruling')}/>
@@ -160,7 +160,12 @@ export function PhoneCheck() {
   const s = result ? sentenceFor(result) : null
 
   return (
-    <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:items-start xl:gap-14">
+    /* Gaps and top margins came down by about a third through this screen.
+       It is the tallest thing on the page and every one of its stacked mt-
+       steps was set independently, so the capture card opened on 24px, then
+       28px between each live readout, then 32px before the buttons, and none
+       of those gaps was carrying a division a rule was not already making. */
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:items-start xl:gap-8">
       <div>
         <Card>
           <CardContent>
@@ -168,7 +173,7 @@ export function PhoneCheck() {
               Forty five seconds. Everything is worked out on this phone and thrown away.
             </p>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <Step on={PHASES[phase] >= 1} title={`Fingertip over the camera · ${PPG_SECONDS}s`}>
                 Rest your hand on something.
               </Step>
@@ -187,7 +192,7 @@ export function PhoneCheck() {
             <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
             {phase === 'camera' && (
-              <div className="mt-7" aria-live="polite">
+              <div className="mt-5" aria-live="polite">
                 <p className="font-mono text-meta tabular-nums text-ink-3">
                   Reading your pulse · {Math.max(0, Math.ceil(PPG_SECONDS * (1 - progress)))}s left
                 </p>
@@ -197,7 +202,7 @@ export function PhoneCheck() {
             )}
 
             {phase === 'voice' && (
-              <div className="mt-7" aria-live="polite">
+              <div className="mt-5" aria-live="polite">
                 <p className="font-mono text-meta tabular-nums text-ink-3">
                   Listening · {Math.max(0, Math.ceil(VOICE_SECONDS * (1 - progress)))}s left
                 </p>
@@ -211,15 +216,15 @@ export function PhoneCheck() {
               </div>
             )}
 
-            {phase === 'working' && <p className="mt-7 text-sec text-ink-2" aria-live="polite">Working it out…</p>}
+            {phase === 'working' && <p className="mt-5 text-sec text-ink-2" aria-live="polite">Working it out…</p>}
 
             {error && (
-              <p role="alert" className="mt-7 max-w-[46ch] border-l-2 border-warn pl-3 text-sec text-warn">
+              <p role="alert" className="mt-5 max-w-[46ch] border-l-2 border-warn pl-3 text-sec text-warn">
                 {error}
               </p>
             )}
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               {/* Not "Take a reading": the tab this screen sits under is
                   already called that, and two controls on one page with the
                   same name is one control as far as a screen reader, or a
@@ -240,7 +245,11 @@ export function PhoneCheck() {
         </Card>
       </div>
 
-      <Card aria-live="polite" className="min-h-[14rem] xl:sticky xl:top-[92px]">
+      {/* 14rem of minimum height was an empty white box the size of a
+          paragraph sitting beside a card twice as tall. The placeholder is one
+          sentence, so the card is now the size of one sentence until there is
+          a reading to put in it. */}
+      <Card aria-live="polite" className="min-h-[7rem] xl:sticky xl:top-[92px]">
         <CardContent>
           {!result && (
             <p className="max-w-[36ch] text-sec text-ink-3">
@@ -249,8 +258,8 @@ export function PhoneCheck() {
           )}
           {result && (
             <>
-              <div className="flex flex-col items-start gap-7">
-                <RainbowDial score={result.score} size={288}
+              <div className="flex flex-col items-start gap-5">
+                <RainbowDial score={result.score} size={248}
                   rings={[{ id:'phone', name:'Phone sensors', color:'#157446', glow:'#0e9c9c',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div>

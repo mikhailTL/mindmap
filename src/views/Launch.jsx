@@ -98,8 +98,8 @@ function Console({ children }) {
   return (
     <div className="w-full max-w-[320px] rounded-panel border-2 border-ink bg-card shadow-raise">
       <div className="flex items-baseline justify-between border-b border-rule px-3 py-2">
-        <span className="font-mono text-tick text-ink-3">Caseload</span>
-        <span className="font-mono text-tick text-ink-3">by change</span>
+        <span className="text-tick text-ink-3">Caseload</span>
+        <span className="text-tick text-ink-3">by change</span>
       </div>
       <div className={cn(BODY, 'px-3 py-4')}>{children}</div>
     </div>
@@ -114,7 +114,7 @@ function Waiting({ children }) {
   return (
     <>
       <span aria-hidden className="block h-[3px] w-14 bg-ink-3"/>
-      <span aria-hidden className="mt-3 font-mono text-tick text-ink-3">out of 100</span>
+      <span aria-hidden className="mt-3 text-tick text-ink-3">out of 100</span>
       <p className="mt-4 max-w-[24ch] text-center text-sec text-ink-2">{children}</p>
     </>
   )

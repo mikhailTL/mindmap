@@ -97,14 +97,14 @@ function Row({ s, rank, onOpen }) {
         <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{rank}</span>
         <span className="min-w-0">
           <span className="block truncate text-row text-ink">{s.name}</span>
-          <span className="mt-0.5 block font-mono text-tick text-ink-3">
+          <span className="mt-0.5 block text-tick text-ink-3">
             Grade {s.grade} · {TIER_LABEL[s.tier]}</span>
         </span>
         <span className="flex items-baseline gap-2 sm:block">
           <span className={cn('font-mono text-num font-medium leading-none tabular-nums',
             s.tier === 'crisis' ? 'text-crit' : s.tier === 'high' ? 'text-warn' : 'text-ink')}>
             {s.current}</span>
-          <span className="whitespace-nowrap font-mono text-tick text-ink-3 sm:mt-1 sm:block">out of 100</span>
+          <span className="whitespace-nowrap text-tick text-ink-3 sm:mt-1 sm:block">out of 100</span>
         </span>
         <span className="col-span-full sm:col-span-1">
           <span className="flex items-center gap-3">
@@ -177,11 +177,11 @@ function BlankBoardRow() {
     <figure className="m-0 mt-3">
       <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-panel
         border border-dashed border-rule p-4 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)]">
-        <span className="font-mono text-tick text-ink-3">rank</span>
-        <span className="font-mono text-tick text-ink-3">student · grade · tier</span>
-        <span className="font-mono text-tick text-ink-3">score</span>
+        <span className="text-tick text-ink-3">rank</span>
+        <span className="text-tick text-ink-3">student · grade · tier</span>
+        <span className="text-tick text-ink-3">score</span>
         <span className="col-span-full sm:col-span-1">
-          <span className="block font-mono text-tick text-ink-3">change this week</span>
+          <span className="block text-tick text-ink-3">change this week</span>
           {/* The velocity track, drawn empty: centre line, worse to the right.
               Without it the legend under this figure legends nothing. */}
           <span aria-hidden className="mt-1.5 flex h-1.5 max-w-[13rem] items-stretch">
@@ -217,7 +217,7 @@ function EmptyTriage() {
         Your caseload</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
         <RankRule/>
-        <span className="font-mono text-tick text-ink-3">0 consented · 0 ranked</span>
+        <span className="text-tick text-ink-3">0 consented · 0 ranked</span>
       </div>
 
       <div className="mt-10">
@@ -280,7 +280,7 @@ function Triage({ onOpen, real }) {
         {/* The heading names the board; the ranking rule and both hover
             definitions ride on this one line under it. */}
         <RankRule/>
-        <span className="font-mono text-tick text-ink-3">
+        <span className="text-tick text-ink-3">
           {total} consented · {ranked.length} ranked</span>
       </div>
 
@@ -349,7 +349,7 @@ function Triage({ onOpen, real }) {
           {quiet.map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <span className="text-meta text-ink">{s.name}</span>
-              <span className="font-mono text-meta text-ink-3">Grade {s.grade} · nothing shared</span>
+              <span className="text-meta text-ink-3">Grade {s.grade} · nothing shared</span>
             </li>
           ))}
         </Limited>
@@ -377,7 +377,7 @@ function EmptyRecord() {
         <div>
           <h2 className="font-display text-head font-bold tracking-tight text-ink">
             No student record open</h2>
-          <p className="mt-1 font-mono text-tick text-ink-3">no grade · no scope</p>
+          <p className="mt-1 text-tick text-ink-3">no grade · no scope</p>
           <Sub className="mt-2">A record opens from the triage board, which stays empty until a
             guardian signs a scope.</Sub>
         </div>
@@ -439,7 +439,7 @@ function OneStudent({ who, setWho, real }) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-head font-bold tracking-tight text-ink">{s.name}</h2>
-          <p className="mt-1 font-mono text-tick text-ink-3">
+          <p className="mt-1 text-tick text-ink-3">
             Grade {s.grade}{s.showScore ? ` · ${TIER_LABEL[s.tier]}` : ''}</p>
           <p className="mt-2 max-w-[46ch] text-sec text-ink-2">Consented: {s.scope}.</p>
         </div>
@@ -534,7 +534,7 @@ function OneStudent({ who, setWho, real }) {
               const y = 180 - ((v - lo) / (hi - lo)) * 160
               return <g key={v}>
                 <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
-                <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 font-mono text-[16px]">{v}</text>
+                <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
               </g>
             })}
             <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
@@ -545,8 +545,8 @@ function OneStudent({ who, setWho, real }) {
               vectorEffect="non-scaling-stroke"
               d={series.slice(31).map((p, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
                 (180 - ((p.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
-            <text x="40" y="209" className="fill-ink-3 font-mono text-[16px]">45 days ago</text>
-            <text x="710" y="209" textAnchor="end" className="fill-ink-3 font-mono text-[16px]">today</text>
+            <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
+            <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
           </svg>
           <Note>The coloured stretch is the last two weeks.</Note>
         </Panel>
@@ -740,7 +740,7 @@ function Cohort({ real }) {
                 <span className="font-mono text-sec tabular-nums text-ink-3">{d.mean}</span>
                 <div className={cn('w-full rounded-t-xs', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
                   style={{ height: (d.mean / 100) * 120 + 'px' }}/>
-                <span className="font-mono text-tick text-ink-3">{d.label}</span>
+                <span className="text-tick text-ink-3">{d.label}</span>
               </div>
             ))}
           </div>

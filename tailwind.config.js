@@ -54,18 +54,19 @@ export default {
         calm:   '#157446',
         crit:   '#a8321f',
       },
-      /* One family. Satoshi, variable 300 to 900.
-         What this replaces: Quicksand for display, Chivo for body, Chivo Mono
-         for every eyebrow, figure and caption. Three faces is three designers,
-         and the mono was the loudest of the three. All three aliases point at
-         the same family on purpose, so `font-mono` anywhere on the site
-         resolves to Satoshi rather than needing two hundred call sites
-         rewritten. Figures that have to line up use `tabular-nums`, which
-         Satoshi supports, instead of a whole second typeface. */
+      /* Quicksand for display, Chivo for body, Chivo Mono for figures.
+         All three are variable files, so 700 is available and headings are
+         bold: the site had been set at 500 throughout, which is why a heading
+         differed from the paragraph under it by size alone.
+
+         The note that sent this to Satoshi for an afternoon was about one
+         habit rather than the kit: a mono caption under every heading, which
+         is a tell. The kit is back and the habit is gone. `mono` is for
+         figures that have to line up, not for labels. */
       fontFamily: {
-        display: ['Satoshi','-apple-system','system-ui','sans-serif'],
-        body:    ['Satoshi','-apple-system','system-ui','sans-serif'],
-        mono:    ['Satoshi','-apple-system','system-ui','sans-serif'],
+        display: ['Quicksand','-apple-system','system-ui','sans-serif'],
+        body:    ['Chivo','-apple-system','system-ui','sans-serif'],
+        mono:    ['"Chivo Mono"','ui-monospace','monospace'],
       },
       /* nine steps because the content has nine levels of meaning */
       fontSize: TYPE_SCALE,

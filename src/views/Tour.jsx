@@ -65,7 +65,7 @@ function EvidenceGap() {
               <div key={i} className="flex-1 text-center">
                 <div className={cn('h-9 rounded-xs border border-rule',
                   r.on.includes(i) ? 'border-accent bg-accent' : 'bg-mist')}/>
-                <span className="mt-1.5 block font-mono text-tick text-ink-3">{d}</span>
+                <span className="mt-1.5 block text-tick text-ink-3">{d}</span>
               </div>
             ))}
           </div>
@@ -122,7 +122,7 @@ function Signals() {
               <div className="flex items-center gap-2.5">
                 <s.icon aria-hidden className="size-5" style={{ color: s.glow }}/>
                 <CardTitle as="h3" className="text-row">{s.name}</CardTitle>
-                <span className="ml-auto font-mono text-tick text-ink-3">{s.unit}</span>
+                <span className="ml-auto text-tick text-ink-3">{s.unit}</span>
               </div>
               <SignalTrace kind={id} className="mt-3"/>
               <p className="mt-3 text-sec text-ink-2">{s.about}</p>
@@ -158,7 +158,7 @@ function Caseload() {
                     style={{ width: `${s.current}%` }}/>
                 </span>
               </span>
-              <span className="font-mono text-fine text-ink-2">{TIER_LABEL[tier]}</span>
+              <span className="text-fine text-ink-2">{TIER_LABEL[tier]}</span>
               {/* Rate of change is what the board ranks on, so it is the figure
                   on the row — the score alone would make the order look wrong. */}
               <span className="text-right font-mono text-fine tabular-nums text-ink">
@@ -372,8 +372,7 @@ const STOPS = [
               <TD className="font-display font-medium text-ink">{what}</TD>
               <TD>
                 {kind === 'demo'
-                  ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5
-                      font-mono text-fine text-warn">{status}</span>
+                  ? <span className="inline-flex items-baseline border-l-2 border-warn pl-2.5 text-fine text-warn">{status}</span>
                   : <Badge variant="state">{status}</Badge>}
               </TD>
               <TD className="text-sec text-ink-2">{means}</TD>

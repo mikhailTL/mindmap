@@ -272,7 +272,7 @@ function Caseload() {
         {BOARD.map(s => (
           <tr key={s.id}>
             <th scope="row" className="border-b border-rule py-3.5 pr-3 text-left font-normal">
-              <span className="block font-mono text-meta text-ink">{s.name}</span>
+              <span className="block text-meta text-ink">{s.name}</span>
               <span className="block font-display text-fine font-bold text-ink-3">
                 Grade {s.grade}. {TIER_LABEL[s.tier]}</span>
             </th>
@@ -309,7 +309,7 @@ function SmallGroups() {
           border-b border-rule py-4 sm:grid-cols-[minmax(0,15rem)_minmax(6rem,1fr)_5rem]">
           <span className="order-1 min-w-0">
             <span className="block font-display text-meta font-bold text-ink">{c.label}</span>
-            <span className="block font-mono text-fine text-ink-3">{c.n} students</span>
+            <span className="block text-fine text-ink-3">{c.n} students</span>
           </span>
           {/* the bar is ordered last on a phone and given the full row. In an
               auto-width column it collapsed to a few pixels, which quietly

@@ -1,6 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { Button } from '../ui/button'
+import { Card } from '../ui/card'
 import { ArrowLeft, ArrowRight } from '../ui/marks'
 import { createCinematic } from './cinematic'
 
@@ -133,7 +134,8 @@ function greenSelection(a) {
   }
 }
 
-export const PatchArena = React.forwardRef(function PatchArena({ className, view = 'closed', onPlay }, ref) {
+export const PatchArena = React.forwardRef(function PatchArena(
+  { className, view = 'closed', onPlay, beside }, ref) {
   const host = React.useRef(null)
   const el = React.useRef(null)
   /* the walkthrough, once the geometry is in and the box is on screen */
@@ -347,34 +349,69 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
   const key = 'min-h-[44px] px-3 text-fine'
 
   return (
-    <div className={cn('flex w-full flex-col', className)}>
-      {/* The stage owns its height here rather than taking it from whatever box
-          the page puts it in. A fixed-height parent shared with the controls
-          was collapsing the canvas to a hundred pixels on a phone, where the
-          controls wrap to six rows — and the framing the model is drawn with is
-          a function of the canvas aspect, so a squashed canvas draws a small
-          model floating in an empty field. */}
-      <div className="relative h-[min(40vh,280px)] lg:h-[min(58vh,470px)]">
-        <div ref={host} className="h-full w-full"/>
-        {phase !== 'live' && (
-          <div className="absolute inset-0 grid place-items-center p-6 text-center">
-            {phase === 'error' ? (
-              <p className="max-w-[34ch] text-sec text-ink-2">
-                The 3D model needs WebGL2, which this browser has turned off. The drawing beside it
-                shows the same three parts.
-              </p>
-            ) : (
-              <p className="max-w-[30ch] text-sec text-ink-3">
-                {phase === 'fetch' ? 'Loading the model…' : 'The model loads when you reach it.'}
-              </p>
-            )}
+    /* The viewer is a composed object on the page, not a bare canvas floating
+       on the band's ground and not a vendor widget either.
+
+       Last pass stripped the container outright, because the one the bundle
+       ships reads as an embed: its own header bar, its own sidebar, its own
+       caption, its own blue palette. Stripping it left the model with no edge
+       and nothing under it, which is the "middle of nowhere" the review named.
+       What it gets back is the site's own Card — one surface, one hairline,
+       the 10px panel corner — with the stage on mist so a white shell has
+       something to read against, the flat drawing on the card's own white
+       stock beside it, and the fourteen controls inside the same edge rather
+       than adrift under it. */
+    /* shadow-raise is the site's one depth mechanism: a hard offset, no blur.
+       On the ink band it lands at 10% ink over ink and is invisible there, and
+       the white surface against the dark ground is the separation instead. It
+       stays on the component because the card is what carries the figure
+       wherever it is used, and on any lighter ground it is the edge. */
+    <Card className={cn('flex w-full flex-col shadow-raise', className)}>
+      <div className="grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+        {/* The stage owns its height rather than taking it from whatever box
+            the page puts it in. A fixed-height parent shared with the controls
+            was collapsing the canvas to a hundred pixels on a phone, where the
+            controls wrap to six rows.
+
+            It is also no longer as wide as the page. The framing is a function
+            of the canvas aspect — half-width = max(38mm, half-height x aspect)
+            x 1.4 — so a 2.2:1 stage draws the patch at a third of its width
+            and the rest is empty field. Beside a 320px column the stage lands
+            near 1.4:1, where the same rule draws it about two thirds across. */}
+        <div className="relative order-1 h-[min(62vw,300px)] bg-mist lg:order-2
+          lg:h-[min(50vh,440px)] lg:border-l lg:border-rule">
+          <div ref={host} className="h-full w-full"/>
+          {phase !== 'live' && (
+            <div className="absolute inset-0 grid place-items-center p-6 text-center">
+              {phase === 'error' ? (
+                <p className="max-w-[34ch] text-sec text-ink-2">
+                  The 3D model needs WebGL2, which this browser has turned off. The drawing beside it
+                  shows the same three parts.
+                </p>
+              ) : (
+                <p className="max-w-[30ch] text-sec text-ink-3">
+                  {phase === 'fetch' ? 'Loading the model…' : 'The model loads when you reach it.'}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* The flat drawing, in the same edge as the model instead of beside it
+            as a second figure of equal size. Two drawings of one object
+            competing at one scale is what made the band read as scattered: the
+            model is the half you operate, so it takes the room, and the
+            drawing sits next to it as the key that names the layers. */}
+        {beside && (
+          <div className="order-2 border-t border-rule px-4 py-4 lg:order-1 lg:border-t-0 lg:px-5">
+            {beside}
           </div>
         )}
       </div>
 
-      {/* A rule, not a box: the controls belong to the figure above them the
-          way a key belongs to a drawing. */}
-      <div className="mt-3 border-t border-rule pt-3">
+      {/* Inside the card and under a hairline: the controls belong to the
+          figure above them the way a key belongs to a drawing. */}
+      <div className="border-t border-rule px-4 py-3 lg:px-5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="tick mr-1 shrink-0">Views</span>
           {VIEWS.map(([id, label]) => (
@@ -408,6 +445,6 @@ export const PatchArena = React.forwardRef(function PatchArena({ className, view
             mono. It is one line of the page's own type instead. */}
         <p className="note mt-2">Drag the model to turn it. Scroll to zoom. Click any part to name it.</p>
       </div>
-    </div>
+    </Card>
   )
 })

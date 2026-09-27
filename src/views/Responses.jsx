@@ -583,7 +583,7 @@ const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' 
 function Stars({ value, max = STAR_MAX }) {
   const uid = React.useId()
   if (value == null) {
-    return <span className="font-mono text-fine text-ink-3">no rating</span>
+    return <span className="text-fine text-ink-3">no rating</span>
   }
   return (
     <span className="inline-flex items-center gap-2">
@@ -1203,7 +1203,7 @@ export function Responses() {
                         </TD>
                         <TD align="right">
                           {p.sus == null
-                            ? <span className="font-mono text-ink-3">none</span>
+                            ? <span className="text-ink-3">none</span>
                             : <Badge>{susGrade(p.sus).grade}</Badge>}
                         </TD>
                         <TD num align="right" className="text-ink">

@@ -60,8 +60,10 @@
      ink-3 #47705e is 5.33 : 1 on paper and 4.68 : 1 on mist, so a caption
      still clears 4.5 : 1 wherever it lands. */
   .note { @apply font-body text-note text-ink-3; }
-  /* A figure's unit or scale label. Typed, not set. No box, so no radius —
-     .mark, .note and .tick are marks on the sheet, not objects on it. */
+  /* A figure's unit or scale label. It keeps the mono face because it sits
+     against figures that have to line up; everything that was only a caption
+     lost it. No box, so no radius: .mark, .note and .tick are marks on the
+     sheet, not objects on it. */
   .tick { @apply font-mono text-tick font-light tabular-nums text-ink-3; }
   /* The one containment pattern that uses a border: a bordered field on card
      stock. Everything else groups with rules, space or a background field.

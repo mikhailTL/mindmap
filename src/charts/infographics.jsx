@@ -157,7 +157,7 @@ export function WeekStrip({ days, band, className }) {
         return (
           <div key={d.d} className="flex-1 text-center">
             <div className={cn('h-2 rounded-xs', over ? 'bg-warn' : 'bg-accent/45')}/>
-            <span className="mt-1.5 block font-mono text-tick text-ink-3">{d.d[0]}</span>
+            <span className="mt-1.5 block text-tick text-ink-3">{d.d[0]}</span>
           </div>
         )
       })}

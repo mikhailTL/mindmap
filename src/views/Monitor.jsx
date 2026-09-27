@@ -57,8 +57,7 @@ export function Reason({ claim, plain, source, index, chart }) {
         <C.Trigger className="group flex min-h-[64px] w-full items-center gap-4 px-3 py-5 text-left
           transition-colors hover:bg-mist/60">
           <span className="flex-1 text-body text-ink">{claim}</span>
-          <span className="flex shrink-0 items-center gap-1.5 font-mono text-tick
-            text-accent">
+          <span className="flex shrink-0 items-center gap-1.5 text-tick text-accent">
             <span className="hidden sm:inline group-data-[state=open]:sm:hidden">Why</span>
             <Chevron aria-hidden className="size-4 transition-transform duration-200 ease-out
               group-data-[state=open]:rotate-90"/>
@@ -68,7 +67,7 @@ export function Reason({ claim, plain, source, index, chart }) {
           <div className="grid gap-6 px-3 pb-6 sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-start">
             <div>
               <p className="max-w-[52ch] text-sec text-ink-2">{plain}</p>
-              <p className="mt-3 font-mono text-tick text-ink-3">{source}</p>
+              <p className="mt-3 text-tick text-ink-3">{source}</p>
             </div>
             {chart && <div className="rounded-xs bg-mist px-3 py-3">{chart}</div>}
           </div>
@@ -166,7 +165,7 @@ function SilentChannels() {
               <span className="tick w-[4ch] shrink-0">{s.unit}</span>
               {/* The lane itself: ruled, dashed, empty. */}
               <span aria-hidden className="flex-1 border-t border-dashed border-ruling"/>
-              <span className="shrink-0 whitespace-nowrap font-mono text-tick text-ink-3">no signal</span>
+              <span className="shrink-0 whitespace-nowrap text-tick text-ink-3">no signal</span>
             </div>
           )
         })}

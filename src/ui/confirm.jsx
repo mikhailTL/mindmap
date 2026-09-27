@@ -36,15 +36,15 @@ export function ConfirmClose({ open, onOpenChange, subject, steps, onConfirm }) 
 
           <ul className="mt-6 list-none border-t border-rule p-0 text-meta text-ink-2">
             <li className="flex gap-4 border-b border-rule py-3">
-              <span className="w-28 shrink-0 font-mono text-tick text-ink-3">Written</span>
+              <span className="w-28 shrink-0 text-tick text-ink-3">Written</span>
               <span>Outcome, your name, the timestamp.</span>
             </li>
             <li className="flex gap-4 border-b border-rule py-3">
-              <span className="w-28 shrink-0 font-mono text-tick text-ink-3">Readable by</span>
+              <span className="w-28 shrink-0 text-tick text-ink-3">Readable by</span>
               <span>You, the safeguarding lead, and the student.</span>
             </li>
             <li className="flex gap-4 border-b border-rule py-3">
-              <span className="w-28 shrink-0 font-mono text-tick text-ink-3">Reversible</span>
+              <span className="w-28 shrink-0 text-tick text-ink-3">Reversible</span>
               <span className="text-crit">No. The log cannot be edited or deleted.</span>
             </li>
           </ul>

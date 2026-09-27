@@ -8,7 +8,7 @@ import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { RuledField, MarginRule } from '../ui/paper'
 import { RainbowDial } from '../charts/rainbow'
-import { ProblemStats, TreatmentGap, WhyItWorks, SOURCES } from '../charts/problem'
+import { ProblemStats } from '../charts/problem'
 import { studentRings } from '../lib/readings'
 import { triage, tierOf, TIER_LABEL } from '../lib/caseload'
 import { DATA } from '../lib/assets'
@@ -23,22 +23,43 @@ import { cn } from '../lib/utils'
  * told how the thing works before being told why anyone built it, and the one
  * figure on the page that was about a teenager was a placeholder.
  *
- * The order is now: what this is, what the problem is, why this helps, the
- * three ways to start, how a reading works, who sees what, and what it will
- * never do. Each band answers the question the band above it raises, which is
- * the only ordering rule this page needs.
+ * The order is now: what this is, what the problem is, the three ways to
+ * start, how a reading works, who sees what, privacy, and what it will never
+ * do. Each band answers the question the band above it raises, which is the
+ * only ordering rule this page needs.
  *
- * Grounds and rhythm are not decided here: every band is a <Section>, which
- * owns its ground, its heading size and its padding. The dark band appears
- * exactly once, on the statistics, because that is the part of the page that
- * has to stop somebody scrolling.
+ * WHAT WENT, and why. There was a light band called "Why MindMap helps"
+ * between the problem and the three doors, carrying the 1-in-5 treatment
+ * funnel and a two-lane timing diagram. It is gone: the review asked for every
+ * statistic to sit on the dark band and said this one was "too much", so the
+ * one fact in the funnel worth keeping is now a row on the dark band and the
+ * timing diagram, which measured nothing and was captioned as a shape rather
+ * than a figure, is not replaced.
  *
- * What changed in the pass after the last review: nothing on this page is a
- * row of three equal rounded cards any more. There were two of them, one under
- * the other, and a row of equal cards with an icon on top is the single most
- * generated-looking object on the web. Both are ruled rows now, which is the
- * language the rest of the site is already in — an observation sheet, not a
- * pricing page — and both are shorter than the cards they replace.
+ * GROUNDS. Every band is a <Section>, which owns its padding and its heading
+ * size, and the ground is chosen here because the ladder is a property of the
+ * page and not of any one band. Alternating the two near-whites is invisible —
+ * paper and card differ by about 2% in luminance — so the ladder runs
+ * white, tint, white, tint between two dark bands:
+ *
+ *   hero            paper, ruled
+ *   the problem     ink            every statistic on the page
+ *   3 ways          accent.wash    the green tint
+ *   a day in        card           white
+ *   3 perspectives  beam.wash      the turquoise tint
+ *   privacy         card           white
+ *   never do        ink            the close
+ *
+ * Both washes are real palette grounds and the site had barely used either.
+ * ink 12.7 : 1, ink.2 6.9 : 1, ink.3 4.67 : 1 and accent 4.84 : 1 all clear AA
+ * on both of them, so nothing on a tinted band needed a different colour than
+ * it had on paper. The one thing that did need changing is hover: mist/60 on a
+ * wash is the same luminance as the wash, so the rows that hover now hover to
+ * card instead.
+ *
+ * Nothing on this page is a row of three equal rounded cards. There were two
+ * of them, one under the other, and a row of equal cards with an icon on top
+ * is the single most generated-looking object on the web. Both are ruled rows.
  */
 
 /* The three ways in, in the order a visitor can answer them: the one that
@@ -152,35 +173,43 @@ export function Overview({ go }) {
   return (
     <main>
       {/* ── the hero ──────────────────────────────────────────────────────
-          What was wrong with it was one thing wearing three hats. The copy sat
-          in the left half and one phone sat in the right half, and between
-          them, at 1440 and worse at 1920, ran a column of nothing about four
-          hundred pixels wide. Filling a gap with padding is what put it there
-          in the first place, so it is filled with the other half of the
-          product instead: the patch, drawn front on, at a size that makes it
-          the first object you see.
+          Two things were wrong with what this replaces and the review named
+          both. It stood about 550px tall, so on a 900px screen the dark band
+          under it was already showing before a visitor had scrolled: the band
+          opened the page as a stripe rather than as a screen. And the patch
+          was translated left across the panel's border on top of the phone,
+          which was meant to read as one deliberately broken seam and read
+          instead as two objects colliding.
 
-          Three things hold the band together. The whole section is one ruled
-          sheet, margin line included, so the parts of the copy column the
-          headline does not reach are ruled paper rather than blank paper. The
-          right side is a washed panel that runs off the edge of the page
-          instead of stopping politely inside it. And the patch is translated
-          left across the boundary between the two, overlapping both, so the
-          composition has one seam that is deliberately broken rather than a
-          tidy fifty-fifty split with a canyon down the middle.
+          The fix for the first is a real viewport measure: 100svh less the
+          57px sticky header, with the copy column centred inside it and the
+          device panel stretching the whole way down. svh and not vh, because
+          vh on a phone is the height the browser has when its chrome is
+          hidden, so a vh hero is always taller than the screen it is on.
 
-          It is also about a hundred and thirty pixels shorter than what it
-          replaces, which was the other half of the note. */}
-      <section id="hero" className="relative isolate overflow-hidden border-t border-rule bg-paper">
+          The fix for the second is to stop sharing a field. The panel is now
+          two stacked fields with a rule between them, one object each, on two
+          different tints: the patch on accent.wash, the app on mist. Neither
+          can reach the other, each has its own caption, and the pair reads as
+          two plates on a sheet rather than as a composite.
+
+          The notebook stays. It is behind the copy column, which is where it
+          was asked for, and the margin rule with it. */}
+      <section id="hero" className="relative isolate flex min-h-[calc(100svh-57px)] flex-col
+        overflow-hidden border-t border-rule bg-paper">
         <RuledField className="z-0" pitch={37} offset={12} opacity={0.34}/>
         <MarginRule className="left-[11px] z-0 sm:left-6 lg:left-8"/>
 
-        <div className="wrap relative z-10 grid gap-0
-          lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]
-          xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)]
-          2xl:grid-cols-[minmax(0,1fr)_minmax(0,40rem)]">
+        <div className="wrap relative z-10 flex flex-1 flex-col
+          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]
+          xl:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]
+          2xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]">
 
-          <div className="max-w-[40rem] py-8 lg:self-center lg:py-12 lg:pr-14">
+          {/* Centred, not top-set. The column is shorter than the screen by
+              design — the empty part of it is ruled paper, which is a sheet
+              with room on it rather than a gap. */}
+          <div className="flex max-w-[40rem] shrink-0 flex-col justify-center py-7
+            lg:py-10 lg:pr-14">
             {/* The name, with the hairline a drawing puts in front of a key.
                 accent on paper is 5.52 : 1, so it can be a word and not only
                 a colour. It is two steps smaller than it was: it is the label
@@ -190,19 +219,21 @@ export function Overview({ go }) {
               <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
               MindMap, a wellness app for teenagers
             </ScrollIn>
-            {/* One element, one leading, balanced wrapping. The break falls
+            {/* The step at 2xl is `fig` and not `sect`. Over 1536 the copy
+                column is 900px wide and a 52px headline in it left the top
+                third of the sheet empty; `fig` is 72px there, which is the
+                size the column was actually drawn for.
+
+                One element, one leading, balanced wrapping. The break falls
                 wherever the column is, instead of being hard coded into a
                 place that only worked at one width. Leading is 1.06 and not
                 1.02: at 1.02 the descenders of "Making your stress" landed in
                 the cap height of "readable". */}
             <h1 className="mt-4 max-w-[13ch] font-display text-view font-bold leading-[1.06]
-              tracking-tight text-ink [text-wrap:balance] 2xl:max-w-[12ch] 2xl:text-sect">
+              tracking-tight text-ink [text-wrap:balance] lg:text-sect
+              2xl:max-w-[11ch] 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
-            {/* Three sizes that are genuinely three sizes: 46, 22, 15 at 1440.
-                What this replaces was 46, 24, 19, which is one size of large
-                and two sizes of medium, and reads as a template because it is
-                how a template hedges. */}
             <ScrollIn as="p" className="mt-4 text-row font-medium leading-[1.3] text-ink-2">
               One score. One sentence. Every day.
             </ScrollIn>
@@ -212,7 +243,7 @@ export function Overview({ go }) {
             <ScrollIn as="p" className="mt-2.5 max-w-read text-note text-ink-2">
               Read from a patch on your forearm, or from the phone already in your pocket.
             </ScrollIn>
-            <ScrollIn className="mt-7">
+            <ScrollIn className="mt-6">
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
                 <Button variant="outline" onClick={() => go('without-patch')}>Take a reading now</Button>
@@ -220,67 +251,64 @@ export function Overview({ go }) {
             </ScrollIn>
           </div>
 
-          {/* The two ways to use it, shown rather than described. The app is
-              the live components on the live data, so it cannot drift out of
-              date with the product it is advertising, and the patch is the
-              front view because a reader who has never seen the thing needs
-              the object before it needs an exploded drawing of the object. */}
-          {/* The panel runs off the page. `after` is the part of it that lives
-              past the wrap's right edge: at 1920 the wrap stops 120px short of
-              the viewport and a panel that stopped with it left a strip of bare
-              paper beside a full-bleed dark band, which reads as a mistake. The
-              section clips it, so the strip costs nothing. */}
-          <div className="relative -mx-[22px] border-t border-rule bg-mist/50 sm:-mx-10
-            lg:mx-0 lg:-mr-14 lg:border-l lg:border-t-0
-            after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-            after:bg-mist/50 after:content-[''] lg:after:block">
-            {/* registration marks, the way a sheet carries them: four corners,
-                hairline, no frame. They are the reason the panel reads as part
-                of a drawing rather than as a box with a tint in it. */}
-            <span aria-hidden className="absolute left-4 top-4 h-3 w-3 border-l border-t border-ruling/50"/>
-            <span aria-hidden className="absolute bottom-4 left-4 h-3 w-3 border-b border-l border-ruling/50"/>
+          {/* The two ways to use it, shown rather than described, one to a
+              field. The app is the live components on the live data, so it
+              cannot drift out of date with the product it is advertising, and
+              the patch is the front view because a reader who has never seen
+              the thing needs the object before it needs a section drawing.
 
-            {/* The patch carries a negative left margin at lg, so it hangs
-                across the panel's own border and sits on the ruled paper with
-                the headline. That overlap is the whole composition: without it
-                this is two columns again, with a rule instead of a canyon. */}
-            {/* Past 1680 the panel is wider than the page, because the page
-                stops and the panel does not. The left pad is exactly that
-                overhang, so the pair centres in the panel a reader can see
-                rather than in the part of it the layout knows about. */}
-            <div className="flex items-end justify-center gap-0 px-5 pb-6 pt-7
-              lg:h-full lg:justify-start lg:px-0 lg:pb-14 lg:pt-10
-              2xl:justify-center 2xl:pl-[max(0px,calc((100vw-1680px)/2))]">
-              <PatchFront
-                className="relative z-20 w-[166px] shrink-0 -mr-9 translate-y-3
-                  sm:w-[200px] lg:-ml-20 lg:-mr-11 lg:w-[248px] lg:translate-y-2
-                  2xl:ml-0 2xl:w-[288px]"/>
-              <IPhone model="15-pro" scale={0.34} screenBg="#f7faf8"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                className="relative z-10 lg:hidden">
-                <PhoneApp/>
-              </IPhone>
-              <IPhone model="15-pro" scale={0.52} screenBg="#f7faf8"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                className="relative z-10 hidden lg:block 2xl:hidden">
-                <PhoneApp/>
-              </IPhone>
-              <IPhone model="15-pro" scale={0.56} screenBg="#f7faf8"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                className="relative z-10 hidden 2xl:block">
-                <PhoneApp/>
-              </IPhone>
+              Side by side on a phone and stacked from lg, because a phone has
+              width to spare in one row and no height to spare in two. The
+              rule between the fields turns with the axis.
+
+              `after` on each field is the part of it that lives past the
+              wrap's right edge: over 1680 the wrap stops short of the viewport
+              and a tint that stopped with it left a strip of bare paper beside
+              a full-bleed dark band, which reads as a mistake. The section
+              clips it, so the strip costs nothing. */}
+          <div className="relative -mx-[22px] flex flex-1 border-t border-rule sm:-mx-10
+            lg:mx-0 lg:-mr-14 lg:flex-col lg:border-l lg:border-t-0">
+
+            <div className="relative flex flex-1 flex-col items-center justify-center gap-3
+              border-r border-rule bg-accent-wash px-4 py-6 lg:min-h-0 lg:border-b lg:border-r-0
+              after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
+              after:bg-accent-wash after:content-[''] lg:after:block">
+              {/* registration marks, the way a sheet carries them: two
+                  corners, hairline, no frame. They are the reason a tinted
+                  field reads as a plate on a drawing rather than as a box. */}
+              <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
+              <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
+              <PatchFront className="w-[116px] shrink-0 sm:w-[144px] lg:w-[172px]"/>
+              <p className="text-center">
+                <span className="block font-display text-tick font-bold text-ink">The patch</span>
+                <span className="mt-0.5 block text-fine text-ink-3">
+                  Four signals, once a second, all day
+                </span>
+              </p>
             </div>
 
-            {/* A key, the way a drawing carries one: one typed line along the
-                bottom naming the two objects and what each costs a reader in
-                time. It sits on the panel's own baseline rather than beside
-                either device, which is why it cannot collide with one when the
-                pair grows at 1920. ink-3 on mist is 4.68 : 1. */}
-            <div className="absolute bottom-5 right-6 hidden items-center gap-3 whitespace-nowrap lg:flex">
-              <span className="tick">Patch · all day</span>
-              <span aria-hidden className="h-3 w-px bg-ruling/55"/>
-              <span className="tick">Phone · 45 seconds</span>
+            <div className="relative flex flex-[1.35] flex-col items-center justify-center gap-3
+              bg-beam-wash px-4 py-6 lg:min-h-0
+              after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
+              after:bg-beam-wash after:content-[''] lg:after:block">
+              <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
+              <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
+              <IPhone model="15-pro" scale={0.26} screenBg="#f7faf8"
+                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                className="lg:hidden">
+                <PhoneApp/>
+              </IPhone>
+              <IPhone model="15-pro" scale={0.44} screenBg="#f7faf8"
+                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                className="hidden lg:block">
+                <PhoneApp/>
+              </IPhone>
+              <p className="text-center">
+                <span className="block font-display text-tick font-bold text-ink">The app</span>
+                <span className="mt-0.5 block text-fine text-ink-3">
+                  One reading in forty five seconds
+                </span>
+              </p>
             </div>
           </div>
         </div>
@@ -293,31 +321,10 @@ export function Overview({ go }) {
           three facts about the device and one placeholder reading
           "[cited stat]", which was honest and useless. */}
       <Section name="The problem" tone="ink">
-        <SectionHead tone="ink" className="max-w-[20ch]">
+        <SectionHead tone="ink" className="max-w-[30ch]">
           Most teenagers who are struggling are not being reached.
         </SectionHead>
-        <ProblemStats className="mt-8"/>
-      </Section>
-
-      {/* ── why this helps ──────────────────────────────────────────────── */}
-      <Section name="Why MindMap helps" tone="paper">
-        <SectionHead className="max-w-[26ch]">
-          The body changes before anyone finds the words for it.
-        </SectionHead>
-        <div className="mt-8 grid gap-x-14 gap-y-10 lg:grid-cols-2">
-          <TreatmentGap/>
-          <WhyItWorks/>
-        </div>
-        <p className="mt-8 text-fine text-ink-3">
-          Sources:{' '}
-          {SOURCES.map((s, i) => (
-            <React.Fragment key={s.href}>
-              {i > 0 && ' · '}
-              <a href={s.href} target="_blank" rel="noreferrer"
-                className="border-b border-accent/40 text-accent hover:border-accent">{s.label}</a>
-            </React.Fragment>
-          ))}
-        </p>
+        <ProblemStats className="mt-6"/>
       </Section>
 
       {/* ── the three doors ──────────────────────────────────────────────
@@ -326,15 +333,15 @@ export function Overview({ go }) {
           which is what the rows say themselves, one line each. Every row keeps
           a transparent left rule so the one that is marked does not shunt its
           own text three pixels out of line with the other two. */}
-      <Section name="Getting started" tone="card">
+      <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
-        <ul className="mt-7 list-none border-t border-rule p-0">
+        <ul className="mt-6 list-none border-t border-rule p-0">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} as="li" className="border-b border-rule">
               <button type="button" onClick={() => go(d.go)}
                 className={cn(`group grid w-full grid-cols-[3.4rem_minmax(0,1fr)] items-center
-                  gap-x-5 gap-y-1.5 border-l-[3px] py-5 pl-4 pr-1 text-left
-                  transition-colors duration-150 hover:bg-mist/60
+                  gap-x-5 gap-y-1.5 border-l-[3px] py-4 pl-4 pr-1 text-left
+                  transition-colors duration-150 hover:bg-card
                   md:grid-cols-[4.6rem_minmax(0,15ch)_minmax(0,1fr)_auto] md:gap-x-9`,
                   d.lead ? 'border-l-accent' : 'border-l-transparent')}>
                 <span className="row-span-2 grid place-items-center md:row-span-1" aria-hidden>{d.art}</span>
@@ -355,9 +362,9 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── how a reading works ─────────────────────────────────────────── */}
-      <Section name="How it works" tone="paper" tight>
+      <Section name="How it works" tone="card" tight>
         <SectionHead>A day in, one score and one sentence out.</SectionHead>
-        <HowItWorks className="mt-7"/>
+        <HowItWorks className="mt-6"/>
       </Section>
 
       {/* ── the three audiences ──────────────────────────────────────────
@@ -365,17 +372,17 @@ export function Overview({ go }) {
           and is given roughly twice the area and twice the artwork; the parent
           and the counselor are two ruled rows beside them, which is also the
           truth about how much each of those two is shown. */}
-      <Section name="Who it is for" tone="card" id="screens">
+      <Section name="Who it is for" tone="card" id="screens" className="bg-beam-wash">
         <SectionHead>3 Perspectives</SectionHead>
         <SectionLede>
           One day of measurements, read three ways. The student sees all of it; the other two see
           only what the student agreed to share.
         </SectionLede>
-        <div className="mt-7 grid border-t border-rule lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <div className="mt-6 grid border-t border-rule lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
           <ScrollIn className="h-full">
             <button type="button" onClick={() => go(SCREENS[0].id)}
-              className="group flex h-full w-full flex-col gap-5 border-b border-rule py-7 pr-0
-                text-left transition-colors duration-150 hover:bg-mist/60 lg:border-r lg:pr-12">
+              className="group flex h-full w-full flex-col gap-4 border-b border-rule py-6 pr-0
+                text-left transition-colors duration-150 hover:bg-card lg:border-r lg:pr-12">
               <span className="font-display text-tick font-bold text-accent">{SCREENS[0].who}</span>
               <span className="font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
                 {SCREENS[0].title}
@@ -383,8 +390,16 @@ export function Overview({ go }) {
               {/* The line and the dial share a row rather than stacking. A
                   dial centred under a left-set paragraph left two hundred
                   pixels of nothing on either side of it and made the cell
-                  taller than the two rows beside it for no reason. */}
-              <div className="flex flex-wrap items-center gap-x-10 gap-y-5">
+                  taller than the two rows beside it for no reason.
+
+                  flex-1 is the fix for the hole this cell had under it. The
+                  student cell is shorter than the two rows it sits beside, the
+                  CTA is anchored to the bottom so the two CTAs line up, and
+                  the difference was landing as one 110px gap directly above
+                  the link. The row takes the slack instead and centres in it,
+                  so what is left reads as the cell breathing rather than as a
+                  missing paragraph. */}
+              <div className="flex flex-1 flex-wrap items-center gap-x-10 gap-y-4">
                 <span className="max-w-[26ch] flex-1 text-sec leading-[1.5] text-ink-2">
                   {SCREENS[0].line}
                 </span>
@@ -402,8 +417,8 @@ export function Overview({ go }) {
             {SCREENS.slice(1).map((s2, i) => (
               <ScrollRow key={s2.id} index={i + 1} className="h-full">
                 <button type="button" onClick={() => go(s2.id)}
-                  className="group flex h-full w-full flex-col gap-3 border-b border-rule py-7
-                    text-left transition-colors duration-150 hover:bg-mist/60">
+                  className="group flex h-full w-full flex-col gap-3 border-b border-rule py-6
+                    text-left transition-colors duration-150 hover:bg-card">
                   <span className="font-display text-tick font-bold text-accent">{s2.who}</span>
                   <span className="font-display text-head font-bold leading-tight text-ink">{s2.title}</span>
                   <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
@@ -424,13 +439,13 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── privacy ─────────────────────────────────────────────────────── */}
-      <Section name="Privacy" tone="paper">
+      <Section name="Privacy" tone="card">
         <SectionHead>Student Privacy</SectionHead>
         <SectionLede>
           The student decides what leaves the phone. Parents and counselors see a score and a
           sentence, and only where consent has been given.
         </SectionLede>
-        <WhoSeesWhat className="mt-7 max-w-[62rem]"/>
+        <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
@@ -440,11 +455,18 @@ export function Overview({ go }) {
           a promise never to do something is the icon arguing with the
           sentence. A rule over each line does the same separating and says
           nothing. */}
-      <Section name="Limits" tone="mist" tight>
-        <SectionHead>What MindMap Will Never Do</SectionHead>
-        <ul className="mt-6 grid list-none gap-x-12 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3">
+      <Section name="Limits" tone="ink" tight>
+        <SectionHead tone="ink">What MindMap Will Never Do</SectionHead>
+        {/* The page's second dark band, and the reason it is allowed one. The
+            component's note says the inverted band is used once, because one
+            inversion cuts a page in two and a second one cuts it into nothing.
+            These six lines are the strongest sentences on the site and they
+            are the last thing on it, so the second inversion is not a repeat
+            of the first — it closes the page against the band that opened it,
+            and every tint between the two now reads as the middle. */}
+        <ul className="mt-5 grid list-none gap-x-12 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {NEVER.map(t => (
-            <li key={t} className="border-t border-ruling/50 py-3 text-meta leading-[1.4] text-ink">
+            <li key={t} className="border-t border-ink-3 py-2.5 text-meta leading-[1.4] text-mist">
               {t}
             </li>
           ))}

@@ -57,7 +57,7 @@ function StageDay() {
           <g key={h} className="ob-a ob-rise" style={{ '--d': '.5s', '--t': `${0.12 + i * 0.14}s` }}>
             <line x1={x} y1="160" x2={x} y2="166" className="stroke-ink-3" strokeWidth="1" />
             <text x={x} y="180" textAnchor="middle" fontSize="12.5"
-              className="font-mono fill-ink-3">{h}</text>
+              className="fill-ink-3">{h}</text>
           </g>
         )
       })}
@@ -96,7 +96,7 @@ function StageWeek() {
               fill="none" strokeWidth={on ? 2 : 1.25} strokeLinecap="round"
               className={on ? 'stroke-accent' : 'stroke-ink-3'} />
             <text x={x + 17} y="166" textAnchor="middle" fontSize="13"
-              className="font-mono fill-ink-3">{d}</text>
+              className="fill-ink-3">{d}</text>
           </g>
         )
       })}

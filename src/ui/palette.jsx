@@ -58,8 +58,7 @@ export function Palette({ go }){
 /* The hint only shows where the shortcut exists. */
 export function PaletteHint(){
   return (
-    <span className="ml-3 hidden items-center gap-1.5 font-mono text-fine text-ink-3
-      [@media(hover:hover)and(pointer:fine)]:inline-flex">
+    <span className="ml-3 hidden items-center gap-1.5 text-fine text-ink-3 [@media(hover:hover)and(pointer:fine)]:inline-flex">
       <kbd className="rounded-xs border border-rule px-1.5 py-0.5">⌘K</kbd>
     </span>
   )

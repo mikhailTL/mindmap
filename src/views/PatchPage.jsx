@@ -47,7 +47,7 @@ export function PatchPage() {
             band that already opens with a label, a heading and a paragraph.
             This is Section's own padding, which is the site's default break and
             the one the review's "filled with nothing" was measured against. */}
-        <div className="wrap relative py-10 lg:py-14">
+        <div className="wrap relative py-9 lg:py-12">
           <Label>The patch</Label>
           {/* "What the patch measures." named the section but not the object, so
               a reader who landed here first still did not know what a patch is.
@@ -58,7 +58,7 @@ export function PatchPage() {
           <RevealLines as="h1"
             className="mt-3 max-w-[22ch] font-display font-bold text-sect leading-[1.05] tracking-tight text-ink"
             lines={['A sticker-sized', 'patch for the forearm.']}/>
-          <ScrollIn className="mt-5">
+          <ScrollIn className="mt-4">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
               It reads four signals off the skin once a second and sends them to the phone: heart,
               sweat, skin temperature and movement. One patch is worn for a week.
@@ -91,7 +91,7 @@ export function PatchPage() {
               rows, which gave those two ~400px cards holding ~130px of text
               over an empty field — and stretching the trace to fill the void
               only distorted the waveform it exists to show. */}
-          <div className="mt-8 grid gap-x-6 gap-y-5 lg:grid-cols-3">
+          <div className="mt-6 grid gap-x-4 gap-y-4 lg:grid-cols-3">
             {RAINBOW.map((s2, i) => {
               const lead = s2.id === 'sweat'
               const place = {
@@ -133,70 +133,66 @@ export function PatchPage() {
             })}
           </div>
 
-          {/* One figure, two halves of it. The drawing and the model were a
-              drawing beside a boxed widget: the model sat in a white card with
-              its own heading, its own sidebar and its own frame, which is what
-              read as an embed. The card is gone, the viewer's own furniture is
-              hidden in arena.jsx, and both halves now stand on the band's own
-              ground under one caption.
-
-              The drawing keeps the narrower column because the model is the
-              half you operate. Both came down in height: the two of them used
-              to run past a laptop's screen on their own. */}
-          <figure className="mt-8 m-0 grid items-center gap-7 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:gap-10">
-            {/* The column is wider than the old 360px because the drawing was
-                coming out at 268px beside a 350px model. ExplodedStack's own 84%
-                is the widest the rotated sheet can be without its corners
-                crossing the clip on its container, so the width has to come
-                from the column rather than from `size`. */}
-            <ExplodedStack caption="" className="h-[min(30vh,260px)] lg:h-[min(36vh,320px)]"/>
-
-            {/* No height here: the viewer sets the one its own framing needs. */}
-            <div className="min-w-0">
-              <PatchArena ref={model} onPlay={() => setPicked(null)}/>
-            </div>
-
-            <figcaption className="max-w-[72ch] text-meta text-ink-3 lg:col-span-2">
-              The drawing names what each layer does. The model is the same patch, turnable and
-              sectionable. No assembled unit has been photographed yet, and no figure on this page
-              was measured from one.
-            </figcaption>
-          </figure>
         </div>
       </section>
 
-      {/* Was py-20, which put 80px of empty paper between the band's border and
-          a heading with three cards under it. Same step as the band above. */}
-      <section className="wrap py-10 lg:py-14">
-        {/* "Three layers" counted the list without saying what the list was
-            of. */}
-        <h2 className="mark">The three parts of a patch</h2>
-        <p className="mt-2 max-w-[56ch] text-sec text-ink-2">Pick one to see it alone in the model.</p>
-        {/* Three hand-built toggles, each re-declaring its own border, hover and
-            pressed rule. They are the sourced Card in its `interactive` form
-            now; the only thing the page still owns is the selected state, which
-            holds the left rule at accent so a pressed toggle does not look the
-            same as a hovered one. aria-pressed and the handler are unchanged. */}
-        <ol className="mt-4 grid list-none gap-4 p-0 lg:grid-cols-3">
-          {LAYERS.map(l => {
-            const on = picked === l.part
-            return (
-              <li key={l.i} className="h-full">
-                <Card interactive as="button" aria-pressed={on}
-                  onClick={() => setPicked(on ? null : l.part)}
-                  className={cn('grid h-full items-start gap-4 p-5',
-                    on && 'border-l-accent bg-mist/60')}>
-                  <div>
-                    <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
-                    <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
-                    <span className="mt-2 block font-mono text-tick text-accent">
-                      {on ? 'Showing only this' : 'Show only this'}</span>
-                  </div>
-                </Card>
-              </li>
-            )
-          })}
-        </ol>
+      {/* The dark band, used once. Two near-white bands in a row separate by
+          about 2% in luminance, which is not a separation a reader notices,
+          and the review asked for real shade between sections. This is where
+          it belongs: the model is the thing on this page worth stopping at,
+          and an inverted band puts a white card and a white shell on a ground
+          that is nothing like either.
+
+          It also absorbs the section that used to follow. "The three parts"
+          was a third full band of its own, under a figure the reader had
+          already scrolled past, driving a model no longer on screen. As a rail
+          beside the figure the toggles point at something visible, and the
+          page loses a band. */}
+      <section className="border-b border-rule bg-ink text-paper">
+        <div className="wrap py-9 lg:py-12">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-start lg:gap-8">
+            <figure className="m-0 min-w-0">
+              {/* The drawing goes INTO the viewer's card rather than beside it
+                  as a second figure at the same scale. One composition, one
+                  edge, one caption under the pair. */}
+              <PatchArena ref={model} onPlay={() => setPicked(null)}
+                beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
+              <figcaption className="mt-3 max-w-[70ch] text-meta text-mist">
+                The drawing names what each layer does. The model is the same patch, turnable and
+                sectionable. No assembled unit has been photographed yet, and no figure on this page
+                was measured from one.
+              </figcaption>
+            </figure>
+
+            {/* The three toggles, as a rail. `.mark` rules in ink and colours
+                its label ink-2, both of which disappear on this band, so the
+                heading is written out here in the band's own two values. */}
+            <div className="min-w-0">
+              <h2 className="block rounded-none border-t border-mist pt-3 font-display text-tick
+                font-bold text-accent-lit">The three parts of a patch</h2>
+              <p className="mt-2 text-sec text-mist">Pick one to see it alone in the model.</p>
+              <ol className="mt-4 grid list-none gap-3 p-0">
+                {LAYERS.map(l => {
+                  const on = picked === l.part
+                  return (
+                    <li key={l.i}>
+                      <Card interactive as="button" aria-pressed={on}
+                        onClick={() => setPicked(on ? null : l.part)}
+                        className={cn('grid items-start gap-4 p-4', on && 'border-l-accent bg-mist/60')}>
+                        <div>
+                          <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
+                          <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
+                          <span className="mt-2 block text-tick font-bold text-accent">
+                            {on ? 'Showing only this' : 'Show only this'}</span>
+                        </div>
+                      </Card>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   )
