@@ -98,7 +98,7 @@
 @keyframes mm-fall {
   0%   { transform: translateY(0);   opacity: 0 }
   20%  { opacity: .9 }
-  100% { transform: translateY(15px); opacity: 0 }
+  100% { transform: translateY(11px); opacity: 0 }
 }
 @media (prefers-reduced-motion: reduce) {
   .mm-drift, .mm-rain line { animation: none; }

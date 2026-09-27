@@ -36,7 +36,12 @@ import { cn } from '../lib/utils'
  * The interior of the arch is a half-disc of radius 76, which is what holds the
  * score. A three-digit number at the display step needs about 87px of the 152
  * that radius gives at the default width. */
-const VW = 320, VH = 206, CX = 160, CY = 168
+/* VH was 206, which put the baseline 38 units under the feet: enough for two
+   labels and nothing else. The clouds sit ON the feet now and one of them
+   rains, so the box is 18 units taller. Nothing else moved: CX, CY and the
+   radii are untouched, so the arch draws exactly where it always did and only
+   the strip beneath it grew. */
+const VW = 320, VH = 224, CX = 160, CY = 168
 const BAND = 16
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
 
@@ -69,6 +74,17 @@ function arcPath(r, pct) {
    pair of spectacles. A single closed path has one edge. */
 const CLOUD = 'M0 18 C0 12 5 9 9 10 C10 3 18 0 24 4 C28 0 36 2 37 8 C43 8 46 13 44 18 Z'
 
+/* Weather is grey and blue, not green. The first pass painted the storm cloud
+   in ink-2 and the rain in the turquoise, which put two more greens next to an
+   arch whose entire job is to be red, orange, green and blue in that order,
+   and the green cloud read as a fifth band. These four values belong to no
+   token and are not meant to: like the sensor hues in lib/sensors.js they are
+   drawing colours, chosen against paper and used flat.
+     rule  #6f7d88  4.03 on paper, the calm cloud's edge
+     storm #5a6773  5.52 on paper
+     rain  #2f7fd0  3.94 on paper, clear of the 3 : 1 a graphic needs */
+const SKY = { edge:'#6f7d88', storm:'#5a6773', rain:'#2f7fd0' }
+
 function Cloud({ x, y, k, fill, stroke }) {
   return (
     <path d={CLOUD} fill={fill} stroke={stroke} strokeWidth={stroke ? 1.6 / k : 0}
@@ -79,19 +95,28 @@ function Cloud({ x, y, k, fill, stroke }) {
 export function ArchWeather() {
   return (
     <g aria-hidden style={{ pointerEvents:'none' }}>
-      {/* calm: white, still, drifting a few units and back. It carries a rule
-          because a white cloud on near-white paper is otherwise a hole. */}
+      {/* Both clouds sit ON the feet, wide enough to swallow the ends of all
+          four bands, which is the shape the drawing is quoting: the arch
+          springs out of a cloud at each end rather than floating above two of
+          them. They are drawn after the bands for exactly that reason, so a
+          band terminates inside its cloud instead of running past it.
+
+          The left foot spans x 13 to 83 and the right 237 to 307. Each cloud
+          is 85 wide and overhangs its own foot on the outside, because the
+          coloured arcs are round capped and a cap bulges half a band past the
+          end of the arc. An earlier pass sized the clouds to the feet exactly
+          and the red band's cap printed below the left one. */}
       <g className="mm-drift">
-        <Cloud x={8} y={30} k={1.05} fill="#ffffff" stroke="#93b2a1"/>
+        <Cloud x={1} y={149} k={1.85} fill="#ffffff" stroke={SKY.edge}/>
       </g>
-      {/* peak: dark, and it is raining on the high end */}
       <g className="mm-drift mm-drift-slow">
-        <Cloud x={252} y={22} k={1.15} fill="#2a5744"/>
+        <Cloud x={234} y={149} k={1.85} fill={SKY.storm}/>
       </g>
-      <g className="mm-rain" stroke="#0e9c9c" strokeWidth="3" strokeLinecap="round">
-        <line x1="266" y1="46" x2="262" y2="57"/>
-        <line x1="281" y1="48" x2="277" y2="59"/>
-        <line x1="296" y1="46" x2="292" y2="57"/>
+      {/* Rain, in the strip the taller box opened up under the peak foot. */}
+      <g className="mm-rain" stroke={SKY.rain} strokeWidth="3.4" strokeLinecap="round">
+        <line x1="252" y1="184" x2="248" y2="196"/>
+        <line x1="270" y1="186" x2="266" y2="198"/>
+        <line x1="288" y1="184" x2="284" y2="196"/>
       </g>
     </g>
   )
@@ -173,7 +198,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         {/* the score rides over the arch in real HTML, so it uses the display
             face and a step off the scale rather than a size the viewBox
             invented at this particular width */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[18%]
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[26%]
           flex flex-col items-center">
           <span className="font-display text-dial font-medium leading-none tracking-tight text-ink">{shown}</span>
           <span className="mt-1 font-mono text-tick text-ink-3">out of 100</span>
@@ -182,10 +207,14 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         {/* their own strip below the feet. Sitting level with the arch put
             them under the shortest band, which is exactly where a low reading
             draws the eye. */}
-        <span aria-hidden className="absolute bottom-0 left-0 font-mono text-tick
-          text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-0 right-0 font-mono text-tick
-          text-ink-3">peak</span>
+        {/* Centred under each foot rather than pinned to the box corners. The
+            clouds now occupy those corners, and "calm" was printing on top of
+            the white one. 15% and 85% are the feet's own centres in the
+            viewBox, so the words track the ends they name at any size. */}
+        <span aria-hidden className="absolute bottom-0 left-[15%] -translate-x-1/2 font-mono
+          text-tick text-ink-3">calm</span>
+        <span aria-hidden className="absolute bottom-0 left-[85%] -translate-x-1/2 font-mono
+          text-tick text-ink-3">peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">

@@ -6,16 +6,21 @@ import { cn } from '../lib/utils'
  *
  * "A fingertip over the rear camera turns the phone into the same kind of
  * sensor the patch carries" was the whole explanation, and it asked a reader
- * to picture a thing they have never seen. The review's note was blunt: the
- * page needs a picture, an exploded one, the way the patch page has one. So
- * the stack is drawn instead of described, and photoplethysmography is
- * something a judge can read off the drawing without being told the word.
+ * to picture a thing they have never seen. So the stack is drawn instead of
+ * described, and photoplethysmography is something a judge can read off the
+ * drawing without being told the word.
  *
- * Isometric, so the plates read as solid. A plan square of side S projects to
- * a rhombus of half-width S·cos30 and half-height S·sin30, which is why every
- * plate here is W across and W·0.577 tall, and why a circle on one becomes an
- * ellipse at the same ratio. Getting that ratio wrong is what makes a drawing
- * look like clip art rather than a section view.
+ * The first attempt drew the layers as isometric diamonds with numbered
+ * badges down the right. Two things were wrong with it. A square rotated 45
+ * degrees stops reading as a camera island and starts reading as a rhombus,
+ * so the one shape the reader is supposed to recognise was the one shape that
+ * had been thrown away. And badges are a lookup table: eye to drawing, drawing
+ * to number, number to list, back to drawing. The product exploded views this
+ * is modelled on never do that. They name the part next to the part.
+ *
+ * So: labels left, one long leader line per part running right to the plate it
+ * names, plates stacked straight down, and the phone's own camera island at
+ * the bottom of the stack so the layers visibly land on a real object.
  */
 
 /* Palette by hand, not by class: these are SVG paint attributes and Tailwind
@@ -26,146 +31,255 @@ const CARD = '#ffffff', ACCENT = '#157446', WASH = '#dcefe4'
 const BEAM = '#0e9c9c', BEAMWASH = '#d9f0ef'
 const BLOOD = '#e11919'                 // the heart signal's own colour, sitewide
 
-const W = 56, H = 32, T = 7             // plate half-width, half-height, thickness
-const CX = 250                          // the stack's centre line
-const ISO = 0.5774                      // sin30 / cos30: the one ratio the drawing obeys
+/* One oblique projection for the whole drawing: a point (x, y) in a plate's
+   own plan lands at (cx + x - 0.42y, cy + 0.34y). Shallow on purpose. A
+   steeper angle turns the island into a sliver and buries the lens cutouts,
+   and the cutouts are the thing that says "this is your camera". */
+const SHX = -0.42, SY = 0.34
+const CX = 512                          // the stack's centre line
+const A = 90, RAD = 30, T = 8           // plate half-side, corner radius, thickness
 
-/* Top face, plus the two side faces that give a plate its thickness. Drawn
-   sides-first so the top's own edges close the shape. */
-function Plate({ cx = CX, cy, top, side, w = W, h = H, t = T, children }) {
+/* Every path is built through the map below rather than handed to an SVG
+   matrix transform. A matrix would squash stroke width along with the
+   geometry: at 0.34 vertical scale a 1.4 edge prints at 0.48 going across and
+   1.4 going down, so the plate outlines would look half-erased next to the
+   lens rings. Building the points costs a helper and keeps one ink weight. */
+const px = (cx, x, y) => cx + x + SHX * y
+const py = (cy, y) => cy + SY * y
+const P = (cx, cy, x, y) => `${px(cx, x, y).toFixed(1)},${py(cy, y).toFixed(1)}`
+
+/* Rounded square, corners as quadratics. Quadratics survive an affine map
+   exactly, where an elliptical arc would need its radii and rotation
+   recomputed per layer; the fuller corner they give is also closer to the
+   squircle a camera island actually is. */
+function plateD(cx, cy, a, b, r, ox = 0, oy = 0) {
+  const p = (x, y) => P(cx, cy, x + ox, y + oy)
+  return `M${p(-a + r, -b)} L${p(a - r, -b)} Q${p(a, -b)} ${p(a, -b + r)}`
+    + ` L${p(a, b - r)} Q${p(a, b)} ${p(a - r, b)}`
+    + ` L${p(-a + r, b)} Q${p(-a, b)} ${p(-a, b - r)}`
+    + ` L${p(-a, -b + r)} Q${p(-a, -b)} ${p(-a + r, -b)} Z`
+}
+
+/* A plan circle, as four cubics, for the same reason. */
+const K = 0.5523
+function holeD(cx, cy, ox, oy, r) {
+  const p = (x, y) => P(cx, cy, x + ox, y + oy)
+  return `M${p(r, 0)} C${p(r, K * r)} ${p(K * r, r)} ${p(0, r)}`
+    + ` C${p(-K * r, r)} ${p(-r, K * r)} ${p(-r, 0)}`
+    + ` C${p(-r, -K * r)} ${p(-K * r, -r)} ${p(0, -r)}`
+    + ` C${p(K * r, -r)} ${p(r, -K * r)} ${p(r, 0)} Z`
+}
+
+/* The island's cutouts, in plan, once. Three cameras, the flash beside them
+   and the small sensor window above it: that arrangement is what a reader
+   recognises, so it is repeated on every layer rather than simplified to the
+   one lens the light happens to use. Three lenses really do mean three lens
+   assemblies, three filters and three sensor dies. */
+const LENSES = [[-40, -40], [-40, 40], [40, 40]]
+const LENS_R = 30
+const FLASH_HOLE = [46, -34], FLASH_R = 14
+const TINY = [46, -66], TINY_R = 6
+
+const ROW = { glass: 300, lens: 395, ir: 490, sensor: 585 }
+const PHONE = 690, ISLAND = 684        // phone body face, island top face
+
+/* The light uses the top-left camera, so the whole ray is one vertical line:
+   travelling along the stack's normal is straight down in this projection,
+   which is what lets the beam read as a single path through four parts. */
+const RAYX = px(CX, LENSES[0][0], LENSES[0][1])
+const faceY = cy => py(cy, LENSES[0][1])
+
+/* The finger, once, because the outline and the clip that keeps the vessels
+   inside the skin have to be the same path. Cut off at the top edge on
+   purpose: a finger that starts at the frame has somewhere to come from. */
+const FINGER = 'M434,0 C428,70 430,150 440,196 C448,228 462,246 489,248'
+  + ' C516,246 530,228 538,196 C548,150 550,70 544,0 Z'
+
+const FLASH = { cx: 405, cy: 232, a: 34, r: 12, t: 6 }
+
+/* Name, one line, and where its leader line stops. Kept in one list so the
+   drawing's labels and the phone-width list under it can never disagree. */
+export const CAMERA_PARTS = [
+  { id: 'finger', t: 'Your fingertip', s: 'Blood passes through it.', row: 132, lead: 436 },
+  { id: 'flash', t: 'LED flash', s: 'Shines into your finger.', row: 232, lead: 362 },
+  { id: 'glass', t: 'Cover glass', s: 'The window you touch.', row: ROW.glass, lead: 414 },
+  { id: 'lens', t: 'Lens', s: 'Focuses the light.', row: ROW.lens, lead: 414 },
+  { id: 'ir', t: 'Infrared filter', s: 'Blocks light you cannot see.', row: ROW.ir, lead: 414 },
+  { id: 'sensor', t: 'Image sensor', s: 'Turns the light into a number.', row: ROW.sensor, lead: 414 },
+]
+
+/* Body, then face, so the offset copy showing below the face is the layer's
+   thickness. Cheaper than three faces per plate and it cannot fall out of
+   register, because both copies come from the same call. */
+function Plate({ cy, face = CARD, side = MIST, a = A, b = A, r = RAD, t = T, children }) {
   return (
     <g>
-      <path d={`M${cx - w},${cy} L${cx},${cy + h} L${cx},${cy + h + t} L${cx - w},${cy + t} Z`}
-        fill={side} stroke={INK} strokeWidth="1.3" strokeLinejoin="round"/>
-      <path d={`M${cx},${cy + h} L${cx + w},${cy} L${cx + w},${cy + t} L${cx},${cy + h + t} Z`}
-        fill={side} stroke={INK} strokeWidth="1.3" strokeLinejoin="round"/>
-      <path d={`M${cx},${cy - h} L${cx + w},${cy} L${cx},${cy + h} L${cx - w},${cy} Z`}
-        fill={top} stroke={INK} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d={plateD(CX, cy + t, a, b, r)} fill={side} stroke={INK} strokeWidth="1.3"/>
+      <path d={plateD(CX, cy, a, b, r)} fill={face} stroke={INK} strokeWidth="1.5"/>
       {children}
     </g>
   )
 }
 
-/* A plan circle on a plate. rx = 1.2247·R, ry = 0.7071·R, so an inscribed
-   circle lands at 0.707 of the plate's half-width. */
-function Hole({ cy, r, ...p }) {
-  return <ellipse cx={CX} cy={cy} rx={r} ry={r * ISO} {...p}/>
-}
-
-/* The grid on the sensor's face, drawn along the two plate edges rather than
-   square to the page: a square grid on an isometric face is the giveaway
-   that the projection was faked. */
-function SensorGrid({ cy, n = 6 }) {
-  const lines = []
-  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
-  const L = [CX - W, cy], TOP = [CX, cy - H], R = [CX + W, cy], B = [CX, cy + H]
-  for (let i = 1; i < n; i++) {
-    const t = i / n
-    const a = lerp(L, TOP, t), b = lerp(B, R, t)
-    const c = lerp(L, B, t), d = lerp(TOP, R, t)
-    lines.push(<line key={`a${i}`} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}/>)
-    lines.push(<line key={`b${i}`} x1={c[0]} y1={c[1]} x2={d[0]} y2={d[1]}/>)
-  }
-  return <g stroke={RULING} strokeWidth="0.9" opacity="0.7">{lines}</g>
-}
-
-function Badge({ x, y, n }) {
+/* The cutouts that every layer carries, so the layers stay recognisably the
+   same object. `lens` is what changes between layers; the flash and sensor
+   windows are plain openings passing through. */
+function Cutouts({ cy, lens }) {
   return (
     <g>
-      <circle cx={x} cy={y} r="13" fill={CARD} stroke={INK} strokeWidth="1.5"/>
-      <text x={x} y={y + 5.5} textAnchor="middle" fill={INK}
-        fontFamily="Chivo Mono, monospace" fontSize="15">{n}</text>
+      {LENSES.map(([x, y], i) => <g key={i}>{lens(x, y, i)}</g>)}
+      <path d={holeD(CX, cy, FLASH_HOLE[0], FLASH_HOLE[1], FLASH_R)}
+        fill={MIST} stroke={RULING} strokeWidth="1.1"/>
+      <path d={holeD(CX, cy, TINY[0], TINY[1], TINY_R)}
+        fill={MIST} stroke={RULING} strokeWidth="1"/>
     </g>
   )
 }
 
-/* Every part, once, so the drawing and the list under it can never disagree. */
-export const CAMERA_PARTS = [
-  { n:1, t:'LED flash',       s:'Shines into your finger.' },
-  { n:2, t:'Your fingertip',  s:'Blood passes through it.' },
-  { n:3, t:'Cover glass',     s:'The window you touch.' },
-  { n:4, t:'Lens',            s:'Focuses the light.' },
-  { n:5, t:'Infrared filter', s:'Blocks light you cannot see.' },
-  { n:6, t:'Image sensor',    s:'Turns the light into a number.' },
-]
-
-const ROWS = { 2:100, 3:200, 4:300, 5:400, 6:500 }   // label rows, by part number
-
-/* The fingertip, once, because the shape and the clip that masks the vessels
-   to it have to be the same path or the blood runs outside the skin. It is cut
-   off above the frame on purpose: a finger that starts at the top edge has
-   somewhere to come from. */
-const FINGER = 'M202,100 C198,62 206,28 224,-14 L302,-14 C309,30 306,70 300,100 Z'
-const FLASH = { cx:96, cy:200, w:36, h:21, t:6 }
-
-/* The stack itself, in its own coordinates, so the wide drawing and the narrow
-   one are the same picture and not two that drift apart. */
-function Stack({ p }) {
+/* The grid is drawn along the die's own plan axes, not square to the page. A
+   page-square grid on a foreshortened face is the giveaway that the
+   projection was faked. */
+function SensorDie({ cy, ox, oy }) {
+  const h = 23, n = 4, out = []
+  for (let i = 1; i < n; i++) {
+    const d = -h + (2 * h * i) / n
+    out.push(<line key={`v${i}`} {...seg(cy, ox + d, oy - h, ox + d, oy + h)}/>)
+    out.push(<line key={`h${i}`} {...seg(cy, ox - h, oy + d, ox + h, oy + d)}/>)
+  }
   return (
     <g>
-      {/* the exploded-view guide: where the left corners would meet if the
-          layers were closed up. Convention, and it is what says "one part". */}
-      <line x1={CX - W} y1={190} x2={CX - W} y2={508} stroke={RULING}
-        strokeWidth="1" strokeDasharray="2 5"/>
+      <path d={plateD(CX, cy, h, h, 6, ox, oy)} fill={INK} stroke={INK} strokeWidth="1.2"/>
+      <g stroke={RULING} strokeWidth="0.9" opacity="0.55">{out}</g>
+    </g>
+  )
+}
 
-      {/* 1 · the flash, and the light leaving it */}
-      <Plate {...FLASH} top={WASH} side={MIST}/>
-      <Hole cy={FLASH.cy} r={13} fill={ACCENT} opacity="0.9"/>
-      <path d={`M${FLASH.cx},${FLASH.cy - FLASH.h - 4} C 100,134 128,76 192,48`}
-        fill="none" stroke={BEAMWASH} strokeWidth="11" strokeLinecap="round"/>
-      <path d={`M${FLASH.cx},${FLASH.cy - FLASH.h - 4} C 100,136 132,82 188,60`}
-        fill="none" stroke={BEAM} strokeWidth="2.6" strokeLinecap="round"
-        markerEnd={`url(#${p}-tip)`} className={`${p}-ray`}/>
+function seg(cy, x1, y1, x2, y2) {
+  return {
+    x1: px(CX, x1, y1), y1: py(cy, y1),
+    x2: px(CX, x2, y2), y2: py(cy, y2),
+  }
+}
 
-      {/* 2 · the finger. The contact ellipse is drawn over the body on purpose:
-          the patch of skin actually touching the glass is the thing a reader
-          has to locate, and an outline finds it faster than a caption. */}
+function Stack({ p }) {
+  const ray = { fill: 'none', stroke: BEAM, strokeWidth: '2.6', strokeLinecap: 'round' }
+  const glow = { fill: 'none', stroke: BEAMWASH, strokeWidth: '10', strokeLinecap: 'round' }
+  return (
+    <g>
+      {/* Where the island's two visible corners would come back to if the
+          layers were closed up. Convention, and it is the line that says the
+          five plates and the phone are one part rather than six drawings. */}
+      <g stroke={RULING} strokeWidth="1" strokeDasharray="2 6">
+        <line x1={px(CX, -A, A)} y1="332" x2={px(CX, -A, A)} y2={py(ISLAND, A)}/>
+        <line x1={px(CX, A, -A)} y1="266" x2={px(CX, A, -A)} y2="634"/>
+      </g>
+
+      {/* The flash, exploded out to the side because it is not in the optical
+          stack: it sits beside the lenses in the same island, which is why its
+          window appears as a cutout on every plate below. */}
+      <path d={plateD(FLASH.cx, FLASH.cy + FLASH.t, FLASH.a, FLASH.a, FLASH.r)}
+        fill={MIST} stroke={INK} strokeWidth="1.3"/>
+      <path d={plateD(FLASH.cx, FLASH.cy, FLASH.a, FLASH.a, FLASH.r)}
+        fill={CARD} stroke={INK} strokeWidth="1.5"/>
+      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 17)} fill={WASH} stroke={INK2} strokeWidth="1.2"/>
+      <path d={holeD(FLASH.cx, FLASH.cy, 0, 0, 8)} fill={ACCENT}/>
+
+      {/* Out of the flash and into the side of the finger. */}
+      <path d="M410,224 C420,194 428,166 446,152" {...glow}/>
+      <path d="M410,224 C420,194 428,166 446,152" {...ray} className={`${p}-ray`}/>
+
+      {/* The fingertip. The contact outline inside it is the patch of skin
+          actually against the glass, which is the thing a reader has to
+          locate, and an outline finds it faster than a caption would. */}
       <path d={FINGER} fill={MIST} stroke={INK} strokeWidth="1.5" strokeLinejoin="round"/>
       <g clipPath={`url(#${p}-finger)`}>
-        <path d="M226,-10 C232,24 238,58 236,98" fill="none" stroke={BLOOD}
-          strokeWidth="2.2" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
-        <path d="M278,-10 C273,22 279,60 283,98" fill="none" stroke={BLOOD}
-          strokeWidth="1.8" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
-        {/* the light, inside the tissue, crossing both vessels */}
-        <path d="M198,50 C222,58 248,64 268,70" fill="none" stroke={BEAMWASH} strokeWidth="9" strokeLinecap="round"/>
-        <path d="M198,50 C222,58 248,64 268,70" fill="none" stroke={BEAM}
-          strokeWidth="2.4" strokeLinecap="round" className={`${p}-ray`}/>
+        <path d="M452,0 C458,60 463,130 460,224" fill="none" stroke={BLOOD}
+          strokeWidth="2.4" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
+        <path d="M516,0 C511,56 518,130 523,220" fill="none" stroke={BLOOD}
+          strokeWidth="2" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
+        {/* Inside the tissue, across both vessels and back down to the pad.
+            This detour is the whole reason the drawing exists: what reaches
+            the sensor is what the blood did not absorb on the way. */}
+        <path d="M444,152 C470,168 502,178 520,196 C516,220 504,238 489,244" {...glow}/>
+        <path d="M444,152 C470,168 502,178 520,196 C516,220 504,238 489,244"
+          {...ray} className={`${p}-ray`}/>
       </g>
-      <ellipse cx={CX} cy="100" rx="50" ry="28" fill={WASH} stroke={INK} strokeWidth="1.5"/>
+      <path d={holeD(489, 240, 0, 0, 22)} fill={WASH} fillOpacity="0.8"
+        stroke={INK} strokeWidth="1.4"/>
 
-      {/* the light that made it back out, heading for the glass */}
-      <path d="M266,122 L254,164" fill="none" stroke={BEAMWASH} strokeWidth="10" strokeLinecap="round"/>
-      <path d="M266,122 L254,164" fill="none" stroke={BEAM} strokeWidth="2.6" strokeLinecap="round"
-        markerEnd={`url(#${p}-tip)`} className={`${p}-ray`}/>
+      {/* Cover glass. The tint is a separate inset shape rather than a
+          translucent face, so the layer below does not print through it. */}
+      <Plate cy={ROW.glass}>
+        <path d={plateD(CX, ROW.glass, A - 9, A - 9, RAD - 4)} fill={BEAMWASH}
+          fillOpacity="0.5" stroke={INK} strokeOpacity="0.3" strokeWidth="1"/>
+        <Cutouts cy={ROW.glass} lens={(x, y) => (
+          <path d={holeD(CX, ROW.glass, x, y, LENS_R)} fill="none"
+            stroke={RULING} strokeWidth="1.2"/>
+        )}/>
+      </Plate>
 
-      {/* 3 · cover glass */}
-      <Plate cy={200} top={BEAMWASH} side={RULE}/>
-      <Hole cy={200} r={38} fill="none" stroke={RULING} strokeWidth="1.1"/>
+      {/* Lens, as the concentric elements it is. */}
+      <Plate cy={ROW.lens}>
+        <Cutouts cy={ROW.lens} lens={(x, y) => (
+          <g>
+            <path d={holeD(CX, ROW.lens, x, y, LENS_R)} fill={CARD} stroke={INK2} strokeWidth="1.3"/>
+            <path d={holeD(CX, ROW.lens, x, y, 21)} fill={WASH} stroke={INK2} strokeWidth="1.1"/>
+            <path d={holeD(CX, ROW.lens, x, y, 11)} fill={CARD} stroke={INK2} strokeWidth="1.1"/>
+          </g>
+        )}/>
+      </Plate>
 
-      {/* 4 · lens barrel, as the concentric elements it is */}
-      <Plate cy={300} top={MIST} side={RULE}/>
-      <Hole cy={300} r={40} fill={CARD} stroke={INK2} strokeWidth="1.2"/>
-      <Hole cy={300} r={29} fill={WASH} stroke={INK2} strokeWidth="1.1"/>
-      <Hole cy={300} r={17} fill={CARD} stroke={INK2} strokeWidth="1.1"/>
+      {/* Infrared filter. The 45 degree hatch is the site's mark for a
+          material zone, the same one that marks adhesive on the patch
+          drawing: here it is the coating, which is the only part of this
+          layer that does anything. */}
+      <Plate cy={ROW.ir}>
+        <Cutouts cy={ROW.ir} lens={(x, y) => (
+          <g>
+            <path d={holeD(CX, ROW.ir, x, y, LENS_R)} fill={`url(#${p}-hatch)`}/>
+            <path d={holeD(CX, ROW.ir, x, y, LENS_R)} fill="none" stroke={ACCENT}
+              strokeWidth="1.2" strokeDasharray="5 4"/>
+          </g>
+        )}/>
+      </Plate>
 
-      {/* 5 · infrared filter */}
-      <Plate cy={400} top={WASH} side={RULE}/>
-      <Hole cy={400} r={38} fill="none" stroke={ACCENT} strokeWidth="1.2" strokeDasharray="4 4"/>
+      {/* Image sensor. Square dies, not circles: it is the one layer that is
+          not an optic, and the drawing should say so before the label does. */}
+      <Plate cy={ROW.sensor}>
+        <Cutouts cy={ROW.sensor} lens={(x, y) => <SensorDie cy={ROW.sensor} ox={x} oy={y}/>}/>
+      </Plate>
 
-      {/* 6 · image sensor */}
-      <Plate cy={500} top={INK} side={INK2}/>
-      <SensorGrid cy={500}/>
+      {/* The phone itself, so the stack lands on something. No inset trim line
+          on this one: it was drawn here for consistency with the patch shell
+          and it ran about ten units outside the island, which printed as a
+          fourth parallel outline around the same corner and made the island
+          impossible to pick out. The body is sized to clear the island
+          instead, which is what the trim line was standing in for. */}
+      <path d={plateD(CX, PHONE + 12, 126, 146, 48, 26)} fill={MIST} stroke={INK} strokeWidth="1.4"/>
+      <path d={plateD(CX, PHONE, 126, 146, 48, 26)} fill={CARD} stroke={INK} strokeWidth="1.6"/>
+      <path d={plateD(CX, ISLAND + 6, A, A, RAD)} fill={MIST} stroke={INK} strokeWidth="1.3"/>
+      <path d={plateD(CX, ISLAND, A, A, RAD)} fill={CARD} stroke={INK} strokeWidth="1.6"/>
+      {LENSES.map(([x, y], i) => (
+        <g key={i}>
+          <path d={holeD(CX, ISLAND, x, y, LENS_R)} fill={MIST} stroke={INK} strokeWidth="1.4"/>
+          <path d={holeD(CX, ISLAND, x, y, 19)} fill={CARD} stroke={INK2} strokeWidth="1.1"/>
+          <path d={holeD(CX, ISLAND, x, y, 9)} fill={INK}/>
+        </g>
+      ))}
+      <path d={holeD(CX, ISLAND, FLASH_HOLE[0], FLASH_HOLE[1], FLASH_R)}
+        fill={WASH} stroke={INK2} strokeWidth="1.2"/>
+      <path d={holeD(CX, ISLAND, FLASH_HOLE[0], FLASH_HOLE[1], 6)} fill={ACCENT}/>
+      <path d={holeD(CX, ISLAND, TINY[0], TINY[1], TINY_R)} fill={INK} fillOpacity="0.5"/>
 
-      {/* the ray, in the gaps between the plates, because that is the only
-          place it can be seen once the layers are solid */}
-      <g stroke={BEAM} strokeWidth="2.4" strokeLinecap="round" className={`${p}-ray`}>
-        <line x1={CX} y1="239" x2={CX} y2="264"/>
-        <line x1={CX} y1="339" x2={CX} y2="364"/>
-        <line x1={CX} y1="439" x2={CX} y2="464" markerEnd={`url(#${p}-tip)`}/>
+      {/* The ray in the gaps, because once the plates are solid the gaps are
+          the only place it can be seen. */}
+      <g stroke={BEAM} strokeWidth="2.6" strokeLinecap="round" className={`${p}-ray`}>
+        <line x1={RAYX} y1="252" x2={RAYX} y2={faceY(ROW.glass) - 4}/>
+        <line x1={RAYX} y1={faceY(ROW.glass) + T + 4} x2={RAYX} y2={faceY(ROW.lens) - 4}/>
+        <line x1={RAYX} y1={faceY(ROW.lens) + T + 4} x2={RAYX} y2={faceY(ROW.ir) - 4}/>
+        <line x1={RAYX} y1={faceY(ROW.ir) + T + 4} x2={RAYX} y2={faceY(ROW.sensor) - 5}
+          markerEnd={`url(#${p}-tip)`}/>
       </g>
-
-      <Badge x={FLASH.cx - FLASH.w} y={FLASH.cy} n={1}/>
-      {[2, 3, 4, 5, 6].map(n => <Badge key={n} x={CX + W + 8} y={ROWS[n]} n={n}/>)}
     </g>
   )
 }
@@ -174,12 +288,14 @@ function Defs({ p }) {
   return (
     <defs>
       <marker id={`${p}-tip`} viewBox="0 0 10 10" refX="8" refY="5"
-        markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        markerWidth="4" markerHeight="4" orient="auto-start-reverse">
         <path d="M0 1 L9 5 L0 9 Z" fill={BEAM}/>
       </marker>
-      <clipPath id={`${p}-finger`}>
-        <path d={FINGER}/>
-      </clipPath>
+      <clipPath id={`${p}-finger`}><path d={FINGER}/></clipPath>
+      <pattern id={`${p}-hatch`} width="7" height="7" patternTransform="rotate(45)"
+        patternUnits="userSpaceOnUse">
+        <line x1="0" y1="0" x2="0" y2="7" stroke={INK} strokeOpacity="0.16" strokeWidth="1"/>
+      </pattern>
     </defs>
   )
 }
@@ -210,12 +326,14 @@ export function CameraModule({ className }) {
   return (
     <figure className={cn('m-0', className)}>
       <svg
-        viewBox={narrow ? '0 0 344 556' : '0 0 700 556'}
+        /* Narrow crops to the drawing rather than redrawing it, so the phone
+           and the desktop are the same picture and cannot drift apart. */
+        viewBox={narrow ? '344 0 396 790' : '0 0 760 790'}
         className="block w-full"
         role="img"
         aria-label="An exploded view of a phone's rear camera. Light from the LED flash
-          passes through a fingertip, then down through the cover glass, the lens, the
-          infrared filter and onto the image sensor.">
+          passes through a fingertip, then down through the cover glass, the lens and the
+          infrared filter onto the image sensor, which sits in the phone's camera island.">
         {/* The animation lives in the drawing rather than in input.css because
             the class names are namespaced per instance; two of these on one
             page must not share a keyframe name. */}
@@ -230,43 +348,41 @@ export function CameraModule({ className }) {
           }
         `}</style>
         <Defs p={p}/>
-        <g transform="translate(0,8)"><Stack p={p}/></g>
+        <g aria-hidden="true">
+          <Stack p={p}/>
+          <text x={CX} y="776" textAnchor="middle" fill={INK2}
+            fontFamily="ui-monospace, monospace" fontSize="15">camera island</text>
 
-        {!narrow && (
-          <g transform="translate(0,8)">
-            {CAMERA_PARTS.filter(x => x.n > 1).map(x => (
-              <g key={x.n}>
-                <line x1={CX + W + 24} y1={ROWS[x.n]} x2="404" y2={ROWS[x.n]}
-                  stroke={RULING} strokeWidth="1.2"/>
-                <text x="416" y={ROWS[x.n] - 2} fill={INK}
-                  fontFamily="Quicksand, sans-serif" fontWeight="700" fontSize="21">{x.t}</text>
-                <text x="416" y={ROWS[x.n] + 20} fill={INK2}
-                  fontFamily="Chivo, sans-serif" fontSize="16">{x.s}</text>
-              </g>
-            ))}
-            <text x={FLASH.cx} y="256" textAnchor="middle" fill={INK}
-              fontFamily="Quicksand, sans-serif" fontWeight="700" fontSize="21">LED flash</text>
-            <text x={FLASH.cx} y="277" textAnchor="middle" fill={INK2}
-              fontFamily="Chivo, sans-serif" fontSize="15">Shines into your finger.</text>
-          </g>
-        )}
+          {/* Labels left, one leader line each running right to the part it
+              names. No badges: the reference exploded views this is modelled
+              on put the words beside the thing, and a numbered key is three
+              extra eye movements for the same fact. */}
+          {!narrow && CAMERA_PARTS.map(x => (
+            <g key={x.id}>
+              <line x1="258" y1={x.row} x2={x.lead} y2={x.row}
+                stroke={RULING} strokeWidth="1.2"/>
+              <text x="24" y={x.row - 8} fill={INK}
+                fontFamily="Quicksand, sans-serif" fontWeight="700" fontSize="20">{x.t}</text>
+              <text x="24" y={x.row + 16} fill={INK2}
+                fontFamily="Chivo, sans-serif" fontSize="15">{x.s}</text>
+            </g>
+          ))}
+        </g>
       </svg>
 
-      {/* The list is the narrow screen's labels. At 390px a 16px label inside a
-          760-unit viewBox renders at eight pixels, which is a label nobody can
-          read, so the numbers stay on the drawing and the words come out. */}
+      {/* The list is the narrow screen's labels. At 390px a 15 unit label
+          inside a 760 unit viewBox renders at seven pixels, which is a label
+          nobody can read, so the words come out of the drawing and the list
+          keeps them in the order the layers are stacked. */}
       {narrow && (
-        <ol className="mt-6 m-0 grid list-none grid-cols-1 gap-x-5 gap-y-3 p-0 sm:grid-cols-2">
+        <ul className="mt-6 m-0 grid list-none grid-cols-1 gap-x-5 gap-y-3 p-0 sm:grid-cols-2">
           {CAMERA_PARTS.map(x => (
-            <li key={x.n} className="grid grid-cols-[1.6rem_1fr] items-baseline gap-x-2">
-              <span className="font-mono text-fine tabular-nums text-ink-3">{x.n}</span>
-              <span>
-                <b className="font-display text-ui font-bold text-ink">{x.t}</b>
-                <span className="block text-fine text-ink-2">{x.s}</span>
-              </span>
+            <li key={x.id}>
+              <b className="font-display text-ui font-bold text-ink">{x.t}</b>
+              <span className="block text-fine text-ink-2">{x.s}</span>
             </li>
           ))}
-        </ol>
+        </ul>
       )}
 
       <figcaption className="mt-7 flex flex-col gap-4 border-t border-rule pt-5

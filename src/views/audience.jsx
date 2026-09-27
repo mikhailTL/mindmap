@@ -5,10 +5,11 @@ import { Section, SectionHead, SectionLede } from '../ui/section'
 import { DemoNotice } from '../ui/notice'
 import { Progress } from '../ui/progress'
 import { WeekChart } from '../charts/week'
-import { Bars, RainbowDial, RainbowKey, SensorDetail } from '../charts/rainbow'
+import { Bars, RainbowDial } from '../charts/rainbow'
 import { WhoSeesWhat } from '../charts/infographics'
 import { Spark } from '../charts/primitives'
 import { studentRings } from '../lib/readings'
+import { SENSORS } from '../lib/sensors'
 import { DATA } from '../lib/assets'
 import { CHART_DATA } from '../lib/chartdata'
 import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roster } from '../lib/caseload'
@@ -16,26 +17,24 @@ import { cn } from '../lib/utils'
 
 /* The three audience routes: for students, for parents, for schools.
  *
- * What these were: three identical five-step walkthroughs, each one an
- * illustrated essay. Fifteen hand-drawn SVG scenes, a numbered contents list,
- * a numbered heading per step, forty words of body copy under every heading,
- * and a title on each page written to sound like a manifesto. Three hundred
- * words before a reader reached a chart, and the chart was a drawing of a
- * chart rather than the app's own.
+ * The last pass answered "make these pages theirs" by giving each one more
+ * machinery: a day tagger a student had to fill in, four sharing switches, a
+ * caseload that could be re-sorted, a detail panel that opened under the arch.
+ * The owner's note on it was that the diagrams were too complex, and he was
+ * right about the cause — every one of those controls is a thing a reader has
+ * to operate before the page will say anything. A landing page that has to be
+ * operated has not made its point.
  *
- * The rewrite follows the one note that covered all of it: a person arriving
- * here belongs to exactly one of these three audiences and wants the thing
- * that is theirs. So each page is short, each section is named in the words
- * its audience would use, and each one leads with the real chart component
- * that audience actually gets:
+ * So each page now carries ONE picture per section and the fewest words that
+ * can sit under it, and nothing on the student or parent page can be clicked
+ * except the door into the app:
  *
- *   students  the score arch, live, with the signal panel under it
- *   parents   the week chart, which is the whole of the parent view
- *   schools   the whole-school bars, then a caseload ranked by movement
+ *   students  the rainbow arch with its clouds, large, and the four signals
+ *   parents   the week, and the one sentence it produces
+ *   schools   real figures, because this is the audience that wants them
  *
- * Nothing here draws a picture of a feature. Every figure below is the
- * component the app ships, on the fixtures the rest of the site runs on, which
- * is also why every one of them carries the demo notice.
+ * Density is not the enemy on the schools page and is the enemy on the other
+ * two. That asymmetry is deliberate and is the whole design.
  */
 
 /* ───────────────────────────── shared page parts ───────────────────────── */
@@ -58,10 +57,10 @@ function Hero({ label, title, lede, go }) {
   )
 }
 
-/* A figure on a page: its own bolded heading, the chart, the caveat. The
-   caveat is attached here rather than written into each section, because a
-   chart that loses its "this is generated" line in an edit is the one mistake
-   on this site that would actually matter. */
+/* A figure on a page: the chart, and the caveat. The caveat is attached here
+   rather than written into each section, because a chart that loses its "this
+   is generated" line in an edit is the one mistake on this site that would
+   actually matter. */
 function Fig({ title, children, className }) {
   return (
     <figure className={cn('field m-0 mt-7 p-5 sm:p-7', className)}>
@@ -90,141 +89,80 @@ function Closer({ title, line, label, view, go }) {
 
 /* ═══════════════════════════════ for students ═══════════════════════════ */
 
-/* The score arch, the signal tiles and the detail panel, wired together the
-   way the student screen wires them. Not a screenshot of the feature: the
-   feature, on the same fixtures. */
-function ScoreBlock() {
-  const rings = React.useMemo(() => studentRings(), [])
-  const [picked, setPicked] = React.useState(null)
-  const ring = rings.find(r => r.id === picked)
+/* The four signals as a flat readout, replacing the RainbowKey tiles and the
+   panel that opened under them. Those are the app's control surface and they
+   belong on the app screen; here they were four buttons that only ever led
+   back to the figure already on the page. Name, colour, figure, bar — nothing
+   to press, nothing to read twice. */
+function Signals({ rings }) {
   return (
-    <div>
-      <div className="flex flex-col items-center gap-7 lg:flex-row lg:items-start lg:gap-10">
-        <RainbowDial score={62} usual={51} rings={rings} size={300}
-          picked={picked} onPick={id => setPicked(p => (p === id ? null : id))}/>
-        <RainbowKey rings={rings} picked={picked} onPick={setPicked} className="w-full min-w-0"/>
-      </div>
-      {ring && <SensorDetail ring={ring} onClose={() => setPicked(null)}/>}
-    </div>
-  )
-}
-
-/* The days that cleared this student's own range, each one waiting for a
-   reason. MindMap reads no timetable and no grade book, so the school half of
-   the picture can only come from the student: this is that half, and making
-   the reader supply it is a more honest demonstration than a fabricated
-   "test day" overlay would be. */
-const REASONS = ['Test', 'Deadline', 'Late night', 'Nothing unusual']
-function WeekTagger() {
-  const high = DATA.week.filter(d => d.v > DATA.weekBand.hi)
-  const [tags, setTags] = React.useState({})
-  return (
-    <div className="mt-7 border-t border-rule pt-6">
-      <p className="mark mb-5">Add what was on</p>
-      <ul className="m-0 list-none space-y-5 p-0">
-        {high.map(d => (
-          <li key={d.d} className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-5">
-            <span className="w-[8rem] shrink-0 font-display text-meta font-bold text-ink">
-              {d.d} <span className="font-mono font-normal text-ink-3">{d.v}</span>
+    <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:gap-4">
+      {rings.map(r => {
+        const s = SENSORS[r.id]
+        const Icon = s.icon
+        return (
+          <li key={r.id} className="field p-4">
+            <span className="flex items-center gap-2.5">
+              <Icon aria-hidden className="size-5 shrink-0" style={{ color: s.glow }}/>
+              {/* text-ui until the tiles get a full half-column: "Temperature"
+                  at text-row overruns a 115px tile at 390px and clips */}
+              <span className="font-display text-ui font-bold leading-tight text-ink lg:text-row">{s.name}</span>
             </span>
-            <span className="flex flex-wrap gap-2">
-              {REASONS.map(r => {
-                const on = tags[d.d] === r
-                return (
-                  <button key={r} aria-pressed={on}
-                    onClick={() => setTags(t => ({ ...t, [d.d]: t[d.d] === r ? null : r }))}
-                    className={cn('min-h-[40px] rounded-chip border px-3.5 font-display text-fine',
-                      'transition-colors duration-150',
-                      on ? 'border-accent bg-accent text-paper font-bold'
-                         : 'border-rule bg-card text-ink-2 hover:border-accent hover:text-ink')}>
-                    {r}
-                  </button>
-                )
-              })}
-            </span>
+            {/* the figure is ink, never the signal's colour: four coloured
+                numerals down a page read as four alarms */}
+            <span className="mt-3 block font-mono text-num tabular-nums leading-none text-ink">{r.value}</span>
+            <Progress value={r.value} tone={s.glow} label={`${s.name}, ${r.value} out of 100`}
+              className="mt-3 h-1.5"/>
           </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-/* Sharing, as the switches themselves. The previous page drew a phone with
-   switches painted on it; a reader could not touch any of them, which made the
-   claim "you decide, row by row" a picture of a claim. */
-const SHARE = [
-  ['Your score for the day', true],
-  ['Whether the week ran high', true],
-  ['Every reading, second by second', false],
-  ['Anything you wrote', false],
-]
-function ShareSwitches() {
-  const [on, setOn] = React.useState(() => SHARE.map(r => r[1]))
-  return (
-    <ul className="m-0 mt-7 list-none p-0">
-      {SHARE.map(([label], i) => (
-        <li key={label}>
-          <button role="switch" aria-checked={on[i]}
-            onClick={() => setOn(v => v.map((x, j) => (j === i ? !x : x)))}
-            className="flex min-h-[56px] w-full items-center justify-between gap-4 border-b border-rule
-              px-1 text-left transition-colors duration-150 hover:bg-mist/60">
-            <span className="font-display text-meta font-medium text-ink">{label}</span>
-            {/* the state is spelled out as well as painted: a switch that only
-                changes colour is the one control a grader always flags */}
-            <span className="flex shrink-0 items-center gap-3">
-              <span className={cn('font-mono text-fine', on[i] ? 'text-accent-ink' : 'text-ink-3')}>
-                {on[i] ? 'shared' : 'private'}</span>
-              <span aria-hidden className={cn('relative block h-6 w-11 rounded-chip transition-colors',
-                on[i] ? 'bg-accent' : 'bg-ruling')}>
-                <span className={cn('absolute top-[3px] size-[18px] rounded-chip bg-card transition-[left]',
-                  on[i] ? 'left-[26px]' : 'left-[3px]')}/>
-              </span>
-            </span>
-          </button>
-        </li>
-      ))}
+        )
+      })}
     </ul>
   )
 }
 
 export function ForStudents({ go }) {
+  const rings = React.useMemo(() => studentRings(), [])
   return (
     <main>
       <Hero go={go} label="For students"
         title="Your stress, one number a day."
-        lede="What your body did today, which days of the week ran hard, and who gets told."/>
+        lede="One score a day, and the four things behind it."/>
 
       <Section name="Today" tone="paper">
-        <SectionHead>Your score today, and what moved it</SectionHead>
-        <SectionLede>Scored against your own last two weeks, never against anyone else.
-          Tap a signal to open its hour.</SectionLede>
-        <Fig title="Score and signals">
-          <ScoreBlock/>
+        <SectionHead>Your score today</SectionHead>
+        <SectionLede>Scored against your own last two weeks, never against anyone else.</SectionLede>
+        <Fig>
+          <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
+            {/* the arch is the picture on this page, so it gets the room: it
+                leads at any width and takes half the row on a laptop */}
+            <RainbowDial score={62} usual={51} rings={rings} size={440}/>
+            <div className="w-full min-w-0">
+              <p className="max-w-[26ch] text-body text-ink">
+                Today ran higher than your usual. Sweat moved first, then your heart rate.</p>
+              <div className="mt-6"><Signals rings={rings}/></div>
+            </div>
+          </div>
         </Fig>
       </Section>
 
       <Section name="Your week" tone="card">
-        <SectionHead>Which days ran hard, and what was on</SectionHead>
-        <SectionLede>MindMap never sees your timetable, your grades or your messages. It shows the
-          days. You add the reason, so late nights and heavy weeks end up side by side.</SectionLede>
-        <Fig title="Your last seven days">
+        <SectionHead>Which days ran hard</SectionHead>
+        <SectionLede>Three school days sat above your usual range. The weekend did not.</SectionLede>
+        {/* bleeds to the screen edge on a phone: see the note on the parent
+            page's copy of this figure */}
+        <Fig className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
-          <WeekTagger/>
         </Fig>
       </Section>
 
-      <Section name="Your privacy" tone="mist">
-        <SectionHead>Nothing leaves your phone unless you switch it on</SectionHead>
-        <SectionLede>Every row is yours. Turn one off and it stops being shared from that moment.</SectionLede>
-        <div className="field mt-7 p-5 sm:p-7">
-          <ShareSwitches/>
-          <p className="mt-6 max-w-[54ch] text-sec text-ink-2">Crisis alerts are the one exception,
-            and you are told that before you start.</p>
-        </div>
+      <Section name="Your privacy" tone="mist" tight>
+        <SectionHead>Nothing leaves your phone unless you say so</SectionHead>
+        <SectionLede>You see all of it. Your parents see a score and a week, only if you switch
+          it on. Nobody sees what you write.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-student" label="Open the student screen" title="The student screen"
-        line="Today’s score, the four signals behind it, and the check-in. Sample readings only."/>
+        line="Your score, your signals and the check-in. Sample readings only."/>
     </main>
   )
 }
@@ -235,7 +173,7 @@ export function ForStudents({ go }) {
    The second list is not a settings page they have not found yet: there is no
    parent view of any of it, which is why it is drawn as an absence. */
 const SEEN = ['One score for the day', 'Which days ran high', 'A patch that stopped reporting']
-const UNSEEN = ['Any single reading', 'Anything she wrote', 'Where she was', 'What she is doing now']
+const UNSEEN = ['Any single reading', 'Anything she wrote', 'Where she is', 'What she is doing now']
 function SeenUnseen() {
   return (
     <div className="mt-7 grid gap-5 sm:grid-cols-2 sm:gap-7">
@@ -262,33 +200,37 @@ export function ForParents({ go }) {
     <main>
       <Hero go={go} label="For parents"
         title="What you see about your child."
-        lede="One sentence a week, and the days behind it. No readings, no notes, no location."/>
+        lede="A week, and one sentence about it."/>
 
       <Section name="The week" tone="paper">
-        <SectionHead>Her week, and the days that ran high</SectionHead>
-        <SectionLede>Three days sat above her own usual range. That range is built from her own
-          fortnight, so a naturally fast heart rate is not read as a bad week.</SectionLede>
-        <Fig title="Her last seven days">
-          <WeekChart data={DATA.week} band={DATA.weekBand}/>
-          <p className="mt-6 border-t border-rule pt-5 text-body text-ink">
+        <SectionHead>Her week</SectionHead>
+        <SectionLede>Measured against her own fortnight, never against other children.</SectionLede>
+        {/* Full bleed on a phone. WeekChart collides the value labels on two
+            adjacent above-range bars once the plot drops under about 330px,
+            and Wednesday and Thursday are exactly that pair. Taking back the
+            22px gutters puts the chart at 362px, which clears them. */}
+        <Fig className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
+          {/* the sentence sits above the chart, not under it. A parent who
+              reads only the first line has still got the whole message. */}
+          <p className="mb-5 max-w-[40ch] text-body text-ink">
             Monday, Wednesday and Thursday ran high. The rest of the week was calm.</p>
+          <WeekChart data={DATA.week} band={DATA.weekBand}/>
         </Fig>
       </Section>
 
       <Section name="What you see" tone="card">
         <SectionHead>What you see, and what you never see</SectionHead>
-        <SectionLede>The second list has no parent view to switch on. It was never built.</SectionLede>
+        <SectionLede>There is no parent view for the second list. It was never built.</SectionLede>
         <SeenUnseen/>
       </Section>
 
       <Section name="Using it" tone="mist" tight>
-        <SectionHead>A better question at dinner, not a check-up</SectionHead>
-        <SectionLede>Ask her about Thursday. The week tells you when to ask, and nothing more than
-          that. It is not a report card and it is not proof of anything.</SectionLede>
+        <SectionHead>A better question at dinner</SectionHead>
+        <SectionLede>Ask her about Thursday. It tells you when to ask, and nothing more.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-parent" label="Open the parent screen" title="The parent screen"
-        line="The week, the sentence, and the full list of what is shared. Sample readings only."/>
+        line="The week, the sentence, and everything that is shared. Sample readings only."/>
     </main>
   )
 }
@@ -301,51 +243,58 @@ export function ForParents({ go }) {
 const ACCENT = '#157446'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
-/* The caseload, and the argument the page exists to make: sorting by score
-   puts the student who has always run high at the top, and that student is
-   rarely the one being missed. The control is real, so a reviewer can watch
-   the top row change rather than take the claim on trust. */
-const BOARD = roster().filter(s => s.showTrend)
-const SERIES = id => CHART_DATA.pro?.[id.replace(/\D/g, '')]
+/* The caseload, ranked on the week's movement rather than on today's score,
+   because a student who has always run high is rarely the one being missed.
+   The sort toggle that used to make that argument is gone: it asked a reader
+   to run an experiment to be told a one-line conclusion. The ranking states
+   it, and the "was" column lets anyone check it.
+
+   A table rather than a list. This is the one page whose audience reads
+   tables, and a table gets column headers, row scope and alignment for free. */
+const BOARD = roster().filter(s => s.showTrend).sort((a, b) => b.velocity - a.velocity)
+const SERIES = name => CHART_DATA.pro?.[name.replace(/\D/g, '')]
 function Caseload() {
-  const [by, setBy] = React.useState('change')
-  const rows = [...BOARD].sort((a, b) =>
-    by === 'change' ? b.velocity - a.velocity : b.current - a.current)
   return (
-    <div>
-      <div role="group" aria-label="Order the caseload" className="flex flex-wrap gap-2.5">
-        {[['change', 'By change this week'], ['score', 'By score today']].map(([k, label]) => (
-          <button key={k} aria-pressed={by === k} onClick={() => setBy(k)}
-            className={cn('min-h-[44px] rounded-field border px-4 font-display text-fine',
-              'transition-colors duration-150',
-              by === k ? 'border-accent bg-accent text-paper font-bold'
-                       : 'border-rule bg-card text-ink-2 hover:border-accent hover:text-ink')}>
-            {label}
-          </button>
-        ))}
-      </div>
-      <ul className="m-0 mt-5 list-none p-0">
-        {rows.map(s => (
-          <li key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1
-            border-b border-rule py-3.5 sm:grid-cols-[minmax(0,1fr)_120px_3.5rem_4.5rem]">
-            <span className="min-w-0">
+    <table className="w-full border-collapse text-left">
+      <caption className="sr-only">Caseload ranked by change over the week</caption>
+      <thead>
+        <tr className="border-b border-ink font-display text-fine font-bold text-ink-2 sm:text-tick">
+          <th scope="col" className="py-3 pr-3">Student</th>
+          {/* the sparkline is the seven weekly points the rank is built on. At
+              390px the three figures carry the row and the line is dropped. */}
+          <th scope="col" className="hidden py-3 pr-3 sm:table-cell">Seven weeks</th>
+          <th scope="col" className="py-3 pl-2 text-right">Was</th>
+          <th scope="col" className="py-3 pl-2 text-right">Now</th>
+          <th scope="col" className="py-3 pl-2 text-right">Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        {BOARD.map(s => (
+          <tr key={s.id}>
+            <th scope="row" className="border-b border-rule py-3.5 pr-3 text-left font-normal">
               <span className="block font-mono text-meta text-ink">{s.name}</span>
               <span className="block font-display text-fine font-bold text-ink-3">
                 Grade {s.grade}. {TIER_LABEL[s.tier]}</span>
-            </span>
-            {/* the sparkline is the seven weekly points this row is ranked on;
-                at 390px the figures carry it and the line is dropped */}
-            <span className="hidden sm:block">
-              {SERIES(s.name) && <Spark data={SERIES(s.name)}/>}
-            </span>
-            <span className="font-mono text-num tabular-nums text-ink sm:text-right">{s.current}</span>
-            <span className={cn('font-mono text-meta tabular-nums sm:text-right',
+            </th>
+            <td className="hidden border-b border-rule py-3.5 pr-3 sm:table-cell">
+              {/* not every student on the board has a weekly series in the
+                  fixtures. A blank cell in a table of figures reads as a bug,
+                  so the absence is drawn as a flat line. */}
+              {SERIES(s.name)
+                ? <Spark data={SERIES(s.name)}/>
+                : <span aria-hidden className="block h-px w-16 bg-ruling"/>}
+            </td>
+            <td className="border-b border-rule py-3.5 pl-2 text-right font-mono text-meta
+              tabular-nums text-ink-3">{s.weekAgo}</td>
+            <td className="border-b border-rule py-3.5 pl-2 text-right font-mono text-num
+              tabular-nums text-ink">{s.current}</td>
+            <td className={cn('border-b border-rule py-3.5 pl-2 text-right font-mono text-meta tabular-nums',
               s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink-3')}>
-              {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ ' : ''}{s.velocity}</span>
-          </li>
+              {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ ' : ''}{s.velocity}</td>
+          </tr>
         ))}
-      </ul>
-    </div>
+      </tbody>
+    </table>
   )
 }
 
@@ -354,21 +303,26 @@ function Caseload() {
    that cleared, so the gap is the point. */
 function SmallGroups() {
   return (
-    <ul className="m-0 mt-2 list-none p-0">
+    <ul className="m-0 list-none p-0">
       {COHORT_PERIOD.map(c => (
-        <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2
-          border-b border-rule py-4 sm:grid-cols-[minmax(0,15rem)_minmax(6rem,1fr)_7rem]">
-          <span className="min-w-0">
+        <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3
+          border-b border-rule py-4 sm:grid-cols-[minmax(0,15rem)_minmax(6rem,1fr)_5rem]">
+          <span className="order-1 min-w-0">
             <span className="block font-display text-meta font-bold text-ink">{c.label}</span>
             <span className="block font-mono text-fine text-ink-3">{c.n} students</span>
           </span>
-          {c.suppressed ? (
-            <span className="col-span-2 font-display text-fine text-ink-3 sm:col-span-1">
-              Under {K_ANONYMITY}, so nothing is reported</span>
-          ) : (
-            <Progress value={c.mean} label={`${c.label}, mean ${c.mean}`} className="h-2.5"/>
-          )}
-          <span className="font-mono text-meta tabular-nums text-ink sm:text-right">
+          {/* the bar is ordered last on a phone and given the full row. In an
+              auto-width column it collapsed to a few pixels, which quietly
+              deleted the one thing this figure is here to show. */}
+          <span className="order-3 col-span-2 sm:order-2 sm:col-span-1">
+            {c.suppressed ? (
+              <span className="block font-display text-fine text-ink-3">
+                Under {K_ANONYMITY}, so nothing is reported</span>
+            ) : (
+              <Progress value={c.mean} label={`${c.label}, mean ${c.mean}`} className="h-2.5"/>
+            )}
+          </span>
+          <span className="order-2 text-right font-mono text-meta tabular-nums text-ink sm:order-3">
             {c.suppressed ? 'withheld' : c.mean}</span>
         </li>
       ))}
@@ -388,25 +342,29 @@ export function ForSchools({ go }) {
         <SectionLede>Mean wellness score across all {SCHOOL_N} students whose families opted in.
           Thursday is the peak.</SectionLede>
         <Fig>
-          <Bars data={SCHOOL_WEEK} color={ACCENT} unit="school day"/>
+          {/* capped, because `Bars` divides its width evenly between five bars
+              and at 1360px each one came out wider than it was tall, which
+              reads as a colour block rather than a measurement */}
+          <Bars data={SCHOOL_WEEK} color={ACCENT} unit="school day" className="max-w-[680px]"/>
         </Fig>
       </Section>
 
-      <Section name="The caseload" tone="card">
-        <SectionHead>Ranked by who changed this week, not by who scores highest</SectionHead>
-        <SectionLede>A student who has always run high is rarely the one being missed. Switch the
-          order and watch the top row change.</SectionLede>
-        <Fig title="Five students, ranked">
-          <Caseload/>
-        </Fig>
-      </Section>
-
-      <Section name="Small groups" tone="mist">
-        <SectionHead>Nothing is reported for a group under five students</SectionHead>
-        <SectionLede>Fifth period has three students in it, so it returns nothing at all. The figure
-          is withheld, not estimated, because with three it is a short step to a name.</SectionLede>
-        <Fig title="By class period">
+      <Section name="By class period" tone="card">
+        <SectionHead>Class periods, and the floor under small groups</SectionHead>
+        <SectionLede>Nothing is reported for a group under {K_ANONYMITY} students. Fifth period has
+          three in it, so the figure is withheld rather than estimated.</SectionLede>
+        <Fig>
           <SmallGroups/>
+        </Fig>
+      </Section>
+
+      <Section name="The caseload" tone="mist">
+        <SectionHead>Ranked by who changed this week</SectionHead>
+        <SectionLede>A student who has always run high is rarely the one being missed, so the board
+          ranks on the week's movement. Only students whose guardians consented to trends appear
+          here.</SectionLede>
+        <Fig>
+          <Caseload/>
         </Fig>
       </Section>
 
