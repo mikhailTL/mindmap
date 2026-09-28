@@ -195,151 +195,133 @@ export function Overview({ go }) {
 
           The notebook stays. It is behind the copy column, which is where it
           was asked for, and the margin rule with it. */}
-      <section id="hero" className="relative isolate flex min-h-[calc(100svh-57px)] flex-col
-        overflow-hidden border-t border-rule bg-paper">
+      {/* ── the hero ──────────────────────────────────────────────────────
+          One column of type on a ruled sheet, which is the shape this page
+          opened with and the shape it is back to. It had become a split band
+          with a photograph and two device drawings crammed into the right half
+          of it: three pictures at a third of the size each needs, none of them
+          readable, and a headline squeezed into what was left. Nothing on this
+          band now competes with the sentence.
+
+          The pictures did not go away, they went below, where each one gets a
+          width worth having. */}
+      <section id="hero" className="relative isolate flex min-h-[calc(84svh-57px)] flex-col
+        justify-center overflow-hidden border-t border-rule bg-paper">
         <RuledField className="z-0" pitch={37} offset={12} opacity={0.34}/>
         <MarginRule className="left-[11px] z-0 sm:left-6 lg:left-8"/>
 
-        <div className="wrap relative z-10 flex flex-1 flex-col
-          lg:grid lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]
-          xl:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]
-          2xl:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
+        <div className="wrap relative z-10 py-14 lg:py-20">
+          {/* The name, with the hairline a drawing puts in front of a key.
+              accent on paper is 5.52 : 1, so it can be a word and not only a
+              colour. */}
+          <ScrollIn as="p" className="flex items-center gap-3 font-display text-tick font-bold
+            tracking-tight text-accent">
+            <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
+            MindMap, a wellness app for teenagers
+          </ScrollIn>
+          {/* One element, one leading, balanced wrapping, and no ch cap past
+              lg: the column is the measure now. Leading is 1.06 and not 1.02,
+              because at 1.02 the descenders of "Making your stress" landed in
+              the cap height of "readable". */}
+          <h1 className="mt-5 max-w-[14ch] font-display text-view font-bold leading-[1.06]
+            tracking-tight text-ink [text-wrap:balance] lg:text-sect 2xl:text-fig">
+            Making your stress <span className="text-accent">readable</span>.
+          </h1>
+          <ScrollIn as="p" className="mt-6 text-lead font-medium leading-[1.3] text-ink-2">
+            One score. One sentence. Every day.
+          </ScrollIn>
+          <ScrollIn as="p" className="mt-3 max-w-[46ch] text-sec text-ink-2">
+            Read from a patch on your forearm, or from the phone already in your pocket.
+          </ScrollIn>
+          <ScrollIn className="mt-9">
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
+              <Button variant="outline" onClick={() => go('without-patch')}>Take a reading now</Button>
+            </div>
+          </ScrollIn>
+        </div>
+      </section>
 
-          {/* Centred, not top-set. The column is shorter than the screen by
-              design — the empty part of it is ruled paper, which is a sheet
-              with room on it rather than a gap. */}
-          {/* The copy column is the FIXED track and the pictures take the
-              rest. It was the other way round, and a headline wraps at its own
-              measure whatever track it sits in, so the 1fr track grew past the
-              text and left 260px of bare paper between the title and the
-              devices. Sizing the text column to the text closes it, and every
-              pixel the window gains now goes to the pictures. */}
-          <div className="flex shrink-0 flex-col justify-center py-7 lg:py-10 lg:pr-10">
-            {/* The name, with the hairline a drawing puts in front of a key.
-                accent on paper is 5.52 : 1, so it can be a word and not only
-                a colour. It is two steps smaller than it was: it is the label
-                on the sheet, not the first headline. */}
-            <ScrollIn as="p" className="flex items-center gap-3 font-display text-tick font-bold
-              tracking-tight text-accent">
-              <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
-              MindMap, a wellness app for teenagers
-            </ScrollIn>
-            {/* The step at 2xl is `fig` and not `sect`. Over 1536 the copy
-                column is 900px wide and a 52px headline in it left the top
-                third of the sheet empty; `fig` is 72px there, which is the
-                size the column was actually drawn for.
+      {/* ── worn ──────────────────────────────────────────────────────────
+          The photograph makes the argument no drawing can: a patch is a
+          medical-looking object, and a teenager's first question about one is
+          whether they would be seen wearing it.
 
-                One element, one leading, balanced wrapping. The break falls
-                wherever the column is, instead of being hard coded into a
-                place that only worked at one width. Leading is 1.06 and not
-                1.02: at 1.02 the descenders of "Making your stress" landed in
-                the cap height of "readable". */}
-            <h1 className="mt-4 max-w-[14ch] font-display text-view font-bold leading-[1.06]
-              tracking-tight text-ink [text-wrap:balance] lg:text-sect
-              2xl:max-w-[12ch] 2xl:text-fig">
-              Making your stress <span className="text-accent">readable</span>.
-            </h1>
-            <ScrollIn as="p" className="mt-4 text-row font-medium leading-[1.3] text-ink-2">
-              One score. One sentence. Every day.
-            </ScrollIn>
-            {/* ink-2 and not ink-3. Measured on a rule rather than on the
-                ground between two, ink-3 at this size lands at 4.51 : 1, which
-                passes and has no margin left in it; ink-2 is 7.3 : 1 there. */}
-            <ScrollIn as="p" className="mt-2.5 max-w-read text-note text-ink-2">
-              Read from a patch on your forearm, or from the phone already in your pocket.
-            </ScrollIn>
-            <ScrollIn className="mt-6">
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-                <Button variant="outline" onClick={() => go('without-patch')}>Take a reading now</Button>
-              </div>
-            </ScrollIn>
+          It is a 4:3 panel and not a full-bleed strip. The strip was wider and
+          shorter than the subject, so object-cover had to choose between his
+          face and his forearm and cut whichever it was not given: a picture
+          captioned "worn, and not noticed" that did not show the thing being
+          worn. At 4:3 the whole of him, and the patch, are inside the frame. */}
+      <Section name="Worn" tone="mist">
+        <div className="mt-6 grid items-center gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
+          <figure className="m-0 overflow-hidden rounded-panel border border-ink shadow-raise">
+            <picture>
+              <source type="image/webp" srcSet="/img/worn-900.webp 900w, /img/worn.webp 1600w"
+                sizes="(max-width: 1023px) 100vw, 58vw"/>
+              <img src="/img/worn.jpg" width="1600" height="895" loading="eager" decoding="async"
+                alt="A teenager sitting outdoors with friends, laughing, a MindMap patch on his forearm"
+                className="aspect-[4/3] w-full object-cover object-[57%_46%]"/>
+            </picture>
+          </figure>
+          <div>
+            <h2 className="font-display text-sub font-bold leading-[1.14] tracking-tight text-ink">
+              Worn, and not noticed.
+            </h2>
+            <p className="mt-4 max-w-[36ch] text-body leading-[1.5] text-ink-2">
+              It is a sticker on the forearm, about the size of a bottle cap. Under a sleeve or
+              not, nobody asks about it.
+            </p>
+            <p className="mt-3 max-w-[36ch] text-sec text-ink-2">
+              Nothing to charge every night, nothing to remember to put on, and nothing anyone
+              can read off it by looking.
+            </p>
           </div>
+        </div>
+      </Section>
 
-          {/* The product, three ways, in the order a stranger needs them:
-              worn by somebody, then the object, then the screen.
-
-              The photograph carries the argument the drawings cannot. A patch
-              is a medical-looking object and a teenager's first question about
-              one is whether they would be seen wearing it. A picture of
-              somebody wearing it, out with friends, with the thing almost
-              unnoticeable on their forearm, answers that before a word of copy
-              gets the chance to.
-
-              `after` on each field is the part of it that lives past the
-              wrap's right edge: over 1680 the wrap stops short of the viewport
-              and a tint that stopped with it left a strip of bare paper beside
-              a full-bleed dark band, which reads as a mistake. The section
-              clips it, so the strip costs nothing. */}
-          <div className="relative -mx-[22px] flex flex-1 flex-col border-t border-rule
-            sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
-
-            <figure className="relative m-0 flex-[1.15] overflow-hidden border-b border-rule">
-              <picture>
-                <source type="image/webp" srcSet="/img/patch-worn-700.webp 700w, /img/patch-worn.webp 1300w"
-                  sizes="(max-width: 1023px) 100vw, 40rem"/>
-                <img src="/img/patch-worn.jpg" width="1084" height="752" loading="eager" decoding="async"
-                  alt="A teenager sitting outdoors with friends, laughing, a MindMap patch on his forearm"
-                  className="size-full object-cover object-[58%_42%]"/>
-              </picture>
-              {/* A solid plate, not a gradient scrim. A scrim's contrast
-                  depends on whatever pixels happen to be under it, which means
-                  it cannot be measured and cannot be guaranteed: here it was
-                  paper-white type over a sunlit forearm. Ink is 14.47 : 1
-                  against paper wherever it lands, and a ruled plate at the foot
-                  of a picture is what this site's drawings already do. */}
-              {/* At the top of the picture, not the foot of it. At the foot
-                  the plate landed exactly on the forearm and covered the one
-                  thing the photograph is here to show. */}
-              <figcaption className="absolute inset-x-0 top-0 border-b border-ink bg-ink
-                px-4 py-2.5 text-paper">
-                <span className="block font-display text-tick font-bold">Worn, and not noticed</span>
-                <span className="mt-0.5 block text-fine text-mist">
-                  A sticker on the forearm, under a sleeve or not
-                </span>
-              </figcaption>
-            </figure>
-
-            <div className="flex flex-1">
-              <div className="relative flex flex-1 flex-col items-center justify-center gap-2
-                border-r border-rule bg-accent-wash px-3 py-3
-                after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-                after:bg-accent-wash after:content-[''] lg:after:block">
-                {/* registration marks, the way a sheet carries them: two
-                    corners, hairline, no frame. They are the reason a tinted
-                    field reads as a plate on a drawing rather than as a box. */}
-                <span aria-hidden className="absolute left-2.5 top-2.5 h-2.5 w-2.5 border-l border-t border-ruling/55"/>
-                <PatchFront className="w-[78px] shrink-0 sm:w-[96px] lg:w-[104px]"/>
-                <p className="text-center">
-                  <span className="block font-display text-tick font-bold text-ink">The patch</span>
-                  <span className="mt-0.5 block text-fine text-ink-3">Four signals, all day</span>
-                </p>
-              </div>
-
-              <div className="relative flex flex-[1.2] flex-col items-center justify-center gap-2
-                bg-beam-wash px-3 py-3
-                after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-                after:bg-beam-wash after:content-[''] lg:after:block">
-                <span aria-hidden className="absolute bottom-2.5 right-2.5 h-2.5 w-2.5 border-b border-r border-ruling/55"/>
-                <IPhone model="15-pro" scale={0.2} screenBg="#f7faf8"
-                  label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                  className="lg:hidden">
-                  <PhoneApp/>
-                </IPhone>
-                <IPhone model="15-pro" scale={0.235} screenBg="#f7faf8"
-                  label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                  className="hidden lg:block">
-                  <PhoneApp/>
-                </IPhone>
-                <p className="text-center">
-                  <span className="block font-display text-tick font-bold text-ink">The app</span>
-                  <span className="mt-0.5 block text-fine text-ink-3">A reading in forty five seconds</span>
-                </p>
-              </div>
+      {/* ── the two devices, at a size worth drawing ──────────────────────── */}
+      <Section name="What it is" tone="card" tight>
+        <div className="mt-6 grid items-center gap-8 border-t border-rule pt-8
+          lg:grid-cols-2 lg:gap-14">
+          <div className="flex items-center gap-6 sm:gap-10">
+            <PatchFront className="w-[132px] shrink-0 sm:w-[168px] lg:w-[190px]"/>
+            <div>
+              <h3 className="font-display text-head font-bold text-ink">The patch</h3>
+              <p className="mt-2 max-w-[30ch] text-sec text-ink-2">
+                Four signals off the forearm, once a second, all day: pulse, sweat, skin
+                temperature and movement.
+              </p>
+              <button onClick={() => go('patch')}
+                className="lift mt-3 font-display text-meta font-bold text-accent">
+                See how it is built →
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 border-t border-rule pt-8 sm:gap-10
+            lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
+            <IPhone model="15-pro" scale={0.34} screenBg="#f7faf8"
+              label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+              className="shrink-0 sm:hidden">
+              <PhoneApp/>
+            </IPhone>
+            <IPhone model="15-pro" scale={0.46} screenBg="#f7faf8"
+              label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+              className="hidden shrink-0 sm:block">
+              <PhoneApp/>
+            </IPhone>
+            <div>
+              <h3 className="font-display text-head font-bold text-ink">The app</h3>
+              <p className="mt-2 max-w-[30ch] text-sec text-ink-2">
+                One reading in forty five seconds from the phone camera, with no hardware at all.
+              </p>
+              <button onClick={() => go('without-patch')}
+                className="lift mt-3 font-display text-meta font-bold text-accent">
+                Take one now →
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      </Section>
 
       {/* ── the problem, on the one dark band ────────────────────────────
           Straight under the hero, because a reader who does not believe there
