@@ -118,3 +118,20 @@
 }
 @keyframes mm-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
 @keyframes mm-draw { 0% { stroke-dashoffset: 700 } 65%,100% { stroke-dashoffset: 0 } }
+
+@layer components {
+  /* The breathing light behind the patch drawing in the hero. One blurred
+     radial, nine seconds, and nothing else on that field moves. */
+  .mm-glow {
+    background: radial-gradient(closest-side, rgb(21 116 70 / 0.30), rgb(21 116 70 / 0.10) 58%, transparent 78%);
+    filter: blur(26px);
+    animation: mm-breathe 9s ease-in-out infinite both;
+  }
+}
+@keyframes mm-breathe {
+  0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(0.94) }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.06) }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-glow { animation: none; opacity: .75; }
+}

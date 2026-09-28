@@ -231,7 +231,7 @@ export function Overview({ go }) {
           <div className="relative -mx-[22px] flex flex-1 border-t border-rule
             sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
-            <div className="relative flex flex-1 flex-col items-center justify-center gap-4
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden
               border-r border-rule bg-accent-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
               after:bg-accent-wash after:content-[''] lg:after:block">
@@ -240,14 +240,18 @@ export function Overview({ go }) {
                   as a plate on a drawing rather than as a box. */}
               <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
               <span aria-hidden className="absolute bottom-3 left-3 h-3 w-3 border-b border-l border-ruling/55"/>
-              <PatchFront className="w-[116px] shrink-0 sm:w-[148px] lg:w-[178px] xl:w-[206px]"/>
-              <p className="text-center">
-                <span className="block font-display text-ui font-bold text-ink">The patch</span>
-                <span className="mt-0.5 block text-fine text-ink-3">Four signals, all day</span>
-              </p>
+              {/* The glow is behind the drawing and is the only thing moving in
+                  this field. It is a blurred radial in the accent, breathing on
+                  a nine second cycle, which is slow enough to read as the thing
+                  being alive rather than as an animation playing. It stops
+                  under reduced motion and what is left is a still soft light,
+                  not a hard edge appearing. */}
+              <span aria-hidden className="mm-glow pointer-events-none absolute left-1/2 top-1/2
+                h-[62%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]"/>
+              <PatchFront className="relative w-[196px] shrink-0 sm:w-[240px] lg:w-[290px] xl:w-[340px]"/>
             </div>
 
-            <div className="relative flex flex-[1.15] flex-col items-center justify-center gap-4
+            <div className="relative flex flex-1 flex-col items-center justify-center
               bg-beam-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
               after:bg-beam-wash after:content-[''] lg:after:block">
@@ -268,54 +272,10 @@ export function Overview({ go }) {
                 className="hidden shrink-0 xl:block">
                 <PhoneApp/>
               </IPhone>
-              <p className="text-center">
-                <span className="block font-display text-ui font-bold text-ink">The app</span>
-                <span className="mt-0.5 block text-fine text-ink-3">A reading in forty five seconds</span>
-              </p>
             </div>
           </div>
         </div>
       </section>
-
-      {/* ── worn ──────────────────────────────────────────────────────────
-          The photograph makes the argument no drawing can: a patch is a
-          medical-looking object, and a teenager's first question about one is
-          whether they would be seen wearing it.
-
-          It is a 4:3 panel and not a full-bleed strip. The strip was wider and
-          shorter than the subject, so object-cover had to choose between his
-          face and his forearm and cut whichever it was not given: a picture
-          captioned "worn, and not noticed" that did not show the thing being
-          worn. At 4:3 the whole of him, and the patch, are inside the frame. */}
-      <Section name="On a normal day" tone="mist">
-        <div className="mt-6 grid items-center gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
-          <figure className="m-0 overflow-hidden rounded-panel border border-ink shadow-raise">
-            <picture>
-              <source type="image/webp" srcSet="/img/worn-900.webp 900w, /img/worn.webp 1600w"
-                sizes="(max-width: 1023px) 100vw, 58vw"/>
-              <img src="/img/worn.jpg" width="1600" height="895" loading="eager" decoding="async"
-                alt="A teenager sitting outdoors with friends, laughing, a MindMap patch on his forearm"
-                className="aspect-[4/3] w-full object-cover object-[57%_42%]"/>
-            </picture>
-          </figure>
-          <div>
-            {/* "Worn, and not noticed" was a claim the photograph argues
-                with: the patch is plainly visible in it. A caption should not
-                ask a reader to disbelieve what they are looking at. */}
-            <h2 className="font-display text-sub font-bold leading-[1.14] tracking-tight text-ink">
-              A day that runs easy.
-            </h2>
-            <p className="mt-4 max-w-[36ch] text-body leading-[1.5] text-ink-2">
-              The patch sits on the upper arm, half under a sleeve, and reads four signals while
-              the day happens around it.
-            </p>
-            <p className="mt-3 max-w-[36ch] text-sec text-ink-2">
-              Nothing to charge every night, nothing to remember to put on, and nothing to do
-              until there is something worth saying.
-            </p>
-          </div>
-        </div>
-      </Section>
 
       {/* The band that stood here showed the patch drawing and the phone
           again, at the same size, with the same two captions. They are in the
@@ -348,7 +308,7 @@ export function Overview({ go }) {
               <button type="button" onClick={() => go(d.go)}
                 className={cn(`group grid w-full grid-cols-[3.4rem_minmax(0,1fr)] items-center
                   gap-x-5 gap-y-1.5 border-l-[3px] py-4 pl-4 pr-1 text-left
-                  transition-colors duration-150 hover:bg-card
+
                   md:grid-cols-[4.6rem_minmax(0,15ch)_minmax(0,1fr)_auto] md:gap-x-9`,
                   d.lead ? 'border-l-accent' : 'border-l-transparent')}>
                 <span className="row-span-2 grid place-items-center md:row-span-1" aria-hidden>{d.art}</span>
@@ -385,63 +345,43 @@ export function Overview({ go }) {
           One day of measurements, read three ways. The student sees all of it; the other two see
           only what the student agreed to share.
         </SectionLede>
-        <div className="mt-6 grid border-t border-rule lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          <ScrollIn className="h-full">
-            <button type="button" onClick={() => go(SCREENS[0].id)}
-              className="group flex h-full w-full flex-col gap-4 border-b border-rule py-6 pr-0
-                text-left transition-colors duration-150 hover:bg-card lg:border-r lg:pr-12">
-              <span className="font-display text-tick font-bold text-accent">{SCREENS[0].who}</span>
-              <span className="font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
-                {SCREENS[0].title}
-              </span>
-              {/* The line and the dial share a row rather than stacking. A
-                  dial centred under a left-set paragraph left two hundred
-                  pixels of nothing on either side of it and made the cell
-                  taller than the two rows beside it for no reason.
-
-                  flex-1 is the fix for the hole this cell had under it. The
-                  student cell is shorter than the two rows it sits beside, the
-                  CTA is anchored to the bottom so the two CTAs line up, and
-                  the difference was landing as one 110px gap directly above
-                  the link. The row takes the slack instead and centres in it,
-                  so what is left reads as the cell breathing rather than as a
-                  missing paragraph. */}
-              <div className="flex flex-1 flex-wrap items-center gap-x-10 gap-y-4">
-                <span className="max-w-[26ch] flex-1 text-sec leading-[1.5] text-ink-2">
-                  {SCREENS[0].line}
+        {/* Three equal cells. It had been one wide student cell beside two
+            stacked rows, which made the student's screen look like the product
+            and the other two like footnotes. They are three views of the same
+            day and the grid should say so: same width, same height, same
+            order of parts in each. */}
+        <div className="mt-6 grid border-t border-rule lg:grid-cols-3">
+          {SCREENS.map((s2, i) => (
+            <ScrollRow key={s2.id} index={i} className="h-full">
+              <button type="button" onClick={() => go(s2.id)}
+                /* The gutters are keyed off the index, not `first:`/`last:`.
+                   The button is not the grid's direct child, ScrollRow is, so
+                   those pseudo-classes matched nothing and the first cell's
+                   heading ran into the divider beside it. */
+                className={cn('group flex h-full w-full flex-col gap-3 border-b border-rule py-6 text-left',
+                  i === 0 ? 'lg:pr-7' : i === 2 ? 'lg:pl-7' : 'lg:px-7',
+                  i < 2 && 'lg:border-r')}>
+                <span className="font-display text-tick font-bold text-accent">{s2.who}</span>
+                <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                  {s2.title}
                 </span>
-                <span aria-hidden><Preview id="student"/></span>
-              </div>
-              <span className="mt-auto flex items-center gap-2.5 font-display text-meta font-bold text-accent">
-                {SCREENS[0].cta}
-                <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                  group-hover:translate-x-1.5"/>
-              </span>
-            </button>
-          </ScrollIn>
-
-          <div className="grid lg:pl-12">
-            {SCREENS.slice(1).map((s2, i) => (
-              <ScrollRow key={s2.id} index={i + 1} className="h-full">
-                <button type="button" onClick={() => go(s2.id)}
-                  className="group flex h-full w-full flex-col gap-3 border-b border-rule py-6
-                    text-left transition-colors duration-150 hover:bg-card">
-                  <span className="font-display text-tick font-bold text-accent">{s2.who}</span>
-                  <span className="font-display text-head font-bold leading-tight text-ink">{s2.title}</span>
-                  <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-                    <span className="max-w-[34ch] flex-1 text-note leading-[1.5] text-ink-2">{s2.line}</span>
-                    <div aria-hidden><Preview id={s2.id}/></div>
-                  </div>
-                  <span className="mt-auto flex items-center gap-2.5 pt-1 font-display text-meta
-                    font-bold text-accent">
-                    {s2.cta}
-                    <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                      group-hover:translate-x-1.5"/>
-                  </span>
-                </button>
-              </ScrollRow>
-            ))}
-          </div>
+                {/* One fixed-height stage per cell, so the three previews sit
+                    on the same line whatever shape each one is: an arch, a
+                    week strip and a ranked list are three different heights
+                    and without this the copy under them stepped. */}
+                <span aria-hidden className="mt-1 flex h-[188px] items-center justify-center">
+                  <Preview id={s2.id}/>
+                </span>
+                <span className="max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.line}</span>
+                <span className="mt-auto flex items-center gap-2.5 pt-2 font-display text-meta
+                  font-bold text-accent group-hover:text-accent-ink">
+                  {s2.cta}
+                  <ArrowRight className="size-[1.1rem] transition-transform duration-200
+                    group-hover:translate-x-1.5"/>
+                </span>
+              </button>
+            </ScrollRow>
+          ))}
         </div>
       </Section>
 

@@ -22,13 +22,20 @@ export const Card = React.forwardRef(function Card(
       ref={ref}
       className={cn(
         'bg-card text-ink border border-rule rounded-panel overflow-hidden',
+        /* Hover moves the leading rule and nothing else. It used to repaint
+           the whole card's background as well, and on a page whose bands are
+           already four different tints that read as the card flashing a
+           colour from somewhere else in the palette: messy, and on a light
+           band the card went white against white. A 3px rule appearing is
+           enough to say "this is a control", and it is the same signal
+           whatever ground the card is sitting on. */
         interactive && [
           'w-full text-left cursor-pointer',
           'border-l-[3px] border-l-transparent',
-          'transition-[border-color,background-color,box-shadow] duration-150 ease-out',
-          'hover:border-l-accent hover:bg-mist/70',
-          'focus-visible:border-l-accent focus-visible:bg-mist/70',
-          'active:bg-mist active:shadow-none',
+          'transition-[border-color,box-shadow] duration-150 ease-out',
+          'hover:border-l-accent',
+          'focus-visible:border-l-accent',
+          'active:shadow-none',
           'disabled:pointer-events-none disabled:opacity-45',
         ],
         className
