@@ -201,15 +201,20 @@ export function Overview({ go }) {
         <MarginRule className="left-[11px] z-0 sm:left-6 lg:left-8"/>
 
         <div className="wrap relative z-10 flex flex-1 flex-col
-          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]
-          xl:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]
-          2xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]">
+          lg:grid lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]
+          xl:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]
+          2xl:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
 
           {/* Centred, not top-set. The column is shorter than the screen by
               design — the empty part of it is ruled paper, which is a sheet
               with room on it rather than a gap. */}
-          <div className="flex max-w-[40rem] shrink-0 flex-col justify-center py-7
-            lg:py-10 lg:pr-14">
+          {/* The copy column is the FIXED track and the pictures take the
+              rest. It was the other way round, and a headline wraps at its own
+              measure whatever track it sits in, so the 1fr track grew past the
+              text and left 260px of bare paper between the title and the
+              devices. Sizing the text column to the text closes it, and every
+              pixel the window gains now goes to the pictures. */}
+          <div className="flex shrink-0 flex-col justify-center py-7 lg:py-10 lg:pr-10">
             {/* The name, with the hairline a drawing puts in front of a key.
                 accent on paper is 5.52 : 1, so it can be a word and not only
                 a colour. It is two steps smaller than it was: it is the label
@@ -229,9 +234,9 @@ export function Overview({ go }) {
                 place that only worked at one width. Leading is 1.06 and not
                 1.02: at 1.02 the descenders of "Making your stress" landed in
                 the cap height of "readable". */}
-            <h1 className="mt-4 max-w-[13ch] font-display text-view font-bold leading-[1.06]
+            <h1 className="mt-4 max-w-[14ch] font-display text-view font-bold leading-[1.06]
               tracking-tight text-ink [text-wrap:balance] lg:text-sect
-              2xl:max-w-[11ch] 2xl:text-fig">
+              2xl:max-w-[12ch] 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
             <ScrollIn as="p" className="mt-4 text-row font-medium leading-[1.3] text-ink-2">
@@ -251,64 +256,86 @@ export function Overview({ go }) {
             </ScrollIn>
           </div>
 
-          {/* The two ways to use it, shown rather than described, one to a
-              field. The app is the live components on the live data, so it
-              cannot drift out of date with the product it is advertising, and
-              the patch is the front view because a reader who has never seen
-              the thing needs the object before it needs a section drawing.
+          {/* The product, three ways, in the order a stranger needs them:
+              worn by somebody, then the object, then the screen.
 
-              Side by side on a phone and stacked from lg, because a phone has
-              width to spare in one row and no height to spare in two. The
-              rule between the fields turns with the axis.
+              The photograph carries the argument the drawings cannot. A patch
+              is a medical-looking object and a teenager's first question about
+              one is whether they would be seen wearing it. A picture of
+              somebody wearing it, out with friends, with the thing almost
+              unnoticeable on their forearm, answers that before a word of copy
+              gets the chance to.
 
               `after` on each field is the part of it that lives past the
               wrap's right edge: over 1680 the wrap stops short of the viewport
               and a tint that stopped with it left a strip of bare paper beside
               a full-bleed dark band, which reads as a mistake. The section
               clips it, so the strip costs nothing. */}
-          <div className="relative -mx-[22px] flex flex-1 border-t border-rule sm:-mx-10
-            lg:mx-0 lg:-mr-14 lg:flex-col lg:border-l lg:border-t-0">
+          <div className="relative -mx-[22px] flex flex-1 flex-col border-t border-rule
+            sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
-            <div className="relative flex flex-1 flex-col items-center justify-center gap-3
-              border-r border-rule bg-accent-wash px-4 py-6 lg:min-h-0 lg:border-b lg:border-r-0
-              after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-              after:bg-accent-wash after:content-[''] lg:after:block">
-              {/* registration marks, the way a sheet carries them: two
-                  corners, hairline, no frame. They are the reason a tinted
-                  field reads as a plate on a drawing rather than as a box. */}
-              <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
-              <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
-              <PatchFront className="w-[116px] shrink-0 sm:w-[144px] lg:w-[172px]"/>
-              <p className="text-center">
-                <span className="block font-display text-tick font-bold text-ink">The patch</span>
-                <span className="mt-0.5 block text-fine text-ink-3">
-                  Four signals, once a second, all day
+            <figure className="relative m-0 flex-[1.15] overflow-hidden border-b border-rule">
+              <picture>
+                <source type="image/webp" srcSet="/img/patch-worn-700.webp 700w, /img/patch-worn.webp 1300w"
+                  sizes="(max-width: 1023px) 100vw, 40rem"/>
+                <img src="/img/patch-worn.jpg" width="1084" height="752" loading="eager" decoding="async"
+                  alt="A teenager sitting outdoors with friends, laughing, a MindMap patch on his forearm"
+                  className="size-full object-cover object-[58%_42%]"/>
+              </picture>
+              {/* A solid plate, not a gradient scrim. A scrim's contrast
+                  depends on whatever pixels happen to be under it, which means
+                  it cannot be measured and cannot be guaranteed: here it was
+                  paper-white type over a sunlit forearm. Ink is 14.47 : 1
+                  against paper wherever it lands, and a ruled plate at the foot
+                  of a picture is what this site's drawings already do. */}
+              {/* At the top of the picture, not the foot of it. At the foot
+                  the plate landed exactly on the forearm and covered the one
+                  thing the photograph is here to show. */}
+              <figcaption className="absolute inset-x-0 top-0 border-b border-ink bg-ink
+                px-4 py-2.5 text-paper">
+                <span className="block font-display text-tick font-bold">Worn, and not noticed</span>
+                <span className="mt-0.5 block text-fine text-mist">
+                  A sticker on the forearm, under a sleeve or not
                 </span>
-              </p>
-            </div>
+              </figcaption>
+            </figure>
 
-            <div className="relative flex flex-[1.35] flex-col items-center justify-center gap-3
-              bg-beam-wash px-4 py-6 lg:min-h-0
-              after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-              after:bg-beam-wash after:content-[''] lg:after:block">
-              <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
-              <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
-              <IPhone model="15-pro" scale={0.26} screenBg="#f7faf8"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                className="lg:hidden">
-                <PhoneApp/>
-              </IPhone>
-              <IPhone model="15-pro" scale={0.44} screenBg="#f7faf8"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
-                className="hidden lg:block">
-                <PhoneApp/>
-              </IPhone>
-              <p className="text-center">
-                <span className="block font-display text-tick font-bold text-ink">The app</span>
-                <span className="mt-0.5 block text-fine text-ink-3">
-                  One reading in forty five seconds
-                </span>
-              </p>
+            <div className="flex flex-1">
+              <div className="relative flex flex-1 flex-col items-center justify-center gap-2
+                border-r border-rule bg-accent-wash px-3 py-3
+                after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
+                after:bg-accent-wash after:content-[''] lg:after:block">
+                {/* registration marks, the way a sheet carries them: two
+                    corners, hairline, no frame. They are the reason a tinted
+                    field reads as a plate on a drawing rather than as a box. */}
+                <span aria-hidden className="absolute left-2.5 top-2.5 h-2.5 w-2.5 border-l border-t border-ruling/55"/>
+                <PatchFront className="w-[78px] shrink-0 sm:w-[96px] lg:w-[104px]"/>
+                <p className="text-center">
+                  <span className="block font-display text-tick font-bold text-ink">The patch</span>
+                  <span className="mt-0.5 block text-fine text-ink-3">Four signals, all day</span>
+                </p>
+              </div>
+
+              <div className="relative flex flex-[1.2] flex-col items-center justify-center gap-2
+                bg-beam-wash px-3 py-3
+                after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
+                after:bg-beam-wash after:content-[''] lg:after:block">
+                <span aria-hidden className="absolute bottom-2.5 right-2.5 h-2.5 w-2.5 border-b border-r border-ruling/55"/>
+                <IPhone model="15-pro" scale={0.2} screenBg="#f7faf8"
+                  label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                  className="lg:hidden">
+                  <PhoneApp/>
+                </IPhone>
+                <IPhone model="15-pro" scale={0.235} screenBg="#f7faf8"
+                  label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                  className="hidden lg:block">
+                  <PhoneApp/>
+                </IPhone>
+                <p className="text-center">
+                  <span className="block font-display text-tick font-bold text-ink">The app</span>
+                  <span className="mt-0.5 block text-fine text-ink-3">A reading in forty five seconds</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>

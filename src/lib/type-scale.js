@@ -12,11 +12,14 @@
    together because a chart's annotations are, and the large end jumps hard
    because a chart has exactly one number you read from across a room.
 
-   The whole scale came down about 8% at the display end and about 5% at the
-   reading end. It had been tuned for an anxious glance and had ended up
-   costing a reader four scrolls to get past a section: the review's words were
-   that everything had got "just slightly too big". Ratios between the steps
-   are unchanged, so nothing about the hierarchy moved, only its size.
+   The reading end came down about 5% and stayed there: body, sec, meta, ui,
+   tick, note and fine are what a section's bulk is set in, and that is where
+   "everything has got slightly too big" was actually true.
+
+   The display end came down with it and went straight back up, because the
+   note behind that was about sections, not about headlines. A title is the
+   one thing on a page allowed to be large. view, sect, major, fig, page,
+   dial, sub, head, row, stat and gap are at or above where they started.
 
    `gap` is the deliberate irregularity. It sits at 2.75rem, between `stat`
    and the fluid display steps, and is used for the one figure per screen that
@@ -31,17 +34,17 @@ export const TYPE_SCALE = {
   sec:   ['1.1875rem',  { lineHeight:'1.55', letterSpacing:'-0.002em' }],
   body:  ['1.3125rem',  { lineHeight:'1.56', letterSpacing:'-0.004em' }],
   lead:  ['clamp(1.3125rem,1.5vw,1.5rem)', { lineHeight:'1.48', letterSpacing:'-0.008em' }],
-  row:   ['1.375rem',   { lineHeight:'1.25', letterSpacing:'-0.014em' }],
-  head:  ['1.5rem',     { lineHeight:'1.2',  letterSpacing:'-0.018em' }],
-  sub:   ['clamp(1.5rem,2.1vw,2rem)', { lineHeight:'1.16', letterSpacing:'-0.022em' }],
+  row:   ['1.5rem',     { lineHeight:'1.25', letterSpacing:'-0.014em' }],
+  head:  ['1.625rem',   { lineHeight:'1.2',  letterSpacing:'-0.018em' }],
+  sub:   ['clamp(1.625rem,2.4vw,2.25rem)', { lineHeight:'1.14', letterSpacing:'-0.022em' }],
   num:   ['1.75rem',    { lineHeight:'1',    letterSpacing:'-0.018em' }],
-  stat:  ['2.125rem',   { lineHeight:'1',    letterSpacing:'-0.026em' }],
-  gap:   ['2.4375rem',  { lineHeight:'0.98', letterSpacing:'-0.03em' }],
-  major: ['clamp(1.875rem,2.8vw,2.5rem)',   { lineHeight:'1.1',  letterSpacing:'-0.028em' }],
-  dial:  ['3.125rem',   { lineHeight:'0.95', letterSpacing:'-0.034em' }],
-  view:  ['clamp(1.9375rem,3.6vw,2.875rem)',{ lineHeight:'1.08', letterSpacing:'-0.03em' }],
-  sect:  ['clamp(2.125rem,3.8vw,3.25rem)',  { lineHeight:'1.05', letterSpacing:'-0.033em' }],
-  fig:   ['clamp(3rem,6.2vw,4.5rem)',       { lineHeight:'0.94', letterSpacing:'-0.042em' }],
-  page:  ['clamp(2.75rem,6vw,5.25rem)',     { lineHeight:'0.99', letterSpacing:'-0.038em' }],
+  stat:  ['2.375rem',   { lineHeight:'1',    letterSpacing:'-0.026em' }],
+  gap:   ['2.75rem',    { lineHeight:'0.98', letterSpacing:'-0.03em' }],
+  major: ['clamp(2.125rem,3.4vw,3rem)',     { lineHeight:'1.08', letterSpacing:'-0.028em' }],
+  dial:  ['3.5rem',     { lineHeight:'0.95', letterSpacing:'-0.034em' }],
+  view:  ['clamp(2.25rem,4.4vw,3.625rem)',  { lineHeight:'1.06', letterSpacing:'-0.03em' }],
+  sect:  ['clamp(2.625rem,4.8vw,4.25rem)',  { lineHeight:'1.03', letterSpacing:'-0.033em' }],
+  fig:   ['clamp(3.5rem,7.4vw,5.5rem)',     { lineHeight:'0.93', letterSpacing:'-0.042em' }],
+  page:  ['clamp(3.25rem,7.4vw,6.5rem)',    { lineHeight:'0.98', letterSpacing:'-0.038em' }],
 }
 export const TYPE_STEPS = Object.keys(TYPE_SCALE)
