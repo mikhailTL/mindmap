@@ -3,7 +3,7 @@ import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Logo } from '../ui/logo'
 import { Label } from '../ui/misc'
-import { ArrowLeft, ArrowRight } from '../ui/marks'
+import { ArrowRight } from '../ui/marks'
 import { RainbowDial } from '../charts/rainbow'
 import { WeekStrip } from '../charts/infographics'
 import { studentRings } from '../lib/readings'
@@ -316,10 +316,6 @@ export function Launch({ go }) {
   const real = mode === 'real'
   return (
     <main className="wrap py-14">
-      <Button variant="ghost" size="sm" onClick={() => go('site')}>
-        <ArrowLeft aria-hidden/>Back to the overview
-      </Button>
-
       {/* The mark at full size, once. This is the only screen a visitor reaches
           by saying "open it", so it is the one place the product introduces
           itself rather than sitting in a corner of a bar. */}

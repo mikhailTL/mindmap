@@ -6,7 +6,6 @@ import { ArrowRight } from '../ui/marks'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
-import { RuledField, MarginRule } from '../ui/paper'
 import { RainbowDial } from '../charts/rainbow'
 import { ProblemStats } from '../charts/problem'
 import { studentRings } from '../lib/readings'
@@ -182,13 +181,11 @@ export function Overview({ go }) {
           of them past use. */}
       <section id="hero" className="relative isolate flex min-h-[calc(100svh-57px)] flex-col
         overflow-hidden border-t border-rule bg-paper lg:h-[calc(100svh-57px)] lg:min-h-0">
-        <RuledField className="z-0" pitch={37} offset={12} opacity={0.34}/>
-        <MarginRule className="left-[11px] z-0 sm:left-6 lg:left-8"/>
 
         <div className="wrap relative z-10 flex flex-1 flex-col
-          lg:grid lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]
-          xl:grid-cols-[minmax(0,35rem)_minmax(0,1fr)]
-          2xl:grid-cols-[minmax(0,41rem)_minmax(0,1fr)]">
+          lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]
+          xl:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]
+          2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
           <div className="flex shrink-0 flex-col justify-center py-10 lg:py-0 lg:pr-10">
             {/* The name, with the hairline a drawing puts in front of a key.
@@ -199,10 +196,18 @@ export function Overview({ go }) {
               <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
               MindMap, a wellness app for teenagers
             </ScrollIn>
-            {/* Leading is 1.06 and not 1.02: at 1.02 the descenders of "Making
-                your stress" landed in the cap height of "readable". */}
-            <h1 className="mt-5 max-w-[14ch] font-display text-view font-bold leading-[1.06]
-              tracking-tight text-ink [text-wrap:balance] lg:text-sect 2xl:text-fig">
+            {/* Set the way the first version of this page set it: medium
+                weight, not bold, and breaking after "stress" so "readable."
+                takes the second line on its own. Balanced wrapping is off for
+                the same reason, since balancing moved the break to wherever
+                the two lines came out most even, which was mid-phrase. The
+                column widened to 40rem at xl because the break only falls
+                there if the line has room for it.
+
+                Leading is 1.06 and not 1.02: at 1.02 the descenders of
+                "Making your stress" landed in the cap height of "readable". */}
+            <h1 className="mt-5 max-w-[19ch] font-display text-view font-medium leading-[1.06]
+              tracking-tight text-ink lg:text-sect 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
             <ScrollIn as="p" className="mt-6 text-lead font-medium leading-[1.3] text-ink-2">

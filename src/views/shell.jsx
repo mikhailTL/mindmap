@@ -1,5 +1,4 @@
 import React from 'react'
-import { Back } from './Monitor'
 import KineticGrid from '../s21/texture'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { DemoNotice, RealNotice } from '../ui/notice'
@@ -31,8 +30,12 @@ export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab,
             regions — instead of per-section numbers that each said something
             different about the same kind of break. A header band is the
             smallest step. */}
+        {/* The "Overview" back link that used to open this band is gone. The
+            app has its own chrome now and that chrome carries one way out,
+            named once; two back arrows within sixty pixels of each other, both
+            going to the same marketing page, is the kind of doubling that
+            makes a product read as a prototype. */}
         <div className="wrap relative py-10">
-          <Back go={go} to="site" label="Overview"/>
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
           {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
           {/* One ruled annotation, and which one depends on what the panes below

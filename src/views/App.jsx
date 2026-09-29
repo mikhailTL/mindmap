@@ -18,12 +18,12 @@ import { Pro } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { ModeToggle } from '../ui/mode-toggle'
-import { Palette, PaletteHint } from '../ui/palette'
+import { Palette } from '../ui/palette'
 import { Logo } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ChevronDown, Cross } from '../ui/marks'
+import { ArrowLeft, Bracket, ChevronDown, Cross, Grid, PulseMark } from '../ui/marks'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
@@ -41,6 +41,26 @@ import { cn } from '../lib/utils'
    goes looking. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
                'app-parent','app-pro','check','privacy','tour','responses','survey']
+
+/* One bar was serving two different things.
+ *
+ * Half of these routes are a website: they argue for MindMap to somebody who
+ * has not used it. The other half are the product: the screens a student, a
+ * parent or a counselor would open on a Tuesday. Navigating a dashboard with
+ * the same bar that sells the dashboard is what made this read as a prototype,
+ * so the chrome now switches on the route. Marketing keeps the top bar; the
+ * app gets a tab bar on a phone and a rail on a desktop, which is what every
+ * product of this shape does, Oura and Dexcom included.
+ *
+ * `check` and `privacy` are in here because they render app screens, whatever
+ * their urls suggest: `check` is the student section on its reading tab and
+ * `privacy` is the parent section on its sharing tab. */
+const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','privacy'])
+
+/* The command palette ships an entry whose id is `hub`, which is not a route
+   and used to render nothing at all. Rather than let any caller push a view
+   that does not exist, `go` resolves through here first. */
+const ALIAS = { hub: 'app' }
 
 /* These are the browser tab text, which is the one string on this site a
    reader meets before the page has drawn. They were written as headlines with
@@ -276,15 +296,6 @@ function Drawer({ view, go, onClose }) {
               </button>
             )
           })}
-          {/* The demo/real switch is a setting inside the app, and on a phone
-              a 56px bar has no room for it until the sections come out from
-              behind the hamburger, so it rides in here for the views it
-              actually acts on. */}
-          {view.startsWith('app') && (
-            <div className="mt-5 border-t border-rule pt-5">
-              <ModeToggle/>
-            </div>
-          )}
         </nav>
       </div>
     </div>
@@ -309,7 +320,6 @@ function Header({ view, go }) {
     setMenu(false)
     burger.current?.focus()
   }, [])
-  const inApp = view.startsWith('app')
 
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-paper">
@@ -338,14 +348,18 @@ function Header({ view, go }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
-          <span className="hidden xl:inline"><PaletteHint/></span>
-          {inApp && <span className="hidden xl:block"><ModeToggle compact className="min-w-0"/></span>}
+          {/* Two things left this row. The demo/real switch, because it is a
+              setting belonging to the app and it never acted on anything a
+              marketing page draws; it lives in the app chrome now. And the
+              command-palette hint, which was a key cap styled like a control
+              that could not be pressed: the shortcut still works, the badge
+              that implied it was a button does not. */}
           {/* Still the only filled control on the bar: everything else here
               explains MindMap, this opens it. */}
-          <button onClick={() => go('app')} aria-current={inApp ? 'page' : undefined}
+          <button onClick={() => go('app')}
             className={cn('inline-flex h-11 shrink-0 items-center gap-2 rounded-field px-3.5',
-              'font-display text-ui font-medium text-paper transition-colors duration-150 sm:px-4',
-              inApp ? 'bg-accent-ink' : 'bg-accent hover:bg-accent-ink')}>
+              'bg-accent font-display text-ui font-medium text-paper transition-colors',
+              'duration-150 hover:bg-accent-ink sm:px-4')}>
             {/* "Open the app" does not fit beside a hamburger at 390px. */}
             <span className="xl:hidden">Open</span>
             <span className="hidden xl:inline">Open the app</span>
@@ -370,6 +384,161 @@ function Header({ view, go }) {
       <ScrollProgress/>
       {menu && <Drawer view={view} go={go} onClose={closeMenu}/>}
     </header>
+  )
+}
+
+/* ── the app's own chrome ───────────────────────────────────────────────
+ *
+ * Four destinations, and they are the four things this app is: the screen a
+ * student reads, the reading they take to fill it, the screen their parent
+ * reads, and the console their school reads. The student's two sit together
+ * because that is the order one person moves through them; the two oversight
+ * screens follow.
+ *
+ * What is deliberately *not* a destination: Launch, which asks who you are and
+ * is a door you walk through once, and the sharing screen, which is a tab
+ * inside the parent and student sections and is where it belongs — a person
+ * checks what is shared while looking at what is shared, not from a bar.
+ * `#/privacy` still resolves and lights Parent, because that is the section it
+ * opens.
+ */
+const DialMark = p => (
+  /* The score arch with the reading landed on it, which is what taking a
+     reading produces. A second wave mark next to the pulse trace would have
+     been two pictures of the same thing. */
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
+    <path d="M3.8 17.8a8.2 8.2 0 0 1 16.4 0"/>
+    <circle cx="18.9" cy="13.7" r="1.9" fill="currentColor" stroke="none"/>
+  </svg>
+)
+
+const APP_NAV = [
+  ['app-student', 'Student', PulseMark],
+  ['check',       'Reading', DialMark],
+  ['app-parent',  'Parent',  Bracket],
+  ['app-pro',     'School',  Grid],
+]
+
+/* Which destination each route belongs to. Launch is in here as null on
+   purpose: on the door nothing is lit, because nothing has been chosen. */
+const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
+                  'app-parent':'app-parent', privacy:'app-parent', 'app-pro':'app-pro' }
+
+/* The phone bar.
+ *
+ * Fixed to the bottom, always there, thumb height. Selection is carried three
+ * ways and colour is only one of them: the cell fills, the label goes bold,
+ * and the ink darkens — desaturate a screenshot and you can still read where
+ * you are. Every cell is at least 56 tall and a quarter of the viewport wide,
+ * so the smallest target here is 97 x 56 at 390. The inset padding is what
+ * keeps the labels off a home indicator, and the spacer the page renders below
+ * the footer is what keeps this bar off the last line of content.
+ */
+function AppTabBar({ view, go }) {
+  const here = APP_TAB[view]
+  return (
+    <nav aria-label="App screens"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ruling bg-paper
+        pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <ul className="flex">
+        {APP_NAV.map(([id, label, Mark]) => {
+          const on = here === id
+          return (
+            <li key={id} className="flex-1">
+              <button type="button" onClick={() => go(id)}
+                aria-current={on ? 'page' : undefined}
+                className={cn('flex min-h-[56px] w-full flex-col items-center justify-center gap-1',
+                  'px-1 pb-1.5 pt-2 transition-colors duration-150',
+                  on ? 'text-accent-ink' : 'text-ink-2')}>
+                {/* Solid, not tinted. An accent-wash pill measures 1.14 : 1
+                    against paper, which is a fill you can only see if you
+                    already know where to look; filled accent is 5.52 and the
+                    mark reverses out of it, so the selected cell survives a
+                    desaturated screenshot. */}
+                <span aria-hidden className={cn('flex h-7 w-14 items-center justify-center rounded-bar',
+                  'transition-colors duration-150', on ? 'bg-accent text-paper' : 'bg-transparent')}>
+                  <Mark size={22}/>
+                </span>
+                <span className={cn('font-display text-fine leading-none',
+                  on ? 'font-bold' : 'font-medium')}>{label}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}
+
+/* The desktop rail.
+ *
+ * The same four destinations, not the phone bar stretched across 1440: four
+ * icons spaced a third of a metre apart along the bottom of a monitor is a
+ * phone habit on a desk. A 216px column instead, labels beside their marks,
+ * with the settings and the way out where a desk app keeps them — at the foot,
+ * below everything you actually came for.
+ */
+function AppRail({ view, go }) {
+  const here = APP_TAB[view]
+  return (
+    <div className="fixed inset-y-0 left-0 z-40 hidden w-[13.5rem] flex-col overflow-y-auto
+      border-r border-rule bg-paper lg:flex">
+      <div className="border-b border-rule px-5 py-4 text-row text-ink">
+        <Logo/>
+      </div>
+      <nav aria-label="App screens" className="flex flex-col gap-0.5 p-3">
+        {APP_NAV.map(([id, label, Mark]) => {
+          const on = here === id
+          return (
+            <button key={id} type="button" onClick={() => go(id)}
+              aria-current={on ? 'page' : undefined}
+              className={cn('flex min-h-[44px] w-full items-center gap-3 rounded-field py-2 pr-3',
+                'text-left transition-colors duration-150',
+                on ? 'bg-accent-wash text-accent-ink' : 'text-ink-2 hover:text-ink')}>
+              {/* the same leading bar the phone drawer uses for the page you
+                  are on, so "you are here" looks the same across the product */}
+              <span aria-hidden className={cn('h-5 w-[3px] shrink-0 rounded-bar',
+                on ? 'bg-accent' : 'bg-transparent')}/>
+              <Mark size={20}/>
+              <span className={cn('font-display text-ui', on ? 'font-bold' : 'font-medium')}>{label}</span>
+            </button>
+          )
+        })}
+      </nav>
+      <div className="mt-auto border-t border-rule p-3">
+        <ModeToggle compact className="[&_button]:min-h-[44px]"/>
+        <ExitToSite go={go} className="mt-3"/>
+      </div>
+    </div>
+  )
+}
+
+/* The way out. Named, not a logo that might mean home and might mean site, and
+   set as a quiet text control rather than anything that competes with the four
+   screens above it. */
+function ExitToSite({ go, className }) {
+  return (
+    <button type="button" onClick={() => go('site')}
+      className={cn('flex min-h-[44px] items-center gap-2 rounded-field pr-2 font-display',
+        'text-ui font-medium text-ink-2 transition-colors duration-150 hover:text-ink', className)}>
+      <ArrowLeft aria-hidden className="size-4"/>Back to the site
+    </button>
+  )
+}
+
+/* On a phone the rail's foot has nowhere to go, so the two things it holds sit
+   in a strip of the same 56px the marketing bar uses. No wordmark and no tabs
+   in here: the bar at the bottom is the navigation, and a second row of it at
+   the top is the thing this pass is removing. */
+function AppTopStrip({ go }) {
+  return (
+    <div className="sticky top-0 z-40 border-b border-rule bg-paper lg:hidden">
+      <div className="wrap flex h-14 items-center justify-between gap-3">
+        <ExitToSite go={go}/>
+        <ModeToggle compact className="[&_button]:min-h-[44px]"/>
+      </div>
+    </div>
   )
 }
 
@@ -691,7 +860,11 @@ export function App() {
       window.ScrollTrigger?.refresh()
     })
   }, [])
-  const go = React.useCallback(v => {
+  /* Every caller resolves through here, so a control that asks for a view
+     which no longer exists lands on the overview instead of rendering nothing.
+     The command palette was doing exactly that. */
+  const go = React.useCallback(raw => {
+    const v = ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
     if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
     setView(v); land(v)
   }, [land])
@@ -703,6 +876,7 @@ export function App() {
   }, [land])
   const wide = view !== 'site'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
+  const inApp = APP_VIEWS.has(view)
 
   /* Three routes are tabs inside a section rather than pages of their own, and
      they keep their URLs so every existing link still lands in the right place. */
@@ -730,27 +904,42 @@ export function App() {
       {!showIntro && !visitor && !admin && (
         <NameGate onDone={() => { try { setVisitorState(getVisitor()) } catch { setVisitorState({ name:'Anonymous' }) } }}/>
       )}
-      <Header view={view} go={go}/>
+      {inApp ? <AppTopStrip go={go}/> : <Header view={view} go={go}/>}
       <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
-        <V go={go} key={view}/>
-      </div>
-      {/* Mounted per view and keyed by it, so leaving a page abandons any
-          question that was mid-answer rather than carrying it to the next one. */}
-      {/* One box in the corner, not a card over the page. It counts the
-          routes visited and only appears once someone has been around. It is
-          suppressed on the survey route itself, where offering to open the
-          survey over the survey would be a joke. */}
-      {!showIntro && visitor && !admin && view !== 'survey' && <ReviewLauncher page={view}/>}
-      <footer className="border-t border-rule py-11">
-        <div className="wrap">
-          <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
-            medical device and does not diagnose or treat any condition. If you need urgent help, contact your
-            local emergency number or a crisis line.</p>
-          <p className="note mt-3.5">MindMap · Solace Innovation</p>
+      {inApp && <AppRail view={view} go={go}/>}
+      {/* The rail is fixed, so the page is inset by its width rather than
+          laid out beside it: the dashboards draw full-bleed bands and a flex
+          sibling would have clipped them. */}
+      <div className={cn(inApp && 'lg:pl-[13.5rem]')}>
+        <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
+          <V go={go} key={view}/>
         </div>
-      </footer>
+        {/* Mounted per view and keyed by it, so leaving a page abandons any
+            question that was mid-answer rather than carrying it to the next one. */}
+        {/* One box in the corner, not a card over the page. It counts the
+            routes visited and only appears once someone has been around. It is
+            suppressed on the survey route itself, where offering to open the
+            survey over the survey would be a joke. */}
+        {/* Not on the app routes. A feedback bubble parked over a dashboard is
+            the clearest tell that a thing is a demo rather than a product, and
+            on a phone it would sit directly on top of the tab bar. It still
+            follows a reviewer around all eight marketing pages, and the survey
+            has its own place in the marketing bar. */}
+        {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
+        <footer className="border-t border-rule py-11">
+          <div className="wrap">
+            <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
+              medical device and does not diagnose or treat any condition. If you need urgent help, contact your
+              local emergency number or a crisis line.</p>
+            <p className="note mt-3.5">MindMap · Solace Innovation</p>
+          </div>
+        </footer>
+        {/* What keeps the tab bar off the last line of the page. Its height
+            plus whatever the handset reserves at the bottom of the glass. */}
+        {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))] lg:hidden"/>}
+      </div>
+      {inApp && <AppTabBar view={view} go={go}/>}
     </>
   )
 }

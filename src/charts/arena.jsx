@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
-import { ArrowLeft, ArrowRight } from '../ui/marks'
+import { ArrowLeft, ArrowRight, ChevronDown } from '../ui/marks'
 import { createCinematic } from './cinematic'
 
 /* The interactive CAD, sitting directly on the hardware page.
@@ -73,17 +73,26 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 `
 
 /* The eight configurations the model actually carries. Titles are the plain
-   ones: nothing here is named anything a reader has to decode. */
-const VIEWS = [
-  ['closed',    'Closed'],
-  ['exploded',  'Exploded'],
-  ['ghost',     'See through'],
-  ['skin',      'Skin side'],
-  ['section_a', 'Section A-A'],
-  ['section_b', 'Section B-B'],
-  ['arm',       'On the arm'],
-  ['optics',    'Optics'],
-]
+   ones: nothing here is named anything a reader has to decode.
+
+   They are split because eight views in a row is a control panel. Three of
+   them answer the questions a visitor arrives with — what is it, what is
+   inside it, how big is it on a person — and those three stay on the face of
+   the card. The other five answer questions only someone already reading a
+   drawing asks, and they sit behind the disclosure with the other machinery.
+   Nothing was removed: every one of the eight still calls setView. */
+const VIEWS = {
+  closed:    'Closed',
+  exploded:  'Exploded',
+  arm:       'On the arm',
+  ghost:     'See through',
+  skin:      'Skin side',
+  section_a: 'Section A-A',
+  section_b: 'Section B-B',
+  optics:    'Optics',
+}
+const PRIMARY = ['closed', 'exploded', 'arm']
+const SECONDARY = ['ghost', 'skin', 'section_a', 'section_b', 'optics']
 
 /* One sixth of a turn per press: far enough that the shape moves, short enough
    that a reader can walk it round with repeated presses. */
@@ -135,7 +144,7 @@ function greenSelection(a) {
 }
 
 export const PatchArena = React.forwardRef(function PatchArena(
-  { className, view = 'closed', onPlay, beside }, ref) {
+  { className, view = 'closed', onPlay, onShowAll, beside }, ref) {
   const host = React.useRef(null)
   const el = React.useRef(null)
   /* the walkthrough, once the geometry is in and the box is on screen */
@@ -150,6 +159,9 @@ export const PatchArena = React.forwardRef(function PatchArena(
   const [mode, setMode] = React.useState(view)
   const [apart, setApart] = React.useState(false)
   const [turning, setTurning] = React.useState(false)
+  /* The drawer of demoted controls. Closed on arrival, because the front of
+     the card has to read as a product and not as a rig. */
+  const [more, setMore] = React.useState(false)
 
   /* Anything the reader does to the model is the reader taking hold of it, so
      the sequence yields first and stays yielded. */
@@ -217,6 +229,12 @@ export const PatchArena = React.forwardRef(function PatchArena(
         a.addEventListener('mindmap-view-change', e => {
           if (dead) return
           setMode(e.detail.view)
+          /* The model changes its own view — the selection card's "Section"
+             action does it, and so does the walkthrough. If it lands on one of
+             the five demoted views the drawer opens, so the lit button is
+             always on screen and the pressed state never has to lie about
+             where the model is. */
+          if (!PRIMARY.includes(e.detail.view)) setMore(true)
           /* setView writes the explode value itself and does not announce it,
              so the take-apart control would otherwise stay lit over a model
              that had been put back together by a section cut. */
@@ -343,10 +361,15 @@ export const PatchArena = React.forwardRef(function PatchArena(
   }, [playing, onPlay, spinOff])
 
   const live = phase === 'live' && armed
-  /* Compact because there are fourteen of them and they are the interface, not
-     a band of buttons over it. 44px is the floor and text-fine is the smallest
-     step that carries a control label. */
+  /* Compact because they are the interface, not a band of buttons over it.
+     44px is the floor and text-fine is the smallest step that carries a
+     control label. */
   const key = 'min-h-[44px] px-3 text-fine'
+  const viewKey = id => (
+    <Button key={id} size="sm" variant={mode === id && !playing ? 'solid' : 'outline'}
+      aria-pressed={mode === id && !playing} disabled={!live}
+      onClick={() => show(id)} className={key}>{VIEWS[id]}</Button>
+  )
 
   return (
     /* The viewer is a composed object on the page, not a bare canvas floating
@@ -410,37 +433,78 @@ export const PatchArena = React.forwardRef(function PatchArena(
       </div>
 
       {/* Inside the card and under a hairline: the controls belong to the
-          figure above them the way a key belongs to a drawing. */}
+          figure above them the way a key belongs to a drawing.
+
+          What this was: fourteen buttons in two rows, each row opened by a
+          mono tick label ("Views", "Turn"). That is a control panel, and it
+          told a first-time reader that operating the model was a job. It is
+          one row now — three views, the two turn keys, the walkthrough, and a
+          drawer holding the eight controls that answer questions nobody asks
+          on arrival. The row labels went with it: a group of buttons under a
+          drawing does not need to be told it is a group, and the assistive
+          reading is carried by role="group" and aria-label instead, which is
+          where it belonged. */}
       <div className="border-t border-rule px-4 py-3 lg:px-5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="tick mr-1 shrink-0">Views</span>
-          {VIEWS.map(([id, label]) => (
-            <Button key={id} size="sm" variant={mode === id && !playing ? 'solid' : 'outline'}
-              aria-pressed={mode === id && !playing} disabled={!live}
-              onClick={() => show(id)} className={key}>{label}</Button>
-          ))}
-        </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <span className="tick mr-1 shrink-0">Turn</span>
-          <Button size="sm" variant="outline" disabled={!live} onClick={() => turn(1)} className={key}>
-            <ArrowLeft/>Left
-          </Button>
-          <Button size="sm" variant="outline" disabled={!live} onClick={() => turn(-1)} className={key}>
-            Right<ArrowRight/>
-          </Button>
-          <Button size="sm" variant={turning ? 'solid' : 'outline'} aria-pressed={turning}
-            disabled={!live} onClick={rotate} className={key}>Keep turning</Button>
-          <Button size="sm" variant={apart ? 'solid' : 'outline'} aria-pressed={apart}
-            disabled={!live} onClick={() => takeApart(!apart)} className={key}>
-            {apart ? 'Put together' : 'Take apart'}
-          </Button>
-          <Button size="sm" variant="outline" disabled={!live}
-            onClick={() => { hold(); spinOff(); try { el.current?.showAll() } catch {} }} className={key}>
-            Show every part
-          </Button>
+          <div role="group" aria-label="View" className="flex flex-wrap items-center gap-1.5">
+            {PRIMARY.map(viewKey)}
+          </div>
+          {/* A hairline, not a gap: at sm and up the two groups sit on one line
+              and nothing else separates turning the model from changing what it
+              shows. It is hidden while the row is wrapping, where the wrap is
+              already the separation. */}
+          <span aria-hidden className="mx-1 hidden h-6 w-px bg-rule sm:block"/>
+          <div role="group" aria-label="Turn the model" className="flex items-center gap-1.5">
+            {/* Icon-only, because "Left" and "Right" beside two arrows is the
+                same word twice and the pair is what pushes this row onto a
+                second line at 390px. The name is still on the button for
+                anyone reading it aloud. */}
+            <Button size="sm" variant="outline" disabled={!live} onClick={() => turn(1)}
+              className={cn(key, 'min-w-[44px] px-0')}>
+              <ArrowLeft/><span className="sr-only">Turn left</span>
+            </Button>
+            <Button size="sm" variant="outline" disabled={!live} onClick={() => turn(-1)}
+              className={cn(key, 'min-w-[44px] px-0')}>
+              <ArrowRight/><span className="sr-only">Turn right</span>
+            </Button>
+          </div>
+          {/* The sequence starts itself on arrival, so its stop has to be on
+              the face of the card: a moving model whose stop is behind a
+              disclosure is the one thing here that could trap a reader. */}
           <Button size="sm" variant={playing ? 'solid' : 'outline'} aria-pressed={playing}
-            disabled={!live} onClick={walk} className={key}>Walkthrough</Button>
+            disabled={!live} onClick={walk} className={key}>
+            {playing ? 'Stop' : 'Walkthrough'}
+          </Button>
+          {/* Next to the controls it opens, not flushed to the far edge: at
+              1440 an ml-auto put it nine hundred pixels away from the group it
+              belongs to and it read as an unrelated page control. */}
+          <Button size="sm" variant="outline" disabled={!live} aria-expanded={more}
+            aria-controls="arena-more" onClick={() => setMore(v => !v)} className={key}>
+            More
+            <ChevronDown className={cn('transition-transform duration-150', more && 'rotate-180')}/>
+          </Button>
         </div>
+        {more && (
+          <div id="arena-more" className="mt-2.5 flex flex-wrap items-center gap-1.5
+            border-t border-rule pt-2.5">
+            {SECONDARY.map(viewKey)}
+            <Button size="sm" variant={turning ? 'solid' : 'outline'} aria-pressed={turning}
+              disabled={!live} onClick={rotate} className={key}>Keep turning</Button>
+            <Button size="sm" variant={apart ? 'solid' : 'outline'} aria-pressed={apart}
+              disabled={!live} onClick={() => takeApart(!apart)} className={key}>
+              {apart ? 'Put together' : 'Take apart'}
+            </Button>
+            {/* onShowAll, because this is the one control that undoes a
+                choice made outside the card: the part cards beside the figure
+                isolate an assembly, and without telling them, the rail went on
+                reading "Showing only this" over a model showing everything. */}
+            <Button size="sm" variant="outline" disabled={!live}
+              onClick={() => { hold(); spinOff(); onShowAll?.(); try { el.current?.showAll() } catch {} }}
+              className={key}>
+              Show every part
+            </Button>
+          </div>
+        )}
         {/* The viewer used to say this along the bottom of the canvas in 10px
             mono. It is one line of the page's own type instead. */}
         <p className="note mt-2">Drag the model to turn it. Scroll to zoom. Click any part to name it.</p>

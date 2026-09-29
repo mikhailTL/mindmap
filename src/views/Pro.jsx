@@ -1,5 +1,4 @@
 import React from 'react'
-import { Back } from './Monitor'
 import { Panel } from '../s21/display'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
 import { RuleDraw, ScrollIn } from '../s21/motion'
@@ -1006,7 +1005,6 @@ export function Pro({ go }) {
         {/* Was py-6 sm:py-8; the header band is the smallest of the three
             fixed steps, and matches the band in views/shell.jsx. */}
         <div className="wrap relative py-10">
-          <Back go={go} to="site" label="Overview"/>
           {/* Was "For school counselors and psychologists" — an audience, not a
               screen. The three audience views are named the same way now. */}
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
