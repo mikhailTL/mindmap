@@ -332,7 +332,8 @@ export function Launch({ go }) {
       </p>
 
       <section className="mt-14">
-        <h2 className="mark">Three screens</h2>
+        <h2 className="font-display text-sub font-bold leading-[1.12] tracking-[-0.024em] text-ink">
+          Three screens</h2>
         <div className="mt-5 grid gap-6 lg:grid-cols-3">
           {ROLES.map(role => (
             <Door key={role.id} role={role} go={go} active={active} setActive={setActive}

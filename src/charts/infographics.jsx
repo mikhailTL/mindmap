@@ -24,38 +24,28 @@ export function SignalTrace({ kind, className }) {
 }
 
 /* ── Patch → phone → sentence. Three steps, no paragraph. ──────────────── */
-/* Three steps in a row of equal boxes reads as three options. These are not
-   options; the second cannot happen without the first. So: one rule running
-   the length of the sequence, three blocks of different widths hanging off it,
-   each offset a little further down than the last. Width and drop carry the
-   order the step numerals used to carry, and unlike a numeral they cannot end
-   up disagreeing with the source order. */
+/* Three steps as three windows. They were three blocks hanging off one long
+   rule, with a second rule over each block, and the review said what a rule
+   between items does: it reads as a new topic beginning. A box closes a group,
+   so the sequence is now boxed and the order is carried by the order. */
 export function HowItWorks({ className }) {
   const steps = [
-    { t:'Worn on the arm', art:'patch', w:'lg:w-[34%]', drop:'lg:mt-0',
-      s:<>Four signals off the forearm, once a second, all day: pulse, sweat, skin temperature and
-        movement.</> },
-    { t:'Read on your phone', art:'phone', w:'lg:w-[28%]', drop:'lg:mt-12',
-      s:<>Scored against your own last two weeks.</> },
-    { t:'One sentence back', art:'card', w:'lg:w-[38%]', drop:'lg:mt-6',
-      s:<>One line in plain words. The four signals sit underneath it, and you can stop reading at
-        any point.</> },
+    { t:'Worn on the arm', art:'patch',
+      s:'Pulse, sweat, skin temperature and movement off the upper arm, once a second, all day.' },
+    { t:'Read on your phone', art:'phone',
+      s:'Scored against your own last two weeks.' },
+    { t:'One sentence back', art:'card',
+      s:'One line in plain words, with the four signals under it.' },
   ]
   return (
-    <ol className={cn('relative m-0 list-none p-0 lg:flex lg:items-start lg:gap-10', className)}>
-      {/* the rule the sequence hangs from */}
-      <span aria-hidden className="absolute left-0 right-0 top-0 hidden border-t-2 border-ink lg:block"/>
-      {steps.map((s2, i) => (
-        <li key={s2.t} className={cn('border-t-2 border-ink pt-5 lg:border-t-0 lg:pt-7',
-          i > 0 && 'mt-9 lg:mt-0', s2.w, s2.drop)}>
-          <div className="flex items-baseline gap-3">
-            <h3 className="font-display text-head font-bold text-ink">{s2.t}</h3>
-          </div>
-          <div className={cn('mt-5 flex items-center bg-mist/70 px-4',
-            i === 0 ? 'h-28' : i === 1 ? 'h-20' : 'h-24')}>
+    <ol className={cn('m-0 grid auto-rows-fr list-none gap-5 p-0 md:grid-cols-3', className)}>
+      {steps.map(s2 => (
+        <li key={s2.t} className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
+          <span className="flex h-24 items-center justify-center rounded-field bg-mist/70">
             <StepArt kind={s2.art}/>
-          </div>
-          <p className="mt-4 max-w-[38ch] text-sec text-ink-2">{s2.s}</p>
+          </span>
+          <h3 className="mt-5 font-display text-head font-bold leading-tight text-ink">{s2.t}</h3>
+          <p className="mt-2 max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.s}</p>
         </li>
       ))}
     </ol>
@@ -84,14 +74,20 @@ function StepArt({ kind }) {
 }
 
 /* ── Who sees what. Replaces four paragraphs of privacy copy. ──────────── */
-const ROWS = [
-  ['One number for the day',    2, 2, 2],
-  ['Whether the week ran high', 2, 2, 2],
-  ['Every reading, second by second', 2, 0, 1],
-  ['Anything they wrote',       2, 0, 0],
-  ['Where they were',           2, 0, 0],
+/* The five things a day of measurement produces, and what each person is shown
+   of them. 2 always, 1 only with consent, 0 never. */
+const WHAT = [
+  'One number for the day',
+  'Whether the week ran high',
+  'Every reading, second by second',
+  'Anything they wrote',
+  'Where they were',
 ]
-const WHO = ['Student', 'Parent', 'Counselor']
+const SEES = [
+  { who:'Student',   sees:[2, 2, 2, 2, 2] },
+  { who:'Parent',    sees:[2, 2, 0, 0, 0] },
+  { who:'Counselor', sees:[2, 2, 1, 0, 0] },
+]
 function Mark({ v }) {
   const label = v === 2 ? 'Always' : v === 1 ? 'Only if the student agrees' : 'Never'
   return (
@@ -115,32 +111,31 @@ function Mark({ v }) {
 export function WhoSeesWhat({ className }) {
   return (
     <figure className={cn('m-0', className)}>
-      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sec text-ink-2">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sec text-ink-2">
         <span className="flex items-center gap-2"><Mark v={2}/> Always</span>
         <span className="flex items-center gap-2"><Mark v={1}/> Only if the student agrees</span>
         <span className="flex items-center gap-2"><Mark v={0}/> Never</span>
       </div>
-      <table className="w-full border-collapse text-left">
-        <caption className="sr-only">What each person can see</caption>
-        <thead>
-          <tr>
-            <th className="sticky top-[7rem] z-10 w-[38%] border-b border-ink bg-paper py-3 pr-3
-              font-display text-fine font-bold text-ink-2 sm:w-1/2 sm:pr-4 sm:text-tick">What</th>
-            {WHO.map(w => <th key={w}
-              className="sticky top-[7rem] z-10 border-b border-ink bg-paper px-1 py-3 text-center
-                font-display text-fine font-bold text-ink-2 sm:text-tick">{w}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {ROWS.map(([what, a, b, c]) => (
-            <tr key={what}>
-              <th scope="row" className="border-b border-rule py-4 pr-3 text-left text-sec font-normal
-                text-ink sm:pr-4 sm:text-meta">{what}</th>
-              {[a, b, c].map((v, i) => <td key={i} className="border-b border-rule px-1 py-4"><Mark v={v}/></td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* One window per person, not a table. The table put a rule under every
+          row, and a rule across a list of five things reads as five separate
+          subjects rather than as one person's view of one day. Equal rows at
+          every width: auto-rows-fr, because the three windows stack into one
+          column on a phone and auto rows there size themselves separately. */}
+      <div className="mt-5 grid auto-rows-fr gap-5 md:grid-cols-3">
+        {SEES.map(p => (
+          <div key={p.who} className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
+            <h3 className="font-display text-head font-bold leading-tight text-ink">{p.who}</h3>
+            <ul className="mt-4 grid list-none gap-3 p-0">
+              {WHAT.map((w, i) => (
+                <li key={w} className="grid grid-cols-[1.25rem_1fr] items-start gap-3 text-sec leading-[1.45]">
+                  <span className="mt-[0.1rem]"><Mark v={p.sees[i]}/></span>
+                  <span className={p.sees[i] === 0 ? 'text-ink-3' : 'text-ink'}>{w}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
       <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">Students can change every row at any
         time. Crisis alerts are the exception, and students are told so before they start.</figcaption>
     </figure>

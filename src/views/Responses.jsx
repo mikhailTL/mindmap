@@ -974,15 +974,15 @@ export function Responses() {
                 Who would recommend it
               </figcaption>
               <p className="note mt-1">
-                One 0–10 question. Promoters are 9–10, passives 7–8, detractors
-                0–6; the score is the promoter share minus the detractor share,
+                One question, scored 0 to 10. Promoters answer 9 or 10, passives 7 or 8,
+                detractors 0 to 6. The score is the promoter share minus the detractor share,
                 so it runs −100 to +100 and passives count only by diluting both.
               </p>
               <Rows
                 points={[
-                  { value: 'promoter', label: 'Promoters (9–10)' },
-                  { value: 'passive', label: 'Passives (7–8)' },
-                  { value: 'detractor', label: 'Detractors (0–6)' },
+                  { value: 'promoter', label: 'Promoters, 9 or 10' },
+                  { value: 'passive', label: 'Passives, 7 or 8' },
+                  { value: 'detractor', label: 'Detractors, 0 to 6' },
                 ]}
                 counts={{ promoter: s.promoters, passive: s.passives, detractor: s.detractors }}
                 total={s.npsAnswered}

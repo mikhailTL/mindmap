@@ -119,7 +119,10 @@ export function ExplodedStack({
   className,
   caption = 'Drawing · engineering labels',
   shift = '0%, 0%',
-  size = 'w-[min(84%,400px)]',
+  /* 84% overran the left edge by 4px at 390 once the sheets tip: the
+     rotation widens the painted box past the element box. 76% below sm
+     keeps every sheet inside the column; the desktop figure is unchanged. */
+  size = 'w-[min(76%,400px)] sm:w-[min(84%,400px)]',
 }) {
   return (
     <div className={'relative overflow-x-clip [perspective:1500px] ' + (className || '')}>

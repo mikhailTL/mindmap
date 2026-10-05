@@ -12,6 +12,7 @@ import { studentRings } from '../lib/readings'
 import { triage, tierOf, TIER_LABEL } from '../lib/caseload'
 import { DATA } from '../lib/assets'
 import { HowItWorks, WhoSeesWhat, WeekStrip } from '../charts/infographics'
+import { Card } from '../ui/card'
 import { cn } from '../lib/utils'
 
 /* The homepage, in the order the argument actually runs.
@@ -66,8 +67,8 @@ import { cn } from '../lib/utils'
    only looking. The middle one carries the accent rule because it is the only
    one a stranger can use in the next minute. */
 const DOORS = [
-  { id:'patch', go:'patch', title:'Wear the patch', note:'Needs a patch',
-    line:'A sticker on your upper arm reads four signals once a second, for a week.',
+  { id:'patch', go:'patch', title:'Wear the patch', note:'Needs the patch',
+    line:'A real reading from your own body, all day, off a sticker that takes pulse, sweat, temperature and movement once a second.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -75,8 +76,8 @@ const DOORS = [
         <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
-  { id:'phone', go:'without-patch', title:'Use your phone', note:'Your own reading', lead:true,
-    line:'Your own reading, from your own body. Fingertip on the camera, one spoken sentence, forty five seconds.',
+  { id:'phone', go:'without-patch', title:'Use your phone', note:'No hardware needed', lead:true,
+    line:'A real reading from your own body in forty five seconds, off the camera and one spoken sentence.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -86,8 +87,8 @@ const DOORS = [
         <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
-  { id:'demo', go:'app', title:'Try the demo', note:'Just looking',
-    line:'Nobody measured. Every screen filled with made-up data so you can look around without taking a reading.',
+  { id:'demo', go:'app', title:'Try the demo', note:'No reading taken',
+    line:'Every screen filled with made up data, so you can look around without measuring anything.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="18" y="13" width="184" height="94" rx="10" fill="none" className="stroke-ruling"
@@ -159,6 +160,18 @@ function Preview({ id }) {
   )
 }
 
+/* What a reader asks the moment they see a sticker on somebody's arm. Every
+   line here is a fact the hardware thread has settled, and the last one is the
+   one it has not: an invented wear time would be the only unmeasured number on
+   the page. */
+const PATCH_FACTS = [
+  'An adhesive sticker, worn on the upper arm.',
+  'A short sleeve covers it. Nothing shows when it is covered.',
+  'Three parts: a printed outer shell, an electronics pod, and the skin side base.',
+  'The board drops into the pod. The shell charges through a slot in its side.',
+  'How long one adhesive lasts before it is replaced is not settled. No unit has been worn by anyone yet.',
+]
+
 const NEVER = [
   'Show a parent a raw reading',
   'Report on a group of under five students',
@@ -212,12 +225,12 @@ export function Overview({ go }) {
             </h1>
             <ScrollIn as="p" className="mt-6 max-w-[46ch] text-lead font-medium leading-[1.35] text-ink-2">
               MindMap measures what stress does to your body and turns it into
-              one number a day, plus one plain sentence saying what changed.
+              one number a day, plus one plain sentence saying what changed. A
+              rising week shows up early, and you choose who else sees it.
             </ScrollIn>
             <ScrollIn as="p" className="mt-3 max-w-[46ch] text-sec text-ink-2">
-              It reads your pulse, your sweat, your skin temperature and how much you move. Read
-              them from a patch on your upper arm using the app, or from the phone already in
-              your pocket.
+              It reads pulse, sweat, skin temperature and movement. Read them from a patch on
+              your upper arm using the app, or from the phone already in your pocket.
             </ScrollIn>
             <ScrollIn className="mt-8">
               <div className="flex flex-wrap gap-3">
@@ -256,7 +269,16 @@ export function Overview({ go }) {
                   not a hard edge appearing. */}
               <span aria-hidden className="mm-glow pointer-events-none absolute left-1/2 top-1/2
                 h-[62%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]"/>
-              <PatchFront className="relative w-[196px] shrink-0 sm:w-[240px] lg:w-[290px] xl:w-[340px]"/>
+              {/* The caption is the figure's own label. The "4 signals" claim
+                  used to stand on its own beside this drawing, which told a
+                  reader there were four of something and not what. */}
+              <figure className="relative m-0 flex min-w-0 max-w-full flex-col items-center gap-3">
+                <PatchFront className="w-[180px] sm:w-[224px] lg:w-[250px] xl:w-[290px]"/>
+                <figcaption className="max-w-[17ch] text-balance text-center font-display text-fine
+                  font-bold tracking-[0.01em] text-ink-3 sm:max-w-none">
+                  Pulse, sweat, temperature, movement
+                </figcaption>
+              </figure>
             </div>
 
             <div className="relative flex flex-1 flex-col items-center justify-center
@@ -313,7 +335,7 @@ export function Overview({ go }) {
         <SectionLede>
           All three open the same app. They differ in what it has to work with.
         </SectionLede>
-        <div className="mt-7 grid gap-5 md:grid-cols-3">
+        <div className="mt-7 grid auto-rows-fr gap-5 md:grid-cols-3">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(d.go)}
@@ -339,6 +361,19 @@ export function Overview({ go }) {
       <Section name="How it works" tone="card" tight className="bg-aqua">
         <SectionHead>A day in, one score and one sentence out.</SectionHead>
         <HowItWorks className="mt-6"/>
+        {/* One window, five lines. The reviewer asked five questions about the
+            object itself and the page answered none of them. */}
+        <div className="mt-6 rounded-panel border border-rule bg-card p-6">
+          <h3 className="font-display text-head font-bold leading-tight text-ink">The patch itself</h3>
+          <ul className="mt-4 grid list-none gap-x-10 gap-y-2.5 p-0 md:grid-cols-2">
+            {PATCH_FACTS.map(t => (
+              <li key={t} className="flex gap-3 text-sec leading-[1.5] text-ink-2">
+                <span aria-hidden className="mt-[0.62em] size-1.5 shrink-0 rounded-chip bg-accent"/>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Section>
 
       {/* ── the three audiences ──────────────────────────────────────────
@@ -357,7 +392,7 @@ export function Overview({ go }) {
             and the other two like footnotes. They are three views of the same
             day and the grid should say so: same width, same height, same
             order of parts in each. */}
-        <div className="mt-7 grid gap-5 lg:grid-cols-3">
+        <div className="mt-7 grid auto-rows-fr gap-5 lg:grid-cols-3">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}

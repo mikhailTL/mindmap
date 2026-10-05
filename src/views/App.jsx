@@ -730,12 +730,17 @@ function SurveyPage() {
   const answer = (q, value, label) => recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
 
   return (
-    <>
+    /* <main>, like every other page: without it this route had no main
+       landmark and a screen reader had nothing to skip to. */
+    <main>
       {/* "Tell us where this falls down" was the heading here. There is no
           "us": one student reads these. And "where this falls down" is not a
           phrase anybody says out loud, which is why it read as filler. */}
-      <Section tone="paper" name="Feedback" tight>
-        <SectionHead>Tell me what to fix</SectionHead>
+      <Section tone="paper" tight>
+        <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
+          Give feedback
+        </h1>
+        <SectionHead className="mt-5">Tell me what to fix</SectionHead>
         <SectionLede>
           {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
           so you can stop halfway and come back. The only thing kept alongside them is the
@@ -770,7 +775,7 @@ function SurveyPage() {
               className="mt-9 border-t border-ink pt-3 first:mt-0
                 lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
               <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
-                <h2 className="font-display text-tick font-bold text-ink-2">{section.title}</h2>
+                <h2 className="font-display text-head font-bold text-ink-2">{section.title}</h2>
                 {section.note && <p className="mt-1.5 max-w-[36ch] text-meta text-ink-3">{section.note}</p>}
               </div>
               <div className="mt-5 flex flex-col gap-6 lg:mt-0">
@@ -784,7 +789,7 @@ function SurveyPage() {
                           justify-between it reads as a heading in a table
                           rather than a note about this one question. */}
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
+                        <p className="max-w-[44ch] font-display text-body font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
                       </div>
                       {off && !a ? <p className="note mt-3">Skipped.</p> : (
@@ -814,7 +819,7 @@ function SurveyPage() {
           </div>
         </div>
       </Section>
-    </>
+    </main>
   )
 }
 

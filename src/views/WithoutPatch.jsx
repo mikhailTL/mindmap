@@ -33,28 +33,35 @@ import { ITEMS } from '../lib/engine'
  * puts its caption in the margin instead of under itself.
  *
  * The second is the ladder. Alternating paper and card is alternating nothing:
- * they are 2% apart in luminance. So the bands are mist, white, accent wash,
- * white, beam wash, ink, which is a light surface against a tinted one the
- * whole way down and the dark band last. The two washes are not tones the
- * Section component knows about, so they arrive as a class and tailwind-merge
- * drops the tone's own background; tone is still passed because it is what
- * sets the eyebrow and heading colours, which must stay ink-side.
+ * they are 2% apart in luminance. The bands are mist, white, aqua-2, white,
+ * ink: 20%, 15%, 15% apart and then the dark one. The accent-wash and
+ * beam-wash pair that used to sit in the middle of that run measured 3% apart
+ * and read as one surface. aqua-2 is not a tone the Section component knows
+ * about, so it arrives as a class and tailwind-merge drops the tone's own
+ * background; tone is still passed because it sets the eyebrow and heading
+ * colours, which must stay ink-side.
+ *
+ * The fourth review cut the page again, on one note: too much of it. Six bands
+ * are four plus the hero now. The camera figure and the signal coverage are
+ * one subject and share a band. The four step phones are the instructions for
+ * the capture they sat above, so they moved into it and the lede between them
+ * went. Nothing on the page is a paragraph any more. The hero is a <header>
+ * rather than a <section>, so every <section> here is headed by an h2 at the
+ * one section size and the heading a reader could not find is gone.
  */
 
 const ROUTES = [
   { id:'sensors', title:'Camera and microphone', when:'45 seconds', art:'sensors',
-    line:'A fingertip on the rear lens, then one spoken sentence.',
     gives:['Heart rate', 'Beat-to-beat', 'Voice'] },
   { id:'ask', title:`${ITEMS.length} questions`, when:'30 seconds', art:'ask',
-    line:'No camera, no microphone. Same model, same scale.',
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
 const STEPS = [
-  { k:'pad',   t:'Fingertip on the rear camera.' },
-  { k:'still', t:'Hold still for thirty seconds.' },
-  { k:'say',   t:'Say one sentence out loud.' },
-  { k:'got',   t:'Read your score.' },
+  { k:'pad',   t:'Finger on the camera.' },
+  { k:'still', t:'Hold still.' },
+  { k:'say',   t:'Say one sentence.' },
+  { k:'got',   t:'Your score.' },
 ]
 
 /* Two small drawings, because two cards of equal prose are a comparison a
@@ -105,7 +112,7 @@ export function WithoutPatch({ go }) {
     <main>
       {/* mist, not paper. The hero used to be the same near-white as the
           section under it, so the page opened on one undivided sheet. */}
-      <section className="border-t border-rule bg-mist">
+      <header className="border-t border-rule bg-mist">
         <div className="wrap py-9 lg:py-12">
           <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12">
             <div>
@@ -117,16 +124,15 @@ export function WithoutPatch({ go }) {
                 You do not need the patch.
               </h1>
               <p className="mt-4 max-w-read text-lead leading-[1.4] text-ink-2">
-                Your phone already has the sensors. Forty five seconds, one score out of 100.
+                Forty five seconds, one score out of 100.
               </p>
               <p className="mt-2.5 max-w-read text-sec text-ink-2">
-                Nothing leaves the phone. No video or recording is ever saved.
+                Nothing leaves the phone.
               </p>
+              {/* One control. The second one went to the questions, which the
+                  route card below goes to under a clearer name. */}
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button onClick={toCheck}>Take a reading<span aria-hidden>→</span></Button>
-                <Button variant="outline" onClick={() => go('check')}>
-                  Answer {ITEMS.length} questions
-                </Button>
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
@@ -136,7 +142,7 @@ export function WithoutPatch({ go }) {
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
       {/* White, so the ruled step table in the figure has a ground its mist
           bands can be told apart from. */}
@@ -145,10 +151,22 @@ export function WithoutPatch({ go }) {
         <ScrollIn className="mt-5 lg:mt-6">
           <CameraModule className="mx-auto max-w-[66rem]"/>
         </ScrollIn>
+        {/* The coverage strip used to be two thirds of the way down the next
+            band under an h3, which is the heading the review could not find.
+            It is the same subject as the figure and sits under the same h2. */}
+        <ScrollIn className="mt-7">
+          <SignalCoverage/>
+        </ScrollIn>
       </Section>
 
-      <Section name="Two ways" tone="mist" tight className="bg-accent-wash">
+      <Section name="Two ways" tone="mist" tight className="bg-aqua-2">
         <SectionHead>Two ways to take a reading.</SectionHead>
+        {/* Asked twice, on two pages: how two ways to take a reading squares
+            with three ways to use MindMap. One line, in the Overview page's
+            own words so the two headings match. */}
+        <SectionLede className="mt-2.5">
+          Two of the 3 Ways to Use MindMap. The demo takes no reading.
+        </SectionLede>
         <div className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-5">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
@@ -163,7 +181,6 @@ export function WithoutPatch({ go }) {
                   <CardTitle>{r.title}</CardTitle>
                   <span className="font-mono text-tick tabular-nums text-accent">{r.when}</span>
                 </div>
-                <p className="mt-1.5 max-w-[38ch] text-sec leading-[1.45] text-ink-2">{r.line}</p>
                 <ul className="mt-3 flex list-none flex-wrap gap-2 p-0">
                   {r.gives.map(g => (
                     <li key={g} className="rounded-chip border border-rule bg-mist/60 px-3 py-0.5 text-fine text-ink-2">{g}</li>
@@ -189,15 +206,18 @@ export function WithoutPatch({ go }) {
             </ScrollRow>
           ))}
         </div>
-
-        <ScrollIn className="mt-7">
-          <h3 className="font-display text-head font-bold text-ink">What the phone picks up.</h3>
-          <SignalCoverage className="mt-3"/>
-        </ScrollIn>
       </Section>
 
-      <Section name="How to do it" tone="card" tight>
-        <SectionHead>Four steps.</SectionHead>
+      {/* The procedure and the thing it is a procedure for were two bands,
+          two headings and a lede. One band now: four phones, then the capture
+          that follows them. The numerals stay because this is a sequence.
+
+          paper, not card: the capture is built out of white cards, and on a
+          white band a white card is a border and nothing else. Against the
+          aqua band above it paper is a 10% step, where mist, aqua and both
+          washes all land inside 6% of it and read as the same surface. */}
+      <Section name="Try it" tone="paper" tight id="take">
+        <SectionHead>Take a reading in four steps.</SectionHead>
         {/* Two up until 1280, not until 1024. At 1024 a four-column track is
             210px wide and the phone drawing is 228px, so the row ran off the
             right edge on exactly the laptop width most people have.
@@ -221,25 +241,16 @@ export function WithoutPatch({ go }) {
             </ScrollRow>
           ))}
         </ol>
-      </Section>
-
-      {/* The turquoise wash, so the one section a visitor is meant to act in
-          is the one surface on the page that is neither white nor green. */}
-      <Section name="Try it" tone="mist" tight id="take" className="bg-beam-wash">
-        <SectionHead>Take a reading now.</SectionHead>
-        <SectionLede className="mt-2.5">
-          The band under the score is how sure the reading is.
-        </SectionLede>
-        <div className="mt-5"><PhoneCheck/></div>
+        <div className="mt-8"><PhoneCheck/></div>
       </Section>
 
       <Section name="Limits" tone="ink" tight>
-        <SectionHead tone="ink">What we have and have not proved.</SectionHead>
+        <SectionHead tone="ink">Proved and not proved.</SectionHead>
         <ul className="mt-5 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-6">
           {[
-            ['Proved', 'Heart rate lands within half a beat per minute of a test signal whose rate we already knew.'],
-            ['Careful', 'The beat-to-beat number is an index of our own, not a clinical RMSSD. It is withheld when the timing is too noisy.'],
-            ['Not proved', 'None of it has been tested against a real person yet. Every figure comes from synthetic signals.'],
+            ['Proved', 'Heart rate, within half a beat per minute on a known signal.'],
+            ['Careful', 'Beat-to-beat is our own index, not a clinical RMSSD. Withheld when noisy.'],
+            ['Not proved', 'Never tested on a person. Every figure is synthetic.'],
           ].map(([k, v], i) => (
             <ScrollRow key={k} index={i} as="li" className="border-t border-ink-3 pt-3">
               <p className="font-display text-ui font-bold text-accent-lit">{k}</p>

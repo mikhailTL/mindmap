@@ -160,22 +160,22 @@ const LEAD = 21                        // line leading inside a row
 
 export const CAMERA_STEPS = [
   { id: 'flash', n: '01', elbow: 378,
-    lines: ['The flash shines into the side', 'of your fingertip.'],
+    lines: ['The flash shines into', 'your fingertip.'],
     to: [[396, 76]] },
   { id: 'blood', n: '02', diagonal: true,
-    lines: ['Blood absorbs some of that light.', 'Every heartbeat changes how much.'],
+    lines: ['Blood absorbs the light.', 'Each heartbeat changes how much.'],
     to: [[486, 82]] },
   { id: 'optics', n: '03', elbow: 400,
-    lines: ['What comes back out crosses the', 'cover glass. The lens focuses it.'],
+    lines: ['Light comes back through the', 'cover glass. The lens focuses it.'],
     to: [[460, ROW.glass], [460, ROW.lens]] },
   { id: 'ir', n: '04', elbow: 408,
-    lines: ['The infrared filter drops the', 'light your eye cannot see.'],
+    lines: ['The infrared filter drops', 'invisible light.'],
     to: [[460, ROW.ir]] },
   { id: 'sensor', n: '05', elbow: 408,
-    lines: ['The sensor turns it into a number,', 'thirty times a second.'],
+    lines: ['The sensor reads it thirty', 'times a second.'],
     to: [[460, ROW.sensor]] },
   { id: 'pulse', n: '06', elbow: 420,
-    lines: ['That number rising and falling', 'is your pulse.'],
+    lines: ['That rise and fall', 'is your pulse.'],
     to: [[452, PHONE]] },
 ]
 

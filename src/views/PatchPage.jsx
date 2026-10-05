@@ -8,9 +8,26 @@ import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
 import { ChevronDown } from '../ui/marks'
 import { cn } from '../lib/utils'
+import { Section, SectionHead } from '../ui/section'
+import { PART_ART } from '../charts/patch-parts'
 
 /* The page's three part cards map onto the model's own assemblies. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
+
+/* The hero used to be one 41-word paragraph that stopped at "one score", and
+   the review stopped with it: it reads the signals how, then what does it do.
+   Five statements carry the whole chain in fewer words than the paragraph
+   carried half of it, and the last two are the half that was missing. Nothing
+   here is claimed beyond what the build actually is: how long one adhesive
+   lasts has not been decided and no unit has been worn, so no figure for
+   either appears. */
+const CHAIN = [
+  'Sticks to the upper arm, under a sleeve.',
+  'Reads four signals off the skin, one a second.',
+  'Sends them to your phone over Bluetooth.',
+  'A day becomes one score out of 100, plus a plain sentence on what changed.',
+  'You pick what a parent or counselor can see.',
+]
 
 export function PatchPage() {
   const [picked, setPicked] = React.useState(null)
@@ -58,141 +75,155 @@ export function PatchPage() {
   return (
     <main>
       {/* A dot grid sat over this band at 70%. It was texture standing in for
-          hierarchy, and the palette rebuild left the band reading as itself. */}
-      <section className="relative overflow-hidden border-b border-rule bg-mist">
-        {/* Was py-20, a page-region step at both edges: 160px of nothing on a
-            band that already opens with a label, a heading and a paragraph.
-            This is Section's own padding, which is the site's default break and
-            the one the review's "filled with nothing" was measured against. */}
+          hierarchy, and the palette rebuild left the band reading as itself.
+
+          The border-b is gone: the band under it is a <Section>, which brings
+          its own border-t, and two hairlines meeting read as a 2px rule
+          nobody drew. */}
+      <section className="relative overflow-hidden bg-mist">
         <div className="wrap relative py-9 lg:py-12">
           <Label>The patch</Label>
           {/* "What the patch measures." named the section but not the object, so
               a reader who landed here first still did not know what a patch is.
-              The heading states the thing; the paragraph states what it does.
+              The heading states the thing; the list under it states the chain.
               The measure widens from 18ch because the longer line needs it, and
               the break falls after "sticker-sized" so a 390px column cannot
               hyphen-break that word across two lines. */}
           <RevealLines as="h1"
             className="mt-3 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
-            lines={['A sticker-sized', 'patch for the forearm.']}/>
+            lines={['A sticker-sized', 'patch for the upper arm.']}/>
           <ScrollIn className="mt-4">
-            <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
-              A sticker you wear on your upper arm, under a sleeve. It reads four things off the
-              skin once a second and sends them to your phone over Bluetooth, where the app turns
-              a whole day of them into one score.
-            </p>
+            {/* Statements, not a block. The review asked for bullets here by
+                name, and the standing preference is the same. text-body rather
+                than text-lead: five lines at lead size is a wall again. */}
+            <ul className="m-0 grid max-w-[46ch] list-none gap-2 p-0">
+              {CHAIN.map(t => (
+                <li key={t} className="flex gap-2.5 text-body leading-[1.45] text-ink-2">
+                  {/* accent on mist is 4.85 : 1, well over the 3 : 1 a
+                      non-text mark needs, and the dot is aria-hidden so the
+                      list reads as a list and not as five bullet characters. */}
+                  <span aria-hidden
+                    className="mt-[0.52em] h-[7px] w-[7px] shrink-0 rounded-chip bg-accent"/>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
             {/* What you can DO here, said inside the first screen rather than
-                discovered nine hundred pixels down. The page's one interactive
-                object is a 3D model on a dark band below the fold, and nothing
-                above the fold admitted it existed. A real button, so it is in
+                discovered nine hundred pixels down. A real button, so it is in
                 the tab order and takes the site's focus ring, and the scroll
                 itself is left to the site's own rule so it stops animating
                 when the reader has asked for stillness. */}
             <button type="button" onClick={toModel}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
+              className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
                 font-display text-ui font-medium text-accent hover:border-accent hover:text-accent-ink">
               Turn the 3D model<ChevronDown/>
             </button>
           </ScrollIn>
-
-          {/* Plain words before the engineering labels. Two testers hit
-              EDA / PPG / nRF52840 first and stopped reading.
-
-              Sweat used to take the full width with a 56px trace and the other
-              three sat in a row beneath it. That weighting is gone: one signal
-              with a hero chart read as the feature and the other three as its
-              footnotes, when the reading is all four together and none of them
-              means anything alone. Four equal tiles, one row, a 44px trace
-              each — the row of metric tiles a product app opens with, and it
-              costs the page a whole band of height.
-
-              The signal's own colour is the card's leading rule, the same mark
-              the tiles elsewhere use. Each tile is its own <dl> so the
-              term/definition reading survives the grid. h-full is on both
-              wrappers because equal height is now the point: an uneven row of
-              four reads as four unrelated cards, not one reading. */}
-          <div className="mt-6 grid grid-cols-2 gap-3 lg:mt-7 lg:grid-cols-4 lg:gap-4">
-            {RAINBOW.map((s2, i) => (
-              <ScrollRow key={s2.id} index={i} className="h-full">
-                <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
-                  <div className="bg-mist/70 px-3 py-2.5 lg:px-4">
-                    <SignalTrace kind={s2.id} className="h-11"/>
-                  </div>
-                  <dl className="m-0 px-3 pb-3.5 pt-2.5 lg:px-4 lg:pb-4">
-                    <dt className="font-display text-row font-bold text-ink">{s2.name}</dt>
-                    {/* text-meta, not text-sec: two of these lines run to three
-                        rows in a 170px phone column and the tile is a label,
-                        not a paragraph. The full note on each signal, the
-                        0.35 g movement threshold included, is on the signal
-                        pages where a reader has asked for it. */}
-                    <dd className="m-0 mt-1 max-w-[26ch] text-meta text-ink-2">{s2.short}</dd>
-                  </dl>
-                </Card>
-              </ScrollRow>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* The dark band, used once. Two near-white bands in a row separate by
-          about 2% in luminance, which is not a separation a reader notices,
-          and the review asked for real shade between sections. This is where
-          it belongs: the model is the thing on this page worth stopping at,
-          and an inverted band puts a white card and a white shell on a ground
-          that is nothing like either.
+      {/* The four signals were the back half of the hero band and sat under no
+          heading of their own. That is what made this the one page in the menu
+          that failed the scale: h1 at 54px, then a 29px card title, and no
+          section heading anywhere on it. SectionHead is the site's h2 and the
+          32-48px step comes from there, so this page cannot drift again.
 
-          It also absorbs the section that used to follow. "The three parts"
-          was a third full band of its own, under a figure the reader had
-          already scrolled past, driving a model no longer on screen. As a rail
-          beside the figure the toggles point at something visible, and the
-          page loses a band. */}
-      <section ref={band} id="model" data-anchor className="border-b border-rule bg-ink text-paper">
-        <div className="wrap py-9 lg:py-12">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-start lg:gap-8">
+          A ground of its own as well. Plain words before the engineering
+          labels: two testers hit EDA / PPG / nRF52840 first and stopped
+          reading. Four equal tiles, one row, a 44px trace each, the signal's
+          own colour as the card's leading rule. h-full on both wrappers
+          because an uneven row of four reads as four unrelated cards rather
+          than as one reading. */}
+      <Section tone="card" tight className="bg-aqua-2">
+        <SectionHead className="mt-0 max-w-[24ch]">Four signals off the skin</SectionHead>
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          {RAINBOW.map((s2, i) => (
+            <ScrollRow key={s2.id} index={i} className="h-full">
+              <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
+                <div className="bg-mist/70 px-3 py-2.5 lg:px-4">
+                  <SignalTrace kind={s2.id} className="h-11"/>
+                </div>
+                <dl className="m-0 px-3 pb-3.5 pt-2.5 lg:px-4 lg:pb-4">
+                  <dt className="font-display text-row font-bold text-ink">{s2.name}</dt>
+                  {/* text-meta, not text-sec: two of these lines run to three
+                      rows in a 170px phone column and the tile is a label,
+                      not a paragraph. The full note on each signal, the
+                      0.35 g movement threshold included, is on the signal
+                      pages where a reader has asked for it. */}
+                  <dd className="m-0 mt-1 max-w-[26ch] text-meta text-ink-2">{s2.short}</dd>
+                </dl>
+              </Card>
+            </ScrollRow>
+          ))}
+        </div>
+      </Section>
+
+      {/* The dark band, used once, and now one section with one heading at the
+          top of it.
+
+          The review could not tell whether what sat on the green belonged to
+          the band or to the sections around it, and the cause was structural:
+          the band opened with a figure and kept its only heading in the
+          right-hand rail at card size, so the green had no stated beginning.
+          The heading is the first thing inside it now, at the same step as the
+          section above, and everything on the green sits under that one
+          heading. No extra rules were added to say so: the ground changes, the
+          padding is a step deeper than its neighbours, and the heading names
+          the section. The rail stays beside the figure, because a toggle that
+          isolates an assembly has to point at a model the reader can see. */}
+      <section ref={band} id="model" data-anchor
+        className="border-t border-rule bg-ink text-paper">
+        <div className="wrap py-10 lg:py-16">
+          <SectionHead tone="ink" className="mt-0 max-w-[26ch]">
+            The three parts of a patch
+          </SectionHead>
+          <div className="mt-6 grid gap-6 lg:mt-9
+            lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-start lg:gap-8">
             <figure className="m-0 min-w-0">
               {/* The drawing goes INTO the viewer's card rather than beside it
                   as a second figure at the same scale. One composition, one
                   edge, one caption under the pair. */}
               <PatchArena ref={model} onPlay={() => setPicked(null)} onShowAll={() => setPicked(null)}
                 beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
+              {/* Four short sentences. "No figure on this page was measured
+                  from one" is what the review could not parse, and it was
+                  saying two things at once: that nothing is a photograph, and
+                  where the dimensions came from. The second was answering a
+                  question nobody asked, so it is gone. */}
               <figcaption className="mt-3 max-w-[70ch] text-meta text-mist">
-                Turn the model to see the patch from any angle, or cut it open. The flat drawing
-                beside it names the same three layers. Nothing here is a photograph: no unit has
-                been built yet, so every dimension on this page comes from the CAD.
+                The flat drawing names the three layers. The model is the same patch. You can turn
+                it and cut it open. No unit has been built, so nothing on this page is a photograph.
               </figcaption>
             </figure>
 
-            {/* The three toggles, as a rail. `.mark` rules in ink and colours
-                its label ink-2, both of which disappear on this band, so the
-                heading is written out here in the band's own two values. */}
-            <div className="min-w-0">
-              {/* Sized as what it is: a heading one level under the page
-                  title, not a caption. The review could not tell whether this
-                  was a new section or a part of the one above it, and at
-                  caption size it could have been either. */}
-              <h3 className="font-display text-head font-bold leading-tight text-accent-lit">
-                The three parts of a patch</h3>
-              <p className="mt-2 text-sec text-mist">Tap one to see it on its own.</p>
-              <ol className="mt-4 grid list-none gap-3 p-0">
-                {LAYERS.map(l => {
-                  const on = picked === l.part
-                  return (
-                    <li key={l.i}>
-                      <Card interactive as="button" aria-pressed={on}
-                        onClick={() => setPicked(on ? null : l.part)}
-                        className={cn('grid items-start gap-4 p-4', on && 'border-l-accent bg-mist/60')}>
-                        <div>
-                          <h3 className="font-display text-row font-bold text-ink">{l.title}</h3>
-                          <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
-                          <span className="mt-2 block text-tick font-bold text-accent">
-                            {on ? 'Showing only this' : 'Show only this'}</span>
-                        </div>
-                      </Card>
-                    </li>
-                  )
-                })}
-              </ol>
-            </div>
+            <ol className="m-0 grid list-none gap-3 p-0">
+              {LAYERS.map(l => {
+                const on = picked === l.part
+                return (
+                  <li key={l.i}>
+                    <Card interactive as="button" aria-pressed={on}
+                      onClick={() => setPicked(on ? null : l.part)}
+                      className={cn(on && 'border-l-accent')}>
+                      {/* The review called three text-only boxes boring and it
+                          was right. The drawing sits on ink inside the white
+                          card: the cards stand on the dark band, the band's
+                          two usable stroke values are mist and accent.lit, and
+                          both vanish on white. Its own ink panel is what lets
+                          the drawing keep the band's palette and still measure
+                          12.69 and 7.67 against what is behind it. */}
+                      <div className="bg-ink px-3 py-3">{PART_ART[l.part]}</div>
+                      <div className="p-4">
+                        <h3 className="font-display text-head font-bold leading-tight text-ink">
+                          {l.title}</h3>
+                        <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
+                        <span className="mt-2 block text-tick font-bold text-accent">
+                          {on ? 'Showing only this' : 'Show only this'}</span>
+                      </div>
+                    </Card>
+                  </li>
+                )
+              })}
+            </ol>
           </div>
         </div>
       </section>

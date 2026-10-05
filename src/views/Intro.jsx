@@ -5,23 +5,25 @@ import { Button } from '../ui/button'
 import { Logo } from '../ui/logo'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { ITEMS } from '../lib/engine'
+import { IntroSky } from '../charts/intro-sky'
 
 /* The title sequence.
  *
  * Four things decide the shape of this file.
  *
- * 1. It is a title card, not a page. The rest of the site is paper; this is an
- *    ink field, and the logo mark is its recurring device — it is the patch on
- *    the arm in beat two, and the last beat resolves a day of readings back
- *    into the mark's own two-peak stroke. The contrast against the site proper
- *    is the point: when it clears, you know the film ended and the product
- *    began.
+ * 1. It is a title card, not a page, and it is a pale one. It ran as an ink
+ *    field for two passes and the note came back both times that it was too
+ *    dark and too bold for an opening. It is aqua now, the type is ink, and
+ *    the logo mark is still the recurring device: it is the patch on the arm
+ *    in beat three, and the last beat resolves a day of readings back into
+ *    the mark's own two-peak stroke.
  *
- * 2. Colour cannot live on the ink field. Three of the four signal colours
- *    clear 3:1 on #0d2b1e but Movement #1560e0 measures 2.91, and the four are
- *    a set — splitting them across two contrast stories is worse than moving
- *    all four. So anything carrying signal colour sits on a card plate, which
- *    is also what those screens are in the app. Ink field, light plates.
+ * 2. The rainbow is the ground, so the plates are translucent. charts/
+ *    intro-sky.jsx lays a four-band arch and a travelling cloud behind every
+ *    beat, and a wall of opaque white cards in front of it leaves nothing to
+ *    see. Every plate is card at 85%, which keeps ink-3 at 4.74 : 1 over the
+ *    worst band the arch can put behind it and still lets the arch read
+ *    through. Signal colour stays on a plate, as it does in the app.
  *
  * 3. Every drawing's RESTING state is the finished picture; motion is only ever
  *    layered on top. Killing the animation reveals a complete diagram rather
@@ -60,45 +62,59 @@ export function suppressIntro() {
   try { window.localStorage.setItem(OFF_KEY, '1') } catch {}
 }
 
-/* Five beats: what it is, what it measures, how to use it, what comes back,
-   and who it is for.
+/* Six beats: what it is, what the patch does, the three ways in, what comes
+   back, who it is for, and the mark.
 
    The review watched this and could not answer "what is it and what does it
-   do" at the end of it, which is the one job an opening sequence has. So beat
-   one now says what it measures rather than making an observation about
-   bodies, beat two names the four signals, and a fifth beat was added for the
-   audience, which was asked for by name.
+   do" at the end of it, which is the one job an opening sequence has. Beat one
+   now names the product and the thing it hands back in the same breath, beat
+   two says what the patch is and what it reads, beat three says what the phone
+   does without it, and beat five is the audience, which was asked for by name.
 
-   Beat three said "two ways to take a reading" while the overview said "3
-   Ways to Use MindMap", and nothing on either page reconciled them. There are
-   three ways to use it (patch, phone, demo) and two of them are readings; the
-   sequence now says three and matches the page.
+   Beat three said "two ways to take a reading" while the overview said "3 Ways
+   to Use MindMap", and nothing on either page reconciled them. The heading is
+   now the overview's heading, word for word, and the beat settles the
+   arithmetic itself: three ways, two of which read a body.
 
-   Each beat carries its own ground. The sequence ran on one near-black green
-   throughout and the note was that it was too dark and too bold for an
-   opening. These are teals, lightening across the four and settling onto the
-   brand green for the mark. Every one was measured: paper clears 9.1 : 1 on
-   the weakest of them and accent-lit clears 4.8, so nothing in the sequence
-   changes contrast class as the ground moves under it.
+   Each beat carries its own ground, and the whole set moved. The sequence
+   ran on one near-black green, then on five dark teals, and the note both
+   times was the same: too dark and too bold for an opening, and aqua or
+   turquoise would be better. These are pale aquas. Relative luminance, and
+   the gap to the next one, which has to stay visible across the 900ms
+   crossfade:
+
+     #e8f6f4 .8960   #dcf0ef .8377   #d2ebe9 .7900
+     #e3f2ed .8595   #d7eeea .8154   #eaf6f2 .8981
+     gaps    .0583   .0477   .0695   .0441   .0828
+
+   The type inverted with them. Measured across all six grounds, worst case:
+   ink #0d2b1e 12.16 : 1, ink-2 #2a5744 6.60, ink-3 #47705e 4.48, accent
+   #157446 4.64. Headings are ink and sub-lines are ink-2; ink-3 is only ever
+   used inside a plate, where it measures 4.74 against the worst plate the
+   arch can put under it. paper, mist, rule and ruling have no contrast left
+   on a pale ground at all and none of them survives in here.
 
    Nothing here is a setup for a later line, and no number appears that the
    prototype does not produce. */
 const BEATS = [
-  { ms: 6200, bg: '#0b3f3f',
-    head: 'MindMap is a wellness app for teenagers.',
-    sub:  'It measures what stress does to your body, and tells you in one sentence.' },
-  { ms: 6200, bg: '#0f4d4e',
-    head: 'It reads four signals.',
-    sub:  'Your pulse, your sweat, your skin temperature and how much you move.' },
-  { ms: 6200, bg: '#0c4738',
-    head: 'Three ways to use it.',
-    sub:  'Wear the patch. Use the phone in your pocket. Or open the demo and look around.' },
-  { ms: 6200, bg: '#11423f',
+  { ms: 6200, bg: '#e8f6f4',
+    head: 'MindMap is a stress tracker for teenagers.',
+    sub:  'It measures your pulse, your sweat, your skin temperature and how much you move, all day, then hands back one score out of 100 and one sentence saying what changed.' },
+  { ms: 5800, bg: '#dcf0ef',
+    head: 'The patch is a sticker for your upper arm.',
+    sub:  'It sticks to the skin, takes those four readings about once a second, and sends them to your phone over Bluetooth.' },
+  { ms: 6000, bg: '#d2ebe9',
+    head: '3 Ways to Use MindMap',
+    sub:  'The patch and the phone each take a real reading from your body. The demo takes none.' },
+  { ms: 5600, bg: '#e3f2ed',
     head: 'A day comes back as one score.',
-    sub:  'Out of 100, with one plain sentence under it saying what changed.' },
-  { ms: 5600, bg: '#0d2b1e',
+    sub:  'Out of 100, from the patch or from the phone, with one plain sentence under it saying what changed.' },
+  { ms: 5600, bg: '#d7eeea',
+    head: 'Students, parents and school counselors.',
+    sub:  'Each one sees a different amount, and the student decides what leaves their phone.' },
+  { ms: 5200, bg: '#eaf6f2',
     head: 'MindMap',
-    sub:  'For students, their parents, and school counselors.' },
+    sub:  'A patch, or six questions. One score and one sentence a day.' },
 ]
 const LAST = BEATS.length - 1
 const TOTAL = BEATS.reduce((a, b) => a + b.ms, 0)
@@ -114,10 +130,11 @@ const svgProps = {
   focusable: 'false',
 }
 
-/* The mark's dot is `var(--logo-peak, currentColor)`, and the accent it
-   defaults to measures 2.24 on ink. Beam is 5.30, so on every ink field in
-   this file the peak is beam and the rest of the mark is whatever it sits on. */
-const PEAK = { '--logo-peak': '#0e9c9c' }
+/* The mark's dot is `var(--logo-peak, currentColor)`. On the old ink field it
+   was beam #0e9c9c at 5.30 : 1. On a pale aqua beam measures 2.69 and fails
+   even as a graphic, so the peak is beam-ink #0b7d7d, which is the same
+   turquoise at a value that holds 3.96 on the lightest ground. */
+const PEAK = { '--logo-peak': '#0b7d7d' }
 
 /* Deterministic wiggle, and its own measured length. Math.random() would redraw
    on every render and read as noise rather than as a recording; the length is
@@ -179,12 +196,12 @@ const HOURS = [['6am', 60], ['10am', 150], ['2pm', 240], ['6pm', 330], ['10pm', 
 
 function Plate({ className, delay = '0s', children }) {
   return (
-    <div className={cn('iv-a iv-rise rounded-panel border border-rule bg-card', className)}
+    <div className={cn('iv-a iv-rise rounded-panel border border-rule bg-card/85', className)}
       style={{ '--d': '.55s', '--t': delay }}>{children}</div>
   )
 }
 
-/* ── Beat 1 ── the app, who it is for, and the gap it exists to close ──────
+/* ── Beat 1 ── what stress does to a body, and who can see it ─────────────
    Two lanes on one axis: what the body is doing, and what anybody watching can
    see. Drawn as bars of samples rather than as a curve, so the lag between the
    two is a horizontal distance a viewer can measure off the screen instead of
@@ -203,9 +220,13 @@ const DAY = Array.from({ length: 32 }, (_, i) => {
 
 function StageDay() {
   return (
-    <div className="mx-auto flex h-full w-full max-w-[880px] items-center">
+    <div className="mx-auto flex h-full max-h-full min-h-0 w-full max-w-[880px] items-center">
+      {/* On a plate, like every other drawing here. It used to sit straight on
+          the field, which worked when the field was ink and nothing was behind
+          it; over the arch, a bare axis in ink-3 measures 1.66 : 1. */}
+      <Plate className="max-h-full min-h-0 w-full px-3 py-4 sm:px-5 sm:py-5">
       <svg {...svgProps} viewBox="0 0 480 250">
-        <text x="8" y="44" fontSize="17" className="font-mono fill-rule iv-a iv-rise"
+        <text x="8" y="44" fontSize="17" className="font-mono fill-ink-2 iv-a iv-rise"
           style={{ '--d': '.5s', '--t': '.1s' }}>your body</text>
         {DAY.map((d, i) => (
           <line key={'b' + i} x1={d.x} y1={92 - d.body} x2={d.x} y2={92 + d.body} strokeWidth="3.4"
@@ -213,11 +234,11 @@ function StageDay() {
             style={{ '--d': '.4s', '--t': `${0.25 + i * 0.03}s` }} />
         ))}
 
-        <text x="8" y="152" fontSize="17" className="font-mono fill-rule iv-a iv-rise"
+        <text x="8" y="152" fontSize="17" className="font-mono fill-ink-2 iv-a iv-rise"
           style={{ '--d': '.5s', '--t': '.75s' }}>what anyone notices</text>
         {DAY.map((d, i) => (
           <line key={'s' + i} x1={d.x} y1={186 - d.seen} x2={d.x} y2={186 + d.seen} strokeWidth="3.4"
-            strokeLinecap="round" className="stroke-rule iv-a iv-fade"
+            strokeLinecap="round" className="stroke-ink-3 iv-a iv-fade"
             style={{ '--d': '.4s', '--t': `${0.95 + i * 0.03}s` }} />
         ))}
 
@@ -226,26 +247,29 @@ function StageDay() {
             lane finally moves; both x values come straight off DAY's own
             thresholds rather than being placed by eye. */}
         <path d="M230 60 V 216" fill="none" strokeWidth="1.25" strokeDasharray="4 5"
-          className="stroke-ruling iv-a iv-fade" style={{ '--d': '.5s', '--t': '1.85s' }} />
+          className="stroke-ink-3 iv-a iv-fade" style={{ '--d': '.5s', '--t': '1.85s' }} />
         <path d="M374 170 V 216" fill="none" strokeWidth="1.25" strokeDasharray="4 5"
-          className="stroke-ruling iv-a iv-fade" style={{ '--d': '.5s', '--t': '2s' }} />
+          className="stroke-ink-3 iv-a iv-fade" style={{ '--d': '.5s', '--t': '2s' }} />
         <path d="M230 210 V 222 M230 216 H 374 M374 210 V 222" fill="none" strokeWidth="1.4"
-          className="stroke-rule iv-a iv-draw" style={{ '--len': 180, '--d': '.7s', '--t': '2.1s' }} />
+          className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 180, '--d': '.7s', '--t': '2.1s' }} />
         <text x="302" y="242" textAnchor="middle" fontSize="16"
-          className="font-mono fill-rule iv-a iv-rise" style={{ '--d': '.5s', '--t': '2.5s' }}>hours</text>
+          className="font-mono fill-ink-2 iv-a iv-rise" style={{ '--d': '.5s', '--t': '2.5s' }}>hours</text>
       </svg>
+      </Plate>
     </div>
   )
 }
 
-/* ── Beat 2 ── the two ways in, side by side ───────────────────────────────
+/* ── Beat 3 ── the three ways in, side by side ─────────────────────────────
    The half of the product that needs no hardware had no picture anywhere in
    this sequence, which is exactly how a patch ends up reading as the whole
-   thing. Two plates, in the order the check-in screen lists the same two
-   routes, so the film and the app agree about what comes first.
+   thing. Three plates: the patch, the phone on its own, and the demo. The
+   first two read a body and the third reads nobody, which is the whole of the
+   "three ways, two readings" arithmetic the heading promises.
 
-   Both plates carry signal colour or filled controls, so both are light
-   plates — the ink field cannot hold either. */
+   Every plate carries signal colour or a filled control, so every one of them
+   is a plate. Nothing in this sequence paints a signal hue straight onto the
+   ground, which is where the arch lives. */
 
 /* One or two words per question, not the questions themselves: the six real
    prompts are sentences, and six sentences beside a five-point scale wrap into
@@ -257,7 +281,7 @@ const ASK = {
 }
 const PICKED = [3, 1, 4, 2, 3, 1]
 
-/* ── Beat 2 ── the four signals, named ─────────────────────────────────────
+/* ── Beat 2 ── the four signals the patch reads, named ────────────────────
    The review's question after watching this was "what does it actually
    measure", and nothing in the sequence answered it: the signals appeared as
    four unlabelled dots in a legend on the next beat. Four plates, each with
@@ -300,7 +324,11 @@ function StageRoutes() {
             box: at a fixed narrow width the same two strokes closed into a
             loop floating in the middle of the card and stopped reading as a
             limb. The ratio is what holds the height steady at 390px. */}
-        <div className="mx-auto mt-2 aspect-[420/96] w-full">
+        {/* Hidden under sm. Stacked on a 390px phone these three drawings ran
+            the stage 700px tall inside a 456px slot, so the plates were cut off
+            and ran up over the head. The title and the line under it carry the
+            beat on a phone; the drawings return at sm. */}
+        <div className="mx-auto mt-2 hidden aspect-[420/96] w-full sm:block">
           <svg {...svgProps} viewBox="0 0 420 96">
             {/* forearm: elbow off-frame at the left, heel of the hand at the
                 right. Two long strokes and a cap — enough to place the patch,
@@ -322,7 +350,7 @@ function StageRoutes() {
             </g>
           </svg>
         </div>
-        <ul className="m-0 mt-2 flex list-none flex-wrap gap-x-3 gap-y-1 p-0">
+        <ul className="m-0 mt-2 hidden list-none flex-wrap gap-x-3 gap-y-1 p-0 sm:flex">
           {SENSOR_ORDER.map((id, i) => (
             <li key={id} className="iv-a iv-rise flex items-center gap-1.5"
               style={{ '--d': '.4s', '--t': `${1.3 + i * 0.1}s` }}>
@@ -331,12 +359,13 @@ function StageRoutes() {
             </li>
           ))}
         </ul>
-        <p className="mt-1.5 text-fine text-ink-3">One reading a second, all day.</p>
+        <p className="mt-1.5 text-fine text-ink-3">Four signals off your skin, about one reading a
+          second, all day.</p>
       </Plate>
 
       <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".4s">
-        <span className="block font-display text-ui font-bold text-ink">Answer six questions</span>
-        <ul className="m-0 mt-2 grid list-none gap-1 p-0">
+        <span className="block font-display text-ui font-bold text-ink">Use the phone alone</span>
+        <ul className="m-0 mt-2 hidden list-none gap-1 p-0 sm:grid">
           {ITEMS.map((it, i) => (
             <li key={it.id} className="iv-a iv-rise flex items-center gap-3"
               style={{ '--d': '.4s', '--t': `${0.9 + i * 0.12}s` }}>
@@ -353,17 +382,18 @@ function StageRoutes() {
             </li>
           ))}
         </ul>
-        <p className="mt-1.5 text-fine text-ink-3">About thirty seconds. Nothing on your arm.</p>
+        <p className="mt-1.5 text-fine text-ink-3">The camera, the microphone and six questions.
+          About thirty seconds, and nothing on your arm.</p>
       </Plate>
 
       {/* The third way. It was missing, and its absence was the reason the
           sequence said two ways while the overview said three. */}
       <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".7s">
         <span className="block font-display text-ui font-bold text-ink">Open the demo</span>
-        <div className="mx-auto mt-2 aspect-[420/96] w-full">
+        <div className="mx-auto mt-2 hidden aspect-[420/96] w-full sm:block">
           <svg {...svgProps} viewBox="0 0 420 96">
             <rect x="24" y="10" width="372" height="76" rx="10" fill="none" strokeWidth="2.2"
-              strokeDasharray="8 7" className="stroke-ruling iv-a iv-pop"
+              strokeDasharray="8 7" className="stroke-ink-3 iv-a iv-pop"
               style={{ '--d': '.5s', '--t': '.95s' }}/>
             <path d="M68 70 L136 40 L200 54 L268 24 L352 38" fill="none" strokeWidth="2.6"
               strokeLinecap="round" strokeLinejoin="round" className="stroke-accent iv-a iv-draw"
@@ -372,7 +402,8 @@ function StageRoutes() {
               style={{ '--d': '.4s', '--t': '1.9s' }}/>
           </svg>
         </div>
-        <p className="mt-1.5 text-fine text-ink-3">Nobody measured. Every screen filled in, so you can look around.</p>
+        <p className="mt-1.5 text-fine text-ink-3">No one is measured. Every screen is filled in, so
+          you can look around.</p>
       </Plate>
     </div>
   )
@@ -402,7 +433,7 @@ function StageScore() {
             </g>
 
             <line x1="24" y1="170" x2="436" y2="170" strokeWidth="1"
-              className="stroke-rule iv-a iv-draw" style={{ '--len': 414, '--d': '.5s', '--t': '2.5s' }} />
+              className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 414, '--d': '.5s', '--t': '2.5s' }} />
             <text x="230" y="198" textAnchor="middle" fontSize="20"
               className="font-body fill-ink iv-a iv-rise" style={{ '--d': '.55s', '--t': '2.75s' }}>
               &ldquo;Tense from noon, settled by six.&rdquo;
@@ -414,15 +445,55 @@ function StageScore() {
   )
 }
 
-/* ── Beat 5 ── one score, three readers, three different views ───────────── */
-/* Written from the student outwards, because that is the direction permission
-   travels here. A counselor's line says what was handed to them, not what they
-   can look up — the difference between a shared reading and a feed. */
+/* ── Beat 5 ── who can use it ──────────────────────────────────────────────
+   Asked for by name: the audience was a single line at the end of the last
+   beat, which is the same as not saying it. Three readers, each named the way
+   they would be named out loud, with one line on what that person gets and
+   nothing else. Written from the student outwards, because that is the
+   direction permission travels here. A counselor's line says what was handed
+   to them rather than what they can look up, which is the difference between a
+   shared reading and a feed. */
 const READERS = [
-  { who: 'The student', sees: 'The score, the sentence, and all four readings.' },
-  { who: 'A parent',    sees: 'The score and the sentence, once you share them.' },
-  { who: 'A counselor', sees: 'Only what you have chosen to pass on.' },
+  { who: 'Students',
+    gets: 'The score, the sentence, and all four readings behind them.' },
+  { who: 'Parents',
+    gets: 'The score and the sentence, once a student shares them.' },
+  { who: 'School counselors',
+    gets: 'Only what a student has chosen to pass on.' },
 ]
+
+function StageAudience() {
+  return (
+    <div className="mx-auto grid h-full w-full max-w-[1040px] content-center items-start gap-2
+      sm:gap-4 lg:grid-cols-3">
+      {READERS.map((r, i) => (
+        <Plate key={r.who} className="px-4 py-4 sm:px-5 sm:py-5" delay={`${0.1 + i * 0.18}s`}>
+          {/* One figure per plate, at plate scale: a head and a pair of
+              shoulders, which is as much of a person as a title card can draw
+              without becoming an illustration of one. The band under it is the
+              amount that reader is handed, drawn as a share of the plate's
+              width rather than as a figure, because no number here is one the
+              prototype produces. */}
+          <div className="mx-auto hidden aspect-[180/72] w-full max-w-[200px] sm:block">
+            <svg {...svgProps} viewBox="0 0 180 72">
+              <circle cx="90" cy="24" r="13" fill="none" strokeWidth="2.2"
+                className="stroke-ink-3 iv-a iv-pop"
+                style={{ '--d': '.45s', '--t': `${0.3 + i * 0.18}s` }}/>
+              <path d="M58 64 C 62 46, 76 40, 90 40 C 104 40, 118 46, 122 64" fill="none"
+                strokeWidth="2.2" strokeLinecap="round" className="stroke-ink-3 iv-a iv-draw"
+                style={{ '--len': 160, '--d': '.7s', '--t': `${0.45 + i * 0.18}s` }}/>
+              <rect x="40" y="68" width={100 - i * 28} height="4" rx="2"
+                fill="#0e9c9c" className="iv-a iv-fade"
+                style={{ '--d': '.5s', '--t': `${0.9 + i * 0.18}s` }}/>
+            </svg>
+          </div>
+          <span className="block font-display text-ui font-bold text-ink sm:mt-2">{r.who}</span>
+          <span className="mt-1 block text-fine leading-tight text-ink-2">{r.gets}</span>
+        </Plate>
+      ))}
+    </div>
+  )
+}
 
 function StageMark({ still }) {
   const a = still ? undefined : 'iv-a'
@@ -437,15 +508,15 @@ function StageMark({ still }) {
                   1.55s fade delay and CSS custom properties inherit, so a child
                   that omits it silently adopts its parent's cue. */}
               <line x1="40" y1="226" x2="440" y2="226" strokeWidth="1.25"
-                className="stroke-ruling iv-a iv-draw" style={{ '--len': 402, '--d': '.5s', '--t': '0s' }} />
+                className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 402, '--d': '.5s', '--t': '0s' }} />
               {HOURS.map(([h, x], i) => (
                 <g key={h} className="iv-a iv-rise" style={{ '--d': '.4s', '--t': `${0.25 + i * 0.07}s` }}>
-                  <line x1={x} y1="226" x2={x} y2="234" strokeWidth="1.25" className="stroke-ruling" />
+                  <line x1={x} y1="226" x2={x} y2="234" strokeWidth="1.25" className="stroke-ink-3" />
                   <text x={x} y="252" textAnchor="middle" fontSize="16"
-                    className="font-mono fill-rule">{h}</text>
+                    className="font-mono fill-ink-2">{h}</text>
                 </g>
               ))}
-              <circle cx="419.1" cy="199.8" r="6.5" fill="#0e9c9c" className="iv-a iv-pop"
+              <circle cx="419.1" cy="199.8" r="6.5" fill="#0b7d7d" className="iv-a iv-pop"
                 style={{ '--d': '.35s', '--t': '1.15s' }} />
             </g>
           )}
@@ -454,40 +525,64 @@ function StageMark({ still }) {
             ? { transform: 'translate(136px,125.2px) scale(5.2)', transformBox: 'view-box',
                 transformOrigin: '0 0', strokeWidth: 0.5 }
             : { '--d': '1s', '--t': '1.55s', transformBox: 'view-box', transformOrigin: '0 0' }}>
-            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#f7faf8"
+            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#0d2b1e"
               className={cn(a, !still && 'iv-draw')}
               style={still ? undefined : { '--len': 96, '--d': '.8s', '--t': '2.3s' }} />
-            <path d={RIDGE} fill="none" stroke="#0e9c9c" strokeLinecap="round" strokeLinejoin="round"
+            <path d={RIDGE} fill="none" stroke="#0b7d7d" strokeLinecap="round" strokeLinejoin="round"
               className={cn(a, !still && 'iv-draw')}
               style={still ? undefined : { '--len': 33, '--d': '1.3s', '--t': '.15s' }} />
-            <circle cx="29.5" cy="17.6" r="2.4" fill="#0e9c9c" strokeWidth="0"
+            <circle cx="29.5" cy="17.6" r="2.4" fill="#0b7d7d" strokeWidth="0"
               className={cn(a, !still && 'iv-pop')}
               style={still ? undefined : { '--d': '.4s', '--t': '3s' }} />
           </g>
         </svg>
       </div>
 
-      <p className={cn(a, !still && 'iv-rise', 'mt-2 font-display text-view font-bold tracking-tight text-paper')}
+      {/* text-beam would be a word in a colour that measures 2.69 here, which
+          the palette forbids outright. beam-ink is the turquoise when it has
+          to be a word, and the wordmark is 36px or larger, so it clears the
+          3 : 1 large-text bar at 3.96 with room over. */}
+      <p className={cn(a, !still && 'iv-rise', 'mt-2 font-display text-view font-bold tracking-tight text-ink')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.15s' }}>
-        Mind<span className="text-beam">Map</span>
+        Mind<span className="text-beam-ink">Map</span>
       </p>
-      <p className={cn(a, !still && 'iv-rise', 'mt-3 text-center text-lead text-mist')}
+      <p className={cn(a, !still && 'iv-rise', 'mt-3 text-center text-lead text-ink-2')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.4s' }}>
         A patch, or six questions. One score and one sentence a day.
       </p>
-      <p className={cn(a, !still && 'iv-rise', 'mt-3 max-w-[46ch] text-center text-note text-rule')}
-        style={still ? undefined : { '--d': '.6s', '--t': '3.6s' }}>
+
+      {/* The last beat was an arch, a wordmark and a lot of nothing. The four
+          signals close it instead: the same four hues, in the same order, that
+          the arch behind them is drawn in, which is the one place in the
+          sequence where the rainbow and the product are the same object. The
+          names come from lib/sensors.js, so nothing here is a second copy. */}
+      <ul className={cn(a, !still && 'iv-rise',
+        'm-0 mt-5 flex list-none flex-wrap items-center justify-center gap-x-5 gap-y-2 p-0')}
+        style={still ? undefined : { '--d': '.6s', '--t': '3.5s' }}>
+        {SENSOR_ORDER.map(id => (
+          <li key={id} className="flex items-center gap-2">
+            <span aria-hidden className="block h-2.5 w-2.5 rounded-chip"
+              style={{ background: SENSORS[id].glow }}/>
+            <span className="font-display text-ui font-medium text-ink">{SENSORS[id].name}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p className={cn(a, !still && 'iv-rise', 'mt-4 max-w-[46ch] text-center text-note text-ink-3')}
+        style={still ? undefined : { '--d': '.6s', '--t': '3.7s' }}>
         A working prototype built by a high-school team. Not a medical device.
       </p>
     </div>
   )
 }
 
-/* Four stages, down from six. The two that went were the seven-layer patch
-   stack and the who-sees-what diagram: both are whole pages elsewhere, and a
-   title sequence that explains an enclosure and a consent model on the way
-   past is a sequence nobody finishes reading. */
-const STAGES = [StageDay, StageSignals, StageRoutes, StageScore, StageMark]
+/* Six stages, one per beat. The two that went earlier were the seven-layer
+   patch stack and the who-sees-what consent diagram: both are whole pages
+   elsewhere, and a title sequence that explains an enclosure and a permission
+   model on the way past is a sequence nobody finishes. The audience stage is
+   not that diagram. It names three people and what each one is handed, which
+   is the question the review actually asked. */
+const STAGES = [StageDay, StageSignals, StageRoutes, StageScore, StageAudience, StageMark]
 
 /* One motion vocabulary, declared once. Keyframes live here rather than in
    tailwind.config.js because they describe this one sequence, not the design
@@ -515,7 +610,6 @@ const CSS = `
 .iv-root .iv-blink,.iv-root .iv-sway{animation:none}
 .iv-root .iv-flow{animation-name:iv-fade;animation-duration:.4s;animation-delay:var(--t);animation-iteration-count:1}
 .iv-root .iv-out{animation:iv-out ${OUT_MS}ms cubic-bezier(.55,0,.25,1) both}
-.iv-root .iv-wipe{animation:iv-wipe .62s cubic-bezier(.65,0,.35,1) both}
 @keyframes iv-draw{from{stroke-dashoffset:var(--len)}}
 @keyframes iv-rise{from{opacity:0;transform:translateY(10px)}}
 @keyframes iv-pop{from{opacity:0;transform:scale(.35)}}
@@ -525,14 +619,10 @@ const CSS = `
 @keyframes iv-scan{0%{transform:translateX(170px);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(446px);opacity:0}}
 @keyframes iv-blink{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes iv-sway{0%,100%{transform:rotateX(30deg) rotateZ(-22deg)}50%{transform:rotateX(20deg) rotateZ(-8deg)}}
-30%{opacity:1}
-to{opacity:1;transform:translate(-50%,-50%) translateZ(var(--z1))}}
-to{transform:translate(-50%,-50%) translateZ(var(--z2))}}
 @keyframes iv-morph{from{transform:translate(-138.5px,-132.8px) scale(18.9);stroke-width:.18px}
 to{transform:translate(136px,125.2px) scale(5.2);stroke-width:.5px}}
 @keyframes iv-stage{from{opacity:0;transform:translateY(16px)}}
 @keyframes iv-out{to{opacity:0;transform:translateY(-14px)}}
-@keyframes iv-wipe{from{transform:translateX(-152%)}to{transform:translateX(102%)}}
 @media (prefers-reduced-motion:reduce){.iv-root [class*="iv-"]{animation:none !important}}
 `
 
@@ -667,20 +757,30 @@ export function Intro({ onDone }) {
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
 
+      {/* The one continuous thing in the sequence. It sits under every beat
+          and is the only transition between them; `beat` and the beat count
+          are all it takes, so the cloud's walk re-spaces itself if a beat is
+          ever added or removed. */}
+      <IntroSky beat={beat} count={BEATS.length}/>
+
       {/* The announcement is its own node so the visible headline can be styled
           and swapped freely without a screen reader hearing it twice. */}
       <p aria-live="polite" aria-atomic="true" className="sr-only">{b.head + ' ' + b.sub}</p>
 
       {/* ── the frame, top: wordmark, beat number, and the rail ───────────── */}
-      <div className="shrink-0 border-b border-paper/20">
+      {/* No rule under the frame. A hairline across the top of every beat is
+          one more line between one beat and the next, which is what the review
+          was counting. */}
+      <div className="relative z-10 shrink-0">
         {/* --logo-peak is set on a wrapper rather than passed down: Logo takes
             no style prop, and the mark reads the variable off whatever it
-            inherits from. tone="ink" because the accent half of the wordmark
-            measures 2.24 on this field. */}
+            inherits from. tone="paper" is the light-ground lockup, where the
+            accent half of the wordmark is accent #157446 at 4.64 : 1; the
+            accent-lit the ink field needed measures 1.9 here. */}
         <div aria-hidden style={PEAK}
           className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4
-            px-5 py-3 text-paper sm:px-10 sm:py-4">
-          <Logo tone="ink" className="text-ui sm:text-head"/>
+            px-5 py-3 text-ink sm:px-10 sm:py-4">
+          <Logo tone="paper" className="text-ui sm:text-head"/>
           {/* Where "01 / 04" was. A count is a label the film does not need:
               the only thing a viewer wants off this corner is how much is
               left, and four ticks with one filled says that without asking
@@ -689,7 +789,7 @@ export function Intro({ onDone }) {
           <span className="flex items-center gap-1.5">
             {BEATS.map((_, i) => (
               <span key={i} className={cn('block h-[3px] w-4',
-                i === beat ? 'bg-beam' : i < beat ? 'bg-paper/45' : 'bg-paper/20')}/>
+                i === beat ? 'bg-accent' : i < beat ? 'bg-ink/35' : 'bg-ink/15')}/>
             ))}
           </span>
         </div>
@@ -698,9 +798,9 @@ export function Intro({ onDone }) {
             aria-label="Introduction progress" aria-valuemin={1}
             aria-valuemax={BEATS.length} aria-valuenow={beat + 1}>
             {BEATS.map((_, i) => (
-              <span key={i} className="block h-full flex-1 overflow-hidden bg-paper/15">
+              <span key={i} className="block h-full flex-1 overflow-hidden bg-ink/10">
                 <span ref={el => { fills.current[i] = el }}
-                  className="block h-full w-full origin-left bg-beam"
+                  className="block h-full w-full origin-left bg-accent"
                   style={{ transform: 'scaleX(0)' }} />
               </span>
             ))}
@@ -709,7 +809,7 @@ export function Intro({ onDone }) {
       </div>
 
       {/* ── the stage ─────────────────────────────────────────────────────── */}
-      <main className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+      <main className="relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-hidden">
         <div key={beat} className={cn('mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col',
           'justify-center gap-4 px-5 py-5 sm:gap-6 sm:px-10 sm:py-7', leaving && 'iv-out')}>
           <div className="iv-stage flex min-h-0 flex-1 flex-col justify-center gap-4 sm:gap-6">
@@ -720,61 +820,54 @@ export function Intro({ onDone }) {
                 <span className="flex items-center gap-1.5">
                   {BEATS.map((_, i) => (
                     <span key={i} className={cn('block size-1.5 rounded-chip',
-                      i === beat ? 'bg-beam' : 'bg-paper/25')}/>
+                      i === beat ? 'bg-accent' : 'bg-ink/20')}/>
                   ))}
                 </span>
-                <span className="h-px flex-1 bg-paper/20"/>
               </span>
               {beat < LAST && (
                 <>
-                  <p className="iv-a iv-rise font-display text-sub font-bold text-paper"
+                  <p className="iv-a iv-rise font-display text-sub font-bold text-ink"
                     style={{ '--d': '.7s' }}>{b.head}</p>
                   {/* The sub used to arrive 160ms behind the head, which is
                       not a gap — both lines land together and the eye picks
                       one. A second of separation is the difference between
                       reading two lines and glancing at a block. */}
-                  <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-mist sm:mt-3 sm:text-body"
+                  <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-ink-2 sm:mt-3 sm:text-body"
                     style={{ '--d': '.7s', '--t': '1s' }}>{b.sub}</p>
                 </>
               )}
             </div>
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+            {/* overflow-hidden: a drawing taller than its slot was bleeding
+                up over the head and sub on beat 1, which measured as a 562 by
+                46 overlap. The stage is clipped to its own box now. */}
+            <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
               <Stage still={reduced}/>
             </div>
           </div>
         </div>
 
-        {/* The transition: one band crosses the stage at every boundary, so a
-            beat change reads as an event rather than one picture replacing
-            another.
-
-            It used to hold full-frame for ~230ms with the logo mark popping in
-            and back out inside it. Six beats meant six of those, and at that
-            duration a mark appearing and vanishing does not read as branding —
-            it reads as a flicker, which is exactly what it was reported as.
-            The band now travels straight through without pausing and carries
-            nothing. The brand is the whole film; it does not need stamping on
-            every seam. */}
-        {!reduced && (
-          <div key={'w' + beat} aria-hidden
-            className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-            <div className="iv-wipe absolute inset-y-0 left-0 w-[150%] border-r-2 border-beam
-              bg-accent-ink"/>
-          </div>
-        )}
+        {/* Where the band wipe was. One opaque panel with a 2px beam edge
+            crossed the stage at every boundary, and the note back was that the
+            cuts still read as abrupt lines. It was the line. The sky behind
+            every beat is the transition now: the arch never moves and the
+            cloud walks one step along it per beat, so a boundary is something
+            continuing rather than something being cut. */}
       </main>
 
       {/* ── the frame, bottom: the one control, and what pressing it costs ── */}
-      <div className="shrink-0 px-5 py-4 sm:px-10 sm:py-5">
+      <div className="relative z-10 shrink-0 px-5 py-4 sm:px-10 sm:py-5">
+        {/* Inverted with the field. Paper on paper is a 1.05 : 1 button, so
+            the one control in here is the one dark object: paper on ink at
+            14.47 : 1, with its second line in mist at 12.69. */}
         <Button ref={skipRef} onClick={skip}
-          className="mx-auto flex h-auto w-full max-w-[430px] flex-col gap-0.5 bg-paper py-3
-            text-ink hover:bg-mist active:bg-mist">
+          className="mx-auto flex h-auto w-full max-w-[430px] flex-col gap-0.5 bg-ink py-3
+            text-paper hover:bg-ink-2 active:bg-ink-2">
           <span className="font-display text-ui font-medium">Skip the intro</span>
-          <span className="font-body text-fine font-normal text-ink-2">
+          <span className="font-body text-fine font-normal text-mist">
             and don&rsquo;t show it again on this device
           </span>
         </Button>
-        <p aria-hidden className="mx-auto mt-2.5 w-full text-center font-mono text-fine text-rule">
+        <p aria-hidden className="mx-auto mt-2.5 w-full text-center font-mono text-fine text-ink-3">
           Esc does the same
         </p>
       </div>

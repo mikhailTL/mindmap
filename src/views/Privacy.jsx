@@ -27,7 +27,7 @@ const YOU_NEVER = [
 export function PrivacyBody({ go }) {
   return (
     <>
-      <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">
+      <h2 className="max-w-[18ch] font-display font-bold text-sub leading-[1.12] tracking-tight text-ink">
         What a parent can see</h2>
 
       {/* Two ruled columns became two Cards when the sourced component landed:
@@ -41,7 +41,7 @@ export function PrivacyBody({ go }) {
           <Card className="h-full border-t-2 border-t-accent">
             <CardHeader>
               {/* Was "What a parent sees", one word off the h2 directly above. */}
-              <CardTitle as="h3" className="text-row">Shared with a parent</CardTitle>
+              <CardTitle as="h3">Shared with a parent</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <ul className="list-none space-y-3 p-0">
@@ -62,7 +62,7 @@ export function PrivacyBody({ go }) {
         <ScrollIn as="section" delay={0.08} className="h-full">
           <Card className="h-full border-t-2 border-t-ink">
             <CardHeader>
-              <CardTitle as="h3" className="text-row">Never shared with a parent</CardTitle>
+              <CardTitle as="h3">Never shared with a parent</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <ul className="list-none space-y-3 p-0">
@@ -83,7 +83,7 @@ export function PrivacyBody({ go }) {
       <ScrollIn>
         {/* Was "Everyone, side by side", which named a layout rather than its
             subject. */}
-        <h3 className="mt-14 font-display text-sub font-bold tracking-tight text-ink">
+        <h3 className="mt-14 font-display text-head font-bold tracking-tight text-ink">
           Student, parent and counselor compared</h3>
         <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </ScrollIn>
