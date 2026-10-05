@@ -323,7 +323,7 @@ export function Launch({ go }) {
         <Logo motto className="text-sub text-ink" title="MindMap"/>
       </div>
       <Label className="mt-8 block">Launch the app</Label>
-      <h1 className="mt-3.5 font-display text-view font-bold leading-[1.05] tracking-tight text-ink">
+      <h1 className="mt-3.5 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">
         Who is opening the app?
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">

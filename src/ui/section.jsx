@@ -47,7 +47,7 @@ export function Section({ name, tone = 'paper', id, className, children, bleed =
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
       <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-7 lg:py-10' : 'py-9 lg:py-14')}>
         {name && (
-          <p className={cn('font-display text-tick font-bold tracking-[0.01em]', NAME[tone])}>{name}</p>
+          <p className={cn('font-display text-meta font-bold tracking-[0.01em]', NAME[tone])}>{name}</p>
         )}
         {children}
       </div>
@@ -57,6 +57,12 @@ export function Section({ name, tone = 'paper', id, className, children, bleed =
 
 /* One heading size for a section, and nothing else. Anything on a page that is
    not this is the inconsistency the review was pointing at.
+
+   `text-sub` is 32px to 48px now, up from 26 to 36. The note was that a reader
+   could not tell a new section had started, and the cause was arithmetic: a
+   heading at 26px over a paragraph at 19px is a 1.37 ratio, which the eye does
+   not read as a change of subject. At 32 over 19 it is 1.68, and at the wide
+   end 48 over 19 is 2.5.
  *
  * font-bold, not font-medium. The whole site was set at 500, so a heading
  * differed from the paragraph under it by size alone and, at the smaller

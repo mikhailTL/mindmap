@@ -44,6 +44,17 @@ export default {
            bars and draws rain, and `beam.ink` is the only one allowed to be a
            word. It is never the only thing carrying a state. */
         beam:   { DEFAULT:'#0e9c9c', ink:'#0b7d7d', wash:'#d9f0ef' },
+        /* Two more grounds, asked for by name: the review wanted turquoise in
+           the run of near-whites so a long page reads as a sequence of
+           sections rather than one sheet. Both were measured against every ink
+           that can land on them and both clear 4.5 : 1 for the weakest of
+           them, which is what makes them usable as section grounds rather than
+           as decoration:
+             aqua   #eef7f6  ink 13.95 : ink-3 5.14 : accent 5.33
+             aqua-2 #e2f2f0  ink 13.17 : ink-3 4.86 : accent 5.03
+           A third, deeper step was measured at #d2ebe8 and rejected: ink-3
+           lands at 4.48 on it, which fails. */
+        aqua:   { DEFAULT:'#eef7f6', 2:'#e2f2f0' },
         /* The score's own three tiers. Calm is the brand green, because on a
            green site a calm day should look like the site. Warn is an amber
            and crit keeps its red, since nothing else reads as an alarm at a

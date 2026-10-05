@@ -322,7 +322,7 @@ function Header({ view, go }) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-rule bg-paper">
+    <header className="sticky top-0 z-50 border-b-2 border-ink bg-mist">
       <div className="wrap flex h-14 items-center gap-1">
         {/* No motto here any more. It is four words of explanation on a row
             that now has to hold five destinations and a key, and it was the
@@ -361,7 +361,7 @@ function Header({ view, go }) {
               'bg-accent font-display text-ui font-medium text-paper transition-colors',
               'duration-150 hover:bg-accent-ink sm:px-4')}>
             {/* "Open the app" does not fit beside a hamburger at 390px. */}
-            <span className="xl:hidden">Open</span>
+            <span className="xl:hidden">Open app</span>
             <span className="hidden xl:inline">Open the app</span>
             {/* The arrow is decoration and it is the first thing to go. It
                 only comes back where the row has width to spare. */}
@@ -927,7 +927,7 @@ export function App() {
             follows a reviewer around all eight marketing pages, and the survey
             has its own place in the marketing bar. */}
         {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
-        <footer className="border-t border-rule py-11">
+        <footer className="border-t-2 border-ink bg-mist py-11">
           <div className="wrap">
             <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
               medical device and does not diagnose or treat any condition. If you need urgent help, contact your

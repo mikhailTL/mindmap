@@ -112,7 +112,7 @@ export function WithoutPatch({ go }) {
               <p className="font-display text-tick font-bold tracking-[0.01em] text-accent">
                 Without the patch
               </p>
-              <h1 className="mt-2.5 max-w-[14ch] font-display font-bold text-view lg:text-sect
+              <h1 className="mt-2.5 max-w-[14ch] font-display font-bold text-major
                 leading-[1.04] tracking-tight text-ink">
                 You do not need the patch.
               </h1>

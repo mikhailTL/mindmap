@@ -66,8 +66,8 @@ import { cn } from '../lib/utils'
    only looking. The middle one carries the accent rule because it is the only
    one a stranger can use in the next minute. */
 const DOORS = [
-  { id:'patch', go:'patch', title:'Wear the patch', note:'Needs a paired patch',
-    line:'A sticker on your forearm reads four signals once a second, all day.',
+  { id:'patch', go:'patch', title:'Wear the patch', note:'Needs a patch',
+    line:'A sticker on your upper arm reads four signals once a second, for a week.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -75,8 +75,8 @@ const DOORS = [
         <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
-  { id:'phone', go:'without-patch', title:'Use your phone', note:'Works right now', lead:true,
-    line:'Fingertip on the camera, one spoken sentence. Forty five seconds, no hardware.',
+  { id:'phone', go:'without-patch', title:'Use your phone', note:'Your own reading', lead:true,
+    line:'Your own reading, from your own body. Fingertip on the camera, one spoken sentence, forty five seconds.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -86,8 +86,8 @@ const DOORS = [
         <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
-  { id:'demo', go:'app', title:'Try the demo', note:'Start here if you are reviewing',
-    line:'Every screen filled with generated data, marked as generated. Nothing to set up.',
+  { id:'demo', go:'app', title:'Try the demo', note:'Just looking',
+    line:'Nobody measured. Every screen filled with made-up data so you can look around without taking a reading.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="18" y="13" width="184" height="94" rx="10" fill="none" className="stroke-ruling"
@@ -210,16 +210,19 @@ export function Overview({ go }) {
               tracking-tight text-ink lg:text-sect 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
-            <ScrollIn as="p" className="mt-6 text-lead font-medium leading-[1.3] text-ink-2">
-              One score. One sentence. Every day.
+            <ScrollIn as="p" className="mt-6 max-w-[46ch] text-lead font-medium leading-[1.35] text-ink-2">
+              MindMap measures what stress does to your body and turns it into
+              one number a day, plus one plain sentence saying what changed.
             </ScrollIn>
-            <ScrollIn as="p" className="mt-3 max-w-[44ch] text-sec text-ink-2">
-              Read from a patch on your forearm, or from the phone already in your pocket.
+            <ScrollIn as="p" className="mt-3 max-w-[46ch] text-sec text-ink-2">
+              It reads your pulse, your sweat, your skin temperature and how much you move. Read
+              them from a patch on your upper arm using the app, or from the phone already in
+              your pocket.
             </ScrollIn>
             <ScrollIn className="mt-8">
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-                <Button variant="outline" onClick={() => go('without-patch')}>Take a reading now</Button>
+                <Button variant="outline" onClick={() => go('without-patch')}>Take a reading from your phone</Button>
               </div>
             </ScrollIn>
           </div>
@@ -300,41 +303,40 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── the three doors ──────────────────────────────────────────────
-          Three ruled rows, not three cards. The lede that used to sit here
-          said the three doors open the same app and then asked who you are,
-          which is what the rows say themselves, one line each. Every row keeps
-          a transparent left rule so the one that is marked does not shunt its
-          own text three pixels out of line with the other two. */}
+          Three cards, not three ruled rows. The rows were a deliberate earlier
+          choice and the review overturned it in as many words: a horizontal
+          rule between items reads as a new topic beginning, so three options
+          separated by rules read as three sections rather than as one choice
+          with three answers. A card closes a group. A rule cuts one up. */}
       <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
-        <ul className="mt-6 list-none border-t border-rule p-0">
+        <SectionLede>
+          All three open the same app. They differ in what it has to work with.
+        </SectionLede>
+        <div className="mt-7 grid gap-5 md:grid-cols-3">
           {DOORS.map((d, i) => (
-            <ScrollRow key={d.id} index={i} as="li" className="border-b border-rule">
-              <button type="button" onClick={() => go(d.go)}
-                className={cn(`group grid w-full grid-cols-[3.4rem_minmax(0,1fr)] items-center
-                  gap-x-5 gap-y-1.5 border-l-[3px] py-4 pl-4 pr-1 text-left
-
-                  md:grid-cols-[4.6rem_minmax(0,15ch)_minmax(0,1fr)_auto] md:gap-x-9`,
-                  d.lead ? 'border-l-accent' : 'border-l-transparent')}>
-                <span className="row-span-2 grid place-items-center md:row-span-1" aria-hidden>{d.art}</span>
-                <span className="font-display text-head font-bold leading-tight text-ink">{d.title}</span>
-                <span className="col-start-2 text-note leading-[1.5] text-ink-2 md:col-start-3 md:text-sec">
-                  {d.line}
+            <ScrollRow key={d.id} index={i} className="h-full">
+              <Card interactive as="button" type="button" onClick={() => go(d.go)}
+                className={cn('flex h-full flex-col p-6', d.lead && 'border-l-accent')}>
+                <span className="grid h-[72px] place-items-start" aria-hidden>{d.art}</span>
+                <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">
+                  {d.title}
                 </span>
-                <span className="col-start-2 flex items-center gap-2 font-display text-tick font-bold
-                  text-accent md:col-start-4 md:justify-self-end">
+                <span className="mt-2 block text-sec leading-[1.5] text-ink-2">{d.line}</span>
+                <span className="mt-auto flex items-center gap-2 pt-5 font-display text-meta
+                  font-bold text-accent">
                   {d.note}
-                  <ArrowRight className="size-[1rem] transition-transform duration-200
+                  <ArrowRight className="size-[1.1rem] transition-transform duration-200
                     group-hover:translate-x-1.5"/>
                 </span>
-              </button>
+              </Card>
             </ScrollRow>
           ))}
-        </ul>
+        </div>
       </Section>
 
       {/* ── how a reading works ─────────────────────────────────────────── */}
-      <Section name="How it works" tone="card" tight>
+      <Section name="How it works" tone="card" tight className="bg-aqua">
         <SectionHead>A day in, one score and one sentence out.</SectionHead>
         <HowItWorks className="mt-6"/>
       </Section>
@@ -355,17 +357,16 @@ export function Overview({ go }) {
             and the other two like footnotes. They are three views of the same
             day and the grid should say so: same width, same height, same
             order of parts in each. */}
-        <div className="mt-6 grid border-t border-rule lg:grid-cols-3">
+        <div className="mt-7 grid gap-5 lg:grid-cols-3">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
-                /* The gutters are keyed off the index, not `first:`/`last:`.
-                   The button is not the grid's direct child, ScrollRow is, so
-                   those pseudo-classes matched nothing and the first cell's
-                   heading ran into the divider beside it. */
-                className={cn('group flex h-full w-full flex-col gap-3 border-b border-rule py-6 text-left',
-                  i === 0 ? 'lg:pr-7' : i === 2 ? 'lg:pl-7' : 'lg:px-7',
-                  i < 2 && 'lg:border-r')}>
+                /* Boxed, not ruled. Same note as the doors above: the rules
+                   between these three read as three separate topics when they
+                   are three views of one day. */
+                className="group flex h-full w-full flex-col gap-3 rounded-panel border
+                  border-rule bg-card p-6 text-left transition-[border-color] duration-150
+                  hover:border-accent">
                 <span className="font-display text-tick font-bold text-accent">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
@@ -391,7 +392,7 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── privacy ─────────────────────────────────────────────────────── */}
-      <Section name="Privacy" tone="card">
+      <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
         <SectionLede>
           The student decides what leaves the phone. Parents and counselors see a score and a
@@ -416,9 +417,9 @@ export function Overview({ go }) {
             are the last thing on it, so the second inversion is not a repeat
             of the first — it closes the page against the band that opened it,
             and every tint between the two now reads as the middle. */}
-        <ul className="mt-5 grid list-none gap-x-12 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {NEVER.map(t => (
-            <li key={t} className="border-t border-ink-3 py-2.5 text-meta leading-[1.4] text-mist">
+            <li key={t} className="rounded-panel bg-ink-2/45 px-5 py-4 text-meta leading-[1.4] text-mist">
               {t}
             </li>
           ))}

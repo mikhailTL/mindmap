@@ -467,7 +467,7 @@ export function Tour({ go }) {
   return (
     <main className="wrap py-14">
       <p className="note">Guided tour · {STOPS.length} stops</p>
-      <h1 className="mt-3.5 font-display font-bold text-view leading-[1.05] tracking-tight text-ink">
+      <h1 className="mt-3.5 font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
         What we built and how it works
       </h1>
       <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">

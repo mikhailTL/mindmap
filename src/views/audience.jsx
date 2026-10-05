@@ -49,7 +49,7 @@ function Hero({ label, title, lede, go }) {
           <ArrowLeft aria-hidden className="size-4"/> Overview
         </button>
         <p className="font-display text-tick font-bold text-accent">{label}</p>
-        <h1 className="mt-3 max-w-[16ch] font-display text-view font-bold leading-[1.06]
+        <h1 className="mt-3 max-w-[16ch] font-display text-major font-bold leading-[1.06]
           tracking-tight text-ink">{title}</h1>
         <p className="mt-4 max-w-[46ch] text-lead text-ink-2">{lede}</p>
       </div>

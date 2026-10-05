@@ -44,15 +44,19 @@ export function LogoMark({ className, title }) {
   )
 }
 
-/* The lockup. `tone` picks which colour the second half of the word takes: on
-   paper it is the accent, on an ink field both halves stay in the field's own
-   foreground, because accent on ink does not clear 4.5:1. */
+/* The lockup. `tone` picks which green the second half of the word takes: the
+   accent on paper, accent-lit on an ink field. It is always green. */
 export function Logo({ className, markClassName, tone = 'paper', title = 'MindMap', motto = false }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark className={cn('h-[1.15em] w-auto shrink-0', markClassName)}/>
-      <span className="font-display font-medium leading-none tracking-[-0.015em]">
-        Mind<span className={tone === 'paper' ? 'text-accent' : undefined}>Map</span>
+      <span className="font-display font-bold leading-none tracking-[-0.015em]">
+        {/* "Map" is green wherever the mark appears, which the review asked
+            for by name. On the dark band it cannot be `accent`: that measures
+            2.80 : 1 on ink and fails outright, so the band gets `accent-lit`
+            at 7.67 : 1. Same colour idea, two values, because one value cannot
+            be legible on both grounds. */}
+        Mind<span className={tone === 'paper' ? 'text-accent' : 'text-accent-lit'}>Map</span>
       </span>
       {/* The review asked for the motto on the mark. It sits beside the
           wordmark rather than under the whole lockup: centred underneath it

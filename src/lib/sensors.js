@@ -24,16 +24,16 @@ import { MoveMark, PulseMark, SweatMark, TempMark } from '../ui/marks'
    icon and the dot carry identity; the figure beside them is always ink. */
 export const SENSORS = {
   heart: { id:'heart', name:'Heart',       unit:'bpm', icon:PulseMark,       glow:'#e11919',
-           short:'Beats, and the gaps between them.',
-           about:'Beats, and the gaps between them. Rises with effort and with pressure, so the gaps matter more than the rate.' },
+           short:'How fast it beats, and how steady the beat is.',
+           about:'How fast your heart beats, and how even the time between beats is. The rate rises with exercise and with pressure alike, so the evenness is what tells them apart: under stress the gaps between beats get more regular.' },
   sweat: { id:'sweat', name:'Sweat',       unit:'µS',  icon:SweatMark,    glow:'#e86a05',
-           short:'Too small to feel. Rises when you tense.',
+           short:'Sweat you cannot feel. Rises first when you tense.',
            about:'Changes in skin conductance far too small to feel. It is the fastest of the four to react.' },
   temp:  { id:'temp',  name:'Temperature', unit:'°C',  icon:TempMark, glow:'#199e19',
-           short:'Drifts as your body settles.',
+           short:'Skin cools under strain, warms as you settle.',
            about:'Skin temperature drifts down as blood moves away from the hands under strain, and back up as you settle.' },
   move:  { id:'move',  name:'Movement',    unit:'g',   icon:MoveMark,    glow:'#1560e0',
-           short:'Tells still apart from running.',
+           short:'Separates a hard run from a hard day.',
            about:'Separates a hard run from a hard day. Above 0.35 g the score is held back rather than counted as stress.' },
 }
 export const SENSOR_ORDER = ['heart','sweat','temp','move']

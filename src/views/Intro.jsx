@@ -60,27 +60,45 @@ export function suppressIntro() {
   try { window.localStorage.setItem(OFF_KEY, '1') } catch {}
 }
 
-/* Every line is a statement of fact that stands on its own. Beat one names the
-   product and who it is for, because someone who watches four seconds and
-   leaves must still be able to answer "what is this" — and the answer is an
-   app, not a piece of hardware. The patch arrives third, as one of two ways in,
-   which is the order the product actually works in: a person with no patch can
-   still take a reading, and a sequence that opens on a circuit board tells them
-   the opposite. Nothing here is a setup for a later line, and no number appears
-   that the prototype does not produce. */
+/* Five beats: what it is, what it measures, how to use it, what comes back,
+   and who it is for.
+
+   The review watched this and could not answer "what is it and what does it
+   do" at the end of it, which is the one job an opening sequence has. So beat
+   one now says what it measures rather than making an observation about
+   bodies, beat two names the four signals, and a fifth beat was added for the
+   audience, which was asked for by name.
+
+   Beat three said "two ways to take a reading" while the overview said "3
+   Ways to Use MindMap", and nothing on either page reconciled them. There are
+   three ways to use it (patch, phone, demo) and two of them are readings; the
+   sequence now says three and matches the page.
+
+   Each beat carries its own ground. The sequence ran on one near-black green
+   throughout and the note was that it was too dark and too bold for an
+   opening. These are teals, lightening across the four and settling onto the
+   brand green for the mark. Every one was measured: paper clears 9.1 : 1 on
+   the weakest of them and accent-lit clears 4.8, so nothing in the sequence
+   changes contrast class as the ground moves under it.
+
+   Nothing here is a setup for a later line, and no number appears that the
+   prototype does not produce. */
 const BEATS = [
-  { ms: 6000,
+  { ms: 6200, bg: '#0b3f3f',
     head: 'MindMap is a wellness app for teenagers.',
-    sub:  'Your body reacts to a hard day before you notice it.' },
-  { ms: 6000,
-    head: 'Two ways to take a reading.',
-    sub:  'Wear the patch, or use the phone you already have.' },
-  { ms: 6000,
+    sub:  'It measures what stress does to your body, and tells you in one sentence.' },
+  { ms: 6200, bg: '#0f4d4e',
+    head: 'It reads four signals.',
+    sub:  'Your pulse, your sweat, your skin temperature and how much you move.' },
+  { ms: 6200, bg: '#0c4738',
+    head: 'Three ways to use it.',
+    sub:  'Wear the patch. Use the phone in your pocket. Or open the demo and look around.' },
+  { ms: 6200, bg: '#11423f',
     head: 'A day comes back as one score.',
-    sub:  'Under it, one sentence in plain words.' },
-  { ms: 5600,
+    sub:  'Out of 100, with one plain sentence under it saying what changed.' },
+  { ms: 5600, bg: '#0d2b1e',
     head: 'MindMap',
-    sub:  'One score and one sentence a day.' },
+    sub:  'For students, their parents, and school counselors.' },
 ]
 const LAST = BEATS.length - 1
 const TOTAL = BEATS.reduce((a, b) => a + b.ms, 0)
@@ -239,10 +257,43 @@ const ASK = {
 }
 const PICKED = [3, 1, 4, 2, 3, 1]
 
+/* ── Beat 2 ── the four signals, named ─────────────────────────────────────
+   The review's question after watching this was "what does it actually
+   measure", and nothing in the sequence answered it: the signals appeared as
+   four unlabelled dots in a legend on the next beat. Four plates, each with
+   the signal's own trace in the signal's own colour, is the shortest way to
+   answer it, and it reuses the hues the rest of the site already assigns. */
+const TRACE_D = {
+  heart: 'M0 20 L10 20 L13 7 L16 31 L19 20 L34 20 L44 20 L47 8 L50 30 L53 20 L68 20 L80 20',
+  sweat: 'M0 29 L12 29 Q18 29 21 13 Q24 5 28 12 Q32 19 36 28 L44 29 Q50 29 53 15 Q56 7 60 14 Q63 21 67 28 L80 29',
+  temp:  'M0 11 C12 11 18 13 26 17 C36 22 44 23 54 21 C64 19 72 16 80 13',
+  move:  'M0 20 L7 20 L9 16 L11 24 L13 20 L34 20 L36 18 L38 22 L40 20 L58 20 L60 14 L62 26 L64 20 L80 20',
+}
+
+function StageSignals() {
+  return (
+    <div className="mx-auto grid h-full w-full max-w-[940px] content-center gap-2 sm:gap-3
+      grid-cols-2 lg:grid-cols-4">
+      {SENSOR_ORDER.map((id, i) => (
+        <Plate key={id} className="px-3 py-3 sm:px-4 sm:py-4" delay={`${0.1 + i * 0.12}s`}>
+          <svg {...svgProps} viewBox="0 0 80 36" preserveAspectRatio="none"
+            className="h-9 w-full sm:h-11">
+            <path d={TRACE_D[id]} fill="none" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round" stroke={SENSORS[id].glow} vectorEffect="non-scaling-stroke"
+              className="iv-a iv-draw" style={{ '--len': 200, '--d': '.9s', '--t': `${0.3 + i * 0.12}s` }}/>
+          </svg>
+          <span className="mt-2 block font-display text-ui font-bold text-ink">{SENSORS[id].name}</span>
+          <span className="mt-1 block text-fine leading-tight text-ink-2">{SENSORS[id].short}</span>
+        </Plate>
+      ))}
+    </div>
+  )
+}
+
 function StageRoutes() {
   return (
-    <div className="mx-auto grid h-full w-full max-w-[940px] content-center items-start gap-2
-      sm:gap-4 lg:grid-cols-2">
+    <div className="mx-auto grid h-full w-full max-w-[1040px] content-center items-start gap-2
+      sm:gap-4 lg:grid-cols-3">
       <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".1s">
         <span className="block font-display text-ui font-bold text-ink">Wear the patch</span>
         {/* Full plate width, with the elbow cut flush at the left edge of the
@@ -303,6 +354,25 @@ function StageRoutes() {
           ))}
         </ul>
         <p className="mt-1.5 text-fine text-ink-3">About thirty seconds. Nothing on your arm.</p>
+      </Plate>
+
+      {/* The third way. It was missing, and its absence was the reason the
+          sequence said two ways while the overview said three. */}
+      <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".7s">
+        <span className="block font-display text-ui font-bold text-ink">Open the demo</span>
+        <div className="mx-auto mt-2 aspect-[420/96] w-full">
+          <svg {...svgProps} viewBox="0 0 420 96">
+            <rect x="24" y="10" width="372" height="76" rx="10" fill="none" strokeWidth="2.2"
+              strokeDasharray="8 7" className="stroke-ruling iv-a iv-pop"
+              style={{ '--d': '.5s', '--t': '.95s' }}/>
+            <path d="M68 70 L136 40 L200 54 L268 24 L352 38" fill="none" strokeWidth="2.6"
+              strokeLinecap="round" strokeLinejoin="round" className="stroke-accent iv-a iv-draw"
+              style={{ '--len': 320, '--d': '.9s', '--t': '1.15s' }}/>
+            <circle cx="352" cy="38" r="5.5" fill="#0e9c9c" className="iv-a iv-pop"
+              style={{ '--d': '.4s', '--t': '1.9s' }}/>
+          </svg>
+        </div>
+        <p className="mt-1.5 text-fine text-ink-3">Nobody measured. Every screen filled in, so you can look around.</p>
       </Plate>
     </div>
   )
@@ -417,7 +487,7 @@ function StageMark({ still }) {
    stack and the who-sees-what diagram: both are whole pages elsewhere, and a
    title sequence that explains an enclosure and a consent model on the way
    past is a sequence nobody finishes reading. */
-const STAGES = [StageDay, StageRoutes, StageScore, StageMark]
+const STAGES = [StageDay, StageSignals, StageRoutes, StageScore, StageMark]
 
 /* One motion vocabulary, declared once. Keyframes live here rather than in
    tailwind.config.js because they describe this one sequence, not the design
@@ -592,7 +662,8 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden bg-ink outline-none',
+      style={{ background: BEATS[beat]?.bg || '#0d2b1e', transition: 'background 900ms cubic-bezier(0.4,0,0.2,1)' }}
+      className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
 
@@ -694,7 +765,7 @@ export function Intro({ onDone }) {
       </main>
 
       {/* ── the frame, bottom: the one control, and what pressing it costs ── */}
-      <div className="shrink-0 border-t border-paper/20 px-5 py-4 sm:px-10 sm:py-5">
+      <div className="shrink-0 px-5 py-4 sm:px-10 sm:py-5">
         <Button ref={skipRef} onClick={skip}
           className="mx-auto flex h-auto w-full max-w-[430px] flex-col gap-0.5 bg-paper py-3
             text-ink hover:bg-mist active:bg-mist">

@@ -73,12 +73,13 @@ export function PatchPage() {
               the break falls after "sticker-sized" so a 390px column cannot
               hyphen-break that word across two lines. */}
           <RevealLines as="h1"
-            className="mt-3 max-w-[22ch] font-display font-bold text-sect leading-[1.05] tracking-tight text-ink"
+            className="mt-3 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
             lines={['A sticker-sized', 'patch for the forearm.']}/>
           <ScrollIn className="mt-4">
             <p className="max-w-[46ch] text-lead leading-[1.5] text-ink-2">
-              It reads four signals off the skin once a second and sends them to the phone: heart,
-              sweat, skin temperature and movement. One patch is worn for a week.
+              A sticker you wear on your upper arm, under a sleeve. It reads four things off the
+              skin once a second and sends them to your phone over Bluetooth, where the app turns
+              a whole day of them into one score.
             </p>
             {/* What you can DO here, said inside the first screen rather than
                 discovered nine hundred pixels down. The page's one interactive
@@ -155,9 +156,9 @@ export function PatchPage() {
               <PatchArena ref={model} onPlay={() => setPicked(null)} onShowAll={() => setPicked(null)}
                 beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
               <figcaption className="mt-3 max-w-[70ch] text-meta text-mist">
-                The drawing names what each layer does. The model is the same patch, turnable and
-                sectionable. No assembled unit has been photographed yet, and no figure on this page
-                was measured from one.
+                Turn the model to see the patch from any angle, or cut it open. The flat drawing
+                beside it names the same three layers. Nothing here is a photograph: no unit has
+                been built yet, so every dimension on this page comes from the CAD.
               </figcaption>
             </figure>
 
@@ -165,9 +166,13 @@ export function PatchPage() {
                 its label ink-2, both of which disappear on this band, so the
                 heading is written out here in the band's own two values. */}
             <div className="min-w-0">
-              <h2 className="block rounded-none border-t border-mist pt-3 font-display text-tick
-                font-bold text-accent-lit">The three parts of a patch</h2>
-              <p className="mt-2 text-sec text-mist">Pick one to see it alone in the model.</p>
+              {/* Sized as what it is: a heading one level under the page
+                  title, not a caption. The review could not tell whether this
+                  was a new section or a part of the one above it, and at
+                  caption size it could have been either. */}
+              <h3 className="font-display text-head font-bold leading-tight text-accent-lit">
+                The three parts of a patch</h3>
+              <p className="mt-2 text-sec text-mist">Tap one to see it on its own.</p>
               <ol className="mt-4 grid list-none gap-3 p-0">
                 {LAYERS.map(l => {
                   const on = picked === l.part
