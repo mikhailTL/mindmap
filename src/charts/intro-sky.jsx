@@ -26,8 +26,8 @@ import React from 'react'
  *    group is painted at 0.55 and masked by a ramp that holds 0.30 above
  *    y 420 and reaches 1 at the feet, so the effective paint is at most 0.165
  *    where the headline and its sub-line sit and 0.55 at the feet. Measured
- *    against the six grounds: ink-2 #2a5744 clears 4.98 : 1 on the worst band
- *    at 0.165, ink #0d2b1e clears 4.98 : 1 on the worst band at 0.55, and both
+ *    against the six grounds: ink-2 #1f5560 clears 4.98 : 1 on the worst band
+ *    at 0.165, ink #0b2b33 clears 4.98 : 1 on the worst band at 0.55, and both
  *    are 6.6 : 1 or better on bare ground. Raising either number spends that,
  *    and the arch is also the better picture for it: a rainbow dissolving into
  *    the sky at its apex and strongest at its feet is what one looks like.

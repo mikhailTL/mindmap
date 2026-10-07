@@ -260,7 +260,7 @@ export function PhoneCheck() {
             <>
               <div className="flex flex-col items-start gap-5">
                 <RainbowDial score={result.score} size={248}
-                  rings={[{ id:'phone', name:'Phone sensors', color:'#157446', glow:'#0e9c9c',
+                  rings={[{ id:'phone', name:'Phone sensors', color:'#0a6e68', glow:'#1d8fb0',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div>
                   {/* The verdict alone at display size. The reason follows at

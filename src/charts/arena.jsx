@@ -33,11 +33,11 @@ const BASE   = '/di/arena/'
    inline write can. These are mist, ink, card, rule and accent: the ground the
    figure sits on, and the ink and rule the page uses around it. */
 const SKIN = {
-  bg:     '#e3ede7',
-  ink:    '#0d2b1e',
+  bg:     '#dfecee',
+  ink:    '#0b2b33',
   panel:  '#ffffff',
-  border: '#c2d7ca',
-  accent: '#157446',
+  border: '#bed6da',
+  accent: '#0a6e68',
 }
 
 /* Appended to the shadow root, so it lands after the bundle's own sheet and
@@ -53,14 +53,14 @@ const SKIN_CSS = `
 .shell .stage{min-height:0;background:transparent}
 .busy{background:${SKIN.bg};padding:20px;font-family:Chivo,system-ui,sans-serif}
 .busy strong{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.busy p{font-size:15px;color:#47705e;margin:6px 0 0}
+.busy p{font-size:15px;color:#3c6a74;margin:6px 0 0}
 .selection{bottom:16px;left:16px;padding:16px;max-height:min(80%,320px);border:1px solid ${SKIN.border};border-radius:10px;
   box-shadow:5px 5px 0 0 rgb(13 43 30 / .16);font-family:Chivo,system-ui,sans-serif}
 .selection h3{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.selection p{font-size:13px;color:#2a5744}
-.selection .kicker{color:#47705e}
+.selection p{font-size:13px;color:#1f5560}
+.selection .kicker{color:#3c6a74}
 .selection-actions{gap:7px}
-.selection-actions button{min-height:44px;padding:8px 12px;font-size:13px;border-radius:6px;border-color:#0d2b1e}
+.selection-actions button{min-height:44px;padding:8px 12px;font-size:13px;border-radius:6px;border-color:#0b2b33}
 .selection .close{min-height:34px;min-width:34px;font-size:17px;border:0}
 .toast{border:1px solid ${SKIN.border};border-radius:10px;font-family:Chivo,system-ui,sans-serif}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SKIN.accent};outline-offset:2px}
@@ -130,7 +130,7 @@ function greenSelection(a) {
   const any = a.objects.values().next().value
   if (!any) return
   const tint = any.material.color.clone().set(SKIN.accent)
-  const box = any.material.color.clone().set('#0e9c9c')
+  const box = any.material.color.clone().set('#1d8fb0')
   const base = a.applyState.bind(a)
   a.applyState = () => {
     base()

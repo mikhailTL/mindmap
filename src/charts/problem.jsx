@@ -49,12 +49,12 @@ export const SOURCES = [
 ]
 
 /* Everything in this file is drawn for the dark band and nowhere else. accent
-   #157446 measures 2.62 : 1 on ink and is unusable there, so the lit quantity
+   #0a6e68 measures 2.62 : 1 on ink and is unusable there, so the lit quantity
    is accent.lit (7.67 : 1), the second quantity is beam (4.53 : 1, and only
    ever a graphic), the remainder is ink.3 and the type is mist and ruling. */
-const LIT = '#3ecf9a'   /* accent.lit — the quantity being counted */
-const REST = '#47705e'  /* ink.3 — the denominator it is counted out of */
-const PAIR = '#0e9c9c'  /* beam — the other half of a two-way split */
+const LIT = '#3fd6c4'   /* accent.lit — the quantity being counted */
+const REST = '#3c6a74'  /* ink.3 — the denominator it is counted out of */
+const PAIR = '#1d8fb0'  /* beam — the other half of a two-way split */
 
 /* ── 1. How big it is, and which way it is going ───────────────────────── */
 
@@ -105,7 +105,7 @@ function ThenNow({ className }) {
       className={cn('block h-auto w-full', className)}>
       <rect x="10" y="31" width="30" height="45" rx="2" fill={REST} />
       <rect x="60" y="16" width="30" height="60" rx="2" fill={LIT} />
-      <path d="M10 31 L90 31" fill="none" stroke="#93b2a1" strokeWidth="0.8"
+      <path d="M10 31 L90 31" fill="none" stroke="#8eb0b6" strokeWidth="0.8"
         strokeDasharray="3 3" />
       <path d="M4 76 L96 76" fill="none" stroke={REST} strokeWidth="1" />
     </svg>

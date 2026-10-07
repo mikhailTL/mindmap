@@ -88,8 +88,8 @@ export function suppressIntro() {
      gaps    .0583   .0477   .0695   .0441   .0828
 
    The type inverted with them. Measured across all six grounds, worst case:
-   ink #0d2b1e 12.16 : 1, ink-2 #2a5744 6.60, ink-3 #47705e 4.48, accent
-   #157446 4.64. Headings are ink and sub-lines are ink-2; ink-3 is only ever
+   ink #0b2b33 12.16 : 1, ink-2 #1f5560 6.60, ink-3 #3c6a74 4.48, accent
+   #0a6e68 4.64. Headings are ink and sub-lines are ink-2; ink-3 is only ever
    used inside a plate, where it measures 4.74 against the worst plate the
    arch can put under it. paper, mist, rule and ruling have no contrast left
    on a pale ground at all and none of them survives in here.
@@ -131,10 +131,10 @@ const svgProps = {
 }
 
 /* The mark's dot is `var(--logo-peak, currentColor)`. On the old ink field it
-   was beam #0e9c9c at 5.30 : 1. On a pale aqua beam measures 2.69 and fails
-   even as a graphic, so the peak is beam-ink #0b7d7d, which is the same
+   was beam #1d8fb0 at 5.30 : 1. On a pale aqua beam measures 2.69 and fails
+   even as a graphic, so the peak is beam-ink #11677f, which is the same
    turquoise at a value that holds 3.96 on the lightest ground. */
-const PEAK = { '--logo-peak': '#0b7d7d' }
+const PEAK = { '--logo-peak': '#11677f' }
 
 /* Deterministic wiggle, and its own measured length. Math.random() would redraw
    on every render and read as noise rather than as a recording; the length is
@@ -230,7 +230,7 @@ function StageDay() {
           style={{ '--d': '.5s', '--t': '.1s' }}>your body</text>
         {DAY.map((d, i) => (
           <line key={'b' + i} x1={d.x} y1={92 - d.body} x2={d.x} y2={92 + d.body} strokeWidth="3.4"
-            strokeLinecap="round" stroke="#0e9c9c" className="iv-a iv-fade"
+            strokeLinecap="round" stroke="#1d8fb0" className="iv-a iv-fade"
             style={{ '--d': '.4s', '--t': `${0.25 + i * 0.03}s` }} />
         ))}
 
@@ -342,9 +342,9 @@ function StageRoutes() {
             {/* the mark at patch size, centred on the arm: 40 x 28 logo units
                 at scale 1.7, so the dark lozenge is 61 x 34 on a 420 canvas */}
             <g transform="translate(136,25) scale(1.7)">
-              <rect x="2" y="4" width="36" height="20" rx="10" fill="#0d2b1e" stroke="#f7faf8"
+              <rect x="2" y="4" width="36" height="20" rx="10" fill="#0b2b33" stroke="#f5fafa"
                 strokeWidth="0.7" className="iv-a iv-pop" style={{ '--d': '.45s', '--t': '.95s' }} />
-              <path d={RIDGE} fill="none" stroke="#0e9c9c" strokeWidth="0.9" strokeLinecap="round"
+              <path d={RIDGE} fill="none" stroke="#1d8fb0" strokeWidth="0.9" strokeLinecap="round"
                 strokeLinejoin="round" className="iv-a iv-draw"
                 style={{ '--len': 33, '--d': '.8s', '--t': '1.2s' }} />
             </g>
@@ -398,7 +398,7 @@ function StageRoutes() {
             <path d="M68 70 L136 40 L200 54 L268 24 L352 38" fill="none" strokeWidth="2.6"
               strokeLinecap="round" strokeLinejoin="round" className="stroke-accent iv-a iv-draw"
               style={{ '--len': 320, '--d': '.9s', '--t': '1.15s' }}/>
-            <circle cx="352" cy="38" r="5.5" fill="#0e9c9c" className="iv-a iv-pop"
+            <circle cx="352" cy="38" r="5.5" fill="#1d8fb0" className="iv-a iv-pop"
               style={{ '--d': '.4s', '--t': '1.9s' }}/>
           </svg>
         </div>
@@ -483,7 +483,7 @@ function StageAudience() {
                 strokeWidth="2.2" strokeLinecap="round" className="stroke-ink-3 iv-a iv-draw"
                 style={{ '--len': 160, '--d': '.7s', '--t': `${0.45 + i * 0.18}s` }}/>
               <rect x="40" y="68" width={100 - i * 28} height="4" rx="2"
-                fill="#0e9c9c" className="iv-a iv-fade"
+                fill="#1d8fb0" className="iv-a iv-fade"
                 style={{ '--d': '.5s', '--t': `${0.9 + i * 0.18}s` }}/>
             </svg>
           </div>
@@ -516,7 +516,7 @@ function StageMark({ still }) {
                     className="font-mono fill-ink-2">{h}</text>
                 </g>
               ))}
-              <circle cx="419.1" cy="199.8" r="6.5" fill="#0b7d7d" className="iv-a iv-pop"
+              <circle cx="419.1" cy="199.8" r="6.5" fill="#11677f" className="iv-a iv-pop"
                 style={{ '--d': '.35s', '--t': '1.15s' }} />
             </g>
           )}
@@ -525,13 +525,13 @@ function StageMark({ still }) {
             ? { transform: 'translate(136px,125.2px) scale(5.2)', transformBox: 'view-box',
                 transformOrigin: '0 0', strokeWidth: 0.5 }
             : { '--d': '1s', '--t': '1.55s', transformBox: 'view-box', transformOrigin: '0 0' }}>
-            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#0d2b1e"
+            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#0b2b33"
               className={cn(a, !still && 'iv-draw')}
               style={still ? undefined : { '--len': 96, '--d': '.8s', '--t': '2.3s' }} />
-            <path d={RIDGE} fill="none" stroke="#0b7d7d" strokeLinecap="round" strokeLinejoin="round"
+            <path d={RIDGE} fill="none" stroke="#11677f" strokeLinecap="round" strokeLinejoin="round"
               className={cn(a, !still && 'iv-draw')}
               style={still ? undefined : { '--len': 33, '--d': '1.3s', '--t': '.15s' }} />
-            <circle cx="29.5" cy="17.6" r="2.4" fill="#0b7d7d" strokeWidth="0"
+            <circle cx="29.5" cy="17.6" r="2.4" fill="#11677f" strokeWidth="0"
               className={cn(a, !still && 'iv-pop')}
               style={still ? undefined : { '--d': '.4s', '--t': '3s' }} />
           </g>
@@ -752,7 +752,7 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      style={{ background: BEATS[beat]?.bg || '#0d2b1e', transition: 'background 900ms cubic-bezier(0.4,0,0.2,1)' }}
+      style={{ background: BEATS[beat]?.bg || '#0b2b33', transition: 'background 900ms cubic-bezier(0.4,0,0.2,1)' }}
       className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
@@ -775,7 +775,7 @@ export function Intro({ onDone }) {
         {/* --logo-peak is set on a wrapper rather than passed down: Logo takes
             no style prop, and the mark reads the variable off whatever it
             inherits from. tone="paper" is the light-ground lockup, where the
-            accent half of the wordmark is accent #157446 at 4.64 : 1; the
+            accent half of the wordmark is accent #0a6e68 at 4.64 : 1; the
             accent-lit the ink field needed measures 1.9 here. */}
         <div aria-hidden style={PEAK}
           className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4

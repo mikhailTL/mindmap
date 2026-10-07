@@ -49,10 +49,10 @@ import { cn } from '../lib/utils'
 
 /* Palette by hand, not by class: these are SVG paint attributes and Tailwind
    tokens do not reach them. Values are tailwind.config.js, unchanged. */
-const INK = '#0d2b1e', INK2 = '#2a5744', INK3 = '#47705e'
-const RULE = '#c2d7ca', RULING = '#93b2a1', MIST = '#e3ede7'
-const CARD = '#ffffff', ACCENT = '#157446', WASH = '#dcefe4'
-const BEAM = '#0e9c9c', BEAMWASH = '#d9f0ef'
+const INK = '#0b2b33', INK2 = '#1f5560', INK3 = '#3c6a74'
+const RULE = '#bed6da', RULING = '#8eb0b6', MIST = '#dfecee'
+const CARD = '#ffffff', ACCENT = '#0a6e68', WASH = '#d6eeeb'
+const BEAM = '#1d8fb0', BEAMWASH = '#ddf0f8'
 const BLOOD = '#e11919'                 // the heart signal's own colour, sitewide
 
 /* One oblique projection for the whole drawing: a point (x, y) in a plate's
@@ -615,10 +615,10 @@ function Still() {
         <svg viewBox="0 0 300 92" style={{ width:'100%', display:'block' }} aria-hidden>
           <path d="M0 58 L28 58 L36 22 L44 80 L52 58 L90 58 L118 58 L126 22 L134 80 L142 58
                    L180 58 L208 58 L216 22 L224 80 L232 58 L268 58 L296 58"
-            fill="none" stroke="#3ecf9a" strokeWidth="3.4" strokeLinecap="round"
+            fill="none" stroke="#3fd6c4" strokeWidth="3.4" strokeLinecap="round"
             strokeLinejoin="round" className="mm-trace"/>
         </svg>
-        <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:'#c2d7ca' }}>
+        <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:'#bed6da' }}>
           72 bpm · signal good</p>
       </div>
     </div>
@@ -669,7 +669,7 @@ export function StepScreen({ kind }) {
   const S = SCREENS[kind] || Pad
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%',
-      justifyContent:'center', background:'#f7faf8' }}>
+      justifyContent:'center', background:'#f5fafa' }}>
       <S/>
     </div>
   )

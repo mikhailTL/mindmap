@@ -26,9 +26,9 @@ import { cn } from '../lib/utils'
  * No background, deliberately. A bed would make it an object again, and it
  * also frees the note to sit on paper, card or mist without a contrast audit
  * per surface: every colour used here clears 4.5 : 1 on all three.
- *   warn  #99590c  5.33 paper / 4.94 mist / 5.36 card
+ *   warn  #8f5a0c  5.33 paper / 4.94 mist / 5.36 card
  *   crit  #a8321f  6.50 paper / 6.02 mist / 6.55 card
- *   ink-2 #2a5744  8.00 paper / 7.40 mist / 8.30 card
+ *   ink-2 #1f5560  8.00 paper / 7.40 mist / 8.30 card
  */
 
 function Notice({ tag, tone, rule, inline, children, className }) {

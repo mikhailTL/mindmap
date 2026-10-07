@@ -11,11 +11,11 @@ import React from 'react'
  * What had to change is the ground. These cards stand on the ink band, so each
  * drawing is given its own ink panel inside the card and the band's palette
  * applies: ink is 1.00 on itself and accent is 2.80, both unusable, so every
- * stroke here is one of three values measured against #0d2b1e.
+ * stroke here is one of three values measured against #0b2b33.
  *
- *   paper      #f7faf8   14.47 : 1
- *   mist       #e3ede7   12.69 : 1
- *   accent.lit #3ecf9a    7.67 : 1
+ *   paper      #f5fafa   14.47 : 1
+ *   mist       #dfecee   12.69 : 1
+ *   accent.lit #3fd6c4    7.67 : 1
  *
  * accent.lit carries the one thing each card is about: the charging slot, the
  * board in its tray, the skin contacts. mist draws the plastic, paper the
@@ -25,10 +25,10 @@ import React from 'react'
  * No labels. The card beside each drawing already names the part in the page's
  * own type, and 15px mono inside a 90px figure is a caption nobody reads.
  */
-const PAPER = '#f7faf8'
-const MIST  = '#e3ede7'
-const LIT   = '#3ecf9a'
-const GND   = '#0d2b1e'   /* the panel's own ground, used to mask, never to draw */
+const PAPER = '#f5fafa'
+const MIST  = '#dfecee'
+const LIT   = '#3fd6c4'
+const GND   = '#0b2b33'   /* the panel's own ground, used to mask, never to draw */
 
 /* Same proportions as the engineering drawing, on a shorter canvas: 440x200
    instead of 440x260, because these sit three to a column and the height is

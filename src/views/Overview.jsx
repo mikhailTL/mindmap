@@ -103,15 +103,18 @@ const DOORS = [
    the one it reports to, then the school. Each tile shows that screen's own
    live chart rather than a photograph of somebody holding a phone. */
 const SCREENS = [
-  { id:'student', who:'Student',
+  { id:'student', who:'Student', photo:'student-card',
+    alt:'A student outdoors at school, the patch worn on her upper arm under a short sleeve',
     title:'Your score today, and what moved it',
     line:'You see the score, the four signals behind it, and every reading ever taken.',
     cta:'What a student gets' },
-  { id:'parent',  who:'Parent',
+  { id:'parent',  who:'Parent', photo:'parent-card',
+    alt:'A parent and their teenager talking at a kitchen table, the patch on the teenager\u2019s upper arm',
     title:'One sentence a week, and which days ran high',
     line:'You see the shape of the week. Never a raw reading, never a note, never a location.',
     cta:'What a parent gets' },
-  { id:'pro',     who:'School counselor',
+  { id:'pro',     who:'School counselor', photo:'school-card',
+    alt:'A school counselor at her desk, mid conversation with a student',
     title:'A caseload ranked by who is changing fastest',
     line:'You see a score and a rank, for the students whose guardian agreed to share trends.',
     cta:'What a school gets' },
@@ -181,6 +184,15 @@ const NEVER = [
   'Diagnose anything. This is not a medical device',
 ]
 
+/* The hero's three facts. Fragments, not sentences: the title screen is
+   scanned, never read, and each of these answers one question a reviewer
+   asked. What does it measure, where does it measure, who else sees it. */
+const HERO_FACTS = [
+  'Pulse, sweat, temperature, movement.',
+  'From a patch on your arm, or your phone alone.',
+  'You choose who else sees it.',
+]
+
 export function Overview({ go }) {
   return (
     <main>
@@ -204,8 +216,8 @@ export function Overview({ go }) {
             {/* The name, with the hairline a drawing puts in front of a key.
                 accent on paper is 5.52 : 1, so it can be a word and not only a
                 colour. */}
-            <ScrollIn as="p" className="flex items-center gap-3 font-display text-tick font-bold
-              tracking-tight text-accent">
+            <ScrollIn as="p" className="flex items-center gap-3 font-mono text-row font-bold
+              tracking-[0.005em] text-accent">
               <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
               MindMap, a wellness app for teenagers
             </ScrollIn>
@@ -223,14 +235,21 @@ export function Overview({ go }) {
               tracking-tight text-ink lg:text-sect 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
-            <ScrollIn as="p" className="mt-6 max-w-[46ch] text-lead font-medium leading-[1.35] text-ink-2">
-              MindMap measures what stress does to your body and turns it into
-              one number a day, plus one plain sentence saying what changed. A
-              rising week shows up early, and you choose who else sees it.
+            {/* Two paragraphs stood here, sixty words of prose on a title
+                screen. Nobody reads a paragraph above the fold. One line says
+                what comes back, three fragments say where it comes from, and
+                the whole block is twenty seven words you can take in without
+                reading a sentence. */}
+            <ScrollIn as="p" className="mt-6 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
+              One score a day, out of 100. One sentence saying what changed.
             </ScrollIn>
-            <ScrollIn as="p" className="mt-3 max-w-[46ch] text-sec text-ink-2">
-              It reads pulse, sweat, skin temperature and movement. Read them from a patch on
-              your upper arm using the app, or from the phone already in your pocket.
+            <ScrollIn as="ul" className="m-0 mt-5 flex list-none flex-col gap-2 p-0">
+              {HERO_FACTS.map(f => (
+                <li key={f} className="flex items-start gap-2.5 text-sec text-ink-2">
+                  <span aria-hidden className="mt-[0.62em] h-[3px] w-3 shrink-0 rounded-bar bg-accent"/>
+                  {f}
+                </li>
+              ))}
             </ScrollIn>
             <ScrollIn className="mt-8">
               <div className="flex flex-wrap gap-3">
@@ -287,17 +306,17 @@ export function Overview({ go }) {
               after:bg-beam-wash after:content-[''] lg:after:block">
               <span aria-hidden className="absolute right-3 top-3 h-3 w-3 border-r border-t border-ruling/55"/>
               <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
-              <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"
+              <IPhone model="15-pro" scale={0.3} screenBg="#f5fafa"
                 label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
                 className="shrink-0 lg:hidden">
                 <PhoneApp/>
               </IPhone>
-              <IPhone model="15-pro" scale={0.52} screenBg="#f7faf8"
+              <IPhone model="15-pro" scale={0.52} screenBg="#f5fafa"
                 label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
                 className="hidden shrink-0 lg:block xl:hidden">
                 <PhoneApp/>
               </IPhone>
-              <IPhone model="15-pro" scale={0.62} screenBg="#f7faf8"
+              <IPhone model="15-pro" scale={0.62} screenBg="#f5fafa"
                 label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
                 className="hidden shrink-0 xl:block">
                 <PhoneApp/>
@@ -402,7 +421,16 @@ export function Overview({ go }) {
                 className="group flex h-full w-full flex-col gap-3 rounded-panel border
                   border-rule bg-card p-6 text-left transition-[border-color] duration-150
                   hover:border-accent">
-                <span className="font-display text-tick font-bold text-accent">{s2.who}</span>
+                {/* The photo leads. These three cards are the one place on
+                    the site where a reader is choosing which person they are,
+                    and a face answers that faster than a label does. Fixed
+                    height and object-cover so three different crops still sit
+                    on one line. */}
+                <img src={`/photos/${s2.photo}.webp`} alt={s2.alt} loading="lazy" decoding="async"
+                  width="900" height="605"
+                  className="-mx-6 -mt-6 mb-1 h-[148px] w-[calc(100%+3rem)] rounded-t-panel
+                    object-cover"/>
+                <span className="font-mono text-body font-bold tracking-[0.005em] text-accent">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
                 </span>
@@ -410,7 +438,7 @@ export function Overview({ go }) {
                     on the same line whatever shape each one is: an arch, a
                     week strip and a ranked list are three different heights
                     and without this the copy under them stepped. */}
-                <span aria-hidden className="mt-1 flex h-[188px] items-center justify-center">
+                <span aria-hidden className="mt-1 flex h-[150px] items-center justify-center">
                   <Preview id={s2.id}/>
                 </span>
                 <span className="max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.line}</span>

@@ -1,5 +1,6 @@
 import React from 'react'
-import { Label } from '../ui/misc'
+// Label was the page eyebrow here; it is written out now so the mono step is
+// visible at the call site rather than hidden behind a shared annotation class.
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { RevealLines, ScrollIn, ScrollRow } from '../s21/motion'
@@ -81,8 +82,10 @@ export function PatchPage() {
           its own border-t, and two hairlines meeting read as a 2px rule
           nobody drew. */}
       <section className="relative overflow-hidden bg-mist">
-        <div className="wrap relative py-9 lg:py-12">
-          <Label>The patch</Label>
+        <div className="wrap relative py-9 lg:py-12
+          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,40%)] lg:items-center lg:gap-10">
+          <div className="min-w-0">
+          <p className="font-mono text-row font-bold tracking-[0.005em] text-accent">The patch</p>
           {/* "What the patch measures." named the section but not the object, so
               a reader who landed here first still did not know what a patch is.
               The heading states the thing; the list under it states the chain.
@@ -119,6 +122,24 @@ export function PatchPage() {
               Turn the 3D model<ChevronDown/>
             </button>
           </ScrollIn>
+          </div>
+
+          {/* Worn, at the size it is actually worn. The drawing and the model
+              below say what the thing is made of; this says what it looks like
+              on an arm, which is the question the review asked twice and no
+              diagram answers. The caption is not decoration: the patch here is
+              rendered from the same CAD the model is built from, and nothing
+              about it has been worn by anybody yet. */}
+          <figure className="m-0 mt-8 lg:mt-0">
+            <img src="/photos/patch-worn.webp" width="1024" height="688" loading="eager"
+              decoding="async"
+              alt="The patch worn on an upper arm, the sleeve of a short-sleeved shirt just above it"
+              className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
+            <figcaption className="mt-2.5 max-w-[46ch] text-meta text-ink-3">
+              Concept image. The patch is rendered from the CAD below. No unit has been built
+              or worn.
+            </figcaption>
+          </figure>
         </div>
       </section>
 

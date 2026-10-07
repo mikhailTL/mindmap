@@ -152,12 +152,12 @@ export function CheckInBody({ go }){
                 side by side left the sentence breaking every two words */}
             <div className="flex flex-col items-start gap-7">
               {/* Both hexes are palette tokens, checked against the rebuild:
-                  #157446 is accent, #0e9c9c is beam. Beam paints the band on a
+                  #0a6e68 is accent, #1d8fb0 is beam. Beam paints the band on a
                   mist track — a fill, which is the only job it has — and the
                   ring never carries the reading on its own, so neither is
                   being asked to clear a text ratio. */}
               <RainbowDial score={r.score} size={288}
-                rings={[{ id:'self', name:'Your answers', color:'#157446', glow:'#0e9c9c',
+                rings={[{ id:'self', name:'Your answers', color:'#0a6e68', glow:'#1d8fb0',
                           value:r.score, reading:'Six questions' }]}/>
               <div>
                 <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>

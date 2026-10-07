@@ -13,9 +13,9 @@ import { cn } from '../lib/utils'
  * tailwind.config.js. They are the only place a hex appears in this file. */
 const T = {
   paper:  '#ffffff',
-  mist:   '#e3ede7',
-  ink:    [23, 31, 60],    // #0d2b1e
-  accent: [61, 82, 160],   // #157446
+  mist:   '#dfecee',
+  ink:    [23, 31, 60],    // #0b2b33
+  accent: [61, 82, 160],   // #0a6e68
 }
 
 /* ───────────────────────────── DOT PATTERN ───────────────────────────── */
@@ -307,7 +307,7 @@ const UNIFORMS = {
        remap, which left every dot in the ramp LIGHTER than the ground it sits
        on: the field was drawing light dots on lavender instead of faint dark
        dots on paper. */
-    [0.9686, 0.9804, 0.9725], // paper  #f7faf8, the ground
+    [0.9686, 0.9804, 0.9725], // paper  #f5fafa, the ground
     [0.9554, 0.9595, 0.9552], // ink   @ 3.5%
     [0.9273, 0.9349, 0.9303], // ink   @ 6.5%
     [0.8953, 0.9313, 0.9243], // accent @ 10%

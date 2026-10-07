@@ -39,19 +39,32 @@ import { cn } from '../lib/utils'
 
 /* ───────────────────────────── shared page parts ───────────────────────── */
 
-function Hero({ label, title, lede, go }) {
+/* The band takes a photograph from lg and stacks it under the copy below
+   that. The images are concept shots: the patch in them is rendered from the
+   same CAD the 3D model on the patch page is built from, and no unit has been
+   worn by anybody. */
+function Hero({ label, title, lede, go, photo, photoAlt }) {
   return (
     <div className="border-b border-rule bg-mist">
-      <div className="wrap py-10 lg:py-14">
+      <div className={cn('wrap py-10 lg:py-14', photo &&
+        'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:items-end lg:gap-10')}>
+        <div className="min-w-0">
         <button onClick={() => go('site')}
           className="mb-7 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
             font-medium text-accent transition-colors duration-150 hover:text-accent-ink">
           <ArrowLeft aria-hidden className="size-4"/> Overview
         </button>
-        <p className="font-display text-tick font-bold text-accent">{label}</p>
+        <p className="font-mono text-row font-bold tracking-[0.005em] text-accent">{label}</p>
         <h1 className="mt-3 max-w-[16ch] font-display text-major font-bold leading-[1.06]
           tracking-tight text-ink">{title}</h1>
         <p className="mt-4 max-w-[46ch] text-lead text-ink-2">{lede}</p>
+        </div>
+        {photo && (
+          <img src={`/photos/${photo}.webp`} alt={photoAlt} loading="eager" decoding="async"
+            width="1344" height="752"
+            className="mt-7 h-[210px] w-full rounded-panel object-cover sm:h-[280px]
+              lg:mt-0 lg:h-[320px]"/>
+        )}
       </div>
     </div>
   )
@@ -124,7 +137,8 @@ export function ForStudents({ go }) {
   const rings = React.useMemo(() => studentRings(), [])
   return (
     <main>
-      <Hero go={go} label="For students"
+      <Hero go={go} label="For students" photo="student-hero"
+        photoAlt="A student sitting on steps outside school, the patch worn on her upper arm under a short sleeve"
         title="Your stress, one number a day."
         lede="One score a day, and the four things behind it."/>
 
@@ -198,7 +212,8 @@ function SeenUnseen() {
 export function ForParents({ go }) {
   return (
     <main>
-      <Hero go={go} label="For parents"
+      <Hero go={go} label="For parents" photo="parent-hero"
+        photoAlt="A parent in a kitchen holding a phone, their teenager in the background wearing the patch"
         title="What you see about your child."
         lede="A week, and one sentence about it."/>
 
@@ -239,8 +254,8 @@ export function ForParents({ go }) {
 
 /* Whole-school means by day of the school week. `Bars` is the app's own bar
    figure and takes a paint rather than a class, so the accent token is passed
-   by value here; it is the same #157446 the class would resolve to. */
-const ACCENT = '#157446'
+   by value here; it is the same #0a6e68 the class would resolve to. */
+const ACCENT = '#0a6e68'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
 /* The caseload, ranked on the week's movement rather than on today's score,
@@ -333,7 +348,8 @@ function SmallGroups() {
 export function ForSchools({ go }) {
   return (
     <main>
-      <Hero go={go} label="For schools"
+      <Hero go={go} label="For schools" photo="pro-hero"
+        photoAlt="A school counselor walking through a bright school corridor"
         title="What a counselor sees."
         lede="Whole-school patterns, a caseload ranked by change, and a hard floor under small groups."/>
 

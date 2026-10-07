@@ -32,18 +32,18 @@ export default {
            accent #3d52a0 / ink #2c3c78 / wash #dde3f6        beam #7091e6
            warn #97482a / wash #f2e9e4          calm #2a6350  crit #a11b1b  */
       colors: {
-        paper:  '#f7faf8',
+        paper:  '#f5fafa',
         card:   '#ffffff',
-        mist:   '#e3ede7',
-        ink:    { DEFAULT:'#0d2b1e', 2:'#2a5744', 3:'#47705e' },
-        rule:   '#c2d7ca',
-        ruling: '#93b2a1',
-        accent: { DEFAULT:'#157446', ink:'#0f5836', wash:'#dcefe4', lit:'#3ecf9a' },
+        mist:   '#dfecee',
+        ink:    { DEFAULT:'#0b2b33', 2:'#1f5560', 3:'#3c6a74' },
+        rule:   '#bed6da',
+        ruling: '#8eb0b6',
+        accent: { DEFAULT:'#0a6e68', ink:'#07544f', wash:'#d6eeeb', lit:'#3fd6c4' },
         /* The turquoise. 3.20 : 1 on paper clears the 3 : 1 a non-text graphic
            needs and clears nothing at all as text, so it rules charts, fills
            bars and draws rain, and `beam.ink` is the only one allowed to be a
            word. It is never the only thing carrying a state. */
-        beam:   { DEFAULT:'#0e9c9c', ink:'#0b7d7d', wash:'#d9f0ef' },
+        beam:   { DEFAULT:'#1d8fb0', ink:'#11677f', wash:'#ddf0f8' },
         /* Two more grounds, asked for by name: the review wanted turquoise in
            the run of near-whites so a long page reads as a sequence of
            sections rather than one sheet. Both were measured against every ink
@@ -54,15 +54,15 @@ export default {
              aqua-2 #e2f2f0  ink 13.17 : ink-3 4.86 : accent 5.03
            A third, deeper step was measured at #d2ebe8 and rejected: ink-3
            lands at 4.48 on it, which fails. */
-        aqua:   { DEFAULT:'#eef7f6', 2:'#e2f2f0' },
+        aqua:   { DEFAULT:'#edf7f7', 2:'#cee8ea' },
         /* The score's own three tiers. Calm is the brand green, because on a
            green site a calm day should look like the site. Warn is an amber
            and crit keeps its red, since nothing else reads as an alarm at a
            glance. Measured on paper : mist
              warn #99590c  5.27 : 4.63
              crit #a8321f  6.36 : 5.58 */
-        warn:   { DEFAULT:'#99590c', wash:'#f6ecdc' },
-        calm:   '#157446',
+        warn:   { DEFAULT:'#8f5a0c', wash:'#f5ecdb' },
+        calm:   '#0a6e68',
         crit:   '#a8321f',
       },
       /* Quicksand for display, Chivo for body, Chivo Mono for figures.
