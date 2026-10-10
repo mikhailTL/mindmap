@@ -16,21 +16,21 @@
 export const K_ANONYMITY = 5
 
 /* Students consented to the school across the whole building. The counselor's
-   own caseload is the eight below; the year-group screens aggregate everyone. */
+   own eight are below; the year-group screens aggregate everyone. */
 export const SCHOOL_N = 96
 
-/* score  — may the school see a wellness index at all
+/* score  — may the school see a Mind Score at all
    trends — may the school see week-over-week movement
    Crisis alerts reach the counselor either way; that is the one thing a
    guardian cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
-  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Aug 22, 2025' },
-  'Student 3907': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts, no trends',             basis:'FERPA', signedAt:'Aug 24, 2025' },
-  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Wellness score, trends, academic correlation, raw readings',basis:'Both',  signedAt:'Sep 03, 2025' },
-  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'FERPA', signedAt:'Aug 29, 2025' },
-  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends, academic correlation',             basis:'FERPA', signedAt:'Sep 05, 2025' },
-  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Wellness score, trends',                                   basis:'COPPA', signedAt:'Sep 09, 2025' },
-  'Student 6053': { score:true,  trends:false, raw:false, scope:'Wellness score and crisis alerts, no trends',             basis:'Both',  signedAt:'Sep 08, 2025' },
+  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends, academic correlation',                 basis:'FERPA', signedAt:'Aug 22, 2025' },
+  'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no trends',                  basis:'FERPA', signedAt:'Aug 24, 2025' },
+  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Mind Score, trends, academic correlation, raw readings',   basis:'Both',  signedAt:'Sep 03, 2025' },
+  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends',                                       basis:'FERPA', signedAt:'Aug 29, 2025' },
+  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends, academic correlation',                 basis:'FERPA', signedAt:'Sep 05, 2025' },
+  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends',                                       basis:'COPPA', signedAt:'Sep 09, 2025' },
+  'Student 6053': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no trends',                  basis:'Both',  signedAt:'Sep 08, 2025' },
   'Student 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
 }
 const EXPIRES = 'Jun 12, 2026'
@@ -47,7 +47,9 @@ const SEED = [
 ]
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'moderate' : 'info'
-export const TIER_LABEL = { info:'Steady', moderate:'Watch', high:'Elevated', crisis:'Urgent' }
+/* Labels name the band the Mind Score sits in, not a verdict on the student.
+   Keys, order and count are unchanged; only the words a counselor reads. */
+export const TIER_LABEL = { info:'Low', moderate:'Moderate', high:'Elevated', crisis:'Urgent' }
 export const TIER_ORDER = ['crisis','high','moderate','info']
 
 /* Every student on the caseload, each carrying what may be shown about them.
@@ -61,9 +63,10 @@ export const roster = () => SEED.map(s => {
     tier: c.score ? tierOf(current) : null }
 })
 
-/* The board ranks by rate of change, so this list holds only the students
-   whose guardians consented to trends. The rest are shown separately and
-   without a rank, because ranking them would leak the thing they withheld. */
+/* The list is ordered by how much the Mind Score moved, so it holds only the
+   students whose guardians consented to trends. The rest are shown separately
+   and out of the ordering, because ordering them would leak the thing they
+   withheld. */
 export const triage = () => roster().filter(s => s.showTrend)
   .sort((a, b) => b.velocity - a.velocity)
 export const scoreOnly  = () => roster().filter(s => s.showScore && !s.showTrend)
@@ -142,10 +145,10 @@ const SIGNALS = [
 ]
 export function driversFor(s) {
   const h = [...s.id + s.name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
-  const ranked = SIGNALS.map((label, i) => ({ label, w: ((h >> i) % 7) + (i === 0 ? 5 : 1) }))
+  const top = SIGNALS.map((label, i) => ({ label, w: ((h >> i) % 7) + (i === 0 ? 5 : 1) }))
     .sort((a, b) => b.w - a.w).slice(0, 5)
-  const total = ranked.reduce((a, b) => a + b.w, 0)
-  return ranked.map(r => ({ label:r.label, share: r.w / total }))
+  const total = top.reduce((a, b) => a + b.w, 0)
+  return top.map(r => ({ label:r.label, share: r.w / total }))
 }
 
 export const INTERVENTIONS = [

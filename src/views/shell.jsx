@@ -1,5 +1,4 @@
 import React from 'react'
-import KineticGrid from '../s21/texture'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
@@ -23,29 +22,39 @@ export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab,
   const pick = v => { onTab(v); announce(v) }
   return (
     <main>
-      <div className="relative overflow-hidden border-b border-rule bg-mist">
-        <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
-        {/* Was py-6 sm:py-8. The site's vertical rhythm is now three fixed
-            steps — 10 inside a section, 14 between sections, 20 between page
-            regions — instead of per-section numbers that each said something
-            different about the same kind of break. A header band is the
-            smallest step. */}
+      {/* The screen header.
+       *
+       * It was a mist band with a kinetic grid drawn behind it, which is the
+       * marketing site's hero construction: a tinted full-bleed ground with a
+       * texture on it, read at the top of a page you are being sold. Inside
+       * the app it sat two pixels under a 48px white title bar and undid it.
+       *
+       * So it is the app's own sheet now. Card ground, no texture, a hairline
+       * closing it against the canvas below, and half the air: 20px of
+       * padding against the band's old 40. It continues the title bar rather
+       * than competing with it, and the tinted canvas starts under the rule.
+       *
+       * Measured on card #ffffff: ink 14.92, ink-2 8.31, warn 5.78,
+       * crit 6.69. The weakest is 5.78, so every word on the band clears
+       * 4.5 : 1 at body size. The closing hairline is ink-3 at 5.99, the
+       * same rule the title bar and the app foot are drawn with. */}
+      <div className="border-b border-ink-3 bg-card">
         {/* The "Overview" back link that used to open this band is gone. The
             app has its own chrome now and that chrome carries one way out,
             named once; two back arrows within sixty pixels of each other, both
             going to the same marketing page, is the kind of doubling that
             makes a product read as a prototype. */}
-        <div className="wrap relative py-10">
+        <div className="wrap !py-5 lg:!py-6">
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">{title}</h1>
-          {sub && <p className="mt-3 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
+          {sub && <p className="mt-2 max-w-[60ch] text-sec text-ink-2">{sub}</p>}
           {/* One ruled annotation, and which one depends on what the panes below
               are actually showing: the sample-data caveat over fixtures, the
               no-patch fault when the app is running on nothing. The hand-rolled
               paragraph this replaces wrapped a capsule badge inside a bordered
               tinted box — three containers for one sentence. */}
           {note && (mode === 'real'
-            ? <RealNotice className="mt-4">{realNote}</RealNotice>
-            : <DemoNotice className="mt-4">{note}</DemoNotice>)}
+            ? <RealNotice className="mt-3">{realNote}</RealNotice>
+            : <DemoNotice className="mt-3">{note}</DemoNotice>)}
         </div>
       </div>
       {/* Was py-9 sm:py-12. The tab body is a section, so it takes the middle

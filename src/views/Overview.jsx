@@ -14,6 +14,15 @@ import { DATA } from '../lib/assets'
 import { HowItWorks, WhoSeesWhat, WeekStrip } from '../charts/infographics'
 import { Card } from '../ui/card'
 import { cn } from '../lib/utils'
+/* The site's vocabulary lives in one file. The daily number is the Mind Score
+   on every screen, the consent model is said the same way everywhere, and the
+   two privacy rows a reader read as categories rather than as features are
+   named for what they are. Nothing here invents a second name for any of
+   them. */
+import {
+  SCORE, SCORE_RANGE, NOTES, LOCATION,
+  CONSENT_SHORT, CONSENT_OFF, CASELOAD_TITLE,
+} from '../lib/terms'
 
 /* The homepage, in the order the argument actually runs.
  *
@@ -105,18 +114,18 @@ const DOORS = [
 const SCREENS = [
   { id:'student', who:'Student', photo:'student-card',
     alt:'A student outdoors at school, the patch worn on her upper arm under a short sleeve',
-    title:'Your score today, and what moved it',
-    line:'You see the score, the four signals behind it, and every reading ever taken.',
+    title:`Your ${SCORE} today, and what moved it`,
+    line:`You see the ${SCORE}, ${SCORE_RANGE}, the four signals behind it, and every reading ever taken.`,
     cta:'What a student gets' },
   { id:'parent',  who:'Parent', photo:'parent-card',
     alt:'A parent and their teenager talking at a kitchen table, the patch on the teenager\u2019s upper arm',
     title:'One sentence a week, and which days ran high',
-    line:'You see the shape of the week. Never a raw reading, never a note, never a location.',
+    line:`You see the ${SCORE} and the shape of the week. Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
     cta:'What a parent gets' },
   { id:'pro',     who:'School counselor', photo:'school-card',
     alt:'A school counselor at her desk, mid conversation with a student',
-    title:'A caseload ranked by who is changing fastest',
-    line:'You see a score and a rank, for the students whose guardian agreed to share trends.',
+    title:CASELOAD_TITLE,
+    line:`You see the ${SCORE} and how far it moved since last week, for the students who share it.`,
     cta:'What a school gets' },
 ]
 
@@ -173,6 +182,22 @@ const PATCH_FACTS = [
   'Three parts: a printed outer shell, an electronics pod, and the skin side base.',
   'The board drops into the pod. The shell charges through a slot in its side.',
   'How long one adhesive lasts before it is replaced is not settled. No unit has been worn by anyone yet.',
+]
+
+/* The four things a reader wants settled before they will put this on a
+   teenager, in the order the question arrives: who sees it, who turned it on,
+   what nobody gets, and how it stops. Each one is how the product works,
+   stated once. */
+const TRUST = [
+  { title:'The student sees everything first',
+    line:'Every reading lands on the student\u2019s phone before anybody else has anything at all. '
+      + 'A student sees more than a parent or a counselor ever does.' },
+  { title:'A guardian opens the account',
+    line:`${CONSENT_SHORT} Parent and school are two separate choices. Nothing is shared by default.` },
+  { title:'Never shared with anyone',
+    line:`The raw second by second readings. ${NOTES}. ${LOCATION}. Those three stay on the phone.` },
+  { title:'Sharing switches off',
+    line:`${CONSENT_OFF} Nothing is deleted by switching it off.` },
 ]
 
 const NEVER = [
@@ -241,7 +266,7 @@ export function Overview({ go }) {
                 the whole block is twenty seven words you can take in without
                 reading a sentence. */}
             <ScrollIn as="p" className="mt-6 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
-              One score a day, out of 100. One sentence saying what changed.
+              One {SCORE} a day. One sentence saying what changed.
             </ScrollIn>
             <ScrollIn as="ul" className="m-0 mt-5 flex list-none flex-col gap-2 p-0">
               {HERO_FACTS.map(f => (
@@ -307,17 +332,17 @@ export function Overview({ go }) {
               <span aria-hidden className="absolute right-3 top-3 h-3 w-3 border-r border-t border-ruling/55"/>
               <span aria-hidden className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-ruling/55"/>
               <IPhone model="15-pro" scale={0.3} screenBg="#f5fafa"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="shrink-0 lg:hidden">
                 <PhoneApp/>
               </IPhone>
               <IPhone model="15-pro" scale={0.52} screenBg="#f5fafa"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="hidden shrink-0 lg:block xl:hidden">
                 <PhoneApp/>
               </IPhone>
               <IPhone model="15-pro" scale={0.62} screenBg="#f5fafa"
-                label="The MindMap app, cycling through a reading, the score it returns and the week it lands in"
+                label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="hidden shrink-0 xl:block">
                 <PhoneApp/>
               </IPhone>
@@ -340,6 +365,12 @@ export function Overview({ go }) {
         <SectionHead tone="ink" className="max-w-[30ch]">
           Most teenagers who are struggling are not being reached.
         </SectionHead>
+        {/* One line, so the figures under it open an argument instead of
+            decorating the band. No figure of its own: this band already
+            carries every number on the page. */}
+        <SectionLede tone="ink">
+          MindMap returns one {SCORE} a day. A change shows up early, while it is still small.
+        </SectionLede>
         <ProblemStats className="mt-6"/>
       </Section>
 
@@ -378,7 +409,7 @@ export function Overview({ go }) {
 
       {/* ── how a reading works ─────────────────────────────────────────── */}
       <Section name="How it works" tone="card" tight className="bg-aqua">
-        <SectionHead>A day in, one score and one sentence out.</SectionHead>
+        <SectionHead>A day in, one {SCORE} and one sentence out.</SectionHead>
         <HowItWorks className="mt-6"/>
         {/* One window, five lines. The reviewer asked five questions about the
             object itself and the page answered none of them. */}
@@ -455,13 +486,34 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── privacy ─────────────────────────────────────────────────────── */}
+      {/* Straight after the three perspectives, because a reader who has just
+          been shown that a parent and a school each get a view of a teenager's
+          day is holding exactly one question, and this section is the answer
+          to it. One section and not two: the four statements say how the
+          product works, the table says what each person is shown, and
+          splitting them would put one subject on the page twice.
+ *
+          Four boxes, no rules. A rule between items reads as a new topic
+          beginning, and these four are one answer in four parts. */}
       <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
         <SectionLede>
-          The student decides what leaves the phone. Parents and counselors see a score and a
-          sentence, and only where consent has been given.
+          The student sees every reading first. Nothing reaches a parent or a school until the
+          student turns that sharing on.
         </SectionLede>
-        <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
+        <div className="mt-7 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {TRUST.map((t, i) => (
+            <ScrollRow key={t.title} index={i} className="h-full">
+              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
+                <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                  {t.title}
+                </h3>
+                <p className="mt-3 text-sec leading-[1.5] text-ink-2">{t.line}</p>
+              </div>
+            </ScrollRow>
+          ))}
+        </div>
+        <WhoSeesWhat className="mt-7 max-w-[62rem]"/>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}

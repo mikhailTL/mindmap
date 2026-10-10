@@ -109,8 +109,14 @@ function along(t) {
   return [CX + R_CLOUD * Math.cos(a), CY + R_CLOUD * Math.sin(a)]
 }
 
+/* The step between two feet of the arch, eased. It was 1500ms against beats
+   that ran about six seconds; the beats are roughly two and a half times that
+   now, and a step that lands in a second and a half on a fourteen-second beat
+   reads as a twitch followed by a long wait rather than as a walk. 2400ms is
+   the same curve over the same distance, slow enough that the cloud is still
+   arriving while the new ground is still settling. */
 const CSS = `
-.is-sky .is-cloud{transition:transform 1500ms cubic-bezier(.33,0,.2,1)}
+.is-sky .is-cloud{transition:transform 2400ms cubic-bezier(.33,0,.2,1)}
 @media (prefers-reduced-motion:reduce){.is-sky .is-cloud{transition:none}}
 `
 

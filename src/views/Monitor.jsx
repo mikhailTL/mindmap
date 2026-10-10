@@ -16,6 +16,7 @@ import { studentRings, parentRings } from '../lib/readings'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { useMode } from '../lib/mode'
 import { cn } from '../lib/utils'
+import { SCORE, CONSENT_SHORT } from '../lib/terms'
 
 /* The dashboard shows one number, one sentence, and the reasons under it.
    Everything else is behind a control the reader chooses to open. (This note
@@ -183,7 +184,7 @@ function SilentChannels() {
 const PAIRING = [
   ['A charged patch', 'One MindMap patch on the inside of the forearm. None exists to send you yet. The hardware is drawn and printed, not manufactured.'],
   ['A phone with Bluetooth', 'The app pairs over Bluetooth LE and reads the four channels above once a second.'],
-  ['About two weeks of wear', 'The score compares you with your own normal, and the first two weeks are what build that normal.'],
+  ['About two weeks of wear', `The ${SCORE} compares you with your own normal, and the first two weeks are what build that normal.`],
 ]
 
 function StudentUnpaired({ go, openTab }) {
@@ -191,9 +192,9 @@ function StudentUnpaired({ go, openTab }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline gap-3.5">
-        <h2 className="font-display text-row font-bold text-ink">Your reading today</h2>
+        <h2 className="font-display text-row font-bold text-ink">Your {SCORE} today</h2>
         <Label>No patch paired</Label>
-        <RealNotice inline>Nothing has been measured, so there is no score.</RealNotice>
+        <RealNotice inline>Nothing has been measured, so there is no {SCORE}.</RealNotice>
       </div>
 
       <div className="mt-10 grid gap-9 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-14">
@@ -223,7 +224,7 @@ function StudentUnpaired({ go, openTab }) {
           <CardHeader className="p-6 pb-0">
             <CardTitle as="h3" className="text-row">Take a reading without a patch</CardTitle>
             <CardDescription className="max-w-[56ch]">Six questions, scored by the same model the
-              patch feeds, on the same scale out of 100. It is the only screen here that measures
+              patch feeds. The same {SCORE}, 0 to 100. It is the only screen here that measures
               the person reading it.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 pt-5">
@@ -237,12 +238,12 @@ function StudentUnpaired({ go, openTab }) {
       <ScrollIn as="div"><Card interactive as="button"
         onClick={() => openTab ? openTab('shared') : go('privacy')}
         className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
-        <span className="text-body text-ink">What you write in the app stays on your device.
+        <span className="text-body text-ink">{CONSENT_SHORT}
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </Card></ScrollIn>
 
-      <p className="mt-10 max-w-[64ch] text-meta text-ink-2">Once a patch is paired the score is
+      <p className="mt-10 max-w-[64ch] text-meta text-ink-2">Once a patch is paired the {SCORE} is
         worked out every 30 seconds from the last minute of readings, and compared with your own
         last two weeks. Each ring is one signal's distance from that baseline. The middle number
         blends all four, so the rings do not add up to it.</p>
@@ -262,7 +263,7 @@ export function StudentBody({ go, openTab }) {
       <div className="flex flex-wrap items-baseline gap-3.5">
         {/* "Today" alone did not say today's what; the date badge beside it
             reads as the answer and is not. */}
-        <h2 className="font-display text-row font-bold text-ink">Your reading today</h2>
+        <h2 className="font-display text-row font-bold text-ink">Your {SCORE} today</h2>
         <Label>Thursday · 4:10 pm</Label>
         <DemoNotice inline>Sample data. Not a real person.</DemoNotice>
       </div>
@@ -286,16 +287,16 @@ export function StudentBody({ go, openTab }) {
       <ScrollIn as="div"><Card interactive as="button"
         onClick={() => openTab ? openTab('shared') : go('privacy')}
         className="mt-10 flex min-h-[56px] items-center justify-between gap-4 px-5 py-4">
-        <span className="text-body text-ink">What you write in the app stays on your device.
+        <span className="text-body text-ink">{CONSENT_SHORT}
           <span className="block text-meta text-ink-2">See who can see what</span></span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </Card></ScrollIn>
 
       <AllDetail>
-        <h3 className="mark">Your score through the day</h3>
+        <h3 className="mark">Your {SCORE} through the day</h3>
         <p className="mt-1.5 mb-2 text-sec text-ink-3">The shaded band is your normal range.</p>
         <DayChart data={DATA.day} band={DATA.band}/>
-        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The score is worked out every 30 seconds
+        <p className="mt-6 max-w-[64ch] text-meta text-ink-2">The {SCORE} is worked out every 30 seconds
           from the last minute of readings, and compared with your own last two weeks. Each ring above
           is one signal's distance from that baseline. The middle number blends all four, so the rings
           do not add up to it.</p>

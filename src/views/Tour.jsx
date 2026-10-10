@@ -15,6 +15,7 @@ import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { roster, triage, scoreOnly, alertsOnly, tierOf, TIER_LABEL } from '../lib/caseload'
 import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
+import { SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE } from '../lib/terms'
 
 /* The judge's route through the site, in eight stops.
  *
@@ -135,21 +136,25 @@ function Signals() {
 }
 
 /* ── 06 ─────────────────────────────────────────────────────────────────── */
-/* The ranked board, plus the students the board is not allowed to rank. Every
-   count is read off the same fixture the counselor console reads, so the prose
-   cannot claim a consent split the list does not show. */
+/* The check-in list, plus the students consent keeps off it. Every count is
+   read off the same fixture the counselor console reads, so the prose cannot
+   claim a consent split the list does not show.
+ *
+ * The leading ordinal is gone with the word "ranked": a column of positions is
+ * a leaderboard whatever the heading over it says. The order is still largest
+ * change first, and the change itself is the figure on the row. */
 function Caseload() {
-  const ranked = triage()
+  const moved = triage()
   const held = [...scoreOnly(), ...alertsOnly()]
   return (
     <div>
-      <ol className="m-0 list-none space-y-2 p-0">
-        {ranked.map((s, i) => {
+      <p className="mark">{CASELOAD_TITLE}</p>
+      <ol className="m-0 mt-3 list-none space-y-2 p-0">
+        {moved.map(s => {
           const tier = tierOf(s.current)
           return (
-            <li key={s.id} className="grid grid-cols-[1.5rem_minmax(0,1fr)_5.5rem_3rem]
+            <li key={s.id} className="grid grid-cols-[minmax(0,1fr)_5.5rem_3rem]
               items-center gap-3 border-b border-rule pb-2">
-              <span className="font-mono text-meta tabular-nums text-ink-3">{i + 1}</span>
               <span className="min-w-0">
                 <span className="block truncate font-display text-ui font-medium text-ink">{s.name}</span>
                 <span className="mt-1 block h-2 w-full rounded-bar bg-rule/70">
@@ -159,15 +164,16 @@ function Caseload() {
                 </span>
               </span>
               <span className="text-fine text-ink-2">{TIER_LABEL[tier]}</span>
-              {/* Rate of change is what the board ranks on, so it is the figure
-                  on the row — the score alone would make the order look wrong. */}
+              {/* Change since last week is what orders the list, so it is the
+                  figure on the row. The Mind Score alone would make the order
+                  look wrong. */}
               <span className="text-right font-mono text-fine tabular-nums text-ink">
                 {s.velocity > 0 ? '+' : ''}{s.velocity}</span>
             </li>
           )
         })}
       </ol>
-      <p className="mark mt-7">Consented out of the ranking</p>
+      <p className="mark mt-7">Consented out of this list</p>
       <ul className="m-0 mt-3 list-none space-y-2 p-0">
         {held.map(s => (
           <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1
@@ -263,7 +269,7 @@ const STOPS = [
           to rule illness in or out.
         </Lede>
         <Lede>
-          Movement is a control, not a fifth reading. Above 0.35 g the score is held back, so a
+          Movement is a control, not a fifth reading. Above 0.35 g the {SCORE} is held back, so a
           hard run cannot be scored as a hard day.
         </Lede>
       </>
@@ -277,11 +283,11 @@ const STOPS = [
     body: (
       <>
         <Lede>
-          One number out of 100 and one plain sentence. Each ring is one signal's distance from
-          this person's fourteen-day baseline; the number in the middle blends all four.
+          One {SCORE}, {SCORE_RANGE}, and one plain sentence. Each ring is one signal's distance
+          from this person's fourteen-day baseline; the number in the middle blends all four.
         </Lede>
         <Lede>
-          The student sees every reading, second by second, and everything they write. Nothing on
+          The student sees every reading, second by second, and their own {NOTES}. Nothing on
           their own screen is withheld from them.
         </Lede>
       </>
@@ -304,20 +310,19 @@ const STOPS = [
     body: (
       <>
         <Lede>
-          A parent gets one number a day, one sentence a week, and which days sat above their
+          A parent gets one {SCORE} a day, one sentence a week, and which days sat above their
           child's own range. That is all.
         </Lede>
         <Lede>
-          A parent never sees a raw reading, anything the student wrote, or where they were.
-          Showing a parent the raw stream would make it a surveillance tool, and a teenager would
-          stop wearing it.
+          A parent never sees a raw reading, {NOTES} or {LOCATION}. A teenager who could not keep
+          those private would stop wearing the patch.
         </Lede>
       </>
     ),
     art: () => {
       const band = DATA.weekBand || { hi: 1 }
       const over = (DATA.week || []).filter(d => d.v > band.hi).length
-      const never = ['A raw reading', 'Anything written in the app', 'Where they were',
+      const never = ['A raw reading', NOTES, LOCATION,
         'Anything said near the microphone']
       return (
         <div>
@@ -393,7 +398,7 @@ const STOPS = [
         </Lede>
         <Lede>
           A counselor's queue today is ordered by who asked, or who a teacher mentioned. This
-          orders it by who moved fastest this week.
+          orders it by whose {SCORE} moved most since last week.
         </Lede>
       </>
     ),
@@ -411,11 +416,11 @@ const STOPS = [
           ))}
         </ol>
         <p className="mt-8 max-w-[54ch] text-meta text-ink">
-          A counselor cannot read 400 charts, which is why the output is a rank and a sentence
-          rather than a dashboard. If the ranking is right, the student falling fastest is seen
-          first.
+          A counselor cannot read 400 charts, which is why the output is a short list and a
+          sentence rather than a dashboard. If the list is right, the student whose {SCORE} moved
+          most is seen first.
         </p>
-        <Note>What would prove this wrong: a trial in which counselors using the ranked list reach
+        <Note>What would prove this wrong: a trial in which counselors using this list reach
           students no earlier than counselors using their existing referral queue. We have not run
           it.</Note>
       </div>
@@ -428,18 +433,20 @@ const STOPS = [
    because a hand-written "five of eight" is a claim that goes stale the moment
    a consent record changes. */
 function CaseloadBody() {
-  const all = roster().length, ranked = triage().length
+  const all = roster().length, trends = triage().length
   const partial = scoreOnly().length, alerts = alertsOnly().length
   return (
     <>
       <Lede>
-        {all} students on this caseload, ranked by how fast each one is changing rather than by how
-        high they are. A student steady at 86 for a month is not the emergency.
+        {all} students on this caseload. The list leads with the students whose {SCORE} moved most
+        since last week, so a check-in starts with the biggest change. A student steady at 86 for a
+        month is not the emergency.
       </Lede>
       <Lede>
-        Consent decides who can appear. {ranked} guardians agreed to trends, so {ranked} students
-        can be ranked; {partial} agreed to a score without trends and are listed unranked; the
-        remaining {alerts} agreed to crisis alerts only, which carries no score at all.
+        Consent decides who can appear. {trends} guardians agreed to trends, so {trends} students
+        appear with a change since last week; {partial} agreed to a {SCORE} without trends and
+        appear without one; the remaining {alerts} agreed to crisis alerts only, which carries no
+        {SCORE} at all.
       </Lede>
       <Note>Crisis alerts reach the counselor in every case. No guardian can consent that away,
         and students are told so before they wear it.</Note>
@@ -540,7 +547,7 @@ export function Tour({ go }) {
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button onClick={() => go('app')}>Open the app<ArrowRight aria-hidden/></Button>
-          <Button variant="outline" onClick={() => go('check')}>Score yourself in six questions</Button>
+          <Button variant="outline" onClick={() => go('check')}>Get a {SCORE} in six questions</Button>
         </div>
       </section>
 

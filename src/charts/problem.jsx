@@ -112,11 +112,32 @@ function ThenNow({ className }) {
   )
 }
 
+/* Five marks, one lit. The group the row below it is counted out of: of all
+   adolescents aged 12 to 17, the one in five who had a major depressive
+   episode in the past year.
+ *
+ * Both rows use the same five-mark unit, and the label over each row says
+ * which five it is. That is the whole of the nesting: one figure out of all
+ * adolescents, one figure out of the group the first one found. */
+function OneOfFive({ className }) {
+  const marks = [LIT, REST, REST, REST, REST]
+  return (
+    <svg viewBox="0 0 100 26" aria-hidden="true"
+      className={cn('block h-auto w-full', className)}>
+      {marks.map((fill, i) => (
+        <g key={i} fill={fill}>
+          <circle cx={10 + i * 20} cy="6.4" r="4.2" />
+          <rect x={10 + i * 20 - 7} y="13" width="14" height="11" rx="5.4" />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 /* Five marks, three of them lit, on one line. This is all that is left of the
    funnel: the two-tier drawing existed to show 1 in 5 opening out into 5, and
    the opening-out was the expensive part of it in both height and attention.
-   The ratio that matters is the second one, so only the second one is drawn,
-   and the first is a clause in the sentence beside it. */
+   The five here are the five the row above found, not five adolescents. */
 function ThreeOfFive({ className }) {
   const marks = [LIT, LIT, LIT, PAIR, PAIR]
   return (
@@ -201,45 +222,75 @@ export function ProblemStats({ className }) {
         </ScrollRow>
       </div>
 
-      {/* ── 2. The gap, in one row ───────────────────────────────────────
-          The strongest single fact on the page, so it gets the rule above it
-          and the largest figure on the band. It is a row and not a fourth
-          column because it is counted out of a different hundred: the three
-          above are out of all high school students, this one is out of the
-          adolescents who had an episode. A fourth column would have implied
-          one denominator for all four. */}
+      {/* ── 2. The treatment gap, as two figures that nest ─────────
+          One figure, one claim, one line. This was a single row whose sentence
+          opened on a preposition and carried a second figure inside itself, so
+          a reader had to hold two denominators at once to collect one fact. A
+          review said it was confusing and it was right.
+ *
+          It is two rows now. The first is counted out of all adolescents aged
+          12 to 17. The second is counted out of the first, so it is indented
+          behind a rule and labelled as a part of that group: the nesting is
+          drawn, and neither sentence has to carry it. Each row keeps its own
+          exact percentage and its own source on screen.
+ *
+          Still a row and not a fourth column, for the reason it always was:
+          the three figures above are counted out of all high school students
+          and these two are not, and a fourth column would have implied one
+          denominator for all of them. */}
       <ScrollIn className="mt-7 border-t border-ink-3 pt-6">
-        <figure className="m-0 flex flex-wrap items-center gap-x-9 gap-y-4"
-          aria-label={'1 in 5 US adolescents aged 12 to 17, or 20.1 percent, had a major ' +
-            'depressive episode in the past year, and 3 in 5 of them, or 59.4 percent, ' +
-            'received no treatment for it. Source: NIMH, from NSDUH 2021.'}>
+        <p className="text-fine text-ruling">Among US adolescents aged 12 to 17</p>
+
+        <figure className="m-0 mt-4 flex flex-wrap items-center gap-x-8 gap-y-3"
+          aria-label={'1 in 5 US adolescents aged 12 to 17, or 20.1 percent, had a major '
+            + 'depressive episode in the past year. Source: NIMH, from NSDUH 2021.'}>
           {/* The figure and its five marks are one object and never separate.
-              Left as three siblings in one wrapping row, a phone gave the
-              sentence the 50px left over beside them and set it one word to
-              the line. */}
+              Left as loose siblings in a wrapping row, a phone gives the
+              sentence whatever is left beside them and sets it one word to the
+              line. */}
+          <div className="flex shrink-0 items-center gap-6">
+            <p className="font-display text-stat font-bold leading-none text-accent-lit">1 in 5</p>
+            <div className="w-[104px] shrink-0"><OneOfFive /></div>
+          </div>
+          <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
+            text-mist">
+            had a major depressive episode in the past year
+            <span className="mt-1 block text-fine text-ruling">
+              20.1%. NIMH, from NSDUH 2021
+            </span>
+          </figcaption>
+        </figure>
+
+        {/* The label sits on the same left edge as the indented figure under
+            it: pl-5 on a phone, and ml-6 plus pl-5 from sm up. */}
+        <p className="mt-6 pl-5 text-fine text-ruling sm:pl-11">Within that group</p>
+        <figure className="m-0 mt-2 flex flex-wrap items-center gap-x-8 gap-y-3 border-l-2
+          border-ink-3 pl-5 sm:ml-6"
+          aria-label={'3 in 5 of the adolescents who had a major depressive episode in the past '
+            + 'year, or 59.4 percent, received no treatment for it. Source: NIMH, from '
+            + 'NSDUH 2021.'}>
           <div className="flex shrink-0 items-center gap-6">
             <p className="font-display text-gap font-bold leading-none text-accent-lit">3 in 5</p>
             <div className="w-[112px] shrink-0"><ThreeOfFive /></div>
           </div>
-          {/* basis is what makes the sentence take its own line rather than a
-              column: under 18rem of space left in the row, it wraps. */}
-          <figcaption className="min-w-0 max-w-[58ch] flex-1 basis-[18rem] text-sec leading-[1.4]
+          <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
             text-mist">
-            of the 1 in 5 US adolescents aged 12 to 17 who had a major depressive episode in the
-            past year received no treatment for it
+            received no treatment for it
             <span className="mt-1 block text-fine text-ruling">
-              20.1% and 59.4%. NIMH, from NSDUH 2021
+              59.4%. NIMH, from NSDUH 2021
+            </span>
+            {/* The two colours are named once, under the marks they belong to,
+                rather than on each mark. Inside the caption so that the
+                caption stays the figure's last child. */}
+            <span className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-fine text-mist">
+              <span className="flex items-center gap-2">
+                <span aria-hidden className="size-3 rounded-chip bg-accent-lit" />No treatment
+              </span>
+              <span className="flex items-center gap-2">
+                <span aria-hidden className="size-3 rounded-chip bg-beam" />Treatment
+              </span>
             </span>
           </figcaption>
-          {/* The two colours are named once, here, rather than on each mark. */}
-          <div className="flex shrink-0 flex-wrap gap-x-5 gap-y-1.5 text-fine text-mist">
-            <span className="flex items-center gap-2">
-              <span aria-hidden className="size-3 rounded-chip bg-accent-lit" />No treatment
-            </span>
-            <span className="flex items-center gap-2">
-              <span aria-hidden className="size-3 rounded-chip bg-beam" />Treatment
-            </span>
-          </div>
         </figure>
       </ScrollIn>
 

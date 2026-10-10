@@ -57,11 +57,15 @@ const ROUTES = [
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
+/* The captions used to repeat each phone screen's own title word for word,
+   so the row printed "Hold still." twice, forty pixels apart. The screens
+   carry the instruction now and the caption is the short imperative under it,
+   which is also the label a screen reader is given for the drawing. */
 const STEPS = [
-  { k:'pad',   t:'Finger on the camera.' },
-  { k:'still', t:'Hold still.' },
-  { k:'say',   t:'Say one sentence.' },
-  { k:'got',   t:'Your score.' },
+  { k:'pad',   t:'Index fingertip, lens and flash.' },
+  { k:'still', t:'Hand resting, thirty seconds.' },
+  { k:'say',   t:'One sentence, quiet room.' },
+  { k:'got',   t:'Your Mind Score and band.' },
 ]
 
 /* Two small drawings, because two cards of equal prose are a comparison a
@@ -124,7 +128,7 @@ export function WithoutPatch({ go }) {
                 You do not need the patch.
               </h1>
               <p className="mt-4 max-w-read text-lead leading-[1.4] text-ink-2">
-                Forty five seconds, one score out of 100.
+                Forty five seconds, one Mind Score out of 100.
               </p>
               <p className="mt-2.5 max-w-read text-sec text-ink-2">
                 Nothing leaves the phone.

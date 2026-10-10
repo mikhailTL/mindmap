@@ -2,19 +2,20 @@ import React from 'react'
 import { ScrollIn } from '../s21/motion'
 import { WhoSeesWhat } from '../charts/infographics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card'
+import { SCORE, NOTES, NOTES_DEF, LOCATION } from '../lib/terms'
 
 /* Three of the site's own pages promised this screen and none of them opened
    it. It is the question every tester went looking for first. */
 
 const YOU_SEE = [
-  'One number for each day, and for the week',
+  `The ${SCORE} for each day, and for the week`,
   'Whether a day was above their usual',
   'Roughly how long they slept',
   'Whether the patch was being worn',
 ]
 const YOU_NEVER = [
-  'Anything they write in the app',
-  'Where they were',
+  `${NOTES}. ${NOTES_DEF}`,
+  LOCATION,
   'Their second-by-second readings',
   'Anything they say. The microphone is never recorded or sent',
 ]

@@ -1,13 +1,12 @@
 import React from 'react'
 import { Card, CardContent } from '../ui/card'
-import { Button } from '../ui/button'
 import { Logo } from '../ui/logo'
-import { Label } from '../ui/misc'
 import { ArrowRight } from '../ui/marks'
 import { RainbowDial } from '../charts/rainbow'
 import { WeekStrip } from '../charts/infographics'
 import { studentRings } from '../lib/readings'
 import { triage, tierOf, TIER_LABEL } from '../lib/caseload'
+import { SCORE, CASELOAD_TITLE } from '../lib/terms'
 import { DATA } from '../lib/assets'
 import { useMode } from '../lib/mode'
 import { cn } from '../lib/utils'
@@ -98,7 +97,7 @@ function Console({ children }) {
   return (
     <div className="w-full max-w-[320px] rounded-panel border-2 border-ink bg-card shadow-raise">
       <div className="flex items-baseline justify-between border-b border-rule px-3 py-2">
-        <span className="text-tick text-ink-3">Caseload</span>
+        <span className="text-tick text-ink-3">Check in with</span>
         <span className="text-tick text-ink-3">by change</span>
       </div>
       <div className={cn(BODY, 'px-3 py-4')}>{children}</div>
@@ -209,7 +208,8 @@ function ProRanking({ still }) {
   const on = useEntered(still)
   /* `roster()` names the reading `current`. Reading `score` returns undefined,
      tierOf floors that to 'info', and the board becomes four identical rows in
-     one colour — which is the opposite of what a ranked caseload shows. */
+     one colour, which is the opposite of what this list is for: the five
+     students whose reading moved most, in that order. */
   const rows = triage().slice(0, 5)
   return (
     <Console>
@@ -244,20 +244,23 @@ function ProRanking({ still }) {
 
 const ROLES = [
   { id:'app-student', who:'Student', Preview: StudentPreview,
-    title:'Your score, and how it was worked out',
+    title:`Your ${SCORE}, and how it was worked out`,
     body:'Every reading the patch took today, what moved the number, and what you wrote. Nothing here is withheld from you.',
-    cta:'Open the student dashboard',
-    name:'Open the student dashboard: one score out of 100 for today, with every reading underneath it.' },
+    cta:'Open the student screen',
+    name:`Open the student screen: one ${SCORE} out of 100 for today, with every reading underneath it.` },
   { id:'app-parent', who:'Parent', Preview: ParentPreview,
     title:'The week in one sentence',
-    body:'One number a day, which days sat above her own range, and a line in plain words. Never a raw reading, never a note.',
-    cta:'Open the parent dashboard',
-    name:'Open the parent dashboard: the week at a glance and one plain sentence.' },
+    body:`One ${SCORE} a day, which days sat above her own range, and a line in plain words. Never a raw reading, never a note.`,
+    cta:'Open the parent screen',
+    name:`Open the parent screen: the week at a glance and one plain sentence.` },
   { id:'app-pro', who:'School professional', Preview: ProPreview,
-    title:'Students ranked by who is changing fastest',
-    body:'A score and a rank for the students whose guardian consented to trends. Never a group under five.',
+    /* Was "Students ranked by who is changing fastest", which two testers read
+       as students being listed by how badly they are doing. terms.js settled
+       the wording for the whole site and this is it. */
+    title: CASELOAD_TITLE,
+    body:`The students whose ${SCORE} moved most since last week, for the ones whose guardian consented to trends. Never a group under five.`,
     cta:'Open the counselor console',
-    name:'Open the school counselor console: a caseload ranked by who is changing fastest.' },
+    name:`Open the counselor console: the students whose ${SCORE} moved most since last week.` },
 ]
 
 
@@ -282,27 +285,31 @@ function Door({ role, go, active, setActive, real, still }) {
           student screen, and all of that would otherwise be concatenated into
           this button's name. The button says where it goes; the screen says
           what it says, once you are on it. */}
-      <div aria-hidden className={cn('grid min-h-[352px] place-items-center border-b border-rule px-4 py-8',
+      <div aria-hidden className={cn('grid min-h-[352px] place-items-center border-b border-rule px-3 py-5',
         'transition-opacity duration-200', active !== null && !focused && 'opacity-75')}>
         <Preview cycle={cycle} real={real} still={still}/>
       </div>
-      <CardContent className="flex flex-1 flex-col gap-4">
+      <CardContent className="flex flex-1 flex-col gap-2.5 p-4">
         {/* The role is what a visitor is scanning for, so the role is the
             title. It used to be a mono eyebrow over a sentence: three cards
             each headed by a different sentence meant reading all three to find
             out which one was yours. */}
         {/* a span, not a heading: a button's content model is phrasing, and
             an h2 inside it puts a heading-shaped thing outside the outline */}
-        <span className="block font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
+        {/* `text-sub` was 32px to 48px here, which is a marketing section
+            head sitting inside a card. On the app scale a door is a row of a
+            list you are choosing from, so the role is `row` at 25px and
+            everything under it steps down with it. */}
+        <span className="block font-display text-row font-bold leading-[1.2] tracking-[-0.014em] text-ink">
           {role.who}
         </span>
-        <span className="-mt-2 block font-display text-meta font-medium text-ink-2">
+        <span className="block font-display text-ui font-medium text-ink-2">
           {role.title}
         </span>
-        <p className="text-sec text-ink-2">{role.body}</p>
-        <span className="mt-auto inline-flex items-center gap-2.5 pt-2 font-display text-meta
+        <p className="text-note text-ink-2">{role.body}</p>
+        <span className="mt-auto inline-flex items-center gap-2 pt-2 font-display text-ui
           font-medium text-accent">
-          {role.cta}<ArrowRight aria-hidden className="size-[1.1rem]"/>
+          {role.cta}<ArrowRight aria-hidden className="size-4 shrink-0"/>
         </span>
       </CardContent>
     </Card>
@@ -315,37 +322,39 @@ export function Launch({ go }) {
   const still = useStill()
   const real = mode === 'real'
   return (
-    <main className="wrap py-14">
-      {/* The mark at full size, once. This is the only screen a visitor reaches
-          by saying "open it", so it is the one place the product introduces
-          itself rather than sitting in a corner of a bar. */}
-      <div className="mt-10 flex items-center gap-4">
-        <Logo motto className="text-sub text-ink" title="MindMap"/>
-      </div>
-      <Label className="mt-8 block">Launch the app</Label>
-      <h1 className="mt-3.5 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">
+    /* This is the app's front door, so it is built to the app's scale rather
+       than to the site's. What was here was a marketing page: a wordmark at
+       48px, a 60px title, a 24px lede and 56px of air between every part of
+       it, which is exactly why a tester could not tell they had crossed into
+       the product. The title bar above already names the screen, the rail
+       already carries the mark past lg, and the page itself is now a question
+       and three doors.
+
+       `.wrap` takes its padding from the shell, which is 24px here and 32
+       past lg. It was py-14. */
+    <main className="wrap">
+      {/* Below lg the rail is not on screen, so this is the one place the
+          product signs its name. One line, at 17px, not a 48px lockup. */}
+      <Logo className="text-ui text-ink lg:hidden" title="MindMap"/>
+      <h1 className="mt-4 font-display text-head font-bold leading-[1.2] tracking-[-0.018em] text-ink lg:mt-0">
         Who is opening the app?
       </h1>
-      <p className="mt-5 max-w-read text-lead leading-[1.55] text-ink-2">
+      {/* The "Three screens" heading under this was a section head over a
+          section of three, directly under a sentence that already said there
+          were three. */}
+      <p className="mt-2.5 max-w-[60ch] text-sec text-ink-2">
         Three screens read the same day of measurements and show three different parts of it.
         Pick the one that is yours.
       </p>
 
-      <section className="mt-14">
-        <h2 className="font-display text-sub font-bold leading-[1.12] tracking-[-0.024em] text-ink">
-          Three screens</h2>
-        <div className="mt-5 grid gap-6 lg:grid-cols-3">
-          {ROLES.map(role => (
-            <Door key={role.id} role={role} go={go} active={active} setActive={setActive}
-              real={real} still={still}/>
-          ))}
-        </div>
-      </section>
-
-      <p className="mt-14 max-w-[62ch] text-sec text-ink-3">
-        MindMap measures four body signals and scores them against your own two weeks. It is not a
-        medical device, it does not diagnose anything, and no screen here is a clinical judgement.
-      </p>
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        {ROLES.map(role => (
+          <Door key={role.id} role={role} go={go} active={active} setActive={setActive}
+            real={real} still={still}/>
+        ))}
+      </div>
+      {/* The medical disclaimer used to be repeated here and in the footer of
+          the same page. It is in the app's foot now, on every app screen. */}
     </main>
   )
 }

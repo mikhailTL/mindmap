@@ -12,6 +12,8 @@ import { analysePPG } from '../signals/ppg'
 import { analyseVoice } from '../signals/voice'
 import { askMotion, startMotion, MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateBaseline } from '../signals/score'
+import { SCORE_DEF } from '../lib/terms'
+import { StepFigure, SAY_LINES } from '../charts/camera'
 
 /* A reading with no patch, from the sensors a phone already has.
  *
@@ -66,7 +68,7 @@ function Trace({ samples, className }) {
    dimming ahead of the capture and lighting as each stage passes. A dot keeps
    the state and drops the count, and the order is already carried by the
    stack. */
-function Step({ title, children, on }) {
+function Step({ title, note, children, on }) {
   return (
     <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3',
       !on && 'opacity-45')}>
@@ -74,11 +76,16 @@ function Step({ title, children, on }) {
         on ? 'bg-accent' : 'border-2 border-ruling')}/>
       <div>
         <p className="font-display text-ui font-bold text-ink">{title}</p>
-        <p className="mt-1 max-w-[42ch] text-sec text-ink-2">{children}</p>
+        <p className="mt-1 max-w-[52ch] text-sec leading-[1.45] text-ink-2">{note}</p>
+        {children}
       </div>
     </div>
   )
 }
+
+/* The lines a reader can repeat live in charts/camera beside the phone
+   mockup that prints two of them, so the screen and the drawing cannot drift
+   apart. */
 
 const PHASES = { idle:0, camera:1, voice:2, working:3, done:4 }
 
@@ -169,19 +176,42 @@ export function PhoneCheck() {
       <div>
         <Card>
           <CardContent>
-            <p className="max-w-[42ch] text-sec text-ink-2">
-              Forty five seconds. Everything is worked out on this phone and thrown away.
-            </p>
-
-            <div className="mt-4">
-              <Step on={PHASES[phase] >= 1} title={`Fingertip over the camera · ${PPG_SECONDS}s`}>
-                Rest your hand on something.
+            {/* The opening line went. It said forty five seconds and nothing
+                leaves the phone, both of which the page says above it, and it
+                was costing the room these three steps needed to answer the
+                questions a tester actually asked of them. */}
+            {/* Four questions came back from one tester: which finger, cover
+                it or touch it, rest the hand on what, and say what. Three of
+                those are a position, so each step carries a small drawing and
+                the sentence under it stays a sentence. */}
+            <div>
+              <Step on={PHASES[phase] >= 1}
+                title={`Index fingertip over the camera · ${PPG_SECONDS}s`}
+                note="Pad flat over the rear lens and flash. Rest it; pressing hard flattens the pulse.">
+                <div className="mt-2.5 grid gap-2 sm:grid-cols-2 sm:gap-4">
+                  <StepFigure kind="grip"/>
+                  <StepFigure kind="rest"/>
+                </div>
+                <p className="mt-1.5 text-fine text-ink-3">Movement is what fails a reading.</p>
               </Step>
-              <Step on={PHASES[phase] >= 2} title={`Say one sentence · ${VOICE_SECONDS}s`}>
-                Anything at all. Only the pitch is kept.
+              <Step on={PHASES[phase] >= 2}
+                title={`Say one sentence · ${VOICE_SECONDS}s`}
+                note={'Somewhere quiet, no music or television. Phone about an arm\u2019s length '
+                  + 'away. Normal voice. No words are kept.'}>
+                <div className="mt-2.5"><StepFigure kind="quiet"/></div>
+                <p className="mt-1.5 text-sec text-ink-3">Read one, or say anything you like:</p>
+                <ul className="mt-1.5 list-none border-l-2 border-accent p-0 pl-3">
+                  {SAY_LINES.map(l => (
+                    <li key={l} className="text-sec leading-[1.5] text-ink">{l}</li>
+                  ))}
+                </ul>
               </Step>
-              <Step on={PHASES[phase] >= 3} title="One score, with a band">
-                The band is how sure the reading is.
+              <Step on={PHASES[phase] >= 3}
+                title="Your Mind Score, with a band"
+                note="0 to 100, measured against your own normal. Which way it moved is the useful part, not the figure.">
+                <p className="mt-2 max-w-[52ch] text-sec text-ink-3">
+                  Higher means working harder. The band is how sure, from how clean the signal was.
+                </p>
               </Step>
             </div>
 
@@ -252,9 +282,15 @@ export function PhoneCheck() {
       <Card aria-live="polite" className="min-h-[7rem] xl:sticky xl:top-[92px]">
         <CardContent>
           {!result && (
-            <p className="max-w-[36ch] text-sec text-ink-3">
-              Your reading appears here: a sentence first, then the number.
-            </p>
+            <>
+              <p className="max-w-[36ch] text-sec text-ink-3">
+                Your Mind Score appears here.
+              </p>
+              {/* The definition before the reading as well as beside it. Both
+                  readers who asked what the number meant asked it on the way
+                  in, not after. */}
+              <p className="mt-2 max-w-[44ch] text-meta text-ink-3">{SCORE_DEF}</p>
+            </>
           )}
           {result && (
             <>
@@ -274,11 +310,11 @@ export function PhoneCheck() {
                       printed at the same rank as the score rather than filed
                       under a disclosure. */}
                   <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 text-sec">
-                    <dt className="text-ink-3">Score</dt>
+                    <dt className="text-ink-3">Mind Score</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
                     <dt className="text-ink-3">How sure</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">
-                      {result.low}–{result.high} <span className="text-ink-3">(±{result.half})</span>
+                      {result.low} to {result.high} <span className="text-ink-3">(±{result.half})</span>
                     </dd>
                     <dt className="text-ink-3">Read from</dt>
                     <dd className="m-0 text-ink">{result.channels.join(' and ')}
@@ -290,6 +326,15 @@ export function PhoneCheck() {
                       : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
+                  {/* Two readers asked what the number means and neither of
+                      them asked it before taking a reading, so the answer is
+                      printed here as well as in the steps above. */}
+                  <p className="mt-4 max-w-[48ch] text-meta text-ink-3">{SCORE_DEF}</p>
+                  <p className="mt-2 max-w-[48ch] text-meta text-ink-3">
+                    Higher means working harder. The direction it moved matters more than the
+                    figure. The band is how sure, from how clean the signal was.
+                  </p>
+
                   {result.held && (
                     <p className="mt-5 max-w-[44ch] border-l-2 border-warn pl-3 text-sec text-warn">
                       {result.holdReason}
@@ -298,9 +343,9 @@ export function PhoneCheck() {
                 </div>
               </div>
 
-              <AllDetail label="See what moved the score">
+              <AllDetail label="See what moved your Mind Score">
                 <p className="mt-2 max-w-[52ch] text-sec text-ink-3">
-                  Right of the line raised the score, left of it lowered it. Each bar is that feature
+                  Right of the line raised the Mind Score, left of it lowered it. Each bar is that feature
                   against your own average, not against anybody else's.
                 </p>
                 <Diverge items={result.contrib.map(c => ({ label: c.label,

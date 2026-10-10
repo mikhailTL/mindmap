@@ -11,11 +11,13 @@ import { ChevronDown } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
+import { SCORE, SCORE_RANGE, CONSENT_SHORT } from '../lib/terms'
 
 /* The page's three part cards map onto the model's own assemblies. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
-/* The hero used to be one 41-word paragraph that stopped at "one score", and
+/* The hero used to be one 41-word paragraph that stopped at the day's one
+   number, and
    the review stopped with it: it reads the signals how, then what does it do.
    Five statements carry the whole chain in fewer words than the paragraph
    carried half of it, and the last two are the half that was missing. Nothing
@@ -26,8 +28,8 @@ const CHAIN = [
   'Sticks to the upper arm, under a sleeve.',
   'Reads four signals off the skin, one a second.',
   'Sends them to your phone over Bluetooth.',
-  'A day becomes one score out of 100, plus a plain sentence on what changed.',
-  'You pick what a parent or counselor can see.',
+  `A day becomes one ${SCORE}, ${SCORE_RANGE}, plus a plain sentence on what changed.`,
+  CONSENT_SHORT,
 ]
 
 export function PatchPage() {

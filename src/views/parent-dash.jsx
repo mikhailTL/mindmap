@@ -7,6 +7,7 @@ import { DATA } from '../lib/assets'
 import { CONSENT } from '../lib/caseload'
 import { ScrollIn } from '../s21/motion'
 import { cn } from '../lib/utils'
+import { SCORE, NOTES, LOCATION, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
 
 /* The parent's screen, built from what a parent is actually doing here.
  *
@@ -21,8 +22,8 @@ import { cn } from '../lib/utils'
  *   the answer → which days → the one thing to ask → what you are never
  *   shown → what the school may see → is the patch even reporting
  *
- * Nothing here is finer-grained than a day, and no raw reading, note or
- * location appears at any depth. That is the product's central promise, and
+ * Nothing here is finer-grained than a day, and no raw reading, Notes entry or
+ * Location appears at any depth. That is the product's central promise, and
  * sections 4 and 5 state it on the page rather than leaving it to be inferred
  * from what happens to be absent.
  */
@@ -82,9 +83,9 @@ function detail(w) {
 }
 
 /* ── 2. The week, at day grain and no finer ─────────────────────────────── */
-/* Seven cells, each saying one word. There is deliberately no daily score
-   here: a number invites a parent to watch it move, which is the instrument
-   posture this screen exists to avoid. Above / inside is the whole answer.
+/* Seven cells, each saying one word. The daily Mind Score is deliberately not
+   here: a number on this screen invites a parent to follow it hour by hour,
+   which is the instrument posture this screen exists to avoid. Above / inside is the whole answer.
    Colour is never alone — the word is the state, and the bar differs in weight
    as well as hue so it survives grayscale. */
 function WeekDays({ days, empty }) {
@@ -178,8 +179,8 @@ function AskAbout({ w }) {
 /* Phrased in the third person so the identical list is true in both modes —
    in real mode there is no child on this account to call "her". */
 const NEVER = [
-  ['Anything they write in the app', 'Notes and check-in answers stay on their phone.'],
-  ['Where they were', 'No location is collected, so none can be shared.'],
+  [NOTES, 'What a student writes in their own journal stays on their phone.'],
+  [LOCATION, 'No location is collected, so none can be shared.'],
   ['Their second-by-second readings', 'You get a day, never a moment.'],
   ['Anything they say', 'The microphone is never recorded and never sent.'],
 ]
@@ -192,9 +193,9 @@ const NEVER = [
 const [SCHOOL_CODE, RECORD] = Object.entries(CONSENT)[0]
 
 const SCOPES = [
-  { id:'score',  label:'A wellness score for the week',
+  { id:'score',  label:`The ${SCORE} for the week`,
     sub:'One number for a week. Never a reading.' },
-  { id:'trends', label:'Whether that score moved week to week',
+  { id:'trends', label:`Whether the ${SCORE} moved week to week`,
     sub:'Direction only, at week grain.' },
   { id:'raw',    label:'Second-by-second readings',
     sub:'Off unless both you and your child turn it on.' },
@@ -272,10 +273,9 @@ function SchoolSharing({ real }) {
               </div>
             ))}
           </dl>
-          <p className="mt-5 max-w-[62ch] text-sec text-ink-2">{CHILD} can narrow any of these further
-            from her own phone. She cannot widen them, and neither can the school. Second-by-second
-            readings are kept only for the window she sets, then deleted, with no archive and no
-            backup. You are never shown them.</p>
+          <p className="mt-5 max-w-[62ch] text-sec text-ink-2">{CONSENT_OFF} She cannot widen these
+            rows, and neither can the school. Second-by-second readings are kept only for the window
+            she sets, then deleted, with no archive and no backup. You are never shown them.</p>
           <p className="mt-3 max-w-[62ch] text-sec text-ink-3">In this demo a switch changes this page
             only. In the product it writes a dated row in the school&rsquo;s consent log, and {CHILD} is
             told the same day.</p>
@@ -381,7 +381,7 @@ export function ParentDash({ go, openTab }) {
           <p className="mt-4 max-w-[52ch] text-sec text-ink-2">
             {real
               ? 'Seven days, none of them measured. These stay empty until a patch reports.'
-              : 'Above or inside her own range, and that is the whole of it. There is no daily score to watch, and no hour, minute or reading behind these cells for anyone to open.'}
+              : `Above or inside her own range, and that is the whole of it. No daily ${SCORE} sits here, and no hour, minute or reading behind these cells for anyone to open.`}
           </p>
         </div>
       </ScrollIn>
@@ -423,6 +423,7 @@ export function ParentDash({ go, openTab }) {
       {/* 5. What the school may see, and how to change it */}
       <ScrollIn as="section" className="mt-14">
         <h2 className="mark">What the school can see</h2>
+        <p className="mt-4 max-w-[62ch] text-sec text-ink-2">{CONSENT_SHORT}</p>
         <SchoolSharing real={real}/>
       </ScrollIn>
 

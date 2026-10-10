@@ -530,8 +530,8 @@ export function CameraModule({ className }) {
           sm:flex-row sm:items-center sm:gap-6
           xl:flex-col xl:items-start xl:gap-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
           <p className="m-0 max-w-[46ch] text-sec leading-[1.45] text-ink-2">
-            One number per frame, thirty frames a second. Each beat lets less light
-            through, so the number dips once per beat.
+            One number per frame, thirty a second. Each beat lets less light through,
+            so the number dips.
           </p>
           <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px] xl:w-full">
             <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
@@ -577,6 +577,130 @@ export function SignalCoverage({ className }) {
   )
 }
 
+/* ── Three figures for the capture steps ─────────────────────
+ * A tester went through the four steps and asked which finger, what to rest a
+ * hand on, what to say, and how quiet the room has to be. Four fair questions,
+ * and the answer to three of them is a position rather than a sentence, so
+ * they are drawn. Each figure is 210 by 92 in its own units and renders at
+ * five rem of height, which is the size the review kept asking these to be.
+ */
+
+/* Lines to read out loud.
+ *
+ * Told to say anything, a reader stops and composes something. These are flat
+ * and ordinary on purpose: what is measured is the level and the steadiness of
+ * a voice, never the words. Saying your own is still fine. Exported, because
+ * the capture screen and the phone mockup have to offer the same lines. */
+export const SAY_LINES = [
+  'The bus leaves at eight.',
+  'The window faces the street.',
+  'There are four chairs at the table.',
+]
+
+/* Which finger, and over what. The pad sits over the lens and the flash at
+   once, which is the part a sentence cannot make anyone believe. */
+function GripFig() {
+  return (
+    <svg viewBox="0 0 210 96" className="block w-full max-w-[16rem]" aria-hidden>
+      {/* The island has to stay readable under the pad, so the pad is inside
+          its edges rather than around them: a shape bigger than the thing it
+          covers reads as a blob with circles in it. */}
+      <rect x="6" y="6" width="70" height="70" rx="19" fill={CARD} stroke={INK} strokeWidth="1.4"/>
+      <circle cx="25" cy="25" r="9" fill="none" stroke={INK2} strokeWidth="1.2"/>
+      <circle cx="25" cy="57" r="9" fill="none" stroke={INK2} strokeWidth="1.2"/>
+      <circle cx="57" cy="57" r="9" fill="none" stroke={INK2} strokeWidth="1.2"/>
+      <circle cx="57" cy="25" r="6.5" fill={WASH} stroke={INK2} strokeWidth="1.2"/>
+      <circle cx="57" cy="25" r="3" fill={ACCENT}/>
+      {/* the skin actually against the glass, over both openings at once */}
+      <ellipse cx="41" cy="41" rx="30" ry="27" fill={WASH} fillOpacity="0.45"
+        stroke={INK} strokeWidth="1.6"/>
+      <g stroke={INK3} strokeWidth="1" fill="none">
+        <path d="M64,25 H112"/>
+        <path d="M66,57 H112"/>
+      </g>
+      <g fill={INK2} fontFamily="Chivo, sans-serif" fontSize="12.5">
+        <text x="116" y="29">flash</text>
+        <text x="116" y="61">lens</text>
+      </g>
+      <text x="6" y="90" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
+        index fingertip pad, resting
+      </text>
+    </svg>
+  )
+}
+
+/* What the hand rests on. A hand holding a phone up is the one position
+   thirty seconds of stillness cannot survive, so both are down: the hand on
+   the phone, the forearm on the same surface behind it. Shared with the
+   mockup screen, which draws it at device size and sets its own caption. */
+function RestArt({ caption = true }) {
+  const hatch = [10, 24, 38, 52, 66, 80, 94, 108, 122, 136, 150, 164, 178, 192]
+  return (
+    <g>
+      <line x1="4" y1="68" x2="206" y2="68" stroke={INK} strokeWidth="1.6"/>
+      <g stroke={RULING} strokeWidth="1">
+        {hatch.map(x => <line key={x} x1={x} y1="68" x2={x - 7} y2="76"/>)}
+      </g>
+      <rect x="18" y="57" width="90" height="11" rx="3" fill={MIST} stroke={INK} strokeWidth="1.4"/>
+      <path d="M56,57 L104,57 L112,68 L210,68 L210,45
+               C172,45 146,46 124,49 C106,52 92,50 80,47
+               C68,44 54,45 48,50 C44,54 48,57 56,57 Z"
+        fill={MIST} stroke={INK} strokeWidth="1.4" strokeLinejoin="round"/>
+      <ellipse cx="62" cy="57" rx="10" ry="3.2" fill={WASH} stroke={INK2} strokeWidth="1.1"/>
+      <circle cx="62" cy="57" r="2.4" fill={ACCENT}/>
+      {caption && (
+        <text x="4" y="88" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
+          a table or your lap, both down
+        </text>
+      )}
+    </g>
+  )
+}
+
+function RestFig() {
+  return (
+    <svg viewBox="0 0 210 96" className="block w-full max-w-[16rem]" aria-hidden>
+      <RestArt/>
+    </svg>
+  )
+}
+
+/* How far away, and how quiet. The struck-out speaker is the room; the
+   dimension is the distance, because "an arm's length" is a measurement and
+   measurements belong on a dimension line. */
+function QuietFig() {
+  return (
+    <svg viewBox="0 0 210 96" className="block w-full max-w-[16rem]" aria-hidden>
+      <rect x="8" y="10" width="30" height="54" rx="8" fill={MIST} stroke={INK} strokeWidth="1.4"/>
+      <circle cx="23" cy="58" r="2.6" fill={ACCENT}/>
+      <path d="M62,32 L70,32 L79,22 L79,52 L70,42 L62,42 Z" fill={CARD} stroke={INK} strokeWidth="1.2"/>
+      <path d="M85,28 C90,33 90,41 85,46" fill="none" stroke={INK3} strokeWidth="1.3"/>
+      <path d="M58,52 L92,22" stroke={INK} strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="172" cy="26" r="11" fill={CARD} stroke={INK} strokeWidth="1.4"/>
+      <path d="M152,58 C152,42 161,34 172,34 C183,34 192,42 192,58" fill={CARD}
+        stroke={INK} strokeWidth="1.4"/>
+      <g fill="none" stroke={BEAM} strokeWidth="1.6" strokeLinecap="round">
+        <path d="M144,24 C138,29 138,37 144,42"/>
+        <path d="M134,20 C126,27 126,39 134,46"/>
+      </g>
+      <g stroke={INK3} strokeWidth="1">
+        <line x1="40" y1="68" x2="40" y2="80"/>
+        <line x1="150" y1="68" x2="150" y2="80"/>
+        <line x1="40" y1="74" x2="150" y2="74"/>
+      </g>
+      <text x="95" y="90" textAnchor="middle" fill={INK3}
+        fontFamily="Chivo, sans-serif" fontSize="12.5">an arm’s length</text>
+    </svg>
+  )
+}
+
+const STEP_FIGS = { grip: GripFig, rest: RestFig, quiet: QuietFig }
+
+export function StepFigure({ kind }) {
+  const F = STEP_FIGS[kind]
+  return F ? <F/> : null
+}
+
 /* ── Screens for the four-step guide ──────────────────────────────────────
  * These are drawn at real device points and scaled by the phone frame around
  * them, the same contract PhoneApp works to. A screenshot would have been
@@ -585,22 +709,56 @@ export function SignalCoverage({ className }) {
 const F_TITLE = { margin:0, fontFamily:'Quicksand, sans-serif', fontWeight:700,
   fontSize:34, letterSpacing:'-0.02em', color:INK }
 const F_SUB = { margin:'8px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }
+/* A quoted line a reader can say out loud without composing one. Ruled on the
+   left so it reads as something to be read, not as another instruction. */
+const F_QUOTE = { margin:'14px 0 0', fontFamily:'Chivo, sans-serif', fontSize:21,
+  color:INK, borderLeft:`3px solid ${ACCENT}`, paddingLeft:12 }
+
+/* Two loops, both cheap and both off under reduced motion.
+ *
+ * A tester asked for a video of the capture. A video of four taps goes stale
+ * the first time the app changes and cannot be read at 390px, so the figure
+ * animates instead: a fingertip lowering onto the lens, and a trace drawing
+ * itself once a beat. Those are the two steps a still picture cannot carry,
+ * and they are the two steps people get wrong.
+ *
+ * mm-trace in input.css is not covered by that file's reduced-motion rule, so
+ * the trace here runs on its own class rather than borrowing a loop this file
+ * cannot switch off. */
+const STEP_MOTION = `
+  @keyframes mm-settle { 0%,10% { transform: translateY(-30px) } 48%,100% { transform: none } }
+  @keyframes mm-steady { 0% { stroke-dashoffset: 700 } 60%,100% { stroke-dashoffset: 0 } }
+  .mm-settle { animation: mm-settle 3.4s cubic-bezier(.22,.8,.3,1) infinite both; }
+  .mm-steady { stroke-dasharray: 700; stroke-dashoffset: 700;
+    animation: mm-steady 2.8s cubic-bezier(.3,.1,.2,1) infinite both; }
+  @media (prefers-reduced-motion: reduce) {
+    .mm-settle { animation: none; transform: none }
+    .mm-steady { animation: none; stroke-dasharray: none; stroke-dashoffset: 0 }
+  }
+`
 
 function Pad() {
   return (
     <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Cover the camera.</p>
-      <p style={F_SUB}>Rear lens and flash, one finger.</p>
-      <svg viewBox="0 0 240 190" style={{ marginTop:26, width:'100%', display:'block' }} aria-hidden>
+      <p style={F_TITLE}>Index fingertip on the camera.</p>
+      <p style={F_SUB}>Pad flat over lens and flash. Cover both, rest, no pressing.</p>
+      <svg viewBox="0 0 240 190" style={{ marginTop:22, width:'100%', display:'block' }} aria-hidden>
+        <style>{STEP_MOTION}</style>
         <rect x="52" y="14" width="136" height="162" rx="30" fill={MIST} stroke={INK} strokeWidth="2.4"/>
         <rect x="70" y="32" width="86" height="86" rx="24" fill={CARD} stroke={INK2} strokeWidth="2"/>
         <circle cx="94" cy="56" r="15" fill="none" stroke={INK2} strokeWidth="2"/>
         <circle cx="132" cy="94" r="15" fill="none" stroke={INK2} strokeWidth="2"/>
         <circle cx="94" cy="94" r="9" fill={ACCENT}/>
         <circle cx="132" cy="56" r="7" fill={WASH} stroke={INK2} strokeWidth="1.6"/>
-        <ellipse cx="116" cy="76" rx="54" ry="44" fill={WASH} stroke={INK} strokeWidth="2.6" opacity="0.92"/>
-        <path d="M62,150 C62,120 76,100 106,92 L184,92 C176,124 160,146 138,158 Z"
-          fill={MIST} stroke={INK} strokeWidth="2.4" strokeLinejoin="round"/>
+        {/* The pad and the finger move as one body, so the loop reads as a
+            fingertip being lowered onto the lens rather than as a shape
+            growing. It lands and stays landed for half the cycle: the point
+            of the drawing is contact, not the travel. */}
+        <g className="mm-settle">
+          <ellipse cx="116" cy="76" rx="54" ry="44" fill={WASH} stroke={INK} strokeWidth="2.6" opacity="0.92"/>
+          <path d="M62,150 C62,120 76,100 106,92 L184,92 C176,124 160,146 138,158 Z"
+            fill={MIST} stroke={INK} strokeWidth="2.4" strokeLinejoin="round"/>
+        </g>
       </svg>
     </div>
   )
@@ -609,16 +767,24 @@ function Pad() {
 function Still() {
   return (
     <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Hold still.</p>
-      <p style={F_SUB}>Thirty seconds. Rest your hand.</p>
-      <div style={{ marginTop:24, borderRadius:16, background:INK, padding:'22px 18px' }}>
-        <svg viewBox="0 0 300 92" style={{ width:'100%', display:'block' }} aria-hidden>
-          <path d="M0 58 L28 58 L36 22 L44 80 L52 58 L90 58 L118 58 L126 22 L134 80 L142 58
-                   L180 58 L208 58 L216 22 L224 80 L232 58 L268 58 L296 58"
+      <p style={F_TITLE}>Rest both on a table.</p>
+      <p style={F_SUB}>Phone down, forearm down. Thirty seconds.</p>
+      {/* The trace used to be the whole screen, which answered a question
+          nobody asked: a reader can see the phone is busy. What they could
+          not see was where to put the hand, so that is the drawing now and
+          the trace is one line of readout under it. */}
+      <svg viewBox="0 0 210 78" style={{ marginTop:20, width:'100%', display:'block' }} aria-hidden>
+        <RestArt caption={false}/>
+      </svg>
+      <div style={{ marginTop:18, borderRadius:16, background:INK, padding:'18px 18px' }}>
+        <svg viewBox="0 0 300 54" style={{ width:'100%', display:'block' }} aria-hidden>
+          <style>{STEP_MOTION}</style>
+          <path d="M0 34 L28 34 L36 12 L44 48 L52 34 L90 34 L118 34 L126 12 L134 48 L142 34
+                   L180 34 L208 34 L216 12 L224 48 L232 34 L268 34 L296 34"
             fill="none" stroke="#3fd6c4" strokeWidth="3.4" strokeLinecap="round"
-            strokeLinejoin="round" className="mm-trace"/>
+            strokeLinejoin="round" className="mm-steady"/>
         </svg>
-        <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:'#bed6da' }}>
+        <p style={{ margin:'12px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:21, color:'#bed6da' }}>
           72 bpm · signal good</p>
       </div>
     </div>
@@ -628,16 +794,19 @@ function Still() {
 function Say() {
   return (
     <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Say one sentence.</p>
-      <p style={F_SUB}>Anything. The words are not kept.</p>
-      <div style={{ marginTop:28, display:'flex', alignItems:'flex-end', gap:5, height:120 }}>
+      <p style={F_TITLE}>Read one line aloud.</p>
+      <p style={F_SUB}>Quiet room, arm’s length, normal voice.</p>
+      {/* Two, not one. A tester asked for a sentence to repeat rather than a
+          prompt to answer, and one line reads as the line you have to say. */}
+      {SAY_LINES.slice(0, 2).map(l => <p key={l} style={F_QUOTE}>{l}</p>)}
+      <div style={{ marginTop:20, display:'flex', alignItems:'flex-end', gap:5, height:78 }}>
         {[22, 48, 74, 96, 64, 108, 82, 54, 90, 116, 70, 44, 86, 58, 30, 66].map((v, i) => (
           <span key={i} style={{ flex:1, height:v, borderRadius:3,
             background: i % 3 === 0 ? BEAM : ACCENT, opacity: 0.55 + (v / 240) }}/>
         ))}
       </div>
-      <p style={{ margin:'16px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:22, color:INK3 }}>
-        15s · listening</p>
+      <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:21, color:INK3 }}>
+        15s · listening · no words kept</p>
     </div>
   )
 }
@@ -645,19 +814,19 @@ function Say() {
 function Got() {
   return (
     <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Your score.</p>
-      <p style={F_SUB}>With how sure it is.</p>
-      <div style={{ marginTop:26, borderRadius:16, background:CARD, border:`1px solid ${RULE}`,
+      <p style={F_TITLE}>Your Mind Score.</p>
+      <p style={F_SUB}>0 to 100, against your own normal.</p>
+      <div style={{ marginTop:22, borderRadius:16, background:CARD, border:`1px solid ${RULE}`,
         padding:'24px 20px' }}>
         <p style={{ margin:0, fontFamily:'Chivo Mono, monospace', fontSize:64, lineHeight:1, color:INK }}>38</p>
-        <p style={{ margin:'6px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK3 }}>
-          out of 100</p>
+        <p style={{ margin:'6px 0 0', fontFamily:'Chivo, sans-serif', fontSize:21, color:INK3 }}>
+          Up 6 since yesterday. Higher means working harder.</p>
         <div style={{ marginTop:22, height:12, borderRadius:999, background:MIST, position:'relative' }}>
           <span style={{ position:'absolute', left:'22%', width:'26%', top:0, bottom:0,
             borderRadius:999, background:ACCENT }}/>
         </div>
         <p style={{ margin:'10px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }}>
-          Somewhere in the green band.</p>
+          The band: how sure.</p>
       </div>
     </div>
   )

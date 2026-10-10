@@ -23,7 +23,7 @@ import { Logo } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowLeft, Bracket, ChevronDown, Cross, Grid, PulseMark } from '../ui/marks'
+import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Grid, PulseMark } from '../ui/marks'
 import { ScrollProgress } from '../s21/motion'
 import { cn } from '../lib/utils'
 
@@ -357,15 +357,23 @@ function Header({ view, go }) {
           {/* Still the only filled control on the bar: everything else here
               explains MindMap, this opens it. */}
           <button onClick={() => go('app')}
-            className={cn('inline-flex h-11 shrink-0 items-center gap-2 rounded-field px-3.5',
+            className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-field px-3',
               'bg-accent font-display text-ui font-medium text-paper transition-colors',
-              'duration-150 hover:bg-accent-ink sm:px-4')}>
-            {/* "Open the app" does not fit beside a hamburger at 390px. */}
-            <span className="xl:hidden">Open app</span>
-            <span className="hidden xl:inline">Open the app</span>
-            {/* The arrow is decoration and it is the first thing to go. It
-                only comes back where the row has width to spare. */}
-            <span aria-hidden className="hidden 2xl:inline">&rarr;</span>
+              'duration-150 hover:bg-accent-ink sm:gap-2 sm:px-4')}>
+{/* Two testers could not tell the app from the site. Half of that is
+                what the app looks like, which the app chrome below answers, and
+                half is whether the door says it is a door. So this is a
+                crossing rather than a link: the label names where it goes and
+                the arrow points out of the page, and it is the exact mirror of
+                "Back to the site" in the app, which carries the same arrow
+                pointing the other way. One crossing each direction, both named,
+                neither doubled.
+
+                The full label gives way at 390px and nowhere else. It used to
+                hold out until 1280, which wasted the room the row had. */}
+            <span className="sm:hidden">Open app</span>
+            <span className="hidden sm:inline">Open the app</span>
+            <ArrowRight aria-hidden className="size-4 shrink-0"/>
           </button>
           <button ref={burger} type="button" onClick={() => setMenu(true)}
             aria-expanded={menu} aria-label="Open the menu"
@@ -425,21 +433,84 @@ const APP_NAV = [
 const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
                   'app-parent':'app-parent', privacy:'app-parent', 'app-pro':'app-pro' }
 
+/* The destination names, for the app's title bar.
+ *
+ * A website header says what the site is; an app's bar says which screen is
+ * open. These are the four destinations plus the two routes that are tabs
+ * inside one of them, written as the screen rather than as the audience.
+ */
+const APP_TITLE = {
+  app:            'Screens',
+  'app-student':  'Student',
+  check:          'Take a reading',
+  'app-parent':   'Parent',
+  privacy:        'Who sees what',
+  'app-pro':      'School',
+}
+
+/* ── the app shell ─────────────────────────────────────────────────────────
+ *
+ * Two testers said the same thing in the same words: the app reads as another
+ * page of the website. It already had its own navigation, and that was not
+ * enough, because everything else about it was still the brochure. Same
+ * ground, same 60px page titles, same section padding.
+ *
+ * So the four things that make a surface a product are declared here, once,
+ * and every app route inherits them:
+ *
+ *   ground   a tinted canvas, the turquoise at 15% over paper, which resolves
+ *            to #d5eaef. No marketing band uses it: those run paper, card,
+ *            mist, aqua, aqua-2, accent-wash, beam-wash and the one ink band.
+ *            White chrome and white cards sit on top of it, which is the
+ *            layering a product has and a landing page does not. Measured
+ *            against every ink that lands on it: ink 11.97, ink-2 6.67,
+ *            ink-3 4.80, accent 4.89, accent-ink 7.05, warn 4.63, crit 5.36,
+ *            beam-ink 5.15. The weakest of them clears 4.5.
+ *   type     headings step down hard. A marketing page title is `major`, 40px
+ *            to 60px, and a marketing section head is `sub`, 32px to 48px. In
+ *            here an h1 is `head` at 29px and an h2 is `row` at 25px, so the
+ *            largest heading in the app is smaller than the smallest heading
+ *            on any marketing page. Card titles follow at 18px and 17px.
+ *   rhythm   every banded `.wrap` tightens to 24px of padding, 32px past lg.
+ *            The marketing bands are 36 and 56.
+ *   nav      persistent, and the destination you are on is a filled accent
+ *            block in both the phone bar and the desk rail.
+ *
+ * Written as descendant variants rather than per screen because the screens
+ * belong to the dashboards and the surface belongs to the chrome. A pane
+ * cannot drift back towards the brochure without this file saying so.
+ */
+const APP_SHELL = cn(
+  'min-h-[100dvh] bg-beam/15 lg:pl-[13.5rem]',
+  /* Each step carries its own leading and tracking from the scale, so one
+     class per level is the whole override. `.mark` is exempt: it is a ruled
+     label at 16px that happens to be marked up as a heading, and a step on
+     it would blow a hairline annotation up to 25px. */
+  '[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
+  '[&_h3:not(.mark)]:text-meta [&_h4:not(.mark)]:text-ui',
+  '[&_.wrap]:py-6 lg:[&_.wrap]:py-8',
+)
+
 /* The phone bar.
  *
- * Fixed to the bottom, always there, thumb height. Selection is carried three
- * ways and colour is only one of them: the cell fills, the label goes bold,
- * and the ink darkens — desaturate a screenshot and you can still read where
- * you are. Every cell is at least 56 tall and a quarter of the viewport wide,
- * so the smallest target here is 97 x 56 at 390. The inset padding is what
- * keeps the labels off a home indicator, and the spacer the page renders below
- * the footer is what keeps this bar off the last line of content.
+ * Fixed to the bottom, always there, thumb height. Selection is carried four
+ * ways and colour is only one of them: a rule lands on the top edge of the
+ * cell, the mark fills, the label goes bold, and the ink darkens. Desaturate
+ * a screenshot and you can still read where you are. Every cell is at least
+ * 56 tall and a quarter of the viewport wide, so the smallest target here is
+ * 97 x 56 at 390. The inset padding is what keeps the labels off a home
+ * indicator, and the spacer the page renders below the footer is what keeps
+ * this bar off the last line of content.
+ *
+ * White, on a hairline. The marketing header is mist on a 2px ink rule, and
+ * the two are now different objects at a glance rather than the same object
+ * in two places.
  */
 function AppTabBar({ view, go }) {
   const here = APP_TAB[view]
   return (
     <nav aria-label="App screens"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ruling bg-paper
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-3 bg-card
         pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="flex">
         {APP_NAV.map(([id, label, Mark]) => {
@@ -448,14 +519,16 @@ function AppTabBar({ view, go }) {
             <li key={id} className="flex-1">
               <button type="button" onClick={() => go(id)}
                 aria-current={on ? 'page' : undefined}
-                className={cn('flex min-h-[56px] w-full flex-col items-center justify-center gap-1',
+                className={cn('relative flex min-h-[56px] w-full flex-col items-center justify-center gap-1',
                   'px-1 pb-1.5 pt-2 transition-colors duration-150',
-                  on ? 'text-accent-ink' : 'text-ink-2')}>
+                  /* the rule on the cell edge, which is what a tab bar uses to
+                     say "this one" when the fill alone could be a hover */
+                  'before:absolute before:inset-x-0 before:top-0 before:h-[2px]',
+                  on ? 'text-accent-ink before:bg-accent' : 'text-ink-2 before:bg-transparent')}>
                 {/* Solid, not tinted. An accent-wash pill measures 1.14 : 1
                     against paper, which is a fill you can only see if you
-                    already know where to look; filled accent is 5.52 and the
-                    mark reverses out of it, so the selected cell survives a
-                    desaturated screenshot. */}
+                    already know where to look; filled accent is 5.79 with
+                    paper reversed out of it. */}
                 <span aria-hidden className={cn('flex h-7 w-14 items-center justify-center rounded-bar',
                   'transition-colors duration-150', on ? 'bg-accent text-paper' : 'bg-transparent')}>
                   <Mark size={22}/>
@@ -476,37 +549,40 @@ function AppTabBar({ view, go }) {
  * The same four destinations, not the phone bar stretched across 1440: four
  * icons spaced a third of a metre apart along the bottom of a monitor is a
  * phone habit on a desk. A 216px column instead, labels beside their marks,
- * with the settings and the way out where a desk app keeps them — at the foot,
+ * with the settings and the way out where a desk app keeps them, at the foot,
  * below everything you actually came for.
+ *
+ * The selected destination is a filled accent block. It was an accent-wash
+ * tint with a leading bar, which is how this site marks a row in a list; a
+ * product marks the screen you are standing on more loudly than it marks a
+ * selected row, because that one is a fact about the whole window.
  */
 function AppRail({ view, go }) {
   const here = APP_TAB[view]
   return (
     <div className="fixed inset-y-0 left-0 z-40 hidden w-[13.5rem] flex-col overflow-y-auto
-      border-r border-rule bg-paper lg:flex">
-      <div className="border-b border-rule px-5 py-4 text-row text-ink">
+      border-r border-ink-3 bg-card lg:flex">
+      {/* 48px, the same as the title bar to its right, so the two line up
+          across the top of the window instead of stepping. */}
+      <div className="flex h-12 shrink-0 items-center border-b border-rule px-4 text-ui text-ink">
         <Logo/>
       </div>
-      <nav aria-label="App screens" className="flex flex-col gap-0.5 p-3">
+      <nav aria-label="App screens" className="flex flex-col gap-1 p-2.5">
         {APP_NAV.map(([id, label, Mark]) => {
           const on = here === id
           return (
             <button key={id} type="button" onClick={() => go(id)}
               aria-current={on ? 'page' : undefined}
-              className={cn('flex min-h-[44px] w-full items-center gap-3 rounded-field py-2 pr-3',
+              className={cn('flex min-h-[44px] w-full items-center gap-2.5 rounded-field px-3',
                 'text-left transition-colors duration-150',
-                on ? 'bg-accent-wash text-accent-ink' : 'text-ink-2 hover:text-ink')}>
-              {/* the same leading bar the phone drawer uses for the page you
-                  are on, so "you are here" looks the same across the product */}
-              <span aria-hidden className={cn('h-5 w-[3px] shrink-0 rounded-bar',
-                on ? 'bg-accent' : 'bg-transparent')}/>
+                on ? 'bg-accent text-paper' : 'text-ink-2 hover:bg-mist hover:text-ink')}>
               <Mark size={20}/>
               <span className={cn('font-display text-ui', on ? 'font-bold' : 'font-medium')}>{label}</span>
             </button>
           )
         })}
       </nav>
-      <div className="mt-auto border-t border-rule p-3">
+      <div className="mt-auto border-t border-rule p-2.5">
         <ModeToggle compact className="[&_button]:min-h-[44px]"/>
         <ExitToSite go={go} className="mt-3"/>
       </div>
@@ -516,29 +592,75 @@ function AppRail({ view, go }) {
 
 /* The way out. Named, not a logo that might mean home and might mean site, and
    set as a quiet text control rather than anything that competes with the four
-   screens above it. */
-function ExitToSite({ go, className }) {
+   screens above it. It carries the arrow that the site's "Open the app"
+   carries reversed, so the two crossings are one pair.
+
+   One of these is on screen at a time: the rail holds it past lg, the title
+   bar holds it below. Never both, and never two back links in one corner. */
+function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
-      className={cn('flex min-h-[44px] items-center gap-2 rounded-field pr-2 font-display',
+      className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field pr-2 font-display',
         'text-ui font-medium text-ink-2 transition-colors duration-150 hover:text-ink', className)}>
-      <ArrowLeft aria-hidden className="size-4"/>Back to the site
+      <ArrowLeft aria-hidden className="size-4 shrink-0"/>
+      {short ? (
+        <>
+          {/* At 390 this row holds the screen name, the demo switch and
+              this, and the three of them only just fit. So below sm the label
+              is the destination on its own and the full sentence comes back
+              above it. The arrow carries the direction at either size. */}
+          <span className="sm:hidden">Site</span>
+          <span className="hidden sm:inline">Back to the site</span>
+        </>
+      ) : 'Back to the site'}
     </button>
   )
 }
 
-/* On a phone the rail's foot has nowhere to go, so the two things it holds sit
-   in a strip of the same 56px the marketing bar uses. No wordmark and no tabs
-   in here: the bar at the bottom is the navigation, and a second row of it at
-   the top is the thing this pass is removing. */
-function AppTopStrip({ go }) {
+/* The app's title bar.
+ *
+ * Nothing about it is the marketing header, which is the point. White rather
+ * than mist, 48px rather than 56, a hairline rather than a 2px ink rule, and
+ * it carries the name of the screen you are on instead of a wordmark, five
+ * links and a filled key. An app bar reports; a site header offers.
+ *
+ * Past lg it is the name alone, because the rail beside it already holds the
+ * wordmark, the demo switch and the way out, and repeating any of those would
+ * be the doubling this pass is removing.
+ */
+function AppTopBar({ view, go }) {
   return (
-    <div className="sticky top-0 z-40 border-b border-rule bg-paper lg:hidden">
-      <div className="wrap flex h-14 items-center justify-between gap-3">
-        <ExitToSite go={go}/>
-        <ModeToggle compact className="[&_button]:min-h-[44px]"/>
+    <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
+      <div className="flex h-12 items-center gap-3 px-[22px] sm:px-10 lg:px-14">
+        <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar bg-accent"/>
+        <span className="min-w-0 truncate font-display text-tick font-bold text-ink">
+          {APP_TITLE[view] || 'App'}
+        </span>
+        <div className="ml-auto flex items-center gap-3 lg:hidden">
+          <ModeToggle compact className="[&_button]:min-h-[44px]"/>
+          <ExitToSite go={go} short/>
+        </div>
       </div>
     </div>
+  )
+}
+
+/* The app's foot.
+ *
+ * The site ends on a band: a 2px rule, a mist ground, 88px of padding and the
+ * disclaimer set at reading size. A product does not end a screen with a
+ * marketing band, so in here the same two sentences are a hairline and a line
+ * of small print. ink-3 on the app canvas measures 4.80 : 1, so it still
+ * clears 4.5 at 14px.
+ */
+function AppFoot() {
+  return (
+    <footer className="border-t border-ink-3 px-[22px] py-5 sm:px-10 lg:px-14">
+      <p className="max-w-[78ch] text-fine text-ink-3">MindMap measures physiology and reports patterns. It is not a
+        medical device and does not diagnose or treat any condition. If you need urgent help, contact your
+        local emergency number or a crisis line.</p>
+      <p className="mt-2 text-fine text-ink-3">MindMap · Solace Innovation</p>
+    </footer>
   )
 }
 
@@ -909,14 +1031,20 @@ export function App() {
       {!showIntro && !visitor && !admin && (
         <NameGate onDone={() => { try { setVisitorState(getVisitor()) } catch { setVisitorState({ name:'Anonymous' }) } }}/>
       )}
-      {inApp ? <AppTopStrip go={go}/> : <Header view={view} go={go}/>}
+      {!inApp && <Header view={view} go={go}/>}
       <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {inApp && <AppRail view={view} go={go}/>}
       {/* The rail is fixed, so the page is inset by its width rather than
           laid out beside it: the dashboards draw full-bleed bands and a flex
-          sibling would have clipped them. */}
-      <div className={cn(inApp && 'lg:pl-[13.5rem]')}>
+          sibling would have clipped them.
+
+          APP_SHELL is where the app stops looking like the site: the canvas,
+          the heading steps and the band padding all land here and every pane
+          inside inherits them. Nothing is clipped and nothing is transformed,
+          so the sticky columns inside the reading screen still stick. */}
+      <div className={cn(inApp && APP_SHELL)}>
+        {inApp && <AppTopBar view={view} go={go}/>}
         <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
           <V go={go} key={view}/>
         </div>
@@ -932,14 +1060,19 @@ export function App() {
             follows a reviewer around all eight marketing pages, and the survey
             has its own place in the marketing bar. */}
         {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
-        <footer className="border-t-2 border-ink bg-mist py-11">
-          <div className="wrap">
-            <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
-              medical device and does not diagnose or treat any condition. If you need urgent help, contact your
-              local emergency number or a crisis line.</p>
-            <p className="note mt-3.5">MindMap · Solace Innovation</p>
-          </div>
-        </footer>
+        {/* The site keeps its band. The app gets a line of small print,
+            because the band is the last thing on the page that still read as
+            the brochure. */}
+        {inApp ? <AppFoot/> : (
+          <footer className="border-t-2 border-ink bg-mist py-11">
+            <div className="wrap">
+              <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
+                medical device and does not diagnose or treat any condition. If you need urgent help, contact your
+                local emergency number or a crisis line.</p>
+              <p className="note mt-3.5">MindMap · Solace Innovation</p>
+            </div>
+          </footer>
+        )}
         {/* What keeps the tab bar off the last line of the page. Its height
             plus whatever the handset reserves at the bottom of the glass. */}
         {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))] lg:hidden"/>}

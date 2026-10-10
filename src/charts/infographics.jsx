@@ -1,6 +1,7 @@
 import React from 'react'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
+import { SCORE, NOTES, LOCATION, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
 
 /* Pictures that replace paragraphs. Every one of these was a block of prose
    until a reader had to get through it to learn one fact. */
@@ -33,7 +34,7 @@ export function HowItWorks({ className }) {
     { t:'Worn on the arm', art:'patch',
       s:'Pulse, sweat, skin temperature and movement off the upper arm, once a second, all day.' },
     { t:'Read on your phone', art:'phone',
-      s:'Scored against your own last two weeks.' },
+      s:`One ${SCORE}, measured against your own last two weeks.` },
     { t:'One sentence back', art:'card',
       s:'One line in plain words, with the four signals under it.' },
   ]
@@ -77,16 +78,24 @@ function StepArt({ kind }) {
 /* The five things a day of measurement produces, and what each person is shown
    of them. 2 always, 1 only with consent, 0 never. */
 const WHAT = [
-  'One number for the day',
+  `${SCORE} for the day`,
   'Whether the week ran high',
   'Every reading, second by second',
-  'Anything they wrote',
-  'Where they were',
+  NOTES,
+  LOCATION,
 ]
+/* The raw stream, Notes and Location are level 0 for both a parent and a
+   counselor at every consent level. The trust block above this figure states
+   that those three never leave the phone, and a cell that said "only if the
+   student agrees" put a second answer to the same question in the same
+   section. Rows 1 and 2 are level 1 for the same reason: nothing is shared by
+   default, so what a parent or a school is shown is what the student turned
+   on, and the student can turn it off again. Level 2 is the student's own
+   column, which is the one audience that always sees everything. */
 const SEES = [
   { who:'Student',   sees:[2, 2, 2, 2, 2] },
-  { who:'Parent',    sees:[2, 2, 0, 0, 0] },
-  { who:'Counselor', sees:[2, 2, 1, 0, 0] },
+  { who:'Parent',    sees:[1, 1, 0, 0, 0] },
+  { who:'Counselor', sees:[1, 1, 0, 0, 0] },
 ]
 function Mark({ v }) {
   const label = v === 2 ? 'Always' : v === 1 ? 'Only if the student agrees' : 'Never'
@@ -136,8 +145,8 @@ export function WhoSeesWhat({ className }) {
           </div>
         ))}
       </div>
-      <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">Students can change every row at any
-        time. Crisis alerts are the exception, and students are told so before they start.</figcaption>
+      <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">{CONSENT_SHORT} {CONSENT_OFF} Crisis
+        alerts are the exception, and students are told so before they start.</figcaption>
     </figure>
   )
 }

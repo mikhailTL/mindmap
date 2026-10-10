@@ -96,32 +96,66 @@ export function suppressIntro() {
 
    Nothing here is a setup for a later line, and no number appears that the
    prototype does not produce. */
+/* How long each beat is, and why it is that long.
+ *
+ * A tester said the sequence was helpful but moved fast. Two different faults
+ * hide in that: not enough time to read, and content landing faster than the
+ * eye settles. The dwell below answers the first and PACE/DUR in the CSS
+ * answers the second.
+ *
+ * The dwell of a beat is not a flat addition. It is sized to the beat's own
+ * content:
+ *
+ *   copy done = when the sub-line lands
+ *             + (heading + sub-line words) / 3.5      first read, prose rate
+ *             + (stage words) / 9                     labels and captions, scanned
+ *   anim done = when the last element in the stage finishes + 0.4
+ *   dwell     = max(copy done, anim done) + 0.9       one crossfade of rest
+ *
+ * 3.5 words a second is a first-time reader on prose. The stage rate is faster
+ * because a stage is short labels in a grid, sampled rather than read line by
+ * line, and because every stage here is a whole page elsewhere on the site for
+ * anybody who wants all of it. The last beat has no heading block, so its clock
+ * starts when the wordmark lands rather than when a sub-line does.
+ *
+ *   beat  words (copy / stage)  last element  copy done  dwell
+ *     1        37 / 6               4.33s      13.55s    14.4s
+ *     2        30 / 39              2.31s      15.21s    16.1s
+ *     3        22 / 67              3.31s      16.04s    16.9s
+ *     4        26 / 10              4.76s      10.85s    11.7s
+ *     5        19 / 33              2.47s      11.41s    12.3s
+ *     6        25 / 4               6.24s      13.01s    13.9s
+ *
+ * 85.3s against the 34.4s it ran before. The floor is the copy, not the
+ * timings: the six headings and sub-lines are approved and 3.5 words a second
+ * over them is most of this. Nobody has to sit through it either way, which is
+ * what Back, Next and Skip are for.
+ */
 const BEATS = [
-  { ms: 6200, bg: '#e8f6f4',
+  { ms: 10400, bg: '#e8f6f4',
     head: 'MindMap is a stress tracker for teenagers.',
     sub:  'It measures your pulse, your sweat, your skin temperature and how much you move, all day, then hands back one score out of 100 and one sentence saying what changed.' },
-  { ms: 5800, bg: '#dcf0ef',
+  { ms: 11600, bg: '#dcf0ef',
     head: 'The patch is a sticker for your upper arm.',
     sub:  'It sticks to the skin, takes those four readings about once a second, and sends them to your phone over Bluetooth.' },
-  { ms: 6000, bg: '#d2ebe9',
+  { ms: 12200, bg: '#d2ebe9',
     head: '3 Ways to Use MindMap',
     sub:  'The patch and the phone each take a real reading from your body. The demo takes none.' },
-  { ms: 5600, bg: '#e3f2ed',
+  { ms: 8400, bg: '#e3f2ed',
     head: 'A day comes back as one score.',
     sub:  'Out of 100, from the patch or from the phone, with one plain sentence under it saying what changed.' },
-  { ms: 5600, bg: '#d7eeea',
+  { ms: 8900, bg: '#d7eeea',
     head: 'Students, parents and school counselors.',
     sub:  'Each one sees a different amount, and the student decides what leaves their phone.' },
-  { ms: 5200, bg: '#eaf6f2',
+  { ms: 10000, bg: '#eaf6f2',
     head: 'MindMap',
     sub:  'A patch, or six questions. One score and one sentence a day.' },
 ]
 const LAST = BEATS.length - 1
-const TOTAL = BEATS.reduce((a, b) => a + b.ms, 0)
 const EXIT_MS = 620          // must match the opacity transition on the overlay
 const SKIP_MS = 180          // a skip is an interruption, so it clears faster
-const STILL_MS = 900         // reduced motion: hold the finished mark, then leave
-const OUT_MS = 700           // how long before a beat ends its stage starts leaving
+const OUT_MS = 900           // how long before a beat ends its stage starts leaving
+const FADE_MS = 1500         // the ground crossfade, in step with the longer beats
 
 const svgProps = {
   preserveAspectRatio: 'xMidYMid meet',
@@ -589,7 +623,19 @@ const STAGES = [StageDay, StageSignals, StageRoutes, StageScore, StageAudience, 
    system. The reduced-motion rule at the bottom is the whole no-motion story:
    remove the animation and every mark, layer and label renders finished. */
 const CSS = `
-.iv-root .iv-a{animation-duration:var(--d,1s);animation-delay:var(--t,0s);animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+/* The second half of "it moves fast". Every --t and --d in this file is a cue
+   relative to the start of its beat, and they were written against beats of
+   about six seconds: a stage finished arriving by 2.3s and then sat for four.
+   Stretched over a fourteen-second beat the same cues would land in the first
+   sixth of it and the rest would be a still. One multiplier on the delays and
+   a smaller one on the durations re-spaces the whole build without touching a
+   single call site, which is the only way to re-time ninety-odd cues without
+   mistyping one. 1.5 on the delays walks the stage in over about three and a
+   half seconds instead of two and a bit; 1.15 on the durations stops the
+   strokes from drawing faster than the gaps between them.
+   calc() multiplies a time by a number, so --t stays authored in seconds. */
+.iv-root{--iv-pace:1.5;--iv-dur:1.15}
+.iv-root .iv-a{animation-duration:calc(var(--d,1s) * var(--iv-dur,1));animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.3,1)}
 .iv-root .iv-draw{stroke-dasharray:var(--len);stroke-dashoffset:0;animation-name:iv-draw}
 .iv-root .iv-rise{animation-name:iv-rise}
 .iv-root .iv-pop{transform-box:fill-box;transform-origin:center;animation-name:iv-pop}
@@ -608,7 +654,7 @@ const CSS = `
    rather than deleted at each call site so the classes stay available to the
    pages, which are not a title card and can afford ambient motion. */
 .iv-root .iv-blink,.iv-root .iv-sway{animation:none}
-.iv-root .iv-flow{animation-name:iv-fade;animation-duration:.4s;animation-delay:var(--t);animation-iteration-count:1}
+.iv-root .iv-flow{animation-name:iv-fade;animation-duration:.4s;animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-iteration-count:1}
 .iv-root .iv-out{animation:iv-out ${OUT_MS}ms cubic-bezier(.55,0,.25,1) both}
 @keyframes iv-draw{from{stroke-dashoffset:var(--len)}}
 @keyframes iv-rise{from{opacity:0;transform:translateY(10px)}}
@@ -628,11 +674,20 @@ to{transform:translate(136px,125.2px) scale(5.2);stroke-width:.5px}}
 
 export function Intro({ onDone }) {
   const reduced = useReducedMotion()
-  const [beat, setBeat] = React.useState(reduced ? LAST : 0)
+  /* Reduced motion used to open on the last beat and leave after 900ms, which
+     made the other five unreachable. It opens on the first beat like everybody
+     else now and does not advance itself at all; see the clock below. */
+  const [beat, setBeat] = React.useState(0)
   const [leaving, setLeaving] = React.useState(false)
   const [exiting, setExiting] = React.useState(false)
   const rootRef = React.useRef(null)
   const skipRef = React.useRef(null)
+  const prevRef = React.useRef(null)
+  const nextRef = React.useRef(null)
+  /* When the beat now playing began. Zero means "re-anchor on the next frame",
+     which is how a jump hands the beat it lands on that beat's whole dwell
+     rather than whatever was left of the one it replaced. */
+  const startRef = React.useRef(0)
   const fills = React.useRef([])
   const beatRef = React.useRef(0)
   const leaveRef = React.useRef(false)
@@ -662,43 +717,77 @@ export function Intro({ onDone }) {
     close(SKIP_MS)
   }, [close])
 
-  /* One clock for the whole sequence. Beat boundaries are derived from elapsed
-     time rather than accumulated by a chain of timeouts, so a dropped frame or
-     a backgrounded tab cannot leave the headline and the progress rail
-     disagreeing about which beat is playing. */
+  /* The reader's own clock. However long the beats are, a sequence that only
+     advances on a timer is too fast for somebody who reads slowly and too slow
+     for somebody who does not, so the two directions are controls. A jump
+     re-anchors the beat timer: going on early does not shorten the beat landed
+     on, and going back gives that beat its whole dwell again instead of the
+     sliver that was left when it was first passed.
+
+     Next past the last beat ends the sequence, and that is not Skip. Skip is a
+     refusal and writes the key; reaching the end by pressing Next is having
+     watched it, and suppresses nothing. */
+  const goTo = React.useCallback(i => {
+    if (doneRef.current || timerRef.current) return
+    if (i > LAST) { close(EXIT_MS); return }
+    const n = Math.max(0, Math.min(LAST, i))
+    if (n === beatRef.current) return
+    beatRef.current = n
+    startRef.current = 0
+    leaveRef.current = false
+    setLeaving(false)
+    setBeat(n)
+  }, [close])
+
+  const goNext = React.useCallback(() => goTo(beatRef.current + 1), [goTo])
+  const goPrev = React.useCallback(() => goTo(beatRef.current - 1), [goTo])
+
+  /* One clock, and it owns one beat at a time. It used to run against the sum
+     of every beat, which left no time to seek to: a jump would have had to
+     rewrite the progress rail's history to express itself. The frame timestamp
+     is still what a boundary is derived from, so a dropped frame or a
+     backgrounded tab cannot leave the headline and the rail disagreeing about
+     which beat is playing; only the origin moved, from the start of the
+     sequence to the start of the beat now playing.
+
+     Under reduced motion this does not run at all. An auto-advancing sequence
+     is fast for anybody who reads slowly however long its beats are, and a
+     reader who asked for less motion asked for exactly that. Every beat
+     renders finished, Back and Next are the only clock, and Next on the last
+     beat ends it. Nothing that was moving is frozen, so there is no stopped
+     screen to stare at either. */
   React.useEffect(() => {
     if (reduced) return
-    let raf = 0, t0 = 0
+    let raf = 0
+    startRef.current = 0
     const tick = t => {
-      if (!t0) t0 = t
-      const e = t - t0
-      let acc = 0, i = 0
-      while (i < BEATS.length - 1 && e >= acc + BEATS[i].ms) { acc += BEATS[i].ms; i++ }
-      const p = Math.min(1, (e - acc) / BEATS[i].ms)
+      if (!startRef.current) startRef.current = t
+      const i = beatRef.current
+      const dur = BEATS[i].ms
+      const e = t - startRef.current
+      const p = Math.min(1, e / dur)
       /* Written straight to the DOM: this runs 60x a second and re-rendering
          six segments that often is real work for a decorative rail. */
       fills.current.forEach((el, k) => {
         if (el) el.style.transform = `scaleX(${k < i ? 1 : k === i ? p : 0})`
       })
-      if (i !== beatRef.current) { beatRef.current = i; setBeat(i); leaveRef.current = false; setLeaving(false) }
       /* The stage starts clearing before the beat ends, so the boundary is a
          hand-off and not a swap. Two state writes per beat, not per frame. */
-      const out = i < LAST && e - acc > BEATS[i].ms - OUT_MS
+      const out = i < LAST && e > dur - OUT_MS
       if (out !== leaveRef.current) { leaveRef.current = out; setLeaving(out) }
-      if (e >= TOTAL) { close(EXIT_MS); return }
+      if (e >= dur) {
+        if (i >= LAST) { close(EXIT_MS); return }
+        beatRef.current = i + 1
+        startRef.current = t
+        leaveRef.current = false
+        setLeaving(false)
+        setBeat(i + 1)
+      }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [reduced, close])
-
-  /* No motion at all: the finished mark is already on screen, so the only
-     thing left is to get out of the way. */
-  React.useEffect(() => {
-    if (!reduced) return
-    const id = setTimeout(finish, STILL_MS)
-    return () => clearTimeout(id)
-  }, [reduced, finish])
 
   React.useEffect(() => () => clearTimeout(timerRef.current), [])
 
@@ -738,12 +827,31 @@ export function Intro({ onDone }) {
     }
   }, [])
 
-  /* Skip is the only control in here, so the trap is one line: Tab goes back to
-     it rather than escaping into the page that is currently aria-hidden. Esc
-     is Skip, consequence included — a person hitting Esc is refusing this. */
+  /* Three controls now, so the trap is a ring rather than one node: Tab walks
+     Back, Skip, Next and wraps, and Back drops out of the ring on the first
+     beat where it is disabled. Nothing escapes into the page behind, which is
+     currently aria-hidden.
+
+     The arrows are the same two actions as the two buttons, which is what makes
+     the sequence reader-paced from the keyboard alone. Down and Up are included
+     because the beats read as a vertical stack of cards on a phone and both
+     axes get guessed at. Esc is still Skip, consequence included: a person
+     hitting Esc is refusing this. */
+  const ring = () =>
+    [prevRef.current, skipRef.current, nextRef.current].filter(el => el && !el.disabled)
+
   const onKey = e => {
     if (e.key === 'Escape') { e.preventDefault(); skip() }
-    else if (e.key === 'Tab') { e.preventDefault(); skipRef.current?.focus() }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goNext() }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goPrev() }
+    else if (e.key === 'Tab') {
+      e.preventDefault()
+      const els = ring()
+      if (!els.length) return
+      const at = els.indexOf(document.activeElement)
+      const to = at < 0 ? 0 : (at + (e.shiftKey ? -1 : 1) + els.length) % els.length
+      els[to].focus()
+    }
   }
 
   const Stage = STAGES[beat]
@@ -752,7 +860,14 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      style={{ background: BEATS[beat]?.bg || '#0b2b33', transition: 'background 900ms cubic-bezier(0.4,0,0.2,1)' }}
+      /* The crossfade was 900ms against six-second beats. On a fourteen-second
+         beat the same 900ms is proportionally half of what it was and starts
+         reading as a switch, so it grew with the pace. The six grounds are
+         .044 to .083 apart in relative luminance, which is what keeps one
+         distinguishable from the next while the two are mixed; a longer mix
+         does not spend any of that. */
+      style={{ background: BEATS[beat]?.bg || '#0b2b33',
+        transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
       className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
@@ -854,21 +969,47 @@ export function Intro({ onDone }) {
             continuing rather than something being cut. */}
       </main>
 
-      {/* ── the frame, bottom: the one control, and what pressing it costs ── */}
+      {/* ── the frame, bottom: the three controls ──────────────────────────── */}
       <div className="relative z-10 shrink-0 px-5 py-4 sm:px-10 sm:py-5">
-        {/* Inverted with the field. Paper on paper is a 1.05 : 1 button, so
-            the one control in here is the one dark object: paper on ink at
-            14.47 : 1, with its second line in mist at 12.69. */}
-        <Button ref={skipRef} onClick={skip}
-          className="mx-auto flex h-auto w-full max-w-[430px] flex-col gap-0.5 bg-ink py-3
-            text-paper hover:bg-ink-2 active:bg-ink-2">
-          <span className="font-display text-ui font-medium">Skip the intro</span>
-          <span className="font-body text-fine font-normal text-mist">
-            and don&rsquo;t show it again on this device
-          </span>
-        </Button>
+        {/* Back and Next are the plate shape every drawing in here already
+            uses: ink #0b2b33 on card at 85%, which measures 11.8 : 1 over the
+            worst band the arch can put under them, and 4.74 : 1 when Back
+            dims to ink-3 on the first beat. Button's own disabled state is
+            opacity 45, which would take that label to about 2.4; it is
+            overridden to a colour instead, so a disabled control is still
+            readable rather than just faint.
+
+            Skip stays the one dark object, because it is the one control with
+            a consequence: paper on ink at 14.47 : 1, second line in mist at
+            12.69. Three keys of equal weight and one of them permanent is how
+            a person skips the intro by meaning to go on.
+
+            54px tall, never narrower than 44, and the row stretches so all
+            three match the two-line Skip. */}
+        <div className="mx-auto flex w-full max-w-[660px] items-stretch justify-center gap-2 sm:gap-3">
+          <Button ref={prevRef} onClick={goPrev} disabled={beat === 0}
+            aria-label="Previous section"
+            className="h-auto min-h-[54px] min-w-[44px] shrink-0 border border-rule bg-card/85 px-4
+              font-display text-ui font-medium text-ink hover:bg-card active:bg-card
+              disabled:opacity-100 disabled:text-ink-3 sm:px-6">
+            Back
+          </Button>
+          <Button ref={skipRef} onClick={skip}
+            className="flex h-auto min-h-[54px] w-full max-w-[430px] flex-col gap-0.5 bg-ink py-3
+              text-paper hover:bg-ink-2 active:bg-ink-2">
+            <span className="font-display text-ui font-medium">Skip the intro</span>
+            <span className="font-body text-fine font-normal text-mist">
+              and don&rsquo;t show it again on this device
+            </span>
+          </Button>
+          <Button ref={nextRef} onClick={goNext} aria-label="Next section"
+            className="h-auto min-h-[54px] min-w-[44px] shrink-0 border border-rule bg-card/85 px-4
+              font-display text-ui font-medium text-ink hover:bg-card active:bg-card sm:px-6">
+            Next
+          </Button>
+        </div>
         <p aria-hidden className="mx-auto mt-2.5 w-full text-center font-mono text-fine text-ink-3">
-          Esc does the same
+          Arrow keys move between sections. Esc skips.
         </p>
       </div>
     </div>

@@ -65,7 +65,7 @@ export function CheckInBody({ go }){
           ? <RealNotice inline>No patch is paired, and these six questions do not need one.</RealNotice>
           : <DemoNotice inline>Every other screen is generated. These six are not.</DemoNotice>}
       </div>
-      <p className="mt-4 max-w-[52ch] text-body leading-[1.5] text-ink-2">Three ways in, one score.
+      <p className="mt-4 max-w-[52ch] text-body leading-[1.5] text-ink-2">Three ways in, one Mind Score.
         The phone's own camera and microphone, a paired patch, or six questions.</p>
 
       {/* mt was 8. Three fixed steps across these views — 10 inside a section,
@@ -74,9 +74,9 @@ export function CheckInBody({ go }){
         <ScrollRow index={0} className="h-full"><Route title="Use the phone's sensors"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Frames and audio are turned into numbers here and dropped. Neither is stored or sent.</p>}>
-          <p className="max-w-[38ch] text-sec text-ink-2">Forty-five seconds. A fingertip on the camera
-            gives heart rate and beat-to-beat variation. One spoken sentence gives pitch and
-            steadiness.</p>
+          <p className="max-w-[38ch] text-sec text-ink-2">Forty-five seconds. An index fingertip over
+            the rear lens and flash gives heart rate and beat-to-beat variation. One spoken sentence
+            gives pitch and steadiness.</p>
         </Route></ScrollRow>
         <ScrollRow index={1} className="h-full"><Route title="Answer six questions"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
@@ -108,7 +108,7 @@ export function CheckInBody({ go }){
       <section className="mt-14">
         <h3 className="mark">Use your phone's camera and microphone</h3>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">
-          No patch, no questions. The same scoring model, given measurements instead of answers.
+          No patch, no questions. The same Mind Score, worked out from measurements instead of answers.
         </p>
         <div className="mt-6"><PhoneCheck/></div>
       </section>
@@ -136,12 +136,16 @@ export function CheckInBody({ go }){
         </Card>
 
       {/* the result region is announced, and its space is reserved so nothing jumps */}
+      {/* 92px was measured against a 56px site header with a 2px rule under
+          it. This screen only ever renders inside the app shell, whose own
+          bar is 48px with a hairline, so 92 left a 43px hole under the chrome.
+          49px of chrome plus 16px of air. */}
       <Card ref={resultRef} aria-live="polite" data-anchor
-        className="mt-10 min-h-[12rem] xl:mt-0 xl:sticky xl:top-[92px]">
+        className="mt-10 min-h-[12rem] xl:mt-0 xl:sticky xl:top-[65px]">
         <CardContent>
         {!done && (
           <p className="max-w-[40ch] text-sec text-ink-3">
-            Answer all six and your reading appears here, as a sentence first.
+            Answer all six and your Mind Score appears here, as a sentence first.
           </p>
         )}
         {done && (
@@ -165,18 +169,18 @@ export function CheckInBody({ go }){
                   sweat, temperature and movement.</p>
               </div>
             </div>
-            <AllDetail label="See what moved the score">
+            <AllDetail label="See what moved your Mind Score">
               {/* The figure heading read "What moved it" directly under a
                   trigger that says the same thing, so only the scale note is
                   left. */}
-              <p className="mt-2 max-w-[52ch] text-sec text-ink-3">Right of the line raised the score,
-                left of it lowered it.</p>
+              <p className="mt-2 max-w-[52ch] text-sec text-ink-3">Right of the line raised the Mind
+                Score, left of it lowered it.</p>
               <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),
                 x: Math.max(-1, Math.min(1, c.raw)) }))}/>
               <p className="mt-6 max-w-[64ch] text-meta text-ink-2">Each answer is measured from its
-                middle option, weighted, averaged, and turned into a score out of 100. The patch does the
-                same last step using heart rate, sweat, temperature and movement instead of answers, so
-                both give one number on one scale.</p>
+                middle option, weighted, averaged, and turned into a Mind Score out of 100. The patch
+                does the same last step using heart rate, sweat, temperature and movement instead of
+                answers, so both give one number on one scale.</p>
             </AllDetail>
           </>
         )}

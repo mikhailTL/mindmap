@@ -19,11 +19,11 @@ import {
   CONSENT_LEDGER, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES, PROTOCOL_DONE, REFERRALS,
   driversFor, INTERVENTIONS, efficacyLabel, profile45,
 } from '../lib/caseload'
-import KineticGrid from '../s21/texture'
+import { CASELOAD_TITLE, CASELOAD_DEF, SCORE, SCORE_DEF, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 const TABS = [
-  ['triage','Triage'], ['student','One student'], ['cohort','Year groups'],
+  ['triage','Who to check in with'], ['student','One student'], ['cohort','Year groups'],
   ['escalation','Escalation'], ['consent','Consent'],
 ]
 const Sub = ({ children, className }) =>
@@ -78,11 +78,11 @@ const Term = ({ label, def }) => (
   </HoverCard>
 )
 
-/* ── Triage ─────────────────────────────────────────────────────────────── */
-/* One list, ranked by rate of change, because that is what the page claims
-   the ranking is. The previous version sorted by velocity and then rendered
-   four columns grouped by tier, so the fastest changer appeared fourth. */
-function Row({ s, rank, onOpen }) {
+/* ── Who to check in with ─────────────────────────────────────────────────────────────── */
+/* One list, ordered by how far the Mind Score moved, which is what the page
+   says the order is for. The previous version sorted by movement and then
+   rendered four columns grouped by tier, so the biggest change came fourth. */
+function Row({ s, n, onOpen }) {
   const dir = s.velocity > 0 ? 'worse' : s.velocity < 0 ? 'better' : 'flat'
   return (
     <li>
@@ -93,7 +93,7 @@ function Row({ s, rank, onOpen }) {
       <Card as="button" interactive type="button" onClick={() => onOpen(s.name)}
         className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 p-4
           sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)] sm:items-center">
-        <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{rank}</span>
+        <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{n}</span>
         <span className="min-w-0">
           <span className="block truncate text-row text-ink">{s.name}</span>
           <span className="mt-0.5 block text-tick text-ink-3">
@@ -109,7 +109,7 @@ function Row({ s, rank, onOpen }) {
           <span className="flex items-center gap-3">
             <span className={cn('font-mono text-meta tabular-nums',
               dir === 'worse' ? 'text-warn' : dir === 'better' ? 'text-calm' : 'text-ink-3')}>
-              {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ −' : '– '}{Math.abs(s.velocity) || ''}
+              {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ −' : '0'}{Math.abs(s.velocity) || ''}
               <span className="ml-1 text-ink-3">a week</span></span>
             {/* Same colour and length for −6 and +4 made the improving student
                 look worse than the worsening one. */}
@@ -139,7 +139,7 @@ function Row({ s, rank, onOpen }) {
 }
 
 /* The consent-limited groups were a tinted band with a left rule; they sit
-   beside the triage list, so they are cards like everything else on the board.
+   beside the check-in list, so they are cards like everything else on it.
    The ruling-coloured leading edge is what still marks them as withheld. */
 function Limited({ heading, note, children }) {
   return (
@@ -162,9 +162,9 @@ const CASELOAD_NEEDS = [
   ['A student pairs a patch',
    'Nothing reaches the school until the student pairs it, on their own phone. They can unpair it the same way.'],
   ['A guardian signs a consent scope',
-   'The scope decides what this board may show: a score, a score with weekly trends, or crisis alerts only.'],
+   `The scope decides what this list may show: a ${SCORE}, a ${SCORE} with weekly change, or crisis alerts only.`],
   ['The scope is applied here, and never widened',
-   'A student consented to alerts only carries no score and no rank here.'],
+   `A student consented to alerts only carries no ${SCORE} and no place on this list.`],
 ]
 
 /* The row the board draws, with its four fields named and none of them filled.
@@ -176,9 +176,9 @@ function BlankBoardRow() {
     <figure className="m-0 mt-3">
       <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-panel
         border border-dashed border-rule p-4 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)]">
-        <span className="text-tick text-ink-3">rank</span>
-        <span className="text-tick text-ink-3">student · grade · tier</span>
-        <span className="text-tick text-ink-3">score</span>
+        <span className="text-tick text-ink-3">order</span>
+        <span className="text-tick text-ink-3">student · grade · band</span>
+        <span className="text-tick text-ink-3">{SCORE}</span>
         <span className="col-span-full sm:col-span-1">
           <span className="block text-tick text-ink-3">change this week</span>
           {/* The velocity track, drawn empty: centre line, worse to the right.
@@ -191,37 +191,41 @@ function BlankBoardRow() {
         </span>
       </div>
       <figcaption className="note mt-3 max-w-[62ch]">
-        One row per consented student, ordered by how fast they are moving. Right of centre is
-        worse.
+        One row per consented student, ordered by how far their {SCORE} moved. Right of centre
+        is worse.
       </figcaption>
     </figure>
   )
 }
 
-/* The ranking rule, with both definitions on the words. It is the same
-   sentence on a full board and an empty one, so it is written once. */
-const RankRule = () => (
-  <Sub>Who to see first. <b className="font-medium text-ink">
-    <Term label="Stress index"
-      def="One score a day per student, 0 to 100, read against that student's own baseline, not against the year group."/>,
-    {' '}0 to 100, higher is worse</b>, ordered by weekly{' '}
-    <Term label="velocity"
-      def="The change in a student's seven-day average from one week to the next. A rising student at 55 sits above a level one at 70."/>.</Sub>
+/* What the list is and why it is in this order, with both definitions on the
+   words. It is the same copy on a full list and an empty one, so it is
+   written once. */
+const OrderRule = () => (
+  <div className="max-w-[68ch]">
+    <Sub>{CASELOAD_DEF}</Sub>
+    <p className="mt-2 text-sec text-ink-3">
+      <Term label={SCORE} def={SCORE_DEF}/>, {SCORE_RANGE}, higher is worse. Ordered by{' '}
+      <Term label="weekly change"
+        def="The move in a student's seven-day average from one week to the next. A student up 15 points from 55 comes before a student level at 70."/>.
+      {' '}Change is what makes a check-in land before a problem grows. A low, steady {SCORE} is
+      not a student in trouble.</p>
+  </div>
 )
 
 function EmptyTriage() {
   return (
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        Your caseload</h2>
+        {CASELOAD_TITLE}</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <RankRule/>
-        <span className="text-tick text-ink-3">0 consented · 0 ranked</span>
+        <OrderRule/>
+        <span className="text-tick text-ink-3">0 consented · 0 on this list</span>
       </div>
 
       <div className="mt-10">
         <section>
-          <h3 className="mark">How a student gets on this board</h3>
+          <h3 className="mark">How a student gets on this list</h3>
           <ol className="m-0 mt-3 list-none p-0">
             {CASELOAD_NEEDS.map(([what, why]) => (
               <li key={what} className="border-b border-rule py-4 last:border-b-0 last:pb-0">
@@ -241,12 +245,12 @@ function EmptyTriage() {
       <div className="mt-14 grid gap-5 lg:grid-cols-2">
         {/* Written as scope definitions rather than as statements about
             guardians who have signed: none has. */}
-        <Limited heading="Score only, no trends"
-          note="No rank is ever shown for these students.">
+        <Limited heading={`${SCORE} only, no weekly change`}
+          note="These students never appear on the list above.">
           <BlankRow>No student is at this scope.</BlankRow>
         </Limited>
         <Limited heading="Crisis alerts only"
-          note="No score, trend or tier is ever shown.">
+          note={`No ${SCORE}, change or band is ever shown.`}>
           <BlankRow>No student is at this scope.</BlankRow>
         </Limited>
       </div>
@@ -256,31 +260,31 @@ function EmptyTriage() {
 
 function Triage({ onOpen, real }) {
   if (real) return <EmptyTriage/>
-  const ranked = triage()
-  const scored = [...ranked, ...scoreOnly()]
+  const moved = triage()
+  const scored = [...moved, ...scoreOnly()]
   const quiet = alertsOnly()
   const total = roster().length
-  const fastest = ranked[0]
+  const mover = moved[0]
   const byScore = [...scored].sort((a, b) => b.current - a.current)
   const highest = byScore[0]
   /* This card used to read "Flat week. Referral already open since Feb 18."
      for whoever came out highest. Both halves were wrong on the fixture: the
-     highest scorer consented to a score only, so the board may not state their
-     weekly change at all, and Feb 18 is a different student's referral — one
-     the Escalation tab shows as closed. Both come off the data now. */
+     highest Mind Score consented to a score only, so the list may not state
+     their weekly change at all, and Feb 18 is a different student's referral,
+     one the Escalation tab shows as closed. Both come off the data now. */
   const ref = REFERRALS.find(r => r.student === highest.name && r.status !== 'Closed')
   const place = ['first','second','third','fourth','fifth','sixth','seventh','eighth'][
-    byScore.findIndex(x => x.id === fastest.id)]
+    byScore.findIndex(x => x.id === mover.id)]
   return (
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        Your caseload</h2>
+        {CASELOAD_TITLE}</h2>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        {/* The heading names the board; the ranking rule and both hover
-            definitions ride on this one line under it. */}
-        <RankRule/>
+        {/* The heading says what the list is for; the order rule and both
+            hover definitions ride under it. */}
+        <OrderRule/>
         <span className="text-tick text-ink-3">
-          {total} consented · {ranked.length} ranked</span>
+          {total} consented · {moved.length} on this list</span>
       </div>
 
       <div className="mt-6 flex h-3 overflow-hidden rounded-xs" role="img"
@@ -300,40 +304,40 @@ function Triage({ onOpen, real }) {
         ))}
       </div>
 
-      {/* "Why this order" was the most useful thing on the screen and sat 240px
-          below the fold. It leads now. */}
+      {/* Why the order exists was the most useful thing on the screen and sat
+          240px below the fold. It leads now. */}
       {/* mt was 7. The scale here is three fixed steps — 10 inside a section,
           14 between sections, 20 between page regions — so blocks at the same
           level of the outline no longer each pick their own number. */}
       <div className="mt-10 grid gap-x-10 gap-y-4 border-y border-rule py-5 sm:grid-cols-2">
         <div className="border-l-2 border-accent pl-4">
-          <p className="font-mono text-num font-medium tabular-nums text-warn">+{fastest.velocity}
-            <span className="ml-2 text-tick text-ink-3">{fastest.name} · first on the list</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">{place[0].toUpperCase() + place.slice(1)} highest
-            score of {scored.length}. Ranked first here on velocity.</p>
+          <p className="font-mono text-num font-medium tabular-nums text-warn">+{mover.velocity}
+            <span className="ml-2 text-tick text-ink-3">{mover.name} · first on the list</span></p>
+          <p className="mt-1.5 text-sec text-ink-2">{place[0].toUpperCase() + place.slice(1)} highest {SCORE} of {scored.length}. First here because their {SCORE} moved most this week.</p>
         </div>
         <div className="border-l-2 border-rule pl-4">
           <p className="font-mono text-num font-medium tabular-nums text-ink">{highest.current}
-            <span className="ml-2 text-tick text-ink-3">{highest.name} · highest score</span></p>
+            <span className="ml-2 text-tick text-ink-3">{highest.name} · highest {SCORE}</span></p>
           <p className="mt-1.5 text-sec text-ink-2">
             {highest.showTrend
               ? `Weekly change ${highest.velocity > 0 ? '+' : ''}${highest.velocity}. `
-              : 'Score only. No weekly change shared. '}
+              : `${SCORE} only. No weekly change shared. `}
             {ref ? `Referral open since ${ref.opened}.` : 'No referral open.'}</p>
         </div>
       </div>
 
       <ol className="mt-10 list-none space-y-2 p-0">
-        {ranked.map((s, i) => <Row key={s.id} s={s} rank={i + 1} onOpen={onOpen}/>)}
+        {moved.map((s, i) => <Row key={s.id} s={s} n={i + 1} onOpen={onOpen}/>)}
       </ol>
-      {/* The first half of this footnote defined velocity; that definition is
-          on the word itself now, and what is left is the bar's legend. */}
+      {/* The first half of this footnote defined the weekly change; that
+          definition is on the word itself now, and what is left is the bar's
+          legend. */}
       <p className="mt-4 border-t border-ink pt-3 text-meta text-ink-3">
         Right of centre on the bar is worse.</p>
 
       <div className="mt-14 grid gap-5 lg:grid-cols-2">
-        <Limited heading="Score only, no trends"
-          note="No rank is shown for these students.">
+        <Limited heading={`${SCORE} only, no weekly change`}
+          note="These students do not appear on the list above.">
           {scoreOnly().map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <button onClick={() => onOpen(s.name)} className="min-h-[44px] text-left text-meta text-ink
@@ -344,7 +348,7 @@ function Triage({ onOpen, real }) {
           ))}
         </Limited>
         <Limited heading="Crisis alerts only"
-          note="No score, trend or tier is shown.">
+          note={`No ${SCORE}, change or band is shown.`}>
           {quiet.map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <span className="text-meta text-ink">{s.name}</span>
@@ -362,8 +366,8 @@ function Triage({ onOpen, real }) {
    list is the empty tab's whole content because a record's shape is the thing
    a school has to agree to before any of it exists. */
 const RECORD_FIELDS = [
-  ['Score today, out of 100', 'With score consent.'],
-  ['Weekly change, and a rank on the board', 'With trend consent.'],
+  [`${SCORE} today, out of 100`, `With ${SCORE} consent.`],
+  ['Weekly change, and a place on the list', 'With trend consent.'],
   ['What is driving the rise', 'With trend consent. Shares per signal, never a raw reading.'],
   ['The last 45 days', 'With trend consent.'],
   ['Counselor notes', 'Any scope. Saving writes a row to the audit log.'],
@@ -377,7 +381,7 @@ function EmptyRecord() {
           <h2 className="font-display text-head font-bold tracking-tight text-ink">
             No student record open</h2>
           <p className="mt-1 text-tick text-ink-3">no grade · no scope</p>
-          <Sub className="mt-2">A record opens from the triage board, which stays empty until a
+          <Sub className="mt-2">A record opens from the check-in list, which stays empty until a
             guardian signs a scope.</Sub>
         </div>
         {/* The control stays, disabled and empty. Removing it would hide how a
@@ -475,11 +479,11 @@ function OneStudent({ who, setWho, real }) {
       {s.showScore && !s.showTrend && (
         <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
           <CardHeader className="p-6 pb-0">
-            <CardTitle as="h3" className="text-row">Score today: {s.current} out of 100</CardTitle>
+            <CardTitle as="h3" className="text-row">{SCORE} today: {s.current} out of 100</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-3">
             <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
-              <li>Consent scope: <b className="font-medium text-ink">score and crisis alerts</b></li>
+              <li>Consent scope: <b className="font-medium text-ink">{SCORE} and crisis alerts</b></li>
               <li>Weekly change, driver breakdown and the 45-day line are withheld</li>
             </ul>
           </CardContent>
@@ -528,7 +532,7 @@ function OneStudent({ who, setWho, real }) {
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Panel label="The last 45 days">
           <svg viewBox="0 0 720 214" className="block w-full overflow-visible" role="img"
-            aria-label="Daily mean stress index over 45 days, rising through the last two weeks.">
+            aria-label={`Daily mean ${SCORE} over 45 days, rising through the last two weeks.`}>
             {[40, 60, 80].map(v => {
               const y = 180 - ((v - lo) / (hi - lo)) * 160
               return <g key={v}>
@@ -588,8 +592,8 @@ const SuppressedSwatch = ({ className }) => (
    there is nothing to aggregate — but the rule that governs the aggregation is
    policy, and it is the half a school weighs before it signs anything. */
 const COHORT_REPORTS = [
-  ['Stress by class period', 'A mean per period across the building. Fewer than five consented students returns nothing.'],
-  ['Stress by weekday', 'The same figure per weekday, school-wide.'],
+  [`${SCORE} by class period`, 'A mean per period across the building. Fewer than five consented students returns nothing.'],
+  [`${SCORE} by weekday`, 'The same figure per weekday, school-wide.'],
 ]
 
 function EmptyCohort() {
@@ -615,7 +619,7 @@ function EmptyCohort() {
               </li>
             ))}
           </ul>
-          <Note>Consented students only, from the same windows the individual scores use.</Note>
+          <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
         </section>
 
         <Panel as="h3" label="Smallest group we will show">
@@ -647,11 +651,11 @@ function Cohort({ real }) {
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
         Patterns across the whole school</h2>
-      {/* A reviewer read "8 students" on the triage board and "18 consented
+      {/* A reviewer read "8 students" on the check-in list and "18 consented
           students" here and concluded one of them was invented. Both are true
           and neither said which population it meant. */}
       <Sub className="mt-2">All {SCHOOL_N} consented students in the building, not the eight on your
-        caseload. Nobody here is identifiable.</Sub>
+        own list. Nobody here is identifiable.</Sub>
       <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
           {/* "School-wide pattern" repeated the h2 directly above it. The two
@@ -679,7 +683,7 @@ function Cohort({ real }) {
                 non-exam baseline</li>
             </ul>
           </ScrollIn>
-          <Note>Consented students only, from the same windows the individual scores use.</Note>
+          <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
         </section>
 
         {/* "Privacy floor" named a policy in a term nobody outside the team
@@ -698,7 +702,7 @@ function Cohort({ real }) {
       </div>
 
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Panel label="Stress by class period">
+        <Panel label={`${SCORE} by class period`}>
           <ul className="space-y-4">
             {COHORT_PERIOD.map(p => (
               <li key={p.key}>
@@ -732,7 +736,7 @@ function Cohort({ real }) {
           </ul>
         </Panel>
 
-        <Panel label="Stress by weekday">
+        <Panel label={`${SCORE} by weekday`}>
           <div className="flex h-[170px] items-end justify-between gap-3">
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
@@ -834,7 +838,7 @@ function Escalation({ real }) {
 
         {/* Was "Referrals already open", with a row the status badge marks
             Closed sitting under it. */}
-        <Panel as="h3" label="Referrals on this caseload">
+        <Panel as="h3" label="Referrals on these students">
           <ul className="divide-y divide-rule">
             {real && <BlankRow>No referral has been opened. A referral is written from a
               student's record.</BlankRow>}
@@ -926,8 +930,8 @@ function Consent({ real }) {
             ))}
           </TBody>
         </Table>
-        <Note>The triage board reads this table directly, so a narrowed scope narrows the
-          board.{real ? '' : ' Two students here carry no rank, one shows no score.'}</Note>
+        <Note>The check-in list reads this table directly, so a narrowed scope narrows the
+          list.{real ? '' : ` Two students here show no weekly change, one shows no ${SCORE}.`}</Note>
       </Panel>
 
       <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -999,26 +1003,32 @@ export function Pro({ go }) {
   }
   return (
     <main>
-      <div className="relative overflow-hidden border-b border-rule bg-mist">
-        {/* decoration: it carries no information a reader needs */}
-        <KineticGrid aria-hidden className="absolute inset-0" globalColor="monochrome"/>
-        {/* Was py-6 sm:py-8; the header band is the smallest of the three
-            fixed steps, and matches the band in views/shell.jsx. */}
-        <div className="wrap relative py-10">
+      {/* The screen header, and the same construction as views/shell.jsx so
+       * the four app screens open the same way. It was a mist band with a
+       * kinetic grid behind it, which is the marketing hero: a tinted
+       * full-bleed ground with a texture on it. Two pixels under a 48px white
+       * title bar that reads as an application, it undid the title bar.
+       *
+       * Card ground, no texture, a hairline against the canvas, and 20px of
+       * padding against the old 40. Measured on card #ffffff: ink 14.92,
+       * ink-2 8.31, warn 5.78, crit 6.69; the weakest clears 4.5 : 1. The
+       * closing hairline is ink-3 at 5.99, the app's own rule. */}
+      <div className="border-b border-ink-3 bg-card">
+        <div className="wrap !py-5 lg:!py-6">
           {/* Was "For school counselors and psychologists" — an audience, not a
               screen. The three audience views are named the same way now. */}
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
             What a school counselor sees</h1>
-          <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
+          <p className="mt-2 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
           {/* The hand-rolled tinted box around a capsule badge is gone; one
               ruled annotation carries the sentence, and which sentence depends
               on what the tabs below are actually showing. */}
           {real
-            ? <RealNotice className="mt-4">No student has paired a patch and no guardian has signed
-                a scope, so this caseload is empty.</RealNotice>
-            : <DemoNotice className="mt-4">Every figure here is generated. No student was measured.</DemoNotice>}
+            ? <RealNotice className="mt-3">No student has paired a patch and no guardian has signed
+                a scope, so this list is empty.</RealNotice>
+            : <DemoNotice className="mt-3">Every figure here is generated. No student was measured.</DemoNotice>}
         </div>
       </div>
       {/* Was py-9 sm:py-12; the tab body is a section, the middle step. */}
@@ -1027,7 +1037,7 @@ export function Pro({ go }) {
       {/* Was a second hand-classed copy of the tab strip in views/shell.jsx.
           One definition in ui/tabs now, so the two consoles cannot drift. */}
       <Tabs value={tab} onValueChange={onTab}>
-        <TabsList aria-label="Monitoring views">
+        <TabsList aria-label="Counselor views">
           {TABS.map(([v, label]) => (
             <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
           ))}

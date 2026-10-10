@@ -14,6 +14,9 @@ import { DATA } from '../lib/assets'
 import { CHART_DATA } from '../lib/chartdata'
 import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roster } from '../lib/caseload'
 import { cn } from '../lib/utils'
+import {
+  CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
+} from '../lib/terms'
 
 /* The three audience routes: for students, for parents, for schools.
  *
@@ -21,7 +24,7 @@ import { cn } from '../lib/utils'
  * machinery: a day tagger a student had to fill in, four sharing switches, a
  * caseload that could be re-sorted, a detail panel that opened under the arch.
  * The owner's note on it was that the diagrams were too complex, and he was
- * right about the cause — every one of those controls is a thing a reader has
+ * right about the cause. Every one of those controls is a thing a reader has
  * to operate before the page will say anything. A landing page that has to be
  * operated has not made its point.
  *
@@ -105,7 +108,7 @@ function Closer({ title, line, label, view, go }) {
 /* The four signals as a flat readout, replacing the RainbowKey tiles and the
    panel that opened under them. Those are the app's control surface and they
    belong on the app screen; here they were four buttons that only ever led
-   back to the figure already on the page. Name, colour, figure, bar — nothing
+   back to the figure already on the page. Name, colour, figure, bar, nothing
    to press, nothing to read twice. */
 function Signals({ rings }) {
   return (
@@ -139,11 +142,19 @@ export function ForStudents({ go }) {
     <main>
       <Hero go={go} label="For students" photo="student-hero"
         photoAlt="A student sitting on steps outside school, the patch worn on her upper arm under a short sleeve"
-        title="Your stress, one number a day."
-        lede="One score a day, and the four things behind it."/>
+        title={`Your ${SCORE}, every day.`}
+        lede="You see all of it, first. You decide what leaves your phone."/>
+
+      {/* W2-D: ownership is the opening claim, not a line at the foot of the
+          page. The consent wording is terms.js verbatim so that the student,
+          parent and school pages cannot drift apart on it. */}
+      <Section name="Your call" tone="card" tight>
+        <SectionHead>You see all of it, first</SectionHead>
+        <SectionLede>{CONSENT_SHORT} Nothing is shared by default. {CONSENT_OFF}</SectionLede>
+      </Section>
 
       <Section name="Today" tone="paper">
-        <SectionHead>Your score today</SectionHead>
+        <SectionHead>Your {SCORE} today</SectionHead>
         <SectionLede>Scored against your own last two weeks, never against anyone else.</SectionLede>
         <Fig>
           <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
@@ -171,12 +182,12 @@ export function ForStudents({ go }) {
 
       <Section name="Your privacy" tone="mist" tight>
         <SectionHead>Nothing leaves your phone unless you say so</SectionHead>
-        <SectionLede>You see all of it. Your parents see a score and a week, only if you switch
-          it on. Nobody sees what you write.</SectionLede>
+        <SectionLede>Parents see a {SCORE} and a week, only once you switch it on. {NOTES} stay
+          on your phone. {LOCATION} is never shared.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-student" label="Open the student screen" title="The student screen"
-        line="Your score, your signals and the check-in. Sample readings only."/>
+        line={`Your ${SCORE}, your signals and the check-in. Sample readings only.`}/>
     </main>
   )
 }
@@ -186,8 +197,8 @@ export function ForStudents({ go }) {
 /* Two lists side by side, because the contrast IS the product for a parent.
    The second list is not a settings page they have not found yet: there is no
    parent view of any of it, which is why it is drawn as an absence. */
-const SEEN = ['One score for the day', 'Which days ran high', 'A patch that stopped reporting']
-const UNSEEN = ['Any single reading', 'Anything she wrote', 'Where she is', 'What she is doing now']
+const SEEN = [`One ${SCORE} for the day`, 'Which days ran high', 'A patch that stopped reporting']
+const UNSEEN = ['Any single reading', NOTES, LOCATION, 'What she is doing now']
 function SeenUnseen() {
   return (
     <div className="mt-7 grid gap-5 sm:grid-cols-2 sm:gap-7">
@@ -239,9 +250,21 @@ export function ForParents({ go }) {
         <SeenUnseen/>
       </Section>
 
+      {/* W2-B: the control model, stated as mechanism, on the page a parent
+          reads. Per audience, so switching a week on for home is not switching
+          anything on for school. */}
+      <Section name="Sharing" tone="paper" tight>
+        <SectionHead>Sharing is the student's choice</SectionHead>
+        <SectionLede>{CONSENT_SHORT} Nothing is shared by default. {CONSENT_OFF} Sharing is set
+          per audience, so a week can go home and nothing go to the school.</SectionLede>
+      </Section>
+
+      {/* W2-A: what a parent gets out of the week is timing. The day is named;
+          what happened in it is not, because the product does not have it. */}
       <Section name="Using it" tone="mist" tight>
-        <SectionHead>A better question at dinner</SectionHead>
-        <SectionLede>Ask her about Thursday. It tells you when to ask, and nothing more.</SectionLede>
+        <SectionHead>Be around on the days that ran high</SectionHead>
+        <SectionLede>You know the week had a hard day. You do not know what happened in it. Being
+          around that evening is the use of it.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-parent" label="Open the parent screen" title="The parent screen"
@@ -258,7 +281,7 @@ export function ForParents({ go }) {
 const ACCENT = '#0a6e68'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
-/* The caseload, ranked on the week's movement rather than on today's score,
+/* The caseload, ordered on the week's movement rather than on today's Mind Score,
    because a student who has always run high is rarely the one being missed.
    The sort toggle that used to make that argument is gone: it asked a reader
    to run an experiment to be told a one-line conclusion. The ranking states
@@ -271,7 +294,7 @@ const SERIES = name => CHART_DATA.pro?.[name.replace(/\D/g, '')]
 function Caseload() {
   return (
     <table className="w-full border-collapse text-left">
-      <caption className="sr-only">Caseload ranked by change over the week</caption>
+      <caption className="sr-only">{CASELOAD_DEF}</caption>
       <thead>
         <tr className="border-b border-ink font-display text-fine font-bold text-ink-2 sm:text-tick">
           <th scope="col" className="py-3 pr-3">Student</th>
@@ -351,12 +374,12 @@ export function ForSchools({ go }) {
       <Hero go={go} label="For schools" photo="pro-hero"
         photoAlt="A school counselor walking through a bright school corridor"
         title="What a counselor sees."
-        lede="Whole-school patterns, a caseload ranked by change, and a hard floor under small groups."/>
+        lede="Whole-school patterns, who to check in with this week, and a hard floor under small groups."/>
 
       <Section name="The whole school" tone="paper">
         <SectionHead>How the school week runs</SectionHead>
-        <SectionLede>Mean wellness score across all {SCHOOL_N} students whose families opted in.
-          Thursday is the peak.</SectionLede>
+        <SectionLede>Mean {SCORE} across all {SCHOOL_N} students whose family opted in and who
+          turned sharing on. Thursday is the peak.</SectionLede>
         <Fig>
           {/* capped, because `Bars` divides its width evenly between five bars
               and at 1360px each one came out wider than it was tall, which
@@ -375,26 +398,33 @@ export function ForSchools({ go }) {
       </Section>
 
       <Section name="The caseload" tone="mist">
-        <SectionHead>Ranked by who changed this week</SectionHead>
-        <SectionLede>A student who has always run high is rarely the one being missed, so the board
-          ranks on the week's movement. Only students whose guardians consented to trends appear
-          here.</SectionLede>
+        <SectionHead>{CASELOAD_TITLE}</SectionHead>
+        <SectionLede>{CASELOAD_DEF} A student who has always run high is rarely the one being
+          missed. Only students whose family opted in and who turned sharing on appear here.</SectionLede>
         <Fig>
           <Caseload/>
         </Fig>
       </Section>
 
       <Section name="Access" tone="paper">
-        <SectionHead>What a counselor can open</SectionHead>
-        <SectionLede>Every record opened is written to a log the school can read. There is no
-          setting that turns the log off.</SectionLede>
+        <SectionHead>What a counselor gets</SectionHead>
+        <SectionLede>A {SCORE} and the direction it moved, for students whose family opted in and
+          who turned sharing on.</SectionLede>
+        <p className="mt-5 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
+          Never a single reading. Never {NOTES}. Never {LOCATION}.</p>
+        <p className="mt-3 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
+          Nothing is reported for a group under {K_ANONYMITY} students, so no cohort figure comes
+          down to one student.</p>
+        <p className="mt-3 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
+          Every record opened is written to a log the school can read. There is no setting that
+          turns the log off.</p>
         <div className="mt-7">
           <WhoSeesWhat/>
         </div>
       </Section>
 
       <Closer go={go} view="app-pro" label="Open the counselor console" title="The counselor console"
-        line="The ranked caseload, the consent ledger and the audit log. Sample students only."/>
+        line="The check-in list, the consent ledger and the audit log. Sample students only."/>
     </main>
   )
 }
