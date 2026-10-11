@@ -306,7 +306,7 @@ function PatchStatus({ real, w }) {
       {real ? (
         <ul className="m-0 mt-5 list-none p-0">
           {['Open MindMap on your child’s phone and pair a patch.',
-            'Check the patch is charged and sitting on the forearm.',
+            'Check the patch is charged and sitting on the upper arm.',
             'This page fills in at the end of the first full week it reports.'].map(s => (
             <li key={s} className="max-w-[56ch] text-sec text-ink-2">{s}</li>
           ))}

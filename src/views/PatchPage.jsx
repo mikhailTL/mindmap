@@ -146,7 +146,7 @@ export function PatchPage() {
             <Parallax2D distance={52}>
               <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
                 decoding="async"
-                alt="The MindMap patch worn on an upper arm"
+                alt="A teenager in a school gym with the MindMap patch on his upper arm"
                 className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
             </Parallax2D>
           </figure>

@@ -268,7 +268,7 @@ const STOPS = [
     body: (
       <>
         <Lede>
-          Pulse, sweat, skin temperature and movement, off the forearm, once a second. Sweat moves
+          Pulse, sweat, skin temperature and movement, off the upper arm, once a second. Sweat moves
           first, heart-rate variability moves furthest, and skin temperature drifts slowly enough
           to rule illness in or out.
         </Lede>

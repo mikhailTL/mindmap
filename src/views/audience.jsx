@@ -174,7 +174,7 @@ export function ForStudents({ go }) {
   return (
     <main>
       <Hero go={go} label="For students" photo="student-hero"
-        photoAlt="A student smiling, the MindMap patch worn on her upper arm"
+        photoAlt="A teenager playing a video game at home"
         title={`Your ${SCORE}, every day.`}
         lede="You decide what leaves your phone."/>
 
@@ -274,7 +274,7 @@ export function ForParents({ go }) {
   return (
     <main>
       <Hero go={go} label="For parents" photo="parent-hero"
-        photoAlt="A parent and their teenager talking, the patch on the teenager’s arm"
+        photoAlt="A mother and her teenage son looking at something together at home"
         title="What you see about your child."
         lede="A week, and one sentence about it."/>
 
@@ -428,7 +428,7 @@ export function ForSchools({ go }) {
   return (
     <main>
       <Hero go={go} label="For schools" photo="pro-hero"
-        photoAlt="A school counselor and a student talking, the patch on the student’s arm"
+        photoAlt="A school counselor and a student talking, the MindMap patch on the student’s upper arm"
         title="What a counselor sees."
         lede="Whole-school patterns, and a floor under small groups."/>
 
