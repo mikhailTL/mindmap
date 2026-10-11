@@ -1,7 +1,7 @@
 import React from 'react'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
-import { SCORE, NOTES, LOCATION, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
+import { SCORE, NOTES, LOCATION } from '../lib/terms'
 
 /* Pictures that replace paragraphs. Every one of these was a block of prose
    until a reader had to get through it to learn one fact. */
@@ -29,10 +29,14 @@ export function SignalTrace({ kind, className }) {
    rule, with a second rule over each block, and the review said what a rule
    between items does: it reads as a new topic beginning. A box closes a group,
    so the sequence is now boxed and the order is carried by the order. */
+/* Step one does not name the four signals. They are named on the hero and
+   again on the patch panel, both on this page and both above this figure, so
+   a third printing here was the third telling of one list. What is left is
+   the two things neither of those says: where it reads from and how often. */
 export function HowItWorks({ className }) {
   const steps = [
     { t:'Worn on the arm', art:'patch',
-      s:'Pulse, sweat, skin temperature and movement off the upper arm, once a second, all day.' },
+      s:'From the upper arm, once a second, all day.' },
     { t:'Read on your phone', art:'phone',
       s:`One ${SCORE}, measured against your own last two weeks.` },
     { t:'One sentence back', art:'card',
@@ -97,11 +101,17 @@ const SEES = [
   { who:'Parent',    sees:[1, 1, 0, 0, 0] },
   { who:'Counselor', sees:[1, 1, 0, 0, 0] },
 ]
+/* The three states, named once. The legend prints them, each list in the
+   grid is named by one of them, and Mark itself carries no text: it used to
+   put a sr-only copy of its own state inside every cell, which is this one
+   short phrase read out eighteen times over one figure. */
+const STATE = { 2:'Always', 1:'Only if the student agrees', 0:'Never' }
+/* Decorative. The state is on the list this mark sits in, so a mark that also
+   announced it would say everything twice. title stays: it is the only thing
+   a mouse has to go on. */
 function Mark({ v }) {
-  const label = v === 2 ? 'Always' : v === 1 ? 'Only if the student agrees' : 'Never'
   return (
-    <span className="flex items-center justify-center" title={label}>
-      <span className="sr-only">{label}</span>
+    <span aria-hidden="true" className="flex items-center justify-center" title={STATE[v]}>
       {v === 2 && <svg viewBox="0 0 20 20" aria-hidden className="size-5 text-accent">
         <circle cx="10" cy="10" r="8" fill="currentColor"/>
         {/* The tick is knocked out of the filled accent disc. It was a raw
@@ -116,6 +126,18 @@ function Mark({ v }) {
         <path d="M6.5 13.5l7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>}
     </span>
   )
+}
+/* The five rows of one person's window, split into consecutive blocks of the
+   same state. SEES orders the rows so there are never more than two blocks,
+   which is what lets the blocks be invisible and the name be free. */
+function runs(sees) {
+  const out = []
+  sees.forEach((v, i) => {
+    const last = out[out.length - 1]
+    if (last && last.v === v) last.rows.push(i)
+    else out.push({ v, rows:[i] })
+  })
+  return out
 }
 export function WhoSeesWhat({ className }) {
   return (
@@ -134,19 +156,36 @@ export function WhoSeesWhat({ className }) {
         {SEES.map(p => (
           <div key={p.who} className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
             <h3 className="font-display text-head font-bold leading-tight text-ink">{p.who}</h3>
-            <ul className="mt-4 grid list-none gap-3 p-0">
-              {WHAT.map((w, i) => (
-                <li key={w} className="grid grid-cols-[1.25rem_1fr] items-start gap-3 text-sec leading-[1.45]">
-                  <span className="mt-[0.1rem]"><Mark v={p.sees[i]}/></span>
-                  <span className={p.sees[i] === 0 ? 'text-ink-3' : 'text-ink'}>{w}</span>
-                </li>
+            {/* Inside each window the five rows are one list per state, named
+                by that state. SEES is already ordered so the states run in
+                blocks, which is why this changes nothing a reader can see:
+                same five rows, same order, one gap throughout. What it buys
+                is the name. A list carries it once for the rows under it, so
+                a cell reads "Parent: Never, list, Notes" instead of putting
+                the same phrase inside all five marks. */}
+            <div className="mt-4 grid gap-3">
+              {runs(p.sees).map(g => (
+                <ul key={g.v} role="list" aria-label={`${p.who}: ${STATE[g.v]}`}
+                  className="m-0 grid list-none gap-3 p-0">
+                  {g.rows.map(i => (
+                    <li key={WHAT[i]} className="grid grid-cols-[1.25rem_1fr] items-start gap-3 text-sec leading-[1.45]">
+                      <span className="mt-[0.1rem]"><Mark v={g.v}/></span>
+                      <span className={g.v === 0 ? 'text-ink-3' : 'text-ink'}>{WHAT[i]}</span>
+                    </li>
+                  ))}
+                </ul>
               ))}
-            </ul>
+            </div>
           </div>
         ))}
       </div>
-      <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">{CONSENT_SHORT} {CONSENT_OFF} Crisis
-        alerts are the exception, and students are told so before they start.</figcaption>
+      {/* One sentence, and it is the one the four cards above this figure do
+          not carry. They print the consent model word for word, in the same
+          section, a few inches up; repeating it here was the same answer
+          given twice on one screen. The exception is not stated anywhere
+          else, so it stays. */}
+      <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">Crisis alerts are the
+        exception, and students are told so before they start.</figcaption>
     </figure>
   )
 }

@@ -84,7 +84,7 @@ export function NameGate({ onDone }) {
             'mt-2 block min-h-[54px] w-full rounded-field border bg-paper px-4',
             'font-body text-sec text-ink placeholder:text-ink-3',
             'transition-[border-color,background-color] duration-150 ease-out',
-            'hover:border-ink-3 focus:bg-card',
+            'hoverOnly:border-ink-3 focus:bg-card',
             error || over ? 'border-crit' : 'border-rule'
           )}
         />

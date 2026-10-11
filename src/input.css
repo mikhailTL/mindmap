@@ -3,7 +3,38 @@
 @tailwind utilities;
 
 @layer base {
-  html { -webkit-text-size-adjust: 100%; overflow-x: clip; scroll-behavior: smooth; }
+  /* The two curves every deliberate animation on this site uses. The built-in
+     CSS keywords are too weak to read as intentional at these durations, and
+     tailwind.config.js cannot be edited from here, so they live as custom
+     properties and are reached with `ease-[var(--ease-out)]`.
+
+       --ease-out     entering and exiting
+       --ease-in-out  moving or morphing something already on screen
+       ease           hover and colour
+       linear         constant motion
+
+     ease-in is never used on UI: it is slow at the exact moment the pointer is
+     watching. Note that `ease-out` as a Tailwind class is the config's own
+     cubic-bezier(0.2,0.7,0.3,1), which is NOT this curve — the var spelling is
+     the one that matters. */
+  :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  html {
+    -webkit-text-size-adjust: 100%; overflow-x: clip; scroll-behavior: smooth;
+    /* The grey flash Safari paints over a tapped element is the single loudest
+       tell that a page is a web view. It is removed here and replaced per
+       control: Button carries active:scale-[0.97], an interactive Card drops
+       its offset shadow, and the rule at the bottom of this block covers
+       anything tappable that has no press state of its own. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Pull-to-refresh and the rubber-band at the end of a scroll both belong to
+     the browser chrome, not to this app; neither should fire inside it. Inner
+     scrollers want overscroll-behavior: contain instead, which Tailwind spells
+     `overscroll-contain` at the call site. */
+  html, body { overscroll-behavior: none; }
   /* the header is sticky and 114px tall on a phone; without this every
      scroll-into-view lands behind it */
   :target, [data-anchor] { scroll-margin-top: 7.5rem; }
@@ -31,8 +62,49 @@
     outline: 2px solid theme('colors.accent.DEFAULT');
     outline-offset: 2px;
   }
+  /* Without this a tap is held for ~300ms while the browser waits to see if a
+     double-tap is coming, and every control on the site feels a third of a
+     second behind the finger. Scoped to things you actually tap: double-tap to
+     zoom stays available on the page itself. */
+  :where(a[href],button,summary,label,select,[role="button"],[role="tab"],[role="radio"],[role="switch"]) {
+    touch-action: manipulation;
+  }
+  /* A control is not prose. Dragging across a button or a tab should not paint
+     a selection, and on touch it should not open the copy bubble. Never on
+     body: the page's text has to stay selectable, and inputs and textareas are
+     deliberately absent from this list. */
+  :where(button,summary,[role="button"],[role="tab"],[role="radio"],[role="switch"],nav a[href]) {
+    user-select: none; -webkit-user-select: none;
+  }
+  /* The replacement for the tap highlight, for tappables that do not carry a
+     press state of their own. Touch only — on a pointer device hover already
+     answers the cursor — and transform-only, so it cannot touch contrast.
+     `button` is excluded on purpose: Button owns its own press. */
+  @media (hover: none) {
+    :where(a[href],summary,[role="button"],[role="tab"],[role="radio"],[role="switch"]):active {
+      transform: scale(0.97);
+    }
+  }
+  /* Fewer and gentler, not none. Colour and opacity are how this site says
+     "that control changed state" and "this pane is the live one", so they keep
+     their transitions; what goes is movement — transform, scale, parallax and
+     every running keyframe. The old rule collapsed transition-duration for
+     every property at once, which also deleted the comprehension cues. */
   @media (prefers-reduced-motion: reduce) {
-    *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+    *,*::before,*::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-property: opacity, color, background-color, border-color, fill, stroke !important;
+      transition-duration: 150ms !important;
+      transition-timing-function: ease !important;
+    }
+    /* and the touch press above becomes an opacity nudge, so a press still
+       reports itself without anything moving */
+    @media (hover: none) {
+      :where(a[href],summary,[role="button"],[role="tab"],[role="radio"],[role="switch"]):active {
+        transform: none; opacity: .72;
+      }
+    }
   }
 }
 @layer components {
@@ -80,15 +152,38 @@
      light source; focus is an outline and cannot be clobbered by this. */
   .lift {
     @apply rounded-panel shadow-raise
-           transition-[background-color,border-color,box-shadow,padding-left] duration-150;
+           transition-[background-color,border-color,box-shadow] duration-150;
+    /* padding-left used to be in that list. Animating padding relays out the
+       element and everything after it on every frame, and it was never what
+       moved here anyway — the offset shadow is. Hover and colour take plain
+       `ease` at 150ms, which is the near-imperceptible end of the scale a
+       hover is allowed to sit in. */
+    transition-timing-function: ease;
   }
-  .lift:hover, .lift:focus-visible { @apply bg-mist/70 shadow-lift; }
+  .lift:focus-visible { @apply bg-mist/70 shadow-lift; }
+  /* A tap on a touch screen fires :hover and the hover sticks until something
+     else is tapped, so the card stays lit after you have moved on. Every
+     :hover rule in this file is gated; the `hoverOnly:` utilities at the call
+     sites need the same variant. */
+  @media (hover: hover) and (pointer: fine) {
+    .lift:hover { @apply bg-mist/70 shadow-lift; }
+  }
 }
 
 @layer components {
-  /* Weather on the score arch. Two keyframes, both tiny, both stopped by the
-     reduced-motion rule in @layer base — which kills duration rather than the
-     animation, so a stopped cloud still sits where it was drawn. */
+  /* Weather on the score arch. Two keyframes, both tiny. These run far past
+     the 300ms ceiling on purpose and the exception is narrow: this is ambient
+     motion rather than a transition — nothing is waiting on it, no state
+     changes when it finishes, and a cloud that crossed in 300ms would read as
+     a twitch. Constant motion takes `linear`; the drift is an oscillation, so
+     it keeps the symmetric built-in ease-in-out rather than --ease-in-out,
+     which is cut for a deliberate 200ms move and would make a nine-second
+     cloud lurch through its midpoint.
+     The explicit `animation: none` below is what stops them under reduced
+     motion. An earlier comment here claimed the base-layer rule only collapsed
+     the duration, leaving a stopped cloud where it was drawn — that stopped
+     being true once these rules were added, and under the rewritten base rule
+     movement is dropped rather than sped up. */
   .mm-drift { animation: mm-drift 9s ease-in-out infinite both; }
   .mm-drift-slow { animation-duration: 12s; }
   .mm-rain line { animation: mm-fall 1.15s linear infinite both; }
@@ -108,20 +203,39 @@
 
 @layer components {
   /* The looping phone screen. One fade per beat and one draw on the pulse
-     trace; both are dropped by the reduced-motion rule above, which is also
-     what stops the loop advancing at all. */
-  .mm-pane { animation: mm-in .5s cubic-bezier(0.2,0.7,0.3,1) both; }
+     trace. The pane is an entrance, so it takes --ease-out, and it came down
+     from 500ms to 260ms: 500 was over the ceiling with no reason behind it,
+     and the beat is timed in JS rather than by this duration, so shortening it
+     changes nothing but the sluggishness. The trace is ambient and loops, so
+     it keeps its long duration for the same reason the weather does; its own
+     curve started at 0.3,0.1 — an ease-in, which held the stroke still for the
+     first third — and is now the site's ease-out, since a draw is an entrance
+     and should decelerate into place. */
+  .mm-pane { animation: mm-in .26s var(--ease-out) both; }
   .mm-trace {
     stroke-dasharray: 700; stroke-dashoffset: 700;
-    animation: mm-draw 2.6s cubic-bezier(0.3,0.1,0.2,1) infinite both;
+    animation: mm-draw 2.6s var(--ease-out) infinite both;
   }
 }
 @keyframes mm-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
 @keyframes mm-draw { 0% { stroke-dashoffset: 700 } 65%,100% { stroke-dashoffset: 0 } }
+/* Reduced motion keeps the pane's fade, because the fade is what says which
+   beat of the loop is live, and drops the 10px rise and the running trace. */
+@media (prefers-reduced-motion: reduce) {
+  /* !important and a class selector, so this beats the universal
+     animation-duration collapse in @layer base; without both, the fade would
+     finish in .01ms and the pane would snap. */
+  .mm-pane { animation: mm-in-static .2s linear both !important; }
+  .mm-trace { animation: none; stroke-dashoffset: 0; }
+}
+@keyframes mm-in-static { from { opacity: 0 } to { opacity: 1 } }
 
 @layer components {
   /* The breathing light behind the patch drawing in the hero. One blurred
-     radial, nine seconds, and nothing else on that field moves. */
+     radial, nine seconds, and nothing else on that field moves. Ambient again,
+     so the 300ms ceiling does not apply: it is opacity and scale on a
+     decorative layer, it never resolves, and it is switched off outright under
+     reduced motion below. */
   .mm-glow {
     background: radial-gradient(closest-side, rgb(21 116 70 / 0.30), rgb(21 116 70 / 0.10) 58%, transparent 78%);
     filter: blur(26px);
@@ -133,5 +247,7 @@
   50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.06) }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mm-glow { animation: none; opacity: .75; }
+  /* animation: none also drops the translate the keyframes were carrying, which
+     left the glow a half-width off centre; it is restated here. */
+  .mm-glow { animation: none; opacity: .75; transform: translate(-50%, -50%); }
 }

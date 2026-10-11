@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- viewport-fit=cover so env(safe-area-inset-*) resolves to real numbers on a
+     notched phone; the app rail and the mobile tab bar already pad with it.
+     No maximum-scale and no user-scalable=no: pinch zoom stays available, and
+     the reason iOS used to zoom on focus was a sub-16px field, not the meta. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- One per scheme, both taken from the palette rather than invented: paper is
+     the ground every route sits on, ink is the dark band. -->
+<meta name="theme-color" content="#f5fafa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b2b33" media="(prefers-color-scheme: dark)">
 <title>MindMap, a wellness app for teenagers</title>
 <meta name="description" content="MindMap turns everyday stress signals into one score and one plain sentence, from a patch on the forearm or from the phone already in your pocket.">
 <!-- Self-hosted, latin and latin-ext only. A webfont stylesheet on another
@@ -14,7 +22,7 @@
 <link rel="stylesheet" href="/fonts/fonts.css">
 </head>
 <body>
-<div id="root"><div style="min-height:60vh;display:grid;place-content:center;gap:14px;text-align:center;font-family:Quicksand,system-ui,sans-serif">
+<div id="root"><div style="min-height:60dvh;display:grid;place-content:center;gap:14px;text-align:center;font-family:Quicksand,system-ui,sans-serif">
 <div style="display:flex;align-items:center;gap:9px;font-size:23px;font-weight:500;letter-spacing:-.02em;color:#0d2b1e"><svg viewBox="0 0 40 28" style="height:1.15em;width:auto" aria-hidden="true"><rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="29.5" cy="17.6" r="2.4" fill="#157446"/></svg><span>Mind<span style="color:#157446">Map</span></span></div>
 <div style="font-family:Chivo,system-ui,sans-serif;font-size:15px;font-weight:500;color:#47705e">Loading</div>
 </div></div>

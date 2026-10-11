@@ -78,7 +78,7 @@ export function ModeToggle({ className, compact = false }) {
                 i > 0 && 'border-l border-ink',
                 on
                   ? 'bg-ink font-medium text-paper'
-                  : 'bg-transparent font-light text-ink-2 hover:bg-mist active:bg-mist'
+                  : 'bg-transparent font-light text-ink-2 hoverOnly:bg-mist active:bg-mist'
               )}
             >
               {LABEL[m]}

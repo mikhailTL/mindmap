@@ -1,3 +1,4 @@
+import plugin from 'tailwindcss/plugin'
 import { TYPE_SCALE } from './src/lib/type-scale.js'
 
 /** Tokens derived from the product, not from a palette generator.
@@ -97,7 +98,18 @@ export default {
         lift: '5px 5px 0 0 rgb(13 43 30 / 0.16)',
       },
       maxWidth: { measure:'62ch', read:'44ch' },
-      transitionTimingFunction: { out:'cubic-bezier(0.2,0.7,0.3,1)' },
+      /* `out` is the house curve and predates the rest; it is left alone
+         because every existing `ease-out` in the codebase is timed against it.
+         The two added beside it are the stronger curves a deliberate animation
+         needs: the built-in CSS easings are too weak to read as intentional at
+         150 to 250ms. `quint` enters and exits, `quart` moves and morphs.
+         Nothing in this project is allowed an ease-in: it holds still through
+         the exact moment the eye is on it. */
+      transitionTimingFunction: {
+        out:'cubic-bezier(0.2,0.7,0.3,1)',
+        quint:'cubic-bezier(0.23,1,0.32,1)',
+        quart:'cubic-bezier(0.77,0,0.175,1)',
+      },
       keyframes: {
         down:{ from:{height:'0'}, to:{height:'var(--radix-collapsible-content-height)'} },
         up:  { from:{height:'var(--radix-collapsible-content-height)'}, to:{height:'0'} },
@@ -112,4 +124,18 @@ export default {
       },
     },
   },
+  /* A tap on a touch screen fires a hover, and it STICKS: the row a reader
+     last touched stays lit until they touch another one, which reads as a
+     selection they did not make. Every hover on this site therefore goes
+     behind a fine pointer. `hoverOnly:` and `groupHoverOnly:` are drop-in
+     replacements for `hover:` and `group-hover:` and exist so that is one
+     word at the call site rather than a 40-character arbitrary variant
+     nobody will remember to type. */
+  plugins: [
+    plugin(({ addVariant }) => {
+      addVariant('hoverOnly', '@media (hover: hover) and (pointer: fine) { &:hover }')
+      addVariant('groupHoverOnly',
+        '@media (hover: hover) and (pointer: fine) { :merge(.group):hover & }')
+    }),
+  ],
 }

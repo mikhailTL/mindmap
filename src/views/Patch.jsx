@@ -92,11 +92,11 @@ export const Face = (
    "XIAO nRF52840 Sense" put a chip's name on a plastic tray. */
 export const LAYERS = [
   { i:0, part:'pod', art:Shell, title:'Printed shell',
-    body:'The outer cover. The slot in the side is the charging port.' },
+    body:'Charging slot in the side.' },
   { i:1, part:'pcb', art:Board, title:'Electronics pod',
-    body:'The tray a XIAO nRF52840 Sense board drops into. The board is bought separately.' },
+    body:'Takes a XIAO nRF52840 Sense board, bought not designed.' },
   { i:2, part:'base', art:Face,  title:'Skin-side base',
-    body:'Holds the sensor window and the adhesive. Pulse, sweat and temperature read through it.' },
+    body:'Sensor window and adhesive. Three signals read through it.' },
 ]
 
 /* The exploded drawing, lifted out of PatchPage so the homepage hero can use

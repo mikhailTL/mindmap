@@ -24,7 +24,7 @@ export function ConfirmClose({ open, onOpenChange, subject, steps, onConfirm }) 
           <div className="flex items-start justify-between gap-6">
             <D.Title className="max-w-[22ch] font-display text-head font-medium text-ink">
               Close the crisis record for {subject}?</D.Title>
-            <D.Close className="lift -m-2 p-2 text-ink-3 hover:text-ink" aria-label="Leave it open">
+            <D.Close className="lift -m-2 p-2 text-ink-3 hoverOnly:text-ink" aria-label="Leave it open">
               <Cross size={22}/>
             </D.Close>
           </div>
@@ -64,7 +64,7 @@ export function ConfirmClose({ open, onOpenChange, subject, steps, onConfirm }) 
           <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
             <D.Close asChild><Button variant="outline" size="sm">Leave it open</Button></D.Close>
             <Button size="sm" disabled={outcome.trim().length < 12}
-              className="!bg-crit hover:!bg-crit/90 disabled:!bg-crit/40"
+              className="!bg-crit hoverOnly:!bg-crit/90 disabled:!bg-crit/40"
               onClick={() => { onConfirm?.(outcome); onOpenChange(false) }}>
               Write it to the log
             </Button>

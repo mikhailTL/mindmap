@@ -29,14 +29,28 @@ export const Card = React.forwardRef(function Card(
            band the card went white against white. A 3px rule appearing is
            enough to say "this is a control", and it is the same signal
            whatever ground the card is sitting on. */
+        /* Motion on an interactive card, under the same rules as Button.
+           Press is a 1% squeeze rather than Button's 3%: a card is 400px wide
+           and several hundred tall, and 3% off that is 12px of travel at the
+           edge, which reads as the layout glitching rather than as a control
+           being pressed. The transform is listed in the transition explicitly
+           alongside border-color and box-shadow — `transition-all` here would
+           also animate border-left-width, so the 3px rule would grow in from
+           0 instead of appearing, and would animate padding on any call site
+           that sets p-8 at a breakpoint.
+           Hover is gated to a fine pointer: on touch the leading rule would
+           latch on after a tap and stay lit while you read the next screen.
+           The squeeze is behind motion-safe:; under reduced motion the shadow
+           dropping is the whole press signal, which is a paint change and not
+           a movement. */
         interactive && [
-          'w-full text-left cursor-pointer',
+          'w-full text-left cursor-pointer touch-manipulation',
           'border-l-[3px] border-l-transparent',
-          'transition-[border-color,box-shadow] duration-150 ease-out',
-          'hover:border-l-accent',
+          'transition-[border-color,box-shadow,transform] duration-150 ease-[var(--ease-out)]',
+          'hoverOnly:border-l-accent',
           'focus-visible:border-l-accent',
-          'active:shadow-none',
-          'disabled:pointer-events-none disabled:opacity-45',
+          'active:shadow-none motion-safe:active:scale-[0.99]',
+          'disabled:pointer-events-none disabled:opacity-45 disabled:active:scale-100',
         ],
         className
       )}

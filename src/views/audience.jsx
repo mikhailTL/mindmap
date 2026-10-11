@@ -6,7 +6,6 @@ import { DemoNotice } from '../ui/notice'
 import { Progress } from '../ui/progress'
 import { WeekChart } from '../charts/week'
 import { Bars, RainbowDial } from '../charts/rainbow'
-import { WhoSeesWhat } from '../charts/infographics'
 import { Spark } from '../charts/primitives'
 import { studentRings } from '../lib/readings'
 import { SENSORS } from '../lib/sensors'
@@ -38,6 +37,14 @@ import {
  *
  * Density is not the enemy on the schools page and is the enemy on the other
  * two. That asymmetry is deliberate and is the whole design.
+ *
+ * Density means figures, not paragraphs. The pass before this one put the
+ * schools page at 548 rendered words, and over half of them were prose laid
+ * around the figures: a lede that restated its heading, a caption that said in
+ * words what the bars already showed, the consent qualifier written out three
+ * times. The copy is cut back to a claim per heading and one line under it.
+ * No figure lost a data point, and one whole figure went with the prose, for
+ * the reason given where it used to stand.
  */
 
 /* ───────────────────────────── shared page parts ───────────────────────── */
@@ -54,7 +61,7 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
         <div className="min-w-0">
         <button onClick={() => go('site')}
           className="mb-5 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
-            font-medium text-accent transition-colors duration-150 hover:text-accent-ink">
+            font-medium text-accent transition-colors duration-150 hoverOnly:text-accent-ink">
           <ArrowLeft aria-hidden className="size-4"/> Overview
         </button>
         <p className="font-mono text-row font-bold tracking-[0.005em] text-accent">{label}</p>
@@ -96,7 +103,7 @@ function Closer({ title, line, label, view, go }) {
       <SectionLede tone="ink">{line}</SectionLede>
       {/* solid is an ink block, which is invisible on the ink band. accent.lit
           is the band's own green and carries ink at 7.67 : 1. */}
-      <Button className="mt-6 bg-accent-lit text-ink hover:bg-paper" onClick={() => go(view)}>
+      <Button className="mt-6 bg-accent-lit text-ink hoverOnly:bg-paper" onClick={() => go(view)}>
         {label} <ArrowRight aria-hidden/>
       </Button>
     </Section>
@@ -141,30 +148,33 @@ export function ForStudents({ go }) {
   return (
     <main>
       <Hero go={go} label="For students" photo="student-hero"
-        photoAlt="A student sitting on steps outside school, the patch worn on her upper arm under a short sleeve"
+        photoAlt="A wearable sensor worn on the back of an upper arm, under a short sleeve"
         title={`Your ${SCORE}, every day.`}
-        lede="You see all of it, first. You decide what leaves your phone."/>
+        lede="You decide what leaves your phone."/>
 
       {/* W2-D: ownership is the opening claim, not a line at the foot of the
           page. The consent wording is terms.js verbatim so that the student,
-          parent and school pages cannot drift apart on it. */}
+          parent and school pages cannot drift apart on it. The third sentence
+          that used to sit between the two constants said that nothing is
+          shared by default, which is what both of them already say. */}
       <Section name="Your call" tone="card" tight>
         <SectionHead>You see all of it, first</SectionHead>
-        <SectionLede>{CONSENT_SHORT} Nothing is shared by default. {CONSENT_OFF}</SectionLede>
+        <SectionLede>{CONSENT_SHORT} {CONSENT_OFF}</SectionLede>
       </Section>
 
       <Section name="Today" tone="paper">
         <SectionHead>Your {SCORE} today</SectionHead>
-        <SectionLede>Scored against your own last two weeks, never against anyone else.</SectionLede>
+        <SectionLede>Measured against your own normal, never against anyone else.</SectionLede>
         <Fig>
           <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
             {/* the arch is the picture on this page, so it gets the room: it
                 leads at any width and takes half the row on a laptop */}
             <RainbowDial score={62} usual={51} rings={rings} size={440}/>
             <div className="w-full min-w-0">
-              <p className="max-w-[26ch] text-body text-ink">
-                Today ran higher than your usual. Sweat moved first, then your heart rate.</p>
-              <div className="mt-6"><Signals rings={rings}/></div>
+              {/* no sentence over the tiles. The dial already shows the day
+                  sitting above the usual band and the tiles already show which
+                  signal moved, so the line was the figure read aloud. */}
+              <Signals rings={rings}/>
             </div>
           </div>
         </Fig>
@@ -172,9 +182,9 @@ export function ForStudents({ go }) {
 
       <Section name="Your week" tone="card">
         <SectionHead>Which days ran hard</SectionHead>
-        <SectionLede>Three school days sat above your usual range. The weekend did not.</SectionLede>
-        {/* bleeds to the screen edge on a phone: see the note on the parent
-            page's copy of this figure */}
+        {/* no lede: it counted the bars drawn directly under it. Bleeds to the
+            screen edge on a phone, as on the parent page's copy of this
+            figure, where the reason is written out. */}
         <Fig className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
         </Fig>
@@ -182,12 +192,12 @@ export function ForStudents({ go }) {
 
       <Section name="Your privacy" tone="mist" tight>
         <SectionHead>Nothing leaves your phone unless you say so</SectionHead>
-        <SectionLede>Parents see a {SCORE} and a week, only once you switch it on. {NOTES} stay
-          on your phone. {LOCATION} is never shared.</SectionLede>
+        <SectionLede>Parents and schools see a {SCORE} and a week. {NOTES} and {LOCATION} never
+          leave your phone.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-student" label="Open the student screen" title="The student screen"
-        line={`Your ${SCORE}, your signals and the check-in. Sample readings only.`}/>
+        line={`Your ${SCORE} and the check-in. Sample readings only.`}/>
     </main>
   )
 }
@@ -197,8 +207,8 @@ export function ForStudents({ go }) {
 /* Two lists side by side, because the contrast IS the product for a parent.
    The second list is not a settings page they have not found yet: there is no
    parent view of any of it, which is why it is drawn as an absence. */
-const SEEN = [`One ${SCORE} for the day`, 'Which days ran high', 'A patch that stopped reporting']
-const UNSEEN = ['Any single reading', NOTES, LOCATION, 'What she is doing now']
+const SEEN = [`The daily ${SCORE}`, 'Which days ran high', 'A patch gone quiet']
+const UNSEEN = ['Any single reading', NOTES, LOCATION, 'Anything in real time']
 function SeenUnseen() {
   return (
     <div className="mt-7 grid gap-5 sm:grid-cols-2 sm:gap-7">
@@ -224,13 +234,12 @@ export function ForParents({ go }) {
   return (
     <main>
       <Hero go={go} label="For parents" photo="parent-hero"
-        photoAlt="A parent in a kitchen holding a phone, their teenager in the background wearing the patch"
+        photoAlt="A parent and their teenager talking across a kitchen counter"
         title="What you see about your child."
         lede="A week, and one sentence about it."/>
 
       <Section name="The week" tone="paper">
-        <SectionHead>Her week</SectionHead>
-        <SectionLede>Measured against her own fortnight, never against other children.</SectionLede>
+        <SectionHead>Her week, against her own normal</SectionHead>
         {/* Full bleed on a phone. WeekChart collides the value labels on two
             adjacent above-range bars once the plot drops under about 330px,
             and Wednesday and Thursday are exactly that pair. Taking back the
@@ -239,36 +248,39 @@ export function ForParents({ go }) {
           {/* the sentence sits above the chart, not under it. A parent who
               reads only the first line has still got the whole message. */}
           <p className="mb-5 max-w-[40ch] text-body text-ink">
-            Monday, Wednesday and Thursday ran high. The rest of the week was calm.</p>
+            Monday, Wednesday and Thursday ran high.</p>
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
         </Fig>
       </Section>
 
       <Section name="What you see" tone="card">
+        {/* the heading names both lists, because the contrast is the figure.
+            The lede under it used to say there is no parent view for the second
+            list, which is what the second list is drawn to say. */}
         <SectionHead>What you see, and what you never see</SectionHead>
-        <SectionLede>There is no parent view for the second list. It was never built.</SectionLede>
         <SeenUnseen/>
       </Section>
 
       {/* W2-B: the control model, stated as mechanism, on the page a parent
-          reads. Per audience, so switching a week on for home is not switching
-          anything on for school. */}
+          reads. Per audience is the heading now rather than a clause at the end
+          of a four-sentence lede: switching a week on for home switches nothing
+          on for school. CONSENT_SHORT says who decides, which is the rest of
+          the model, and the sentences that used to stand beside it restated it
+          in other words. */}
       <Section name="Sharing" tone="paper" tight>
-        <SectionHead>Sharing is the student's choice</SectionHead>
-        <SectionLede>{CONSENT_SHORT} Nothing is shared by default. {CONSENT_OFF} Sharing is set
-          per audience, so a week can go home and nothing go to the school.</SectionLede>
+        <SectionHead>Sharing is set per audience</SectionHead>
+        <SectionLede>{CONSENT_SHORT}</SectionLede>
       </Section>
 
       {/* W2-A: what a parent gets out of the week is timing. The day is named;
           what happened in it is not, because the product does not have it. */}
       <Section name="Using it" tone="mist" tight>
         <SectionHead>Be around on the days that ran high</SectionHead>
-        <SectionLede>You know the week had a hard day. You do not know what happened in it. Being
-          around that evening is the use of it.</SectionLede>
+        <SectionLede>You know the day ran hard. Not what happened in it.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-parent" label="Open the parent screen" title="The parent screen"
-        line="The week, the sentence, and everything that is shared. Sample readings only."/>
+        line="The week, and what is shared. Sample readings only."/>
     </main>
   )
 }
@@ -284,8 +296,9 @@ const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 /* The caseload, ordered on the week's movement rather than on today's Mind Score,
    because a student who has always run high is rarely the one being missed.
    The sort toggle that used to make that argument is gone: it asked a reader
-   to run an experiment to be told a one-line conclusion. The ranking states
-   it, and the "was" column lets anyone check it.
+   to run an experiment to be told a one-line conclusion. CASELOAD_DEF states
+   the ordering over the table, and the "was" and "now" columns are the
+   argument, so the sentence that spelled it out under the lede has gone too.
 
    A table rather than a list. This is the one page whose audience reads
    tables, and a table gets column headers, row scope and alignment for free. */
@@ -294,7 +307,9 @@ const SERIES = name => CHART_DATA.pro?.[name.replace(/\D/g, '')]
 function Caseload() {
   return (
     <table className="w-full border-collapse text-left">
-      <caption className="sr-only">{CASELOAD_DEF}</caption>
+      {/* CASELOAD_DEF is the lede over the table now, so the caption is the
+          table's name rather than a second copy of the definition. */}
+      <caption className="sr-only">{CASELOAD_TITLE}</caption>
       <thead>
         <tr className="border-b border-ink font-display text-fine font-bold text-ink-2 sm:text-tick">
           <th scope="col" className="py-3 pr-3">Student</th>
@@ -372,14 +387,16 @@ export function ForSchools({ go }) {
   return (
     <main>
       <Hero go={go} label="For schools" photo="pro-hero"
-        photoAlt="A school counselor walking through a bright school corridor"
+        photoAlt="A school counselor and a student talking across a desk"
         title="What a counselor sees."
-        lede="Whole-school patterns, who to check in with this week, and a hard floor under small groups."/>
+        lede="Whole-school patterns, and a floor under small groups."/>
 
       <Section name="The whole school" tone="paper">
         <SectionHead>How the school week runs</SectionHead>
-        <SectionLede>Mean {SCORE} across all {SCHOOL_N} students whose family opted in and who
-          turned sharing on. Thursday is the peak.</SectionLede>
+        {/* the consent qualifier, once on the page rather than in three ledes,
+            and no sentence naming the tallest bar: Bars inks the peak and greys
+            the rest for exactly that reason. */}
+        <SectionLede>Mean {SCORE}, all {SCHOOL_N} students sharing with the school.</SectionLede>
         <Fig>
           {/* capped, because `Bars` divides its width evenly between five bars
               and at 1360px each one came out wider than it was tall, which
@@ -389,9 +406,11 @@ export function ForSchools({ go }) {
       </Section>
 
       <Section name="By class period" tone="card">
-        <SectionHead>Class periods, and the floor under small groups</SectionHead>
-        <SectionLede>Nothing is reported for a group under {K_ANONYMITY} students. Fifth period has
-          three in it, so the figure is withheld rather than estimated.</SectionLede>
+        <SectionHead>The floor under small groups</SectionHead>
+        {/* the rule, and not the worked example of it. Fifth period renders as
+            a withheld row in line with the ones that cleared, so the sentence
+            that used to name it was reading the figure out. */}
+        <SectionLede>Nothing is reported for a group under {K_ANONYMITY} students.</SectionLede>
         <Fig>
           <SmallGroups/>
         </Fig>
@@ -399,32 +418,33 @@ export function ForSchools({ go }) {
 
       <Section name="The caseload" tone="mist">
         <SectionHead>{CASELOAD_TITLE}</SectionHead>
-        <SectionLede>{CASELOAD_DEF} A student who has always run high is rarely the one being
-          missed. Only students whose family opted in and who turned sharing on appear here.</SectionLede>
+        <SectionLede>{CASELOAD_DEF}</SectionLede>
         <Fig>
           <Caseload/>
         </Fig>
       </Section>
 
+      {/* What a counselor is given, what a counselor is never given, and what
+          is kept about every record opened. Three claims, one line each.
+
+          The who-sees-what matrix used to close this page and has been taken
+          out rather than trimmed. It is 136 rendered words, it runs on the
+          overview and on the privacy page already, and two of its three
+          columns are a parent's and a student's, which is not what this
+          audience came for. The counselor column is the lede under the
+          heading. The k floor was also stated twice on this page and is now
+          stated once, beside the figure that runs it. */}
       <Section name="Access" tone="paper">
         <SectionHead>What a counselor gets</SectionHead>
-        <SectionLede>A {SCORE} and the direction it moved, for students whose family opted in and
-          who turned sharing on.</SectionLede>
+        <SectionLede>A {SCORE}, and the direction it moved.</SectionLede>
         <p className="mt-5 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
           Never a single reading. Never {NOTES}. Never {LOCATION}.</p>
         <p className="mt-3 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
-          Nothing is reported for a group under {K_ANONYMITY} students, so no cohort figure comes
-          down to one student.</p>
-        <p className="mt-3 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
-          Every record opened is written to a log the school can read. There is no setting that
-          turns the log off.</p>
-        <div className="mt-7">
-          <WhoSeesWhat/>
-        </div>
+          Every record opened is logged. No setting turns the log off.</p>
       </Section>
 
       <Closer go={go} view="app-pro" label="Open the counselor console" title="The counselor console"
-        line="The check-in list, the consent ledger and the audit log. Sample students only."/>
+        line="The check-in list and the audit log. Sample students only."/>
     </main>
   )
 }

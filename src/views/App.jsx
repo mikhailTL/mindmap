@@ -128,9 +128,15 @@ const SECTION = { site:'site', patch:'patch', 'without-patch':'without-patch',
    spacing only fits once past 1536. */
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
-  'transition-colors duration-150',
+  /* Colour only, and only on the label. `transition-colors` also covered the
+     2px indicator under the active tab, so the rule faded in over 150ms while
+     the page under it had already swapped: the eye arrives at new content and
+     the thing that says where you are is still on its way. A header tab is
+     navigation, taken tens of times a session, and the gate for that frequency
+     is no animation at all. The indicator appears. */
+  'transition-[color] duration-100',
   'after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-[2px]',
-  on ? 'text-ink after:bg-accent' : 'text-ink-2 after:bg-transparent hover:text-ink hover:after:bg-rule'
+  on ? 'text-ink after:bg-accent' : 'text-ink-2 after:bg-transparent hoverOnly:text-ink hoverOnly:after:bg-rule'
 )
 
 /* The audience menu, hand rolled.
@@ -218,7 +224,7 @@ function AudienceMenu({ view, go }) {
               onClick={() => { close(false); go(id) }}
               onKeyDown={e => onItemKey(e, i)}
               className={cn('block w-full px-4 py-2.5 text-left transition-colors duration-150',
-                'hover:bg-mist focus-visible:bg-mist',
+                'hoverOnly:bg-mist focus-visible:bg-mist',
                 view === id && 'bg-accent-wash')}
             >
               <span className="block font-display text-ui font-medium text-ink">{label}</span>
@@ -274,11 +280,11 @@ function Drawer({ view, go, onClose }) {
     <div className="fixed inset-0 z-[60] xl:hidden">
       <div className="absolute inset-0 bg-ink/45" onClick={onClose} aria-hidden/>
       <div ref={panel} role="dialog" aria-modal="true" aria-label="Menu"
-        className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto border-b border-ink bg-paper">
+        className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto overscroll-contain border-b border-ink bg-paper">
         <div className="wrap flex h-14 items-center justify-between">
           <span className="font-display text-row font-medium text-ink">Menu</span>
           <button type="button" onClick={onClose} aria-label="Close the menu"
-            className="-mr-2 grid size-11 place-items-center rounded-field text-ink-2 hover:bg-mist hover:text-ink">
+            className="-mr-2 grid size-11 place-items-center rounded-field text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink">
             <Cross className="size-4"/>
           </button>
         </div>
@@ -290,7 +296,7 @@ function Drawer({ view, go, onClose }) {
                 aria-current={here ? 'page' : undefined}
                 className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
                   'font-display text-sec font-medium transition-colors duration-150',
-                  here ? 'text-ink' : 'text-ink-2 hover:text-ink')}>
+                  here ? 'text-ink' : 'text-ink-2 hoverOnly:text-ink')}>
                 <span className={cn('mr-3 h-5 w-[3px] rounded-bar', here ? 'bg-accent' : 'bg-transparent')}/>
                 {label}
               </button>
@@ -329,7 +335,7 @@ function Header({ view, go }) {
             first thing to give way. */}
         <button onClick={() => go('site')} aria-label="MindMap, go to the overview"
           className="mr-1 shrink-0 rounded-field px-1 py-1 text-row text-ink
-            transition-colors duration-150 hover:bg-mist sm:mr-2 sm:text-head">
+            transition-colors duration-150 hoverOnly:bg-mist sm:mr-2 sm:text-head">
           <Logo/>
         </button>
 
@@ -359,7 +365,7 @@ function Header({ view, go }) {
           <button onClick={() => go('app')}
             className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-field px-3',
               'bg-accent font-display text-ui font-medium text-paper transition-colors',
-              'duration-150 hover:bg-accent-ink sm:gap-2 sm:px-4')}>
+              'duration-150 hoverOnly:bg-accent-ink sm:gap-2 sm:px-4')}>
 {/* Two testers could not tell the app from the site. Half of that is
                 what the app looks like, which the app chrome below answers, and
                 half is whether the door says it is a door. So this is a
@@ -378,7 +384,7 @@ function Header({ view, go }) {
           <button ref={burger} type="button" onClick={() => setMenu(true)}
             aria-expanded={menu} aria-label="Open the menu"
             className="-mr-1.5 grid size-11 shrink-0 place-items-center rounded-field text-ink
-              hover:bg-mist xl:hidden">
+              hoverOnly:bg-mist xl:hidden">
             {/* Three equal rules. The `Stack` mark in ui/marks has a short
                 third rule, which is a text-alignment icon and next to a
                 wordmark reads as one. */}
@@ -560,7 +566,7 @@ function AppTabBar({ view, go }) {
 function AppRail({ view, go }) {
   const here = APP_TAB[view]
   return (
-    <div className="fixed inset-y-0 left-0 z-40 hidden w-[13.5rem] flex-col overflow-y-auto
+    <div className="fixed inset-y-0 left-0 z-40 hidden w-[13.5rem] flex-col overflow-y-auto overscroll-contain
       border-r border-ink-3 bg-card lg:flex">
       {/* 48px, the same as the title bar to its right, so the two line up
           across the top of the window instead of stepping. */}
@@ -575,7 +581,7 @@ function AppRail({ view, go }) {
               aria-current={on ? 'page' : undefined}
               className={cn('flex min-h-[44px] w-full items-center gap-2.5 rounded-field px-3',
                 'text-left transition-colors duration-150',
-                on ? 'bg-accent text-paper' : 'text-ink-2 hover:bg-mist hover:text-ink')}>
+                on ? 'bg-accent text-paper' : 'text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink')}>
               <Mark size={20}/>
               <span className={cn('font-display text-ui', on ? 'font-bold' : 'font-medium')}>{label}</span>
             </button>
@@ -601,7 +607,7 @@ function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
       className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field pr-2 font-display',
-        'text-ui font-medium text-ink-2 transition-colors duration-150 hover:text-ink', className)}>
+        'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink', className)}>
       <ArrowLeft aria-hidden className="size-4 shrink-0"/>
       {short ? (
         <>
@@ -690,7 +696,7 @@ function useSurveyStore() {
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
   'font-display text-ui transition-colors duration-150 ease-out',
-  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hover:bg-mist hover:text-ink'
+  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink'
 )
 
 /* The selected marker, and the same one the phone drawer uses for the page you
@@ -702,7 +708,7 @@ const Bar = ({ on }) => (
 
 const fieldClass = cn(
   'block w-full rounded-field border border-rule bg-card p-3 font-body text-sec text-ink',
-  'placeholder:text-ink-3 transition-colors duration-150 ease-out hover:border-ink-3'
+  'placeholder:text-ink-3 transition-colors duration-150 ease-out hoverOnly:border-ink-3'
 )
 
 function ScaleField({ q, value, onPick }) {
@@ -748,7 +754,7 @@ function NpsField({ q, value, onPick }) {
             className={cn('min-h-[44px] min-w-[44px] flex-1 rounded-field border text-ui tabular-nums',
               'transition-colors duration-150 ease-out',
               value === n ? 'border-ink bg-ink font-bold text-paper'
-                          : 'border-rule font-medium text-ink-2 hover:border-ink-3 hover:bg-mist')}>
+                          : 'border-rule font-medium text-ink-2 hoverOnly:border-ink-3 hoverOnly:bg-mist')}>
             {n}
           </button>
         ))}

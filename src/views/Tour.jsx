@@ -222,14 +222,13 @@ const STOPS = [
     title: 'The problem',
     body: (
       <>
+        {/* Two paragraphs stood here, seventy words, and the drawing beside
+            them is the argument: a sparse row of conversations against a dense
+            row of days. The prose was the caption to a figure that does not
+            need one. */}
         <Lede>
-          A counselor's record of a student is one conversation, when one happens, plus whatever a
-          teacher passes on. Between those, nothing gets written down.
-        </Lede>
-        <Lede>
-          MindMap measures four body signals continuously, so there is a record of every day, not
-          only the days someone spoke up. It never explains why a day ran high, and never compares
-          a student against anyone but their own last two weeks.
+          A school's record of a student is the days someone spoke up. MindMap records every day,
+          against that student's own last two weeks and nobody else's.
         </Lede>
       </>
     ),
@@ -241,8 +240,8 @@ const STOPS = [
     body: (
       <>
         <Lede>
-          A stadium-shaped adhesive base, a tray for a Seeed XIAO nRF52840 Sense board, and a
-          printed shell over the top. The board is bought, not designed by us.
+          An adhesive base, a tray for a Seeed XIAO nRF52840 Sense board, and a printed shell.
+          The board is bought, not designed by us.
         </Lede>
         <ul className="mt-6 m-0 list-none space-y-4 p-0">
           {LAYERS.map(l => (
@@ -252,8 +251,7 @@ const STOPS = [
             </li>
           ))}
         </ul>
-        <Note>Drawn to the real dimensions. No unit has been assembled, so there is no
-          photograph of one.</Note>
+        <Note>Drawn to the real dimensions. No unit has been assembled.</Note>
       </>
     ),
     art: Hardware,

@@ -7,7 +7,7 @@ import { cn } from '../lib/utils'
    stop hand-rolling grid classes. Retokenised to the light clinical palette. */
 
 export function Table({ children, className }) {
-  return <div className={cn('w-full overflow-x-auto', className)}>
+  return <div className={cn('w-full overflow-x-auto overscroll-x-contain', className)}>
     <table className="w-full border-collapse text-left">{children}</table></div>
 }
 export const THead = ({ children }) => <thead className="border-b border-ink">{children}</thead>
@@ -15,7 +15,7 @@ export const TBody = ({ children }) => <tbody>{children}</tbody>
 
 export function TR({ children, className, interactive, ...p }) {
   return <tr className={cn('border-b border-rule', interactive &&
-    'group cursor-pointer transition-colors duration-100 [@media(hover:hover)]:hover:bg-mist/60',
+    'group cursor-pointer transition-colors duration-100 hoverOnly:bg-mist/60',
     className)} {...p}>{children}</tr>
 }
 export function TH({ children, className, sortable, onSort, active, dir, align = 'left' }) {
@@ -25,7 +25,7 @@ export function TH({ children, className, sortable, onSort, active, dir, align =
       align === 'right' && 'text-right', className)}>
       {sortable ? (
         <button type="button" onClick={onSort}
-          className={cn('inline-flex min-h-[44px] items-center gap-1.5 transition-colors hover:text-ink',
+          className={cn('inline-flex min-h-[44px] items-center gap-1.5 transition-colors hoverOnly:text-ink',
             active && 'text-ink')}>
           {children}<SortMark aria-hidden size={12}/>
           <span className="sr-only">{active ? `sorted ${dir === 'asc' ? 'ascending' : 'descending'}` : 'sort'}</span>

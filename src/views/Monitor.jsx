@@ -28,7 +28,7 @@ export function Back({ go, to = 'site', label = 'Overview' }) {
   return (
     <button onClick={() => go(to)}
       className="mb-8 flex w-fit min-h-[44px] items-center gap-2 py-2 font-display text-meta
-        font-medium text-accent transition-colors duration-150 hover:text-accent-ink">
+        font-medium text-accent transition-colors duration-150 hoverOnly:text-accent-ink">
       <ArrowLeft aria-hidden className="size-4"/> {label}
     </button>
   )
@@ -56,7 +56,7 @@ export function Reason({ claim, plain, source, index, chart }) {
       <C.Root ref={ref} open={open} onOpenChange={setOpen}
         className="border-b border-rule transition-colors data-[state=open]:bg-mist/40">
         <C.Trigger className="group flex min-h-[64px] w-full items-center gap-4 px-3 py-5 text-left
-          transition-colors hover:bg-mist/60">
+          transition-colors hoverOnly:bg-mist/60">
           <span className="flex-1 text-body text-ink">{claim}</span>
           <span className="flex shrink-0 items-center gap-1.5 text-tick text-accent">
             <span className="hidden sm:inline group-data-[state=open]:sm:hidden">Why</span>
@@ -89,7 +89,7 @@ export function AllDetail({ label = 'See every reading', children }) {
     <C.Root open={open} onOpenChange={setOpen} className="mt-10">
       <C.Trigger className="group flex min-h-[56px] w-full items-center justify-between gap-4
         border-y border-rule font-display text-ui font-medium text-ink
-        transition-colors hover:text-accent">
+        transition-colors hoverOnly:text-accent">
         {label}
         <Chevron aria-hidden className="size-4 transition-transform duration-200 ease-out
           group-data-[state=open]:rotate-90"/>

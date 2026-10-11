@@ -41,7 +41,7 @@ import {
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
   'font-display text-ui transition-colors duration-150 ease-out',
-  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hover:bg-mist hover:text-ink'
+  on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink'
 )
 
 const Bar = ({ on }) => (
@@ -121,7 +121,7 @@ function NpsControl({ q, value, onPick }) {
                 'transition-[background-color,border-color,color] duration-150 ease-out',
                 on
                   ? 'border-ink bg-ink font-bold text-paper'
-                  : 'border-rule font-medium text-ink-2 hover:border-ink-3 hover:bg-mist'
+                  : 'border-rule font-medium text-ink-2 hoverOnly:border-ink-3 hoverOnly:bg-mist'
               )}
             >
               {n}
@@ -155,7 +155,7 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
           'block w-full rounded-field border border-rule bg-paper p-3',
           'font-body text-sec text-ink placeholder:text-ink-3',
           'transition-[border-color,background-color] duration-150 ease-out',
-          'hover:border-ink-3 focus:bg-card'
+          'hoverOnly:border-ink-3 focus:bg-card'
         )}
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -199,7 +199,7 @@ function ImpactControl({ q, initial, onSave, onSkip }) {
           'mt-2 block w-full rounded-field border border-rule bg-paper p-3',
           'font-body text-sec text-ink placeholder:text-ink-3',
           'transition-[border-color,background-color] duration-150 ease-out',
-          'hover:border-ink-3 focus:bg-card'
+          'hoverOnly:border-ink-3 focus:bg-card'
         )}
       />
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -355,7 +355,7 @@ export function ReviewLauncher({ page }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex min-h-[48px] items-center gap-3 px-4 text-left hover:bg-mist"
+            className="flex min-h-[48px] items-center gap-3 px-4 text-left hoverOnly:bg-mist"
           >
             {/* "Review sent" was a lie for as long as nothing was sent
                 anywhere. A finished response is now mailed out on its own, but
@@ -375,7 +375,7 @@ export function ReviewLauncher({ page }) {
             type="button"
             aria-label="Put this away"
             onClick={() => { putAway(); setHidden(true) }}
-            className="grid w-11 place-items-center border-l border-rule text-ink-3 hover:bg-mist hover:text-ink"
+            className="grid w-11 place-items-center border-l border-rule text-ink-3 hoverOnly:bg-mist hoverOnly:text-ink"
           >
             <Cross className="size-3.5"/>
           </button>
@@ -447,7 +447,7 @@ function ReviewDialog({ onClose }) {
     recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/45 p-0 sm:p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-ink/45 p-0 sm:p-6">
       <div
         role="dialog"
         aria-modal="true"

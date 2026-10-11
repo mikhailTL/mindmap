@@ -990,13 +990,13 @@ export function Intro({ onDone }) {
           <Button ref={prevRef} onClick={goPrev} disabled={beat === 0}
             aria-label="Previous section"
             className="h-auto min-h-[54px] min-w-[44px] shrink-0 border border-rule bg-card/85 px-4
-              font-display text-ui font-medium text-ink hover:bg-card active:bg-card
+              font-display text-ui font-medium text-ink hoverOnly:bg-card active:bg-card
               disabled:opacity-100 disabled:text-ink-3 sm:px-6">
             Back
           </Button>
           <Button ref={skipRef} onClick={skip}
             className="flex h-auto min-h-[54px] w-full max-w-[430px] flex-col gap-0.5 bg-ink py-3
-              text-paper hover:bg-ink-2 active:bg-ink-2">
+              text-paper hoverOnly:bg-ink-2 active:bg-ink-2">
             <span className="font-display text-ui font-medium">Skip the intro</span>
             <span className="font-body text-fine font-normal text-mist">
               and don&rsquo;t show it again on this device
@@ -1004,7 +1004,7 @@ export function Intro({ onDone }) {
           </Button>
           <Button ref={nextRef} onClick={goNext} aria-label="Next section"
             className="h-auto min-h-[54px] min-w-[44px] shrink-0 border border-rule bg-card/85 px-4
-              font-display text-ui font-medium text-ink hover:bg-card active:bg-card sm:px-6">
+              font-display text-ui font-medium text-ink hoverOnly:bg-card active:bg-card sm:px-6">
             Next
           </Button>
         </div>

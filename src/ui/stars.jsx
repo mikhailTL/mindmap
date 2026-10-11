@@ -115,7 +115,7 @@ export function StarRating({
               className={cn(
                 'flex h-11 w-11 cursor-pointer items-center justify-center rounded-field',
                 'transition-colors duration-150 ease-out',
-                'hover:bg-mist active:bg-accent-wash'
+                'hoverOnly:bg-mist active:bg-accent-wash'
               )}
             >
               <Star frac={frac} clipId={`${uid}-star-${i}`} />

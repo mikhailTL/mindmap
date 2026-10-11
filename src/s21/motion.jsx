@@ -4,9 +4,34 @@ import { cn } from '../lib/utils'
 
 /* Scroll motion primitives, ported from solace-innovation's s21 kit.
    Every block on the site is wrapped in one of these, so the page assembles
-   itself as you move down it rather than arriving whole. */
+   itself as you move down it rather than arriving whole.
 
-const EASE = [0.16, 1, 0.3, 1]
+   DURATIONS. The ceiling for UI motion is 300ms, and everything in this file
+   sits above it, so each one needs its reason stated rather than inherited
+   from the kit. The reason they share: these are not UI. Nothing in here is a
+   control responding to a press, and nothing is between the reader and an
+   action — each is a block of content entering the viewport once, at reading
+   pace, while the reader is already moving. A content entrance clipped to
+   200ms does not read as crisp, it reads as a flicker, because the eye arrives
+   at the block after the animation has finished and only registers that
+   something twitched.
+
+   What was wrong was the size of the exception, not the exception. The kit
+   shipped 0.7s to 0.9s on every primitive: on a page of thirty wrapped blocks
+   that is most of a second of waiting per block, and scrolling fast meant
+   scrolling past half-drawn content the whole way down. They are now 0.42s for
+   the two reveals and 0.5s for the two that travel further (a full line height
+   under a mask, a rule crossing a whole column), which is still generous for
+   an entrance and no longer visibly lags the scroll.
+
+   EASE is the site's --ease-out from input.css, in array form, because these
+   are entrances and an entrance decelerates into place. Nothing here is ever
+   given an ease-in.
+
+   PROPERTIES. opacity, y and scaleX only — all of them transform or opacity,
+   none of them laying anything out. */
+
+const EASE = [0.23, 1, 0.32, 1]
 
 export function Reveal({ children, className, delay = 0, y = 18, as = 'div' }) {
   const reduced = useReducedMotion()
@@ -18,7 +43,7 @@ export function Reveal({ children, className, delay = 0, y = 18, as = 'div' }) {
   // never worth that failure mode, so it runs on mount and cannot stall.
   return (
     <Comp className={className} initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.75, ease: EASE, delay }}>
+      transition={{ duration: 0.42, ease: EASE, delay }}>
       {children}
     </Comp>
   )
@@ -60,7 +85,7 @@ export function ScrollIn({ children, className, y = 26, delay = 0, once = true, 
     <Comp ref={ref} className={className}
       initial={false}
       animate={state === 'hidden' ? { opacity: 0, y } : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: EASE, delay: state === 'hidden' ? 0 : delay }}>
+      transition={{ duration: 0.42, ease: EASE, delay: state === 'hidden' ? 0 : delay }}>
       {children}
     </Comp>
   )
@@ -68,7 +93,7 @@ export function ScrollIn({ children, className, y = 26, delay = 0, once = true, 
 
 /** Children revealed one after another as the group enters. */
 export function ScrollRow({ children, index = 0, className, as = 'div' }) {
-  return <ScrollIn as={as} className={className} delay={Math.min(index, 10) * 0.06} y={20}>{children}</ScrollIn>
+  return <ScrollIn as={as} className={className} delay={Math.min(index, 10) * 0.05} y={20}>{children}</ScrollIn>
 }
 
 function useInView(once = true) {
@@ -97,7 +122,7 @@ export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) 
         <span key={i} className="block overflow-hidden">
           <motion.span className={cn('block', lineClassName)} initial={false}
             animate={reduced || inView ? { y: '0%', opacity: 1 } : { y: '110%', opacity: 0 }}
-            transition={{ duration: 0.9, ease: EASE, delay: reduced ? 0 : i * 0.08 }}>
+            transition={{ duration: 0.5, ease: EASE, delay: reduced ? 0 : i * 0.06 }}>
             {line}
           </motion.span>
         </span>
@@ -116,17 +141,20 @@ export function Parallax({ children, distance = 60, className }) {
   return <div ref={ref} className={className}><motion.div style={reduced ? undefined : { y }}>{children}</motion.div></div>
 }
 
-/** Hairline that draws itself across as it enters. */
+/** Hairline that draws itself across as it enters. scaleX on a 1px div, so the
+    draw is a transform and not an animated width. */
 export function RuleDraw({ className }) {
   const reduced = useReducedMotion()
   return (
     <motion.div className={cn('h-px w-full origin-left bg-rule', className)}
       initial={reduced ? undefined : { scaleX: 0 }} whileInView={reduced ? undefined : { scaleX: 1 }}
-      viewport={{ once: true }} transition={{ duration: 0.9, ease: EASE }}/>
+      viewport={{ once: true }} transition={{ duration: 0.5, ease: EASE }}/>
   )
 }
 
-/** 1px reading-position bar pinned under the header. */
+/** 1px reading-position bar pinned under the header. Scroll-linked rather than
+    timed, so it has no duration to audit: the spring only smooths the value
+    the scroll already set. scaleX on a 1px bar, never width. */
 export function ScrollProgress({ className }) {
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 240, damping: 40, restDelta: 0.001 })
@@ -134,7 +162,14 @@ export function ScrollProgress({ className }) {
     className={cn('absolute inset-x-0 -bottom-px h-px origin-left bg-accent', className)}/>
 }
 
-/** Numbers that count up once, then hold. Never used on a clinical value. */
+/** Numbers that count up once, then hold. Never used on a clinical value.
+ *
+ * 1.4s, which is the longest thing in the file and the one duration that is
+ * not an entrance. It is left alone: here the motion IS the content — the
+ * number has to pass through the intermediate values legibly for the count to
+ * mean anything, and a figure that reaches its total in 300ms has simply
+ * appeared. It fires once per element, on first view, which is the one place
+ * in the frequency gate where a delight budget exists. */
 export function Tally({ to, suffix = '', duration = 1.4, className }) {
   const [ref, inView] = useInView()
   const [n, setN] = React.useState(0)

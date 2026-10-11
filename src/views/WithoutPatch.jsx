@@ -1,11 +1,11 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Card, CardTitle } from '@/ui/card'
-import { Section, SectionHead, SectionLede } from '../ui/section'
+import { Section, SectionHead } from '../ui/section'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { ScrollIn, ScrollRow } from '../s21/motion'
-import { CameraModule, SignalCoverage, StepScreen, useNarrow } from '../charts/camera'
+import { CameraModule, SignalCoverage } from '../charts/camera'
 import { PhoneCheck } from './PhoneCheck'
 import { ITEMS } from '../lib/engine'
 
@@ -43,11 +43,26 @@ import { ITEMS } from '../lib/engine'
  *
  * The fourth review cut the page again, on one note: too much of it. Six bands
  * are four plus the hero now. The camera figure and the signal coverage are
- * one subject and share a band. The four step phones are the instructions for
- * the capture they sat above, so they moved into it and the lede between them
- * went. Nothing on the page is a paragraph any more. The hero is a <header>
- * rather than a <section>, so every <section> here is headed by an h2 at the
- * one section size and the heading a reader could not find is gone.
+ * one subject and share a band. Nothing on the page is a paragraph any more.
+ * The hero is a <header> rather than a <section>, so every <section> here is
+ * headed by an h2 at the one section size and the heading a reader could not
+ * find is gone.
+ *
+ * The fifth cut was counted rather than judged: the route rendered 538 words
+ * against a budget of 330. Almost all of the overrun was one band. Four phone
+ * mockups stood above the capture screen and each one printed the title and
+ * the subtitle of a step the screen underneath prints again, forty pixels
+ * lower: 104 words to say twice what the reader is about to be told once, at
+ * the moment they do it. The phones are gone and the instructions live in
+ * PhoneCheck, which is where the reading is actually taken. What the capture
+ * needs in order to be completed at all (which fingertip, resting it on a
+ * table, a quiet room, a sentence to say, what the score is measured against)
+ * stayed there and was not moved onto this page.
+ *
+ * Everything else lost its second sentence. A heading is a claim, one line
+ * follows it, then the thing itself; the lede that reconciled "two ways" with
+ * the Overview page's "3 Ways" was a cross-reference, not a reason to read on,
+ * and the limits band says its three facts in one sentence each.
  */
 
 const ROUTES = [
@@ -55,17 +70,6 @@ const ROUTES = [
     gives:['Heart rate', 'Beat-to-beat', 'Voice'] },
   { id:'ask', title:`${ITEMS.length} questions`, when:'30 seconds', art:'ask',
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
-]
-
-/* The captions used to repeat each phone screen's own title word for word,
-   so the row printed "Hold still." twice, forty pixels apart. The screens
-   carry the instruction now and the caption is the short imperative under it,
-   which is also the label a screen reader is given for the drawing. */
-const STEPS = [
-  { k:'pad',   t:'Index fingertip, lens and flash.' },
-  { k:'still', t:'Hand resting, thirty seconds.' },
-  { k:'say',   t:'One sentence, quiet room.' },
-  { k:'got',   t:'Your Mind Score and band.' },
 ]
 
 /* Two small drawings, because two cards of equal prose are a comparison a
@@ -106,10 +110,6 @@ function RouteArt({ kind }) {
 }
 
 export function WithoutPatch({ go }) {
-  /* One measurement, two consumers: the phone mockups have to shrink on a
-     390px screen or they run off it, and the camera drawing swaps its labels
-     out for a list at the same width. */
-  const narrow = useNarrow()
   const toCheck = () => document.getElementById('take')?.scrollIntoView({ behavior:'smooth', block:'start' })
 
   return (
@@ -128,10 +128,7 @@ export function WithoutPatch({ go }) {
                 You do not need the patch.
               </h1>
               <p className="mt-4 max-w-read text-lead leading-[1.4] text-ink-2">
-                Forty five seconds, one Mind Score out of 100.
-              </p>
-              <p className="mt-2.5 max-w-read text-sec text-ink-2">
-                Nothing leaves the phone.
+                Forty five seconds, one Mind Score. Nothing leaves the phone.
               </p>
               {/* One control. The second one went to the questions, which the
                   route card below goes to under a clearer name. */}
@@ -140,7 +137,7 @@ export function WithoutPatch({ go }) {
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
-              <IPhone scale={narrow ? 0.44 : 0.44} label="The MindMap app running on a phone">
+              <IPhone scale={0.44} label="The MindMap app running on a phone">
                 <PhoneApp/>
               </IPhone>
             </div>
@@ -151,7 +148,7 @@ export function WithoutPatch({ go }) {
       {/* White, so the ruled step table in the figure has a ground its mist
           bands can be told apart from. */}
       <Section name="Inside the camera" tone="card" tight id="camera">
-        <SectionHead>How your phone reads a pulse.</SectionHead>
+        <SectionHead>The camera reads your pulse.</SectionHead>
         <ScrollIn className="mt-5 lg:mt-6">
           <CameraModule className="mx-auto max-w-[66rem]"/>
         </ScrollIn>
@@ -165,12 +162,11 @@ export function WithoutPatch({ go }) {
 
       <Section name="Two ways" tone="mist" tight className="bg-aqua-2">
         <SectionHead>Two ways to take a reading.</SectionHead>
-        {/* Asked twice, on two pages: how two ways to take a reading squares
-            with three ways to use MindMap. One line, in the Overview page's
-            own words so the two headings match. */}
-        <SectionLede className="mt-2.5">
-          Two of the 3 Ways to Use MindMap. The demo takes no reading.
-        </SectionLede>
+        {/* No lede. It used to reconcile this heading with the Overview page's
+            "3 Ways to Use MindMap", which is that page's job: the two cards
+            under here are the two ways, and a reader who has not seen the
+            third is not missing anything they need in order to take a
+            reading. */}
         <div className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-5">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
@@ -212,40 +208,22 @@ export function WithoutPatch({ go }) {
         </div>
       </Section>
 
-      {/* The procedure and the thing it is a procedure for were two bands,
-          two headings and a lede. One band now: four phones, then the capture
-          that follows them. The numerals stay because this is a sequence.
+      {/* The heading, then the reading. There used to be a row of four phone
+          mockups between the two, each one printing a step's title and its
+          subtitle above the screen that prints both again a little lower, and
+          between them they were a third of the page's words. A marketing page
+          does not need a picture of the form that is directly underneath it.
+
+          So the heading lost its count as well: nothing here is numbered any
+          more, and PhoneCheck's own three steps carry the order.
 
           paper, not card: the capture is built out of white cards, and on a
           white band a white card is a border and nothing else. Against the
           aqua band above it paper is a 10% step, where mist, aqua and both
           washes all land inside 6% of it and read as the same surface. */}
       <Section name="Try it" tone="paper" tight id="take">
-        <SectionHead>Take a reading in four steps.</SectionHead>
-        {/* Two up until 1280, not until 1024. At 1024 a four-column track is
-            210px wide and the phone drawing is 228px, so the row ran off the
-            right edge on exactly the laptop width most people have.
-
-            The phones came down from 0.55 to 0.50 and the row gap from 8 to 4.
-            At 1280 a 0.55 phone left 86px of nothing in each of four columns
-            and cost 80px of height to do it. */}
-        <ol className="mt-5 grid list-none grid-cols-2 gap-x-3 gap-y-4 p-0
-          sm:gap-x-6 xl:grid-cols-4 xl:gap-x-5">
-          {STEPS.map((s, i) => (
-            <ScrollRow key={s.k} index={i} as="li" className="flex flex-col items-center text-center">
-              <IPhone model="14" scale={narrow ? 0.36 : 0.5} color="natural"
-                showHomeIndicator={false} label={s.t}>
-                <StepScreen kind={s.k}/>
-              </IPhone>
-              <p className="mt-3 flex items-baseline justify-center gap-2 text-fine
-                leading-[1.35] text-ink-2 sm:text-sec">
-                <span className="font-mono tabular-nums text-accent">{i + 1}</span>
-                <span className="max-w-[20ch]">{s.t}</span>
-              </p>
-            </ScrollRow>
-          ))}
-        </ol>
-        <div className="mt-8"><PhoneCheck/></div>
+        <SectionHead>Take a reading.</SectionHead>
+        <div className="mt-5"><PhoneCheck/></div>
       </Section>
 
       {/* Proved / Careful / Not proved was the wrong frame: those are the
@@ -255,17 +233,21 @@ export function WithoutPatch({ go }) {
           beat-to-beat figure is ours and is withheld when the signal is bad,
           and that nothing here has met a person yet. Said as build notes they
           read as the same honesty without borrowing a clinical claim to
-          disclaim. */}
+          disclaim.
+
+          Each one is one sentence now, and the label in front of it names the
+          subject rather than a column. "What it measures" measured nothing;
+          the sentence under it is the measurement. */}
       <Section name="Limits" tone="ink" tight>
-        <SectionHead tone="ink">What this reading is, and what it is not</SectionHead>
+        <SectionHead tone="ink">What this reading is, and is not.</SectionHead>
         <ul className="mt-5 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-6">
           {[
-            ['What it measures',
-              'Heart rate off the camera, matched to within half a beat per minute against a known signal.'],
+            ['Heart rate',
+              'Within half a beat per minute of a known signal.'],
             ['Our own index',
-              'The beat-to-beat figure is this project’s own index, not a clinical RMSSD. It is withheld when the signal is noisy.'],
+              'The beat-to-beat figure is this project’s own index, not a clinical RMSSD. Withheld when the signal is noisy.'],
             ['Where it stands',
-              'Nothing here has been tested on a person. Every figure on this page is generated.'],
+              'Nothing has been tested on a person. Every figure here is generated.'],
           ].map(([k, v], i) => (
             <ScrollRow key={k} index={i} as="li" className="border-t border-ink-3 pt-3">
               <p className="font-display text-ui font-bold text-accent-lit">{k}</p>

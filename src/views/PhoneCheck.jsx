@@ -83,9 +83,10 @@ function Step({ title, note, children, on }) {
   )
 }
 
-/* The lines a reader can repeat live in charts/camera beside the phone
-   mockup that prints two of them, so the screen and the drawing cannot drift
-   apart. */
+/* The lines a reader can repeat live in charts/camera, so the capture screen
+   and the drawings cannot drift apart. Two of the three are printed here: a
+   reader told to say anything stops and composes something, and a reader given
+   three lines reads all three before choosing. */
 
 const PHASES = { idle:0, camera:1, voice:2, working:3, done:4 }
 
@@ -176,43 +177,46 @@ export function PhoneCheck() {
       <div>
         <Card>
           <CardContent>
-            {/* The opening line went. It said forty five seconds and nothing
-                leaves the phone, both of which the page says above it, and it
-                was costing the room these three steps needed to answer the
-                questions a tester actually asked of them. */}
             {/* Four questions came back from one tester: which finger, cover
                 it or touch it, rest the hand on what, and say what. Three of
                 those are a position, so each step carries a small drawing and
-                the sentence under it stays a sentence. */}
+                the sentence under it is the one thing the drawing cannot say.
+
+                Which is the rule the notes were failing. Each one had its
+                instruction and then an explanation of the instruction, and
+                the explanation was describing the figure beside it: the grip
+                drawing shows a pad resting flat, so "pressing hard flattens
+                the pulse" is a caption for a picture that is already there,
+                and the quiet drawing carries both the struck-out speaker and
+                the arm's length dimension. What is left in prose is the
+                position, the surface, and the one fact no drawing can make:
+                that the recording is not kept. */}
             <div>
               <Step on={PHASES[phase] >= 1}
                 title={`Index fingertip over the camera · ${PPG_SECONDS}s`}
-                note="Pad flat over the rear lens and flash. Rest it; pressing hard flattens the pulse.">
+                note="Pad flat over lens and flash. Phone and forearm on a table.">
                 <div className="mt-2.5 grid gap-2 sm:grid-cols-2 sm:gap-4">
                   <StepFigure kind="grip"/>
                   <StepFigure kind="rest"/>
                 </div>
-                <p className="mt-1.5 text-fine text-ink-3">Movement is what fails a reading.</p>
               </Step>
               <Step on={PHASES[phase] >= 2}
                 title={`Say one sentence · ${VOICE_SECONDS}s`}
-                note={'Somewhere quiet, no music or television. Phone about an arm\u2019s length '
-                  + 'away. Normal voice. No words are kept.'}>
+                note="Quiet room. No words are kept.">
                 <div className="mt-2.5"><StepFigure kind="quiet"/></div>
-                <p className="mt-1.5 text-sec text-ink-3">Read one, or say anything you like:</p>
-                <ul className="mt-1.5 list-none border-l-2 border-accent p-0 pl-3">
-                  {SAY_LINES.map(l => (
+                {/* No "Read one aloud:" over these. The step above them is
+                    called Say one sentence and the accent rule down their left
+                    is what marks them as lines to be read rather than read
+                    about, so the label was a third telling. */}
+                <ul className="mt-2.5 list-none border-l-2 border-accent p-0 pl-3">
+                  {SAY_LINES.slice(0, 2).map(l => (
                     <li key={l} className="text-sec leading-[1.5] text-ink">{l}</li>
                   ))}
                 </ul>
               </Step>
               <Step on={PHASES[phase] >= 3}
-                title="Your Mind Score, with a band"
-                note="0 to 100, measured against your own normal. Which way it moved is the useful part, not the figure.">
-                <p className="mt-2 max-w-[52ch] text-sec text-ink-3">
-                  Higher means working harder. The band is how sure, from how clean the signal was.
-                </p>
-              </Step>
+                title="Your Mind Score and band"
+                note="0 to 100, against your own normal."/>
             </div>
 
             {/* The video element is the source the frames are read from. It is
@@ -263,12 +267,12 @@ export function PhoneCheck() {
                 {busy ? 'Reading…' : result ? 'Take another reading' : `Start the ${PPG_SECONDS + VOICE_SECONDS}-second reading`}
               </Button>
               <Button variant="outline" onClick={() => run(false)} disabled={busy || !supported}>
-                Skip the voice step
+                Skip the voice
               </Button>
             </div>
             {!supported && (
               <p className="mt-4 max-w-[46ch] text-meta text-ink-2">
-                This browser will not hand over a camera. The questions still work.
+                No camera in this browser. The questions still work.
               </p>
             )}
           </CardContent>
@@ -281,16 +285,16 @@ export function PhoneCheck() {
           a reading to put in it. */}
       <Card aria-live="polite" className="min-h-[7rem] xl:sticky xl:top-[92px]">
         <CardContent>
+          {/* The definition used to be printed here as well, because both
+              readers who asked what the number meant asked it on the way in.
+              The third step a hand's width to the left now says 0 to 100
+              against your own normal, which is the definition, so this card
+              was printing it twice on one screen. It stays below, next to the
+              number it defines. */}
           {!result && (
-            <>
-              <p className="max-w-[36ch] text-sec text-ink-3">
-                Your Mind Score appears here.
-              </p>
-              {/* The definition before the reading as well as beside it. Both
-                  readers who asked what the number meant asked it on the way
-                  in, not after. */}
-              <p className="mt-2 max-w-[44ch] text-meta text-ink-3">{SCORE_DEF}</p>
-            </>
+            <p className="max-w-[36ch] text-sec text-ink-3">
+              Your Mind Score appears here.
+            </p>
           )}
           {result && (
             <>
@@ -330,6 +334,9 @@ export function PhoneCheck() {
                       them asked it before taking a reading, so the answer is
                       printed here as well as in the steps above. */}
                   <p className="mt-4 max-w-[48ch] text-meta text-ink-3">{SCORE_DEF}</p>
+                  {/* Three sentences, not three places. This ran above the
+                      steps, in the steps, and here; it is kept here, beside
+                      the band and the number it is about. */}
                   <p className="mt-2 max-w-[48ch] text-meta text-ink-3">
                     Higher means working harder. The direction it moved matters more than the
                     figure. The band is how sure, from how clean the signal was.

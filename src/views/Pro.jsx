@@ -72,7 +72,7 @@ const Term = ({ label, def }) => (
   <HoverCard openDelay={180}>
     <HoverCardTrigger asChild>
       <button type="button" className="underline decoration-dotted decoration-ink-3
-        underline-offset-4 hover:decoration-accent focus-visible:decoration-accent">{label}</button>
+        underline-offset-4 hoverOnly:decoration-accent focus-visible:decoration-accent">{label}</button>
     </HoverCardTrigger>
     <HoverCardPortal><HoverCardContent>{def}</HoverCardContent></HoverCardPortal>
   </HoverCard>
@@ -341,7 +341,7 @@ function Triage({ onOpen, real }) {
           {scoreOnly().map(s => (
             <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
               <button onClick={() => onOpen(s.name)} className="min-h-[44px] text-left text-meta text-ink
-                underline decoration-rule underline-offset-4 hover:decoration-accent">{s.name}</button>
+                underline decoration-rule underline-offset-4 hoverOnly:decoration-accent">{s.name}</button>
               <span className="font-mono text-meta tabular-nums text-ink-3">
                 Grade {s.grade} · {s.current} out of 100 · {TIER_LABEL[s.tier]}</span>
             </li>

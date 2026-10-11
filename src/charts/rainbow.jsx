@@ -480,7 +480,7 @@ export function SensorDetail({ ring, onClose }) {
 
       <button onClick={onClose}
         className="mt-5 min-h-[44px] font-display text-meta font-medium text-accent underline
-          underline-offset-4 hover:text-accent-ink">Close {s.name.toLowerCase()}</button>
+          underline-offset-4 hoverOnly:text-accent-ink">Close {s.name.toLowerCase()}</button>
     </section>
   )
 }

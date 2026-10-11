@@ -36,7 +36,11 @@ import { cn } from '../lib/utils'
  * ground alternating white and mist, a hairline between every pair, and the
  * numeral in its own cell behind a divider. Every sentence is re-cut to
  * exactly two lines so the rows are identical and the banding reads as
- * banding rather than as an accident of wrapping. The leader leaves each row
+ * banding rather than as an accident of wrapping. Two lines is the floor as
+ * well as the ceiling: baseY centres a pair of baselines on a 62-unit row,
+ * and ROWH is what holds four of the six leaders level with the part they
+ * point at, so a row that drops to one line sits high and a row that gains
+ * a third overflows. Cut inside a sentence, never out of the count. The leader leaves each row
  * from a dot on the band's right edge and arrives on its plate's left edge
  * horizontally, by way of a staircase, which is how an orthographic drawing
  * points at a thing: the last segment is parallel to the edge it names, so
@@ -163,10 +167,10 @@ export const CAMERA_STEPS = [
     lines: ['The flash shines into', 'your fingertip.'],
     to: [[396, 76]] },
   { id: 'blood', n: '02', diagonal: true,
-    lines: ['Blood absorbs the light.', 'Each heartbeat changes how much.'],
+    lines: ['Blood absorbs it. Each beat', 'changes how much.'],
     to: [[486, 82]] },
   { id: 'optics', n: '03', elbow: 400,
-    lines: ['Light comes back through the', 'cover glass. The lens focuses it.'],
+    lines: ['Back through the cover glass.', 'The lens focuses it.'],
     to: [[460, ROW.glass], [460, ROW.lens]] },
   { id: 'ir', n: '04', elbow: 408,
     lines: ['The infrared filter drops', 'invisible light.'],
@@ -398,11 +402,12 @@ function Defs({ p }) {
   )
 }
 
-/* Media query as state, because two things on this page need the real answer
-   and not a guess: which version of this drawing to mount, and how big a phone
-   mockup can be before it runs off a 390px screen. A CSS-only answer would
-   have meant shipping both drawings and hiding one, which is a second copy of
-   a 200-line SVG in every payload. */
+/* Media query as state, because the figure below needs the real answer and
+   not a guess: which version of this drawing to mount. A CSS-only answer
+   would have meant shipping both drawings and hiding one, which is a second
+   copy of a 200-line SVG in every payload. It also sized a row of phone
+   mockups on the route page; those are gone, so this is down to one caller
+   and the export has no importer left outside this file. */
 export function useNarrow(q = '(max-width: 767px)') {
   const [v, setV] = React.useState(
     () => typeof matchMedia === 'function' ? matchMedia(q).matches : false)
@@ -468,7 +473,14 @@ export function CameraModule({ className }) {
       {/* The caption used to be a band under the drawing, which cost its own
           height on every screen while a wide one carried 300 empty pixels
           down each side of the figure. On xl it is a rail in that dead space
-          instead, so the same words cost nothing to scroll past. */}
+          instead.
+
+          What is in the rail is now one trace and its label. The sentence
+          above it ("One number per frame, thirty a second. Each beat lets
+          less light through, so the number dips.") was row 05 and row 02 of
+          the table it sits beside, reworded: the sensor rate and the
+          absorption are already stated there, and the dip is drawn here. A
+          caption that may name its figure may not read it back. */}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-center xl:gap-9">
         <div>
           <svg
@@ -529,10 +541,6 @@ export function CameraModule({ className }) {
         <figcaption className="m-0 flex flex-col gap-3 border-t border-rule pt-4
           sm:flex-row sm:items-center sm:gap-6
           xl:flex-col xl:items-start xl:gap-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
-          <p className="m-0 max-w-[46ch] text-sec leading-[1.45] text-ink-2">
-            One number per frame, thirty a second. Each beat lets less light through,
-            so the number dips.
-          </p>
           <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px] xl:w-full">
             <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
                      L142 14 L150 30 L158 14 L180 14 L202 14 L210 30 L218 14"
@@ -551,9 +559,12 @@ export function CameraModule({ className }) {
  * comparing two things should be looking at the comparison, not parsing a
  * clause. Four signals, two lit and two not, is the same fact in one glance.
  */
+/* The note is the source and nothing else. "From the camera" and "From the
+   phone" were a sentence built round one word, and the chip the word sits
+   under already says which signal is being sourced. */
 const COVERAGE = [
-  { id:'heart', name:'Heart rate',  on:true,  note:'From the camera.' },
-  { id:'move',  name:'Movement',    on:true,  note:'From the phone.' },
+  { id:'heart', name:'Heart rate',  on:true,  note:'Camera.' },
+  { id:'move',  name:'Movement',    on:true,  note:'Phone.' },
   { id:'sweat', name:'Sweat',       on:false, note:'Patch only.' },
   { id:'temp',  name:'Skin temperature', on:false, note:'Patch only.' },
 ]
@@ -631,9 +642,10 @@ function GripFig() {
 
 /* What the hand rests on. A hand holding a phone up is the one position
    thirty seconds of stillness cannot survive, so both are down: the hand on
-   the phone, the forearm on the same surface behind it. Shared with the
-   mockup screen, which draws it at device size and sets its own caption. */
-function RestArt({ caption = true }) {
+   the phone, the forearm on the same surface behind it. It used to be shared
+   with a phone-mockup screen that drew it without the caption; that screen
+   had no importer left and went, and the caption switch went with it. */
+function RestArt() {
   const hatch = [10, 24, 38, 52, 66, 80, 94, 108, 122, 136, 150, 164, 178, 192]
   return (
     <g>
@@ -648,11 +660,9 @@ function RestArt({ caption = true }) {
         fill={MIST} stroke={INK} strokeWidth="1.4" strokeLinejoin="round"/>
       <ellipse cx="62" cy="57" rx="10" ry="3.2" fill={WASH} stroke={INK2} strokeWidth="1.1"/>
       <circle cx="62" cy="57" r="2.4" fill={ACCENT}/>
-      {caption && (
-        <text x="4" y="88" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
-          a table or your lap, both down
-        </text>
-      )}
+      <text x="4" y="88" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
+        a table or your lap, both down
+      </text>
     </g>
   )
 }
@@ -699,147 +709,4 @@ const STEP_FIGS = { grip: GripFig, rest: RestFig, quiet: QuietFig }
 export function StepFigure({ kind }) {
   const F = STEP_FIGS[kind]
   return F ? <F/> : null
-}
-
-/* ── Screens for the four-step guide ──────────────────────────────────────
- * These are drawn at real device points and scaled by the phone frame around
- * them, the same contract PhoneApp works to. A screenshot would have been
- * faster and would be wrong the first time the app changed.
- */
-const F_TITLE = { margin:0, fontFamily:'Quicksand, sans-serif', fontWeight:700,
-  fontSize:34, letterSpacing:'-0.02em', color:INK }
-const F_SUB = { margin:'8px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }
-/* A quoted line a reader can say out loud without composing one. Ruled on the
-   left so it reads as something to be read, not as another instruction. */
-const F_QUOTE = { margin:'14px 0 0', fontFamily:'Chivo, sans-serif', fontSize:21,
-  color:INK, borderLeft:`3px solid ${ACCENT}`, paddingLeft:12 }
-
-/* Two loops, both cheap and both off under reduced motion.
- *
- * A tester asked for a video of the capture. A video of four taps goes stale
- * the first time the app changes and cannot be read at 390px, so the figure
- * animates instead: a fingertip lowering onto the lens, and a trace drawing
- * itself once a beat. Those are the two steps a still picture cannot carry,
- * and they are the two steps people get wrong.
- *
- * mm-trace in input.css is not covered by that file's reduced-motion rule, so
- * the trace here runs on its own class rather than borrowing a loop this file
- * cannot switch off. */
-const STEP_MOTION = `
-  @keyframes mm-settle { 0%,10% { transform: translateY(-30px) } 48%,100% { transform: none } }
-  @keyframes mm-steady { 0% { stroke-dashoffset: 700 } 60%,100% { stroke-dashoffset: 0 } }
-  .mm-settle { animation: mm-settle 3.4s cubic-bezier(.22,.8,.3,1) infinite both; }
-  .mm-steady { stroke-dasharray: 700; stroke-dashoffset: 700;
-    animation: mm-steady 2.8s cubic-bezier(.3,.1,.2,1) infinite both; }
-  @media (prefers-reduced-motion: reduce) {
-    .mm-settle { animation: none; transform: none }
-    .mm-steady { animation: none; stroke-dasharray: none; stroke-dashoffset: 0 }
-  }
-`
-
-function Pad() {
-  return (
-    <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Index fingertip on the camera.</p>
-      <p style={F_SUB}>Pad flat over lens and flash. Cover both, rest, no pressing.</p>
-      <svg viewBox="0 0 240 190" style={{ marginTop:22, width:'100%', display:'block' }} aria-hidden>
-        <style>{STEP_MOTION}</style>
-        <rect x="52" y="14" width="136" height="162" rx="30" fill={MIST} stroke={INK} strokeWidth="2.4"/>
-        <rect x="70" y="32" width="86" height="86" rx="24" fill={CARD} stroke={INK2} strokeWidth="2"/>
-        <circle cx="94" cy="56" r="15" fill="none" stroke={INK2} strokeWidth="2"/>
-        <circle cx="132" cy="94" r="15" fill="none" stroke={INK2} strokeWidth="2"/>
-        <circle cx="94" cy="94" r="9" fill={ACCENT}/>
-        <circle cx="132" cy="56" r="7" fill={WASH} stroke={INK2} strokeWidth="1.6"/>
-        {/* The pad and the finger move as one body, so the loop reads as a
-            fingertip being lowered onto the lens rather than as a shape
-            growing. It lands and stays landed for half the cycle: the point
-            of the drawing is contact, not the travel. */}
-        <g className="mm-settle">
-          <ellipse cx="116" cy="76" rx="54" ry="44" fill={WASH} stroke={INK} strokeWidth="2.6" opacity="0.92"/>
-          <path d="M62,150 C62,120 76,100 106,92 L184,92 C176,124 160,146 138,158 Z"
-            fill={MIST} stroke={INK} strokeWidth="2.4" strokeLinejoin="round"/>
-        </g>
-      </svg>
-    </div>
-  )
-}
-
-function Still() {
-  return (
-    <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Rest both on a table.</p>
-      <p style={F_SUB}>Phone down, forearm down. Thirty seconds.</p>
-      {/* The trace used to be the whole screen, which answered a question
-          nobody asked: a reader can see the phone is busy. What they could
-          not see was where to put the hand, so that is the drawing now and
-          the trace is one line of readout under it. */}
-      <svg viewBox="0 0 210 78" style={{ marginTop:20, width:'100%', display:'block' }} aria-hidden>
-        <RestArt caption={false}/>
-      </svg>
-      <div style={{ marginTop:18, borderRadius:16, background:INK, padding:'18px 18px' }}>
-        <svg viewBox="0 0 300 54" style={{ width:'100%', display:'block' }} aria-hidden>
-          <style>{STEP_MOTION}</style>
-          <path d="M0 34 L28 34 L36 12 L44 48 L52 34 L90 34 L118 34 L126 12 L134 48 L142 34
-                   L180 34 L208 34 L216 12 L224 48 L232 34 L268 34 L296 34"
-            fill="none" stroke="#3fd6c4" strokeWidth="3.4" strokeLinecap="round"
-            strokeLinejoin="round" className="mm-steady"/>
-        </svg>
-        <p style={{ margin:'12px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:21, color:'#bed6da' }}>
-          72 bpm · signal good</p>
-      </div>
-    </div>
-  )
-}
-
-function Say() {
-  return (
-    <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Read one line aloud.</p>
-      <p style={F_SUB}>Quiet room, arm’s length, normal voice.</p>
-      {/* Two, not one. A tester asked for a sentence to repeat rather than a
-          prompt to answer, and one line reads as the line you have to say. */}
-      {SAY_LINES.slice(0, 2).map(l => <p key={l} style={F_QUOTE}>{l}</p>)}
-      <div style={{ marginTop:20, display:'flex', alignItems:'flex-end', gap:5, height:78 }}>
-        {[22, 48, 74, 96, 64, 108, 82, 54, 90, 116, 70, 44, 86, 58, 30, 66].map((v, i) => (
-          <span key={i} style={{ flex:1, height:v, borderRadius:3,
-            background: i % 3 === 0 ? BEAM : ACCENT, opacity: 0.55 + (v / 240) }}/>
-        ))}
-      </div>
-      <p style={{ margin:'14px 0 0', fontFamily:'Chivo Mono, monospace', fontSize:21, color:INK3 }}>
-        15s · listening · no words kept</p>
-    </div>
-  )
-}
-
-function Got() {
-  return (
-    <div style={{ padding:'0 28px' }}>
-      <p style={F_TITLE}>Your Mind Score.</p>
-      <p style={F_SUB}>0 to 100, against your own normal.</p>
-      <div style={{ marginTop:22, borderRadius:16, background:CARD, border:`1px solid ${RULE}`,
-        padding:'24px 20px' }}>
-        <p style={{ margin:0, fontFamily:'Chivo Mono, monospace', fontSize:64, lineHeight:1, color:INK }}>38</p>
-        <p style={{ margin:'6px 0 0', fontFamily:'Chivo, sans-serif', fontSize:21, color:INK3 }}>
-          Up 6 since yesterday. Higher means working harder.</p>
-        <div style={{ marginTop:22, height:12, borderRadius:999, background:MIST, position:'relative' }}>
-          <span style={{ position:'absolute', left:'22%', width:'26%', top:0, bottom:0,
-            borderRadius:999, background:ACCENT }}/>
-        </div>
-        <p style={{ margin:'10px 0 0', fontFamily:'Chivo, sans-serif', fontSize:22, color:INK2 }}>
-          The band: how sure.</p>
-      </div>
-    </div>
-  )
-}
-
-const SCREENS = { pad:Pad, still:Still, say:Say, got:Got }
-
-export function StepScreen({ kind }) {
-  const S = SCREENS[kind] || Pad
-  return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%',
-      justifyContent:'center', background:'#f5fafa' }}>
-      <S/>
-    </div>
-  )
 }

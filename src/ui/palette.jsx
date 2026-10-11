@@ -36,7 +36,7 @@ export function Palette({ go }){
             <Command.Input autoFocus placeholder="Go to…"
               className="w-full border-b border-rule bg-transparent px-5 py-4 font-body text-sec
                 text-ink outline-none placeholder:text-ink-3"/>
-            <Command.List className="max-h-[52vh] overflow-y-auto p-2">
+            <Command.List className="max-h-[52vh] overscroll-contain overflow-y-auto p-2">
               <Command.Empty className="px-3 py-6 text-sec text-ink-3">Nothing matches that.</Command.Empty>
               {CMDS.map(c=>(
                 <Command.Item key={c.id} value={c.label+' '+c.hint}

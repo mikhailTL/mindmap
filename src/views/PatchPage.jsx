@@ -11,7 +11,7 @@ import { ChevronDown } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
-import { SCORE, SCORE_RANGE, CONSENT_SHORT } from '../lib/terms'
+import { SCORE, SCORE_RANGE } from '../lib/terms'
 
 /* The page's three part cards map onto the model's own assemblies. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
@@ -25,11 +25,10 @@ const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
    lasts has not been decided and no unit has been worn, so no figure for
    either appears. */
 const CHAIN = [
-  'Sticks to the upper arm, under a sleeve.',
-  'Reads four signals off the skin, one a second.',
-  'Sends them to your phone over Bluetooth.',
-  `A day becomes one ${SCORE}, ${SCORE_RANGE}, plus a plain sentence on what changed.`,
-  CONSENT_SHORT,
+  'Upper arm, under a sleeve.',
+  'Four signals, once a second.',
+  'Bluetooth to your phone.',
+  `One ${SCORE} a day, ${SCORE_RANGE}.`,
 ]
 
 export function PatchPage() {
@@ -113,6 +112,13 @@ export function PatchPage() {
                 </li>
               ))}
             </ul>
+            {/* The one fact about this object that is not settled. It used to
+                sit on the landing page inside a panel repeating three things
+                this page already says; the other two went with the panel and
+                this one came here, where the object is. */}
+            <p className="mt-4 max-w-[46ch] text-meta text-ink-3">
+              How long one adhesive lasts is not settled. No unit has been worn yet.
+            </p>
             {/* What you can DO here, said inside the first screen rather than
                 discovered nine hundred pixels down. A real button, so it is in
                 the tab order and takes the site's focus ring, and the scroll
@@ -120,7 +126,7 @@ export function PatchPage() {
                 when the reader has asked for stillness. */}
             <button type="button" onClick={toModel}
               className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
-                font-display text-ui font-medium text-accent hover:border-accent hover:text-accent-ink">
+                font-display text-ui font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
               Turn the 3D model<ChevronDown/>
             </button>
           </ScrollIn>
@@ -137,7 +143,7 @@ export function PatchPage() {
           <figure className="m-0 mt-8 lg:mt-0">
             <img src="/photos/patch-worn.webp" width="1024" height="688" loading="eager"
               decoding="async"
-              alt="The patch worn on an upper arm, the sleeve of a short-sleeved shirt just above it"
+              alt="A wearable sensor on the back of an upper arm, at the size and the place MindMap is worn"
               className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
           </figure>
         </div>
@@ -214,9 +220,13 @@ export function PatchPage() {
                   saying two things at once: that nothing is a photograph, and
                   where the dimensions came from. The second was answering a
                   question nobody asked, so it is gone. */}
+              {/* Four sentences stood here and three of them narrated the
+                  picture directly above: that the drawing names the layers,
+                  that the model is the same patch, that it turns and opens.
+                  The drawing is labelled and the controls are visible. The one
+                  sentence left is the one nothing on screen can say. */}
               <figcaption className="mt-3 max-w-[70ch] text-meta text-mist">
-                The flat drawing names the three layers. The model is the same patch. You can turn
-                it and cut it open. No unit has been built, so nothing on this page is a photograph.
+                No unit has been built, so nothing here is a photograph.
               </figcaption>
             </figure>
 

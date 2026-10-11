@@ -615,7 +615,7 @@ function Stars({ value, max = STAR_MAX }) {
 const CONTROL =
   'min-h-[46px] rounded-field border border-rule bg-card px-3 font-display text-ui font-medium ' +
   'text-ink transition-[background-color,border-color] duration-150 ease-out ' +
-  'hover:border-ink-3 hover:bg-mist active:bg-accent-wash ' +
+  'hoverOnly:border-ink-3 hoverOnly:bg-mist active:bg-accent-wash ' +
   'disabled:pointer-events-none disabled:opacity-45'
 
 function Field({ label, children }) {
@@ -643,7 +643,7 @@ function Notice({ title, children }) {
 function Fold({ summary, note, children }) {
   return (
     <details className="group mt-6 rounded-panel border border-rule bg-card">
-      <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 px-6 py-4 font-display text-ui font-bold text-ink hover:bg-mist [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 px-6 py-4 font-display text-ui font-bold text-ink hoverOnly:bg-mist [&::-webkit-details-marker]:hidden">
         <span className="font-mono text-fine tabular-nums text-ink-3 group-open:hidden">Show</span>
         <span className="hidden font-mono text-fine tabular-nums text-ink-3 group-open:inline">Hide</span>
         {summary}
@@ -1108,8 +1108,8 @@ export function Responses() {
                 'transition-[background-color,border-color,color] duration-150 ease-out',
                 'disabled:pointer-events-none disabled:opacity-45',
                 onlyCommented
-                  ? 'border-ink bg-ink text-paper hover:bg-accent-ink active:bg-accent-ink'
-                  : 'border-rule bg-card text-ink hover:border-ink-3 hover:bg-mist active:bg-accent-wash'
+                  ? 'border-ink bg-ink text-paper hoverOnly:bg-accent-ink active:bg-accent-ink'
+                  : 'border-rule bg-card text-ink hoverOnly:border-ink-3 hoverOnly:bg-mist active:bg-accent-wash'
               )}
             >
               Left a comment{onlyCommented ? ' (on)' : ''}

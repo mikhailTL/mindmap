@@ -208,8 +208,8 @@ function Switch({ on, disabled, label, onClick }) {
       className={cn('min-h-[44px] shrink-0 rounded-field border px-4 font-display text-ui',
         'transition-[background-color,color,border-color] duration-150 ease-out',
         'disabled:pointer-events-none disabled:opacity-45',
-        on ? 'border-ink bg-ink font-medium text-paper hover:bg-accent-ink active:bg-accent-ink'
-           : 'border-ink bg-transparent font-light text-ink-2 hover:bg-mist active:bg-mist')}>
+        on ? 'border-ink bg-ink font-medium text-paper hoverOnly:bg-accent-ink active:bg-accent-ink'
+           : 'border-ink bg-transparent font-light text-ink-2 hoverOnly:bg-mist active:bg-mist')}>
       {on ? 'Shared' : 'Not shared'}
     </button>
   )

@@ -16,7 +16,7 @@ import { cn } from '../lib/utils'
    named for what they are. Nothing here invents a second name for any of
    them. */
 import {
-  SCORE, SCORE_RANGE, NOTES, LOCATION,
+  SCORE, NOTES, LOCATION,
   CONSENT_SHORT, CONSENT_OFF, CASELOAD_TITLE,
 } from '../lib/terms'
 
@@ -58,7 +58,7 @@ import {
  * Both washes are real palette grounds and the site had barely used either.
  * ink 12.7 : 1, ink.2 6.9 : 1, ink.3 4.67 : 1 and accent 4.84 : 1 all clear AA
  * on both of them, so nothing on a tinted band needed a different colour than
- * it had on paper. The one thing that did need changing is hover: mist/60 on a
+ * it had on paper. The one thing that did need changing is hoverOnly: mist/60 on a
  * wash is the same luminance as the wash, so the rows that hover now hover to
  * card instead.
  *
@@ -73,7 +73,7 @@ import {
    one a stranger can use in the next minute. */
 const DOORS = [
   { id:'patch', go:'patch', title:'Wear the patch', note:'Needs the patch',
-    line:'A real reading from your own body, all day, off a sticker that takes pulse, sweat, temperature and movement once a second.',
+    line:'A reading off a sticker on your arm, all day.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -82,7 +82,7 @@ const DOORS = [
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
   { id:'phone', go:'without-patch', title:'Use your phone', note:'No hardware needed', lead:true,
-    line:'A real reading from your own body in forty five seconds, off the camera and one spoken sentence.',
+    line:'A reading in forty five seconds, off the camera.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -93,7 +93,7 @@ const DOORS = [
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
   { id:'demo', go:'app', title:'Try the demo', note:'No reading taken',
-    line:'Every screen filled with made up data, so you can look around without measuring anything.',
+    line:'Every screen filled with made up data.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="18" y="13" width="184" height="94" rx="10" fill="none" className="stroke-ruling"
@@ -105,23 +105,23 @@ const DOORS = [
 ]
 
 /* The three people, in the order they meet the product: the one wearing it,
-   the one it reports to, then the school. Each tile shows that screen's own
-   live chart rather than a photograph of somebody holding a phone. */
+   the one it reports to, then the school. Each tile leads with a photograph of
+   that person, for the reason the note under this array gives. */
 const SCREENS = [
   { id:'student', who:'Student', photo:'student-card',
-    alt:'A student outdoors at school, the patch worn on her upper arm under a short sleeve',
+    alt:'A student sitting on a low wall outside school, writing',
     title:`Your ${SCORE} today, and what moved it`,
-    line:`You see the ${SCORE}, ${SCORE_RANGE}, the four signals behind it, and every reading ever taken.`,
+    line:'The four signals behind it, and every reading ever taken.',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent', photo:'parent-card',
-    alt:'A parent and their teenager talking at a kitchen table, the patch on the teenager\u2019s upper arm',
+    alt:'A parent and their teenager talking across a kitchen counter',
     title:'One sentence a week, and which days ran high',
-    line:`You see the ${SCORE} and the shape of the week. Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
+    line:`Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
     cta:'What a parent gets' },
   { id:'pro',     who:'School counselor', photo:'school-card',
-    alt:'A school counselor at her desk, mid conversation with a student',
+    alt:'A school counselor and a student talking across a desk',
     title:CASELOAD_TITLE,
-    line:`You see the ${SCORE} and how far it moved since last week, for the students who share it.`,
+    line:'Only the students who share it.',
     cta:'What a school gets' },
 ]
 
@@ -135,48 +135,57 @@ const SCREENS = [
    read at 13rem wide. Every one of those previews is still on the page it
    belongs to, at a size where it can actually be read. */
 
-/* What a reader asks the moment they see a sticker on somebody's arm. Every
-   line here is a fact the hardware thread has settled, and the last one is the
-   one it has not: an invented wear time would be the only unmeasured number on
-   the page. */
-const PATCH_FACTS = [
-  'An adhesive sticker, worn on the upper arm.',
-  'A short sleeve covers it. Nothing shows when it is covered.',
-  'Three parts: a printed outer shell, an electronics pod, and the skin side base.',
-  'The board drops into the pod. The shell charges through a slot in its side.',
-  'How long one adhesive lasts before it is replaced is not settled. No unit has been worn by anyone yet.',
-]
+/* What a reader asks the moment they see a sticker on somebody's arm: what it
+   is, whether anybody can see it, and how long it stays on.
+ *
+   The two lines about the shell, the pod and the charging slot are gone. They
+   describe how the thing is built, which is not a question anybody has before
+   they have decided to wear one, and the exploded drawing answers it anyway on
+   the page that owns the hardware.
+ *
+   The last line is the fact the hardware thread has not settled, and it stays:
+   an invented wear time would be the only unmeasured number on the page. */
 
 /* The four things a reader wants settled before they will put this on a
    teenager, in the order the question arrives: who sees it, who turned it on,
-   what nobody gets, and how it stops. Each one is how the product works,
-   stated once. */
+   what nobody gets, and how it stops.
+ *
+   A title and one line each. The same answer was being given three times in
+   one section: a lede, four cards of prose, and then the table. The table is
+   the detailed answer and it is a figure, so the cards are now the claim and
+   the prose under them is a single sentence that the title does not already
+   say. The lede went outright: it said the student sees every reading first,
+   which is the first card. */
 const TRUST = [
   { title:'The student sees everything first',
-    line:'Every reading lands on the student\u2019s phone before anybody else has anything at all. '
-      + 'A student sees more than a parent or a counselor ever does.' },
-  { title:'A guardian opens the account',
-    line:`${CONSENT_SHORT} Parent and school are two separate choices. Nothing is shared by default.` },
+    line:'Every reading lands on their phone before anybody else has anything.' },
+  { title:'Nothing is shared by default',
+    line:CONSENT_SHORT },
   { title:'Never shared with anyone',
-    line:`The raw second by second readings. ${NOTES}. ${LOCATION}. Those three stay on the phone.` },
+    line:`${NOTES}, ${LOCATION}, and every raw reading.` },
   { title:'Sharing switches off',
-    line:`${CONSENT_OFF} Nothing is deleted by switching it off.` },
+    line:CONSENT_OFF },
 ]
 
+/* Six promises, and the wording is the whole of them: each one is a sentence
+   the project can be held to. They were cut to the shortest form that does not
+   weaken the claim, and no further. "A group under five" is still the k floor;
+   "fewer than five" would have been one word shorter and a different promise. */
 const NEVER = [
   'Show a parent a raw reading',
-  'Report on a group of under five students',
-  'Keep data longer than the student chooses',
+  'Report on a group under five',
+  'Keep data past what the student chooses',
   'Open a record without logging it',
-  'Sell or share anything with anyone',
-  'Diagnose anything. This is not a medical device',
+  'Sell or share anything',
+  'Diagnose anything. Not a medical device',
 ]
 
-/* The hero's three facts. Fragments, not sentences: the title screen is
-   scanned, never read, and each of these answers one question a reviewer
-   asked. What does it measure, where does it measure, who else sees it. */
+/* The hero's two facts. Fragments, not sentences: the title screen is
+   scanned, never read. There were three, and the first one was the four
+   signals, word for word the caption printed under the drawing beside it. A
+   fragment that repeats a caption two inches away is the caption printed
+   twice. What is left is where it measures and who else sees it. */
 const HERO_FACTS = [
-  'Pulse, sweat, temperature, movement.',
   'From a patch on your arm, or your phone alone.',
   'You choose who else sees it.',
 ]
@@ -233,8 +242,8 @@ export function Overview({ go }) {
             </h1>
             {/* Two paragraphs stood here, sixty words of prose on a title
                 screen. Nobody reads a paragraph above the fold. One line says
-                what comes back, three fragments say where it comes from, and
-                the whole block is twenty seven words you can take in without
+                what comes back and two fragments say where it comes from and
+                who else sees it, which is a block you can take in without
                 reading a sentence. */}
             <ScrollIn as="p" className="mt-6 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
               One {SCORE} a day. One sentence saying what changed.
@@ -343,7 +352,7 @@ export function Overview({ go }) {
             decorating the band. No figure of its own: this band already
             carries every number on the page. */}
         <SectionLede tone="ink">
-          MindMap returns one {SCORE} a day. A change shows up early, while it is still small.
+          MindMap returns one {SCORE} a day.
         </SectionLede>
         <ProblemStats className="mt-6"/>
       </Section>
@@ -357,7 +366,7 @@ export function Overview({ go }) {
       <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
         <SectionLede>
-          All three open the same app. They differ in what it has to work with.
+          All three open the same app.
         </SectionLede>
         <div className="mt-6 grid auto-rows-fr gap-4 md:grid-cols-3">
           {DOORS.map((d, i) => (
@@ -373,7 +382,7 @@ export function Overview({ go }) {
                   font-bold text-accent">
                   {d.note}
                   <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                    group-hover:translate-x-1.5"/>
+                    groupHoverOnly:translate-x-1.5"/>
                 </span>
               </Card>
             </ScrollRow>
@@ -385,32 +394,26 @@ export function Overview({ go }) {
       <Section name="How it works" tone="card" tight className="bg-aqua">
         <SectionHead>A day in, one {SCORE} and one sentence out.</SectionHead>
         <HowItWorks className="mt-6"/>
-        {/* One window, five lines. The reviewer asked five questions about the
-            object itself and the page answered none of them. */}
-        <div className="mt-6 rounded-panel border border-rule bg-card p-5">
-          <h3 className="font-display text-head font-bold leading-tight text-ink">The patch itself</h3>
-          <ul className="mt-4 grid list-none gap-x-10 gap-y-2.5 p-0 md:grid-cols-2">
-            {PATCH_FACTS.map(t => (
-              <li key={t} className="flex gap-3 text-sec leading-[1.5] text-ink-2">
-                <span aria-hidden className="mt-[0.62em] size-1.5 shrink-0 rounded-chip bg-accent"/>
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Section>
+        {/* One window, three lines. The reviewer asked five questions about
+            the object itself and the page answered none of them; two of the
+            five answers turned out to be about how the thing comes apart,
+            which is not a question a reader has here. */}
+        {/* A panel called "The patch itself" stood here with three facts in
+            it, under a heading, inside its own bordered box. Every one of them
+            is on the patch page, which is one card away on this same screen
+            and is now 169 words long. Printing a page's contents on the page
+            that links to it is the most expensive kind of duplication there
+            is: the reader pays for it twice and learns it once. */}
+</Section>
 
       {/* ── the three audiences ──────────────────────────────────────────
-          Not three equal tiles. The student is the person wearing the thing
-          and is given roughly twice the area and twice the artwork; the parent
-          and the counselor are two ruled rows beside them, which is also the
-          truth about how much each of those two is shown. */}
+          Three equal cells, for the reason the note on the grid gives.
+          A lede stood under the heading saying one day of measurements read
+          three ways, which is the heading, and then saying that the other two
+          see only what the student shared, which is the band below. Both
+          halves were already on the page, so it is gone. */}
       <Section name="Who it is for" tone="card" id="screens" className="bg-beam-wash">
         <SectionHead>3 Perspectives</SectionHead>
-        <SectionLede>
-          One day of measurements, read three ways. The student sees all of it; the other two see
-          only what the student agreed to share.
-        </SectionLede>
         {/* Three equal cells. It had been one wide student cell beside two
             stacked rows, which made the student's screen look like the product
             and the other two like footnotes. They are three views of the same
@@ -425,7 +428,7 @@ export function Overview({ go }) {
                    are three views of one day. */
                 className="group flex h-full w-full flex-col gap-3 rounded-panel border
                   border-rule bg-card p-5 text-left transition-[border-color] duration-150
-                  hover:border-accent">
+                  hoverOnly:border-accent">
                 {/* max-w-none is load-bearing and was missing. Tailwind's
                     preflight sets `img { max-width: 100% }`, which clamped
                     this image back to the card's content box and undid the
@@ -450,10 +453,10 @@ export function Overview({ go }) {
                 </span>
                 <span className="max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.line}</span>
                 <span className="mt-auto flex items-center gap-2.5 pt-2 font-display text-meta
-                  font-bold text-accent group-hover:text-accent-ink">
+                  font-bold text-accent groupHoverOnly:text-accent-ink">
                   {s2.cta}
                   <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                    group-hover:translate-x-1.5"/>
+                    groupHoverOnly:translate-x-1.5"/>
                 </span>
               </button>
             </ScrollRow>
@@ -473,10 +476,6 @@ export function Overview({ go }) {
           beginning, and these four are one answer in four parts. */}
       <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
-        <SectionLede>
-          The student sees every reading first. Nothing reaches a parent or a school until the
-          student turns that sharing on.
-        </SectionLede>
         <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {TRUST.map((t, i) => (
             <ScrollRow key={t.title} index={i} className="h-full">

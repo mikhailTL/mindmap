@@ -5,12 +5,17 @@ import { cn } from '../lib/utils'
 /* The problem band. It sits directly under the hero and it is the page's
    argument, made in pictures.
  *
- * It used to be four facts about the hardware — four signals, 45 seconds,
- * 14 days — which told a visitor what the thing does before telling them why
+ * It used to be four facts about the hardware (four signals, 45 seconds,
+ * 14 days) which told a visitor what the thing does before telling them why
  * it should exist.
  *
- * Every figure here is real and every figure carries its source on screen.
- * Nothing may be added to this file that is not in SOURCES below. If a chart
+ * Every figure here is real and every figure is sourced on screen. Each one
+ * carries its exact percentage beside it and names its source either in the
+ * Sources row at the foot of the band or, for the trend, on its own line,
+ * because the trend's document is not one of the two in SOURCES. The source
+ * used to be reprinted under all four of the other figures as well: the same
+ * two attributions, five times on one band, for a reader who reads one of
+ * them. Nothing may be added to this file that is not sourced. If a chart
  * wants a shape the data does not have, the chart changes.
  *
  * Two figures were wrong until an earlier pass: 42% and 22% were printed
@@ -21,7 +26,7 @@ import { cn } from '../lib/utils'
  * instrument, so the trend panel does not claim one. It shows the same YRBS
  * question a decade apart, 30% to 40%, which is the rise that actually exists.
  * NSDUH cannot be spliced across its 2020 redesign to manufacture a larger
- * number, and none of this measures "mental illness" — it measures one
+ * number, and none of this measures "mental illness": it measures one
  * self-reported question.
  *
  * WHAT THIS PASS CHANGED, and why. Every statistic on the homepage now lives
@@ -30,7 +35,7 @@ import { cn } from '../lib/utils'
  * "too much". So the funnel is gone. It was a 304px two-tier isotype drawing
  * plus two stacked ratios plus a legend, about 420px of band on its own, and
  * it was carrying a single fact: most of it goes unaddressed. That fact is now
- * one ruled row under the three CDC figures — figure, five marks, sentence —
+ * one ruled row under the three CDC figures (figure, five marks, sentence),
  * which costs the band roughly 90px instead of 420 and reads as the conclusion
  * the three figures above it lead to.
  *
@@ -52,9 +57,9 @@ export const SOURCES = [
    #0a6e68 measures 2.62 : 1 on ink and is unusable there, so the lit quantity
    is accent.lit (7.67 : 1), the second quantity is beam (4.53 : 1, and only
    ever a graphic), the remainder is ink.3 and the type is mist and ruling. */
-const LIT = '#3fd6c4'   /* accent.lit — the quantity being counted */
-const REST = '#3c6a74'  /* ink.3 — the denominator it is counted out of */
-const PAIR = '#1d8fb0'  /* beam — the other half of a two-way split */
+const LIT = '#3fd6c4'   /* accent.lit, the quantity being counted */
+const REST = '#3c6a74'  /* ink.3, the denominator it is counted out of */
+const PAIR = '#1d8fb0'  /* beam, the other half of a two-way split */
 
 /* ── 1. How big it is, and which way it is going ───────────────────────── */
 
@@ -66,7 +71,7 @@ const PAIR = '#1d8fb0'  /* beam — the other half of a two-way split */
  * head sits closer to its own shoulders than to the head below it. Both matter
  * only at this size: at 160px a cell is 16px, and with looser proportions a
  * column of marks joins up into one continuous string of dots instead of ten
- * people. The grid carries no meaning on its own — it is aria-hidden and the
+ * people. The grid carries no meaning on its own: it is aria-hidden and the
  * figure is stated in large type above it. */
 function HundredGrid({ filled, className }) {
   const cells = []
@@ -172,7 +177,7 @@ export function ProblemStats({ className }) {
           <ScrollRow key={h.pct} index={i} className="h-full">
             {/* figcaption has to be the figure's first or last child, and it
                 has to come first here: the number, then what it is of, then
-                where it is from, and only then the array. The figure is named
+                the exact figure, and only then the array. The figure is named
                 once, by the caption, and the hundred marks are hidden. */}
             <figure className="m-0 flex h-full flex-col">
               <figcaption>
@@ -183,9 +188,7 @@ export function ProblemStats({ className }) {
                   <Tally to={h.pct} suffix="%" />
                 </span>
                 <span className="mt-2 block max-w-[30ch] text-sec leading-[1.4] text-mist">{h.of}</span>
-                <span className="mt-1 block text-fine text-ruling">
-                  {h.exact}. CDC Youth Risk Behavior Survey, 2023
-                </span>
+                <span className="mt-1 block text-fine text-ruling">{h.exact}</span>
               </figcaption>
               <HundredGrid filled={h.pct} className="mt-auto pt-3" />
             </figure>
@@ -201,9 +204,14 @@ export function ProblemStats({ className }) {
                 <span className="mx-2 font-body text-meta font-normal text-ruling">to</span>
                 <span className="text-accent-lit"><Tally to={40} suffix="%" /></span>
               </span>
+              {/* Names the figure, does not narrate it. The clause that
+                  followed ("the same survey, the same question, a rise of ten
+                  points") was reading the drawing out loud: the two bars, the
+                  dashed 2013 level and the two year labels are the rise, and
+                  the source line under this says which survey both ends come
+                  from. */}
               <span className="mt-2 block max-w-[30ch] text-sec leading-[1.4] text-mist">
-                the first figure ten years earlier: the same survey, the same question, a rise of
-                ten points
+                the first figure, ten years earlier
               </span>
               <span className="mt-1 block text-fine text-ruling">
                 CDC YRBS Data Summary and Trends Report, 2013 to 2023
@@ -232,7 +240,9 @@ export function ProblemStats({ className }) {
           12 to 17. The second is counted out of the first, so it is indented
           behind a rule and labelled as a part of that group: the nesting is
           drawn, and neither sentence has to carry it. Each row keeps its own
-          exact percentage and its own source on screen.
+          exact percentage; both rows come from the one NIMH entry in the
+          Sources row, and each figure's aria-label still names it, so the
+          attribution was printed twice here for no reader.
  *
           Still a row and not a fourth column, for the reason it always was:
           the three figures above are counted out of all high school students
@@ -255,9 +265,7 @@ export function ProblemStats({ className }) {
           <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
             text-mist">
             had a major depressive episode in the past year
-            <span className="mt-1 block text-fine text-ruling">
-              20.1%. NIMH, from NSDUH 2021
-            </span>
+            <span className="mt-1 block text-fine text-ruling">20.1%</span>
           </figcaption>
         </figure>
 
@@ -276,9 +284,7 @@ export function ProblemStats({ className }) {
           <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
             text-mist">
             received no treatment for it
-            <span className="mt-1 block text-fine text-ruling">
-              59.4%. NIMH, from NSDUH 2021
-            </span>
+            <span className="mt-1 block text-fine text-ruling">59.4%</span>
             {/* The two colours are named once, under the marks they belong to,
                 rather than on each mark. Inside the caption so that the
                 caption stays the figure's last child. */}
@@ -303,7 +309,7 @@ export function ProblemStats({ className }) {
           <React.Fragment key={s.href}>
             {i > 0 && ' · '}
             <a href={s.href} target="_blank" rel="noreferrer"
-              className="border-b border-accent-lit/50 text-paper hover:border-accent-lit">
+              className="border-b border-accent-lit/50 text-paper hoverOnly:border-accent-lit">
               {s.label}
             </a>
           </React.Fragment>
