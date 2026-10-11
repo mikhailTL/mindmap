@@ -38,14 +38,16 @@ const NAME = {
 /* Padding is two steps, not a number per section. `tight` is for a band that
    is mostly picture; the default is for one that is mostly read.
 
-   Both came down by about a quarter. Generous padding was doing the work of
-   hierarchy, and the review named it: bands "filled with nothing", and a page
-   that needed too much scrolling to get through. Space between things is not
-   free, and on a phone it is the most expensive thing on the page. */
+   Both have come down twice now, by about a quarter and then again by about
+   a sixth. Generous padding was doing the work of hierarchy, and two separate
+   reviews named the same symptom: bands "filled with nothing", sections
+   "unnecessarily larger", and a page that takes too much scrolling to get
+   through. Space between things is not free, and on a phone it is the most
+   expensive thing on the page. */
 export function Section({ name, tone = 'paper', id, className, children, bleed = false, tight = false }) {
   return (
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
-      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-7 lg:py-10' : 'py-9 lg:py-14')}>
+      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-6 lg:py-9' : 'py-8 lg:py-12')}>
         {name && (
           <p className={cn('font-mono text-body font-bold tracking-[0.005em]', NAME[tone])}>{name}</p>
         )}
@@ -58,11 +60,12 @@ export function Section({ name, tone = 'paper', id, className, children, bleed =
 /* One heading size for a section, and nothing else. Anything on a page that is
    not this is the inconsistency the review was pointing at.
 
-   `text-sub` is 32px to 48px now, up from 26 to 36. The note was that a reader
-   could not tell a new section had started, and the cause was arithmetic: a
-   heading at 26px over a paragraph at 19px is a 1.37 ratio, which the eye does
-   not read as a change of subject. At 32 over 19 it is 1.68, and at the wide
-   end 48 over 19 is 2.5.
+   `text-sub` is 28px to 40px. It was 26-36, went to 32-48 because a reader
+   could not tell a new section had started, and has come back to 28-40
+   because 48 was pushing every section's contents down a line for a
+   difference nobody was asking for. The ratio is what the first complaint was
+   actually about and the ratio survives: 28 over 19 is 1.47 at the narrow end
+   and 40 over 18 is 2.2 at the wide one, against the 1.37 that failed.
  *
  * font-bold, not font-medium. The whole site was set at 500, so a heading
  * differed from the paragraph under it by size alone and, at the smaller
@@ -82,7 +85,7 @@ export function SectionHead({ children, tone = 'paper', className }) {
 
 export function SectionLede({ children, tone = 'paper', className }) {
   return (
-    <p className={cn('mt-3.5 max-w-[54ch] text-sec leading-[1.55]',
+    <p className={cn('mt-3 max-w-[54ch] text-sec leading-[1.55]',
       tone === 'ink' ? 'text-mist' : 'text-ink-2', className)}>
       {children}
     </p>

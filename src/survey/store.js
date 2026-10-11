@@ -1,4 +1,5 @@
 import { questionText } from './questions'
+import { sendResponse } from './mail'
 
 /* The whole survey's state, in one module, with no React in it.
  *
@@ -23,8 +24,14 @@ const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
 /* Shape is versioned so a later change can migrate instead of throwing on a
  * record it does not recognise. Anything that is not v:1 is treated as absent
  * rather than repaired blind — a reviewer's four answers are not worth a
- * migration guess that corrupts the rest. */
-const empty = () => ({ v: VERSION, visitor: null, answers: [] })
+ * migration guess that corrupts the rest.
+ *
+ * sentAt was added without bumping the version on purpose: it is one more key
+ * with a null default, and the spread below fills it in for a record written
+ * before it existed. Bumping VERSION for an additive field would throw away
+ * the half-finished response a reviewer already has in their browser, which is
+ * exactly the thing the guard above is meant to protect. */
+const empty = () => ({ v: VERSION, visitor: null, answers: [], sentAt: null })
 
 let state = empty()
 let loaded = false
@@ -217,4 +224,52 @@ export async function syncPending() {
   } finally {
     syncing = false
   }
+}
+
+/* One mail for the whole response, sent once.
+ *
+ * Separate from syncPending on purpose: that one is a per-answer POST at an
+ * optional self-hosted endpoint and stays as it is, because a database wants
+ * every answer as it is given. A person reading their mail wants one message
+ * when the reviewer is finished, so this is a different trigger, a different
+ * payload and a different success condition.
+ *
+ * sentAt is persisted rather than kept in memory so a reviewer who answers
+ * everything, reloads, and answers an optional question does not post a second
+ * copy of the same response. force is the explicit button, which is how a
+ * deliberately partial response gets through.
+ *
+ * Resolves to a boolean and never throws: every caller is a click handler or an
+ * effect in a survey the reviewer is still looking at. */
+let submitting = false
+
+export async function submitResponse({ force = false } = {}) {
+  load()
+  /* Same in-flight guard as syncPending. The last answer can land at the same
+   * moment the button is pressed, and two posts of one response is worse than
+   * one that has to be pressed again. */
+  if (submitting) return false
+  if (!state.visitor || !state.answers.length) return false
+  if (state.sentAt && !force) return false
+  submitting = true
+  try {
+    const ok = await sendResponse()
+    if (!ok) return false
+    state.sentAt = new Date().toISOString()
+    /* The answers are delivered, so nothing is pending any more. This is also
+     * what stops recordAnswer's opportunistic syncPending from retrying a
+     * backend that is not there on every later keystroke. */
+    state.answers = state.answers.map(a => (a.synced ? a : { ...a, synced: true }))
+    commit()
+    return true
+  } catch {
+    return false
+  } finally {
+    submitting = false
+  }
+}
+
+export function wasSent() {
+  load()
+  return Boolean(state.sentAt)
 }

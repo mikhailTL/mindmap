@@ -41,7 +41,7 @@ export function PatchPage() {
      rather than written here: scrollIntoView silently does nothing in more
      than one engine once smooth behaviour is inherited from html, and a jump
      link that sometimes does nothing is worse than no jump link. No behavior
-     option, so the site's own scroll-behavior rule decides — and that rule is
+     option, so the site's own scroll-behavior rule decides, and that rule is
      already cancelled under prefers-reduced-motion. data-anchor on the target
      is what supplies the offset that keeps the band clear of the sticky
      header, so the number lives in one place for the whole site. */
@@ -129,18 +129,16 @@ export function PatchPage() {
           {/* Worn, at the size it is actually worn. The drawing and the model
               below say what the thing is made of; this says what it looks like
               on an arm, which is the question the review asked twice and no
-              diagram answers. The caption is not decoration: the patch here is
-              rendered from the same CAD the model is built from, and nothing
-              about it has been worn by anybody yet. */}
+              diagram answers. No caption under it: the band below already
+              states that no unit has been built and that nothing on the page
+              is a photograph, and saying it twice on one screen read as a
+              disclaimer rather than as a fact. The alt text carries what the
+              image is for a reader who cannot see it. */}
           <figure className="m-0 mt-8 lg:mt-0">
             <img src="/photos/patch-worn.webp" width="1024" height="688" loading="eager"
               decoding="async"
               alt="The patch worn on an upper arm, the sleeve of a short-sleeved shirt just above it"
               className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
-            <figcaption className="mt-2.5 max-w-[46ch] text-meta text-ink-3">
-              Concept image. The patch is rendered from the CAD below. No unit has been built
-              or worn.
-            </figcaption>
           </figure>
         </div>
       </section>
@@ -200,8 +198,11 @@ export function PatchPage() {
           <SectionHead tone="ink" className="mt-0 max-w-[26ch]">
             The three parts of a patch
           </SectionHead>
+          {/* items-stretch, not items-start: the two columns are one row now,
+              so the rail can be told to take the figure's height instead of
+              running past it. */}
           <div className="mt-6 grid gap-6 lg:mt-9
-            lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-start lg:gap-8">
+            lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch lg:gap-8">
             <figure className="m-0 min-w-0">
               {/* The drawing goes INTO the viewer's card rather than beside it
                   as a second figure at the same scale. One composition, one
@@ -219,27 +220,56 @@ export function PatchPage() {
               </figcaption>
             </figure>
 
-            <ol className="m-0 grid list-none gap-3 p-0">
+            {/* The three cards used to be sized for a column of their own and
+                overran the viewer beside them by about three hundred pixels:
+                the skin-side card sat below the model, where a reader
+                scrolling the band never reached it, and the overrun left a
+                slab of bare green under the figure.
+
+                At lg the rail is pinned to the row: h-full takes the figure's
+                height and three rows of minmax(min-content,1fr) share it, so
+                any slack is spread across the three cards instead of pooling
+                under the model. min-content is the floor rather than 0,
+                because a 1fr row that can shrink past its text is a row that
+                clips it. Every step inside the card comes down one notch to
+                pay for the fit.
+
+                None of this applies below lg, where the cards are the full
+                width of the page with no figure beside them to match and the
+                reading size is the right size. */}
+            <ol className="m-0 grid list-none gap-3 p-0
+              lg:h-full lg:gap-2.5 lg:grid-rows-[repeat(3,minmax(min-content,1fr))]">
               {LAYERS.map(l => {
                 const on = picked === l.part
                 return (
                   <li key={l.i}>
                     <Card interactive as="button" aria-pressed={on}
                       onClick={() => setPicked(on ? null : l.part)}
-                      className={cn(on && 'border-l-accent')}>
+                      className={cn('lg:h-full', on && 'border-l-accent')}>
                       {/* The review called three text-only boxes boring and it
                           was right. The drawing sits on ink inside the white
                           card: the cards stand on the dark band, the band's
                           two usable stroke values are mist and accent.lit, and
                           both vanish on white. Its own ink panel is what lets
                           the drawing keep the band's palette and still measure
-                          12.69 and 7.67 against what is behind it. */}
-                      <div className="bg-ink px-3 py-3">{PART_ART[l.part]}</div>
-                      <div className="p-4">
-                        <h3 className="font-display text-head font-bold leading-tight text-ink">
+                          12.69 and 7.67 against what is behind it.
+
+                          The drawing's own height lives on the svg in
+                          charts/patch-parts (76px, 88px at sm), so a height on
+                          this panel alone would not move it at lg. The child
+                          selector is one specificity step above that class and
+                          is what actually constrains it; the viewBox is
+                          unchanged and preserveAspectRatio keeps the drawing
+                          centred at whatever height the panel is given. */}
+                      <div className="bg-ink px-3 py-3
+                        lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&>svg]:h-full">
+                        {PART_ART[l.part]}</div>
+                      <div className="p-4 lg:p-3">
+                        <h3 className="font-display text-head font-bold leading-tight text-ink
+                          lg:text-row">
                           {l.title}</h3>
-                        <p className="mt-1.5 text-sec text-ink-2">{l.body}</p>
-                        <span className="mt-2 block text-tick font-bold text-accent">
+                        <p className="mt-1.5 text-sec text-ink-2 lg:mt-1 lg:text-fine">{l.body}</p>
+                        <span className="mt-2 block text-tick font-bold text-accent lg:mt-1">
                           {on ? 'Showing only this' : 'Show only this'}</span>
                       </div>
                     </Card>

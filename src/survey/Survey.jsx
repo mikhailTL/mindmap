@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
 import { PAGE, REQUIRED, SECTIONS } from './questions'
 import {
   answersFor, getVersion, getVisitor, recordAnswer,
-  subscribe, syncPending, exportRows, toCSV,
+  subscribe, syncPending, submitResponse, wasSent, exportRows, toCSV,
 } from './store'
 
 /* One survey, opened from a small box in the corner.
@@ -357,8 +357,13 @@ export function ReviewLauncher({ page }) {
             onClick={() => setOpen(true)}
             className="flex min-h-[48px] items-center gap-3 px-4 text-left hover:bg-mist"
           >
-            {/* "Review sent" was a lie: nothing is sent anywhere, the answers
-                sit in this browser until the CSV is taken. */}
+            {/* "Review sent" was a lie for as long as nothing was sent
+                anywhere. A finished response is now mailed out on its own, but
+                the label still reports only what this box can see, which is
+                the saved tally: whether the relay accepted the mail is the
+                survey's business and not the corner box's, and a box that
+                claimed delivery it has not checked would be the same lie
+                again. */}
             <span className="font-display text-ui font-medium text-ink">
               {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Tell me what to fix'}
             </span>
@@ -404,6 +409,39 @@ function ReviewDialog({ onClose }) {
   const done = REQUIRED.filter(q => byId.has(q.id)).length
   const total = REQUIRED.length
   const visitor = getVisitor()
+  const complete = done >= total
+
+  /* Four states and not a boolean. A control that cannot say it is working says
+   * nothing at all while the relay takes its second or two, and a reviewer who
+   * gets no answer presses it again. */
+  const [send, setSend] = React.useState(() => (wasSent() ? 'sent' : 'idle'))
+
+  /* The response goes out by itself the moment the last required question is
+   * answered: a reviewer who has answered everything has finished, and should
+   * not have to find a button to prove it. Keyed on completion so it fires on
+   * the transition rather than once per render, and submitResponse is the real
+   * guard anyway: it refuses once sentAt is set, so reopening a finished survey
+   * does not post the same response a second time. */
+  React.useEffect(() => {
+    if (!complete) return
+    let alive = true
+    setSend(prev => (prev === 'sent' ? prev : 'sending'))
+    submitResponse().then(ok => {
+      if (!alive) return
+      /* A refusal from an already-sent record is not a failure to report. */
+      setSend(ok || wasSent() ? 'sent' : 'failed')
+    })
+    return () => { alive = false }
+  }, [complete])
+
+  /* The explicit path, for a reviewer who has said the one thing they came to
+   * say and is not going to answer the other eleven. force overrides the
+   * once-only guard; the button is disabled once it has succeeded, so it cannot
+   * be used to send the same response twice over. */
+  const sendNow = () => {
+    setSend('sending')
+    submitResponse({ force: true }).then(ok => setSend(ok ? 'sent' : 'failed'))
+  }
 
   const answer = (q, value, label) =>
     recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
@@ -435,7 +473,8 @@ function ReviewDialog({ onClose }) {
         <div className="px-5 pb-9 pt-5 sm:px-8">
           <p className="max-w-[52ch] text-sec text-ink-2">
             {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
-            so closing this loses nothing. The only thing kept alongside them is the name you gave.
+            so closing this loses nothing, and they go on to the person building MindMap once you
+            are through. The only thing kept alongside them is the name you gave.
           </p>
 
           {SECTIONS.map(section => (
@@ -474,18 +513,33 @@ function ReviewDialog({ onClose }) {
             </section>
           ))}
 
-          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-5">
-            <p className="note">
-              {done >= total
-                ? 'That is all of them. Thanks.'
-                : `${total - done} to go.`}
-            </p>
-            <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>
-              Download my answers
-            </Button>
-            <Button size="sm" className="ml-auto" onClick={onClose}>
-              {done >= total ? 'Done' : 'Come back to it'}
-            </Button>
+          <div className="mt-8 border-t border-rule pt-5">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <p className="note">
+                {complete
+                  ? 'That is all of them. Thanks.'
+                  : `${total - done} to go.`}
+              </p>
+              <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>
+                Download my answers
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                className="min-h-[44px]"
+                disabled={send === 'sending' || send === 'sent' || !answers.length}
+                onClick={sendNow}
+              >
+                {send === 'sent' ? 'Feedback sent' : 'Send my feedback'}
+              </Button>
+              <Button size="sm" className="ml-auto" onClick={onClose}>
+                {complete ? 'Done' : 'Come back to it'}
+              </Button>
+            </div>
+            {send === 'failed' && (
+              <p className="note mt-2.5">That did not go through. Try again in a moment.</p>
+            )}
           </div>
         </div>
       </div>

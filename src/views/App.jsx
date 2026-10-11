@@ -865,8 +865,8 @@ function SurveyPage() {
         <SectionHead className="mt-5">Tell me what to fix</SectionHead>
         <SectionLede>
           {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
-          so you can stop halfway and come back. The only thing kept alongside them is the
-          name you gave.
+          so you can stop halfway and come back, and they go to the person building MindMap once
+          you are through. The only thing sent alongside them is the name you gave.
         </SectionLede>
         <p className="mt-3.5 text-fine font-medium tabular-nums text-ink-3">
           {done} of {total} answered

@@ -49,11 +49,11 @@ import {
 function Hero({ label, title, lede, go, photo, photoAlt }) {
   return (
     <div className="border-b border-rule bg-mist">
-      <div className={cn('wrap py-10 lg:py-14', photo &&
-        'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:items-end lg:gap-10')}>
+      <div className={cn('wrap py-8 lg:py-11', photo &&
+        'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:items-center lg:gap-10')}>
         <div className="min-w-0">
         <button onClick={() => go('site')}
-          className="mb-7 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
+          className="mb-5 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
             font-medium text-accent transition-colors duration-150 hover:text-accent-ink">
           <ArrowLeft aria-hidden className="size-4"/> Overview
         </button>
@@ -65,8 +65,8 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
         {photo && (
           <img src={`/photos/${photo}.webp`} alt={photoAlt} loading="eager" decoding="async"
             width="1344" height="752"
-            className="mt-7 h-[210px] w-full rounded-panel object-cover sm:h-[280px]
-              lg:mt-0 lg:h-[320px]"/>
+            className="mt-6 h-[200px] w-full rounded-panel object-cover sm:h-[260px]
+              lg:mt-0 lg:h-[292px]"/>
         )}
       </div>
     </div>
@@ -79,7 +79,7 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
    actually matter. */
 function Fig({ title, children, className }) {
   return (
-    <figure className={cn('field m-0 mt-7 p-5 sm:p-7', className)}>
+    <figure className={cn('field m-0 mt-6 p-4 sm:p-6', className)}>
       {title && <figcaption className="mark mb-5">{title}</figcaption>}
       {children}
       <DemoNotice className="mt-6"/>
@@ -96,7 +96,7 @@ function Closer({ title, line, label, view, go }) {
       <SectionLede tone="ink">{line}</SectionLede>
       {/* solid is an ink block, which is invisible on the ink band. accent.lit
           is the band's own green and carries ink at 7.67 : 1. */}
-      <Button className="mt-7 bg-accent-lit text-ink hover:bg-paper" onClick={() => go(view)}>
+      <Button className="mt-6 bg-accent-lit text-ink hover:bg-paper" onClick={() => go(view)}>
         {label} <ArrowRight aria-hidden/>
       </Button>
     </Section>

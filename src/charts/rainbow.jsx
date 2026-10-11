@@ -36,14 +36,27 @@ import { cn } from '../lib/utils'
  * The interior of the arch is a half-disc of radius 76, which is what holds the
  * score. A three-digit number at the display step needs about 87px of the 152
  * that radius gives at the default width. */
-/* VH was 206, which put the baseline 38 units under the feet: enough for two
-   labels and nothing else. The clouds sit ON the feet now and one of them
-   rains, so the box is 18 units taller. Nothing else moved: CX, CY and the
-   radii are untouched, so the arch draws exactly where it always did and only
-   the strip beneath it grew. */
-const VW = 320, VH = 224, CX = 160, CY = 168
+/* VH has grown twice for the same reason and in the same way. The clouds are
+   the arch's footing now and one of them rains, so the strip under the feet
+   has to hold a cloud bank, three drops and two labels without any of the
+   three landing on each other. CX, CY and the radii have never moved: the arch
+   draws exactly where it always did and only the strip beneath it grew. */
+const VW = 320, VH = 232, CX = 160, CY = 168
 const BAND = 16
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
+/* The plate and the empty part of a band. Both are properties of the asset
+   rather than of whatever page it lands on, which is the point: this dial sits
+   on white on the student page, on a pale blue app canvas in the phone, and
+   inside a phone mock on the overview, and it has to be one recognisable
+   object on all three. PLATE at #e3eff2 is lighter than the app canvas and
+   darker than card white, so it separates from both, and EDGE is the hairline
+   that closes it. The first try at the plate was two steps lighter and the
+   white cloud disappeared into it: a white shape on a near-white sky is an
+   outline, not a cloud, and the calm end read as an empty pill while the grey
+   end read as weather. The plate is set at the depth where BOTH clouds are
+   solid objects. ink-3 measures 5.26 : 1 on it, so the two foot labels and the
+   caption under the figure still clear AA sitting on top of it. */
+const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#abced6'
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
 /* 180° is the left foot, 360° the right; increasing angle sweeps up and over. */
@@ -53,121 +66,126 @@ function arcPath(r, pct) {
   return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
 
-/* ── Weather on the arch ────────────────────────────────────────────────
-   The two ends of the scale get weather: a white cloud sitting still over the
-   calm foot, a dark one raining over the peak foot. It is the one piece of the
-   interface that is there to be liked rather than read, which is why it is
-   drawn last, announced to nobody, and never placed where a figure goes.
+/* ── The weather the arch stands in ────────────────────────────────────
+   One scene, not two pictures. The last version drew the arch and then parked
+   two clouds near it, and the note back was exactly that: misaligned, cheap,
+   "2 images lazily layered over". That was a fair reading of the geometry.
+   The clouds sat under the feet rather than on them, slid sideways on a nine
+   second loop, and the peak-end one floated in open space whenever the score
+   was low enough that no coloured band reached that side.
 
-   It sits in the two upper corners, not on the arch. The first attempt masked
-   the clouds to the band, which is what a single-band arch would want; this
-   arch is four concentric bands filling the whole annulus, and every band
-   paints its own full-length mist track, so a cloud behind them was invisible
-   and a cloud in front of them covered the reading. The corners above each
-   foot are the only empty space in the box, and they are directly above the
-   ends they belong to, so the association still reads.
+   So the clouds are the thing the arch stands on now. Each is centred on its
+   own foot and tall enough that the end of the band disappears into it, which
+   is what makes the arch read as rising out of a cloud bank rather than as
+   being placed beside one. They are wide and flat for the same reason: a tall
+   cloud buries the first fifth of every band, and a low reading would vanish
+   into it. Nothing drifts. A base that slides is a base that is not holding
+   anything up, and the sliding was half of why the two parts looked unrelated.
+   The rain still falls, because that is the one motion here that is a fact
+   about the picture rather than decoration on it.
 
-   Both animations stop under reduced motion. The clouds stay. */
-/* ── Weather on the arch ────────────────────────────────────────────────
-   A cloud sits on each foot and the arch springs out of it. The calm end gets
-   a white one, the peak end a grey one with rain falling out of it.
+   A cloud is a pile of circles of deliberately unequal size on a flat slab,
+   drawn twice. Pass one strokes and fills every shape in the edge colour,
+   which paints the union's outer boundary and nothing else; pass two fills the
+   same shapes on top, so no seam where two lobes overlap can show. The fill is
+   a soft vertical gradient rather than a flat colour, the edge is a hairline
+   rather than a border, and neither pile is a mirror of the other.
 
-   Three attempts got here. The first masked the clouds to the band, which a
-   single-band arch would want, but this arch is four concentric bands each
-   painting a full-length track, so the clouds were invisible behind them and
-   obstructive in front. The second parked them in the upper corners, which
-   read as two balloons. The third drew each as one stiff closed path with a
-   flat base and a heavy outline, and the note back was that they looked
-   "rigid" and "like a pasted image". They did: a single symmetric outline with
-   one flat fill is a sticker.
+   Weather is grey and blue, never green: this graphic's whole job is to be
+   red, orange, green and blue in that order, and a green cloud would cost the
+   one band that is already green. Like the sensor hues in lib/sensors.js these
+   belong to no token and are not meant to.
+     edge  #93a6ab  a hairline, not a border
+     rain  #2f7fd0  3.94 on the plate, clear of the 3 : 1 a graphic needs */
+const SKY = { edge:'#93a6ab', rain:'#2f7fd0' }
 
-   So a cloud is now a pile of circles of deliberately unequal size, drawn
-   twice. Pass one strokes every circle in the edge colour and fills it the
-   same, which paints the union's outer boundary and nothing else. Pass two
-   fills the same circles on top, so no seam where two lobes overlap ever
-   shows. The fill is a soft vertical gradient rather than a flat colour, the
-   edge is a hairline rather than a border, and neither pile is symmetric.
-
-   Weather is grey and blue, never green: an earlier pass used ink-2 and the
-   turquoise, which put two more greens beside a graphic whose entire job is to
-   be red, orange, green and blue in that order. Like the sensor hues in
-   lib/sensors.js these belong to no token and are not meant to.
-     edge  #97a3a0  a hairline, not a border
-     storm #5a6773  5.52 on paper
-     rain  #2f7fd0  3.94 on paper, clear of the 3 : 1 a graphic needs */
-const SKY = { edge:'#97a3a0', storm:'#5a6773', rain:'#2f7fd0' }
-
-/* [cx, cy, r], bottoms roughly level so the pile reads as one cloud resting on
-   something. Neither set is a mirror of the other, and no two radii in a set
-   are equal, because a row of same-sized bumps is the thing that looked
-   stamped. */
+/* A cloud is drawn in its own 96 x 30 box with its base line at the bottom of
+   it, so a cloud is placed by naming where its base sits and how wide its foot
+   is, and nothing else. Every circle's top is at or below 0 and every bottom
+   at or above the slab, so a cloud cannot print with a straight cut down one
+   side the way an earlier oversized pair did. No two radii in a set are equal,
+   because a row of same-sized bumps is the thing that looked stamped. */
+const CLOUD_W = 96, CLOUD_H = 34
 const PUFFS = {
-  calm: [[17,30,13],[33,20,17],[52,26,14],[66,31,10],[41,33,13],[25,34,11]],
-  peak: [[15,32,11],[30,22,16],[49,18,19],[68,28,13],[40,34,12],[58,34,10]],
+  calm: [[10,26,8],[24,21,13],[42,15,15],[64,20,14],[84,26,8],[52,27,7]],
+  peak: [[12,25,9],[30,20,14],[52,15,15],[74,21,13],[88,27,7],[42,28,6]],
 }
-const BASE = { x:4, y:28, w:66, h:16, r:8 }
+const SLAB = { x:4, y:22, w:88, h:12, r:6 }
 
-function Cloud({ x, y, k, kind, fill, edge, id }) {
-  const puffs = PUFFS[kind]
+function Cloud({ cx, base, kind, id, rim = 1.2 }) {
   /* One <g> per pass, and the shapes are identical in both. */
-  const shapes = (props) => (
+  const shapes = props => (
     <>
-      <rect x={BASE.x} y={BASE.y} width={BASE.w} height={BASE.h} rx={BASE.r} {...props}/>
-      {puffs.map(([cx, cy, r], i) => <circle key={i} cx={cx} cy={cy} r={r} {...props}/>)}
+      <rect x={SLAB.x} y={SLAB.y} width={SLAB.w} height={SLAB.h} rx={SLAB.r} {...props}/>
+      {PUFFS[kind].map(([x, y, r], i) => <circle key={i} cx={x} cy={y} r={r} {...props}/>)}
     </>
   )
   return (
-    <g transform={`translate(${x} ${y}) scale(${k})`}>
-      {edge && <g fill={edge} stroke={edge} strokeWidth={1.3 / k}>{shapes({})}</g>}
+    <g transform={`translate(${cx - CLOUD_W / 2} ${base - CLOUD_H})`}>
+      <g fill={SKY.edge} stroke={SKY.edge} strokeWidth={rim}>{shapes({})}</g>
       <g fill={`url(#${id})`}>{shapes({})}</g>
     </g>
   )
 }
 
+/* The feet, in viewBox units: the left spans x 13 to 83 and the right 237 to
+   307, so 48 and 272 are their centres and a cloud centred there is centred on
+   its own foot at any size the dial is drawn at. BASE_Y is eight under the
+   bottom of the band, so each band ends inside its cloud rather than beside
+   it, and the cloud's own top sits six above that bottom, so a band only has
+   to carry about 5% of its length to clear the cloud and be read. */
+/* Four units in from each foot's own centre, so a 96-wide cloud stops short
+   of the plate's edge on both sides. Centred exactly on the feet, each cloud
+   ran into the rounded corner of the plate and read as bleeding out of the
+   frame rather than sitting inside it. */
+const FOOT = { calm: 52, peak: 268 }
+const BASE_Y = 184
+
 export function ArchWeather() {
-  /* Two dials share a page on the overview, so the gradient ids cannot be
-     constants: the second <defs> would silently lose to the first. */
+  /* Two dials share a page on more than one route, so the gradient ids cannot
+     be constants: the second <defs> would silently lose to the first. */
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const calm = `mm-calm-${uid}`, peak = `mm-peak-${uid}`
   return (
     <g aria-hidden style={{ pointerEvents:'none' }}>
       <defs>
-        {/* Light at the top, settling a little at the base.
+        {/* userSpaceOnUse, not the default objectBoundingBox. With the default
+            each of the seven shapes in a cloud gets its own copy of the ramp
+            scaled to its own box, so every lobe prints as a separately shaded
+            disc and the pile reads as a bag of balls. In user space the ramp is
+            one ramp across the whole cloud, which is the only way a union of
+            circles lights like one object. The stops are the cloud's own y
+            range in viewBox units.
 
-            userSpaceOnUse, not the default objectBoundingBox. With the
-            default, each of the seven shapes in a cloud gets its own copy of
-            the ramp scaled to its own box, so every lobe printed as a separate
-            shaded disc and the pile read as a bunch of balls. In user space
-            the ramp is one ramp across the whole cloud, which is the only way
-            a union of circles lights like one object. The stops are the
-            cloud's own y range in viewBox units. */}
-        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="152" x2="0" y2="196">
+            The white cloud's ramp travels almost nowhere, and that is the fix
+            for the second thing that went wrong with it. A ramp ending two
+            steps off the plate left the bottom half of the cloud at the same
+            value as the sky behind it, so all that printed was the outline
+            and the flat base: a pill, not a cloud. It ends well clear of the
+            plate now, so the whole shape is one solid lighter mass and the
+            hairline is a rim on it rather than the only thing drawing it. */}
+        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
           <stop offset="0" stopColor="#ffffff"/>
-          <stop offset="1" stopColor="#eef3f1"/>
+          <stop offset="1" stopColor="#f0f8f9"/>
         </linearGradient>
-        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="152" x2="0" y2="196">
-          <stop offset="0" stopColor="#7a8894"/>
-          <stop offset="1" stopColor="#4f5c68"/>
+        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
+          <stop offset="0" stopColor="#7d8b96"/>
+          <stop offset="1" stopColor="#4c5967"/>
         </linearGradient>
       </defs>
-      {/* The left foot spans x 13 to 83 and the right 237 to 307, and the box
-          is 320 wide. Each cloud is 74 wide and sits inside its own foot's
-          span, which is the constraint an earlier pass broke: at 92 wide both
-          clouds ran past the edges of the viewBox and printed with a straight
-          vertical cut down the outer side of each. Nothing may leave the
-          box. */}
-      <g className="mm-drift">
-        <Cloud x={7} y={152} k={0.95} kind="calm" edge={SKY.edge} id={calm}/>
-      </g>
-      <g className="mm-drift mm-drift-slow">
-        <Cloud x={237} y={152} k={0.95} kind="peak" id={peak}/>
-      </g>
-      {/* Rain, in the strip under the peak foot. Three drops at three lengths;
-          three identical ones looked printed on. */}
+      {/* The white one carries a heavier rim than the grey one, which is not
+          a style choice. A dark cloud draws its own silhouette out of its fill;
+          a white cloud on a pale sky has no fill contrast to draw one with, so
+          the lobes stop reading and the pile goes flat. The rim is what gives
+          it an outline to be a cloud with. */}
+      <Cloud cx={FOOT.calm} base={BASE_Y} kind="calm" id={calm} rim={2}/>
+      <Cloud cx={FOOT.peak} base={BASE_Y} kind="peak" id={peak}/>
+      {/* Rain, out of the underside of the peak cloud. Three drops at three
+          lengths; three identical ones looked printed on. */}
       <g className="mm-rain" stroke={SKY.rain} strokeLinecap="round">
-        <line x1="255" y1="197" x2="252" y2="205" strokeWidth="2.6"/>
-        <line x1="271" y1="199" x2="268" y2="208" strokeWidth="3"/>
-        <line x1="287" y1="197" x2="284" y2="204" strokeWidth="2.3"/>
+        <line x1="256" y1="187" x2="253" y2="196" strokeWidth="2.6"/>
+        <line x1="272" y1="189" x2="269" y2="199" strokeWidth="3"/>
+        <line x1="289" y1="187" x2="286" y2="195" strokeWidth="2.3"/>
       </g>
     </g>
   )
@@ -191,13 +209,22 @@ function useCount(value, on = true) {
 /* Flat, opaque, round-ended. No blur, no gradient, no partial opacity: a
    blurred copy under a band makes the edge look out of focus, and a gradient
    spends half the band's length being a duller version of its own colour.
-   One solid paint at full strength is both brighter and sharper. */
+   One solid paint at full strength is both brighter and sharper.
+
+   TRACK is the unfilled part of each band, and it is the other half of why
+   this graphic disappeared into the page. It was `stroke-mist`, which is a
+   near-white on a near-white ground, so at a middling score the only thing
+   drawn was a short coloured stub with nothing around it and no shape to read.
+   At #bcd6db the four tracks together are a solid arch the eye catches first,
+   and the colour fills it in. It is not text and never carries a value on its
+   own, so 1.6 : 1 against the plate is the right weight rather than a floor it
+   fails. */
 function Band({ r, glow, pct, dim }) {
   const shown = useCount(pct)
   return (
     <g opacity={dim ? 0.24 : 1} className="transition-opacity duration-200"
       style={{ pointerEvents: 'none' }}>
-      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} className="stroke-mist"/>
+      <path d={arcPath(r, 100)} fill="none" strokeWidth={BAND} stroke={TRACK}/>
       <path d={arcPath(r, shown)} fill="none" strokeWidth={BAND} strokeLinecap="round" stroke={glow}/>
     </g>
   )
@@ -233,6 +260,13 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         aria-label={`${score} out of 100${usual != null ? `, usually ${usual}` : ''}. 0 is calm, 100 is peak.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
+          {/* The sky the whole thing stands in, drawn first and carrying the
+              asset's own edge. Without it the arch, the clouds and the rain
+              were three marks floating on whatever ground the page happened to
+              have, which is what "it blends in with background" was pointing
+              at. With it they are one framed picture at every size. */}
+          <rect x="1" y="1" width={VW - 2} height={VH - 2} rx="14"
+            fill={PLATE} stroke={EDGE} strokeWidth="1.6"/>
           {rings.map((r, i) => {
             const s = SENSORS[r.id] || r
             return (
@@ -249,7 +283,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         {/* the score rides over the arch in real HTML, so it uses the display
             face and a step off the scale rather than a size the viewBox
             invented at this particular width */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[26%]
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[28.5%]
           flex flex-col items-center">
           <span className="font-display text-dial font-medium leading-none tracking-tight text-ink">{shown}</span>
           <span className="mt-1 text-tick text-ink-3">out of 100</span>
@@ -262,8 +296,8 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
             clouds now occupy those corners, and "calm" was printing on top of
             the white one. 15% and 85% are the feet's own centres in the
             viewBox, so the words track the ends they name at any size. */}
-        <span aria-hidden className="absolute bottom-0 left-[15%] -translate-x-1/2 text-tick text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-0 left-[85%] -translate-x-1/2 text-tick text-ink-3">peak</span>
+        <span aria-hidden className="absolute bottom-[2.5%] left-[15%] -translate-x-1/2 text-tick text-ink-3">calm</span>
+        <span aria-hidden className="absolute bottom-[2.5%] left-[85%] -translate-x-1/2 text-tick text-ink-3">peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">

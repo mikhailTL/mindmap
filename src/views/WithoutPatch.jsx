@@ -248,13 +248,24 @@ export function WithoutPatch({ go }) {
         <div className="mt-8"><PhoneCheck/></div>
       </Section>
 
+      {/* Proved / Careful / Not proved was the wrong frame: those are the
+          columns of a trial report, and this is a build. The three facts the
+          band exists to state are unchanged, and they are the ones a reader
+          has to leave with: what the camera reading actually is, that the
+          beat-to-beat figure is ours and is withheld when the signal is bad,
+          and that nothing here has met a person yet. Said as build notes they
+          read as the same honesty without borrowing a clinical claim to
+          disclaim. */}
       <Section name="Limits" tone="ink" tight>
-        <SectionHead tone="ink">Proved and not proved.</SectionHead>
+        <SectionHead tone="ink">What this reading is, and what it is not</SectionHead>
         <ul className="mt-5 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-6">
           {[
-            ['Proved', 'Heart rate, within half a beat per minute on a known signal.'],
-            ['Careful', 'Beat-to-beat is our own index, not a clinical RMSSD. Withheld when noisy.'],
-            ['Not proved', 'Never tested on a person. Every figure is synthetic.'],
+            ['What it measures',
+              'Heart rate off the camera, matched to within half a beat per minute against a known signal.'],
+            ['Our own index',
+              'The beat-to-beat figure is this project’s own index, not a clinical RMSSD. It is withheld when the signal is noisy.'],
+            ['Where it stands',
+              'Nothing here has been tested on a person. Every figure on this page is generated.'],
           ].map(([k, v], i) => (
             <ScrollRow key={k} index={i} as="li" className="border-t border-ink-3 pt-3">
               <p className="font-display text-ui font-bold text-accent-lit">{k}</p>

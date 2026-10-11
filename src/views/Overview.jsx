@@ -6,12 +6,8 @@ import { ArrowRight } from '../ui/marks'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
-import { RainbowDial } from '../charts/rainbow'
 import { ProblemStats } from '../charts/problem'
-import { studentRings } from '../lib/readings'
-import { triage, tierOf, TIER_LABEL } from '../lib/caseload'
-import { DATA } from '../lib/assets'
-import { HowItWorks, WhoSeesWhat, WeekStrip } from '../charts/infographics'
+import { HowItWorks, WhoSeesWhat } from '../charts/infographics'
 import { Card } from '../ui/card'
 import { cn } from '../lib/utils'
 /* The site's vocabulary lives in one file. The daily number is the Mind Score
@@ -129,48 +125,15 @@ const SCREENS = [
     cta:'What a school gets' },
 ]
 
-/* Each preview is the live component that screen actually uses, on that
-   screen's own data. A screenshot would go stale the first time a chart
-   changed, and a photograph of somebody holding a phone shows nothing at all.
-
-   The student's dial is drawn at roughly twice the other two, because the
-   student is the person who wears the thing and the layout should say so
-   before the words do. */
-function Preview({ id }) {
-  if (id === 'student') {
-    return <RainbowDial score={51} usual={46} rings={studentRings()} size={244}/>
-  }
-  if (id === 'parent') {
-    return (
-      <div className="w-[13rem] shrink-0">
-        <WeekStrip days={DATA.week} band={DATA.weekBand}/>
-      </div>
-    )
-  }
-  /* `roster()` calls the reading `current`, not `score`. Reading `s.score` gave
-     every row undefined, which tierOf floors to 'info', so this preview once
-     rendered four identical rows and four zero-width bars. */
-  const rows = triage().slice(0, 4)
-  /* Divs and not a list, because this whole preview sits inside a <button>
-     and a <ul> inside a button is content a browser is allowed to move. */
-  return (
-    <div className="w-[13rem] shrink-0 space-y-2.5">
-      {rows.map(s => {
-        const tier = tierOf(s.current)
-        return (
-          <span key={s.id} className="grid grid-cols-[1fr_4.5rem] items-center gap-3">
-            <span className="block h-2 w-full rounded-bar bg-rule/70">
-              <span className={cn('block h-2 rounded-bar',
-                tier === 'crisis' ? 'bg-crit' : tier === 'high' ? 'bg-warn' : 'bg-accent')}
-                style={{ width: `${s.current}%` }}/>
-            </span>
-            <span className="font-mono text-fine tabular-nums text-ink-2">{TIER_LABEL[tier]}</span>
-          </span>
-        )
-      })}
-    </div>
-  )
-}
+/* These three cards used to carry a photograph AND a 150px live preview of
+   that person's own screen: an arch for the student, a week strip for the
+   parent, four ranked rows for the counselor. Two pictures of the same thing
+   stacked in one card is what made this row 150px taller than it had any
+   reason to be, and the note on it was plain: the dashboard pictures are not
+   wanted here, the photograph is enough. A reader picking which of three
+   people they are is answering that off a face, not off a chart they cannot
+   read at 13rem wide. Every one of those previews is still on the page it
+   belongs to, at a size where it can actually be read. */
 
 /* What a reader asks the moment they see a sticker on somebody's arm. Every
    line here is a fact the hardware thread has settled, and the last one is the
@@ -227,10 +190,16 @@ export function Overview({ go }) {
           section below cannot show a strip of itself at the bottom of the
           first view and the page opens on one thing rather than one and a
           half. Below lg it goes back to `min-h-`, because a phone cannot fit a
-          headline, two buttons and two drawings in 700px without shrinking one
-          of them past use. */}
+          headline, a button and two drawings in 700px without shrinking one
+          of them past use.
+
+          Capped at 44rem. On a tall desktop a full-viewport band left about
+          190px of nothing above the headline and as much below it, and that is
+          the single largest piece of the "blank empty space" note. At 1280 x
+          720 the viewport is the smaller of the two, so on a laptop the band
+          is still exactly one screen, which is what the rule was for. */}
       <section id="hero" className="relative isolate flex min-h-[calc(100svh-57px)] flex-col
-        overflow-hidden border-t border-rule bg-paper lg:h-[calc(100svh-57px)] lg:min-h-0">
+        overflow-hidden border-t border-rule bg-paper lg:h-[min(calc(100svh-57px),44rem)] lg:min-h-0">
 
         <div className="wrap relative z-10 flex flex-1 flex-col
           lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]
@@ -238,12 +207,14 @@ export function Overview({ go }) {
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
           <div className="flex shrink-0 flex-col justify-center py-10 lg:py-0 lg:pr-10">
-            {/* The name, with the hairline a drawing puts in front of a key.
-                accent on paper is 5.52 : 1, so it can be a word and not only a
-                colour. */}
-            <ScrollIn as="p" className="flex items-center gap-3 font-mono text-row font-bold
+            {/* A hairline used to sit in front of this line, the way a
+                drawing puts one in front of a key. On a page whose house rule
+                is that there is not one em dash in the copy, a 28px rule
+                immediately before a sentence is read as an em dash by anyone
+                who is not thinking about drawings, and it was. There is
+                nothing in front of the line now. */}
+            <ScrollIn as="p" className="font-mono text-row font-bold
               tracking-[0.005em] text-accent">
-              <span aria-hidden className="h-px w-7 shrink-0 bg-accent/55"/>
               MindMap, a wellness app for teenagers
             </ScrollIn>
             {/* Set the way the first version of this page set it: medium
@@ -276,11 +247,14 @@ export function Overview({ go }) {
                 </li>
               ))}
             </ScrollIn>
+            {/* One button, not two. "Take a reading from your phone" stood
+                beside this one and is also the middle card of the three ways
+                directly below it, which made the phone route the only thing on
+                the page offered twice inside the first two screens. The note
+                was that one destination should not have three ways in, and
+                this was the clearest case of it. */}
             <ScrollIn className="mt-8">
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-                <Button variant="outline" onClick={() => go('without-patch')}>Take a reading from your phone</Button>
-              </div>
+              <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
             </ScrollIn>
           </div>
 
@@ -385,12 +359,12 @@ export function Overview({ go }) {
         <SectionLede>
           All three open the same app. They differ in what it has to work with.
         </SectionLede>
-        <div className="mt-7 grid auto-rows-fr gap-5 md:grid-cols-3">
+        <div className="mt-6 grid auto-rows-fr gap-4 md:grid-cols-3">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(d.go)}
-                className={cn('flex h-full flex-col p-6', d.lead && 'border-l-accent')}>
-                <span className="grid h-[72px] place-items-start" aria-hidden>{d.art}</span>
+                className={cn('flex h-full flex-col p-5', d.lead && 'border-l-accent')}>
+                <span className="grid h-[60px] place-items-start" aria-hidden>{d.art}</span>
                 <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">
                   {d.title}
                 </span>
@@ -413,7 +387,7 @@ export function Overview({ go }) {
         <HowItWorks className="mt-6"/>
         {/* One window, five lines. The reviewer asked five questions about the
             object itself and the page answered none of them. */}
-        <div className="mt-6 rounded-panel border border-rule bg-card p-6">
+        <div className="mt-6 rounded-panel border border-rule bg-card p-5">
           <h3 className="font-display text-head font-bold leading-tight text-ink">The patch itself</h3>
           <ul className="mt-4 grid list-none gap-x-10 gap-y-2.5 p-0 md:grid-cols-2">
             {PATCH_FACTS.map(t => (
@@ -442,7 +416,7 @@ export function Overview({ go }) {
             and the other two like footnotes. They are three views of the same
             day and the grid should say so: same width, same height, same
             order of parts in each. */}
-        <div className="mt-7 grid auto-rows-fr gap-5 lg:grid-cols-3">
+        <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
@@ -450,27 +424,29 @@ export function Overview({ go }) {
                    between these three read as three separate topics when they
                    are three views of one day. */
                 className="group flex h-full w-full flex-col gap-3 rounded-panel border
-                  border-rule bg-card p-6 text-left transition-[border-color] duration-150
+                  border-rule bg-card p-5 text-left transition-[border-color] duration-150
                   hover:border-accent">
-                {/* The photo leads. These three cards are the one place on
+                {/* max-w-none is load-bearing and was missing. Tailwind's
+                    preflight sets `img { max-width: 100% }`, which clamped
+                    this image back to the card's content box and undid the
+                    bleed: the picture started at the card's left edge and
+                    stopped 40px short of its right one, on every card, at
+                    every width. The negative margin was doing its half of the
+                    job and the width was being thrown away.
+
+                    The photo leads. These three cards are the one place on
                     the site where a reader is choosing which person they are,
                     and a face answers that faster than a label does. Fixed
                     height and object-cover so three different crops still sit
                     on one line. */}
                 <img src={`/photos/${s2.photo}.webp`} alt={s2.alt} loading="lazy" decoding="async"
                   width="900" height="605"
-                  className="-mx-6 -mt-6 mb-1 h-[148px] w-[calc(100%+3rem)] rounded-t-panel
+                  className="-mx-5 -mt-5 mb-1 h-[160px] w-[calc(100%_+_2.5rem)] max-w-none
+                    rounded-t-panel
                     object-cover"/>
                 <span className="font-mono text-body font-bold tracking-[0.005em] text-accent">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
-                </span>
-                {/* One fixed-height stage per cell, so the three previews sit
-                    on the same line whatever shape each one is: an arch, a
-                    week strip and a ranked list are three different heights
-                    and without this the copy under them stepped. */}
-                <span aria-hidden className="mt-1 flex h-[150px] items-center justify-center">
-                  <Preview id={s2.id}/>
                 </span>
                 <span className="max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.line}</span>
                 <span className="mt-auto flex items-center gap-2.5 pt-2 font-display text-meta
@@ -501,10 +477,10 @@ export function Overview({ go }) {
           The student sees every reading first. Nothing reaches a parent or a school until the
           student turns that sharing on.
         </SectionLede>
-        <div className="mt-7 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {TRUST.map((t, i) => (
             <ScrollRow key={t.title} index={i} className="h-full">
-              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
+              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-5">
                 <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {t.title}
                 </h3>
@@ -513,7 +489,7 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
-        <WhoSeesWhat className="mt-7 max-w-[62rem]"/>
+        <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
@@ -532,9 +508,9 @@ export function Overview({ go }) {
             are the last thing on it, so the second inversion is not a repeat
             of the first — it closes the page against the band that opened it,
             and every tint between the two now reads as the middle. */}
-        <ul className="mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-6 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {NEVER.map(t => (
-            <li key={t} className="rounded-panel bg-ink-2/45 px-5 py-4 text-meta leading-[1.4] text-mist">
+            <li key={t} className="rounded-panel bg-ink-2/45 px-4 py-3.5 text-meta leading-[1.4] text-mist">
               {t}
             </li>
           ))}
