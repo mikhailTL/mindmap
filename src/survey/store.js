@@ -31,7 +31,7 @@ const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
  * before it existed. Bumping VERSION for an additive field would throw away
  * the half-finished response a reviewer already has in their browser, which is
  * exactly the thing the guard above is meant to protect. */
-const empty = () => ({ v: VERSION, visitor: null, answers: [], sentAt: null })
+const empty = () => ({ v: VERSION, visitor: null, answers: [], sentAt: null, queuedAt: null })
 
 let state = empty()
 let loaded = false
@@ -248,25 +248,68 @@ export async function submitResponse({ force = false } = {}) {
   /* Same in-flight guard as syncPending. The last answer can land at the same
    * moment the button is pressed, and two posts of one response is worse than
    * one that has to be pressed again. */
-  if (submitting) return false
-  if (!state.visitor || !state.answers.length) return false
-  if (state.sentAt && !force) return false
+  if (submitting) return 'idle'
+  if (!state.visitor || !state.answers.length) return 'idle'
+  if (state.sentAt && !force) return 'sent'
   submitting = true
   try {
-    const ok = await sendResponse()
-    if (!ok) return false
-    state.sentAt = new Date().toISOString()
-    /* The answers are delivered, so nothing is pending any more. This is also
-     * what stops recordAnswer's opportunistic syncPending from retrying a
-     * backend that is not there on every later keystroke. */
-    state.answers = state.answers.map(a => (a.synced ? a : { ...a, synced: true }))
+    const result = await sendResponse()
+    if (result === 'sent') {
+      state.sentAt = new Date().toISOString()
+      state.queuedAt = null
+      /* The answers are delivered, so nothing is pending any more. This is also
+       * what stops recordAnswer's opportunistic syncPending from retrying a
+       * backend that is not there on every later keystroke. */
+      state.answers = state.answers.map(a => (a.synced ? a : { ...a, synced: true }))
+      commit()
+      return 'sent'
+    }
+    /* Not delivered, and not lost either. The response is stamped as queued and
+     * every later visit, and the moment the network comes back, tries it again.
+     * A reviewer is told it is saved and will send, because that is true, and
+     * because the two reasons it did not go now are both somebody else's to
+     * fix: an activation link in the owner's mailbox, or a relay that is down.
+     * Showing them a red failure for either one is a lie about whose problem
+     * it is and invites them to press the button four more times. */
+    state.queuedAt = state.queuedAt || new Date().toISOString()
     commit()
-    return true
+    return result
   } catch {
-    return false
+    state.queuedAt = state.queuedAt || new Date().toISOString()
+    commit()
+    return 'unreachable'
   } finally {
     submitting = false
   }
+}
+
+
+/* Is there a response sitting here that still wants to go? */
+export function isQueued() {
+  load()
+  return !!state.queuedAt && !state.sentAt
+}
+
+/* The retry. Cheap, silent, and safe to call on any event: it does nothing
+ * unless there is a queued response, and submitResponse's own in-flight guard
+ * stops two of these overlapping.
+ *
+ * This is the part that makes delivery not depend on the reviewer. They press
+ * Submit once; if it cannot go at that moment it goes on their next visit, or
+ * when their phone finds signal again, without anybody pressing anything. */
+export async function flushQueue() {
+  load()
+  if (!isQueued()) return 'idle'
+  return submitResponse({ force: true })
+}
+
+/* Wired once, at module load, on the two events that actually change the
+ * answer: the page being opened again, and the network returning. */
+if (typeof window !== 'undefined') {
+  const tryFlush = () => { flushQueue().catch(() => {}) }
+  /* A beat after load, so a queued retry never competes with first paint. */
+  setTimeout(tryFlush, 2500)
+  window.addEventListener('online', tryFlush)
 }
 
 export function wasSent() {

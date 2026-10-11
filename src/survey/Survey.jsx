@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
 import { PAGE, REQUIRED, SECTIONS } from './questions'
 import {
   answersFor, getVersion, getVisitor, recordAnswer,
-  subscribe, syncPending, submitResponse, wasSent,
+  subscribe, syncPending, submitResponse, wasSent, isQueued,
 } from './store'
 
 /* One survey, opened from a small box in the corner.
@@ -397,7 +397,11 @@ function ReviewDialog({ onClose }) {
   /* Four states and not a boolean. A control that cannot say it is working says
    * nothing at all while the relay takes its second or two, and a reviewer who
    * gets no answer presses it again. */
-  const [send, setSend] = React.useState(() => (wasSent() ? 'sent' : 'idle'))
+  /* Derived from the store rather than held here, for the same reason the
+     survey page derives it: a queued response retries itself in the background
+     and this has to notice. `busy` is the only local part. */
+  const [busy, setBusy] = React.useState(false)
+  const send = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
 
   /* The response goes out by itself the moment the last required question is
    * answered: a reviewer who has answered everything has finished, and should
@@ -408,12 +412,8 @@ function ReviewDialog({ onClose }) {
   React.useEffect(() => {
     if (!complete) return
     let alive = true
-    setSend(prev => (prev === 'sent' ? prev : 'sending'))
-    submitResponse().then(ok => {
-      if (!alive) return
-      /* A refusal from an already-sent record is not a failure to report. */
-      setSend(ok || wasSent() ? 'sent' : 'failed')
-    })
+    setBusy(true)
+    submitResponse().finally(() => { if (alive) setBusy(false) })
     return () => { alive = false }
   }, [complete])
 
@@ -422,8 +422,8 @@ function ReviewDialog({ onClose }) {
    * once-only guard; the button is disabled once it has succeeded, so it cannot
    * be used to send the same response twice over. */
   const sendNow = () => {
-    setSend('sending')
-    submitResponse({ force: true }).then(ok => setSend(ok ? 'sent' : 'failed'))
+    setBusy(true)
+    submitResponse({ force: true }).finally(() => setBusy(false))
   }
 
   const answer = (q, value, label) =>
@@ -516,14 +516,25 @@ function ReviewDialog({ onClose }) {
                 disabled={send === 'sending' || send === 'sent' || !answers.length}
                 onClick={sendNow}
               >
-                {send === 'sent' ? 'Submitted' : send === 'sending' ? 'Sending' : 'Submit'}
+                {send === 'sent' ? 'Submitted'
+                  : send === 'sending' ? 'Sending'
+                  : send === 'queued' ? 'Send again'
+                  : 'Submit'}
               </Button>
               <Button size="sm" variant="ghost" onClick={onClose}>
                 {complete ? 'Close' : 'Come back to it'}
               </Button>
             </div>
-            {send === 'failed' && (
-              <p className="note mt-2.5">That did not send. Try again in a moment.</p>
+            {/* There is no failure state left to render. A response that
+                cannot go right now is queued and retried on its own, so the
+                reviewer gets a receipt rather than a red line about a problem
+                that is not theirs: an activation link in the owner's mailbox,
+                or a relay that is down. */}
+            {send === 'queued' && (
+              <p className="note mt-2.5">
+                Saved. It goes out the next time this page is open, or as soon as you are
+                back online.
+              </p>
             )}
           </div>
         </div>

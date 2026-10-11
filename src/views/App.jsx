@@ -10,7 +10,7 @@ import { ReviewLauncher } from '../survey/Survey'
 import { PAGE, REQUIRED, SECTIONS } from '../survey/questions'
 import {
   answersFor, getVersion, getVisitor,
-  recordAnswer, submitResponse, subscribe, syncPending, wasSent,
+  isQueued, recordAnswer, submitResponse, subscribe, syncPending, wasSent,
 } from '../survey/store'
 import { Students } from './Students'
 import { Parents } from './Parents'
@@ -828,39 +828,54 @@ function SurveyField({ q, answer, onAnswer, onSkip }) {
  * more than no review, and the store stamps it so a later complete submission
  * is a new send rather than a silent no-op. */
 function SubmitRow({ done, total }) {
-  const [state, setState] = React.useState(() => (wasSent() ? 'sent' : 'idle'))
-  /* Any answer at all, not any REQUIRED answer. `done` counts only the twelve
-     required items, so a reviewer who filled in the optional background
-     questions and nothing else would have faced a Submit button that refused
-     to work and did not say why. */
+  /* Derived from the store on every render, not held here. A queued response
+     is retried in the background on a timer and on the network returning, and
+     when one of those succeeds the store commits and this re-renders through
+     the page's own subscription. Holding the outcome in component state meant
+     a reviewer who left the page open watched it deliver and still read "it
+     will send on its own". Only `busy` is local, because the in-flight moment
+     is this component's and nothing else's. */
+  const [busy, setBusy] = React.useState(false)
   const empty = answersFor(PAGE).length === 0
+  const state = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
 
   const submit = async () => {
-    setState('sending')
-    const ok = await submitResponse({ force: true })
-    setState(ok ? 'sent' : 'failed')
+    setBusy(true)
+    try { await submitResponse({ force: true }) } finally { setBusy(false) }
   }
+
+  /* 'queued' is the state this component exists to get right. The response is
+     saved and will be retried on its own; the reviewer has done everything
+     asked of them, so the line is a receipt and not an error. The only thing
+     they are not told is WHY it has not gone yet, because the two reasons are
+     an activation link in somebody else's mailbox and a relay being down, and
+     neither is theirs to act on. */
+  const line =
+    state === 'sent' ? 'Sent. Thank you.'
+      : state === 'queued' ? 'Saved. It will send on its own.'
+      : done >= total ? 'That is all of them.'
+      : `${total - done} to go.`
 
   return (
     <div className="border-t border-rule pt-5">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <p className="note">
-          {state === 'sent' ? 'Sent. Thank you.'
-            : done >= total ? 'That is all of them.'
-            : `${total - done} to go.`}
-        </p>
+        <p className="note">{line}</p>
         <Button type="button" className="ml-auto min-h-[44px]"
           disabled={empty || state === 'sending' || state === 'sent'}
           onClick={submit}>
           {state === 'sent' ? 'Submitted'
             : state === 'sending' ? 'Sending'
+            : state === 'queued' ? 'Send again'
             : 'Submit'}
         </Button>
       </div>
-      {state === 'failed' && (
-        <p className="note mt-2.5">That did not send. Try again in a moment.</p>
+      {state === 'queued' && (
+        <p className="note mt-2.5">
+          Nothing is lost. It goes out the next time this page is open, or as soon as
+          you are back online.
+        </p>
       )}
-      {state !== 'sent' && !empty && done < total && (
+      {state !== 'sent' && state !== 'queued' && !empty && done < total && (
         <p className="note mt-2.5">You can submit what you have and come back to the rest.</p>
       )}
     </div>

@@ -22,7 +22,25 @@ import { ALL_ITEMS } from './questions'
  * One mail per response, not one per answer. The old per-answer POST was right
  * for a database and would be twelve separate emails for one reviewer.
  */
-const ENDPOINT = 'https://formsubmit.co/ajax/2020mik2020@gmail.com'
+/* Two transports, tried in order.
+ *
+ * OWN is the owner's own endpoint, set at build time through
+ * VITE_SURVEY_ENDPOINT. It is empty on this build and that is fine: when it is
+ * set it goes first, because a response delivered by infrastructure the owner
+ * controls does not depend on a free relay's uptime, rate limit or activation
+ * state. A Google Apps Script web app or a Vercel function both work; neither
+ * needs a key in the bundle, because the URL is the destination, not a secret.
+ *
+ * RELAY is the keyless fallback. Anything with a token would have to ship the
+ * token in the bundle, where every visitor can read it, so it would not be a
+ * secret. FormSubmit takes a plain JSON POST with nothing but the destination
+ * in the URL and answers in JSON, so a refusal is something the survey can read
+ * rather than a navigation away from a half-finished form. It delivers nothing
+ * until the owner of that mailbox clicks a one-time activation link, which is
+ * what stops it being an open spam relay, and which is a state this module now
+ * reports by name instead of calling it a failure. */
+const OWN = import.meta.env?.VITE_SURVEY_ENDPOINT || ''
+const RELAY = 'https://formsubmit.co/ajax/2020mik2020@gmail.com'
 
 /* Question order, not the order the answers were given. A reviewer doubles
  * back and re-answers item three last, and a mail that lists the instrument in
@@ -48,40 +66,77 @@ export function answersText(rows) {
  * and a rejected promise there is a console error and a dead button. A refusal
  * leaves the stored record untouched so the next attempt sends the whole
  * response again rather than half of it. */
+/* The three outcomes, named.
+ *
+ *   'sent'       the response is accepted and gone
+ *   'waiting'    the transport is there but cannot deliver yet. Today that
+ *                means the relay wants its one-time activation click from the
+ *                owner's mailbox; it is not the reviewer's problem and must
+ *                never be shown to them as an error.
+ *   'unreachable' no signal, a blocked request, or the relay is down.
+ *
+ * Only 'sent' is terminal. The other two mean the store keeps the response and
+ * tries again, which is the whole of how this is reliable: delivery does not
+ * have to succeed at the moment a button is pressed.
+ *
+ * Never throws. The callers are a click handler, an effect, and a window event
+ * in a survey somebody is sitting in front of; a rejected promise there is a
+ * console error and a dead button. */
+export function payload(rows) {
+  const name = rows[0]?.visitorName || 'Anonymous'
+  return {
+    _subject: `MindMap feedback: ${name}`,
+    _template: 'table',
+    _captcha: 'false',
+    name,
+    submitted: new Date().toISOString(),
+    answers: answersText(rows),
+  }
+}
+
+async function post(url, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
 export async function sendResponse() {
+  if (typeof fetch !== 'function') return 'unreachable'
+  let rows
   try {
-    if (typeof fetch !== 'function') return false
-    const rows = exportRows()
-    if (!rows.length) return false
-    const name = rows[0].visitorName || 'Anonymous'
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        _subject: `MindMap feedback: ${name}`,
-        _template: 'table',
-        _captcha: 'false',
-        name,
-        submitted: new Date().toISOString(),
-        answers: answersText(rows),
-      }),
-    })
-    if (!res || !res.ok) return false
-    /* A 200 is not acceptance on its own: the relay answers 200 with
-     * success:false when the address is unconfirmed or the post is rate
-     * limited. success comes back as the string "true" on accept and the
-     * boolean false on refusal, so it is compared as text rather than trusted
-     * as a boolean. */
+    rows = exportRows()
+  } catch { return 'unreachable' }
+  if (!rows || !rows.length) return 'unreachable'
+  const body = payload(rows)
+
+  /* The owner's own endpoint, when there is one. A 2xx is acceptance: this is
+     their server and it has no activation step to be in the middle of. */
+  if (OWN) {
     try {
-      const body = await res.json()
-      if (body && String(body.success) !== 'true') return false
-    } catch {
-      /* A 2xx whose body will not parse is taken at its status. Calling it a
-       * failure would invite a second copy of the same response. */
-    }
-    return true
+      const res = await post(OWN, body)
+      if (res && res.ok) return 'sent'
+    } catch {}
+  }
+
+  try {
+    const res = await post(RELAY, body)
+    if (!res) return 'unreachable'
+    if (!res.ok) return 'unreachable'
+    /* A 200 is not acceptance on its own. The relay answers 200 with
+       success:false both when the address is not activated yet and when the
+       post is rate limited, and those are different futures: the first clears
+       when the owner clicks a link, the second clears by waiting. Both are
+       'waiting' as far as the reviewer is concerned, and both keep the
+       response queued. success comes back as the string "true" on accept and
+       the boolean false on refusal, so it is read as text. */
+    let parsed = null
+    try { parsed = await res.json() } catch {}
+    if (!parsed) return 'sent'          // 2xx with an unreadable body: taken at its status
+    if (String(parsed.success) === 'true') return 'sent'
+    return 'waiting'
   } catch {
-    /* No signal, blocked request, or a relay that is down. */
-    return false
+    return 'unreachable'
   }
 }
