@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../ui/card'
 import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
+import { Parallax2D } from '../s21/motion'
 import { RainbowDial } from '../charts/rainbow'
 import { SignalTrace, WeekStrip } from '../charts/infographics'
 import { studentRings } from '../lib/readings'
@@ -56,6 +57,9 @@ function EvidenceGap() {
     { label: 'What the patch records',     on: [0, 1, 2, 3, 4, 5, 6] },
   ]
   return (
+    /* The densest figure on the tour and the one with the most ink, so it takes
+       the largest drift of the three: 38px against the stop's prose. */
+    <Parallax2D distance={38}>
     <figure className="m-0">
       {rows.map((r, ri) => (
         <div key={r.label} className={cn(ri && 'mt-7')}>
@@ -78,27 +82,22 @@ function EvidenceGap() {
         readings in a {SCHOOL_HOURS}-hour school day, per student.
       </figcaption>
     </figure>
+    </Parallax2D>
   )
 }
 
 /* ── 02 ─────────────────────────────────────────────────────────────────── */
-/* ExplodedStack draws its three layers registered exactly on top of each other
-   and expects its host page to push them apart in depth — the overview and the
-   hardware page each do it with GSAP on scroll. This page has no scroll
-   animation, so the separation is set once, statically, which also means there
-   is nothing here to suppress for reduced motion. The centring translate is
-   written back in because the layers get theirs from a Tailwind class and an
-   inline `transform` replaces it wholesale. */
-const LAYER_Z = { '0': 128, '1': 20, '2': -88 }
+/* ExplodedStack separates and tips on scroll by itself now, so the static
+   depth this stop used to write onto `.lyr` on mount is gone. What stood here
+   was the third mechanism animating one drawing — GSAP drove it on two other
+   pages, this page wrote inline transforms, and none of the three could see
+   what the others had set. The figure owns its motion, which includes its own
+   reduced-motion branch, so this stop renders the drawing and nothing else.
+
+   No Parallax2D on this one. It is the one stop whose figure already moves. */
 function Hardware() {
-  const ref = React.useRef(null)
-  React.useEffect(() => {
-    ref.current?.querySelectorAll('.lyr').forEach(l => {
-      l.style.transform = `translate(-50%, -50%) translateZ(${LAYER_Z[l.dataset.i] ?? 0}px)`
-    })
-  }, [])
   return (
-    <figure ref={ref} className="m-0">
+    <figure className="m-0">
       <ExplodedStack className="h-[min(46vh,400px)] w-full" caption={null}
         size="w-[min(94%,440px)]"/>
       <figcaption className="note mt-2 text-center">
@@ -115,10 +114,16 @@ function Hardware() {
 function Signals() {
   return (
     <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
-      {SENSOR_ORDER.map(id => {
+      {SENSOR_ORDER.map((id, i) => {
         const s = SENSORS[id]
         return (
+          /* Alternating travel across the two columns rather than one distance
+             for all four: a grid in which every cell drifts by the same amount
+             is a grid that looks like it is being dragged, not one with depth
+             in it. h-full has to carry through the wrapper or the row loses the
+             equal-height cards it was built for. */
           <li key={id}>
+            <Parallax2D distance={i % 2 ? 20 : 32} className="h-full [&>div]:h-full">
             <Card className="h-full p-5">
               <div className="flex items-center gap-2.5">
                 <s.icon aria-hidden className="size-5" style={{ color: s.glow }}/>
@@ -128,6 +133,7 @@ function Signals() {
               <SignalTrace kind={id} className="mt-3"/>
               <p className="mt-3 text-sec text-ink-2">{s.about}</p>
             </Card>
+            </Parallax2D>
           </li>
         )
       })}
@@ -292,7 +298,12 @@ const STOPS = [
     ),
     art: () => (
       <div>
-        <RainbowDial score={51} usual={46} rings={studentRings()} size={340}/>
+        {/* The dial is the nearest thing on the stop and drifts furthest, with
+            the sentences under it held still: 56px, and the arch has its own
+            whitespace to travel inside. */}
+        <Parallax2D distance={56}>
+          <RainbowDial score={51} usual={46} rings={studentRings()} size={340}/>
+        </Parallax2D>
         <p className="mt-6 max-w-[34ch] font-display text-head font-bold text-ink">
           Today is a little higher than your normal.</p>
         <p className="mt-2 max-w-[34ch] text-sec text-ink-2">
@@ -326,7 +337,12 @@ const STOPS = [
         <div>
           <p className="max-w-[30ch] font-display text-head font-bold text-ink">
             Maya had a harder week than usual.</p>
-          <WeekStrip days={DATA.week} band={DATA.weekBand} className="mt-5 max-w-[22rem]"/>
+          {/* 24px, against the 56 on the dial a stop earlier: the strip is a
+              small figure inside a column of lists and a large drift here
+              would read as the list coming apart. */}
+          <Parallax2D distance={24} className="mt-5 max-w-[22rem]">
+            <WeekStrip days={DATA.week} band={DATA.weekBand}/>
+          </Parallax2D>
           <p className="mt-3 font-mono text-tick tabular-nums text-ink-3">
             {over} of {(DATA.week || []).length} above her usual range</p>
           <p className="mark mt-8">Never shown to a parent</p>

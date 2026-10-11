@@ -9,17 +9,19 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui
 import { Badge } from '../ui/badge'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
-import { HoverCard, HoverCardTrigger, HoverCardContent } from '../ui/hover-card'
-/* ui/hover-card ships no Portal, and the only triggers on this page sit inside
-   a <p>; an unportaled panel would put a <div> in a paragraph and split it. */
-import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card'
+import { Chevron } from '../ui/marks'
+/* The two hover cards that defined "Mind Score" and "weekly change" on the
+   words themselves are gone with the paragraph that carried them. A tooltip is
+   a third place for a definition to live and go stale, and the one sentence
+   under the title now says what the order is in words a counselor already
+   has. */
 import {
-  K_ANONYMITY, TIER_LABEL, TIER_ORDER, triage, scoreOnly, alertsOnly, roster,
+  K_ANONYMITY, TIER_LABEL, triage, scoreOnly, alertsOnly, roster,
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY,
   CONSENT_LEDGER, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES, PROTOCOL_DONE, REFERRALS,
   driversFor, INTERVENTIONS, efficacyLabel, profile45,
 } from '../lib/caseload'
-import { CASELOAD_TITLE, CASELOAD_DEF, SCORE, SCORE_DEF, SCORE_RANGE } from '../lib/terms'
+import { CASELOAD_TITLE, CASELOAD_DEF, SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 const TABS = [
@@ -66,98 +68,141 @@ const EmptyBand = ({ cols, children }) => (
   </TR>
 )
 
-/* A counselor who does not know what a column means had to scroll past the
-   list to the footnote to find out. The definition sits on the word now. */
-const Term = ({ label, def }) => (
-  <HoverCard openDelay={180}>
-    <HoverCardTrigger asChild>
-      <button type="button" className="underline decoration-dotted decoration-ink-3
-        underline-offset-4 hoverOnly:decoration-accent focus-visible:decoration-accent">{label}</button>
-    </HoverCardTrigger>
-    <HoverCardPortal><HoverCardContent>{def}</HoverCardContent></HoverCardPortal>
-  </HoverCard>
+/* ── Who to check in with ────────────────────────────────────────────────
+ *
+ * One list, and it is the whole tab.
+ *
+ * What stood here: an h2, a paragraph carrying two hover-card definitions, a
+ * count, a four-segment tier bar, a four-item legend under the bar, two
+ * bordered callout panels naming the biggest mover and the highest score,
+ * eight bordered student cards each holding a rank, a name, a grade, a band, a
+ * figure, a scale caption, a signed figure, a two-sided divergence bar with
+ * its own aria label, a sentence and an "Open record" link, a legend for that
+ * bar, and two more bordered cards each wrapping a list of students whose
+ * consent scope withholds something. Twenty-odd boxes.
+ *
+ * A counselor opening this on a Monday morning wants to know who to talk to
+ * first. Everything above the list was answering a question that had not been
+ * asked yet, and the list itself was eight cards deep, so the eye had to climb
+ * out of one box and into the next to compare two students.
+ *
+ * So: the title, one sentence saying what the order is, and the list. A row is
+ * a name, the band, the Mind Score and the move — and the move is on the
+ * right, because the move IS the order, and an order you cannot read off a
+ * single right-hand column is an order you have to be told about in a
+ * footnote. The two-sided bar went with the callouts: a signed figure in warn
+ * or calm says which way and how far already, and the bar said it again in
+ * 13rem of width.
+ *
+ * This is the one screen in the app allowed to be dense. Dense is not boxed.
+ */
+
+/* The column the figures are in, named once. Two labels, on the rule the list
+   hangs from, which is what a ruled sheet does instead of a caption per
+   column. */
+const ListHead = () => (
+  <div aria-hidden className="flex items-center gap-4 border-b border-ink pb-2">
+    <span className="w-5 shrink-0"/>
+    <span className="tick min-w-0 flex-1">student</span>
+    <span className="tick shrink-0">change this week</span>
+    <span className="w-4 shrink-0"/>
+  </div>
 )
 
-/* ── Who to check in with ─────────────────────────────────────────────────────────────── */
-/* One list, ordered by how far the Mind Score moved, which is what the page
-   says the order is for. The previous version sorted by movement and then
-   rendered four columns grouped by tier, so the biggest change came fourth. */
+/* What the order is, what it is not, and what is not in the list at any depth.
+   It is one block of small print under the list rather than four paragraphs
+   and two hover cards above it, and it is the same block on a full list and an
+   empty one, so it is written once. */
+const LIST_NOTE = (
+  <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
+    Change this week is the move in a student&rsquo;s seven-day average from one week to the next,
+    and it is what puts this list in order: a student up 15 points from 55 comes before a student
+    level at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is
+    not a student in trouble. A student whose guardian consented to crisis alerts only is never on
+    this list at all, and no raw reading, Notes entry or location is on it at any depth. Counselor
+    notes live in a student&rsquo;s own record, and saving one writes a row to the audit log.</p>
+)
+
 function Row({ s, n, onOpen }) {
   const dir = s.velocity > 0 ? 'worse' : s.velocity < 0 ? 'better' : 'flat'
+  const move = `${s.velocity > 0 ? '+' : s.velocity < 0 ? '−' : ''}${Math.abs(s.velocity)}`
   return (
-    <li>
-      {/* Was a bare <button> carrying its own hover and focus classes. A row
-          that opens a record is the same affordance as any other clickable
-          surface here, so it is the sourced Card's `interactive` state — which
-          also gives it the leading accent rule the hand-rolled row never had. */}
-      <Card as="button" interactive type="button" onClick={() => onOpen(s.name)}
-        className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 p-4
-          sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)] sm:items-center">
-        <span className="pt-1 font-mono text-meta tabular-nums text-ink-3 sm:pt-0">{n}</span>
-        <span className="min-w-0">
-          <span className="block truncate text-row text-ink">{s.name}</span>
-          <span className="mt-0.5 block text-tick text-ink-3">
-            Grade {s.grade} · {TIER_LABEL[s.tier]}</span>
+    <li className="border-b border-rule">
+      {/* Was a Card with `interactive`, which is the right affordance for a
+          card and the wrong object for a row. One label on the button, and the
+          four marks inside it are hidden from the reader: read out
+          separately they are a rank, a name, a punctuated fragment, a bare
+          numeral and a glyph. */}
+      <button type="button" onClick={() => onOpen(s.name)}
+        aria-label={`${s.name}, grade ${s.grade}, ${TIER_LABEL[s.tier]}, ${SCORE} ${s.current} out of 100, `
+          + `${dir === 'worse' ? `up ${Math.abs(s.velocity)} points` : dir === 'better'
+            ? `down ${Math.abs(s.velocity)} points` : 'level'} this week. Open record.`}
+        className="flex min-h-[56px] w-full items-center gap-4 py-3 text-left
+          transition-colors duration-150 hoverOnly:bg-mist/50">
+        <span aria-hidden className="w-5 shrink-0 font-mono text-meta tabular-nums text-ink-3">{n}</span>
+        <span aria-hidden className="min-w-0 flex-1">
+          <span className="block truncate text-body text-ink">{s.name}</span>
+          <span className="block text-tick text-ink-3">
+            Grade {s.grade} · {TIER_LABEL[s.tier]} · {s.current} out of 100</span>
         </span>
-        <span className="flex items-baseline gap-2 sm:block">
-          <span className={cn('font-mono text-num font-medium leading-none tabular-nums',
-            s.tier === 'crisis' ? 'text-crit' : s.tier === 'high' ? 'text-warn' : 'text-ink')}>
-            {s.current}</span>
-          <span className="whitespace-nowrap text-tick text-ink-3 sm:mt-1 sm:block">out of 100</span>
-        </span>
-        <span className="col-span-full sm:col-span-1">
-          <span className="flex items-center gap-3">
-            <span className={cn('font-mono text-meta tabular-nums',
-              dir === 'worse' ? 'text-warn' : dir === 'better' ? 'text-calm' : 'text-ink-3')}>
-              {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ −' : '0'}{Math.abs(s.velocity) || ''}
-              <span className="ml-1 text-ink-3">a week</span></span>
-            {/* Same colour and length for −6 and +4 made the improving student
-                look worse than the worsening one. */}
-            <span className="flex h-1.5 max-w-[13rem] flex-1 items-stretch" role="img"
-              aria-label={`${dir === 'worse' ? 'Worse' : dir === 'better' ? 'Better' : 'Unchanged'} by ${Math.abs(s.velocity)} points this week`}>
-              <span className="flex flex-1 justify-end overflow-hidden rounded-none bg-mist">
-                {s.velocity < 0 && <span className="rounded-none bg-calm"
-                  style={{ width: Math.min(100, Math.abs(s.velocity) * 6) + '%' }}/>}
-              </span>
-              <span className="w-px bg-ink-3"/>
-              <span className="flex flex-1 overflow-hidden rounded-none bg-mist">
-                {s.velocity > 0 && <span className="rounded-none bg-warn"
-                  style={{ width: Math.min(100, s.velocity * 6) + '%' }}/>}
-              </span>
-            </span>
-          </span>
-          <span className="mt-1.5 block text-sec text-ink-2">
-            {s.velocity > 0 ? `Up ${s.velocity} points in a week, from ${s.weekAgo}. `
-              : s.velocity < 0 ? `Down ${Math.abs(s.velocity)} from ${s.weekAgo}. `
-              : 'Level with last week. '}
-            <span className="font-medium text-accent">Open record</span>
-          </span>
-        </span>
-      </Card>
+        <span aria-hidden className={cn('shrink-0 font-mono text-num font-medium leading-none tabular-nums',
+          dir === 'worse' ? 'text-warn' : dir === 'better' ? 'text-calm' : 'text-ink-3')}>{move}</span>
+        <Chevron aria-hidden className="size-4 shrink-0 text-ink-3"/>
+      </button>
     </li>
   )
 }
 
-/* The consent-limited groups were a tinted band with a left rule; they sit
-   beside the check-in list, so they are cards like everything else on it.
-   The ruling-coloured leading edge is what still marks them as withheld. */
-function Limited({ heading, note, children }) {
+/* The two consent-limited groups, which were two bordered cards side by side,
+   each with a heading, a description and a list inside it. They are one list
+   under one rule: a counselor reading either half is asking the same question,
+   and what each student's scope withholds is a line on their own row. */
+function NarrowScopes({ onOpen }) {
+  const scored = scoreOnly(), quiet = alertsOnly()
   return (
-    <Card as="section" className="border-l-[3px] border-l-ruling">
-      <CardHeader className="p-5 pb-0">
-        <CardTitle as="h3" className="text-row">{heading}</CardTitle>
-        <CardDescription className="max-w-[52ch]">{note}</CardDescription>
-      </CardHeader>
-      <CardContent className="p-5 pt-4">
-        <ul className="divide-y divide-rule border-t border-rule">{children}</ul>
-      </CardContent>
-    </Card>
+    <section className="mt-14">
+      <h3 className="mark">Shared with a narrower scope</h3>
+      <p className="mt-4 max-w-[66ch] text-sec text-ink-2">These students are not on the list above,
+        and it is not because nothing moved. A guardian signed a scope that withholds the weekly
+        change, or everything except a crisis alert.</p>
+      <ul className="m-0 mt-4 list-none p-0">
+        {scored.map(s => (
+          <li key={s.id} className="border-b border-rule">
+            <button type="button" onClick={() => onOpen(s.name)}
+              aria-label={`${s.name}, grade ${s.grade}, ${TIER_LABEL[s.tier]}, ${SCORE} ${s.current} out of 100, no weekly change shared. Open record.`}
+              className="flex min-h-[56px] w-full items-center gap-4 py-3 text-left
+                transition-colors duration-150 hoverOnly:bg-mist/50">
+              <span aria-hidden className="min-w-0 flex-1">
+                <span className="block truncate text-body text-ink">{s.name}</span>
+                <span className="block text-tick text-ink-3">
+                  Grade {s.grade} · {TIER_LABEL[s.tier]} · {SCORE} only, no weekly change</span>
+              </span>
+              <span aria-hidden className="shrink-0 font-mono text-num font-medium leading-none tabular-nums text-ink">
+                {s.current}</span>
+              <Chevron aria-hidden className="size-4 shrink-0 text-ink-3"/>
+            </button>
+          </li>
+        ))}
+        {quiet.map(s => (
+          <li key={s.id} className="flex items-center justify-between gap-4 border-b border-rule py-3.5">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-body text-ink">{s.name}</span>
+              <span className="block text-tick text-ink-3">Grade {s.grade} · crisis alerts only</span>
+            </span>
+            <span className="shrink-0 font-display text-ui font-medium text-ink-3">nothing shared</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
 /* The three conditions, in the order they happen. A school reads this tab
    first, and "why is it empty" is the question it asks — so the answer is the
-   content of the empty board rather than a line under it. */
+   content of the empty list rather than a line under it. The drawn blank row
+   that used to sit under them, labelling the four fields of a row that does
+   not exist yet, is gone: the list head above the real list names the same
+   columns, and a diagram of an empty row is a diagram of nothing. */
 const CASELOAD_NEEDS = [
   ['A student pairs a patch',
    'Nothing reaches the school until the student pairs it, on their own phone. They can unpair it the same way.'],
@@ -167,93 +212,30 @@ const CASELOAD_NEEDS = [
    `A student consented to alerts only carries no ${SCORE} and no place on this list.`],
 ]
 
-/* The row the board draws, with its four fields named and none of them filled.
-   Not a loading skeleton — the fields are labelled in words, because the point
-   is to show a counselor what will appear here and what each part of it means,
-   which a shimmering grey bar cannot do. */
-function BlankBoardRow() {
+function TriageHead({ consented, listed }) {
   return (
-    <figure className="m-0 mt-3">
-      <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-panel
-        border border-dashed border-rule p-4 sm:grid-cols-[2rem_minmax(0,15rem)_7rem_minmax(0,1fr)]">
-        <span className="text-tick text-ink-3">order</span>
-        <span className="text-tick text-ink-3">student · grade · band</span>
-        <span className="text-tick text-ink-3">{SCORE}</span>
-        <span className="col-span-full sm:col-span-1">
-          <span className="block text-tick text-ink-3">change this week</span>
-          {/* The velocity track, drawn empty: centre line, worse to the right.
-              Without it the legend under this figure legends nothing. */}
-          <span aria-hidden className="mt-1.5 flex h-1.5 max-w-[13rem] items-stretch">
-            <span className="flex-1 bg-mist"/>
-            <span className="w-px bg-ink-3"/>
-            <span className="flex-1 bg-mist"/>
-          </span>
-        </span>
-      </div>
-      <figcaption className="note mt-3 max-w-[62ch]">
-        One row per consented student, ordered by how far their {SCORE} moved. Right of centre
-        is worse.
-      </figcaption>
-    </figure>
+    <>
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">{CASELOAD_TITLE}</h2>
+      <p className="mt-2 max-w-[68ch] text-sec text-ink-2">{CASELOAD_DEF}</p>
+      <p className="mt-1 text-tick text-ink-3">{consented} consented · {listed} on this list</p>
+    </>
   )
 }
-
-/* What the list is and why it is in this order, with both definitions on the
-   words. It is the same copy on a full list and an empty one, so it is
-   written once. */
-const OrderRule = () => (
-  <div className="max-w-[68ch]">
-    <Sub>{CASELOAD_DEF}</Sub>
-    <p className="mt-2 text-sec text-ink-3">
-      <Term label={SCORE} def={SCORE_DEF}/>, {SCORE_RANGE}, higher is worse. Ordered by{' '}
-      <Term label="weekly change"
-        def="The move in a student's seven-day average from one week to the next. A student up 15 points from 55 comes before a student level at 70."/>.
-      {' '}Change is what makes a check-in land before a problem grows. A low, steady {SCORE} is
-      not a student in trouble.</p>
-  </div>
-)
 
 function EmptyTriage() {
   return (
     <>
-      <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        {CASELOAD_TITLE}</h2>
-      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <OrderRule/>
-        <span className="text-tick text-ink-3">0 consented · 0 on this list</span>
-      </div>
-
-      <div className="mt-10">
-        <section>
-          <h3 className="mark">How a student gets on this list</h3>
-          <ol className="m-0 mt-3 list-none p-0">
-            {CASELOAD_NEEDS.map(([what, why]) => (
-              <li key={what} className="border-b border-rule py-4 last:border-b-0 last:pb-0">
-                <p className="font-display text-ui font-bold text-ink">{what}</p>
-                <p className="mt-1 max-w-[62ch] text-sec text-ink-2">{why}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-      </div>
-
-      <BlankBoardRow/>
-
-      {/* Both limited groups keep their headings with no rows under them: what
-          a narrowed consent scope withholds is worth reading before a school
-          has signed one. */}
-      <div className="mt-14 grid gap-5 lg:grid-cols-2">
-        {/* Written as scope definitions rather than as statements about
-            guardians who have signed: none has. */}
-        <Limited heading={`${SCORE} only, no weekly change`}
-          note="These students never appear on the list above.">
-          <BlankRow>No student is at this scope.</BlankRow>
-        </Limited>
-        <Limited heading="Crisis alerts only"
-          note={`No ${SCORE}, change or band is ever shown.`}>
-          <BlankRow>No student is at this scope.</BlankRow>
-        </Limited>
-      </div>
+      <TriageHead consented={0} listed={0}/>
+      <h3 className="mark mt-10">How a student gets on this list</h3>
+      <ol className="m-0 list-none p-0">
+        {CASELOAD_NEEDS.map(([what, why]) => (
+          <li key={what} className="border-b border-rule py-4">
+            <span className="block text-body text-ink">{what}</span>
+            <span className="mt-1 block max-w-[66ch] text-sec text-ink-2">{why}</span>
+          </li>
+        ))}
+      </ol>
+      {LIST_NOTE}
     </>
   )
 }
@@ -261,102 +243,15 @@ function EmptyTriage() {
 function Triage({ onOpen, real }) {
   if (real) return <EmptyTriage/>
   const moved = triage()
-  const scored = [...moved, ...scoreOnly()]
-  const quiet = alertsOnly()
-  const total = roster().length
-  const mover = moved[0]
-  const byScore = [...scored].sort((a, b) => b.current - a.current)
-  const highest = byScore[0]
-  /* This card used to read "Flat week. Referral already open since Feb 18."
-     for whoever came out highest. Both halves were wrong on the fixture: the
-     highest Mind Score consented to a score only, so the list may not state
-     their weekly change at all, and Feb 18 is a different student's referral,
-     one the Escalation tab shows as closed. Both come off the data now. */
-  const ref = REFERRALS.find(r => r.student === highest.name && r.status !== 'Closed')
-  const place = ['first','second','third','fourth','fifth','sixth','seventh','eighth'][
-    byScore.findIndex(x => x.id === mover.id)]
   return (
     <>
-      <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        {CASELOAD_TITLE}</h2>
-      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        {/* The heading says what the list is for; the order rule and both
-            hover definitions ride under it. */}
-        <OrderRule/>
-        <span className="text-tick text-ink-3">
-          {total} consented · {moved.length} on this list</span>
-      </div>
-
-      <div className="mt-6 flex h-3 overflow-hidden rounded-xs" role="img"
-        aria-label={TIER_ORDER.map(t => `${scored.filter(s2 => s2.tier === t).length} ${TIER_LABEL[t]}`).join(', ')}>
-        {TIER_ORDER.map(t => {
-          const n = scored.filter(s2 => s2.tier === t).length
-          if (!n) return null
-          const fill = { crisis:'bg-crit', high:'bg-warn', moderate:'bg-warn/45', info:'bg-ink-3/40' }[t]
-          return <span key={t} className={cn(fill, 'border-r-2 border-paper last:border-r-0')}
-            style={{ width: (n / scored.length) * 100 + '%' }}/>
-        })}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
-        {TIER_ORDER.map(t => (
-          <span key={t} className="font-mono text-tick tabular-nums text-ink-3">
-            {scored.filter(s2 => s2.tier === t).length} {TIER_LABEL[t]}</span>
-        ))}
-      </div>
-
-      {/* Why the order exists was the most useful thing on the screen and sat
-          240px below the fold. It leads now. */}
-      {/* mt was 7. The scale here is three fixed steps — 10 inside a section,
-          14 between sections, 20 between page regions — so blocks at the same
-          level of the outline no longer each pick their own number. */}
-      <div className="mt-10 grid gap-x-10 gap-y-4 border-y border-rule py-5 sm:grid-cols-2">
-        <div className="border-l-2 border-accent pl-4">
-          <p className="font-mono text-num font-medium tabular-nums text-warn">+{mover.velocity}
-            <span className="ml-2 text-tick text-ink-3">{mover.name} · first on the list</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">{place[0].toUpperCase() + place.slice(1)} highest {SCORE} of {scored.length}. First here because their {SCORE} moved most this week.</p>
-        </div>
-        <div className="border-l-2 border-rule pl-4">
-          <p className="font-mono text-num font-medium tabular-nums text-ink">{highest.current}
-            <span className="ml-2 text-tick text-ink-3">{highest.name} · highest {SCORE}</span></p>
-          <p className="mt-1.5 text-sec text-ink-2">
-            {highest.showTrend
-              ? `Weekly change ${highest.velocity > 0 ? '+' : ''}${highest.velocity}. `
-              : `${SCORE} only. No weekly change shared. `}
-            {ref ? `Referral open since ${ref.opened}.` : 'No referral open.'}</p>
-        </div>
-      </div>
-
-      <ol className="mt-10 list-none space-y-2 p-0">
+      <TriageHead consented={roster().length} listed={moved.length}/>
+      <div className="mt-8"><ListHead/></div>
+      <ol className="m-0 list-none p-0">
         {moved.map((s, i) => <Row key={s.id} s={s} n={i + 1} onOpen={onOpen}/>)}
       </ol>
-      {/* The first half of this footnote defined the weekly change; that
-          definition is on the word itself now, and what is left is the bar's
-          legend. */}
-      <p className="mt-4 border-t border-ink pt-3 text-meta text-ink-3">
-        Right of centre on the bar is worse.</p>
-
-      <div className="mt-14 grid gap-5 lg:grid-cols-2">
-        <Limited heading={`${SCORE} only, no weekly change`}
-          note="These students do not appear on the list above.">
-          {scoreOnly().map(s => (
-            <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
-              <button onClick={() => onOpen(s.name)} className="min-h-[44px] text-left text-meta text-ink
-                underline decoration-rule underline-offset-4 hoverOnly:decoration-accent">{s.name}</button>
-              <span className="font-mono text-meta tabular-nums text-ink-3">
-                Grade {s.grade} · {s.current} out of 100 · {TIER_LABEL[s.tier]}</span>
-            </li>
-          ))}
-        </Limited>
-        <Limited heading="Crisis alerts only"
-          note={`No ${SCORE}, change or band is shown.`}>
-          {quiet.map(s => (
-            <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
-              <span className="text-meta text-ink">{s.name}</span>
-              <span className="text-meta text-ink-3">Grade {s.grade} · nothing shared</span>
-            </li>
-          ))}
-        </Limited>
-      </div>
+      {LIST_NOTE}
+      <NarrowScopes onOpen={onOpen}/>
     </>
   )
 }
@@ -491,80 +386,81 @@ function OneStudent({ who, setWho, real }) {
       )}
 
       {s.showTrend && <>
-      <div className="mt-10 grid gap-8 lg:grid-cols-3">
-        <Panel label="What changed this week">
-          <div className={cn('font-mono text-stat font-medium tabular-nums',
-            s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
-            {s.velocity > 0 ? '+' : ''}{s.velocity}</div>
-          <p className="mt-1 text-sec text-ink-3">vs the week before</p>
-          {/* "N points a week, worse" said the same thing as the figure above
-              it and the caption under that, in a third wording. */}
-          <ul className="mt-4 space-y-2.5 border-t border-rule pt-4 text-meta text-ink-2">
-            <li>Moved from {s.weekAgo} to {s.current}.</li>
-            <li>The change keeps landing in one lesson: AP Chemistry.</li>
-          </ul>
-        </Panel>
+      {/* Five bordered panels stood here: a figure panel, a driver panel with
+          four tracks in it, an intervention panel, the 45-day line and a note
+          field, laid out as a three-up grid and then a two-up grid. Five boxes
+          for one student, and the one figure a counselor opens the record for
+          was in the first of the five.
 
-        <Panel label="What is driving the rise" action="share of this week's rise">
-          <ul className="space-y-3.5">
-            {drivers.map(d => (
-              <li key={d.label}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-meta text-ink-2">{d.label}</span>
-                  <span className="font-mono text-tick tabular-nums text-ink">{Math.round(d.share * 100)}%</span>
-                </div>
-                <div className="mt-1.5 h-1.5 w-full rounded-xs bg-mist">
-                  <div className="h-full rounded-xs bg-warn" style={{ width: d.share * 100 + '%' }}/>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+          It is the record's own reading now, at the step the dashboards give a
+          figure, and everything under it is rows: the drivers are a percentage
+          per row, the interventions are a line each, the line chart is the one
+          chart, and the note field is a field. The driver bars went for the
+          same reason the student screen's did — the figure beside each row
+          states the same share against the same 100. */}
+      <p className="note mt-10">Change this week, against the week before</p>
+      <p className={cn('m-0 mt-1 font-mono text-dial font-medium leading-none tabular-nums',
+        s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
+        {s.velocity > 0 ? '+' : ''}{s.velocity}</p>
+      <p className="mt-3 max-w-[58ch] text-sec text-ink-2">Moved from {s.weekAgo} to {s.current}.
+        The change keeps landing in one lesson: AP Chemistry.</p>
 
-        <Panel label="Interventions tried">
-          <ul className="space-y-2.5 text-meta text-ink-2">
-            {INTERVENTIONS.filter(i => i.sessions > 0).map(i => <li key={i.name}>{efficacyLabel(i)}</li>)}
-          </ul>
-          <Note>Measured from physiology.</Note>
-        </Panel>
-      </div>
+      <h3 className="mark mt-12">What is driving the rise</h3>
+      <ul className="m-0 list-none p-0">
+        {drivers.map(d => (
+          <li key={d.label}
+            className="flex items-center justify-between gap-4 border-b border-rule py-3.5">
+            <span className="text-body text-ink">{d.label}</span>
+            <span className="shrink-0 font-mono text-num font-medium leading-none tabular-nums text-ink">
+              {Math.round(d.share * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 max-w-[66ch] text-meta text-ink-3">Each one&rsquo;s share of this
+        week&rsquo;s rise. Never a raw reading.</p>
 
-      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Panel label="The last 45 days">
-          <svg viewBox="0 0 720 214" className="block w-full overflow-visible" role="img"
-            aria-label={`Daily mean ${SCORE} over 45 days, rising through the last two weeks.`}>
-            {[40, 60, 80].map(v => {
-              const y = 180 - ((v - lo) / (hi - lo)) * 160
-              return <g key={v}>
-                <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
-                <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
-              </g>
-            })}
-            <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
-              vectorEffect="non-scaling-stroke"
-              d={series.map((p, i) => (i ? 'L' : 'M') + (40 + (i / 44) * 670).toFixed(1) + ' ' +
-                (180 - ((p.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
-            <path fill="none" strokeWidth="2.5" strokeLinejoin="round" className="stroke-warn"
-              vectorEffect="non-scaling-stroke"
-              d={series.slice(31).map((p, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
-                (180 - ((p.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
-            <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
-            <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
-          </svg>
-          <Note>The coloured stretch is the last two weeks.</Note>
-        </Panel>
+      <h3 className="mark mt-12">The last 45 days</h3>
+      <svg viewBox="0 0 720 214" className="mt-4 block w-full overflow-visible" role="img"
+        aria-label={`Daily mean ${SCORE} over 45 days, rising through the last two weeks.`}>
+        {[40, 60, 80].map(v => {
+          const y = 180 - ((v - lo) / (hi - lo)) * 160
+          return <g key={v}>
+            <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
+            <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
+          </g>
+        })}
+        <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
+          vectorEffect="non-scaling-stroke"
+          d={series.map((q, i) => (i ? 'L' : 'M') + (40 + (i / 44) * 670).toFixed(1) + ' ' +
+            (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+        <path fill="none" strokeWidth="2.5" strokeLinejoin="round" className="stroke-warn"
+          vectorEffect="non-scaling-stroke"
+          d={series.slice(31).map((q, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
+            (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+        <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
+        <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
+      </svg>
+      <p className="mt-3 text-meta text-ink-3">The coloured stretch is the last two weeks.</p>
 
-        <Panel label="Counselor notes">
-          <label htmlFor="cnote" className="sr-only">Counselor note for {s.name}</label>
-          <textarea id="cnote" rows={5} value={note} onChange={e => setNote(e.target.value)}
-            placeholder="Add a note…"
-            className="w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40 p-3.5
-              text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink focus-visible:outline-none"/>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <span className="text-sec text-ink-3">Saving writes a row to the log</span>
-            <Button size="sm" disabled={!note.trim()}>Save note</Button>
-          </div>
-        </Panel>
+      <h3 className="mark mt-12">Interventions tried</h3>
+      <ul className="m-0 list-none p-0">
+        {INTERVENTIONS.filter(i => i.sessions > 0).map(i => (
+          <li key={i.name} className="border-b border-rule py-3.5 text-body text-ink-2">
+            {efficacyLabel(i)}</li>
+        ))}
+      </ul>
+      <p className="mt-3 text-meta text-ink-3">Measured from physiology.</p>
+
+      <h3 className="mark mt-12">Counselor notes</h3>
+      <label htmlFor="cnote" className="sr-only">Counselor note for {s.name}</label>
+      <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
+        placeholder="Add a note…"
+        className="mt-4 w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
+          p-3.5 text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink
+          focus-visible:outline-none"/>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <span className="text-sec text-ink-3">Saving writes a row to the log</span>
+        <Button size="sm" disabled={!note.trim()}>Save note</Button>
       </div>
       </>}
     </>

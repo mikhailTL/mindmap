@@ -1,4 +1,6 @@
 import React from 'react'
+import { motion, useTransform } from 'framer-motion'
+import { ScrollScene } from '../s21/motion'
 const T = { fontFamily:'ui-monospace,monospace' }
 
 /* All three drawings share one wide viewBox and one set of coordinates, so the
@@ -102,9 +104,26 @@ export const LAYERS = [
 /* The exploded drawing, lifted out of PatchPage so the homepage hero can use
    the same one. It was inline markup in a single view; the hero needed it and
    copying forty lines of transform classes into a second file is how two
-   drawings drift apart. The id stays `stack` because both the hero and the
-   hardware page drive it with the same ScrollTrigger, and only one of the two
-   is mounted at a time under hash routing.
+   drawings drift apart.
+
+   IT NOW OWNS ITS OWN SCROLL MOTION. It used to be a static stack of three
+   registered sheets that expected whichever page hosted it to push them apart
+   and tip them — PatchPage did it with a GSAP ScrollTrigger reaching in
+   through `#stack` and `.lyr`, and the guided tour did it by writing inline
+   transforms onto the same class on mount. That is one figure animated by two
+   unrelated mechanisms living in two other files, neither of which could see
+   what the other had set, and it is why the drawing's own code carried a
+   fixed counter-tilt to cancel an angle a different file had chosen. All of
+   it is replaced by one ScrollScene here, which is framer's useScroll and the
+   same spring the rest of the site's scroll motion uses, so the figure is
+   correct wherever it is mounted and nothing has to be set up around it.
+
+   What the reader gets out of the change: the stack used to tip through 16
+   degrees with the three sheets held at a fixed depth, which read as a plate
+   sliding. It now tips through 32 and rotates through 30 while the three
+   sheets travel different distances in depth, so it opens and closes as it
+   passes — the separation reads as depth because the sheets are genuinely
+   moving apart, not as a slide because they are no longer moving together.
 
    `size` exists because one width served two very different boxes: at
    `w-[min(84%,400px)]` the drawing sat correctly beside the CAD viewer but
@@ -115,6 +134,45 @@ export const LAYERS = [
    column that is the largest width whose projected ink still clears the
    figcaption at the steepest point of the scrub. Naming it here also keeps
    Tailwind generating the class even before the hero passes it. */
+
+/* Depth per sheet, as [at progress 0, at progress 1], in px along the stack's
+   own normal. The midpoints are 122 / 17 / -88, which is within a few pixels
+   of the 128 / 20 / -88 this figure was tuned at as a static drawing: the
+   composition a reader sees at the middle of the pass is the one that was
+   measured, and the two ends open and close either side of it. The three
+   travel 125, 10 and 84 — deliberately unequal, because three sheets moving
+   the same distance is a plate coming apart in one piece. */
+const SHEET_Z = { 0: [60, 185], 1: [12, 22], 2: [-46, -130] }
+
+/* One sheet. A component rather than inline markup because it calls a hook:
+   it reads the same sprung progress the scene is rotating on, so the depth and
+   the tip cannot disagree by a frame.
+
+   x and y are framer's, not Tailwind's `-translate-x-1/2`: framer writes the
+   whole `transform` property, so a translate declared in a class would be
+   overwritten wholesale and the sheet would register off its own centre. */
+function Sheet({ layer, size, progress, narrow }) {
+  const [a, b] = SHEET_Z[layer.i] || [0, 0]
+  /* Shrunk toward the midpoint below sm, like the scene's rotation: less
+     travel, same composition. */
+  const k = narrow ? 0.5 : 1
+  const m = (a + b) / 2
+  const z = useTransform(progress, [0, 1], [m + (a - m) * k, m + (b - m) * k])
+  return (
+    <motion.figure data-i={layer.i} style={{ x: '-50%', y: '-50%', z }}
+      /* `aspect-square` went with the square viewBox: on a 440x260 drawing it
+         padded every layer with 40% empty height and pushed the artwork off
+         the centre this translate assumes. Height now comes from the SVG,
+         which is identical for all three, so registration is free. */
+      className={`lyr absolute left-1/2 top-1/2 m-0 ${size}
+        [transform-style:preserve-3d]
+        [&_svg]:h-auto [&_svg]:w-full [&_svg]:overflow-visible
+        [&_svg]:drop-shadow-[0_26px_34px_rgba(23,31,60,0.16)]`}>
+      {layer.art}
+    </motion.figure>
+  )
+}
+
 export function ExplodedStack({
   className,
   caption = 'Drawing · engineering labels',
@@ -125,38 +183,45 @@ export function ExplodedStack({
   size = 'w-[min(76%,400px)] sm:w-[min(84%,400px)]',
 }) {
   return (
-    <div className={'relative overflow-x-clip [perspective:1500px] ' + (className || '')}>
-      {/* A fixed counter-tilt wrapped around `#stack`, not folded into it.
-          The stack sat at rotateX 58deg statically and Overview/PatchPage
-          scrub it between 70deg and 50deg, which foreshortened every face to
-          about a third of its height — three slivers, no readable patch. The
-          corrective rotation cannot go on `#stack` itself because GSAP
-          overwrites that transform wholesale, and it has to sit OUTSIDE the
-          stack's own rotateZ so the two rotateX terms stay adjacent in the
-          matrix and simply subtract. Net result: 50deg at first paint easing
-          to 30deg across the scrub — faces readable throughout, and the layers
-          still separate in depth exactly as before. */}
-      <div className="absolute inset-0 [transform-style:preserve-3d] [transform:rotateX(-20deg)]">
-        <div id="stack" className="absolute inset-0 [transform-style:preserve-3d]"
-          /* The stack tips away from its own centre, so at hero size it drifts
-             up and right and leaves a hole under it. `shift` recentres the
-             optical mass rather than the bounding box. */
-          style={{ transform: `translate(${shift}) rotateX(50deg) rotateZ(-26deg)` }}>
-          {[...LAYERS].reverse().map(l => (
-            <figure key={l.i} data-i={l.i}
-              /* `aspect-square` went with the square viewBox: on a 440x260
-                 drawing it padded every layer with 40% empty height and pushed
-                 the artwork off the centre the -translate-y-1/2 assumes.
-                 Height now comes from the SVG, which is identical for all
-                 three, so registration is free. */
-              className={`lyr absolute left-1/2 top-1/2 m-0 ${size}
-                -translate-x-1/2 -translate-y-1/2 [transform-style:preserve-3d]
-                [&_svg]:h-auto [&_svg]:w-full [&_svg]:overflow-visible
-                [&_svg]:drop-shadow-[0_26px_34px_rgba(23,31,60,0.16)]`}>
-              {l.art}
-            </figure>
-          ))}
-        </div>
+    /* The clip stays on this element and stays horizontal-only. Horizontal is
+       the axis a scrollbar can come from and this is what guarantees the
+       figure cannot raise one at any width; vertical is deliberately left
+       open, because the sheets' drop shadows and their tipped corners paint
+       above and below this box by design and clipping them would shear the
+       drawing. */
+    <div className={'relative overflow-x-clip ' + (className || '')}>
+      {/* The stack tips away from its own centre, so at hero size it drifts up
+          and right and leaves a hole under it. `shift` recentres the optical
+          mass rather than the bounding box. It sits on a wrapper outside the
+          scene so it is not competing for the same `transform`. */}
+      {/* overflow-clip, and it is load-bearing. The three sheets tip through
+          32 degrees inside a 1500px perspective, which throws the near corner
+          of the top sheet well outside this box, and the automated check at
+          1280 caught exactly that: two elements past the viewport edge on the
+          patch page. The scene's own clip is off because a clip on the
+          rotating element shears its tipped corners; the clip belongs one
+          level out, on the box that does not move. */}
+      <div className="absolute inset-0 overflow-clip"
+        style={{ transform: `translate(${shift})` }}>
+        {/* The angles are stated as the net result now. They used to be split
+            across a fixed rotateX(-20deg) counter-tilt here and a 66-to-50
+            scrub written in PatchPage, which existed only because GSAP
+            overwrote `#stack`'s transform wholesale and the correction had
+            nowhere else to live. One mechanism, one set of numbers: 52 degrees
+            of tip easing to 20, which keeps the three faces readable the whole
+            way through — the pair that read as three slivers was 70 to 50.
+            clip={false} because this figure's own clip is the element above. */}
+        <ScrollScene clip={false} perspective={1500} restAt={0.5} narrow={0.4}
+          className="h-full w-full"
+          from={{ rotateX: 52, rotateZ: -44 }} to={{ rotateX: 20, rotateZ: -14 }}>
+          {({ progress, narrow }) => (
+            <div className="absolute inset-0 [transform-style:preserve-3d]">
+              {[...LAYERS].reverse().map(l => (
+                <Sheet key={l.i} layer={l} size={size} progress={progress} narrow={narrow}/>
+              ))}
+            </div>
+          )}
+        </ScrollScene>
       </div>
       {caption && <span className="note absolute inset-x-0 bottom-0 text-center">{caption}</span>}
     </div>

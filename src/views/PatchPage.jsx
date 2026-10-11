@@ -4,7 +4,7 @@ import { PHOTOS } from '../lib/photos'
 // visible at the call site rather than hidden behind a shared annotation class.
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
-import { RevealLines, ScrollIn, ScrollRow } from '../s21/motion'
+import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../s21/motion'
 import { Card } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
@@ -58,23 +58,17 @@ export function PatchPage() {
     else model.current?.showAll()
   }, [picked])
 
-  /* The drawing separates along its own axis and tips as the section scrolls.
-     Without this the three sheets sit flat on top of one another. */
-  React.useEffect(() => {
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
-    const layers = Array.from(document.querySelectorAll('.lyr'))
-    const Z = { '0': 128, '1': 20, '2': -88 }
-    if (reduce || !window.gsap) {
-      layers.forEach(l => { l.style.transform = `translateZ(${Z[l.dataset.i]}px)` })
-      return
-    }
-    layers.forEach(l => gsap.set(l, { z: Z[l.dataset.i] }))
-    if (!window.ScrollTrigger) return
-    const t = gsap.fromTo('#stack', { rotateX: 66, rotateZ: -40 },
-      { rotateX: 50, rotateZ: -22, ease: 'none',
-        scrollTrigger: { trigger: '#stack', start: 'top bottom', end: 'bottom top', scrub: .6 } })
-    return () => { t.scrollTrigger?.kill(); t.kill() }
-  }, [])
+  /* The GSAP ScrollTrigger that used to live here is gone, and the drawing is
+     not static as a result — it animates harder than it did. What stood here
+     set a fixed translateZ on every `.lyr` on the page by document query and
+     scrubbed `#stack` between rotateX 66/50 and rotateZ -40/-22, which meant
+     one figure was driven by a second animation library reaching across two
+     files into another component's class names, and the drawing itself carried
+     a fixed counter-tilt whose only job was to cancel the angle chosen here.
+     ExplodedStack now owns all of it through the site's own ScrollScene, with
+     a wider tip and its three sheets separating in depth as they pass, so this
+     page has nothing to set up and the site has one scroll mechanism instead
+     of two. See views/Patch.jsx for the numbers. */
   return (
     <main>
       {/* A dot grid sat over this band at 70%. It was texture standing in for
@@ -141,11 +135,20 @@ export function PatchPage() {
               is a photograph, and saying it twice on one screen read as a
               disclaimer rather than as a fact. The alt text carries what the
               image is for a reader who cannot see it. */}
+          {/* The one photographic thing in the band, so it is the thing that
+              drifts: 52px of total travel against a column of type that does
+              not move, which is what makes the band read as two planes rather
+              than as one sheet. The image's own box is untouched — the travel
+              is a transform and it is less than this band's own vertical
+              padding, so nothing is laid out differently and nothing can
+              reach the edge. */}
           <figure className="m-0 mt-8 lg:mt-0">
-            <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
-              decoding="async"
-              alt="A wearable sensor on the back of an upper arm, at the size and the place MindMap is worn"
-              className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
+            <Parallax2D distance={52}>
+              <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
+                decoding="async"
+                alt="The MindMap patch worn on an upper arm"
+                className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
+            </Parallax2D>
           </figure>
         </div>
       </section>
@@ -267,13 +270,20 @@ export function PatchPage() {
 
                           The drawing's own height lives on the svg in
                           charts/patch-parts (76px, 88px at sm), so a height on
-                          this panel alone would not move it at lg. The child
-                          selector is one specificity step above that class and
-                          is what actually constrains it; the viewBox is
-                          unchanged and preserveAspectRatio keeps the drawing
-                          centred at whatever height the panel is given. */}
+                          this panel alone would not move it at lg. This
+                          selector is what actually constrains it: `.cls svg`
+                          and the svg's own `h-[76px]` are a class-plus-type
+                          and a class, so this wins on specificity wherever it
+                          falls in the sheet. It is a descendant selector
+                          rather than the child selector it used to be because
+                          the drawing now sits inside its own perspective box
+                          — the two match at the same specificity, so nothing
+                          else changed. The matching `h-full` on that box is in
+                          charts/patch-parts; the viewBox is unchanged and
+                          preserveAspectRatio keeps the drawing centred at
+                          whatever height the panel is given. */}
                       <div className="bg-ink px-3 py-3
-                        lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&>svg]:h-full">
+                        lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&_svg]:h-full">
                         {PART_ART[l.part]}</div>
                       <div className="p-4 lg:p-3">
                         <h3 className="font-display text-head font-bold leading-tight text-ink

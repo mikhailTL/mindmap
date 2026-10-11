@@ -13,6 +13,7 @@ import { SENSORS } from '../lib/sensors'
 import { DATA } from '../lib/assets'
 import { CHART_DATA } from '../lib/chartdata'
 import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roster } from '../lib/caseload'
+import { Parallax2D } from '../s21/motion'
 import { cn } from '../lib/utils'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
@@ -71,10 +72,18 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
         <p className="mt-4 max-w-[46ch] text-lead text-ink-2">{lede}</p>
         </div>
         {photo && (
-          <img src={PHOTOS[photo]} alt={photoAlt} loading="eager" decoding="async"
-            width="1344" height="752"
-            className="mt-6 h-[200px] w-full rounded-panel object-cover sm:h-[260px]
-              lg:mt-0 lg:h-[292px]"/>
+          /* The photograph is the only thing in the band that is not type, so
+             it is the only thing that moves: 48px of total travel against a
+             headline that holds still, which is what separates the two into
+             planes. The image keeps its own box and its own height, so the
+             grid is laid out exactly as before and the travel is less than the
+             band's vertical padding at every width. */
+          <Parallax2D distance={48} className="mt-6 lg:mt-0">
+            <img src={PHOTOS[photo]} alt={photoAlt} loading="eager" decoding="async"
+              width="1344" height="752"
+              className="h-[200px] w-full rounded-panel object-cover sm:h-[260px]
+                lg:h-[292px]"/>
+          </Parallax2D>
         )}
       </div>
     </div>
@@ -84,12 +93,28 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
 /* A figure on a page: the chart, and the caveat. The caveat is attached here
    rather than written into each section, because a chart that loses its "this
    is generated" line in an edit is the one mistake on this site that would
-   actually matter. */
-function Fig({ title, children, className }) {
+   actually matter.
+
+   The chart inside also drifts against the figure's own frame as the figure
+   crosses the viewport, which is why the distance is a prop with a value per
+   call site rather than one number here: three pages of figures all drifting
+   the same amount reads as a rendering fault. It is the chart that moves and
+   not the figure, so the mono label above it and the generated-data line below
+   it stay put — a caveat that slid around with the chart it qualifies would be
+   the worst thing on the page to animate.
+
+   Every distance passed is small enough that half of it fits inside this
+   figure's own padding, so the chart cannot reach the figure's edge, let alone
+   the viewport's. `clip` is 'x' by default and is turned off for the two
+   WeekChart figures: that svg is `overflow-visible` so it can paint its value
+   labels outside its own box, and a horizontal clip would shear them. Turning
+   it off is safe there and only there, because those two drift in y alone and
+   a vertical translate cannot make anything wider. */
+function Fig({ title, children, className, drift = 26, clip = 'x' }) {
   return (
     <figure className={cn('field m-0 mt-5 p-4 sm:p-5', className)}>
       {title && <figcaption className="mark mb-5">{title}</figcaption>}
-      {children}
+      <Parallax2D distance={drift} clip={clip}>{children}</Parallax2D>
       <DemoNotice className="mt-6"/>
     </figure>
   )
@@ -149,7 +174,7 @@ export function ForStudents({ go }) {
   return (
     <main>
       <Hero go={go} label="For students" photo="student-hero"
-        photoAlt="A wearable sensor worn on the back of an upper arm, under a short sleeve"
+        photoAlt="A student smiling, the MindMap patch worn on her upper arm"
         title={`Your ${SCORE}, every day.`}
         lede="You decide what leaves your phone."/>
 
@@ -166,7 +191,9 @@ export function ForStudents({ go }) {
       <Section name="Today" tone="paper">
         <SectionHead>Your {SCORE} today</SectionHead>
         <SectionLede>Measured against your own normal, never against anyone else.</SectionLede>
-        <Fig>
+        {/* The largest figure on the student page and the one with the most
+            room around it, so it takes the largest drift of the three. */}
+        <Fig drift={36}>
           <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
             {/* the arch is the picture on this page, so it gets the room: it
                 leads at any width and takes half the row on a laptop */}
@@ -186,7 +213,8 @@ export function ForStudents({ go }) {
         {/* no lede: it counted the bars drawn directly under it. Bleeds to the
             screen edge on a phone, as on the parent page's copy of this
             figure, where the reason is written out. */}
-        <Fig className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
+        <Fig drift={20} clip={false}
+          className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
         </Fig>
       </Section>
@@ -213,8 +241,18 @@ const UNSEEN = ['Any single reading', NOTES, LOCATION, 'Anything in real time']
 function SeenUnseen() {
   return (
     <div className="mt-7 grid gap-5 sm:grid-cols-2 sm:gap-7">
-      {[['You see', SEEN, true], ['You never see', UNSEEN, false]].map(([head, rows, yes]) => (
-        <div key={head} className="field p-5 sm:p-6">
+      {[['You see', SEEN, true], ['You never see', UNSEEN, false]].map(([head, rows, yes], ci) => (
+        /* The two panels drift by different amounts, 34 and 18, so the pair
+           reads as two cards at two depths rather than as one band sliding.
+           The contrast between the lists is the figure here, and giving them
+           different travel is the cheapest way to say they are two things.
+
+           h-full three deep, because the wrapper is now the grid item and the
+           row's stretch stops at it: one list has three rows and the other
+           four, so without this the shorter panel loses the matched height the
+           comparison is drawn in. */
+        <Parallax2D key={head} distance={ci ? 18 : 34} className="h-full [&>div]:h-full">
+        <div className="field h-full p-5 sm:p-6">
           <h3 className="font-display text-head font-bold text-ink">{head}</h3>
           <ul className="m-0 mt-4 list-none space-y-3.5 p-0">
             {rows.map(r => (
@@ -226,6 +264,7 @@ function SeenUnseen() {
             ))}
           </ul>
         </div>
+        </Parallax2D>
       ))}
     </div>
   )
@@ -235,7 +274,7 @@ export function ForParents({ go }) {
   return (
     <main>
       <Hero go={go} label="For parents" photo="parent-hero"
-        photoAlt="A parent and their teenager talking across a kitchen counter"
+        photoAlt="A parent and their teenager talking, the patch on the teenager’s arm"
         title="What you see about your child."
         lede="A week, and one sentence about it."/>
 
@@ -245,7 +284,8 @@ export function ForParents({ go }) {
             adjacent above-range bars once the plot drops under about 330px,
             and Wednesday and Thursday are exactly that pair. Taking back the
             22px gutters puts the chart at 362px, which clears them. */}
-        <Fig className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
+        <Fig drift={20} clip={false}
+          className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
           {/* the sentence sits above the chart, not under it. A parent who
               reads only the first line has still got the whole message. */}
           <p className="mb-5 max-w-[40ch] text-body text-ink">
@@ -388,7 +428,7 @@ export function ForSchools({ go }) {
   return (
     <main>
       <Hero go={go} label="For schools" photo="pro-hero"
-        photoAlt="A school counselor and a student talking across a desk"
+        photoAlt="A school counselor and a student talking, the patch on the student’s arm"
         title="What a counselor sees."
         lede="Whole-school patterns, and a floor under small groups."/>
 
@@ -398,7 +438,7 @@ export function ForSchools({ go }) {
             and no sentence naming the tallest bar: Bars inks the peak and greys
             the rest for exactly that reason. */}
         <SectionLede>Mean {SCORE}, all {SCHOOL_N} students sharing with the school.</SectionLede>
-        <Fig>
+        <Fig drift={30}>
           {/* capped, because `Bars` divides its width evenly between five bars
               and at 1360px each one came out wider than it was tall, which
               reads as a colour block rather than a measurement */}
@@ -412,7 +452,9 @@ export function ForSchools({ go }) {
             a withheld row in line with the ones that cleared, so the sentence
             that used to name it was reading the figure out. */}
         <SectionLede>Nothing is reported for a group under {K_ANONYMITY} students.</SectionLede>
-        <Fig>
+        {/* 18, against the 30 on the bars above it. Both figures are rows of
+            measurements and the pair has to separate. */}
+        <Fig drift={18}>
           <SmallGroups/>
         </Fig>
       </Section>
@@ -420,7 +462,10 @@ export function ForSchools({ go }) {
       <Section name="The caseload" tone="mist">
         <SectionHead>{CASELOAD_TITLE}</SectionHead>
         <SectionLede>{CASELOAD_DEF}</SectionLede>
-        <Fig>
+        {/* The smallest drift on the page. This one is a table of figures a
+            counselor reads across a row, and a table that moves far enough to
+            be noticed is a table that is harder to read. */}
+        <Fig drift={12}>
           <Caseload/>
         </Fig>
       </Section>

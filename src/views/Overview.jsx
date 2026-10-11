@@ -110,17 +110,17 @@ const DOORS = [
    that person, for the reason the note under this array gives. */
 const SCREENS = [
   { id:'student', who:'Student', photo:'student-card',
-    alt:'A student sitting on a low wall outside school, writing',
+    alt:'A student smiling, the MindMap patch worn on her upper arm',
     title:`Your ${SCORE} today, and what moved it`,
     line:'The four signals behind it, and every reading ever taken.',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent', photo:'parent-card',
-    alt:'A parent and their teenager talking across a kitchen counter',
+    alt:'A parent and their teenager talking, the patch on the teenager’s arm',
     title:'One sentence a week, and which days ran high',
     line:`Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
     cta:'What a parent gets' },
   { id:'pro',     who:'School counselor', photo:'school-card',
-    alt:'A school counselor and a student talking across a desk',
+    alt:'A school counselor and a student talking, the patch on the student’s arm',
     title:CASELOAD_TITLE,
     line:'Only the students who share it.',
     cta:'What a school gets' },
@@ -201,22 +201,28 @@ export function Overview({ go }) {
           first view and the page opens on one thing rather than one and a
           half. Below lg it goes back to `min-h-`, because a phone cannot fit a
           headline, a button and two drawings in 700px without shrinking one
-          of them past use.
+          of them past use. THAT IS NO LONGER TRUE: the band is one viewport
+          tall at every width now, phones included, because the instruction was
+          plain — the title screen takes the whole screen and the next section's
+          heading must not be visible underneath it. `h-`, not `min-h-`, is the
+          only thing that guarantees that: `min-h-` lets tall content push the
+          band past the fold and the next band's top edge comes into view. The
+          content inside is what flexes instead.
 
           Capped at 44rem. On a tall desktop a full-viewport band left about
           190px of nothing above the headline and as much below it, and that is
           the single largest piece of the "blank empty space" note. At 1280 x
           720 the viewport is the smaller of the two, so on a laptop the band
           is still exactly one screen, which is what the rule was for. */}
-      <section id="hero" className="relative isolate flex min-h-0 flex-col
-        overflow-hidden border-t border-rule bg-paper lg:min-h-[32rem]">
+      <section id="hero" className="relative isolate flex h-[calc(100svh-58px)] flex-col
+        overflow-hidden border-t border-rule bg-paper">
 
         <div className="wrap relative z-10 flex flex-1 flex-col
           lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]
           xl:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
-          <div className="flex shrink-0 flex-col justify-center py-9 lg:py-12 lg:pr-10">
+          <div className="flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
             {/* A hairline used to sit in front of this line, the way a
                 drawing puts one in front of a key. On a page whose house rule
                 is that there is not one em dash in the copy, a 28px rule
@@ -451,7 +457,7 @@ export function Overview({ go }) {
                     height and object-cover so three different crops still sit
                     on one line. */}
                 <img src={PHOTOS[s2.photo]} alt={s2.alt} loading="lazy" decoding="async"
-                  width="900" height="605"
+                  width="1200" height="423"
                   className="-mx-5 -mt-5 mb-1 h-[160px] w-[calc(100%_+_2.5rem)] max-w-none
                     rounded-t-panel object-cover
                     motion-safe:transition-transform motion-safe:duration-[260ms]

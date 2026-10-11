@@ -4,7 +4,7 @@ import { Card, CardTitle } from '@/ui/card'
 import { Section, SectionHead } from '../ui/section'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
-import { ScrollIn, ScrollRow } from '../s21/motion'
+import { Parallax2D, ScrollIn, ScrollRow } from '../s21/motion'
 import { CameraModule, SignalCoverage } from '../charts/camera'
 import { PhoneCheck } from './PhoneCheck'
 import { ITEMS } from '../lib/engine'
@@ -63,6 +63,15 @@ import { ITEMS } from '../lib/engine'
  * follows it, then the thing itself; the lede that reconciled "two ways" with
  * the Overview page's "3 Ways" was a cross-reference, not a reason to read on,
  * and the limits band says its three facts in one sentence each.
+ *
+ * MOTION. Every figure on this page is 2D, so every one of them takes
+ * Parallax2D rather than a 3D scene — nothing drawn here is a stack of objects
+ * in space and tipping a flat schematic would only make it harder to read. The
+ * distances are graded by how near the thing is meant to feel: the phone in
+ * the hero is the nearest object on the page and travels 64px, the camera
+ * module 30, the coverage strip under it 18, and the two small route drawings
+ * 16 inside their own panels. Figures at one shared distance read as a
+ * rendering fault rather than as depth, which is why no two here match.
  */
 
 const ROUTES = [
@@ -137,9 +146,16 @@ export function WithoutPatch({ go }) {
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
-              <IPhone scale={0.44} label="The MindMap app running on a phone">
-                <PhoneApp/>
-              </IPhone>
+              {/* The nearest object on the page, so it drifts furthest. 32px
+                  either side of centre, against a hero band whose own vertical
+                  padding is 36px at the narrow end: the phone cannot reach the
+                  band's edge and its box does not move, so the headline beside
+                  it does not shift by a pixel. */}
+              <Parallax2D distance={64} className="shrink-0">
+                <IPhone scale={0.44} label="The MindMap app running on a phone">
+                  <PhoneApp/>
+                </IPhone>
+              </Parallax2D>
             </div>
           </div>
         </div>
@@ -150,13 +166,24 @@ export function WithoutPatch({ go }) {
       <Section name="Inside the camera" tone="card" tight id="camera">
         <SectionHead>The camera reads your pulse.</SectionHead>
         <ScrollIn className="mt-5 lg:mt-6">
-          <CameraModule className="mx-auto max-w-[66rem]"/>
+          {/* Two mechanisms on one figure, and they do not collide: ScrollIn
+              owns the entrance and ends, Parallax2D owns the drift and is on
+              its own element inside it. Neither one writes the other's
+              transform. */}
+          <Parallax2D distance={30}>
+            <CameraModule className="mx-auto max-w-[66rem]"/>
+          </Parallax2D>
         </ScrollIn>
         {/* The coverage strip used to be two thirds of the way down the next
             band under an h3, which is the heading the review could not find.
             It is the same subject as the figure and sits under the same h2. */}
         <ScrollIn className="mt-7">
-          <SignalCoverage/>
+          {/* Half the module's distance. The two sit in one band under one
+              heading, and the smaller figure reading as the further one is
+              what keeps the pair from drifting as a single sheet. */}
+          <Parallax2D distance={18}>
+            <SignalCoverage/>
+          </Parallax2D>
         </ScrollIn>
       </Section>
 
@@ -174,8 +201,13 @@ export function WithoutPatch({ go }) {
                 {/* w-fit, not a full-width banner. The panel used to run the
                     width of the card with a 170px drawing centred in it, which
                     is 460px of grey doing nothing on every card. */}
+                {/* 8px either side, which is inside this panel's own 10px of
+                    vertical padding, so the drawing moves within its grey
+                    rather than against the card's edge. */}
                 <div className="w-fit rounded-panel bg-mist/70 px-4 py-2.5">
-                  <RouteArt kind={r.art}/>
+                  <Parallax2D distance={16}>
+                    <RouteArt kind={r.art}/>
+                  </Parallax2D>
                 </div>
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
                   <CardTitle>{r.title}</CardTitle>

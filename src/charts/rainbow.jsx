@@ -1,7 +1,5 @@
 import React from 'react'
 import { Chevron } from '../ui/marks'
-import { Card, CardTitle } from '../ui/card'
-import { Progress } from '../ui/progress'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
@@ -44,19 +42,44 @@ import { cn } from '../lib/utils'
 const VW = 320, VH = 232, CX = 160, CY = 168
 const BAND = 16
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
-/* The plate and the empty part of a band. Both are properties of the asset
-   rather than of whatever page it lands on, which is the point: this dial sits
-   on white on the student page, on a pale blue app canvas in the phone, and
-   inside a phone mock on the overview, and it has to be one recognisable
-   object on all three. PLATE at #e3eff2 is lighter than the app canvas and
-   darker than card white, so it separates from both, and EDGE is the hairline
-   that closes it. The first try at the plate was two steps lighter and the
-   white cloud disappeared into it: a white shape on a near-white sky is an
-   outline, not a cloud, and the calm end read as an empty pill while the grey
-   end read as weather. The plate is set at the depth where BOTH clouds are
-   solid objects. ink-3 measures 5.26 : 1 on it, so the two foot labels and the
-   caption under the figure still clear AA sitting on top of it. */
-const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#abced6'
+/* The plate, the hairline that closed it, and the empty part of a band.
+ *
+ * THE PLATE IS OFF BY DEFAULT NOW, and the comment that stood here argued the
+ * opposite, so this is the whole of that argument and what changed in it.
+ *
+ * The plate was a filled, stroked, rounded rect behind the arch, added because
+ * the graphic was disappearing into pale pages: TRACK, the unfilled part of
+ * each band, was a near-white on a near-white ground, so at a middling score
+ * the only mark on the page was a short coloured stub with no shape around it.
+ * The plate gave the asset a ground of its own and that complaint went away.
+ *
+ * It also turned the dial into a framed picture, and on an app screen that is
+ * the wrong object. The dial is that screen's one hero number, and a hero
+ * number does not sit in a frame on its own dashboard: a 320 x 232 bordered
+ * card with a figure inside it reads as a widget somebody dropped onto the
+ * page rather than as the page's own reading. That is the note that came back
+ * and it is correct. On a brochure page the frame is fine, because there the
+ * thing genuinely is an illustration.
+ *
+ * So the frame is off and the problem it was solving is solved where it
+ * started: TRACK carries its own weight. It is `ruling` #8eb0b6, the token
+ * this system already keeps for a mark that has to be seen without being
+ * read. Measured as the arch's own ground against every surface a dial lands
+ * on:
+ *   card   #ffffff             2.32     paper  #f5fafa              2.21
+ *   app canvas #d5eaef          1.86     aqua-2 #cee8ea              1.81
+ *   mist   #dfecee             1.92
+ * The weakest of those beats what the old track managed WITH the plate under
+ * it (1.43), so the four tracks together are a solid arch on any of them and
+ * the colour fills it in. TRACK is not text, it never carries a value on its
+ * own, and 3 : 1 is not a floor it has to clear.
+ *
+ * PLATE and EDGE stay, and are still drawn for a call site that passes
+ * `plate`. ink-3 measures 5.26 : 1 on PLATE, so the two foot labels and the
+ * caption under the figure still clear AA when it is on. PLATE is also the
+ * far stop of the white cloud's gradient, which is what keeps that cloud a
+ * solid object once nothing is behind it. */
+const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#8eb0b6'
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
 /* 180° is the left foot, 360° the right; increasing angle sweeps up and over. */
@@ -157,16 +180,19 @@ export function ArchWeather() {
             circles lights like one object. The stops are the cloud's own y
             range in viewBox units.
 
-            The white cloud's ramp travels almost nowhere, and that is the fix
-            for the second thing that went wrong with it. A ramp ending two
-            steps off the plate left the bottom half of the cloud at the same
-            value as the sky behind it, so all that printed was the outline
-            and the flat base: a pill, not a cloud. It ends well clear of the
-            plate now, so the whole shape is one solid lighter mass and the
-            hairline is a rim on it rather than the only thing drawing it. */}
+            The white cloud's ramp is short, but the reason it travels at all
+            is the reason it now travels further. A ramp ending two steps off
+            its own ground leaves the bottom half of the cloud at the same
+            value as the sky behind it, so all that prints is the outline and
+            the flat base: a pill, not a cloud. With the plate off, that ground
+            is whatever the page is, often card white, which is the worst case
+            there is for a white shape. So the ramp ends at the old plate
+            value: the cloud keeps a lighter top and a body that reads on
+            white, and the hairline is a rim on it rather than the only thing
+            drawing it. */}
         <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
           <stop offset="0" stopColor="#ffffff"/>
-          <stop offset="1" stopColor="#f0f8f9"/>
+          <stop offset="1" stopColor={PLATE}/>
         </linearGradient>
         <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
           <stop offset="0" stopColor="#7d8b96"/>
@@ -247,14 +273,9 @@ function useSpring(target, on = true, stiffness = 170, damping = 26) {
    spends half the band's length being a duller version of its own colour.
    One solid paint at full strength is both brighter and sharper.
 
-   TRACK is the unfilled part of each band, and it is the other half of why
-   this graphic disappeared into the page. It was `stroke-mist`, which is a
-   near-white on a near-white ground, so at a middling score the only thing
-   drawn was a short coloured stub with nothing around it and no shape to read.
-   At #bcd6db the four tracks together are a solid arch the eye catches first,
-   and the colour fills it in. It is not text and never carries a value on its
-   own, so 1.6 : 1 against the plate is the right weight rather than a floor it
-   fails. */
+   TRACK is the unfilled part of each band, and with the plate gone it is the
+   only thing drawing the arch at a low score. It carries that whole job now;
+   the note on the constant has the four measurements that set its value. */
 function Band({ r, glow, pct, dim }) {
   const shown = useSpring(pct)
   return (
@@ -266,7 +287,7 @@ function Band({ r, glow, pct, dim }) {
   )
 }
 
-export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, className }) {
+export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, plate = false, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
   /* Hit-testing the arcs themselves was not reliable: a filtered sibling's hit
@@ -296,13 +317,14 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
         aria-label={`${score} out of 100${usual != null ? `, usually ${usual}` : ''}. 0 is calm, 100 is peak.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
-          {/* The sky the whole thing stands in, drawn first and carrying the
-              asset's own edge. Without it the arch, the clouds and the rain
-              were three marks floating on whatever ground the page happened to
-              have, which is what "it blends in with background" was pointing
-              at. With it they are one framed picture at every size. */}
-          <rect x="1" y="1" width={VW - 2} height={VH - 2} rx="14"
-            fill={PLATE} stroke={EDGE} strokeWidth="1.6"/>
+          {/* The asset's own sky, off unless a call site asks for it. Drawn,
+              it makes the arch, the clouds and the rain one framed picture at
+              any size, which is what an illustration on a brochure page wants.
+              Not drawn, the arch stands straight on the screen and the dial is
+              the screen's own figure rather than a card lying on it. The four
+              tracks are what hold it together either way. */}
+          {plate && <rect x="1" y="1" width={VW - 2} height={VH - 2} rx="14"
+            fill={PLATE} stroke={EDGE} strokeWidth="1.6"/>}
           {rings.map((r, i) => {
             const s = SENSORS[r.id] || r
             return (
@@ -343,51 +365,50 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, c
   )
 }
 
-/* One tile per band. These are the real control: the arch is aria-hidden, so
-   everything a keyboard or a screen reader needs is here. Tiles rather than
-   list rows because a reader has to be able to pick one out and read it from
-   arm's length — a colour bar down the side, the name at heading size, the
-   figure at figure size. */
+/* One row per band, and the row is the control. The arch is aria-hidden, so
+   everything a keyboard or a screen reader needs is here.
+
+   This was four bordered cards in a two-up grid, and each card carried a
+   tinted icon, the name at heading size, the figure, a progress bar and a
+   chevron. Four equal boxes holding five things each is a settings screen: to
+   find the signal that moved you compare five pairs of marks four times. A
+   fitness app puts the same four facts in four rows on one surface — name on
+   the left, figure on the right, a hairline between them, no box around any
+   of them — and the comparison becomes one vertical scan down one column of
+   numbers.
+
+   What survived the cut, and why:
+     the colour  a short rule at the head of the row, not a tinted icon and a
+                 tinted bar. The four hues are the identity the arch is drawn
+                 in and they stay, but once per row rather than three times.
+     the height  56px, so the tap target is still legal without a card around
+                 it to prop it up.
+     the chevron the only mark saying a row opens something.
+   The bar went because the figure beside it stated the same number against
+   the same scale, and the heading above the list states the scale once. */
 export function RainbowKey({ rings, picked, onPick, className }) {
   return (
-    <ul className={cn('grid list-none gap-3 p-0 sm:grid-cols-2', className)}>
+    <ul className={cn('m-0 list-none p-0', className)}>
       {rings.map(r => {
         const s = SENSORS[r.id] || r
         const on = picked === r.id
-        const Icon = s.icon
         const tone = s.glow || s.color
         return (
-          <li key={r.id} className="h-full">
-            {/* Card `interactive` replaces the hand-rolled border / hover /
-                focus-visible stack this tile used to carry, and its left rule
-                is the one the old `border-l-4` was drawing — repainted inline
-                in the signal's colour, which beats the accent hover so the
-                band identity survives the pointer. */}
-            <Card interactive as="button" aria-expanded={on}
+          <li key={r.id} className="border-b border-rule">
+            <button type="button" aria-expanded={on}
               onClick={() => onPick(on ? null : r.id)}
-              style={{ borderLeftColor: tone, background: on ? `${tone}12` : undefined }}
-              className="flex h-full min-h-[104px] flex-col justify-between gap-3 p-4">
-              <span className="flex w-full items-start justify-between gap-3">
-                <span className="flex items-center gap-2.5">
-                  {Icon && <Icon aria-hidden className="size-5 shrink-0" style={{ color: tone }}/>}
-                  <CardTitle as="span" className="text-row">{s.name}</CardTitle>
-                </span>
-                <span className="shrink-0 font-mono text-num font-medium tabular-nums leading-none text-ink">
-                  {r.value}</span>
-              </span>
-              {/* One reading against its scale, which is the whole of what the
-                  "of 100" caption under each figure said — and it said it four
-                  times under a heading that already says it. Bar instead of
-                  caption; aria-hidden because the figure beside it is the
-                  announced one. */}
-              <Progress aria-hidden value={r.value} tone={tone} className="h-1.5"/>
-              <span className="flex w-full items-end justify-between gap-3">
-                <span className="text-sec text-ink-2">{r.reading}</span>
-                <Chevron aria-hidden
-                  className={cn('size-5 shrink-0 text-ink-3 transition-transform duration-200',
-                    on && 'rotate-90')}/>
-              </span>
-            </Card>
+              className={cn('flex min-h-[56px] w-full items-center gap-4 py-3 text-left',
+                'transition-colors duration-150 hoverOnly:bg-mist/50',
+                on && 'bg-mist/50')}>
+              <span aria-hidden className="h-7 w-[3px] shrink-0 rounded-bar"
+                style={{ background: tone }}/>
+              <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">{s.name}</span>
+              <span className="shrink-0 font-mono text-num font-medium tabular-nums leading-none text-ink">
+                {r.value}</span>
+              <Chevron aria-hidden
+                className={cn('size-4 shrink-0 text-ink-3 transition-transform duration-200',
+                  on && 'rotate-90')}/>
+            </button>
           </li>
         )
       })}
@@ -480,7 +501,18 @@ export function RangeBar({ band, color, className }) {
 }
 
 /* Apple Fitness opens a sheet on a ring. A sheet on a page this short would
-   cover the thing it is explaining, so this expands underneath instead. */
+   cover the thing it is explaining, so this expands underneath instead.
+
+   It used to be a bordered card holding a coloured tab, a name, a figure, a
+   trace, a six-bar chart, a range bar and a paragraph: seven objects and three
+   charts, opened from one row, on a screen whose point is that it has one
+   chart. A detail heavier than the screen it came out of is not a detail.
+   What is left is the figure, its unit, the one chart that answers "and what
+   did it just do", and the one sentence. No border either — a rule across the
+   column is enough to say this belongs to the row above it.
+
+   `Bars` and `RangeBar` are untouched and still exported; the marketing pages
+   draw them, where there is room to make an argument out of a signal. */
 export function SensorDetail({ ring, onClose }) {
   const s = SENSORS[ring.id] || ring
   const ref = React.useRef(null)
@@ -489,33 +521,16 @@ export function SensorDetail({ ring, onClose }) {
     return () => clearTimeout(t)
   }, [ring.id])
   return (
-    <section ref={ref} tabIndex={-1} className="mt-6 rounded-xs border border-rule bg-paper p-5 sm:p-7">
-      <span aria-hidden className="mb-4 block h-1 w-14 rounded-none"
-        style={{ background: s.glow || s.color }}/>
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <div>
-          <h3 className="font-display text-head font-medium text-ink">{s.name}</h3>
-          <p className="mt-1 text-tick text-ink-3">
-            {ring.value} out of 100</p>
-        </div>
-        <p className="font-mono font-medium tabular-nums text-stat leading-none text-ink">
+    <section ref={ref} tabIndex={-1} className="mt-8 border-t border-ink pt-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
+        <h3 className="font-display text-row font-medium text-ink">{s.name}</h3>
+        <p className="m-0 font-mono text-stat font-medium leading-none tabular-nums text-ink">
           {ring.big}<span className="ml-1.5 text-meta text-ink-3">{s.unit}</span></p>
       </div>
-
-      <figure className="m-0 mt-5">
-        <figcaption className="mark mb-3 ">{ring.window || 'The last hour'}</figcaption>
-        <SensorTrace data={ring.series} color={s.glow || s.color}/>
-      </figure>
-
-      <div className="mt-7 grid gap-7 border-t border-rule pt-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
-        <Bars data={ring.bars} color={s.glow || s.color} unit={ring.barUnit}/>
-        <RangeBar band={ring.band} color={s.glow || s.color}/>
-      </div>
-
-      <p className="mt-7 max-w-[60ch] border-t border-rule pt-5 text-sec text-ink-2">{ring.note || s.about}</p>
-
+      <SensorTrace className="mt-4" data={ring.series} color={s.glow || s.color}/>
+      <p className="mt-4 max-w-[60ch] text-sec text-ink-2">{ring.note || s.about}</p>
       <button onClick={onClose}
-        className="mt-5 min-h-[44px] font-display text-meta font-medium text-accent underline
+        className="mt-3 min-h-[44px] font-display text-meta font-medium text-accent underline
           underline-offset-4 hoverOnly:text-accent-ink">Close {s.name.toLowerCase()}</button>
     </section>
   )

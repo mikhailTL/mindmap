@@ -479,15 +479,19 @@ const APP_TITLE = {
  *            on any marketing page. Card titles follow at 18px and 17px.
  *   rhythm   every banded `.wrap` tightens to 24px of padding, 32px past lg.
  *            The marketing bands are 36 and 56.
- *   nav      persistent, and the destination you are on is a filled accent
- *            block in both the phone bar and the desk rail.
+ *   nav      one bar, pinned to the bottom edge at every width, and the
+ *            destination you are on is a filled accent block in it. There
+ *            was a 216px left rail past lg as well; see AppTabBar for why
+ *            there is not one any more.
  *
  * Written as descendant variants rather than per screen because the screens
  * belong to the dashboards and the surface belongs to the chrome. A pane
  * cannot drift back towards the brochure without this file saying so.
  */
 const APP_SHELL = cn(
-  'min-h-[100dvh] bg-beam/15 lg:pl-[13.5rem]',
+  /* No left inset: the rail that used to sit in it is gone, so the page runs
+     the full width of the window at every size. */
+  'min-h-[100dvh] bg-beam/15',
   /* Each step carries its own leading and tracking from the scale, so one
      class per level is the whole override. `.mark` is exempt: it is a ruled
      label at 16px that happens to be marked up as a heading, and a step on
@@ -497,28 +501,45 @@ const APP_SHELL = cn(
   '[&_.wrap]:py-6 lg:[&_.wrap]:py-8',
 )
 
-/* The phone bar.
+/* The bar. One of them, at every width, and the app's only navigation.
+ *
+ * There used to be two: this below lg and a 216px fixed left rail past it.
+ * The rail is deleted. Two arguments against it and the second one is the
+ * owner's: a phone-shaped app does not have a sidebar, and this one looked
+ * like a web console with a nav column rather than like a product. The first
+ * is cheaper — one set of destinations rendered twice is one set of states
+ * maintained twice, and the rail had already drifted (it carried the wordmark,
+ * the demo switch and the way out; the bar carried none of them).
  *
  * Fixed to the bottom, always there, thumb height. Selection is carried four
  * ways and colour is only one of them: a rule lands on the top edge of the
  * cell, the mark fills, the label goes bold, and the ink darkens. Desaturate
  * a screenshot and you can still read where you are. Every cell is at least
- * 56 tall and a quarter of the viewport wide, so the smallest target here is
+ * 56 tall and a quarter of the row wide, so the smallest target here is
  * 97 x 56 at 390. The inset padding is what keeps the labels off a home
  * indicator, and the spacer the page renders below the footer is what keeps
  * this bar off the last line of content.
  *
+ * Past 544 the row stops growing and centres instead. Four cells stretched
+ * across 1440 put a third of a metre between the first and the last, which is
+ * the thing that makes a stretched phone bar look like a mistake on a desk;
+ * a thumb-width group in the middle of the edge does not.
+ *
+ * Keyboard: four real buttons in document order, so Tab reaches them and
+ * Enter or Space activates them, and the one you are on carries
+ * aria-current="page". That is the same contract the rail had.
+ *
  * White, on a hairline. The marketing header is mist on a 2px ink rule, and
- * the two are now different objects at a glance rather than the same object
- * in two places.
+ * the two are different objects at a glance rather than the same object in
+ * two places.
  */
 function AppTabBar({ view, go }) {
   const here = APP_TAB[view]
   return (
     <nav aria-label="App screens"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-3 bg-card
-        pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <ul className="flex">
+        pb-[env(safe-area-inset-bottom)]">
+      <ul className="mx-auto flex max-w-[34rem] list-none p-0">
         {APP_NAV.map(([id, label, Mark]) => {
           const on = here === id
           return (
@@ -550,59 +571,14 @@ function AppTabBar({ view, go }) {
   )
 }
 
-/* The desktop rail.
- *
- * The same four destinations, not the phone bar stretched across 1440: four
- * icons spaced a third of a metre apart along the bottom of a monitor is a
- * phone habit on a desk. A 216px column instead, labels beside their marks,
- * with the settings and the way out where a desk app keeps them, at the foot,
- * below everything you actually came for.
- *
- * The selected destination is a filled accent block. It was an accent-wash
- * tint with a leading bar, which is how this site marks a row in a list; a
- * product marks the screen you are standing on more loudly than it marks a
- * selected row, because that one is a fact about the whole window.
- */
-function AppRail({ view, go }) {
-  const here = APP_TAB[view]
-  return (
-    <div className="fixed inset-y-0 left-0 z-40 hidden w-[13.5rem] flex-col overflow-y-auto overscroll-contain
-      border-r border-ink-3 bg-card lg:flex">
-      {/* 48px, the same as the title bar to its right, so the two line up
-          across the top of the window instead of stepping. */}
-      <div className="flex h-12 shrink-0 items-center border-b border-rule px-4 text-ui text-ink">
-        <Logo/>
-      </div>
-      <nav aria-label="App screens" className="flex flex-col gap-1 p-2.5">
-        {APP_NAV.map(([id, label, Mark]) => {
-          const on = here === id
-          return (
-            <button key={id} type="button" onClick={() => go(id)}
-              aria-current={on ? 'page' : undefined}
-              className={cn('flex min-h-[44px] w-full items-center gap-2.5 rounded-field px-3',
-                'text-left transition-colors duration-150',
-                on ? 'bg-accent text-paper' : 'text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink')}>
-              <Mark size={20}/>
-              <span className={cn('font-display text-ui', on ? 'font-bold' : 'font-medium')}>{label}</span>
-            </button>
-          )
-        })}
-      </nav>
-      <div className="mt-auto border-t border-rule p-2.5">
-        <ModeToggle compact className="[&_button]:min-h-[44px]"/>
-        <ExitToSite go={go} className="mt-3"/>
-      </div>
-    </div>
-  )
-}
-
 /* The way out. Named, not a logo that might mean home and might mean site, and
    set as a quiet text control rather than anything that competes with the four
    screens above it. It carries the arrow that the site's "Open the app"
    carries reversed, so the two crossings are one pair.
 
-   One of these is on screen at a time: the rail holds it past lg, the title
-   bar holds it below. Never both, and never two back links in one corner. */
+   One of these is on screen at a time, in the title bar, at every width. It
+   used to move between the rail and the bar at lg, which is how the two
+   copies of it drifted apart. */
 function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
@@ -630,9 +606,10 @@ function ExitToSite({ go, className, short = false }) {
  * it carries the name of the screen you are on instead of a wordmark, five
  * links and a filled key. An app bar reports; a site header offers.
  *
- * Past lg it is the name alone, because the rail beside it already holds the
- * wordmark, the demo switch and the way out, and repeating any of those would
- * be the doubling this pass is removing.
+ * It holds the demo switch and the way out at every width. It used to drop
+ * both past lg and let the rail carry them; with the rail gone this is the
+ * one place either of them lives, which is also the only way there is exactly
+ * one of each on the screen.
  */
 function AppTopBar({ view, go }) {
   return (
@@ -642,7 +619,7 @@ function AppTopBar({ view, go }) {
         <span className="min-w-0 truncate font-display text-tick font-bold text-ink">
           {APP_TITLE[view] || 'App'}
         </span>
-        <div className="ml-auto flex items-center gap-3 lg:hidden">
+        <div className="ml-auto flex items-center gap-3">
           <ModeToggle compact className="[&_button]:min-h-[44px]"/>
           <ExitToSite go={go} short/>
         </div>
@@ -1040,12 +1017,7 @@ export function App() {
       {!inApp && <Header view={view} go={go}/>}
       <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      {inApp && <AppRail view={view} go={go}/>}
-      {/* The rail is fixed, so the page is inset by its width rather than
-          laid out beside it: the dashboards draw full-bleed bands and a flex
-          sibling would have clipped them.
-
-          APP_SHELL is where the app stops looking like the site: the canvas,
+      {/* APP_SHELL is where the app stops looking like the site: the canvas,
           the heading steps and the band padding all land here and every pane
           inside inherits them. Nothing is clipped and nothing is transformed,
           so the sticky columns inside the reading screen still stick. */}
@@ -1086,7 +1058,7 @@ export function App() {
         )}
         {/* What keeps the tab bar off the last line of the page. Its height
             plus whatever the handset reserves at the bottom of the glass. */}
-        {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))] lg:hidden"/>}
+        {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
       </div>
       {inApp && <AppTabBar view={view} go={go}/>}
     </>

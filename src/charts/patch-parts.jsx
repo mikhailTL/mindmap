@@ -1,4 +1,5 @@
 import React from 'react'
+import { ScrollScene } from '../s21/motion'
 
 /* One small line drawing per part card on the hardware page's dark band.
  *
@@ -19,8 +20,18 @@ import React from 'react'
  *
  * accent.lit carries the one thing each card is about: the charging slot, the
  * board in its tray, the skin contacts. mist draws the plastic, paper the
- * raised body. Nothing here animates, so there is no reduced-motion branch to
- * write; the drawings are identical however the reader has set that.
+ * raised body.
+ *
+ * They do animate now, which reverses what this comment used to claim. Three
+ * line drawings of three parts of one object, stacked down a rail beside a 3D
+ * viewer of that same object, read as three flat icons when every one of them
+ * is square to the page. Each one is given its own small ScrollScene, so the
+ * rail reads as three objects sitting in space at slightly different angles
+ * and turning as the reader goes past. It is kept deliberately small — these
+ * are 76px tall, 44 to 56 at lg, and a drawing that size cannot carry a tip
+ * worth more than a few degrees before the strokes start to alias. The
+ * reduced-motion branch is ScrollScene's: under that setting each drawing
+ * resolves to the `to` angle and holds there, fully drawn.
  *
  * No labels. The card beside each drawing already names the part in the page's
  * own type, and 15px mono inside a 90px figure is a caption nobody reads.
@@ -36,21 +47,43 @@ const GND   = '#0b2b33'   /* the panel's own ground, used to mask, never to draw
 const FL  = { x:12,  y:40, width:416, height:120, rx:60 }
 const POD = { x:114, y:56, width:212, height:88,  rx:36 }
 
-function Frame({ label, children }) {
+/* `tilt` is per drawing rather than one shared value, so the three do not move
+   as one plate: the shell leads, the pod follows it a little flatter, and the
+   base runs the opposite way in both rotateX and Z so the bottom of the rail
+   is never parallel to the top. Nine degrees of rotateX, three of rotateZ and
+   18px of depth is the whole budget at this size — the drawing is 76px tall,
+   44 to 56 at lg, and past that the 1px construction lines start to alias.
+
+   `h-full` on the scene is load-bearing at lg. The card's ink panel sets its
+   own height there and the page constrains the svg to it with an
+   `lg:[&_svg]:h-full`; a percentage height resolves against this wrapper, so
+   without it the svg would be measuring against `auto` and fall back to its
+   own 88px. Below lg the panel's height is auto and `h-full` resolves to auto
+   with it, which is the same as not being there. */
+function Frame({ label, children, tilt }) {
   return (
-    <svg viewBox="0 0 440 200" role="img" aria-label={label}
-      preserveAspectRatio="xMidYMid meet"
-      className="h-[76px] w-full sm:h-[88px]">
-      {children}
-    </svg>
+    <ScrollScene perspective={620} narrow={0.5} className="h-full"
+      from={tilt[0]} to={tilt[1]}>
+      <svg viewBox="0 0 440 200" role="img" aria-label={label}
+        preserveAspectRatio="xMidYMid meet"
+        className="h-[76px] w-full sm:h-[88px]">
+        {children}
+      </svg>
+    </ScrollScene>
   )
+}
+
+const TILT = {
+  shell: [{ rotateX: 9, rotateZ: -3, z: -18 }, { rotateX: -5, rotateZ: 2, z: 10 }],
+  pod:   [{ rotateX: 7, rotateZ: 2, z: -12 }, { rotateX: -4, rotateZ: -3, z: 14 }],
+  base:  [{ rotateX: -6, rotateZ: 3, z: 12 }, { rotateX: 8, rotateZ: -2, z: -16 }],
 }
 
 /* The printed shell: the adhesive flange hatched, the raised body on top of
    it, and the charging slot straddling the body wall so it breaks the
    outline. A port that does not break the outline is a sticker. */
 export const ShellArt = (
-  <Frame label="The printed shell, face on, with the charging slot breaking its side wall">
+  <Frame tilt={TILT.shell} label="The printed shell, face on, with the charging slot breaking its side wall">
     <defs>
       <pattern id="pp-shell-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
@@ -75,7 +108,7 @@ export const ShellArt = (
    arrows are the only thing on any of these three that states an action, and
    the card's text is what says the board is bought separately. */
 export const PodArt = (
-  <Frame label="The electronics pod, a tray with the board dropping into it">
+  <Frame tilt={TILT.pod} label="The electronics pod, a tray with the board dropping into it">
     <rect {...FL} fill="none" stroke={MIST} strokeOpacity=".35" strokeWidth="1" strokeDasharray="6 6"/>
     <rect x="112" y="52" width="216" height="96" rx="14" fill="none" stroke={MIST} strokeWidth="1.6"/>
     <rect x="124" y="62" width="192" height="76" rx="8"
@@ -100,7 +133,7 @@ export const PodArt = (
    whole stadium is hatched. The two wing electrodes and the central window
    are the contacts, which is what accent.lit is carrying here. */
 export const BaseArt = (
-  <Frame label="The skin-side base, the adhesive face with its sensor contacts">
+  <Frame tilt={TILT.base} label="The skin-side base, the adhesive face with its sensor contacts">
     <defs>
       <pattern id="pp-base-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">

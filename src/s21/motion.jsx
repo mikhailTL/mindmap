@@ -1,5 +1,5 @@
 import React from 'react'
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion'
+import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { cn } from '../lib/utils'
 
 /* Scroll motion primitives, ported from solace-innovation's s21 kit.
@@ -186,8 +186,208 @@ export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) 
   )
 }
 
-/** Slow counter-scroll drift. A generic wrapper: it moves whatever is put
-    inside it. */
+
+/* ══ Scroll-linked motion ═════════════════════════════════════════════════
+ *
+ * Everything above this line is an ENTRANCE: it starts, it runs for a stated
+ * duration, it ends, and the comment at the top of the file argues each of
+ * those durations. The two components below are a different kind of thing and
+ * are not covered by that argument. They have NO duration, because the
+ * reader's own scroll position is the clock: at a given scroll offset the
+ * figure is at a given angle, full stop. There is nothing to audit against the
+ * 300ms ceiling because nothing here is ever "playing".
+ *
+ * WHY A SPRING AND NOT A RAW SCRUB. The naive version maps scrollYProgress
+ * straight onto the transform. It is correct and it feels like nothing: the
+ * figure is welded to the wheel, so a trackpad's stepped deltas come through
+ * as stepped rotation and the object reads as a value being set rather than as
+ * a thing with mass. useSpring between the two buys the one frame of lag that
+ * makes it read as an object. The spring is tuned to arrive and stop:
+ * damping / (2 * sqrt(stiffness * mass)) = 27 / (2 * sqrt(190)) = 0.98, just
+ * under critical, so it settles without a single overshoot. A bouncy scrub is
+ * worse than no scrub, because the figure keeps moving after the reader has
+ * stopped and reads as broken.
+ *
+ * WHY NEITHER ONE TOUCHES OPACITY. This file already carries the post-mortem
+ * on an entrance mechanism that shipped three cards at opacity 0 to
+ * production. These two are transform-only by construction, so the worst case
+ * if useScroll never reports anything is a figure sitting at its `from` angle
+ * forever — tilted, and completely visible. There is no code path here that
+ * can hide content.
+ *
+ * WHY THEY CLIP THEMSELVES. A rotation or a translate paints outside the
+ * element's own box while leaving that box exactly where it was. The box is
+ * what the page lays out, so nothing moves and nothing reflows — but the paint
+ * can reach the viewport edge and raise a horizontal scrollbar, which is
+ * tested on every route at 1280 and 390. So each one owns its own clip, and
+ * `clip` is a prop rather than an assumption because two call sites hold
+ * drawings that deliberately paint past their box (the exploded stack's drop
+ * shadows, WeekChart's `overflow-visible` value labels) and clipping those is
+ * a visible regression. A y-only Parallax2D adds no horizontal extent at all,
+ * which is why `clip={false}` is safe there and is never offered to a scene
+ * that rotates.
+ *
+ * PROPERTIES. rotateX, rotateZ, translateZ, translate and scale. All of them
+ * transform. None of them lays anything out. */
+
+/* Just under critical damping — see above. restDelta is tight because the
+   value this spring is chasing is a 0-to-1 progress, not a pixel count. */
+const SCENE_SPRING = { stiffness: 190, damping: 27, mass: 1, restDelta: 0.0005 }
+
+const num = (v, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : d)
+
+/* Shrink a pair of endpoints toward their own midpoint. Used for the
+   small-screen reduction: it takes amplitude out of the swing without moving
+   the average, so a figure looks the same at 390 as it does at 1280 and only
+   travels less far either side of that. Scaling the endpoints toward zero
+   instead would flatten the drawing itself, which is a different change. */
+function damp(a, b, k) {
+  const m = (a + b) / 2
+  return [m + (a - m) * k, m + (b - m) * k]
+}
+
+/* True below the `sm` breakpoint. Starts false and corrects on mount: it only
+   scales how far a transform travels, so one frame at the wider amplitude is
+   not something a reader can see, and starting false means a browser with no
+   matchMedia still gets motion rather than an exception. */
+function useNarrowViewport() {
+  const [narrow, setNarrow] = React.useState(false)
+  React.useEffect(() => {
+    if (typeof matchMedia !== 'function') return
+    const mq = matchMedia('(max-width: 639px)')
+    const sync = () => setNarrow(mq.matches)
+    sync()
+    mq.addEventListener?.('change', sync)
+    return () => mq.removeEventListener?.('change', sync)
+  }, [])
+  return narrow
+}
+
+/** A perspective box whose contents rotate in 3D as the element crosses the
+ *  viewport. The 3D half of the site's scroll motion: exploded drawings, where
+ *  the whole point of the figure is that it is a stack of objects in space.
+ *
+ *  from / to   the transform at scroll progress 0 (element's top at the bottom
+ *              of the viewport) and 1 (element's bottom at the top of it).
+ *              Each is `{ rotateX, rotateZ, z }` in degrees and pixels; any
+ *              key left out is 0.
+ *  perspective px, on the wrapper. Lower is a wider lens and a more violent
+ *              foreshortening; 1100 is a normal one.
+ *  narrow      multiplier on the swing below 640px, where a tilt eats
+ *              horizontal room fast. 1 disables the reduction.
+ *  restAt      which point of the range is the resting state under
+ *              prefers-reduced-motion. 1 (the `to` end) by default.
+ *  clip        true for both axes, 'x' for horizontal only, false for neither.
+ *
+ *  `children` may be a function, which is called with
+ *  `{ progress, narrow, reduced }` so a caller can drive its own children off
+ *  the same sprung progress — that is how the exploded stack separates its
+ *  three sheets in depth instead of sliding them as one plate. A function
+ *  child must not call hooks itself; it runs inside this component's render.
+ *  Put them in a component, as ExplodedStack's Sheet does. */
+export function ScrollScene({
+  children,
+  className,
+  perspective = 1100,
+  from = { rotateX: 13, rotateZ: -3, z: 0 },
+  to = { rotateX: -5, rotateZ: 3, z: 0 },
+  narrow: narrowScale = 0.45,
+  restAt = 1,
+  clip = true,
+  style,
+}) {
+  const ref = React.useRef(null)
+  const reduced = useReducedMotion()
+  const narrow = useNarrowViewport()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const live = useSpring(scrollYProgress, SCENE_SPRING)
+  /* A constant progress, so the reduced-motion path runs through exactly the
+     same useTransform chain as the moving one and resolves to a real angle
+     rather than to `undefined`. */
+  const rest = useMotionValue(restAt)
+  React.useEffect(() => { rest.set(restAt) }, [rest, restAt])
+  const p = reduced ? rest : live
+
+  const k = narrow ? narrowScale : 1
+  const [rx0, rx1] = damp(num(from.rotateX), num(to.rotateX), k)
+  const [rz0, rz1] = damp(num(from.rotateZ), num(to.rotateZ), k)
+  const [z0, z1] = damp(num(from.z), num(to.z), k)
+  const rotateX = useTransform(p, [0, 1], [rx0, rx1])
+  const rotateZ = useTransform(p, [0, 1], [rz0, rz1])
+  const z = useTransform(p, [0, 1], [z0, z1])
+
+  const kids = typeof children === 'function'
+    ? children({ progress: p, narrow, reduced })
+    : children
+
+  return (
+    <div ref={ref} style={{ perspective: `${perspective}px`, ...style }}
+      className={cn('relative',
+        clip === 'x' ? 'overflow-x-clip' : clip ? 'overflow-clip' : null, className)}>
+      <motion.div className="h-full w-full [transform-style:preserve-3d]"
+        style={{ rotateX, rotateZ, z }}>
+        {kids}
+      </motion.div>
+    </div>
+  )
+}
+
+/** The 2D half: a figure drifts against the scroll as it crosses the viewport.
+ *  Everything on the site that is not an exploded drawing gets this one.
+ *
+ *  distance  total vertical travel in px, split either side of centre, so 40
+ *            means +20 on the way in and -20 on the way out. Modest on
+ *            purpose: this is meant to be felt as depth, not seen as a slide.
+ *            Vary it between figures — a page where everything drifts by the
+ *            same amount reads as a rendering fault rather than as parallax.
+ *  x         optional total horizontal travel, px. Needs the clip.
+ *  scale     optional total scale change, e.g. 0.04 for 0.98 to 1.02.
+ *  clip      'x' by default: y-only motion cannot widen anything, but x and
+ *            scale can, and the horizontal axis is the one that can produce a
+ *            scrollbar. false for a child that paints outside its own box.
+ *
+ *  This replaces the old `Parallax`, which is still exported below it
+ *  unchanged for the call sites that have it. */
+export function Parallax2D({
+  children,
+  className,
+  distance = 40,
+  x: xDistance = 0,
+  scale: scaleRange = 0,
+  narrow: narrowScale = 0.6,
+  clip = 'x',
+  as = 'div',
+}) {
+  const Comp = motion[as] || motion.div
+  const ref = React.useRef(null)
+  const reduced = useReducedMotion()
+  const narrow = useNarrowViewport()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const p = useSpring(scrollYProgress, SCENE_SPRING)
+  const k = narrow ? narrowScale : 1
+  const d = num(distance) * k / 2
+  const dx = num(xDistance) * k / 2
+  const ds = num(scaleRange) * k / 2
+  const y = useTransform(p, [0, 1], [d, -d])
+  const x = useTransform(p, [0, 1], [dx, -dx])
+  const s = useTransform(p, [0, 1], [1 - ds, 1 + ds])
+  /* No opacity in that list, and the element is in flow either way: if the
+     progress never arrives the figure sits at +d and is entirely readable. */
+  return (
+    <div ref={ref}
+      className={cn(clip === 'x' ? 'overflow-x-clip' : clip ? 'overflow-clip' : null, className)}>
+      <Comp style={reduced ? undefined
+        : { y, ...(xDistance ? { x } : null), ...(scaleRange ? { scale: s } : null) }}>
+        {children}
+      </Comp>
+    </div>
+  )
+}
+
+/** Slow counter-scroll drift, kept at its original signature and behaviour
+    for the call sites that import it by this name. New work wants Parallax2D
+    above, which is the same idea with a clip of its own, a spring, a
+    reduced-motion branch and a travel distance that is not 120px. */
 export function Parallax({ children, distance = 60, className }) {
   const ref = React.useRef(null)
   const reduced = useReducedMotion()
