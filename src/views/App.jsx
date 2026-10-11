@@ -9,8 +9,8 @@ import { NameGate } from '../survey/NameGate'
 import { ReviewLauncher } from '../survey/Survey'
 import { PAGE, REQUIRED, SECTIONS } from '../survey/questions'
 import {
-  answersFor, exportRows, getVersion, getVisitor,
-  recordAnswer, subscribe, syncPending, toCSV,
+  answersFor, getVersion, getVisitor,
+  recordAnswer, submitResponse, subscribe, syncPending, wasSent,
 } from '../survey/store'
 import { Students } from './Students'
 import { Parents } from './Parents'
@@ -806,21 +806,65 @@ function SurveyField({ q, answer, onAnswer, onSkip }) {
   return null
 }
 
-function csvName() {
-  const n = getVisitor()?.name || 'anon'
-  return 'mindmap-review-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.csv'
-}
+/* A reviewer used to be offered exactly one thing to do at the end of this
+   page: download their own answers as a CSV. That is a fine secondary courtesy
+   and a terrible primary action. It left every response sitting on the
+   reviewer's own disk, which is the same failure the store's POST had: the
+   whole point of asking twelve questions is that somebody reads the answers.
 
-/* The reviewer can take their own answers away. Same consent argument the
-   rest of the site makes: if the data is about you, you get a copy of it. */
-function downloadCSV() {
-  try {
-    const url = URL.createObjectURL(new Blob([toCSV(exportRows())], { type:'text/csv;charset=utf-8' }))
-    const a = document.createElement('a')
-    a.href = url; a.download = csvName()
-    document.body.appendChild(a); a.click(); a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 0)
-  } catch {}
+   The button is now Submit, and submitting mails the response. The CSV is not
+   missed: nobody taking a usability survey wants a spreadsheet of their own
+   opinions, and the one person who does want the data is the one it is now
+   sent to. */
+
+/* Submit, and what happens after it.
+ *
+ * Four states and all four are visible, because a button that does not say
+ * whether it worked is a button a reviewer presses twice. `sent` is read back
+ * from the store rather than kept only in this component, so reopening the page
+ * after a successful send still says so instead of inviting a second copy.
+ *
+ * It is enabled as soon as there is one answer. A half-finished review is worth
+ * more than no review, and the store stamps it so a later complete submission
+ * is a new send rather than a silent no-op. */
+function SubmitRow({ done, total }) {
+  const [state, setState] = React.useState(() => (wasSent() ? 'sent' : 'idle'))
+  /* Any answer at all, not any REQUIRED answer. `done` counts only the twelve
+     required items, so a reviewer who filled in the optional background
+     questions and nothing else would have faced a Submit button that refused
+     to work and did not say why. */
+  const empty = answersFor(PAGE).length === 0
+
+  const submit = async () => {
+    setState('sending')
+    const ok = await submitResponse({ force: true })
+    setState(ok ? 'sent' : 'failed')
+  }
+
+  return (
+    <div className="border-t border-rule pt-5">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <p className="note">
+          {state === 'sent' ? 'Sent. Thank you.'
+            : done >= total ? 'That is all of them.'
+            : `${total - done} to go.`}
+        </p>
+        <Button type="button" className="ml-auto min-h-[44px]"
+          disabled={empty || state === 'sending' || state === 'sent'}
+          onClick={submit}>
+          {state === 'sent' ? 'Submitted'
+            : state === 'sending' ? 'Sending'
+            : 'Submit'}
+        </Button>
+      </div>
+      {state === 'failed' && (
+        <p className="note mt-2.5">That did not send. Try again in a moment.</p>
+      )}
+      {state !== 'sent' && !empty && done < total && (
+        <p className="note mt-2.5">You can submit what you have and come back to the rest.</p>
+      )}
+    </div>
+  )
 }
 
 function SurveyPage() {
@@ -917,10 +961,7 @@ function SurveyPage() {
               answers rather than under the rail. */}
           <div className="mt-9 lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
             <div aria-hidden/>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-5">
-              <p className="note">{done >= total ? 'That is all of them. Thanks.' : `${total - done} to go.`}</p>
-              <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>Download my answers</Button>
-            </div>
+            <SubmitRow done={done} total={total}/>
           </div>
         </div>
       </Section>

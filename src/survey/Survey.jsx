@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
 import { PAGE, REQUIRED, SECTIONS } from './questions'
 import {
   answersFor, getVersion, getVisitor, recordAnswer,
-  subscribe, syncPending, submitResponse, wasSent, exportRows, toCSV,
+  subscribe, syncPending, submitResponse, wasSent,
 } from './store'
 
 /* One survey, opened from a small box in the corner.
@@ -272,28 +272,11 @@ function Question({ q, answer, onAnswer, onSkip }) {
   return null
 }
 
-function csvName() {
-  const n = getVisitor()?.name || 'anon'
-  return 'mindmap-review-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.csv'
-}
+/* csvName and downloadCSV lived here. The dialog no longer offers a reviewer
+   their own answers as a file: Submit is the action, and it mails them.
+   src/views/Responses.jsx still exports everything for the one person who
+   actually needs a spreadsheet. */
 
-/* The reviewer can take their own answers away. It is the same consent
- * argument the rest of the site makes: if the data is about you, you get a
- * copy of it, and if there is no backend that day the file is still the
- * record. */
-function downloadCSV() {
-  try {
-    const blob = new Blob([toCSV(exportRows())], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = csvName()
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 0)
-  } catch {}
-}
 
 /* Subscribing to the store rather than lifting state: the corner box and the
    open survey both have to see an answer the moment the other records it. */
@@ -520,25 +503,27 @@ function ReviewDialog({ onClose }) {
                   ? 'That is all of them. Thanks.'
                   : `${total - done} to go.`}
               </p>
-              <Button size="sm" variant="ghost" type="button" onClick={downloadCSV}>
-                Download my answers
-              </Button>
+              {/* Submit is the filled control and the only one that does
+                  anything to the answers. "Download my answers" used to stand
+                  here as a ghost button beside it, and on the survey PAGE it
+                  was the only control at all, which meant the default outcome
+                  of filling in a review was that nobody read it. Close is the
+                  quiet one, because leaving is not the point of the dialog. */}
               <Button
                 size="sm"
-                variant="outline"
                 type="button"
-                className="min-h-[44px]"
+                className="ml-auto min-h-[44px]"
                 disabled={send === 'sending' || send === 'sent' || !answers.length}
                 onClick={sendNow}
               >
-                {send === 'sent' ? 'Feedback sent' : 'Send my feedback'}
+                {send === 'sent' ? 'Submitted' : send === 'sending' ? 'Sending' : 'Submit'}
               </Button>
-              <Button size="sm" className="ml-auto" onClick={onClose}>
-                {complete ? 'Done' : 'Come back to it'}
+              <Button size="sm" variant="ghost" onClick={onClose}>
+                {complete ? 'Close' : 'Come back to it'}
               </Button>
             </div>
             {send === 'failed' && (
-              <p className="note mt-2.5">That did not go through. Try again in a moment.</p>
+              <p className="note mt-2.5">That did not send. Try again in a moment.</p>
             )}
           </div>
         </div>
