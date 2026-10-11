@@ -1062,9 +1062,14 @@ export function App() {
         {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
         {/* The site keeps its band. The app gets a line of small print,
             because the band is the last thing on the page that still read as
-            the brochure. */}
+            the brochure.
+
+            The band's extra foot room under sm is not decoration: the feedback
+            pill is fixed at bottom-4 right-4 and was sitting on the medical
+            disclaimer on a phone, which is the one line on this page that
+            should never be covered. 7rem clears the pill and its safe area. */}
         {inApp ? <AppFoot/> : (
-          <footer className="border-t-2 border-ink bg-mist py-11">
+          <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
               <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
                 medical device and does not diagnose or treat any condition. If you need urgent help, contact your
