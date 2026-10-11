@@ -38,8 +38,12 @@ const NAME = {
 /* Padding is two steps, not a number per section. `tight` is for a band that
    is mostly picture; the default is for one that is mostly read.
 
-   Both have come down twice now, by about a quarter and then again by about
-   a sixth. Generous padding was doing the work of hierarchy, and two separate
+   Three times now. The last cut was made against a measurement rather than a
+   feeling: 27% of the landing page's height was vertical space with nothing
+   painted in it, and the largest single runs were all at section boundaries,
+   where one band's bottom padding meets the next band's top padding and a
+   heading's own top margin. Two bands meeting used to put 96px of nothing
+   between the last word of one and the first word of the next. Generous padding was doing the work of hierarchy, and two separate
    reviews named the same symptom: bands "filled with nothing", sections
    "unnecessarily larger", and a page that takes too much scrolling to get
    through. Space between things is not free, and on a phone it is the most
@@ -47,7 +51,7 @@ const NAME = {
 export function Section({ name, tone = 'paper', id, className, children, bleed = false, tight = false }) {
   return (
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
-      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-6 lg:py-9' : 'py-8 lg:py-12')}>
+      <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-5 lg:py-7' : 'py-7 lg:py-10')}>
         {name && (
           <p className={cn('font-mono text-body font-bold tracking-[0.005em]', NAME[tone])}>{name}</p>
         )}
@@ -76,7 +80,7 @@ export function SectionHead({ children, tone = 'paper', className }) {
        the viewport. It was `text-view lg:text-head`, which is 34px on a phone
        shrinking to 27px on a desktop, so the heading got smaller as the screen
        got bigger, on every section of the page. */
-    <h2 className={cn('mt-3 font-display font-bold text-sub leading-[1.12] tracking-tight',
+    <h2 className={cn('mt-2 font-display font-bold text-sub leading-[1.12] tracking-tight',
       tone === 'ink' ? 'text-paper' : 'text-ink', className)}>
       {children}
     </h2>
@@ -85,7 +89,7 @@ export function SectionHead({ children, tone = 'paper', className }) {
 
 export function SectionLede({ children, tone = 'paper', className }) {
   return (
-    <p className={cn('mt-3 max-w-[54ch] text-sec leading-[1.55]',
+    <p className={cn('mt-2.5 max-w-[54ch] text-sec leading-[1.55]',
       tone === 'ink' ? 'text-mist' : 'text-ink-2', className)}>
       {children}
     </p>

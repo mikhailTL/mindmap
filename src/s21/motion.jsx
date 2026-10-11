@@ -62,54 +62,109 @@ export function RevealRow({ children, index = 0, className, as = 'div' }) {
  * missing API or a slow hydrate can leave content invisible above the fold —
  * which is the blank landing page we had before. Below the fold, the worst case
  * is a block that is already visible when you reach it. */
+/* ── Why this is a scroll listener and not an IntersectionObserver ───────
+ *
+ * It was an IntersectionObserver, twice over, and on the deployed site it
+ * silently stranded content. The "3 Perspectives" row on the landing page
+ * shipped with card one at opacity 0.21 and cards two and three at opacity 0,
+ * transform translateY(20px), permanently: three cards' worth of the page
+ * simply not drawn, under a heading promising three of them. Measured in a
+ * real browser on the live URL, not inferred.
+ *
+ * The cause is almost certainly `overflow-x: clip` on html and body, which
+ * this site needs for its full-bleed bands. A clip container on the document
+ * element changes what the implicit observer root clips against, and the
+ * entries stop arriving. Chasing the exact interaction is the wrong fix
+ * anyway, because it leaves the failure mode in place: an entrance animation
+ * must never be the thing that decides whether content exists. If the
+ * mechanism fails, the content must be VISIBLE, not hidden.
+ *
+ * So: one passive scroll and resize listener for the whole page, coalesced
+ * into a single rAF, walking a Set of waiting elements and measuring them
+ * directly. getBoundingClientRect cannot go stale and does not care what any
+ * ancestor's overflow is set to. Each element removes itself the moment it
+ * shows, so the Set empties as the reader goes down the page and the listener
+ * detaches when it is empty.
+ *
+ * The belt and braces: a 1500ms timer per element. If no scroll ever happens
+ * and the measurement somehow still disagrees, the content appears anyway.
+ * The worst case is an entrance a reader did not see. The worst case before
+ * was a blank page. */
+const waiting = new Set()
+let frame = 0, listening = false
+
+function sweep() {
+  frame = 0
+  const h = window.innerHeight
+  for (const w of waiting) {
+    const el = w.ref.current
+    if (!el) { waiting.delete(w); continue }
+    if (el.getBoundingClientRect().top < h * 0.92) { waiting.delete(w); w.show() }
+  }
+  if (!waiting.size) stop()
+}
+
+const onMove = () => { if (!frame) frame = requestAnimationFrame(sweep) }
+
+function start() {
+  if (listening) return
+  listening = true
+  addEventListener('scroll', onMove, { passive: true })
+  addEventListener('resize', onMove, { passive: true })
+}
+function stop() {
+  if (!listening) return
+  listening = false
+  removeEventListener('scroll', onMove)
+  removeEventListener('resize', onMove)
+}
+
+/* Returns a ref to attach and whether the element has arrived. `false` means
+   it is below the fold and waiting; it never means "I could not tell". */
+function useArrival(ref) {
+  const [shown, setShown] = React.useState(null)   // null = not measured yet
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) { setShown(true); return }
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.92) { setShown(true); return }
+    setShown(false)
+    const w = { ref, show: () => setShown(true) }
+    waiting.add(w)
+    start()
+    onMove()
+    const t = setTimeout(() => { waiting.delete(w); setShown(true) }, 1500)
+    return () => { clearTimeout(t); waiting.delete(w); if (!waiting.size) stop() }
+  }, [ref])
+  return shown
+}
+
 export function ScrollIn({ children, className, y = 26, delay = 0, once = true, as = 'div' }) {
   const reduced = useReducedMotion()
   const Comp = motion[as]
   const ref = React.useRef(null)
-  const [state, setState] = React.useState('unset')   // unset | hidden | shown
-  React.useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') { setState('shown'); return }
-    const r = el.getBoundingClientRect()
-    if (r.top < window.innerHeight * 0.9) { setState('shown'); return }   // already here
-    setState('hidden')
-    const io = new IntersectionObserver(es => {
-      if (es.some(e => e.isIntersecting)) { setState('shown'); if (once) io.disconnect() }
-      else if (!once) setState('hidden')
-    }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [once])
+  const shown = useArrival(ref)
   if (reduced) return <Comp ref={ref} className={className}>{children}</Comp>
+  /* `shown === null` is the one frame before the first measurement. It renders
+     visible, not hidden: a mechanism that has not decided yet must not be
+     allowed to hide anything. */
+  const hidden = shown === false
   return (
     <Comp ref={ref} className={className}
       initial={false}
-      animate={state === 'hidden' ? { opacity: 0, y } : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.42, ease: EASE, delay: state === 'hidden' ? 0 : delay }}>
+      animate={hidden ? { opacity: 0, y } : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.42, ease: EASE, delay: hidden ? 0 : delay }}>
       {children}
     </Comp>
   )
 }
-
-/** Children revealed one after another as the group enters. */
 export function ScrollRow({ children, index = 0, className, as = 'div' }) {
   return <ScrollIn as={as} className={className} delay={Math.min(index, 10) * 0.05} y={20}>{children}</ScrollIn>
 }
 
-function useInView(once = true) {
+function useInView() {
   const ref = React.useRef(null)
-  const [inView, setInView] = React.useState(false)
-  React.useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') { setInView(true); return }
-    const io = new IntersectionObserver(entries => {
-      if (entries.some(e => e.isIntersecting)) { setInView(true); if (once) io.disconnect() }
-      else if (!once) setInView(false)
-    }, { threshold: 0.01 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [once])
-  return [ref, inView]
+  const shown = useArrival(ref)
+  return [ref, shown !== false]
 }
 
 /** Line mask-wipe. Driven by our own observer so it can never stall. */
@@ -145,10 +200,18 @@ export function Parallax({ children, distance = 60, className }) {
     draw is a transform and not an animated width. */
 export function RuleDraw({ className }) {
   const reduced = useReducedMotion()
+  const ref = React.useRef(null)
+  /* On the same arrival watcher as everything else, for the same reason: this
+     was the last `whileInView` on the site, which is framer's own observer and
+     carries framer's own copy of the failure. A rule that never draws is only
+     a missing hairline rather than a missing section, but it fails invisibly
+     and there is no reason to keep two mechanisms. */
+  const shown = useArrival(ref)
   return (
-    <motion.div className={cn('h-px w-full origin-left bg-rule', className)}
-      initial={reduced ? undefined : { scaleX: 0 }} whileInView={reduced ? undefined : { scaleX: 1 }}
-      viewport={{ once: true }} transition={{ duration: 0.5, ease: EASE }}/>
+    <motion.div ref={ref} className={cn('h-px w-full origin-left bg-rule', className)}
+      initial={false}
+      animate={reduced ? undefined : { scaleX: shown === false ? 0 : 1 }}
+      transition={{ duration: 0.5, ease: EASE }}/>
   )
 }
 

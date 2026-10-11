@@ -191,18 +191,54 @@ export function ArchWeather() {
   )
 }
 
-function useCount(value, on = true) {
-  const [shown, setShown] = React.useState(on ? 0 : value)
+/* A spring, not a curve.
+ *
+ * This was a cubic ease over a fixed 1000ms, and a fixed duration is the thing
+ * that gives a readout away as an animation playing rather than a value
+ * arriving. Two problems with it, and both are visible once you look:
+ *
+ * 1. It was not interruptible. The curve was a function of elapsed time from
+ *    its own start, so a score that changed mid-flight restarted from zero and
+ *    the number jumped backwards before setting off again. A spring has no
+ *    start: it integrates from wherever the value currently IS, carrying its
+ *    current velocity, so a new target is absorbed rather than restarting.
+ *    This is the single property Apple's interfaces are built on, and it costs
+ *    about ten lines.
+ * 2. One duration for every distance. Moving 4 points and moving 70 took the
+ *    same second, so a small correction crawled and a large one raced.
+ *
+ * Damping ratio is 26 / (2 * sqrt(170)) = 0.997, which is critically damped to
+ * three figures: it settles as fast as it can without ever going past the
+ * value. That is deliberate and not timidity. Overshoot is for something a
+ * finger threw; this is a measurement, and a measurement that sails past the
+ * number and comes back is lying for a few frames.
+ *
+ * Under reduced motion the value is simply there. */
+function useSpring(target, on = true, stiffness = 170, damping = 26) {
+  const [shown, setShown] = React.useState(on ? 0 : target)
+  const s = React.useRef({ x: on ? 0 : target, v: 0 })
   React.useEffect(() => {
-    if (!on || matchMedia('(prefers-reduced-motion: reduce)').matches) { setShown(value); return }
-    let raf, t0
-    const step = t => { t0 ??= t
-      const p = Math.min(1, (t - t0) / 1000)
-      setShown(value * (1 - Math.pow(1 - p, 3)))
-      if (p < 1) raf = requestAnimationFrame(step) }
+    if (!on || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      s.current.x = target; s.current.v = 0; setShown(target); return
+    }
+    let raf, last
+    const step = t => {
+      if (last == null) last = t
+      /* Clamped, so a backgrounded tab returning after four seconds integrates
+         one frame of 64ms rather than one of 4000ms and flinging the value. */
+      const dt = Math.min(0.064, (t - last) / 1000); last = t
+      const st = s.current
+      st.v += (-stiffness * (st.x - target) - damping * st.v) * dt
+      st.x += st.v * dt
+      if (Math.abs(st.x - target) < 0.02 && Math.abs(st.v) < 0.02) {
+        st.x = target; st.v = 0; setShown(target); return
+      }
+      setShown(st.x)
+      raf = requestAnimationFrame(step)
+    }
     raf = requestAnimationFrame(step)
     return () => cancelAnimationFrame(raf)
-  }, [value, on])
+  }, [target, on, stiffness, damping])
   return shown
 }
 
@@ -220,7 +256,7 @@ function useCount(value, on = true) {
    own, so 1.6 : 1 against the plate is the right weight rather than a floor it
    fails. */
 function Band({ r, glow, pct, dim }) {
-  const shown = useCount(pct)
+  const shown = useSpring(pct)
   return (
     <g opacity={dim ? 0.24 : 1} className="transition-opacity duration-200"
       style={{ pointerEvents: 'none' }}>
@@ -231,7 +267,7 @@ function Band({ r, glow, pct, dim }) {
 }
 
 export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, className }) {
-  const shown = Math.round(useCount(score))
+  const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
   /* Hit-testing the arcs themselves was not reliable: a filtered sibling's hit
      area is its whole filter region, and Chromium would not test a stroke

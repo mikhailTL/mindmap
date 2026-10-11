@@ -1,4 +1,5 @@
 import React from 'react'
+import { PHOTOS } from '../lib/photos'
 import { Button } from '../ui/button'
 import { ArrowLeft, ArrowRight, Check, Never } from '../ui/marks'
 import { Section, SectionHead, SectionLede } from '../ui/section'
@@ -56,7 +57,7 @@ import {
 function Hero({ label, title, lede, go, photo, photoAlt }) {
   return (
     <div className="border-b border-rule bg-mist">
-      <div className={cn('wrap py-8 lg:py-11', photo &&
+      <div className={cn('wrap py-7 lg:py-9', photo &&
         'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:items-center lg:gap-10')}>
         <div className="min-w-0">
         <button onClick={() => go('site')}
@@ -70,7 +71,7 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
         <p className="mt-4 max-w-[46ch] text-lead text-ink-2">{lede}</p>
         </div>
         {photo && (
-          <img src={`/photos/${photo}.webp`} alt={photoAlt} loading="eager" decoding="async"
+          <img src={PHOTOS[photo]} alt={photoAlt} loading="eager" decoding="async"
             width="1344" height="752"
             className="mt-6 h-[200px] w-full rounded-panel object-cover sm:h-[260px]
               lg:mt-0 lg:h-[292px]"/>
@@ -86,7 +87,7 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
    actually matter. */
 function Fig({ title, children, className }) {
   return (
-    <figure className={cn('field m-0 mt-6 p-4 sm:p-6', className)}>
+    <figure className={cn('field m-0 mt-5 p-4 sm:p-5', className)}>
       {title && <figcaption className="mark mb-5">{title}</figcaption>}
       {children}
       <DemoNotice className="mt-6"/>

@@ -1,4 +1,5 @@
 import React from 'react'
+import { PHOTOS } from '../lib/photos'
 import { Button } from '../ui/button'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ScrollIn, ScrollRow } from '../s21/motion'
@@ -207,15 +208,15 @@ export function Overview({ go }) {
           the single largest piece of the "blank empty space" note. At 1280 x
           720 the viewport is the smaller of the two, so on a laptop the band
           is still exactly one screen, which is what the rule was for. */}
-      <section id="hero" className="relative isolate flex min-h-[calc(100svh-57px)] flex-col
-        overflow-hidden border-t border-rule bg-paper lg:h-[min(calc(100svh-57px),44rem)] lg:min-h-0">
+      <section id="hero" className="relative isolate flex min-h-0 flex-col
+        overflow-hidden border-t border-rule bg-paper lg:min-h-[32rem]">
 
         <div className="wrap relative z-10 flex flex-1 flex-col
           lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]
           xl:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
-          <div className="flex shrink-0 flex-col justify-center py-10 lg:py-0 lg:pr-10">
+          <div className="flex shrink-0 flex-col justify-center py-9 lg:py-12 lg:pr-10">
             {/* A hairline used to sit in front of this line, the way a
                 drawing puts one in front of a key. On a page whose house rule
                 is that there is not one em dash in the copy, a 28px rule
@@ -236,7 +237,7 @@ export function Overview({ go }) {
 
                 Leading is 1.06 and not 1.02: at 1.02 the descenders of
                 "Making your stress" landed in the cap height of "readable". */}
-            <h1 className="mt-5 max-w-[19ch] font-display text-view font-medium leading-[1.06]
+            <h1 className="mt-4 max-w-[19ch] font-display text-view font-medium leading-[1.06]
               tracking-tight text-ink lg:text-sect 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
@@ -245,10 +246,10 @@ export function Overview({ go }) {
                 what comes back and two fragments say where it comes from and
                 who else sees it, which is a block you can take in without
                 reading a sentence. */}
-            <ScrollIn as="p" className="mt-6 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
+            <ScrollIn as="p" className="mt-5 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
               One {SCORE} a day. One sentence saying what changed.
             </ScrollIn>
-            <ScrollIn as="ul" className="m-0 mt-5 flex list-none flex-col gap-2 p-0">
+            <ScrollIn as="ul" className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
               {HERO_FACTS.map(f => (
                 <li key={f} className="flex items-start gap-2.5 text-sec text-ink-2">
                   <span aria-hidden className="mt-[0.62em] h-[3px] w-3 shrink-0 rounded-bar bg-accent"/>
@@ -262,7 +263,7 @@ export function Overview({ go }) {
                 the page offered twice inside the first two screens. The note
                 was that one destination should not have three ways in, and
                 this was the clearest case of it. */}
-            <ScrollIn className="mt-8">
+            <ScrollIn className="mt-7">
               <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
             </ScrollIn>
           </div>
@@ -354,7 +355,7 @@ export function Overview({ go }) {
         <SectionLede tone="ink">
           MindMap returns one {SCORE} a day.
         </SectionLede>
-        <ProblemStats className="mt-6"/>
+        <ProblemStats className="mt-5"/>
       </Section>
 
       {/* ── the three doors ──────────────────────────────────────────────
@@ -368,7 +369,7 @@ export function Overview({ go }) {
         <SectionLede>
           All three open the same app.
         </SectionLede>
-        <div className="mt-6 grid auto-rows-fr gap-4 md:grid-cols-3">
+        <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-3">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(d.go)}
@@ -393,7 +394,7 @@ export function Overview({ go }) {
       {/* ── how a reading works ─────────────────────────────────────────── */}
       <Section name="How it works" tone="card" tight className="bg-aqua">
         <SectionHead>A day in, one {SCORE} and one sentence out.</SectionHead>
-        <HowItWorks className="mt-6"/>
+        <HowItWorks className="mt-5"/>
         {/* One window, three lines. The reviewer asked five questions about
             the object itself and the page answered none of them; two of the
             five answers turned out to be about how the thing comes apart,
@@ -419,16 +420,23 @@ export function Overview({ go }) {
             and the other two like footnotes. They are three views of the same
             day and the grid should say so: same width, same height, same
             order of parts in each. */}
-        <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">
+        <div className="mt-5 grid auto-rows-fr gap-3.5 lg:grid-cols-3">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
                 /* Boxed, not ruled. Same note as the doors above: the rules
                    between these three read as three separate topics when they
                    are three views of one day. */
-                className="group flex h-full w-full flex-col gap-3 rounded-panel border
-                  border-rule bg-card p-5 text-left transition-[border-color] duration-150
-                  hoverOnly:border-accent">
+                /* The picture takes the hover, not the chrome. A reader
+                   choosing which of three people they are needs to know which
+                   card they are on; a 2% lean inside a clipped frame says that
+                   without anything moving on the page. Press is 1%: three
+                   percent off a 450px card is 13px of edge travel and reads
+                   as the layout glitching. */
+                className="group flex h-full w-full flex-col gap-3 overflow-hidden rounded-panel
+                  border border-rule bg-card p-5 text-left touch-manipulation
+                  transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
+                  motion-safe:active:scale-[0.99] hoverOnly:border-accent">
                 {/* max-w-none is load-bearing and was missing. Tailwind's
                     preflight sets `img { max-width: 100% }`, which clamped
                     this image back to the card's content box and undid the
@@ -442,11 +450,13 @@ export function Overview({ go }) {
                     and a face answers that faster than a label does. Fixed
                     height and object-cover so three different crops still sit
                     on one line. */}
-                <img src={`/photos/${s2.photo}.webp`} alt={s2.alt} loading="lazy" decoding="async"
+                <img src={PHOTOS[s2.photo]} alt={s2.alt} loading="lazy" decoding="async"
                   width="900" height="605"
                   className="-mx-5 -mt-5 mb-1 h-[160px] w-[calc(100%_+_2.5rem)] max-w-none
-                    rounded-t-panel
-                    object-cover"/>
+                    rounded-t-panel object-cover
+                    motion-safe:transition-transform motion-safe:duration-[260ms]
+                    motion-safe:ease-[var(--ease-out)]
+                    motion-safe:groupHoverOnly:scale-[1.02]"/>
                 <span className="font-mono text-body font-bold tracking-[0.005em] text-accent">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
@@ -476,7 +486,7 @@ export function Overview({ go }) {
           beginning, and these four are one answer in four parts. */}
       <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
-        <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid auto-rows-fr gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {TRUST.map((t, i) => (
             <ScrollRow key={t.title} index={i} className="h-full">
               <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-5">
@@ -488,7 +498,7 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
-        <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
+        <WhoSeesWhat className="mt-5 max-w-[62rem]"/>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
@@ -507,7 +517,7 @@ export function Overview({ go }) {
             are the last thing on it, so the second inversion is not a repeat
             of the first — it closes the page against the band that opened it,
             and every tint between the two now reads as the middle. */}
-        <ul className="mt-6 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-5 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {NEVER.map(t => (
             <li key={t} className="rounded-panel bg-ink-2/45 px-4 py-3.5 text-meta leading-[1.4] text-mist">
               {t}

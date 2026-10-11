@@ -1,4 +1,5 @@
 import React from 'react'
+import { PHOTOS } from '../lib/photos'
 // Label was the page eyebrow here; it is written out now so the mono step is
 // visible at the call site rather than hidden behind a shared annotation class.
 import { LAYERS, ExplodedStack } from './Patch'
@@ -141,7 +142,7 @@ export function PatchPage() {
               disclaimer rather than as a fact. The alt text carries what the
               image is for a reader who cannot see it. */}
           <figure className="m-0 mt-8 lg:mt-0">
-            <img src="/photos/patch-worn.webp" width="1024" height="688" loading="eager"
+            <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
               decoding="async"
               alt="A wearable sensor on the back of an upper arm, at the size and the place MindMap is worn"
               className="h-[230px] w-full rounded-panel object-cover sm:h-[300px] lg:h-[340px]"/>
