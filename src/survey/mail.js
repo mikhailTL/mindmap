@@ -25,11 +25,18 @@ import { ALL_ITEMS } from './questions'
 /* Two transports, tried in order.
  *
  * OWN is the owner's own endpoint, set at build time through
- * VITE_SURVEY_ENDPOINT. It is empty on this build and that is fine: when it is
- * set it goes first, because a response delivered by infrastructure the owner
+ * VITE_SURVEY_MAIL. It is empty on this build and that is fine: when it is set
+ * it goes first, because a response delivered by infrastructure the owner
  * controls does not depend on a free relay's uptime, rate limit or activation
  * state. A Google Apps Script web app or a Vercel function both work; neither
  * needs a key in the bundle, because the URL is the destination, not a secret.
+ *
+ * It is NOT VITE_SURVEY_ENDPOINT, which is already taken: store.js posts each
+ * answer there as it is given and Responses.jsx reads the collected set back
+ * from it, both against the /api/responses protocol. Pointing that one at a
+ * mail endpoint sends it per-answer traffic it does not understand and breaks
+ * the responses page, which is exactly the kind of failure that shows up as a
+ * silent partial delivery weeks later. One name, one job.
  *
  * RELAY is the keyless fallback. Anything with a token would have to ship the
  * token in the bundle, where every visitor can read it, so it would not be a
@@ -39,7 +46,7 @@ import { ALL_ITEMS } from './questions'
  * until the owner of that mailbox clicks a one-time activation link, which is
  * what stops it being an open spam relay, and which is a state this module now
  * reports by name instead of calling it a failure. */
-const OWN = import.meta.env?.VITE_SURVEY_ENDPOINT || ''
+const OWN = import.meta.env?.VITE_SURVEY_MAIL || ''
 const RELAY = 'https://formsubmit.co/ajax/2020mik2020@gmail.com'
 
 /* Question order, not the order the answers were given. A reviewer doubles
@@ -94,11 +101,29 @@ export function payload(rows) {
   }
 }
 
-async function post(url, body) {
+/* Two content types, and the difference matters more than it looks.
+ *
+ * The relay is a CORS-aware API and is happy with application/json.
+ *
+ * A Google Apps Script web app is not: application/json makes the browser send
+ * a CORS preflight OPTIONS first, Apps Script has no way to answer one, and the
+ * POST that follows never happens — the response never leaves the browser and
+ * the failure looks like a network error rather than a misconfiguration.
+ * text/plain is a simple request, so there is no preflight; the body is still
+ * the same JSON text and the script still reads it with JSON.parse. The script
+ * answers with CORS headers of its own, so the reply is readable and acceptance
+ * is something the survey can see rather than guess. A Vercel function is
+ * same-origin and does not care either way, so plain text is the safe default
+ * for whatever the owner stands up. */
+async function post(url, body, type) {
   return fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    headers: {
+      'Content-Type': type || 'application/json',
+      'Accept': 'application/json',
+    },
     body: JSON.stringify(body),
+    redirect: 'follow',
   })
 }
 
@@ -115,13 +140,13 @@ export async function sendResponse() {
      their server and it has no activation step to be in the middle of. */
   if (OWN) {
     try {
-      const res = await post(OWN, body)
+      const res = await post(OWN, body, 'text/plain;charset=utf-8')
       if (res && res.ok) return 'sent'
     } catch {}
   }
 
   try {
-    const res = await post(RELAY, body)
+    const res = await post(RELAY, body, 'application/json')
     if (!res) return 'unreachable'
     if (!res.ok) return 'unreachable'
     /* A 200 is not acceptance on its own. The relay answers 200 with
