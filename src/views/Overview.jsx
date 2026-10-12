@@ -289,7 +289,7 @@ export function Overview({ go }) {
       <Section name="The model" tone="paper">
         <SectionHead>Where the Number Comes From</SectionHead>
         <SectionLede>
-          Four signals in, one {SCORE} out. Move a slider and watch it change.
+          Ten learned curves, added up. Move a slider and watch the {SCORE} change.
         </SectionLede>
         <MindScoreNet className="mt-6"/>
       </Section>
