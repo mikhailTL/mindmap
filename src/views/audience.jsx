@@ -350,9 +350,9 @@ function SmallGroups() {
 export function ForSchools({ go }) {
   return (
     <main>
-      <Hero go={go} label="For schools" photo="pro-hero"
-        photoAlt="A school counselor and a student talking, the MindMap patch on the student’s upper arm"
-        title="What a counselor sees."
+      <Hero go={go} label="For Medical Professionals" photo="pro-hero"
+        photoAlt="A medical professional and a student talking, the MindMap patch on the student’s upper arm"
+        title="What a medical professional sees."
         lede="Whole-school patterns, and a floor under small groups."/>
 
       <Section name="The whole school" tone="paper">
@@ -383,12 +383,12 @@ export function ForSchools({ go }) {
         </Fig>
       </Section>
 
-      {/* Consent scope for a counselor; all three claims are product-critical.
+      {/* Consent scope for a medical professional; all three claims are product-critical.
           A score and its direction only, never a reading, notes or location,
           and every record opened is logged with no setting to turn it off. The
           full who-sees-what matrix is on the overview and privacy pages. */}
       <Section name="Access" tone="paper">
-        <SectionHead>What a counselor gets</SectionHead>
+        <SectionHead>What a medical professional gets</SectionHead>
         <SectionLede>A {SCORE}, and the direction it moved.</SectionLede>
         <p className="mt-5 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
           Never a single reading. Never {NOTES}. Never {LOCATION}.</p>
@@ -396,7 +396,7 @@ export function ForSchools({ go }) {
           Every record opened is logged. No setting turns the log off.</p>
       </Section>
 
-      <Closer go={go} view="app-pro" label="Open the counselor console" title="The counselor console"
+      <Closer go={go} view="app-pro" label="Open the medical professional console" title="The medical professional console"
         line="The check-in list and the audit log. Sample students only."/>
     </main>
   )

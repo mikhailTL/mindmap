@@ -39,7 +39,7 @@ const DOORS = [
         <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
-  { id:'phone', go:'without-patch', title:'Use your phone', note:'No hardware needed', lead:true,
+  { id:'phone', go:'without-patch', title:'Use your phone', note:'No patch needed', lead:true,
     line:'A reading in forty five seconds, off the camera.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
@@ -73,8 +73,8 @@ const SCREENS = [
     title:'One sentence a week, and which days ran high',
     line:`Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
     cta:'What a parent gets' },
-  { id:'pro',     who:'School counselor', photo:'school-card',
-    alt:'A school counselor and a student talking on a sofa',
+  { id:'pro',     who:'Medical Professional', photo:'school-card',
+    alt:'A medical professional and a student talking on a sofa',
     title:CASELOAD_TITLE,
     line:'Only the students who share it.',
     cta:'What a school gets' },

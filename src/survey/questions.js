@@ -6,7 +6,7 @@
  *   NPS    — one 0-10 item.  Stars — 1-5 in half steps.
  *   Impact — five points, plus the survey's one free-text sentence.
  * Demographics come first and are all optional, so a SUS can be split by
- * student / parent / counselor. */
+ * student / parent / medical professional. */
 
 const pts = (...labels) => labels.map((label, i) => ({ value: i + 1, label }))
 
@@ -47,8 +47,8 @@ export const ABOUT_ITEMS = [
     'Student',
     'Parent or guardian',
     'Teacher or school staff',
-    'School counselor or psychologist',
-    'Clinician or healthcare worker',
+    'Medical professional or psychologist',
+    'Clinician or healthcare professional',
     'Engineer, designer or researcher',
     'Something else',
   ], { optional: true }),
@@ -184,7 +184,7 @@ const RETIRED = {
   pro: 'For schools (no longer asked)', app: 'Launch (no longer asked)',
   'app-student': 'Student screen (no longer asked)',
   'app-parent': 'Parent screen (no longer asked)',
-  'app-pro': 'Counselor console (no longer asked)',
+  'app-pro': 'Medical Professional console (no longer asked)',
   check: 'Take a reading (no longer asked)',
   privacy: 'Who can see what (no longer asked)', tour: 'The tour (no longer asked)',
   hub: 'Open the app (no longer asked)', final: 'Last questions (no longer asked)',

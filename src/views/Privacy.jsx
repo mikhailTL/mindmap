@@ -76,7 +76,7 @@ export function PrivacyBody({ go }) {
 
       <ScrollIn>
         <h3 className="mt-14 font-display text-head font-bold tracking-tight text-ink">
-          Student, parent and counselor compared</h3>
+          Student, parent and medical professional compared</h3>
         <WhoSeesWhat className="mt-6 max-w-[62rem]"/>
       </ScrollIn>
     </>

@@ -226,12 +226,12 @@ const ROLES = [
     body:`One ${SCORE} a day, which days sat above her own range, and a line in plain words. Never a raw reading, never a note.`,
     cta:'Open the parent screen',
     name:`Open the parent screen: the week at a glance and one plain sentence.` },
-  { id:'app-pro', who:'School professional', Preview: ProPreview,
+  { id:'app-pro', who:'Medical Professional', Preview: ProPreview,
     /* Wording is fixed site-wide in lib/terms.js — change it there, not here. */
     title: CASELOAD_TITLE,
     body:`The students whose ${SCORE} moved most since last week, for the ones whose guardian consented to trends. Never a group under five.`,
-    cta:'Open the counselor console',
-    name:`Open the counselor console: the students whose ${SCORE} moved most since last week.` },
+    cta:'Open the medical professional console',
+    name:`Open the medical professional console: the students whose ${SCORE} moved most since last week.` },
 ]
 
 

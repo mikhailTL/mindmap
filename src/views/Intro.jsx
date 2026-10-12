@@ -323,10 +323,10 @@ function StageShare({ still }) {
           <Card x={22} y={102} w={150} h={88} t={1.6} still={still}/>
           <Chip x="97" y="152" t={2.0} still={still} size={19}>Parent</Chip>
 
-          {/* the counselor's card is the one that goes */}
+          {/* the medical professional's card is the one that goes */}
           <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
             <Card x={388} y={102} w={150} h={88} t={2.0} still={still}/>
-            <Chip x="463" y="152" t={2.4} still={still} size={19}>Counselor</Chip>
+            <Chip x="463" y="152" t={2.4} still={still} size={19}>Medical Professional</Chip>
           </g>
 
           <Arrow still={still} t={3.2} dur={0.7} d="M224 138 L 186 140" len={50}

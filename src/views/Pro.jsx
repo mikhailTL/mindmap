@@ -44,7 +44,7 @@ const BlankRow = ({ children }) => (
   </li>
 )
 
-/* The header row stays with no data: the columns are the schema, and a counselor
+/* The header row stays with no data: the columns are the schema, and a medical professional
    evaluating this product needs to see what would be logged about them. */
 const EmptyBand = ({ cols, children }) => (
   <TR>
@@ -81,7 +81,7 @@ const LIST_NOTE = (
     It is what puts this list in order. A student up 15 points from 55 comes before a student level
     at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is not a
     student in trouble. A student whose guardian consented to crisis alerts only is never on this
-    list. No raw reading, Notes entry or location is on it at any depth. Counselor notes live in a
+    list. No raw reading, Notes entry or location is on it at any depth. Medical Professional notes live in a
     student&rsquo;s own record. Saving one writes a row to the audit log.</p>
 )
 
@@ -215,7 +215,7 @@ const RECORD_FIELDS = [
   ['Weekly change, and a place on the list', 'With trend consent.'],
   ['What is driving the rise', 'With trend consent. Shares per signal, never a raw reading.'],
   ['The last 45 days', 'With trend consent.'],
-  ['Counselor notes', 'Any scope. Saving writes a row to the audit log.'],
+  ['Medical Professional notes', 'Any scope. Saving writes a row to the audit log.'],
 ]
 
 function EmptyRecord() {
@@ -229,7 +229,7 @@ function EmptyRecord() {
           <Sub className="mt-2">A record opens from the check-in list, which stays empty until a
             guardian signs a scope.</Sub>
         </div>
-        {/* The control stays, disabled: it is how a counselor moves between students,
+        {/* The control stays, disabled: it is how a medical professional moves between students,
             whether or not there is anyone to move between. */}
         <div>
           <label htmlFor="pick" className="note block">Open a different student</label>
@@ -245,7 +245,7 @@ function EmptyRecord() {
         <CardHeader className="p-6 pb-0">
           <CardTitle as="h3" className="text-row">What a record holds</CardTitle>
           <CardDescription className="max-w-[56ch]">Each line appears only if the guardian agreed to
-            it. Crisis alerts reach the counselor in every case, and no guardian can switch them
+            it. Crisis alerts reach the medical professional in every case, and no guardian can switch them
             off.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-5">
@@ -380,8 +380,8 @@ function OneStudent({ who, setWho, real }) {
       </ul>
       <p className="mt-3 text-meta text-ink-3">Measured from physiology.</p>
 
-      <h3 className="mark mt-12">Counselor notes</h3>
-      <label htmlFor="cnote" className="sr-only">Counselor note for {s.name}</label>
+      <h3 className="mark mt-12">Medical Professional notes</h3>
+      <label htmlFor="cnote" className="sr-only">Medical Professional note for {s.name}</label>
       <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
         placeholder="Add a note…"
         className="mt-4 w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
@@ -454,7 +454,7 @@ function EmptyCohort() {
             Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen.</p>
           <div className="mt-5 border-t border-rule pt-4">
             <p className="text-meta text-ink-2">A suppressed cell is hatched, not hidden, so a
-              counselor can see a figure exists and is withheld.</p>
+              medical professional can see a figure exists and is withheld.</p>
             <SuppressedSwatch className="mt-3"/>
           </div>
         </Panel>
@@ -703,7 +703,7 @@ function Escalation({ real }) {
 /* ── Consent ────────────────────────────────────────────────────────────── */
 const FACTS = [
   ['Raw biometrics visible to parents', 'Never'],
-  ['Raw biometrics visible to counselors', 'Only with student consent'],
+  ['Raw biometrics visible to medical professionals', 'Only with student consent'],
   ['Data sold or shared with third parties', 'Never'],
   ['Location collected by default', 'No'],
 ]
@@ -812,7 +812,7 @@ export function Pro({ go }) {
       <div className="border-b border-ink-3 bg-card">
         <div className="wrap !py-5 lg:!py-6">
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-            What a school counselor sees</h1>
+            What a medical professional sees</h1>
           <p className="mt-2 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
@@ -826,7 +826,7 @@ export function Pro({ go }) {
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {/* One definition in ui/tabs, so the two consoles cannot drift. */}
       <Tabs value={tab} onValueChange={onTab}>
-        <TabsList aria-label="Counselor views">
+        <TabsList aria-label="Medical Professional views">
           {TABS.map(([v, label]) => (
             <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
           ))}

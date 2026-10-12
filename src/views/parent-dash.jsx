@@ -126,7 +126,7 @@ function AskAbout({ w }) {
         stressed on {w.peak.name}.&rdquo; She can see this page too, and leading with it turns a
         conversation into a review.</p>
       <p className="mt-3 max-w-[56ch] text-sec text-ink-2">If you are worried about her safety, do
-        not wait for next week&rsquo;s summary. Contact her school counselor, or your local crisis
+        not wait for next week&rsquo;s summary. Contact her medical professional, or your local crisis
         line.</p>
     </>
   )
@@ -143,7 +143,7 @@ const NEVER = [
 ]
 
 /* ── 5. What the school may see ─────────────────────────────────────────── */
-/* Read from the same CONSENT record the counselor's console reads. Never keep a
+/* Read from the same CONSENT record the medical professional's console reads. Never keep a
    second copy here — a consent screen that disagrees with the console is worse
    than none. */
 const [SCHOOL_CODE, RECORD] = Object.entries(CONSENT)[0]
@@ -343,7 +343,7 @@ export function ParentDash({ go, openTab }) {
           className="mt-6 flex min-h-[56px] w-full items-center gap-4 border-b border-rule py-4
             text-left transition-colors duration-150 hoverOnly:bg-mist/50">
           <span className="min-w-0 flex-1">
-            <span className="block text-body text-ink">Student, parent and counselor, side by side</span>
+            <span className="block text-body text-ink">Student, parent and medical professional, side by side</span>
             <span className="block text-meta text-ink-2">Every row, and who can see it</span>
           </span>
           <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>

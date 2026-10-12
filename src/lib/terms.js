@@ -13,7 +13,15 @@ export const NOTES = 'Notes'
 export const NOTES_DEF = 'What a student writes in their own journal.'
 export const LOCATION = 'Location'
 
-/* Counselor view. Never "ranked", never "instability", never a leaderboard. */
+/* The third audience. One name for them, everywhere: never "medical professional",
+   "school", "clinician" or "staff" in copy a visitor reads. */
+export const PRO = 'Medical Professional'
+export const PRO_LC = 'medical professional'
+export const PRO_PLURAL = 'Medical Professionals'
+export const PRO_PLURAL_LC = 'medical professionals'
+export const PRO_FOR = 'For Medical Professionals'
+
+/* Their view. Never "ranked", never "instability", never a leaderboard. */
 export const CASELOAD_TITLE = 'Who to check in with this week'
 export const CASELOAD_DEF =
   'The students whose Mind Score moved most since last week, so a check-in starts with the biggest change.'

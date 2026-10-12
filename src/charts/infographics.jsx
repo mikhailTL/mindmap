@@ -78,14 +78,14 @@ const WHAT = [
   NOTES,
   LOCATION,
 ]
-/* Raw stream, Notes and Location are level 0 for both parent and counselor at
+/* Raw stream, Notes and Location are level 0 for both parent and medical professional at
    every consent level: the trust block above this figure states that those
    three never leave the phone. Rows 1 and 2 are level 1 — nothing is shared by
    default. Level 2 is the student's own column. */
 const SEES = [
   { who:'Student',   sees:[2, 2, 2, 2, 2] },
   { who:'Parent',    sees:[1, 1, 0, 0, 0] },
-  { who:'Counselor', sees:[1, 1, 0, 0, 0] },
+  { who:'Medical Professional', sees:[1, 1, 0, 0, 0] },
 ]
 /* The three states, named once: the legend prints them and each list in the
    grid is named by one. Mark carries no text of its own, or the same phrase is

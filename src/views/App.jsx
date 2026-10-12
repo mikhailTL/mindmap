@@ -12,6 +12,7 @@ import {
   answersFor, getVersion, getVisitor,
   isQueued, recordAnswer, submitResponse, subscribe, syncPending, wasSent,
 } from '../survey/store'
+import Toolkit from './Toolkit'
 import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro } from './Pro'
@@ -30,12 +31,14 @@ import { cn } from '../lib/utils'
 /* `app-*` are the dashboards, `student`/`parent`/`pro` the pages that explain
    them. `check` and `privacy` stay because they are already linked. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
-               'app-parent','app-pro','check','privacy','tour','responses','survey']
+               'app-parent','app-pro','check','privacy','tour','responses','survey',
+               'kit-student','kit-parent']
 
 /* Routes that render app screens, so the chrome switches: `check` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','privacy'])
+const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','privacy',
+                           'kit-student','kit-parent'])
 
 /* The palette pushes `hub`, which is not a route; `go` resolves aliases. */
 const ALIAS = { hub: 'app' }
@@ -46,11 +49,11 @@ const TITLE = {
   'without-patch':'MindMap without the patch',
   student:'MindMap for students',
   parent:'MindMap for parents',
-  pro:'MindMap for schools',
+  pro:'MindMap for Medical Professionals',
   app:'Open the MindMap app',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
-  'app-pro':'The counselor console in MindMap',
+  'app-pro':'The medical professional console in MindMap',
   check:'Take a reading in MindMap',
   privacy:'Who can see what in MindMap',
   tour:'A guided tour of MindMap',
@@ -67,7 +70,7 @@ const MAIN = [
 const AUDIENCE = [
   ['student', 'Students', 'What a week of readings looks like'],
   ['parent',  'Parents',  'What a parent is shown, and what they are not'],
-  ['pro',     'Schools',  'What a counselor sees across a year group'],
+  ['pro',     'Medical Professionals',  'What a medical professional sees across a year group'],
 ]
 
 /* Which nav entry lights per view. The three audience pages share `who`. */
@@ -303,24 +306,48 @@ const DialMark = p => (
   </svg>
 )
 
-const APP_NAV = [
-  ['app-student', 'Student', PulseMark],
-  ['check',       'Reading', DialMark],
-  ['app-parent',  'Parent',  Bracket],
-  ['app-pro',     'School',  Grid],
-]
+/* The bar belongs to whichever app you are in.
+ *
+ * It used to be one bar listing the three audiences, so a student standing in
+ * the student app was offered a parent dashboard and a clinical console at the
+ * bottom of every screen. Nobody switches audience; you are one of them. The
+ * bar now lists what is inside the app you opened, and the launcher at /#/app
+ * is where the three live. */
+const APP_NAV = {
+  student: [
+    ['app-student', 'Today',   PulseMark],
+    ['check',       'Reading', DialMark],
+    ['kit-student', 'Toolkit', Bracket],
+  ],
+  parent: [
+    ['app-parent',  'Week',    PulseMark],
+    ['kit-parent',  'Toolkit', Bracket],
+    ['privacy',     'Sharing', Grid],
+  ],
+  pro: [
+    ['app-pro',     'Caseload', Grid],
+  ],
+}
 
-/* Which destination each route lights. Launch is null: nothing chosen yet. */
+/* Which app a route belongs to, and which of its tabs it lights. */
+const APP_OF = {
+  'app-student': 'student', check: 'student', 'kit-student': 'student',
+  'app-parent': 'parent', privacy: 'parent', 'kit-parent': 'parent',
+  'app-pro': 'pro',
+}
 const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
-                  'app-parent':'app-parent', privacy:'app-parent', 'app-pro':'app-pro' }
+                  'kit-student':'kit-student', 'app-parent':'app-parent',
+                  privacy:'privacy', 'kit-parent':'kit-parent', 'app-pro':'app-pro' }
 
 const APP_TITLE = {
   app:            'Screens',
-  'app-student':  'Student',
+  'app-student':  'Today',
   check:          'Take a reading',
-  'app-parent':   'Parent',
-  privacy:        'Who sees what',
-  'app-pro':      'School',
+  'kit-student':  'Toolkit',
+  'app-parent':   'This week',
+  privacy:        'Sharing',
+  'kit-parent':   'Toolkit',
+  'app-pro':      'Caseload',
 }
 
 /* App shell, inherited by every app route.
@@ -348,12 +375,15 @@ const APP_SHELL = cn(
  */
 function AppTabBar({ view, go }) {
   const here = APP_TAB[view]
+  const tabs = APP_NAV[APP_OF[view]]
+  /* The launcher has no app yet, so it has no bar. */
+  if (!tabs) return null
   return (
     <nav aria-label="App screens"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-3 bg-card
         pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-[34rem] list-none p-0">
-        {APP_NAV.map(([id, label, Mark]) => {
+        {tabs.map(([id, label, Mark]) => {
           const on = here === id
           return (
             <li key={id} className="flex-1">
@@ -743,7 +773,9 @@ export function App() {
               'app-student': p => <Students {...p} tab="today"/>,
               'app-parent':  p => <Parents  {...p} tab="week"/>,
               check:         p => <Students {...p} tab="check"/>,
-              privacy:       p => <Parents  {...p} tab="shared"/> }[view]
+              privacy:       p => <Parents  {...p} tab="shared"/>,
+              'kit-student': () => <Toolkit who="student"/>,
+              'kit-parent':  () => <Toolkit who="parent"/> }[view]
   return (
     <>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target

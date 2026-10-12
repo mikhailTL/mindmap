@@ -102,7 +102,7 @@ function SilentChannels() {
 /* Requirements, not wizard steps — none of these can be satisfied in-app, so
    do not renumber them or attach actions. */
 const PAIRING = [
-  ['A charged patch', 'One MindMap patch on the outside of the upper arm. None exists to send you yet. The hardware is drawn and printed, not manufactured.'],
+  ['A charged patch', 'One MindMap patch on the outside of the upper arm. None exists to send you yet. The patch is drawn and printed, not manufactured.'],
   ['A phone with Bluetooth', 'The app pairs over Bluetooth LE and reads the four channels above once a second.'],
   ['About two weeks of wear', `The ${SCORE} compares you with your own normal, and the first two weeks are what build that normal.`],
 ]

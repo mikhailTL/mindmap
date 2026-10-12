@@ -125,7 +125,7 @@ function Signals() {
 
 /* ── 06 ─────────────────────────────────────────────────────────────────── */
 /* The check-in list plus the students consent keeps off it. Every count is read
-   off the same fixture the counselor console reads, so the prose cannot claim a
+   off the same fixture the medical professional console reads, so the prose cannot claim a
    consent split the list does not show.
  *
  * No position numerals: a column of ranks is a leaderboard whatever the heading
@@ -325,11 +325,11 @@ const STOPS = [
     go: ['privacy', 'See who can see what'],
   },
   {
-    id: 'counselor', nav: 'Counselor console',
-    title: 'What the counselor sees',
+    id: 'medical professional', nav: 'Medical Professional console',
+    title: 'What the medical professional sees',
     body: null,   /* built below, from the fixture, so the counts cannot drift */
     art: Caseload,
-    go: ['pro', 'Open the counselor console'],
+    go: ['pro', 'Open the medical professional console'],
   },
   {
     id: 'honest', nav: 'Real vs demo',
@@ -377,7 +377,7 @@ const STOPS = [
           A projection, not a finding: no adoption figure, no effect size, no trial.
         </Lede>
         <Lede>
-          A counselor's queue today is ordered by who asked, or who a teacher mentioned. This
+          A medical professional's queue today is ordered by who asked, or who a teacher mentioned. This
           orders it by whose {SCORE} moved most since last week.
         </Lede>
       </>
@@ -387,21 +387,21 @@ const STOPS = [
         <p className="mark">The assumptions</p>
         <ol className="m-0 mt-3 list-none space-y-3 p-0">
           {[
-            'A secondary school of about 1,200 students with three counselors, roughly 400 names each. That ratio is an assumption.',
+            'A secondary school of about 1,200 students with three medical professionals, roughly 400 names each. That ratio is an assumption.',
             `Each wearer reports at 1 Hz through a ${SCHOOL_HOURS}-hour school day: ${PER_DAY.toLocaleString('en-US')} readings per student per day.`,
-            'Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. The split shown on the counselor screen is invented.',
+            'Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. The split shown on the medical professional screen is invented.',
             'Groups under five are never reported.',
           ].map((t, i) => (
             <li key={i} className="border-t border-rule pt-3 text-sec text-ink-2">{t}</li>
           ))}
         </ol>
         <p className="mt-8 max-w-[54ch] text-meta text-ink">
-          A counselor cannot read 400 charts, which is why the output is a short list and a
+          A medical professional cannot read 400 charts, which is why the output is a short list and a
           sentence rather than a dashboard. If the list is right, the student whose {SCORE} moved
           most is seen first.
         </p>
-        <Note>What would prove this wrong: a trial in which counselors using this list reach
-          students no earlier than counselors using their existing referral queue. We have not run
+        <Note>What would prove this wrong: a trial in which medical professionals using this list reach
+          students no earlier than medical professionals using their existing referral queue. We have not run
           it.</Note>
       </div>
     ),
@@ -427,7 +427,7 @@ function CaseloadBody() {
         appear without one; the remaining {alerts} agreed to crisis alerts only, which carries no
         {SCORE} at all.
       </Lede>
-      <Note>Crisis alerts reach the counselor in every case. No guardian can consent that away,
+      <Note>Crisis alerts reach the medical professional in every case. No guardian can consent that away,
         and students are told so before they wear it.</Note>
     </>
   )
@@ -483,7 +483,7 @@ export function Tour({ go }) {
                 <div>
                   <h2 className="font-display font-bold text-sub leading-[1.12] tracking-tight text-ink">
                     {s.title}</h2>
-                  {s.id === 'counselor' ? <CaseloadBody/> : s.body}
+                  {s.id === 'medical professional' ? <CaseloadBody/> : s.body}
                   {s.go && (
                     <Button variant="outline" size="sm" className="mt-7"
                       onClick={() => go(s.go[0])}>
@@ -521,7 +521,7 @@ export function Tour({ go }) {
           Open the app yourself
         </h2>
         <p className="mt-3 max-w-[54ch] text-lead text-ink-2">
-          The launcher opens the student screen, the parent screen and the counselor console.
+          The launcher opens the student screen, the parent screen and the medical professional console.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button onClick={() => go('app')}>Open the app<ArrowRight aria-hidden/></Button>

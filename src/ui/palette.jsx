@@ -8,11 +8,11 @@ import { Grid, Wave, Bracket, Frame, Rule, MoveMark, PulseMark } from './marks'
 const CMDS = [
   { id:'site',    label:'Overview',        icon:Rule,        hint:'What MindMap is' },
   { id:'patch',   label:'The patch',       icon:Grid,         hint:'The device, in 3D' },
-  { id:'hub',     label:'The app',         icon:Grid,  hint:'Student, parent, school' },
+  { id:'hub',     label:'The app',         icon:Grid,  hint:'Student, parent, medical professional' },
   { id:'check',   label:'Take a reading',  icon:Wave,        hint:'Patch or six questions' },
   { id:'student', label:'Student view',    icon:Wave,   hint:'Today' },
   { id:'parent',  label:'Parent view',     icon:Bracket,       hint:'This week' },
-  { id:'pro',     label:'For schools',     icon:Frame, hint:'Counselors and psychologists' },
+  { id:'pro',     label:'For Medical Professionals',     icon:Frame, hint:'Medical Professionals and psychologists' },
 ]
 export function Palette({ go }){
   const [open,setOpen] = React.useState(false)
