@@ -3,16 +3,17 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { cn } from '../lib/utils'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
+import { List, Item } from '../ui/list'
 import {
-  PAGE, ABOUT_ITEMS, SUS_ITEMS, ALL_ITEMS, REQUIRED,
-  susScore, susGrade, npsScore, npsBucket,
+  PAGE, SUS_ITEMS, ALL_ITEMS, REQUIRED,
+  susScore, susGrade,
   questionText, itemById, pageLabel,
 } from '../survey/questions'
 import { exportRows, toCSV, getVisitor } from '../survey/store'
 
-/* Peer-review survey results: one instrument (SUS, NPS, stars, impact), each
- * with a published score and benchmark, so the page leads with the arithmetic
- * and keeps the raw answers under it.
+/* Peer-review survey results: thirteen questions, one scored instrument (SUS)
+ * and a rating, so the page leads with the arithmetic and keeps the raw answers
+ * under it. Questions the survey no longer asks are kept at the bottom.
  *
  * ─── On access ──────────────────────────────────────────────────────────────
  * THIS PAGE IS UNLISTED, WHICH IS NOT SECURITY. There is deliberately no login:
@@ -72,7 +73,6 @@ const ASK_ORDER = new Map()
 ALL_ITEMS.forEach((item, i) => ASK_ORDER.set(item.id, i))
 const askIndex = r => ASK_ORDER.get(r.questionId) ?? 9999
 
-const IMPACT = itemById('impact')
 const STARS_ITEM = itemById('stars')
 const STAR_MAX = STARS_ITEM?.max || 5
 const STAR_STEP = STARS_ITEM?.step || 0.5
@@ -104,7 +104,8 @@ function mean(list) {
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 
-/* The impact answer flattens to "4: because…"; only the tail is prose. */
+/* Impact is a text question now. Answers given while it was a five-point
+ * question flatten to "4: because…", so only the tail of those is prose. */
 function prose(row) {
   if (!row) return ''
   if (row.kind === 'text') return String(row.value || '').trim()
@@ -119,24 +120,20 @@ function prose(row) {
 /* Rows arrive in exportRows() shape so the server and local paths converge
  * before anything renders or downloads.
  *
- * Answers recorded under the retired per-page scheme are split out here and
- * must never reach a figure: they answered different questions on a different
- * instrument, so averaging them in would invent a number. They are still kept
- * and shown. */
+ * An answer counts as current only if it was given on this page and its
+ * question is still asked. Everything else — the retired per-page scheme, and
+ * the demographic and recommendation questions the survey dropped — is split
+ * out here and must never reach a figure: it answered a different question, so
+ * averaging it in would invent a number. It is still kept and shown. */
 function build(id, name, rows, startedAt) {
   const sorted = rows.slice().sort((a, b) => askIndex(a) - askIndex(b))
-  const current = sorted.filter(r => r.page === PAGE)
-  const retired = sorted.filter(r => r.page !== PAGE)
+  const live = r => r.page === PAGE && !!itemById(r.questionId)
+  const current = sorted.filter(live)
+  const retired = sorted.filter(r => !live(r))
   const times = rows.map(r => r.at).filter(Boolean).sort()
 
   const by = new Map(current.map(r => [r.questionId, r]))
   const value = qid => (by.has(qid) ? num(by.get(qid).value) : null)
-  const pick = qid => {
-    const r = by.get(qid)
-    if (!r) return null
-    const s = String(r.label ?? '').trim() || String(r.value ?? '').trim()
-    return s || null
-  }
 
   /* susScore returns null unless all ten items are present. Nine items times
      2.5 is not a SUS score, it is a smaller number that looks like one. */
@@ -150,11 +147,8 @@ function build(id, name, rows, startedAt) {
   })
   const sus = susScore(susAnswers)
 
-  const nps = value('nps')
-  const impactRow = by.get('impact')
-  const changeRow = by.get('change')
-  const impactNote = prose(impactRow)
-  const change = prose(changeRow)
+  const impactNote = prose(by.get('impact'))
+  const change = prose(by.get('change'))
 
   const done = REQUIRED_IDS.filter(qid => {
     const r = by.get(qid)
@@ -171,17 +165,9 @@ function build(id, name, rows, startedAt) {
     answered: rows.length,
     sus,
     susAnswered,
-    nps,
-    npsBucket: npsBucket(nps),
     stars: value('stars'),
-    impact: value('impact'),
-    impactLabel: pick('impact'),
     impactNote,
     change,
-    age: pick('about-age'),
-    education: pick('about-education'),
-    role: pick('about-role'),
-    closeness: pick('about-closeness'),
     done,
     commented: !!(impactNote || change),
   }
@@ -198,8 +184,9 @@ function group(rows, startedFor) {
     build(id, rs[0]?.visitorName, rs, startedFor ? startedFor(id) : null))
 }
 
-/* Returns '' for a question that no longer exists — the state of any answer
- * recorded against a retired route. */
+/* Returns '' for anything no longer asked, which is what marks a row as
+ * retired for display. questions.js still knows the old wording; this is the
+ * live-question lookup. */
 function textFor(qid) {
   return itemById(qid) ? questionText(qid) : ''
 }
@@ -267,34 +254,10 @@ function distribution(people, valueOf, points) {
   return { points, counts, total }
 }
 
-/* A segment prints a mean only with MIN_MEAN complete SUS respondents. Below
- * that the row still appears but states the shortfall in words rather than
- * printing a mean of one. */
-function segments(people, pickKey) {
-  const by = new Map()
-  people.forEach(p => {
-    const k = pickKey(p) || 'Did not say'
-    if (!by.has(k)) by.set(k, [])
-    by.get(k).push(p)
-  })
-  return [...by.entries()]
-    .map(([label, list]) => {
-      const complete = list.filter(p => p.sus != null)
-      return {
-        label,
-        n: list.length,
-        complete: complete.length,
-        mean: complete.length >= MIN_MEAN ? mean(complete.map(p => p.sus)) : null,
-      }
-    })
-    .sort((a, b) => b.complete - a.complete || b.n - a.n || a.label.localeCompare(b.label))
-}
-
 function summarise(people) {
   const completeSus = people.filter(p => p.sus != null)
   const partialSus = people.filter(p => p.sus == null && p.susAnswered > 0)
   const susMean = mean(completeSus.map(p => p.sus))
-  const npsValues = people.map(p => p.nps).filter(v => v != null)
   const starValues = people.map(p => p.stars).filter(v => v != null)
 
   const starPoints = []
@@ -313,17 +276,9 @@ function summarise(people) {
     susGrade: susMean == null ? null : susGrade(susMean),
     susBest: completeSus.length ? Math.max(...completeSus.map(p => p.sus)) : null,
     susWorst: completeSus.length ? Math.min(...completeSus.map(p => p.sus)) : null,
-    nps: npsScore(npsValues),
-    npsAnswered: npsValues.length,
-    promoters: npsValues.filter(v => v >= 9).length,
-    passives: npsValues.filter(v => v >= 7 && v <= 8).length,
-    detractors: npsValues.filter(v => v <= 6).length,
     starMean: mean(starValues),
     starsAnswered: starValues.length,
     starDist: distribution(people, p => p.stars, starPoints),
-    impactDist: distribution(people, p => p.impact, IMPACT?.points || []),
-    byRole: segments(people, p => p.role),
-    byCloseness: segments(people, p => p.closeness),
     commented: people.filter(p => p.commented).length,
     retired: people.reduce((n, p) => n + p.retired.length, 0),
   }
@@ -352,9 +307,7 @@ function csv(head, rows) {
 
 const PERSON_HEAD = [
   'name', 'visitorId', 'startedAt', 'lastAt',
-  'susScore', 'susGrade', 'susItemsAnswered',
-  'nps', 'npsBucket', 'stars', 'impact', 'impactLabel',
-  'role', 'closeness', 'age', 'education',
+  'susScore', 'susGrade', 'susItemsAnswered', 'stars',
   'requiredAnswered', 'requiredTotal', 'impactSentence', 'wouldChange',
 ]
 
@@ -367,15 +320,7 @@ function personRows(people) {
     susScore: p.sus == null ? '' : p.sus,
     susGrade: p.sus == null ? '' : susGrade(p.sus).grade,
     susItemsAnswered: p.susAnswered,
-    nps: p.nps == null ? '' : p.nps,
-    npsBucket: p.npsBucket || '',
     stars: p.stars == null ? '' : p.stars,
-    impact: p.impact == null ? '' : p.impact,
-    impactLabel: p.impactLabel || '',
-    role: p.role || '',
-    closeness: p.closeness || '',
-    age: p.age || '',
-    education: p.education || '',
     requiredAnswered: p.done,
     requiredTotal: REQUIRED_COUNT,
     impactSentence: p.impactNote || '',
@@ -498,45 +443,6 @@ function Distribution({ title, note, points, counts, total, children }) {
       {note && <p className="note mt-1">{note}</p>}
       <Rows points={points} counts={counts} total={total} />
       {children}
-    </figure>
-  )
-}
-
-function Segment({ title, note, rows }) {
-  return (
-    <figure className="m-0 border-t border-rule pt-4">
-      <figcaption className="max-w-read font-display text-ui font-bold text-ink">
-        {title}
-      </figcaption>
-      <p className="note mt-1">{note}</p>
-      {rows.length === 0 ? (
-        <p className="mt-3 text-meta text-ink-2">No answers to split on yet.</p>
-      ) : (
-        <div className="mt-3 flex flex-col gap-3">
-          {rows.map(r => (
-            <div key={r.label} className="grid grid-cols-[1fr] gap-1.5 sm:grid-cols-[minmax(0,1fr)_minmax(80px,28%)_6rem] sm:items-center sm:gap-3">
-              <span className="text-meta text-ink-2">{r.label}</span>
-              {r.mean == null ? (
-                <>
-                  <span className="text-fine text-ink-3 sm:col-span-2 sm:text-right">
-                    {r.complete === 0
-                      ? `${r.n} here, none finished`
-                      : `${r.complete} of ${r.n} finished, too few`}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Meter value={r.mean} />
-                  <span className="whitespace-nowrap font-mono text-fine tabular-nums text-ink sm:text-right">
-                    {r.mean.toFixed(1)}
-                    <span className="text-ink-3"> · n{r.complete}</span>
-                  </span>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
     </figure>
   )
 }
@@ -683,9 +589,7 @@ const SORTS = {
   name:  (a, b) => a.name.localeCompare(b.name),
   when:  (a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')),
   sus:   (a, b) => (b.sus ?? -1) - (a.sus ?? -1),
-  nps:   (a, b) => (b.nps ?? -1) - (a.nps ?? -1),
   stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
-  role:  (a, b) => String(a.role || 'zzz').localeCompare(String(b.role || 'zzz')),
   done:  (a, b) => b.done - a.done,
 }
 
@@ -759,11 +663,15 @@ export function Responses() {
     return out
   }, [people])
 
-  const retiredByPage = React.useMemo(() => {
+  /* Grouped by label, not by page id: a dropped question was asked on the
+     page that is still current, so grouping on the id alone would file it
+     under "Site review". */
+  const retiredGroups = React.useMemo(() => {
     const by = new Map()
     people.forEach(p => p.retired.forEach(r => {
-      if (!by.has(r.page)) by.set(r.page, [])
-      by.get(r.page).push({ ...r, name: p.name })
+      const group = itemById(r.questionId) ? pageLabel(r.page) : 'Questions no longer asked'
+      if (!by.has(group)) by.set(group, [])
+      by.get(group).push({ ...r, name: p.name })
     }))
     return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [people])
@@ -771,13 +679,14 @@ export function Responses() {
   /* Every download carries everyone, not the filtered view — the file is the
      archive.
 
-     The question column is filled in here rather than trusted from the row: a
-     retired question has no text to look up, and an empty spreadsheet cell
-     reads as a missing value rather than a deliberate one. */
+     The question column is filled in here rather than trusted from the row.
+     questionText keeps the wording of retired questions, and falls back to the
+     id, because an empty spreadsheet cell reads as a missing value rather than
+     a deliberate one. */
   const rows = React.useMemo(() => people.flatMap(p =>
     [...p.rows, ...p.retired].map(r => ({
       ...r,
-      question: textFor(r.questionId) || 'Question no longer asked',
+      question: questionText(r.questionId),
     }))), [people])
   const downloadCSV = () => save(toCSV(rows), `mindmap-answers-${stamp()}.csv`, 'text/csv;charset=utf-8')
   const downloadPeople = () => save(
@@ -839,7 +748,7 @@ export function Responses() {
         <section aria-label="Headline figures" className="mt-14">
           <p className="mark">The numbers</p>
 
-          <div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             <Figure
               label={susLabel}
               value={s.susMean == null ? 'No data' : s.susMean.toFixed(1)}
@@ -859,16 +768,6 @@ export function Responses() {
             </Figure>
 
             <Figure
-              label="Net Promoter Score"
-              value={s.nps == null ? 'No data' : (s.nps > 0 ? `+${s.nps}` : String(s.nps))}
-              unit={s.nps == null ? null : 'of ±100'}
-            >
-              {s.nps == null
-                ? 'Nobody has answered the recommendation question yet.'
-                : `${s.promoters} promoter${s.promoters === 1 ? '' : 's'}, ${s.passives} passive, ${s.detractors} detractor${s.detractors === 1 ? '' : 's'}, from ${s.npsAnswered} answer${s.npsAnswered === 1 ? '' : 's'}.`}
-            </Figure>
-
-            <Figure
               label={s.starsAnswered === 1 ? 'Rating (one respondent)' : 'Mean rating'}
               value={s.starMean == null ? 'No data' : s.starMean.toFixed(2)}
               unit={s.starMean == null ? null : `of ${STAR_MAX}`}
@@ -885,7 +784,7 @@ export function Responses() {
             </Figure>
           </div>
 
-          <div className="mt-10 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+          <div className="mt-10">
             <figure className="m-0 border-t border-rule pt-4">
               <figcaption className="max-w-read font-display text-ui font-medium text-ink">
                 {susLabel} against the benchmark
@@ -924,107 +823,20 @@ export function Responses() {
                 </p>
               )}
             </figure>
-
-            <figure className="m-0 border-t border-rule pt-4">
-              <figcaption className="max-w-read font-display text-ui font-medium text-ink">
-                Who would recommend it
-              </figcaption>
-              <p className="note mt-1">
-                One question, scored 0 to 10. Promoters answer 9 or 10, passives 7 or 8,
-                detractors 0 to 6. The score is the promoter share minus the detractor share,
-                so it runs −100 to +100 and passives count only by diluting both.
-              </p>
-              <Rows
-                points={[
-                  { value: 'promoter', label: 'Promoters, 9 or 10' },
-                  { value: 'passive', label: 'Passives, 7 or 8' },
-                  { value: 'detractor', label: 'Detractors, 0 to 6' },
-                ]}
-                counts={{ promoter: s.promoters, passive: s.passives, detractor: s.detractors }}
-                total={s.npsAnswered}
-              />
-              <p className="mt-3 max-w-measure text-meta text-ink-2">
-                Anything above 0 means more people would recommend it than would
-                warn someone off it. It is a coarse instrument on a sample this
-                size.
-              </p>
-            </figure>
           </div>
         </section>
 
-        {/* --------------------------------------------------- segmentation */}
-        <section aria-label="Usability by who answered" className="mt-20">
-          <p className="mark">Split by who answered</p>
-          <p className="mt-4 max-w-measure text-sec text-ink-2">
-            One mean over everybody hides the disagreement, and the disagreement
-            is usually the finding. A segment gets a printed mean only once{' '}
-            {MIN_MEAN} people in it have finished all ten statements.
-          </p>
-          <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
-            <Segment
-              title="Mean SUS by role"
-              note={`Rule marks the ${BENCHMARK} benchmark. "Finished" means all ten statements; n is how many.`}
-              rows={s.byRole}
-            />
-            <Segment
-              title="Mean SUS by closeness to teen stress"
-              note="Same scale, same benchmark rule."
-              rows={s.byCloseness}
-            />
-          </div>
-        </section>
-
-        {/* ------------------------------------------------------ the rest */}
-        <section aria-label="Ratings and impact" className="mt-20">
-          <p className="mark">Rating and impact</p>
-          <div className="mt-6 grid gap-x-12 gap-y-8 lg:grid-cols-2">
+        {/* --------------------------------------------------------- rating */}
+        <section aria-label="Overall rating" className="mt-20">
+          <p className="mark">The rating</p>
+          <div className="mt-6 lg:max-w-[38rem]">
             <Distribution
               title="Overall rating"
-              note={`Out of ${STAR_MAX}, in half stars.`}
+              note={`Question 11. Out of ${STAR_MAX}, in half stars.`}
               points={s.starDist.points}
               counts={s.starDist.counts}
               total={s.starDist.total}
             />
-            <Distribution
-              title={IMPACT ? IMPACT.prompt : 'Impact'}
-              note="Optional, and the one place a sentence was invited."
-              points={s.impactDist.points}
-              counts={s.impactDist.counts}
-              total={s.impactDist.total}
-            />
-          </div>
-        </section>
-
-        <section aria-label="Who answered" className="mt-20">
-          <p className="mark">Who answered</p>
-          <p className="mt-4 max-w-measure text-sec text-ink-2">
-            Every question here was optional, so these counts are of people who
-            chose to say. "Did not say" is counted as an answer.
-          </p>
-          <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
-            {ABOUT_ITEMS.map(item => {
-              const counts = {}
-              let total = 0
-              people.forEach(p => {
-                const r = p.rows.find(x => x.questionId === item.id)
-                const v = r ? (String(r.label ?? '').trim() || String(r.value ?? '').trim()) : ''
-                const k = v || 'Did not say'
-                counts[k] = (counts[k] || 0) + 1
-                total += 1
-              })
-              const points = [...item.options.map(o => ({ value: o, label: o })),
-                              { value: 'Did not say', label: 'Did not say' }]
-              return (
-                <Distribution
-                  key={item.id}
-                  title={item.prompt}
-                  note="Optional question."
-                  points={points}
-                  counts={counts}
-                  total={total}
-                />
-              )
-            })}
           </div>
         </section>
 
@@ -1047,9 +859,7 @@ export function Responses() {
                 <option value="name">Name, A to Z</option>
                 <option value="when">Most recent answer first</option>
                 <option value="sus">Highest SUS first</option>
-                <option value="nps">Highest NPS first</option>
                 <option value="stars">Highest rating first</option>
-                <option value="role">Role</option>
                 <option value="done">Most complete first</option>
               </select>
             </Field>
@@ -1087,9 +897,9 @@ export function Responses() {
           </div>
           <p className="note mt-3 max-w-measure">
             Two sheets. <em>Respondents</em> is one row per person with the computed
-            SUS, NPS bucket, rating, role and closeness, the sheet that gets pasted
-            into a spreadsheet. <em>Answers</em> is one row per answer, the full
-            archive, older questions included.
+            SUS, grade and rating, the sheet that gets pasted into a spreadsheet.
+            <em> Answers</em> is one row per answer, the full archive, questions
+            that are no longer asked included.
           </p>
 
           {nothing ? (
@@ -1140,9 +950,7 @@ export function Responses() {
                       <TH>When</TH>
                       <TH align="right">SUS</TH>
                       <TH align="right">Grade</TH>
-                      <TH align="right">NPS</TH>
                       <TH align="right">Stars</TH>
-                      <TH>Role</TH>
                       <TH align="right">Done</TH>
                     </TR>
                   </THead>
@@ -1162,12 +970,8 @@ export function Responses() {
                             : <Badge>{susGrade(p.sus).grade}</Badge>}
                         </TD>
                         <TD num align="right" className="text-ink">
-                          {p.nps == null ? <span className="text-ink-3">none</span> : p.nps}
-                        </TD>
-                        <TD num align="right" className="text-ink">
                           {p.stars == null ? <span className="text-ink-3">none</span> : p.stars.toFixed(1)}
                         </TD>
-                        <TD className="text-ink-2">{p.role || <span className="text-ink-3">not said</span>}</TD>
                         <TD num align="right" className="text-ink">
                           {p.done}<span className="text-ink-3">/{REQUIRED_COUNT}</span>
                         </TD>
@@ -1178,8 +982,8 @@ export function Responses() {
               </div>
               <p className="note mt-3">
                 “Done” counts the {REQUIRED_COUNT} questions that were not optional:
-                the ten usability statements, the recommendation question and the
-                rating.
+                the ten usability statements and the rating. The two sentences are
+                optional and are not counted here.
               </p>
             </>
           )}
@@ -1227,41 +1031,49 @@ export function Responses() {
           </section>
         )}
 
-        {retiredByPage.length > 0 && (
+        {retiredGroups.length > 0 && (
           <section aria-label="Retired answers" className="mt-20">
-            <p className="mark">Older answers we no longer ask</p>
+            <p className="mark">Answers to questions no longer asked</p>
             <p className="mt-4 max-w-measure text-sec text-ink-2">
-              The survey used to ask two questions on every page. Those answers are
-              real and are kept here, but they were given to different questions on
-              a different instrument, so none of them is counted in any figure
-              above.
+              Real answers, kept here in full, to questions the survey has since
+              dropped. None of them is counted in any figure above: they answered a
+              different question, so averaging them in would invent a number.
             </p>
+            <List className="mt-4 max-w-measure text-sec text-ink-2">
+              <Item>The four questions about you — age, schooling, role, and how close teen stress is to your life.</Item>
+              <Item>The 0 to 10 recommendation question.</Item>
+              <Item>The five points under the impact question. Its sentence is still asked, on its own, as question 13.</Item>
+              <Item>The two questions the survey used to ask on every page.</Item>
+            </List>
             <Fold
               summary="The older answers"
-              note={`${s.retired} answer${s.retired === 1 ? '' : 's'} across ${retiredByPage.length} retired page${retiredByPage.length === 1 ? '' : 's'}`}
+              note={`${s.retired} answer${s.retired === 1 ? '' : 's'} in ${retiredGroups.length} group${retiredGroups.length === 1 ? '' : 's'}`}
             >
               <div className="flex flex-col gap-8">
-                {retiredByPage.map(([page, rs]) => (
-                  <div key={page}>
+                {retiredGroups.map(([group, rs]) => (
+                  <div key={group}>
                     <h3 className="font-display text-ui font-bold text-ink">
-                      {pageLabel(page)}
+                      {group}
                     </h3>
                     <dl className="mt-3 flex flex-col gap-4">
                       {rs.map((r, i) => (
-                        <div key={page + '/' + r.questionId + '/' + i}
+                        <div key={group + '/' + r.questionId + '/' + i}
                           className="border-t border-rule pt-3">
                           <dt className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <span className="font-mono text-fine tabular-nums text-ink-3">
                               {r.questionId}
                             </span>
-                            <span className="font-display text-ui font-bold text-ink-2">
-                              {r.name}
+                            {/* questions.js keeps the old wording, so a real
+                                answer never shows under a bare id. */}
+                            <span className="max-w-read font-display text-ui font-bold text-ink-2">
+                              {questionText(r.questionId)}
                             </span>
                           </dt>
                           <dd className="mt-1.5 max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
                             {String(r.label || r.value || '').trim() ||
                               <span className="text-ink-3">left blank</span>}
                           </dd>
+                          <p className="note mt-1">{r.name}</p>
                         </div>
                       ))}
                     </dl>

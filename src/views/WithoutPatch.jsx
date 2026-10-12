@@ -7,6 +7,8 @@ import { PhoneApp } from '../ui/phone-app'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { CameraModule, SignalCoverage } from '../charts/camera'
 import { PhoneCheck } from './PhoneCheck'
+import { List, Item } from '../ui/list'
+import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 
 /* Taking a reading with nothing on your arm.
@@ -134,16 +136,24 @@ export function WithoutPatch({ go }) {
                   <CardTitle>{r.title}</CardTitle>
                   <span className="font-mono text-tick tabular-nums text-accent">{r.when}</span>
                 </div>
-                <ul className="mt-3 flex list-none flex-wrap gap-2 p-0">
+                <List className="mt-3 flex-row flex-wrap">
                   {r.gives.map(g => (
-                    <li key={g} className="rounded-chip border border-rule bg-mist/60 px-3 py-0.5 text-fine text-ink-2">{g}</li>
+                    <Item key={g} marker="none"
+                      className="rounded-chip border border-rule bg-mist/60 px-3 py-0.5 text-fine text-ink-2">
+                      {g}
+                    </Item>
                   ))}
-                </ul>
+                </List>
                 {/* Both labels must differ from the hero's "Take a reading" —
-                    duplicate names are one control to a screen reader. */}
+                    duplicate names are one control to a screen reader. The
+                    questions live inside the app, on a screen of their own, so
+                    the intent is handed over and the app opens on it rather
+                    than on its chooser. The sensor reading is on this page,
+                    below, which is where that one goes. */}
                 <div className="mt-auto pt-4">
                   {r.id === 'ask'
-                    ? <Button variant="outline" size="sm" onClick={() => go('check')}>
+                    ? <Button variant="outline" size="sm"
+                        onClick={() => { setReadingIntent('survey'); go('check') }}>
                         Start the questions<span aria-hidden>→</span>
                       </Button>
                     : <Button variant="outline" size="sm" onClick={toCheck}>
@@ -168,7 +178,7 @@ export function WithoutPatch({ go }) {
           trial-report columns (proved / not proved) — this is a build. */}
       <Section name="Limits" tone="ink" tight>
         <SectionHead tone="ink">What this reading is, and is not.</SectionHead>
-        <ul className="mt-5 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-6">
+        <List className="mt-5 grid gap-4 lg:grid-cols-3 lg:gap-6">
           {[
             ['Heart rate',
               'Within half a beat per minute of a known signal.'],
@@ -177,12 +187,14 @@ export function WithoutPatch({ go }) {
             ['Where it stands',
               'Nothing has been tested on a person. Every figure here is generated.'],
           ].map(([k, v], i) => (
-            <ScrollRow key={k} index={i} as="li" className="border-t border-ink-3 pt-3">
-              <p className="font-display text-ui font-bold text-accent-lit">{k}</p>
-              <p className="mt-1.5 max-w-[40ch] text-sec leading-[1.45] text-mist">{v}</p>
-            </ScrollRow>
+            <Item key={k} marker="none" className="border-t border-ink-3 pt-3">
+              <ScrollRow index={i}>
+                <p className="font-display text-ui font-bold text-accent-lit">{k}</p>
+                <p className="mt-1.5 max-w-[40ch] text-sec leading-[1.45] text-mist">{v}</p>
+              </ScrollRow>
+            </Item>
           ))}
-        </ul>
+        </List>
       </Section>
     </main>
   )

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '@/ui/card'
+import { List, Item } from '../ui/list'
 import { Progress } from '../ui/progress'
 import { Headline, AllDetail } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
@@ -90,9 +91,16 @@ export function PhoneCheck() {
   const live = React.useRef({ cam: null, ppg: null, motion: null })
 
   React.useEffect(() => { setBaseline(loadBaseline()) }, [])
+  /* Leaving mid-reading unmounts this screen, so the cleanup is the only thing
+     that stops the capture. The camera track and the frame loop end here, and
+     so does the accelerometer listener. The microphone is the one exception:
+     captureVoice owns its own stream and exposes no cancel, so a reading
+     abandoned during the voice window releases the mic when that window
+     closes. */
   React.useEffect(() => () => {
     live.current.ppg?.cancel()
     stopStream(live.current.cam?.stream)
+    live.current.motion?.stop()
   }, [])
 
   const supported = mediaAvailable()
@@ -130,6 +138,7 @@ export function PhoneCheck() {
       }
 
       const move = motion?.stop() ?? null
+      live.current.motion = null
       setPhase('working')
 
       if (!ppg.ok) { setError(ppg.message); setPhase('idle'); return }
@@ -144,6 +153,7 @@ export function PhoneCheck() {
       setPhase('done')
     } catch (e) {
       stopStream(cam?.stream)
+      live.current.motion?.stop(); live.current.motion = null
       setError(e?.name === 'NotAllowedError'
         ? 'The camera was not allowed. A reading needs it; the questions do not.'
         : (e?.message || 'Something stopped the capture.'))
@@ -175,11 +185,13 @@ export function PhoneCheck() {
                 title={`Say one sentence · ${VOICE_SECONDS}s`}
                 note="Quiet room. No words are kept.">
                 <div className="mt-2.5"><StepFigure kind="quiet"/></div>
-                <ul className="mt-2.5 list-none border-l-2 border-accent p-0 pl-3">
+                {/* The accent rule is the marker here: these are the lines to
+                    say, not a run of separate points. */}
+                <List className="mt-2.5 gap-1 border-l-2 border-accent pl-3">
                   {SAY_LINES.slice(0, 2).map(l => (
-                    <li key={l} className="text-sec leading-[1.5] text-ink">{l}</li>
+                    <Item key={l} marker="none" className="text-sec leading-[1.5] text-ink">{l}</Item>
                   ))}
-                </ul>
+                </List>
               </Step>
               <Step on={PHASES[phase] >= 3}
                 title="Your Mind Score and band"

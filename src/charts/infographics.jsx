@@ -22,54 +22,6 @@ export function SignalTrace({ kind, className }) {
   )
 }
 
-/* ── Patch → phone → sentence ──────────────────────────────────────────── */
-/* Step one does not name the four signals — the hero and the patch panel both
-   name them above this figure. */
-export function HowItWorks({ className }) {
-  const steps = [
-    { t:'Worn on the arm', art:'patch',
-      s:'From the upper arm, once a second, all day.' },
-    { t:'Read on your phone', art:'phone',
-      s:`One ${SCORE}, measured against your own last two weeks.` },
-    { t:'One sentence back', art:'card',
-      s:'One line in plain words, with the four signals under it.' },
-  ]
-  return (
-    <ol className={cn('m-0 grid auto-rows-fr list-none gap-5 p-0 md:grid-cols-3', className)}>
-      {steps.map(s2 => (
-        <li key={s2.t} className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
-          <span className="flex h-24 items-center justify-center rounded-field bg-mist/70">
-            <StepArt kind={s2.art}/>
-          </span>
-          <h3 className="mt-5 font-display text-head font-bold leading-tight text-ink">{s2.t}</h3>
-          <p className="mt-2 max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.s}</p>
-        </li>
-      ))}
-    </ol>
-  )
-}
-function StepArt({ kind }) {
-  if (kind === 'patch') return (
-    <svg viewBox="0 0 120 64" aria-hidden className="h-14">
-      <rect x="26" y="14" width="68" height="36" rx="16" fill="none" className="stroke-ink" strokeWidth="1.6"/>
-      <rect x="48" y="24" width="24" height="16" rx="5" className="fill-accent"/>
-      <path d="M8 32h14M98 32h14" className="stroke-ink-3" strokeWidth="1.6" strokeLinecap="round"/>
-    </svg>)
-  if (kind === 'phone') return (
-    <svg viewBox="0 0 120 64" aria-hidden className="h-14">
-      <rect x="46" y="6" width="28" height="52" rx="5" fill="none" className="stroke-ink" strokeWidth="1.6"/>
-      <path d="M52 40 L56 40 L58 30 L61 46 L63 38 L68 38" fill="none" className="stroke-accent"
-        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="60" cy="18" r="5" fill="none" className="stroke-ink-3" strokeWidth="1.4"/>
-    </svg>)
-  return (
-    <svg viewBox="0 0 120 64" aria-hidden className="h-14">
-      <rect x="18" y="16" width="84" height="32" rx="3" fill="none" className="stroke-ink" strokeWidth="1.6"/>
-      <path d="M28 28h44M28 36h30" className="stroke-ink-3" strokeWidth="2.4" strokeLinecap="round"/>
-      <circle cx="86" cy="32" r="7" className="fill-accent"/>
-    </svg>)
-}
-
 /* ── Who sees what. 2 always, 1 only with consent, 0 never. ───────────── */
 const WHAT = [
   `${SCORE} for the day`,

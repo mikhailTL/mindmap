@@ -37,9 +37,10 @@ const PAIR = '#1d8fb0'  /* beam, the other half of a two-way split */
 
 /* A hundred-figure array, not a bar. The mark fills more of its 10-unit cell
    than a naive figure would and the head sits closer to its own shoulders than
-   to the head below: at 160px a cell is 16px, and looser proportions join a
-   column of marks into one string of dots. aria-hidden; the figure is in large
-   type above it. */
+   to the head below: at 104px a cell is 10.4px, and looser proportions join a
+   column of marks into one string of dots. It is a supporting mark, sized under
+   the figure it belongs to and not against the column it sits in. aria-hidden;
+   the figure is in large type above it. */
 function HundredGrid({ filled, className }) {
   const cells = []
   for (let i = 0; i < 100; i++) {
@@ -55,7 +56,7 @@ function HundredGrid({ filled, className }) {
   }
   return (
     <svg viewBox="0 0 100 100" aria-hidden="true"
-      className={cn('block h-auto w-full max-w-[152px] lg:max-w-[184px]', className)}>
+      className={cn('block h-auto w-full max-w-[104px] lg:max-w-[120px]', className)}>
       {cells}
     </svg>
   )
@@ -165,7 +166,7 @@ export function ProblemStats({ className }) {
             </figcaption>
             {/* year labels live in HTML, not the viewBox: text inside a scaled
                 SVG shrinks below 12px as the column narrows */}
-            <div className="mt-auto max-w-[168px] pt-3 lg:max-w-[200px]">
+            <div className="mt-auto max-w-[116px] pt-3 lg:max-w-[132px]">
               <ThenNow />
               <div className="mt-1 grid grid-cols-2 text-center text-fine text-ruling">
                 <span>2013</span>
@@ -192,9 +193,9 @@ export function ProblemStats({ className }) {
           {/* The figure and its five marks are one object: as loose siblings
               in a wrapping row, a phone sets the sentence one word to the
               line. */}
-          <div className="flex shrink-0 items-center gap-6">
+          <div className="flex shrink-0 items-center gap-5">
             <p className="font-display text-stat font-bold leading-none text-accent-lit">1 in 5</p>
-            <div className="w-[104px] shrink-0"><OneOfFive /></div>
+            <div className="w-[72px] shrink-0"><OneOfFive /></div>
           </div>
           <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
             text-mist">
@@ -211,9 +212,9 @@ export function ProblemStats({ className }) {
           aria-label={'3 in 5 of the adolescents who had a major depressive episode in the past '
             + 'year, or 59.4 percent, received no treatment for it. Source: NIMH, from '
             + 'NSDUH 2021.'}>
-          <div className="flex shrink-0 items-center gap-6">
+          <div className="flex shrink-0 items-center gap-5">
             <p className="font-display text-gap font-bold leading-none text-accent-lit">3 in 5</p>
-            <div className="w-[112px] shrink-0"><ThreeOfFive /></div>
+            <div className="w-[78px] shrink-0"><ThreeOfFive /></div>
           </div>
           <figcaption className="min-w-0 max-w-[52ch] flex-1 basis-[17rem] text-sec leading-[1.4]
             text-mist">

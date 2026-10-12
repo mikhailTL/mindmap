@@ -9,6 +9,7 @@ import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
 import { Parallax2D } from '../ui/motion'
+import { List, Item } from '../ui/list'
 import { RainbowDial } from '../charts/rainbow'
 import { SignalTrace, WeekStrip } from '../charts/infographics'
 import { studentRings } from '../lib/readings'
@@ -16,7 +17,8 @@ import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { roster, triage, scoreOnly, alertsOnly, tierOf, TIER_LABEL } from '../lib/caseload'
 import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
-import { SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE } from '../lib/terms'
+import { SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE, PRO, PRO_LC, PRO_PLURAL_LC }
+  from '../lib/terms'
 
 /* The guided tour, in eight stops.
  *
@@ -204,8 +206,8 @@ const STOPS = [
     body: (
       <>
         <Lede>
-          A school's record of a student is the days someone spoke up. MindMap records every day,
-          against that student's own last two weeks and nobody else's.
+          The record an adult has of a teenager is the days someone spoke up. MindMap records
+          every day, against that student's own last two weeks and nobody else's.
         </Lede>
       </>
     ),
@@ -220,14 +222,14 @@ const STOPS = [
           An adhesive base, a tray for a Seeed XIAO nRF52840 Sense board, and a printed shell.
           The board is bought, not designed by us.
         </Lede>
-        <ul className="mt-6 m-0 list-none space-y-4 p-0">
+        <List className="mt-6 gap-4">
           {LAYERS.map(l => (
-            <li key={l.i} className="border-t border-rule pt-3">
-              <p className="font-display text-ui font-bold text-ink">{l.title}</p>
-              <p className="mt-1 text-sec text-ink-2">{l.body}</p>
-            </li>
+            <Item key={l.i} marker="none" className="border-t border-rule pt-3">
+              <span className="block font-display text-ui font-bold text-ink">{l.title}</span>
+              <span className="mt-1 block text-sec text-ink-2">{l.body}</span>
+            </Item>
           ))}
-        </ul>
+        </List>
         <Note>Drawn to the real dimensions. No unit has been assembled.</Note>
       </>
     ),
@@ -312,24 +314,25 @@ const STOPS = [
           <p className="mt-3 font-mono text-tick tabular-nums text-ink-3">
             {over} of {(DATA.week || []).length} above her usual range</p>
           <p className="mark mt-8">Never shown to a parent</p>
-          <ul className="m-0 mt-3 list-none space-y-2.5 p-0">
+          {/* The bar is this row's marker, so the list's own is off. */}
+          <List className="mt-3 gap-2.5">
             {never.map(t => (
-              <li key={t} className="flex items-start gap-3 text-meta text-ink">
+              <Item key={t} marker="none" className="gap-3 text-meta text-ink">
                 <Never className="mt-1 size-4 shrink-0 text-ink-3"/>{t}
-              </li>
+              </Item>
             ))}
-          </ul>
+          </List>
         </div>
       )
     },
     go: ['privacy', 'See who can see what'],
   },
   {
-    id: 'medical professional', nav: 'Medical Professional console',
-    title: 'What the medical professional sees',
+    id: 'pro', nav: `${PRO} console`,
+    title: `What the ${PRO_LC} sees`,
     body: null,   /* built below, from the fixture, so the counts cannot drift */
     art: Caseload,
-    go: ['pro', 'Open the medical professional console'],
+    go: ['pro', `Open the ${PRO_LC} console`],
   },
   {
     id: 'honest', nav: 'Real vs demo',
@@ -370,39 +373,39 @@ const STOPS = [
   },
   {
     id: 'scale', nav: 'At scale',
-    title: 'What this would change in a school',
+    title: 'What this would change on a caseload',
     body: (
       <>
         <Lede>
           A projection, not a finding: no adoption figure, no effect size, no trial.
         </Lede>
         <Lede>
-          A medical professional's queue today is ordered by who asked, or who a teacher mentioned. This
-          orders it by whose {SCORE} moved most since last week.
+          A {PRO_LC}'s queue today is ordered by who asked first, or who was referred. This orders
+          it by whose {SCORE} moved most since last week.
         </Lede>
       </>
     ),
     art: () => (
       <div>
         <p className="mark">The assumptions</p>
-        <ol className="m-0 mt-3 list-none space-y-3 p-0">
+        <List className="mt-3 gap-3">
           {[
-            'A secondary school of about 1,200 students with three medical professionals, roughly 400 names each. That ratio is an assumption.',
+            `One ${PRO_LC} carrying a caseload of about 400 students. That ratio is an assumption.`,
             `Each wearer reports at 1 Hz through a ${SCHOOL_HOURS}-hour school day: ${PER_DAY.toLocaleString('en-US')} readings per student per day.`,
-            'Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. The split shown on the medical professional screen is invented.',
+            `Some unknown fraction of students wear a patch, and some unknown fraction of guardians consent to trends. The split shown on the ${PRO_LC} screen is invented.`,
             'Groups under five are never reported.',
           ].map((t, i) => (
-            <li key={i} className="border-t border-rule pt-3 text-sec text-ink-2">{t}</li>
+            <Item key={i} marker="none" className="border-t border-rule pt-3 text-sec text-ink-2">{t}</Item>
           ))}
-        </ol>
+        </List>
         <p className="mt-8 max-w-[54ch] text-meta text-ink">
-          A medical professional cannot read 400 charts, which is why the output is a short list and a
+          A {PRO_LC} cannot read 400 charts, which is why the output is a short list and a
           sentence rather than a dashboard. If the list is right, the student whose {SCORE} moved
           most is seen first.
         </p>
-        <Note>What would prove this wrong: a trial in which medical professionals using this list reach
-          students no earlier than medical professionals using their existing referral queue. We have not run
-          it.</Note>
+        <Note>What would prove this wrong: a trial in which {PRO_PLURAL_LC} using this list reach
+          students no earlier than {PRO_PLURAL_LC} using their existing referral queue. We have not
+          run it.</Note>
       </div>
     ),
     wide: true,
@@ -427,7 +430,7 @@ function CaseloadBody() {
         appear without one; the remaining {alerts} agreed to crisis alerts only, which carries no
         {SCORE} at all.
       </Lede>
-      <Note>Crisis alerts reach the medical professional in every case. No guardian can consent that away,
+      <Note>Crisis alerts reach the {PRO_LC} in every case. No guardian can consent that away,
         and students are told so before they wear it.</Note>
     </>
   )
@@ -483,7 +486,7 @@ export function Tour({ go }) {
                 <div>
                   <h2 className="font-display font-bold text-sub leading-[1.12] tracking-tight text-ink">
                     {s.title}</h2>
-                  {s.id === 'medical professional' ? <CaseloadBody/> : s.body}
+                  {s.id === 'pro' ? <CaseloadBody/> : s.body}
                   {s.go && (
                     <Button variant="outline" size="sm" className="mt-7"
                       onClick={() => go(s.go[0])}>
@@ -521,7 +524,7 @@ export function Tour({ go }) {
           Open the app yourself
         </h2>
         <p className="mt-3 max-w-[54ch] text-lead text-ink-2">
-          The launcher opens the student screen, the parent screen and the medical professional console.
+          The launcher opens the student screen, the parent screen and the {PRO_LC} console.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button onClick={() => go('app')}>Open the app<ArrowRight aria-hidden/></Button>

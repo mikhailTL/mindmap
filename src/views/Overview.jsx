@@ -8,18 +8,20 @@ import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { ProblemStats } from '../charts/problem'
-import { HowItWorks, WhoSeesWhat } from '../charts/infographics'
+import { WhoSeesWhat } from '../charts/infographics'
 import { Card } from '../ui/card'
+import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
-  SCORE, NOTES, LOCATION,
+  SCORE, NOTES, LOCATION, PRO, PRO_LC,
   CONSENT_SHORT, CONSENT_OFF, CASELOAD_TITLE,
 } from '../lib/terms'
 
-/* Grounds are set here rather than in the bands. The ladder runs white, tint,
- * white, tint between the two dark bands, because alternating the two
- * near-whites is invisible: paper and card differ by about 2% in luminance.
+/* Grounds are set here rather than in the bands. Between the two dark bands the
+ * washes run accent, beam, aqua, then paper. They are tints and not alternating
+ * near-whites because paper and card differ by about 2% in luminance, which
+ * reads as no change at all.
  *
  * ink 12.7 : 1, ink.2 6.9, ink.3 4.67 and accent 4.84 all clear AA on both
  * washes, so nothing on a tinted band needs a different colour than it has on
@@ -73,11 +75,11 @@ const SCREENS = [
     title:'One sentence a week, and which days ran high',
     line:`Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
     cta:'What a parent gets' },
-  { id:'pro',     who:'Medical Professional', photo:'school-card',
-    alt:'A medical professional and a student talking on a sofa',
+  { id:'pro',     who:PRO, photo:'school-card',
+    alt:`A ${PRO_LC} and a student talking on a sofa`,
     title:CASELOAD_TITLE,
     line:'Only the students who share it.',
-    cta:'What a school gets' },
+    cta:`What a ${PRO_LC} gets` },
 ]
 
 /* Four decisions, each traceable to a published finding, and a closing line
@@ -167,13 +169,12 @@ export function Overview({ go }) {
             <ScrollIn as="p" className="mt-5 max-w-[26ch] text-lead font-medium leading-[1.3] text-ink">
               One {SCORE} a day. One sentence saying what changed.
             </ScrollIn>
-            <ScrollIn as="ul" className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
-              {HERO_FACTS.map(f => (
-                <li key={f} className="flex items-start gap-2.5 text-sec text-ink-2">
-                  <span aria-hidden className="mt-[0.62em] h-[3px] w-3 shrink-0 rounded-bar bg-accent"/>
-                  {f}
-                </li>
-              ))}
+            <ScrollIn className="mt-4">
+              <List>
+                {HERO_FACTS.map(f => (
+                  <Item key={f} className="text-sec text-ink-2">{f}</Item>
+                ))}
+              </List>
             </ScrollIn>
             <ScrollIn className="mt-7">
               <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
@@ -246,7 +247,7 @@ export function Overview({ go }) {
       <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
         <SectionLede>
-          All three open the same app.
+          All three open the same app: one {SCORE} a day, and one sentence back.
         </SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-3">
           {DOORS.map((d, i) => (
@@ -269,12 +270,6 @@ export function Overview({ go }) {
           ))}
         </div>
       </Section>
-
-      {/* ── how a reading works ─────────────────────────────────────────── */}
-      <Section name="How it works" tone="card" tight className="bg-aqua">
-        <SectionHead>A day in, one {SCORE} and one sentence out.</SectionHead>
-        <HowItWorks className="mt-5"/>
-</Section>
 
       {/* -- the three audiences ------------------------------------------- */}
       <Section name="Who it is for" tone="card" id="screens" className="bg-beam-wash">
@@ -365,13 +360,15 @@ export function Overview({ go }) {
       {/* ── the limits ──────────────────────────────────────────────────── */}
       <Section name="Limits" tone="ink" tight>
         <SectionHead tone="ink">What MindMap Will Never Do</SectionHead>
-        <ul className="mt-5 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        {/* marker="none": the filled panel is the marker. */}
+        <List className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {NEVER.map(t => (
-            <li key={t} className="rounded-panel bg-ink-2/45 px-4 py-3.5 text-meta leading-[1.4] text-mist">
+            <Item key={t} marker="none"
+              className="rounded-panel bg-ink-2/45 px-4 py-3.5 text-meta leading-[1.4] text-mist">
               {t}
-            </li>
+            </Item>
           ))}
-        </ul>
+        </List>
       </Section>
 
     </main>
