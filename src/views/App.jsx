@@ -3,6 +3,8 @@ import { Overview } from './Overview'
 import { PatchPage } from './PatchPage'
 import { WithoutPatch } from './WithoutPatch'
 import { Tour } from './Tour'
+import { Methods } from './Methods'
+import { Pairing } from './Pairing'
 import { Responses } from './Responses'
 import { Intro, introSuppressed } from './Intro'
 import { NameGate } from '../survey/NameGate'
@@ -32,7 +34,7 @@ import { cn } from '../lib/utils'
    them. `check` and `privacy` stay because they are already linked. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
                'app-parent','app-pro','check','shared','privacy','tour','responses','survey',
-               'kit-student','kit-parent']
+               'kit-student','kit-parent','methods','pairing']
 
 /* Routes that render app screens, so the chrome switches: `check` is the
    student section on its reading tab, `privacy` the parent section on its
@@ -57,6 +59,8 @@ const TITLE = {
   check:'Take a reading in MindMap',
   shared:'What leaves your phone in MindMap',
   privacy:'Who can see what in MindMap',
+  methods:'How the Mind Score is computed',
+  pairing:'Pairing the MindMap patch',
   tour:'A guided tour of MindMap',
   responses:'Survey responses in MindMap',
   survey:'Give feedback on MindMap',
@@ -65,7 +69,9 @@ const TITLE = {
 const MAIN = [
   ['site',          'Overview'],
   ['patch',         'The patch'],
+  ['pairing',       'Pairing'],
   ['without-patch', 'Without the patch'],
+  ['methods',       'How it works'],
 ]
 
 const AUDIENCE = [
@@ -75,7 +81,8 @@ const AUDIENCE = [
 ]
 
 /* Which nav entry lights per view. The three audience pages share `who`. */
-const SECTION = { site:'site', patch:'patch', 'without-patch':'without-patch',
+const SECTION = { site:'site', patch:'patch', pairing:'pairing', methods:'methods',
+                  'without-patch':'without-patch',
                   student:'who', parent:'who', pro:'who', survey:'survey',
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
                   check:null, shared:null, privacy:null, tour:null, responses:null }
@@ -721,6 +728,7 @@ export function App() {
   /* Three routes are tabs inside a section and keep their urls. */
   const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
               tour:Tour, responses:Responses, survey:SurveyPage,
+              methods:Methods, pairing:Pairing,
               student:ForStudents, parent:ForParents, pro:ForSchools,
               app:Launch, 'app-pro':Pro,
               'app-student': p => <Students {...p} tab="today"/>,
