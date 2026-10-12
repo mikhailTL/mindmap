@@ -1,0 +1,62 @@
+/* Motion the toolkit needs and the config cannot give it.
+ *
+ * tailwind.config.js and input.css belong to the whole site; these three
+ * keyframes belong to five components, so they live beside them. Everything
+ * else in the toolkit animates with a transition driven by state, which is
+ * what a tool a reader is poking at wants: transitions retarget from wherever
+ * they are, keyframes restart from zero.
+ *
+ * Reduced motion: the base layer in input.css collapses every animation to
+ * .01ms with fill `both`, so each keyframe below ends on the state that still
+ * teaches the thing. The looping one is switched off by name at the bottom,
+ * because a loop collapsed to .01ms flickers rather than stops. */
+
+/* An activity's own content, arriving one row after another when the reader
+   asks for it. 40ms apart, set per row at the call site. */
+@keyframes kit-rise {
+  from { opacity: 0; transform: translateY(3px) }
+  to   { opacity: 1; transform: none }
+}
+.kit-rise { animation: kit-rise .22s var(--ease-out) both }
+
+/* A word the scanner found, lighting up in reading order. The mark's tint is
+   a static class; this only brings it in, so a stopped animation leaves the
+   word marked rather than invisible. */
+@keyframes kit-mark {
+  from { opacity: .35; transform: scale(0.97) }
+  to   { opacity: 1;   transform: none }
+}
+.kit-mark { animation: kit-mark .26s var(--ease-out) both }
+
+/* The one loop in the toolkit: the breathing mark on the closed panel, at the
+   same 40/60 split the pacer itself runs. Eleven seconds is 5.5 breaths a
+   minute, which is the pacer's default, so the list is already showing the
+   pace before anybody opens it. Its curve is a symmetric ease-in-out rather
+   than the site's --ease-in-out: that one is cut for a deliberate 200ms move
+   and would make an eleven-second breath lurch through its middle. */
+@keyframes kit-breathe {
+  0%, 100% { transform: scale(0.52) }
+  40%      { transform: scale(1) }
+}
+.kit-breathe {
+  transform-origin: 20px 20px;
+  animation: kit-breathe 11s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A held breath at the size it rests at, so the mark still reads as a disc
+     inside two rings rather than as a dot. */
+  .kit-breathe { animation: none; transform: scale(0.78) }
+}
+
+/* A stroke drawing itself. Used by the two openers diagrams, where the arrow
+   is the claim being made: a drawn line arrives with a direction, a line that
+   is simply there does not. pathLength normalises every path to 100 units at
+   the call site, so one dash length serves paths of different real lengths.
+   The base reduced-motion layer collapses this to .01ms with fill `both`, so
+   the arrow is already drawn rather than half drawn. */
+@keyframes kit-draw {
+  from { stroke-dashoffset: 100 }
+  to   { stroke-dashoffset: 0 }
+}
+.kit-draw { stroke-dasharray: 100; animation: kit-draw .45s var(--ease-out) both }

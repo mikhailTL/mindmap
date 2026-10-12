@@ -1,6 +1,6 @@
 import React from 'react'
 import { List, Item } from '../ui/list'
-import { Panel } from '../kit/panel'
+import { Panel, riseAt } from '../kit/panel'
 import { Router } from '../kit/router'
 import { Pacer } from '../kit/pacer'
 import { FeelingMap } from '../kit/feelings'
@@ -10,6 +10,10 @@ import { Senses } from '../kit/senses'
 import { Openers } from '../kit/openers'
 import { PhraseCheck } from '../kit/phrasecheck'
 import { Meaning } from '../kit/meaning'
+import {
+  BreathMark, MapMark, ReframeMark, GroundMark, PileMark,
+  OpenersMark, CheckMark, GaugeMark, RulesMark, HelpMark,
+} from '../kit/glyphs'
 import { SCORE } from '../lib/terms'
 
 /* Teen Toolkit.
@@ -18,34 +22,42 @@ import { SCORE } from '../lib/terms'
  * a student is regulating themselves and a parent is helping somebody else,
  * which are different activities, not one activity with different copy.
  *
+ * Every activity is named as a feature rather than described as an action.
+ * "Two ways to open it" told a reader nothing before they tapped it; the name
+ * now says what the thing is, the line under it says what it does, and where
+ * the activity is a known technique it carries the known name so it is legible
+ * on sight. A name that overstates the tool is worse than a vague one, so
+ * nothing is named after a method it does not implement: the breathing one is
+ * resonance breathing because that is the rate it runs, not box breathing.
+ *
  * Nothing in here calls anything. Every tool is local logic on what the reader
  * typed or tapped, which is the only kind of claim a static build can make
  * honestly. Nothing is labelled as intelligence it does not have. */
 
 const STUDENT = [
-  { id:'pacer', title:'Paced breathing', time:'2 to 5 min', Body: Pacer,
-    lede:'A circle to breathe with at five to six breaths a minute, or at the pace you tap in yourself.' },
-  { id:'feelings', title:'Feeling map', time:'1 min', Body: FeelingMap,
-    lede:'Put a dot on two axes and get the closest word out of sixteen. Wound up and flat are both bad days and they need opposite things.' },
-  { id:'words', title:'Absolute words', time:'3 min', Body: Absolutes,
-    lede:'Write the sentence you are saying to yourself. It flags the absolute words in it and asks one question about each.' },
-  { id:'senses', title:'Senses count', time:'3 min', Body: Senses,
-    lede:'Five things you can see, four you can hear, down to one. It holds the count and the list.' },
-  { id:'pile', title:'The pile', time:'5 to 10 min', Body: Pile,
-    lede:'Write down everything on your mind, split it into what can move today and what cannot, then one first move on the top one.' },
+  { id:'pacer', title:'Resonance Breathing', time:'2 to 5 min', Body: Pacer, mark: BreathMark,
+    lede:'Paced at five to six breaths a minute, or tap your own rate.' },
+  { id:'feelings', title:'Mood Map', time:'1 min', Body: FeelingMap, mark: MapMark,
+    lede:'One dot between energy and feeling bad or good, then a word for it.' },
+  { id:'words', title:'Thought Reframe', time:'3 min', Body: Absolutes, mark: ReframeMark,
+    lede:'Marks the absolute words in your own sentence, one question each.' },
+  { id:'senses', title:'5-4-3-2-1 Grounding', time:'3 min', Body: Senses, mark: GroundMark,
+    lede:'Five things you can see down to one you can taste, counted for you.' },
+  { id:'pile', title:'Brain Dump', time:'5 to 10 min', Body: Pile, mark: PileMark,
+    lede:'Dump it all out, split today from not today, pick one first move.' },
 ]
 
 const PARENT = [
-  { id:'openers', title:'Two ways to open it', time:'3 min', Body: Openers,
-    lede:'Pick the situation you are in tonight and see the same intention said as a check and said as a question.' },
-  { id:'phrase', title:'Check a sentence', time:'2 min', Body: PhraseCheck,
-    lede:'Type what you were going to say. It matches a short list of phrasings that tend to close a conversation.' },
-  { id:'meaning', title:'What a high week does and does not mean', time:'4 min', Body: Meaning,
-    lede:`Six things parents read into a ${SCORE}, and what the reading can actually carry.` },
-  { id:'before', title:'Before you start', time:'2 min',
-    lede:'Six things that decide how the conversation goes before either of you says anything.' },
-  { id:'worried', title:'If you are worried', time:'1 min',
-    lede:'When this stops being a conversation at home, and what to do about it.' },
+  { id:'openers', title:'Conversation Openers', time:'3 min', Body: Openers, mark: OpenersMark,
+    lede:'The same intention as a check and as a question, five situations.' },
+  { id:'phrase', title:'Opening Line Check', time:'2 min', Body: PhraseCheck, mark: CheckMark,
+    lede:'Your opening line against ten phrasings that close one down.' },
+  { id:'meaning', title:`Reading the ${SCORE}`, time:'4 min', Body: Meaning, mark: GaugeMark,
+    lede:'Six things parents read into a high fortnight, and what it carries.' },
+  { id:'before', title:'Conversation Ground Rules', time:'2 min', mark: RulesMark, tone:'quiet',
+    lede:'Six things that decide how it goes before anybody speaks.' },
+  { id:'worried', title:'When to Get Help', time:'1 min', mark: HelpMark, tone:'quiet',
+    lede:'When this stops being a conversation at home, and who to tell.' },
 ]
 
 const BEFORE = [
@@ -68,8 +80,14 @@ function Static({ id }) {
   const rows = id === 'before' ? BEFORE : WORRIED
   return (
     <>
+      {/* The rows arrive in reading order rather than as one block, which is
+          the order they are meant to be used in. */}
       <List>
-        {rows.map(r => <Item key={r}><span className="text-body text-ink-2">{r}</span></Item>)}
+        {rows.map((r, i) => (
+          <Item key={r} className="kit-rise" style={riseAt(i)}>
+            <span className="text-body text-ink-2">{r}</span>
+          </Item>
+        ))}
       </List>
       {id === 'before' && (
         <p className="mt-5 max-w-[58ch] text-sec text-ink-2">Offers outperform requirements here, and
@@ -107,40 +125,51 @@ export default function Toolkit({ who = 'student' }) {
 
   return (
     <div className="wrap">
-      <h1 className="font-display font-bold tracking-tight text-ink">Teen Toolkit</h1>
-      <p className="mt-3 max-w-[54ch] text-body text-ink-2">
-        {parent
-          ? `Helping somebody through it is a different job from settling yourself, so none of this is a breathing exercise. None of it depends on the ${SCORE} being high this week.`
-          : 'Five things to do when the day has run high. Try one, try three, try none of them. Nothing here is counted and nothing is a streak.'}
-      </p>
+      {/* Two columns from lg. A single centred stack of full-width panels is
+          the shape the spec exists to stop, and this page has two genuinely
+          different jobs to put side by side: deciding which tool to open, and
+          the tools themselves. The app shell's top bar carries the h1, so
+          nothing in here is one. */}
+      <div className="grid gap-3 lg:grid-cols-[21rem_minmax(0,1fr)] lg:gap-4">
+        <div className="flex flex-col gap-3">
+          {/* The lede and the privacy line are body text, so they are in a
+              container rather than sitting on the app's tinted ground. */}
+          <section className="rounded-panel border border-rule bg-card p-4 sm:p-5">
+            <h2 className="font-display text-row font-bold tracking-tight text-ink">Teen Toolkit</h2>
+            <p className="mt-2 max-w-[46ch] text-sec text-ink-2">
+              {parent
+                ? `Helping somebody through it is a different job from settling yourself, so none of this is a breathing exercise. None of it depends on the ${SCORE} being high this week.`
+                : 'Five things to do when the day has run high. Try one, try three, try none of them. Nothing here is counted and nothing is a streak.'}
+            </p>
+            <p className="mt-4 max-w-[46ch] border-l-2 border-accent pl-4 text-sec text-ink-2">
+              All of this runs in your browser. Nothing you type or tap on this screen is saved, sent or
+              shared {parent ? 'with your teenager, with MindMap, or with anybody else' : 'to MindMap, to a parent, or to anybody else'}.
+              Close the panel and it is gone.
+            </p>
+          </section>
 
-      <p className="mt-5 max-w-[58ch] border-l-2 border-accent pl-4 text-sec text-ink-2">
-        All of this runs in your browser. Nothing you type or tap on this screen is saved, sent or
-        shared {parent ? 'with your teenager, with MindMap, or with anybody else' : 'to MindMap, to a parent, or to anybody else'}.
-        Close the panel and it is gone.
-      </p>
-
-      {!parent && (
-        <div className="mt-7">
-          <Router items={items} onOpen={reveal}/>
+          {!parent && <Router items={items} onOpen={reveal}/>}
         </div>
-      )}
 
-      <div className="mt-7 flex flex-col gap-3.5">
-        {items.map(it => (
-          <Panel key={it.id} id={`kit-${it.id}`} title={it.title} time={it.time} lede={it.lede}
-            open={open.has(it.id)} onOpenChange={on => set(it.id, on)}
-            panelRef={el => { refs.current[it.id] = el }}>
-            {it.Body ? <it.Body/> : <Static id={it.id}/>}
-          </Panel>
-        ))}
+        <div className="flex flex-col gap-3">
+          {items.map(it => (
+            <Panel key={it.id} id={`kit-${it.id}`} title={it.title} time={it.time} lede={it.lede}
+              mark={it.mark} tone={it.tone}
+              open={open.has(it.id)} onOpenChange={on => set(it.id, on)}
+              panelRef={el => { refs.current[it.id] = el }}>
+              {it.Body ? <it.Body/> : <Static id={it.id}/>}
+            </Panel>
+          ))}
+          {/* Foot of the list rather than foot of the intro, because it is
+              about the list and because the two columns end nearer together
+              with it here. */}
+          <p className="note rounded-panel border border-rule bg-card p-4 sm:p-5">
+            {parent
+              ? 'None of these are exercises for your teenager to be given. The student side of the app has its own, and they are hers to open or ignore.'
+              : 'Nobody is told which of these you opened. Your parent’s side of the app has its own list, and it does not include this screen.'}
+          </p>
+        </div>
       </div>
-
-      <p className="note mt-7 max-w-[58ch]">
-        {parent
-          ? 'None of these are exercises for your teenager to be given. The student side of the app has its own, and they are hers to open or ignore.'
-          : 'Nobody is told which of these you opened. Your parent’s side of the app has its own list, and it does not include this screen.'}
-      </p>
     </div>
   )
 }

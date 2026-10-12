@@ -6,7 +6,8 @@ import { Tour } from './Tour'
 import { Methods } from './Methods'
 import { Pairing } from './Pairing'
 import { Responses } from './Responses'
-import { Intro, introSuppressed } from './Intro'
+import { Entry, ReplayTour } from './Entry'
+import { GetHelp, HelpBody, NotificationSettings, NotesJournal } from '../app'
 import { NameGate } from '../survey/NameGate'
 import { ReviewLauncher } from '../survey/Survey'
 import { PAGE, REQUIRED, SECTIONS, questionNumber } from '../survey/questions'
@@ -34,13 +35,13 @@ import { cn } from '../lib/utils'
    them. `check` and `privacy` stay because they are already linked. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
                'app-parent','app-pro','check','shared','privacy','tour','responses','survey',
-               'kit-student','kit-parent','methods','pairing']
+               'kit-student','kit-parent','methods','pairing','notes','app-notify','help']
 
 /* Routes that render app screens, so the chrome switches: `check` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
 const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','shared',
-                           'privacy','kit-student','kit-parent'])
+                           'privacy','kit-student','kit-parent','notes','app-notify','help'])
 
 /* The palette pushes `hub`, which is not a route; `go` resolves aliases. */
 const ALIAS = { hub: 'app' }
@@ -58,6 +59,9 @@ const TITLE = {
   'app-pro':'The medical professional console in MindMap',
   check:'Take a reading in MindMap',
   shared:'What leaves your phone in MindMap',
+  notes:'Your notes in MindMap',
+  'app-notify':'Reminders in MindMap',
+  help:'Getting help',
   privacy:'Who can see what in MindMap',
   methods:'How the Mind Score is computed',
   pairing:'Pairing the MindMap patch',
@@ -66,12 +70,13 @@ const TITLE = {
   survey:'Give feedback on MindMap',
 }
 
-const MAIN = [
-  ['site',          'Overview'],
-  ['patch',         'The patch'],
-  ['pairing',       'Pairing'],
-  ['without-patch', 'Without the patch'],
-  ['methods',       'How it works'],
+/* Two menus, because five flat tabs plus a dropdown did not fit a laptop and
+   read as a pile. Pairing and the no-patch route are both about the patch, so
+   they live under it. */
+const PATCH = [
+  ['patch',         'The patch',          'What it is, and what the four signals are'],
+  ['pairing',       'Pairing it',         'Six steps, no cable and no host computer'],
+  ['without-patch', 'Without the patch',  'The camera and microphone, or six questions'],
 ]
 
 const AUDIENCE = [
@@ -80,12 +85,14 @@ const AUDIENCE = [
   ['pro',     'Medical Professionals',  'What a medical professional sees across a year group'],
 ]
 
-/* Which nav entry lights per view. The three audience pages share `who`. */
-const SECTION = { site:'site', patch:'patch', pairing:'pairing', methods:'methods',
-                  'without-patch':'without-patch',
+/* Which nav entry lights per view. The three patch pages share `kit`, the
+   three audience pages `who`. */
+const SECTION = { site:'site', methods:'methods',
+                  patch:'kit', pairing:'kit', 'without-patch':'kit',
                   student:'who', parent:'who', pro:'who', survey:'survey',
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
-                  check:null, shared:null, privacy:null, tour:null, responses:null }
+                  check:null, shared:null, privacy:null, tour:null, responses:null,
+                  notes:null, 'app-notify':null, help:null }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -100,13 +107,13 @@ const linkClass = on => cn(
  * an outside press close, arrows walk the items, and close returns focus to the
  * trigger -- focus falling to <body> loses a keyboard user the page.
  */
-function AudienceMenu({ view, go }) {
+function NavMenu({ view, go, label, items: entries, section }) {
   const [open, setOpen] = React.useState(false)
   const [at, setAt] = React.useState(0)
   const wrap = React.useRef(null)
   const trigger = React.useRef(null)
   const items = React.useRef([])
-  const on = SECTION[view] === 'who'
+  const on = SECTION[view] === section
 
   const close = React.useCallback((refocus = true) => {
     setOpen(false)
@@ -129,12 +136,12 @@ function AudienceMenu({ view, go }) {
     if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); openAt(0)
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault(); openAt(AUDIENCE.length - 1)
+      e.preventDefault(); openAt(entries.length - 1)
     }
   }
 
   function onItemKey(e, i) {
-    const last = AUDIENCE.length - 1
+    const last = entries.length - 1
     if (e.key === 'ArrowDown')      { e.preventDefault(); setAt(i === last ? 0 : i + 1) }
     else if (e.key === 'ArrowUp')   { e.preventDefault(); setAt(i === 0 ? last : i - 1) }
     else if (e.key === 'Home')      { e.preventDefault(); setAt(0) }
@@ -155,15 +162,15 @@ function AudienceMenu({ view, go }) {
         onKeyDown={onTriggerKey}
         className={cn(linkClass(on), 'gap-1.5')}
       >
-        Who uses it
+        {label}
         <ChevronDown aria-hidden
           className={cn('size-3.5 transition-transform duration-150', open && 'rotate-180')}/>
       </button>
       {open && (
-        <div role="menu" aria-label="Who uses it"
+        <div role="menu" aria-label={label}
           className="absolute left-0 top-full z-50 mt-px w-[19rem] overflow-hidden rounded-panel
             border border-rule bg-card py-1.5 shadow-lift">
-          {AUDIENCE.map(([id, label, hint], i) => (
+          {entries.map(([id, text, hint], i) => (
             <button
               key={id}
               ref={el => { items.current[i] = el }}
@@ -177,7 +184,7 @@ function AudienceMenu({ view, go }) {
                 'hoverOnly:bg-mist focus-visible:bg-mist',
                 view === id && 'bg-accent-wash')}
             >
-              <span className="block font-display text-ui font-medium text-ink">{label}</span>
+              <span className="block font-display text-ui font-medium text-ink">{text}</span>
               <span className="mt-0.5 block text-fine text-ink-3">{hint}</span>
             </button>
           ))}
@@ -213,7 +220,14 @@ function Drawer({ view, go, onClose }) {
     }
   }, [onClose])
 
-  const rows = [...MAIN, ...AUDIENCE.map(([id, label]) => [id, label]), ['survey', 'Give feedback']]
+  /* Flat on a phone. A dropdown inside a drawer is two taps for nothing. */
+  const rows = [
+    ['site', 'Overview'],
+    ...PATCH.map(([id, label]) => [id, label]),
+    ['methods', 'How it works'],
+    ...AUDIENCE.map(([id, label]) => [id, label]),
+    ['survey', 'Give feedback'],
+  ]
 
   return (
     <div className="fixed inset-0 z-[60] xl:hidden">
@@ -265,15 +279,20 @@ function Header({ view, go }) {
         </button>
 
         <nav aria-label="Sections" className="hidden h-full items-stretch xl:flex">
-          {MAIN.map(([id, label]) => (
-            <button key={id} onClick={() => go(id)}
-              aria-current={SECTION[view] === id ? 'page' : undefined}
-              className={linkClass(SECTION[view] === id)}>{label}</button>
-          ))}
-          <AudienceMenu view={view} go={go}/>
+          <button onClick={() => go('site')}
+            aria-current={SECTION[view] === 'site' ? 'page' : undefined}
+            className={linkClass(SECTION[view] === 'site')}>Overview</button>
+          <NavMenu view={view} go={go} label="The patch" items={PATCH} section="kit"/>
+          <button onClick={() => go('methods')}
+            aria-current={SECTION[view] === 'methods' ? 'page' : undefined}
+            className={linkClass(SECTION[view] === 'methods')}>How it works</button>
+          <NavMenu view={view} go={go} label="Who uses it" items={AUDIENCE} section="who"/>
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
             className={linkClass(view === 'survey')}>Give feedback</button>
+          {/* Skipping the tour is a decision for this visit, so there has to be
+              a way back to it that is not clearing site data. */}
+          <ReplayTour/>
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
@@ -326,6 +345,7 @@ const APP_NAV = {
     ['app-student', 'Today',   PulseMark],
     ['check',       'Reading', DialMark],
     ['kit-student', 'Toolkit', Bracket],
+    ['notes',       'Notes',   Bracket],
     ['shared',      'Sharing', Grid],
   ],
   parent: [
@@ -341,11 +361,13 @@ const APP_NAV = {
 /* Which app a route belongs to, and which of its tabs it lights. */
 const APP_OF = {
   'app-student': 'student', check: 'student', 'kit-student': 'student', shared: 'student',
+  notes: 'student', 'app-notify': 'student', help: 'student',
   'app-parent': 'parent', privacy: 'parent', 'kit-parent': 'parent',
   'app-pro': 'pro',
 }
 const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
-                  'kit-student':'kit-student', shared:'shared', 'app-parent':'app-parent',
+                  'kit-student':'kit-student', shared:'shared', notes:'notes',
+                  'app-notify':'shared', help:null, 'app-parent':'app-parent',
                   privacy:'privacy', 'kit-parent':'kit-parent', 'app-pro':'app-pro' }
 
 const APP_TITLE = {
@@ -354,6 +376,9 @@ const APP_TITLE = {
   check:          'Take a reading',
   'kit-student':  'Toolkit',
   shared:         'Sharing',
+  notes:          'Notes',
+  'app-notify':   'Reminders',
+  help:           'Getting help',
   'app-parent':   'This week',
   privacy:        'Sharing',
   'kit-parent':   'Toolkit',
@@ -447,7 +472,10 @@ function AppTopBar({ view, go }) {
         <h1 className="min-w-0 truncate font-display text-tick font-bold text-ink">
           {APP_TITLE[view] || 'App'}
         </h1>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {/* First in the group, so the one control somebody might need in a
+              hurry is the one nearest their thumb. */}
+          <GetHelp compact/>
           <ModeToggle compact className="[&_button]:min-h-[44px]"/>
           <ExitToSite go={go} short/>
         </div>
@@ -694,10 +722,6 @@ export function App() {
      responses route is excluded from all three. */
   const admin = view === 'responses'
   /* Plays on every load. Only Skip suppresses it, and it does so permanently. */
-  const [showIntro, setShowIntro] = React.useState(() => {
-    try { return !admin && !introSuppressed() } catch { return false }
-  })
-  const endIntro = React.useCallback(() => setShowIntro(false), [])
   /* Navigation resets scroll, title and focus itself: focus otherwise falls to
      <body> and the scroll position carries over from the previous screen. */
   const land = React.useCallback(v => {
@@ -736,6 +760,9 @@ export function App() {
               check:         p => <Students {...p} tab="check"/>,
               shared:        p => <Students {...p} tab="shared"/>,
               privacy:       p => <Parents  {...p} tab="shared"/>,
+              notes: () => <NotesJournal/>,
+              'app-notify': () => <NotificationSettings/>,
+              help: () => <HelpBody/>,
               'kit-student': () => <Toolkit who="student"/>,
               'kit-parent':  () => <Toolkit who="parent"/> }[view]
   return (
@@ -747,7 +774,9 @@ export function App() {
         className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-field bg-ink px-5 py-3
           font-display text-meta font-medium text-paper transition-transform duration-150
           focus:translate-y-4">Skip to the main content</a>
-      {showIntro && !admin && <Intro onDone={endIntro}/>}
+      {/* The chooser, and the guided tour behind its fourth option. It owns its
+          own fixed layers and its own session flag. */}
+      <Entry go={go} enabled={!admin}/>
       {/* The name is only ever used to label a survey answer, so it is asked
           inside the survey now rather than across the whole site before anyone
           has seen anything. A full-screen panel between a first-time reader and
@@ -764,7 +793,7 @@ export function App() {
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
         {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
-        {!showIntro && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
+        {!admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
         {/* The extra foot room under sm is load-bearing: the feedback pill is
             fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
         {inApp ? <AppFoot/> : (

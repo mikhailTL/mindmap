@@ -275,6 +275,30 @@ function AppHome({ tap = false }) {
       <p style={{ margin:'10px 0 0', fontFamily:BODY, fontSize:19, lineHeight:1.4, color:INK2 }}>
         Bluetooth Low Energy. Nothing to install first.
       </p>
+      {/* The screen used to be a title, a line and then a button pushed to the
+          bottom by marginTop:auto, which left the middle of a 852-point phone
+          empty. It is an app screen, so it shows the app's real resting state:
+          the four channels named, and no reading against any of them, because
+          nothing is connected yet. It is also the honest contrast with the
+          streaming screen, which is the same four rows carrying units. */}
+      <div style={{ marginTop:20, borderRadius:14, border:`1px solid ${RULE}`, background:CARD,
+        padding:'15px 14px' }}>
+        <p style={{ margin:0, fontFamily:MONO, fontSize:16, color:INK3 }}>No patch connected</p>
+        {SENSOR_ORDER.map((id, i) => {
+          const s = SENSORS[id]
+          return (
+            <div key={id} style={{ display:'flex', alignItems:'center', gap:12,
+              marginTop: i ? 13 : 14 }}>
+              {/* Colour identifies the channel and never carries it alone. */}
+              <span aria-hidden style={{ width:4, height:18, borderRadius:999, background:s.glow }}/>
+              <span style={{ fontFamily:BODY, fontSize:18, color:INK2 }}>{s.name}</span>
+              <span style={{ marginLeft:'auto', fontFamily:MONO, fontSize:15, color:INK3 }}>
+                waiting
+              </span>
+            </div>
+          )
+        })}
+      </div>
       <div style={{ marginTop:'auto', position:'relative' }}>
         <div style={{ borderRadius:14, background: tap ? PRESSED : INK, padding:'18px 14px',
           textAlign:'center', fontFamily:DISPLAY, fontWeight:500, fontSize:21, color:PAPER }}>
@@ -384,7 +408,7 @@ const PHONE_H = Math.round((852 + 20) * SCALE)
 const SCREENS = {
   open: {
     bg: PAPER,
-    label: 'The MindMap app open in a browser, with one button reading Connect to the patch.',
+    label: 'The MindMap app open in a browser, listing the four channels with no reading against any of them, above one button reading Connect to the patch.',
     node: <AppHome/>,
   },
   tap: {
@@ -411,12 +435,17 @@ const SCREENS = {
   },
 }
 
-export function StepArt({ kind }) {
-  if (kind === 'wake') return <PatchWake height={PHONE_H}/>
+/* `scale` is the phone's own scale factor, not a CSS transform: the frame in
+   ui/iphone lays out at it, so the drawing stays crisp and the wake figure is
+   matched to the same height. 0.42 is the six-across page size that was; the
+   console on views/Pairing asks for 0.4, which is the largest that still clears
+   a 390px column once the card's own padding is taken off. */
+export function StepArt({ kind, scale = SCALE }) {
+  if (kind === 'wake') return <PatchWake height={Math.round((852 + 20) * scale)}/>
   const s = SCREENS[kind]
   if (!s) return null
   return (
-    <IPhone scale={SCALE} screenBg={s.bg} label={s.label}>
+    <IPhone scale={scale} screenBg={s.bg} label={s.label}>
       {s.node}
     </IPhone>
   )

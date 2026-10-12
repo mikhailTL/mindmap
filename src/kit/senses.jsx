@@ -1,12 +1,21 @@
 import React from 'react'
 import { Button } from '../ui/button'
-import { Choice, FIELD, Hint, Step } from './panel'
+import { Choice, FIELD, Hint, Step, riseAt } from './panel'
 import { cn } from '../lib/utils'
 
-/* Five, four, three, two, one — but it holds the count and the entries, which
- * is the part the exercise never has on paper. The step only moves on when the
- * entries are actually there, and any sense can be skipped: there is not
- * always something to smell, and the exercise should not stall on it.
+/* 5-4-3-2-1 Grounding. The exercise everybody half remembers, except that this
+ * one holds the count and the entries, which is the part it never has on
+ * paper.
+ *
+ * THE LADDER. Five rows on a five-column grid, so the shape of the exercise is
+ * the shape of the drawing: five slots, then four, then three, down to one. A
+ * slot grows and fills as its entry is typed, which is the only progress
+ * indicator here and the reason the count does not need to be read. The row
+ * being worked on carries a rule down its left edge.
+ *
+ * Reduced motion keeps the fill and drops the grow: the colour is what says
+ * "that one is done", and the grow was only ever making the colour arrive with
+ * some weight behind it.
  *
  * Nothing in here asks for discomfort. Every step is noticing what is already
  * there. */
@@ -20,6 +29,31 @@ const STEPS = [
 ]
 
 const empty = () => Object.fromEntries(STEPS.map(s => [s.id, []]))
+
+/* One rung. `done` slots are filled, `n` is how many the rung has, and the
+   five-column grid is what makes a one-slot rung read as one of five rather
+   than as a full-width bar. */
+function Rung({ step, done, live, skipped }) {
+  return (
+    <div className={cn('flex items-center gap-3 border-l-2 py-1.5 pl-2.5 transition-colors duration-200',
+      live ? 'border-l-accent' : 'border-l-transparent')}>
+      <span className={cn('w-[5.5ch] shrink-0 font-display text-fine',
+        live ? 'font-bold text-ink' : 'font-medium text-ink-2')}>{step.id}</span>
+      <span className="grid min-w-0 flex-1 grid-cols-5 gap-1.5">
+        {Array.from({ length: step.n }, (_, i) => (
+          <span key={i} className={cn('h-2.5 rounded-bar origin-center',
+            'transition-[background-color,transform] duration-200 ease-[var(--ease-out)]',
+            i < done ? 'scale-y-100 bg-accent'
+              : skipped ? 'scale-y-[0.45] bg-ruling'
+              : 'scale-y-[0.45] bg-mist')}/>
+        ))}
+      </span>
+      <span className="w-[4.5ch] shrink-0 text-right font-mono text-fine tabular-nums text-ink-2">
+        {skipped ? 'skip' : `${done}/${step.n}`}
+      </span>
+    </div>
+  )
+}
 
 export function Senses() {
   const [at, setAt] = React.useState(0)
@@ -51,12 +85,22 @@ export function Senses() {
       <p className="max-w-[54ch] text-sec text-ink-2">Attention goes where it is sent. This sends it
         outwards, one sense at a time, and keeps count so you do not have to.</p>
 
+      <div className="mt-5 rounded-panel bg-aqua p-3 sm:p-4">
+        {STEPS.map((s, i) => (
+          <Rung key={s.id} step={s} done={got[s.id].length} live={!done && i === at}
+            skipped={skipped.has(s.id)}/>
+        ))}
+      </div>
+
       {!done && (
         <>
           <div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <p className="font-display text-row font-bold text-ink">{step.ask}</p>
-            <p className="font-mono text-meta tabular-nums text-ink-2">
-              {got[step.id].length} of {step.n}
+            {/* Only the two figures are monospaced. "of" set in Chivo Mono
+                reads as a third number. */}
+            <p className="text-meta text-ink-2">
+              <span className="font-mono tabular-nums">{got[step.id].length}</span> of{' '}
+              <span className="font-mono tabular-nums">{step.n}</span>
             </p>
           </div>
           <p className="note mt-1">{step.eg}</p>
@@ -74,8 +118,8 @@ export function Senses() {
           {got[step.id].length > 0 && (
             <ul className="m-0 mt-4 flex list-none flex-wrap gap-2 p-0">
               {got[step.id].map((g, i) => (
-                <li key={i} className="rounded-field border border-rule bg-mist px-2.5 py-1
-                  text-fine text-ink-2">{g}</li>
+                <li key={i} style={riseAt(i)} className="kit-rise rounded-field border border-rule bg-mist
+                  px-2.5 py-1 text-fine text-ink-2">{g}</li>
               ))}
             </ul>
           )}
@@ -86,8 +130,9 @@ export function Senses() {
         <>
           <Step className="mt-5">Fifteen seconds ago you could not have listed any of this</Step>
           <dl className="m-0 mt-3">
-            {STEPS.map(s => (
-              <div key={s.id} className="flex flex-wrap items-baseline gap-x-3 border-b border-rule py-2.5">
+            {STEPS.map((s, i) => (
+              <div key={s.id} style={riseAt(i)}
+                className="kit-rise flex flex-wrap items-baseline gap-x-3 border-b border-rule py-2.5">
                 <dt className="w-[6ch] shrink-0 font-display text-ui font-bold text-ink-2">{s.id}</dt>
                 <dd className="m-0 min-w-0 flex-1 break-words text-sec text-ink">
                   {skipped.has(s.id) ? <span className="text-ink-3">skipped</span> : got[s.id].join(', ')}

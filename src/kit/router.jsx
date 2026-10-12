@@ -81,9 +81,8 @@ export function Router({ items, onOpen }) {
         )}
       </div>
 
-      <Hint className="mt-5">A table of fifteen answers, written in advance: five states by three
-        lengths. Nothing is learned about you, nothing is stored, and the same two taps always give the
-        same answer.</Hint>
+      <Hint className="mt-5">Fifteen answers written in advance, five states by three lengths. The
+        same two taps always give the same one.</Hint>
     </section>
   )
 }

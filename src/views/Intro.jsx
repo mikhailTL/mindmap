@@ -16,21 +16,43 @@ import { studentRings } from '../lib/readings'
  * on top, so reduced motion and an interrupted beat need no second artwork.
  */
 
-/* "Has refused", not "has watched". Reaching the end sets nothing and the
-   sequence plays again next load; only Skip, or Esc, writes this. */
+/* Skipping is a decision about this visit, not a permanent one: the walkthrough
+   is the site's user manual and it is meant to play on every load, with a skip
+   always visible. sessionStorage, so a refresh in the same tab does not replay
+   it on top of somebody who already said no, and a new visit starts clean.
+
+   It used to be localStorage, which meant one Skip hid the walkthrough from
+   that browser for good and the owner could not find it again. */
 const OFF_KEY = 'mindmap.intro.off'
 
-/** True when the visitor has pressed Skip, in which case the sequence must
- *  never mount again. A throwing localStorage reads as "not suppressed", so the
- *  worst failure under blocked storage is that the intro plays. */
+/* The one standing exception, and it is not a visitor's: the screenshot and
+   measurement harness in $HOME/pw sets this, so a capture of a page is a
+   capture of that page and not of a panel standing in front of it. It is
+   deliberately NOT the key above, which some browsers still hold from when
+   Skip was permanent; honouring that one would hide the walkthrough from
+   exactly the people complaining they cannot find it. Nothing in the interface
+   ever writes this. */
+const AUTO_KEY = 'mindmap.tour.off'
+
+/** True when the visitor pressed Skip earlier in this browsing session. A
+ *  throwing storage reads as "not suppressed", so the worst failure under
+ *  blocked storage is that the walkthrough plays. */
 export function introSuppressed() {
-  try { return window.localStorage.getItem(OFF_KEY) === '1' } catch { return false }
+  try {
+    if (window.localStorage.getItem(AUTO_KEY) === '1') return true
+    return window.sessionStorage.getItem(OFF_KEY) === '1'
+  } catch { return false }
 }
 
-/** Suppress the sequence permanently. Called by Skip and by Esc; exported so a
- *  settings control elsewhere could set the same flag. */
+/** Put the sequence away for the rest of this session. Called by Skip and Esc. */
 export function suppressIntro() {
-  try { window.localStorage.setItem(OFF_KEY, '1') } catch {}
+  try { window.sessionStorage.setItem(OFF_KEY, '1') } catch {}
+}
+
+/** Clears the refusal so the walkthrough plays again. Wired to a control in the
+ *  header so it is reachable without clearing site data. */
+export function replayIntro() {
+  try { window.sessionStorage.removeItem(OFF_KEY) } catch {}
 }
 
 /* The grounds sit .044 to .083 apart in relative luminance, which keeps
@@ -720,7 +742,7 @@ export function Intro({ onDone }) {
               text-paper hoverOnly:bg-ink-2 active:bg-ink-2">
             <span className="font-display text-ui font-medium">Skip the intro</span>
             <span className="font-body text-fine font-normal text-mist">
-              and don&rsquo;t show it again on this device
+              and go straight to the site
             </span>
           </Button>
           <Button ref={nextRef} onClick={goNext} aria-label="Next section"
@@ -734,5 +756,277 @@ export function Intro({ onDone }) {
         </p>
       </div>
     </div>
+  )
+}
+
+/* ── The guided tour ───────────────────────────────────────────────────────
+ *
+ * The owner asked for a tour where "the site automatically goes thru pages and
+ * simply explains them". So this one does not draw its own pictures: it
+ * navigates the real routes and docks a manual panel at the bottom of the real
+ * page. Three things follow from that and are the reason it is not another
+ * five beat sequence like the one above.
+ *
+ *   The page under the panel IS the explanation, so a visitor who stops the
+ *   tour on stop five is already standing on the page they were reading about,
+ *   with the site's own navigation in reach.
+ *
+ *   The sequence above explains the PRODUCT in five drawings. This explains the
+ *   SITE. They are different jobs and the second one is what was asked for.
+ *
+ *   Its last stop is the sequence's closing beat, the day's line folding into
+ *   the logo, because that is the one piece of it the owner has said he likes.
+ *
+ * One line per stop: the panel is read in a glance and the page is the content.
+ */
+
+/* Routes, in the order a stranger needs them: what it is, what it runs on, how
+   the number is made, then the three people who see it. `inApp` lifts the panel
+   over the app's own tab bar so the bar stays visible while it is described. */
+const STOPS = [
+  { view: 'site', name: 'Overview',
+    line: 'The front page: what MindMap is, who it is for, and the figures behind it.' },
+  { view: 'patch', name: 'The patch',
+    line: 'A patch for the upper arm, the four signals it records, and what is inside it.' },
+  { view: 'methods', name: 'How it works',
+    line: 'How the four signals become one Mind Score, on a scale of 0 to 100.' },
+  { view: 'app-student', name: 'The student screen', inApp: true,
+    line: 'The score for today, the four signals behind it, and the week so far.' },
+  { view: 'shared', name: 'Sharing', inApp: true,
+    line: 'The student picks what leaves the phone, field by field, and can switch it off.' },
+  { view: 'app-parent', name: 'The parent screen', inApp: true,
+    line: 'A parent sees one value a day. Never a reading, never Notes, never Location.' },
+  { view: 'app-pro', name: 'The Medical Professional console', inApp: true,
+    line: 'Who to check in with this week, across the students who agreed to be seen.' },
+]
+
+const DWELL = 5800        // how long a page stop holds before the next one
+const CLOSE_MS = 6400     // the closing beat draws for about 3.5s of that
+const TOUR_OUT_MS = 320   // must match the opacity transition on the panel
+
+/** The closing beat on its own, for the tour to end on. The sheet and the
+ *  `.iv-root` scope travel with it: every cue in this file is written against
+ *  that scope and does nothing outside it. */
+export function ClosingBeat({ still }) {
+  return (
+    <div className="iv-root flex min-h-0 w-full flex-1 items-center justify-center px-5 py-6">
+      <style>{CSS}</style>
+      <StageMark still={still}/>
+    </div>
+  )
+}
+
+/* Back and Next sit on card, so ink is 15.2 : 1 and the disabled label is
+   forced to ink-3 at 5.61 rather than Button's opacity 45, which would take it
+   to about 2.4. Everything here is at least 46px tall. */
+const dockBtn = 'min-h-[46px] shrink-0 rounded-field border border-rule bg-card px-3.5 font-display ' +
+  'text-ui font-medium text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist ' +
+  'disabled:pointer-events-none disabled:text-ink-3 sm:px-5'
+
+export function GuidedTour({ go, onDone }) {
+  const reduced = useReducedMotion()
+  const [step, setStep] = React.useState(0)
+  const [paused, setPaused] = React.useState(false)
+  const [exiting, setExiting] = React.useState(false)
+  /* The dock's measured height, which the page below it is padded by and the
+     closing beat is inset by, so neither ends up underneath it. */
+  const [dock, setDock] = React.useState(0)
+  const panelRef = React.useRef(null)
+  const fills = React.useRef([])
+  const stepRef = React.useRef(0)
+  const doneRef = React.useRef(false)
+  const timerRef = React.useRef(0)
+
+  const END = STOPS.length                 // the closing beat's index
+  const TOTAL = STOPS.length + 1
+
+  /* A latch, not state: the exit timer can resolve after unmount and Escape can
+     land on the frame the clock runs out, and onDone must fire once. */
+  const finish = React.useCallback(() => {
+    if (doneRef.current) return
+    doneRef.current = true
+    onDone?.()
+  }, [onDone])
+
+  const close = React.useCallback(() => {
+    if (doneRef.current || timerRef.current) return
+    setExiting(true)
+    timerRef.current = setTimeout(finish, TOUR_OUT_MS)
+  }, [finish])
+
+  React.useEffect(() => () => clearTimeout(timerRef.current), [])
+
+  const goTo = React.useCallback(i => {
+    if (doneRef.current || timerRef.current) return
+    if (i > END) { close(); return }
+    const n = Math.max(0, Math.min(END, i))
+    stepRef.current = n
+    setStep(n)
+  }, [END, close])
+
+  const next = React.useCallback(() => goTo(stepRef.current + 1), [goTo])
+  const prev = React.useCallback(() => goTo(stepRef.current - 1), [goTo])
+
+  /* Each stop navigates before it explains. The closing beat has no page of its
+     own and leaves the last one standing behind it. */
+  React.useEffect(() => {
+    const stop = STOPS[step]
+    if (!stop) return
+    const was = document.activeElement
+    const held = panelRef.current?.contains(was) ? was : null
+    /* `go` is the site's router when the caller has it. The hash is the same
+       router's public contract, so the tour also works unwired. */
+    if (go) go(stop.view)
+    else if (location.hash !== '#/' + stop.view) location.hash = '#/' + stop.view
+    /* The app focuses its main region from a rAF after navigating, which takes
+       the keyboard out of this panel. Two frames later it is ours again, so a
+       visitor driving with the arrow keys keeps driving. */
+    if (held) requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = panelRef.current
+      if (el && !el.contains(document.activeElement)) (el.contains(held) ? held : el).focus({ preventScroll: true })
+    }))
+  }, [step, go])
+
+  /* The clock. Under reduced motion it does not exist: Next is the only thing
+     that moves the tour, which is what no auto-advance has to mean for a tour
+     that turns the pages itself. Boundaries come off the frame timestamp, so a
+     backgrounded tab cannot leave the rail and the panel disagreeing. */
+  React.useEffect(() => {
+    if (reduced || paused || exiting) return
+    const dur = step === END ? CLOSE_MS : DWELL
+    let raf = 0, t0 = 0
+    const tick = t => {
+      if (!t0) t0 = t
+      const p = Math.min(1, (t - t0) / dur)
+      /* Straight to the node: this runs 60x a second for one rail segment. */
+      const el = fills.current[step]
+      if (el) el.style.transform = `scaleX(${p})`
+      if (p >= 1) { if (step === END) close(); else goTo(step + 1); return }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [step, paused, reduced, exiting, END, goTo, close])
+
+  /* Escape anywhere ends the tour. Arrows only when the keyboard is in the
+     panel, or they would stop being page scroll for everybody else. */
+  React.useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return }
+      if (!panelRef.current?.contains(e.target)) return
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); next() }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prev() }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [close, next, prev])
+
+  /* Measured, not guessed: the dock is four rows at 390 and three at 1280, and
+     the pages it stands on end in a footer that would be underneath it. */
+  React.useEffect(() => {
+    const el = panelRef.current
+    if (!el) return
+    const was = document.body.style.paddingBottom
+    const read = () => {
+      const h = el.offsetHeight
+      setDock(d => (d === h ? d : h))
+      document.body.style.paddingBottom = h + 'px'
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => { ro.disconnect(); document.body.style.paddingBottom = was }
+  }, [])
+
+  const stop = STOPS[step]
+  const title = stop ? stop.name : 'That is the whole site'
+  const line = stop
+    ? stop.line
+    : 'The menu at the top of every page opens any of these again, in any order.'
+
+  return (
+    <>
+      {/* The closing beat covers the page rather than sitting in the dock: the
+          morph is 500px of drawing and there is no room for it down there. */}
+      {step === END && (
+        <div aria-hidden style={{ paddingBottom: dock }}
+          className={cn('fixed inset-0 z-[300] flex flex-col bg-paper',
+            'transition-opacity duration-300 ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
+          <ClosingBeat still={reduced}/>
+        </div>
+      )}
+
+      <section ref={panelRef} tabIndex={-1} role="region" aria-label="Guided tour"
+        /* Lifted clear of the app's own tab bar on the app stops, so the bar
+           stays visible while the panel describes the screen it belongs to.
+           The handset inset is the tab bar's business there, and this dock's
+           own only on the marketing pages. */
+        style={{ bottom: stop?.inApp ? 'calc(56px + env(safe-area-inset-bottom))' : 0,
+          paddingBottom: stop?.inApp ? 0 : 'env(safe-area-inset-bottom)' }}
+        className={cn('fixed inset-x-0 z-[310] border-t-2 border-ink bg-card outline-none',
+          'transition-opacity duration-300 ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
+
+        {/* The rail is on the dock's top edge, where it reads as a progress bar
+            for the tour and not as a chart on the page. */}
+        <div className="flex h-[3px] w-full gap-px" role="progressbar"
+          aria-label="Guided tour progress" aria-valuemin={1} aria-valuemax={TOTAL}
+          aria-valuenow={step + 1}>
+          {STOPS.concat([{ view: 'end' }]).map((s, i) => (
+            <span key={s.view} className="block h-full flex-1 overflow-hidden bg-mist">
+              <span ref={el => { fills.current[i] = el }}
+                className="block h-full w-full origin-left bg-accent"
+                style={{ transform: `scaleX(${reduced ? (i <= step ? 1 : 0) : i < step ? 1 : 0})` }}/>
+            </span>
+          ))}
+        </div>
+
+        <p aria-live="polite" aria-atomic="true" className="sr-only">
+          {`Step ${step + 1} of ${TOTAL}. ${title}. ${line}`}
+        </p>
+
+        <div className="mx-auto w-full max-w-[1180px] px-5 pb-3.5 pt-3 sm:px-10">
+          {/* Its own full width row, so the skip is at the dock's top right at
+              every size rather than wherever the column beside it happens to
+              end. It is never the thing that has to be hunted for. */}
+          <div className="flex items-start gap-4">
+            {/* max-w-none because input.css caps every p at 62ch, which here
+                stops the counter growing and leaves the skip mid dock. */}
+            <p className="min-w-0 max-w-none flex-1 font-mono text-fine text-ink-3">
+              Guided tour, step <span className="tabular-nums">{step + 1}</span> of{' '}
+              <span className="tabular-nums">{TOTAL}</span>
+            </p>
+            <button type="button" onClick={close}
+              className="-mt-1.5 min-h-[44px] shrink-0 rounded-field border border-ink px-3.5
+                font-display text-ui font-medium text-ink transition-colors duration-150
+                hoverOnly:bg-mist active:bg-mist">
+              Skip the tour
+            </button>
+          </div>
+
+          <div className="lg:flex lg:items-end lg:gap-10">
+          <div className="min-w-0 lg:flex-1">
+            <p aria-hidden className="mt-0.5 font-display text-row font-bold text-ink">{title}</p>
+            <p aria-hidden className="mt-1 max-w-[62ch] text-meta text-ink-2">{line}</p>
+          </div>
+
+          <div className="mt-3 flex items-stretch gap-2 lg:mt-0 lg:shrink-0">
+            <button type="button" onClick={prev} disabled={step === 0}
+              aria-label="The previous page" className={dockBtn}>Back</button>
+            {!reduced && (
+              <button type="button" onClick={() => setPaused(p => !p)}
+                aria-label={paused ? 'Start the tour moving again' : 'Stop the tour here'}
+                className={dockBtn}>{paused ? 'Play' : 'Pause'}</button>
+            )}
+            <button type="button" onClick={next} aria-label="The next page"
+              className="min-h-[46px] flex-1 rounded-field bg-ink px-4 font-display text-ui
+                font-medium text-paper transition-colors duration-150 hoverOnly:bg-accent-ink
+                active:bg-accent-ink lg:flex-none lg:px-6">
+              {step === END ? 'Done' : 'Next'}
+            </button>
+          </div>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }

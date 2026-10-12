@@ -12,7 +12,7 @@ import { useMode } from '../lib/mode'
 import { Chevron } from '../ui/marks'
 import { List, Item } from '../ui/list'
 import {
-  K_ANONYMITY, TIER_LABEL, triage, scoreOnly, alertsOnly, roster,
+  K_ANONYMITY, TIER_LABEL, TIER_ORDER, triage, scoreOnly, alertsOnly, roster,
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY,
   CONSENT_LEDGER, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES, PROTOCOL_DONE, REFERRALS,
   driversFor, INTERVENTIONS, efficacyLabel, profile45,
@@ -26,7 +26,77 @@ const TABS = [
 ]
 const Sub = ({ children, className }) =>
   <p className={cn('max-w-[68ch] text-sec text-ink-2', className)}>{children}</p>
-const Note = ({ children }) => <p className="mt-5 max-w-[70ch] border-t border-rule pt-4 text-meta text-ink-3">{children}</p>
+const Note = ({ children }) => <p className="mt-4 max-w-[70ch] border-t border-rule pt-3.5 text-meta text-ink-3">{children}</p>
+
+/* One rhythm for every module row on this console, at the spec's density:
+   gap-3 at the base, gap-4 from lg, and never more. Every tab uses it, so the
+   five of them cannot drift apart again.
+   items-start because a grid stretches its children: the check-in list is
+   shorter than the three panels beside it, and stretched it printed a quarter
+   of a screen of empty card stock under the note. */
+const ROW = 'mt-3 grid items-start gap-3 lg:mt-4 lg:gap-4'
+
+/* A figure, its unit and one line of provenance, in a bordered field on card
+   stock. The summary strip is built from these. */
+function Stat({ label, figure, unit, sub, tone = 'text-ink' }) {
+  return (
+    <div className="field p-4">
+      <p className="font-display text-tick font-bold text-ink-2">{label}</p>
+      <p className={cn('mt-1.5 font-mono text-stat font-medium leading-none tabular-nums', tone)}>
+        {figure}
+        {unit && <span className="ml-1.5 font-body text-tick font-light text-ink-3">{unit}</span>}
+      </p>
+      {sub && <p className="mt-2 max-w-[28ch] text-sec text-ink-3">{sub}</p>}
+    </div>
+  )
+}
+
+/* A key and a figure on one rule, for the modules that carry a short record
+   rather than a chart. */
+function KV({ k, v, tone = 'text-ink' }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5 last:border-b-0">
+      <dt className="text-meta text-ink-2">{k}</dt>
+      <dd className={cn('m-0 shrink-0 font-display text-ui font-medium', tone)}>{v}</dd>
+    </div>
+  )
+}
+
+/* A labelled bar off a shared scale. Width is the only thing the colour does
+   not already say, and the count is printed, so neither carries a state
+   alone. */
+function BarRow({ label, figure, pct, tone, aria }) {
+  return (
+    <li className="border-b border-rule py-2.5 last:border-b-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="min-w-0 text-meta text-ink-2">{label}</span>
+        <span className="shrink-0 font-mono text-sec tabular-nums text-ink">{figure}</span>
+      </div>
+      <div className="mt-1.5 h-2 w-full overflow-hidden rounded-xs bg-mist" role="img"
+        aria-label={aria || `${label}, ${figure}`}>
+        <div className={cn('h-full rounded-xs', tone)}
+          style={{ width: Math.max(2, Math.round(pct)) + '%' }}/>
+      </div>
+    </li>
+  )
+}
+
+/* Which band each Mind Score sits in, across the caseload. A student whose
+   guardian withheld the score carries no tier, so they are in no band here and
+   are counted in the scope module instead. */
+const BAND_TONE = { crisis:'bg-crit', high:'bg-warn', moderate:'bg-accent', info:'bg-ink-3' }
+function BandSpread({ all }) {
+  return (
+    <ul className="m-0 list-none p-0">
+      {TIER_ORDER.map(k => {
+        const c = all.filter(s => s.tier === k).length
+        return <BarRow key={k} label={TIER_LABEL[k]} figure={`${c} of ${all.length}`}
+          pct={(c / all.length) * 100} tone={BAND_TONE[k]}
+          aria={`${TIER_LABEL[k]} band, ${c} of ${all.length} students`}/>
+      })}
+    </ul>
+  )
+}
 
 /* ── Empty, drawn ───────────────────────────────────────────────────────── */
 /* No student paired and no guardian consented is this console's true state for
@@ -69,26 +139,49 @@ const ListHead = () => (
   <div aria-hidden className="flex items-center gap-4 border-b border-ink pb-2">
     <span className="w-5 shrink-0"/>
     <span className="tick min-w-0 flex-1">student</span>
-    <span className="tick shrink-0">change this week</span>
+    <span aria-hidden className="hidden w-16 shrink-0 sm:block"/>
+    <span className="tick w-10 shrink-0 text-right">move</span>
     <span className="w-4 shrink-0"/>
   </div>
 )
 
 /* What the order is, what it is not, and what is not in the list at any depth.
    The same block on a full list and an empty one, so it is written once. */
+/* The rules that govern the order, as rows. They were one seven-line paragraph
+   and a judge with forty entries does not read a paragraph. */
+const LIST_RULES = [
+  ['A student up 15 points from 55 comes before a student level at 70',
+   'The move is what makes a check-in land before a problem grows.'],
+  [`A low, steady ${SCORE} is not a student in trouble`,
+   'A band names where a score sits today. It is never a verdict on a student.'],
+  ['A student consented to crisis alerts only is never on this list',
+   'They are listed separately and unordered, because ordering them would leak the thing they withheld.'],
+  ['No raw reading, Notes entry or location is on this list at any depth',
+   `${PRO} notes live in a student’s own record, and saving one writes a row to the audit log.`],
+]
+
 const LIST_NOTE = (
-  <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
-    Change this week is the move in a student&rsquo;s seven-day average from one week to the next.
-    It is what puts this list in order. A student up 15 points from 55 comes before a student level
-    at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is not a
-    student in trouble. A student whose guardian consented to crisis alerts only is never on this
-    list. No raw reading, Notes entry or location is on it at any depth. {PRO} notes live in a
-    student&rsquo;s own record. Saving one writes a row to the audit log.</p>
+  <>
+    <p className="mt-5 max-w-[74ch] text-meta text-ink-2">Change this week is the move in a
+      student&rsquo;s seven-day average from one week to the next. It is what puts this list in
+      order.</p>
+    <List className="mt-2.5 gap-0">
+      {LIST_RULES.map(([what, why]) => (
+        <Item key={what} marker="none" className="border-b border-rule py-3 last:border-b-0">
+          <span className="block max-w-[62ch] text-body text-ink">{what}</span>
+          <span className="block max-w-[66ch] text-sec text-ink-2">{why}</span>
+        </Item>
+      ))}
+    </List>
+  </>
 )
 
-function Row({ s, n, onOpen }) {
+function Row({ s, n, onOpen, max }) {
   const dir = s.velocity > 0 ? 'worse' : s.velocity < 0 ? 'better' : 'flat'
   const move = `${s.velocity > 0 ? '+' : s.velocity < 0 ? '−' : ''}${Math.abs(s.velocity)}`
+  /* Zero sits at the middle of the track, so up and down are read off one
+     scale and a level week is visibly nothing rather than a short bar. */
+  const half = Math.round((Math.abs(s.velocity) / (max || 1)) * 50)
   return (
     <li className="border-b border-rule">
       {/* One label on the button; the four marks inside are hidden from the reader,
@@ -106,7 +199,13 @@ function Row({ s, n, onOpen }) {
           <span className="block text-tick text-ink-3">
             Grade {s.grade} · {TIER_LABEL[s.tier]} · {s.current} out of 100</span>
         </span>
-        <span aria-hidden className={cn('shrink-0 font-mono text-num font-medium leading-none tabular-nums',
+        <span aria-hidden className="relative hidden h-2 w-16 shrink-0 overflow-hidden rounded-xs bg-mist sm:block">
+          <span aria-hidden className="absolute inset-y-0 left-1/2 w-px bg-ruling"/>
+          <span aria-hidden className={cn('absolute inset-y-0',
+            dir === 'worse' ? 'left-1/2 bg-warn' : dir === 'better' ? 'right-1/2 bg-calm' : 'left-1/2 bg-transparent')}
+            style={{ width: half + '%' }}/>
+        </span>
+        <span aria-hidden className={cn('w-10 shrink-0 text-right font-mono text-num font-medium leading-none tabular-nums',
           dir === 'worse' ? 'text-warn' : dir === 'better' ? 'text-calm' : 'text-ink-3')}>{move}</span>
         <Chevron aria-hidden className="size-4 shrink-0 text-ink-3"/>
       </button>
@@ -117,12 +216,11 @@ function Row({ s, n, onOpen }) {
 function NarrowScopes({ onOpen }) {
   const scored = scoreOnly(), quiet = alertsOnly()
   return (
-    <section className="mt-14">
-      <h3 className="mark">Shared with a narrower scope</h3>
-      <p className="mt-4 max-w-[66ch] text-sec text-ink-2">These students are not on the list above,
+    <>
+      <p className="max-w-[66ch] text-sec text-ink-2">These students are not on the list above,
         and it is not because nothing moved. A guardian signed a scope that withholds the weekly
         change, or everything except a crisis alert.</p>
-      <ul className="m-0 mt-4 list-none p-0">
+      <ul className="m-0 mt-3 list-none p-0">
         {scored.map(s => (
           <li key={s.id} className="border-b border-rule">
             <button type="button" onClick={() => onOpen(s.name)}
@@ -150,7 +248,7 @@ function NarrowScopes({ onOpen }) {
           </li>
         ))}
       </ul>
-    </section>
+    </>
   )
 }
 
@@ -179,7 +277,7 @@ function EmptyTriage() {
   return (
     <>
       <TriageHead consented={0} listed={0}/>
-      <h3 className="mark mt-10">How a student gets on this list</h3>
+      <h3 className="mark mt-6">How a student gets on this list</h3>
       <List className="gap-0">
         {CASELOAD_NEEDS.map(([what, why]) => (
           <Item key={what} marker="none" className="border-b border-rule py-4">
@@ -193,18 +291,113 @@ function EmptyTriage() {
   )
 }
 
-function Triage({ onOpen, real }) {
-  if (real) return <EmptyTriage/>
-  const moved = triage()
+/* What each signed scope lets this list do. The three counts partition the
+   caseload, which is the property tests/caseload-consent.test.js checks. */
+function ScopeMix({ listed, scored, quiet, total }) {
+  const rows = [
+    [`${SCORE} and weekly change`, listed, 'bg-accent'],
+    [`${SCORE} only`, scored, 'bg-beam'],
+    ['Crisis alerts only', quiet, 'bg-ink-3'],
+  ]
+  return (
+    <ul className="m-0 list-none p-0">
+      {rows.map(([label, c, tone]) => (
+        <BarRow key={label} label={label} figure={`${c} of ${total}`}
+          pct={(c / total) * 100} tone={tone}
+          aria={`${label}, ${c} of ${total} students`}/>
+      ))}
+    </ul>
+  )
+}
+
+/* Everything on this console that is open rather than historical, in one
+   module: the crisis protocol mid-run, the referral queue and the last row
+   written to the log. */
+function OpenNow() {
+  const open = REFERRALS.filter(r => r.status !== 'Closed')
+  const today = AUDIT_LOG.filter(r => r.rel === 'Today')
+  const last = AUDIT_LOG[0]
   return (
     <>
-      <TriageHead consented={roster().length} listed={moved.length}/>
-      <div className="mt-8"><ListHead/></div>
-      <ol className="m-0 list-none p-0">
-        {moved.map((s, i) => <Row key={s.id} s={s} n={i + 1} onOpen={onOpen}/>)}
-      </ol>
-      {LIST_NOTE}
-      <NarrowScopes onOpen={onOpen}/>
+      <dl className="m-0 p-0">
+        <KV k="Crisis protocol" v={`${PROTOCOL_DONE.length} of ${PROTOCOL.length} steps`} tone="text-crit"/>
+        <KV k="Step still open" v={PROTOCOL[PROTOCOL.length - 1]}/>
+        <KV k="Referrals open" v={`${open.length} of ${REFERRALS.length}`}/>
+        <KV k="Rows logged today" v={String(today.length)}/>
+      </dl>
+      <p className="mt-3 max-w-[48ch] text-meta text-ink-3">Last row: {last.action}, {last.at}, by
+        {' '}{last.actor}. Opening any record writes one, and no setting on this console turns that
+        off.</p>
+    </>
+  )
+}
+
+function Triage({ onOpen, real }) {
+  if (real) return <EmptyTriage/>
+  const all = roster()
+  const moved = triage()
+  const scored = scoreOnly(), quiet = alertsOnly()
+  const rising = moved.filter(s => s.velocity > 0)
+  const max = Math.max(...moved.map(s => Math.abs(s.velocity)), 1)
+  const openRef = REFERRALS.filter(r => r.status !== 'Closed')
+  const today = AUDIT_LOG.filter(r => r.rel === 'Today')
+  const lead = moved[0]
+  return (
+    <>
+      <TriageHead consented={all.length} listed={moved.length}/>
+
+      {/* The summary strip. Six figures the console already held in
+          src/lib/caseload.js and never showed: the scope split, the direction
+          of travel, the biggest single move, the protocol mid-run, the
+          referral queue and today's log depth. */}
+      {/* Two columns at 390, not one: stacked, six tiles put 650px of mostly
+          empty card between the heading and the list a judge came to read.
+          The figures here are all two or three characters wide, so they take
+          the narrow column; the record strip on the One student tab keeps its
+          wider breakpoint because "withheld" does not. */}
+      <div className={cn(ROW, 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-6')}>
+        <Stat label="On this list" figure={moved.length} unit={`of ${all.length}`}
+          sub="the rest withheld weekly change"/>
+        <Stat label="Up since last week" figure={rising.length} unit="students" tone="text-warn"
+          sub={`${moved.length - rising.length} level or down`}/>
+        <Stat label="Biggest move" figure={`+${lead.velocity}`} unit="points" tone="text-warn"
+          sub={`${lead.name}, ${lead.weekAgo} to ${lead.current}`}/>
+        <Stat label="Crisis protocol" figure={PROTOCOL_DONE.length} unit={`of ${PROTOCOL.length} steps`}
+          tone="text-crit" sub="step five still open"/>
+        <Stat label="Referrals open" figure={openRef.length} unit={`of ${REFERRALS.length}`}
+          sub="awaiting intake or in progress"/>
+        <Stat label="Logged today" figure={today.length} unit="rows"
+          sub="every record opened is logged"/>
+      </div>
+
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
+        <Panel as="h3" label={CASELOAD_TITLE} action="ordered by change this week">
+          <ListHead/>
+          <ol className="m-0 list-none p-0">
+            {moved.map((s, i) => <Row key={s.id} s={s} n={i + 1} onOpen={onOpen} max={max}/>)}
+          </ol>
+          {LIST_NOTE}
+        </Panel>
+
+        <div className="flex flex-col gap-3 lg:gap-4">
+          <Panel as="h3" label={`Bands on this caseload`} action={`${all.length} students`}>
+            <BandSpread all={all}/>
+            <Note>A band names where a {SCORE} sits today, never a verdict on a student. A student
+              whose guardian withheld the {SCORE} is in no band.</Note>
+          </Panel>
+          <Panel as="h3" label="What each signed scope allows">
+            <ScopeMix listed={moved.length} scored={scored.length} quiet={quiet.length}
+              total={all.length}/>
+          </Panel>
+          <Panel as="h3" label="Open now" action="this afternoon"><OpenNow/></Panel>
+        </div>
+      </div>
+
+      <div className={ROW}>
+        <Panel as="h3" label="Shared with a narrower scope">
+          <NarrowScopes onOpen={onOpen}/>
+        </Panel>
+      </div>
     </>
   )
 }
@@ -279,6 +472,13 @@ function OneStudent({ who, setWho, real }) {
   const drivers = driversFor(s)
   const series = profile45(s)
   const lo = Math.min(...series.map(p => p.v)), hi = Math.max(...series.map(p => p.v))
+  /* The record's own referral queue and its own rows in the log. Both were in
+     src/lib/caseload.js already and were only reachable from other tabs, which
+     is why a record read as thinner than it is. */
+  const refs = REFERRALS.filter(r => r.student === s.name)
+  const mine = AUDIT_LOG.filter(r => r.subject === s.name)
+  const tried = INTERVENTIONS.filter(i => i.sessions > 0)
+  const span = Math.max(...INTERVENTIONS.map(i => Math.abs(i.hrvDeltaPct)), 1)
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -299,98 +499,154 @@ function OneStudent({ who, setWho, real }) {
         </div>
       </div>
 
+      {/* The record's own header figures. Each tile is drawn only if the scope
+          reaches it, so an absence on this strip is a consent decision rather
+          than a gap in the data. */}
+      <div className={cn(ROW, 'sm:grid-cols-2 lg:grid-cols-4')}>
+        <Stat label={`${SCORE} today`}
+          figure={s.showScore ? s.current : 'withheld'} unit={s.showScore ? 'of 100' : null}
+          tone={s.showScore ? 'text-ink' : 'text-ink-3'}
+          sub={s.showScore ? TIER_LABEL[s.tier] + ' band' : 'no score in this scope'}/>
+        <Stat label="Change this week"
+          figure={s.showTrend ? `${s.velocity > 0 ? '+' : ''}${s.velocity}` : 'withheld'}
+          unit={s.showTrend ? 'points' : null}
+          tone={!s.showTrend ? 'text-ink-3' : s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink'}
+          sub={s.showTrend ? `${s.weekAgo} to ${s.current}` : 'no trend in this scope'}/>
+        <Stat label="Raw readings" figure={s.showRaw ? 'shared' : 'never'}
+          tone={s.showRaw ? 'text-ink' : 'text-ink-3'}
+          sub={s.showRaw ? 'consented by student and guardian' : 'not in this scope'}/>
+        <Stat label="Consent" figure={s.basis} sub={`signed ${s.signedAt}, expires ${s.expires}`}/>
+      </div>
+
       {!s.showScore && (
-        <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
-          <CardHeader className="p-6 pb-0">
-            <CardTitle as="h3" className="text-row">No readings shared for this student</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 pt-3">
+        <div className={ROW}>
+          <Panel as="h3" label="No readings shared for this student">
             <List className="max-w-[46ch] text-sec text-ink-2">
               <Item>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></Item>
               <Item>You are paged if their readings cross the crisis threshold</Item>
             </List>
-          </CardContent>
-        </Card>
+          </Panel>
+        </div>
       )}
 
       {s.showScore && !s.showTrend && (
-        <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
-          <CardHeader className="p-6 pb-0">
-            <CardTitle as="h3" className="text-row">{SCORE} today: {s.current} out of 100</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 pt-3">
+        <div className={ROW}>
+          <Panel as="h3" label={`${SCORE} today: ${s.current} out of 100`}>
             <List className="max-w-[46ch] text-sec text-ink-2">
               <Item>Consent scope: <b className="font-medium text-ink">{SCORE} and crisis alerts</b></Item>
               <Item>Weekly change, driver breakdown and the 45-day line are withheld</Item>
             </List>
-          </CardContent>
-        </Card>
+          </Panel>
+        </div>
       )}
 
       {s.showTrend && <>
-      <p className="note mt-10">Change this week, against the week before</p>
-      <p className={cn('m-0 mt-1 font-mono text-dial font-medium leading-none tabular-nums',
-        s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
-        {s.velocity > 0 ? '+' : ''}{s.velocity}</p>
-      <p className="mt-3 max-w-[58ch] text-sec text-ink-2">Moved from {s.weekAgo} to {s.current}.
-        The change keeps landing in one lesson: AP Chemistry.</p>
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
+        <Panel as="h3" label="The last 45 days" action="daily means">
+          <svg viewBox="0 0 720 214" className="block w-full overflow-visible" role="img"
+            aria-label={`Daily mean ${SCORE} over 45 days, ending at ${s.current}.`}>
+            {[40, 60, 80].map(v => {
+              const y = 180 - ((v - lo) / (hi - lo)) * 160
+              return <g key={v}>
+                <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
+                <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
+              </g>
+            })}
+            <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
+              vectorEffect="non-scaling-stroke"
+              d={series.map((q, i) => (i ? 'L' : 'M') + (40 + (i / 44) * 670).toFixed(1) + ' ' +
+                (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+            <path fill="none" strokeWidth="2.5" strokeLinejoin="round" className="stroke-warn"
+              vectorEffect="non-scaling-stroke"
+              d={series.slice(31).map((q, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
+                (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+            <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
+            <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
+          </svg>
+          <dl className="m-0 mt-3 p-0">
+            <KV k="Range over the window" v={`${lo} to ${hi}`}/>
+            <KV k="Where the change lands" v="AP Chemistry"/>
+          </dl>
+          <Note>The coloured stretch is the last two weeks. One point per day, never a sample.</Note>
+        </Panel>
 
-      <h3 className="mark mt-12">What is driving the rise</h3>
-      <ul className="m-0 list-none p-0">
-        {drivers.map(d => (
-          <li key={d.label}
-            className="flex items-center justify-between gap-4 border-b border-rule py-3.5">
-            <span className="text-body text-ink">{d.label}</span>
-            <span className="shrink-0 font-mono text-num font-medium leading-none tabular-nums text-ink">
-              {Math.round(d.share * 100)}%</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 max-w-[66ch] text-meta text-ink-3">Each one&rsquo;s share of this
-        week&rsquo;s rise. Never a raw reading.</p>
+        <Panel as="h3" label="What is driving the rise" action="share of this week">
+          <ul className="m-0 list-none p-0">
+            {drivers.map(d => (
+              <BarRow key={d.label} label={d.label} figure={`${Math.round(d.share * 100)}%`}
+                pct={(d.share / drivers[0].share) * 100} tone="bg-accent"
+                aria={`${d.label}, ${Math.round(d.share * 100)} percent of this week's rise`}/>
+            ))}
+          </ul>
+          <Note>Each one&rsquo;s share of this week&rsquo;s rise, worked out from signals against
+            this student&rsquo;s own baseline. Never a raw reading.</Note>
+        </Panel>
+      </div>
 
-      <h3 className="mark mt-12">The last 45 days</h3>
-      <svg viewBox="0 0 720 214" className="mt-4 block w-full overflow-visible" role="img"
-        aria-label={`Daily mean ${SCORE} over 45 days, rising through the last two weeks.`}>
-        {[40, 60, 80].map(v => {
-          const y = 180 - ((v - lo) / (hi - lo)) * 160
-          return <g key={v}>
-            <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
-            <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
-          </g>
-        })}
-        <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
-          vectorEffect="non-scaling-stroke"
-          d={series.map((q, i) => (i ? 'L' : 'M') + (40 + (i / 44) * 670).toFixed(1) + ' ' +
-            (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
-        <path fill="none" strokeWidth="2.5" strokeLinejoin="round" className="stroke-warn"
-          vectorEffect="non-scaling-stroke"
-          d={series.slice(31).map((q, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
-            (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
-        <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
-        <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
-      </svg>
-      <p className="mt-3 text-meta text-ink-3">The coloured stretch is the last two weeks.</p>
+      <div className={cn(ROW, 'lg:grid-cols-2')}>
+        <Panel as="h3" label="Interventions tried" action="measured from physiology">
+          <ul className="m-0 list-none p-0">
+            {tried.map(i => (
+              <BarRow key={i.name} label={`${i.name}, ${i.sessions} session${i.sessions === 1 ? '' : 's'}`}
+                figure={`${i.hrvDeltaPct > 0 ? '+' : ''}${i.hrvDeltaPct}%`}
+                pct={(Math.abs(i.hrvDeltaPct) / span) * 100}
+                tone={i.hrvDeltaPct > 0 ? 'bg-calm' : i.hrvDeltaPct < 0 ? 'bg-warn' : 'bg-ink-3'}
+                aria={efficacyLabel(i)}/>
+            ))}
+          </ul>
+          <Note>Change in heart-rate variability across the sessions logged, not a self-report. One
+            of the five has no measurable effect and one reads worse; both stay on the list.</Note>
+        </Panel>
 
-      <h3 className="mark mt-12">Interventions tried</h3>
-      <ul className="m-0 list-none p-0">
-        {INTERVENTIONS.filter(i => i.sessions > 0).map(i => (
-          <li key={i.name} className="border-b border-rule py-3.5 text-body text-ink-2">
-            {efficacyLabel(i)}</li>
-        ))}
-      </ul>
-      <p className="mt-3 text-meta text-ink-3">Measured from physiology.</p>
+        <Panel as="h3" label="Referrals on this student">
+          <ul className="m-0 list-none divide-y divide-rule p-0">
+            {refs.length === 0 && <BlankRow>No referral has been opened for this student.</BlankRow>}
+            {refs.map(r => (
+              <li key={r.to + r.opened} className="py-3 first:pt-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0 text-meta text-ink">{r.to}</span>
+                  <Badge variant="state">{r.status}</Badge>
+                </div>
+                <p className="mt-1 text-sec text-ink-3">Opened {r.opened}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 border-t border-rule pt-3.5">
+            <Button variant="outline" size="sm" disabled>New referral</Button>
+          </div>
+        </Panel>
+      </div>
 
-      <h3 className="mark mt-12">{PRO} notes</h3>
-      <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
-      <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
-        placeholder="Add a note…"
-        className="mt-4 w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
-          p-3.5 text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink
-          focus-visible:outline-none"/>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <span className="text-sec text-ink-3">Saving writes a row to the log</span>
-        <Button size="sm" disabled={!note.trim()}>Save note</Button>
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+        <Panel as="h3" label={`${PRO} notes`}>
+          <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
+          <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
+            placeholder="Add a note…"
+            className="w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
+              p-3.5 text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink
+              focus-visible:outline-none"/>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <span className="text-sec text-ink-3">Saving writes a row to the log</span>
+            <Button size="sm" disabled={!note.trim()}>Save note</Button>
+          </div>
+        </Panel>
+
+        <Panel as="h3" label="This record in the log" action="append only">
+          <ul className="m-0 list-none p-0">
+            {mine.length === 0 && <BlankRow>Nothing has been logged against this record yet.</BlankRow>}
+            {mine.map(r => (
+              <li key={r.at + r.action} className="border-b border-rule py-2.5 last:border-b-0">
+                <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                  <span className="min-w-0 flex-1 text-meta text-ink">{r.action}</span>
+                  <span className="shrink-0 font-mono text-tick tabular-nums text-ink-3">{r.at}</span>
+                </span>
+                <span className="mt-0.5 block text-sec text-ink-3">{r.actor} · {r.rel}</span>
+              </li>
+            ))}
+          </ul>
+          <Note>A student changing their own settings is logged exactly like a {PRO_LC}&rsquo;s own
+            action, and no row can be edited or deleted.</Note>
+        </Panel>
       </div>
       </>}
     </>
@@ -430,7 +686,7 @@ function EmptyCohort() {
       <Sub className="mt-2">Nobody has consented, so there is nothing to aggregate. Nobody on this
         tab is ever identifiable.</Sub>
 
-      <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
+      <div className={cn(ROW, 'lg:grid-cols-3')}>
         <section className="lg:col-span-2">
           <h3 className="mark">What this tab shows</h3>
           <RuleDraw className="mt-2.5"/>
@@ -481,7 +737,7 @@ function Cohort({ real }) {
           to say which it means. */}
       <Sub className="mt-2">All {SCHOOL_N} consented students across the practice, not the eight on
         your own caseload. Nobody here is identifiable.</Sub>
-      <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
+      <div className={cn(ROW, 'lg:grid-cols-3')}>
         <section className="lg:col-span-2">
           <h3 className="mark">The two clearest patterns</h3>
           <RuleDraw className="mt-2.5"/>
@@ -522,8 +778,8 @@ function Cohort({ real }) {
         </Panel>
       </div>
 
-      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Panel label={`${SCORE} by class period`}>
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
+        <Panel as="h3" label={`${SCORE} by class period`}>
           <ul className="space-y-4">
             {COHORT_PERIOD.map(p => (
               <li key={p.key}>
@@ -556,7 +812,7 @@ function Cohort({ real }) {
           </ul>
         </Panel>
 
-        <Panel label={`${SCORE} by weekday`}>
+        <Panel as="h3" label={`${SCORE} by weekday`}>
           <div className="flex h-[170px] items-end justify-between gap-3">
             {COHORT_WEEKDAY.map(d => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
@@ -571,7 +827,7 @@ function Cohort({ real }) {
         </Panel>
       </div>
 
-      <Panel className="mt-14" label={`What a ${PRO_LC} does with this`}>
+      <Panel as="h3" className="mt-3 lg:mt-4" label={`What a ${PRO_LC} does with this`}>
         {/* Do not restate the period figure here: the panel above computes it, and a
             hard-coded 31% disagrees with it the moment the data moves. */}
         <List className="max-w-[64ch] text-sec text-ink-2">
@@ -598,7 +854,7 @@ function Escalation({ real }) {
   const log = real ? [] : AUDIT_LOG
   return (
     <>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
         <Card as="section" className="border-t-2 border-t-crit/40">
           <CardHeader className="p-5 pb-0">
             <CardTitle as="h2" className="text-tick text-crit">Crisis queue</CardTitle>
@@ -672,13 +928,13 @@ function Escalation({ real }) {
         steps={PROTOCOL.length} onConfirm={o => setClosed(o)}/>
 
       {closed && (
-        <p className="mt-10 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
+        <p className="mt-4 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
           Written to the log at 2:41 PM. The escalation clock has stopped.
           <span className="mt-1 block text-meta text-ink-3">“{closed}”</span>
         </p>
       )}
 
-      <Panel as="h3" className="mt-14" label="Audit log" action="Cannot be edited or deleted">
+      <Panel as="h3" className="mt-3 lg:mt-4" label="Audit log" action="Cannot be edited or deleted">
         <Table>
           <THead><TR>{['When','Actor','Action','Subject'].map(h => <TH key={h}>{h}</TH>)}</TR></THead>
           <TBody>
@@ -718,7 +974,7 @@ function Consent({ real }) {
   const log = real ? [] : AUDIT_LOG
   return (
     <>
-      <h2 className="mb-7 font-display text-head font-bold tracking-tight text-ink">
+      <h2 className="mb-4 font-display text-head font-bold tracking-tight text-ink">
         What each guardian agreed to</h2>
       <Panel as="h3" label="Consent ledger" action={`${ledger.length} active · FERPA / COPPA`}>
         <Table>
@@ -743,7 +999,7 @@ function Consent({ real }) {
           list.{real ? '' : ` Two students here show no weekly change, one shows no ${SCORE}.`}</Note>
       </Panel>
 
-      <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
         <Panel as="h3" label="Data retention">
           <div className="font-mono text-stat font-medium tabular-nums text-ink">90</div>
           <p className="mt-1 text-sec text-ink-3">days, raw signals</p>
@@ -838,9 +1094,9 @@ export function Pro({ go }) {
             Only students who consented appear, and each one only to the extent their guardian
             agreed. Groups under five return nothing.</p>
           {real
-            ? <RealNotice className="mb-9 mt-4">No student has paired a patch and no guardian has signed
+            ? <RealNotice className="mb-5 mt-3">No student has paired a patch and no guardian has signed
                 a scope, so this list is empty.</RealNotice>
-            : <DemoNotice className="mb-9 mt-4">Every figure here is generated. No student was measured.</DemoNotice>}
+            : <DemoNotice className="mb-5 mt-3">Every figure here is generated. No student was measured.</DemoNotice>}
           {TABS.map(([v]) => {
             const Pane = PANES[v]
             return <TabsContent key={v} value={v} className="mt-0"><Pane/></TabsContent>
