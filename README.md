@@ -3,7 +3,7 @@
 A stress tracker for teenagers: a wearable patch that reads four body signals,
 and an app that turns a day of them into one number and one sentence.
 
-This repository is the web front end — the marketing site that explains the
+This repository is the web front end: the marketing site that explains the
 product, and an interactive prototype of the three app views (student, parent,
 school counsellor). The hardware and firmware live elsewhere.
 
@@ -32,7 +32,7 @@ Vercel function and is optional (see [docs/survey.md](docs/survey.md)).
 
 Hash-routed, no router dependency. Fifteen views in two groups.
 
-**The site** — what MindMap is, for somebody who has not used it.
+**The site.** What MindMap is, for somebody who has not used it.
 
 | Route | What it is |
 |---|---|
@@ -43,7 +43,7 @@ Hash-routed, no router dependency. Fifteen views in two groups.
 | `#/privacy` | Who sees what, and what is never shared |
 | `#/tour` | The whole product in one page |
 
-**The app** — the screens somebody would actually open.
+**The app.** The screens somebody would actually open.
 
 | Route | What it is |
 |---|---|
@@ -107,26 +107,26 @@ tools/survey-endpoint.gs
                     an Apps Script web app that receives survey responses
 ```
 
-Both have a README explaining the decisions that are easy to get wrong —
+Both have a README explaining the decisions that are easy to get wrong:
 patch orientation in one, what counts as a sentence in the other.
 
 Beyond those, the site is held to four gates, run against a real browser on a
 production build:
 
-- **Layout** — fifteen routes at 1280 px and 390 px: no console errors, no
+- **Layout.** Fifteen routes at 1280 px and 390 px: no console errors, no
   element wider than its container, no horizontal scroll, no em dashes.
-- **Contrast** — every text node on every route clears WCAG AA (4.5:1).
-- **Reading grade** — Flesch-Kincaid and SMOG over the rendered prose.
+- **Contrast.** Every text node on every route clears WCAG AA (4.5:1).
+- **Reading grade.** Flesch-Kincaid and SMOG over the rendered prose.
   Currently 4.5 and 7.4; NIH guidance for health material is grade 6 or below.
-- **Walkthrough fit** — all seven beats at both widths with every heading,
+- **Walkthrough fit.** All five beats at both widths, with every heading,
   sub-line and label inside the viewport and three reachable controls.
 
 ## Design notes
 
 Interface and wording decisions are traceable to published sources rather than
 to taste, and [docs/design-evidence.md](docs/design-evidence.md) is the proof:
-every decision, its citation, how strong that evidence is, and — the longest
-section — the claims the project deliberately refuses to make, with the papers
+every decision, its citation, how strong that evidence is, and, in the longest
+section, the claims the project deliberately refuses to make, with the papers
 that say why.
 
 The short version: the score is read against a labelled mark rather than a bare
@@ -149,4 +149,3 @@ Photographs are licensed from Adobe Stock; the IDs are listed in
 `tools/photos/README.md`. Statistics are from the CDC Youth Risk Behavior
 Survey (2023) and NIMH/NSDUH (2021) and are cited on the pages that use them.
 
-Built with Claude Code.

@@ -1,4 +1,4 @@
-/* MindMap survey endpoint — a Google Apps Script web app.
+/* MindMap survey endpoint: a Google Apps Script web app.
  *
  * Why this file is here. The site is a static build: there is no server of
  * ours between a reviewer's browser and a mailbox. Delivery therefore depends

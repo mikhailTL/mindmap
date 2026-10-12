@@ -25,7 +25,7 @@ in the bundle, because the URL is a destination, not a secret.
 
 `tools/survey-endpoint.gs` is the whole thing: a Google Apps Script web app that
 writes every response to a spreadsheet **and then** emails it to you. The
-spreadsheet is the durable half — a response survives a bounced mail, a full
+spreadsheet is the durable half, a response survives a bounced mail, a full
 mailbox, or a filter that files the notification somewhere you never look.
 
 1. Open <https://sheets.new>. Name the sheet something like *MindMap feedback*.
@@ -40,7 +40,7 @@ mailbox, or a filter that files the notification somewhere you never look.
    not expose the spreadsheet: the script answers `GET` with a count and
    nothing else, and only ever writes.
 4. **Deploy**, then **Authorize access** and allow the two permissions it asks
-   for — send mail as you, and edit this spreadsheet. The warning screen is the
+   for: send mail as you, and edit this spreadsheet. The warning screen is the
    standard unverified-app one; it is your own script. Copy the **Web app URL**
    at the end. It looks like
    `https://script.google.com/macros/s/AKfy…long…/exec`.
@@ -71,7 +71,7 @@ one job.
 
 **The post goes out as `text/plain`.** A cross-origin POST with
 `Content-Type: application/json` makes the browser send a CORS preflight first,
-Apps Script has no way to answer one, and the real request never happens — the
+Apps Script has no way to answer one, and the real request never happens: the
 failure looks like a dead network rather than a misconfiguration. `text/plain`
 is a simple request with no preflight; the body is still the same JSON text and
 the script still reads it with `JSON.parse`. This is already handled in
@@ -100,7 +100,7 @@ It still works and nothing is lost. The response is written to the reviewer's
 browser as they answer, the submit button reports *Saved. It will send on its
 own*, and the response is retried a couple of seconds after every page load and
 whenever the network comes back. It is delivered the moment any transport
-accepts it — including the relay, the moment you click its activation link. The
+accepts it: including the relay, the moment you click its activation link. The
 reviewer never sees an error, because none of this is their problem.
 
 ## The central store, for the responses page
@@ -129,7 +129,7 @@ are present.
 ### 2. The client is already installed
 
 `@vercel/kv` is in `package.json`. npm prints a deprecation warning on install
-— that notice is about the hosted product moving to the Marketplace, not about
+, that notice is about the hosted product moving to the Marketplace, not about
 the client, which still speaks the same REST protocol Upstash exposes through
 those two variables. Nothing to do here unless the install was skipped:
 
@@ -138,7 +138,7 @@ npm i @vercel/kv
 ```
 
 The import in `api/responses.js` is a dynamic `import()` inside a `try`, so the
-build does not break if this step is skipped — the function silently falls back
+build does not break if this step is skipped, the function silently falls back
 to memory instead. That is the failure this step exists to prevent, so do not
 skip it.
 
@@ -159,10 +159,10 @@ question.
 
 Check the **Source** tile at the top right of the summary:
 
-- **KV store** — responses are being kept. This is what you want.
-- **Server, in memory** — the API is running but has no store. A banner says so.
+- **KV store** , responses are being kept. This is what you want.
+- **Server, in memory** , the API is running but has no store. A banner says so.
   Go back to step 1.
-- **This browser** — the API could not be reached at all. A banner says why.
+- **This browser** , the API could not be reached at all. A banner says why.
 
 ### 5. Export
 
@@ -181,7 +181,7 @@ yours. Answers are written to that reviewer's own browser as they go, so they
 see a working survey and can download their own CSV at the end. The POST to
 `/api/responses` either fails quietly or lands in one serverless instance's
 memory, which is wiped by the next deploy, the next cold start, or the platform
-recycling the instance — and there is more than one instance, so two reviewers
+recycling the instance, and there is more than one instance, so two reviewers
 can write to two different copies that never see each other.
 
 In other words: without the KV store, **the only person who can retrieve a
@@ -199,7 +199,7 @@ look like protection and be worth nothing, which is worse than an honest gap
 because it stops you from closing the real one.
 
 The optional key is the same caveat one layer down. Set `RESPONSES_KEY` (server
-env, any random string) and `VITE_RESPONSES_KEY=1` (build env — a flag only, its
+env, any random string) and `VITE_RESPONSES_KEY=1` (build env, a flag only, its
 value is never used as the key and never reaches the bundle). The page then
 reads `?key=…` from the URL it was opened with and sends it as an
 `x-responses-key` header, and the API refuses `GET` without it. This stops a
@@ -208,11 +208,11 @@ chat, or landing in someone's browser history.
 
 Real protection is one of:
 
-- **Vercel deployment protection** — Project → **Settings** → **Deployment
+- **Vercel deployment protection** , Project → **Settings** → **Deployment
   Protection** → **Vercel Authentication**, which requires a Vercel login to
   view the deployment at all. Note that it covers the whole site, so reviewers
   would need accounts; usually you turn it on after the review window closes.
-- **An access-controlled store** — move reading behind credentials the browser
+- **An access-controlled store** , move reading behind credentials the browser
   never holds, and fetch the data server-side.
 
 Until one of those is on, treat everything on the responses page as public.

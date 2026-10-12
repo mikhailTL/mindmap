@@ -1,6 +1,6 @@
 # MindMap: the evidence behind the interface
 
-What follows is the proof for the claim on the overview page — that the screens
+What follows is the proof for the claim on the overview page, that the screens
 and the wording are built from published research rather than from taste. Every
 row names a source you can open, says how strong it is, and points at the code
 that implements it.
@@ -22,7 +22,7 @@ number on a scale, and separately as the same number on a scale carrying a
 labelled threshold: *"Many doctors are not concerned until here."* For a
 near-normal value, the share who said they would contact a doctor urgently fell
 from **48–58% to 35%** (χ²(3) = 53.83, p < .001). For genuinely extreme values
-there was **no difference** between displays — the anchor did not blunt
+there was **no difference** between displays, the anchor did not blunt
 appropriate alarm.
 
 **Source.** Zikmund-Fisher, B. J., Scherer, A. M., Witteman, H. O., Solomon,
@@ -35,7 +35,7 @@ experiment, hypothetical vignettes.**
 **What it changed.** A stress score has exactly this failure mode: 51 out of
 100 is an ordinary Tuesday, and a reader with no reference point reads anything
 past the middle of a scale as bad news. The usual day was already on the screen
-— as a sentence *under* the picture. The finding is about a mark *on the scale
+, as a sentence *under* the picture. The finding is about a mark *on the scale
 the number is read against*, so a sentence underneath does not implement it.
 The arch now carries the reader's own usual day as a mark across the four
 bands, with a head at its outer end so it reads as deliberate, and the sentence
@@ -46,7 +46,7 @@ below says what the mark is.
 ### 1.2 No student is ever ranked against another student
 
 **Finding.** Across 208 laboratory studies, the two things that predicted a
-cortisol response were uncontrollability and **social-evaluative threat** —
+cortisol response were uncontrollability and **social-evaluative threat** 
 being judged by other people. Social evaluation present **d = 0.67** against
 **d = 0.15** absent. Both present, d = 0.92; neither present, no significant
 rise at all.
@@ -59,7 +59,7 @@ the standard citation in this area.**
 
 **What it changed.** Nothing in the student's view compares them to anyone. The
 parent screen states it outright. The counselor screen does order students, but
-that list is a caseload for the adult and is never shown to the student — which
+that list is a caseload for the adult and is never shown to the student, which
 is the distinction the finding actually draws, since social-evaluative threat
 is about the person *being* evaluated knowing it.
 
@@ -68,12 +68,12 @@ is about the person *being* evaluated knowing it.
 ### 1.3 Every share is the student's to switch off
 
 **Finding.** Same meta-analysis: an **uncontrollable** stressor produced
-**d = 0.52**, a controllable one **d = 0.16** — more than three times the
+**d = 0.52**, a controllable one **d = 0.16** , more than three times the
 cortisol response, from controllability alone.
 
 **What it changed.** Nothing is shared by default; every share is revocable;
 the student sees each reading before anyone else does. This was already the
-product's consent model — the finding is why it is also a stress-design
+product's consent model, the finding is why it is also a stress-design
 decision and not only a privacy one.
 
 ### 1.4 The reading level is measured, not asserted
@@ -90,7 +90,7 @@ study; the sixth-grade target is a guideline.**
 
 **What it changed.** `tools/readability/` runs Flesch-Kincaid and SMOG over the
 prose the site actually renders. Measured over every text node, including
-headings and table cells, the site scores **grade 3.6** — a flattering number
+headings and table cells, the site scores **grade 3.6** , a flattering number
 describing nothing anybody reads, because a heading is a label and a table cell
 is a fragment. Measured over paragraph prose only: **Flesch-Kincaid 4.5, SMOG
 7.4**, 8.6 words per sentence, 6.6% words of three or more syllables.
@@ -125,14 +125,14 @@ be claimed.
 | Low visual density, conventional layout | Visual complexity correlates with rated arousal **r = .74** and worse one-week recognition **r = −.40**; aesthetic judgement forms in 17–50 ms and is driven by low complexity **and high prototypicality** (η²p = .58 and .81) | Tuch et al., *IJHCS* 2009, https://doi.org/10.1016/j.ijhcs.2009.04.002 · Tuch et al., *IJHCS* 2012, https://doi.org/10.1016/j.ijhcs.2012.06.003 |
 | Statistics as icon arrays with denominator and time frame named | Pictographs and bar formats are read most accurately; always state the denominator and time frame; present absolute not relative risk | Trevena et al., *BMC Med Inform Decis Mak* 2013, 13(S2):S7, https://doi.org/10.1186/1472-6947-13-S2-S7 |
 | Evaluative words beside every number ("above her usual range") | Less numerate readers fill bare numbers in with mood and narrative; evaluative labels changed choices without changing recall of the numbers | Peters, *Current Directions in Psychological Science* 2012, https://doi.org/10.1177/0963721411429960 |
-| Motion honours the system reduced-motion setting | WCAG 2.3.3 Animation from Interactions, **Level AAA** — above the usual AA bar | https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions |
+| Motion honours the system reduced-motion setting | WCAG 2.3.3 Animation from Interactions, **Level AAA** , above the usual AA bar | https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions |
 | Text contrast clears 4.5:1 everywhere, verified on every route | WCAG 1.4.3 Contrast (Minimum), Level AA | https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum |
 | No diagnostic language, no clinical cut-offs, person-first wording | APA bias-free language; WHO responsible-reporting guidance | APA *Publication Manual* 7th ed. · WHO/IASP 2023, https://www.who.int/publications/i/item/9789240076846 |
 
 On the last row: USPSTF (2022) reviewed two RCTs (n = 2,675) and found **no
 significant short-term distress** from suicide-risk screening, but states
 explicitly that **no study examined labelling or stigmatisation**. Because
-labelling is unstudied, the conservative design is the right one — which is
+labelling is unstudied, the conservative design is the right one, which is
 also the honest way to answer a judge who asks whether showing a teenager a
 number is safe.
 
@@ -143,8 +143,8 @@ number is safe.
 This section is the most valuable one in a judged setting. Each line is a claim
 a weaker project would make and we can explain why we didn't.
 
-**"Green is calming."** The largest review of the field — 132 studies, 42,266
-participants, 64 countries — concludes in its own words that *"we do not know if
+**"Green is calming."** The largest review of the field: 132 studies, 42,266
+participants, 64 countries: concludes in its own words that *"we do not know if
 we feel colours"*, and found the handful of studies testing colour effects on
 emotion or physiology inconclusive. A critical review of healthcare colour
 states *"there are no direct linkages between particular colors and health
@@ -207,7 +207,7 @@ Readability is a floor, not a result.
    site. Not changed unilaterally because it alters the look everywhere.
 
 2. **A breathing pacer in the app at 5.5–6 breaths per minute.** Resonance
-   frequency is ~0.1 Hz, refined to ~0.09 Hz ≈ 5.5 breaths/min — an 11-second
+   frequency is ~0.1 Hz, refined to ~0.09 Hz ≈ 5.5 breaths/min, an 11-second
    cycle (Lehrer & Gevirtz, *Frontiers in Psychology* 2014,
    https://doi.org/10.3389/fpsyg.2014.00756). Meta-analysis of 12 RCTs puts
    slow breathing at **g = −0.35** for stress and −0.32 for anxiety (Fincham et
@@ -227,13 +227,13 @@ Readability is a floor, not a result.
 
 Flagged honestly rather than quietly used.
 
-1. **Coyne et al. (2003)**, *Journal of Clinical Oncology* 21(5):836–842 — the
+1. **Coyne et al. (2003)**, *Journal of Clinical Oncology* 21(5):836–842: the
    easy-to-read consent RCT. Widely reported as a null result on comprehension.
    Behind a paywall; confirm before citing.
 2. **Readability of publicly available mental health information**, *Patient
-   Education and Counseling* (2023), PMID 36944285 — the most on-topic review
+   Education and Counseling* (2023), PMID 36944285, the most on-topic review
    for this domain.
-3. **The completed #chatsafe RCT** (protocol https://doi.org/10.2196/44300) —
+3. **The completed #chatsafe RCT** (protocol https://doi.org/10.2196/44300) 
    needed before describing #chatsafe as *effective* rather than
    *consensus-based*. The guidelines themselves are a six-stage Delphi study
    with 103 experts including 74 young people: Robinson et al., *PLoS ONE* 2023,
@@ -245,7 +245,7 @@ Flagged honestly rather than quietly used.
 
 > Every interface and wording decision on this site is traceable to a published
 > source, and the sources are named on the site itself. We have not tested the
-> product and we make no efficacy claim — what we claim is that the design is
+> product and we make no efficacy claim: what we claim is that the design is
 > reasoned rather than decorative. Where the popular design literature is wrong,
 > such as colour psychology, we cite the papers that say so and decline to make
 > the claim.

@@ -1,9 +1,9 @@
 """Build the seven photographs the site ships.
 
 Five licensed plates, two of them carrying the patch. Every crop is stated as
-a horizontal span and a top edge in the plate's own coordinates, so a shape
-change on the site moves the bottom edge and never silently takes the top off
-somebody's head — which is the one way these have gone wrong before.
+a horizontal span and a top edge in the plate's own coordinates. A shape
+change then moves the bottom edge; it cannot silently take the top off
+somebody's head, which is how an earlier set shipped.
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,9 +31,8 @@ def load(n):
 #
 # ball: a lean teenager, low on the upper arm where it has already tapered,
 # taken as 68 mm across (a 21 cm circumference). The patch is then 0.53 of the
-# visible arm — noticeably chunkier than a Freestyle Libre's 35 mm disc, which
-# is correct, because 36 x 54 mm is a bigger object than either that or a
-# Dexcom G6.
+# visible arm. That is noticeably chunkier than a Freestyle Libre's 35 mm disc
+# and correct: 36 x 54 mm is a bigger object than either that or a Dexcom G6.
 ball = place(load('ball'), cx=0.7755, cy=0.448,
              width=0.047 * arm_fraction(68), angle=0.0, bend=0.16, tint=0.35)
 # pro: a fuller arm, taken as 72 mm across. The arm leans, so the patch leans

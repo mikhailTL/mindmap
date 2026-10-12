@@ -6,7 +6,7 @@ Seven files in `src/photos/`, built from five licensed Adobe Stock plates by
 ## Why the patch is drawn and not generated
 
 An image model asked to add a device to a photograph regenerates the
-photograph, and the person in it comes back subtly not themselves — which is
+photograph, and the person in it comes back subtly not themselves. That is
 what "looks AI generated" means when someone says it about a photograph of a
 real person. So nothing here is generated. The licensed plate is untouched
 except for the pixels the patch covers, and the patch is the site's own
@@ -27,8 +27,8 @@ approximates it, and the photograph's grain is added last.
 
 Stated, never guessed, because this is the thing that has been wrong before.
 The patch is a tall oval. It sits on the **outer face of the upper arm**, and
-its **long axis runs along the arm**, shoulder to elbow — the way a Dexcom G6
-sits, not across the arm. `angle` turns the sprite to follow an arm that leans;
+its **long axis runs along the arm**, shoulder to elbow, the way a Dexcom G6
+sits. Not across the arm. `angle` turns the sprite to follow an arm that leans;
 `bend` is the small horizontal squeeze a flat oval takes on a round arm.
 
 Width is given as a fraction of the photograph's width and is derived from the
@@ -43,8 +43,8 @@ shape changes it moves the bottom edge, and it cannot silently take the top off
 somebody's head, which is how an earlier set of these shipped with cropped
 foreheads.
 
-Where a band is too shallow to hold both the faces and the patch — the
-counselor card is 2.84:1 — the faces win and the patch is carried whole by the
+Where a band is too shallow to hold both the faces and the patch (the
+counselor card is 2.84:1), the faces win and the patch is carried whole by the
 taller hero crop of the same plate. A half-cut device at the frame edge reads
 as a blemish.
 
@@ -69,8 +69,8 @@ content hash and replacing a photograph busts its own cache.
 
 | file | Adobe Stock | what it is |
 |---|---|---|
-| `ball.jpg`   | 173838410  | teenage boy in a gym, tank top, basketball — carries the patch |
+| `ball.jpg`   | 173838410  | teenage boy in a gym, tank top, basketball, carries the patch |
 | `game2.jpg`  | 1237468491 | teenage boy playing a video game at home |
 | `walk.jpg`   | 317316308  | five teenagers walking through a park |
 | `parent.jpg` | 670916081  | a mother and her teenage son at home |
-| `pro.jpg`    | 138355957  | a school counselor and a student — carries the patch |
+| `pro.jpg`    | 138355957  | a school counselor and a student, carries the patch |

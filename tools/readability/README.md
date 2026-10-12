@@ -33,7 +33,7 @@ which is what every tool in this class does.
 ## What the numbers are for
 
 NIH guidance for patient education material is a sixth-grade reading level, and
-published material routinely misses it — American Heart Association pages
+published material routinely misses it: American Heart Association pages
 measure around grade 10.7. The overview page states the measured figures and
 the target, and does not claim that an easier text is a less stressful one. The
 health-literacy literature measures comprehension, not stress, and the one

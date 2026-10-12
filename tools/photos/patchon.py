@@ -91,8 +91,8 @@ def arm_fraction(arm_mm):
     Width is derived, never chosen by eye: the patch is 36 mm across, so on an
     arm `arm_mm` wide in the photograph it covers 36/arm_mm of it. Every call
     site states the arm it assumed, so the number is arguable instead of
-    arbitrary — which is the point, because this has been drawn too small
-    before."""
+    arbitrary. The size has been drawn wrong before; a stated assumption can
+    be argued with."""
     return PATCH_MM_ACROSS / float(arm_mm)
 
 
