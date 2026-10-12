@@ -10,17 +10,18 @@ import { Badge } from '../ui/badge'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { Chevron } from '../ui/marks'
+import { List, Item } from '../ui/list'
 import {
   K_ANONYMITY, TIER_LABEL, triage, scoreOnly, alertsOnly, roster,
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY,
   CONSENT_LEDGER, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES, PROTOCOL_DONE, REFERRALS,
   driversFor, INTERVENTIONS, efficacyLabel, profile45,
 } from '../lib/caseload'
-import { CASELOAD_TITLE, CASELOAD_DEF, SCORE } from '../lib/terms'
+import { CASELOAD_TITLE, CASELOAD_DEF, SCORE, PRO, PRO_LC, PRO_PLURAL_LC } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 const TABS = [
-  ['triage','Who to check in with'], ['student','One student'], ['cohort','Year groups'],
+  ['triage','Who to check in with'], ['student','One student'], ['cohort','Group patterns'],
   ['escalation','Escalation'], ['consent','Consent'],
 ]
 const Sub = ({ children, className }) =>
@@ -81,7 +82,7 @@ const LIST_NOTE = (
     It is what puts this list in order. A student up 15 points from 55 comes before a student level
     at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is not a
     student in trouble. A student whose guardian consented to crisis alerts only is never on this
-    list. No raw reading, Notes entry or location is on it at any depth. Medical Professional notes live in a
+    list. No raw reading, Notes entry or location is on it at any depth. {PRO} notes live in a
     student&rsquo;s own record. Saving one writes a row to the audit log.</p>
 )
 
@@ -153,11 +154,11 @@ function NarrowScopes({ onOpen }) {
   )
 }
 
-/* The three conditions, in the order they happen. A school reads this tab first
-   and asks why it is empty, so the answer is the content of the empty list. */
+/* The three conditions, in the order they happen. A medical professional reads this
+   tab first and asks why it is empty, so the answer is the content of the empty list. */
 const CASELOAD_NEEDS = [
   ['A student pairs a patch',
-   'Nothing reaches the school until the student pairs it, on their own phone. They can unpair it the same way.'],
+   `Nothing reaches a ${PRO_LC} until the student pairs it, on their own phone. They can unpair it the same way.`],
   ['A guardian signs a consent scope',
    `The scope decides what this list may show: a ${SCORE}, a ${SCORE} with weekly change, or crisis alerts only.`],
   ['The scope is applied here, and never widened',
@@ -179,14 +180,14 @@ function EmptyTriage() {
     <>
       <TriageHead consented={0} listed={0}/>
       <h3 className="mark mt-10">How a student gets on this list</h3>
-      <ol className="m-0 list-none p-0">
+      <List className="gap-0">
         {CASELOAD_NEEDS.map(([what, why]) => (
-          <li key={what} className="border-b border-rule py-4">
+          <Item key={what} marker="none" className="border-b border-rule py-4">
             <span className="block text-body text-ink">{what}</span>
             <span className="mt-1 block max-w-[66ch] text-sec text-ink-2">{why}</span>
-          </li>
+          </Item>
         ))}
-      </ol>
+      </List>
       {LIST_NOTE}
     </>
   )
@@ -215,7 +216,7 @@ const RECORD_FIELDS = [
   ['Weekly change, and a place on the list', 'With trend consent.'],
   ['What is driving the rise', 'With trend consent. Shares per signal, never a raw reading.'],
   ['The last 45 days', 'With trend consent.'],
-  ['Medical Professional notes', 'Any scope. Saving writes a row to the audit log.'],
+  [`${PRO} notes`, 'Any scope. Saving writes a row to the audit log.'],
 ]
 
 function EmptyRecord() {
@@ -245,7 +246,7 @@ function EmptyRecord() {
         <CardHeader className="p-6 pb-0">
           <CardTitle as="h3" className="text-row">What a record holds</CardTitle>
           <CardDescription className="max-w-[56ch]">Each line appears only if the guardian agreed to
-            it. Crisis alerts reach the medical professional in every case, and no guardian can switch them
+            it. Crisis alerts reach the {PRO_LC} in every case, and no guardian can switch them
             off.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-5">
@@ -304,10 +305,10 @@ function OneStudent({ who, setWho, real }) {
             <CardTitle as="h3" className="text-row">No readings shared for this student</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-3">
-            <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
-              <li>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></li>
-              <li>You are paged if their readings cross the crisis threshold</li>
-            </ul>
+            <List className="max-w-[46ch] text-sec text-ink-2">
+              <Item>Consent scope: <b className="font-medium text-ink">crisis alerts only</b></Item>
+              <Item>You are paged if their readings cross the crisis threshold</Item>
+            </List>
           </CardContent>
         </Card>
       )}
@@ -318,10 +319,10 @@ function OneStudent({ who, setWho, real }) {
             <CardTitle as="h3" className="text-row">{SCORE} today: {s.current} out of 100</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-3">
-            <ul className="max-w-[46ch] space-y-1.5 text-sec text-ink-2">
-              <li>Consent scope: <b className="font-medium text-ink">{SCORE} and crisis alerts</b></li>
-              <li>Weekly change, driver breakdown and the 45-day line are withheld</li>
-            </ul>
+            <List className="max-w-[46ch] text-sec text-ink-2">
+              <Item>Consent scope: <b className="font-medium text-ink">{SCORE} and crisis alerts</b></Item>
+              <Item>Weekly change, driver breakdown and the 45-day line are withheld</Item>
+            </List>
           </CardContent>
         </Card>
       )}
@@ -380,8 +381,8 @@ function OneStudent({ who, setWho, real }) {
       </ul>
       <p className="mt-3 text-meta text-ink-3">Measured from physiology.</p>
 
-      <h3 className="mark mt-12">Medical Professional notes</h3>
-      <label htmlFor="cnote" className="sr-only">Medical Professional note for {s.name}</label>
+      <h3 className="mark mt-12">{PRO} notes</h3>
+      <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
       <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
         placeholder="Add a note…"
         className="mt-4 w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
@@ -396,7 +397,7 @@ function OneStudent({ who, setWho, real }) {
   )
 }
 
-/* ── Year groups ────────────────────────────────────────────────────────── */
+/* ── Group patterns ─────────────────────────────────────────────────────── */
 /* The hatch that marks a suppressed cell. Its own pattern id: the bars below
    each define `hatch` inside their own svg, and two elements with the same id in
    one document collide. */
@@ -415,17 +416,17 @@ const SuppressedSwatch = ({ className }) => (
 
 /* Both halves aggregate consented students, so with none consented there is
    nothing to aggregate -- but the rule governing the aggregation is policy, and
-   a school weighs it before it signs. */
+   a practice weighs it before it signs. */
 const COHORT_REPORTS = [
-  [`${SCORE} by class period`, 'A mean per period across the building. Fewer than five consented students returns nothing.'],
-  [`${SCORE} by weekday`, 'The same figure per weekday, school-wide.'],
+  [`${SCORE} by class period`, 'A mean per class period, across all consented students. Fewer than five consented students returns nothing.'],
+  [`${SCORE} by weekday`, 'The same figure per weekday, across all consented students.'],
 ]
 
 function EmptyCohort() {
   return (
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        Patterns across the whole school</h2>
+        Patterns across all consented students</h2>
       <Sub className="mt-2">Nobody has consented, so there is nothing to aggregate. Nobody on this
         tab is ever identifiable.</Sub>
 
@@ -433,17 +434,17 @@ function EmptyCohort() {
         <section className="lg:col-span-2">
           <h3 className="mark">What this tab shows</h3>
           <RuleDraw className="mt-2.5"/>
-          <ul className="m-0 mt-5 list-none p-0">
+          <List className="mt-5 gap-0">
             {/* The dashed lane is this row's rule as well as its blank; a solid border under
                 it put two hairlines 12px apart. */}
             {COHORT_REPORTS.map(([what, how]) => (
-              <li key={what} className="py-4 first:pt-0">
+              <Item key={what} marker="none" className="py-4 first:pt-0">
                 <h4 className="font-display text-row font-bold tracking-tight text-ink">{what}</h4>
-                <p className="mt-1.5 max-w-[58ch] text-sec text-ink-2">{how}</p>
+                <span className="mt-1.5 block max-w-[58ch] text-sec text-ink-2">{how}</span>
                 <BlankLane className="mt-3.5 block w-full"/>
-              </li>
+              </Item>
             ))}
-          </ul>
+          </List>
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
         </section>
 
@@ -454,7 +455,7 @@ function EmptyCohort() {
             Any group smaller than {K_ANONYMITY} is suppressed before it reaches this screen.</p>
           <div className="mt-5 border-t border-rule pt-4">
             <p className="text-meta text-ink-2">A suppressed cell is hatched, not hidden, so a
-              medical professional can see a figure exists and is withheld.</p>
+              {' '}{PRO_LC} can see a figure exists and is withheld.</p>
             <SuppressedSwatch className="mt-3"/>
           </div>
         </Panel>
@@ -475,35 +476,35 @@ function Cohort({ real }) {
   return (
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
-        Patterns across the whole school</h2>
+        Patterns across all consented students</h2>
       {/* The check-in list's count and this one are different populations, so each has
           to say which it means. */}
-      <Sub className="mt-2">All {SCHOOL_N} consented students in the building, not the eight on your
-        own list. Nobody here is identifiable.</Sub>
+      <Sub className="mt-2">All {SCHOOL_N} consented students across the practice, not the eight on
+        your own caseload. Nobody here is identifiable.</Sub>
       <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <h3 className="mark">The two clearest patterns</h3>
           <RuleDraw className="mt-2.5"/>
           <ScrollIn className="mt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
-              {top.label} shows a school-wide stress spike.</h4>
-            <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
-              <li>Mean <b className="font-medium text-ink">{top.mean}</b> against a school average
-                of {avg}, <b className="font-medium text-warn">
-                {Math.round(((top.mean - avg) / avg) * 100)}% higher</b></li>
-              <li>Across {top.n} consented students in that period</li>
-              <li>Holds across every year group taking it</li>
-            </ul>
+              {top.label} is the clearest spike across the whole group.</h4>
+            <List className="mt-3 max-w-[58ch] text-sec text-ink-2">
+              <Item>Mean <b className="font-medium text-ink">{top.mean}</b> against an all-period
+                average of {avg}, <b className="font-medium text-warn">
+                {Math.round(((top.mean - avg) / avg) * 100)}% higher</b></Item>
+              <Item>Across {top.n} consented students in that period</Item>
+              <Item>Holds across every year group taking it</Item>
+            </List>
           </ScrollIn>
           <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
-              {hardest.full} is the hardest day of the week, school-wide.</h4>
-            <ul className="mt-3 max-w-[58ch] space-y-1.5 text-sec text-ink-2">
-              <li>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
-                average day</li>
-              <li>Exam weeks in junior year run <b className="font-medium text-warn">2.4×</b> the
-                non-exam baseline</li>
-            </ul>
+              {hardest.full} is the hardest day of the week across the whole group.</h4>
+            <List className="mt-3 max-w-[58ch] text-sec text-ink-2">
+              <Item>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
+                average day</Item>
+              <Item>Exam weeks in junior year run <b className="font-medium text-warn">2.4×</b> the
+                non-exam baseline</Item>
+            </List>
           </ScrollIn>
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
         </section>
@@ -570,13 +571,15 @@ function Cohort({ real }) {
         </Panel>
       </div>
 
-      <Panel className="mt-14" label="What a school does with this">
+      <Panel className="mt-14" label={`What a ${PRO_LC} does with this`}>
         {/* Do not restate the period figure here: the panel above computes it, and a
             hard-coded 31% disagrees with it the moment the data moves. */}
-        <ul className="max-w-[64ch] space-y-2 text-sec text-ink-2">
-          <li>Moving one lab section is a single timetable change.</li>
-          <li>The same screen shows whether the mean came down four weeks later.</li>
-        </ul>
+        <List className="max-w-[64ch] text-sec text-ink-2">
+          <Item>A pattern this size is a conversation with the school, never a finding about any
+            one student.</Item>
+          <Item>A check-in can be timed to the period the pattern names.</Item>
+          <Item>The same screen shows whether the mean came down four weeks later.</Item>
+        </List>
       </Panel>
     </>
   )
@@ -588,7 +591,7 @@ function Escalation({ real }) {
   const [closing, setClosing] = React.useState(false)
   const [closed, setClosed] = React.useState(null)
   const toggle = i => setDone(d => d.includes(i) ? d.filter(x => x !== i) : [...d, i])
-  /* Derived rather than branched on at the top: the protocol is the school's own
+  /* Derived rather than branched on at the top: the protocol is the practice's own
      document and stays on screen either way, unticked and untouchable. */
   const ticked = real ? [] : done
   const referrals = real ? [] : REFERRALS
@@ -692,7 +695,8 @@ function Escalation({ real }) {
             ))}
           </TBody>
         </Table>
-        <Note>A student changing their own settings is logged exactly like a staff action.{' '}
+        <Note>A student changing their own settings is logged exactly like a {PRO_LC}&rsquo;s
+          own action.{' '}
           {real ? 'The log cannot be edited or deleted.'
                 : 'Step five is still open, so there is no closing entry yet.'}</Note>
       </Panel>
@@ -703,13 +707,13 @@ function Escalation({ real }) {
 /* ── Consent ────────────────────────────────────────────────────────────── */
 const FACTS = [
   ['Raw biometrics visible to parents', 'Never'],
-  ['Raw biometrics visible to medical professionals', 'Only with student consent'],
+  [`Raw biometrics visible to ${PRO_PLURAL_LC}`, 'Only with student consent'],
   ['Data sold or shared with third parties', 'Never'],
   ['Location collected by default', 'No'],
 ]
 function Consent({ real }) {
   /* Only the rows are conditional. Every statement on this tab is policy, which is
-     as true of a school with nobody enrolled as of a full one. */
+     as true of a practice with nobody consented as of a full one. */
   const ledger = real ? [] : CONSENT_LEDGER
   const log = real ? [] : AUDIT_LOG
   return (
@@ -795,7 +799,7 @@ export function Pro({ go }) {
   const onTab = v => { setTab(v); announce(`Showing ${TABS.find(t => t[0] === v)[1]}`) }
   const openStudent = name => { setWho(name); setTab('student'); announce(`Opened the record for ${name}`) }
   /* Every tab takes the flag rather than the console swapping wholesale: the policy
-     statements hold for an empty school as for a full one. Only the rows go. */
+     statements hold for an empty caseload as for a full one. Only the rows go. */
   const PANES = {
     triage: () => <Triage onOpen={openStudent} real={real}/>,
     student: () => <OneStudent who={who} setWho={setWho} real={real}/>,
@@ -805,38 +809,44 @@ export function Pro({ go }) {
   }
   return (
     <main>
-      {/* The screen header, same construction as views/shell.jsx so the four app screens
-          open the same way. Card ground, no texture, a hairline against the canvas.
-          Measured on card #ffffff: ink 14.92, ink-2 8.31, warn 5.78, crit 6.69; the
-          weakest clears 4.5 : 1. The closing hairline is ink-3 at 5.99. */}
-      <div className="border-b border-ink-3 bg-card">
-        <div className="wrap !py-5 lg:!py-6">
-          <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-            What a medical professional sees</h1>
-          <p className="mt-2 max-w-[60ch] text-sec text-ink-2">
-            Only students who consented appear, and each one only to the extent their guardian agreed.
-            Groups under five return nothing.</p>
-          {real
-            ? <RealNotice className="mt-3">No student has paired a patch and no guardian has signed
-                a scope, so this list is empty.</RealNotice>
-            : <DemoNotice className="mt-3">Every figure here is generated. No student was measured.</DemoNotice>}
-        </div>
-      </div>
-      <div className="wrap py-14">
-      <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      {/* One definition in ui/tabs, so the two consoles cannot drift. */}
+      {/* One definition in ui/tabs, so the two consoles cannot drift. The root wraps the
+          header as well, because this console's strip belongs to the chrome. */}
       <Tabs value={tab} onValueChange={onTab}>
-        <TabsList aria-label="Medical Professional views">
-          {TABS.map(([v, label]) => (
-            <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
-          ))}
-        </TabsList>
-        {TABS.map(([v]) => {
-          const Pane = PANES[v]
-          return <TabsContent key={v} value={v}><Pane/></TabsContent>
-        })}
+        {/* No screen header. The app's top bar names the screen; a band under it
+            reading "What a medical professional sees" described the product to
+            the person already using it. The consent rule it carried is real, so
+            that sentence moved down into the console itself.
+
+            These five tabs are the console's whole navigation, so they stay
+            chrome: card ground, and from sm up stuck beneath the app's 48px top
+            bar. At 390 the strip scrolls sideways rather than wrapping to three
+            rows, which cost a third of the viewport.
+            Contrast on card #ffffff: ink 14.92, ink-2 8.31, warn 5.78, crit 6.69. */}
+        <div className="border-b border-ink bg-card sm:sticky sm:top-12 sm:z-30">
+          <div className="wrap !py-0">
+            <TabsList aria-label={`${PRO} views`} scroll className="gap-x-6 border-b-0">
+              {TABS.map(([v, label]) => (
+                <TabsTrigger key={v} value={v}>{label}</TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </div>
+
+        <div className="wrap !pt-5 pb-14">
+          <p aria-live="polite" className="sr-only text-sec">{said}</p>
+          <p className="max-w-[62ch] text-sec text-ink-2">
+            Only students who consented appear, and each one only to the extent their guardian
+            agreed. Groups under five return nothing.</p>
+          {real
+            ? <RealNotice className="mb-9 mt-4">No student has paired a patch and no guardian has signed
+                a scope, so this list is empty.</RealNotice>
+            : <DemoNotice className="mb-9 mt-4">Every figure here is generated. No student was measured.</DemoNotice>}
+          {TABS.map(([v]) => {
+            const Pane = PANES[v]
+            return <TabsContent key={v} value={v} className="mt-0"><Pane/></TabsContent>
+          })}
+        </div>
       </Tabs>
-      </div>
     </main>
   )
 }

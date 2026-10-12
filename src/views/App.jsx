@@ -7,7 +7,7 @@ import { Responses } from './Responses'
 import { Intro, introSuppressed } from './Intro'
 import { NameGate } from '../survey/NameGate'
 import { ReviewLauncher } from '../survey/Survey'
-import { PAGE, REQUIRED, SECTIONS } from '../survey/questions'
+import { PAGE, REQUIRED, SECTIONS, questionNumber } from '../survey/questions'
 import {
   answersFor, getVersion, getVisitor,
   isQueued, recordAnswer, submitResponse, subscribe, syncPending, wasSent,
@@ -31,14 +31,14 @@ import { cn } from '../lib/utils'
 /* `app-*` are the dashboards, `student`/`parent`/`pro` the pages that explain
    them. `check` and `privacy` stay because they are already linked. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
-               'app-parent','app-pro','check','privacy','tour','responses','survey',
+               'app-parent','app-pro','check','shared','privacy','tour','responses','survey',
                'kit-student','kit-parent']
 
 /* Routes that render app screens, so the chrome switches: `check` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','privacy',
-                           'kit-student','kit-parent'])
+const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','shared',
+                           'privacy','kit-student','kit-parent'])
 
 /* The palette pushes `hub`, which is not a route; `go` resolves aliases. */
 const ALIAS = { hub: 'app' }
@@ -55,6 +55,7 @@ const TITLE = {
   'app-parent':'The parent screen in MindMap',
   'app-pro':'The medical professional console in MindMap',
   check:'Take a reading in MindMap',
+  shared:'What leaves your phone in MindMap',
   privacy:'Who can see what in MindMap',
   tour:'A guided tour of MindMap',
   responses:'Survey responses in MindMap',
@@ -77,7 +78,7 @@ const AUDIENCE = [
 const SECTION = { site:'site', patch:'patch', 'without-patch':'without-patch',
                   student:'who', parent:'who', pro:'who', survey:'survey',
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
-                  check:null, privacy:null, tour:null, responses:null }
+                  check:null, shared:null, privacy:null, tour:null, responses:null }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -318,6 +319,7 @@ const APP_NAV = {
     ['app-student', 'Today',   PulseMark],
     ['check',       'Reading', DialMark],
     ['kit-student', 'Toolkit', Bracket],
+    ['shared',      'Sharing', Grid],
   ],
   parent: [
     ['app-parent',  'Week',    PulseMark],
@@ -331,12 +333,12 @@ const APP_NAV = {
 
 /* Which app a route belongs to, and which of its tabs it lights. */
 const APP_OF = {
-  'app-student': 'student', check: 'student', 'kit-student': 'student',
+  'app-student': 'student', check: 'student', 'kit-student': 'student', shared: 'student',
   'app-parent': 'parent', privacy: 'parent', 'kit-parent': 'parent',
   'app-pro': 'pro',
 }
 const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
-                  'kit-student':'kit-student', 'app-parent':'app-parent',
+                  'kit-student':'kit-student', shared:'shared', 'app-parent':'app-parent',
                   privacy:'privacy', 'kit-parent':'kit-parent', 'app-pro':'app-pro' }
 
 const APP_TITLE = {
@@ -344,6 +346,7 @@ const APP_TITLE = {
   'app-student':  'Today',
   check:          'Take a reading',
   'kit-student':  'Toolkit',
+  shared:         'Sharing',
   'app-parent':   'This week',
   privacy:        'Sharing',
   'kit-parent':   'Toolkit',
@@ -432,9 +435,11 @@ function AppTopBar({ view, go }) {
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
       <div className="flex h-12 items-center gap-3 px-[22px] sm:px-10 lg:px-14">
         <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar bg-accent"/>
-        <span className="min-w-0 truncate font-display text-tick font-bold text-ink">
+        {/* The screens dropped their own header bands, so this is each app
+            route's only heading and has to be the h1. */}
+        <h1 className="min-w-0 truncate font-display text-tick font-bold text-ink">
           {APP_TITLE[view] || 'App'}
-        </span>
+        </h1>
         <div className="ml-auto flex items-center gap-3">
           <ModeToggle compact className="[&_button]:min-h-[44px]"/>
           <ExitToSite go={go} short/>
@@ -496,43 +501,6 @@ function ScaleField({ q, value, onPick }) {
   )
 }
 
-function ChoiceField({ q, value, onPick }) {
-  return (
-    <div role="radiogroup" aria-label={q.prompt} className="mt-3 flex flex-col">
-      {q.options.map(opt => (
-        <button key={opt} type="button" role="radio" aria-checked={value === opt}
-          onClick={() => onPick(opt, opt)} className={pickClass(value === opt)}>
-          <Bar on={value === opt}/>{opt}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-/* The ends are labelled: an unlabelled 0 to 10 row gets answered backwards.
-   The only bordered cells left in the survey. */
-function NpsField({ q, value, onPick }) {
-  return (
-    <div className="mt-3">
-      <div role="radiogroup" aria-label={q.prompt} className="flex flex-wrap gap-1.5">
-        {Array.from({ length: 11 }, (_, n) => (
-          <button key={n} type="button" role="radio" aria-checked={value === n}
-            aria-label={`${n} out of 10`} onClick={() => onPick(n, String(n))}
-            className={cn('min-h-[44px] min-w-[44px] flex-1 rounded-field border text-ui tabular-nums',
-              'transition-colors duration-150 ease-out',
-              value === n ? 'border-ink bg-ink font-bold text-paper'
-                          : 'border-rule font-medium text-ink-2 hoverOnly:border-ink-3 hoverOnly:bg-mist')}>
-            {n}
-          </button>
-        ))}
-      </div>
-      <div className="mt-2 flex justify-between text-fine text-ink-3">
-        <span>{q.low}</span><span>{q.high}</span>
-      </div>
-    </div>
-  )
-}
-
 function TextField({ q, initial = '', onSave, onSkip }) {
   const [text, setText] = React.useState(initial)
   const empty = !text.trim()
@@ -552,44 +520,18 @@ function TextField({ q, initial = '', onSave, onSkip }) {
   )
 }
 
-function ImpactField({ q, initial, onSave, onSkip }) {
-  const [score, setScore] = React.useState(initial?.score ?? null)
-  const [label, setLabel] = React.useState(initial?.label ?? null)
-  const [note, setNote] = React.useState(initial?.note ?? '')
-  return (
-    <div>
-      <ScaleField q={q} value={score} onPick={(v, l) => { setScore(v); setLabel(l) }}/>
-      <label className="mt-5 block font-display text-ui font-medium text-ink">{q.sentence.prompt}</label>
-      <textarea rows={2} value={note} maxLength={q.sentence.maxLength}
-        placeholder={q.sentence.placeholder} onChange={e => setNote(e.target.value)}
-        className={cn(fieldClass, 'mt-2')}/>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <Button size="sm" type="button" disabled={score == null}
-          onClick={() => onSave({ score, note: note.trim() }, label)}>Save</Button>
-        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>}
-      </div>
-      {score == null && <p className="note mt-2">Pick a point above first.</p>}
-    </div>
-  )
-}
-
 function SurveyField({ q, answer, onAnswer, onSkip }) {
   const v = answer?.value
-  if (q.kind === 'scale')  return <ScaleField q={q} value={v ?? null} onPick={onAnswer}/>
-  if (q.kind === 'choice') return <ChoiceField q={q} value={typeof v === 'string' ? v : null} onPick={onAnswer}/>
-  if (q.kind === 'nps')    return <NpsField q={q} value={typeof v === 'number' ? v : null} onPick={onAnswer}/>
-  if (q.kind === 'text')   return <TextField q={q} initial={typeof v === 'string' ? v : ''}
-                                    onSave={t => onAnswer(t, null)} onSkip={q.optional ? onSkip : undefined}/>
-  if (q.kind === 'stars')  return (
+  if (q.kind === 'scale') return <ScaleField q={q} value={v ?? null} onPick={onAnswer}/>
+  if (q.kind === 'text')  return <TextField q={q} initial={typeof v === 'string' ? v : ''}
+                                   onSave={t => onAnswer(t, null)} onSkip={q.optional ? onSkip : undefined}/>
+  if (q.kind === 'stars') return (
     <div className="mt-3">
       <StarRating label={q.prompt} max={q.max} step={q.step}
         value={typeof v === 'number' ? v : null}
         onChange={n => onAnswer(n, `${n} of ${q.max}`)}/>
     </div>
   )
-  if (q.kind === 'impact') return <ImpactField q={q}
-    initial={v && typeof v === 'object' ? { ...v, label: answer.label } : null}
-    onSave={onAnswer} onSkip={onSkip}/>
   return null
 }
 
@@ -689,6 +631,10 @@ function SurveyPage() {
                   return (
                     <div key={q.id} className="border-t border-rule pt-4">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        {/* The numeral comes from ask order, not the prompt. */}
+                        <span className="font-mono text-fine tabular-nums text-ink-3">
+                          {questionNumber(q.id)}
+                        </span>
                         <p className="max-w-[44ch] font-display text-body font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
                       </div>
@@ -773,6 +719,7 @@ export function App() {
               'app-student': p => <Students {...p} tab="today"/>,
               'app-parent':  p => <Parents  {...p} tab="week"/>,
               check:         p => <Students {...p} tab="check"/>,
+              shared:        p => <Students {...p} tab="shared"/>,
               privacy:       p => <Parents  {...p} tab="shared"/>,
               'kit-student': () => <Toolkit who="student"/>,
               'kit-parent':  () => <Toolkit who="parent"/> }[view]

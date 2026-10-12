@@ -230,7 +230,7 @@ const ROLES = [
     /* Wording is fixed site-wide in lib/terms.js — change it there, not here. */
     title: CASELOAD_TITLE,
     body:`The students whose ${SCORE} moved most since last week, for the ones whose guardian consented to trends. Never a group under five.`,
-    cta:'Open the medical professional console',
+    cta:'Open the console',
     name:`Open the medical professional console: the students whose ${SCORE} moved most since last week.` },
 ]
 

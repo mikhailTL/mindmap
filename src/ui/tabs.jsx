@@ -8,11 +8,20 @@ import { cn } from '@/lib/utils'
    border-color out of the transition list, and no sliding indicator. */
 export const Tabs = TabsPrimitive.Root
 
-export const TabsList = React.forwardRef(function TabsList({ className, ...props }, ref) {
+/* `scroll` is for a strip with more triggers than fit a 390px screen: wrapping
+   one to three rows costs a third of the viewport, so it scrolls sideways
+   instead and bleeds to the gutter edge so the cut tab reads as cut. */
+export const TabsList = React.forwardRef(function TabsList({ className, scroll, ...props }, ref) {
   return (
     <TabsPrimitive.List
       ref={ref}
-      className={cn('flex flex-wrap items-stretch gap-x-7 gap-y-1 border-b border-ink', className)}
+      className={cn(
+        'flex items-stretch gap-x-7 border-b border-ink',
+        scroll
+          ? 'flex-nowrap overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          : 'flex-wrap gap-y-1',
+        className
+      )}
       {...props}
     />
   )

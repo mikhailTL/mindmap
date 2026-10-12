@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, Never } from '../ui/marks'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { DemoNotice } from '../ui/notice'
 import { Progress } from '../ui/progress'
+import { List, Item } from '../ui/list'
 import { WeekChart } from '../charts/week'
 import { Bars, RainbowDial } from '../charts/rainbow'
 import { Spark } from '../charts/primitives'
@@ -17,13 +18,15 @@ import { Parallax2D } from '../ui/motion'
 import { cn } from '../lib/utils'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
+  PRO_LC, PRO_PLURAL_LC, PRO_FOR,
 } from '../lib/terms'
 
-/* The three audience routes: students, parents, schools.
+/* The three audience routes: students, parents, medical professionals.
  *
  * One figure per section, and nothing on the student or parent page is
- * clickable except the door into the app. The schools page is deliberately the
- * dense one — that asymmetry is intended, so do not even out the three.
+ * clickable except the door into the app. The medical professional page is
+ * deliberately the dense one — that asymmetry is intended, so do not even out
+ * the three.
  *
  * All consent wording comes from lib/terms.js verbatim so the three pages
  * cannot drift apart on it. */
@@ -168,8 +171,8 @@ export function ForStudents({ go }) {
 
       <Section name="Your privacy" tone="mist" tight>
         <SectionHead>Nothing leaves your phone unless you say so</SectionHead>
-        <SectionLede>Parents and schools see a {SCORE} and a week. {NOTES} and {LOCATION} never
-          leave your phone.</SectionLede>
+        <SectionLede>Parents and {PRO_PLURAL_LC} see a {SCORE} and a week. {NOTES} and {LOCATION}
+          never leave your phone.</SectionLede>
       </Section>
 
       <Closer go={go} view="app-student" label="Open the student screen" title="The student screen"
@@ -196,15 +199,16 @@ function SeenUnseen() {
         <Parallax2D key={head} distance={ci ? 18 : 34} className="h-full [&>div]:h-full">
         <div className="field h-full p-5 sm:p-6">
           <h3 className="font-display text-head font-bold text-ink">{head}</h3>
-          <ul className="m-0 mt-4 list-none space-y-3.5 p-0">
+          {/* The tick or the bar is this row's marker, so the list's own is off. */}
+          <List className="mt-4 gap-3.5">
             {rows.map(r => (
-              <li key={r} className="flex items-start gap-3 text-sec text-ink-2">
-                {yes ? <Check aria-hidden className="mt-1 size-5 text-accent"/>
-                     : <Never aria-hidden className="mt-1 size-5 text-ink-3"/>}
+              <Item key={r} marker="none" className="gap-3 text-sec text-ink-2">
+                {yes ? <Check aria-hidden className="mt-1 size-5 shrink-0 text-accent"/>
+                     : <Never aria-hidden className="mt-1 size-5 shrink-0 text-ink-3"/>}
                 <span>{r}</span>
-              </li>
+              </Item>
             ))}
-          </ul>
+          </List>
         </div>
         </Parallax2D>
       ))}
@@ -239,7 +243,7 @@ export function ForParents({ go }) {
       </Section>
 
       {/* Consent is per audience: granting a week to a parent grants nothing
-          to the school. CONSENT_SHORT states who decides. */}
+          to a medical professional. CONSENT_SHORT states who decides. */}
       <Section name="Sharing" tone="paper" tight>
         <SectionHead>Sharing is set per audience</SectionHead>
         <SectionLede>{CONSENT_SHORT}</SectionLede>
@@ -258,7 +262,7 @@ export function ForParents({ go }) {
   )
 }
 
-/* ═══════════════════════════════ for schools ════════════════════════════ */
+/* ═══════════════════════════════ for medical professionals ══════════════ */
 
 /* `Bars` takes a paint, not a class, so accent is passed by value. #0a6e68 is
    what the token resolves to — keep them in step. */
@@ -350,16 +354,16 @@ function SmallGroups() {
 export function ForSchools({ go }) {
   return (
     <main>
-      <Hero go={go} label="For Medical Professionals" photo="pro-hero"
-        photoAlt="A medical professional and a student talking, the MindMap patch on the student’s upper arm"
-        title="What a medical professional sees."
-        lede="Whole-school patterns, and a floor under small groups."/>
+      <Hero go={go} label={PRO_FOR} photo="pro-hero"
+        photoAlt={`A ${PRO_LC} and a student talking, the MindMap patch on the student’s upper arm`}
+        title={`What a ${PRO_LC} sees.`}
+        lede="Caseload-wide patterns, and a floor under small groups."/>
 
-      <Section name="The whole school" tone="paper">
-        <SectionHead>How the school week runs</SectionHead>
+      <Section name="Across the caseload" tone="paper">
+        <SectionHead>How the week runs</SectionHead>
         {/* The consent qualifier appears once per page. Bars inks the peak, so
             no sentence should name the tallest bar. */}
-        <SectionLede>Mean {SCORE}, all {SCHOOL_N} students sharing with the school.</SectionLede>
+        <SectionLede>Mean {SCORE}, all {SCHOOL_N} students sharing with a {PRO_LC}.</SectionLede>
         <Fig drift={30}>
           {/* Width cap: `Bars` splits its width evenly between five bars, and
               at 1360px each is wider than it is tall. */}
@@ -388,7 +392,7 @@ export function ForSchools({ go }) {
           and every record opened is logged with no setting to turn it off. The
           full who-sees-what matrix is on the overview and privacy pages. */}
       <Section name="Access" tone="paper">
-        <SectionHead>What a medical professional gets</SectionHead>
+        <SectionHead>What a {PRO_LC} gets</SectionHead>
         <SectionLede>A {SCORE}, and the direction it moved.</SectionLede>
         <p className="mt-5 max-w-[54ch] text-sec leading-[1.55] text-ink-2">
           Never a single reading. Never {NOTES}. Never {LOCATION}.</p>
@@ -396,7 +400,8 @@ export function ForSchools({ go }) {
           Every record opened is logged. No setting turns the log off.</p>
       </Section>
 
-      <Closer go={go} view="app-pro" label="Open the medical professional console" title="The medical professional console"
+      <Closer go={go} view="app-pro" label="Open the console"
+        title={`The ${PRO_LC} console`}
         line="The check-in list and the audit log. Sample students only."/>
     </main>
   )
