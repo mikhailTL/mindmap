@@ -13,6 +13,7 @@ import { analysePPG } from '../signals/ppg'
 import { analyseVoice } from '../signals/voice'
 import { askMotion, startMotion, MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateBaseline } from '../signals/score'
+import { fitCalibration, identityCalibration } from '../signals/tnam'
 import { SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 
@@ -36,6 +37,19 @@ function loadBaseline() {
 }
 function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
+
+/* The person's check-in answers, and the calibration fitted from them: one
+   gain per model curve, kept on this device like the baseline. Each answer is
+   the model's view of that reading plus what the person said; no raw signal. */
+const CHECKINS = 'mindmap.phone.checkins'
+function loadCheckins() {
+  try {
+    const raw = localStorage.getItem(CHECKINS)
+    const a = raw ? JSON.parse(raw) : []
+    return Array.isArray(a) ? a.filter(e => Array.isArray(e.contributions)) : []
+  } catch { return [] }
+}
+function saveCheckins(a) { try { localStorage.setItem(CHECKINS, JSON.stringify(a)) } catch {} }
 
 /* The beating waveform is the only feedback that confirms finger placement
    before the capture window is spent. Keep it live. */
@@ -87,10 +101,18 @@ export function PhoneCheck() {
   const [result, setResult] = React.useState(null)
   const [detail, setDetail] = React.useState(null)
   const [baseline, setBaseline] = React.useState(emptyBaseline)
+  const [checkins, setCheckins] = React.useState([])
+  const [calibration, setCalibration] = React.useState(identityCalibration)
+  const [answered, setAnswered] = React.useState(false)
   const videoRef = React.useRef(null)
   const live = React.useRef({ cam: null, ppg: null, motion: null })
 
-  React.useEffect(() => { setBaseline(loadBaseline()) }, [])
+  React.useEffect(() => {
+    setBaseline(loadBaseline())
+    const past = loadCheckins()
+    setCheckins(past)
+    setCalibration(fitCalibration(past))
+  }, [])
   /* Leaving mid-reading unmounts this screen, so the cleanup is the only thing
      that stops the capture. The camera track and the frame loop end here, and
      so does the accelerometer listener. The microphone is the one exception:
@@ -143,12 +165,13 @@ export function PhoneCheck() {
 
       if (!ppg.ok) { setError(ppg.message); setPhase('idle'); return }
 
-      const scored = scoreCapture({ ppg, voice, motion: move, baseline })
+      const scored = scoreCapture({ ppg, voice, motion: move, baseline, calibration })
       if (!scored.ok) { setError('Nothing came through to score. Try again.'); setPhase('idle'); return }
 
       const next = updateBaseline(baseline, featuresFrom({ ppg, voice }), dayKey())
       setBaseline(next); saveBaseline(next)
       setResult(scored)
+      setAnswered(false)
       setDetail({ ppg, voice, move, torch: cam.torch })
       setPhase('done')
     } catch (e) {
@@ -159,6 +182,16 @@ export function PhoneCheck() {
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
+  }
+
+  /* One answer becomes one label; the calibration is refitted on all of them.
+     A reading taken while moving is not labelled: the model did not score it. */
+  const answer = stressed => {
+    if (!result?.model || result.held) return
+    const next = [...checkins, { contributions: result.model.contributions, temporal: result.model.temporal, label: stressed ? 1 : 0, day: dayKey() }].slice(-200)
+    setCheckins(next); saveCheckins(next)
+    setCalibration(fitCalibration(next))
+    setAnswered(true)
   }
 
   const busy = phase === 'camera' || phase === 'voice' || phase === 'working'
@@ -302,6 +335,34 @@ export function PhoneCheck() {
                     <p className="mt-5 max-w-[44ch] border-l-2 border-warn pl-3 text-sec text-warn">
                       {result.holdReason}
                     </p>
+                  )}
+
+                  {/* The check-in. The answer is the label the model learns this
+                      person from: one gain per signal, refitted here, on this
+                      device. Eight answers took a lab-trained model from 0.78 to
+                      0.95 on people it had never seen (see tnam-results.js). */}
+                  {!result.held && (
+                    <div className="mt-6 border-t border-line pt-5">
+                      {!answered ? (
+                        <>
+                          <p className="max-w-[40ch] text-sec text-ink">Does this match how you feel right now?</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button onClick={() => answer(true)}>Stressed</Button>
+                            <Button variant="outline" onClick={() => answer(false)}>Fine</Button>
+                          </div>
+                          <p className="mt-3 max-w-[44ch] text-meta text-ink-3">
+                            {checkins.length === 0
+                              ? 'Your first answer starts your personal calibration.'
+                              : `${checkins.length} answer${checkins.length === 1 ? '' : 's'} so far shape how your readings are weighed.`}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="max-w-[44ch] text-sec text-ink-2">
+                          Noted. <span className="font-mono tabular-nums">{checkins.length}</span> answer{checkins.length === 1 ? '' : 's'} now
+                          shape how your readings are weighed. The next reading uses them.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

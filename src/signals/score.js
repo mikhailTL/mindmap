@@ -1,20 +1,31 @@
 import { MOVE_LIMIT_G } from './motion.js'
+import {
+  FEATURES, ORDINARY_LOGIT, SCORE_TEMPERATURE, calibratedContributions, calibratedLogit,
+  forward, identityCalibration,
+} from './tnam.js'
 
-/* One score, from whichever channels the phone got. Same last step and same K
- * as the patch and self-report routes, so all three land on one scale.
+/* One score, from whichever channels the phone got. Same scale as the patch
+ * and self-report routes, so all three land on one dial.
  *
  * Every feature enters as a z-score against the same person's own history,
  * captured the same way. That is what lets a camera HRV index sit beside a
  * patch RMSSD: a fixed scale difference between methods cancels against each
- * method's own baseline. */
+ * method's own baseline.
+ *
+ * The heart terms go through the Mind Score model (tnam.js): the learned curve
+ * for heart rate and the one for beat-to-beat variation, with this person's
+ * calibration gains on top. The voice terms keep the hand allocation below —
+ * no public dataset pairs the camera-and-microphone capture with stress
+ * labels, so there is nothing to fit them against yet. */
 const K = 2.4                   /* the logistic constant the other two routes use */
 
 /* The sign carries direction:
  *   heart rate up                                     -> load up
  *   beat-to-beat variation down                       -> load up (weight < 0)
  *   pitch up, pitch less steady, loudness less steady -> load up
- * Weights are a starting allocation, NOT fitted — nothing here is trained on a
- * person. Heart terms carry more because the patch leans on those two. */
+ * Heart weights are now only used for the confidence band's channel
+ * bookkeeping; their contribution to the score comes from the model. Voice
+ * weights are a starting allocation, NOT fitted. */
 export const TERMS = [
   { id: 'hr',        ch: 'heart', w:  1.2, label: 'Heart rate' },
   { id: 'hrv',       ch: 'heart', w: -1.4, label: 'Beat-to-beat variation' },
@@ -85,31 +96,54 @@ export function featuresFrom({ ppg, voice }) {
   return f
 }
 
-export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline() }) {
+export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), calibration = identityCalibration(), history = [] }) {
   const features = featuresFrom({ ppg, voice })
   const used = TERMS.filter(t => features[t.id] != null && Number.isFinite(features[t.id]))
   if (!used.length) {
     return { ok: false, reason: 'no-signal', message: 'Nothing came through to score.' }
   }
 
-  const contrib = used.map(t => {
-    const z = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
-    return { ...t, value: features[t.id], z, raw: t.w * z }
-  })
+  const z = {}
+  for (const t of used) z[t.id] = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
+
+  /* Heart, through the model. A signal the phone cannot read enters as 0 —
+     "at your usual" — which is what the model was trained to tolerate. Motion
+     enters on the patch's scale, 1 = the 0.35 g line. */
+  const peakG = motion?.ok ? motion.peak : 0
+  const x = FEATURES.map(k =>
+    k === 'hr' && z.hr != null ? z.hr
+    : k === 'rmssd' && z.hrv != null ? z.hrv
+    : k === 'motion' ? clamp(peakG / MOVE_LIMIT_G, 0, 1)
+    : 0)
+  const fw = forward(x, history)
+  const cc = calibratedContributions(fw, calibration)
+  /* Display units: the model's logit relative to an ordinary day, spread by
+     the display temperature. Zero means "your usual". */
+  const heart = (calibratedLogit(fw, calibration) - ORDINARY_LOGIT) / SCORE_TEMPERATURE
+
+  /* Voice, by hand, in the same display units the formula used. */
   const wTotal = TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
-  const wSum = used.reduce((a, t) => a + Math.abs(t.w), 0)
-  /* Floor the divisor at 55% of full weight. Dividing by only the weight
-     present lets one surviving channel speak for all: a heart-only capture at
-     3 sd scored 97 against 93 with voice attached, so losing a channel raised
-     the score. */
-  const S = contrib.reduce((a, c) => a + c.raw, 0) / Math.max(wSum, 0.55 * wTotal) / 2
-  const score = Math.round(100 / (1 + Math.exp(-K * S)))
+  const voiceD = used.filter(t => t.ch === 'voice').reduce((a, t) => a + (K * t.w * z[t.id]) / wTotal / 2, 0)
+
+  const D = heart + voiceD
+  const score = Math.round(100 / (1 + Math.exp(-D)))
+
+  const contrib = used.map(t => {
+    const raw = t.ch === 'heart'
+      ? (t.id === 'hr' ? cc.hr : cc.rmssd) / SCORE_TEMPERATURE
+      : (K * t.w * z[t.id]) / wTotal / 2
+    return { ...t, value: features[t.id], z: z[t.id], raw }
+  })
+  if (history.length && Math.abs(cc.temporal) > 0.05) {
+    contrib.push({ id: 'temporal', ch: 'heart', w: 0, label: 'Pattern across recent readings', value: null, z: 0, raw: cc.temporal / SCORE_TEMPERATURE })
+  }
 
   /* Band. Three shortfalls widen it: missing channels, poor camera signal, and
      a baseline too short to define this person's normal. Summed in quadrature
-     as standard deviations on S, then carried through the logistic by its
-     slope at the score — hence 100*K*p*(1-p). */
-  const chPresent = new Set(contrib.map(c => c.ch))
+     as standard deviations on S = D/K, then carried through the logistic by
+     its slope at the score — hence 100*K*p*(1-p). */
+  const S = D / K
+  const chPresent = new Set(contrib.filter(c => c.id !== 'temporal').map(c => c.ch))
   const missingW = TERMS.filter(t => !used.includes(t)).reduce((a, t) => a + Math.abs(t.w), 0)
   const sMissing = 0.55 * (missingW / wTotal)
   const sQuality = 0.45 * (1 - (ppg?.quality ?? 0))
@@ -123,6 +157,9 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline() })
   return {
     ok: true,
     score, S, contrib, features,
+    /* What the model saw, kept so a check-in answer can become a label. */
+    model: { contributions: FEATURES.map(k => fw.contributions[k]), temporal: fw.temporal, logit: fw.logit },
+    calibrationLabels: calibration.n || 0,
     low: Math.max(0, score - half), high: Math.min(100, score + half), half,
     channels: [...chPresent],
     missing: TERMS.filter(t => !used.includes(t)).map(t => t.ch)
