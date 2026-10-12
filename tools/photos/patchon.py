@@ -16,8 +16,9 @@ the sprite is a tall oval, `angle` turns its long axis to lie ALONG the arm
 import math
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 import numpy as np
+import os
 
-SPRITE = '/mnt/user-data/uploads/Desktop/mindmap-patient-react/_work/sprite.png'
+SPRITE = os.environ.get('MINDMAP_SPRITE', './_work/sprite.png')
 
 
 def _cylinder(sprite, bend):
@@ -73,6 +74,26 @@ def _scene_tint(photo, box):
     mean = a.reshape(-1, 3).mean(axis=0)
     lum = 0.2126 * mean[0] + 0.7152 * mean[1] + 0.0722 * mean[2]
     return mean / max(1e-6, lum)
+
+
+# The device, from the enclosure spec: pod + adhesive base assembled,
+# 54.0 x 36.0 x 10.2 mm maximum. 36 mm is the dimension that lies across the
+# arm; 54 mm runs along it. For scale: a Dexcom G6 transmitter is about
+# 38 x 23 mm and a Freestyle Libre sensor is a 35 mm disc, so this reads
+# noticeably chunkier than either, and that is correct.
+PATCH_MM_ACROSS = 36.0
+PATCH_MM_ALONG = 54.0
+
+
+def arm_fraction(arm_mm):
+    """How much of the visible width of an arm the patch covers.
+
+    Width is derived, never chosen by eye: the patch is 36 mm across, so on an
+    arm `arm_mm` wide in the photograph it covers 36/arm_mm of it. Every call
+    site states the arm it assumed, so the number is arguable instead of
+    arbitrary — which is the point, because this has been drawn too small
+    before."""
+    return PATCH_MM_ACROSS / float(arm_mm)
 
 
 def place(photo, *, cx, cy, width, angle=0.0, bend=0.16, light=0.85, tint=0.30,

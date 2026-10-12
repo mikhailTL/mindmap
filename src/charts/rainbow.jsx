@@ -287,6 +287,49 @@ function Band({ r, glow, pct, dim }) {
   )
 }
 
+/* The harm anchor: the reader's own usual day, drawn on the scale.
+ *
+ * Zikmund-Fisher et al. (2018) showed 1,618 people a lab result as a number
+ * on a scale, and separately as the same number on a scale carrying a
+ * labelled threshold — "Many doctors are not concerned until here". For a
+ * near-normal value the threshold cut the share who said they would contact a
+ * doctor urgently from 48-58% down to 35%, and it did not blunt the response
+ * to genuinely extreme values, which stayed the same across every display.
+ *
+ * A stress score has exactly that failure mode. 51 out of 100 is an ordinary
+ * Tuesday, and a reader with no reference point reads anything past the
+ * middle of a scale as bad news. The usual day was already printed here, as a
+ * sentence under the arch. A sentence under a picture is not an anchor: the
+ * finding is about a mark on the scale the number is read against. So it is
+ * now a mark on the scale, and the sentence under it says what the mark is.
+ *
+ * Zikmund-Fisher, B. J., Scherer, A. M., Witteman, H. O., Solomon, J. B.,
+ * Exe, N. L., & Fagerlin, A. (2018). Effect of harm anchors in visual displays
+ * of test results on patient perceptions of urgency about near-normal values:
+ * experimental study. Journal of Medical Internet Research, 20(3), e98.
+ * https://doi.org/10.2196/jmir.8889
+ *
+ * Two strokes, not one. A single dark hairline crossing four saturated bands
+ * disappears into whichever band is darkest; the pale stroke under it is what
+ * makes the mark one object instead of four interruptions. */
+function UsualMark({ at }) {
+  const deg = 180 + 1.8 * Math.max(0, Math.min(100, at))
+  const [x1, y1] = pol(RADII[3] - BAND / 2 - 5, deg)
+  const [x2, y2] = pol(RADII[0] + BAND / 2 + 6, deg)
+  const line = w => <line x1={x1.toFixed(2)} y1={y1.toFixed(2)}
+    x2={x2.toFixed(2)} y2={y2.toFixed(2)} strokeWidth={w} strokeLinecap="round"/>
+  /* A line alone reads as a scratch on the drawing. The head at its outer end
+     is what makes it a mark somebody put there on purpose. */
+  return (
+    <g aria-hidden>
+      <g stroke="#f7fbfa" strokeOpacity="0.95">{line(6)}</g>
+      <g stroke="#0b2b33" strokeOpacity="0.62">{line(2.2)}</g>
+      <circle cx={x2.toFixed(2)} cy={y2.toFixed(2)} r="3.2"
+        fill="#0b2b33" fillOpacity="0.62" stroke="#f7fbfa" strokeOpacity="0.95" strokeWidth="1.4"/>
+    </g>
+  )
+}
+
 export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, plate = false, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
@@ -314,7 +357,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
     <div className={cn('w-full shrink-0', className)} style={{ maxWidth: size }}>
       <div ref={boxRef} role="img" onClick={hit} className="relative"
         style={{ aspectRatio: `${VW} / ${VH}`, cursor: onPick ? 'pointer' : undefined }}
-        aria-label={`${score} out of 100${usual != null ? `, usually ${usual}` : ''}. 0 is calm, 100 is peak.
+        aria-label={`${score} out of 100${usual != null ? `, marked against a usual day of ${usual}` : ''}. 0 is calm, 100 is peak.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
           {/* The asset's own sky, off unless a call site asks for it. Drawn,
@@ -337,6 +380,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
           {/* last, because every band paints a full-length mist track and
               anything drawn before them is painted out */}
           <ArchWeather/>
+          {usual != null && <UsualMark at={usual}/>}
         </svg>
         {/* the score rides over the arch in real HTML, so it uses the display
             face and a step off the scale rather than a size the viewBox
@@ -359,7 +403,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
-          usually <b className="font-medium text-ink">{usual}</b></p>
+          The mark is a usual day: <b className="font-medium text-ink">{usual}</b></p>
       )}
     </div>
   )

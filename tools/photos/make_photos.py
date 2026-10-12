@@ -8,7 +8,7 @@ somebody's head — which is the one way these have gone wrong before.
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image
-from patchon import place, crop_to
+from patchon import place, crop_to, arm_fraction
 
 S = os.environ.get('MINDMAP_PLATES', './_work')
 OUT = f'{S}/photos'
@@ -22,12 +22,24 @@ def load(n):
     return Image.open(f'{S}/plates/{n}.jpg')
 
 # --- the two plates that carry the patch ----------------------------------
-# ball: upper arm vertical, patch on the outer face, long axis along the arm
-ball = place(load('ball'), cx=0.7755, cy=0.445, width=0.047 * 0.47,
-             angle=0.0, bend=0.16, tint=0.35)
-# pro: the arm leans, so the patch leans with it
-pro = place(load('pro'), cx=0.7675, cy=0.675, width=0.0365 * 0.46,
-            angle=0.15, bend=0.16, tint=0.35)
+# Size comes from the enclosure spec, not from the eye: the assembled pod and
+# base are 54 x 36 mm, so the only judgement call left per photograph is how
+# wide the arm in it is. That is stated here and nowhere else.
+#
+#   ARM_FRAC   the visible width of the arm, as a fraction of the plate's width
+#   arm_mm     what that arm is taken to be across, in millimetres
+#
+# ball: a lean teenager, low on the upper arm where it has already tapered,
+# taken as 68 mm across (a 21 cm circumference). The patch is then 0.53 of the
+# visible arm — noticeably chunkier than a Freestyle Libre's 35 mm disc, which
+# is correct, because 36 x 54 mm is a bigger object than either that or a
+# Dexcom G6.
+ball = place(load('ball'), cx=0.7755, cy=0.448,
+             width=0.047 * arm_fraction(68), angle=0.0, bend=0.16, tint=0.35)
+# pro: a fuller arm, taken as 72 mm across. The arm leans, so the patch leans
+# with it.
+pro = place(load('pro'), cx=0.7675, cy=0.678,
+            width=0.0365 * arm_fraction(72), angle=0.15, bend=0.16, tint=0.35)
 
 walk, game, parent = load('walk'), load('game2'), load('parent')
 

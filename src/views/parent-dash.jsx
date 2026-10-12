@@ -422,7 +422,7 @@ export function ParentDash({ go, openTab }) {
       )}
 
       <p className="mt-14 max-w-[70ch] text-meta text-ink-3">MindMap reports patterns in body signals.
-        It is not a medical device, it does not diagnose or treat any condition, and nothing on this
+        It is not a medical device. It does not diagnose or treat any condition. Nothing on this
         screen is a clinical finding.</p>
     </>
   )

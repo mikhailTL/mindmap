@@ -115,12 +115,12 @@ const ListHead = () => (
    empty one, so it is written once. */
 const LIST_NOTE = (
   <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
-    Change this week is the move in a student&rsquo;s seven-day average from one week to the next,
-    and it is what puts this list in order: a student up 15 points from 55 comes before a student
-    level at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is
-    not a student in trouble. A student whose guardian consented to crisis alerts only is never on
-    this list at all, and no raw reading, Notes entry or location is on it at any depth. Counselor
-    notes live in a student&rsquo;s own record, and saving one writes a row to the audit log.</p>
+    Change this week is the move in a student&rsquo;s seven-day average from one week to the next.
+    It is what puts this list in order. A student up 15 points from 55 comes before a student level
+    at 70. That is what makes a check-in land before a problem grows. A low, steady {SCORE} is not a
+    student in trouble. A student whose guardian consented to crisis alerts only is never on this
+    list. No raw reading, Notes entry or location is on it at any depth. Counselor notes live in a
+    student&rsquo;s own record. Saving one writes a row to the audit log.</p>
 )
 
 function Row({ s, n, onOpen }) {

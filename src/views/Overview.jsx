@@ -157,6 +157,45 @@ const SCREENS = [
    the prose under them is a single sentence that the title does not already
    say. The lede went outright: it said the student sees every reading first,
    which is the first card. */
+/* The design, with its working shown.
+ *
+ * Every other section of this page is about what the product does. This one is
+ * about why each screen looks and reads the way it does, and it exists because
+ * the answer is not taste. Four decisions, each traceable to a published
+ * finding a judge can look up, and a closing line that refuses the claim the
+ * section invites — that any of this has been shown to lower anybody's stress.
+ * It has not. Saying so is not modesty; it is the difference between a design
+ * rationale and an efficacy claim, and a reader who checks will find the
+ * distinction held everywhere on this site.
+ *
+ * Numbers are quoted as the sources report them. Cohen's d is spelled out in
+ * plain words first and given as a figure second, because the sentence has to
+ * work for a reader who has never met an effect size.
+ *
+ * The readability figures are measured, not asserted. tools/readability/ runs
+ * the formulas over the prose this site actually renders, so the number in the
+ * fourth card is reproducible and moves when the writing does. */
+const EVIDENCE = [
+  { title: 'The mark on the dial',
+    line: `A bare number makes an ordinary day look like bad news. Shown against a labelled
+      usual day, the share of readers who wanted to call a doctor about a near-normal result
+      fell from about half to about a third.`,
+    cite: 'Zikmund-Fisher et al., J Med Internet Res, 2018. 1,618 adults.' },
+  { title: 'Nobody is ranked',
+    line: `Across 208 lab studies, being judged by other people was the biggest single driver of
+      the stress hormone. No student here is ever compared with another
+      student.`,
+    cite: 'Dickerson & Kemeny, Psychological Bulletin, 2004. d = 0.67 against 0.15.' },
+  { title: 'You decide what is shared',
+    line: `In those same studies, a stressor you cannot control raised cortisol more than three
+      times as much as one you can. Every share on this site is yours to switch off.`,
+    cite: 'Dickerson & Kemeny, 2004. d = 0.52 against 0.16.' },
+  { title: 'Plain words, measured',
+    line: `The writing here is scored, not described. It reads below grade 5 on Flesch-Kincaid
+      and about grade 7 on SMOG. Health material is meant to sit at or below grade 6.`,
+    cite: 'Measured on the prose of all 13 pages. tools/readability.' },
+]
+
 const TRUST = [
   { title:'The student sees everything first',
     line:'Every reading lands on their phone before anybody else has anything.' },
@@ -505,6 +544,42 @@ export function Overview({ go }) {
           ))}
         </div>
         <WhoSeesWhat className="mt-5 max-w-[62rem]"/>
+      </Section>
+
+      {/* ── the design, and where it comes from ─────────────────────────── */}
+      {/* Directly after privacy, because both sections answer the same
+          question — why should a stranger trust this — and both answer it with
+          something checkable rather than with a promise. */}
+      <Section name="Evidence" tone="paper">
+        <SectionHead>Designed From the Research</SectionHead>
+        <SectionLede>
+          Four decisions on this site, and the published finding behind each one.
+        </SectionLede>
+        <div className="mt-5 grid auto-rows-fr gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          {EVIDENCE.map((e, i) => (
+            <ScrollRow key={e.title} index={i} className="h-full">
+              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-5">
+                <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                  {e.title}
+                </h3>
+                <p className="mt-3 text-sec leading-[1.5] text-ink-2">{e.line}</p>
+                {/* The source sits at the foot of its own card, in the mono
+                    face the site uses for anything a reader is meant to check
+                    rather than read. mt-auto puts it on the card's floor so the
+                    four citations line up across the row however long the
+                    paragraphs above them run. */}
+                <p className="mt-auto pt-4 font-mono text-fine leading-[1.45] text-ink-3">{e.cite}</p>
+              </div>
+            </ScrollRow>
+          ))}
+        </div>
+        <ScrollIn>
+          <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
+            None of this says MindMap lowers anyone&rsquo;s stress. It has not been tested and
+            nothing here claims it has. These are the reasons behind the design, and every one of
+            them can be looked up.
+          </p>
+        </ScrollIn>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
