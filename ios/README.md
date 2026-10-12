@@ -1,5 +1,21 @@
 # MindMap for iOS
 
+> ### The scorer in here is out of date
+>
+> `MindScoreNetwork.swift` and `Resources/net-weights.json` are a port of a
+> network that has since been retired from the web app. That network was fitted
+> to a hand-written reference formula rather than to people. The Mind Score is
+> now computed by the model in `src/signals/tnam.js`: a Temporal Neural Additive
+> Model, 4,572 weights, trained on WESAD and evaluated leave-one-subject-out,
+> with a per-person calibration layer on top. `src/signals/tnam-results.js` holds
+> the numbers.
+>
+> Porting that model to Swift is the next job in this directory, and the two
+> generator scripts that used to copy the old weights across have been deleted
+> along with the module they read. Until the port lands, the Swift scorer agrees
+> with a model the web app no longer uses, and nothing in here should be
+> presented as the current Mind Score.
+
 The native counterpart to the React app in this repo. Same product, same
 vocabulary, same scorer: the Swift network in `Scoring/` runs the weights the
 web app runs, and the unit tests check it against the web app's own answers.

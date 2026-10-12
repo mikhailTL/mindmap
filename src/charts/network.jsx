@@ -1,311 +1,335 @@
 import React from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { ARCH, PARAM_COUNT, SIGNALS, Z_LIMIT, edge, edgeMax, reference, run } from '../signals/net'
+import {
+  CONTEXT_WINDOWS, FEATURES, ORDINARY_LOGIT, PARAM_COUNT, SCORE_TEMPERATURE,
+  displayScore, forward,
+} from '../signals/tnam'
+import { TNAM_RESULTS as R } from '../signals/tnam-results'
+import { bandOf } from '../signals/score'
+import { MOVE_LIMIT_G } from '../signals/motion'
 import { SENSORS } from '../lib/sensors'
-import { ScrollIn, RuleDraw } from '../ui/motion'
+import { RuleDraw, ScrollIn } from '../ui/motion'
 import { cn } from '../lib/utils'
 
-/* The Mind Score network, drawn from the network itself.
+/* The Mind Score model, drawn from the model.
  *
- * Nothing here is an illustration of the model: the edges are read out of the
- * fitted weights with edge()/edgeMax(), the nodes are lit by the activations
- * run() returns, and the big number is run().score. Change the weights and
- * this picture changes with them.
+ * Nothing here is an illustration. The ten curves are the fitted shape
+ * functions, read out of TNAM_RESULTS.shapes, which ml/research.py samples
+ * from the same weights tnam.js runs; the marker on each is forward()'s own
+ * contribution for the current input; the score is displayScore(). Refit the
+ * model and this figure changes with it.
  *
- * The argument the figure exists to make is the third preset. Heart, sweat and
- * temperature are identical between "a hard day" and "the same body, during a
- * run"; only movement differs, and the score drops by 35 points. A weighted
- * sum cannot do that, which is why there is a network at all.
+ * Why an additive model is worth drawing at all: the logit is a bias plus one
+ * curve per signal plus one term over the last four minutes, and nothing
+ * else. So the decomposition below is not an attribution method and not an
+ * estimate. It is the arithmetic, it closes to the last decimal place, and a
+ * reader can check it. Almost no network allows that.
+ *
+ * Every number on screen is read out of TNAM_RESULTS or returned by the model
+ * in this page. Paths are named beside each block so a reader who opens the
+ * file can find the source of anything they doubt.
+ *
+ * What this file used to draw was a 4-16-10-1 network fitted to a hand
+ * written reference formula rather than to data. It is gone, along with
+ * src/signals/net.js.
  */
 
-/* Quoted from the header of src/signals/net-weights.js, which tools/net/train.py
- * rewrites whenever it refits. These four numbers cannot be imported, so if
- * that header ever disagrees with this line, that header is right. */
-const FIT = { points: '483,521', mean: '0.014', p99: '0.074', worst: '1.246' }
+/* Human words for the ten inputs, plus the patch channel each belongs to.
+   The feature keys are never shown: a reader should not have to know that
+   edaTonic is the slow part of skin conductance to read the curve. Keyed by
+   feature, so this cannot drift out of FEATURES order. */
+const META = {
+  rmssd:     { ch:'heart', name:'Beat-to-beat variation', unit:'RMSSD' },
+  sdnn:      { ch:'heart', name:'Spread of beat spacing', unit:'SDNN' },
+  pnn50:     { ch:'heart', name:'Long gaps between beats', unit:'pNN50' },
+  lfhf:      { ch:'heart', name:'Slow against fast rhythm', unit:'LF / HF' },
+  hr:        { ch:'heart', name:'Heart rate', unit:'beats per minute' },
+  edaTonic:  { ch:'sweat', name:'Skin conductance', unit:'slow level' },
+  edaPhasic: { ch:'sweat', name:'Skin conductance jumps', unit:'fast part' },
+  scrPerMin: { ch:'sweat', name:'Sweat bursts per minute', unit:'count' },
+  tempSlope: { ch:'temp',  name:'Temperature drift', unit:'skin, per minute' },
+  motion:    { ch:'move',  name:'Movement', unit:'peak g' },
+}
+const ROWS = FEATURES.map((k, i) => ({ k, i, ...META[k], tone: SENSORS[META[k].ch].glow }))
 
-/* The four demonstration days, in z-scores against the wearer's own baseline.
- * Order matters: "a hard day" and the run sit next to each other so the pair
- * can be clicked one after the other. */
+/* Readings enter as z-scores against the wearer's own baseline and score.js
+   clamps them at 3, so that is the slider range. Movement enters on the
+   patch's own scale, where 1 is the MOVE_LIMIT_G line. */
+const Z_LIMIT = 3
+const dom = k => (k === 'motion' ? { min: 0, max: 1, step: 0.05 } : { min: -Z_LIMIT, max: Z_LIMIT, step: 0.1 })
+
+/* The preceding windows the temporal term reads. `forward` keeps the last
+   CONTEXT_WINDOWS - 1 of them, so seven steps toward the current reading is
+   "this has been climbing for four minutes" and an empty list is "steady at
+   this person's usual". */
+const RAMP = [1, 2, 3, 4, 5, 6, 7].map(i => i / CONTEXT_WINDOWS)
+const historyFor = (x, climbing) => (climbing ? RAMP.map(s => x.map(v => v * s)) : [])
+
+/* Four readings, and the scores they produce under the real forward pass.
+   Verified under node against this build of the weights:
+     an ordinary day 50, under pressure 86, jogging 78, settling 32,
+   with the preceding four minutes steady; 50, 98, 90, 31 climbing. */
 const PRESETS = [
-  { id: 'ordinary', label: 'An ordinary day', z: [0, 0, 0, 0] },
-  { id: 'hard', label: 'A hard day', z: [1.8, 1.6, -1.2, 0] },
-  { id: 'running', label: 'The same body, during a run', z: [1.8, 1.6, -1.2, 2.4] },
-  { id: 'easy', label: 'An easy day', z: [-1.5, -1.2, 1, 0] },
+  { id:'ordinary', label:'An ordinary day', x:{} },
+  { id:'hard', label:'Under pressure',
+    x:{ hr:1.6, rmssd:-1.2, sdnn:-0.9, pnn50:-0.4, lfhf:0.6, edaTonic:2.0, edaPhasic:1.2, scrPerMin:1.4, tempSlope:-1.0, motion:0.05 } },
+  { id:'jogging', label:'Jogging, not stressed',
+    x:{ hr:2.2, rmssd:-1.4, sdnn:-1.0, pnn50:-0.5, lfhf:0.3, edaTonic:0.8, edaPhasic:0.4, scrPerMin:0.5, tempSlope:0.6, motion:1 } },
+  { id:'settled', label:'Settling down',
+    x:{ hr:-0.8, rmssd:1.2, sdnn:1.0, pnn50:0.5, lfhf:-0.5, edaTonic:-1.3, edaPhasic:-0.8, scrPerMin:-1.0, tempSlope:0.8, motion:0 } },
 ]
-const byId = id => PRESETS.find(p => p.id === id) || PRESETS[1]
+const vectorOf = o => FEATURES.map(k => o[k] ?? 0)
 
-/* The slider's domain is the z domain, so the words have to be the reading's
- * distance from the wearer's own usual rather than any absolute value. */
+/* Every curve's value with every input at the wearer's usual. This is the
+   reference the hairline in each plot marks, and the reference the score's 50
+   is anchored to: displayScore puts ORDINARY_LOGIT at the middle of the
+   scale, so what moves a score is each curve's distance from its own value
+   here, not its absolute height. */
+const USUAL = forward(FEATURES.map(() => 0)).contributions
+
+const f2 = n => n.toFixed(2)
+const f3 = n => n.toFixed(3)
+const signed = n => (n >= 0 ? '+' : '') + n.toFixed(2)
+const pct = n => `${(n * 100).toFixed(1)}%`
+const ci = o => `${f3(o.lo)} to ${f3(o.hi)}`
+
 function inWords(z) {
   const a = Math.abs(z)
-  if (a < 0.4) return 'your usual'
-  if (a < 1.1) return z > 0 ? 'a little above your usual' : 'a little below your usual'
-  if (a < 2.2) return z > 0 ? 'above your usual' : 'below your usual'
-  return z > 0 ? 'well above your usual' : 'well below your usual'
+  if (a < 0.4) return 'at their usual'
+  if (a < 1.1) return z > 0 ? 'a little above usual' : 'a little below usual'
+  if (a < 2.2) return z > 0 ? 'above usual' : 'below usual'
+  return z > 0 ? 'well above usual' : 'well below usual'
 }
-const signed = z => (z > 0 ? '+' : '') + z.toFixed(1)
+/* Short enough to sit on one line in a phone-width cell. The sentence version
+   goes to aria-valuetext, where there is no column to overflow. */
+const shortReading = (k, v) => (k === 'motion' ? `${f2(v * MOVE_LIMIT_G)} g` : `${signed(v)} z`)
+const longReading = (k, v) =>
+  k === 'motion'
+    ? `${f2(v * MOVE_LIMIT_G)} g peak, against the ${MOVE_LIMIT_G} g line`
+    : `${signed(v)} standard deviations, ${inWords(v)}`
 
-/* 1 SVG unit = 1 CSS pixel, so a 12px label is 12px on a phone and the 4
- * columns can be laid out against the space that actually exists. The house
- * useWidth in charts/primitives floors at 320, which breaks that contract on a
- * 390px viewport once the card padding is taken off, so this one does not
- * clamp. */
-function useBoxWidth(fallback = 760) {
-  const ref = React.useRef(null)
-  const [w, setW] = React.useState(fallback)
-  React.useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const read = () => setW(Math.max(240, Math.round(el.clientWidth || fallback)))
-    read()
-    if (!window.ResizeObserver) return
-    const ro = new ResizeObserver(read)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [fallback])
-  return [ref, w]
-}
+/* ── one small multiple ──────────────────────────────────────────────────
+   1 SVG unit is not 1 pixel here: the plot carries no type, so it can scale
+   freely and the labels around it stay DOM text at their declared size. Flat
+   strokes, no gradient and no blur, per lib/sensors. */
+const PW = 128, PH = 60, PL = 5, PR = 5, PT = 7, PB = 7
 
-/* Columns left to right, nodes spread down each column. Below 430px the label
- * gutter and the node radii shrink rather than the whole drawing scaling down,
- * because a scaled drawing takes the type with it. */
-function geometry(w) {
-  const narrow = w < 430
-  /* The gutter has to hold "Temperature" at the label size below, or an SVG,
-     which clips to its viewBox, eats the first letter. */
-  const gutter = narrow ? 86 : 126
-  const h = narrow ? 272 : w < 780 ? 304 : 340
-  const foot = 28                        // clearance for the per layer counts below
-  const top = 8
-  const first = gutter + (narrow ? 8 : 16)
-  const last = w - (narrow ? 14 : 20)
-  const r = narrow ? { in: 5.5, hid: 3.4, out: 11 } : { in: 7, hid: 4.4, out: 14 }
-  const inset = [20, 0, 14, 0]
-  const x = ARCH.map((_, l) => first + ((last - first) * l) / (ARCH.length - 1))
-  const mid = (top + h - foot) / 2
-  const pos = (layer, i) => {
-    const n = ARCH[layer]
-    if (n === 1) return [x[layer], mid]
-    const lo = top + inset[layer]
-    const hi = h - foot - inset[layer]
-    return [x[layer], lo + ((hi - lo) * i) / (n - 1)]
+function plotGeometry(grid) {
+  const x0 = grid.x[0], x1 = grid.x[grid.x.length - 1]
+  let lo = Math.min(...grid.y), hi = Math.max(...grid.y)
+  /* A tenth of the range of headroom, so a marker on an endpoint is still a
+     whole dot inside the frame. Zero is NOT forced into view: four of the ten
+     curves never cross it, and dragging them down to a zero line would
+     flatten the shape the plot exists to show. The hairline carries the
+     reference instead. */
+  const pad = (hi - lo) * 0.12 || 0.1
+  lo -= pad; hi += pad
+  return {
+    X: z => PL + ((z - x0) / (x1 - x0)) * (PW - PL - PR),
+    Y: y => PH - PB - ((y - lo) / (hi - lo)) * (PH - PT - PB),
+    x0, x1,
   }
-  return { narrow, gutter, h, foot, r, x, pos, labelX: gutter - (narrow ? 6 : 10) }
 }
 
-/* Edge weight to ink. The raw magnitudes are honest but unreadable: movement
- * owns the three largest first-layer weights by a factor of five, because it
- * drives the gate, so a linear mapping prints the other three signals as
- * nothing at all. The exponents below are monotone, so every ordering survives
- * and the faint edges stay on the page. */
-const emphasis = m => Math.pow(Math.max(0, Math.min(1, m)), 0.55)
+function Curve({ row, z, contribution }) {
+  const grid = R.shapes[row.k]
+  const g = React.useMemo(() => plotGeometry(grid), [grid])
+  const d = grid.x.map((x, i) => `${i ? 'L' : 'M'}${g.X(x).toFixed(2)} ${g.Y(grid.y[i]).toFixed(2)}`).join(' ')
+  const usual = USUAL[row.k]
+  const mx = g.X(Math.max(g.x0, Math.min(g.x1, z))), my = g.Y(contribution)
+  /* The endpoints are named by the grid's own x values rather than by the
+     slider range: the curves were sampled wider than a reading can go. */
+  const lo = row.k === 'motion' ? 'no movement'
+    : `${Math.abs(g.x0).toFixed(1)} standard deviations below usual`
+  const hi = row.k === 'motion' ? 'the movement line'
+    : `${Math.abs(g.x1).toFixed(1)} standard deviations above usual`
+  const ends = `At ${lo} this curve contributes ${signed(grid.y[0])}, at their usual `
+    + `${signed(usual)}, at ${hi} ${signed(grid.y[grid.y.length - 1])}. `
+    + `The current reading contributes ${signed(contribution)}.`
+  return (
+    <svg viewBox={`0 0 ${PW} ${PH}`} role="img"
+      aria-label={`Learned curve for ${row.name.toLowerCase()}. ${ends}`}
+      className="mt-1.5 block w-full" style={{ aspectRatio: `${PW} / ${PH}` }}>
+      {/* the wearer's usual, which is where the scale's 50 comes from */}
+      <line x1={PL} y1={g.Y(usual).toFixed(2)} x2={PW - PR} y2={g.Y(usual).toFixed(2)}
+        strokeWidth="1" strokeDasharray="3 3" className="stroke-ruling"/>
+      <line x1={mx.toFixed(2)} y1={PT - 3} x2={mx.toFixed(2)} y2={PH - PB + 3}
+        strokeWidth="1" className="stroke-ruling"/>
+      <path d={d} fill="none" stroke={row.tone} strokeWidth="2" strokeLinecap="round"
+        strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
+      <circle cx={mx.toFixed(2)} cy={my.toFixed(2)} r="4.2" fill={row.tone}
+        className="stroke-card" strokeWidth="1.8"/>
+    </svg>
+  )
+}
+
+/* ── the paired result, one line per held-out person ───────────────
+   No type inside the SVG. An SVG scales with its column, and type inside one
+   scales with it: the axis labels here were rendering at under 10px on a
+   phone. The plot carries geometry only and every word around it is DOM text
+   at its declared size, which is the same reason charts/diverge.jsx is built
+   out of divs. */
+const SW = 300, SH = 150
+const SLEFT = 18, SRIGHT = 282, SLO = 0.55, SHI = 1.0, SPAD = 7
+const sy = v => SH - SPAD - ((Math.max(SLO, v) - SLO) / (SHI - SLO)) * (SH - SPAD * 2)
+
+function PairedPlot() {
+  const mf = R.summary.formula.auroc.mean, mt = R.summary.tnam.auroc.mean
+  const perfect = R.per_subject.filter(s => s.tnam >= 1).length
+  const read = R.per_subject.map(s => `${s.subject} ${f3(s.formula)} to ${f3(s.tnam)}`).join(', ')
+  return (
+    <div className="mt-3 max-w-[560px]">
+      <svg viewBox={`0 0 ${SW} ${SH}`} role="img"
+        aria-label={`Leave-one-subject-out AUROC for each of the ${R.per_subject.length} people, `
+          + `hand-weighted formula on the left and this model on the right: ${read}. `
+          + `${perfect} of them reach 1.000 with this model.`}
+        className="block w-full" style={{ aspectRatio: `${SW} / ${SH}` }}>
+        {[0.6, 0.7, 0.8, 0.9, 1.0].map(v => (
+          <line key={v} x1="0" y1={sy(v)} x2={SW} y2={sy(v)} strokeWidth="1" className="stroke-rule"/>
+        ))}
+        {R.per_subject.map(s => (
+          <g key={s.subject}>
+            <line x1={SLEFT} y1={sy(s.formula)} x2={SRIGHT} y2={sy(s.tnam)}
+              strokeWidth="1.1" strokeOpacity="0.55" className="stroke-ink"/>
+            <circle cx={SLEFT} cy={sy(s.formula)} r="2.6" fillOpacity="0.55" className="fill-ink"/>
+            <circle cx={SRIGHT} cy={sy(s.tnam)} r="2.6" fillOpacity="0.55" className="fill-ink"/>
+          </g>
+        ))}
+        {/* the two means, over the fifteen */}
+        <line x1={SLEFT} y1={sy(mf)} x2={SRIGHT} y2={sy(mt)} strokeWidth="2.6" className="stroke-accent"/>
+        <circle cx={SLEFT} cy={sy(mf)} r="4.4" className="fill-accent"/>
+        <circle cx={SRIGHT} cy={sy(mt)} r="4.4" className="fill-accent"/>
+      </svg>
+      <p aria-hidden className="mt-1.5 flex justify-between gap-4 text-fine text-ink">
+        <span>formula <span className="font-mono tabular-nums">{f3(mf)}</span></span>
+        <span>this model <span className="font-mono tabular-nums">{f3(mt)}</span></span>
+      </p>
+    </div>
+  )
+}
+
+/* ── one signed bar in the decomposition ─────────────────────────────────
+   Phone order is label, figure, then the bar across both columns; from `sm`
+   the three sit on one line. `order` reorders grid auto-placement, which is
+   why the markup is in neither order. */
+function Part({ label, value, tone, scale, note }) {
+  const w = Math.max(1.2, (Math.abs(value) / scale) * 50)
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_4.25rem] items-center gap-x-3 gap-y-0.5
+      border-t border-rule py-1.5 sm:grid-cols-[minmax(0,13rem)_minmax(5rem,1fr)_4.25rem]">
+      <span className="order-1 text-fine text-ink-2">
+        {label}
+        {note && <span className="tick ml-2">{note}</span>}
+      </span>
+      <span aria-hidden className="relative order-3 col-span-2 block h-[13px]
+        bg-[linear-gradient(to_right,transparent_calc(50%-0.5px),theme(colors.rule)_calc(50%-0.5px),theme(colors.rule)_calc(50%+0.5px),transparent_calc(50%+0.5px))]
+        sm:order-2 sm:col-span-1">
+        <span className="absolute top-[2px] block h-[9px] rounded-xs"
+          style={{ width: `${w}%`, background: tone, [value >= 0 ? 'left' : 'right']: '50%' }}/>
+      </span>
+      <span className="order-2 text-right font-mono text-tick tabular-nums text-ink sm:order-3">
+        {signed(value)}
+      </span>
+    </li>
+  )
+}
 
 export function MindScoreNet({ className, initial = 'hard' }) {
   const reduced = useReducedMotion()
-  const [box, w] = useBoxWidth()
-  const geo = React.useMemo(() => geometry(w), [w])
+  const start = PRESETS.find(p => p.id === initial) || PRESETS[1]
 
-  const [z, setZ] = React.useState(() => byId(initial).z.slice())
-  const [active, setActive] = React.useState(() => byId(initial).id)
-  const zRef = React.useRef(z)
-  zRef.current = z
+  const [x, setX] = React.useState(() => vectorOf(start.x))
+  const [active, setActive] = React.useState(start.id)
+  const [climbing, setClimbing] = React.useState(false)
+  const xRef = React.useRef(x)
+  xRef.current = x
   const frame = React.useRef(0)
   React.useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
   /* A preset is an argument, so it has to be watched arriving: the sliders
-     travel to it rather than jumping, and the score counts across the gap. One
-     rAF loop over the whole vector, not a spring per slider. */
+     travel to it and the score counts across the gap. One rAF loop over the
+     whole vector rather than a spring per input. */
   const glide = target => {
     cancelAnimationFrame(frame.current)
-    if (reduced) { setZ(target.slice()); return }
-    const from = zRef.current.slice()
+    if (reduced) { setX(target.slice()); return }
+    const from = xRef.current.slice()
     const t0 = performance.now()
     const step = t => {
       const p = Math.min(1, (t - t0) / 460)
       const e = 1 - Math.pow(1 - p, 3)
-      setZ(from.map((v, i) => v + (target[i] - v) * e))
+      setX(from.map((v, i) => v + (target[i] - v) * e))
       if (p < 1) frame.current = requestAnimationFrame(step)
     }
     frame.current = requestAnimationFrame(step)
   }
-
   const setOne = (i, v) => {
     cancelAnimationFrame(frame.current)
     setActive(null)
-    setZ(prev => prev.map((old, k) => (k === i ? v : old)))
+    setX(prev => prev.map((old, k) => (k === i ? v : old)))
   }
 
-  const { score, p, acts } = run(z)
-  const { score: refScore, gate } = reference(z)
+  const fw = forward(x, historyFor(x, climbing))
+  const score = displayScore(fw.logit)
+  const band = bandOf(score)
+  const curveSum = FEATURES.reduce((a, k) => a + fw.contributions[k], 0)
+  const bias = fw.logit - curveSum - fw.temporal
+  const scale = Math.max(0.4, ...ROWS.map(r => Math.abs(fw.contributions[r.k])), Math.abs(fw.temporal))
 
-  /* Weights do not move when a slider does, so the 234 edges are built once
-     per layout and reused on every frame of a drag. */
-  const edges = React.useMemo(() => {
-    const out = []
-    for (let l = 0; l < ARCH.length - 1; l++) {
-      const max = edgeMax(l) || 1
-      for (let i = 0; i < ARCH[l]; i++) {
-        const [x1, y1] = geo.pos(l, i)
-        const tone = l === 0 ? SENSORS[SIGNALS[i]].glow : null
-        for (let j = 0; j < ARCH[l + 1]; j++) {
-          const m = emphasis(Math.abs(edge(l, i, j)) / max)
-          const [x2, y2] = geo.pos(l + 1, j)
-          out.push({
-            k: `${l}-${i}-${j}`, x1, y1, x2, y2, tone,
-            sw: +(0.45 + 1.5 * m).toFixed(2),
-            op: +(0.09 + 0.5 * m).toFixed(3),
-          })
-        }
-      }
-    }
-    return out
-  }, [geo])
+  /* The biggest move away from this person's usual, which is what the marker
+     on each curve shows. Not the biggest contribution: a curve can sit high
+     at the usual and still have moved nothing. */
+  const moved = ROWS.map(r => ({ r, d: fw.contributions[r.k] - USUAL[r.k] }))
+    .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0]
+  const atLine = x[ROWS.findIndex(r => r.k === 'motion')] >= 1
 
-  const read = SIGNALS.map((s, i) => `${SENSORS[s].name} ${inWords(z[i])}`).join(', ')
-  const alt = `Diagram of the network that computes the Mind Score. Four readings enter: ${read}. `
-    + `They pass through ${ARCH[1]} and then ${ARCH[2]} intermediate units and leave as one `
-    + `Mind Score of ${score} out of 100, where 0 is calm and 100 is peak.`
-
-  /* A node is a card-filled ring with a disc inside it whose radius carries the
-     activation. Size and not sign: a tanh unit's sign is an accident of how it
-     was initialised, and the magnitude is the only part a reader can act on. */
-  const lit = a => Math.sqrt(Math.min(1, Math.abs(a)))
+  const i8 = R.calibration.ks.indexOf(8)
+  const cal = {
+    base: R.calibration.base_auroc.mean,
+    gains: R.calibration.auroc.gains.triggered[i8],
+    gainsCi: R.calibration.auroc_ci.gains.triggered[i8],
+    scratch: R.calibration.auroc.scratch.triggered[i8],
+    affine: R.calibration.auroc.affine.triggered[i8],
+  }
 
   return (
     <ScrollIn className={cn('w-full', className)}>
-      <div className="rounded-panel border border-rule bg-card p-5 sm:p-7">
+      <figure className="m-0 rounded-panel border border-rule bg-card p-4 sm:p-7">
 
-        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h3 className="font-display text-row font-bold text-ink">How one day becomes one number</h3>
-          <p className="tick">{ARCH.join('-')}, live in this page</p>
-        </div>
+        <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+          <h3 className="font-display text-row font-bold text-ink">What the model learned</h3>
+          <p className="tick">{PARAM_COUNT} weights, running in this page</p>
+        </figcaption>
 
-        <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-7">
-          <div ref={box} role="img" aria-label={alt} className="w-full min-w-0 sm:flex-1">
-            <svg viewBox={`0 0 ${w} ${geo.h}`} aria-hidden focusable="false"
-              className="block w-full" style={{ aspectRatio: `${w} / ${geo.h}` }}>
-              <g>
-                {edges.map(e => (
-                  <line key={e.k} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-                    strokeWidth={e.sw} strokeOpacity={e.op} strokeLinecap="round"
-                    stroke={e.tone || undefined}
-                    className={e.tone ? undefined : 'stroke-ink'}/>
-                ))}
-              </g>
-
-              {/* input column: the one place the signal colours appear in the
-                  drawing. The label beside each stays ink, per lib/sensors. */}
-              {SIGNALS.map((id, i) => {
-                const s = SENSORS[id]
-                const [cx, cy] = geo.pos(0, i)
-                return (
-                  <g key={id}>
-                    <text x={geo.labelX} y={cy + 4} textAnchor="end"
-                      fontSize={geo.narrow ? 12 : 14}
-                      className="fill-ink font-body">{s.name}</text>
-                    <circle cx={cx} cy={cy} r={geo.r.in} className="fill-card stroke-ruling" strokeWidth="1.2"/>
-                    <circle cx={cx} cy={cy} r={(geo.r.in * lit(z[i] / Z_LIMIT)).toFixed(2)} fill={s.glow}/>
-                  </g>
-                )
-              })}
-
-              {[1, 2].map(l => (
-                <g key={l}>
-                  {acts[l].map((a, j) => {
-                    const [cx, cy] = geo.pos(l, j)
-                    return (
-                      <g key={j}>
-                        <circle cx={cx} cy={cy} r={geo.r.hid} className="fill-card stroke-ruling" strokeWidth="1"/>
-                        <circle cx={cx} cy={cy} r={(geo.r.hid * lit(a)).toFixed(2)} className="fill-ink"/>
-                      </g>
-                    )
-                  })}
-                </g>
-              ))}
-
-              {(() => {
-                const [cx, cy] = geo.pos(3, 0)
-                return (
-                  <g>
-                    <circle cx={cx} cy={cy} r={geo.r.out} className="fill-card stroke-ink" strokeWidth="1.6"/>
-                    <circle cx={cx} cy={cy} r={(geo.r.out * Math.sqrt(p)).toFixed(2)} className="fill-accent"/>
-                  </g>
-                )
-              })()}
-
-              {/* the architecture, under the columns it describes */}
-              {/* The output column sits against the right edge, so its caption
-                  is anchored to that edge: centred on the node it runs past the
-                  viewBox and an SVG clips to its viewBox. */}
-              {ARCH.map((n, l) => {
-                const last = l === ARCH.length - 1
-                return (
-                  <text key={l} x={last ? w - 2 : geo.x[l]} y={geo.h - 6}
-                    textAnchor={last ? 'end' : 'middle'}
-                    fontSize={geo.narrow ? 11 : 12}
-                    className="fill-ink-3 font-mono">
-                    {l === 0 ? `${n} signals` : last ? `${n} score` : `${n} units`}
-                  </text>
-                )
-              })}
-            </svg>
-          </div>
-
-          <div className="max-w-full shrink-0 text-center sm:w-[168px] sm:text-left">
-            <p className="m-0 font-display text-fig font-bold leading-none tabular-nums text-ink">{score}</p>
-            <p className="m-0 mt-1.5 font-display text-ui font-medium text-ink-2">Mind Score</p>
-            <p className="tick mt-1">out of 100</p>
-            <p className="tick">0 is calm, 100 is peak</p>
-          </div>
-        </div>
-
-        <RuleDraw className="mt-6"/>
-
-        <p className="mt-5 max-w-[68ch] text-sec text-ink-2">
-          Those middle two days carry identical heart, sweat and temperature readings.
-          Sitting still they come out at 86. During a run they come out at 51, because
-          movement holds the other three back rather than adding to them.
+        <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
+          One learned curve per signal, plus one term over the last four minutes, added up.
+          The ten curves below are the fitted curves, not a sketch of them. Move a slider and
+          the dot moves along the curve it belongs to.
         </p>
 
-        <div className="mt-4 flex max-w-[900px] flex-wrap gap-2.5">
-          {PRESETS.map(d => (
-            <button key={d.id} type="button" aria-pressed={active === d.id}
-              onClick={() => { setActive(d.id); glide(d.z) }}
-              className={cn('inline-flex min-h-[44px] items-center rounded-field border px-3.5',
-                'font-display text-fine font-medium',
-                'transition-[background-color,border-color,color] duration-150 ease-[var(--ease-out)]',
-                'motion-safe:active:scale-[0.97] touch-manipulation',
-                active === d.id
-                  ? 'border-ink bg-mist text-ink'
-                  : 'border-rule text-ink-2 hoverOnly:border-ruling hoverOnly:bg-mist')}>
-              {d.label}
-            </button>
-          ))}
-        </div>
-
-        <ul className="mt-6 m-0 max-w-[900px] list-none p-0">
-          {SIGNALS.map((id, i) => {
-            const s = SENSORS[id]
-            const slider = `mm-net-${id}`
+        {/* ── 1. the curves ───────────────────────────────────────────────── */}
+        <ul className="mt-5 m-0 grid list-none grid-cols-2 gap-x-4 gap-y-4 p-0
+          sm:grid-cols-3 lg:grid-cols-5">
+          {ROWS.map(row => {
+            const id = `mm-tnam-${row.k}`
+            const d = dom(row.k)
             return (
-              <li key={id} className="border-t border-rule py-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-                  <label htmlFor={slider}
-                    className="flex items-center gap-2.5 font-display text-ui font-medium text-ink">
-                    <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar"
-                      style={{ background: s.glow }}/>
-                    {s.name}
+              <li key={row.k} className="min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <label htmlFor={id}
+                    className="font-display text-fine font-medium leading-tight text-ink">
+                    {row.name}
                   </label>
-                  <span className="text-fine text-ink-2">
-                    {inWords(z[i])}
-                    <span className="ml-2 font-mono text-tick tabular-nums text-ink-3">{signed(z[i])} z</span>
+                  <span className="shrink-0 font-mono text-tick tabular-nums text-ink">
+                    {signed(fw.contributions[row.k])}
                   </span>
                 </div>
-                <input id={slider} type="range" min={-Z_LIMIT} max={Z_LIMIT} step="0.1"
-                  value={z[i]} onChange={e => setOne(i, Number(e.target.value))}
-                  aria-valuetext={`${inWords(z[i])}, ${signed(z[i])} standard deviations`}
-                  style={{ '--mm-dot': s.glow }}
-                  className="mt-1 h-11 w-full cursor-pointer appearance-none bg-transparent
+                <Curve row={row} z={x[row.i]} contribution={fw.contributions[row.k]}/>
+                <input id={id} type="range" min={d.min} max={d.max} step={d.step}
+                  value={x[row.i]} onChange={e => setOne(row.i, Number(e.target.value))}
+                  aria-valuetext={`${longReading(row.k, x[row.i])}. Contributes `
+                    + `${signed(fw.contributions[row.k])} to the logit.`}
+                  style={{ '--mm-dot': row.tone }}
+                  className="h-11 w-full cursor-pointer appearance-none bg-transparent
                     [&::-webkit-slider-runnable-track]:h-1.5
                     [&::-webkit-slider-runnable-track]:rounded-bar
                     [&::-webkit-slider-runnable-track]:bg-mist
@@ -327,40 +351,243 @@ export function MindScoreNet({ className, initial = 'hard' }) {
                     [&::-moz-range-thumb]:border-2
                     [&::-moz-range-thumb]:border-card
                     [&::-moz-range-thumb]:bg-[var(--mm-dot)]"/>
+                <p className="tick -mt-0.5 flex justify-between gap-1">
+                  <span>{shortReading(row.k, x[row.i])}</span>
+                  <span>alone {f2(R.univariate_auroc[row.k])}</span>
+                </p>
               </li>
             )
           })}
         </ul>
-        <p aria-hidden className="mt-1 flex max-w-[900px] justify-between gap-2 text-fine text-ink-3">
-          <span>well below</span><span>your usual</span><span>well above</span>
+
+        <p className="mt-4 max-w-[78ch] text-fine text-ink-3">
+          Dashed hairline: that curve at the wearer's usual. Dot: the current reading.{' '}
+          <span className="font-mono">alone</span> is what the one signal scores by itself on
+          the held-out people, from TNAM_RESULTS.univariate_auroc. Beat-to-beat variation on
+          its own is near a coin toss and the slow part of skin conductance is near the whole
+          answer. The model has to carry both. Each curve is drawn over the whole range it was
+          sampled at, plus and minus four standard deviations; a reading enters clamped
+          at {Z_LIMIT}, which is where the sliders stop.
         </p>
 
-        <div className="mt-5 max-w-[640px] rounded-field bg-mist px-4 py-3">
-          <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="font-display text-ui font-medium text-ink">Movement gate</span>
-            <span className="font-mono text-num font-medium tabular-nums leading-none text-ink">
-              {gate.toFixed(2)}</span>
-          </p>
-          <p className="tick mt-1.5">
-            How much of heart, sweat and temperature is counted at this much movement.
-            1.00 counts all of it, 0.00 counts none.
-          </p>
+        {/* ── 2. live inputs and the score ─────────────────────────────────── */}
+        <RuleDraw className="mt-6"/>
+
+        <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
+          <div className="shrink-0">
+            <p className="m-0 font-display text-dial font-bold leading-none tabular-nums text-ink">
+              {score}
+            </p>
+            <p className="m-0 mt-1 font-display text-ui font-medium text-ink-2">
+              Mind Score, {band.word}
+            </p>
+            <p className="tick mt-1">out of 100. 50 is this person's usual day.</p>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap gap-2.5">
+              {PRESETS.map(p => (
+                <button key={p.id} type="button" aria-pressed={active === p.id}
+                  onClick={() => { setActive(p.id); glide(vectorOf(p.x)) }}
+                  className={cn('inline-flex min-h-[44px] items-center rounded-field border px-3.5',
+                    'font-display text-fine font-medium',
+                    'transition-[background-color,border-color,color] duration-150 ease-[var(--ease-out)]',
+                    'motion-safe:active:scale-[0.97] touch-manipulation',
+                    active === p.id
+                      ? 'border-ink bg-mist text-ink'
+                      : 'border-rule text-ink-2 hoverOnly:border-ruling hoverOnly:bg-mist')}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2.5">
+              <span className="font-display text-fine font-medium text-ink">
+                The four minutes before:
+              </span>
+              {[[false, 'steady at usual'], [true, 'climbing to here']].map(([v, word]) => (
+                <button key={word} type="button" aria-pressed={climbing === v}
+                  onClick={() => setClimbing(v)}
+                  className={cn('inline-flex min-h-[44px] items-center rounded-field border px-3.5',
+                    'font-display text-fine font-medium',
+                    'transition-[background-color,border-color,color] duration-150 ease-[var(--ease-out)]',
+                    'motion-safe:active:scale-[0.97] touch-manipulation',
+                    climbing === v
+                      ? 'border-ink bg-mist text-ink'
+                      : 'border-rule text-ink-2 hoverOnly:border-ruling hoverOnly:bg-mist')}>
+                  {word}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 max-w-[66ch] text-fine text-ink-2">
+              At these readings the model gives {score} out of 100, {band.word}. The biggest
+              move away from this person's usual is {moved.r.name.toLowerCase()},{' '}
+              {signed(moved.d)} on the logit. The last four minutes add {signed(fw.temporal)}.
+            </p>
+            {atLine && (
+              <p className="mt-2 max-w-[66ch] text-fine text-ink">
+                Movement is at the {MOVE_LIMIT_G} g line, so in the app this reading is not
+                scored by the model at all. It goes to the hand-weighted formula, for the
+                reason under the limits below.
+              </p>
+            )}
+          </div>
         </div>
 
-        <p className="mt-5 max-w-[72ch] text-fine text-ink-3">
-          Architecture {ARCH.join('-')}, tanh between layers and a logistic at the end,
-          {' '}{PARAM_COUNT} parameters, running in this page with no server behind it.
-          It is fitted to the published-coefficient reference model documented in
-          tools/net/train.py, not to people. Against that reference, over {FIT.points} test
-          points, it is out by {FIT.mean} score points on average, {FIT.p99} at the 99th
-          percentile and {FIT.worst} at worst. It will be refitted when measured readings
-          exist. The reference model reads {refScore} at these inputs.
+        {/* ── 3. the decomposition, which is exact ─────────────────────────── */}
+        <h4 className="mark mt-7">Why it said that</h4>
+        <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
+          Because the model is additive, the parts are the answer rather than an estimate of
+          it. These twelve numbers add up to the logit the score came from, exactly.
         </p>
+        <ul className="mt-4 m-0 max-w-[720px] list-none p-0">
+          <Part label="Bias" value={bias} tone={SENSORS.heart.glow} scale={scale}
+            note="the model's own offset"/>
+          {ROWS.map(row => (
+            <Part key={row.k} label={row.name} value={fw.contributions[row.k]} tone={row.tone}
+              scale={scale} note={row.unit}/>
+          ))}
+          <Part label="The last four minutes" value={fw.temporal} tone={SENSORS.move.glow}
+            scale={scale} note={`${CONTEXT_WINDOWS} windows`}/>
+        </ul>
+        <dl className="mt-4 m-0 max-w-[720px] grid grid-cols-[minmax(0,1fr)_5.5rem] gap-x-3
+          border-t border-ink pt-3 text-fine">
+          {[
+            ['Added together, the logit', f2(fw.logit)],
+            ['An ordinary day, every signal at usual', f2(ORDINARY_LOGIT)],
+            ['The difference', signed(fw.logit - ORDINARY_LOGIT)],
+          ].map(([k, v]) => (
+            <React.Fragment key={k}>
+              <dt className="text-ink-2">{k}</dt>
+              <dd className="m-0 text-right font-mono tabular-nums text-ink">{v}</dd>
+            </React.Fragment>
+          ))}
+          <dt className="mt-1 font-medium text-ink">Mind Score</dt>
+          <dd className="m-0 mt-1 text-right font-mono font-medium tabular-nums text-ink">{score}</dd>
+        </dl>
         <p className="mt-2 max-w-[72ch] text-fine text-ink-3">
-          A Mind Score is not a diagnosis and it is not a percentage. It is one number
-          out of 100 describing one day against that person's own fourteen day baseline.
+          The difference is divided by {SCORE_TEMPERATURE}, put through a logistic and
+          multiplied by 100. Monotone, so it cannot change which of two readings is the higher
+          one; it is what puts an ordinary day at 50.
         </p>
-      </div>
+
+        {/* ── 4. the evidence ─────────────────────────────────────────────── */}
+        <h4 className="mark mt-7">What it scores</h4>
+        <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
+          WESAD: {R.summary.formula.auroc.n} adults, wrist sensors, sixty second windows,
+          stress against rest and amusement, leave-one-subject-out. Every number below is from
+          people the model had never seen. The hand-weighted formula it replaces
+          scores {f3(R.summary.formula.auroc.mean)} AUROC. This model
+          scores {f3(R.summary.tnam.auroc.mean)}. It is better on {R.paired.wins} of
+          the {R.summary.tnam.auroc.n} people, tied on {R.paired.ties}, worse on none,
+          p = {R.paired.p}.
+        </p>
+        <PairedPlot/>
+        <p className="mt-2 max-w-[78ch] text-fine text-ink-3">
+          One line per held-out person, formula on the left and this model on the right. The
+          vertical axis runs 0.55 at the bottom to 1.00 at the top, ruled every 0.1. The heavy
+          line is the two means.{' '}
+          {R.per_subject.filter(s => s.tnam >= 1).length} of the {R.per_subject.length} reach
+          1.000, so those endpoints sit on top of each other. A clean 1.000 is what a set this
+          small allows, and is not a claim about new people. The transfer numbers under the
+          limits are the guide to that.
+        </p>
+        <dl className="mt-4 m-0 max-w-[720px] grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-4
+          gap-y-0 text-fine">
+          <dt className="border-b border-rule py-2"/>
+          <dd className="m-0 border-b border-rule py-2 text-right font-medium text-ink">formula</dd>
+          <dd className="m-0 border-b border-rule py-2 text-right font-medium text-ink">this model</dd>
+          {[
+            ['AUROC', R.summary.formula.auroc, R.summary.tnam.auroc],
+            ['F1', R.summary.formula.f1, R.summary.tnam.f1],
+            ['Balanced accuracy', R.summary.formula.bacc, R.summary.tnam.bacc],
+          ].map(([k, a, b]) => (
+            <React.Fragment key={k}>
+              <dt className="border-b border-rule py-2 text-ink-2">
+                {k}<span className="tick ml-2">95% interval</span>
+              </dt>
+              <dd className="m-0 border-b border-rule py-2 text-right font-mono tabular-nums text-ink-2">
+                {f3(a.mean)}<span className="tick block">{ci(a)}</span>
+              </dd>
+              <dd className="m-0 border-b border-rule py-2 text-right font-mono tabular-nums text-ink">
+                {f3(b.mean)}<span className="tick block">{ci(b)}</span>
+              </dd>
+            </React.Fragment>
+          ))}
+        </dl>
+        <p className="mt-2 max-w-[78ch] text-fine text-ink-3">
+          Intervals are bootstrap percentiles over the {R.summary.tnam.auroc.n} held-out
+          people, which is why this model's upper bound reads past 1.000: the bootstrap does
+          not know that an AUROC cannot. The F1 gap carries p = {R.paired.f1_p}. {PARAM_COUNT}
+          {' '}weights, counted off the shipped file by tnam.js itself.
+        </p>
+
+        {/* ── 5. the limits, same size as the results ──────────────────────── */}
+        <h4 className="mark mt-7">What it does not do</h4>
+        <ul className="mt-3 m-0 max-w-[72ch] list-none space-y-2.5 p-0 text-sec text-ink-2">
+          <li>
+            Everybody in every study above is an adult. The adolescent pilot has not reported.
+            Nothing here has been shown to hold for a fifteen year old.
+          </li>
+          <li>
+            On {R.transfer.subjects} new people under a stressor it never saw it
+            scores {f3(R.transfer.cognitive.tnam.mean)} ({ci(R.transfer.cognitive.tnam)}), not
+            0.997. The formula scores {f3(R.transfer.cognitive.formula.mean)} on the same
+            people, so on a new population the advantage is gone.
+          </li>
+          <li>
+            On the emotional film condition in that study it
+            scores {f3(R.transfer.emotional.tnam.mean)} ({ci(R.transfer.emotional.tnam)}): it
+            rates those windows below rest. That is a failure, not a thin margin. Across all
+            of that study's stressors together it reads {f3(R.transfer.any_stress.tnam.mean)},
+            which is chance.
+          </li>
+          <li>
+            Movement fools it. On real jogging data the model alone
+            calls {pct(R.confound.tnam_raw.physical_flagged)} of moving windows stressed,
+            because the training set had no condition where somebody exercised calmly. Sending
+            moving readings to the formula instead brings that
+            to {pct(R.confound.tnam_fallback.physical_flagged)}, against the formula's
+            own {pct(R.confound.formula.physical_flagged)}, and costs four points of the
+            cognitive stress still caught, {pct(R.confound.tnam_raw.cognitive_caught)} down
+            to {pct(R.confound.tnam_fallback.cognitive_caught)}. That is what the app ships,
+            and it is why the reading above is held at the {MOVE_LIMIT_G} g line.
+          </li>
+          <li>
+            Laughing still trips it: {pct(R.summary.tnam.amusement_false_alarm)} of amusement
+            windows flagged, against the formula's{' '}
+            {pct(R.summary.formula.amusement_false_alarm)}. Meditation is the part that got
+            better, {pct(R.summary.formula.meditation_false_alarm)} down
+            to {pct(R.summary.tnam.meditation_false_alarm)}.
+          </li>
+          <li>
+            Over {R.exams.spearman_flagged_vs_grade.n} real exams it runs and
+            drops {pct(R.exams.motion_rejected)} of windows for wrist movement, and how often
+            it flagged somebody had no relationship to the grade they
+            got: rho {f2(R.exams.spearman_flagged_vs_grade.rho)},
+            p = {R.exams.spearman_flagged_vs_grade.p}. It does not predict performance.
+          </li>
+          <li>
+            No patch has been built or worn. A Mind Score is not a diagnosis. It is one number
+            out of 100 describing one reading against that person's own baseline.
+          </li>
+        </ul>
+
+        {/* ── 6. personal calibration ──────────────────────────────────────── */}
+        <h4 className="mark mt-7">Asking eight questions</h4>
+        <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
+          The {f3(cal.base)} on new people is what the model does knowing nothing about them.
+          Eight check-ins, asked when the displayed band changes rather than on a schedule, fit
+          one gain per curve on top of the frozen model and take it
+          to {f3(cal.gains)} ({f3(cal.gainsCi[0])} to {f3(cal.gainsCi[1])}). The same eight
+          answers used to fit a model from scratch reach {f3(cal.scratch)}; moving the
+          threshold alone reaches {f3(cal.affine)}, where it started. The curves are worth
+          keeping. What a person needs is their own scale on them.
+        </p>
+        <p className="mt-2 max-w-[78ch] text-fine text-ink-3">
+          From TNAM_RESULTS.calibration, on {R.transfer.subjects} new people, scored on the
+          windows they were not asked about. Training code in the Conrad repo under ml/. The
+          weights and results this figure reads are generated files and are not edited by hand.
+        </p>
+      </figure>
     </ScrollIn>
   )
 }
