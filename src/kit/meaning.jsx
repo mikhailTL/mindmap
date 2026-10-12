@@ -60,9 +60,9 @@ const CLAIMS = [
 
 function Column({ title, rows, lit }) {
   return (
-    <div className={cn('rounded-panel border bg-aqua p-3.5',
-      lit ? 'border-accent/45' : 'border-rule')}>
-      <p className={cn('font-display text-tick font-bold', lit ? 'text-accent' : 'text-ink-2')}>{title}</p>
+    <div className={cn('rounded-panel border-2 p-3.5',
+      lit ? 'kit-ground kit-edge' : 'border-ink bg-card')}>
+      <p className={cn('font-display text-tick font-bold', lit ? 'kit-ink' : 'text-ink-2')}>{title}</p>
       <dl className="m-0 mt-2">
         {rows.map((r, i) => (
           <div key={r.k} style={riseAt(i)} className="kit-rise border-t border-rule py-2 first:border-t-0">
@@ -96,11 +96,11 @@ export function Meaning() {
             <C.Trigger
               className={cn('group flex min-h-[56px] w-full items-center gap-3 py-3 text-left',
                 'transition-colors duration-150 hoverOnly:text-accent-ink')}>
-              <Chevron aria-hidden className="size-3.5 shrink-0 text-accent transition-transform
+              <Chevron aria-hidden className="kit-ink size-3.5 shrink-0 transition-transform
                 duration-200 ease-[var(--ease-out)] group-data-[state=open]:rotate-90"/>
               <span className="min-w-0 flex-1 text-body text-ink">{c.q}</span>
-              <span className="shrink-0 whitespace-nowrap rounded-field border border-rule bg-mist
-                px-2 py-0.5 font-display text-fine font-bold text-ink-2">{c.verdict}</span>
+              <span className="shrink-0 whitespace-nowrap rounded-chip border-2 border-ink bg-card
+                px-2.5 py-0.5 font-display text-fine font-bold text-ink-2">{c.verdict}</span>
             </C.Trigger>
             <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
               <p className="max-w-[56ch] pb-4 pl-6 text-sec text-ink-2">{c.a}</p>

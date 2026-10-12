@@ -38,17 +38,6 @@
   0%, 100% { transform: scale(0.52) }
   40%      { transform: scale(1) }
 }
-.kit-breathe {
-  transform-origin: 20px 20px;
-  animation: kit-breathe 11s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* A held breath at the size it rests at, so the mark still reads as a disc
-     inside two rings rather than as a dot. */
-  .kit-breathe { animation: none; transform: scale(0.78) }
-}
-
 /* A stroke drawing itself. Used by the two openers diagrams, where the arrow
    is the claim being made: a drawn line arrives with a direction, a line that
    is simply there does not. pathLength normalises every path to 100 units at
@@ -60,3 +49,123 @@
   to   { stroke-dashoffset: 0 }
 }
 .kit-draw { stroke-dasharray: 100; animation: kit-draw .45s var(--ease-out) both }
+
+/* ── THE ACTIVITY'S OWN COLOUR ───────────────────────────────────────────
+ * palette.js hands each panel four custom properties and everything inside
+ * it reads them through these. A class rather than an arbitrary Tailwind
+ * value because the components that need them sit several files deep and are
+ * shared between activities: a component cannot be given a class it does not
+ * know at build time, but it inherits a variable without being told.
+ *
+ * Every fallback is the leaf family, so a kit component rendered outside a
+ * panel still draws itself rather than drawing nothing. */
+.kit-ground  { background-color: var(--kit-tint, #d6eeeb) }
+.kit-fill    { background-color: var(--kit-deep, #07544f) }
+.kit-fill-art{ background-color: var(--kit-art,  #0a6e68) }
+.kit-ink     { color: var(--kit-deep, #07544f) }
+.kit-art     { color: var(--kit-art,  #0a6e68) }
+.kit-edge    { border-color: var(--kit-deep, #07544f) }
+.kit-s       { stroke: var(--kit-deep, #07544f) }
+.kit-s-art   { stroke: var(--kit-art,  #0a6e68) }
+.kit-f       { fill: var(--kit-deep, #07544f) }
+.kit-f-art   { fill: var(--kit-art,  #0a6e68) }
+.kit-f-glow  { fill: var(--kit-glow, #3fd6c4) }
+.kit-f-tint  { fill: var(--kit-tint, #d6eeeb) }
+
+/* ── THE CARD ────────────────────────────────────────────────────────────
+ * The one structural idea this page runs on, and the reason it stops reading
+ * as a settings screen: a flat block of the activity's own colour, a heavy
+ * ink edge, and a hard offset shadow in that same colour rather than in grey.
+ * No blur and no light source, which is the shadow the site's config already
+ * defines for every other card; this one only takes the activity's hue
+ * instead of a grey, which is the single change that makes ten cards read as
+ * ten things.
+ *
+ * The press is the whole hover: the card travels along its own shadow and the
+ * shadow shortens by the same amount, so the block looks pushed rather than
+ * lit. Nothing about the layout moves, because a shadow has no size on the
+ * page and the translate is composited. */
+.kit-block, .kit-card {
+  box-shadow: 4px 4px 0 0 var(--kit-art, #0a6e68);
+  transition: box-shadow .16s var(--ease-out), transform .16s var(--ease-out);
+}
+/* .kit-block is the look without the press. A card that travels under the
+   pointer is promising something, so only the ones that are themselves a
+   control get .kit-card: the ten activity panels and the chooser's two
+   buttons. The page's own intro, the chooser's frame and the closing line are
+   blocks, and they hold still. */
+@media (hover: hover) and (pointer: fine) {
+  .kit-card:hover { transform: translate(1px, 1px); box-shadow: 3px 3px 0 0 var(--kit-deep, #07544f) }
+}
+.kit-card:has(:focus-visible) { box-shadow: 3px 3px 0 0 var(--kit-deep, #07544f) }
+.kit-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--kit-deep, #07544f) }
+@media (prefers-reduced-motion: reduce) {
+  .kit-card, .kit-card:hover, .kit-card:active { transform: none; transition: box-shadow .16s }
+}
+
+/* ── THE SCENES ──────────────────────────────────────────────────────────
+ * Each closed card opens with a drawing of what the activity actually is,
+ * composed per activity rather than drawn from one icon set: a sky and a
+ * horizon for the breath, a field and a dot for the map, five falling stacks
+ * for the count. They are flat blocks of the activity's two tones, which is
+ * the neo-brutalist half of this, and they are built out of discs and rounded
+ * ends, which is the calm half.
+ *
+ * Only one of the ten loops. Ten looping drawings in one column is a
+ * fairground and the reader came here because the day had already been loud.
+ * The rest hold still until a fine pointer is on the card, and then the one
+ * part of the drawing that carries the idea moves: the dot slides to its
+ * reading, the lifted word turns back level, the heap tidies into two
+ * columns. On a touch screen none of that fires, and the drawing is already
+ * the finished state rather than the waiting one, so nothing is lost. */
+.kit-move {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: var(--rest, none);
+  transition: transform .5s var(--ease-out);
+}
+/* The gauge needle turns about the dial's centre rather than about its own
+   bounding box, which is the one scene where the origin is a point in the
+   drawing instead of the middle of the thing moving. */
+.kit-move-v { transform-box: view-box }
+@media (hover: hover) and (pointer: fine) {
+  .kit-card:hover .kit-move { transform: var(--hov, var(--rest, none)) }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Held at the resting state, which is the finished drawing in every scene,
+     so nothing here needs motion to be understood. */
+  .kit-move, .kit-card:hover .kit-move { transition: none; transform: var(--rest, none) }
+}
+
+/* The breathing disc at the centre of the breathing scene, and the only loop
+   in the toolkit. Eleven seconds is 5.5 breaths a minute, the pacer's own
+   default, so the closed card is already showing the pace before anybody
+   opens it. The curve is a symmetric ease-in-out rather than the site's
+   --ease-in-out: that one is cut for a deliberate 200ms move and would make
+   an eleven second breath lurch through its middle. The disc is already
+   translated to where it belongs, so it scales about itself. */
+.kit-breathe-c {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kit-breathe 11s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-breathe-c { animation: none; transform: scale(0.78) }
+}
+
+/* The scene arrives once, as the list is read down. Not a loop and not a
+   hover: a column of cards that all appear at the same instant reads as a
+   page that has not finished loading. */
+@keyframes kit-settle {
+  from { opacity: 0; transform: translateY(6px) }
+  to   { opacity: 1; transform: none }
+}
+.kit-settle { animation: kit-settle .42s var(--ease-out) both }
+
+/* A control that lights in the activity's own wash. `hoverOnly:` is a Tailwind
+   variant and cannot be put in front of a plain class, so the gate is written
+   out here instead: a tap on a touch screen fires a hover and it sticks, which
+   would leave the last chip a reader touched looking chosen. */
+@media (hover: hover) and (pointer: fine) {
+  .kit-hoverable:hover { background-color: var(--kit-tint, #d6eeeb) }
+}

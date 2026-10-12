@@ -1,5 +1,6 @@
 import React from 'react'
 import { Choice, Hint, Step } from './panel'
+import { vars, varsFamily } from './palette'
 
 /* Two taps in, up to two activities out. A written table, five states by three
  * lengths, and the panel says that is what it is: no model, nothing learned
@@ -38,9 +39,10 @@ export function Router({ items, onOpen }) {
   const names = Object.fromEntries(items.map(i => [i.id, i.title]))
 
   return (
-    <section className="rounded-panel border border-rule bg-card p-5">
-      <h2 className="font-display text-row font-bold tracking-tight text-ink">Pick one for me</h2>
-      <p className="mt-1.5 max-w-[48ch] text-sec text-ink-2">Two taps. Or skip this and read the list.</p>
+    <section style={varsFamily('leaf')}
+      className="kit-block kit-ground rounded-panel border-2 border-ink p-5 sm:p-6">
+      <h2 className="font-display text-head font-bold tracking-tight text-ink">Pick one for me</h2>
+      <p className="mt-2 max-w-[48ch] text-sec text-ink-2">Two taps. Or skip this and read the list.</p>
 
       <Step className="mt-5">What it feels like right now</Step>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -62,13 +64,14 @@ export function Router({ items, onOpen }) {
 
       <div aria-live="polite" className="mt-5">
         {picks ? (
-          <div className="border-l-2 border-accent pl-4">
+          <div className="rounded-panel border-2 border-ink bg-card p-4">
             <p className="max-w-[48ch] text-sec text-ink-2">{WHY[state]}</p>
-            <div className="mt-3 flex flex-wrap gap-2.5">
+            <div className="mt-3.5 flex flex-wrap gap-2.5">
               {picks.map((id, n) => (
                 <button key={id} type="button" onClick={() => onOpen(id)}
-                  className="min-h-[48px] rounded-field bg-accent px-4 font-display text-ui font-medium
-                    text-paper transition-colors duration-150 hoverOnly:bg-accent-ink">
+                  style={vars(id)}
+                  className="kit-fill kit-card min-h-[48px] rounded-field border-2 border-ink px-4
+                    font-display text-ui font-bold text-paper">
                   {n === 0 ? 'Open' : 'Then'} {names[id]}
                 </button>
               ))}

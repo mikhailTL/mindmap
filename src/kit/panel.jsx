@@ -1,53 +1,73 @@
 import React from 'react'
 import * as C from '@radix-ui/react-collapsible'
 import { Chevron } from '../ui/marks'
-import { Mark } from './glyphs'
+import { Art } from './glyphs'
+import { vars } from './palette'
 import { cn } from '../lib/utils'
 import './kit.css'
 
-/* Shared shell for the toolkit. One panel per activity: a drawn mark, the
-   feature name, a one-line description of what it does, how long it takes,
-   and the tool itself behind a disclosure.
+/* Shared shell for the toolkit, and the whole of why this page stopped
+ * reading as a settings screen.
+ *
+ * It used to be a hairline border, a white ground and a 48px line glyph, ten
+ * times in a column, in one colour. Correct and cold. design-spec 7b lifts the
+ * restraint on exactly this page, so a card is now a flat block of the
+ * activity's own wash, a heavy ink edge, a hard offset shadow in the
+ * activity's own colour rather than in grey, a drawn scene across the top of
+ * it, and a confident name under that.
+ *
+ * WHY THE COLOUR IS A WASH AND NOT A FILL. Young people asked for muted over
+ * vivid when they were shown mental health app designs: a bright screen on a
+ * bad day "is shouty, it hurts your head" (Western Sydney / UTS, Desirable
+ * design, 2022). So the brutalist half of this is the edge, the shadow, the
+ * block and the type, and never the saturation.
+ *
+ * The whole card is the trigger, which is a 300px target rather than a 44px
+ * one, and the press runs through the shadow: the block travels along its own
+ * offset and the shadow shortens by the same amount, so it reads as pushed.
+ *
+ * Panels are independent rather than an accordion: closing one to open
+ * another would throw away whatever the reader had typed in it. Radix unmounts
+ * closed content, so a closed tool holds no state and runs no loop. */
 
-   The mark is not decoration. A reader scanning ten panels for the breathing
-   one should find it without reading, and the closed row had nothing in it to
-   find.
-
-   Panels are independent rather than an accordion: closing one to open
-   another would throw away whatever the reader had typed in it. Radix unmounts
-   closed content, so a closed tool holds no state and runs no loop. */
-
-export function Panel({ id, title, time, lede, mark, tone, open, onOpenChange, panelRef, children }) {
+export function Panel({ id, kit, title, time, lede, mark, open, onOpenChange, panelRef, index = 0, children }) {
   return (
-    <section ref={panelRef} id={id}
-      className="scroll-mt-16 overflow-hidden rounded-panel border border-rule bg-card">
+    <section ref={panelRef} id={id} style={{ ...vars(kit), animationDelay: `${Math.min(index, 6) * 60}ms` }}
+      className="kit-card kit-settle kit-ground scroll-mt-16 overflow-hidden rounded-panel border-2 border-ink">
       <C.Root open={open} onOpenChange={onOpenChange}>
         <h2 className="m-0">
-          {/* The time sits on the title's own line rather than in a right-hand
-              column. In a column it was 72px of permanent width taken out of a
-              314px row at 390, which pushed every subtitle to six lines and
-              broke "5-4-3-2-1 Grounding" across two. */}
-          <C.Trigger
-            className={cn('group flex w-full items-start gap-3.5 p-4 text-left sm:gap-4 sm:p-5',
-              'transition-colors duration-150 hoverOnly:bg-mist/60')}>
-            {mark && <Mark draw={mark} tone={tone}/>}
-            <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <span className="font-display text-row font-bold tracking-tight text-ink">{title}</span>
-                <span className="whitespace-nowrap rounded-field border border-rule bg-mist px-2 py-0.5
-                  font-display text-fine font-medium text-ink-2">{time}</span>
+          <C.Trigger className="group block w-full p-3 text-left sm:p-4">
+            {mark && <Art draw={mark}/>}
+            <span className="mt-3.5 flex items-start gap-3 px-0.5 pb-0.5">
+              <span className="min-w-0 flex-1">
+                {/* text-wrap is inherited and the base layer balances headings,
+                    so inside this h2 the subtitle was being balanced too and
+                    wrapped at about 280px on a 670px row. It is a sentence,
+                    not a heading. */}
+                <span className="block font-display text-row font-bold tracking-tight text-ink sm:text-head">
+                  {title}
+                </span>
+                <span className="mt-2 block max-w-[48ch] text-sec text-ink-2 [text-wrap:pretty]">{lede}</span>
+                <span className="kit-fill mt-3 inline-block rounded-chip px-3 py-1 font-display
+                  text-fine font-bold text-paper">{time}</span>
               </span>
-              {/* text-wrap is inherited and the base layer balances headings,
-                  so inside this h2 the subtitle was being balanced too and wrapped
-                  at about 280px on a 670px row. It is a sentence, not a heading. */}
-              <span className="mt-1.5 block max-w-[46ch] text-sec text-ink-2 [text-wrap:pretty]">{lede}</span>
+              {/* A drawn control rather than a bare chevron: on a page built
+                  out of edges, the one thing a reader has to press should have
+                  one too. */}
+              <span className="grid size-11 shrink-0 place-items-center rounded-chip border-2
+                border-ink bg-card">
+                <Chevron aria-hidden className="size-4 text-ink transition-transform duration-200
+                  ease-[var(--ease-out)] group-data-[state=open]:rotate-90"/>
+              </span>
             </span>
-            <Chevron aria-hidden className="mt-1 size-4 shrink-0 text-accent transition-transform
-              duration-200 ease-[var(--ease-out)] group-data-[state=open]:rotate-90"/>
           </C.Trigger>
         </h2>
         <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
-          <div className="border-t border-rule p-4 sm:p-5">{children}</div>
+          {/* The tool itself goes back onto white. The wash is the activity's
+              name badge, not its reading surface: a form filled in on a tint
+              is harder to read than one on paper, and this is where somebody
+              actually types. */}
+          <div className="border-t-2 border-ink bg-card p-4 sm:p-5">{children}</div>
         </C.Content>
       </C.Root>
     </section>
@@ -55,27 +75,30 @@ export function Panel({ id, title, time, lede, mark, tone, open, onOpenChange, p
 }
 
 /* A chip in a row of choices. Selection is carried by fill, weight and ink, so
-   it survives a greyscale screenshot. 44px floor on every target. */
+   it survives a greyscale screenshot. 44px floor on every target, and the
+   selected one takes the activity's own colour rather than a house green, so a
+   reader looking at two open panels can tell which is which. */
 export function Choice({ on = false, className, ...rest }) {
   return (
     <button type="button" aria-pressed={on}
-      className={cn('min-h-[44px] rounded-field border px-3.5 text-left font-display text-ui',
+      className={cn('min-h-[46px] rounded-field border-2 px-3.5 text-left font-display text-ui',
         'transition-colors duration-150 ease-[var(--ease-out)]',
-        on ? 'border-ink bg-ink font-bold text-paper'
-           : 'border-rule bg-card font-medium text-ink-2 hoverOnly:border-ink-3 hoverOnly:bg-mist',
+        on ? 'kit-fill border-ink font-bold text-paper'
+           : 'kit-hoverable border-ink bg-card font-medium text-ink',
         className)} {...rest}/>
   )
 }
 
 export const FIELD = cn(
-  'block w-full rounded-field border border-rule bg-card p-3 font-body text-sec text-ink',
-  'placeholder:text-ink-3 transition-colors duration-150 hoverOnly:border-ink-3'
+  'block w-full rounded-field border-2 border-ink bg-card p-3 font-body text-sec text-ink',
+  'placeholder:text-ink-3 transition-colors duration-150'
 )
 
-/* Ruled label inside a panel. Not .mark: that one is a heading. */
+/* Ruled label inside a panel, in the activity's own ink. Not .mark: that one
+   is a heading. */
 export function Step({ children, className }) {
   return (
-    <p className={cn('border-t border-rule pt-2.5 font-display text-tick font-bold text-ink-2', className)}>
+    <p className={cn('kit-ink border-t-2 border-ink pt-2.5 font-display text-tick font-bold', className)}>
       {children}
     </p>
   )
@@ -105,8 +128,8 @@ export function Readout({ n, unit, className }) {
    a button, which is why it is allowed to be smaller than a 44px target. */
 export function Tag({ on = false, className, children, ...rest }) {
   return (
-    <span className={cn('inline-block rounded-field border px-2 py-0.5 font-display text-fine',
-      on ? 'kit-mark border-accent bg-accent font-bold text-paper'
+    <span className={cn('inline-block rounded-chip border-2 px-2.5 py-0.5 font-display text-fine',
+      on ? 'kit-mark kit-fill border-ink font-bold text-paper'
          : 'border-rule bg-card font-medium text-ink-2', className)} {...rest}>
       {children}
     </span>

@@ -89,7 +89,11 @@ Files: `src/views/Toolkit.jsx`, `src/kit/`
    technique has a common name, use it; where ours goes further, say how.
 2. The graphics are low quality. They must be designed and animated, with
    motion that teaches the activity rather than decorating it.
-3. Absolute, for a mental-health product used by teenagers: never suggest
+3. It must be peaceful and uplifting, not cold and edgy. Stress-management
+   apps are the reference for theme and graphics. A monotonous stack of
+   colourless cards with minimalist diagrams is rejected. Neo-brutalist is an
+   acceptable direction if taken wholly. See design-spec section 7b.
+4. Absolute, for a mental-health product used by teenagers: never suggest
    physical discomfort as a coping strategy; no diagnostic language or clinical
    cut-offs; no streaks, guilt, nagging or comparison between students; nothing
    typed leaves the device; nothing is labelled "AI", because none of it is.

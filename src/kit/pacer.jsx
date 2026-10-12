@@ -10,7 +10,7 @@ import { Choice, Hint, Step } from './panel'
  * THE DIAL. Three things, each saying something the others do not:
  *   the disc    scales 0.42 to 1 and is the breath itself, so the reader can
  *               follow it without reading anything
- *   the ring    is split 40 / 60 in accent and turquoise, which is the one
+ *   the ring    is split 40 / 60 in the activity's two tones, which is the one
  *               fact about this technique that is hard to say in words: the
  *               out-breath is half as long again as the in-breath
  *   the hand    runs round the ring once per breath, so a glance says where
@@ -145,26 +145,26 @@ export function Pacer() {
     <div>
       <p className="max-w-[54ch] text-sec text-ink-2">{reduced
         ? 'Your device asks for reduced motion, so the dial is held still and the count is the pacer: breathe in while it runs down the in-breath, out through the longer half.'
-        : 'Breathe in while the disc grows and out while it shrinks. The green run on the ring is the in-breath, two fifths of it, and the longer turquoise run is the out-breath. Look at it rather than counting.'}</p>
+        : 'Breathe in while the disc grows and out while it shrinks. The shorter, darker run on the ring is the in-breath, two fifths of it, and the longer, lighter run is the out-breath. Look at it rather than counting.'}</p>
 
-      <div className="mt-5 rounded-panel bg-aqua p-4 sm:p-5">
+      <div className="kit-ground mt-5 rounded-panel border-2 border-ink p-4 sm:p-5">
         <div aria-hidden className="relative mx-auto size-[208px]">
           {/* The ring, and the one fact it is here to carry: the out-breath is
               the longer half. pathLength normalises the circle to 100 units so
               the split is written as the numbers it actually is. */}
           <svg viewBox="0 0 100 100" className="absolute inset-0 size-full">
-            <circle cx="50" cy="50" r="46" className="stroke-rule" strokeWidth="2" fill="none"/>
+            <circle cx="50" cy="50" r="46" className="stroke-ruling" strokeWidth="2" fill="none"/>
             <circle cx="50" cy="50" r="46" pathLength="100" transform="rotate(-90 50 50)"
-              className="stroke-accent" strokeWidth="4" strokeLinecap="butt" fill="none"
+              className="kit-s" strokeWidth="4" strokeLinecap="butt" fill="none"
               strokeDasharray="40 60"/>
             <circle cx="50" cy="50" r="46" pathLength="100" transform="rotate(-90 50 50)"
-              className="stroke-beam" strokeWidth="4" strokeLinecap="butt" fill="none"
+              className="kit-s-art" strokeWidth="4" strokeLinecap="butt" fill="none"
               strokeDasharray="60 40" strokeDashoffset="-40"/>
           </svg>
           {/* The breath. Held at the size it rests at when motion is reduced,
               which is still a disc inside a ring rather than a blank field. */}
           <span ref={disc} style={{ transform: discAt(reduced ? 0.78 : 0.42) }}
-            className="absolute left-1/2 top-1/2 size-[168px] rounded-chip bg-accent
+            className="absolute left-1/2 top-1/2 size-[168px] rounded-chip kit-fill
               will-change-transform"/>
           {/* The hand. A rotation on a wrapper, so the dot it carries is the
               only thing that moves and it moves on the compositor. */}
@@ -178,8 +178,8 @@ export function Pacer() {
         {/* The readout. Three figures rather than one, because "how long is
             left" and "how long have I been doing this" are different questions
             and the second one is the one a reader asks at the end. */}
-        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border border-rule
-          bg-rule sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border-2 border-ink
+          bg-ink sm:grid-cols-3">
           {/* Announced, because under reduced motion and for a reader who
               cannot see the disc this cell is the pacer. Twice a breath at five
               a minute is ten announcements a minute, which is the instruction

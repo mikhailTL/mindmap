@@ -68,8 +68,12 @@ function readWeek() {
   /* Flagged day = furthest above their own range, not the latest. No day above
      the band means nothing is flagged. */
   const peak = over.length ? over.reduce((a, b) => (b.v > a.v ? b : a)) : null
+  /* Highest and lowest day of the seven, which is day grain and so inside a
+     parent's scope. Read off the same fixture as everything else here. */
+  const ranked = [...days].sort((a, b) => b.v - a.v)
   return {
     band, days, over, peak,
+    hiDay: ranked[0] ?? null, loDay: ranked[ranked.length - 1] ?? null,
     last: days[days.length - 1],
     avg: days.length ? Math.round(days.reduce((a, d) => a + d.v, 0) / days.length) : null,
     /* The dial's harm anchor: the middle of their own fourteen-day range. */
@@ -120,11 +124,14 @@ function DayStrip({ on, tone, label }) {
   )
 }
 
-function Tile({ label, figure, unit, children }) {
+/* `pre` is the hedging word in front of a figure, small and on the same line.
+   Set in the figure's own run it wrapped the tile over two lines at 1280. */
+function Tile({ label, pre, figure, unit, children }) {
   return (
     <div className="field p-4">
       <p className="font-display text-tick font-bold text-ink-2">{label}</p>
       <p className="mt-1.5 font-mono text-stat font-medium leading-none tabular-nums text-ink">
+        {pre && <span className="mr-1.5 font-body text-tick font-light text-ink-3">{pre}</span>}
         {figure}
         {unit && <span className="ml-1.5 font-body text-tick font-light text-ink-3">{unit}</span>}
       </p>
@@ -144,25 +151,20 @@ function Fact({ k, v, tone = 'text-ink' }) {
   )
 }
 
-/* Two bars off one scale: the three short nights against their own usual.
-   Each bar carries its own name and its own figure, because a bar whose only
-   label is in the aria string is a bar a sighted reader has to guess at.
-   Worked out from movement, so it is an estimate and the figures say "about". */
-const SLEEP_ROWS = [
-  { k:`${word(SLEEP.nights)} short nights`, v:SLEEP.hours, tone:'bg-warn' },
-  { k:'their usual night',                  v:SLEEP.usual, tone:'bg-ink-3/40' },
-]
-
-function SleepBars() {
-  const top = Math.max(SLEEP.hours, SLEEP.usual)
+/* A measured value against the same wearer's own usual, as two bars off one
+   zero-based scale. Each bar carries its own name and its own figure, because
+   a bar whose only label is in the aria string is a bar a sighted reader has
+   to guess at. `top` is the scale's full length, never the larger of the two
+   values, so a bar's length is readable as a share of the whole rather than
+   only against its neighbour. */
+function PairBars({ rows, top, aria }) {
   return (
-    <div className="mt-3 flex flex-col gap-2" role="img"
-      aria-label={`About ${hrs(SLEEP.hours)} on ${word(SLEEP.nights)} nights, against their usual of about ${hrs(SLEEP.usual)}.`}>
-      {SLEEP_ROWS.map(r => (
+    <div className="mt-3 flex flex-col gap-2" role="img" aria-label={aria}>
+      {rows.map(r => (
         <span key={r.k} aria-hidden className="block">
           <span className="flex items-baseline justify-between gap-2">
-            <span className="text-fine text-ink-2">{r.k}</span>
-            <span className="shrink-0 font-mono text-fine tabular-nums text-ink">about {hrs(r.v)}</span>
+            <span className="min-w-0 text-fine text-ink-2">{r.k}</span>
+            <span className="shrink-0 font-mono text-fine tabular-nums text-ink">{r.text}</span>
           </span>
           <span className="mt-1 block h-2.5 rounded-bar bg-ink-3/15">
             <span className={cn('block h-full rounded-bar', r.tone)}
@@ -171,6 +173,21 @@ function SleepBars() {
         </span>
       ))}
     </div>
+  )
+}
+
+/* Worked out from movement, so it is an estimate and both figures say "about". */
+function SleepBars() {
+  return (
+    <PairBars top={Math.max(SLEEP.hours, SLEEP.usual)}
+      aria={`About ${hrs(SLEEP.hours)} on ${word(SLEEP.nights)} nights, against their usual of about ${hrs(SLEEP.usual)}.`}
+      rows={[
+        /* Short keys: the tile is 216px wide at 1280 and the key sits on one
+           rule with its figure. The tile's own label carries the full phrase,
+           and so does the aria string above. */
+        { k:'short nights', v:SLEEP.hours, text:`about ${hrs(SLEEP.hours)}`, tone:'bg-warn' },
+        { k:'usual night', v:SLEEP.usual, text:`about ${hrs(SLEEP.usual)}`, tone:'bg-ink-3/40' },
+      ]}/>
   )
 }
 
@@ -211,6 +228,16 @@ function AskAbout({ w }) {
       </div>
       <p className="mt-1.5 max-w-[52ch] text-sec text-ink-2">Their body was working harder that day
         than it usually does. This screen cannot say why, and it is not a diagnosis.</p>
+      {/* The flagged day on its own leaves the other days above the range
+          unnamed, and a parent who asks about one of three has been told a
+          third of what this screen knows. Day grain, like everything here. */}
+      <dl className="m-0 mt-3.5 p-0">
+        {w.over.map(d => (
+          <Fact key={d.key} k={d.name === w.peak.name ? `${d.name}, the furthest above` : d.name}
+            v={`${d.v} of 100`} tone={d.name === w.peak.name ? 'text-warn' : 'text-ink'}/>
+        ))}
+        <Fact k="Their own usual range" v={`${w.band.lo} to ${w.band.hi}`}/>
+      </dl>
       <List className="mt-4 gap-0">
         {openers(w.peak.name).map(o => (
           <Item key={o} marker="none" className="border-b border-rule py-3 text-body text-ink">
@@ -250,7 +277,13 @@ const SCOPES = [
   { id:'trends', label:`Whether the ${SCORE} moved week to week`,
     sub:'Direction only, at week grain.' },
   { id:'raw',    label:'Second-by-second readings',
-    sub:'Off unless both you and your child turn it on.' },
+    sub:'Off unless both you and your child turn it on. You cannot turn it on from this screen.',
+    /* The student holds the other half of this one, so a parent cannot widen
+       it alone. The row stays, because a scope a parent cannot find reads as a
+       scope that does not exist, and it is locked rather than merely defaulted
+       off. The words beside the control are what carry the lock: a disabled
+       control alone says only "not now". */
+    held:'Your child’s switch' },
 ]
 
 /* A locked row is drawn, not faded. The old disabled state was
@@ -292,8 +325,10 @@ function ScopeRow({ label, sub, children }) {
 function SchoolSharing({ real }) {
   /* Real mode has no signed consent, so every row starts closed and the
      controls are disabled. Do not default any scope on. */
+  /* Only the scopes a parent may actually move are in this state. The raw
+     scope is deliberately absent: there is nothing here that could flip it. */
   const [share, setShare] = React.useState(() => ({
-    score: !real && RECORD.score, trends: !real && RECORD.trends, raw: !real && RECORD.raw,
+    score: !real && RECORD.score, trends: !real && RECORD.trends,
   }))
   return (
     <>
@@ -301,8 +336,19 @@ function SchoolSharing({ real }) {
       <List className="mt-4 gap-0">
         {SCOPES.map(s => (
           <ScopeRow key={s.id} label={s.label} sub={s.sub}>
-            <Switch on={share[s.id]} disabled={real} label={s.label}
-              onClick={() => setShare(p => ({ ...p, [s.id]: !p[s.id] }))}/>
+            {s.held ? (
+              /* Read from the consent record and not from this screen's state,
+                 so there is no path by which a tap here changes it. Drawn at
+                 full strength, like the crisis row below. */
+              <span className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+                <span className="font-display text-tick font-bold text-ink-2">{s.held}</span>
+                <Switch on={!real && !!RECORD[s.id]} disabled
+                  label={`${s.label}. Locked here, ${s.held.toLowerCase()}`}/>
+              </span>
+            ) : (
+              <Switch on={share[s.id]} disabled={real} label={s.label}
+                onClick={() => setShare(p => ({ ...p, [s.id]: !p[s.id] }))}/>
+            )}
           </ScopeRow>
         ))}
         {/* Not a choice, but listed as a disabled control rather than omitted:
@@ -520,11 +566,19 @@ export function ParentDash({ go, openTab }) {
           <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
             <Panel as="h3" label={`The week, ${SCORE} out of 100`}>
               <div className="flex flex-col items-center">
+                {/* 380 rather than 320: RainbowDial caps itself at `size` and
+                    the card is 440 wide at 1280, so the hero was sitting in a
+                    card wider than itself with the slack landing at its foot.
+                    Under sm the card is narrower than either figure and the
+                    dial takes the card's width, so nothing changes at 390. */}
                 <RainbowDial className={NO_WEATHER} score={w.avg} usual={w.usual}
-                  rings={[weekRing]} size={320}/>
+                  rings={[weekRing]} size={380}/>
               </div>
               <dl className="m-0 mt-4 p-0">
                 <Fact k="Their own usual range" v={`${w.band.lo} to ${w.band.hi}`}/>
+                {w.hiDay && <Fact k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
+                  tone={w.hiDay.over ? 'text-warn' : 'text-ink'}/>}
+                {w.loDay && <Fact k="Lowest day" v={`${w.loDay.name}, ${w.loDay.v}`}/>}
                 <Fact k="Days measured" v={`${measured} of ${DAYS.length}`}/>
                 <Fact k="Grain shared with you" v="One day"/>
               </dl>
@@ -537,7 +591,10 @@ export function ParentDash({ go, openTab }) {
                   usual range, worked out from their own last two weeks. They are never compared
                   with other students.</p>
               </Panel>
-              <div className="grid gap-3 sm:grid-cols-3">
+              {/* items-start: these three tiles hold different amounts of
+                  content, and stretched the two shorter ones printed about
+                  150px of empty card stock each under their last line. */}
+              <div className="grid items-start gap-3 sm:grid-cols-3">
                 <Tile label="Above their usual range" figure={w.over.length}
                   unit={`of ${measured} days`}>
                   <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
@@ -545,6 +602,23 @@ export function ParentDash({ go, openTab }) {
                       + `${list(w.over.map(d => d.name))}.`}/>
                   <p className="mt-2 text-fine text-ink-2">
                     {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
+                  {/* How far above, which the count alone does not say. Both
+                      bars run off the same 0 to 100 scale the score uses. */}
+                  {w.peak && (
+                    <PairBars top={100}
+                      aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
+                      rows={[
+                        { k:w.peak.name, v:w.peak.v, text:`${w.peak.v} of 100`, tone:'bg-warn' },
+                        { k:'usual day', v:w.usual, text:`${w.usual} of 100`, tone:'bg-ink-3/40' },
+                      ]}/>
+                  )}
+                </Tile>
+                {/* Hours as a decimal, not "5 h 30": the formatted string ran
+                    past the tile at 390 and broke the figure over two lines.
+                    "about" is the tile's `pre` for the same reason. */}
+                <Tile label={`Sleep, ${word(SLEEP.nights)} short nights`}
+                  pre="about" figure={SLEEP.hours} unit="h a night">
+                  <SleepBars/>
                 </Tile>
                 <Tile label="Patch worn" figure={measured} unit={`of ${DAYS.length} days`}>
                   <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
@@ -552,12 +626,6 @@ export function ParentDash({ go, openTab }) {
                   <p className="mt-2 text-fine text-ink-2">
                     {measured === DAYS.length ? 'Every day reported'
                       : `${cap(word(DAYS.length - measured))} days with no reading`}</p>
-                </Tile>
-                {/* Hours as a decimal, not "5 h 30": the formatted string ran
-                    past the tile at 390 and broke the figure over two lines. */}
-                <Tile label={`Sleep, ${word(SLEEP.nights)} short nights`}
-                  figure={`about ${SLEEP.hours}`} unit="h a night">
-                  <SleepBars/>
                 </Tile>
               </div>
             </div>
@@ -572,7 +640,11 @@ export function ParentDash({ go, openTab }) {
         </>
       )}
 
-      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
+      {/* Two equal columns rather than 7fr and 5fr: the consent module is one
+          card and the column beside it is two, and at 7fr the pair ran 168px
+          past the bottom of the consent card. Equal widths put the three
+          within a few dozen pixels of each other. */}
+      <div className={cn(ROW, 'lg:grid-cols-2')}>
         <Panel as="h3" label="What the school may see"><SchoolSharing real={real}/></Panel>
         <div className="flex flex-col gap-3 lg:gap-4">
           <Panel as="h3" label="If a crisis alert is raised"><CrisisPath real={real}/></Panel>
@@ -600,10 +672,9 @@ export function ParentDash({ go, openTab }) {
           </Panel>
         </div>
       </div>
-
-      <p className="mt-6 max-w-[70ch] text-meta text-ink-3">MindMap reports patterns in body
-        signals. It is not a medical device. It does not diagnose or treat any condition. Nothing on
-        this screen is a clinical finding.</p>
+      {/* No medical disclaimer here. AppFoot in src/views/App.jsx prints one
+          immediately below this screen, and the same sentence twice, 24px
+          apart, reads as a template rather than as a statement. */}
     </>
   )
 }

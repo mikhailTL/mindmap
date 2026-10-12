@@ -8,7 +8,7 @@ import { cn } from '../lib/utils'
 /* Brain Dump. Write the pile down, split it into what can move today and what
  * cannot, then one physical first move on the top item only.
  *
- * THE SPLIT. One bar under the list, growing green from the left as things go
+ * THE SPLIT. One bar under the list, filling from the left as things go
  * to today and grey from the right as things go to not today, with the unsorted
  * middle closing between them. It is there because the finding of this exercise
  * is a proportion: most of a pile is not yours to move today, and a reader who
@@ -30,7 +30,7 @@ function Split({ today, later, total }) {
   const t = total ? today / total : 0
   const l = total ? later / total : 0
   return (
-    <div className="mt-4 rounded-panel border border-rule bg-card p-3.5">
+    <div className="mt-4 rounded-panel border-2 border-ink bg-card p-3.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
         {[['Today', today], ['Not today', later], ['To sort', total - today - later]].map(([k, n]) => (
           <span key={k} className="inline-flex items-baseline gap-1.5">
@@ -39,9 +39,9 @@ function Split({ today, later, total }) {
           </span>
         ))}
       </div>
-      <div aria-hidden className="relative mt-2.5 h-2.5 w-full overflow-hidden rounded-bar bg-mist">
+      <div aria-hidden className="relative mt-2.5 h-2.5 w-full overflow-hidden rounded-bar bg-mist border border-rule">
         <span style={{ transform: `scaleX(${t})` }}
-          className="absolute inset-y-0 left-0 w-full origin-left rounded-bar bg-accent
+          className="kit-fill absolute inset-y-0 left-0 w-full origin-left rounded-bar
             transition-transform duration-300 ease-[var(--ease-out)]"/>
         <span style={{ transform: `scaleX(${l})` }}
           className="absolute inset-y-0 right-0 w-full origin-right rounded-bar bg-ruling

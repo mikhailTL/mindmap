@@ -128,6 +128,36 @@ From the landing page, the app opens in no more than three clicks, and one of
 them is the button in the header. Nothing may be added that lengthens that
 path.
 
+## 7b. The Toolkit is the one place that breaks the restraint
+
+The owner, after seeing it: "the toolkit shouldnt be cold and edgy, it should be
+peaceful and uplifting, look at apps that focus on stress management and the
+themes and graphics they use, you need to add that, not a monotonous stack of
+cards with no color and minimalist diagrams. In fact these can be of the
+neo-brutalist style."
+
+So the Toolkit is carved out of sections 2, 3 and 6 above. It keeps the house
+tokens and it keeps every safety rule, and it drops the restraint.
+
+- Colour is allowed to carry feeling here, not only status, and each activity
+  may own a colour so the set reads as a set of different things rather than a
+  stack of identical cards. Take them from the palette; do not invent one.
+- Illustration is allowed. A breathing circle, a sky, a horizon, a growing
+  shape. Warm and calming, drawn with care, never clip art and never a mascot.
+- Shapes may be larger and softer than the rest of the site. The flat
+  instrument-panel density of section 1 is the wrong target for a page somebody
+  opens because they are having a bad day.
+- Neo-brutalist is explicitly permitted: heavy borders, flat blocks of colour,
+  hard offset shadows, big confident type. If that route is taken it is taken
+  wholly and consistently across all ten activities, not sprinkled.
+- What does not change: nothing is stored or sent, no streaks, no guilt, no
+  comparison, no diagnostic language, no suggestion of physical discomfort,
+  nothing labelled "AI", AA contrast on every text node, 44px targets, and every
+  activity still working and meaningful under prefers-reduced-motion.
+
+The test is a teenager opening this at 11pm feeling bad. It should feel like
+somewhere calm to land, not like a settings screen.
+
 ## 8b. Infographics and diagrams
 
 Every figure on the site is held to a higher bar than it currently meets. The

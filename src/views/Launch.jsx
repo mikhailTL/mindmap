@@ -14,7 +14,7 @@ import { cn } from '../lib/utils'
 /* The app's front door: three role previews.
  *
  * Each preview renders the real dashboard component on the real fixture data
- * (RainbowDial, WeekStrip, triage()). Do not hand-draw a mock here — it goes
+ * (RainbowDial, WeekStrip, triage()). Do not hand-draw a mock here; it goes
  * stale against the screen it previews. */
 
 /* ── Loop ────────────────────────────────────────────────────────────────── */
@@ -77,9 +77,11 @@ function Phone({ children }) {
 function Console({ children }) {
   return (
     <div className="w-full max-w-[320px] rounded-panel border-2 border-ink bg-card shadow-raise">
-      <div className="flex items-baseline justify-between border-b border-rule px-3 py-2">
-        <span className="text-tick text-ink-3">Check in with</span>
-        <span className="text-tick text-ink-3">by change</span>
+      {/* gap-3, not justify-between alone: at this frame's 320px the two
+          labels met with no space between them and read as one word. */}
+      <div className="flex items-baseline justify-between gap-3 border-b border-rule px-3 py-2">
+        <span className="min-w-0 text-tick text-ink-3">Check in with</span>
+        <span className="shrink-0 text-tick text-ink-3">by change</span>
       </div>
       <div className={cn(BODY, 'px-3 py-4')}>{children}</div>
     </div>
@@ -87,7 +89,7 @@ function Console({ children }) {
 }
 
 /* Real mode must never render a figure here. 0 is a valid score (calm), so a
-   dial at 0 reads as a reading. The slot holds a drawn rule, not a glyph —
+   dial at 0 reads as a reading. The slot holds a drawn rule, not a glyph:
    a dash or an em dash could be mistaken for a value. */
 function Waiting({ children }) {
   return (
@@ -112,33 +114,43 @@ function StudentPreview({ cycle, real }) {
   )
 }
 
-/* Derived from the same fixture WeekStrip draws, so the sentence and the
-   picture cannot disagree. Do not hardcode the count. */
-function daysOver() {
-  const band = DATA.weekBand || { hi: 1 }
-  return (DATA.week || []).filter(d => d.v > band.hi).length
-}
-
-function ParentPreview({ cycle, real, still }) {
-  if (real) return (
-    <Phone>
-      <div aria-hidden className="flex w-full max-w-[17rem] gap-1.5">
-        {Array.from({ length: 7 }, (_, i) => <span key={i} className="h-2 flex-1 rounded-xs bg-mist"/>)}
+/* Real mode draws no week. Seven day letters under an empty plot is the axis
+   the strip would have, with nothing on it; drawing seven grey bars instead
+   read as a reading at zero and no longer matched the chart it stood in for.
+   The labels come from the same fixture WeekStrip reads, so the axis cannot
+   drift from the chart. */
+function EmptyWeek() {
+  const days = (DATA.week || []).map(d => d.d)
+  return (
+    <>
+      <div aria-hidden className="w-full max-w-[17rem]">
+        <div className="h-16 rounded-panel border border-dashed border-ruling"/>
+        <div className="mt-1.5 flex">
+          {days.map(d => (
+            <span key={d} className="flex-1 text-center text-tick text-ink-3">{d[0]}</span>
+          ))}
+        </div>
       </div>
       {/* Not colour alone: the words and the weight carry this state into
           grayscale. */}
-      <p className="mt-5 flex max-w-[26ch] items-start gap-2 text-sec font-medium text-crit">
+      <p className="mt-4 flex max-w-[26ch] items-start gap-2 text-sec font-medium text-crit">
         <span aria-hidden className="mt-[0.5em] size-2 shrink-0 rounded-chip bg-crit"/>
         Patch not connected. No readings have arrived this week.
       </p>
-    </Phone>
+    </>
   )
+}
+
+function ParentPreview({ cycle, real, still }) {
+  if (real) return <Phone><EmptyWeek/></Phone>
   return <ParentWeek key={cycle} still={still}/>
 }
 
+/* WeekStrip prints the usual range, marks every day above it and sets that
+   day's figure under the axis, so a sentence counting those days here would
+   say the picture twice. Do not add one back. */
 function ParentWeek({ still }) {
   const on = useEntered(still)
-  const n = daysOver()
   return (
     <Phone>
       {/* A clip-path wipe, not seven staggered bars: the bars are 8px tall, so
@@ -151,14 +163,6 @@ function ParentWeek({ still }) {
           <WeekStrip days={DATA.week} band={DATA.weekBand}/>
         </div>
       </div>
-      <p className="mt-5 max-w-[24ch] text-center text-sec text-ink-2"
-        style={{
-          opacity: on ? 1 : 0,
-          transform: on ? 'none' : 'translateY(6px)',
-          transition: still ? undefined : `opacity 460ms ${EASE} 900ms, transform 460ms ${EASE} 900ms`,
-        }}>
-        {n === 1 ? 'One day' : `${n} days`} above her usual range this week.
-      </p>
     </Phone>
   )
 }
@@ -223,17 +227,45 @@ const ROLES = [
     name:`Open the student screen: one ${SCORE} out of 100 for today, with every reading underneath it.` },
   { id:'app-parent', who:'Parent', Preview: ParentPreview,
     title:'The week in one sentence',
-    body:`One ${SCORE} a day, which days sat above her own range, and a line in plain words. Never a raw reading, never a note.`,
+    body:`One ${SCORE} a day, which days sat above their own range, and a line in plain words. Never a raw reading, never a note.`,
     cta:'Open the parent screen',
-    name:`Open the parent screen: the week at a glance and one plain sentence.` },
+    name:'Open the parent screen: the week at a glance and one plain sentence.' },
   { id:'app-pro', who:'Medical Professional', Preview: ProPreview,
-    /* Wording is fixed site-wide in lib/terms.js — change it there, not here. */
+    /* Wording is fixed site-wide in lib/terms.js. Change it there, not here. */
     title: CASELOAD_TITLE,
     body:`The students whose ${SCORE} moved most since last week, for the ones whose guardian consented to trends. Never a group under five.`,
     cta:'Open the console',
     name:`Open the medical professional console: the students whose ${SCORE} moved most since last week.` },
 ]
 
+/* What the three screens have in common, as figures rather than as a sentence
+   about them. Each one is already true elsewhere on this site: the scale, the
+   number of screens, and the floor under a group report. */
+const FACTS = [
+  ['3', 'screens, one day of measurements'],
+  ['0 to 100', SCORE],
+  ['5', 'smallest group a report may cover'],
+]
+
+/* Figures as a chip row inside the panel rather than as a row of cells.
+   Spec 2 allows a card to hold a row of chips, and at 390 three cells stacked
+   into three rows of their own cost this block about 140px of height for the
+   same three numbers. Label beside the figure, never under it. */
+function Figures({ items, className }) {
+  return (
+    <ul className={cn('m-0 flex list-none flex-wrap gap-1.5 p-0', className)}>
+      {items.map(([value, label]) => (
+        <li key={label} className="inline-flex items-baseline gap-1.5 rounded-chip border
+          border-rule bg-paper px-2.5 py-1">
+          <span className="font-mono text-ui font-bold tabular-nums leading-none text-accent">
+            {value}
+          </span>
+          <span className="text-fine leading-none text-ink-2">{label}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 function Door({ role, go, active, setActive, real, still }) {
   const focused = active === role.id
@@ -285,17 +317,26 @@ export function Launch({ go }) {
     /* No vertical padding: `.wrap` takes it from the app shell (24px, 32 past
        lg). */
     <main className="wrap">
-      {/* lg:hidden — past lg the app rail carries the wordmark instead. */}
+      {/* lg:hidden -- past lg the app rail carries the wordmark instead. */}
       <Logo className="text-ui text-ink lg:hidden" title="MindMap"/>
-      <h1 className="mt-4 font-display text-head font-bold leading-[1.2] tracking-[-0.018em] text-ink lg:mt-0">
+      {/* An h2, not an h1: the app's top bar already carries this screen's h1,
+          and two of them on one page leave a reader no top of the outline. The
+          shell sets its size. */}
+      <h2 className="mt-3 font-display font-bold text-ink lg:mt-0">
         Who is opening the app?
-      </h1>
-      <p className="mt-2.5 max-w-[60ch] text-sec text-ink-2">
-        Three screens read the same day of measurements and show three different parts of it.
-        Pick the one that is yours.
-      </p>
+      </h2>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      {/* The line and the three counts used to sit on the app's tint, which is
+          the one thing section 2 of the spec rules out. One container, one
+          line, and the figures that say what the three screens share. */}
+      <div className="mt-3 rounded-panel border border-rule bg-card p-3.5">
+        <p className="text-meta leading-[1.4] text-ink-2">
+          Three screens read the same day. Pick the one that is yours.
+        </p>
+        <Figures items={FACTS} className="mt-2.5"/>
+      </div>
+
+      <div className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-3 lg:gap-4">
         {ROLES.map(role => (
           <Door key={role.id} role={role} go={go} active={active} setActive={setActive}
             real={real} still={still}/>

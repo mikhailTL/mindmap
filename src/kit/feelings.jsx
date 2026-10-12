@@ -9,7 +9,7 @@ import { cn } from '../lib/utils'
  * THE FIELD. All sixteen words are drawn as marks where they sit, so the map
  * teaches its own vocabulary: a reader can see that the bottom left is a
  * different country from the top left before they have moved anything. The
- * nearest mark grows and turns green as the dot passes it, which is the whole
+ * nearest mark grows and takes the activity's colour as the dot passes it, which is the whole
  * mechanism made visible, and a crosshair follows the dot out to the two axes
  * so the reading is legible as two values rather than one position.
  *
@@ -100,7 +100,7 @@ export function FeelingMap() {
         onPointerUp={release}
         onPointerCancel={release}
         className="relative mx-auto mt-1.5 aspect-square w-full max-w-[20rem] touch-none
-          overflow-hidden rounded-panel border border-ruling bg-aqua">
+          overflow-hidden rounded-panel border-2 border-ink kit-ground">
         <span aria-hidden className="absolute inset-x-0 top-1/2 border-t border-dashed border-ruling"/>
         <span aria-hidden className="absolute inset-y-0 left-1/2 border-l border-dashed border-ruling"/>
 
@@ -111,7 +111,7 @@ export function FeelingMap() {
           <span key={w.w} aria-hidden style={pc(w.x, w.y)}
             className={cn('absolute block size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-chip',
               'transition-[background-color,transform] duration-200 ease-[var(--ease-out)]',
-              found === w ? 'scale-[2.2] bg-accent' : 'bg-ink-3')}/>
+              found === w ? 'scale-[2.2] kit-fill' : 'bg-ink-3')}/>
         ))}
 
         {/* The reading, out to both axes. Shown only once the dot is placed, so
@@ -119,9 +119,9 @@ export function FeelingMap() {
         {placed && (
           <>
             <span aria-hidden style={{ left: pc(pos.x, 0).left }}
-              className="absolute inset-y-0 border-l border-accent/45"/>
+              className="kit-edge absolute inset-y-0 border-l-2 opacity-50"/>
             <span aria-hidden style={{ top: pc(0, pos.y).top }}
-              className="absolute inset-x-0 border-t border-accent/45"/>
+              className="kit-edge absolute inset-x-0 border-t-2 opacity-50"/>
             {/* The answer, written where it lives. Sixteen unlabelled dots are
                 a pattern; one of them named under the thumb is the map
                 teaching its own vocabulary as the dot moves across it. It
@@ -130,7 +130,7 @@ export function FeelingMap() {
                 bottom edge. */}
             <span aria-hidden style={{ left: labelLeft(pos.x), top: pc(0, pos.y).top }}
               className={cn('pointer-events-none absolute -translate-x-1/2 whitespace-nowrap',
-                'rounded-field bg-accent px-2 py-0.5 font-display text-fine font-bold text-paper',
+                'kit-fill rounded-chip px-2.5 py-0.5 font-display text-fine font-bold text-paper',
                 pos.y < -0.5 ? '-translate-y-[2.4rem]' : 'translate-y-[1.3rem]')}>{found.w}</span>
           </>
         )}
@@ -143,11 +143,11 @@ export function FeelingMap() {
           {/* A halo under the thumb, so the finger covering the dot does not
               also cover every sign that it is being held. Opacity, which is
               what still works when motion is reduced. */}
-          <span aria-hidden className={cn('absolute size-11 rounded-chip bg-accent-wash',
+          <span aria-hidden className={cn('absolute size-11 rounded-chip kit-ground',
             'transition-opacity duration-150 ease-[var(--ease-out)]', held ? 'opacity-100' : 'opacity-0')}/>
           <span aria-hidden className={cn('relative block size-6 rounded-chip border-2 border-paper',
             'transition-transform duration-150 ease-[var(--ease-out)]',
-            held && 'scale-[1.2]', placed ? 'bg-accent' : 'bg-ink-3')}/>
+            held && 'scale-[1.2]', placed ? 'kit-fill' : 'bg-ink-3')}/>
         </button>
       </div>
       <div className="mx-auto mt-1.5 flex w-full max-w-[20rem] items-baseline justify-between gap-2
@@ -156,7 +156,7 @@ export function FeelingMap() {
       </div>
 
       <div aria-live="polite"
-        className="mt-5 min-h-[7rem] rounded-panel border border-rule border-l-2 border-l-accent bg-card p-4">
+        className="kit-edge mt-5 min-h-[7rem] rounded-panel border-2 border-l-[6px] bg-card p-4">
         {found ? (
           /* Keyed on the word, so a new answer arrives rather than swapping
              under the reader's eye mid-drag. */

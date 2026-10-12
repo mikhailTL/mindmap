@@ -4,11 +4,33 @@ import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
 /* Concentric-arch score dial: one band per sensor on its own 0-100 scale.
- * The arch is aria-hidden — a 16-unit band stroke is ~20px at a sane dial
+ * The arch is aria-hidden: a 16-unit band stroke is ~20px at a sane dial
  * size, half the minimum tap target, so every band has a focusable, named
  * 56px row under it (RingList).
  * The centre number is a logistic blend of four z-scores, NOT the mean of the
- * bands. Do not label it an average. */
+ * bands. Do not label it an average.
+ *
+ * TWO THINGS CHANGED HERE.
+ *
+ * 1. `weather` IS A PROP NOW, default true. ArchWeather used to render
+ *    unconditionally, so the clouds appeared on the parent dial, where design
+ *    spec section 7 says they do not belong, and the parent screen had to
+ *    suppress them with a CSS selector written against this file's internals
+ *    (`[&_g:has(>_.mm-rain)]:hidden`). That selector breaks silently the day
+ *    `mm-rain` is renamed. Pass `weather={false}` instead.
+ *
+ * 2. THE DIAL HAS A SCALE. It had four radii and a usual-day mark and nothing
+ *    else: no axis, no tick, no labelled end, so a band's fill could be
+ *    compared with the other three and with nothing absolute. There is a
+ *    graduated axis outside the bands now - minor ticks every 5 points,
+ *    majors every 25, numbered at 25, 50 and 75, with both ends named and
+ *    numbered at the feet. The usual-day mark lands on that scale, which is
+ *    what makes it a set point rather than a decoration.
+ *
+ * The viewBox is fixed at 320 by 232 and the radii are fixed with it:
+ * views/Intro.jsx overlays its own svg on this one at the same viewBox and
+ * points an arrow at RADII[0] + BAND / 2 by coordinate. Moving any of those
+ * numbers silently moves that annotation off the thing it annotates. */
 
 /* BAND 16 thick, radii 18 apart, so a 2-unit gap separates the four. Red
    outside, blue inside. Interior half-disc radius ~76 holds the score; three
@@ -23,6 +45,10 @@ const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
    to 1.81 on the palest ground a dial lands on (aqua-2 #cee8ea). Not text,
    carries no value, so 3 : 1 does not apply. */
 const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#8eb0b6'
+/* The axis. ink-3 clears 4.5 : 1 as text on every ground a dial lands on -
+   card 5.61, paper 5.33, PLATE 5.26, aqua-2 4.86, mist 4.68 - so the same
+   value draws the rule, the ticks and their numbers. */
+const INK3 = '#3c6a74'
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
 /* 180° is the left foot, 360° the right; increasing angle sweeps up and over. */
@@ -30,6 +56,48 @@ function arcPath(r, pct) {
   const to = 180 + 180 * Math.max(0.0001, Math.min(1, pct / 100))
   const [x1, y1] = pol(r, 180), [x2, y2] = pol(r, to)
   return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
+}
+
+/* ── The scale ─────────────────────────────────────────────────────────── */
+
+/* The axis sits just outside the outer band: 149 is two units clear of its
+   147 edge, and a major tick reaching 157 still leaves three units of the
+   viewBox at the feet and eleven at the top. Nothing here can be any longer.
+   The 50 tick is the one exception, cut to three units, because its number is
+   the only one that has to live in the eleven units above the arch. */
+const AXIS_R = 149
+const MAJORS = [0, 25, 75, 100]
+const MINORS = Array.from({ length: 21 }, (_, i) => i * 5).filter(v => v % 25)
+
+/* Numbers are SVG text, sized against the rendered dial so that a 320px dial
+   and a 440px dial both print them at about 11px: SVG text in a scaled viewBox
+   would otherwise be 8px on the 248px check-in dial. 25 and 75 sit on their
+   own radius at 168, which clears both their own tick and the band. */
+const axisFont = size => Math.max(7.5, Math.min(16, (11 * 320) / size))
+
+function Axis({ font }) {
+  const ray = (v, len) => {
+    const d = 180 + 1.8 * v
+    const [x1, y1] = pol(AXIS_R, d), [x2, y2] = pol(AXIS_R + len, d)
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}`
+  }
+  return (
+    <g aria-hidden style={{ pointerEvents: 'none' }}>
+      <path d={arcPath(AXIS_R, 100)} fill="none" stroke={INK3} strokeWidth="1"/>
+      <g stroke={INK3} strokeWidth="1">
+        {MINORS.map(v => <path key={v} d={ray(v, 4)}/>)}
+      </g>
+      <g stroke={INK3} strokeWidth="1.6">
+        {MAJORS.map(v => <path key={v} d={ray(v, 8)}/>)}
+        <path d={ray(50, 3)}/>
+      </g>
+      <g className="font-mono" fill={INK3} fontSize={font.toFixed(2)} textAnchor="middle">
+        <text x="41.2" y={(49.2 + font * 0.36).toFixed(1)}>25</text>
+        <text x="160" y="13">50</text>
+        <text x="278.8" y={(49.2 + font * 0.36).toFixed(1)}>75</text>
+      </g>
+    </g>
+  )
 }
 
 /* Each cloud is centred on a foot and tall enough that the band end
@@ -108,7 +176,7 @@ export function ArchWeather() {
 
 /* A spring, not a fixed-duration curve: it integrates from the current value
    and velocity, so a target that changes mid-flight is absorbed rather than
-   restarted. Damping ratio 26 / (2 * sqrt(170)) = 0.997 — critically damped,
+   restarted. Damping ratio 26 / (2 * sqrt(170)) = 0.997, critically damped,
    no overshoot. Under reduced motion the value is set directly. */
 function useSpring(target, on = true, stiffness = 170, damping = 26) {
   const [shown, setShown] = React.useState(on ? 0 : target)
@@ -139,7 +207,7 @@ function useSpring(target, on = true, stiffness = 170, damping = 26) {
 }
 
 /* Flat, opaque, round-ended: no blur, gradient or partial opacity. TRACK is
-   the unfilled remainder — see the note on the constant. */
+   the unfilled remainder; see the note on the constant. */
 function Band({ r, glow, pct, dim }) {
   const shown = useSpring(pct)
   return (
@@ -158,10 +226,11 @@ function Band({ r, glow, pct, dim }) {
  * Solomon, J. B., Exe, N. L., & Fagerlin, A. (2018). Effect of harm anchors
  * in visual displays of test results on patient perceptions of urgency about
  * near-normal values: experimental study. JMIR, 20(3), e98.
- * https://doi.org/10.2196/jmir.8889 — the finding is about a mark on the
+ * https://doi.org/10.2196/jmir.8889 . The finding is about a mark on the
  * scale, not a sentence under the picture.
  * The mark sits at 180 + 1.8 * usual degrees (180° = left foot, 1.8°/point
- * over the 180° sweep). Anything pointing at the usual value moves with it.
+ * over the 180° sweep). Anything pointing at the usual value moves with it,
+ * including the axis tick it now lands between.
  * Two strokes: one dark hairline alone disappears into the darkest band. */
 function UsualMark({ at }) {
   const deg = 180 + 1.8 * Math.max(0, Math.min(100, at))
@@ -179,7 +248,8 @@ function UsualMark({ at }) {
   )
 }
 
-export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, plate = false, className }) {
+export function RainbowDial({ score, usual, rings, onPick, picked, size = 320,
+  plate = false, weather = true, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
   /* Do not hit-test the arcs: a filtered sibling's hit area is its whole
@@ -205,6 +275,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
       <div ref={boxRef} role="img" onClick={hit} className="relative"
         style={{ aspectRatio: `${VW} / ${VH}`, cursor: onPick ? 'pointer' : undefined }}
         aria-label={`${score} out of 100${usual != null ? `, marked against a usual day of ${usual}` : ''}. 0 is calm, 100 is peak.
+          The scale outside the bands is ticked every 5 points and numbered every 25.
           Each signal out of 100: ${read}.`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
           {plate && <rect x="1" y="1" width={VW - 2} height={VH - 2} rx="14"
@@ -218,9 +289,10 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
               </React.Fragment>
             )
           })}
-          {/* last: every band paints a full-length mist track over anything
-              drawn before it */}
-          <ArchWeather/>
+          {/* after the bands, because every band paints a full-length mist
+              track over anything drawn before it */}
+          <Axis font={axisFont(size)}/>
+          {weather && <ArchWeather/>}
           {usual != null && <UsualMark at={usual}/>}
         </svg>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[28.5%]
@@ -229,9 +301,14 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320, p
           <span className="mt-1 text-tick text-ink-3">out of 100</span>
         </div>
         {/* 15% and 85% are the feet's own centres in the viewBox, so the
-            labels track the ends they name at any size. */}
-        <span aria-hidden className="absolute bottom-[2.5%] left-[15%] -translate-x-1/2 text-tick text-ink-3">calm</span>
-        <span aria-hidden className="absolute bottom-[2.5%] left-[85%] -translate-x-1/2 text-tick text-ink-3">peak</span>
+            labels track the ends they name at any size. Both ends carry their
+            number as well as their word: the scale is labelled, not implied. */}
+        <span aria-hidden className="absolute bottom-[2.5%] left-[15%] -translate-x-1/2
+          whitespace-nowrap text-tick text-ink-3">
+          <b className="font-mono font-normal text-ink-2">0</b> calm</span>
+        <span aria-hidden className="absolute bottom-[2.5%] left-[85%] -translate-x-1/2
+          whitespace-nowrap text-tick text-ink-3">
+          <b className="font-mono font-normal text-ink-2">100</b> peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
@@ -260,8 +337,12 @@ export function RainbowKey({ rings, picked, onPick, className }) {
               <span aria-hidden className="h-7 w-[3px] shrink-0 rounded-bar"
                 style={{ background: tone }}/>
               <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">{s.name}</span>
-              <span className="shrink-0 font-mono text-num font-medium tabular-nums leading-none text-ink">
-                {r.value}</span>
+              {/* the unit beside the figure, never under it */}
+              <span className="flex shrink-0 items-baseline gap-1.5">
+                <span className="font-mono text-num font-medium tabular-nums leading-none text-ink">
+                  {r.value}</span>
+                <span className="text-fine text-ink-3">of 100</span>
+              </span>
               <Chevron aria-hidden
                 className={cn('size-4 shrink-0 text-ink-3 transition-transform duration-200',
                   on && 'rotate-90')}/>
@@ -300,50 +381,128 @@ export function SensorTrace({ data, color, h = 96, className }) {
   )
 }
 
+/* ── Bars ─────────────────────────────────────────────────────────────────
+ * One series on the score's own 0 to 100 scale.
+ *
+ * It was seven bars against an implied ceiling, the non-peak ones held at 42%
+ * opacity. Both were wrong: there was no axis, so a bar's height was only
+ * comparable with the bar beside it, and accent at 42% over paper measures
+ * 1.91 : 1, under the 3 : 1 a non-text graphic owes. Every bar is the full
+ * colour now, the axis is drawn and labelled, and the series average is a
+ * dashed reference line with its own value, so the reader can see which
+ * periods ran above this person's own day rather than only which was worst. */
+const BAR_TICKS = [0, 25, 50, 75, 100]
+const PLOT_H = 136
+
 export function Bars({ data, color, unit = 'class period', className }) {
   if (!data?.length) return null
   const hi = Math.max(...data.map(d => d.v))
+  const mean = data.reduce((a, d) => a + d.v, 0) / data.length
+  const alt = data.map(d => `${d.label} ${d.v}`).join(', ')
+    + `, out of 100. Average ${mean.toFixed(1)}.`
   return (
     <figure className={cn('m-0', className)}>
-      <figcaption className="mark mb-3 ">By {unit}</figcaption>
-      <div className="flex h-[132px] items-end gap-2" role="img"
-        aria-label={data.map(d => `${d.label} ${d.v}`).join(', ') + ' out of 100'}>
-        {data.map(d => {
-          const top = d.v === hi
-          return (
-            <div key={d.label} className="flex flex-1 flex-col items-center justify-end gap-2">
-              <span className={cn('font-mono text-tick tabular-nums',
-                top ? 'text-ink' : 'text-ink-3')}>{d.v}</span>
-              <div className="w-full rounded-t-lg transition-[height] duration-500"
-                style={{ height: Math.max(4, (d.v / 100) * 96), background: color,
-                         opacity: top ? 1 : 0.42 }}/>
-              <span className={cn('font-mono text-tick', top ? 'text-ink' : 'text-ink-3')}>{d.label}</span>
+      <figcaption className="mark mb-3">By {unit}, out of 100</figcaption>
+      <div className="flex gap-2">
+        {/* the axis labels are DOM text, not <text> in a scaled viewBox, so a
+            14px tick really is 14px in a narrow column */}
+        <div aria-hidden className="relative w-7 shrink-0" style={{ height: PLOT_H }}>
+          {BAR_TICKS.map(t => (
+            <span key={t} style={{ bottom: `${t}%` }}
+              className="absolute right-0 translate-y-1/2 font-mono text-fine tabular-nums text-ink-3">
+              {t}
+            </span>
+          ))}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="relative border-b border-l border-ink-3" style={{ height: PLOT_H }}
+            role="img" aria-label={alt}>
+            {BAR_TICKS.filter(t => t > 0).map(t => (
+              <span key={t} aria-hidden style={{ bottom: `${t}%` }}
+                className="absolute inset-x-0 block border-t border-rule"/>
+            ))}
+            {/* this person's own average across the window, drawn so the bars
+                are read against something and not only against each other */}
+            <span aria-hidden style={{ bottom: `${mean}%` }}
+              className="absolute inset-x-0 block border-t border-dashed border-ink-3"/>
+            <div className="absolute inset-0 flex items-end gap-1.5">
+              {data.map(d => (
+                <div key={d.label} className="relative flex h-full flex-1 items-end justify-center">
+                  <span style={{ height: `${d.v}%`, background: color }}
+                    className="block w-full max-w-[34px] rounded-t-xs transition-[height] duration-500"/>
+                  <span style={{ bottom: `${d.v}%` }}
+                    className={cn('absolute left-1/2 mb-1 -translate-x-1/2 font-mono text-fine',
+                      'tabular-nums', d.v === hi ? 'font-medium text-ink' : 'text-ink-2')}>
+                    {d.v}
+                  </span>
+                </div>
+              ))}
             </div>
-          )
-        })}
+          </div>
+          <div aria-hidden className="mt-1.5 flex gap-1.5">
+            {data.map(d => (
+              <span key={d.label}
+                className="flex-1 text-center font-mono text-fine tabular-nums text-ink-3">
+                {d.label}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
+      <p className="mt-1.5 text-fine text-ink-3">
+        Dashed: this window&rsquo;s average,{' '}
+        <b className="font-mono font-normal tabular-nums text-ink-2">{mean.toFixed(1)}</b>.
+      </p>
     </figure>
   )
 }
 
+/* One value against the wearer's own normal range, on a drawn 0 to 100 axis.
+   The range used to be a grey block with neither of its edges stated. */
 export function RangeBar({ band, color, className }) {
   if (!band) return null
   const { lo, hi, now } = band
   const out = now > hi || now < lo
   return (
     <figure className={cn('m-0', className)}>
-      <figcaption className="mark mb-3 ">Against their own normal</figcaption>
-      <div className="relative h-10" role="img"
-        aria-label={`Normal range ${lo} to ${hi}. Now ${now}, ${out ? 'outside it' : 'inside it'}.`}>
-        <div className="absolute inset-x-0 top-4 h-2.5 rounded-xs bg-mist"/>
-        <div className="absolute top-4 h-2.5 rounded-xs bg-ink-3/35"
+      <figcaption className="mark mb-3">Against their own normal, out of 100</figcaption>
+      <div className="relative h-12" role="img"
+        aria-label={`Normal range ${lo} to ${hi} out of 100. Now ${now}, ${out ? 'outside it' : 'inside it'}.`}>
+        <div className="absolute inset-x-0 top-5 h-2.5 rounded-xs bg-mist"/>
+        <div className="absolute top-5 h-2.5 rounded-xs bg-ink-3/35"
           style={{ left: lo + '%', width: (hi - lo) + '%' }}/>
-        <div className="absolute top-[9px] h-[22px] w-[5px] -translate-x-1/2 rounded-none"
+        {/* the range's own two edges, stated */}
+        {[lo, hi].map((v, i) => (
+          <React.Fragment key={v}>
+            <span aria-hidden style={{ left: `${v}%` }}
+              className="absolute top-[14px] block h-[26px] w-px bg-ink-3"/>
+            <span aria-hidden style={{ left: `${v}%` }}
+              className={cn('absolute top-0 font-mono text-fine tabular-nums text-ink-3',
+                i === 0 ? '-translate-x-full pr-1' : 'pl-1')}>
+              {v}
+            </span>
+          </React.Fragment>
+        ))}
+        <div className="absolute top-[15px] h-[24px] w-[5px] -translate-x-1/2 rounded-none"
           style={{ left: now + '%', background: color }}/>
-        <span className="absolute top-0 -translate-x-1/2 font-mono text-tick tabular-nums text-ink"
-          style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
+        <span className="absolute top-0 -translate-x-1/2 font-mono text-fine font-medium
+          tabular-nums text-ink" style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
       </div>
-      <p className="mt-1 flex justify-between text-tick text-ink-3">
+      {/* the axis under it, ticked and numbered */}
+      <div aria-hidden className="relative h-6 border-t border-ink-3">
+        {BAR_TICKS.map((t, i) => (
+          <React.Fragment key={t}>
+            <span style={{ left: `${t}%` }}
+              className="absolute top-0 block h-1.5 w-px -translate-x-1/2 bg-ink-3"/>
+            <span style={{ left: `${t}%` }}
+              className={cn('absolute top-2 font-mono text-fine tabular-nums text-ink-3',
+                i === 0 ? 'translate-x-0' : t === 100 ? '-translate-x-full' : '-translate-x-1/2')}>
+              {t}
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
+      <p className="mt-5 flex justify-between text-fine text-ink-3">
         <span>calm</span>
         <span>{out ? 'above their usual range' : 'inside their usual range'}</span>
         <span>peak</span>

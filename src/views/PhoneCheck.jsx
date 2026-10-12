@@ -1,6 +1,5 @@
 import React from 'react'
 import { Button } from '../ui/button'
-import { Card, CardContent } from '@/ui/card'
 import { List, Item } from '../ui/list'
 import { Progress } from '../ui/progress'
 import { Headline, AllDetail } from './Monitor'
@@ -51,6 +50,11 @@ function loadCheckins() {
 }
 function saveCheckins(a) { try { localStorage.setItem(CHECKINS, JSON.stringify(a)) } catch {} }
 
+/* Section 2 of the spec: on the app's tint and on this page's paper band
+   alike, nothing stands on the ground. One class, so both halves of this
+   screen are the same object. */
+const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
+
 /* The beating waveform is the only feedback that confirms finger placement
    before the capture window is spent. Keep it live. */
 function Trace({ samples, className }) {
@@ -73,13 +77,12 @@ function Trace({ samples, className }) {
 
 function Step({ title, note, children, on }) {
   return (
-    <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3',
-      !on && 'opacity-45')}>
+    <div className="grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3">
       <span aria-hidden className={cn('mt-2 size-3 rounded-chip justify-self-center',
         on ? 'bg-accent' : 'border-2 border-ruling')}/>
       <div>
-        <p className="font-display text-ui font-bold text-ink">{title}</p>
-        <p className="mt-1 max-w-[52ch] text-sec leading-[1.45] text-ink-2">{note}</p>
+        <p className={cn('font-display text-ui font-bold', on ? 'text-ink' : 'text-ink-2')}>{title}</p>
+        <p className="mt-1 max-w-[52ch] text-meta leading-[1.4] text-ink-2">{note}</p>
         {children}
       </div>
     </div>
@@ -90,7 +93,7 @@ function Step({ title, note, children, on }) {
    drift apart. Only two of the three are printed: given three, readers read all
    three aloud before choosing. */
 
-const PHASES = { idle:0, camera:1, voice:2, working:3, done:4 }
+const PHASES = { idle:1, camera:1, voice:2, working:3, done:4 }
 
 export function PhoneCheck() {
   const [phase, setPhase] = React.useState('idle')
@@ -198,10 +201,9 @@ export function PhoneCheck() {
   const s = result ? sentenceFor(result) : null
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:items-start xl:gap-8">
+    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
       <div>
-        <Card>
-          <CardContent>
+        <div className={PANEL}>
             {/* Each `note` carries only what its StepFigure cannot show: the
                 position, the surface, and that nothing is kept. Do not restate
                 the drawings in prose. */}
@@ -222,7 +224,7 @@ export function PhoneCheck() {
                     say, not a run of separate points. */}
                 <List className="mt-2.5 gap-1 border-l-2 border-accent pl-3">
                   {SAY_LINES.slice(0, 2).map(l => (
-                    <Item key={l} marker="none" className="text-sec leading-[1.5] text-ink">{l}</Item>
+                    <Item key={l} marker="none" className="text-meta leading-[1.45] text-ink">{l}</Item>
                   ))}
                 </List>
               </Step>
@@ -237,7 +239,7 @@ export function PhoneCheck() {
             <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
             {phase === 'camera' && (
-              <div className="mt-5" aria-live="polite">
+              <div className="mt-4" aria-live="polite">
                 <p className="font-mono text-meta tabular-nums text-ink-3">
                   Reading your pulse · {Math.max(0, Math.ceil(PPG_SECONDS * (1 - progress)))}s left
                 </p>
@@ -247,7 +249,7 @@ export function PhoneCheck() {
             )}
 
             {phase === 'voice' && (
-              <div className="mt-5" aria-live="polite">
+              <div className="mt-4" aria-live="polite">
                 <p className="font-mono text-meta tabular-nums text-ink-3">
                   Listening · {Math.max(0, Math.ceil(VOICE_SECONDS * (1 - progress)))}s left
                 </p>
@@ -261,16 +263,16 @@ export function PhoneCheck() {
               </div>
             )}
 
-            {phase === 'working' && <p className="mt-5 text-sec text-ink-2" aria-live="polite">Working it out…</p>}
+            {phase === 'working' && <p className="mt-4 text-meta text-ink-2" aria-live="polite">Working it out…</p>}
 
             {error && (
-              <p role="alert" className="mt-5 max-w-[46ch] border-l-2 border-warn pl-3 text-sec text-warn">
+              <p role="alert" className="mt-4 max-w-[46ch] border-l-2 border-warn pl-3 text-meta text-warn">
                 {error}
               </p>
             )}
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              {/* Must not be labelled "Take a reading" — that is the enclosing
+            <div className="mt-4 flex flex-wrap gap-3">
+              {/* Must not be labelled "Take a reading": that is the enclosing
                   tab's name, and two identically named controls are one control
                   to a screen reader. */}
               <Button onClick={() => run(true)} disabled={busy || !supported}>
@@ -281,34 +283,32 @@ export function PhoneCheck() {
               </Button>
             </div>
             {!supported && (
-              <p className="mt-4 max-w-[46ch] text-meta text-ink-2">
+              <p className="mt-3 max-w-[46ch] text-fine text-ink-2">
                 No camera in this browser. The questions still work.
               </p>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
-      <Card aria-live="polite" className="min-h-[7rem] xl:sticky xl:top-[92px]">
-        <CardContent>
+      <section aria-live="polite" className={cn(PANEL, 'min-h-[7rem] xl:sticky xl:top-[92px]')}>
           {!result && (
-            <p className="max-w-[36ch] text-sec text-ink-3">
+            <p className="max-w-[36ch] text-meta text-ink-3">
               Your Mind Score appears here.
             </p>
           )}
           {result && (
             <>
-              <div className="flex flex-col items-start gap-5">
+              <div className="flex flex-col items-start gap-4">
                 <RainbowDial score={result.score} size={248}
                   rings={[{ id:'phone', name:'Phone sensors', color:'#0a6e68', glow:'#1d8fb0',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
-                <div>
+                <div className="w-full">
                   <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
-                  <p className="mt-4 max-w-[42ch] text-sec text-ink-2">{s.tail}</p>
+                  <p className="mt-3 max-w-[42ch] text-meta text-ink-2">{s.tail}</p>
 
                   {/* The confidence band ranks with the score, not behind a
                       disclosure. Do not move it into AllDetail. */}
-                  <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 text-sec">
+                  <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
                     <dt className="text-ink-3">Mind Score</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
                     <dt className="text-ink-3">How sure</dt>
@@ -325,14 +325,22 @@ export function PhoneCheck() {
                       : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
-                  <p className="mt-4 max-w-[48ch] text-meta text-ink-3">{SCORE_DEF}</p>
-                  <p className="mt-2 max-w-[48ch] text-meta text-ink-3">
-                    Higher means working harder. The direction it moved matters more than the
-                    figure. The band is how sure, from how clean the signal was.
-                  </p>
+                  {/* The same four claims the two paragraphs here carried,
+                      one to a row. Nothing may be dropped from this block: it
+                      is what stops the figure being read as a diagnosis. */}
+                  <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
+                    <dt className="text-ink-3">What it is</dt>
+                    <dd className="m-0 text-ink-2">{SCORE_DEF}</dd>
+                    <dt className="text-ink-3">Higher</dt>
+                    <dd className="m-0 text-ink-2">Working harder, not worse</dd>
+                    <dt className="text-ink-3">What to read</dt>
+                    <dd className="m-0 text-ink-2">The direction it moved, more than the figure</dd>
+                    <dt className="text-ink-3">The band</dt>
+                    <dd className="m-0 text-ink-2">How sure, from how clean the signal was</dd>
+                  </dl>
 
                   {result.held && (
-                    <p className="mt-5 max-w-[44ch] border-l-2 border-warn pl-3 text-sec text-warn">
+                    <p className="mt-4 max-w-[44ch] border-l-2 border-warn pl-3 text-meta text-warn">
                       {result.holdReason}
                     </p>
                   )}
@@ -341,23 +349,25 @@ export function PhoneCheck() {
                       person from: one gain per signal, refitted here, on this
                       device. Eight answers took a lab-trained model from 0.78 to
                       0.95 on people it had never seen (see tnam-results.js). */}
+                  {/* border-rule, not border-line: there is no `line` colour
+                      in the config, so that rule never drew. */}
                   {!result.held && (
-                    <div className="mt-6 border-t border-line pt-5">
+                    <div className="mt-4 border-t border-rule pt-4">
                       {!answered ? (
                         <>
-                          <p className="max-w-[40ch] text-sec text-ink">Does this match how you feel right now?</p>
+                          <p className="max-w-[40ch] text-meta text-ink">Does this match how you feel right now?</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Button onClick={() => answer(true)}>Stressed</Button>
                             <Button variant="outline" onClick={() => answer(false)}>Fine</Button>
                           </div>
-                          <p className="mt-3 max-w-[44ch] text-meta text-ink-3">
+                          <p className="mt-2.5 max-w-[44ch] text-fine text-ink-3">
                             {checkins.length === 0
                               ? 'Your first answer starts your personal calibration.'
                               : `${checkins.length} answer${checkins.length === 1 ? '' : 's'} so far shape how your readings are weighed.`}
                           </p>
                         </>
                       ) : (
-                        <p className="max-w-[44ch] text-sec text-ink-2">
+                        <p className="max-w-[44ch] text-meta text-ink-2">
                           Noted. <span className="font-mono tabular-nums">{checkins.length}</span> answer{checkins.length === 1 ? '' : 's'} now
                           shape how your readings are weighed. The next reading uses them.
                         </p>
@@ -368,9 +378,9 @@ export function PhoneCheck() {
               </div>
 
               <AllDetail label="See what moved your Mind Score">
-                <p className="mt-2 max-w-[52ch] text-sec text-ink-3">
+                <p className="mt-2 max-w-[52ch] text-meta text-ink-3">
                   Right of the line raised the Mind Score, left of it lowered it. Each bar is that feature
-                  against your own average, not against anybody else's.
+                  against your own average, not against anybody else’s.
                 </p>
                 <Diverge items={result.contrib.map(c => ({ label: c.label,
                   x: Math.max(-1, Math.min(1, c.raw)) }))}/>
@@ -378,8 +388,7 @@ export function PhoneCheck() {
               </AllDetail>
             </>
           )}
-        </CardContent>
-      </Card>
+      </section>
     </div>
   )
 }
@@ -407,7 +416,7 @@ function Readings({ detail, result }) {
   if (move?.ok) rows.push(['Movement', `${move.peak.toFixed(2)} g peak · limit ${MOVE_LIMIT_G} g`])
   return (
     <>
-      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 text-meta">
+      <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
         {rows.map(([k, v]) => (
           <React.Fragment key={k}>
             <dt className="text-ink-3">{k}</dt>
@@ -415,13 +424,22 @@ function Readings({ detail, result }) {
           </React.Fragment>
         ))}
       </dl>
-      <p className="mt-6 max-w-[64ch] text-meta text-ink-2">
-        The camera gives heart rate and a beat-to-beat index on a scale of its own. The filter that
-        steadies beat timing also trims some real variation, so the index runs about a fifth below a
-        clinical RMSSD and is never called one. Every feature is scored against your own history, which
-        is what lets a phone reading and a patch reading share one scale. Nothing here has been
-        validated against a person.
-      </p>
+      {/* Four rows, the same four claims the paragraph here carried. All four
+          are load-bearing: the index runs about a fifth below a clinical RMSSD
+          and must never be called one, and nothing here has been validated
+          against a person. Do not shorten this block. */}
+      <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
+        <dt className="text-ink-3">The camera gives</dt>
+        <dd className="m-0 text-ink-2">Heart rate, and a beat-to-beat index on a scale of its own</dd>
+        <dt className="text-ink-3">Not an RMSSD</dt>
+        <dd className="m-0 text-ink-2">The filter that steadies beat timing also trims some real
+          variation, so the index runs about a fifth below a clinical RMSSD and is never called one</dd>
+        <dt className="text-ink-3">Measured against</dt>
+        <dd className="m-0 text-ink-2">Your own history, which is what lets a phone reading and a
+          patch reading share one scale</dd>
+        <dt className="text-ink-3">Where it stands</dt>
+        <dd className="m-0 text-ink-2">Nothing here has been validated against a person</dd>
+      </dl>
     </>
   )
 }

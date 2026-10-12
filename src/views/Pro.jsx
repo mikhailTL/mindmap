@@ -17,7 +17,8 @@ import {
   CONSENT_LEDGER, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES, PROTOCOL_DONE, REFERRALS,
   driversFor, INTERVENTIONS, efficacyLabel, profile45,
 } from '../lib/caseload'
-import { CASELOAD_TITLE, CASELOAD_DEF, SCORE, PRO, PRO_LC, PRO_PLURAL_LC } from '../lib/terms'
+import { RETENTION } from '../app/store'
+import { CASELOAD_TITLE, CASELOAD_DEF, SCORE, SCORE_RANGE, PRO, PRO_LC, PRO_PLURAL_LC } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 const TABS = [
@@ -35,6 +36,10 @@ const Note = ({ children }) => <p className="mt-4 max-w-[70ch] border-t border-r
    shorter than the three panels beside it, and stretched it printed a quarter
    of a screen of empty card stock under the note. */
 const ROW = 'mt-3 grid items-start gap-3 lg:mt-4 lg:gap-4'
+
+/* The interior ticks on every 0 to 100 track on this console. The ends are
+   drawn by the track itself, so they are not in the list. */
+const TICKS = [25, 50, 75]
 
 /* A figure, its unit and one line of provenance, in a bordered field on card
    stock. The summary strip is built from these. */
@@ -158,6 +163,8 @@ const LIST_RULES = [
    'They are listed separately and unordered, because ordering them would leak the thing they withheld.'],
   ['No raw reading, Notes entry or location is on this list at any depth',
    `${PRO} notes live in a student’s own record, and saving one writes a row to the audit log.`],
+  ['A student can unpair their patch and leave this list the same day',
+   'Nothing reaches this console after that. The rows already written to the log stay, because the log cannot be edited.'],
 ]
 
 const LIST_NOTE = (
@@ -179,6 +186,10 @@ const LIST_NOTE = (
 function Row({ s, n, onOpen, max }) {
   const dir = s.velocity > 0 ? 'worse' : s.velocity < 0 ? 'better' : 'flat'
   const move = `${s.velocity > 0 ? '+' : s.velocity < 0 ? '−' : ''}${Math.abs(s.velocity)}`
+  /* No driver line here. The generated breakdown in src/lib/caseload.js puts
+     the same signal first for every student on this list, so a third line
+     printed the same sentence five times. The week-ago figure on the line
+     below is per student and says what the move was made of. */
   /* Zero sits at the middle of the track, so up and down are read off one
      scale and a level week is visibly nothing rather than a short bar. */
   const half = Math.round((Math.abs(s.velocity) / (max || 1)) * 50)
@@ -197,7 +208,7 @@ function Row({ s, n, onOpen, max }) {
         <span aria-hidden className="min-w-0 flex-1">
           <span className="block truncate text-body text-ink">{s.name}</span>
           <span className="block text-tick text-ink-3">
-            Grade {s.grade} · {TIER_LABEL[s.tier]} · {s.current} out of 100</span>
+            Grade {s.grade} · {TIER_LABEL[s.tier]} · {s.weekAgo} to {s.current} out of 100</span>
         </span>
         <span aria-hidden className="relative hidden h-2 w-16 shrink-0 overflow-hidden rounded-xs bg-mist sm:block">
           <span aria-hidden className="absolute inset-y-0 left-1/2 w-px bg-ruling"/>
@@ -472,6 +483,12 @@ function OneStudent({ who, setWho, real }) {
   const drivers = driversFor(s)
   const series = profile45(s)
   const lo = Math.min(...series.map(p => p.v)), hi = Math.max(...series.map(p => p.v))
+  const yspan = hi - lo || 1
+  /* Gridlines off this student's own window. Fixed lines at 40, 60 and 80 were
+     drawn for every student, so a student whose 45 days ran 81 to 96 had all
+     three ruled below the baseline with their labels sitting on the date
+     row. */
+  const ticks = [10, 20, 30, 40, 50, 60, 70, 80, 90].filter(v => v > lo && v < hi)
   /* The record's own referral queue and its own rows in the log. Both were in
      src/lib/caseload.js already and were only reachable from other tabs, which
      is why a record read as thinner than it is. */
@@ -490,9 +507,13 @@ function OneStudent({ who, setWho, real }) {
         </div>
         <div>
           <label htmlFor="pick" className="note block">Open a different student</label>
+          {/* The ring is written out rather than left to the global rule in
+              src/input.css: that one is inside :where(), so it carries no
+              specificity and any utility on this element wins. */}
           <select id="pick" value={s.name} onChange={e => setWho(e.target.value)}
             className="mt-1.5 min-h-[48px] rounded-field border-0 border-b-2 border-ink bg-transparent
-              px-1 font-body text-meta text-ink focus-visible:outline-none">
+              px-1 font-body text-meta text-ink focus-visible:outline focus-visible:outline-2
+              focus-visible:outline-offset-2 focus-visible:outline-accent">
             {all.map(x => <option key={x.id} value={x.name}>
               {x.name} · G{x.grade}{x.showScore ? ` · ${x.current}` : ' · not shared'}</option>)}
           </select>
@@ -545,8 +566,8 @@ function OneStudent({ who, setWho, real }) {
         <Panel as="h3" label="The last 45 days" action="daily means">
           <svg viewBox="0 0 720 214" className="block w-full overflow-visible" role="img"
             aria-label={`Daily mean ${SCORE} over 45 days, ending at ${s.current}.`}>
-            {[40, 60, 80].map(v => {
-              const y = 180 - ((v - lo) / (hi - lo)) * 160
+            {ticks.map(v => {
+              const y = 180 - ((v - lo) / yspan) * 160
               return <g key={v}>
                 <line x1="40" x2="710" y1={y} y2={y} className="stroke-rule" strokeWidth="1"/>
                 <text x="30" y={y + 5} textAnchor="end" className="fill-ink-3 text-[16px]">{v}</text>
@@ -555,19 +576,23 @@ function OneStudent({ who, setWho, real }) {
             <path fill="none" strokeWidth="2" strokeLinejoin="round" className="stroke-ink-3"
               vectorEffect="non-scaling-stroke"
               d={series.map((q, i) => (i ? 'L' : 'M') + (40 + (i / 44) * 670).toFixed(1) + ' ' +
-                (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+                (180 - ((q.v - lo) / yspan) * 160).toFixed(1)).join(' ')}/>
             <path fill="none" strokeWidth="2.5" strokeLinejoin="round" className="stroke-warn"
               vectorEffect="non-scaling-stroke"
               d={series.slice(31).map((q, i) => (i ? 'L' : 'M') + (40 + ((i + 31) / 44) * 670).toFixed(1) + ' ' +
-                (180 - ((q.v - lo) / (hi - lo)) * 160).toFixed(1)).join(' ')}/>
+                (180 - ((q.v - lo) / yspan) * 160).toFixed(1)).join(' ')}/>
             <text x="40" y="209" className="fill-ink-3 text-[16px]">45 days ago</text>
             <text x="710" y="209" textAnchor="end" className="fill-ink-3 text-[16px]">today</text>
           </svg>
+          {/* The row here used to read "Where the change lands: AP Chemistry",
+              the same literal for every student and in no data file. The two
+              rows below are read off this student's own series. */}
           <dl className="m-0 mt-3 p-0">
             <KV k="Range over the window" v={`${lo} to ${hi}`}/>
-            <KV k="Where the change lands" v="AP Chemistry"/>
+            <KV k="Last two weeks" v={`${series[31].v} to ${s.current}`}/>
           </dl>
-          <Note>The coloured stretch is the last two weeks. One point per day, never a sample.</Note>
+          <Note>The coloured stretch is the last two weeks. One point per day, never a sample. The
+            scale runs over this student&rsquo;s own window, {lo} to {hi}, not 0 to 100.</Note>
         </Panel>
 
         <Panel as="h3" label="What is driving the rise" action="share of this week">
@@ -583,7 +608,10 @@ function OneStudent({ who, setWho, real }) {
         </Panel>
       </div>
 
-      <div className={cn(ROW, 'lg:grid-cols-2')}>
+      {/* Three modules in two columns, then the log on its own full-width
+          row. As four panels in two rows the short one in each row ended 280px
+          and 343px above its neighbour. */}
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
         <Panel as="h3" label="Interventions tried" action="measured from physiology">
           <ul className="m-0 list-none p-0">
             {tried.map(i => (
@@ -598,6 +626,7 @@ function OneStudent({ who, setWho, real }) {
             of the five has no measurable effect and one reads worse; both stay on the list.</Note>
         </Panel>
 
+        <div className="flex flex-col gap-3 lg:gap-4">
         <Panel as="h3" label="Referrals on this student">
           <ul className="m-0 list-none divide-y divide-rule p-0">
             {refs.length === 0 && <BlankRow>No referral has been opened for this student.</BlankRow>}
@@ -615,22 +644,23 @@ function OneStudent({ who, setWho, real }) {
             <Button variant="outline" size="sm" disabled>New referral</Button>
           </div>
         </Panel>
-      </div>
-
-      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
         <Panel as="h3" label={`${PRO} notes`}>
           <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
           <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
             placeholder="Add a note…"
             className="w-full resize-none rounded-field border-0 border-b-2 border-rule bg-mist/40
               p-3.5 text-meta text-ink placeholder:text-ink-3 focus-visible:border-ink
-              focus-visible:outline-none"/>
+              focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+              focus-visible:outline-accent"/>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <span className="text-sec text-ink-3">Saving writes a row to the log</span>
             <Button size="sm" disabled={!note.trim()}>Save note</Button>
           </div>
         </Panel>
+        </div>
+      </div>
 
+      <div className={ROW}>
         <Panel as="h3" label="This record in the log" action="append only">
           <ul className="m-0 list-none p-0">
             {mine.length === 0 && <BlankRow>Nothing has been logged against this record yet.</BlankRow>}
@@ -723,10 +753,10 @@ function EmptyCohort() {
 function Cohort({ real }) {
   if (real) return <EmptyCohort/>
   const visible = COHORT_PERIOD.filter(p => !p.suppressed)
-  const lo = Math.min(...visible.map(p => p.mean)), hi = Math.max(...visible.map(p => p.mean))
   const avg = Math.round(visible.reduce((a, b) => a + b.mean, 0) / visible.length)
   const top = [...visible].sort((a, b) => b.mean - a.mean)[0]
   const hardest = [...COHORT_WEEKDAY].sort((a, b) => b.mean - a.mean)[0]
+  const easiest = [...COHORT_WEEKDAY].sort((a, b) => a.mean - b.mean)[0]
   const wAvg = Math.round(COHORT_WEEKDAY.reduce((a, b) => a + b.mean, 0) / COHORT_WEEKDAY.length)
   const suppressed = COHORT_PERIOD.filter(p => p.suppressed).length
   return (
@@ -749,7 +779,8 @@ function Cohort({ real }) {
                 average of {avg}, <b className="font-medium text-warn">
                 {Math.round(((top.mean - avg) / avg) * 100)}% higher</b></Item>
               <Item>Across {top.n} consented students in that period</Item>
-              <Item>Holds across every year group taking it</Item>
+              <Item>Every other period sits between {Math.min(...visible.map(v => v.mean))} and
+                {' '}{[...visible].sort((a, b) => b.mean - a.mean)[1].mean}</Item>
             </List>
           </ScrollIn>
           <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
@@ -758,8 +789,9 @@ function Cohort({ real }) {
             <List className="mt-3 max-w-[58ch] text-sec text-ink-2">
               <Item>Mean <b className="font-medium text-ink">{hardest.mean}</b> against {wAvg} on an
                 average day</Item>
-              <Item>Exam weeks in junior year run <b className="font-medium text-warn">2.4×</b> the
-                non-exam baseline</Item>
+              <Item>{easiest.full} is the lightest at <b className="font-medium text-ink">
+                {easiest.mean}</b>, {hardest.mean - easiest.mean} points below {hardest.full}</Item>
+              <Item>Every weekday cell covers all {SCHOOL_N} consented students</Item>
             </List>
           </ScrollIn>
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
@@ -775,20 +807,30 @@ function Cohort({ real }) {
               <b className="font-medium text-ink">{suppressed} cell{suppressed === 1 ? '' : 's'}</b>
               {' '}hidden on this page for that reason.</p>
           )}
+          {/* The legend sits on the tab that draws the hatch, not only on the
+              empty one, which is where it used to be alone. */}
+          <div className="mt-4 border-t border-rule pt-4">
+            <p className="text-meta text-ink-2">A suppressed cell is hatched, not hidden, so a
+              {' '}{PRO_LC} can see a figure exists and is withheld.</p>
+            <SuppressedSwatch className="mt-3"/>
+          </div>
         </Panel>
       </div>
 
       <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
-        <Panel as="h3" label={`${SCORE} by class period`}>
+        <Panel as="h3" label={`${SCORE} by class period`} action={`${SCORE_RANGE}, zero based`}>
           <ul className="space-y-4">
             {COHORT_PERIOD.map(p => (
               <li key={p.key}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-meta text-ink-2">{p.label}</span>
+                  {/* A suppressed cell prints no n either. "n=3" beside a class
+                      period publishes the exact size of the group the floor
+                      exists to protect. */}
                   <span className="font-mono text-sec tabular-nums text-ink-3">
-                    {p.suppressed ? 'suppressed' : p.mean} · n={p.n}</span>
+                    {p.suppressed ? `suppressed · n < ${K_ANONYMITY}` : `${p.mean} · n=${p.n}`}</span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-xs bg-mist">
+                <div className="relative mt-2 h-2.5 w-full overflow-hidden rounded-xs bg-mist">
                   {p.suppressed ? (
                     /* Drawn, not a repeating-linear-gradient of a raw hex: gradients are out of the
                        system and that colour was not a token. Ruled in `ruling`. */
@@ -803,40 +845,86 @@ function Cohort({ real }) {
                       <rect width="100%" height="100%" fill="url(#hatch)"/>
                     </svg>
                   ) : (
+                    /* Zero based. The old scale ran 20% to 100% across the
+                       narrow span these means actually occupy, so a 46 and a
+                       71 drew as one bar five times the other. */
                     <div className={cn('h-full rounded-xs', p.mean >= 65 ? 'bg-warn' : 'bg-accent')}
-                      style={{ width: 20 + ((p.mean - lo) / (hi - lo || 1)) * 80 + '%' }}/>
+                      style={{ width: p.mean + '%' }}/>
                   )}
+                  {TICKS.map(t => (
+                    <span key={t} aria-hidden className="absolute inset-y-0 w-px bg-card/70"
+                      style={{ left: t + '%' }}/>
+                  ))}
+                  <span aria-hidden className="absolute inset-y-0 w-0.5 bg-ink"
+                    style={{ left: avg + '%' }}/>
                 </div>
               </li>
             ))}
           </ul>
+          <div aria-hidden className="mt-2.5 flex justify-between border-t border-rule pt-1.5
+            font-mono text-tick tabular-nums text-ink-3">
+            {[0, ...TICKS, 100].map(t => <span key={t}>{t}</span>)}
+          </div>
+          <Note>Bars run from zero, so twice the length is twice the mean. The upright rule is the
+            all-period average, {avg}. A period under {K_ANONYMITY} consented students is hatched and
+            returns neither a mean nor its size.</Note>
         </Panel>
 
-        <Panel as="h3" label={`${SCORE} by weekday`}>
-          <div className="flex h-[170px] items-end justify-between gap-3">
-            {COHORT_WEEKDAY.map(d => (
-              <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-2">
-                <span className="font-mono text-sec tabular-nums text-ink-3">{d.mean}</span>
-                <div className={cn('w-full rounded-t-xs', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
-                  style={{ height: (d.mean / 100) * 120 + 'px' }}/>
-                <span className="text-tick text-ink-3">{d.label}</span>
+        <div className="flex flex-col gap-3 lg:gap-4">
+        <Panel as="h3" label={`${SCORE} by weekday`} action={`${SCORE_RANGE}, zero based`}>
+          <div className="flex gap-3" role="img"
+            aria-label={`Mean ${SCORE} by weekday, out of 100: `
+              + COHORT_WEEKDAY.map(d => `${d.full} ${d.mean}`).join(', ')
+              + `. The average day is ${wAvg}.`}>
+            <div aria-hidden className="flex h-[150px] w-7 shrink-0 flex-col justify-between
+              text-right font-mono text-tick tabular-nums text-ink-3">
+              <span>100</span><span>50</span><span>0</span>
+            </div>
+            <div aria-hidden className="relative h-[150px] flex-1">
+              {[0, 50, 100].map(v => (
+                <span key={v} className="absolute inset-x-0 h-px bg-rule"
+                  style={{ bottom: (v / 100) * 150 + 'px' }}/>
+              ))}
+              {/* The average the sentence beside this chart cites, drawn. */}
+              <span className="absolute inset-x-0 h-0.5 bg-ink"
+                style={{ bottom: (wAvg / 100) * 150 + 'px' }}/>
+              <div className="absolute inset-0 flex items-end justify-between gap-3">
+                {COHORT_WEEKDAY.map(d => (
+                  <span key={d.key} className="flex h-full flex-1 items-end">
+                    <span className={cn('w-full rounded-t-xs', d.mean >= 60 ? 'bg-warn' : 'bg-ink-3')}
+                      style={{ height: (d.mean / 100) * 150 + 'px' }}/>
+                  </span>
+                ))}
               </div>
+            </div>
+          </div>
+          <div aria-hidden className="mt-2 flex gap-3 pl-10">
+            {COHORT_WEEKDAY.map(d => (
+              <span key={d.key} className="flex-1 text-center">
+                <span className="block font-mono text-sec tabular-nums text-ink">{d.mean}</span>
+                <span className="block text-tick text-ink-3">{d.label}</span>
+              </span>
             ))}
           </div>
-          <Note>Every weekday cell clears the {K_ANONYMITY}-student floor.</Note>
+          <Note>The horizontal rule is the average day, {wAvg}. Every weekday cell covers all
+            {' '}{SCHOOL_N} consented students and clears the {K_ANONYMITY}-student floor.</Note>
         </Panel>
-      </div>
 
-      <Panel as="h3" className="mt-3 lg:mt-4" label={`What a ${PRO_LC} does with this`}>
-        {/* Do not restate the period figure here: the panel above computes it, and a
-            hard-coded 31% disagrees with it the moment the data moves. */}
-        <List className="max-w-[64ch] text-sec text-ink-2">
-          <Item>A pattern this size is a conversation with the school, never a finding about any
-            one student.</Item>
-          <Item>A check-in can be timed to the period the pattern names.</Item>
-          <Item>The same screen shows whether the mean came down four weeks later.</Item>
-        </List>
-      </Panel>
+        {/* Stacked under the weekday chart rather than run full width below the
+            row: the two charts are different heights and the shorter column
+            was ending 187px above the taller one. */}
+        <Panel as="h3" label={`What a ${PRO_LC} does with this`}>
+          {/* Do not restate the period figure here: the panel above computes it, and a
+              hard-coded 31% disagrees with it the moment the data moves. */}
+          <List className="max-w-[64ch] text-sec text-ink-2">
+            <Item>A pattern this size is a conversation with the school, never a finding about any
+              one student.</Item>
+            <Item>A check-in can be timed to the period the pattern names.</Item>
+            <Item>The same screen shows whether the mean came down four weeks later.</Item>
+          </List>
+        </Panel>
+        </div>
+      </div>
     </>
   )
 }
@@ -863,7 +951,8 @@ function Escalation({ real }) {
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h3 className="font-display text-row font-bold tracking-tight text-ink">
               {real ? 'Nothing in the queue' : 'Student 8241'}</h3>
-            <span className="font-mono text-sec tabular-nums text-ink-3">{real ? '' : '2:14 PM'}</span>
+            <span className="font-mono text-sec tabular-nums text-ink-3">
+              {real ? '' : PROTOCOL_TIMES[0]}</span>
           </div>
           {real
             /* An empty crisis queue is the good state and has to read as one. It is also the
@@ -929,7 +1018,8 @@ function Escalation({ real }) {
 
       {closed && (
         <p className="mt-4 border-l-2 border-calm py-1 pl-5 text-sec text-ink-2">
-          Written to the log at 2:41 PM. The escalation clock has stopped.
+          Written to the log at {PROTOCOL_TIMES[PROTOCOL_TIMES.length - 1]}. The escalation clock
+          has stopped.
           <span className="mt-1 block text-meta text-ink-3">“{closed}”</span>
         </p>
       )}
@@ -1001,11 +1091,26 @@ function Consent({ real }) {
 
       <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
         <Panel as="h3" label="Data retention">
-          <div className="font-mono text-stat font-medium tabular-nums text-ink">90</div>
-          <p className="mt-1 text-sec text-ink-3">days, raw signals</p>
+          {/* Read off RETENTION in src/app/store.js, which is the list the
+              student's own Sharing screen offers. A 90 typed in here was the
+              longest option dressed as a policy. */}
+          <div className="font-mono text-stat font-medium tabular-nums text-ink">
+            {Math.max(...RETENTION)}</div>
+          <p className="mt-1 text-sec text-ink-3">days, the longest window a student may set</p>
           <p className="mt-4 max-w-[52ch] text-meta text-ink-2">
-            Set by each student. After the window closes the raw readings are deleted. No archive,
-            no backup.</p>
+            Each student picks their own, {RETENTION.join(', ')} days, and it starts at the
+            shortest. After the window closes the raw readings are deleted. No archive, no
+            backup.</p>
+          {/* The three windows themselves, off the same list, so the figure
+              above reads as the end of a scale rather than as a policy. */}
+          <ul className="m-0 mt-5 list-none border-t border-rule p-0">
+            {RETENTION.map(d => (
+              <BarRow key={d} label={d === RETENTION[0] ? `${d} days, the default` : `${d} days`}
+                figure={`${d} d`} pct={(d / Math.max(...RETENTION)) * 100}
+                tone={d === RETENTION[0] ? 'bg-accent' : 'bg-ink-3'}
+                aria={`${d} days${d === RETENTION[0] ? ', the default' : ''}`}/>
+            ))}
+          </ul>
           <ul className="mt-5 divide-y divide-rule border-t border-rule">
             {FACTS.map(([k, v]) => (
               <li key={k} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
@@ -1092,7 +1197,7 @@ export function Pro({ go }) {
           <p aria-live="polite" className="sr-only text-sec">{said}</p>
           <p className="max-w-[62ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian
-            agreed. Groups under five return nothing.</p>
+            agreed. Groups under {K_ANONYMITY} return nothing.</p>
           {real
             ? <RealNotice className="mb-5 mt-3">No student has paired a patch and no guardian has signed
                 a scope, so this list is empty.</RealNotice>

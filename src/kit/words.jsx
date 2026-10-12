@@ -74,7 +74,7 @@ function Rulebook({ found }) {
   const hit = new Set(found)
   let n = -1
   return (
-    <div className="mt-3 rounded-panel border border-rule bg-card p-3.5">
+    <div className="mt-3 rounded-panel border-2 border-ink bg-card p-3.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
         <Readout n={found.length} unit={found.length === 1 ? 'word matched' : 'words matched'}/>
         <Readout n={COUNT} unit="on the list"/>
@@ -170,7 +170,7 @@ export function Absolutes() {
           <textarea id="words-again" rows={3} value={again} maxLength={240}
             onChange={e => setAgain(e.target.value)} className={cn(FIELD, 'mt-2')}/>
           {again.trim() && (
-            <div className="mt-4 border-l-2 border-accent pl-4">
+            <div className="kit-ground mt-4 rounded-panel border-2 border-ink p-4">
               <p className="note">First go</p>
               <p className="mt-0.5 max-w-[52ch] text-sec text-ink-2">{shown}</p>
               <p className="note mt-3">Second go</p>

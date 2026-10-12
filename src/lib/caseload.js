@@ -1,9 +1,11 @@
+import { PRO } from './terms.js'
+
 /* Medical Professional demo data. Two rules:
    1. CONSENT is the single source of truth. It feeds both the Consent-tab
       ledger and the triage board's flags, so the board cannot show a trend for
       a student consented only to crisis alerts. Keep no second copy.
    2. Nothing here is a measurement. Every number is generated from the scoring
-      model, deterministically, per student — which is why the per-student
+      model, deterministically, per student, which is why the per-student
       helpers take the student as an argument. */
 
 export const K_ANONYMITY = 5
@@ -12,8 +14,8 @@ export const K_ANONYMITY = 5
    below; year-group screens aggregate everyone. */
 export const SCHOOL_N = 96
 
-/* score  — may the school see a Mind Score at all
-   trends — may the school see week-over-week movement
+/* score:  may the school see a Mind Score at all
+   trends: may the school see week-over-week movement
    Crisis alerts reach the medical professional either way: the one thing a guardian
    cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
@@ -64,18 +66,21 @@ export const scoreOnly  = () => roster().filter(s => s.showScore && !s.showTrend
   .sort((a, b) => b.current - a.current)
 export const alertsOnly = () => roster().filter(s => !s.showScore)
 
+/* No teacher, and no field for one. A class is a period and a subject here;
+   naming the adult who teaches it would put an invented person in a consent
+   record and would be read by nothing on any screen. */
 export const COURSES = [
-  { id:'c1', name:'AP US History',      teacher:'Mr. Delaney',  period:1 },
-  { id:'c2', name:'Pre-Calculus',       teacher:'Mrs. Okafor',  period:2 },
-  { id:'c3', name:'AP Chemistry',       teacher:'Ms. Ruiz',     period:3 },
-  { id:'c4', name:'English Literature', teacher:'Mr. Vance',    period:5 },
-  { id:'c5', name:'Spanish III',        teacher:'Sra. Molina',  period:6 },
-  { id:'c6', name:'Biology',            teacher:'Dr. Aslan',    period:7 },
+  { id:'c1', name:'AP US History',      period:1 },
+  { id:'c2', name:'Pre-Calculus',       period:2 },
+  { id:'c3', name:'AP Chemistry',       period:3 },
+  { id:'c4', name:'English Literature', period:5 },
+  { id:'c5', name:'Spanish III',        period:6 },
+  { id:'c6', name:'Biology',            period:7 },
 ]
 const ord = n => n + (['th','st','nd','rd'][(n % 100 - n % 10 !== 10) * (n % 10)] || 'th')
 
 /* n counts consented students in that period across the school, not the
-   caseload — hence figures larger than eight. */
+   caseload, hence figures larger than eight. */
 export const COHORT_PERIOD = COURSES.map(c => ({
   key:'p' + c.period,
   label:`${ord(c.period)} period · ${c.name}`,
@@ -95,13 +100,19 @@ export const CONSENT_LEDGER = roster().map(s => ({
 
 /* Times must match PROTOCOL_TIMES below. The protocol is still open at the
    last step, so there is no "closed" row. */
+/* Every actor is a role, never a person. The three that were already roles
+   set the pattern: System, the guardian of a pseudonym, the student behind
+   one. A named professional would be an invented person in an audit trail,
+   and one role holds this console, so PRO names them. The log stays
+   attributable because a role plus a time is who did it on a console one
+   professional signs into. */
 export const AUDIT_LOG = [
-  { at:'12 Sep, 2:34 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Guardian contacted by phone',                      subject:'Student 8241' },
-  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:'R. Okonkwo',       action:'In-person welfare check completed',                subject:'Student 8241' },
-  { at:'12 Sep, 2:21 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Acknowledged crisis alert',                        subject:'Student 8241' },
+  { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
+  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'In-person welfare check completed',                subject:'Student 8241' },
+  { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Student 8241' },
   { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised, medical professional notified',         subject:'Student 8241' },
-  { at:'12 Sep, 11:02 AM',rel:'Today',     actor:'R. Okonkwo',       action:'Opened record',                                    subject:'Student 5512' },
-  { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:'R. Okonkwo',       action:'Exported year-group report (no group under five)', subject:'Grade 11' },
+  { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Student 5512' },
+  { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:PRO,                action:'Exported year-group report (no group under five)', subject:'Grade 11' },
   { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed weekly summary',                            subject:'Student 8241' },
   { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Shortened raw-signal retention to 30 days',        subject:'Student 8241' },
 ]

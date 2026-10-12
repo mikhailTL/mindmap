@@ -36,14 +36,14 @@ const empty = () => Object.fromEntries(STEPS.map(s => [s.id, []]))
 function Rung({ step, done, live, skipped }) {
   return (
     <div className={cn('flex items-center gap-3 border-l-2 py-1.5 pl-2.5 transition-colors duration-200',
-      live ? 'border-l-accent' : 'border-l-transparent')}>
+      live ? 'kit-edge' : 'border-l-transparent')}>
       <span className={cn('w-[5.5ch] shrink-0 font-display text-fine',
         live ? 'font-bold text-ink' : 'font-medium text-ink-2')}>{step.id}</span>
       <span className="grid min-w-0 flex-1 grid-cols-5 gap-1.5">
         {Array.from({ length: step.n }, (_, i) => (
           <span key={i} className={cn('h-2.5 rounded-bar origin-center',
             'transition-[background-color,transform] duration-200 ease-[var(--ease-out)]',
-            i < done ? 'scale-y-100 bg-accent'
+            i < done ? 'scale-y-100 kit-fill'
               : skipped ? 'scale-y-[0.45] bg-ruling'
               : 'scale-y-[0.45] bg-mist')}/>
         ))}
@@ -85,7 +85,7 @@ export function Senses() {
       <p className="max-w-[54ch] text-sec text-ink-2">Attention goes where it is sent. This sends it
         outwards, one sense at a time, and keeps count so you do not have to.</p>
 
-      <div className="mt-5 rounded-panel bg-aqua p-3 sm:p-4">
+      <div className="kit-ground mt-5 rounded-panel border-2 border-ink p-3 sm:p-4">
         {STEPS.map((s, i) => (
           <Rung key={s.id} step={s} done={got[s.id].length} live={!done && i === at}
             skipped={skipped.has(s.id)}/>
@@ -118,7 +118,7 @@ export function Senses() {
           {got[step.id].length > 0 && (
             <ul className="m-0 mt-4 flex list-none flex-wrap gap-2 p-0">
               {got[step.id].map((g, i) => (
-                <li key={i} style={riseAt(i)} className="kit-rise rounded-field border border-rule bg-mist
+                <li key={i} style={riseAt(i)} className="kit-rise rounded-chip border-2 border-ink bg-card
                   px-2.5 py-1 text-fine text-ink-2">{g}</li>
               ))}
             </ul>
