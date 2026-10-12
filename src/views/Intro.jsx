@@ -4,8 +4,10 @@ import { cn } from '../lib/utils'
 import { Button } from '../ui/button'
 import { Logo } from '../ui/logo'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
-import { ITEMS } from '../lib/engine'
 import { IntroSky } from '../charts/intro-sky'
+import { PHOTOS } from '../lib/photos'
+import { RainbowDial } from '../charts/rainbow'
+import { studentRings } from '../lib/readings'
 
 /* The title sequence.
  *
@@ -132,24 +134,16 @@ export function suppressIntro() {
  * what Back, Next and Skip are for.
  */
 const BEATS = [
-  { ms: 10400, bg: '#e8f6f4',
-    head: 'MindMap is a stress tracker for teenagers.',
-    sub:  'It measures your pulse, your sweat, your skin temperature and how much you move, all day, then hands back one score out of 100 and one sentence saying what changed.' },
-  { ms: 11600, bg: '#dcf0ef',
-    head: 'The patch is a sticker for your upper arm.',
-    sub:  'It sticks to the skin, takes those four readings about once a second, and sends them to your phone over Bluetooth.' },
-  { ms: 12200, bg: '#d2ebe9',
-    head: '3 Ways to Use MindMap',
-    sub:  'The patch and the phone each take a real reading from your body. The demo takes none.' },
-  { ms: 8400, bg: '#e3f2ed',
-    head: 'A day comes back as one score.',
-    sub:  'Out of 100, from the patch or from the phone, with one plain sentence under it saying what changed.' },
-  { ms: 8900, bg: '#d7eeea',
-    head: 'Students, parents and school counselors.',
-    sub:  'Each one sees a different amount, and the student decides what leaves their phone.' },
-  { ms: 10000, bg: '#eaf6f2',
-    head: 'MindMap',
-    sub:  'A patch, or six questions. One score and one sentence a day.' },
+  { ms: 11000, bg: '#e8f6f4', head: 'One number for your day.' },
+  { ms: 13000, bg: '#dcf0ef', head: 'The patch goes on your arm.' },
+  { ms: 12500, bg: '#d2ebe9', head: 'It reads four things.' },
+  { ms: 12500, bg: '#e3f2ed', head: 'Your usual day is marked.',
+    sub: 'So an ordinary day reads as ordinary.' },
+  { ms: 13500, bg: '#d7eeea', head: 'Three ways to start.' },
+  { ms: 13000, bg: '#eef7f3', head: 'You choose who sees it.',
+    sub: 'Nothing leaves your phone unless you say so.' },
+  { ms: 10500, bg: '#eaf6f2', head: 'MindMap',
+    sub: 'A patch, or six questions. One score a day.' },
 ]
 const LAST = BEATS.length - 1
 const EXIT_MS = 620          // must match the opacity transition on the overlay
@@ -216,8 +210,6 @@ function Count({ to, ms = 1400, delay = 0, ...p }) {
   return <text ref={ref} {...p}>0</text>
 }
 
-/* A light plate on the ink field: every screen the app would show, and the only
-   surface in this sequence allowed to carry signal colour. */
 /* The mark's ridge, the same five points the logo is drawn from. It is shared
    by the route beat and by the closing morph, so it lives here rather than
    being typed twice and drifting. */
@@ -228,303 +220,443 @@ const RIDGE = 'M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6'
    morphs out of. */
 const HOURS = [['6am', 60], ['10am', 150], ['2pm', 240], ['6pm', 330], ['10pm', 420]]
 
-function Plate({ className, delay = '0s', children }) {
-  return (
-    <div className={cn('iv-a iv-rise rounded-panel border border-rule bg-card/85', className)}
-      style={{ '--d': '.55s', '--t': delay }}>{children}</div>
-  )
+/* ── the drawing vocabulary ───────────────────────────────────────────────
+ *
+ * Three marks, and between them they are most of what this sequence does.
+ *
+ * An arrow is a line and a head, and the head is a separate node that pops
+ * when the line finishes rather than a marker-end that appears with the first
+ * pixel of it. A marker that is already there while the line is still growing
+ * tells the eye where to look before the line has finished saying it, and the
+ * whole point of an arrow here is that it arrives.
+ *
+ * A spot is two rings half a second apart. One ring reads as a circle somebody
+ * drew; two in sequence read as a pulse, and a pulse is what says "this one,
+ * now". They are bounded at two: a highlight that blinks forever is motion
+ * competing with the thing it is highlighting.
+ *
+ * A chip is three words at most. Everything in here that wants a sentence is a
+ * whole page elsewhere on the site, and this is the sequence that sends people
+ * to those pages, not a smaller copy of them.
+ */
+
+/* The arrowhead, built from the tip backwards so the caller gives a point and
+   a bearing rather than three corners it has to work out. The notch at -0.72
+   is what stops it reading as a paper dart. */
+function headPath(x, y, deg, s = 10) {
+  const r = (deg * Math.PI) / 180
+  const c = Math.cos(r), si = Math.sin(r)
+  const p = (dx, dy) =>
+    `${(x + dx * c - dy * si).toFixed(1)} ${(y + dx * si + dy * c).toFixed(1)}`
+  return `M${p(0, 0)} L${p(-s, s * 0.5)} L${p(-s * 0.72, 0)} L${p(-s, -s * 0.5)} Z`
 }
 
-/* ── Beat 1 ── what stress does to a body, and who can see it ─────────────
-   Two lanes on one axis: what the body is doing, and what anybody watching can
-   see. Drawn as bars of samples rather than as a curve, so the lag between the
-   two is a horizontal distance a viewer can measure off the screen instead of
-   a claim they have to take on trust. The bars also survive at 390px, where a
-   pair of overlaid curves would read as one smudge. */
-const DAY = Array.from({ length: 32 }, (_, i) => {
-  /* Deterministic, for the same reason waveLine is: a recording that redrew
-     itself on every render would read as noise. */
-  const k = Math.abs(Math.sin(i * 1.73) * 0.66 + Math.sin(i * 0.9 + 1.2) * 0.34)
-  return {
-    x: 14 + i * 14.4,
-    body: i < 15 ? 3 + k * 4 : 6 + k * 20,
-    seen: i < 25 ? 2 : 2 + (i - 25) * 1.8,
+function Arrow({ d, len, x, y, deg, t, dur = 0.8, color = '#0b2b33', w = 2.4, still }) {
+  if (still) {
+    return (
+      <g stroke={color} fill={color}>
+        <path d={d} fill="none" strokeWidth={w} strokeLinecap="round"/>
+        <path d={headPath(x, y, deg)} strokeWidth="0"/>
+      </g>
+    )
   }
-})
-
-function StageDay() {
   return (
-    <div className="mx-auto flex h-full max-h-full min-h-0 w-full max-w-[880px] items-center">
-      {/* On a plate, like every other drawing here. It used to sit straight on
-          the field, which worked when the field was ink and nothing was behind
-          it; over the arch, a bare axis in ink-3 measures 1.66 : 1. */}
-      <Plate className="max-h-full min-h-0 w-full px-3 py-4 sm:px-5 sm:py-5">
-      <svg {...svgProps} viewBox="0 0 480 250">
-        <text x="8" y="44" fontSize="17" className="font-mono fill-ink-2 iv-a iv-rise"
-          style={{ '--d': '.5s', '--t': '.1s' }}>your body</text>
-        {DAY.map((d, i) => (
-          <line key={'b' + i} x1={d.x} y1={92 - d.body} x2={d.x} y2={92 + d.body} strokeWidth="3.4"
-            strokeLinecap="round" stroke="#1d8fb0" className="iv-a iv-fade"
-            style={{ '--d': '.4s', '--t': `${0.25 + i * 0.03}s` }} />
-        ))}
-
-        <text x="8" y="152" fontSize="17" className="font-mono fill-ink-2 iv-a iv-rise"
-          style={{ '--d': '.5s', '--t': '.75s' }}>what anyone notices</text>
-        {DAY.map((d, i) => (
-          <line key={'s' + i} x1={d.x} y1={186 - d.seen} x2={d.x} y2={186 + d.seen} strokeWidth="3.4"
-            strokeLinecap="round" className="stroke-ink-3 iv-a iv-fade"
-            style={{ '--d': '.4s', '--t': `${0.95 + i * 0.03}s` }} />
-        ))}
-
-        {/* The two moments, and the distance between them. The left mark sits
-            where the body's bars start growing and the right where the second
-            lane finally moves; both x values come straight off DAY's own
-            thresholds rather than being placed by eye. */}
-        <path d="M230 60 V 216" fill="none" strokeWidth="1.25" strokeDasharray="4 5"
-          className="stroke-ink-3 iv-a iv-fade" style={{ '--d': '.5s', '--t': '1.85s' }} />
-        <path d="M374 170 V 216" fill="none" strokeWidth="1.25" strokeDasharray="4 5"
-          className="stroke-ink-3 iv-a iv-fade" style={{ '--d': '.5s', '--t': '2s' }} />
-        <path d="M230 210 V 222 M230 216 H 374 M374 210 V 222" fill="none" strokeWidth="1.4"
-          className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 180, '--d': '.7s', '--t': '2.1s' }} />
-        <text x="302" y="242" textAnchor="middle" fontSize="16"
-          className="font-mono fill-ink-2 iv-a iv-rise" style={{ '--d': '.5s', '--t': '2.5s' }}>hours</text>
-      </svg>
-      </Plate>
-    </div>
+    <g stroke={color} fill={color}>
+      <path d={d} fill="none" strokeWidth={w} strokeLinecap="round"
+        className="iv-a iv-draw" style={{ '--len': len, '--d': `${dur}s`, '--t': `${t}s` }}/>
+      <path d={headPath(x, y, deg)} strokeWidth="0" className="iv-a iv-pop"
+        style={{ '--d': '.28s', '--t': `${(t + dur - 0.06).toFixed(2)}s` }}/>
+    </g>
   )
 }
 
-/* ── Beat 3 ── the three ways in, side by side ─────────────────────────────
-   The half of the product that needs no hardware had no picture anywhere in
-   this sequence, which is exactly how a patch ends up reading as the whole
-   thing. Three plates: the patch, the phone on its own, and the demo. The
-   first two read a body and the third reads nobody, which is the whole of the
-   "three ways, two readings" arithmetic the heading promises.
-
-   Every plate carries signal colour or a filled control, so every one of them
-   is a plate. Nothing in this sequence paints a signal hue straight onto the
-   ground, which is where the arch lives. */
-
-/* One or two words per question, not the questions themselves: the six real
-   prompts are sentences, and six sentences beside a five-point scale wrap into
-   a wall of text at 390px. Keyed off ITEMS so the count here can never drift
-   from the count the app actually asks. */
-const ASK = {
-  tension: 'Tension', edge: 'On edge', sleep: 'Last night',
-  energy: 'Energy', focus: 'Focus', demand: 'Today so far',
-}
-const PICKED = [3, 1, 4, 2, 3, 1]
-
-/* ── Beat 2 ── the four signals the patch reads, named ────────────────────
-   The review's question after watching this was "what does it actually
-   measure", and nothing in the sequence answered it: the signals appeared as
-   four unlabelled dots in a legend on the next beat. Four plates, each with
-   the signal's own trace in the signal's own colour, is the shortest way to
-   answer it, and it reuses the hues the rest of the site already assigns. */
-const TRACE_D = {
-  heart: 'M0 20 L10 20 L13 7 L16 31 L19 20 L34 20 L44 20 L47 8 L50 30 L53 20 L68 20 L80 20',
-  sweat: 'M0 29 L12 29 Q18 29 21 13 Q24 5 28 12 Q32 19 36 28 L44 29 Q50 29 53 15 Q56 7 60 14 Q63 21 67 28 L80 29',
-  temp:  'M0 11 C12 11 18 13 26 17 C36 22 44 23 54 21 C64 19 72 16 80 13',
-  move:  'M0 20 L7 20 L9 16 L11 24 L13 20 L34 20 L36 18 L38 22 L40 20 L58 20 L60 14 L62 26 L64 20 L80 20',
-}
-
-function StageSignals() {
+function Spot({ cx, cy, r, t, still, color = '#0a6e68' }) {
+  if (still) return <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="2.4"/>
   return (
-    <div className="mx-auto grid h-full w-full max-w-[940px] content-center gap-2 sm:gap-3
-      grid-cols-2 lg:grid-cols-4">
-      {SENSOR_ORDER.map((id, i) => (
-        <Plate key={id} className="px-3 py-3 sm:px-4 sm:py-4" delay={`${0.1 + i * 0.12}s`}>
-          <svg {...svgProps} viewBox="0 0 80 36" preserveAspectRatio="none"
-            className="h-9 w-full sm:h-11">
-            <path d={TRACE_D[id]} fill="none" strokeWidth="1.8" strokeLinecap="round"
-              strokeLinejoin="round" stroke={SENSORS[id].glow} vectorEffect="non-scaling-stroke"
-              className="iv-a iv-draw" style={{ '--len': 200, '--d': '.9s', '--t': `${0.3 + i * 0.12}s` }}/>
-          </svg>
-          <span className="mt-2 block font-display text-ui font-bold text-ink">{SENSORS[id].name}</span>
-          <span className="mt-1 block text-fine leading-tight text-ink-2">{SENSORS[id].short}</span>
-        </Plate>
+    <g fill="none" stroke={color} strokeWidth="2.6">
+      {[0, 0.52].map((o, i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} className="iv-a iv-ring"
+          style={{ '--d': '1.3s', '--t': `${(t + o).toFixed(2)}s` }}/>
       ))}
-    </div>
+    </g>
   )
 }
 
-function StageRoutes() {
+function Chip({ x, y, t, still, anchor = 'middle', size = 17, tone = 'fill-ink', children }) {
   return (
-    <div className="mx-auto grid h-full w-full max-w-[1040px] content-center items-start gap-2
-      sm:gap-4 lg:grid-cols-3">
-      <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".1s">
-        <span className="block font-display text-ui font-bold text-ink">Wear the patch</span>
-        {/* Full plate width, with the elbow cut flush at the left edge of the
-            box: at a fixed narrow width the same two strokes closed into a
-            loop floating in the middle of the card and stopped reading as a
-            limb. The ratio is what holds the height steady at 390px. */}
-        {/* Hidden under sm. Stacked on a 390px phone these three drawings ran
-            the stage 700px tall inside a 456px slot, so the plates were cut off
-            and ran up over the head. The title and the line under it carry the
-            beat on a phone; the drawings return at sm. */}
-        <div className="mx-auto mt-2 hidden aspect-[420/96] w-full sm:block">
-          <svg {...svgProps} viewBox="0 0 420 96">
-            {/* forearm: elbow off-frame at the left, heel of the hand at the
-                right. Two long strokes and a cap — enough to place the patch,
-                not enough to become an illustration of a person. */}
-            <path d="M-6 18 C 120 10, 260 8, 344 15" fill="none" strokeWidth="2.2"
-              className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 356, '--d': '.7s', '--t': '.3s' }} />
-            <path d="M-6 80 C 120 88, 260 86, 344 80" fill="none" strokeWidth="2.2"
-              className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 356, '--d': '.7s', '--t': '.36s' }} />
-            <path d="M344 15 C 372 31, 372 64, 344 80" fill="none" strokeWidth="2.2"
-              className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 90, '--d': '.45s', '--t': '.8s' }} />
-            {/* the mark at patch size, centred on the arm: 40 x 28 logo units
-                at scale 1.7, so the dark lozenge is 61 x 34 on a 420 canvas */}
-            <g transform="translate(136,25) scale(1.7)">
-              <rect x="2" y="4" width="36" height="20" rx="10" fill="#0b2b33" stroke="#f5fafa"
-                strokeWidth="0.7" className="iv-a iv-pop" style={{ '--d': '.45s', '--t': '.95s' }} />
-              <path d={RIDGE} fill="none" stroke="#1d8fb0" strokeWidth="0.9" strokeLinecap="round"
-                strokeLinejoin="round" className="iv-a iv-draw"
-                style={{ '--len': 33, '--d': '.8s', '--t': '1.2s' }} />
-            </g>
-          </svg>
-        </div>
-        <ul className="m-0 mt-2 hidden list-none flex-wrap gap-x-3 gap-y-1 p-0 sm:flex">
-          {SENSOR_ORDER.map((id, i) => (
-            <li key={id} className="iv-a iv-rise flex items-center gap-1.5"
-              style={{ '--d': '.4s', '--t': `${1.3 + i * 0.1}s` }}>
-              <span className="block h-2 w-2 rounded-chip" style={{ background: SENSORS[id].glow }} />
-              <span className="text-fine leading-tight text-ink-2">{SENSORS[id].name}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-1.5 text-fine text-ink-3">Four signals off your skin, about one reading a
-          second, all day.</p>
-      </Plate>
-
-      <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".4s">
-        <span className="block font-display text-ui font-bold text-ink">Use the phone alone</span>
-        <ul className="m-0 mt-2 hidden list-none gap-1 p-0 sm:grid">
-          {ITEMS.map((it, i) => (
-            <li key={it.id} className="iv-a iv-rise flex items-center gap-3"
-              style={{ '--d': '.4s', '--t': `${0.9 + i * 0.12}s` }}>
-              <span className="text-fine leading-tight text-ink-2">{ASK[it.id] || it.id}</span>
-              {/* The answered step is filled; the rest are outlined in ink-3
-                  rather than washed in, because a five-point scale drawn in
-                  mist is a row of dots nobody can count. */}
-              <span className="ml-auto flex items-center gap-1.5">
-                {[0, 1, 2, 3, 4].map(k => (
-                  <span key={k} className={cn('block h-2 w-2 rounded-chip border border-ink-3',
-                    k === PICKED[i] ? 'bg-accent' : 'bg-card')} />
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-1.5 text-fine text-ink-3">The camera, the microphone and six questions.
-          About thirty seconds, and nothing on your arm.</p>
-      </Plate>
-
-      {/* The third way. It was missing, and its absence was the reason the
-          sequence said two ways while the overview said three. */}
-      <Plate className="px-4 py-3 sm:px-5 sm:py-4" delay=".7s">
-        <span className="block font-display text-ui font-bold text-ink">Open the demo</span>
-        <div className="mx-auto mt-2 hidden aspect-[420/96] w-full sm:block">
-          <svg {...svgProps} viewBox="0 0 420 96">
-            <rect x="24" y="10" width="372" height="76" rx="10" fill="none" strokeWidth="2.2"
-              strokeDasharray="8 7" className="stroke-ink-3 iv-a iv-pop"
-              style={{ '--d': '.5s', '--t': '.95s' }}/>
-            <path d="M68 70 L136 40 L200 54 L268 24 L352 38" fill="none" strokeWidth="2.6"
-              strokeLinecap="round" strokeLinejoin="round" className="stroke-accent iv-a iv-draw"
-              style={{ '--len': 320, '--d': '.9s', '--t': '1.15s' }}/>
-            <circle cx="352" cy="38" r="5.5" fill="#1d8fb0" className="iv-a iv-pop"
-              style={{ '--d': '.4s', '--t': '1.9s' }}/>
-          </svg>
-        </div>
-        <p className="mt-1.5 text-fine text-ink-3">No one is measured. Every screen is filled in, so
-          you can look around.</p>
-      </Plate>
-    </div>
+    <text x={x} y={y} textAnchor={anchor} fontSize={size} fontWeight="600"
+      className={cn('font-display', tone, !still && 'iv-a iv-rise')}
+      style={still ? undefined : { '--d': '.5s', '--t': `${t}s` }}>{children}</text>
   )
 }
 
-function StageScore() {
+/* A card in the drawings: the same panel the site uses, drawn rather than laid
+   out, because an arrow pointing at an HTML box has to be positioned against a
+   layout that moves and an arrow pointing at a rect does not. */
+function Card({ x, y, w, h, t, still, dim = false }) {
   return (
-    <div className="mx-auto flex h-full w-full max-w-[760px] items-center">
-      <Plate className="w-full px-3 py-3 sm:px-6 sm:py-5">
-        <div className="mx-auto aspect-[460/210] max-h-full w-full max-w-[700px]">
-          <svg {...svgProps} viewBox="0 0 460 210">
-            {/* Four signal traces, four connector curves, a junction dot and a
-                label used to live here — eleven things drawn in four seconds to
-                say one thing. The four signals are the patch page's subject and
-                the arc is this beat's, so the arc is all that is left. */}
-            <path d="M238 126 A82 82 0 0 1 402 126" fill="none" strokeWidth="10" strokeLinecap="round"
-              className="stroke-mist iv-a iv-rise" style={{ '--d': '.4s', '--t': '1.4s' }} />
-            <path d="M238 126 A82 82 0 0 1 355 51.8" fill="none" strokeWidth="10" strokeLinecap="round"
-              className="stroke-accent iv-a iv-draw" style={{ '--len': 168, '--d': '1.1s', '--t': '1.5s' }} />
-            <circle cx="355" cy="51.8" r="6.5" className="fill-accent iv-a iv-pop iv-blink"
-              style={{ '--d': '.3s', '--t': '2.6s' }} />
-            <g className="iv-a iv-fade" style={{ '--d': '.4s', '--t': '1.5s' }}>
-              <Count to={64} ms={1200} delay={120} x="320" y="116" textAnchor="middle" fontSize="50"
-                fontWeight="500" className="font-display fill-ink" />
-              <text x="320" y="142" textAnchor="middle" fontSize="15"
-                className="font-body fill-ink-2">out of 100</text>
-            </g>
+    <rect x={x} y={y} width={w} height={h} rx="16"
+      fill="#ffffff" fillOpacity={dim ? 0.34 : 0.85} stroke="#8eb0b6"
+      strokeOpacity={dim ? 0.45 : 1} strokeWidth="1.5"
+      className={cn(!still && 'iv-a iv-lift')}
+      style={still ? undefined : { '--d': '.6s', '--t': `${t}s` }}/>
+  )
+}
 
-            <line x1="24" y1="170" x2="436" y2="170" strokeWidth="1"
-              className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 414, '--d': '.5s', '--t': '2.5s' }} />
-            <text x="230" y="198" textAnchor="middle" fontSize="20"
-              className="font-body fill-ink iv-a iv-rise" style={{ '--d': '.55s', '--t': '2.75s' }}>
-              &ldquo;Tense from noon, settled by six.&rdquo;
-            </text>
-          </svg>
-        </div>
-      </Plate>
+/* ── Beat 1 ── a whole day arrives as one number ──────────────────────────
+   The line is the day and the circle is what the day becomes. Nothing else is
+   on the screen, because the first thing anybody has to understand about this
+   product is the conversion, and a second object would be a second subject. */
+const DAYLINE = waveLine(150, 1.05, 30, 30, 48, 300)
+
+function StageOneNumber({ still }) {
+  const a = still ? undefined : 'iv-a'
+  return (
+    <div className="iv-real mx-auto w-full max-w-[720px]">
+      <div className="aspect-[16/9] w-full">
+        <svg {...svgProps} viewBox="0 0 560 300">
+          {/* the day, recorded */}
+          <line x1="44" y1="226" x2="306" y2="226" strokeWidth="1.5"
+            className={cn('stroke-ink-3', !still && 'iv-a iv-draw')}
+            style={still ? undefined : { '--len': 300, '--d': '.6s', '--t': '.2s' }}/>
+          <path d={DAYLINE.d} fill="none" stroke="#11677f" strokeWidth="3.2" strokeLinecap="round"
+            strokeLinejoin="round" className={cn(a, !still && 'iv-draw')}
+            style={still ? undefined : { '--len': DAYLINE.len, '--d': '2.2s', '--t': '.6s' }}/>
+          <Chip x="175" y="256" t={1.1} still={still} size={16} tone="fill-ink-2">one day</Chip>
+
+          {/* and what it becomes */}
+          <Arrow still={still} t={3.3} dur={0.9} d="M318 168 C 348 178, 366 176, 386 166"
+            len={92} x={390} y={164} deg={-24}/>
+
+          <circle cx="462" cy="150" r="62" fill="#ffffff" fillOpacity="0.85" stroke="#0a6e68"
+            strokeWidth="2.4" className={cn(a, !still && 'iv-pop')}
+            style={still ? undefined : { '--d': '.5s', '--t': '4.15s' }}/>
+          {still
+            ? <text x="462" y="166" textAnchor="middle" fontSize="54" fontWeight="700"
+                className="font-display fill-ink">64</text>
+            : <Count to={64} ms={1500} delay={4600} x="462" y="166" textAnchor="middle"
+                fontSize="54" fontWeight="700" className="font-display fill-ink"/>}
+          <Chip x="462" y="236" t={6.0} still={still} size={16} tone="fill-ink-2">out of 100</Chip>
+          <Spot cx={462} cy={150} r={76} t={6.3} still={still}/>
+        </svg>
+      </div>
     </div>
   )
 }
 
-/* ── Beat 5 ── who can use it ──────────────────────────────────────────────
-   Asked for by name: the audience was a single line at the end of the last
-   beat, which is the same as not saying it. Three readers, each named the way
-   they would be named out loud, with one line on what that person gets and
-   nothing else. Written from the student outwards, because that is the
-   direction permission travels here. A counselor's line says what was handed
-   to them rather than what they can look up, which is the difference between a
-   shared reading and a feed. */
-const READERS = [
-  { who: 'Students',
-    gets: 'The score, the sentence, and all four readings behind them.' },
-  { who: 'Parents',
-    gets: 'The score and the sentence, once a student shares them.' },
-  { who: 'School counselors',
-    gets: 'Only what a student has chosen to pass on.' },
+/* ── Beat 2 ── where the patch goes, and where the readings go ────────────
+   An arm, a patch landing on it, and four readings walking down the wire to a
+   phone. The landing is the instruction: it comes in from off the arm and
+   stops on the outer face of the upper arm, which is the one thing about
+   wearing it that a picture can teach faster than a sentence. */
+/* One path, used twice: once filled and once as the outline that draws over
+   it. Typed twice, the two would drift apart on the first edit. */
+/* ── Beat 2 ── where it goes, and where the readings go ──────────────────
+ *
+ * This beat was a drawn arm for three passes and it was wrong every time: two
+ * mirrored curves read as a leaf, and adding a shoulder to them read as a
+ * mitten. The problem was not the drawing. A limb with nothing attached to it
+ * is ambiguous at any level of effort, and the one thing this beat has to
+ * teach — where on your body the thing goes — is the one thing an ambiguous
+ * limb cannot say.
+ *
+ * So it is the photograph. The same licensed plate the patch page uses, with
+ * the patch composited onto the outer upper arm at its real 36 x 54 mm, framed
+ * through a clip so the arm fills the panel. It is unambiguous, it is already
+ * in the bundle, and it is the picture the visitor will meet again two clicks
+ * later, which is what a walkthrough is for.
+ *
+ * The photograph is placed by arithmetic rather than by eye. The patch sits at
+ * (0.5737, 0.7869) of the plate and is 0.0352 of its width, measured off the
+ * file; PATCH_W is how wide it should be here, and the image's size and offset
+ * fall out of those three numbers. Re-crop the photograph and only the
+ * constants change.
+ */
+const PHOTO = { w: 1024, h: 688 }
+const PATCH_AT = { x: 0.5737, y: 0.7869, w: 0.0352 }
+const PANEL = { x: 20, y: 20, w: 280, h: 200 }
+const PATCH_W = 27                               // how wide the patch reads, in viewBox units
+const SPOT_AT = { x: 168, y: 146 }               // where it lands in the 560 x 300 viewBox
+
+/* The crop, as a window onto the photograph's own pixels.
+ *
+ * It was a full-size <image> behind a clipPath, which paints correctly and
+ * lays out catastrophically: the clip hides the pixels but the element keeps
+ * its real geometry, so the <g> measured 479px inside a 350px column, the
+ * dialog grew a 33px horizontal scroll, and on a 390px phone the browser
+ * scrolled it to reveal the overflow — pushing every heading 13px off the left
+ * edge of the screen. The drawing looked right and the words were cut in half.
+ *
+ * A nested <svg> clips to its own bounds by construction, so the geometry and
+ * the paint agree. The viewBox below is the region of the photograph that
+ * shows through, computed from where the patch is in the file and how big it
+ * should read here. */
+const CROP_W = (PATCH_AT.w * PHOTO.w * PANEL.w) / PATCH_W
+const CROP_H = (CROP_W * PANEL.h) / PANEL.w
+const CROP_X = PATCH_AT.x * PHOTO.w - ((SPOT_AT.x - PANEL.x) / PANEL.w) * CROP_W
+const CROP_Y = PATCH_AT.y * PHOTO.h - ((SPOT_AT.y - PANEL.y) / PANEL.h) * CROP_H
+
+function StagePatch({ still }) {
+  const a = still ? undefined : 'iv-a'
+  const clip = React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const dot = (i, c) => (
+    <circle key={i} r="6" fill={c}
+      className={cn(!still && 'iv-a iv-run')}
+      style={still
+        ? { transform: `translate(${332 + i * 22}px, ${146 - i * 5}px)`, transformBox: 'view-box' }
+        : { offsetPath: 'path("M312 152 C 344 150, 370 142, 392 134")',
+            '--d': '2.4s', '--t': `${(4.4 + i * 0.45).toFixed(2)}s` }}/>
+  )
+  return (
+    <div className="iv-real mx-auto w-full max-w-[760px]">
+      <div className="aspect-[16/9] w-full">
+        <svg {...svgProps} viewBox="0 0 560 300">
+          <defs>
+            <clipPath id={clip}>
+              <rect x={PANEL.x} y={PANEL.y} width={PANEL.w} height={PANEL.h} rx="20"/>
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${clip})`} className={cn(a, !still && 'iv-fade')}
+            style={still ? undefined : { '--d': '.9s', '--t': '.3s' }}>
+            <svg x={PANEL.x} y={PANEL.y} width={PANEL.w} height={PANEL.h}
+              viewBox={`${CROP_X.toFixed(1)} ${CROP_Y.toFixed(1)} ${CROP_W.toFixed(1)} ${CROP_H.toFixed(1)}`}
+              preserveAspectRatio="xMidYMid slice">
+              <image href={PHOTOS['patch-worn']} x="0" y="0"
+                width={PHOTO.w} height={PHOTO.h}/>
+            </svg>
+          </g>
+          <rect x={PANEL.x} y={PANEL.y} width={PANEL.w} height={PANEL.h} rx="20" fill="none"
+            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-fade')}
+            style={still ? undefined : { '--d': '.9s', '--t': '.3s' }}/>
+
+          {/* two rings on the patch itself, which is the whole instruction */}
+          <Spot cx={SPOT_AT.x} cy={SPOT_AT.y} r={26} t={1.8} still={still}/>
+
+          {/* and then the readings leave */}
+          <Arrow still={still} t={3.4} dur={0.9} d="M312 152 C 344 150, 370 142, 392 134"
+            len={100} x={396} y={132} deg={-20} color="#1f5560" w={2.2}/>
+          {!still && SENSOR_ORDER.map((i2, i) => dot(i, SENSORS[i2].glow))}
+
+          <rect x="408" y="62" width="100" height="176" rx="18" fill="#ffffff" fillOpacity="0.92"
+            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
+            style={still ? undefined : { '--d': '.6s', '--t': '3.2s' }}/>
+          <g className={cn(a, !still && 'iv-fade')}
+            style={still ? undefined : { '--d': '.5s', '--t': '6.4s' }}>
+            <text x="458" y="152" textAnchor="middle" fontSize="42" fontWeight="700"
+              className="font-display fill-ink">64</text>
+            <text x="458" y="176" textAnchor="middle" fontSize="14"
+              className="font-mono fill-ink-2">out of 100</text>
+          </g>
+          <Chip x="458" y="264" t={6.8} still={still} size={16} tone="fill-ink-2">your phone</Chip>
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ── Beat 3 ── the four signals, one at a time ────────────────────────────
+   One row per signal and a second and a half between them, which is the whole
+   design of this beat: four traces arriving together is a chart, four arriving
+   in turn is a list of four things. The spot on each dot is what makes the
+   difference legible at a glance rather than only in sequence. */
+function StageFour({ still }) {
+  return (
+    <div className="iv-real mx-auto w-full max-w-[720px]">
+      <div className="aspect-[16/10] w-full">
+        <svg {...svgProps} viewBox="0 0 560 350">
+          {SENSOR_ORDER.map((id, i) => {
+            const s = SENSORS[id]
+            const y = 52 + i * 82
+            const t = 0.4 + i * 1.55
+            const w = waveLine(y, SHAPE[id].seed, SHAPE[id].amp * 1.1, SHAPE[id].steps, 236, 528)
+            return (
+              <g key={id}>
+                <circle cx="40" cy={y} r="11" fill={s.glow}
+                  className={cn(!still && 'iv-a iv-pop')}
+                  style={still ? undefined : { '--d': '.42s', '--t': `${t}s` }}/>
+                <Spot cx={40} cy={y} r={22} t={t + 0.15} still={still} color={s.glow}/>
+                <text x="68" y={y + 7} fontSize="22" fontWeight="600"
+                  className={cn('font-display fill-ink', !still && 'iv-a iv-rise')}
+                  style={still ? undefined : { '--d': '.5s', '--t': `${(t + 0.2).toFixed(2)}s` }}>
+                  {s.name}
+                </text>
+                <path d={w.d} fill="none" stroke={s.glow} strokeWidth="2.8" strokeLinecap="round"
+                  strokeLinejoin="round" className={cn(!still && 'iv-a iv-draw')}
+                  style={still ? undefined
+                    : { '--len': w.len, '--d': '1.25s', '--t': `${(t + 0.35).toFixed(2)}s` }}/>
+              </g>
+            )
+          })}
+          <Chip x="382" y="336" t={7.0} still={still} size={16} tone="fill-ink-2">
+            about once a second
+          </Chip>
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ── Beat 4 ── the mark, which is the one thing on the dial to learn ──────
+   The real RainbowDial, not a drawing of one, because the point of this beat
+   is that the thing you are about to meet on the site is this thing. The
+   overlay is a separate svg on the dial's own 320 x 232 viewBox, so the arrow
+   lands on the mark by sharing its coordinate system rather than by being
+   nudged until it looks right.
+
+   The mark sits at 180 + 1.8 x usual degrees from the arch's centre, which for
+   a usual day of 46 is 262.8 — just left of the apex. Change the usual and the
+   arrow has to move with it; it is written as a constant here so the two
+   cannot drift apart silently. */
+const USUAL = 46
+const DIAL_SCORE = 64
+
+function StageMarkOnDial({ still }) {
+  return (
+    <div className="iv-real mx-auto flex w-full max-w-[560px] flex-col items-center">
+      <div className="relative w-[min(100%,430px)]">
+        <RainbowDial score={DIAL_SCORE} usual={USUAL} rings={studentRings()} size={430}/>
+        <svg viewBox="0 0 320 232" aria-hidden focusable="false"
+          className="pointer-events-none absolute inset-x-0 top-0"
+          style={{ aspectRatio: '320 / 232' }}>
+          <Chip x="14" y="30" t={2.4} still={still} anchor="start" size={16}>your usual day</Chip>
+          <Arrow still={still} t={3.0} dur={0.75} d="M76 42 C 100 40, 118 33, 132 25"
+            len={80} x={135} y={23} deg={-27}/>
+          <Spot cx={146} cy={54} r={26} t={3.9} still={still}/>
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ── Beat 5 ── the three ways in, highlighted one at a time ───────────────
+   This is the beat that is a manual rather than a trailer. Three cards in the
+   order the overview lists them, then two seconds on each one alone: the spot
+   says which, the arrow says look here, and three words say what it needs from
+   you. A viewer who watches only this beat can still choose. */
+const WAYS = [
+  { label: 'Patch',  note: 'on your arm' },
+  { label: 'Phone',  note: 'camera and flash' },
+  { label: 'Demo',   note: 'nothing to wear' },
 ]
 
-function StageAudience() {
+function StageWays({ still }) {
+  const X = [26, 208, 390]
   return (
-    <div className="mx-auto grid h-full w-full max-w-[1040px] content-center items-start gap-2
-      sm:gap-4 lg:grid-cols-3">
-      {READERS.map((r, i) => (
-        <Plate key={r.who} className="px-4 py-4 sm:px-5 sm:py-5" delay={`${0.1 + i * 0.18}s`}>
-          {/* One figure per plate, at plate scale: a head and a pair of
-              shoulders, which is as much of a person as a title card can draw
-              without becoming an illustration of one. The band under it is the
-              amount that reader is handed, drawn as a share of the plate's
-              width rather than as a figure, because no number here is one the
-              prototype produces. */}
-          <div className="mx-auto hidden aspect-[180/72] w-full max-w-[200px] sm:block">
-            <svg {...svgProps} viewBox="0 0 180 72">
-              <circle cx="90" cy="24" r="13" fill="none" strokeWidth="2.2"
-                className="stroke-ink-3 iv-a iv-pop"
-                style={{ '--d': '.45s', '--t': `${0.3 + i * 0.18}s` }}/>
-              <path d="M58 64 C 62 46, 76 40, 90 40 C 104 40, 118 46, 122 64" fill="none"
-                strokeWidth="2.2" strokeLinecap="round" className="stroke-ink-3 iv-a iv-draw"
-                style={{ '--len': 160, '--d': '.7s', '--t': `${0.45 + i * 0.18}s` }}/>
-              <rect x="40" y="68" width={100 - i * 28} height="4" rx="2"
-                fill="#1d8fb0" className="iv-a iv-fade"
-                style={{ '--d': '.5s', '--t': `${0.9 + i * 0.18}s` }}/>
-            </svg>
-          </div>
-          <span className="block font-display text-ui font-bold text-ink sm:mt-2">{r.who}</span>
-          <span className="mt-1 block text-fine leading-tight text-ink-2">{r.gets}</span>
-        </Plate>
-      ))}
+    <div className="iv-real mx-auto w-full max-w-[760px]">
+      <div className="aspect-[16/9] w-full">
+        <svg {...svgProps} viewBox="0 0 560 300">
+          {WAYS.map((w, i) => {
+            const x = X[i], cx = x + 72
+            const show = 0.3 + i * 0.55
+            const lit = 3.0 + i * 2.5
+            return (
+              <g key={w.label}>
+                <Card x={x} y={86} w={144} h={128} t={show} still={still}/>
+                {/* one glyph per card, drawn in the same two strokes as
+                    everything else here so the row reads as one family */}
+                <g className={cn(!still && 'iv-a iv-fade')}
+                  style={still ? undefined : { '--d': '.5s', '--t': `${(show + 0.25).toFixed(2)}s` }}>
+                  {i === 0 && (
+                    <>
+                      <rect x={cx - 15} y="112" width="30" height="44" rx="13" fill="#ffffff"
+                        stroke="#1f5560" strokeWidth="2"/>
+                      <rect x={cx - 6} y="104" width="12" height="10" rx="4" fill="#f3f8f5"
+                        stroke="#1f5560" strokeWidth="1.4"/>
+                    </>
+                  )}
+                  {i === 1 && (
+                    <>
+                      <rect x={cx - 17} y="104" width="34" height="54" rx="8" fill="#ffffff"
+                        stroke="#1f5560" strokeWidth="2"/>
+                      <circle cx={cx} cy="126" r="8" fill="none" stroke="#1f5560" strokeWidth="2"/>
+                      <circle cx={cx} cy="146" r="3.4" fill="#e86a05"/>
+                    </>
+                  )}
+                  {i === 2 && (
+                    <>
+                      <circle cx={cx} cy="131" r="22" fill="none" stroke="#1f5560" strokeWidth="2"
+                        strokeDasharray="5 5"/>
+                      <path d={`M${cx - 6} 121 L${cx + 11} 131 L${cx - 6} 141 Z`} fill="#1f5560"/>
+                    </>
+                  )}
+                </g>
+                <text x={cx} y="192" textAnchor="middle" fontSize="21" fontWeight="700"
+                  className={cn('font-display fill-ink', !still && 'iv-a iv-rise')}
+                  style={still ? undefined : { '--d': '.5s', '--t': `${(show + 0.35).toFixed(2)}s` }}>
+                  {w.label}
+                </text>
+
+                {/* and then, one at a time */}
+                <Arrow still={still} t={lit} dur={0.55}
+                  d={`M${cx} 38 L${cx} 70`} len={40} x={cx} y={74} deg={90}/>
+                <Spot cx={cx} cy={150} r={82} t={lit + 0.5} still={still}/>
+                <Chip x={cx} y="252" t={lit + 0.7} still={still} size={16} tone="fill-ink-2">
+                  {w.note}
+                </Chip>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ── Beat 6 ── the switch, and what happens when it goes off ──────────────
+   Every other way of saying "you control what is shared" is a sentence. This
+   one is a switch that turns off while you watch and a share that stops: the
+   arrow fades, the card dims, and nothing has to be claimed. The student's
+   phone never changes, which is the other half of the point. */
+function StageShare({ still }) {
+  const a = still ? undefined : 'iv-a'
+  const off = still ? undefined : 'iv-a iv-fade-out'
+  return (
+    <div className="iv-real mx-auto w-full max-w-[760px]">
+      <div className="aspect-[16/9] w-full">
+        <svg {...svgProps} viewBox="0 0 560 300">
+          {/* the student, in the middle, who sees everything first */}
+          <rect x="232" y="64" width="96" height="164" rx="18" fill="#ffffff" fillOpacity="0.92"
+            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
+            style={still ? undefined : { '--d': '.6s', '--t': '.3s' }}/>
+          <g className={cn(a, !still && 'iv-fade')}
+            style={still ? undefined : { '--d': '.5s', '--t': '.8s' }}>
+            <text x="280" y="148" textAnchor="middle" fontSize="40" fontWeight="700"
+              className="font-display fill-ink">64</text>
+          </g>
+          <Chip x="280" y="254" t={1.1} still={still} size={17}>You</Chip>
+
+          <Card x={22} y={102} w={150} h={88} t={1.6} still={still}/>
+          <Chip x="97" y="152" t={2.0} still={still} size={19}>Parent</Chip>
+
+          {/* the counselor's card is the one that goes */}
+          <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
+            <Card x={388} y={102} w={150} h={88} t={2.0} still={still}/>
+            <Chip x="463" y="152" t={2.4} still={still} size={19}>Counselor</Chip>
+          </g>
+
+          <Arrow still={still} t={3.2} dur={0.7} d="M224 138 L 186 140" len={50}
+            x={182} y={140} deg={183} color="#1f5560" w={2.2}/>
+          <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
+            <Arrow still={still} t={4.0} dur={0.7} d="M336 138 L 374 140" len={50}
+              x={378} y={140} deg={3} color="#1f5560" w={2.2}/>
+          </g>
+
+          {/* the switch: on, then off */}
+          <g className={cn(a, !still && 'iv-lift')}
+            style={still ? undefined : { '--d': '.55s', '--t': '5.2s' }}>
+            <rect x="424" y="212" width="78" height="38" rx="19" fill="#0a6e68"
+              className={cn(!still && 'iv-a iv-switch')}
+              style={still ? undefined : { '--d': '.6s', '--t': '6.9s' }}/>
+            <circle cx="483" cy="231" r="14" fill="#ffffff"
+              className={cn(!still && 'iv-a iv-knob')}
+              style={still ? undefined : { '--d': '.6s', '--t': '6.9s' }}/>
+          </g>
+          <Spot cx={463} cy={231} r={52} t={6.6} still={still}/>
+          <Chip x="463" y="286" t={5.7} still={still} size={16} tone="fill-ink-2">
+            you switch it off
+          </Chip>
+        </svg>
+      </div>
     </div>
   )
 }
@@ -580,10 +712,14 @@ function StageMark({ still }) {
         style={still ? undefined : { '--d': '.6s', '--t': '3.15s' }}>
         Mind<span className="text-beam-ink">Map</span>
       </p>
-      <p className={cn(a, !still && 'iv-rise', 'mt-3 text-center text-lead text-ink-2')}
-        style={still ? undefined : { '--d': '.6s', '--t': '3.4s' }}>
-        A patch, or six questions. One score and one sentence a day.
-      </p>
+      {/* The line under the wordmark was a sentence, then the four signals
+          were a list, then there was a disclaimer. Three blocks of type under
+          a mark that has just resolved out of a day of readings is three
+          things competing with the one thing worth watching. The signals stay,
+          because they are the four colours the arch behind them is drawn in
+          and that is the only place in the sequence where the rainbow and the
+          product are the same object. The sentence and the disclaimer are on
+          the page this lands on. */}
 
       {/* The last beat was an arch, a wordmark and a lot of nothing. The four
           signals close it instead: the same four hues, in the same order, that
@@ -602,10 +738,7 @@ function StageMark({ still }) {
         ))}
       </ul>
 
-      <p className={cn(a, !still && 'iv-rise', 'mt-4 max-w-[46ch] text-center text-note text-ink-3')}
-        style={still ? undefined : { '--d': '.6s', '--t': '3.7s' }}>
-        A working prototype built by a high-school team. Not a medical device.
-      </p>
+
     </div>
   )
 }
@@ -616,7 +749,8 @@ function StageMark({ still }) {
    model on the way past is a sequence nobody finishes. The audience stage is
    not that diagram. It names three people and what each one is handed, which
    is the question the review actually asked. */
-const STAGES = [StageDay, StageSignals, StageRoutes, StageScore, StageAudience, StageMark]
+const STAGES = [StageOneNumber, StagePatch, StageFour, StageMarkOnDial,
+  StageWays, StageShare, StageMark]
 
 /* One motion vocabulary, declared once. Keyframes live here rather than in
    tailwind.config.js because they describe this one sequence, not the design
@@ -647,6 +781,33 @@ const CSS = `
 .iv-root .iv-sway{animation:iv-sway 8s cubic-bezier(.45,0,.55,1) var(--t,0s) infinite both}
 .iv-root .iv-morph{animation-name:iv-morph;animation-timing-function:cubic-bezier(.55,0,.25,1)}
 .iv-root .iv-stage{animation:iv-stage .55s cubic-bezier(.2,.7,.3,1) both}
+/* The vocabulary the walkthrough beats are drawn in. They opt out of the pace
+   multiplier above: that multiplier exists because the original six beats were
+   cued for a six-second beat and then stretched, and every cue in the six
+   walkthrough stages is already authored in real seconds against its own
+   beat's dwell. One place that multiplies and one place that does not is worse
+   than two vocabularies, so the stages that want true seconds say so. */
+.iv-root .iv-real{--iv-pace:1;--iv-dur:1}
+/* A highlight. Two of these half a second apart is a pulse; one is a circle
+   somebody drew and forgot about, and an infinite one is motion arguing with
+   the thing it is pointing at. */
+.iv-root .iv-ring{transform-box:fill-box;transform-origin:center;animation-name:iv-ring}
+.iv-root .iv-lift{animation-name:iv-lift}
+/* An object arriving from somewhere specific. --dx/--dy is where it comes
+   from, so the patch can fly in off the arm and land on it rather than fading
+   up in place, which would say nothing about where it goes. */
+.iv-root .iv-glide{animation-name:iv-glide}
+/* Readings walking down the wire. Three passes, not infinite: enough to read
+   as a flow and over before the beat is. */
+.iv-root .iv-run{offset-rotate:0deg;animation-name:iv-run;animation-iteration-count:3;animation-timing-function:cubic-bezier(.45,0,.55,1)}
+.iv-root .iv-switch{animation-name:iv-switch}
+.iv-root .iv-knob{animation-name:iv-knob}
+@keyframes iv-ring{0%{opacity:0;transform:scale(.5)}30%{opacity:.95}100%{opacity:0;transform:scale(1.45)}}
+@keyframes iv-lift{from{opacity:0;transform:translateY(18px)}}
+@keyframes iv-glide{from{opacity:0;transform:translate(var(--dx,0),var(--dy,0))}}
+@keyframes iv-run{0%{offset-distance:0%;opacity:0}12%{opacity:1}86%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes iv-switch{to{fill:#9fb9bd}}
+@keyframes iv-knob{to{transform:translateX(-40px)}}
 /* Nothing in the sequence loops any more. A pulse that blinks forever, a
    drawing that sways forever and a dash pattern that flows forever are three
    things moving while somebody is trying to read a sentence, and none of them
@@ -868,6 +1029,11 @@ export function Intro({ onDone }) {
          does not spend any of that. */
       style={{ background: BEATS[beat]?.bg || '#0b2b33',
         transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
+      /* Belt as well as braces. The 33px sideways scroll above came from one
+         oversized node and that node is fixed, but a dialog whose words can be
+         pushed off the screen by anything at all is a bug waiting to be
+         reintroduced by the next drawing. onScroll puts it back. */
+      onScroll={e => { e.currentTarget.scrollLeft = 0 }}
       className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
@@ -876,11 +1042,27 @@ export function Intro({ onDone }) {
           and is the only transition between them; `beat` and the beat count
           are all it takes, so the cloud's walk re-spaces itself if a beat is
           ever added or removed. */}
-      <IntroSky beat={beat} count={BEATS.length}/>
+      {/* The arch behind every beat was the only transition between them and
+          it still is, but it was also the loudest thing on the screen. Six of
+          these seven beats are now a diagram somebody is meant to read, and a
+          full-strength rainbow behind a diagram is two pictures on one screen:
+          a cloud landed on the word "Sweat", and the beat that shows the real
+          dial had a second arch behind the first one. It holds the beats
+          together at a quarter strength and comes back whole for the mark,
+          which is the only beat that is a title card rather than a lesson.
+
+          Off entirely for the dial. No opacity makes two concentric arches
+          read as one object. */}
+      {beat !== 3 && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 transition-opacity
+          duration-[900ms]" style={{ opacity: beat === LAST ? 1 : 0.26 }}>
+          <IntroSky beat={beat} count={BEATS.length}/>
+        </div>
+      )}
 
       {/* The announcement is its own node so the visible headline can be styled
           and swapped freely without a screen reader hearing it twice. */}
-      <p aria-live="polite" aria-atomic="true" className="sr-only">{b.head + ' ' + b.sub}</p>
+      <p aria-live="polite" aria-atomic="true" className="sr-only">{b.head + (b.sub ? ' ' + b.sub : '')}</p>
 
       {/* ── the frame, top: wordmark, beat number, and the rail ───────────── */}
       {/* No rule under the frame. A hairline across the top of every beat is
@@ -943,12 +1125,21 @@ export function Intro({ onDone }) {
                 <>
                   <p className="iv-a iv-rise font-display text-sub font-bold text-ink"
                     style={{ '--d': '.7s' }}>{b.head}</p>
+                  {/* Most beats have no second line at all. The sequence used
+                      to carry thirty-word sub-lines under every heading and the
+                      note back was that it was a wall of words moving too fast
+                      to read; the answer was not a slower wall. Where a second
+                      line survives it is because the beat teaches something the
+                      drawing cannot say on its own, and it is under nine
+                      words. */}
                   {/* The sub used to arrive 160ms behind the head, which is
                       not a gap — both lines land together and the eye picks
                       one. A second of separation is the difference between
                       reading two lines and glancing at a block. */}
-                  <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-ink-2 sm:mt-3 sm:text-body"
-                    style={{ '--d': '.7s', '--t': '1s' }}>{b.sub}</p>
+                  {b.sub && (
+                    <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-ink-2 sm:mt-3 sm:text-body"
+                      style={{ '--d': '.7s', '--t': '.9s' }}>{b.sub}</p>
+                  )}
                 </>
               )}
             </div>
