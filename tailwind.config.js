@@ -63,6 +63,31 @@ export default {
              warn #99590c  5.27 : 4.63
              crit #a8321f  6.36 : 5.58 */
         warn:   { DEFAULT:'#8f5a0c', wash:'#f5ecdb' },
+        /* Six hues the product can be cheerful in. The teal above is the brand
+           and stays the brand; these exist because an app a teenager opens
+           every day cannot be one colour, and because a dashboard whose tiles
+           are all the same tint reads as a spreadsheet.
+
+           Each hue is three tokens with one job each, and the jobs do not swap:
+             DEFAULT  a graphic only, never a word. Clears 3 : 1 on paper, the
+                      floor a non-text graphic owes.
+             ink      the only one allowed to be text. Clears 4.5 : 1 on paper,
+                      on card, and on its own wash, so a coloured label can sit
+                      on its own tile.
+             wash     a ground. ink, ink-2 and the hue's own ink all clear
+                      4.5 : 1 on it.
+           Measured, ink on paper : ink on its own wash
+             coral 6.01 : 5.38   lilac 8.46 : 7.59   sun   5.67 : 5.08
+             mint  5.83 : 5.17   sky   5.63 : 5.08   blush 6.44 : 5.73
+           Generated and checked by the script in tools/brand; rerun it before
+           changing any value here. Colour still never carries a state on its
+           own: a tile that means something also says so in words. */
+        coral:  { DEFAULT:'#f25424', ink:'#b23009', wash:'#ffe8e0' },
+        lilac:  { DEFAULT:'#a024f2', ink:'#6f09b2', wash:'#f6e8ff' },
+        sun:    { DEFAULT:'#b5871b', ink:'#825d07', wash:'#f5ecd7' },
+        mint:   { DEFAULT:'#18a370', ink:'#067049', wash:'#d5f2e8' },
+        sky:    { DEFAULT:'#2294e6', ink:'#0967ab', wash:'#def0fc' },
+        blush:  { DEFAULT:'#f2248b', ink:'#b2095e', wash:'#fce6f1' },
         calm:   '#0a6e68',
         crit:   '#a8321f',
       },

@@ -34,6 +34,43 @@ has to be figured out.
 Judges are local professionals, educators and congressional staff reading fast.
 Design for them, not for a design award.
 
+## 0b. The references, which outrank my earlier reading of "sleek"
+
+The owner sent twelve reference screens and they correct this spec. Read this
+section before sections 1, 3 and 6, which it amends.
+
+**For the landing page**, three medical-device sites: one full-bleed photographic
+hero with the headline over it; one product render running off the edge of the
+frame with almost no text; one saturated colour hero with a large product figure
+to the right and, under it, white cards each led by a photograph of a real
+person. A marketing builder screen showing a white hero with the headline left
+and, right, overlapping cards at different depths, one of them a real photograph
+and the others live figures.
+
+What they share, and what we do not have: **one big confident image or render
+per hero, a saturated ground, and floating cards layered over it.** Not a flat
+tinted band with a heading on it. The owner's words: "too plain and devoid of
+images and stock photos, it is all monotonous in color and not nice."
+
+**For the app**, six wellness and fitness dashboards. Every one of them: tiles in
+several different colours, not one tint; tiles of several different sizes, not a
+uniform grid; a big friendly ring or arc as the hero figure; illustration; mood
+faces; rounded chips for filters and days; a greeting by name at the top. They
+look like something a teenager would open. The owner's words: "they're all
+engaging, have some fun engaging features to engage teens and kids, and are
+colorful and follow the same playful pattern, not just bare design, thats what
+urs needs to be like, like a real dashboard in a real app."
+
+**And the balance he says we are missing**: "the blend of both infographic and
+diagram design with realism, stock images, and realistic stuff." Our figures are
+all diagram and no realism. A section that carries a chart should often also
+carry a photograph of the person the chart is about.
+
+So: section 6's restraint is lifted for grounds, tiles and figures. The six hues
+added to `tailwind.config.js` for this are measured and may be used freely.
+Colour still never carries a state on its own, body text stays ink, and nothing
+is invented outside the config.
+
 ## 1. Density
 
 The old rhythm was a portfolio: one idea per screen, large type, wide gutters.
@@ -157,6 +194,36 @@ tokens and it keeps every safety rule, and it drops the restraint.
 
 The test is a teenager opening this at 11pm feeling bad. It should feel like
 somewhere calm to land, not like a settings screen.
+
+## 7c. The one sentence is the app's hero, and it has to be readable
+
+The owner: "Ours should emphasize the one sentence (which needs to be readable
+to the user, not like number comparison, but like 'youre more anxious than
+usual' or stuff like that, u have it wrong rn)."
+
+He is right that it is wrong. The student screen currently leads with "Today is
+51, five above a usual 46, with heart furthest above its own normal." That is
+three numbers, and nobody reads it as a sentence about their day.
+
+The sentence becomes the largest thing on the screen, above the number, in plain
+words, at display size. The number stays, under it, smaller.
+
+**What the sentence may not become.** MindMap measures physiology. It does not
+measure anxiety, mood or feeling, and it has never claimed to. "You are more
+anxious than usual" is a claim about an emotion we did not measure, and putting
+it on a teenager's screen is both false and the kind of thing that gets a
+health app rejected. The honest sentence is about the body and is just as
+readable:
+
+  "Your body is working harder than usual today."
+  "Today looks like an ordinary day for you."
+  "You have been running high since about two o'clock."
+  "Today is calmer than your last two weeks."
+
+Plain, second person, no figure in it, no diagnosis, nothing a reader has to
+decode. Then one quieter line underneath may name the one signal that moved
+most, in words rather than standard deviations. The parent and professional
+screens get the same treatment in their own voice.
 
 ## 8b. Infographics and diagrams
 
