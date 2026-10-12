@@ -1,21 +1,10 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* A rating control drawn, not imported.
- *
- * Two things usually go wrong with half-star widgets and both are fixed here.
- * The first is that they are built from five buttons, which makes the keyboard
- * experience five tab stops and no concept of a value; this is one focusable
- * slider, the way a rating actually behaves. The second is that the value
- * exists only as a row of shapes in one colour, so a reader who cannot resolve
- * the fill — or who is listening — has nothing. The number is printed beside
- * the stars for that reason, and it is the same number the screen reader
- * announces.
- *
- * The half fill is a clip rectangle over a second copy of the path. A gradient
- * with two hard stops would render the same pixels and is banned here for good
- * reason: once one gradient exists in the stylesheet, the next one is easier.
- */
+/* One focusable slider, not five buttons: a rating has a value, and five
+   buttons give five tab stops and no value. The number is printed beside the
+   stars so nothing depends on resolving the fill. Half fill is a clip rect
+   over a second copy of the path. */
 
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
@@ -49,8 +38,8 @@ export function StarRating({
   const uid = React.useId()
   const [hover, setHover] = React.useState(null)
 
-  /* Floating point: 0.5 added five times is not 2.5, and a value of
-   * 2.4999999 renders a star at 99.996% fill and reads "2.4999999 out of 5". */
+  /* Float guard: 0.5 added five times is not 2.5, and 2.4999999 renders a star
+   * at 99.996% fill and is announced as "2.4999999 out of 5". */
   const snap = v => {
     const n = Math.round(v / step) * step
     return Math.min(max, Math.max(step, +n.toFixed(4)))
@@ -61,8 +50,7 @@ export function StarRating({
   const fromPointer = (e, i) => {
     const r = e.currentTarget.getBoundingClientRect()
     const frac = (e.clientX - r.left) / r.width
-    /* Never lands on the lower star's own value: pointing anywhere inside the
-     * third star means at least 2.5, which is what a person pressing it meant. */
+    /* Pointing anywhere inside star i means at least i + step. */
     const within = Math.max(step, Math.min(1, Math.ceil((frac - 1e-9) / step) * step))
     return snap(i + within)
   }
@@ -123,9 +111,6 @@ export function StarRating({
           )
         })}
       </div>
-      {/* The rating in words and figures, so it never depends on the fill.
-          Unrated says so in words: a placeholder glyph in the figure's slot
-          reads as a value the reader cannot make out. */}
       <span className="font-mono text-meta tabular-nums text-ink">
         {shown == null ? <span className="text-ink-3">Not rated</span> : <>
           {shown.toFixed(1)}<span className="text-ink-3"> / {max}</span>

@@ -13,11 +13,6 @@ import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
 
-/* One route per card. The counters that used to head these ran 01, 03, 02 down
-   the row and nobody noticed, which is the argument against them: a numeral
-   that is wrong still looks like an order. The panel was a bare top rule on
-   the sheet; it is the project Card now, so the three routes read as three
-   objects side by side rather than as three paragraphs under a line. */
 function Route({ title, children, foot }){
   return (
     <Card className="flex h-full flex-col">
@@ -40,8 +35,8 @@ export function CheckInBody({ go }){
   const r = done ? score(ans) : null
   const s = r ? sentence(r) : null
   const answered = Object.keys(ans).length
-  // The score appeared 2300px down with no confirmation; testers found it by
-  // scrolling on spec. Completing the last question now takes you to it.
+  // Answering the last item scrolls to the result; 260ms lets the card mount
+  // and the layout settle before scrollIntoView measures.
   React.useEffect(() => {
     if (!done || !resultRef.current) return
     const t = setTimeout(() => resultRef.current?.scrollIntoView({ block:'start' }), 260)
@@ -56,11 +51,10 @@ export function CheckInBody({ go }){
     <>
       <div className="flex flex-wrap items-baseline gap-4">
         <h2 className="max-w-[18ch] font-display font-bold text-head text-ink">Take a reading now</h2>
-        {/* This screen is the exception in both modes — it scores whoever is
-            reading it, from their own answers, with or without hardware — so
-            the annotation states what is true of the screens around it rather
-            than of this one. Neither stamp can be dropped: in demo the
-            surrounding figures are invented, and in real there is no patch. */}
+        {/* This screen scores real answers in both modes, so the notice
+            describes the surrounding screens rather than this one. Both
+            variants are required: demo figures elsewhere are generated, and
+            in real mode no patch is paired. */}
         {mode === 'real'
           ? <RealNotice inline>No patch is paired, and these six questions do not need one.</RealNotice>
           : <DemoNotice inline>Every other screen is generated. These six are not.</DemoNotice>}
@@ -68,8 +62,8 @@ export function CheckInBody({ go }){
       <p className="mt-4 max-w-[52ch] text-body leading-[1.5] text-ink-2">Three ways in, one Mind Score.
         The phone's own camera and microphone, a paired patch, or six questions.</p>
 
-      {/* mt was 8. Three fixed steps across these views — 10 inside a section,
-          14 between sections, 20 between page regions. */}
+      {/* Vertical scale: 10 within a section, 14 between sections, 20 between
+          page regions. */}
       <div className="mt-10 grid gap-3.5 lg:grid-cols-3">
         <ScrollRow index={0} className="h-full"><Route title="Use the phone's sensors"
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
@@ -82,9 +76,6 @@ export function CheckInBody({ go }){
           foot={<p className="min-h-[3.2em] max-w-[44ch] text-meta text-ink-2">
             Your answers stay on this device. Nothing is stored or sent.</p>}>
           <p className="max-w-[38ch] text-sec text-ink-2">No patch needed.</p>
-          {/* The count was the only sign the six were finite, and it only moved
-              once a question was answered. The bar states the remainder up
-              front, before anything has been touched. */}
           <div className="mt-5 min-h-[46px]">
             <p className="font-mono text-meta tabular-nums text-ink-3">{answered} of {ITEMS.length} answered</p>
             <Progress className="mt-3 max-w-[22rem]" value={answered} max={ITEMS.length}
@@ -101,10 +92,8 @@ export function CheckInBody({ go }){
         </Route></ScrollRow>
       </div>
 
-      {/* The measured route first, because it is the one that produces a
-          reading rather than a self-assessment. The six questions keep their
-          place underneath, unchanged: they are the fallback when a camera is
-          refused, and they are the only route that works with no hands free. */}
+      {/* Questions stay below the sensor route: they are the fallback when
+          camera or mic permission is refused. */}
       <section className="mt-14">
         <h3 className="mark">Use your phone's camera and microphone</h3>
         <p className="mt-2 max-w-[56ch] text-sec text-ink-2">
@@ -113,16 +102,8 @@ export function CheckInBody({ go }){
         <div className="mt-6"><PhoneCheck/></div>
       </section>
 
-      {/* On a monitor the six questions and the running result sit side by side,
-          so the reading appears without the answers scrolling out of view. */}
-      {/* mt was 8 as well, which made the break between "how to take a reading"
-          and the reading itself the same size as the gap inside it. This is a
-          section break. */}
       <h3 className="mt-20 mark">Or answer six questions</h3>
       <div className="mt-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:gap-14 2xl:gap-20 xl:items-start">
-        {/* The six sat on the sheet under a single ink rule, which read as the
-            start of a section rather than as one form. One Card holds them and
-            each question keeps its own hairline as a row rule inside it. */}
         <Card>
           <CardContent className="py-0">
             {ITEMS.map((it,i)=>(
@@ -135,11 +116,9 @@ export function CheckInBody({ go }){
           </CardContent>
         </Card>
 
-      {/* the result region is announced, and its space is reserved so nothing jumps */}
-      {/* 92px was measured against a 56px site header with a 2px rule under
-          it. This screen only ever renders inside the app shell, whose own
-          bar is 48px with a hairline, so 92 left a 43px hole under the chrome.
-          49px of chrome plus 16px of air. */}
+      {/* min-h reserves the result's space so completing the form does not
+          shift the page. xl:top-[65px] = the app shell's 48px bar + 1px
+          hairline + 16px air; it is not the 56px marketing header. */}
       <Card ref={resultRef} aria-live="polite" data-anchor
         className="mt-10 min-h-[12rem] xl:mt-0 xl:sticky xl:top-[65px]">
         <CardContent>
@@ -150,16 +129,9 @@ export function CheckInBody({ go }){
         )}
         {done && (
           <>
-            {/* One ring, because six answers are one signal. A patch fills
-                four — the dashboards show what that looks like. */}
-            {/* this column is 34rem wide, so the arch and the sentence stack;
-                side by side left the sentence breaking every two words */}
             <div className="flex flex-col items-start gap-7">
-              {/* Both hexes are palette tokens, checked against the rebuild:
-                  #0a6e68 is accent, #1d8fb0 is beam. Beam paints the band on a
-                  mist track — a fill, which is the only job it has — and the
-                  ring never carries the reading on its own, so neither is
-                  being asked to clear a text ratio. */}
+              {/* RainbowDial takes raw hex, not tokens: #0a6e68 is accent,
+                  #1d8fb0 is beam. Keep them in step with the palette. */}
               <RainbowDial score={r.score} size={288}
                 rings={[{ id:'self', name:'Your answers', color:'#0a6e68', glow:'#1d8fb0',
                           value:r.score, reading:'Six questions' }]}/>
@@ -170,9 +142,6 @@ export function CheckInBody({ go }){
               </div>
             </div>
             <AllDetail label="See what moved your Mind Score">
-              {/* The figure heading read "What moved it" directly under a
-                  trigger that says the same thing, so only the scale note is
-                  left. */}
               <p className="mt-2 max-w-[52ch] text-sec text-ink-3">Right of the line raised the Mind
                 Score, left of it lowered it.</p>
               <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),

@@ -15,19 +15,13 @@ import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateB
 import { SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 
-/* A reading with no patch, from the sensors a phone already has.
+/* Camera + mic reading, no patch. Features match the patch's (rate,
+   beat-to-beat variation, voice) so both feed one scale.
  *
- * The six questions still exist and still work. What they cannot do is produce
- * a measurement: they produce an opinion, scored. This screen puts a fingertip
- * on the camera for thirty seconds and one spoken sentence into the microphone
- * for fifteen, and hands the same model the same kind of features the patch
- * hands it: rate, beat-to-beat variation, and the way a voice is carrying.
- *
- * Nothing is uploaded. The frames are reduced to one number each as they
- * arrive and the audio is turned into six numbers and dropped; neither the
- * video nor the recording is ever written down, which is also why the result
- * cannot be recovered or replayed by anyone, including us.
- */
+ * Nothing leaves the device. Each frame is reduced to a single number as it
+ * arrives and the audio to six numbers, then dropped; no video or recording is
+ * ever written, so a reading cannot be replayed or recovered. Any change that
+ * buffers or persists raw media breaks that promise and the copy on screen. */
 
 const STORE = 'mindmap.phone.baseline'
 
@@ -42,9 +36,8 @@ function loadBaseline() {
 function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
 
-/* The live trace during a capture. A number ticking up says the phone is busy;
-   a waveform that visibly beats is the only thing that tells someone their
-   finger is in the right place before thirty seconds have gone by. */
+/* The beating waveform is the only feedback that confirms finger placement
+   before the capture window is spent. Keep it live. */
 function Trace({ samples, className }) {
   const d = React.useMemo(() => {
     if (!samples?.length) return ''
@@ -63,11 +56,6 @@ function Trace({ samples, className }) {
   )
 }
 
-/* The step marker was the numeral 01, 02, 03, which is one of the counting
-   labels the review asked to see the back of. It was also doing a second job:
-   dimming ahead of the capture and lighting as each stage passes. A dot keeps
-   the state and drops the count, and the order is already carried by the
-   stack. */
 function Step({ title, note, children, on }) {
   return (
     <div className={cn('grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3',
@@ -83,10 +71,9 @@ function Step({ title, note, children, on }) {
   )
 }
 
-/* The lines a reader can repeat live in charts/camera, so the capture screen
-   and the drawings cannot drift apart. Two of the three are printed here: a
-   reader told to say anything stops and composes something, and a reader given
-   three lines reads all three before choosing. */
+/* SAY_LINES is defined in charts/camera so the screen and the drawings cannot
+   drift apart. Only two of the three are printed: given three, readers read all
+   three aloud before choosing. */
 
 const PHASES = { idle:0, camera:1, voice:2, working:3, done:4 }
 
@@ -168,29 +155,13 @@ export function PhoneCheck() {
   const s = result ? sentenceFor(result) : null
 
   return (
-    /* Gaps and top margins came down by about a third through this screen.
-       It is the tallest thing on the page and every one of its stacked mt-
-       steps was set independently, so the capture card opened on 24px, then
-       28px between each live readout, then 32px before the buttons, and none
-       of those gaps was carrying a division a rule was not already making. */
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:items-start xl:gap-8">
       <div>
         <Card>
           <CardContent>
-            {/* Four questions came back from one tester: which finger, cover
-                it or touch it, rest the hand on what, and say what. Three of
-                those are a position, so each step carries a small drawing and
-                the sentence under it is the one thing the drawing cannot say.
-
-                Which is the rule the notes were failing. Each one had its
-                instruction and then an explanation of the instruction, and
-                the explanation was describing the figure beside it: the grip
-                drawing shows a pad resting flat, so "pressing hard flattens
-                the pulse" is a caption for a picture that is already there,
-                and the quiet drawing carries both the struck-out speaker and
-                the arm's length dimension. What is left in prose is the
-                position, the surface, and the one fact no drawing can make:
-                that the recording is not kept. */}
+            {/* Each `note` carries only what its StepFigure cannot show: the
+                position, the surface, and that nothing is kept. Do not restate
+                the drawings in prose. */}
             <div>
               <Step on={PHASES[phase] >= 1}
                 title={`Index fingertip over the camera · ${PPG_SECONDS}s`}
@@ -204,10 +175,6 @@ export function PhoneCheck() {
                 title={`Say one sentence · ${VOICE_SECONDS}s`}
                 note="Quiet room. No words are kept.">
                 <div className="mt-2.5"><StepFigure kind="quiet"/></div>
-                {/* No "Read one aloud:" over these. The step above them is
-                    called Say one sentence and the accent rule down their left
-                    is what marks them as lines to be read rather than read
-                    about, so the label was a third telling. */}
                 <ul className="mt-2.5 list-none border-l-2 border-accent p-0 pl-3">
                   {SAY_LINES.slice(0, 2).map(l => (
                     <li key={l} className="text-sec leading-[1.5] text-ink">{l}</li>
@@ -219,10 +186,9 @@ export function PhoneCheck() {
                 note="0 to 100, against your own normal."/>
             </div>
 
-            {/* The video element is the source the frames are read from. It is
-                never shown: a live picture of the inside of a fingertip is a
-                flat red rectangle, and the waveform underneath is the thing
-                that actually tells you the capture is working. */}
+            {/* Frames are read off this element. It must stay in the DOM and
+                playing: `sr-only` hides it without `display:none`, which stops
+                frame delivery. Do not swap it for `hidden`. */}
             <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
             {phase === 'camera' && (
@@ -259,10 +225,9 @@ export function PhoneCheck() {
             )}
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {/* Not "Take a reading": the tab this screen sits under is
-                  already called that, and two controls on one page with the
-                  same name is one control as far as a screen reader, or a
-                  keyboard user reading a list of buttons, is concerned. */}
+              {/* Must not be labelled "Take a reading" — that is the enclosing
+                  tab's name, and two identically named controls are one control
+                  to a screen reader. */}
               <Button onClick={() => run(true)} disabled={busy || !supported}>
                 {busy ? 'Reading…' : result ? 'Take another reading' : `Start the ${PPG_SECONDS + VOICE_SECONDS}-second reading`}
               </Button>
@@ -279,18 +244,8 @@ export function PhoneCheck() {
         </Card>
       </div>
 
-      {/* 14rem of minimum height was an empty white box the size of a
-          paragraph sitting beside a card twice as tall. The placeholder is one
-          sentence, so the card is now the size of one sentence until there is
-          a reading to put in it. */}
       <Card aria-live="polite" className="min-h-[7rem] xl:sticky xl:top-[92px]">
         <CardContent>
-          {/* The definition used to be printed here as well, because both
-              readers who asked what the number meant asked it on the way in.
-              The third step a hand's width to the left now says 0 to 100
-              against your own normal, which is the definition, so this card
-              was printing it twice on one screen. It stays below, next to the
-              number it defines. */}
           {!result && (
             <p className="max-w-[36ch] text-sec text-ink-3">
               Your Mind Score appears here.
@@ -303,16 +258,11 @@ export function PhoneCheck() {
                   rings={[{ id:'phone', name:'Phone sensors', color:'#0a6e68', glow:'#1d8fb0',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div>
-                  {/* The verdict alone at display size. The reason follows at
-                      reading size: set in the same face and weight it ran to
-                      six lines of 48px type, which is a paragraph pretending
-                      to be a headline. */}
                   <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
                   <p className="mt-4 max-w-[42ch] text-sec text-ink-2">{s.tail}</p>
 
-                  {/* The band is the honest part of the whole screen, so it is
-                      printed at the same rank as the score rather than filed
-                      under a disclosure. */}
+                  {/* The confidence band ranks with the score, not behind a
+                      disclosure. Do not move it into AllDetail. */}
                   <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 text-sec">
                     <dt className="text-ink-3">Mind Score</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
@@ -330,13 +280,7 @@ export function PhoneCheck() {
                       : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
-                  {/* Two readers asked what the number means and neither of
-                      them asked it before taking a reading, so the answer is
-                      printed here as well as in the steps above. */}
                   <p className="mt-4 max-w-[48ch] text-meta text-ink-3">{SCORE_DEF}</p>
-                  {/* Three sentences, not three places. This ran above the
-                      steps, in the steps, and here; it is kept here, beside
-                      the band and the number it is about. */}
                   <p className="mt-2 max-w-[48ch] text-meta text-ink-3">
                     Higher means working harder. The direction it moved matters more than the
                     figure. The band is how sure, from how clean the signal was.
@@ -367,9 +311,9 @@ export function PhoneCheck() {
   )
 }
 
-/* What was actually measured, in the units it was measured in. A score with no
-   way to see the numbers under it is a number to be taken on trust, and this
-   product does not ask for that anywhere else. */
+/* Raw measured values in their own units. The closing paragraph's claims are
+   load-bearing: the index runs ~20% below a clinical RMSSD and must never be
+   called one, and nothing here has been validated against a person. */
 function Readings({ detail, result }) {
   if (!detail) return null
   const { ppg, voice, move, torch } = detail

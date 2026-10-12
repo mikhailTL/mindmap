@@ -10,41 +10,25 @@ import {
 } from '../survey/questions'
 import { exportRows, toCSV, getVisitor } from '../survey/store'
 
-/* The page Mikhail opens to read what peer reviewers actually said.
- *
- * It used to be a list of raw answers grouped by person. That was the right
- * shape for eight little per-page surveys, where there was nothing to compute:
- * two bespoke five-point questions per route can only be read one at a time.
- * The survey is now one instrument — SUS, NPS, stars, impact — and every one
- * of those has a published score and a published benchmark, so the page leads
- * with the arithmetic and keeps the raw answers underneath it. A competition
- * writeup needs "SUS 74.5, a B, above the 68 population mean, n = 11", and no
- * amount of scrolling a list of answers produces that sentence.
- *
- * The one figure that matters most is the least obvious: SUS split by who the
- * respondent was. A single mean over everybody hides the disagreement, and the
- * disagreement is the finding — a counselor and a stranger rating the same
- * build 55 and 88 is a far more useful result than "71".
+/* Peer-review survey results: one instrument (SUS, NPS, stars, impact), each
+ * with a published score and benchmark, so the page leads with the arithmetic
+ * and keeps the raw answers under it.
  *
  * ─── On access ──────────────────────────────────────────────────────────────
- * This page is UNLISTED, WHICH IS NOT SECURITY. There is no login here on
- * purpose: a password field in a static bundle is either checked in the client
- * (where anyone can read the comparison) or checked against a secret shipped in
- * the bundle (where anyone can read the secret). Both are theatre, and theatre
- * is worse than an honest gap because it stops you from closing the real one.
+ * THIS PAGE IS UNLISTED, WHICH IS NOT SECURITY. There is deliberately no login:
+ * a password check in a static bundle is either done in the client or compared
+ * against a secret shipped in the bundle, and both are readable.
  *
- * What is here instead: the route resolves but sits in no nav bar and is
- * linked from nowhere on the site, and when VITE_RESPONSES_KEY is set the page
- * takes a key out of the URL query string and forwards it as a header for the
- * API to check against its own server-side env var. The key is never a build-time constant — VITE_RESPONSES_KEY is read
- * only as a flag meaning "this deployment expects a key", never as the key
- * itself, so nothing secret lands in dist/.
+ * The route resolves but is in no nav bar and linked from nowhere. When
+ * VITE_RESPONSES_KEY is set, the page reads a key from the URL query and
+ * forwards it as a header for the API to check against its own server-side env
+ * var. VITE_RESPONSES_KEY is only ever read as a flag meaning "this deployment
+ * expects a key" — never as the key itself — so no secret lands in dist/.
  *
- * The real protection is one of: Vercel deployment protection on the project,
+ * Real protection requires one of: Vercel deployment protection on the project,
  * or an access-controlled store the function reads with credentials the browser
- * never holds. Until one of those is on, treat everything here as public.
- * SURVEY-SETUP.md says the same thing in the same words.
- */
+ * never holds. Until one is on, treat everything here as public. SURVEY-SETUP.md
+ * states the same thing. */
 
 const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
 /* Flag, not secret. Its value is never compared against anything and never
@@ -53,23 +37,20 @@ const KEY_EXPECTED = !!import.meta.env?.VITE_RESPONSES_KEY
 
 const STORE_KEY = 'mindmap.survey'
 
-/* The published population mean for SUS across several hundred studies. It is
- * the only reason a SUS number means anything on its own, so it is a named
- * constant and it is printed next to every SUS figure on the page. */
+/* Published SUS population mean across several hundred studies. Printed beside
+ * every SUS figure on the page — a bare SUS number means nothing without it. */
 const BENCHMARK = 68
 
-/* Below this, a mean is one or two people's opinion wearing a mean's clothes.
- * Sauro's own guidance for SUS is that small samples move the number by more
- * than the differences anyone is trying to detect; three is not a defensible
- * sample either, it is simply the floor under which the page refuses to print
- * a number at all. */
+/* Floor under which the page refuses to print a mean at all. Per Sauro's SUS
+ * guidance, small samples move the score by more than the differences being
+ * detected. Three is not a defensible sample either — just the hard floor. */
 const MIN_MEAN = 3
 
 const REQUIRED_IDS = REQUIRED.map(q => q.id)
 const REQUIRED_COUNT = REQUIRED_IDS.length
 
 /* The app routes on the hash, so a shared link can carry its query on either
- * side of the '#'. Both are read rather than making Mikhail remember which. */
+ * side of the '#'. Both sides are read. */
 function urlKey() {
   try {
     const fromSearch = new URLSearchParams(location.search).get('key')
@@ -85,9 +66,8 @@ function urlKey() {
 
 /* ------------------------------------------------------------ question map */
 
-/* Sorting a reviewer's answers by the order they were asked, not by the clock:
- * someone who went back and changed one answer should not have it jump to the
- * bottom of their card away from the question it belongs beside. */
+/* Sort answers by ask order, not timestamp: a revised answer must not jump to
+ * the bottom of the card, away from its question. */
 const ASK_ORDER = new Map()
 ALL_ITEMS.forEach((item, i) => ASK_ORDER.set(item.id, i))
 const askIndex = r => ASK_ORDER.get(r.questionId) ?? 9999
@@ -99,11 +79,10 @@ const STAR_STEP = STARS_ITEM?.step || 0.5
 
 /* ------------------------------------------------------------- normalising */
 
-/* The store flattens a compound answer for its CSV with a module-private
- * helper. The server hands back the unflattened original, so the same rule is
- * restated here rather than exported and shared — the store's copy is the one
- * that defines the CSV, and a shared helper would let a change to this page's
- * display quietly change the column Mikhail opens in a spreadsheet. */
+/* Deliberate duplicate of the store's module-private flattener (the server
+ * returns the unflattened original). Do not extract a shared helper: the
+ * store's copy defines the exported CSV column, and sharing it would let a
+ * display change here alter that column. */
 function flat(value) {
   if (value == null) return ''
   if (typeof value === 'object') {
@@ -125,8 +104,7 @@ function mean(list) {
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 
-/* The sentence a reviewer typed, pulled clear of the score it was attached to:
- * the impact answer flattens to "4: because…" and only the tail is prose. */
+/* The impact answer flattens to "4: because…"; only the tail is prose. */
 function prose(row) {
   if (!row) return ''
   if (row.kind === 'text') return String(row.value || '').trim()
@@ -138,13 +116,13 @@ function prose(row) {
   return ''
 }
 
-/* One respondent, built from rows already in exportRows() shape so the server
- * path and the local path converge before anything renders or downloads.
+/* Rows arrive in exportRows() shape so the server and local paths converge
+ * before anything renders or downloads.
  *
- * Answers recorded under the retired per-page scheme are split off here and
- * never reach a figure. They are real answers a real person gave and they are
- * kept, but they were given to different questions on a different instrument,
- * and averaging them in would be inventing a number. */
+ * Answers recorded under the retired per-page scheme are split out here and
+ * must never reach a figure: they answered different questions on a different
+ * instrument, so averaging them in would invent a number. They are still kept
+ * and shown. */
 function build(id, name, rows, startedAt) {
   const sorted = rows.slice().sort((a, b) => askIndex(a) - askIndex(b))
   const current = sorted.filter(r => r.page === PAGE)
@@ -160,9 +138,8 @@ function build(id, name, rows, startedAt) {
     return s || null
   }
 
-  /* susScore returns null unless all ten are present, which is the whole
-     point of it — nine items scored and multiplied by 2.5 is not a SUS
-     score, it is a smaller number that looks like one. */
+  /* susScore returns null unless all ten items are present. Nine items times
+     2.5 is not a SUS score, it is a smaller number that looks like one. */
   const susAnswers = new Map()
   let susAnswered = 0
   SUS_ITEMS.forEach(item => {
@@ -221,9 +198,8 @@ function group(rows, startedFor) {
     build(id, rs[0]?.visitorName, rs, startedFor ? startedFor(id) : null))
 }
 
-/* questionText now takes only a question id, and returns the id back when the
- * question no longer exists — which is exactly what an answer to a retired
- * route looks like by the time it reaches here. */
+/* Returns '' for a question that no longer exists — the state of any answer
+ * recorded against a retired route. */
 function textFor(qid) {
   return itemById(qid) ? questionText(qid) : ''
 }
@@ -247,12 +223,11 @@ function fromRespondents(list) {
   })
 }
 
-/* The store keeps one visitor per browser, because a browser normally has one
- * reviewer in front of it. A stored record can also carry a `respondents`
- * array in precisely the shape the API returns and this page's own JSON
- * download writes — an archive pasted back in to read offline. Both are read,
- * and the store's own copy wins on a clash of ids, so nothing is shown twice.
- * Guarded throughout: in a private window the first property access throws. */
+/* The store keeps one visitor per browser. A stored record may also carry a
+ * `respondents` array in the shape the API returns and this page's JSON download
+ * writes (an archive pasted back in to read offline). Both are read; the store's
+ * own copy wins on an id clash. Guarded throughout: in a private window the
+ * first localStorage access throws. */
 function archived() {
   try {
     const raw = window.localStorage.getItem(STORE_KEY)
@@ -292,10 +267,9 @@ function distribution(people, valueOf, points) {
   return { points, counts, total }
 }
 
-/* A segment is only ever printed as a mean when it has MIN_MEAN complete SUS
- * respondents in it. Below that the row still appears — knowing that four
- * counselors looked at this and only one finished the scale is itself worth
- * seeing — but it says so in words instead of printing a mean of one. */
+/* A segment prints a mean only with MIN_MEAN complete SUS respondents. Below
+ * that the row still appears but states the shortfall in words rather than
+ * printing a mean of one. */
 function segments(people, pickKey) {
   const by = new Map()
   people.forEach(p => {
@@ -363,10 +337,9 @@ function stamp() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-/* RFC4180, restated for the second file. The store's own serialiser is bound
- * to the one answer-row header it exports, and the per-respondent sheet has a
- * different shape entirely; sharing it would mean widening the store's header
- * constant, which is the column order Mikhail's existing spreadsheet expects. */
+/* RFC4180 quoting, restated for the per-respondent sheet. The store's
+ * serialiser is bound to its own answer-row header, and that header is the
+ * column order existing spreadsheets expect — do not widen it to share this. */
 function cell(v) {
   const s = v == null ? '' : String(v)
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -410,9 +383,8 @@ function personRows(people) {
   }))
 }
 
-/* Same mechanism the survey card uses. Wrapped because a blocked blob URL or a
- * revoked object URL must not take the page down with it — the reader still has
- * every answer on screen, which is the thing that matters. */
+/* Wrapped: a blocked or revoked blob URL must not take the page down — every
+ * answer is already on screen. */
 function save(text, filename, mime) {
   try {
     const url = URL.createObjectURL(new Blob([text], { type: mime }))
@@ -455,10 +427,9 @@ function shortWhen(iso) {
   }
 }
 
-/* A drawn bar, the way every other figure on this site is drawn: a rect in a
- * viewBox, no library, no rounded end to distort under a non-uniform scale.
- * accent on mist clears the 3:1 graphics minimum, and the count is printed
- * beside it so the length is never the only carrier. */
+/* A rect in a viewBox; no rounded end, which distorts under the non-uniform
+ * scale. accent on mist clears the 3:1 graphics minimum, and the count is
+ * printed beside it so bar length is never the only carrier. */
 function Bar({ frac }) {
   const w = frac > 0 ? Math.max(1.2, frac * 100) : 0
   return (
@@ -469,9 +440,9 @@ function Bar({ frac }) {
   )
 }
 
-/* The same bar, fixed to the 0–100 SUS range, with the 68 benchmark drawn on
- * it as an ink rule. The comparison is stated in words beside every one of
- * these — the rule is a second way of reading it, never the only way. */
+/* Fixed to the 0-100 SUS range with BENCHMARK drawn as an ink rule. The
+ * comparison is also stated in words beside every one of these; the rule is
+ * never the only way to read it. */
 function Meter({ value }) {
   const w = value == null ? 0 : Math.max(0, Math.min(100, value))
   return (
@@ -499,10 +470,6 @@ function Figure({ label, value, unit, children }) {
 }
 
 function Rows({ points, counts, total, unit = 'answered' }) {
-  /* A row of empty bars for every point on a scale nobody has answered yet is
-     six blocks of nothing on a page with no responses. The caption stays so
-     the page keeps its structure; the bars wait until there is something to
-     draw. */
   if (!total) return <p className="note mt-3">Nothing answered here yet.</p>
   return (
     <div className="mt-3 flex flex-col gap-2">
@@ -574,9 +541,9 @@ function Segment({ title, note, rows }) {
   )
 }
 
-/* The rating as a shape and as a figure, so it never depends on the fill.
- * Read-only: the interactive control in ui/stars is a slider and a slider that
- * cannot be moved is a trap for a keyboard user. */
+/* Rating is given as a shape and as a figure, so it never depends on the fill.
+ * Read-only on purpose: ui/stars is a slider, and an immovable slider traps
+ * keyboard users. */
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
 
@@ -637,9 +604,8 @@ function Notice({ title, children }) {
   )
 }
 
-/* A disclosure, not an accordion component: these two sections are long, cold
- * and read once, and a native <details> is keyboard-operable, findable by the
- * browser's own in-page search when open, and has no state to get wrong. */
+/* Native <details>, not an accordion component: keyboard-operable, findable by
+ * the browser's in-page search when open, and no state to get wrong. */
 function Fold({ summary, note, children }) {
   return (
     <details className="group mt-6 rounded-panel border border-rule bg-card">
@@ -694,10 +660,8 @@ function Respondent({ p }) {
                   {textFor(r.questionId) || 'This question is no longer asked'}
                 </span>
               </dt>
-              {/* Prose is never clamped, ellipsised or scrolled: a reviewer's
-                  sentence is the single most useful thing in this whole file,
-                  and truncating it to fit a card is losing the data to keep the
-                  layout. break-words because a pasted URL must not push the
+              {/* Never clamp, ellipsise or scroll reviewer prose — truncating it
+                  loses the data. break-words so a pasted URL cannot push the
                   card wider than the screen. */}
               <dd className="mt-2 max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
                 {String(r.value || '').trim() || <span className="text-ink-3">left blank</span>}
@@ -726,12 +690,9 @@ const SORTS = {
 }
 
 export function Responses() {
-  /* This browser's own records are available synchronously, so the page paints
-     its real structure on the first frame and the fetch only ever upgrades it.
-     Gating the whole body on `status !== 'loading'` measured CLS 0.32 at
-     1280px — an empty page replaced wholesale a few hundred ms later. Starting
-     from local data and swapping the rows in place measures near zero, and it
-     also means a reviewer with no network still sees their own answers. */
+  /* Paint from local records synchronously; the fetch only upgrades them.
+     Gating the body on a loading state measured CLS 0.32 at 1280px. It also
+     means a reviewer with no network still sees their own answers. */
   const [status, setStatus] = React.useState('local') // local | server
   const [problem, setProblem] = React.useState(null)
   const [ephemeral, setEphemeral] = React.useState(false)
@@ -785,8 +746,8 @@ export function Responses() {
     return list
   }, [people, query, sort, onlyCommented])
 
-  /* Every figure is computed over everyone, not over the filter: a mean that
-     moves when you type in a search box is a mean of nothing. */
+  /* Computed over everyone, never the filtered view: a mean that moves when
+     you type in the search box is a mean of nothing. */
   const s = React.useMemo(() => summarise(people), [people])
 
   const comments = React.useMemo(() => {
@@ -807,12 +768,12 @@ export function Responses() {
     return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [people])
 
-  /* Both downloads carry everyone, not the filtered view — the file is the
-     archive, and a CSV that silently omits the people you had filtered out is
-     the worst kind of wrong. */
-  /* The question column is filled in here rather than trusted from the row:
-     a retired question has no text left to look up, and an empty cell in a
-     spreadsheet reads as a missing value rather than a deliberate one. */
+  /* Every download carries everyone, not the filtered view — the file is the
+     archive.
+
+     The question column is filled in here rather than trusted from the row: a
+     retired question has no text to look up, and an empty spreadsheet cell
+     reads as a missing value rather than a deliberate one. */
   const rows = React.useMemo(() => people.flatMap(p =>
     [...p.rows, ...p.retired].map(r => ({
       ...r,
@@ -828,8 +789,7 @@ export function Responses() {
 
   const nothing = people.length === 0
 
-  /* One respondent is a respondent, not a sample. The label above the figure
-     changes with it so the page never prints the word "mean" over a single
+  /* The label changes with n so the page never prints "mean" over a single
      person's answer. */
   const susLabel = s.completeSus === 1 ? 'SUS score (one respondent)' : 'Mean SUS'
   const smallSample = s.completeSus > 0 && s.completeSus < MIN_MEAN
@@ -849,10 +809,9 @@ export function Responses() {
         </div>
       </div>
 
-      {/* Either notice, or neither, occupies this slot. Without a floor under
-          it the swap moved the whole page — measured at CLS 0.32 on a 1280px
-          viewport, well past the 0.1 the audit allows. The floor is the taller
-          of the two, so nothing below it ever moves. */}
+      {/* min-h is the taller of the two notices, so swapping or dropping them
+          moves nothing below. Without it the swap measured CLS 0.32 at 1280px,
+          past the 0.1 the audit allows. */}
       <div className="wrap min-h-[16rem]">
         {status === 'local' && (
           <Notice title="Showing this browser's records only">
@@ -926,8 +885,6 @@ export function Responses() {
             </Figure>
           </div>
 
-          {/* How to read the SUS number. Stated once, here, next to the
-              number it qualifies, rather than as a footnote nobody reaches. */}
           <div className="mt-10 grid gap-x-12 gap-y-8 lg:grid-cols-2">
             <figure className="m-0 border-t border-rule pt-4">
               <figcaption className="max-w-read font-display text-ui font-medium text-ink">
@@ -935,9 +892,8 @@ export function Responses() {
               </figcaption>
               <div className="mt-3">
                 <Meter value={s.susMean} />
-                {/* The 68 tick sits at 68% of the track, not in the middle of a
-                    justified row: a benchmark label that does not line up with
-                    the rule it names is worse than no label. */}
+                {/* The tick is positioned at BENCHMARK% of the track, not spaced
+                    in a justified row — it has to line up with the rule. */}
                 <div className="relative mt-1.5 h-[1.5em] font-mono text-tick tabular-nums text-ink-3">
                   <span className="absolute left-0">0</span>
                   <span className="absolute -translate-x-1/2 text-ink" style={{ left: `${BENCHMARK}%` }}>
@@ -1097,8 +1053,8 @@ export function Responses() {
                 <option value="done">Most complete first</option>
               </select>
             </Field>
-            {/* aria-pressed rather than a checkbox: it is a view filter that
-                takes effect immediately, not a value being submitted. */}
+            {/* aria-pressed, not a checkbox: a view filter applied immediately,
+                not a value being submitted. */}
             <button
               type="button"
               aria-pressed={onlyCommented}
@@ -1137,9 +1093,8 @@ export function Responses() {
           </p>
 
           {nothing ? (
-            /* Drawn, and it says which of the two very different things it
-               means — nobody has answered, or nobody's answers can reach
-               this page. Those need different actions from Mikhail. */
+            /* The empty state must distinguish the two cases: nobody answered,
+               or answers cannot reach this page. They need different fixes. */
             <div className="mt-8 rounded-panel border border-rule bg-card p-8">
               <h2 className="font-display text-head font-bold text-ink">
                 {status === 'server' ? 'Nobody has answered yet' : 'Nothing recorded in this browser'}

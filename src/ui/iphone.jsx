@@ -1,18 +1,8 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* An iPhone, drawn in CSS, with a real screen you can put anything into.
- *
- * Ported from the 21st.dev component Mikhail supplied, with three changes:
- * it is JSX rather than TypeScript, because this codebase has no type layer;
- * the colours come from the project's tokens instead of a hard-coded set; and
- * the screen is a flex column rather than a fixed 390x844 box, so the content
- * inside it scales with `scale` instead of overflowing at small sizes.
- *
- * Geometry is one object per model. Every number is the real device's, in
- * points, so `scale` is an honest multiplier: at 1 the drawing is the size of
- * the phone.
- */
+/* Geometry is the real device's, in points, so `scale` is a true multiplier:
+   at 1 the drawing is the size of the phone. */
 const MODELS = {
   '15-pro': { w:393, h:852, r:55, island:true,  bezel:10 },
   '15':     { w:393, h:852, r:55, island:true,  bezel:11 },
@@ -54,9 +44,7 @@ export function IPhone({
       style={{
         width: W * scale,
         height: H * scale,
-        /* One element scaled, rather than every number inside it multiplied.
-           The children lay out at real device points and the browser scales
-           the raster, so a chart inside keeps its proportions exactly. */
+        /* Children lay out at device points; one transform scales the lot. */
         ['--mm-scale']: scale,
       }}>
       <div
@@ -66,8 +54,6 @@ export function IPhone({
           padding: bezel, boxSizing: 'border-box',
           boxShadow: `inset 0 0 0 2px ${shell.edge}, 8px 8px 0 0 rgb(13 43 30 / 0.12)`,
         }}>
-        {/* the side buttons, which are the only thing that makes a rounded
-            rectangle read as a phone rather than as a card */}
         <span aria-hidden style={{ position:'absolute', left:-2, top: bezel + 118, width:3, height:32,
           background: shell.edge, borderRadius:'3px 0 0 3px' }}/>
         <span aria-hidden style={{ position:'absolute', left:-3, top: bezel + 176, width:4, height:62,
@@ -81,7 +67,6 @@ export function IPhone({
           position:'relative', width:m.w, height:m.h, borderRadius:r, overflow:'hidden',
           background:screenBg, display:'flex', flexDirection:'column',
         }}>
-          {/* the cutout: an island on the newer bodies, a notch on the older */}
           {m.island ? (
             <span aria-hidden style={{ position:'absolute', top:12, left:'50%', transform:'translateX(-50%)',
               width:126, height:36, borderRadius:20, background:'#000', zIndex:3 }}/>
@@ -89,7 +74,7 @@ export function IPhone({
             <span aria-hidden style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)',
               width:210, height:30, borderRadius:'0 0 18px 18px', background:'#000', zIndex:3 }}/>
           )}
-          {/* safe areas, so content never lands under the cutout or the bar */}
+          {/* safe areas: content must not land under the cutout or the bar */}
           <div style={{ flex:1, minHeight:0, paddingTop: m.island ? 60 : 44,
             paddingBottom: showHomeIndicator ? 30 : 12, display:'flex', flexDirection:'column' }}>
             {children}

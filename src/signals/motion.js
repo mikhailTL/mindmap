@@ -1,12 +1,7 @@
-/* Movement during a capture.
- *
- * The patch treats movement as a disqualifier rather than as a stress signal:
- * above 0.35 g the score is held back instead of counted, because a hard run
- * and a hard day look similar in every other channel. The phone has the same
- * accelerometer, so it applies the same rule to its own captures — and it has
- * a second job here, since a hand that is moving is also a fingertip sliding
- * on a camera lens.
- */
+/* Movement during a capture. Movement is a disqualifier, not a stress signal:
+ * above 0.35 g the score is held back rather than counted, because a hard run
+ * and a hard day look alike in every other channel. Same rule as the patch,
+ * and here it doubles as a check on a fingertip sliding off the lens. */
 export const MOVE_LIMIT_G = 0.35
 
 export function startMotion() {
@@ -14,8 +9,8 @@ export function startMotion() {
   const on = e => {
     const a = e.accelerationIncludingGravity || e.acceleration
     if (!a || a.x == null) return
-    /* Gravity is in there; its magnitude is what is subtracted, so a phone
-       held at any angle reads zero when it is still. */
+    /* Subtract 1 g of magnitude, not an axis, so a phone held at any angle
+       reads zero when still. */
     const g = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) / 9.81
     mags.push(Math.abs(g - 1))
   }

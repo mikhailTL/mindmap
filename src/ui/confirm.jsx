@@ -3,20 +3,13 @@ import * as D from '@radix-ui/react-dialog'
 import { Button } from './button'
 import { Cross } from './marks'
 
-/* The one action on this site that cannot be taken back, and the only dialog.
- *
- * Closing a crisis record writes a permanent row to an append-only log and
- * stops the escalation clock. A disabled button and a hopeful click was the
- * whole safeguard before this. The confirmation states what is written, who
- * can read it afterwards and what cannot be undone, in that order, and the
- * confirming button says what it does rather than "Confirm". */
+/* Confirming writes one row to an append-only audit log and stops the
+   escalation clock. It cannot be undone. */
 export function ConfirmClose({ open, onOpenChange, subject, steps, onConfirm }) {
   const [outcome, setOutcome] = React.useState('')
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        {/* The backdrop-saturate filter was the last piece of glass left over from
-            the old system; a flat ink scrim is the whole dim. */}
         <D.Overlay className="fixed inset-0 z-[90] bg-ink/35"/>
         <D.Content
           className="fixed left-1/2 top-1/2 z-[100] w-[min(46rem,calc(100vw-2.5rem))]
@@ -52,9 +45,8 @@ export function ConfirmClose({ open, onOpenChange, subject, steps, onConfirm }) 
           <label className="mt-6 block">
             <span className="font-display text-tick font-medium text-ink-2">
               Outcome, in your own words</span>
-            {/* Square corners and a suppressed outline came across with the green
-                system: the field takes the field radius, and killing the outline
-                now leaves an ink border behind it rather than nothing. */}
+            {/* outline-none is safe only because focus-visible:border-ink
+                replaces it. */}
             <textarea rows={3} value={outcome} onChange={e => setOutcome(e.target.value)}
               placeholder="What happened, and what comes next."
               className="mt-2 w-full resize-none rounded-field border border-rule bg-paper p-3.5 text-meta

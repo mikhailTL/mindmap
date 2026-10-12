@@ -1,36 +1,22 @@
-/* The survey's backend, such as it is.
+/* Survey backend. POST upserts one reviewer's answers, GET returns all of
+ * them. One file, no framework; expected traffic is a dozen peer reviewers.
  *
- * POST appends (or rather upserts) one reviewer's answers; GET returns
- * everybody's. It is deliberately one file with no framework: the entire
- * traffic this will ever see is a dozen peer reviewers over a few weeks, and
- * every dependency added here is one more thing that can fail at deploy time
- * the night before a submission deadline.
+ * Two invariants that are easy to break quietly:
  *
- * Two design points worth stating because they are easy to get wrong quietly:
- *
- * 1. When no KV store is configured this falls back to an in-process Map, and
- *    every response it sends then carries `ephemeral: true`. That flag is not
- *    decoration. A serverless instance is recycled on a deploy, on a cold
- *    start, or whenever the platform feels like it, and there is more than one
- *    of them — so the memory store loses data and also disagrees with itself
- *    between instances. It exists so that local development works and so that
- *    a misconfigured deploy degrades visibly rather than looking fine while
- *    dropping every answer on the floor.
- *
- * 2. Answer content is never written to stdout. Logs on a hosting dashboard
- *    are not a place to put what a named reviewer said about a project, and a
- *    single console.log(body) added for debugging is how that happens. Errors
- *    here log a fixed string and no error response ever contains any part of
- *    the request that caused it.
- */
+ * 1. With no KV store configured, storage falls back to an in-process Map and
+ *    every response carries `ephemeral: true`. Serverless instances are
+ *    recycled and there is more than one, so that store both loses data and
+ *    disagrees with itself across instances. The flag is what makes a
+ *    misconfigured deploy visible instead of silently dropping answers.
+ * 2. Answer content never goes to stdout — not even one console.log(body)
+ *    while debugging. Errors log a fixed string, and no error response carries
+ *    any part of the request that caused it. */
 
 const STORE_KEY = 'mindmap:responses'
 
-/* Caps, all of them set near the real shape of the survey rather than at some
- * round number: 21 questions exist, so 40 answers is already twice anything
- * legitimate, and a 16 KB body is roughly four times the largest honest
- * submission. Past these it is either a bug or an attack, and both deserve the
- * same flat refusal. */
+/* Caps sized to the survey, not to round numbers: 21 questions exist, so 40
+ * answers is twice anything legitimate, and 16 KB is about four times the
+ * largest honest submission. */
 const MAX_BYTES = 16 * 1024
 const MAX_ANSWERS = 40
 const MAX_RESPONDENTS = 500
@@ -39,24 +25,21 @@ const LIMIT = {
   label: 160, value: 600, iso: 40,
 }
 
-/* Crude by design and documented as crude: this is per-instance memory, so a
- * flood spread across instances is not stopped by it. It stops the realistic
- * failure — a page stuck in a retry loop, or one reviewer's browser firing the
- * same sync repeatedly — and nothing more. */
+/* Per-instance memory, so this does not stop a flood spread across instances.
+ * It stops the realistic failure: a page stuck in a retry loop. */
 const RATE_WINDOW_MS = 60000
 const RATE_MAX = 40
 
-/* Module scope is per-instance and survives between invocations on a warm
- * instance, which is exactly as long as any of this is trusted to last. */
+/* Module scope is per-instance, surviving only between invocations on a warm
+ * instance. Nothing here is trusted to last longer. */
 const memory = new Map()
 const hits = new Map()
 
 let kvPromise = null
 
-/* The import sits inside a try and behind a runtime env check so that a
- * project which has not run `npm i @vercel/kv` still builds and still serves:
- * the function falls back to memory instead of the deploy failing on a missing
- * module. */
+/* Import guarded by try and by a runtime env check, so a project without
+ * @vercel/kv installed still builds and serves off the memory fallback
+ * instead of failing the deploy on a missing module. */
 async function getKV() {
   if (!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)) return null
   if (!kvPromise) {
@@ -81,10 +64,9 @@ function send(res, code, body) {
   res.end(JSON.stringify(body))
 }
 
-/* No Access-Control-Allow-Origin is ever sent, so a cross-origin browser read
- * fails on its own. This check is the belt to that braces: it also refuses the
- * cross-origin writes that a missing CORS header would still have let through
- * unread. */
+/* Access-Control-Allow-Origin is never sent, so a cross-origin read already
+ * fails. This also refuses cross-origin *writes*, which a missing CORS header
+ * would let through unread. */
 function sameOrigin(req) {
   const origin = req.headers.origin
   if (!origin) return true /* same-origin fetches and server-side calls send none */
@@ -106,9 +88,8 @@ function keyMatches(given, expected) {
   return diff === 0
 }
 
-/* Control characters out, length capped. Not an HTML escape — nothing here is
- * interpolated into markup — but a defence against a record that breaks a CSV
- * row or forges a log line downstream. */
+/* Strips control characters and caps length. Not an HTML escape; it stops a
+ * record breaking a CSV row or forging a log line downstream. */
 function str(v, max) {
   if (v == null) return ''
   return String(v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max)
@@ -120,8 +101,8 @@ function isoOrNow(v) {
   return Number.isFinite(t) ? new Date(t).toISOString() : new Date().toISOString()
 }
 
-/* The store sends a value that is a number, a string, or the impact question's
- * { score, note }. Anything else is not a shape this survey produces. */
+/* A value is a number, a string, or the impact question's { score, note }.
+ * Anything else is not a shape this survey produces. */
 function value(v) {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
   if (typeof v === 'string') return str(v, LIMIT.value)
@@ -170,8 +151,8 @@ async function readBody(req) {
   try {
     for await (const chunk of req) {
       size += chunk.length
-      /* Counted as it arrives, because Content-Length is a claim and not a
-       * fact — a chunked request carries none at all. */
+      /* Counted as it arrives: Content-Length is a claim, and a chunked
+       * request carries none. */
       if (size > MAX_BYTES) return { tooBig: true }
       chunks.push(chunk)
     }
@@ -187,8 +168,8 @@ function rateLimited(id) {
   const seen = (hits.get(id) || []).filter(t => now - t < RATE_WINDOW_MS)
   seen.push(now)
   hits.set(id, seen)
-  /* Unbounded growth is its own denial of service: cold entries are dropped
-   * whenever the table exceeds any plausible reviewer count. */
+  /* Unbounded growth is its own denial of service: drop cold entries once the
+   * table passes any plausible reviewer count. */
   if (hits.size > 2000) {
     for (const [k, v] of hits) {
       if (!v.length || now - v[v.length - 1] > RATE_WINDOW_MS) hits.delete(k)
@@ -218,8 +199,8 @@ async function readOne(kv, id) {
 
 async function writeOne(kv, id, record) {
   if (!kv) {
-    /* A bound the KV path does not need: memory has no eviction, so without
-     * this one runaway client could grow the instance until it is killed. */
+    /* Memory has no eviction, so bound it here; the KV path needs no such
+     * limit. */
     if (!memory.has(id) && memory.size >= MAX_RESPONDENTS) return false
     memory.set(id, record)
     return true
@@ -240,9 +221,9 @@ export default async function handler(req, res) {
   const storage = kv ? 'kv' : 'memory'
 
   if (req.method === 'GET') {
-    /* The key, when one is configured, lives only in the server's env and in
-     * the URL the page was opened with. It is obscurity, not security — see
-     * the header comment in src/views/Responses.jsx and SURVEY-SETUP.md. */
+    /* The key lives only in the server env and in the URL the page was opened
+     * with. Obscurity, not security — see src/views/Responses.jsx and
+     * SURVEY-SETUP.md. */
     const expected = process.env.RESPONSES_KEY
     if (expected && !keyMatches(req.headers['x-responses-key'], expected)) {
       return send(res, 403, { ok: false, error: 'A valid key is required to read responses.' })
@@ -297,11 +278,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    /* Upsert, so a reviewer who reloads and re-syncs stays one person with
-     * updated answers rather than a second row in the summary. Read-modify-
-     * write is a race in principle; in practice one visitor's browser is the
-     * only writer for that visitor's key, and losing the race costs a single
-     * re-answered question which the next sync sends again anyway. */
+    /* Upsert, so a reviewer who reloads and re-syncs stays one row. The
+     * read-modify-write races in principle, but one visitor's browser is the
+     * only writer for that key and losing the race costs one re-answered
+     * question that the next sync resends. */
     const prev = await readOne(kv, id)
     const merged = new Map((prev?.answers || []).map(a => [a.page + '/' + a.qid, a]))
     clean.forEach(a => merged.set(a.page + '/' + a.qid, a))

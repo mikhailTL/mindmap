@@ -11,68 +11,21 @@ import { ITEMS } from '../lib/engine'
 
 /* Taking a reading with nothing on your arm.
  *
- * The page existed and read as slop: a numbered "02 · The two routes" eyebrow
- * in a style the site no longer uses, titles written as slogans ("The phone in
- * your pocket is already a sensor"), two prose cards a reader had to parse to
- * compare, and a set of capture instructions that were a paragraph each. The
- * review's instruction was to cut it roughly in half and let pictures carry
- * what the sentences were carrying.
- *
- * So: the camera is drawn rather than described, the comparison is four
- * signals lit or unlit rather than a clause beginning "no skin temperature",
- * and the instructions are four phones with one line under each. Every title
- * is now something a fifteen-year-old reads once.
- *
- * Two things came back three reviews running and are fixed here.
- *
- * The first is white space. The hero phone stood at 0.62 and the step phones
- * at 0.55 for no reason but that a drawing likes room; the section stack was
- * mt-8 on top of mt-10 on top of a figure carrying its own caption band; the
- * camera figure was capped at 60rem inside a 1328px wrap, so a sixth of the
- * page's width was margin. All of that is measured down here, and the figure
- * puts its caption in the margin instead of under itself.
- *
- * The second is the ladder. Alternating paper and card is alternating nothing:
- * they are 2% apart in luminance. The bands are mist, white, aqua-2, white,
- * ink: 20%, 15%, 15% apart and then the dark one. The accent-wash and
- * beam-wash pair that used to sit in the middle of that run measured 3% apart
- * and read as one surface. aqua-2 is not a tone the Section component knows
- * about, so it arrives as a class and tailwind-merge drops the tone's own
- * background; tone is still passed because it sets the eyebrow and heading
+ * Band luminance ladder: mist, white, aqua-2, white, ink — 20%, 15%, 15% apart
+ * and then the dark one. Keep adjacent bands this far apart; accent-wash and
+ * beam-wash sit 3% apart and read as one surface. `aqua-2` is not a Section
+ * tone, so it comes in as a class and tailwind-merge drops the tone's own
+ * background. `tone` is still passed because it sets the eyebrow and heading
  * colours, which must stay ink-side.
  *
- * The fourth review cut the page again, on one note: too much of it. Six bands
- * are four plus the hero now. The camera figure and the signal coverage are
- * one subject and share a band. Nothing on the page is a paragraph any more.
- * The hero is a <header> rather than a <section>, so every <section> here is
- * headed by an h2 at the one section size and the heading a reader could not
- * find is gone.
+ * Capture instructions (which fingertip, resting on a table, a quiet room, a
+ * sentence to say, what the score is measured against) live in PhoneCheck, at
+ * the point of use. Do not duplicate them onto this page.
  *
- * The fifth cut was counted rather than judged: the route rendered 538 words
- * against a budget of 330. Almost all of the overrun was one band. Four phone
- * mockups stood above the capture screen and each one printed the title and
- * the subtitle of a step the screen underneath prints again, forty pixels
- * lower: 104 words to say twice what the reader is about to be told once, at
- * the moment they do it. The phones are gone and the instructions live in
- * PhoneCheck, which is where the reading is actually taken. What the capture
- * needs in order to be completed at all (which fingertip, resting it on a
- * table, a quiet room, a sentence to say, what the score is measured against)
- * stayed there and was not moved onto this page.
- *
- * Everything else lost its second sentence. A heading is a claim, one line
- * follows it, then the thing itself; the lede that reconciled "two ways" with
- * the Overview page's "3 Ways" was a cross-reference, not a reason to read on,
- * and the limits band says its three facts in one sentence each.
- *
- * MOTION. Every figure on this page is 2D, so every one of them takes
- * Parallax2D rather than a 3D scene — nothing drawn here is a stack of objects
- * in space and tipping a flat schematic would only make it harder to read. The
- * distances are graded by how near the thing is meant to feel: the phone in
- * the hero is the nearest object on the page and travels 64px, the camera
- * module 30, the coverage strip under it 18, and the two small route drawings
- * 16 inside their own panels. Figures at one shared distance read as a
- * rendering fault rather than as depth, which is why no two here match.
- */
+ * Every figure here is 2D, so all use Parallax2D, never a 3D scene. Distances
+ * are deliberately unequal — hero phone 64, camera module 30, coverage strip
+ * 18, route drawings 16 — because figures at one shared distance read as a
+ * rendering fault rather than as depth. */
 
 const ROUTES = [
   { id:'sensors', title:'Camera and microphone', when:'45 seconds', art:'sensors',
@@ -81,10 +34,6 @@ const ROUTES = [
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
-/* Two small drawings, because two cards of equal prose are a comparison a
-   reader has to do themselves. Kept local: they are this page's furniture,
-   not a chart anything else will want. Down from 84 units of height to 64:
-   neither drawing has anything in the top or bottom sixth of its box. */
 function RouteArt({ kind }) {
   if (kind === 'sensors') return (
     <svg viewBox="0 0 200 74" aria-hidden className="h-16 w-[13.5rem]">
@@ -102,9 +51,6 @@ function RouteArt({ kind }) {
   )
   return (
     <svg viewBox="0 0 200 74" aria-hidden className="h-16 w-[13.5rem]">
-      {/* three cards deep, and the options inside the top one rather than
-          hanging off its right edge, which is where they sat first and read as
-          a rendering fault */}
       {[0, 1, 2].map(i => (
         <rect key={i} x={16 + i * 9} y={2 + i * 7} width="116" height="52" rx="8"
           className={i === 2 ? 'fill-card stroke-ink' : 'fill-mist stroke-ruling'} strokeWidth="1.5"/>
@@ -123,8 +69,6 @@ export function WithoutPatch({ go }) {
 
   return (
     <main>
-      {/* mist, not paper. The hero used to be the same near-white as the
-          section under it, so the page opened on one undivided sheet. */}
       <header className="border-t border-rule bg-mist">
         <div className="wrap py-9 lg:py-12">
           <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12">
@@ -139,18 +83,13 @@ export function WithoutPatch({ go }) {
               <p className="mt-4 max-w-read text-lead leading-[1.4] text-ink-2">
                 Forty five seconds, one Mind Score. Nothing leaves the phone.
               </p>
-              {/* One control. The second one went to the questions, which the
-                  route card below goes to under a clearer name. */}
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button onClick={toCheck}>Take a reading<span aria-hidden>→</span></Button>
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
-              {/* The nearest object on the page, so it drifts furthest. 32px
-                  either side of centre, against a hero band whose own vertical
-                  padding is 36px at the narrow end: the phone cannot reach the
-                  band's edge and its box does not move, so the headline beside
-                  it does not shift by a pixel. */}
+              {/* 64px travel = 32px either side, inside this band's 36px minimum
+                  padding, so nothing reaches the edge and no layout shifts. */}
               <Parallax2D distance={64} className="shrink-0">
                 <IPhone scale={0.44} label="The MindMap app running on a phone">
                   <PhoneApp/>
@@ -161,26 +100,17 @@ export function WithoutPatch({ go }) {
         </div>
       </header>
 
-      {/* White, so the ruled step table in the figure has a ground its mist
-          bands can be told apart from. */}
+      {/* White ground: the figure's own mist bands vanish on a mist section. */}
       <Section name="Inside the camera" tone="card" tight id="camera">
         <SectionHead>The camera reads your pulse.</SectionHead>
         <ScrollIn className="mt-5 lg:mt-6">
-          {/* Two mechanisms on one figure, and they do not collide: ScrollIn
-              owns the entrance and ends, Parallax2D owns the drift and is on
-              its own element inside it. Neither one writes the other's
-              transform. */}
+          {/* ScrollIn owns the entrance, Parallax2D the drift, on separate
+              elements — both write `transform`, so nesting is required. */}
           <Parallax2D distance={30}>
             <CameraModule className="mx-auto max-w-[66rem]"/>
           </Parallax2D>
         </ScrollIn>
-        {/* The coverage strip used to be two thirds of the way down the next
-            band under an h3, which is the heading the review could not find.
-            It is the same subject as the figure and sits under the same h2. */}
         <ScrollIn className="mt-7">
-          {/* Half the module's distance. The two sit in one band under one
-              heading, and the smaller figure reading as the further one is
-              what keeps the pair from drifting as a single sheet. */}
           <Parallax2D distance={18}>
             <SignalCoverage/>
           </Parallax2D>
@@ -189,21 +119,12 @@ export function WithoutPatch({ go }) {
 
       <Section name="Two ways" tone="mist" tight className="bg-aqua-2">
         <SectionHead>Two ways to take a reading.</SectionHead>
-        {/* No lede. It used to reconcile this heading with the Overview page's
-            "3 Ways to Use MindMap", which is that page's job: the two cards
-            under here are the two ways, and a reader who has not seen the
-            third is not missing anything they need in order to take a
-            reading. */}
         <div className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-5">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
               <Card className="flex h-full flex-col p-5">
-                {/* w-fit, not a full-width banner. The panel used to run the
-                    width of the card with a 170px drawing centred in it, which
-                    is 460px of grey doing nothing on every card. */}
-                {/* 8px either side, which is inside this panel's own 10px of
-                    vertical padding, so the drawing moves within its grey
-                    rather than against the card's edge. */}
+                {/* 16px travel = 8px either side, inside this panel's 10px of
+                    vertical padding, so the drawing stays within its ground. */}
                 <div className="w-fit rounded-panel bg-mist/70 px-4 py-2.5">
                   <Parallax2D distance={16}>
                     <RouteArt kind={r.art}/>
@@ -218,13 +139,8 @@ export function WithoutPatch({ go }) {
                     <li key={g} className="rounded-chip border border-rule bg-mist/60 px-3 py-0.5 text-fine text-ink-2">{g}</li>
                   ))}
                 </ul>
-                {/* Both cards end on a control, which is the only reason the
-                    row has no shelf in it: one card carried a button and the
-                    other stopped at its chips, so the left one finished 80px
-                    above the right. The names differ because the page already
-                    has a "Take a reading" in the hero and two controls with
-                    one name is one control to anything reading the page
-                    aloud. */}
+                {/* Both labels must differ from the hero's "Take a reading" —
+                    duplicate names are one control to a screen reader. */}
                 <div className="mt-auto pt-4">
                   {r.id === 'ask'
                     ? <Button variant="outline" size="sm" onClick={() => go('check')}>
@@ -240,36 +156,16 @@ export function WithoutPatch({ go }) {
         </div>
       </Section>
 
-      {/* The heading, then the reading. There used to be a row of four phone
-          mockups between the two, each one printing a step's title and its
-          subtitle above the screen that prints both again a little lower, and
-          between them they were a third of the page's words. A marketing page
-          does not need a picture of the form that is directly underneath it.
-
-          So the heading lost its count as well: nothing here is numbered any
-          more, and PhoneCheck's own three steps carry the order.
-
-          paper, not card: the capture is built out of white cards, and on a
-          white band a white card is a border and nothing else. Against the
-          aqua band above it paper is a 10% step, where mist, aqua and both
-          washes all land inside 6% of it and read as the same surface. */}
+      {/* tone="paper", not "card": PhoneCheck is white cards, which on a white
+          band are just borders. paper is a 10% step from the aqua above; mist
+          and both washes land within 6% and read as one surface. */}
       <Section name="Try it" tone="paper" tight id="take">
         <SectionHead>Take a reading.</SectionHead>
         <div className="mt-5"><PhoneCheck/></div>
       </Section>
 
-      {/* Proved / Careful / Not proved was the wrong frame: those are the
-          columns of a trial report, and this is a build. The three facts the
-          band exists to state are unchanged, and they are the ones a reader
-          has to leave with: what the camera reading actually is, that the
-          beat-to-beat figure is ours and is withheld when the signal is bad,
-          and that nothing here has met a person yet. Said as build notes they
-          read as the same honesty without borrowing a clinical claim to
-          disclaim.
-
-          Each one is one sentence now, and the label in front of it names the
-          subject rather than a column. "What it measures" measured nothing;
-          the sentence under it is the measurement. */}
+      {/* Approved claim language; all three must stay. Do not reframe as
+          trial-report columns (proved / not proved) — this is a build. */}
       <Section name="Limits" tone="ink" tight>
         <SectionHead tone="ink">What this reading is, and is not.</SectionHead>
         <ul className="mt-5 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-6">

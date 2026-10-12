@@ -3,9 +3,8 @@ import { Command } from 'cmdk'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Grid, Wave, Bracket, Frame, Rule, MoveMark, PulseMark } from './marks'
 
-/* shadcn's Command component (cmdk + Radix Dialog), adapted: the registry demo
-   list is replaced by this product's views, and it is a desktop affordance —
-   pointer hardware only, since a touch user has the tab bar. */
+/* cmdk + Radix Dialog. Pointer hardware only: touch users have the tab bar,
+   and there is no key to press. */
 const CMDS = [
   { id:'site',    label:'Overview',        icon:Rule,        hint:'What MindMap is' },
   { id:'patch',   label:'The patch',       icon:Grid,         hint:'The device, in 3D' },
@@ -55,7 +54,6 @@ export function Palette({ go }){
     </Dialog.Root>
   )
 }
-/* The hint only shows where the shortcut exists. */
 export function PaletteHint(){
   return (
     <span className="ml-3 hidden items-center gap-1.5 text-fine text-ink-3 [@media(hover:hover)and(pointer:fine)]:inline-flex">

@@ -2,64 +2,31 @@ import React from 'react'
 import { ScrollScene } from '../ui/motion'
 
 /* One small line drawing per part card on the hardware page's dark band.
- *
- * They follow views/Patch.jsx rather than inventing a second drawing style:
- * one shared viewBox for all three, the same stadium flange with a centred
- * pod, the same stroke weights (1.6 for an outline, 1.5 for a body, 1.2 to 1
- * for a construction line), and construction geometry dashed so it reads as
- * registration and not as a part.
- *
- * What had to change is the ground. These cards stand on the ink band, so each
- * drawing is given its own ink panel inside the card and the band's palette
- * applies: ink is 1.00 on itself and accent is 2.80, both unusable, so every
- * stroke here is one of three values measured against #0b2b33.
- *
- *   paper      #f5fafa   14.47 : 1
- *   mist       #dfecee   12.69 : 1
- *   accent.lit #3fd6c4    7.67 : 1
- *
- * accent.lit carries the one thing each card is about: the charging slot, the
- * board in its tray, the skin contacts. mist draws the plastic, paper the
- * raised body.
- *
- * They do animate now, which reverses what this comment used to claim. Three
- * line drawings of three parts of one object, stacked down a rail beside a 3D
- * viewer of that same object, read as three flat icons when every one of them
- * is square to the page. Each one is given its own small ScrollScene, so the
- * rail reads as three objects sitting in space at slightly different angles
- * and turning as the reader goes past. It is kept deliberately small — these
- * are 76px tall, 44 to 56 at lg, and a drawing that size cannot carry a tip
- * worth more than a few degrees before the strokes start to alias. The
- * reduced-motion branch is ScrollScene's: under that setting each drawing
- * resolves to the `to` angle and holds there, fully drawn.
- *
- * No labels. The card beside each drawing already names the part in the page's
- * own type, and 15px mono inside a 90px figure is a caption nobody reads.
- */
+ * They follow views/Patch.jsx: one shared viewBox for all three, the same
+ * stadium flange with a centred pod, the same stroke weights (1.6 outline,
+ * 1.5 body, 1.2-1.0 construction line), construction geometry dashed.
+ * These sit on the ink band. Against #0b2b33, ink is 1.00 and accent 2.80 —
+ * both unusable — so every stroke is one of three measured values:
+ *   paper      #f5fafa   14.47 : 1   the raised body
+ *   mist       #dfecee   12.69 : 1   the plastic
+ *   accent.lit #3fd6c4    7.67 : 1   the one thing each card is about
+ * Under reduced motion ScrollScene resolves each drawing to its `to` angle. */
 const PAPER = '#f5fafa'
 const MIST  = '#dfecee'
 const LIT   = '#3fd6c4'
 const GND   = '#0b2b33'   /* the panel's own ground, used to mask, never to draw */
 
-/* Same proportions as the engineering drawing, on a shorter canvas: 440x200
-   instead of 440x260, because these sit three to a column and the height is
-   the expensive dimension. */
+/* Engineering-drawing proportions on a shorter canvas: 440x200, not 440x260. */
 const FL  = { x:12,  y:40, width:416, height:120, rx:60 }
 const POD = { x:114, y:56, width:212, height:88,  rx:36 }
 
-/* `tilt` is per drawing rather than one shared value, so the three do not move
-   as one plate: the shell leads, the pod follows it a little flatter, and the
-   base runs the opposite way in both rotateX and Z so the bottom of the rail
-   is never parallel to the top. Nine degrees of rotateX, three of rotateZ and
-   18px of depth is the whole budget at this size — the drawing is 76px tall,
-   44 to 56 at lg, and past that the 1px construction lines start to alias.
-
-   `h-full` on the scene is load-bearing at lg. The card's ink panel sets its
-   own height there and the page constrains the svg to it with an
-   `lg:[&_svg]:h-full`; a percentage height resolves against this wrapper, so
-   without it the svg would be measuring against `auto` and fall back to its
-   own 88px. Below lg the panel's height is auto and `h-full` resolves to auto
-   with it, which is the same as not being there. */
+/* `tilt` is per drawing so the three do not move as one plate. Nine degrees
+   rotateX, three rotateZ, 18px depth is the whole budget — at 76px (44-56 at
+   lg) the 1px construction lines alias past that.
+   `h-full` on the scene is load-bearing at lg: the card's ink panel sets its
+   own height there and the page constrains the svg with `lg:[&_svg]:h-full`,
+   and a percentage height resolves against this wrapper. Without it the svg
+   measures against `auto` and falls back to its own 88px. */
 function Frame({ label, children, tilt }) {
   return (
     <ScrollScene perspective={620} narrow={0.5} className="h-full"
@@ -79,9 +46,9 @@ const TILT = {
   base:  [{ rotateX: -6, rotateZ: 3, z: 12 }, { rotateX: 8, rotateZ: -2, z: -16 }],
 }
 
-/* The printed shell: the adhesive flange hatched, the raised body on top of
-   it, and the charging slot straddling the body wall so it breaks the
-   outline. A port that does not break the outline is a sticker. */
+/* Printed shell: adhesive flange hatched, raised body on top, charging slot
+   straddling the body wall so it breaks the outline. A port that does not
+   break the outline is a sticker. */
 export const ShellArt = (
   <Frame tilt={TILT.shell} label="The printed shell, face on, with the charging slot breaking its side wall">
     <defs>
@@ -91,8 +58,8 @@ export const ShellArt = (
       </pattern>
     </defs>
     <rect {...FL} fill="none" stroke={MIST} strokeWidth="1.6"/>
-    {/* The hatch covers the whole stadium and is masked by the opaque body, so
-        it survives only in the flange ring. The ring IS the adhesive. */}
+    {/* The hatch covers the whole stadium and is masked by the opaque body,
+        so it survives only in the flange ring. The ring IS the adhesive. */}
     <rect {...FL} fill="url(#pp-shell-hatch)"/>
     <rect x="22" y="49" width="396" height="102" rx="51"
       fill="none" stroke={MIST} strokeOpacity=".4" strokeWidth="1"/>
@@ -104,9 +71,7 @@ export const ShellArt = (
   </Frame>
 )
 
-/* The electronics pod: a tray, and the bought board dropping into it. The two
-   arrows are the only thing on any of these three that states an action, and
-   the card's text is what says the board is bought separately. */
+/* Electronics pod: a tray and the bought board dropping into it. */
 export const PodArt = (
   <Frame tilt={TILT.pod} label="The electronics pod, a tray with the board dropping into it">
     <rect {...FL} fill="none" stroke={MIST} strokeOpacity=".35" strokeWidth="1" strokeDasharray="6 6"/>
@@ -130,8 +95,8 @@ export const PodArt = (
 )
 
 /* The skin-side base, seen from the skin: the whole face is adhesive, so the
-   whole stadium is hatched. The two wing electrodes and the central window
-   are the contacts, which is what accent.lit is carrying here. */
+   whole stadium is hatched. The wing electrodes and central window are the
+   contacts. */
 export const BaseArt = (
   <Frame tilt={TILT.base} label="The skin-side base, the adhesive face with its sensor contacts">
     <defs>

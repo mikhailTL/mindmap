@@ -18,27 +18,19 @@ import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
 import { SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE } from '../lib/terms'
 
-/* The judge's route through the site, in eight stops.
+/* The guided tour, in eight stops.
  *
- * This replaces a page built around a generated video. A video of a product
- * that does not physically exist is a picture of a claim; every stop here shows
- * the live component the real screen runs, or a drawing of the real part, so
- * there is nothing on this page a judge cannot also go and click.
+ * Every stop renders the live component the real screen runs, or a drawing of
+ * the real part — never a recording or a mockup. The HONESTY stop is the list
+ * of everything on this site that is not real; keep it current.
  *
- * The order answers four questions in the order a judge asks them: what is the
- * problem, what did you actually build, does it work, and what would it change.
- * Stop seven is the one that matters most — it is the list of everything on
- * this site that is not real, written by us rather than found by a reviewer.
- *
- * Why the current stop is NOT in the URL: the router matches the whole hash
- * against a fixed list of view names, so `#/tour/3` — or any sub-path, query or
- * suffix — fails that match and drops the visitor on the overview. Encoding the
- * stop would mean editing the router, which this change is not allowed to touch,
- * and a deep link that silently lands somewhere else is worse than no deep link.
- */
+ * The current stop is deliberately NOT in the URL. The router matches the whole
+ * hash against a fixed list of view names, so `#/tour/3` — or any sub-path,
+ * query or suffix — fails the match and lands the visitor on the overview.
+ * Deep-linking a stop requires changing the router first. */
 
-/* Arithmetic, not a measurement: 1 Hz for a seven-hour school day. Computed
-   rather than typed so the two numbers in the sentence cannot drift apart. */
+/* Arithmetic, not a measurement: 1 Hz over a seven-hour school day. Computed,
+   not typed, so the two numbers in the caption cannot drift apart. */
 const SCHOOL_HOURS = 7
 const PER_DAY = SCHOOL_HOURS * 60 * 60
 
@@ -47,9 +39,8 @@ const Note = ({ children }) =>
   <p className="mt-6 max-w-[52ch] border-t border-rule pt-4 text-sec text-ink-3">{children}</p>
 
 /* ── 01 ─────────────────────────────────────────────────────────────────── */
-/* The gap drawn as what it is: a row of days with almost nothing written in it.
-   No figure here is a statistic — the top row is one conversation because that
-   is the thing being described, and the caption says the drawing is a drawing. */
+/* Nothing in this figure is a statistic, and the caption must keep saying the
+   drawing is a drawing. */
 function EvidenceGap() {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   const rows = [
@@ -57,8 +48,7 @@ function EvidenceGap() {
     { label: 'What the patch records',     on: [0, 1, 2, 3, 4, 5, 6] },
   ]
   return (
-    /* The densest figure on the tour and the one with the most ink, so it takes
-       the largest drift of the three: 38px against the stop's prose. */
+    /* Largest drift of the three figures on the tour. */
     <Parallax2D distance={38}>
     <figure className="m-0">
       {rows.map((r, ri) => (
@@ -87,14 +77,9 @@ function EvidenceGap() {
 }
 
 /* ── 02 ─────────────────────────────────────────────────────────────────── */
-/* ExplodedStack separates and tips on scroll by itself now, so the static
-   depth this stop used to write onto `.lyr` on mount is gone. What stood here
-   was the third mechanism animating one drawing — GSAP drove it on two other
-   pages, this page wrote inline transforms, and none of the three could see
-   what the others had set. The figure owns its motion, which includes its own
-   reduced-motion branch, so this stop renders the drawing and nothing else.
-
-   No Parallax2D on this one. It is the one stop whose figure already moves. */
+/* ExplodedStack owns its own scroll motion and reduced-motion branch. Do not
+   write transforms onto `.lyr` here, and do not wrap this in Parallax2D — it is
+   the one stop whose figure already moves. */
 function Hardware() {
   return (
     <figure className="m-0">
@@ -108,20 +93,17 @@ function Hardware() {
 }
 
 /* ── 03 ─────────────────────────────────────────────────────────────────── */
-/* Each signal beside the shape it actually draws, and the sentence sensors.js
-   already holds for it — retyping those here is how the patch page and the tour
-   end up describing the same sensor two different ways. */
+/* Copy comes from lib/sensors.js. Do not retype it here, or the patch page and
+   the tour describe the same sensor two different ways. */
 function Signals() {
   return (
     <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
       {SENSOR_ORDER.map((id, i) => {
         const s = SENSORS[id]
         return (
-          /* Alternating travel across the two columns rather than one distance
-             for all four: a grid in which every cell drifts by the same amount
-             is a grid that looks like it is being dragged, not one with depth
-             in it. h-full has to carry through the wrapper or the row loses the
-             equal-height cards it was built for. */
+          /* Alternating travel per column; one distance for all four reads as
+             the grid being dragged. h-full must carry through the Parallax2D
+             wrapper or the row loses its equal-height cards. */
           <li key={id}>
             <Parallax2D distance={i % 2 ? 20 : 32} className="h-full [&>div]:h-full">
             <Card className="h-full p-5">
@@ -142,13 +124,12 @@ function Signals() {
 }
 
 /* ── 06 ─────────────────────────────────────────────────────────────────── */
-/* The check-in list, plus the students consent keeps off it. Every count is
-   read off the same fixture the counselor console reads, so the prose cannot
-   claim a consent split the list does not show.
+/* The check-in list plus the students consent keeps off it. Every count is read
+   off the same fixture the counselor console reads, so the prose cannot claim a
+   consent split the list does not show.
  *
- * The leading ordinal is gone with the word "ranked": a column of positions is
- * a leaderboard whatever the heading over it says. The order is still largest
- * change first, and the change itself is the figure on the row. */
+ * No position numerals: a column of ranks is a leaderboard whatever the heading
+ * says. Order is largest change first. */
 function Caseload() {
   const moved = triage()
   const held = [...scoreOnly(), ...alertsOnly()]
@@ -170,9 +151,8 @@ function Caseload() {
                 </span>
               </span>
               <span className="text-fine text-ink-2">{TIER_LABEL[tier]}</span>
-              {/* Change since last week is what orders the list, so it is the
-                  figure on the row. The Mind Score alone would make the order
-                  look wrong. */}
+              {/* Change since last week orders the list, so it is the figure on
+                  the row — the score alone makes the order look wrong. */}
               <span className="text-right font-mono text-fine tabular-nums text-ink">
                 {s.velocity > 0 ? '+' : ''}{s.velocity}</span>
             </li>
@@ -194,13 +174,9 @@ function Caseload() {
 }
 
 /* ── 07 ─────────────────────────────────────────────────────────────────── */
-/* Third column is the cell treatment, not a badge variant. Five of these rows
-   used to pass `demo` straight into <Badge variant="demo">, which was the
-   capsule; a ruled annotation is the wrong shape inside a table cell, so a
-   generated row gets a stamp instead — the mono uppercase word on a warn rule,
-   the same mark the annotation carries, sized to a cell. A stated fact keeps
-   the bordered `state` badge. The two differ by shape, face and weight before
-   they differ by hue, so the column still separates in grayscale. */
+/* Third column is a cell treatment ('demo' | 'fact'), not a Badge variant.
+   The two differ by shape, face and weight before they differ by hue, so the
+   column still separates in grayscale. */
 const HONESTY = [
   ['The screens on this site', 'Built', 'fact',
     'Hash-routed React, running on fixture data.'],
@@ -219,19 +195,14 @@ const HONESTY = [
 ]
 
 /* ── The stops ──────────────────────────────────────────────────────────── */
-/* `art` is a function, not an element, so each stop's components mount fresh
-   when the reader arrives — the dial counts up on arrival rather than having
-   already finished behind a hidden panel. */
+/* `art` is a function, not an element: each stop's components must mount fresh
+   on arrival, or the dial finishes counting behind a hidden panel. */
 const STOPS = [
   {
     id: 'problem', nav: 'The problem',
     title: 'The problem',
     body: (
       <>
-        {/* Two paragraphs stood here, seventy words, and the drawing beside
-            them is the argument: a sparse row of conversations against a dense
-            row of days. The prose was the caption to a figure that does not
-            need one. */}
         <Lede>
           A school's record of a student is the days someone spoke up. MindMap records every day,
           against that student's own last two weeks and nobody else's.
@@ -298,9 +269,6 @@ const STOPS = [
     ),
     art: () => (
       <div>
-        {/* The dial is the nearest thing on the stop and drifts furthest, with
-            the sentences under it held still: 56px, and the arch has its own
-            whitespace to travel inside. */}
         <Parallax2D distance={56}>
           <RainbowDial score={51} usual={46} rings={studentRings()} size={340}/>
         </Parallax2D>
@@ -337,9 +305,7 @@ const STOPS = [
         <div>
           <p className="max-w-[30ch] font-display text-head font-bold text-ink">
             Maya had a harder week than usual.</p>
-          {/* 24px, against the 56 on the dial a stop earlier: the strip is a
-              small figure inside a column of lists and a large drift here
-              would read as the list coming apart. */}
+          {/* Small drift: a large one here reads as the list coming apart. */}
           <Parallax2D distance={24} className="mt-5 max-w-[22rem]">
             <WeekStrip days={DATA.week} band={DATA.weekBand}/>
           </Parallax2D>
@@ -443,9 +409,8 @@ const STOPS = [
   },
 ]
 
-/* The counselor stop's prose is generated from the same roster the list draws,
-   because a hand-written "five of eight" is a claim that goes stale the moment
-   a consent record changes. */
+/* Generated from the same roster the list draws. A hand-written "five of
+   eight" goes stale the moment a consent record changes. */
 function CaseloadBody() {
   const all = roster().length, trends = triage().length
   const partial = scoreOnly().length, alerts = alertsOnly().length
@@ -474,11 +439,11 @@ export function Tour({ go }) {
   const first = React.useRef(true)
   const stop = STOPS[i]
 
-  /* Moving stop changes content above the control that changed it, so the
-     reader is put back at the top of the stop. Skipped on first paint, or the
-     page would scroll itself on arrival. Honour the reduced-motion setting
-     explicitly: the global `scroll-behavior: smooth` is what would otherwise
-     animate this. */
+  /* Changing stop replaces content above the control that changed it, so the
+     reader is moved back to the top. Skipped on first paint, or the page
+     scrolls itself on arrival. `behavior` is set explicitly because the global
+     `scroll-behavior: smooth` would otherwise animate it under reduced
+     motion. */
   React.useEffect(() => {
     if (first.current) { first.current = false; return }
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -498,9 +463,9 @@ export function Tour({ go }) {
 
       <Tabs value={stop.id} onValueChange={v => setI(STOPS.findIndex(s => s.id === v))}
         className="mt-10">
-        {/* The strip is the index and the control. Radix gives it roving focus
-            and arrow keys; Previous and Next below are for the reader who is
-            moving through in order and should not have to aim at a tab. */}
+        {/* Radix gives the strip roving focus and arrow keys. Previous/Next
+            below exist for in-order readers who should not have to aim at a
+            tab. */}
         <div ref={anchor} data-anchor>
           <TabsList aria-label="Tour stops" className="gap-x-6">
             {STOPS.map(s => (
@@ -533,9 +498,8 @@ export function Tour({ go }) {
         })}
       </Tabs>
 
-      {/* Position, then the two controls. The figure is announced because the
-          strip above it is a scrolling row on a phone and the reader cannot
-          always see where they are in it. */}
+      {/* aria-live on the position: the tab strip scrolls on a phone, so the
+          reader cannot always see where they are in it. */}
       <div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-4 border-t-2 border-ink pt-6">
         <p aria-live="polite" className="font-mono text-tick tabular-nums text-ink-2">
           Stop {i + 1} of {STOPS.length}</p>

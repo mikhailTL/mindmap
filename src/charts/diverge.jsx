@@ -2,10 +2,10 @@ import React from 'react'
 /* Diverging bars off a neutral centre: warm raised the score, cool lowered it.
    Real DOM text, so the labels are the size they say they are at any width.
 
-   The bar column carries a 7rem floor. Without one, a 22rem label column and a
-   4.5rem figure column inside a 34rem sticky panel left the track about 26px
-   wide, so a bar at the full -1.00 rendered as a 13px blob and every row
-   looked the same. The label column gives up its width first now. */
+   The bar column needs its 7rem floor: without one, a 22rem label column plus
+   a 4.5rem figure column inside a 34rem sticky panel left the track ~26px
+   wide, and a full -1.00 bar rendered as a 13px blob. The label column gives
+   up width first. */
 export function Diverge({ items }){
   return (
     <ul className="mt-3.5 list-none p-0 m-0">

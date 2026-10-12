@@ -9,35 +9,15 @@ import {
   subscribe, syncPending, submitResponse, wasSent, isQueued,
 } from './store'
 
-/* One survey, opened from a small box in the corner.
- *
- * What was here: a card that armed itself after twelve seconds or forty per
- * cent of a scroll and then asked two questions, on every page, eight times a
- * visit. It was dismissed as a pop-up because it was one. A reviewer's words
- * for it were "very annoying", which is the correct review of any element that
- * appears over the thing a person is reading without being asked for.
- *
- * What replaces it interrupts nothing. A small box sits in the corner once the
- * reviewer has actually been around the site; it can be put away and it stays
- * away; and the survey itself opens as a dialog they chose to open, holds every
- * question in one place, and saves each answer the moment it is given so
- * closing it half-done loses nothing.
- */
+/* One survey, opened from a box in the corner. The box appears only once the
+ * reviewer has been around the site and stays away once put away; the dialog
+ * saves each answer as it is given, so closing it half-done loses nothing. */
 
-/* An answer is a row on a ruled list, not a card.
- *
- * Every option here used to be a bordered rounded box, so a seven-option
- * question was seven identical capsules in a column and the whole survey was a
- * hundred and forty of them. The box adds nothing the hairline above the row
- * does not already do, and a column of them buries which one is picked under
- * the sameness of the rest. Rules separate; a bar, a fill and a weight say
- * which one is chosen. Kept byte for byte the same as the page version in
- * views/App.jsx, so an answer looks identical whichever way it is opened.
- *
- * The point's number used to be printed in front of its label in the mono
- * face, a stamp on every row of a five-row group. The label already says which
- * end of the scale it is. The value still goes to the store; it is only off
- * the screen. */
+/* An answer is a row on a ruled list, not a card: rules separate, and a bar, a
+ * fill and a weight mark the chosen one. Kept byte for byte identical to the
+ * page version in views/App.jsx so an answer looks the same whichever way it
+ * is opened. Point values go to the store but are not printed — the label
+ * already says which end of the scale it is. */
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
   'font-display text-ui transition-colors duration-150 ease-out',
@@ -71,10 +51,8 @@ function ScaleControl({ q, value, onPick }) {
   )
 }
 
-/* A multiple choice. Same radio-group mechanics as the scale, but the options
-   are named alternatives rather than points on a line, so they carry no
-   numeral and no implied order: numbering "On the forearm / On the chest"
-   would suggest one is higher than another. */
+/* Same radio-group mechanics as the scale, but the options are named
+   alternatives, so no numeral and no implied order. */
 function ChoiceControl({ q, value, onPick }) {
   return (
     <div className="mt-3 flex flex-col" role="radiogroup" aria-label={q.prompt}>
@@ -97,11 +75,9 @@ function ChoiceControl({ q, value, onPick }) {
   )
 }
 
-/* Zero to ten in a row. Eleven buttons is a lot for a phone, so they wrap and
-   the two ends carry their own labels: an unlabelled 0-10 row gets answered
-   backwards by roughly the people you least want to misread. The only bordered
-   cells left in the survey, because a horizontal scale of single figures has
-   nothing else to hold it together. */
+/* Zero to ten, wrapping on a phone. Both ends carry labels — an unlabelled
+   0-10 row gets answered backwards. The only bordered cells in the survey: a
+   horizontal scale of single figures has nothing else holding it together. */
 function NpsControl({ q, value, onPick }) {
   return (
     <div className="mt-3">
@@ -159,9 +135,7 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
         )}
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        {/* The disabled Save says why it is disabled. The old pair also printed
-            "Ready to save." the instant a key was pressed, which is a sentence
-            that reports what the reader just did. */}
+        {/* The disabled Save says why it is disabled. */}
         <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
         <span className="text-fine tabular-nums text-ink-3">
           {text.length}/{q.maxLength}
@@ -220,9 +194,8 @@ function ImpactControl({ q, initial, onSave, onSkip }) {
   )
 }
 
-/* One question, whichever of the five kinds it is. Page cards and the final
- * block share it so a wording or spacing change cannot apply to one and not
- * the other. */
+/* One question, whichever kind it is. Shared by the page cards and the final
+ * block so wording and spacing cannot drift between them. */
 function Question({ q, answer, onAnswer, onSkip }) {
   if (q.kind === 'scale') {
     return <ScaleControl q={q} value={answer?.value ?? null} onPick={(v, l) => onAnswer(v, l)} />
@@ -272,14 +245,12 @@ function Question({ q, answer, onAnswer, onSkip }) {
   return null
 }
 
-/* csvName and downloadCSV lived here. The dialog no longer offers a reviewer
-   their own answers as a file: Submit is the action, and it mails them.
-   src/views/Responses.jsx still exports everything for the one person who
-   actually needs a spreadsheet. */
+/* The dialog offers no CSV: Submit is the action and it mails the response.
+   src/views/Responses.jsx exports the spreadsheet. */
 
 
-/* Subscribing to the store rather than lifting state: the corner box and the
-   open survey both have to see an answer the moment the other records it. */
+/* Subscribes to the store rather than lifting state: the corner box and the
+   open survey must both see an answer the moment the other records it. */
 function useSurvey() {
   return React.useSyncExternalStore(subscribe, getVersion, () => 0)
 }
@@ -292,10 +263,8 @@ const SEEN_KEY = 'mindmap.review.seen'
 const putAway = () => { try { sessionStorage.setItem(OFF_KEY, '1') } catch {} }
 const isPutAway = () => { try { return sessionStorage.getItem(OFF_KEY) === '1' } catch { return false } }
 
-/* The box waits until the reviewer has actually been somewhere. Asking someone
-   to review a site they have seen one page of produces an answer about one
-   page. Three distinct routes is the threshold, which on this site means they
-   have at least left the overview and opened something. */
+/* The box waits for three distinct routes, which on this site means the
+   reviewer has left the overview and opened something. */
 const SEEN_MIN = 3
 function noteVisit(page) {
   try {
@@ -311,9 +280,8 @@ function countAnswered() {
   return REQUIRED.filter(q => have.has(q.id)).length
 }
 
-/* The corner box. Fixed, small, and out of the way of everything: it never
-   covers page content on a phone because it sits above the safe area and the
-   page is not padded for it: it is 56px of chrome, not a sheet. */
+/* The corner box: 56px of fixed chrome above the safe area, not a sheet, so
+   the page needs no padding for it. */
 export function ReviewLauncher({ page }) {
   useSurvey()
   const [open, setOpen] = React.useState(false)
@@ -340,13 +308,9 @@ export function ReviewLauncher({ page }) {
             onClick={() => setOpen(true)}
             className="flex min-h-[48px] items-center gap-3 px-4 text-left hoverOnly:bg-mist"
           >
-            {/* "Review sent" was a lie for as long as nothing was sent
-                anywhere. A finished response is now mailed out on its own, but
-                the label still reports only what this box can see, which is
-                the saved tally: whether the relay accepted the mail is the
-                survey's business and not the corner box's, and a box that
-                claimed delivery it has not checked would be the same lie
-                again. */}
+            {/* This label reports the saved tally only. Delivery is the
+                dialog's business — the box must not claim a send it has not
+                checked. */}
             <span className="font-display text-ui font-medium text-ink">
               {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Tell me what to fix'}
             </span>
@@ -394,21 +358,17 @@ function ReviewDialog({ onClose }) {
   const visitor = getVisitor()
   const complete = done >= total
 
-  /* Four states and not a boolean. A control that cannot say it is working says
-   * nothing at all while the relay takes its second or two, and a reviewer who
-   * gets no answer presses it again. */
-  /* Derived from the store rather than held here, for the same reason the
-     survey page derives it: a queued response retries itself in the background
-     and this has to notice. `busy` is the only local part. */
+  /* Four states, not a boolean: without a 'sending' state the control is mute
+   * for the second or two the relay takes and gets pressed again. Derived from
+   * the store, not held here, because a queued response retries itself in the
+   * background and this has to notice. `busy` is the only local part. */
   const [busy, setBusy] = React.useState(false)
   const send = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
 
-  /* The response goes out by itself the moment the last required question is
-   * answered: a reviewer who has answered everything has finished, and should
-   * not have to find a button to prove it. Keyed on completion so it fires on
-   * the transition rather than once per render, and submitResponse is the real
-   * guard anyway: it refuses once sentAt is set, so reopening a finished survey
-   * does not post the same response a second time. */
+  /* Sends itself once the last required question is answered. Keyed on
+   * completion so it fires on the transition, and submitResponse is the real
+   * guard: it refuses once sentAt is set, so reopening a finished survey does
+   * not post a second copy. */
   React.useEffect(() => {
     if (!complete) return
     let alive = true
@@ -417,10 +377,9 @@ function ReviewDialog({ onClose }) {
     return () => { alive = false }
   }, [complete])
 
-  /* The explicit path, for a reviewer who has said the one thing they came to
-   * say and is not going to answer the other eleven. force overrides the
-   * once-only guard; the button is disabled once it has succeeded, so it cannot
-   * be used to send the same response twice over. */
+  /* The explicit path, for a deliberately partial response. force overrides
+   * the once-only guard; the button disables itself after a success, so it
+   * cannot send the same response twice. */
   const sendNow = () => {
     setBusy(true)
     submitResponse({ force: true }).finally(() => setBusy(false))
@@ -439,10 +398,7 @@ function ReviewDialog({ onClose }) {
         ref={ref}
         className="mx-auto min-h-full w-full max-w-[42rem] bg-paper sm:min-h-0 sm:rounded-panel"
       >
-        {/* The count under the heading was the line the review pointed at:
-            "12 of 12 answered · saved as you go", set in the mono face, saying
-            the same thing twice. The tally is worth a line. That every answer
-            saves itself belongs in the sentence below, once. */}
+        {/* The tally only; that answers save themselves is said below, once. */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-3.5 sm:rounded-t-panel sm:px-8">
           <div>
             <h2 className="font-display text-sub font-bold text-ink">Tell me what to fix</h2>
@@ -503,12 +459,7 @@ function ReviewDialog({ onClose }) {
                   ? 'That is all of them. Thanks.'
                   : `${total - done} to go.`}
               </p>
-              {/* Submit is the filled control and the only one that does
-                  anything to the answers. "Download my answers" used to stand
-                  here as a ghost button beside it, and on the survey PAGE it
-                  was the only control at all, which meant the default outcome
-                  of filling in a review was that nobody read it. Close is the
-                  quiet one, because leaving is not the point of the dialog. */}
+              {/* Submit is the only control that acts on the answers. */}
               <Button
                 size="sm"
                 type="button"
@@ -525,11 +476,9 @@ function ReviewDialog({ onClose }) {
                 {complete ? 'Close' : 'Come back to it'}
               </Button>
             </div>
-            {/* There is no failure state left to render. A response that
-                cannot go right now is queued and retried on its own, so the
-                reviewer gets a receipt rather than a red line about a problem
-                that is not theirs: an activation link in the owner's mailbox,
-                or a relay that is down. */}
+            {/* No failure state: an undelivered response is queued and
+                retried on its own, so the reviewer gets a receipt rather than
+                a red line about the owner's activation link or relay. */}
             {send === 'queued' && (
               <p className="note mt-2.5">
                 Saved. It goes out the next time this page is open, or as soon as you are

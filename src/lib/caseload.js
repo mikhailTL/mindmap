@@ -1,28 +1,21 @@
-/* Counselor demo data.
-
-   Two rules this file exists to enforce:
-
-   1. Consent is the single source of truth. CONSENT below feeds both the
-      ledger on the Consent tab and the flags the triage board reads, so the
-      board physically cannot show a trend for a student whose guardian only
-      consented to crisis alerts. A reviewer found the two disagreeing when
-      they were maintained separately.
-   2. Nothing here is a measurement. Every number is generated from the
-      scoring model, deterministically, per student — which is also why the
-      per-student panels take the student as an argument instead of reading a
-      module-level constant. The earlier version showed Student 8241's drivers
-      and 45-day profile under every name on the board. */
+/* Counselor demo data. Two rules:
+   1. CONSENT is the single source of truth. It feeds both the Consent-tab
+      ledger and the triage board's flags, so the board cannot show a trend for
+      a student consented only to crisis alerts. Keep no second copy.
+   2. Nothing here is a measurement. Every number is generated from the scoring
+      model, deterministically, per student — which is why the per-student
+      helpers take the student as an argument. */
 
 export const K_ANONYMITY = 5
 
-/* Students consented to the school across the whole building. The counselor's
-   own eight are below; the year-group screens aggregate everyone. */
+/* Consented students across the whole building. The counselor's own eight are
+   below; year-group screens aggregate everyone. */
 export const SCHOOL_N = 96
 
 /* score  — may the school see a Mind Score at all
    trends — may the school see week-over-week movement
-   Crisis alerts reach the counselor either way; that is the one thing a
-   guardian cannot consent away, and it is stated wherever it applies. */
+   Crisis alerts reach the counselor either way: the one thing a guardian
+   cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
   'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends, academic correlation',                 basis:'FERPA', signedAt:'Aug 22, 2025' },
   'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no trends',                  basis:'FERPA', signedAt:'Aug 24, 2025' },
@@ -47,13 +40,12 @@ const SEED = [
 ]
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'moderate' : 'info'
-/* Labels name the band the Mind Score sits in, not a verdict on the student.
-   Keys, order and count are unchanged; only the words a counselor reads. */
+/* Labels name the band the Mind Score sits in, not a verdict on the student. */
 export const TIER_LABEL = { info:'Low', moderate:'Moderate', high:'Elevated', crisis:'Urgent' }
 export const TIER_ORDER = ['crisis','high','moderate','info']
 
-/* Every student on the caseload, each carrying what may be shown about them.
-   A consumer that renders `current` without checking `showScore` is a bug. */
+/* Every student, carrying what may be shown about them. Rendering `current`
+   without checking `showScore` is a bug. */
 export const roster = () => SEED.map(s => {
   const c = CONSENT[s.name]
   const current = clamp(s.base, 5, 99), weekAgo = clamp(s.base - s.drift, 5, 99)
@@ -63,10 +55,9 @@ export const roster = () => SEED.map(s => {
     tier: c.score ? tierOf(current) : null }
 })
 
-/* The list is ordered by how much the Mind Score moved, so it holds only the
-   students whose guardians consented to trends. The rest are shown separately
-   and out of the ordering, because ordering them would leak the thing they
-   withheld. */
+/* Ordered by how much the Mind Score moved, so it holds only students
+   consented to trends. The rest are listed separately and unordered, because
+   ordering them would leak the thing they withheld. */
 export const triage = () => roster().filter(s => s.showTrend)
   .sort((a, b) => b.velocity - a.velocity)
 export const scoreOnly  = () => roster().filter(s => s.showScore && !s.showTrend)
@@ -102,9 +93,8 @@ export const CONSENT_LEDGER = roster().map(s => ({
   signedAt:s.signedAt, expires:s.expires,
 }))
 
-/* Times match PROTOCOL_TIMES below. The protocol is still open at step four,
-   so there is no "closed" row — an earlier version logged a close that the
-   checklist had not reached. */
+/* Times must match PROTOCOL_TIMES below. The protocol is still open at the
+   last step, so there is no "closed" row. */
 export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:'R. Okonkwo',       action:'Guardian contacted by phone',                      subject:'Student 8241' },
   { at:'12 Sep, 2:26 PM', rel:'Today',     actor:'R. Okonkwo',       action:'In-person welfare check completed',                subject:'Student 8241' },

@@ -1,36 +1,22 @@
 import { questionText } from './questions'
 import { sendResponse } from './mail'
 
-/* The whole survey's state, in one module, with no React in it.
+/* The survey's state, in one React-free module with a subscribe list rather
+ * than context: it is read from a page component, from a floating card three
+ * subtrees away and from an export button, and has to survive a hash-route
+ * change that unmounts everything between.
  *
- * Why a hand-rolled store and not context: the survey has to be readable from
- * a page component, from a floating card mounted three subtrees away, and from
- * an export button, and it has to survive a hash-route change that unmounts
- * everything in between. A module with a subscribe list is the smallest thing
- * that does that, and it makes the persistence layer the same code path in
- * every consumer.
- *
- * The hard requirement underneath all of it: a reviewer in a private window,
- * or behind blocked site data, must still see a working site. Storage is
- * therefore never assumed — every touch of localStorage is guarded and the
- * failure mode is an in-memory store that loses itself on reload, which is a
- * worse survey but not a broken page.
- */
+ * Storage is never assumed. Every localStorage touch is guarded, and a private
+ * window or blocked site data degrades to an in-memory store. */
 
 const KEY = 'mindmap.survey'
 const VERSION = 1
 const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
 
-/* Shape is versioned so a later change can migrate instead of throwing on a
- * record it does not recognise. Anything that is not v:1 is treated as absent
- * rather than repaired blind — a reviewer's four answers are not worth a
- * migration guess that corrupts the rest.
- *
- * sentAt was added without bumping the version on purpose: it is one more key
- * with a null default, and the spread below fills it in for a record written
- * before it existed. Bumping VERSION for an additive field would throw away
- * the half-finished response a reviewer already has in their browser, which is
- * exactly the thing the guard above is meant to protect. */
+/* Versioned shape: anything not v:1 is treated as absent rather than repaired
+ * blind. Additive keys with a null default (sentAt, queuedAt) do NOT bump
+ * VERSION — the spread in read() fills them in, and a bump would discard the
+ * half-finished response already in a reviewer's browser. */
 const empty = () => ({ v: VERSION, visitor: null, answers: [], sentAt: null, queuedAt: null })
 
 let state = empty()
@@ -55,8 +41,8 @@ function write() {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(state))
   } catch {
-    /* Quota or a blocked store: the in-memory copy is still authoritative for
-     * this page view, so there is nothing to recover from and nothing to say. */
+    /* Quota or blocked store: the in-memory copy stays authoritative for this
+     * page view, so there is nothing to recover. */
   }
 }
 
@@ -69,8 +55,8 @@ function load() {
 function commit() {
   write()
   version += 1
-  /* A listener that throws must not stop the ones after it from updating, or
-   * one broken card freezes every other mounted survey on the page. */
+  /* A throwing listener must not stop the ones after it, or one broken card
+   * freezes every other mounted survey on the page. */
   listeners.forEach(fn => { try { fn() } catch {} })
 }
 
@@ -79,9 +65,8 @@ export function subscribe(fn) {
   return () => listeners.delete(fn)
 }
 
-/* Paired with subscribe for useSyncExternalStore: a monotonic integer is a
- * stable snapshot, where returning the answers array would hand React a new
- * identity on every render and loop. */
+/* Snapshot for useSyncExternalStore. A monotonic integer is stable; returning
+ * the answers array would hand React a new identity each render and loop. */
 export function getVersion() {
   load()
   return version
@@ -91,8 +76,7 @@ function newId() {
   try {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
   } catch {}
-  /* Not a UUID and not trying to be — it only has to be unique across the few
-   * browsers that will ever open this. */
+  /* Not a UUID: only has to be unique across the browsers that open this. */
   return 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)
 }
 
@@ -101,9 +85,8 @@ export function getVisitor() {
   return state.visitor
 }
 
-/* An empty or whitespace name is the Skip path, and it is recorded rather than
- * left null: an anonymous response is still a response, and a null visitor
- * would make the gate ask again on the next page. */
+/* An empty name is the Skip path and is still recorded: a null visitor would
+ * make the gate ask again on the next page. */
 export function setVisitor(name) {
   load()
   const clean = String(name ?? '').trim().slice(0, 60)
@@ -121,9 +104,8 @@ export function answersFor(page) {
   return state.answers.filter(a => a.page === page)
 }
 
-/* Re-answering replaces rather than appends: a reviewer who changes a rating
- * should not be counted twice, and the page survey decides whether a question
- * is done by whether an answer for it exists. */
+/* Re-answering replaces rather than appends — completeness is decided by
+ * whether an answer for the question exists. */
 export function recordAnswer({ page, qid, kind, value, label }) {
   load()
   const row = {
@@ -139,15 +121,14 @@ export function recordAnswer({ page, qid, kind, value, label }) {
   if (i >= 0) state.answers[i] = row
   else state.answers.push(row)
   commit()
-  /* Opportunistic: if there is a backend it gets the answer now, and if there
-   * is not, the rejection is swallowed and the answer stays pending. */
+  /* Opportunistic: a backend gets the answer now; with none, the rejection is
+   * swallowed and the answer stays pending. */
   syncPending()
   return row
 }
 
-/* The impact question carries a score and an optional sentence, and stars carry
- * a fraction. Flattening happens here so the CSV has one scalar per row and
- * Mikhail is not parsing JSON out of a spreadsheet cell. */
+/* Impact carries { score, note } and stars carry a fraction. Flattened here so
+ * the CSV holds one scalar per row instead of JSON in a cell. */
 function flatten(value) {
   if (value == null) return ''
   if (typeof value === 'object') {
@@ -176,9 +157,8 @@ export function exportRows() {
 
 const HEAD = ['visitorName', 'visitorId', 'page', 'questionId', 'question', 'kind', 'value', 'label', 'at']
 
-/* RFC4180: quote anything containing a comma, a quote or a newline, double the
- * quotes inside, and end lines with CRLF so Excel does not eat the last column
- * of a row on Windows. */
+/* RFC4180: quote anything holding a comma, quote or newline, double inner
+ * quotes, and end lines with CRLF or Excel on Windows eats the last column. */
 function cell(v) {
   const s = v == null ? '' : String(v)
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -189,17 +169,15 @@ export function toCSV(rows) {
   return [HEAD.join(','), ...body].join('\r\n')
 }
 
-/* One answer's identity, for matching a record against the batch that was just
- * accepted. The separator is a unit separator and not a space or a hyphen
- * because page ids contain hyphens ('app-student'), and a separator a key can
- * itself contain is a collision waiting for the first id that straddles it. */
+/* One answer's identity, for matching records against an accepted batch. The
+ * separator is U+001F and not a hyphen, because page ids contain hyphens
+ * ('app-student') and a separator a key can contain collides. */
 const rowKey = a => a.page + '\u001f' + a.qid
 
 let syncing = false
 
-/* Resolves either way, always. A peer reviewer on a train with no signal must
- * not see a rejection in the console or lose the answer they just gave, so a
- * failed POST leaves every record pending for the next attempt. */
+/* Always resolves, never rejects. A failed POST leaves every record pending
+ * for the next attempt rather than losing the answer. */
 export async function syncPending() {
   load()
   if (syncing) return false
@@ -226,28 +204,22 @@ export async function syncPending() {
   }
 }
 
-/* One mail for the whole response, sent once.
+/* One mail for the whole response, sent once. Distinct from syncPending's
+ * per-answer POST: different trigger, payload and success condition.
  *
- * Separate from syncPending on purpose: that one is a per-answer POST at an
- * optional self-hosted endpoint and stays as it is, because a database wants
- * every answer as it is given. A person reading their mail wants one message
- * when the reviewer is finished, so this is a different trigger, a different
- * payload and a different success condition.
+ * Returns mail.js's 'sent' | 'waiting' | 'unreachable', or 'idle'. Only 'sent'
+ * is terminal; the other two leave the response queued for flushQueue, so a
+ * failed delivery loses nothing.
  *
- * sentAt is persisted rather than kept in memory so a reviewer who answers
- * everything, reloads, and answers an optional question does not post a second
- * copy of the same response. force is the explicit button, which is how a
- * deliberately partial response gets through.
- *
- * Resolves to a boolean and never throws: every caller is a click handler or an
- * effect in a survey the reviewer is still looking at. */
+ * sentAt is persisted, not in memory, so a reviewer who finishes, reloads and
+ * answers an optional question does not post a second copy. force is the
+ * explicit button. Never throws. */
 let submitting = false
 
 export async function submitResponse({ force = false } = {}) {
   load()
-  /* Same in-flight guard as syncPending. The last answer can land at the same
-   * moment the button is pressed, and two posts of one response is worse than
-   * one that has to be pressed again. */
+  /* In-flight guard: the last answer can land as the button is pressed, and a
+   * doubled response is worse than one that has to be pressed again. */
   if (submitting) return 'idle'
   if (!state.visitor || !state.answers.length) return 'idle'
   if (state.sentAt && !force) return 'sent'
@@ -257,20 +229,17 @@ export async function submitResponse({ force = false } = {}) {
     if (result === 'sent') {
       state.sentAt = new Date().toISOString()
       state.queuedAt = null
-      /* The answers are delivered, so nothing is pending any more. This is also
-       * what stops recordAnswer's opportunistic syncPending from retrying a
-       * backend that is not there on every later keystroke. */
+      /* Delivered, so nothing is pending. This is also what stops
+       * recordAnswer's opportunistic syncPending from retrying an absent
+       * backend on every later keystroke. */
       state.answers = state.answers.map(a => (a.synced ? a : { ...a, synced: true }))
       commit()
       return 'sent'
     }
-    /* Not delivered, and not lost either. The response is stamped as queued and
-     * every later visit, and the moment the network comes back, tries it again.
-     * A reviewer is told it is saved and will send, because that is true, and
-     * because the two reasons it did not go now are both somebody else's to
-     * fix: an activation link in the owner's mailbox, or a relay that is down.
-     * Showing them a red failure for either one is a lie about whose problem
-     * it is and invites them to press the button four more times. */
+    /* Not delivered, not lost: stamped as queued and retried on every later
+     * visit and when the network returns. Both causes — an unclicked
+     * activation link, a relay that is down — are the owner's, not the
+     * reviewer's, so this is not surfaced as a failure. */
     state.queuedAt = state.queuedAt || new Date().toISOString()
     commit()
     return result
@@ -284,30 +253,24 @@ export async function submitResponse({ force = false } = {}) {
 }
 
 
-/* Is there a response sitting here that still wants to go? */
 export function isQueued() {
   load()
   return !!state.queuedAt && !state.sentAt
 }
 
-/* The retry. Cheap, silent, and safe to call on any event: it does nothing
- * unless there is a queued response, and submitResponse's own in-flight guard
- * stops two of these overlapping.
- *
- * This is the part that makes delivery not depend on the reviewer. They press
- * Submit once; if it cannot go at that moment it goes on their next visit, or
- * when their phone finds signal again, without anybody pressing anything. */
+/* The retry. Safe on any event: a no-op unless something is queued, and
+ * submitResponse's in-flight guard stops two overlapping. */
 export async function flushQueue() {
   load()
   if (!isQueued()) return 'idle'
   return submitResponse({ force: true })
 }
 
-/* Wired once, at module load, on the two events that actually change the
- * answer: the page being opened again, and the network returning. */
+/* Wired once at module load, on the two events that change the answer: the
+ * page being opened again, and the network returning. */
 if (typeof window !== 'undefined') {
   const tryFlush = () => { flushQueue().catch(() => {}) }
-  /* A beat after load, so a queued retry never competes with first paint. */
+  /* Delayed, so a queued retry never competes with first paint. */
   setTimeout(tryFlush, 2500)
   window.addEventListener('online', tryFlush)
 }

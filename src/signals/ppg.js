@@ -1,27 +1,15 @@
 import { bandpass, mean, median, percentile, resample, sd, spectrum } from './dsp.js'
 
-/* Photoplethysmography off the phone camera.
+/* Photoplethysmography off the phone camera. In: the per-frame mean red
+ * channel from capture.js. Out: rate, and variation in the gaps between beats.
+ * Constants were fitted against synthetic captures with known heart rate and
+ * known RMSSD; measured figures are quoted where they decided a value.
  *
- * A fingertip over the lens with the torch on turns the camera into the same
- * class of sensor the patch carries: light in, light out, and the blood volume
- * in between changing how much comes back. The red channel of each frame,
- * averaged over the middle of the sensor, is the raw signal. Everything here
- * turns that into the two heart features the patch model already takes — the
- * rate, and the variation in the gaps between beats.
- *
- * Every constant below was chosen against synthetic captures whose true heart
- * rate and true RMSSD were known in advance. The numbers those runs produced
- * are quoted where they decided something.
- *
- * One property of the method has to be stated plainly, because it decides how
- * the output may be used. Narrowing the band to steady the beat timing also
- * attenuates some of the genuine beat-to-beat variation: against synthetic
- * captures the returned HRV ran about 20% below the planted RMSSD, and the
- * shortfall was stable across rates. So this number is not a clinical RMSSD
- * and is never presented as one. It is an index on a fixed scale of its own,
- * and the scorer only ever uses it as a z-score against the same person's own
- * history captured the same way, where a constant scale factor cancels.
- */
+ * CAVEAT on the HRV output: narrowing the band to steady beat timing also
+ * attenuates genuine variation, and the returned HRV ran ~20% below the planted
+ * RMSSD, stably across rates. It is not a clinical RMSSD and must never be
+ * presented as one — only as a z-score against the same person's own history
+ * captured the same way, where the scale factor cancels. */
 export const FS = 30            /* camera frame rate the signal is resampled to */
 const WARMUP_S = 2              /* dropped: auto-exposure is still hunting */
 const MIN_S = 12
@@ -38,9 +26,8 @@ export function analysePPG(samples) {
   const durS = raw.length / FS
   if (durS < MIN_S) return fail('too-short', 'The capture stopped early.')
 
-  /* A lens that is not covered, or a fingertip pressed hard enough to blanch,
-     both give a bright nearly flat frame: a high mean with almost nothing
-     moving on it. */
+  /* Uncovered lens, or a fingertip pressed hard enough to blanch: both give a
+     high mean with almost no swing on it. */
   const level = mean(raw)
   const swing = percentile(raw, 0.95) - percentile(raw, 0.05)
   if (swing / (level || 1) < 0.0015) {
@@ -51,38 +38,30 @@ export function analysePPG(samples) {
   const f0 = dominant(wide)
   if (!f0) return fail('no-pulse', 'No steady pulse there. Hold still and try again.')
 
-  /* Beat timing is taken off a band tightened around the rate that was just
-     found, not off the whole 0.7-3.5 Hz window. Out-of-band noise moves each
-     peak independently, and independent per-beat error lands directly in
-     RMSSD, which is built from differences between neighbouring beats.
-     f0-0.5 Hz to f0x1.25 was the setting that minimised RMSSD error across
-     seven synthetic cases: narrower suppressed more noise but started
-     attenuating genuine variation (a true 55 ms read 17 ms low at f0x1.08),
-     wider let the noise back in. */
+  /* Beat timing comes off a band tightened around the rate just found: noise
+     outside it moves each peak independently and lands straight in RMSSD.
+     f0-0.5 Hz to f0x1.25 minimised RMSSD error over seven synthetic cases —
+     narrower attenuated real variation (true 55 ms read 17 ms low at f0x1.08),
+     wider readmitted noise. */
   const lo = Math.max(0.45, f0 - 0.5)
   const hi = Math.min(3.9, f0 * 1.25)
   const tight = bandpass(raw, FS, lo, hi)
   const amp = sd(tight) || 1
-  /* A second of filtered signal is discarded at each end. The band-pass runs
-     through an FFT, so the transform treats the record as circular and the
-     first and last samples are convolved with the opposite end of the
-     capture. Left in, those corrupted beats landed in RMSSD, and on a short
-     capture they dominated it. */
+  /* Discard one second at each end: the band-pass FFT treats the record as
+     circular, so the first and last samples are convolved with the opposite
+     end and would dominate RMSSD on a short capture. */
   const edge = FS
   const wave = tight.slice(edge, tight.length - edge).map(x => x / amp)
 
-  /* Upward zero crossings, not peaks. A band-limited pulse has a flat apex
-     and a steep zero crossing, and the steep part is where a given amount of
-     amplitude noise moves the time estimate least. Swapping apexes for
-     crossings cut RMSSD error by roughly a third on the same captures
-     (15.1 ms to 8.0 ms at 88 bpm). */
+  /* Upward zero crossings, not peaks: a band-limited pulse has a flat apex and
+     a steep crossing, where amplitude noise moves the time estimate least.
+     Crossings cut RMSSD error from 15.1 ms to 8.0 ms at 88 bpm. */
   const marks = crossings(wave, FS, 0.6 / f0)
   if (marks.length < 8) return fail('no-pulse', 'No steady pulse there. Hold still and try again.')
 
-  /* How far noise can move a crossing: the residual amplitude that survives
-     the timing filter, divided by how fast the wave is moving as it crosses.
-     Measured above the pulse band, where a camera's noise is flat, then
-     scaled to the bandwidth the timing filter passes. */
+  /* How far noise can move a crossing: residual amplitude over slope. Noise is
+     measured above the pulse band, where a camera's is flat, then scaled to
+     the timing filter's bandwidth. */
   const above = bandpass(raw, FS, 4.5, 14)
   const noiseSd = Math.sqrt((sd(above) ** 2 * (hi - lo)) / 9.5) / amp
   const slope = median(marks.map(m => Math.abs(m.slope)))
@@ -100,8 +79,8 @@ export function analysePPG(samples) {
   if (kept.length < 6) return fail('unstable', 'That one was too noisy to score. Try again, still.')
 
   const ibi = kept.map(k => k.d)
-  /* Successive differences only between genuinely adjacent intervals —
-     bridging a rejected beat would invent a difference that never happened. */
+  /* Successive differences only between adjacent intervals: bridging a
+     rejected beat invents a difference that never happened. */
   const diffs = []
   for (let i = 1; i < kept.length; i++) {
     if (kept[i].i === kept[i - 1].i + 1) diffs.push(kept[i].d - kept[i - 1].d)
@@ -110,33 +89,22 @@ export function analysePPG(samples) {
   const enough = diffs.length >= 8
   const rmssdRaw = enough ? Math.sqrt(mean(diffs.map(d => d * d))) : null
 
-  /* Two independent things blur an RMSSD read off a camera, and the stated
-     band is their sum in quadrature.
-
-     Sampling: RMSSD is a root-mean-square over a finite number of successive
-     differences, so its own standard error is about rmssd / sqrt(2N) — around
-     12% over a 32-second capture, 17% over 18 seconds.
-
-     Timing: the per-beat placement noise estimated above, which enters every
-     difference. HRV_BAND_K carries the two to about one standard deviation;
-     it was set so the stated band contained the true value on roughly four
-     captures in five across nine synthetic cases, rather than being picked to
-     look tight. */
+  /* Quadrature sum of two independent blurs: sampling — RMSSD's own standard
+     error, ~rmssd/sqrt(2N), being ~12% over 32 s and ~17% over 18 s — and
+     timing, the per-beat placement noise above. HRV_BAND_K carries the two to
+     about one sd; set so the band held the true value on four captures in five
+     across nine synthetic cases. */
   const hrvBand = enough
     ? HRV_BAND_K * Math.sqrt((rmssdRaw / Math.sqrt(2 * diffs.length)) ** 2 + (JITTER_CAL * jitterMs) ** 2)
     : null
 
-  /* The gate is on the timing noise itself rather than on its ratio to the
-     answer. A ratio test throws away exactly the captures worth keeping: a
-     stressed teenager has low HRV by definition, so dividing by it rejected
-     every 88 and 104 bpm capture in testing while their actual error was
-     under 1 ms. Timing noise below 14 ms separated the clean synthetic
-     captures (5.7-9.6 ms) from the noisy ones (17-55 ms) cleanly. */
+  /* Gate on absolute timing noise, never on its ratio to the answer: low HRV
+     is the signal of interest, and a ratio test rejected every 88 and 104 bpm
+     capture despite errors under 1 ms. The 14 ms cut separated clean synthetic
+     captures (5.7-9.6 ms) from noisy ones (17-55 ms). */
   const hrvOk = enough && jitterMs <= JITTER_MAX_MS
-  /* A band wider than the number it qualifies is not a measurement of that
-     number, it is a ceiling on it — which is what a metronome-steady pulse
-     produces, and printing "3 ms plus or minus 23" instead of "under 26 ms"
-     states a precision that is not there. */
+  /* A band wider than the number it qualifies is a ceiling, not a measurement:
+     report "under 26 ms", never "3 ms plus or minus 23". */
   const hrvResolved = hrvOk && hrvBand <= rmssdRaw
   const quality = qualityOf(wide, f0, ibi, kept.length, all.length, durS, jitterMs)
 
@@ -153,8 +121,8 @@ export function analysePPG(samples) {
   }
 }
 
-/* The strongest frequency inside the plausible heart band, interpolated across
-   its two neighbours so the answer is not pinned to a bin edge. */
+/* Strongest frequency in the 0.7-3.5 Hz heart band, in Hz, interpolated across
+   its two neighbouring bins so the answer is not pinned to a bin edge. */
 function dominant(x) {
   const { f, p } = spectrum(x, FS)
   let k0 = -1
@@ -168,8 +136,8 @@ function dominant(x) {
   return f[k0] + Math.max(-0.5, Math.min(0.5, d)) * (f[1] - f[0])
 }
 
-/* Upward zero crossings, placed between the two samples that straddle zero,
-   with the slope there kept because the timing-noise estimate needs it. */
+/* Upward zero crossings as { t: ms, slope }, placed between the two samples
+   straddling zero. The slope is kept for the timing-noise estimate. */
 function crossings(w, fs, minGapS) {
   const out = []
   const gap = minGapS * 1000
@@ -183,10 +151,9 @@ function crossings(w, fs, minGapS) {
   return out
 }
 
-/* Four things have to hold for a camera pulse to be worth scoring: the power
-   sits at one rate and its harmonic, the intervals agree with each other, most
-   of the beats found survived the artefact pass, and the capture ran long
-   enough. Multiplied, so any one of them failing pulls the result down alone. */
+/* Capture quality, 0-1: the product of power concentration at one rate and its
+   harmonic, interval regularity, beat survival, timing noise and length. A
+   product, so any one term failing pulls the result down alone. */
 function qualityOf(wide, f0, ibi, kept, total, durS, jitterMs) {
   const { f, p } = spectrum(wide, FS)
   let inBand = 0, atPulse = 0

@@ -27,46 +27,19 @@ import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Grid, PulseMark } f
 import { ScrollProgress } from '../ui/motion'
 import { cn } from '../lib/utils'
 
-/* The nav tabs used to drop a first-time visitor straight into a screen full
-   of somebody else's readings. They now open a walkthrough of what MindMap
-   does for that audience, and the app itself is behind one deliberate door:
-   Launch. `app-*` are the real dashboards; `student`/`parent`/`pro` are the
-   explanations of them. The old `check` and `privacy` urls still resolve, so
-   nothing that was ever linked is broken.
-
-   `survey` is new. The usability survey was only reachable from a box that
-   appears in the corner after three routes have been visited, which meant a
-   reviewer who came to do one job could not find the job. It has a url now
-   and a place in the bar; the corner box still works for everyone who never
-   goes looking. */
+/* `app-*` are the dashboards, `student`/`parent`/`pro` the pages that explain
+   them. `check` and `privacy` stay because they are already linked. */
 const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
                'app-parent','app-pro','check','privacy','tour','responses','survey']
 
-/* One bar was serving two different things.
- *
- * Half of these routes are a website: they argue for MindMap to somebody who
- * has not used it. The other half are the product: the screens a student, a
- * parent or a counselor would open on a Tuesday. Navigating a dashboard with
- * the same bar that sells the dashboard is what made this read as a prototype,
- * so the chrome now switches on the route. Marketing keeps the top bar; the
- * app gets a tab bar on a phone and a rail on a desktop, which is what every
- * product of this shape does, Oura and Dexcom included.
- *
- * `check` and `privacy` are in here because they render app screens, whatever
- * their urls suggest: `check` is the student section on its reading tab and
- * `privacy` is the parent section on its sharing tab. */
+/* Routes that render app screens, so the chrome switches: `check` is the
+   student section on its reading tab, `privacy` the parent section on its
+   sharing tab, whatever the urls suggest. */
 const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','privacy'])
 
-/* The command palette ships an entry whose id is `hub`, which is not a route
-   and used to render nothing at all. Rather than let any caller push a view
-   that does not exist, `go` resolves through here first. */
+/* The palette pushes `hub`, which is not a route; `go` resolves aliases. */
 const ALIAS = { hub: 'app' }
 
-/* These are the browser tab text, which is the one string on this site a
-   reader meets before the page has drawn. They were written as headlines with
-   an em dash hinge in each one ("The patch, em dash, MindMap"), so a row of
-   open tabs read as a row of identical fragments. Plain sentences now, no
-   dashes, the distinguishing word first. */
 const TITLE = {
   site:'MindMap, a wellness app for teenagers',
   patch:'The MindMap patch',
@@ -85,69 +58,36 @@ const TITLE = {
   survey:'Give feedback on MindMap',
 }
 
-/* The bar carried six flat tabs, three of which were "For students", "For
-   parents", "For schools". Three entries of the same shape, differing by one
-   word, is a list that should have been a list: they are one question, "who
-   is this for", and they belong behind one control. What is left at the top
-   level is the three things a stranger reads in order, then that question,
-   then the survey.
-
-   "No patch" was the label on the phone-only route, and read as an error
-   state: the same two words the app prints when no hardware is paired. It
-   names the thing you do use now, not the thing you do not. */
 const MAIN = [
   ['site',          'Overview'],
   ['patch',         'The patch'],
   ['without-patch', 'Without the patch'],
 ]
 
-/* The audience menu. Each one gets a line of its own, because "Students" on
-   its own does not say whether it is the app, the argument, or a sign-up. */
 const AUDIENCE = [
   ['student', 'Students', 'What a week of readings looks like'],
   ['parent',  'Parents',  'What a parent is shown, and what they are not'],
   ['pro',     'Schools',  'What a counselor sees across a year group'],
 ]
 
-/* Which top-level section each view belongs under. The three audience pages
-   all light the one menu trigger, so the bar still says where you are. */
+/* Which nav entry lights per view. The three audience pages share `who`. */
 const SECTION = { site:'site', patch:'patch', 'without-patch':'without-patch',
                   student:'who', parent:'who', pro:'who', survey:'survey',
-                  /* the app lives under no tab: it is reached through Open the
-                     app, so no nav entry should light up while you are inside */
                   app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
                   check:null, privacy:null, tour:null, responses:null }
 
-/* Every nav label used to be preceded by a counting numeral, 01 through 06.
-   Numbering a reader through a website tells them how much is left rather
-   than what any of it is, and at 390px those numerals were the reason the bar
-   wrapped to a third row. There is not a counting numeral left in here. */
-
-/* Tight cells until there is width to spend. The bar has to hold a wordmark,
-   five labels, the demo switch and the key on one line, and the roomier
-   spacing only fits once past 1536. */
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
-  /* Colour only, and only on the label. `transition-colors` also covered the
-     2px indicator under the active tab, so the rule faded in over 150ms while
-     the page under it had already swapped: the eye arrives at new content and
-     the thing that says where you are is still on its way. A header tab is
-     navigation, taken tens of times a session, and the gate for that frequency
-     is no animation at all. The indicator appears. */
+  /* Colour only. `transition-colors` also covers the 2px active indicator,
+     which then fades in over 150ms after the route has already swapped. */
   'transition-[color] duration-100',
   'after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-[2px]',
   on ? 'text-ink after:bg-accent' : 'text-ink-2 after:bg-transparent hoverOnly:text-ink hoverOnly:after:bg-rule'
 )
 
-/* The audience menu, hand rolled.
- *
- * There is no Radix menu package in this project and this is not worth adding
- * one for, but a div that shows a list on click is not a menu: a keyboard user
- * gets no arrow keys, no way out but Tab, and no idea the trigger does
- * anything. So the four things that actually make it a menu are here and the
- * rest is markup. Open on click, Escape and an outside press close it, the
- * arrows walk the items, and closing by keyboard puts focus back on the
- * trigger, because focus that falls to <body> loses a keyboard user the page.
+/* Hand-rolled menu; there is no Radix in this project. Click opens, Escape and
+ * an outside press close, arrows walk the items, and close returns focus to the
+ * trigger -- focus falling to <body> loses a keyboard user the page.
  */
 function AudienceMenu({ view, go }) {
   const [open, setOpen] = React.useState(false)
@@ -162,8 +102,7 @@ function AudienceMenu({ view, go }) {
     if (refocus) trigger.current?.focus()
   }, [])
 
-  /* Pointer down rather than click: a click that lands on another nav button
-     should close this and open that in one press, not take two. */
+  /* pointerdown, not click, so a press on another nav button takes one press. */
   React.useEffect(() => {
     if (!open) return
     const away = e => { if (!wrap.current?.contains(e.target)) close(false) }
@@ -237,15 +176,6 @@ function AudienceMenu({ view, go }) {
   )
 }
 
-/* The phone drawer.
- *
- * At 390px the old bar was a wordmark row, two rows of wrapped tabs and a
- * button row under them: roughly half the viewport of chrome above every
- * page. The bar is one 56px row now and everything that used to wrap lives in
- * here. Modal, so it traps Tab rather than letting focus wander onto the page
- * behind it, locks the body while it is up, and hands focus back to the
- * hamburger on the way out.
- */
 function Drawer({ view, go, onClose }) {
   const panel = React.useRef(null)
 
@@ -261,8 +191,6 @@ function Drawer({ view, go, onClose }) {
         const f = focusable()
         if (!f.length) return
         const i = f.indexOf(document.activeElement)
-        /* Tab out of either end wraps, which is what makes it a trap rather
-           than a suggestion. */
         const next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1)
         e.preventDefault(); f[next].focus()
       }
@@ -308,17 +236,6 @@ function Drawer({ view, go, onClose }) {
   )
 }
 
-/* One row, 56px, at every width.
- *
- * What was wrong with the old bar was not any one control, it was that the
- * bar had four kinds of thing in it at once: a wordmark, six numbered and
- * ruled cells, a segmented switch and a filled key, laid out with
- * `flex-wrap`, which on a phone turned into four stacked rows. A header is a
- * place to leave, not a page. So: the mark, the sections, one menu, the
- * survey, and the single filled control that opens the app. Below lg the
- * sections go behind a hamburger, because five labels and a wordmark do not
- * fit on one line and pretending otherwise is what caused the wrap.
- */
 function Header({ view, go }) {
   const [menu, setMenu] = React.useState(false)
   const burger = React.useRef(null)
@@ -330,9 +247,6 @@ function Header({ view, go }) {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-ink bg-mist">
       <div className="wrap flex h-14 items-center gap-1">
-        {/* No motto here any more. It is four words of explanation on a row
-            that now has to hold five destinations and a key, and it was the
-            first thing to give way. */}
         <button onClick={() => go('site')} aria-label="MindMap, go to the overview"
           className="mr-1 shrink-0 rounded-field px-1 py-1 text-row text-ink
             transition-colors duration-150 hoverOnly:bg-mist sm:mr-2 sm:text-head">
@@ -346,37 +260,16 @@ function Header({ view, go }) {
               className={linkClass(SECTION[view] === id)}>{label}</button>
           ))}
           <AudienceMenu view={view} go={go}/>
-          {/* The survey was the one thing reviewers were asked to do and the
-              one thing with no way to reach it. It is a destination now. */}
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
             className={linkClass(view === 'survey')}>Give feedback</button>
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
-          {/* Two things left this row. The demo/real switch, because it is a
-              setting belonging to the app and it never acted on anything a
-              marketing page draws; it lives in the app chrome now. And the
-              command-palette hint, which was a key cap styled like a control
-              that could not be pressed: the shortcut still works, the badge
-              that implied it was a button does not. */}
-          {/* Still the only filled control on the bar: everything else here
-              explains MindMap, this opens it. */}
           <button onClick={() => go('app')}
             className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-field px-3',
               'bg-accent font-display text-ui font-medium text-paper transition-colors',
               'duration-150 hoverOnly:bg-accent-ink sm:gap-2 sm:px-4')}>
-{/* Two testers could not tell the app from the site. Half of that is
-                what the app looks like, which the app chrome below answers, and
-                half is whether the door says it is a door. So this is a
-                crossing rather than a link: the label names where it goes and
-                the arrow points out of the page, and it is the exact mirror of
-                "Back to the site" in the app, which carries the same arrow
-                pointing the other way. One crossing each direction, both named,
-                neither doubled.
-
-                The full label gives way at 390px and nowhere else. It used to
-                hold out until 1280, which wasted the room the row had. */}
             <span className="sm:hidden">Open app</span>
             <span className="hidden sm:inline">Open the app</span>
             <ArrowRight aria-hidden className="size-4 shrink-0"/>
@@ -385,9 +278,8 @@ function Header({ view, go }) {
             aria-expanded={menu} aria-label="Open the menu"
             className="-mr-1.5 grid size-11 shrink-0 place-items-center rounded-field text-ink
               hoverOnly:bg-mist xl:hidden">
-            {/* Three equal rules. The `Stack` mark in ui/marks has a short
-                third rule, which is a text-alignment icon and next to a
-                wordmark reads as one. */}
+            {/* Inline, not the shared `Stack` mark: that one has a short third
+                rule and reads as a text-alignment icon beside a wordmark. */}
             <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none"
               stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
               <path d="M4 7h16M4 12h16M4 17h16"/>
@@ -401,25 +293,9 @@ function Header({ view, go }) {
   )
 }
 
-/* ── the app's own chrome ───────────────────────────────────────────────
- *
- * Four destinations, and they are the four things this app is: the screen a
- * student reads, the reading they take to fill it, the screen their parent
- * reads, and the console their school reads. The student's two sit together
- * because that is the order one person moves through them; the two oversight
- * screens follow.
- *
- * What is deliberately *not* a destination: Launch, which asks who you are and
- * is a door you walk through once, and the sharing screen, which is a tab
- * inside the parent and student sections and is where it belongs — a person
- * checks what is shared while looking at what is shared, not from a bar.
- * `#/privacy` still resolves and lights Parent, because that is the section it
- * opens.
- */
+/* Launch and the sharing screen are deliberately not destinations. `#/privacy`
+   still resolves, and lights Parent. */
 const DialMark = p => (
-  /* The score arch with the reading landed on it, which is what taking a
-     reading produces. A second wave mark next to the pulse trace would have
-     been two pictures of the same thing. */
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
     <path d="M3.8 17.8a8.2 8.2 0 0 1 16.4 0"/>
@@ -434,17 +310,10 @@ const APP_NAV = [
   ['app-pro',     'School',  Grid],
 ]
 
-/* Which destination each route belongs to. Launch is in here as null on
-   purpose: on the door nothing is lit, because nothing has been chosen. */
+/* Which destination each route lights. Launch is null: nothing chosen yet. */
 const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
                   'app-parent':'app-parent', privacy:'app-parent', 'app-pro':'app-pro' }
 
-/* The destination names, for the app's title bar.
- *
- * A website header says what the site is; an app's bar says which screen is
- * open. These are the four destinations plus the two routes that are tabs
- * inside one of them, written as the screen rather than as the audience.
- */
 const APP_TITLE = {
   app:            'Screens',
   'app-student':  'Student',
@@ -454,84 +323,28 @@ const APP_TITLE = {
   'app-pro':      'School',
 }
 
-/* ── the app shell ─────────────────────────────────────────────────────────
+/* App shell, inherited by every app route.
  *
- * Two testers said the same thing in the same words: the app reads as another
- * page of the website. It already had its own navigation, and that was not
- * enough, because everything else about it was still the brochure. Same
- * ground, same 60px page titles, same section padding.
- *
- * So the four things that make a surface a product are declared here, once,
- * and every app route inherits them:
- *
- *   ground   a tinted canvas, the turquoise at 15% over paper, which resolves
- *            to #d5eaef. No marketing band uses it: those run paper, card,
- *            mist, aqua, aqua-2, accent-wash, beam-wash and the one ink band.
- *            White chrome and white cards sit on top of it, which is the
- *            layering a product has and a landing page does not. Measured
- *            against every ink that lands on it: ink 11.97, ink-2 6.67,
- *            ink-3 4.80, accent 4.89, accent-ink 7.05, warn 4.63, crit 5.36,
- *            beam-ink 5.15. The weakest of them clears 4.5.
- *   type     headings step down hard. A marketing page title is `major`, 40px
- *            to 60px, and a marketing section head is `sub`, 32px to 48px. In
- *            here an h1 is `head` at 29px and an h2 is `row` at 25px, so the
- *            largest heading in the app is smaller than the smallest heading
- *            on any marketing page. Card titles follow at 18px and 17px.
- *   rhythm   every banded `.wrap` tightens to 24px of padding, 32px past lg.
- *            The marketing bands are 36 and 56.
- *   nav      one bar, pinned to the bottom edge at every width, and the
- *            destination you are on is a filled accent block in it. There
- *            was a 216px left rail past lg as well; see AppTabBar for why
- *            there is not one any more.
- *
- * Written as descendant variants rather than per screen because the screens
- * belong to the dashboards and the surface belongs to the chrome. A pane
- * cannot drift back towards the brochure without this file saying so.
+ *   ground  bg-beam/15 resolves to #d5eaef and is used by no marketing band.
+ *           Every ink on it clears 4.5 : 1, the weakest ink-3 at 4.80, so a
+ *           new ink used in here has to be checked.
+ *   type    h1 is `head` (29px), h2 `row` (25px), under the smallest
+ *           marketing heading (`sub`, 32px).
  */
 const APP_SHELL = cn(
-  /* No left inset: the rail that used to sit in it is gone, so the page runs
-     the full width of the window at every size. */
   'min-h-[100dvh] bg-beam/15',
-  /* Each step carries its own leading and tracking from the scale, so one
-     class per level is the whole override. `.mark` is exempt: it is a ruled
-     label at 16px that happens to be marked up as a heading, and a step on
-     it would blow a hairline annotation up to 25px. */
+  /* `.mark` is exempt: it is a ruled 16px label marked up as a heading, and a
+     step on it would blow a hairline annotation up to 25px. */
   '[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
   '[&_h3:not(.mark)]:text-meta [&_h4:not(.mark)]:text-ui',
   '[&_.wrap]:py-6 lg:[&_.wrap]:py-8',
 )
 
-/* The bar. One of them, at every width, and the app's only navigation.
- *
- * There used to be two: this below lg and a 216px fixed left rail past it.
- * The rail is deleted. Two arguments against it and the second one is the
- * owner's: a phone-shaped app does not have a sidebar, and this one looked
- * like a web console with a nav column rather than like a product. The first
- * is cheaper — one set of destinations rendered twice is one set of states
- * maintained twice, and the rail had already drifted (it carried the wordmark,
- * the demo switch and the way out; the bar carried none of them).
- *
- * Fixed to the bottom, always there, thumb height. Selection is carried four
- * ways and colour is only one of them: a rule lands on the top edge of the
- * cell, the mark fills, the label goes bold, and the ink darkens. Desaturate
- * a screenshot and you can still read where you are. Every cell is at least
- * 56 tall and a quarter of the row wide, so the smallest target here is
- * 97 x 56 at 390. The inset padding is what keeps the labels off a home
- * indicator, and the spacer the page renders below the footer is what keeps
- * this bar off the last line of content.
- *
- * Past 544 the row stops growing and centres instead. Four cells stretched
- * across 1440 put a third of a metre between the first and the last, which is
- * the thing that makes a stretched phone bar look like a mistake on a desk;
- * a thumb-width group in the middle of the edge does not.
- *
- * Keyboard: four real buttons in document order, so Tab reaches them and
- * Enter or Space activates them, and the one you are on carries
- * aria-current="page". That is the same contract the rail had.
- *
- * White, on a hairline. The marketing header is mist on a 2px ink rule, and
- * the two are different objects at a glance rather than the same object in
- * two places.
+/* Selection is carried four ways and colour is only one: rule on the cell's top
+ * edge, mark fills, label bolds, ink darkens -- it survives a desaturated
+ * screenshot. Cells are at least 56 tall and a quarter of the row, so the
+ * smallest target is 97 x 56 at 390. The inset padding keeps labels off the
+ * home indicator; the spacer below the footer keeps the bar off content.
  */
 function AppTabBar({ view, go }) {
   const here = APP_TAB[view]
@@ -548,14 +361,10 @@ function AppTabBar({ view, go }) {
                 aria-current={on ? 'page' : undefined}
                 className={cn('relative flex min-h-[56px] w-full flex-col items-center justify-center gap-1',
                   'px-1 pb-1.5 pt-2 transition-colors duration-150',
-                  /* the rule on the cell edge, which is what a tab bar uses to
-                     say "this one" when the fill alone could be a hover */
+                  /* rule on the cell edge: the fill alone could read as hover */
                   'before:absolute before:inset-x-0 before:top-0 before:h-[2px]',
                   on ? 'text-accent-ink before:bg-accent' : 'text-ink-2 before:bg-transparent')}>
-                {/* Solid, not tinted. An accent-wash pill measures 1.14 : 1
-                    against paper, which is a fill you can only see if you
-                    already know where to look; filled accent is 5.79 with
-                    paper reversed out of it. */}
+                {/* accent-wash on paper is 1.14 : 1; filled accent is 5.79. */}
                 <span aria-hidden className={cn('flex h-7 w-14 items-center justify-center rounded-bar',
                   'transition-colors duration-150', on ? 'bg-accent text-paper' : 'bg-transparent')}>
                   <Mark size={22}/>
@@ -571,14 +380,6 @@ function AppTabBar({ view, go }) {
   )
 }
 
-/* The way out. Named, not a logo that might mean home and might mean site, and
-   set as a quiet text control rather than anything that competes with the four
-   screens above it. It carries the arrow that the site's "Open the app"
-   carries reversed, so the two crossings are one pair.
-
-   One of these is on screen at a time, in the title bar, at every width. It
-   used to move between the rail and the bar at lg, which is how the two
-   copies of it drifted apart. */
 function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
@@ -587,10 +388,7 @@ function ExitToSite({ go, className, short = false }) {
       <ArrowLeft aria-hidden className="size-4 shrink-0"/>
       {short ? (
         <>
-          {/* At 390 this row holds the screen name, the demo switch and
-              this, and the three of them only just fit. So below sm the label
-              is the destination on its own and the full sentence comes back
-              above it. The arrow carries the direction at either size. */}
+          {/* At 390 this row also carries the screen name and the demo switch. */}
           <span className="sm:hidden">Site</span>
           <span className="hidden sm:inline">Back to the site</span>
         </>
@@ -599,18 +397,6 @@ function ExitToSite({ go, className, short = false }) {
   )
 }
 
-/* The app's title bar.
- *
- * Nothing about it is the marketing header, which is the point. White rather
- * than mist, 48px rather than 56, a hairline rather than a 2px ink rule, and
- * it carries the name of the screen you are on instead of a wordmark, five
- * links and a filled key. An app bar reports; a site header offers.
- *
- * It holds the demo switch and the way out at every width. It used to drop
- * both past lg and let the rail carry them; with the rail gone this is the
- * one place either of them lives, which is also the only way there is exactly
- * one of each on the screen.
- */
 function AppTopBar({ view, go }) {
   return (
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
@@ -628,14 +414,8 @@ function AppTopBar({ view, go }) {
   )
 }
 
-/* The app's foot.
- *
- * The site ends on a band: a 2px rule, a mist ground, 88px of padding and the
- * disclaimer set at reading size. A product does not end a screen with a
- * marketing band, so in here the same two sentences are a hairline and a line
- * of small print. ink-3 on the app canvas measures 4.80 : 1, so it still
- * clears 4.5 at 14px.
- */
+/* ink-3 on the app canvas measures 4.80 : 1, so this small print still clears
+   4.5 at 14px. */
 function AppFoot() {
   return (
     <footer className="border-t border-ink-3 px-[22px] py-5 sm:px-10 lg:px-14">
@@ -647,37 +427,19 @@ function AppFoot() {
   )
 }
 
-/* ── the survey, as a page ───────────────────────────────────────────────
- *
- * The survey itself lives in src/survey and is only ever opened as a dialog
- * out of the corner box, which is deliberate for a reviewer who is mid-browse
- * and wrong for a reviewer who arrived to do it. This is the same questions
- * and the same store, written down a page instead of inside an overlay, so an
- * answer given here is the same answer the corner box counts, and the whole
- * thing has a url that can be sent to someone.
- */
+/* Same questions and same store as the dialog in src/survey, so an answer given
+   here is the answer the corner box counts. Unlike the dialog it has a url. */
 
 function useSurveyStore() {
   return React.useSyncExternalStore(subscribe, getVersion, () => 0)
 }
 
-/* An answer is a row on a ruled list, not a card.
- *
- * Every choice here used to be a bordered rounded box, so a seven-option
- * question was seven identical capsules stacked in a column and a twenty
- * question survey was a hundred and forty of them. That is the shape a
- * generated interface reaches for when it has a list and no idea what the list
- * is: the box adds nothing the hairline above the row does not already do, and
- * a column of them buries which one is picked under the sameness of the rest.
- * Rules separate; a bar, a fill and a weight say which one is chosen. */
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
   'font-display text-ui transition-colors duration-150 ease-out',
   on ? 'bg-accent-wash font-bold text-ink' : 'font-medium text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink'
 )
 
-/* The selected marker, and the same one the phone drawer uses for the page you
-   are on, so "picked" looks the same everywhere on the site. */
 const Bar = ({ on }) => (
   <span aria-hidden className={cn('mr-3 h-5 w-[3px] shrink-0 rounded-bar',
     on ? 'bg-accent' : 'bg-transparent')}/>
@@ -717,10 +479,8 @@ function ChoiceField({ q, value, onPick }) {
   )
 }
 
-/* Eleven buttons wrap on a phone, so the ends are labelled. An unlabelled
-   0 to 10 row gets answered backwards by the people you least want to
-   misread. The only bordered cells left in the survey: a horizontal scale of
-   single figures has nothing else to hold it together. */
+/* The ends are labelled: an unlabelled 0 to 10 row gets answered backwards.
+   The only bordered cells left in the survey. */
 function NpsField({ q, value, onPick }) {
   return (
     <div className="mt-3">
@@ -750,9 +510,6 @@ function TextField({ q, initial = '', onSave, onSkip }) {
     <div className="mt-3">
       <textarea rows={3} value={text} maxLength={q.maxLength} placeholder={q.placeholder}
         aria-label={q.prompt} onChange={e => setText(e.target.value)} className={fieldClass}/>
-      {/* "Ready to save." used to sit here the moment a character was typed,
-          which is a line of text that reports the obvious. The hint now only
-          exists while Save is off, saying why it is off. */}
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
         <span className="text-fine tabular-nums text-ink-3">{text.length}/{q.maxLength}</span>
@@ -806,35 +563,14 @@ function SurveyField({ q, answer, onAnswer, onSkip }) {
   return null
 }
 
-/* A reviewer used to be offered exactly one thing to do at the end of this
-   page: download their own answers as a CSV. That is a fine secondary courtesy
-   and a terrible primary action. It left every response sitting on the
-   reviewer's own disk, which is the same failure the store's POST had: the
-   whole point of asking twelve questions is that somebody reads the answers.
-
-   The button is now Submit, and submitting mails the response. The CSV is not
-   missed: nobody taking a usability survey wants a spreadsheet of their own
-   opinions, and the one person who does want the data is the one it is now
-   sent to. */
-
-/* Submit, and what happens after it.
- *
- * Four states and all four are visible, because a button that does not say
- * whether it worked is a button a reviewer presses twice. `sent` is read back
- * from the store rather than kept only in this component, so reopening the page
- * after a successful send still says so instead of inviting a second copy.
- *
- * It is enabled as soon as there is one answer. A half-finished review is worth
- * more than no review, and the store stamps it so a later complete submission
- * is a new send rather than a silent no-op. */
+/* `sent` is read back from the store, not held here, so reopening the page after
+ * a successful send does not invite a second copy. Enabled from the first
+ * answer: the store stamps a partial response, so a later full one is a new
+ * send rather than a no-op.
+ */
 function SubmitRow({ done, total }) {
-  /* Derived from the store on every render, not held here. A queued response
-     is retried in the background on a timer and on the network returning, and
-     when one of those succeeds the store commits and this re-renders through
-     the page's own subscription. Holding the outcome in component state meant
-     a reviewer who left the page open watched it deliver and still read "it
-     will send on its own". Only `busy` is local, because the in-flight moment
-     is this component's and nothing else's. */
+  /* Derived from the store each render: a queued response is retried in the
+     background and the commit re-renders through the page's subscription. */
   const [busy, setBusy] = React.useState(false)
   const empty = answersFor(PAGE).length === 0
   const state = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
@@ -844,12 +580,7 @@ function SubmitRow({ done, total }) {
     try { await submitResponse({ force: true }) } finally { setBusy(false) }
   }
 
-  /* 'queued' is the state this component exists to get right. The response is
-     saved and will be retried on its own; the reviewer has done everything
-     asked of them, so the line is a receipt and not an error. The only thing
-     they are not told is WHY it has not gone yet, because the two reasons are
-     an activation link in somebody else's mailbox and a relay being down, and
-     neither is theirs to act on. */
+  /* 'queued' is saved and retried on its own, so the line is a receipt. */
   const line =
     state === 'sent' ? 'Sent. Thank you.'
       : state === 'queued' ? 'Saved. It will send on its own.'
@@ -894,12 +625,8 @@ function SurveyPage() {
   const answer = (q, value, label) => recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
 
   return (
-    /* <main>, like every other page: without it this route had no main
-       landmark and a screen reader had nothing to skip to. */
+    /* <main> so this route has a main landmark for the skip link. */
     <main>
-      {/* "Tell us where this falls down" was the heading here. There is no
-          "us": one student reads these. And "where this falls down" is not a
-          phrase anybody says out loud, which is why it read as filler. */}
       <Section tone="paper" tight>
         <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
           Give feedback
@@ -915,25 +642,8 @@ function SurveyPage() {
         </p>
       </Section>
 
-      {/* tight, because the default section padding put about a hundred pixels
-          of nothing between "0 of 12 answered" and the first question, and the
-          rule between the two bands already says a new thing has started. */}
       <Section tone="card" tight>
         <div>
-          {/* Twenty questions down one column, so the vertical rhythm is the
-              whole layout. It was mt-12 between sections and gap-8 with pt-6
-              inside them, which put a band of nothing between every question
-              and cost four extra scrolls to reach the end. The rule above each
-              prompt is what separates them; the space only has to keep the
-              rule off the answer above it.
-
-              From lg the section's name moves into a rail beside the questions
-              instead of sitting above them. The answers keep a 44rem reading
-              measure whatever the window does, so on a wide screen the column
-              was a strip of questions with half the page empty to the right of
-              it. The rail fills that with the one thing worth having on screen
-              while you answer ten statements in a row: which ten they are.
-              It sticks, so it is still there at the tenth. */}
           {SECTIONS.map(section => (
             <section key={section.id}
               className="mt-9 border-t border-ink pt-3 first:mt-0
@@ -948,10 +658,6 @@ function SurveyPage() {
                   const off = skipped.has(q.id)
                   return (
                     <div key={q.id} className="border-t border-rule pt-4">
-                      {/* "Optional" sits next to the prompt, not flung to the
-                          far side of the column: pushed apart by a
-                          justify-between it reads as a heading in a table
-                          rather than a note about this one question. */}
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         <p className="max-w-[44ch] font-display text-body font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
@@ -972,8 +678,6 @@ function SurveyPage() {
               </div>
             </section>
           ))}
-          {/* Same grid as a section, so the closing row lines up under the
-              answers rather than under the rail. */}
           <div className="mt-9 lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
             <div aria-hidden/>
             <SubmitRow done={done} total={total}/>
@@ -993,30 +697,19 @@ export function App() {
   const [view, setView] = React.useState(fromHash)
   const mainRef = React.useRef(null)
   const [said, setSaid] = React.useState('')
-  /* Three gates, in order, and each one only for a first-time visitor:
-     the title sequence, then the name, then the per-page questions.
-     A returning reviewer sees none of the first two: the whole point of the
-     skip is that nobody sits through an intro twice. The responses page is
-     excluded from all of it, since Mikhail reading the results is not a
-     respondent, and a survey card over the data he came to read would be
-     absurd. */
+  /* Three gates in order: title sequence, name, per-page questions. The
+     responses route is excluded from all three. */
   const admin = view === 'responses'
-  /* Plays on every load, not once ever. Only the Skip control suppresses it,
-     and it suppresses it permanently, because a visitor who watched it may
-     well want it again and a visitor who skipped it has told you exactly what
-     they want. */
+  /* Plays on every load. Only Skip suppresses it, and it does so permanently. */
   const [showIntro, setShowIntro] = React.useState(() => {
     try { return !admin && !introSuppressed() } catch { return false }
   })
   const [visitor, setVisitorState] = React.useState(() => {
     try { return getVisitor() } catch { return null }
   })
-  /* Intro writes its own suppression key when Skip or Esc is used, so this
-     only has to take the overlay down. */
   const endIntro = React.useCallback(() => setShowIntro(false), [])
-  /* A keyboard user lost their place on every navigation: focus fell back to
-     <body>, the title never changed, and the scroll position carried over from
-     the previous screen. */
+  /* Navigation resets scroll, title and focus itself: focus otherwise falls to
+     <body> and the scroll position carries over from the previous screen. */
   const land = React.useCallback(v => {
     window.scrollTo(0, 0)
     document.title = TITLE[v] || 'MindMap'
@@ -1026,9 +719,7 @@ export function App() {
       window.ScrollTrigger?.refresh()
     })
   }, [])
-  /* Every caller resolves through here, so a control that asks for a view
-     which no longer exists lands on the overview instead of rendering nothing.
-     The command palette was doing exactly that. */
+  /* Unknown views fall back to the overview rather than rendering nothing. */
   const go = React.useCallback(raw => {
     const v = ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
     if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
@@ -1044,13 +735,10 @@ export function App() {
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
   const inApp = APP_VIEWS.has(view)
 
-  /* Three routes are tabs inside a section rather than pages of their own, and
-     they keep their URLs so every existing link still lands in the right place. */
+  /* Three routes are tabs inside a section and keep their urls. */
   const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
               tour:Tour, responses:Responses, survey:SurveyPage,
-              /* what MindMap does for each audience, behind the Who uses it menu */
               student:ForStudents, parent:ForParents, pro:ForSchools,
-              /* the app, behind Open the app */
               app:Launch, 'app-pro':Pro,
               'app-student': p => <Students {...p} tab="today"/>,
               'app-parent':  p => <Parents  {...p} tab="week"/>,
@@ -1058,9 +746,8 @@ export function App() {
               privacy:       p => <Parents  {...p} tab="shared"/> }[view]
   return (
     <>
-      {/* sr-only clips this to a 1x1 box, which an audit reads as a 1px tap
-          target and a keyboard user gets no real hit area from. Full size,
-          parked above the viewport, sliding down on focus. */}
+      {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
+          and which leaves a keyboard user no hit area. */}
       <a href="#main"
         onClick={e => { e.preventDefault(); mainRef.current?.focus() }}
         className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-field bg-ink px-5 py-3
@@ -1073,35 +760,18 @@ export function App() {
       {!inApp && <Header view={view} go={go}/>}
       <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      {/* APP_SHELL is where the app stops looking like the site: the canvas,
-          the heading steps and the band padding all land here and every pane
-          inside inherits them. Nothing is clipped and nothing is transformed,
-          so the sticky columns inside the reading screen still stick. */}
+      {/* Nothing in here is clipped or transformed: a transform creates a
+          containing block and breaks the sticky columns in the reading screen. */}
       <div className={cn(inApp && APP_SHELL)}>
         {inApp && <AppTopBar view={view} go={go}/>}
         <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
           <V go={go} key={view}/>
         </div>
-        {/* Mounted per view and keyed by it, so leaving a page abandons any
-            question that was mid-answer rather than carrying it to the next one. */}
-        {/* One box in the corner, not a card over the page. It counts the
-            routes visited and only appears once someone has been around. It is
-            suppressed on the survey route itself, where offering to open the
-            survey over the survey would be a joke. */}
-        {/* Not on the app routes. A feedback bubble parked over a dashboard is
-            the clearest tell that a thing is a demo rather than a product, and
-            on a phone it would sit directly on top of the tab bar. It still
-            follows a reviewer around all eight marketing pages, and the survey
-            has its own place in the marketing bar. */}
+        {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
+        {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
         {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
-        {/* The site keeps its band. The app gets a line of small print,
-            because the band is the last thing on the page that still read as
-            the brochure.
-
-            The band's extra foot room under sm is not decoration: the feedback
-            pill is fixed at bottom-4 right-4 and was sitting on the medical
-            disclaimer on a phone, which is the one line on this page that
-            should never be covered. 7rem clears the pill and its safe area. */}
+        {/* The extra foot room under sm is load-bearing: the feedback pill is
+            fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
         {inApp ? <AppFoot/> : (
           <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
@@ -1112,8 +782,7 @@ export function App() {
             </div>
           </footer>
         )}
-        {/* What keeps the tab bar off the last line of the page. Its height
-            plus whatever the handset reserves at the bottom of the glass. */}
+        {/* Clears the fixed tab bar: its height plus the handset's bottom inset. */}
         {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
       </div>
       {inApp && <AppTabBar view={view} go={go}/>}

@@ -19,42 +19,19 @@ import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
 } from '../lib/terms'
 
-/* The three audience routes: for students, for parents, for schools.
+/* The three audience routes: students, parents, schools.
  *
- * The last pass answered "make these pages theirs" by giving each one more
- * machinery: a day tagger a student had to fill in, four sharing switches, a
- * caseload that could be re-sorted, a detail panel that opened under the arch.
- * The owner's note on it was that the diagrams were too complex, and he was
- * right about the cause. Every one of those controls is a thing a reader has
- * to operate before the page will say anything. A landing page that has to be
- * operated has not made its point.
+ * One figure per section, and nothing on the student or parent page is
+ * clickable except the door into the app. The schools page is deliberately the
+ * dense one — that asymmetry is intended, so do not even out the three.
  *
- * So each page now carries ONE picture per section and the fewest words that
- * can sit under it, and nothing on the student or parent page can be clicked
- * except the door into the app:
- *
- *   students  the rainbow arch with its clouds, large, and the four signals
- *   parents   the week, and the one sentence it produces
- *   schools   real figures, because this is the audience that wants them
- *
- * Density is not the enemy on the schools page and is the enemy on the other
- * two. That asymmetry is deliberate and is the whole design.
- *
- * Density means figures, not paragraphs. The pass before this one put the
- * schools page at 548 rendered words, and over half of them were prose laid
- * around the figures: a lede that restated its heading, a caption that said in
- * words what the bars already showed, the consent qualifier written out three
- * times. The copy is cut back to a claim per heading and one line under it.
- * No figure lost a data point, and one whole figure went with the prose, for
- * the reason given where it used to stand.
- */
+ * All consent wording comes from lib/terms.js verbatim so the three pages
+ * cannot drift apart on it. */
 
 /* ───────────────────────────── shared page parts ───────────────────────── */
 
-/* The band takes a photograph from lg and stacks it under the copy below
-   that. The images are concept shots: the patch in them is rendered from the
-   same CAD the 3D model on the patch page is built from, and no unit has been
-   worn by anybody. */
+/* Hero images are concept shots, the patch rendered from the same CAD as the
+   3D model. No unit has been worn — never describe them as photographs. */
 function Hero({ label, title, lede, go, photo, photoAlt }) {
   return (
     <div className="border-b border-rule bg-mist">
@@ -72,12 +49,8 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
         <p className="mt-4 max-w-[46ch] text-lead text-ink-2">{lede}</p>
         </div>
         {photo && (
-          /* The photograph is the only thing in the band that is not type, so
-             it is the only thing that moves: 48px of total travel against a
-             headline that holds still, which is what separates the two into
-             planes. The image keeps its own box and its own height, so the
-             grid is laid out exactly as before and the travel is less than the
-             band's vertical padding at every width. */
+          /* 48px travel, under the band's padding at every width; the image
+             keeps its own box, so the grid does not reflow. */
           <Parallax2D distance={48} className="mt-6 lg:mt-0">
             <img src={PHOTOS[photo]} alt={photoAlt} loading="eager" decoding="async"
               width="1344" height="752"
@@ -90,26 +63,16 @@ function Hero({ label, title, lede, go, photo, photoAlt }) {
   )
 }
 
-/* A figure on a page: the chart, and the caveat. The caveat is attached here
-   rather than written into each section, because a chart that loses its "this
-   is generated" line in an edit is the one mistake on this site that would
-   actually matter.
+/* DemoNotice is attached here, not in each section, so a figure cannot lose its
+   "this is generated" line in an edit. Only the chart drifts; the caveat stays.
 
-   The chart inside also drifts against the figure's own frame as the figure
-   crosses the viewport, which is why the distance is a prop with a value per
-   call site rather than one number here: three pages of figures all drifting
-   the same amount reads as a rendering fault. It is the chart that moves and
-   not the figure, so the mono label above it and the generated-data line below
-   it stay put — a caveat that slid around with the chart it qualifies would be
-   the worst thing on the page to animate.
+   `drift` is per call site (one distance everywhere reads as a rendering
+   fault). Keep each value small enough that half fits inside this figure's
+   padding, or the chart reaches its edge.
 
-   Every distance passed is small enough that half of it fits inside this
-   figure's own padding, so the chart cannot reach the figure's edge, let alone
-   the viewport's. `clip` is 'x' by default and is turned off for the two
-   WeekChart figures: that svg is `overflow-visible` so it can paint its value
-   labels outside its own box, and a horizontal clip would shear them. Turning
-   it off is safe there and only there, because those two drift in y alone and
-   a vertical translate cannot make anything wider. */
+   `clip` defaults to 'x' and is turned off only for the two WeekChart figures:
+   that svg is `overflow-visible` to paint value labels outside its box, and a
+   horizontal clip shears them. Safe only there — those drift in y alone. */
 function Fig({ title, children, className, drift = 26, clip = 'x' }) {
   return (
     <figure className={cn('field m-0 mt-5 p-4 sm:p-5', className)}>
@@ -120,15 +83,14 @@ function Fig({ title, children, className, drift = 26, clip = 'x' }) {
   )
 }
 
-/* The one door into the app, at the foot of each page. It takes the dark band,
-   which is this site's single separation device and is spent once per page. */
+/* The ink band is the site's single separation device: one per page. */
 function Closer({ title, line, label, view, go }) {
   return (
     <Section name="Open the app" tone="ink" tight>
       <SectionHead tone="ink">{title}</SectionHead>
       <SectionLede tone="ink">{line}</SectionLede>
-      {/* solid is an ink block, which is invisible on the ink band. accent.lit
-          is the band's own green and carries ink at 7.67 : 1. */}
+      {/* The solid variant disappears on the ink band; accent-lit carries ink
+          text at 7.67:1. */}
       <Button className="mt-6 bg-accent-lit text-ink hoverOnly:bg-paper" onClick={() => go(view)}>
         {label} <ArrowRight aria-hidden/>
       </Button>
@@ -138,11 +100,7 @@ function Closer({ title, line, label, view, go }) {
 
 /* ═══════════════════════════════ for students ═══════════════════════════ */
 
-/* The four signals as a flat readout, replacing the RainbowKey tiles and the
-   panel that opened under them. Those are the app's control surface and they
-   belong on the app screen; here they were four buttons that only ever led
-   back to the figure already on the page. Name, colour, figure, bar, nothing
-   to press, nothing to read twice. */
+/* Read-only. The interactive RainbowKey belongs on the app screen, not here. */
 function Signals({ rings }) {
   return (
     <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:gap-4">
@@ -153,12 +111,12 @@ function Signals({ rings }) {
           <li key={r.id} className="field p-4">
             <span className="flex items-center gap-2.5">
               <Icon aria-hidden className="size-5 shrink-0" style={{ color: s.glow }}/>
-              {/* text-ui until the tiles get a full half-column: "Temperature"
-                  at text-row overruns a 115px tile at 390px and clips */}
+              {/* text-ui until lg: "Temperature" at text-row overruns a 115px
+                  tile at 390px and clips. */}
               <span className="font-display text-ui font-bold leading-tight text-ink lg:text-row">{s.name}</span>
             </span>
-            {/* the figure is ink, never the signal's colour: four coloured
-                numerals down a page read as four alarms */}
+            {/* Numeral is ink, never the signal's colour: four coloured numerals
+                down a page read as four alarms. */}
             <span className="mt-3 block font-mono text-num tabular-nums leading-none text-ink">{r.value}</span>
             <Progress value={r.value} tone={s.glow} label={`${s.name}, ${r.value} out of 100`}
               className="mt-3 h-1.5"/>
@@ -178,11 +136,9 @@ export function ForStudents({ go }) {
         title={`Your ${SCORE}, every day.`}
         lede="You decide what leaves your phone."/>
 
-      {/* W2-D: ownership is the opening claim, not a line at the foot of the
-          page. The consent wording is terms.js verbatim so that the student,
-          parent and school pages cannot drift apart on it. The third sentence
-          that used to sit between the two constants said that nothing is
-          shared by default, which is what both of them already say. */}
+      {/* Consent wording is terms.js verbatim. CONSENT_SHORT and CONSENT_OFF
+          together already state that nothing is shared by default — do not add
+          a third sentence saying it again. */}
       <Section name="Your call" tone="card" tight>
         <SectionHead>You see all of it, first</SectionHead>
         <SectionLede>{CONSENT_SHORT} {CONSENT_OFF}</SectionLede>
@@ -191,17 +147,10 @@ export function ForStudents({ go }) {
       <Section name="Today" tone="paper">
         <SectionHead>Your {SCORE} today</SectionHead>
         <SectionLede>Measured against your own normal, never against anyone else.</SectionLede>
-        {/* The largest figure on the student page and the one with the most
-            room around it, so it takes the largest drift of the three. */}
         <Fig drift={36}>
           <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
-            {/* the arch is the picture on this page, so it gets the room: it
-                leads at any width and takes half the row on a laptop */}
             <RainbowDial score={62} usual={51} rings={rings} size={440}/>
             <div className="w-full min-w-0">
-              {/* no sentence over the tiles. The dial already shows the day
-                  sitting above the usual band and the tiles already show which
-                  signal moved, so the line was the figure read aloud. */}
               <Signals rings={rings}/>
             </div>
           </div>
@@ -210,9 +159,7 @@ export function ForStudents({ go }) {
 
       <Section name="Your week" tone="card">
         <SectionHead>Which days ran hard</SectionHead>
-        {/* no lede: it counted the bars drawn directly under it. Bleeds to the
-            screen edge on a phone, as on the parent page's copy of this
-            figure, where the reason is written out. */}
+        {/* Full bleed on a phone; see the parent page's copy for why. */}
         <Fig drift={20} clip={false}
           className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
@@ -233,24 +180,19 @@ export function ForStudents({ go }) {
 
 /* ═══════════════════════════════ for parents ════════════════════════════ */
 
-/* Two lists side by side, because the contrast IS the product for a parent.
-   The second list is not a settings page they have not found yet: there is no
-   parent view of any of it, which is why it is drawn as an absence. */
+/* Consent scope for a parent. UNSEEN is not a settings page a parent has not
+   found — there is no parent view of any of it, which is why it is drawn as an
+   absence. Moving a row between these lists is a consent change. */
 const SEEN = [`The daily ${SCORE}`, 'Which days ran high', 'A patch gone quiet']
 const UNSEEN = ['Any single reading', NOTES, LOCATION, 'Anything in real time']
 function SeenUnseen() {
   return (
     <div className="mt-7 grid gap-5 sm:grid-cols-2 sm:gap-7">
       {[['You see', SEEN, true], ['You never see', UNSEEN, false]].map(([head, rows, yes], ci) => (
-        /* The two panels drift by different amounts, 34 and 18, so the pair
-           reads as two cards at two depths rather than as one band sliding.
-           The contrast between the lists is the figure here, and giving them
-           different travel is the cheapest way to say they are two things.
-
-           h-full three deep, because the wrapper is now the grid item and the
-           row's stretch stops at it: one list has three rows and the other
-           four, so without this the shorter panel loses the matched height the
-           comparison is drawn in. */
+        /* Unequal drift (34 / 18) so the pair reads as two depths. h-full three
+           deep because Parallax2D is the grid item and the row's stretch stops
+           there: the lists have three and four rows, and without it the shorter
+           panel loses the matched height the comparison needs. */
         <Parallax2D key={head} distance={ci ? 18 : 34} className="h-full [&>div]:h-full">
         <div className="field h-full p-5 sm:p-6">
           <h3 className="font-display text-head font-bold text-ink">{head}</h3>
@@ -280,14 +222,11 @@ export function ForParents({ go }) {
 
       <Section name="The week" tone="paper">
         <SectionHead>Her week, against her own normal</SectionHead>
-        {/* Full bleed on a phone. WeekChart collides the value labels on two
-            adjacent above-range bars once the plot drops under about 330px,
-            and Wednesday and Thursday are exactly that pair. Taking back the
-            22px gutters puts the chart at 362px, which clears them. */}
+        {/* Full bleed on a phone. WeekChart collides value labels on two
+            adjacent above-range bars below ~330px of plot, and Wed/Thu are
+            that pair. Reclaiming the 22px gutters gives 362px, which clears. */}
         <Fig drift={20} clip={false}
           className="-mx-[22px] rounded-none border-x-0 p-3.5 sm:mx-0 sm:rounded-field sm:border-x sm:p-7">
-          {/* the sentence sits above the chart, not under it. A parent who
-              reads only the first line has still got the whole message. */}
           <p className="mb-5 max-w-[40ch] text-body text-ink">
             Monday, Wednesday and Thursday ran high.</p>
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
@@ -295,26 +234,19 @@ export function ForParents({ go }) {
       </Section>
 
       <Section name="What you see" tone="card">
-        {/* the heading names both lists, because the contrast is the figure.
-            The lede under it used to say there is no parent view for the second
-            list, which is what the second list is drawn to say. */}
         <SectionHead>What you see, and what you never see</SectionHead>
         <SeenUnseen/>
       </Section>
 
-      {/* W2-B: the control model, stated as mechanism, on the page a parent
-          reads. Per audience is the heading now rather than a clause at the end
-          of a four-sentence lede: switching a week on for home switches nothing
-          on for school. CONSENT_SHORT says who decides, which is the rest of
-          the model, and the sentences that used to stand beside it restated it
-          in other words. */}
+      {/* Consent is per audience: granting a week to a parent grants nothing
+          to the school. CONSENT_SHORT states who decides. */}
       <Section name="Sharing" tone="paper" tight>
         <SectionHead>Sharing is set per audience</SectionHead>
         <SectionLede>{CONSENT_SHORT}</SectionLede>
       </Section>
 
-      {/* W2-A: what a parent gets out of the week is timing. The day is named;
-          what happened in it is not, because the product does not have it. */}
+      {/* The day is named; what happened in it is not, because the product
+          does not have it. Do not imply otherwise here. */}
       <Section name="Using it" tone="mist" tight>
         <SectionHead>Be around on the days that ran high</SectionHead>
         <SectionLede>You know the day ran hard. Not what happened in it.</SectionLede>
@@ -328,34 +260,27 @@ export function ForParents({ go }) {
 
 /* ═══════════════════════════════ for schools ════════════════════════════ */
 
-/* Whole-school means by day of the school week. `Bars` is the app's own bar
-   figure and takes a paint rather than a class, so the accent token is passed
-   by value here; it is the same #0a6e68 the class would resolve to. */
+/* `Bars` takes a paint, not a class, so accent is passed by value. #0a6e68 is
+   what the token resolves to — keep them in step. */
 const ACCENT = '#0a6e68'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
-/* The caseload, ordered on the week's movement rather than on today's Mind Score,
-   because a student who has always run high is rarely the one being missed.
-   The sort toggle that used to make that argument is gone: it asked a reader
-   to run an experiment to be told a one-line conclusion. CASELOAD_DEF states
-   the ordering over the table, and the "was" and "now" columns are the
-   argument, so the sentence that spelled it out under the lede has gone too.
+/* Ordered on the week's movement, not on today's score: a student who has
+   always run high is rarely the one being missed. CASELOAD_DEF states the
+   ordering above the table, so keep the two in agreement.
 
-   A table rather than a list. This is the one page whose audience reads
-   tables, and a table gets column headers, row scope and alignment for free. */
+   A real <table>, for the column headers, row scope and numeric alignment. */
 const BOARD = roster().filter(s => s.showTrend).sort((a, b) => b.velocity - a.velocity)
 const SERIES = name => CHART_DATA.pro?.[name.replace(/\D/g, '')]
 function Caseload() {
   return (
     <table className="w-full border-collapse text-left">
-      {/* CASELOAD_DEF is the lede over the table now, so the caption is the
-          table's name rather than a second copy of the definition. */}
       <caption className="sr-only">{CASELOAD_TITLE}</caption>
       <thead>
         <tr className="border-b border-ink font-display text-fine font-bold text-ink-2 sm:text-tick">
           <th scope="col" className="py-3 pr-3">Student</th>
-          {/* the sparkline is the seven weekly points the rank is built on. At
-              390px the three figures carry the row and the line is dropped. */}
+          {/* The seven weekly points the rank is built on; hidden below sm,
+              where the three figures carry the row. */}
           <th scope="col" className="hidden py-3 pr-3 sm:table-cell">Seven weeks</th>
           <th scope="col" className="py-3 pl-2 text-right">Was</th>
           <th scope="col" className="py-3 pl-2 text-right">Now</th>
@@ -371,9 +296,9 @@ function Caseload() {
                 Grade {s.grade}. {TIER_LABEL[s.tier]}</span>
             </th>
             <td className="hidden border-b border-rule py-3.5 pr-3 sm:table-cell">
-              {/* not every student on the board has a weekly series in the
-                  fixtures. A blank cell in a table of figures reads as a bug,
-                  so the absence is drawn as a flat line. */}
+              {/* Not every student has a weekly series in the fixtures. A blank
+                  cell in a table of figures reads as a bug, so draw the
+                  absence as a flat rule. */}
               {SERIES(s.name)
                 ? <Spark data={SERIES(s.name)}/>
                 : <span aria-hidden className="block h-px w-16 bg-ruling"/>}
@@ -392,9 +317,8 @@ function Caseload() {
   )
 }
 
-/* The floor of five, shown by running the rule rather than describing it: the
-   period that falls under it renders as a withheld row, in line with the ones
-   that cleared, so the gap is the point. */
+/* k-anonymity floor: a period under K_ANONYMITY renders as a withheld row in
+   line with the ones that cleared. Never print a mean for a suppressed row. */
 function SmallGroups() {
   return (
     <ul className="m-0 list-none p-0">
@@ -405,9 +329,8 @@ function SmallGroups() {
             <span className="block font-display text-meta font-bold text-ink">{c.label}</span>
             <span className="block text-fine text-ink-3">{c.n} students</span>
           </span>
-          {/* the bar is ordered last on a phone and given the full row. In an
-              auto-width column it collapsed to a few pixels, which quietly
-              deleted the one thing this figure is here to show. */}
+          {/* Bar is ordered last on a phone and given the full row: in an
+              auto-width column it collapses to a few pixels. */}
           <span className="order-3 col-span-2 sm:order-2 sm:col-span-1">
             {c.suppressed ? (
               <span className="block font-display text-fine text-ink-3">
@@ -434,26 +357,19 @@ export function ForSchools({ go }) {
 
       <Section name="The whole school" tone="paper">
         <SectionHead>How the school week runs</SectionHead>
-        {/* the consent qualifier, once on the page rather than in three ledes,
-            and no sentence naming the tallest bar: Bars inks the peak and greys
-            the rest for exactly that reason. */}
+        {/* The consent qualifier appears once per page. Bars inks the peak, so
+            no sentence should name the tallest bar. */}
         <SectionLede>Mean {SCORE}, all {SCHOOL_N} students sharing with the school.</SectionLede>
         <Fig drift={30}>
-          {/* capped, because `Bars` divides its width evenly between five bars
-              and at 1360px each one came out wider than it was tall, which
-              reads as a colour block rather than a measurement */}
+          {/* Width cap: `Bars` splits its width evenly between five bars, and
+              at 1360px each is wider than it is tall. */}
           <Bars data={SCHOOL_WEEK} color={ACCENT} unit="school day" className="max-w-[680px]"/>
         </Fig>
       </Section>
 
       <Section name="By class period" tone="card">
         <SectionHead>The floor under small groups</SectionHead>
-        {/* the rule, and not the worked example of it. Fifth period renders as
-            a withheld row in line with the ones that cleared, so the sentence
-            that used to name it was reading the figure out. */}
         <SectionLede>Nothing is reported for a group under {K_ANONYMITY} students.</SectionLede>
-        {/* 18, against the 30 on the bars above it. Both figures are rows of
-            measurements and the pair has to separate. */}
         <Fig drift={18}>
           <SmallGroups/>
         </Fig>
@@ -462,24 +378,15 @@ export function ForSchools({ go }) {
       <Section name="The caseload" tone="mist">
         <SectionHead>{CASELOAD_TITLE}</SectionHead>
         <SectionLede>{CASELOAD_DEF}</SectionLede>
-        {/* The smallest drift on the page. This one is a table of figures a
-            counselor reads across a row, and a table that moves far enough to
-            be noticed is a table that is harder to read. */}
         <Fig drift={12}>
           <Caseload/>
         </Fig>
       </Section>
 
-      {/* What a counselor is given, what a counselor is never given, and what
-          is kept about every record opened. Three claims, one line each.
-
-          The who-sees-what matrix used to close this page and has been taken
-          out rather than trimmed. It is 136 rendered words, it runs on the
-          overview and on the privacy page already, and two of its three
-          columns are a parent's and a student's, which is not what this
-          audience came for. The counselor column is the lede under the
-          heading. The k floor was also stated twice on this page and is now
-          stated once, beside the figure that runs it. */}
+      {/* Consent scope for a counselor; all three claims are product-critical.
+          A score and its direction only, never a reading, notes or location,
+          and every record opened is logged with no setting to turn it off. The
+          full who-sees-what matrix is on the overview and privacy pages. */}
       <Section name="Access" tone="paper">
         <SectionHead>What a counselor gets</SectionHead>
         <SectionLede>A {SCORE}, and the direction it moved.</SectionLede>

@@ -3,16 +3,9 @@ import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { cn } from '../lib/utils'
 
-/* The app, running, inside the phone drawing.
- *
- * Three beats on a loop: taking a reading, the score that comes back, and the
- * week it lands in. A screenshot would be dead the first time a chart changed
- * and would show a moment rather than a product; this is the site's own
- * components on the site's own demo data, so it cannot drift.
- *
- * Under reduced motion the loop does not run. It holds on the score, which is
- * the beat that says what MindMap is.
- */
+/* Three beats on a loop, built from the site's own components and demo data so
+   it cannot drift out of date. Under reduced motion the loop does not run and
+   it holds on the score. */
 const BEATS = ['reading', 'score', 'week']
 const HOLD = 4200
 
@@ -30,8 +23,6 @@ function useBeat() {
   return [BEATS[i], i]
 }
 
-/* The camera beat. A fingertip over the lens, and the trace the blood under it
-   makes — the same waveform the reading screen draws, at phone size. */
 function Reading() {
   return (
     <div style={{ padding:'0 26px' }}>
@@ -131,8 +122,6 @@ export function PhoneApp() {
   )
 }
 
-/* The phone's own progress through the loop, as three ticks under the drawing.
-   Without it the screen looks like it is glitching rather than cycling. */
 export function PhoneBeats({ className }) {
   return <span className={cn('sr-only', className)}/>
 }

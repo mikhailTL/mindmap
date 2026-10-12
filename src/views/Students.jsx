@@ -4,14 +4,9 @@ import { StudentBody } from './Monitor'
 import { CheckInBody } from './CheckIn'
 import { PrivacyBody } from './Privacy'
 
-/* Tab ids are unchanged; only the labels moved. "What is shared" named a topic
-   without saying who the two parties were, so a student could not tell whether
-   the tab was about their parent, their school, or an export. */
 const TABS = [['today','Today'], ['check','Take a reading'], ['shared','Who sees what']]
 const PANES = { today: StudentBody, check: CheckInBody, shared: PrivacyBody }
 
-/* The title was "For students", which named an audience rather than a screen.
-   All three sections now answer "what am I about to look at?" in one shape. */
 export function Students({ go, tab = 'today', setTab }) {
   const [local, setLocal] = React.useState(tab)
   React.useEffect(() => setLocal(tab), [tab])

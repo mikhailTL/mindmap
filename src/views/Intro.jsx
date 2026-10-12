@@ -9,51 +9,20 @@ import { PHOTOS } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 
-/* The title sequence.
+/* Every plate is card at 85%: that keeps ink-3 at 4.74 : 1 over the worst band
+ * the arch behind it can produce, and still lets the arch read through.
  *
- * Four things decide the shape of this file.
- *
- * 1. It is a title card, not a page, and it is a pale one. It ran as an ink
- *    field for two passes and the note came back both times that it was too
- *    dark and too bold for an opening. It is aqua now, the type is ink, and
- *    the logo mark is still the recurring device: it is the patch on the arm
- *    in beat three, and the last beat resolves a day of readings back into
- *    the mark's own two-peak stroke.
- *
- * 2. The rainbow is the ground, so the plates are translucent. charts/
- *    intro-sky.jsx lays a four-band arch and a travelling cloud behind every
- *    beat, and a wall of opaque white cards in front of it leaves nothing to
- *    see. Every plate is card at 85%, which keeps ink-3 at 4.74 : 1 over the
- *    worst band the arch can put behind it and still lets the arch read
- *    through. Signal colour stays on a plate, as it does in the app.
- *
- * 3. Every drawing's RESTING state is the finished picture; motion is only ever
- *    layered on top. Killing the animation reveals a complete diagram rather
- *    than an empty frame, which is what makes reduced motion and an interrupted
- *    beat behave without a second set of artwork.
- *
- * 4. One requestAnimationFrame loop owns the whole timeline. A chain of
- *    setTimeouts was five things to cancel, a beat index that could disagree
- *    with the progress rail, and no way to know where in a beat an unmount
- *    happened. One clock, one cancel.
- *
- * Playback: this runs on every load. The only thing that stops it is the
- * visitor pressing Skip, which writes one key and is permanent. Sitting
- * through it does not count as consent to never see it again — a person who
- * watched it once and did not object may well want it again, and a person who
- * did object had a button at the bottom of the screen the whole time.
+ * Every drawing's RESTING state is the finished picture and motion is layered
+ * on top, so reduced motion and an interrupted beat need no second artwork.
  */
 
-/* This key means "has refused", not "has watched" — the two are different
-   questions and only one of them suppresses the sequence. Reaching the end
-   sets nothing; the intro plays again on the next load, which is what was
-   asked for. Only Skip (or Esc, which is the same action) writes it. */
+/* "Has refused", not "has watched". Reaching the end sets nothing and the
+   sequence plays again next load; only Skip, or Esc, writes this. */
 const OFF_KEY = 'mindmap.intro.off'
 
-/** True when the visitor has pressed Skip at some point, in which case the
- *  sequence must never mount again. Safe in private mode / blocked storage:
- *  a throwing localStorage reads as "not suppressed", so the worst failure is
- *  that the intro plays. */
+/** True when the visitor has pressed Skip, in which case the sequence must
+ *  never mount again. A throwing localStorage reads as "not suppressed", so the
+ *  worst failure under blocked storage is that the intro plays. */
 export function introSuppressed() {
   try { return window.localStorage.getItem(OFF_KEY) === '1' } catch { return false }
 }
@@ -64,93 +33,10 @@ export function suppressIntro() {
   try { window.localStorage.setItem(OFF_KEY, '1') } catch {}
 }
 
-/* Six beats: what it is, what the patch does, the three ways in, what comes
-   back, who it is for, and the mark.
-
-   The review watched this and could not answer "what is it and what does it
-   do" at the end of it, which is the one job an opening sequence has. Beat one
-   now names the product and the thing it hands back in the same breath, beat
-   two says what the patch is and what it reads, beat three says what the phone
-   does without it, and beat five is the audience, which was asked for by name.
-
-   Beat three said "two ways to take a reading" while the overview said "3 Ways
-   to Use MindMap", and nothing on either page reconciled them. The heading is
-   now the overview's heading, word for word, and the beat settles the
-   arithmetic itself: three ways, two of which read a body.
-
-   Each beat carries its own ground, and the whole set moved. The sequence
-   ran on one near-black green, then on five dark teals, and the note both
-   times was the same: too dark and too bold for an opening, and aqua or
-   turquoise would be better. These are pale aquas. Relative luminance, and
-   the gap to the next one, which has to stay visible across the 900ms
-   crossfade:
-
-     #e8f6f4 .8960   #dcf0ef .8377   #d2ebe9 .7900
-     #e3f2ed .8595   #d7eeea .8154   #eaf6f2 .8981
-     gaps    .0583   .0477   .0695   .0441   .0828
-
-   The type inverted with them. Measured across all six grounds, worst case:
-   ink #0b2b33 12.16 : 1, ink-2 #1f5560 6.60, ink-3 #3c6a74 4.48, accent
-   #0a6e68 4.64. Headings are ink and sub-lines are ink-2; ink-3 is only ever
-   used inside a plate, where it measures 4.74 against the worst plate the
-   arch can put under it. paper, mist, rule and ruling have no contrast left
-   on a pale ground at all and none of them survives in here.
-
-   Nothing here is a setup for a later line, and no number appears that the
-   prototype does not produce. */
-/* How long each beat is, and why it is that long.
- *
- * A tester said the sequence was helpful but moved fast. Two different faults
- * hide in that: not enough time to read, and content landing faster than the
- * eye settles. The dwell below answers the first and PACE/DUR in the CSS
- * answers the second.
- *
- * The dwell of a beat is not a flat addition. It is sized to the beat's own
- * content:
- *
- *   copy done = when the sub-line lands
- *             + (heading + sub-line words) / 3.5      first read, prose rate
- *             + (stage words) / 9                     labels and captions, scanned
- *   anim done = when the last element in the stage finishes + 0.4
- *   dwell     = max(copy done, anim done) + 0.9       one crossfade of rest
- *
- * 3.5 words a second is a first-time reader on prose. The stage rate is faster
- * because a stage is short labels in a grid, sampled rather than read line by
- * line, and because every stage here is a whole page elsewhere on the site for
- * anybody who wants all of it. The last beat has no heading block, so its clock
- * starts when the wordmark lands rather than when a sub-line does.
- *
- *   beat  words (copy / stage)  last element  copy done  dwell
- *     1        37 / 6               4.33s      13.55s    14.4s
- *     2        30 / 39              2.31s      15.21s    16.1s
- *     3        22 / 67              3.31s      16.04s    16.9s
- *     4        26 / 10              4.76s      10.85s    11.7s
- *     5        19 / 33              2.47s      11.41s    12.3s
- *     6        25 / 4               6.24s      13.01s    13.9s
- *
- * 85.3s against the 34.4s it ran before. The floor is the copy, not the
- * timings: the six headings and sub-lines are approved and 3.5 words a second
- * over them is most of this. Nobody has to sit through it either way, which is
- * what Back, Next and Skip are for.
- */
-/* Five beats, twenty-nine seconds.
- *
- * It ran at eighty-six. The brief before this one said "slower by a lot" and
- * that was the right note about the pacing INSIDE a beat — content was landing
- * faster than the eye settles — and the wrong lever to pull on the total. An
- * opening that plays on every load has to be shorter than the patience of
- * somebody who has already seen it once, and eighty-six seconds is not shorter
- * than anybody's patience. It is a film, and nobody asked for a film.
- *
- * So the beats inside are still unhurried — an arrow still takes most of a
- * second to arrive, a highlight still pulses twice — and there are fewer of
- * them. The two that went are the two the site itself covers best: the four
- * signals are named with their colours on the closing beat and traced in full
- * on the patch page, and the three ways to start are the overview's own
- * second section, one scroll below where this lands.
- *
- * What is left is the four things you cannot use the product without knowing,
- * and the mark.
+/* The grounds sit .044 to .083 apart in relative luminance, which keeps
+ * one distinguishable from the next across the crossfade. Worst case over all
+ * five: ink 12.16 : 1, ink-2 6.60, ink-3 4.48, accent 4.64. ink-3 only ever
+ * appears inside a plate; paper, mist, rule and ruling have no contrast left.
  */
 const BEATS = [
   { ms: 6300, bg: '#e8f6f4', head: 'One number for your day.' },
@@ -175,16 +61,12 @@ const svgProps = {
   focusable: 'false',
 }
 
-/* The mark's dot is `var(--logo-peak, currentColor)`. On the old ink field it
-   was beam #1d8fb0 at 5.30 : 1. On a pale aqua beam measures 2.69 and fails
-   even as a graphic, so the peak is beam-ink #11677f, which is the same
-   turquoise at a value that holds 3.96 on the lightest ground. */
+/* beam #1d8fb0 measures 2.69 on a pale aqua and fails even as a graphic, so the
+   peak is beam-ink #11677f: the same turquoise, 3.96 on the lightest ground. */
 const PEAK = { '--logo-peak': '#11677f' }
 
-/* Deterministic wiggle, and its own measured length. Math.random() would redraw
-   on every render and read as noise rather than as a recording; the length is
-   returned because --len has to be at least the path length or the stroke-draw
-   never completes, and eyeballing it is how a trace ends up permanently short. */
+/* Deterministic; Math.random() would redraw every render. --len has to be at
+   least the path length or the stroke-draw never completes. */
 function waveLine(y, seed, amp, steps, x0, x1) {
   let d = '', len = 0, px = 0, py = 0
   for (let i = 0; i <= steps; i++) {
@@ -198,9 +80,7 @@ function waveLine(y, seed, amp, steps, x0, x1) {
   return { d, len: Math.ceil(len) + 4 }
 }
 
-
-/* A figure that counts up, written straight to the node. As React state this
-   re-rendered the whole stage sixty times a second to change two glyphs. */
+/* Written to the node: as state this re-rendered the stage 60x a second. */
 function Count({ to, ms = 1400, delay = 0, ...p }) {
   const ref = React.useRef(null)
   React.useEffect(() => {
@@ -218,39 +98,14 @@ function Count({ to, ms = 1400, delay = 0, ...p }) {
   return <text ref={ref} {...p}>0</text>
 }
 
-/* The mark's ridge, the same five points the logo is drawn from. It is shared
-   by the route beat and by the closing morph, so it lives here rather than
-   being typed twice and drifting. */
+/* The logo's five ridge points, shared by the route beat and the closing morph. */
 const RIDGE = 'M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6'
 
-/* The axis under the closing line: five marks across the 40-440 span the line
-   is drawn along, so the last one sits under the endpoint the mark's dot
-   morphs out of. */
+/* Five marks on the closing line's 40-440 span; the last sits under the morph. */
 const HOURS = [['6am', 60], ['10am', 150], ['2pm', 240], ['6pm', 330], ['10pm', 420]]
 
-/* ── the drawing vocabulary ───────────────────────────────────────────────
- *
- * Three marks, and between them they are most of what this sequence does.
- *
- * An arrow is a line and a head, and the head is a separate node that pops
- * when the line finishes rather than a marker-end that appears with the first
- * pixel of it. A marker that is already there while the line is still growing
- * tells the eye where to look before the line has finished saying it, and the
- * whole point of an arrow here is that it arrives.
- *
- * A spot is two rings half a second apart. One ring reads as a circle somebody
- * drew; two in sequence read as a pulse, and a pulse is what says "this one,
- * now". They are bounded at two: a highlight that blinks forever is motion
- * competing with the thing it is highlighting.
- *
- * A chip is three words at most. Everything in here that wants a sentence is a
- * whole page elsewhere on the site, and this is the sequence that sends people
- * to those pages, not a smaller copy of them.
- */
-
-/* The arrowhead, built from the tip backwards so the caller gives a point and
-   a bearing rather than three corners it has to work out. The notch at -0.72
-   is what stops it reading as a paper dart. */
+/* Point and bearing rather than three corners. The notch at -0.72 stops it
+   reading as a paper dart. */
 function headPath(x, y, deg, s = 10) {
   const r = (deg * Math.PI) / 180
   const c = Math.cos(r), si = Math.sin(r)
@@ -298,9 +153,7 @@ function Chip({ x, y, t, still, anchor = 'middle', size = 17, tone = 'fill-ink',
   )
 }
 
-/* A card in the drawings: the same panel the site uses, drawn rather than laid
-   out, because an arrow pointing at an HTML box has to be positioned against a
-   layout that moves and an arrow pointing at a rect does not. */
+/* Drawn, not laid out: an arrow can be aimed at a rect, not at a moving box. */
 function Card({ x, y, w, h, t, still, dim = false }) {
   return (
     <rect x={x} y={y} width={w} height={h} rx="16"
@@ -311,10 +164,7 @@ function Card({ x, y, w, h, t, still, dim = false }) {
   )
 }
 
-/* ── Beat 1 ── a whole day arrives as one number ──────────────────────────
-   The line is the day and the circle is what the day becomes. Nothing else is
-   on the screen, because the first thing anybody has to understand about this
-   product is the conversion, and a second object would be a second subject. */
+/* -- Beat 1 -- a whole day arrives as one number ------------------------- */
 const DAYLINE = waveLine(150, 1.05, 30, 30, 48, 300)
 
 function StageOneNumber({ still }) {
@@ -323,7 +173,6 @@ function StageOneNumber({ still }) {
     <div className="iv-real mx-auto w-full max-w-[720px]">
       <div className="aspect-[16/9] w-full">
         <svg {...svgProps} viewBox="0 0 560 300">
-          {/* the day, recorded */}
           <line x1="44" y1="226" x2="306" y2="226" strokeWidth="1.5"
             className={cn('stroke-ink-3', !still && 'iv-a iv-draw')}
             style={still ? undefined : { '--len': 300, '--d': '.6s', '--t': '.2s' }}/>
@@ -332,7 +181,6 @@ function StageOneNumber({ still }) {
             style={still ? undefined : { '--len': DAYLINE.len, '--d': '2.2s', '--t': '.6s' }}/>
           <Chip x="175" y="256" t={1.1} still={still} size={16} tone="fill-ink-2">one day</Chip>
 
-          {/* and what it becomes */}
           <Arrow still={still} t={3.3} dur={0.9} d="M318 168 C 348 178, 366 176, 386 166"
             len={92} x={390} y={164} deg={-24}/>
 
@@ -352,33 +200,11 @@ function StageOneNumber({ still }) {
   )
 }
 
-/* ── Beat 2 ── where the patch goes, and where the readings go ────────────
-   An arm, a patch landing on it, and four readings walking down the wire to a
-   phone. The landing is the instruction: it comes in from off the arm and
-   stops on the outer face of the upper arm, which is the one thing about
-   wearing it that a picture can teach faster than a sentence. */
-/* One path, used twice: once filled and once as the outline that draws over
-   it. Typed twice, the two would drift apart on the first edit. */
-/* ── Beat 2 ── where it goes, and where the readings go ──────────────────
- *
- * This beat was a drawn arm for three passes and it was wrong every time: two
- * mirrored curves read as a leaf, and adding a shoulder to them read as a
- * mitten. The problem was not the drawing. A limb with nothing attached to it
- * is ambiguous at any level of effort, and the one thing this beat has to
- * teach — where on your body the thing goes — is the one thing an ambiguous
- * limb cannot say.
- *
- * So it is the photograph. The same licensed plate the patch page uses, with
- * the patch composited onto the outer upper arm at its real 36 x 54 mm, framed
- * through a clip so the arm fills the panel. It is unambiguous, it is already
- * in the bundle, and it is the picture the visitor will meet again two clicks
- * later, which is what a walkthrough is for.
- *
- * The photograph is placed by arithmetic rather than by eye. The patch sits at
+/* -- Beat 2 -- where it goes, and where the readings go -------------------
+ * The licensed plate from the patch page, patch composited onto the outer upper
+ * arm at its real 36 x 54 mm. Placed by arithmetic: the patch sits at
  * (0.5737, 0.7869) of the plate and is 0.0352 of its width, measured off the
- * file; PATCH_W is how wide it should be here, and the image's size and offset
- * fall out of those three numbers. Re-crop the photograph and only the
- * constants change.
+ * file, and PATCH_W is how wide it reads here. Re-crop and only these change.
  */
 const PHOTO = { w: 1024, h: 688 }
 const PATCH_AT = { x: 0.5737, y: 0.7869, w: 0.0352 }
@@ -386,19 +212,10 @@ const PANEL = { x: 20, y: 20, w: 280, h: 200 }
 const PATCH_W = 27                               // how wide the patch reads, in viewBox units
 const SPOT_AT = { x: 168, y: 146 }               // where it lands in the 560 x 300 viewBox
 
-/* The crop, as a window onto the photograph's own pixels.
- *
- * It was a full-size <image> behind a clipPath, which paints correctly and
- * lays out catastrophically: the clip hides the pixels but the element keeps
- * its real geometry, so the <g> measured 479px inside a 350px column, the
- * dialog grew a 33px horizontal scroll, and on a 390px phone the browser
- * scrolled it to reveal the overflow — pushing every heading 13px off the left
- * edge of the screen. The drawing looked right and the words were cut in half.
- *
- * A nested <svg> clips to its own bounds by construction, so the geometry and
- * the paint agree. The viewBox below is the region of the photograph that
- * shows through, computed from where the patch is in the file and how big it
- * should read here. */
+/* A nested <svg>, not a full-size <image> behind a clipPath: a clip hides the
+ * pixels but the element keeps its real geometry, which measured 479px inside a
+ * 350px column, gave the dialog a 33px horizontal scroll, and on a 390px phone
+ * pushed every heading 13px off the left edge. */
 const CROP_W = (PATCH_AT.w * PHOTO.w * PANEL.w) / PATCH_W
 const CROP_H = (CROP_W * PANEL.h) / PANEL.w
 const CROP_X = PATCH_AT.x * PHOTO.w - ((SPOT_AT.x - PANEL.x) / PANEL.w) * CROP_W
@@ -437,10 +254,8 @@ function StagePatch({ still }) {
             stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-fade')}
             style={still ? undefined : { '--d': '.9s', '--t': '.3s' }}/>
 
-          {/* two rings on the patch itself, which is the whole instruction */}
           <Spot cx={SPOT_AT.x} cy={SPOT_AT.y} r={26} t={1.8} still={still}/>
 
-          {/* and then the readings leave */}
           <Arrow still={still} t={3.4} dur={0.9} d="M312 152 C 344 150, 370 142, 392 134"
             len={100} x={396} y={132} deg={-20} color="#1f5560" w={2.2}/>
           {!still && SENSOR_ORDER.map((i2, i) => dot(i, SENSORS[i2].glow))}
@@ -462,17 +277,10 @@ function StagePatch({ still }) {
   )
 }
 
-/* ── Beat 4 ── the mark, which is the one thing on the dial to learn ──────
-   The real RainbowDial, not a drawing of one, because the point of this beat
-   is that the thing you are about to meet on the site is this thing. The
-   overlay is a separate svg on the dial's own 320 x 232 viewBox, so the arrow
-   lands on the mark by sharing its coordinate system rather than by being
-   nudged until it looks right.
-
-   The mark sits at 180 + 1.8 x usual degrees from the arch's centre, which for
-   a usual day of 46 is 262.8 — just left of the apex. Change the usual and the
-   arrow has to move with it; it is written as a constant here so the two
-   cannot drift apart silently. */
+/* -- Beat 4 -- the mark on the dial --------------------------------------
+   The overlay shares the dial's own 320 x 232 viewBox, so the arrow lands on the
+   mark by coordinates rather than by nudging. The mark sits at 180 + 1.8 x usual
+   degrees from the arch's centre, so changing USUAL moves the arrow. */
 const USUAL = 46
 const DIAL_SCORE = 64
 
@@ -494,11 +302,7 @@ function StageMarkOnDial({ still }) {
   )
 }
 
-/* ── Beat 6 ── the switch, and what happens when it goes off ──────────────
-   Every other way of saying "you control what is shared" is a sentence. This
-   one is a switch that turns off while you watch and a share that stops: the
-   arrow fades, the card dims, and nothing has to be claimed. The student's
-   phone never changes, which is the other half of the point. */
+/* -- Beat 6 -- the switch, and what happens when it goes off ------------- */
 function StageShare({ still }) {
   const a = still ? undefined : 'iv-a'
   const off = still ? undefined : 'iv-a iv-fade-out'
@@ -506,7 +310,6 @@ function StageShare({ still }) {
     <div className="iv-real mx-auto w-full max-w-[760px]">
       <div className="aspect-[16/9] w-full">
         <svg {...svgProps} viewBox="0 0 560 300">
-          {/* the student, in the middle, who sees everything first */}
           <rect x="232" y="64" width="96" height="164" rx="18" fill="#ffffff" fillOpacity="0.92"
             stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
             style={still ? undefined : { '--d': '.6s', '--t': '.3s' }}/>
@@ -533,7 +336,6 @@ function StageShare({ still }) {
               x={378} y={140} deg={3} color="#1f5560" w={2.2}/>
           </g>
 
-          {/* the switch: on, then off */}
           <g className={cn(a, !still && 'iv-lift')}
             style={still ? undefined : { '--d': '.55s', '--t': '5.2s' }}>
             <rect x="424" y="212" width="78" height="38" rx="19" fill="#0a6e68"
@@ -562,9 +364,8 @@ function StageMark({ still }) {
           {/* the chart furniture, present only while the line is a day */}
           {!still && (
             <g className="iv-a iv-fade-out" style={{ '--d': '.4s', '--t': '1.55s' }}>
-              {/* --t is restated at every level: the group carries its own
-                  1.55s fade delay and CSS custom properties inherit, so a child
-                  that omits it silently adopts its parent's cue. */}
+              {/* --t is restated at every level: custom properties inherit,
+                  so a child that omits it adopts the group's 1.55s cue. */}
               <line x1="40" y1="226" x2="440" y2="226" strokeWidth="1.25"
                 className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 402, '--d': '.5s', '--t': '0s' }} />
               {HOURS.map(([h, x], i) => (
@@ -596,28 +397,14 @@ function StageMark({ still }) {
         </svg>
       </div>
 
-      {/* text-beam would be a word in a colour that measures 2.69 here, which
-          the palette forbids outright. beam-ink is the turquoise when it has
-          to be a word, and the wordmark is 36px or larger, so it clears the
-          3 : 1 large-text bar at 3.96 with room over. */}
+      {/* beam-ink, not text-beam: beam measures 2.69 here. The wordmark is
+          36px or larger, so 3.96 clears the 3 : 1 large-text bar. */}
       <p className={cn(a, !still && 'iv-rise', 'mt-2 font-display text-view font-bold tracking-tight text-ink')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.15s' }}>
         Mind<span className="text-beam-ink">Map</span>
       </p>
-      {/* The line under the wordmark was a sentence, then the four signals
-          were a list, then there was a disclaimer. Three blocks of type under
-          a mark that has just resolved out of a day of readings is three
-          things competing with the one thing worth watching. The signals stay,
-          because they are the four colours the arch behind them is drawn in
-          and that is the only place in the sequence where the rainbow and the
-          product are the same object. The sentence and the disclaimer are on
-          the page this lands on. */}
 
-      {/* The last beat was an arch, a wordmark and a lot of nothing. The four
-          signals close it instead: the same four hues, in the same order, that
-          the arch behind them is drawn in, which is the one place in the
-          sequence where the rainbow and the product are the same object. The
-          names come from lib/sensors.js, so nothing here is a second copy. */}
+      {/* The four signal hues, in the arch's order; names from lib/sensors.js. */}
       <ul className={cn(a, !still && 'iv-rise',
         'm-0 mt-5 flex list-none flex-wrap items-center justify-center gap-x-5 gap-y-2 p-0')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.5s' }}>
@@ -630,105 +417,59 @@ function StageMark({ still }) {
         ))}
       </ul>
 
-
     </div>
   )
 }
 
-/* Six stages, one per beat. The two that went earlier were the seven-layer
-   patch stack and the who-sees-what consent diagram: both are whole pages
-   elsewhere, and a title sequence that explains an enclosure and a permission
-   model on the way past is a sequence nobody finishes. The audience stage is
-   not that diagram. It names three people and what each one is handed, which
-   is the question the review actually asked. */
 const STAGES = [StageOneNumber, StagePatch, StageMarkOnDial, StageShare, StageMark]
 
-/* One motion vocabulary, declared once. Keyframes live here rather than in
-   tailwind.config.js because they describe this one sequence, not the design
-   system. The reduced-motion rule at the bottom is the whole no-motion story:
-   remove the animation and every mark, layer and label renders finished. */
+/* Keyframes are local to this sequence, not the design system. The
+   reduced-motion rule at the bottom of the sheet is the whole no-motion story. */
 const CSS = `
-/* The second half of "it moves fast". Every --t and --d in this file is a cue
-   relative to the start of its beat, and they were written against beats of
-   about six seconds: a stage finished arriving by 2.3s and then sat for four.
-   Stretched over a fourteen-second beat the same cues would land in the first
-   sixth of it and the rest would be a still. One multiplier on the delays and
-   a smaller one on the durations re-spaces the whole build without touching a
-   single call site, which is the only way to re-time ninety-odd cues without
-   mistyping one. 1.5 on the delays walks the stage in over about three and a
-   half seconds instead of two and a bit; 1.15 on the durations stops the
-   strokes from drawing faster than the gaps between them.
-   calc() multiplies a time by a number, so --t stays authored in seconds. */
+/* Cue vocabulary. --t is when a mark starts and --d how long it takes, both
+   relative to the start of its beat, both authored in seconds. --iv-pace and
+   --iv-dur scale every cue from one place; .iv-real is the walkthrough stages,
+   which run faster than the closing beat. */
 .iv-root{--iv-pace:1;--iv-dur:1}
+.iv-root .iv-real{--iv-pace:.62;--iv-dur:.82}
 .iv-root .iv-a{animation-duration:calc(var(--d,1s) * var(--iv-dur,1));animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+/* --len must be >= the real path length or the stroke never finishes drawing. */
 .iv-root .iv-draw{stroke-dasharray:var(--len);stroke-dashoffset:0;animation-name:iv-draw}
 .iv-root .iv-rise{animation-name:iv-rise}
 .iv-root .iv-pop{transform-box:fill-box;transform-origin:center;animation-name:iv-pop}
 .iv-root .iv-fade{animation-name:iv-fade}
 .iv-root .iv-fade-out{animation-name:iv-fade-out}
-.iv-root .iv-flow{stroke-dasharray:var(--seg) var(--gapl);animation-name:iv-fade,iv-flow;animation-duration:.4s,var(--d);animation-delay:var(--t),var(--t);animation-iteration-count:1,infinite;animation-timing-function:linear,linear;animation-fill-mode:both,both}
-.iv-root .iv-scan{animation:iv-scan 2.8s cubic-bezier(.45,0,.55,1) var(--t,0s) infinite both}
-.iv-root .iv-blink{animation:iv-blink 2.2s cubic-bezier(.4,0,.6,1) var(--t,0s) infinite both}
-.iv-root .iv-sway{animation:iv-sway 8s cubic-bezier(.45,0,.55,1) var(--t,0s) infinite both}
 .iv-root .iv-morph{animation-name:iv-morph;animation-timing-function:cubic-bezier(.55,0,.25,1)}
 .iv-root .iv-stage{animation:iv-stage .55s cubic-bezier(.2,.7,.3,1) both}
-/* The vocabulary the walkthrough beats are drawn in. They opt out of the pace
-   multiplier above: that multiplier exists because the original six beats were
-   cued for a six-second beat and then stretched, and every cue in the six
-   walkthrough stages is already authored in real seconds against its own
-   beat's dwell. One place that multiplies and one place that does not is worse
-   than two vocabularies, so the stages that want true seconds say so. */
-.iv-root .iv-real{--iv-pace:.62;--iv-dur:.82}
-/* A highlight. Two of these half a second apart is a pulse; one is a circle
-   somebody drew and forgot about, and an infinite one is motion arguing with
-   the thing it is pointing at. */
 .iv-root .iv-ring{transform-box:fill-box;transform-origin:center;animation-name:iv-ring}
 .iv-root .iv-lift{animation-name:iv-lift}
-/* An object arriving from somewhere specific. --dx/--dy is where it comes
-   from, so the patch can fly in off the arm and land on it rather than fading
-   up in place, which would say nothing about where it goes. */
-.iv-root .iv-glide{animation-name:iv-glide}
-/* Readings walking down the wire. Three passes, not infinite: enough to read
-   as a flow and over before the beat is. */
+/* Dots travelling a wire. One pass each, staggered by --t; a loop would still
+   be moving while the next beat is being read. */
 .iv-root .iv-run{offset-rotate:0deg;animation-name:iv-run;animation-iteration-count:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}
 .iv-root .iv-switch{animation-name:iv-switch}
 .iv-root .iv-knob{animation-name:iv-knob}
-@keyframes iv-ring{0%{opacity:0;transform:scale(.5)}30%{opacity:.95}100%{opacity:0;transform:scale(1.45)}}
-@keyframes iv-lift{from{opacity:0;transform:translateY(18px)}}
-@keyframes iv-glide{from{opacity:0;transform:translate(var(--dx,0),var(--dy,0))}}
-@keyframes iv-run{0%{offset-distance:0%;opacity:0}12%{opacity:1}86%{opacity:1}100%{offset-distance:100%;opacity:0}}
-@keyframes iv-switch{to{fill:#9fb9bd}}
-@keyframes iv-knob{to{transform:translateX(-40px)}}
-/* Nothing in the sequence loops any more. A pulse that blinks forever, a
-   drawing that sways forever and a dash pattern that flows forever are three
-   things moving while somebody is trying to read a sentence, and none of them
-   carries information the still frame does not. They are overridden here
-   rather than deleted at each call site so the classes stay available to the
-   pages, which are not a title card and can afford ambient motion. */
-.iv-root .iv-blink,.iv-root .iv-sway{animation:none}
-.iv-root .iv-flow{animation-name:iv-fade;animation-duration:.4s;animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-iteration-count:1}
 .iv-root .iv-out{animation:iv-out ${OUT_MS}ms cubic-bezier(.55,0,.25,1) both}
 @keyframes iv-draw{from{stroke-dashoffset:var(--len)}}
 @keyframes iv-rise{from{opacity:0;transform:translateY(10px)}}
 @keyframes iv-pop{from{opacity:0;transform:scale(.35)}}
 @keyframes iv-fade{from{opacity:0}}
 @keyframes iv-fade-out{from{opacity:1}to{opacity:0}}
-@keyframes iv-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-34}}
-@keyframes iv-scan{0%{transform:translateX(170px);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(446px);opacity:0}}
-@keyframes iv-blink{0%,100%{opacity:1}50%{opacity:.25}}
-@keyframes iv-sway{0%,100%{transform:rotateX(30deg) rotateZ(-22deg)}50%{transform:rotateX(20deg) rotateZ(-8deg)}}
+@keyframes iv-ring{0%{opacity:0;transform:scale(.5)}30%{opacity:.95}100%{opacity:0;transform:scale(1.45)}}
+@keyframes iv-lift{from{opacity:0;transform:translateY(18px)}}
+@keyframes iv-run{0%{offset-distance:0%;opacity:0}12%{opacity:1}86%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes iv-switch{to{fill:#9fb9bd}}
+@keyframes iv-knob{to{transform:translateX(-40px)}}
 @keyframes iv-morph{from{transform:translate(-138.5px,-132.8px) scale(18.9);stroke-width:.18px}
 to{transform:translate(136px,125.2px) scale(5.2);stroke-width:.5px}}
 @keyframes iv-stage{from{opacity:0;transform:translateY(16px)}}
 @keyframes iv-out{to{opacity:0;transform:translateY(-14px)}}
+/* Reduced motion: no animation at all. Every stage renders its finished state,
+   so the sequence is still readable. */
 @media (prefers-reduced-motion:reduce){.iv-root [class*="iv-"]{animation:none !important}}
 `
 
 export function Intro({ onDone }) {
   const reduced = useReducedMotion()
-  /* Reduced motion used to open on the last beat and leave after 900ms, which
-     made the other five unreachable. It opens on the first beat like everybody
-     else now and does not advance itself at all; see the clock below. */
   const [beat, setBeat] = React.useState(0)
   const [leaving, setLeaving] = React.useState(false)
   const [exiting, setExiting] = React.useState(false)
@@ -737,8 +478,7 @@ export function Intro({ onDone }) {
   const prevRef = React.useRef(null)
   const nextRef = React.useRef(null)
   /* When the beat now playing began. Zero means "re-anchor on the next frame",
-     which is how a jump hands the beat it lands on that beat's whole dwell
-     rather than whatever was left of the one it replaced. */
+     which is how a jump hands the beat it lands on that beat's whole dwell. */
   const startRef = React.useRef(0)
   const fills = React.useRef([])
   const beatRef = React.useRef(0)
@@ -746,10 +486,8 @@ export function Intro({ onDone }) {
   const doneRef = React.useRef(false)
   const timerRef = React.useRef(0)
 
-  /* onDone is a one-way door: the caller unmounts this tree on it. Firing it
-     twice — skip landing on the same frame the timeline ends, or a queued exit
-     timer resolving after an unmount — would run that side effect twice, so
-     the latch is a ref and not state. */
+  /* The latch is a ref, not state: a skip landing on the frame the timeline ends,
+     or an exit timer resolving after unmount, must not fire onDone twice. */
   const finish = React.useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
@@ -762,23 +500,14 @@ export function Intro({ onDone }) {
     timerRef.current = setTimeout(finish, ms)
   }, [finish])
 
-  /* The only thing that suppresses the sequence. Watching it to the end does
-     not, which is why this lives on the control and not in `finish`. */
+  /* The only thing that suppresses the sequence, hence not in `finish`. */
   const skip = React.useCallback(() => {
     suppressIntro()
     close(SKIP_MS)
   }, [close])
 
-  /* The reader's own clock. However long the beats are, a sequence that only
-     advances on a timer is too fast for somebody who reads slowly and too slow
-     for somebody who does not, so the two directions are controls. A jump
-     re-anchors the beat timer: going on early does not shorten the beat landed
-     on, and going back gives that beat its whole dwell again instead of the
-     sliver that was left when it was first passed.
-
-     Next past the last beat ends the sequence, and that is not Skip. Skip is a
-     refusal and writes the key; reaching the end by pressing Next is having
-     watched it, and suppresses nothing. */
+  /* A jump re-anchors the beat timer. Next past the last beat ends the sequence,
+     and that is not Skip: reaching the end suppresses nothing. */
   const goTo = React.useCallback(i => {
     if (doneRef.current || timerRef.current) return
     if (i > LAST) { close(EXIT_MS); return }
@@ -794,20 +523,9 @@ export function Intro({ onDone }) {
   const goNext = React.useCallback(() => goTo(beatRef.current + 1), [goTo])
   const goPrev = React.useCallback(() => goTo(beatRef.current - 1), [goTo])
 
-  /* One clock, and it owns one beat at a time. It used to run against the sum
-     of every beat, which left no time to seek to: a jump would have had to
-     rewrite the progress rail's history to express itself. The frame timestamp
-     is still what a boundary is derived from, so a dropped frame or a
-     backgrounded tab cannot leave the headline and the rail disagreeing about
-     which beat is playing; only the origin moved, from the start of the
-     sequence to the start of the beat now playing.
-
-     Under reduced motion this does not run at all. An auto-advancing sequence
-     is fast for anybody who reads slowly however long its beats are, and a
-     reader who asked for less motion asked for exactly that. Every beat
-     renders finished, Back and Next are the only clock, and Next on the last
-     beat ends it. Nothing that was moving is frozen, so there is no stopped
-     screen to stare at either. */
+  /* Boundaries come off the frame timestamp, so a dropped frame or a backgrounded
+     tab cannot leave the headline and the rail disagreeing. Under reduced motion
+     it does not run at all: every beat renders finished, Back/Next are the clock. */
   React.useEffect(() => {
     if (reduced) return
     let raf = 0
@@ -818,13 +536,11 @@ export function Intro({ onDone }) {
       const dur = BEATS[i].ms
       const e = t - startRef.current
       const p = Math.min(1, e / dur)
-      /* Written straight to the DOM: this runs 60x a second and re-rendering
-         six segments that often is real work for a decorative rail. */
+      /* Straight to the DOM: this runs 60x a second for a decorative rail. */
       fills.current.forEach((el, k) => {
         if (el) el.style.transform = `scaleX(${k < i ? 1 : k === i ? p : 0})`
       })
-      /* The stage starts clearing before the beat ends, so the boundary is a
-         hand-off and not a swap. Two state writes per beat, not per frame. */
+      /* The stage clears before the beat ends. Two state writes per beat. */
       const out = i < LAST && e > dur - OUT_MS
       if (out !== leaveRef.current) { leaveRef.current = out; setLeaving(out) }
       if (e >= dur) {
@@ -843,11 +559,9 @@ export function Intro({ onDone }) {
 
   React.useEffect(() => () => clearTimeout(timerRef.current), [])
 
-  /* Scroll lock, and the rest of the document taken out of the accessibility
-     tree. The siblings are walked from this node up rather than from a known
-     container because the caller decides where this mounts, and their previous
-     aria-hidden values are restored rather than removed — something else on the
-     page may have set one for its own reasons. */
+  /* Scroll lock, and the document taken out of the accessibility tree. Siblings
+     are walked from this node up because the caller decides where this mounts,
+     and their previous aria-hidden values are restored, not removed. */
   React.useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -860,12 +574,9 @@ export function Intro({ onDone }) {
       }
     }
     rootRef.current?.focus({ preventScroll: true })
-    /* Focus has to be held, not just taken. The host decides where this mounts
-       and may move focus itself during its own first render — this app focuses
-       its main region from a rAF, which runs after this effect and silently
-       pulled the keyboard out of a dialog covering the whole page, leaving Esc
-       and the tab trap doing nothing at all. Anything landing outside is
-       brought back; focusing the root itself re-enters, so this cannot loop. */
+    /* Focus has to be held, not just taken: this app focuses its main region from
+       a rAF that runs after this effect, which pulled the keyboard out of the
+       dialog and left Esc and the tab trap doing nothing. */
     const onFocusIn = e => {
       const el = rootRef.current
       if (el && !el.contains(e.target)) el.focus({ preventScroll: true })
@@ -879,16 +590,8 @@ export function Intro({ onDone }) {
     }
   }, [])
 
-  /* Three controls now, so the trap is a ring rather than one node: Tab walks
-     Back, Skip, Next and wraps, and Back drops out of the ring on the first
-     beat where it is disabled. Nothing escapes into the page behind, which is
-     currently aria-hidden.
-
-     The arrows are the same two actions as the two buttons, which is what makes
-     the sequence reader-paced from the keyboard alone. Down and Up are included
-     because the beats read as a vertical stack of cards on a phone and both
-     axes get guessed at. Esc is still Skip, consequence included: a person
-     hitting Esc is refusing this. */
+  /* Tab walks Back, Skip, Next and wraps; Back leaves the ring on the first beat,
+     where it is disabled. Arrows mirror the buttons. Esc is Skip. */
   const ring = () =>
     [prevRef.current, skipRef.current, nextRef.current].filter(el => el && !el.disabled)
 
@@ -912,38 +615,16 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      /* The crossfade was 900ms against six-second beats. On a fourteen-second
-         beat the same 900ms is proportionally half of what it was and starts
-         reading as a switch, so it grew with the pace. The six grounds are
-         .044 to .083 apart in relative luminance, which is what keeps one
-         distinguishable from the next while the two are mixed; a longer mix
-         does not spend any of that. */
       style={{ background: BEATS[beat]?.bg || '#0b2b33',
         transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
-      /* Belt as well as braces. The 33px sideways scroll above came from one
-         oversized node and that node is fixed, but a dialog whose words can be
-         pushed off the screen by anything at all is a bug waiting to be
-         reintroduced by the next drawing. onScroll puts it back. */
+      /* Belt and braces: an oversized drawing must not push the words off. */
       onScroll={e => { e.currentTarget.scrollLeft = 0 }}
       className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
 
-      {/* The one continuous thing in the sequence. It sits under every beat
-          and is the only transition between them; `beat` and the beat count
-          are all it takes, so the cloud's walk re-spaces itself if a beat is
-          ever added or removed. */}
-      {/* The arch behind every beat was the only transition between them and
-          it still is, but it was also the loudest thing on the screen. Six of
-          these seven beats are now a diagram somebody is meant to read, and a
-          full-strength rainbow behind a diagram is two pictures on one screen:
-          a cloud landed on the word "Sweat", and the beat that shows the real
-          dial had a second arch behind the first one. It holds the beats
-          together at a quarter strength and comes back whole for the mark,
-          which is the only beat that is a title card rather than a lesson.
-
-          Off entirely for the dial. No opacity makes two concentric arches
-          read as one object. */}
+      {/* The arch is the only transition between beats. Off entirely for the
+          dial, where no opacity makes two concentric arches read as one. */}
       {beat !== 3 && (
         <div aria-hidden className="pointer-events-none absolute inset-0 transition-opacity
           duration-[900ms]" style={{ opacity: beat === LAST ? 1 : 0.26 }}>
@@ -951,29 +632,17 @@ export function Intro({ onDone }) {
         </div>
       )}
 
-      {/* The announcement is its own node so the visible headline can be styled
-          and swapped freely without a screen reader hearing it twice. */}
+      {/* Its own node, so the visible headline is not announced twice. */}
       <p aria-live="polite" aria-atomic="true" className="sr-only">{b.head + (b.sub ? ' ' + b.sub : '')}</p>
 
       {/* ── the frame, top: wordmark, beat number, and the rail ───────────── */}
-      {/* No rule under the frame. A hairline across the top of every beat is
-          one more line between one beat and the next, which is what the review
-          was counting. */}
       <div className="relative z-10 shrink-0">
-        {/* --logo-peak is set on a wrapper rather than passed down: Logo takes
-            no style prop, and the mark reads the variable off whatever it
-            inherits from. tone="paper" is the light-ground lockup, where the
-            accent half of the wordmark is accent #0a6e68 at 4.64 : 1; the
-            accent-lit the ink field needed measures 1.9 here. */}
+        {/* --logo-peak on a wrapper: Logo takes no style prop. tone="paper" is
+            the light-ground lockup, accent #0a6e68 at 4.64 : 1. */}
         <div aria-hidden style={PEAK}
           className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4
             px-5 py-3 text-ink sm:px-10 sm:py-4">
           <Logo tone="paper" className="text-ui sm:text-head"/>
-          {/* Where "01 / 04" was. A count is a label the film does not need:
-              the only thing a viewer wants off this corner is how much is
-              left, and four ticks with one filled says that without asking
-              anyone to read a number. The rail below and its progressbar role
-              still carry the announced version. */}
           <span className="flex items-center gap-1.5">
             {BEATS.map((_, i) => (
               <span key={i} className={cn('block h-[3px] w-4',
@@ -1003,8 +672,6 @@ export function Intro({ onDone }) {
           <div className="iv-stage flex min-h-0 flex-1 flex-col justify-center gap-4 sm:gap-6">
             <div aria-hidden className="shrink-0">
               <span className="mb-3 flex items-center gap-3">
-                {/* Dots, not a beat number, for the same reason as the corner
-                    above: the head under this line is the thing to read. */}
                 <span className="flex items-center gap-1.5">
                   {BEATS.map((_, i) => (
                     <span key={i} className={cn('block size-1.5 rounded-chip',
@@ -1016,17 +683,7 @@ export function Intro({ onDone }) {
                 <>
                   <p className="iv-a iv-rise font-display text-sub font-bold text-ink"
                     style={{ '--d': '.7s' }}>{b.head}</p>
-                  {/* Most beats have no second line at all. The sequence used
-                      to carry thirty-word sub-lines under every heading and the
-                      note back was that it was a wall of words moving too fast
-                      to read; the answer was not a slower wall. Where a second
-                      line survives it is because the beat teaches something the
-                      drawing cannot say on its own, and it is under nine
-                      words. */}
-                  {/* The sub used to arrive 160ms behind the head, which is
-                      not a gap — both lines land together and the eye picks
-                      one. A second of separation is the difference between
-                      reading two lines and glancing at a block. */}
+                  {/* 1s between head and sub; at 160ms they read as one block. */}
                   {b.sub && (
                     <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-ink-2 sm:mt-3 sm:text-body"
                       style={{ '--d': '.7s', '--t': '.9s' }}>{b.sub}</p>
@@ -1034,40 +691,22 @@ export function Intro({ onDone }) {
                 </>
               )}
             </div>
-            {/* overflow-hidden: a drawing taller than its slot was bleeding
-                up over the head and sub on beat 1, which measured as a 562 by
-                46 overlap. The stage is clipped to its own box now. */}
+            {/* overflow-hidden: a taller drawing bled over the head on beat 1. */}
             <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
               <Stage still={reduced}/>
             </div>
           </div>
         </div>
 
-        {/* Where the band wipe was. One opaque panel with a 2px beam edge
-            crossed the stage at every boundary, and the note back was that the
-            cuts still read as abrupt lines. It was the line. The sky behind
-            every beat is the transition now: the arch never moves and the
-            cloud walks one step along it per beat, so a boundary is something
-            continuing rather than something being cut. */}
       </main>
 
       {/* ── the frame, bottom: the three controls ──────────────────────────── */}
       <div className="relative z-10 shrink-0 px-5 py-4 sm:px-10 sm:py-5">
-        {/* Back and Next are the plate shape every drawing in here already
-            uses: ink #0b2b33 on card at 85%, which measures 11.8 : 1 over the
-            worst band the arch can put under them, and 4.74 : 1 when Back
-            dims to ink-3 on the first beat. Button's own disabled state is
-            opacity 45, which would take that label to about 2.4; it is
-            overridden to a colour instead, so a disabled control is still
-            readable rather than just faint.
-
-            Skip stays the one dark object, because it is the one control with
-            a consequence: paper on ink at 14.47 : 1, second line in mist at
-            12.69. Three keys of equal weight and one of them permanent is how
-            a person skips the intro by meaning to go on.
-
-            54px tall, never narrower than 44, and the row stretches so all
-            three match the two-line Skip. */}
+        {/* Back and Next are the drawings' plate: ink on card at 85%, 11.8 : 1
+            over the worst band behind them, 4.74 : 1 when Back dims to ink-3.
+            Button's disabled state is opacity 45, which would take that label to
+            about 2.4, so it is overridden to a colour. Skip is the one dark
+            object. 54px tall, never narrower than 44. */}
         <div className="mx-auto flex w-full max-w-[660px] items-stretch justify-center gap-2 sm:gap-3">
           <Button ref={prevRef} onClick={goPrev} disabled={beat === 0}
             aria-label="Previous section"

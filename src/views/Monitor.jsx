@@ -11,42 +11,14 @@ import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { useMode } from '../lib/mode'
 import { SCORE, CONSENT_SHORT } from '../lib/terms'
 
-/* The student's screen, and it is one surface.
- *
- * What this replaces: an instrument panel. A 24rem dial column on the left,
- * and beside it a headline, a paragraph, a ruled sub-heading and a two-up grid
- * of four bordered signal cards; then a bordered suggestion card, then a
- * bordered privacy card, then a drawer. Sixteen framed objects on a screen
- * whose entire job is to report one number, and the number was one of sixteen
- * things competing for the first look.
- *
- * The order is the order of the question being asked now: the figure, the one
- * sentence that reads it, the four signals as four rows, the one row that says
- * what leaves the phone. One arc, one figure, one sentence, one list. Nothing
- * on this screen is in a box.
- *
- * What came off and is not coming back:
- *   the four signal cards      four rows, see RainbowKey
- *   the plate behind the dial  see the note on PLATE in charts/rainbow.jsx
- *   the second paragraph       the sentence absorbed it
- *   the suggestion card        a bordered card for one sentence of advice
- *   the sample-data notice     the section band above already carries it, and
- *                              the same disclosure twice in one screenful
- *                              reads as two disclosures
- *   the "scored out of 100" repetition  the heading says the scale once; the
- *                              four rows do not each need a caption saying it
- *
- * What is behind a control the reader chooses to open: the day chart and the
- * paragraph about how the figure is worked out.
- */
+/* The student dashboard. SectionShell already carries the sample-data
+   disclosure, so this screen must not repeat it. */
 
 export function Headline({ children }) {
   return <p className="max-w-[24ch] font-display text-major font-bold
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
-/* The full record, reachable without it occupying the default view. (The note
-   here used to guess at how many readers open it; nobody counted.) */
 export function AllDetail({ label = 'See every reading', children }) {
   const [open, setOpen] = React.useState(false)
   return (
@@ -65,14 +37,8 @@ export function AllDetail({ label = 'See every reading', children }) {
   )
 }
 
-/* The hero, and the whole of the top of the screen: the arc, the figure inside
-   it, one sentence under it, then the four signals as rows. `picked` lives
-   here because the detail opens below all of it, across the column.
-
-   Centred and capped at 30rem rather than parked in a grid column. The dial is
-   the one thing on the screen and a thing that is the one thing is in the
-   middle; the two-column layout existed to give the four signal cards somewhere
-   to live, and there are no cards now. */
+/* `picked` lives here, not in RainbowKey: SensorDetail opens below both the
+   dial and the key, so they share the selection. */
 function Hero({ score, usual, rings, sentence }) {
   const [picked, setPicked] = React.useState(null)
   const open = rings.find(r => r.id === picked)
@@ -90,11 +56,8 @@ function Hero({ score, usual, rings, sentence }) {
   )
 }
 
-/* What leaves the phone, as a row rather than a card. A teen tester went
-   looking for this first and had to read it off a parent's screen, in the
-   third person, so it is here and in first person. The row shape is the same
-   one the parent screen uses, and both are plain rules now: a bordered card
-   holding one line and a chevron is a card drawn around a list row. */
+/* Consent summary, phrased in first person: this is the student's own screen.
+   The parent screen states the same scope in the third person. */
 function SharedRow({ go, openTab }) {
   return (
     <button type="button" onClick={() => openTab ? openTab('shared') : go('privacy')}
@@ -110,14 +73,9 @@ function SharedRow({ go, openTab }) {
 }
 
 /* ── Student, with nothing paired ───────────────────────────────────────── */
-/* Four lanes of chart paper with the pen never lowered.
- *
- * The alternative was a dial at zero, and it is unusable here: zero on this
- * scale means a calm day, so an empty dial would be a reading — the one number
- * on the screen, stating something false with total confidence. This figure
- * cannot be misread as a measurement, and it occupies the place the dial
- * occupies in demo, so flipping modes exchanges one drawn object for another
- * instead of collapsing the layout. */
+/* Unpaired state. Do not substitute a dial at zero: 0 is a valid score on
+   this scale (a calm day), so an empty dial reads as a real measurement.
+   Empty lanes occupy the dial's slot so switching modes does not reflow. */
 function SilentChannels() {
   return (
     <figure className="m-0">
@@ -128,7 +86,6 @@ function SilentChannels() {
             <div key={id} className="flex items-center gap-4 border-b border-rule py-5">
               <span className="w-[10ch] shrink-0 font-display text-meta font-medium text-ink">{s.name}</span>
               <span className="tick w-[4ch] shrink-0">{s.unit}</span>
-              {/* The lane itself: ruled, dashed, empty. */}
               <span aria-hidden className="flex-1 border-t border-dashed border-ruling"/>
               <span className="shrink-0 whitespace-nowrap text-tick text-ink-3">no signal</span>
             </div>
@@ -142,9 +99,8 @@ function SilentChannels() {
   )
 }
 
-/* Written as requirements, not as a wizard: nothing here can be completed by
-   clicking, so presenting them as steps would be a promise the screen cannot
-   keep. */
+/* Requirements, not wizard steps — none of these can be satisfied in-app, so
+   do not renumber them or attach actions. */
 const PAIRING = [
   ['A charged patch', 'One MindMap patch on the outside of the upper arm. None exists to send you yet. The hardware is drawn and printed, not manufactured.'],
   ['A phone with Bluetooth', 'The app pairs over Bluetooth LE and reads the four channels above once a second.'],
@@ -173,11 +129,8 @@ function StudentUnpaired({ go, openTab }) {
         ))}
       </ul>
 
-      {/* This outranks the pairing requirements above on purpose. A visitor has
-          no patch and cannot get one, but the six questions score a real person
-          on the same scale with no hardware at all. It was a bordered card
-          with a header, a description and a button; it is the one ruled block
-          on the screen now, which is louder, not quieter. */}
+      {/* The only route a visitor can actually complete, so it outranks the
+          pairing requirements above. */}
       <div className="mt-12 border-l-2 border-accent pl-5">
         <p className="max-w-[46ch] text-body text-ink">Six questions, scored by the same model the
           patch feeds. The same {SCORE}, 0 to 100, on the person reading this.</p>
@@ -192,14 +145,11 @@ function StudentUnpaired({ go, openTab }) {
 /* ── Student ────────────────────────────────────────────────────────────── */
 export function StudentBody({ go, openTab }) {
   const [mode] = useMode()
-  /* The whole screen swaps rather than each figure emptying in place: a score,
-     a dial and four signals have no honest empty form, and a page of blanks
-     reads as a failure rather than as a product waiting for a device. */
+  /* Real mode swaps the whole screen rather than emptying each figure: score,
+     dial and signals have no honest zero state. */
   if (mode === 'real') return <StudentUnpaired go={go} openTab={openTab}/>
   return (
     <>
-      {/* "Today" alone did not say today's what; the date beside it reads as
-          the answer and is not. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-display text-row font-bold text-ink">Your {SCORE} today</h2>
         <span className="note">Thursday · 4:10 pm</span>
@@ -223,12 +173,4 @@ export function StudentBody({ go, openTab }) {
   )
 }
 
-/* Back, Reason and Stat lived here and are gone with the screen that used
-   them: Back was a second way out of the app, which the app chrome now owns
-   and names once; Reason was the collapsible claim row from the version of
-   this screen that argued its own case, and Stat was a bordered figure tile
-   from the version before that. Nothing imported any of the three.
-
-   ParentBody lived here too: StudentBody with the nouns swapped — same dial,
-   same four signal tiles, same layout, for a reader who opens the screen once
-   a week rather than daily. It was replaced by src/views/parent-dash.jsx. */
+/* The parent dashboard is src/views/parent-dash.jsx, not here. */

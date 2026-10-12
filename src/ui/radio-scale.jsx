@@ -16,8 +16,6 @@ export function Scale({ name, legend, low, high, value, onChange }){
           <R.Item key={v} value={String(v)}
             aria-label={`${v}, ${v===0?low:v===4?high:'between'}`}
             className={cn(
-              /* rounded-xs was the retired palette's one-size radius; in this
-                 system a tappable field is rounded-field. */
               'min-h-[56px] rounded-field border border-rule bg-paper font-mono text-meta text-ink-2',
               'transition-[background-color,color,border-color] duration-150 ease-out',
               'hoverOnly:border-ink-3 hoverOnly:bg-mist/50',

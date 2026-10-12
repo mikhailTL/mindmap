@@ -1,29 +1,20 @@
 import { MOVE_LIMIT_G } from './motion.js'
 
-/* One score, from whichever channels the phone actually got.
- *
- * The patch route and the self-report route already end the same way: weighted
- * terms summed, divided by the weight that was available, put through a
- * logistic and read off as 0-100. This does the same thing with the same
- * constant, so a phone reading and a patch reading are the same number on the
- * same scale rather than two scores that happen to share an axis label.
+/* One score, from whichever channels the phone got. Same last step and same K
+ * as the patch and self-report routes, so all three land on one scale.
  *
  * Every feature enters as a z-score against the same person's own history,
- * captured the same way. That is what lets a camera HRV index sit next to a
- * patch RMSSD: a fixed scale difference between the two methods cancels when
- * each is measured against its own baseline. It is also the only honest way to
- * read a resting heart rate, which is a personal constant far more than it is
- * a population one.
- */
+ * captured the same way. That is what lets a camera HRV index sit beside a
+ * patch RMSSD: a fixed scale difference between methods cancels against each
+ * method's own baseline. */
 const K = 2.4                   /* the logistic constant the other two routes use */
 
-/* Direction is the sign, and it is the part worth arguing about:
- *   heart rate up          -> load up
- *   beat-to-beat variation down -> load up, so the weight is negative
+/* The sign carries direction:
+ *   heart rate up                                     -> load up
+ *   beat-to-beat variation down                       -> load up (weight < 0)
  *   pitch up, pitch less steady, loudness less steady -> load up
- * Weights are a starting allocation, not a fitted result. Nothing here has
- * been trained on a person; the heart terms carry more because they are the
- * two the patch itself leans on. */
+ * Weights are a starting allocation, NOT fitted — nothing here is trained on a
+ * person. Heart terms carry more because the patch leans on those two. */
 export const TERMS = [
   { id: 'hr',        ch: 'heart', w:  1.2, label: 'Heart rate' },
   { id: 'hrv',       ch: 'heart', w: -1.4, label: 'Beat-to-beat variation' },
@@ -33,10 +24,9 @@ export const TERMS = [
   { id: 'ampInstab', ch: 'voice', w:  0.3, label: 'Loudness steadiness' },
 ]
 
-/* Where a new user starts, before they have any history. Population numbers
-   for adolescents at rest, wide on purpose: the confidence band is what
-   carries the fact that these are borrowed rather than earned, and it narrows
-   as real captures replace them. */
+/* Starting point before a user has history: population figures for adolescents
+   at rest, deliberately wide. The confidence band carries the fact that these
+   are borrowed. */
 export const PRIOR = {
   hr:        { m: 76,    s: 11 },
   hrv:       { m: 26,    s: 11 },     /* the camera index, not clinical RMSSD */
@@ -50,7 +40,7 @@ export function emptyBaseline() {
   return { n: 0, days: 0, stats: {}, lastDay: null }
 }
 
-/* Welford, so a running mean and variance never need the history kept. One
+/* Welford: running mean and variance without keeping the history. Only one
    capture per day counts toward `days`; the rest still sharpen the mean. */
 export function updateBaseline(baseline, features, dayKey) {
   const b = { ...baseline, stats: { ...baseline.stats } }
@@ -71,8 +61,8 @@ export function updateBaseline(baseline, features, dayKey) {
 function zOf(key, value, baseline) {
   const st = baseline.stats[key]
   const prior = PRIOR[key]
-  /* Under about five captures a personal sd is mostly noise, so the prior's
-     spread is used with the personal mean once there is one. */
+  /* Under five captures a personal sd is mostly noise: use the prior's spread
+     with the personal mean. */
   if (!st || st.n < 2) return prior ? (value - prior.m) / prior.s : 0
   const sd = st.n >= 5 ? Math.sqrt(st.m2 / (st.n - 1)) : (prior ? prior.s : 1)
   const m = st.m
@@ -108,22 +98,17 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline() })
   })
   const wTotal = TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
   const wSum = used.reduce((a, t) => a + Math.abs(t.w), 0)
-  /* Dividing by the weight actually present would let one surviving channel
-     speak for all of them: a heart-only capture at three standard deviations
-     came out at 97 where the same reading with voice attached came out at 93,
-     so losing a channel raised the score. The floor at 55% of the full weight
-     stops that — a capture missing half its evidence is pulled toward the
-     middle, and the band below widens at the same time. */
+  /* Floor the divisor at 55% of full weight. Dividing by only the weight
+     present lets one surviving channel speak for all: a heart-only capture at
+     3 sd scored 97 against 93 with voice attached, so losing a channel raised
+     the score. */
   const S = contrib.reduce((a, c) => a + c.raw, 0) / Math.max(wSum, 0.55 * wTotal) / 2
   const score = Math.round(100 / (1 + Math.exp(-K * S)))
 
-  /* The band.
-     Three things widen it, and each is a real shortfall rather than a mood:
-     channels that did not arrive, a camera signal that was poor, and a
-     baseline too short to say what normal is for this person. They are summed
-     in quadrature as standard deviations on S, then carried through the
-     logistic by its own slope at the score, which is where the 100*K*p*(1-p)
-     comes from. */
+  /* Band. Three shortfalls widen it: missing channels, poor camera signal, and
+     a baseline too short to define this person's normal. Summed in quadrature
+     as standard deviations on S, then carried through the logistic by its
+     slope at the score — hence 100*K*p*(1-p). */
   const chPresent = new Set(contrib.map(c => c.ch))
   const missingW = TERMS.filter(t => !used.includes(t)).reduce((a, t) => a + Math.abs(t.w), 0)
   const sMissing = 0.55 * (missingW / wTotal)
@@ -151,8 +136,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline() })
   }
 }
 
-/* What the score is called. Same four bands the self-report route uses, so the
-   two never disagree about what "usual" means. */
+/* Same four bands as the self-report route, so the two agree on "usual". */
 export function bandOf(n) {
   if (n < 35) return { key: 'low',   word: 'easier than usual' }
   if (n < 58) return { key: 'usual', word: 'in your usual range' }
@@ -160,7 +144,7 @@ export function bandOf(n) {
   return { key: 'high', word: 'high' }
 }
 
-/* One sentence, then the number, in the order the rest of the product uses. */
+/* One sentence, then the number. Never the other way round. */
 export function sentenceFor(r) {
   const b = bandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]

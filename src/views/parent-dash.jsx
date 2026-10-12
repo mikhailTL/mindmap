@@ -7,39 +7,13 @@ import { CONSENT } from '../lib/caseload'
 import { cn } from '../lib/utils'
 import { SCORE, NOTES, LOCATION, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
 
-/* The parent's screen, built from what a parent is actually doing here.
+/* The parent dashboard.
  *
- * A parent opens this about once a week and is deciding one thing: whether to
- * ask their kid a question tonight, and what question. So the order of the
- * page is the order of that decision:
- *
- *   one figure → the sentence that reads it → which days → the one thing to
- *   ask → what is and is not shared → is the patch even reporting
- *
- * Nothing here is finer-grained than a day, and no raw reading, Notes entry or
- * Location appears at any depth.
- *
- * What this pass took off, and why. The screen had the right order already and
- * the wrong number of objects: a two-column sentence-and-evidence grid, seven
- * bordered day cells in a seven-up grid, a two-column "why it is flagged /
- * how to bring it up" grid with three ruled quote blocks and two ruled warning
- * blocks, a four-row never-list with an icon per row, a five-row consent list
- * with an icon AND a switch per row, a three-field definition list under it,
- * three paragraphs of small print after that, a bordered patch card holding
- * its own three-field definition list, and a card-shaped link to the privacy
- * comparison. Nineteen framed or gridded things, no single thing to look at
- * first, and the one sentence a parent came for was one paragraph among nine.
- *
- * So: one figure at the top, at the size the student screen gives its score,
- * because "three of five school days" IS this screen's reading. Everything
- * under it is rows on one surface — day, label, value, hairline — and the only
- * boxes left are the consent switches, which are controls and have to look
- * like controls. Colour lands once, on the days that ran above her range.
- *
- * Sections 5 and 6 state the privacy promise on the page rather than leaving
- * it to be inferred from what happens to be absent. That has not changed and
- * is not negotiable; it is just rows now.
- */
+ * CONSENT SCOPE: nothing on this screen is finer-grained than a day. No raw
+ * reading, Notes entry or Location may appear at any depth, behind any drawer,
+ * export or link. The "What is shared" and "What this screen never shows you"
+ * sections state that promise explicitly rather than leaving it to be inferred
+ * from an absence — both are required, not decorative. */
 
 const CHILD = 'Maya'
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -47,17 +21,14 @@ const FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday',
                Fri:'Friday', Sat:'Saturday', Sun:'Sunday' }
 const WEEKEND = new Set(['Sat', 'Sun'])
 
-/* Counts read as words inside a sentence; the one count that is the screen's
-   figure is set as a figure, which is a different job. */
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven']
 const word = n => WORDS[n] ?? String(n)
 const list = xs => xs.length < 2 ? (xs[0] ?? '')
   : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
 
-/* Every figure on this screen is derived here, from the same fixture the rest
-   of the app reads. Nothing below retypes a count as a literal, so a change to
-   the generated week changes the figure, the sentence, the day rows and the
-   flagged day together instead of leaving four statements to disagree. */
+/* Single source for every figure on this screen, off the same fixture the rest
+   of the app reads. Never retype a count as a literal below: the figure, the
+   sentence, the day rows and the flagged day have to move together. */
 function readWeek() {
   const band = DATA.weekBand
   const days = (DATA.week ?? []).map(d => ({
@@ -65,8 +36,8 @@ function readWeek() {
   }))
   const over = days.filter(d => d.over)
   const school = days.filter(d => !WEEKEND.has(d.key))
-  /* The flagged day is the one furthest above her own range, not the latest
-     and not a hand-picked one. If no day is above it, nothing is flagged. */
+  /* Flagged day = furthest above her own range, not the latest. No day above
+     the band means nothing is flagged. */
   const peak = over.length ? over.reduce((a, b) => (b.v > a.v ? b : a)) : null
   return {
     days, over, peak,
@@ -77,8 +48,7 @@ function readWeek() {
   }
 }
 
-/* The line a parent came for. Written by branch rather than by template so
-   that a quiet week reads like a quiet week instead of "no of five". */
+/* Branched, not templated: a quiet week must not read "no of five". */
 function headline(w) {
   if (!w.days.length) return null
   if (!w.over.length) return `${CHILD} stayed inside her usual range every day this week.`
@@ -88,10 +58,8 @@ function headline(w) {
   return `${list(w.over.map(d => d.name))}.`
 }
 
-/* The figure's own unit, which is the thing that makes a bare numeral a
-   reading. It changes with the shape of the week for the same reason the
-   sentence does: "of her five school days" is false if a weekend day ran
-   high. */
+/* The unit changes with the shape of the week: "of her five school days" is
+   false once a weekend day runs high. */
 function unit(w) {
   if (!w.over.length) return `days above her usual range, of ${word(w.days.length)}`
   if (!w.weekendOver.length)
@@ -100,18 +68,12 @@ function unit(w) {
 }
 
 /* ── 2. The week, at day grain and no finer ─────────────────────────────── */
-/* Seven rows, each saying one word. The daily Mind Score is deliberately not
-   here: a number per day invites a parent to follow it hour by hour, which is
-   the instrument posture this screen exists to avoid. Above or inside is the
-   whole answer.
+/* Above or inside, and nothing else. The daily score must not be added here:
+   a number per day invites hour-by-hour tracking, which the consent scope does
+   not permit a parent.
 
-   It was seven bordered cells in a seven-across grid, which is a chart of a
-   thing that is not a chart — at 390 they stacked into seven boxes anyway, so
-   the grid bought a desk layout nobody needed and a box per day everywhere.
-   Rows cost one hairline each and read the same at both widths.
-
-   Colour is never alone: the word is the state, and the weight differs as well
-   as the hue, so it survives grayscale. */
+   Colour is never the only carrier — the word is the state and the weight
+   differs too, so the rows survive grayscale. */
 function WeekDays({ days, empty }) {
   const cells = empty ? DAYS.map(k => ({ key:k, name:FULL[k] })) : days
   return (
@@ -135,12 +97,8 @@ function WeekDays({ days, empty }) {
 }
 
 /* ── 3. The one thing worth asking about ────────────────────────────────── */
-/* A flag with no next step is worse than no flag: the parent still acts, just
-   badly — usually by reading the dashboard out loud at the kitchen table. So
-   the opener lines and the one thing not to do are part of the flag, not a
-   help article somewhere behind it. Three openers, three rows; the two
-   cautions are sentences rather than ruled blocks, because five ruled blocks
-   in one section is a wall of ruled blocks and nothing stands out in it. */
+/* The openers, the "not this" line and the safety line ship with the flag, not
+   behind a link: a flag with no next step gets acted on badly. */
 const openers = day => [
   `How was ${day}?`,
   'Anything this week you want to get off your chest?',
@@ -175,11 +133,8 @@ function AskAbout({ w }) {
 }
 
 /* ── 4. What a parent is never shown ────────────────────────────────────── */
-/* Phrased in the third person so the identical list is true in both modes —
-   in real mode there is no child on this account to call "her". The per-row
-   Never glyph is gone: the heading over the list is the word never, four
-   copies of it down the left margin said it four more times, and a glyph that
-   means the same on every row of a list is not carrying any information. */
+/* Third person, so the same list is true in both modes: in real mode there is
+   no child on the account to call "her". */
 const NEVER = [
   [NOTES, 'What a student writes in their own journal stays on their phone.'],
   [LOCATION, 'No location is collected, so none can be shared.'],
@@ -188,10 +143,9 @@ const NEVER = [
 ]
 
 /* ── 5. What the school may see ─────────────────────────────────────────── */
-/* Read from the same CONSENT record the counselor's console reads, rather than
-   a second copy on this screen: when those two were maintained separately they
-   disagreed, and a consent screen that contradicts the console is worse than
-   no consent screen. */
+/* Read from the same CONSENT record the counselor's console reads. Never keep a
+   second copy here — a consent screen that disagrees with the console is worse
+   than none. */
 const [SCHOOL_CODE, RECORD] = Object.entries(CONSENT)[0]
 
 const SCOPES = [
@@ -217,12 +171,9 @@ function Switch({ on, disabled, label, onClick }) {
   )
 }
 
-/* The switch is the row's value, on the right, where every other value on this
-   screen is. The Always / Never glyph that used to sit on the left of each row
-   said the same thing the switch says and said it in a second vocabulary. */
 function SchoolSharing({ real }) {
-  /* Real mode has no signed consent to load, so the rows start closed and the
-     controls are inert — there is nothing yet for them to act on. */
+  /* Real mode has no signed consent, so every row starts closed and the
+     controls are disabled. Do not default any scope on. */
   const [share, setShare] = React.useState(() => ({
     score: !real && RECORD.score, trends: !real && RECORD.trends, raw: !real && RECORD.raw,
   }))
@@ -240,9 +191,9 @@ function SchoolSharing({ real }) {
               onClick={() => setShare(p => ({ ...p, [s.id]: !p[s.id] }))}/>
           </li>
         ))}
-        {/* The one row that is not a choice. It is shown as a control in the
-            disabled state rather than left off the list, because a parent who
-            cannot find it assumes it does not exist. */}
+        {/* Not a choice, but listed as a disabled control rather than omitted:
+            a scope a parent cannot find reads as a scope that does not
+            exist. */}
         <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-rule py-4">
           <span className="min-w-0 flex-1 basis-[18rem]">
             <span className="block text-body text-ink">A crisis alert</span>
@@ -257,9 +208,6 @@ function SchoolSharing({ real }) {
           patch is paired. Nothing is being shared with any school. These controls become live when a
           patch is paired and a guardian consent is signed.</p>
       ) : (
-        /* Three paragraphs and a three-field definition list stood here. The
-           list's three facts are one line of small print, which is what they
-           are, and the two paragraphs that repeated each other are one. */
         <>
           <p className="mt-5 max-w-[62ch] text-sec text-ink-2">{CONSENT_OFF} She cannot widen these
             rows, and neither can the school. Second-by-second readings are kept only for the window
@@ -275,13 +223,9 @@ function SchoolSharing({ real }) {
 }
 
 /* ── 6. Is the patch even reporting ─────────────────────────────────────── */
-/* A week with no readings and a week with nothing wrong look identical unless
-   something says so, so this states the count of days that reported rather
-   than the state of the child. In real mode it is the first thing on the page:
-   it is not a footnote about the data, it is the reason there is none.
-
-   It was a bordered card around a three-field definition list, which is a box
-   around three rows. It is three rows. */
+/* States how many days reported, not the state of the child: an unmeasured week
+   and a calm week are indistinguishable otherwise. In real mode this leads the
+   page — it is the reason there is no data, not a footnote about it. */
 function PatchStatus({ real, w }) {
   const rows = real
     ? [['Status', 'Not reporting'],
@@ -334,9 +278,7 @@ export function ParentDash({ go, openTab }) {
         {!real && <span className="note">This week · {w.days[0]?.name} to {w.last?.name}</span>}
       </div>
 
-      {/* Real mode leads with the fault: there is no answer to lead with, and a
-          device that is not reporting is the only news there is. Demo mode
-          takes the patch last, where it belongs in the reading order. */}
+      {/* Real mode leads with the fault; demo mode takes the patch last. */}
       {real ? (
         <section className="mt-8"><PatchStatus real={real} w={w}/></section>
       ) : (
@@ -344,10 +286,8 @@ export function ParentDash({ go, openTab }) {
           <DemoNotice className="mt-3">{CHILD} is not a real person. Every figure on this screen is
             generated from the scoring model; nobody has worn a patch and nobody was measured.</DemoNotice>
 
-          {/* 1. The figure, and the sentence that reads it. This is the whole
-                of what a parent came for and it is the only thing above the
-                fold. The count is set at the step the student screen sets its
-                score at, because it is the same kind of statement. */}
+          {/* 1. The figure and the sentence that reads it. text-dial matches
+                the student screen's score — same kind of statement. */}
           <section className="mx-auto mt-10 max-w-[34rem] text-center">
             <p className="m-0 font-display text-dial font-medium leading-none tracking-tight text-ink">
               {w.over.length}</p>
@@ -381,9 +321,6 @@ export function ParentDash({ go, openTab }) {
         </section>
       )}
 
-      {/* 5. What is shared, and what never is. One section: a parent reading
-            the first half is asking the same question as a parent reading the
-            second, and they used to be two sections a screen apart. */}
       <section className="mt-12">
         <h2 className="mark">What is shared</h2>
         <p className="mt-4 max-w-[62ch] text-sec text-ink-2">{CONSENT_SHORT}</p>

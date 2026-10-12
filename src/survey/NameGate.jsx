@@ -5,18 +5,13 @@ import { cn } from '../lib/utils'
 
 const MAX = 60
 
-/* The consent panel, asked once.
+/* The consent panel, asked once. States what is collected and who reads it
+ * before anything is collected, and gives declining a name equal weight to
+ * giving one.
  *
- * This site's argument is that a teenager should know what is collected about
- * them and who reads it before anything is collected. A survey that harvested
- * names quietly behind that argument would be the single most damaging thing
- * on the site, so the gate says the whole of it in one sentence, up front, and
- * gives an equal-weight way to decline the name and still take part.
- *
- * Not a focus trap and not a dialog role: it is the first thing on the page
- * and there is nothing behind it to escape back to. Esc takes the Skip path,
- * which is the same thing the button does, so pressing it cannot lose work.
- */
+ * Deliberately not a dialog role and not a focus trap: it is the first thing on
+ * the page with nothing behind it to escape back to. Esc takes the Skip path,
+ * the same as the button, so it cannot lose work. */
 export function NameGate({ onDone }) {
   const [name, setName] = React.useState('')
   const [error, setError] = React.useState(null)
@@ -32,8 +27,8 @@ export function NameGate({ onDone }) {
   const submit = e => {
     e?.preventDefault()
     const clean = name.trim()
-    /* The button stays live and explains itself. A disabled button with no
-     * message is the commonest way a form silently blames the reader. */
+    /* The button stays enabled and explains the refusal; a disabled button
+     * with no message blames the reader silently. */
     if (!clean) {
       setError('Type a name, or skip and stay anonymous.')
       ref.current?.focus()
@@ -58,9 +53,7 @@ export function NameGate({ onDone }) {
         onSubmit={submit}
         className="w-full max-w-[34rem] rounded-panel border border-rule bg-card p-6 shadow-lift sm:p-8"
       >
-        {/* "We" was one student. There is no team behind this and pretending
-            otherwise on the one panel that asks for a name is the worst place
-            on the site to do it. */}
+        {/* First person singular throughout: one student, not a team. */}
         <h2 className="font-display text-sub font-bold text-ink">What should I call you?</h2>
 
         <p className="mt-3 text-sec text-ink-2">

@@ -1,6 +1,5 @@
-/* Getting the two streams off the phone. Everything here is browser plumbing;
-   the numbers are worked out in ppg.js and voice.js, which never touch the
-   DOM so they can be tested against signals whose answer is known. */
+/* Browser plumbing for the two phone streams. The numbers come out of ppg.js
+   and voice.js, which stay DOM-free so they can be tested in Node. */
 
 export const PPG_SECONDS = 30
 export const VOICE_SECONDS = 15
@@ -9,12 +8,10 @@ export function mediaAvailable() {
   return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-/* The rear camera, with the torch on if the device will allow it. The torch is
-   what makes this work at all indoors: without it the only light reaching the
-   sensor through a fingertip is whatever is in the room, and the pulse rides
-   on a signal too small to survive the camera's own noise. A phone that
-   refuses the torch still returns a stream, and the capture below will tell
-   the difference by how little the frame moves. */
+/* Rear camera with the torch on where allowed; returns { stream, track, torch }.
+   The torch is what makes this work indoors — on room light alone the pulse
+   rides on a signal too small to survive sensor noise. A phone that refuses it
+   still returns a stream, and the quality score catches that downstream. */
 export async function openCamera() {
   if (!mediaAvailable()) throw new Error('This browser will not open a camera from here.')
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -31,13 +28,11 @@ export async function openCamera() {
   return { stream, track, torch }
 }
 
-/* Thirty seconds of frames reduced to one number each: the mean red channel
-   over the middle of the sensor.
-
-   The frame is drawn into a 32x24 canvas rather than read at full size. The
-   downscale is the averaging — done by the graphics path rather than by a loop
-   over 76,800 pixels every 33 ms, which on a mid-range phone is the difference
-   between a capture that holds 30 fps and one that stutters and loses beats. */
+/* Reduces each frame to one number — mean red channel over the middle of the
+   sensor — for `seconds`. Returns { done, cancel }; `done` resolves to
+   [{ t: ms, v }]. Frames go into a 32x24 canvas so the downscale averages in
+   the graphics path rather than looping 76,800 pixels every 33 ms, which on a
+   mid-range phone is the difference between 30 fps and dropped beats. */
 export function capturePPG(video, { seconds = PPG_SECONDS, onTick } = {}) {
   const W = 32, H = 24
   const canvas = document.createElement('canvas')
@@ -68,11 +63,10 @@ export function capturePPG(video, { seconds = PPG_SECONDS, onTick } = {}) {
   return { done, cancel() { stop = true; cancelAnimationFrame(raf) } }
 }
 
-/* Fifteen seconds of microphone, kept as raw samples in memory and never
-   written anywhere. A ScriptProcessorNode rather than an AudioWorklet because
-   a worklet needs its own module file fetched at runtime, and one more network
-   request between pressing a button and recording a voice is one more thing
-   that can fail on a school wifi. */
+/* `seconds` of microphone, held as raw samples in memory and never written
+   anywhere. Resolves to { pcm: Float32Array, fs }. ScriptProcessorNode rather
+   than AudioWorklet: a worklet needs its own module file fetched at runtime,
+   and that request can fail on school wifi. */
 export async function captureVoice({ seconds = VOICE_SECONDS, onLevel } = {}) {
   if (!mediaAvailable()) throw new Error('This browser will not open a microphone from here.')
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -105,9 +99,9 @@ export async function captureVoice({ seconds = VOICE_SECONDS, onLevel } = {}) {
       resolve({ pcm: out, fs: ac.sampleRate })
     }
     src.connect(node)
-    /* Chromium will not run a ScriptProcessor that goes nowhere, so it is
-       connected to a muted gain node rather than to the speakers — otherwise
-       the phone plays the microphone back through its own earpiece. */
+    /* Chromium will not run a ScriptProcessor with no destination, so route it
+       through a muted gain node — connecting it straight to the speakers plays
+       the microphone back through the earpiece. */
     const mute = ac.createGain()
     mute.gain.value = 0
     node.connect(mute)

@@ -3,8 +3,6 @@ import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 import { SCORE, NOTES, LOCATION } from '../lib/terms'
 
-/* Pictures that replace paragraphs. Every one of these was a block of prose
-   until a reader had to get through it to learn one fact. */
 
 /* ── The four signals, drawn as the shapes they actually make ───────────── */
 const TRACE = {
@@ -24,15 +22,9 @@ export function SignalTrace({ kind, className }) {
   )
 }
 
-/* ── Patch → phone → sentence. Three steps, no paragraph. ──────────────── */
-/* Three steps as three windows. They were three blocks hanging off one long
-   rule, with a second rule over each block, and the review said what a rule
-   between items does: it reads as a new topic beginning. A box closes a group,
-   so the sequence is now boxed and the order is carried by the order. */
-/* Step one does not name the four signals. They are named on the hero and
-   again on the patch panel, both on this page and both above this figure, so
-   a third printing here was the third telling of one list. What is left is
-   the two things neither of those says: where it reads from and how often. */
+/* ── Patch → phone → sentence ──────────────────────────────────────────── */
+/* Step one does not name the four signals — the hero and the patch panel both
+   name them above this figure. */
 export function HowItWorks({ className }) {
   const steps = [
     { t:'Worn on the arm', art:'patch',
@@ -78,9 +70,7 @@ function StepArt({ kind }) {
     </svg>)
 }
 
-/* ── Who sees what. Replaces four paragraphs of privacy copy. ──────────── */
-/* The five things a day of measurement produces, and what each person is shown
-   of them. 2 always, 1 only with consent, 0 never. */
+/* ── Who sees what. 2 always, 1 only with consent, 0 never. ───────────── */
 const WHAT = [
   `${SCORE} for the day`,
   'Whether the week ran high',
@@ -88,35 +78,27 @@ const WHAT = [
   NOTES,
   LOCATION,
 ]
-/* The raw stream, Notes and Location are level 0 for both a parent and a
-   counselor at every consent level. The trust block above this figure states
-   that those three never leave the phone, and a cell that said "only if the
-   student agrees" put a second answer to the same question in the same
-   section. Rows 1 and 2 are level 1 for the same reason: nothing is shared by
-   default, so what a parent or a school is shown is what the student turned
-   on, and the student can turn it off again. Level 2 is the student's own
-   column, which is the one audience that always sees everything. */
+/* Raw stream, Notes and Location are level 0 for both parent and counselor at
+   every consent level: the trust block above this figure states that those
+   three never leave the phone. Rows 1 and 2 are level 1 — nothing is shared by
+   default. Level 2 is the student's own column. */
 const SEES = [
   { who:'Student',   sees:[2, 2, 2, 2, 2] },
   { who:'Parent',    sees:[1, 1, 0, 0, 0] },
   { who:'Counselor', sees:[1, 1, 0, 0, 0] },
 ]
-/* The three states, named once. The legend prints them, each list in the
-   grid is named by one of them, and Mark itself carries no text: it used to
-   put a sr-only copy of its own state inside every cell, which is this one
-   short phrase read out eighteen times over one figure. */
+/* The three states, named once: the legend prints them and each list in the
+   grid is named by one. Mark carries no text of its own, or the same phrase is
+   read out eighteen times over one figure. */
 const STATE = { 2:'Always', 1:'Only if the student agrees', 0:'Never' }
-/* Decorative. The state is on the list this mark sits in, so a mark that also
-   announced it would say everything twice. title stays: it is the only thing
-   a mouse has to go on. */
+/* Decorative: the state is on the list this mark sits in. title stays — it is
+   all a mouse has to go on. */
 function Mark({ v }) {
   return (
     <span aria-hidden="true" className="flex items-center justify-center" title={STATE[v]}>
       {v === 2 && <svg viewBox="0 0 20 20" aria-hidden className="size-5 text-accent">
         <circle cx="10" cy="10" r="8" fill="currentColor"/>
-        {/* The tick is knocked out of the filled accent disc. It was a raw
-            literal of the retired palette's near-white; card #ffffff is the
-            equivalent sheet colour and reads 6.65 : 1 on accent. */}
+        {/* card #ffffff reads 6.65 : 1 on accent. */}
         <path d="M6 10.5l2.6 2.6L14 8" fill="none" className="stroke-card" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
       {v === 1 && <svg viewBox="0 0 20 20" aria-hidden className="size-5 text-accent">
         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2"/>
@@ -127,9 +109,8 @@ function Mark({ v }) {
     </span>
   )
 }
-/* The five rows of one person's window, split into consecutive blocks of the
-   same state. SEES orders the rows so there are never more than two blocks,
-   which is what lets the blocks be invisible and the name be free. */
+/* Five rows per window, split into consecutive blocks of the same state. SEES
+   is ordered so there are never more than two blocks. */
 function runs(sees) {
   const out = []
   sees.forEach((v, i) => {
@@ -147,22 +128,16 @@ export function WhoSeesWhat({ className }) {
         <span className="flex items-center gap-2"><Mark v={1}/> Only if the student agrees</span>
         <span className="flex items-center gap-2"><Mark v={0}/> Never</span>
       </div>
-      {/* One window per person, not a table. The table put a rule under every
-          row, and a rule across a list of five things reads as five separate
-          subjects rather than as one person's view of one day. Equal rows at
-          every width: auto-rows-fr, because the three windows stack into one
-          column on a phone and auto rows there size themselves separately. */}
+      {/* auto-rows-fr keeps rows equal at every width: the three windows stack
+          into one column on a phone, and auto rows there size themselves
+          separately. */}
       <div className="mt-5 grid auto-rows-fr gap-5 md:grid-cols-3">
         {SEES.map(p => (
           <div key={p.who} className="flex h-full flex-col rounded-panel border border-rule bg-card p-6">
             <h3 className="font-display text-head font-bold leading-tight text-ink">{p.who}</h3>
-            {/* Inside each window the five rows are one list per state, named
-                by that state. SEES is already ordered so the states run in
-                blocks, which is why this changes nothing a reader can see:
-                same five rows, same order, one gap throughout. What it buys
-                is the name. A list carries it once for the rows under it, so
-                a cell reads "Parent: Never, list, Notes" instead of putting
-                the same phrase inside all five marks. */}
+            {/* One list per state, named by that state, so a cell reads
+                "Parent: Never, list, Notes" rather than repeating the phrase
+                inside all five marks. */}
             <div className="mt-4 grid gap-3">
               {runs(p.sees).map(g => (
                 <ul key={g.v} role="list" aria-label={`${p.who}: ${STATE[g.v]}`}
@@ -179,11 +154,8 @@ export function WhoSeesWhat({ className }) {
           </div>
         ))}
       </div>
-      {/* One sentence, and it is the one the four cards above this figure do
-          not carry. They print the consent model word for word, in the same
-          section, a few inches up; repeating it here was the same answer
-          given twice on one screen. The exception is not stated anywhere
-          else, so it stays. */}
+      {/* The four cards above already print the consent model word for word;
+          only the exception is stated nowhere else. */}
       <figcaption className="mt-4 max-w-[62ch] text-sec text-ink-3">Crisis alerts are the
         exception, and students are told so before they start.</figcaption>
     </figure>

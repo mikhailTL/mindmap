@@ -2,9 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { Card, CardHeader, CardTitle, CardContent } from './card'
 
-/* Display primitives from the s21 kit. The dark-site tokens are gone; the
-   status ramp is re-pointed at the clinical roles (amber = out of range,
-   red = critical and reserved). */
+/* Status ramp: warn means out of range, crit is reserved for critical. */
 
 const STATUS = {
   Urgent:   'border-crit/40 text-crit bg-crit/5',
@@ -39,11 +37,8 @@ export function EmptyState({ title, body, className }) {
     <p className="mx-auto mt-2 max-w-[42ch] text-sec text-ink-2">{body}</p>
   </div>
 }
-/* Panel was a bare <section> with a hand-drawn label rule, which meant a panel
-   and a clickable row on the same screen were two different surfaces built two
-   different ways. It is the sourced Card now — same props, so no caller moved.
-   `.mark` is dropped from the label: it carries its own top rule, and stacked
-   on the card's border two hairlines 3px apart read as a rendering fault. */
+/* Do not add `.mark` to the label: its top rule stacks on the card border and
+   two hairlines 3px apart read as a rendering fault. */
 export function Panel({ children, label, action, className, as:H = 'h2' }) {
   return (
     <Card as="section" className={cn(className)}>

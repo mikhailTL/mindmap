@@ -2,9 +2,8 @@ import * as React from 'react'
 import * as SeparatorPrimitive from '@radix-ui/react-separator'
 import { cn } from '@/lib/utils'
 
-/* shadcn/ui Separator, adapted: the registry's slate-200 becomes the project
- * rule, and `weight` is added because on this site a rule carries hierarchy —
- * a hairline separates rows inside a band, an ink rule separates the bands. */
+/* `weight`: a hairline separates rows inside a band, an ink rule separates the
+ * bands themselves. */
 export const Separator = React.forwardRef(function Separator(
   { className, orientation = 'horizontal', decorative = true, weight = 'hair', ...props }, ref) {
   return (

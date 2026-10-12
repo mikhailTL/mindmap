@@ -3,17 +3,10 @@ import { motion, useTransform } from 'framer-motion'
 import { ScrollScene } from '../ui/motion'
 const T = { fontFamily:'ui-monospace,monospace' }
 
-/* All three drawings share one wide viewBox and one set of coordinates, so the
-   exploded layers register on top of each other without per-layer nudging.
-
-   What changed: every layer used to be drawn on a 400x400 square as a 308x228
-   rounded rectangle — a 4:3 block that read as a pebble or a games console,
-   not as something you stick on a forearm. A skin patch is a thin, wide
-   lozenge: a stadium-shaped adhesive flange with a raised pod in the middle.
-   So the canvas is 440x260 and the silhouette below is a 412x148 stadium
-   (2.8:1, fully radiused ends) with a 216x108 pod centred in it. The ring left
-   between the two IS the adhesive flange, which is why it is never drawn as a
-   shape of its own — it is the part of the flange the pod does not cover. */
+/* Shell, Board and Face share the 440x260 viewBox and the FL/POD coordinates,
+   so the exploded layers register without per-layer nudging; keep all three the
+   same size or ExplodedStack's centring breaks. The adhesive flange is the ring
+   FL leaves outside POD — never a shape of its own. */
 const FL  = { x:14,  y:56, width:412, height:148, rx:74 }  /* adhesive flange, stadium */
 const POD = { x:112, y:76, width:216, height:108, rx:44 }  /* the raised body */
 
@@ -22,16 +15,12 @@ export const Shell = (
     <defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
       <line x1="0" y1="0" x2="0" y2="7" stroke="#0b2b33" strokeOpacity=".14" strokeWidth="1"/></pattern></defs>
     <rect {...FL} fill="#ffffff" fillOpacity=".93" stroke="#0b2b33" strokeWidth="1.6"/>
-    {/* The hatch covers the whole stadium and is then masked by the opaque pod,
-        so it survives only in the flange ring. That is cheaper and steadier
-        than an even-odd ring path, and it means the adhesive zone can never
-        drift out of register with the body sitting on it. */}
+    {/* Hatch covers the whole stadium and is masked by the opaque pod, leaving
+        it in the flange ring only — the pod rect must come after. */}
     <rect {...FL} fill="url(#hatch)"/>
     <rect x="25" y="67" width="390" height="126" rx="63" fill="none" stroke="#0b2b33" strokeOpacity=".3" strokeWidth="1"/>
     <rect {...POD} fill="#ffffff" stroke="#0b2b33" strokeWidth="1.5"/>
     <rect x="124" y="88" width="192" height="84" rx="36" fill="none" stroke="#0b2b33" strokeOpacity=".28" strokeWidth="1"/>
-    {/* The charging slot straddles the pod wall rather than sitting inside it,
-        because a port that does not break the outline is a sticker, not a port. */}
     <rect x="310" y="116" width="30" height="28" rx="9" fill="url(#hatch)" stroke="#0b2b33" strokeOpacity=".45" strokeWidth="1"/>
     <circle cx="220" cy="130" r="30" fill="none" stroke="#0b2b33" strokeOpacity=".3" strokeWidth="1"/>
     <circle cx="220" cy="130" r="7" fill="#0a6e68"/>
@@ -42,10 +31,6 @@ export const Board = (
   <svg viewBox="0 0 440 260" role="img" aria-label="The XIAO nRF52840 Sense board">
     <defs><pattern id="keep" width="6" height="6" patternUnits="userSpaceOnUse">
       <line x1="0" y1="6" x2="6" y2="0" stroke="#0a6e68" strokeOpacity=".35" strokeWidth="1"/></pattern></defs>
-    {/* The middle layer used to be a bare rectangle floating at a different
-        width from the other two, so mid-explode it looked like a stray part.
-        This dashed ghost is the flange the tray lands inside — it carries no
-        information beyond registration, which is why it is a construction line. */}
     <rect {...FL} fill="none" stroke="#0b2b33" strokeOpacity=".3" strokeWidth="1" strokeDasharray="6 6"/>
     <rect x="116" y="80" width="208" height="100" rx="16" fill="#dfecee" stroke="#0b2b33" strokeWidth="1.6"/>
     <rect x="132" y="92" width="176" height="76" rx="6" fill="#ffffff" stroke="#0b2b33" strokeWidth="1.3"/>
@@ -64,16 +49,11 @@ export const Board = (
 export const Face = (
   <svg viewBox="0 0 440 260" role="img" aria-label="The sensor face that sits against the skin">
     <rect {...FL} fill="#ffffff" fillOpacity=".85" stroke="#0b2b33" strokeOpacity=".55" strokeWidth="1.4"/>
-    {/* No inset trim line on this layer, unlike the shell. It was drawn here
-        too, for symmetry, and at this size it ran horizontally straight
-        through "EDA" and "TEMP" — a decorative rule cancelling four labels.
-        The pod outline already separates flange from body, so the trim had
-        nothing left to say. */}
+    {/* No inset trim line here, unlike Shell: it runs through the EDA and TEMP
+        labels at this size. */}
     <rect {...POD} fill="none" stroke="#0b2b33" strokeOpacity=".35" strokeWidth="1.2"/>
-    {/* The two EDA electrodes moved out onto the wings, outside the pod
-        outline. They were inboard on the old square drawing, which put both
-        skin contacts under the thickest part of the enclosure — the wide
-        silhouette is what makes the real placement drawable. */}
+    {/* EDA electrodes belong on the wings, outside the pod outline: that is the
+        real skin-contact placement. */}
     {[66,374].map(cx=>(<g key={cx}>
       <circle cx={cx} cy="124" r="34" fill="#dfecee" stroke="#0b2b33" strokeWidth="1.5"/>
       <circle cx={cx} cy="124" r="22" fill="none" stroke="#0b2b33" strokeOpacity=".35" strokeWidth="1"/>
@@ -88,10 +68,8 @@ export const Face = (
     <text x="220" y="199" textAnchor="middle" style={T} fontSize="15" fill="#1f5560">TEMP</text>
   </svg>)
 
-/* `title`/`body` describe the physical stack and label the drawing. `cad`
-   names what the model actually isolates, which is not the same thing: the CAD
-   is three printed parts, and the board is not one of them. Calling part two
-   "XIAO nRF52840 Sense" put a chip's name on a plastic tray. */
+/* `part` is the CAD part id — three printed parts. The XIAO board is bought,
+   not modelled, so 'pcb' is the tray, not the chip. */
 export const LAYERS = [
   { i:0, part:'pod', art:Shell, title:'Printed shell',
     body:'Charging slot in the side.' },
@@ -101,69 +79,35 @@ export const LAYERS = [
     body:'Sensor window and adhesive. Three signals read through it.' },
 ]
 
-/* The exploded drawing, lifted out of PatchPage so the homepage hero can use
-   the same one. It was inline markup in a single view; the hero needed it and
-   copying forty lines of transform classes into a second file is how two
-   drawings drift apart.
+/* Owns its own scroll motion via ScrollScene. Do not drive `#stack` or `.lyr`
+   from a host page — two mechanisms writing the same `transform` is what the
+   old counter-tilt existed to cancel.
 
-   IT NOW OWNS ITS OWN SCROLL MOTION. It used to be a static stack of three
-   registered sheets that expected whichever page hosted it to push them apart
-   and tip them — PatchPage did it with a GSAP ScrollTrigger reaching in
-   through `#stack` and `.lyr`, and the guided tour did it by writing inline
-   transforms onto the same class on mount. That is one figure animated by two
-   unrelated mechanisms living in two other files, neither of which could see
-   what the other had set, and it is why the drawing's own code carried a
-   fixed counter-tilt to cancel an angle a different file had chosen. All of
-   it is replaced by one ScrollScene here, which is framer's useScroll and the
-   same spring the rest of the site's scroll motion uses, so the figure is
-   correct wherever it is mounted and nothing has to be set up around it.
+   `size` defaults to the hardware page's width; the hero passes
+   `w-[min(96%,470px)]`, the largest width whose projected ink still clears the
+   figcaption at the steepest point of the scrub in its 604x460 column. The
+   literal is named here so Tailwind emits the class before any caller uses it. */
 
-   What the reader gets out of the change: the stack used to tip through 16
-   degrees with the three sheets held at a fixed depth, which read as a plate
-   sliding. It now tips through 32 and rotates through 30 while the three
-   sheets travel different distances in depth, so it opens and closes as it
-   passes — the separation reads as depth because the sheets are genuinely
-   moving apart, not as a slide because they are no longer moving together.
-
-   `size` exists because one width served two very different boxes: at
-   `w-[min(84%,400px)]` the drawing sat correctly beside the CAD viewer but
-   floated inside the much larger hero column with a ring of dead space around
-   it, which is what read as "shrunken". The default is the hardware page's
-   old value, so only the hero has to say anything, and what it should say is
-   `size="w-[min(96%,470px)]"` — measured, not guessed: at the hero's 604x460
-   column that is the largest width whose projected ink still clears the
-   figcaption at the steepest point of the scrub. Naming it here also keeps
-   Tailwind generating the class even before the hero passes it. */
-
-/* Depth per sheet, as [at progress 0, at progress 1], in px along the stack's
-   own normal. The midpoints are 122 / 17 / -88, which is within a few pixels
-   of the 128 / 20 / -88 this figure was tuned at as a static drawing: the
-   composition a reader sees at the middle of the pass is the one that was
-   measured, and the two ends open and close either side of it. The three
-   travel 125, 10 and 84 — deliberately unequal, because three sheets moving
-   the same distance is a plate coming apart in one piece. */
+/* Depth per sheet as [progress 0, progress 1], px along the stack's normal.
+   Midpoints 122 / 17 / -88 are the tuned static composition. Travel is
+   deliberately unequal (125 / 10 / 84) so the stack opens instead of sliding
+   as one plate. */
 const SHEET_Z = { 0: [60, 185], 1: [12, 22], 2: [-46, -130] }
 
-/* One sheet. A component rather than inline markup because it calls a hook:
-   it reads the same sprung progress the scene is rotating on, so the depth and
-   the tip cannot disagree by a frame.
-
-   x and y are framer's, not Tailwind's `-translate-x-1/2`: framer writes the
-   whole `transform` property, so a translate declared in a class would be
-   overwritten wholesale and the sheet would register off its own centre. */
+/* A component, not inline markup, so useTransform reads the same sprung
+   progress the scene rotates on; otherwise depth and tip drift a frame apart.
+   Centring uses framer's x/y, not `-translate-x-1/2`: framer writes the whole
+   `transform`, so a class translate is overwritten and the sheet registers off
+   its own centre. */
 function Sheet({ layer, size, progress, narrow }) {
   const [a, b] = SHEET_Z[layer.i] || [0, 0]
-  /* Shrunk toward the midpoint below sm, like the scene's rotation: less
-     travel, same composition. */
   const k = narrow ? 0.5 : 1
   const m = (a + b) / 2
   const z = useTransform(progress, [0, 1], [m + (a - m) * k, m + (b - m) * k])
   return (
     <motion.figure data-i={layer.i} style={{ x: '-50%', y: '-50%', z }}
-      /* `aspect-square` went with the square viewBox: on a 440x260 drawing it
-         padded every layer with 40% empty height and pushed the artwork off
-         the centre this translate assumes. Height now comes from the SVG,
-         which is identical for all three, so registration is free. */
+      /* No `aspect-square`: height comes from the SVG, identical for all three
+         layers, so they register against this translate. */
       className={`lyr absolute left-1/2 top-1/2 m-0 ${size}
         [transform-style:preserve-3d]
         [&_svg]:h-auto [&_svg]:w-full [&_svg]:overflow-visible
@@ -177,40 +121,24 @@ export function ExplodedStack({
   className,
   caption = 'Drawing · engineering labels',
   shift = '0%, 0%',
-  /* 84% overran the left edge by 4px at 390 once the sheets tip: the
-     rotation widens the painted box past the element box. 76% below sm
-     keeps every sheet inside the column; the desktop figure is unchanged. */
+  /* 76% below sm: rotation widens the painted box past the element box, and
+     84% overran the left edge by 4px at 390. */
   size = 'w-[min(76%,400px)] sm:w-[min(84%,400px)]',
 }) {
   return (
-    /* The clip stays on this element and stays horizontal-only. Horizontal is
-       the axis a scrollbar can come from and this is what guarantees the
-       figure cannot raise one at any width; vertical is deliberately left
-       open, because the sheets' drop shadows and their tipped corners paint
-       above and below this box by design and clipping them would shear the
-       drawing. */
+    /* Horizontal-only clip: stops the tipped sheets raising a horizontal
+       scrollbar at any width. A full clip shears their shadows and corners. */
     <div className={'relative overflow-x-clip ' + (className || '')}>
-      {/* The stack tips away from its own centre, so at hero size it drifts up
-          and right and leaves a hole under it. `shift` recentres the optical
-          mass rather than the bounding box. It sits on a wrapper outside the
-          scene so it is not competing for the same `transform`. */}
-      {/* overflow-clip, and it is load-bearing. The three sheets tip through
-          32 degrees inside a 1500px perspective, which throws the near corner
-          of the top sheet well outside this box, and the automated check at
-          1280 caught exactly that: two elements past the viewport edge on the
-          patch page. The scene's own clip is off because a clip on the
-          rotating element shears its tipped corners; the clip belongs one
-          level out, on the box that does not move. */}
+      {/* `shift` recentres the optical mass; it lives on this wrapper, not the
+          scene, so it does not compete for the same `transform`. The
+          `overflow-clip` is load-bearing and must stay on this non-moving box:
+          at 32deg in a 1500px perspective the top sheet's near corner lands
+          outside it and overflows the viewport at 1280. */}
       <div className="absolute inset-0 overflow-clip"
         style={{ transform: `translate(${shift})` }}>
-        {/* The angles are stated as the net result now. They used to be split
-            across a fixed rotateX(-20deg) counter-tilt here and a 66-to-50
-            scrub written in PatchPage, which existed only because GSAP
-            overwrote `#stack`'s transform wholesale and the correction had
-            nowhere else to live. One mechanism, one set of numbers: 52 degrees
-            of tip easing to 20, which keeps the three faces readable the whole
-            way through — the pair that read as three slivers was 70 to 50.
-            clip={false} because this figure's own clip is the element above. */}
+        {/* Net angles, no counter-tilt. 52deg easing to 20 keeps all three
+            faces readable through the scrub; past ~70 they read as slivers.
+            clip={false} because the clip lives on the wrapper above. */}
         <ScrollScene clip={false} perspective={1500} restAt={0.5} narrow={0.4}
           className="h-full w-full"
           from={{ rotateX: 52, rotateZ: -44 }} to={{ rotateX: 20, rotateZ: -14 }}>

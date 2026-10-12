@@ -10,11 +10,6 @@ import { Badge } from '../ui/badge'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { Chevron } from '../ui/marks'
-/* The two hover cards that defined "Mind Score" and "weekly change" on the
-   words themselves are gone with the paragraph that carried them. A tooltip is
-   a third place for a definition to live and go stale, and the one sentence
-   under the title now says what the order is in words a counselor already
-   has. */
 import {
   K_ANONYMITY, TIER_LABEL, triage, scoreOnly, alertsOnly, roster,
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY,
@@ -33,16 +28,12 @@ const Sub = ({ children, className }) =>
 const Note = ({ children }) => <p className="mt-5 max-w-[70ch] border-t border-rule pt-4 text-meta text-ink-3">{children}</p>
 
 /* ── Empty, drawn ───────────────────────────────────────────────────────── */
-/* With no student paired and no guardian consented, this console has no rows —
- * which is its true state for every visitor today, and it is not a fault. So
- * an empty region here keeps the form and loses only the entries: the rules
- * stay, the columns keep their names, the blank is drawn as a ruled lane and
- * annotated. A bare sentence in the middle of a blank panel reads as a page
- * that failed to load, which is the one thing this console cannot afford to
- * look like.
- *
- * Dashed rather than solid: a drawn rule on this site means a real division,
- * so a lane that is waiting for content has to be visibly a different mark. */
+/* No student paired and no guardian consented is this console's true state for
+   every visitor today, not a fault, so the empty region keeps the form and loses
+   only the entries.
+
+   Dashed rather than solid: a drawn rule on this site means a real division, so
+   a lane waiting for content has to be a visibly different mark. */
 const BlankLane = ({ className }) =>
   <span aria-hidden className={cn('border-t border-dashed border-ruling', className)}/>
 
@@ -53,10 +44,8 @@ const BlankRow = ({ children }) => (
   </li>
 )
 
-/* A table keeps its header row when it has no data. The columns are the
-   schema, and the schema is real whether or not anything has been written to
-   it — a counselor evaluating this product needs to see what would be logged
-   about them before there is anything to log. */
+/* The header row stays with no data: the columns are the schema, and a counselor
+   evaluating this product needs to see what would be logged about them. */
 const EmptyBand = ({ cols, children }) => (
   <TR>
     <TD colSpan={cols}>
@@ -68,38 +57,13 @@ const EmptyBand = ({ cols, children }) => (
   </TR>
 )
 
-/* ── Who to check in with ────────────────────────────────────────────────
- *
- * One list, and it is the whole tab.
- *
- * What stood here: an h2, a paragraph carrying two hover-card definitions, a
- * count, a four-segment tier bar, a four-item legend under the bar, two
- * bordered callout panels naming the biggest mover and the highest score,
- * eight bordered student cards each holding a rank, a name, a grade, a band, a
- * figure, a scale caption, a signed figure, a two-sided divergence bar with
- * its own aria label, a sentence and an "Open record" link, a legend for that
- * bar, and two more bordered cards each wrapping a list of students whose
- * consent scope withholds something. Twenty-odd boxes.
- *
- * A counselor opening this on a Monday morning wants to know who to talk to
- * first. Everything above the list was answering a question that had not been
- * asked yet, and the list itself was eight cards deep, so the eye had to climb
- * out of one box and into the next to compare two students.
- *
- * So: the title, one sentence saying what the order is, and the list. A row is
- * a name, the band, the Mind Score and the move — and the move is on the
- * right, because the move IS the order, and an order you cannot read off a
- * single right-hand column is an order you have to be told about in a
- * footnote. The two-sided bar went with the callouts: a signed figure in warn
- * or calm says which way and how far already, and the bar said it again in
- * 13rem of width.
- *
- * This is the one screen in the app allowed to be dense. Dense is not boxed.
- */
+/* -- Who to check in with ------------------------------------------------
 
-/* The column the figures are in, named once. Two labels, on the rule the list
-   hangs from, which is what a ruled sheet does instead of a caption per
-   column. */
+   The title, one sentence saying what the order is, and the list. The move is in
+   the right-hand column because the move IS the order. This is the one screen
+   in the app allowed to be dense. */
+
+/* The figure columns, named once on the rule the list hangs from. */
 const ListHead = () => (
   <div aria-hidden className="flex items-center gap-4 border-b border-ink pb-2">
     <span className="w-5 shrink-0"/>
@@ -110,9 +74,7 @@ const ListHead = () => (
 )
 
 /* What the order is, what it is not, and what is not in the list at any depth.
-   It is one block of small print under the list rather than four paragraphs
-   and two hover cards above it, and it is the same block on a full list and an
-   empty one, so it is written once. */
+   The same block on a full list and an empty one, so it is written once. */
 const LIST_NOTE = (
   <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
     Change this week is the move in a student&rsquo;s seven-day average from one week to the next.
@@ -128,11 +90,9 @@ function Row({ s, n, onOpen }) {
   const move = `${s.velocity > 0 ? '+' : s.velocity < 0 ? '−' : ''}${Math.abs(s.velocity)}`
   return (
     <li className="border-b border-rule">
-      {/* Was a Card with `interactive`, which is the right affordance for a
-          card and the wrong object for a row. One label on the button, and the
-          four marks inside it are hidden from the reader: read out
-          separately they are a rank, a name, a punctuated fragment, a bare
-          numeral and a glyph. */}
+      {/* One label on the button; the four marks inside are hidden from the reader,
+          since read out separately they are a rank, a name, a punctuated fragment, a
+          bare numeral and a glyph. */}
       <button type="button" onClick={() => onOpen(s.name)}
         aria-label={`${s.name}, grade ${s.grade}, ${TIER_LABEL[s.tier]}, ${SCORE} ${s.current} out of 100, `
           + `${dir === 'worse' ? `up ${Math.abs(s.velocity)} points` : dir === 'better'
@@ -153,10 +113,6 @@ function Row({ s, n, onOpen }) {
   )
 }
 
-/* The two consent-limited groups, which were two bordered cards side by side,
-   each with a heading, a description and a list inside it. They are one list
-   under one rule: a counselor reading either half is asking the same question,
-   and what each student's scope withholds is a line on their own row. */
 function NarrowScopes({ onOpen }) {
   const scored = scoreOnly(), quiet = alertsOnly()
   return (
@@ -197,12 +153,8 @@ function NarrowScopes({ onOpen }) {
   )
 }
 
-/* The three conditions, in the order they happen. A school reads this tab
-   first, and "why is it empty" is the question it asks — so the answer is the
-   content of the empty list rather than a line under it. The drawn blank row
-   that used to sit under them, labelling the four fields of a row that does
-   not exist yet, is gone: the list head above the real list names the same
-   columns, and a diagram of an empty row is a diagram of nothing. */
+/* The three conditions, in the order they happen. A school reads this tab first
+   and asks why it is empty, so the answer is the content of the empty list. */
 const CASELOAD_NEEDS = [
   ['A student pairs a patch',
    'Nothing reaches the school until the student pairs it, on their own phone. They can unpair it the same way.'],
@@ -257,9 +209,7 @@ function Triage({ onOpen, real }) {
 }
 
 /* ── One student ────────────────────────────────────────────────────────── */
-/* What a record holds, and the consent scope that unlocks each part of it. The
-   list is the empty tab's whole content because a record's shape is the thing
-   a school has to agree to before any of it exists. */
+/* What a record holds, and the consent scope that unlocks each part. */
 const RECORD_FIELDS = [
   [`${SCORE} today, out of 100`, `With ${SCORE} consent.`],
   ['Weekly change, and a place on the list', 'With trend consent.'],
@@ -279,9 +229,8 @@ function EmptyRecord() {
           <Sub className="mt-2">A record opens from the check-in list, which stays empty until a
             guardian signs a scope.</Sub>
         </div>
-        {/* The control stays, disabled and empty. Removing it would hide how a
-            counselor moves between students, which is a real part of the
-            console whether or not there is anyone to move between. */}
+        {/* The control stays, disabled: it is how a counselor moves between students,
+            whether or not there is anyone to move between. */}
         <div>
           <label htmlFor="pick" className="note block">Open a different student</label>
           <select id="pick" disabled defaultValue="none"
@@ -301,9 +250,6 @@ function EmptyRecord() {
         </CardHeader>
         <CardContent className="p-6 pt-5">
           <ul className="m-0 list-none border-t border-rule p-0">
-            {/* Ruled as a two-column table rather than a wrapping row: the
-                field and the consent that unlocks it are a pair, and ragged
-                starts made them read as one sentence per line instead. */}
             {RECORD_FIELDS.map(([field, when]) => (
               <li key={field} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-5
                 gap-y-1 border-b border-rule py-3.5
@@ -321,14 +267,14 @@ function EmptyRecord() {
 }
 
 function OneStudent({ who, setWho, real }) {
-  /* Hooks first, then the branch: the two states are different screens, and
-     returning before this line would change the hook order on a mode flip. */
+  /* Hooks first, then the branch: returning before this line would change the hook
+     order on a mode flip. */
   const [note, setNote] = React.useState('')
   if (real) return <EmptyRecord/>
   const all = roster()
   const s = all.find(x => x.name === who) || all[0]
-  /* Both of these used to be module constants, so every student on the board
-     showed Student 8241's drivers and Student 8241's 45-day line. */
+  /* Per student, not module constants: as constants every student on the board
+     showed Student 8241's drivers and 45-day line. */
   const drivers = driversFor(s)
   const series = profile45(s)
   const lo = Math.min(...series.map(p => p.v)), hi = Math.max(...series.map(p => p.v))
@@ -352,14 +298,9 @@ function OneStudent({ who, setWho, real }) {
         </div>
       </div>
 
-      {/* Both withheld-consent states were tinted bands with a left rule. They
-          are the record for this student, so they are the same card the record
-          would have been, with the ruling edge marking what is withheld. */}
       {!s.showScore && (
         <Card as="section" className="mt-10 border-l-[3px] border-l-ruling">
           <CardHeader className="p-6 pb-0">
-            {/* "Nothing to show, by consent" read as an error state. It is a
-                consent scope, and the card says which one. */}
             <CardTitle as="h3" className="text-row">No readings shared for this student</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-3">
@@ -386,18 +327,6 @@ function OneStudent({ who, setWho, real }) {
       )}
 
       {s.showTrend && <>
-      {/* Five bordered panels stood here: a figure panel, a driver panel with
-          four tracks in it, an intervention panel, the 45-day line and a note
-          field, laid out as a three-up grid and then a two-up grid. Five boxes
-          for one student, and the one figure a counselor opens the record for
-          was in the first of the five.
-
-          It is the record's own reading now, at the step the dashboards give a
-          figure, and everything under it is rows: the drivers are a percentage
-          per row, the interventions are a line each, the line chart is the one
-          chart, and the note field is a field. The driver bars went for the
-          same reason the student screen's did — the figure beside each row
-          states the same share against the same 100. */}
       <p className="note mt-10">Change this week, against the week before</p>
       <p className={cn('m-0 mt-1 font-mono text-dial font-medium leading-none tabular-nums',
         s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink')}>
@@ -468,9 +397,9 @@ function OneStudent({ who, setWho, real }) {
 }
 
 /* ── Year groups ────────────────────────────────────────────────────────── */
-/* The hatch that marks a suppressed cell, drawn once as a legend. Its own
-   pattern id: the bars below each define `hatch` inside their own svg, and a
-   second element with the same id in one document is a real collision. */
+/* The hatch that marks a suppressed cell. Its own pattern id: the bars below
+   each define `hatch` inside their own svg, and two elements with the same id in
+   one document collide. */
 const SuppressedSwatch = ({ className }) => (
   <svg className={cn('h-2 w-full', className)} preserveAspectRatio="none" role="img"
     aria-label="Suppressed for k-anonymity">
@@ -484,9 +413,9 @@ const SuppressedSwatch = ({ className }) => (
   </svg>
 )
 
-/* Both halves of this tab aggregate consented students, so with none consented
-   there is nothing to aggregate — but the rule that governs the aggregation is
-   policy, and it is the half a school weighs before it signs anything. */
+/* Both halves aggregate consented students, so with none consented there is
+   nothing to aggregate -- but the rule governing the aggregation is policy, and
+   a school weighs it before it signs. */
 const COHORT_REPORTS = [
   [`${SCORE} by class period`, 'A mean per period across the building. Fewer than five consented students returns nothing.'],
   [`${SCORE} by weekday`, 'The same figure per weekday, school-wide.'],
@@ -505,8 +434,8 @@ function EmptyCohort() {
           <h3 className="mark">What this tab shows</h3>
           <RuleDraw className="mt-2.5"/>
           <ul className="m-0 mt-5 list-none p-0">
-            {/* The dashed lane is this row's rule as well as its blank: a solid
-                border under it put two hairlines 12px apart. */}
+            {/* The dashed lane is this row's rule as well as its blank; a solid border under
+                it put two hairlines 12px apart. */}
             {COHORT_REPORTS.map(([what, how]) => (
               <li key={what} className="py-4 first:pt-0">
                 <h4 className="font-display text-row font-bold tracking-tight text-ink">{what}</h4>
@@ -547,15 +476,12 @@ function Cohort({ real }) {
     <>
       <h2 className="font-display text-head font-bold tracking-tight text-ink">
         Patterns across the whole school</h2>
-      {/* A reviewer read "8 students" on the check-in list and "18 consented
-          students" here and concluded one of them was invented. Both are true
-          and neither said which population it meant. */}
+      {/* The check-in list's count and this one are different populations, so each has
+          to say which it means. */}
       <Sub className="mt-2">All {SCHOOL_N} consented students in the building, not the eight on your
         own list. Nobody here is identifiable.</Sub>
       <div className="mt-10 grid gap-x-12 gap-y-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          {/* "School-wide pattern" repeated the h2 directly above it. The two
-              findings under it are what the section actually is. */}
           <h3 className="mark">The two clearest patterns</h3>
           <RuleDraw className="mt-2.5"/>
           <ScrollIn className="mt-6">
@@ -582,8 +508,6 @@ function Cohort({ real }) {
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
         </section>
 
-        {/* "Privacy floor" named a policy in a term nobody outside the team
-            uses. The rule itself is unchanged. */}
         <Panel as="h3" label="Smallest group we will show">
           <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
           <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
@@ -609,9 +533,8 @@ function Cohort({ real }) {
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-xs bg-mist">
                   {p.suppressed ? (
-                    /* Was a repeating-linear-gradient of a raw hex. Gradients
-                       are out of the system and the colour was not a token, so
-                       the hatch is drawn instead, ruled in `ruling`. */
+                    /* Drawn, not a repeating-linear-gradient of a raw hex: gradients are out of the
+                       system and that colour was not a token. Ruled in `ruling`. */
                     <svg className="h-full w-full" preserveAspectRatio="none" role="img"
                       aria-label="Suppressed for k-anonymity">
                       <defs>
@@ -648,9 +571,8 @@ function Cohort({ real }) {
       </div>
 
       <Panel className="mt-14" label="What a school does with this">
-        {/* The first bullet restated the period figure from the top of the tab
-            and hard-coded 31% while the panel above computes it, so the two
-            would disagree the moment the data moved. */}
+        {/* Do not restate the period figure here: the panel above computes it, and a
+            hard-coded 31% disagrees with it the moment the data moves. */}
         <ul className="max-w-[64ch] space-y-2 text-sec text-ink-2">
           <li>Moving one lab section is a single timetable change.</li>
           <li>The same screen shows whether the mean came down four weeks later.</li>
@@ -666,19 +588,14 @@ function Escalation({ real }) {
   const [closing, setClosing] = React.useState(false)
   const [closed, setClosed] = React.useState(null)
   const toggle = i => setDone(d => d.includes(i) ? d.filter(x => x !== i) : [...d, i])
-  /* Derived rather than branched on at the top: the protocol is the school's
-     own document and stays on the screen either way — with no alert to run it
-     against, every step is simply unticked and untouchable. */
+  /* Derived rather than branched on at the top: the protocol is the school's own
+     document and stays on screen either way, unticked and untouchable. */
   const ticked = real ? [] : done
   const referrals = real ? [] : REFERRALS
   const log = real ? [] : AUDIT_LOG
   return (
     <>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        {/* The queue sat in a bare section while the referral list beside it was
-            a Panel, so the two halves of one row were different objects. Both
-            are cards now; the crit rule on the top edge is what still says
-            which one is the alarm. */}
         <Card as="section" className="border-t-2 border-t-crit/40">
           <CardHeader className="p-5 pb-0">
             <CardTitle as="h2" className="text-tick text-crit">Crisis queue</CardTitle>
@@ -690,21 +607,17 @@ function Escalation({ real }) {
             <span className="font-mono text-sec tabular-nums text-ink-3">{real ? '' : '2:14 PM'}</span>
           </div>
           {real
-            /* An empty crisis queue is the good state, and it has to read as
-               one. It is also the only thing on this console nobody can put a
-               row into by hand, which is worth saying while it is empty. */
+            /* An empty crisis queue is the good state and has to read as one. It is also the
+               only thing on this console nobody can put a row into by hand. */
             ? <p className="mt-2 max-w-[60ch] text-meta text-ink-2">An entry appears only when a
                 paired patch crosses the crisis threshold. Nobody can raise one by hand, and none
                 has been raised.</p>
             : <p className="mt-2 max-w-[60ch] text-meta text-ink-2">
                 Student 8241 crossed the crisis threshold during AP Chemistry. The protocol ran
                 automatically.</p>}
-          {/* The wrapper already draws the rule that separates the steps from
-              the alert above; `.mark` draws its own, so the two stacked into a
-              pair of hairlines 16px apart that read as a rendering fault. */}
+          {/* The wrapper already draws the rule above the steps, and `.mark` draws its own:
+              stacked, the two read as a pair of hairlines 16px apart. */}
           <div className="mt-5 border-t border-rule pt-4">
-            {/* "Protocol" named the document, not the five checkboxes under
-                it. */}
             <h4 className="font-display text-tick font-bold text-ink-2">Escalation steps</h4>
             <ul className="mt-3 space-y-1">
               {PROTOCOL.map((step, i) => (
@@ -732,8 +645,6 @@ function Escalation({ real }) {
           </CardContent>
         </Card>
 
-        {/* Was "Referrals already open", with a row the status badge marks
-            Closed sitting under it. */}
         <Panel as="h3" label="Referrals on these students">
           <ul className="divide-y divide-rule">
             {real && <BlankRow>No referral has been opened. A referral is written from a
@@ -797,10 +708,8 @@ const FACTS = [
   ['Location collected by default', 'No'],
 ]
 function Consent({ real }) {
-  /* Only the rows are conditional. Every statement on this tab — the ledger's
-     columns, the retention window, the four facts, the export behaviour — is
-     policy, and policy is as true of a school with nobody enrolled as of a
-     full one. It is also the tab a school reads before it enrolls anyone. */
+  /* Only the rows are conditional. Every statement on this tab is policy, which is
+     as true of a school with nobody enrolled as of a full one. */
   const ledger = real ? [] : CONSENT_LEDGER
   const log = real ? [] : AUDIT_LOG
   return (
@@ -847,7 +756,6 @@ function Consent({ real }) {
           </ul>
         </Panel>
 
-        {/* "The same log, most recent first" said what it was not. */}
         <Panel as="h3" label="Recent activity in the log">
           <ul className="divide-y divide-rule">
             {real && <BlankRow>Nothing has happened on this console yet.</BlankRow>}
@@ -881,15 +789,13 @@ export function Pro({ go }) {
   const [tab, setTab] = React.useState('triage')
   const [who, setWho] = React.useState('Student 8241')
   const [said, setSaid] = React.useState('')
-  /* Switching tabs, or opening a record from the board, replaced the whole
-     panel with focus still on <body> and nothing announced. A screen-reader
-     user had no way to know the page had changed under them. */
+  /* Switching tabs, or opening a record, replaces the whole panel with focus still
+     on <body> and nothing announced. */
   const announce = msg => { setSaid(''); requestAnimationFrame(() => setSaid(msg)) }
   const onTab = v => { setTab(v); announce(`Showing ${TABS.find(t => t[0] === v)[1]}`) }
   const openStudent = name => { setWho(name); setTab('student'); announce(`Opened the record for ${name}`) }
-  /* Every tab takes the flag rather than the console swapping wholesale: the
-     consent, retention, k-anonymity and audit statements are policy, and they
-     are as true of an empty school as of a full one. Only the rows go. */
+  /* Every tab takes the flag rather than the console swapping wholesale: the policy
+     statements hold for an empty school as for a full one. Only the rows go. */
   const PANES = {
     triage: () => <Triage onOpen={openStudent} real={real}/>,
     student: () => <OneStudent who={who} setWho={setWho} real={real}/>,
@@ -899,39 +805,26 @@ export function Pro({ go }) {
   }
   return (
     <main>
-      {/* The screen header, and the same construction as views/shell.jsx so
-       * the four app screens open the same way. It was a mist band with a
-       * kinetic grid behind it, which is the marketing hero: a tinted
-       * full-bleed ground with a texture on it. Two pixels under a 48px white
-       * title bar that reads as an application, it undid the title bar.
-       *
-       * Card ground, no texture, a hairline against the canvas, and 20px of
-       * padding against the old 40. Measured on card #ffffff: ink 14.92,
-       * ink-2 8.31, warn 5.78, crit 6.69; the weakest clears 4.5 : 1. The
-       * closing hairline is ink-3 at 5.99, the app's own rule. */}
+      {/* The screen header, same construction as views/shell.jsx so the four app screens
+          open the same way. Card ground, no texture, a hairline against the canvas.
+          Measured on card #ffffff: ink 14.92, ink-2 8.31, warn 5.78, crit 6.69; the
+          weakest clears 4.5 : 1. The closing hairline is ink-3 at 5.99. */}
       <div className="border-b border-ink-3 bg-card">
         <div className="wrap !py-5 lg:!py-6">
-          {/* Was "For school counselors and psychologists" — an audience, not a
-              screen. The three audience views are named the same way now. */}
           <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
             What a school counselor sees</h1>
           <p className="mt-2 max-w-[60ch] text-sec text-ink-2">
             Only students who consented appear, and each one only to the extent their guardian agreed.
             Groups under five return nothing.</p>
-          {/* The hand-rolled tinted box around a capsule badge is gone; one
-              ruled annotation carries the sentence, and which sentence depends
-              on what the tabs below are actually showing. */}
           {real
             ? <RealNotice className="mt-3">No student has paired a patch and no guardian has signed
                 a scope, so this list is empty.</RealNotice>
             : <DemoNotice className="mt-3">Every figure here is generated. No student was measured.</DemoNotice>}
         </div>
       </div>
-      {/* Was py-9 sm:py-12; the tab body is a section, the middle step. */}
       <div className="wrap py-14">
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      {/* Was a second hand-classed copy of the tab strip in views/shell.jsx.
-          One definition in ui/tabs now, so the two consoles cannot drift. */}
+      {/* One definition in ui/tabs, so the two consoles cannot drift. */}
       <Tabs value={tab} onValueChange={onTab}>
         <TabsList aria-label="Counselor views">
           {TABS.map(([v, label]) => (

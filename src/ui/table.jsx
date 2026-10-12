@@ -3,9 +3,6 @@ import React from 'react'
 
 import { cn } from '../lib/utils'
 
-/* Table primitives from the s21 kit — a real header/row/cell system so pages
-   stop hand-rolling grid classes. Retokenised to the light clinical palette. */
-
 export function Table({ children, className }) {
   return <div className={cn('w-full overflow-x-auto overscroll-x-contain', className)}>
     <table className="w-full border-collapse text-left">{children}</table></div>
