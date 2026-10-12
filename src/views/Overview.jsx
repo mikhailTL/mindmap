@@ -9,6 +9,9 @@ import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { ProblemStats } from '../charts/problem'
 import { WhoSeesWhat } from '../charts/infographics'
+import { MindScoreNet } from '../charts/network'
+import { PatchStack } from '../charts/patchstack'
+import { Faces } from '../charts/people'
 import { Card } from '../ui/card'
 import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
@@ -243,6 +246,13 @@ export function Overview({ go }) {
         <ProblemStats className="mt-5"/>
       </Section>
 
+      {/* -- who this is about ---------------------------------------------
+          The band above states the problem in national figures. Figures at that
+          size stop reading as people, so the faces follow immediately. */}
+      <Section name="Who this is about" tone="paper" tight>
+        <Faces/>
+      </Section>
+
       {/* -- the three doors ----------------------------------------------- */}
       <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
@@ -269,6 +279,27 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
+      </Section>
+
+      {/* -- what actually computes the number ------------------------------
+          The two things a reader has to take on trust everywhere else on this
+          page: what the patch is, and where the number comes from. Both are
+          drawn here and both can be driven by hand, because a figure somebody
+          moves is believed and a claim is not. */}
+      <Section name="The model" tone="paper">
+        <SectionHead>Where the Number Comes From</SectionHead>
+        <SectionLede>
+          Four signals in, one {SCORE} out. Move a slider and watch it change.
+        </SectionLede>
+        <MindScoreNet className="mt-6"/>
+      </Section>
+
+      <Section name="The patch" tone="card" className="bg-aqua-2">
+        <SectionHead>Inside the Patch</SectionHead>
+        <SectionLede>
+          Five layers, 54 mm by 36 mm, worn on the outer upper arm.
+        </SectionLede>
+        <PatchStack className="mt-6"/>
       </Section>
 
       {/* -- the three audiences ------------------------------------------- */}
