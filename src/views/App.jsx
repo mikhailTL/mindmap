@@ -593,7 +593,7 @@ function SurveyPage() {
   const byId = new Map(answersFor(PAGE).map(a => [a.qid, a]))
   const done = REQUIRED.filter(q => byId.has(q.id)).length
   const total = REQUIRED.length
-  const visitor = getVisitor()
+  const [visitor, setVisitor] = React.useState(() => { try { return getVisitor() } catch { return null } })
   const answer = (q, value, label) => recordAnswer({ page: PAGE, qid: q.id, kind: q.kind, value, label })
 
   return (
@@ -613,6 +613,16 @@ function SurveyPage() {
           {done} of {total} answered
         </p>
       </Section>
+
+      {/* Asked here, where the name is actually used, rather than over the whole
+          site before anyone has seen it. */}
+      {!visitor && (
+        <Section tone="paper" tight>
+          <NameGate inline onDone={() => {
+            try { setVisitor(getVisitor()) } catch { setVisitor({ name: 'Anonymous' }) }
+          }}/>
+        </Section>
+      )}
 
       <Section tone="card" tight>
         <div>
@@ -680,9 +690,6 @@ export function App() {
   const [showIntro, setShowIntro] = React.useState(() => {
     try { return !admin && !introSuppressed() } catch { return false }
   })
-  const [visitor, setVisitorState] = React.useState(() => {
-    try { return getVisitor() } catch { return null }
-  })
   const endIntro = React.useCallback(() => setShowIntro(false), [])
   /* Navigation resets scroll, title and focus itself: focus otherwise falls to
      <body> and the scroll position carries over from the previous screen. */
@@ -733,9 +740,10 @@ export function App() {
           font-display text-meta font-medium text-paper transition-transform duration-150
           focus:translate-y-4">Skip to the main content</a>
       {showIntro && !admin && <Intro onDone={endIntro}/>}
-      {!showIntro && !visitor && !admin && (
-        <NameGate onDone={() => { try { setVisitorState(getVisitor()) } catch { setVisitorState({ name:'Anonymous' }) } }}/>
-      )}
+      {/* The name is only ever used to label a survey answer, so it is asked
+          inside the survey now rather than across the whole site before anyone
+          has seen anything. A full-screen panel between a first-time reader and
+          the product is a cost paid by everybody to serve one page. */}
       {!inApp && <Header view={view} go={go}/>}
       <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
@@ -748,7 +756,7 @@ export function App() {
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
         {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
-        {!showIntro && visitor && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
+        {!showIntro && !admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
         {/* The extra foot room under sm is load-bearing: the feedback pill is
             fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
         {inApp ? <AppFoot/> : (

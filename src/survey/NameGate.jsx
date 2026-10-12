@@ -5,19 +5,24 @@ import { cn } from '../lib/utils'
 
 const MAX = 60
 
-/* The consent panel, asked once. States what is collected and who reads it
- * before anything is collected, and gives declining a name equal weight to
- * giving one.
+/* The consent panel, asked once, at the top of the survey. States what is
+ * collected and who reads it before anything is collected, and gives declining
+ * a name equal weight to giving one.
  *
- * Deliberately not a dialog role and not a focus trap: it is the first thing on
- * the page with nothing behind it to escape back to. Esc takes the Skip path,
+ * `inline` is how it is used now: a card at the head of the one page the name
+ * is for. It used to cover the whole site before anybody had seen anything,
+ * which charged every reader for a question that concerns one page.
+ *
+ * Deliberately not a dialog role and not a focus trap. Esc takes the Skip path,
  * the same as the button, so it cannot lose work. */
-export function NameGate({ onDone }) {
+export function NameGate({ onDone, inline = false }) {
   const [name, setName] = React.useState('')
   const [error, setError] = React.useState(null)
   const ref = React.useRef(null)
 
-  React.useEffect(() => { ref.current?.focus() }, [])
+  /* Autofocus only when this covers the page. Inline, stealing focus would
+     scroll a reader past the heading they were reading. */
+  React.useEffect(() => { if (!inline) ref.current?.focus() }, [inline])
 
   const finish = value => {
     setVisitor(value)
@@ -46,12 +51,15 @@ export function NameGate({ onDone }) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-paper/95 p-5"
+      className={cn(inline
+        ? 'w-full'
+        : 'fixed inset-0 z-[70] flex items-center justify-center bg-paper/95 p-5')}
       onKeyDown={e => { if (e.key === 'Escape') finish('') }}
     >
       <form
         onSubmit={submit}
-        className="w-full max-w-[34rem] rounded-panel border border-rule bg-card p-6 shadow-lift sm:p-8"
+        className={cn('w-full rounded-panel border border-rule bg-card p-6 sm:p-8',
+          inline ? 'max-w-[42rem]' : 'max-w-[34rem] shadow-lift')}
       >
         {/* First person singular throughout: one student, not a team. */}
         <h2 className="font-display text-sub font-bold text-ink">What should I call you?</h2>
