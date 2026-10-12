@@ -133,16 +133,33 @@ export function suppressIntro() {
  * over them is most of this. Nobody has to sit through it either way, which is
  * what Back, Next and Skip are for.
  */
+/* Five beats, twenty-nine seconds.
+ *
+ * It ran at eighty-six. The brief before this one said "slower by a lot" and
+ * that was the right note about the pacing INSIDE a beat — content was landing
+ * faster than the eye settles — and the wrong lever to pull on the total. An
+ * opening that plays on every load has to be shorter than the patience of
+ * somebody who has already seen it once, and eighty-six seconds is not shorter
+ * than anybody's patience. It is a film, and nobody asked for a film.
+ *
+ * So the beats inside are still unhurried — an arrow still takes most of a
+ * second to arrive, a highlight still pulses twice — and there are fewer of
+ * them. The two that went are the two the site itself covers best: the four
+ * signals are named with their colours on the closing beat and traced in full
+ * on the patch page, and the three ways to start are the overview's own
+ * second section, one scroll below where this lands.
+ *
+ * What is left is the four things you cannot use the product without knowing,
+ * and the mark.
+ */
 const BEATS = [
-  { ms: 11000, bg: '#e8f6f4', head: 'One number for your day.' },
-  { ms: 13000, bg: '#dcf0ef', head: 'The patch goes on your arm.' },
-  { ms: 12500, bg: '#d2ebe9', head: 'It reads four things.' },
-  { ms: 12500, bg: '#e3f2ed', head: 'Your usual day is marked.',
+  { ms: 6300, bg: '#e8f6f4', head: 'One number for your day.' },
+  { ms: 7000, bg: '#dcf0ef', head: 'The patch goes on your arm.' },
+  { ms: 5200, bg: '#e3f2ed', head: 'Your usual day is marked.',
     sub: 'So an ordinary day reads as ordinary.' },
-  { ms: 13500, bg: '#d7eeea', head: 'Three ways to start.' },
-  { ms: 13000, bg: '#eef7f3', head: 'You choose who sees it.',
+  { ms: 6300, bg: '#eef7f3', head: 'You choose who sees it.',
     sub: 'Nothing leaves your phone unless you say so.' },
-  { ms: 10500, bg: '#eaf6f2', head: 'MindMap',
+  { ms: 5000, bg: '#eaf6f2', head: 'MindMap',
     sub: 'A patch, or six questions. One score a day.' },
 ]
 const LAST = BEATS.length - 1
@@ -181,15 +198,6 @@ function waveLine(y, seed, amp, steps, x0, x1) {
   return { d, len: Math.ceil(len) + 4 }
 }
 
-/* Per-signal trace character, keyed off sensors.js so order and colour can only
-   come from one place. Heart is dense and spiky, sweat and temperature drift,
-   movement is jittery — the shape is part of the claim, not decoration. */
-const SHAPE = {
-  heart: { steps: 24, amp: 9, seed: 1.15 },
-  sweat: { steps: 11, amp: 8, seed: 0.72 },
-  temp:  { steps: 9,  amp: 7, seed: 0.55 },
-  move:  { steps: 28, amp: 9, seed: 1.90 },
-}
 
 /* A figure that counts up, written straight to the node. As React state this
    re-rendered the whole stage sixty times a second to change two glyphs. */
@@ -334,7 +342,7 @@ function StageOneNumber({ still }) {
           {still
             ? <text x="462" y="166" textAnchor="middle" fontSize="54" fontWeight="700"
                 className="font-display fill-ink">64</text>
-            : <Count to={64} ms={1500} delay={4600} x="462" y="166" textAnchor="middle"
+            : <Count to={64} ms={1250} delay={2850} x="462" y="166" textAnchor="middle"
                 fontSize="54" fontWeight="700" className="font-display fill-ink"/>}
           <Chip x="462" y="236" t={6.0} still={still} size={16} tone="fill-ink-2">out of 100</Chip>
           <Spot cx={462} cy={150} r={76} t={6.3} still={still}/>
@@ -454,48 +462,6 @@ function StagePatch({ still }) {
   )
 }
 
-/* ── Beat 3 ── the four signals, one at a time ────────────────────────────
-   One row per signal and a second and a half between them, which is the whole
-   design of this beat: four traces arriving together is a chart, four arriving
-   in turn is a list of four things. The spot on each dot is what makes the
-   difference legible at a glance rather than only in sequence. */
-function StageFour({ still }) {
-  return (
-    <div className="iv-real mx-auto w-full max-w-[720px]">
-      <div className="aspect-[16/10] w-full">
-        <svg {...svgProps} viewBox="0 0 560 350">
-          {SENSOR_ORDER.map((id, i) => {
-            const s = SENSORS[id]
-            const y = 52 + i * 82
-            const t = 0.4 + i * 1.55
-            const w = waveLine(y, SHAPE[id].seed, SHAPE[id].amp * 1.1, SHAPE[id].steps, 236, 528)
-            return (
-              <g key={id}>
-                <circle cx="40" cy={y} r="11" fill={s.glow}
-                  className={cn(!still && 'iv-a iv-pop')}
-                  style={still ? undefined : { '--d': '.42s', '--t': `${t}s` }}/>
-                <Spot cx={40} cy={y} r={22} t={t + 0.15} still={still} color={s.glow}/>
-                <text x="68" y={y + 7} fontSize="22" fontWeight="600"
-                  className={cn('font-display fill-ink', !still && 'iv-a iv-rise')}
-                  style={still ? undefined : { '--d': '.5s', '--t': `${(t + 0.2).toFixed(2)}s` }}>
-                  {s.name}
-                </text>
-                <path d={w.d} fill="none" stroke={s.glow} strokeWidth="2.8" strokeLinecap="round"
-                  strokeLinejoin="round" className={cn(!still && 'iv-a iv-draw')}
-                  style={still ? undefined
-                    : { '--len': w.len, '--d': '1.25s', '--t': `${(t + 0.35).toFixed(2)}s` }}/>
-              </g>
-            )
-          })}
-          <Chip x="382" y="336" t={7.0} still={still} size={16} tone="fill-ink-2">
-            about once a second
-          </Chip>
-        </svg>
-      </div>
-    </div>
-  )
-}
-
 /* ── Beat 4 ── the mark, which is the one thing on the dial to learn ──────
    The real RainbowDial, not a drawing of one, because the point of this beat
    is that the thing you are about to meet on the site is this thing. The
@@ -522,80 +488,6 @@ function StageMarkOnDial({ still }) {
           <Arrow still={still} t={3.0} dur={0.75} d="M76 42 C 100 40, 118 33, 132 25"
             len={80} x={135} y={23} deg={-27}/>
           <Spot cx={146} cy={54} r={26} t={3.9} still={still}/>
-        </svg>
-      </div>
-    </div>
-  )
-}
-
-/* ── Beat 5 ── the three ways in, highlighted one at a time ───────────────
-   This is the beat that is a manual rather than a trailer. Three cards in the
-   order the overview lists them, then two seconds on each one alone: the spot
-   says which, the arrow says look here, and three words say what it needs from
-   you. A viewer who watches only this beat can still choose. */
-const WAYS = [
-  { label: 'Patch',  note: 'on your arm' },
-  { label: 'Phone',  note: 'camera and flash' },
-  { label: 'Demo',   note: 'nothing to wear' },
-]
-
-function StageWays({ still }) {
-  const X = [26, 208, 390]
-  return (
-    <div className="iv-real mx-auto w-full max-w-[760px]">
-      <div className="aspect-[16/9] w-full">
-        <svg {...svgProps} viewBox="0 0 560 300">
-          {WAYS.map((w, i) => {
-            const x = X[i], cx = x + 72
-            const show = 0.3 + i * 0.55
-            const lit = 3.0 + i * 2.5
-            return (
-              <g key={w.label}>
-                <Card x={x} y={86} w={144} h={128} t={show} still={still}/>
-                {/* one glyph per card, drawn in the same two strokes as
-                    everything else here so the row reads as one family */}
-                <g className={cn(!still && 'iv-a iv-fade')}
-                  style={still ? undefined : { '--d': '.5s', '--t': `${(show + 0.25).toFixed(2)}s` }}>
-                  {i === 0 && (
-                    <>
-                      <rect x={cx - 15} y="112" width="30" height="44" rx="13" fill="#ffffff"
-                        stroke="#1f5560" strokeWidth="2"/>
-                      <rect x={cx - 6} y="104" width="12" height="10" rx="4" fill="#f3f8f5"
-                        stroke="#1f5560" strokeWidth="1.4"/>
-                    </>
-                  )}
-                  {i === 1 && (
-                    <>
-                      <rect x={cx - 17} y="104" width="34" height="54" rx="8" fill="#ffffff"
-                        stroke="#1f5560" strokeWidth="2"/>
-                      <circle cx={cx} cy="126" r="8" fill="none" stroke="#1f5560" strokeWidth="2"/>
-                      <circle cx={cx} cy="146" r="3.4" fill="#e86a05"/>
-                    </>
-                  )}
-                  {i === 2 && (
-                    <>
-                      <circle cx={cx} cy="131" r="22" fill="none" stroke="#1f5560" strokeWidth="2"
-                        strokeDasharray="5 5"/>
-                      <path d={`M${cx - 6} 121 L${cx + 11} 131 L${cx - 6} 141 Z`} fill="#1f5560"/>
-                    </>
-                  )}
-                </g>
-                <text x={cx} y="192" textAnchor="middle" fontSize="21" fontWeight="700"
-                  className={cn('font-display fill-ink', !still && 'iv-a iv-rise')}
-                  style={still ? undefined : { '--d': '.5s', '--t': `${(show + 0.35).toFixed(2)}s` }}>
-                  {w.label}
-                </text>
-
-                {/* and then, one at a time */}
-                <Arrow still={still} t={lit} dur={0.55}
-                  d={`M${cx} 38 L${cx} 70`} len={40} x={cx} y={74} deg={90}/>
-                <Spot cx={cx} cy={150} r={82} t={lit + 0.5} still={still}/>
-                <Chip x={cx} y="252" t={lit + 0.7} still={still} size={16} tone="fill-ink-2">
-                  {w.note}
-                </Chip>
-              </g>
-            )
-          })}
         </svg>
       </div>
     </div>
@@ -749,8 +641,7 @@ function StageMark({ still }) {
    model on the way past is a sequence nobody finishes. The audience stage is
    not that diagram. It names three people and what each one is handed, which
    is the question the review actually asked. */
-const STAGES = [StageOneNumber, StagePatch, StageFour, StageMarkOnDial,
-  StageWays, StageShare, StageMark]
+const STAGES = [StageOneNumber, StagePatch, StageMarkOnDial, StageShare, StageMark]
 
 /* One motion vocabulary, declared once. Keyframes live here rather than in
    tailwind.config.js because they describe this one sequence, not the design
@@ -768,7 +659,7 @@ const CSS = `
    half seconds instead of two and a bit; 1.15 on the durations stops the
    strokes from drawing faster than the gaps between them.
    calc() multiplies a time by a number, so --t stays authored in seconds. */
-.iv-root{--iv-pace:1.5;--iv-dur:1.15}
+.iv-root{--iv-pace:1;--iv-dur:1}
 .iv-root .iv-a{animation-duration:calc(var(--d,1s) * var(--iv-dur,1));animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.3,1)}
 .iv-root .iv-draw{stroke-dasharray:var(--len);stroke-dashoffset:0;animation-name:iv-draw}
 .iv-root .iv-rise{animation-name:iv-rise}
@@ -787,7 +678,7 @@ const CSS = `
    walkthrough stages is already authored in real seconds against its own
    beat's dwell. One place that multiplies and one place that does not is worse
    than two vocabularies, so the stages that want true seconds say so. */
-.iv-root .iv-real{--iv-pace:1;--iv-dur:1}
+.iv-root .iv-real{--iv-pace:.62;--iv-dur:.82}
 /* A highlight. Two of these half a second apart is a pulse; one is a circle
    somebody drew and forgot about, and an infinite one is motion arguing with
    the thing it is pointing at. */
@@ -799,7 +690,7 @@ const CSS = `
 .iv-root .iv-glide{animation-name:iv-glide}
 /* Readings walking down the wire. Three passes, not infinite: enough to read
    as a flow and over before the beat is. */
-.iv-root .iv-run{offset-rotate:0deg;animation-name:iv-run;animation-iteration-count:3;animation-timing-function:cubic-bezier(.45,0,.55,1)}
+.iv-root .iv-run{offset-rotate:0deg;animation-name:iv-run;animation-iteration-count:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}
 .iv-root .iv-switch{animation-name:iv-switch}
 .iv-root .iv-knob{animation-name:iv-knob}
 @keyframes iv-ring{0%{opacity:0;transform:scale(.5)}30%{opacity:.95}100%{opacity:0;transform:scale(1.45)}}
