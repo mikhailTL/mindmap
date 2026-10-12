@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollScene } from '../s21/motion'
+import { ScrollScene } from '../ui/motion'
 
 /* One small line drawing per part card on the hardware page's dark band.
  *

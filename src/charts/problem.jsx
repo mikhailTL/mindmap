@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tally, ScrollIn, ScrollRow } from '../s21/motion'
+import { Tally, ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
 
 /* The problem band. It sits directly under the hero and it is the page's

@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion, useTransform } from 'framer-motion'
-import { ScrollScene } from '../s21/motion'
+import { ScrollScene } from '../ui/motion'
 const T = { fontFamily:'ui-monospace,monospace' }
 
 /* All three drawings share one wide viewBox and one set of coordinates, so the

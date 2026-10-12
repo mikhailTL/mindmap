@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollRow } from '../s21/motion'
+import { ScrollRow } from '../ui/motion'
 
 import { Headline, AllDetail } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'

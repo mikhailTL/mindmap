@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { cn } from '../lib/utils'
-import { Table, THead, TBody, TR, TH, TD } from '../s21/table'
+import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import {
   PAGE, ABOUT_ITEMS, SUS_ITEMS, ALL_ITEMS, REQUIRED,
   susScore, susGrade, npsScore, npsBucket,

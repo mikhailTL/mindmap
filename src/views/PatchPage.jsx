@@ -4,7 +4,7 @@ import { PHOTOS } from '../lib/photos'
 // visible at the call site rather than hidden behind a shared annotation class.
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
-import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../s21/motion'
+import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
 import { Card } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'

@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollIn } from '../s21/motion'
+import { ScrollIn } from '../ui/motion'
 import { WhoSeesWhat } from '../charts/infographics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card'
 import { SCORE, NOTES, NOTES_DEF, LOCATION } from '../lib/terms'

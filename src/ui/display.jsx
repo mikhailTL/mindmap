@@ -1,6 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from './card'
 
 /* Display primitives from the s21 kit. The dark-site tokens are gone; the
    status ramp is re-pointed at the clinical roles (amber = out of range,

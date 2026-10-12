@@ -24,7 +24,7 @@ import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Grid, PulseMark } from '../ui/marks'
-import { ScrollProgress } from '../s21/motion'
+import { ScrollProgress } from '../ui/motion'
 import { cn } from '../lib/utils'
 
 /* The nav tabs used to drop a first-time visitor straight into a screen full

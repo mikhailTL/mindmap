@@ -1,4 +1,4 @@
-import { ChevronDown as SortMark } from '../ui/marks'
+import { ChevronDown as SortMark } from './marks'
 import React from 'react'
 
 import { cn } from '../lib/utils'

@@ -13,7 +13,7 @@ import { SENSORS } from '../lib/sensors'
 import { DATA } from '../lib/assets'
 import { CHART_DATA } from '../lib/chartdata'
 import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roster } from '../lib/caseload'
-import { Parallax2D } from '../s21/motion'
+import { Parallax2D } from '../ui/motion'
 import { cn } from '../lib/utils'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
