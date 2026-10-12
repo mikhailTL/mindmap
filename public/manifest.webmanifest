@@ -1,0 +1,17 @@
+{
+  "name": "MindMap, a wellness app for teenagers",
+  "short_name": "MindMap",
+  "description": "One score a day, from a patch on the forearm or from the phone in your pocket. Built for the Congressional App Challenge.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en",
+  "background_color": "#f5fafa",
+  "theme_color": "#f5fafa",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

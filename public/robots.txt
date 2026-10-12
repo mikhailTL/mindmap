@@ -1,0 +1,5 @@
+# Everything here is public. Nothing is disallowed.
+User-agent: *
+Allow: /
+
+Sitemap: https://mindmappaitent.vercel.app/sitemap.xml

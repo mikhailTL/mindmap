@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5fafa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b2b33" media="(prefers-color-scheme: dark)">
+<title>Not found, MindMap</title>
+<!-- A 404 is served to somebody who followed a link that no longer points
+     anywhere, so it must not depend on the app bundle booting. Everything
+     below is inline. The one shared file is the font stylesheet the rest of
+     the site already serves, and the page is legible without it. -->
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="/icon-192.png">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+  /* Tokens copied from tailwind.config.js, not re-picked. */
+  :root { --paper:#f5fafa; --ink:#0b2b33; --ink-3:#3c6a74; --accent:#0a6e68;
+          --rule:#bed6da; --aqua:#edf7f7; }
+  * { box-sizing:border-box }
+  html,body { margin:0; height:100% }
+  body {
+    background:var(--paper); color:var(--ink);
+    font-family:Chivo,-apple-system,system-ui,sans-serif;
+    display:grid; place-content:center; justify-items:start;
+    gap:18px; padding:32px max(24px, env(safe-area-inset-left)) 32px;
+    min-height:100dvh;
+  }
+  .lockup { display:flex; align-items:center; gap:10px;
+            font-family:Quicksand,-apple-system,system-ui,sans-serif;
+            font-weight:700; font-size:30px; letter-spacing:-.015em; line-height:1 }
+  .lockup svg { height:1.15em; width:auto }
+  .green { color:var(--accent) }
+  h1 { font-size:clamp(26px, 6vw, 40px); font-weight:600; line-height:1.15;
+       margin:10px 0 0; max-width:18ch }
+  p { margin:0; font-size:17px; line-height:1.5; color:var(--ink-3); max-width:44ch }
+  .row { display:flex; flex-wrap:wrap; gap:12px; margin-top:6px }
+  a.btn {
+    display:inline-block; text-decoration:none; font-weight:600; font-size:16px;
+    padding:12px 20px; border-radius:6px;
+    background:var(--accent); color:var(--paper);
+    box-shadow:3px 3px 0 0 rgb(13 43 30 / .10);
+  }
+  a.ghost { background:var(--aqua); color:var(--accent); border:1px solid var(--rule) }
+  a.btn:focus-visible { outline:3px solid var(--ink); outline-offset:3px }
+</style>
+</head>
+<body>
+  <div class="lockup">
+    <svg viewBox="0 0 40 28" aria-hidden="true">
+      <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6" fill="none" stroke="currentColor"
+            stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="29.5" cy="17.6" r="2.4" fill="#0a6e68"/>
+    </svg>
+    <span>Mind<span class="green">Map</span></span>
+  </div>
+
+  <h1>That page is not here.</h1>
+  <p>The address you followed does not match anything in MindMap. Every page in
+     the site lives under one address, so the overview is one tap away.</p>
+
+  <div class="row">
+    <a class="btn" href="/#/site">Go to the overview</a>
+    <a class="btn ghost" href="/#/app">Open the app</a>
+  </div>
+</body>
+</html>

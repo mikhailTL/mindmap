@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MindMap is hash routed, so the server only ever sees one path: /. Every route
+  below is a fragment, and search engines largely drop fragments and index the
+  base URL once. The base URL is therefore listed first and on its own terms;
+  the fragments are listed after it as a map of what the one document contains,
+  not as a claim that each will be indexed separately.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://mindmappaitent.vercel.app/</loc>
+    <lastmod>2026-10-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- The site: what MindMap is, for somebody who has not used it. -->
+  <url><loc>https://mindmappaitent.vercel.app/#/</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/site</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/patch</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/without-patch</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/student</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/parent</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/pro</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/privacy</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/tour</loc></url>
+
+  <!-- The app: the screens somebody would actually open. -->
+  <url><loc>https://mindmappaitent.vercel.app/#/app</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/app-student</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/app-parent</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/app-pro</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/check</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/shared</loc></url>
+
+  <!-- Toolkits, and the usability survey with its results. -->
+  <url><loc>https://mindmappaitent.vercel.app/#/kit-student</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/kit-parent</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/survey</loc></url>
+  <url><loc>https://mindmappaitent.vercel.app/#/responses</loc></url>
+</urlset>
