@@ -106,8 +106,8 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   const z = {}
   for (const t of used) z[t.id] = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
 
-  /* Heart, through the model. A signal the phone cannot read enters as 0 —
-     "at your usual" — which is what the model was trained to tolerate. Motion
+  /* Heart, through the model. A signal the phone cannot read enters as 0 --
+     "at your usual" -- which is what the model was trained to tolerate. Motion
      enters on the patch's scale, 1 = the 0.35 g line. */
   const peakG = motion?.ok ? motion.peak : 0
   const x = FEATURES.map(k =>
@@ -117,24 +117,45 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
     : 0)
   const fw = forward(x, history)
   const cc = calibratedContributions(fw, calibration)
-  /* Display units: the model's logit relative to an ordinary day, spread by
-     the display temperature. Zero means "your usual". */
-  const heart = (calibratedLogit(fw, calibration) - ORDINARY_LOGIT) / SCORE_TEMPERATURE
-
-  /* Voice, by hand, in the same display units the formula used. */
   const wTotal = TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
-  const voiceD = used.filter(t => t.ch === 'voice').reduce((a, t) => a + (K * t.w * z[t.id]) / wTotal / 2, 0)
+  const byHand = t => (K * t.w * z[t.id]) / wTotal / 2
+
+  /* Over the movement line the model does not score the reading. The formula
+     does.
+
+     This is the shipped design the transfer study measured, not a safety net
+     bolted on afterwards. On real jogging data the model on its own calls 73%
+     of moving windows stressed, because its motion curve rises with movement:
+     the training set had no condition where someone exercised calmly, so
+     "moving" and "aroused" are the same thing to it. Handing moving windows to
+     the formula brings that to 30%, against the formula's own 27.5%, and costs
+     four points of the cognitive stress it still catches, 78.7% to 74.3%.
+     Figures in tnam-results.js under `confound`.
+
+     It also makes the saturation above harmless: every reading at or past the
+     line takes this branch, so the fact that 0.35 g and 2 g are the same input
+     to the model never reaches a score. */
+  const moving = motion?.ok ? !motion.still : false
+  const heart = moving
+    ? used.filter(t => t.ch === 'heart').reduce((a, t) => a + byHand(t), 0)
+    : (calibratedLogit(fw, calibration) - ORDINARY_LOGIT) / SCORE_TEMPERATURE
+
+  /* Voice, by hand, in the same display units. The divisor is the full weight
+     of all six terms rather than the terms present, so dropping a channel
+     cannot re-weight the ones that remain. It does remove that channel's own
+     evidence, which is the point of it being absent. */
+  const voiceD = used.filter(t => t.ch === 'voice').reduce((a, t) => a + byHand(t), 0)
 
   const D = heart + voiceD
   const score = Math.round(100 / (1 + Math.exp(-D)))
 
   const contrib = used.map(t => {
-    const raw = t.ch === 'heart'
+    const raw = t.ch === 'heart' && !moving
       ? (t.id === 'hr' ? cc.hr : cc.rmssd) / SCORE_TEMPERATURE
-      : (K * t.w * z[t.id]) / wTotal / 2
+      : byHand(t)
     return { ...t, value: features[t.id], z: z[t.id], raw }
   })
-  if (history.length && Math.abs(cc.temporal) > 0.05) {
+  if (!moving && history.length && Math.abs(cc.temporal) > 0.05) {
     contrib.push({ id: 'temporal', ch: 'heart', w: 0, label: 'Pattern across recent readings', value: null, z: 0, raw: cc.temporal / SCORE_TEMPERATURE })
   }
 
@@ -152,13 +173,14 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   const p = score / 100
   const half = clamp(Math.round(1.0 * sigmaS * 100 * K * p * (1 - p)), 3, 34)
 
-  const held = motion?.ok ? !motion.still : false
+  const held = moving
 
   return {
     ok: true,
     score, S, contrib, features,
     /* What the model saw, kept so a check-in answer can become a label. */
-    model: { contributions: FEATURES.map(k => fw.contributions[k]), temporal: fw.temporal, logit: fw.logit },
+    model: { contributions: FEATURES.map(k => fw.contributions[k]), temporal: fw.temporal, logit: fw.logit,
+             scored: !moving },
     calibrationLabels: calibration.n || 0,
     low: Math.max(0, score - half), high: Math.min(100, score + half), half,
     channels: [...chPresent],
@@ -168,7 +190,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
     quality: ppg?.quality ?? 0,
     held,
     holdReason: held
-      ? `You were moving at ${motion.peak.toFixed(2)} g, over the ${MOVE_LIMIT_G} g line. The reading is kept but not counted as stress.`
+      ? `You were moving at ${motion.peak.toFixed(2)} g, over the ${MOVE_LIMIT_G} g line. The reading is kept and scored, but a moving reading is not counted as a stressed one.`
       : null,
   }
 }

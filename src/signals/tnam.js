@@ -37,7 +37,9 @@ function linear(l, x) {
 }
 const relu = v => { for (let i = 0; i < v.length; i++) if (v[i] < 0) v[i] = 0; return v }
 
-/* f_k(z): one scalar in, one contribution out. */
+/* f_k(z): one scalar in, one contribution out. `k` is the signal's INDEX in
+   FEATURES, not its name, which is the one place in this module that is keyed
+   by position rather than by key. */
 export function shape(k, z) {
   const [l1, l2, l3] = W.shapes[k]
   return linear(l3, relu(linear(l2, relu(linear(l1, [z])))))[0]
