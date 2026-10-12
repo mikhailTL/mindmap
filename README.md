@@ -1,91 +1,152 @@
-# MindMap — patient edition
+# MindMap
 
-React 18 + Tailwind 3 + Vite. Seven views, hash-routed, no backend.
+A stress tracker for teenagers: a wearable patch that reads four body signals,
+and an app that turns a day of them into one number and one sentence.
+
+This repository is the web front end — the marketing site that explains the
+product, and an interactive prototype of the three app views (student, parent,
+school counsellor). The hardware and firmware live elsewhere.
+
+Built for the Congressional App Challenge and the Conrad Challenge.
+
+**Live:** https://mindmappaitent.vercel.app
+
+> MindMap reports patterns in body signals. It is not a medical device, it does
+> not diagnose or treat any condition, and no screen in here is a clinical
+> finding. Every number in the prototype is generated; no person has been
+> measured.
+
+## Running it
 
 ```bash
 npm install
-npm run dev        # localhost:5173
+npm run dev        # http://localhost:5173
 npm run build      # -> dist/
+npm run preview    # serve the build on :4173
 ```
 
-## Deploy
+Node 20 (`.nvmrc`). No backend is needed to run the site; `api/` is a single
+Vercel function and is optional (see [docs/survey.md](docs/survey.md)).
+
+## Routes
+
+Hash-routed, no router dependency. Fifteen views in two groups.
+
+**The site** — what MindMap is, for somebody who has not used it.
+
+| Route | What it is |
+|---|---|
+| `#/site` | Overview |
+| `#/patch` | The patch: what it reads, how it is built |
+| `#/without-patch` | Taking a reading with a phone camera instead |
+| `#/student` `#/parent` `#/pro` | What each audience gets |
+| `#/privacy` | Who sees what, and what is never shared |
+| `#/tour` | The whole product in one page |
+
+**The app** — the screens somebody would actually open.
+
+| Route | What it is |
+|---|---|
+| `#/app` | Pick a view |
+| `#/app-student` | The daily score, its four signals, the week |
+| `#/app-parent` | One sentence a week, and which days ran high |
+| `#/app-pro` | A counsellor's caseload, consent-scoped |
+| `#/check` | Take a reading: patch, phone camera, or demo |
+| `#/survey` `#/responses` | Usability survey and its results |
+
+An opening walkthrough plays on first load and can be skipped permanently.
+
+## Layout
+
+```
+src/
+  views/      one file per route, plus the shell and the walkthrough
+  charts/     every drawing: the score arch, the sensor traces, the 3D viewer,
+              the problem statistics
+  ui/         buttons, cards, section furniture, the logo
+  signals/    the scoring model and the generated readings behind it
+  survey/     the usability instrument, its store, and delivery
+  lib/        design tokens, sensor definitions, shared vocabulary
+  photos/     licensed photographs, imported so Vite content-hashes them
+api/          one serverless function, optional
+tools/        the scripts that produce and check what ships
+docs/         setup and design notes
+public/di/    the vendored 3D patch viewer (see below)
+```
+
+Two conventions worth knowing before editing:
+
+- **Vocabulary lives in `src/lib/terms.js`.** The daily number is called the
+  same thing on every screen because every screen imports the same constant.
+- **Photographs are imported, never linked.** Vercel serves `public/` with
+  `cache-control: immutable`, so a photograph replaced under its old filename
+  is invisible to anyone who has already visited. Going through Vite gives each
+  file a content hash. `src/lib/photos.js` is the map.
+
+## The 3D patch viewer
+
+`public/di/arena/` is a vendored, self-contained WebGL viewer for the patch
+assembly: a 621 KB script and a 20 MB geometry file holding 178 bodies. It is
+exposed as a custom element and driven through `src/charts/arena.jsx`.
+
+It is a build artifact from the CAD pipeline and is checksummed there. **Do not
+edit anything in that directory.** Regenerate it upstream instead.
+
+This is also why a clone is large.
+
+## Checking what ships
+
+`tools/` holds the scripts that build and verify the site rather than a folder
+of one-off helpers.
+
+```
+tools/photos/       composites the patch onto licensed photographs at its real
+                    54 x 36 mm, and crops every image the site uses
+tools/readability/  measures the reading grade of the prose the site renders
+tools/survey-endpoint.gs
+                    an Apps Script web app that receives survey responses
+```
+
+Both have a README explaining the decisions that are easy to get wrong —
+patch orientation in one, what counts as a sentence in the other.
+
+Beyond those, the site is held to four gates, run against a real browser on a
+production build:
+
+- **Layout** — fifteen routes at 1280 px and 390 px: no console errors, no
+  element wider than its container, no horizontal scroll, no em dashes.
+- **Contrast** — every text node on every route clears WCAG AA (4.5:1).
+- **Reading grade** — Flesch-Kincaid and SMOG over the rendered prose.
+  Currently 4.5 and 7.4; NIH guidance for health material is grade 6 or below.
+- **Walkthrough fit** — all seven beats at both widths with every heading,
+  sub-line and label inside the viewport and three reachable controls.
+
+## Design notes
+
+Interface and wording decisions are traceable to published sources rather than
+to taste, and [docs/design-evidence.md](docs/design-evidence.md) is the proof:
+every decision, its citation, how strong that evidence is, and — the longest
+section — the claims the project deliberately refuses to make, with the papers
+that say why.
+
+The short version: the score is read against a labelled mark rather than a bare
+scale (Zikmund-Fisher et al., 2018); no student is ever ranked against another
+and every share is revocable (Dickerson & Kemeny, 2004); and no claim is made
+that any of it reduces anybody's stress, because that has not been tested.
+
+## Deploying
 
 ```bash
 npx vercel --prod
 ```
 
-`vercel.json` already carries the SPA rewrite and cache headers (`immutable` on
-`/assets` and `/photos`, `must-revalidate` on the shell). Vercel needs no other
-configuration.
+`vercel.json` carries the SPA rewrite and the cache headers. Netlify
+equivalent: build `npm run build`, publish `dist`, add `/* /index.html 200`.
 
-Netlify equivalent: build `npm run build`, publish `dist`, add `/* /index.html 200`.
+## Credits
 
-## Routes
+Photographs are licensed from Adobe Stock; the IDs are listed in
+`tools/photos/README.md`. Statistics are from the CDC Youth Risk Behavior
+Survey (2023) and NIMH/NSDUH (2021) and are cited on the pages that use them.
 
-| Hash | View |
-|---|---|
-| `#/site` | Marketing overview |
-| `#/hub` | Tile hub |
-| `#/check` | Live reading — patch or six questions |
-| `#/student` | Student monitoring |
-| `#/parent` | Parent monitoring |
-| `#/pro` | Clinician caseload |
-| `#/index` | Every screen, listed |
-
-`Cmd+K` / `Ctrl+K` opens the command palette.
-
-## Structure
-
-```
-src/
-  ui/         Button, Card, Disclosure, Scale, Palette   — shadcn patterns on Radix
-  charts/     Spark, DayChart, WeekChart, Diverge        — no chart library
-  views/      one file per route
-  lib/
-    engine.js     the self-report scoring engine
-    chartdata.js  DEMO SERIES — replace with the live feed
-    images.js     photo paths
-```
-
-## Swapping in real data
-
-`src/lib/chartdata.js` is generated demo data. Replace `CHART_DATA` with whatever
-the API returns, in the same shape:
-
-```js
-{ day: [{t:'07:00', v:43.3}, ...],  band: {lo, hi},
-  spark: { hr:[...], hrv:[...], eda:[...], temp:[...], mot:[...] },
-  week: [{d:'Mon', v:61}, ...],     weekBand: {lo, hi},
-  pro:  { '8241': [63,64,67,...] } }
-```
-
-`src/lib/engine.js` is real, not a mock: weighted items -> mean ->
-100/(1+e^(-2.4*S)). The patch route runs the same last step on physiology.
-
-## Web Bluetooth
-
-`connectPatch()` targets the Nordic UART service
-6e400001-b5a3-f393-e0a9-e50e24dcca9e. It needs a secure origin (HTTPS or
-localhost), Chrome or Edge, and a top-level page. It cannot work inside an
-iframe, which is why the embedded preview falls back to the questionnaire with an
-explicit message. On the Vercel URL it should reach the device chooser.
-
-## Design language
-
-Tokens live in `tailwind.config.js`, derived rather than picked:
-
-- Nine type steps for the nine levels of meaning in the content.
-- Clinical colour rules. Red is reserved for critical and is not available as a
-  brand accent; amber means out of range. Out-of-range is never colour alone — it
-  carries a glyph and weight, so it survives grayscale.
-- `ink-3` measures 5.32:1 on paper and 4.66:1 on sage. Both clear WCAG AA.
-- 16px floor on every rendered string, chart labels included.
-
-## Audit
-
-```bash
-npm run build && npx vite preview --port 5199
-# then run the ui skill's audit.mjs against http://localhost:5199/#/parent
-```
-
-Last run: 0 CRITICAL, 0 HIGH across all seven views at 390 / 768 / 1280 / 1920.
+Built with Claude Code.
