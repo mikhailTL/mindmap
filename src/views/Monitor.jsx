@@ -60,7 +60,7 @@ function Hero({ score, usual, rings, sentence }) {
    The parent screen states the same scope in the third person. */
 function SharedRow({ go, openTab }) {
   return (
-    <button type="button" onClick={() => openTab ? openTab('shared') : go('privacy')}
+    <button type="button" onClick={() => go('shared')}
       className="mt-12 flex min-h-[56px] w-full items-center gap-4 border-y border-rule py-4
         text-left transition-colors duration-150 hoverOnly:bg-mist/50">
       <span className="min-w-0 flex-1">
