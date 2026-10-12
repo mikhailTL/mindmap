@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { Cross } from '../ui/marks'
 import { StarRating } from '../ui/stars'
 import { cn } from '../lib/utils'
-import { PAGE, REQUIRED, SECTIONS } from './questions'
+import { PAGE, questionNumber, REQUIRED, SECTIONS } from './questions'
 import {
   answersFor, getVersion, getVisitor, recordAnswer,
   subscribe, syncPending, submitResponse, wasSent, isQueued,
@@ -51,68 +51,6 @@ function ScaleControl({ q, value, onPick }) {
   )
 }
 
-/* Same radio-group mechanics as the scale, but the options are named
-   alternatives, so no numeral and no implied order. */
-function ChoiceControl({ q, value, onPick }) {
-  return (
-    <div className="mt-3 flex flex-col" role="radiogroup" aria-label={q.prompt}>
-      {q.options.map(opt => {
-        const on = value === opt
-        return (
-          <button
-            key={opt}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            onClick={() => onPick(opt, opt)}
-            className={pickClass(on)}
-          >
-            <Bar on={on}/>{opt}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/* Zero to ten, wrapping on a phone. Both ends carry labels — an unlabelled
-   0-10 row gets answered backwards. The only bordered cells in the survey: a
-   horizontal scale of single figures has nothing else holding it together. */
-function NpsControl({ q, value, onPick }) {
-  return (
-    <div className="mt-3">
-      <div role="radiogroup" aria-label={q.prompt} className="flex flex-wrap gap-1.5">
-        {Array.from({ length: 11 }, (_, n) => {
-          const on = value === n
-          return (
-            <button
-              key={n}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              aria-label={`${n} out of 10`}
-              onClick={() => onPick(n, String(n))}
-              className={cn(
-                'min-h-[44px] min-w-[44px] flex-1 rounded-field border text-ui tabular-nums',
-                'transition-[background-color,border-color,color] duration-150 ease-out',
-                on
-                  ? 'border-ink bg-ink font-bold text-paper'
-                  : 'border-rule font-medium text-ink-2 hoverOnly:border-ink-3 hoverOnly:bg-mist'
-              )}
-            >
-              {n}
-            </button>
-          )
-        })}
-      </div>
-      <div className="mt-2 flex justify-between text-fine text-ink-3">
-        <span>{q.low}</span>
-        <span>{q.high}</span>
-      </div>
-    </div>
-  )
-}
-
 function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
   const [text, setText] = React.useState(initial)
   const empty = !text.trim()
@@ -153,56 +91,11 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
   )
 }
 
-function ImpactControl({ q, initial, onSave, onSkip }) {
-  const [score, setScore] = React.useState(initial?.score ?? null)
-  const [label, setLabel] = React.useState(initial?.label ?? null)
-  const [note, setNote] = React.useState(initial?.note ?? '')
-  return (
-    <div>
-      <ScaleControl q={q} value={score} onPick={(v, l) => { setScore(v); setLabel(l) }} />
-      <label className="mt-5 block font-display text-ui font-medium text-ink">
-        {q.sentence.prompt}
-      </label>
-      <textarea
-        rows={2}
-        value={note}
-        maxLength={q.sentence.maxLength}
-        placeholder={q.sentence.placeholder}
-        onChange={e => setNote(e.target.value)}
-        className={cn(
-          'mt-2 block w-full rounded-field border border-rule bg-paper p-3',
-          'font-body text-sec text-ink placeholder:text-ink-3',
-          'transition-[border-color,background-color] duration-150 ease-out',
-          'hoverOnly:border-ink-3 focus:bg-card'
-        )}
-      />
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <Button
-          size="sm"
-          type="button"
-          disabled={score == null}
-          onClick={() => onSave({ score, note: note.trim() }, label)}
-        >
-          Save
-        </Button>
-        {onSkip && (
-          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>
-        )}
-      </div>
-      {score == null && <p className="note mt-2">Pick a point above first.</p>}
-    </div>
-  )
-}
-
 /* One question, whichever kind it is. Shared by the page cards and the final
  * block so wording and spacing cannot drift between them. */
 function Question({ q, answer, onAnswer, onSkip }) {
   if (q.kind === 'scale') {
     return <ScaleControl q={q} value={answer?.value ?? null} onPick={(v, l) => onAnswer(v, l)} />
-  }
-  if (q.kind === 'choice') {
-    return <ChoiceControl q={q} value={typeof answer?.value === 'string' ? answer.value : null}
-      onPick={(v, l) => onAnswer(v, l)} />
   }
   if (q.kind === 'text') {
     return (
@@ -213,10 +106,6 @@ function Question({ q, answer, onAnswer, onSkip }) {
         onSkip={q.optional ? onSkip : undefined}
       />
     )
-  }
-  if (q.kind === 'nps') {
-    return <NpsControl q={q} value={typeof answer?.value === 'number' ? answer.value : null}
-      onPick={(v, l) => onAnswer(v, l)} />
   }
   if (q.kind === 'stars') {
     return (
@@ -229,17 +118,6 @@ function Question({ q, answer, onAnswer, onSkip }) {
           onChange={v => onAnswer(v, `${v} of ${q.max}`)}
         />
       </div>
-    )
-  }
-  if (q.kind === 'impact') {
-    return (
-      <ImpactControl
-        q={q}
-        initial={answer?.value && typeof answer.value === 'object'
-          ? { ...answer.value, label: answer.label } : null}
-        onSave={(v, l) => onAnswer(v, l)}
-        onSkip={onSkip}
-      />
     )
   }
   return null
@@ -427,6 +305,10 @@ function ReviewDialog({ onClose }) {
                   return (
                     <div key={q.id} className="border-t border-rule pt-4">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        {/* The numeral comes from ask order, not the prompt. */}
+                        <span className="font-mono text-fine tabular-nums text-ink-3">
+                          {questionNumber(q.id)}
+                        </span>
                         <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
                         {q.optional && <span className="note">Optional</span>}
                       </div>

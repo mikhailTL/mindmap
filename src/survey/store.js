@@ -127,8 +127,9 @@ export function recordAnswer({ page, qid, kind, value, label }) {
   return row
 }
 
-/* Impact carries { score, note } and stars carry a fraction. Flattened here so
- * the CSV holds one scalar per row instead of JSON in a cell. */
+/* Stars carry a fraction, and impact answers given before it became a plain
+ * text question carry { score, note }. Flattened here so the CSV holds one
+ * scalar per row instead of JSON in a cell. */
 function flatten(value) {
   if (value == null) return ''
   if (typeof value === 'object') {
