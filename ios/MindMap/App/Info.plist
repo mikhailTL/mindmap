@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Purpose strings. Each one says what the data is, what it is used for,
+	     and that it stays on the device. App Review reads these, and a string
+	     that does not name a use is a 5.1.1 rejection on its own.
+
+	     If the camera and microphone route is not in the build being
+	     submitted, DELETE those two keys before submitting. Declaring a
+	     permission the app never asks for is a metadata problem, not a
+	     harmless extra. -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>MindMap uses Bluetooth to read four signals from your MindMap patch: heart, sweat, skin temperature and movement. The readings are scored on this phone and stay on it.</string>
+
+	<key>NSCameraUsageDescription</key>
+	<string>MindMap can measure your pulse from a fingertip held over the camera, for when you do not have the patch with you. No photo or video is saved or sent, and the measurement stays on this phone.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MindMap can measure the pitch and steadiness of your voice, for when you do not have the patch with you. Nothing you say is recorded, saved or sent, and the measurement stays on this phone.</string>
+
+	<!-- No UIBackgroundModes entry on purpose. This build does not read the
+	     patch in the background, and bluetooth-central must not be declared
+	     until it does. -->
+
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<key>UILaunchScreen</key>
+	<dict/>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>
