@@ -69,6 +69,7 @@ src/
   lib/        design tokens, sensor definitions, shared vocabulary
   photos/     licensed photographs, imported so Vite content-hashes them
 api/          one serverless function, optional
+ml/           the model: training, evaluation, and the generated weights
 tools/        the scripts that produce and check what ships
 docs/         setup and design notes
 public/di/    the vendored 3D patch viewer (see below)
@@ -82,6 +83,23 @@ Two conventions worth knowing before editing:
   `cache-control: immutable`, so a photograph replaced under its old filename
   is invisible to anyone who has already visited. Going through Vite gives each
   file a content hash. `src/lib/photos.js` is the map.
+
+## The model
+
+The daily reading is not a weighted formula. `src/signals/tnam.js` is a temporal
+neural additive model - one learned curve per signal, then a GRU over eight
+four-minute windows, 4,572 parameters - running in the page with no server and
+no dependencies.
+
+`ml/` is how it was made, committed so the claim is checkable rather than
+asserted: `ml/tnam.py` is the model, `ml/research.py` is the run that produced
+the weights the browser loads, and `ml/results/` holds its output. On WESAD with
+leave-one-subject-out validation it reaches 0.997 AUROC against 0.887 for the
+formula it replaced, winning on 13 of 15 subjects (p = 0.0015).
+
+It also fails in a way the site prints rather than hides: on a dataset where
+distress was induced by film it scores that distress at 0.281, below rest. See
+`ml/README.md` and `docs/tnam-handoff.md`.
 
 ## The 3D patch viewer
 
@@ -113,7 +131,7 @@ patch orientation in one, what counts as a sentence in the other.
 Beyond those, the site is held to four gates, run against a real browser on a
 production build:
 
-- **Layout.** Fifteen routes at 1280 px and 390 px: no console errors, no
+- **Layout.** All 23 routes at 1280 px and 390 px: no console errors, no
   element wider than its container, no horizontal scroll, no em dashes.
 - **Contrast.** Every text node on every route clears WCAG AA (4.5:1).
 - **Reading grade.** Flesch-Kincaid and SMOG over the rendered prose.
