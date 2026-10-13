@@ -162,7 +162,7 @@ function senseArt({ cx, cy, a, b, cfg }) {
             <circle cx={f(x)} cy={f(cy)} r={f(r)} fill={SENSORS[id].glow}/>
             <line x1={f(x)} y1={f(cy + cfg.chanDy + 3)} x2={f(x)} y2={f(cy - r * 1.5 - 1.5)}
               stroke={RULING} strokeWidth="1"/>
-            <text x={f(x)} y={f(cy + cfg.chanDy)} textAnchor="middle" className="font-mono"
+            <text x={f(x)} y={f(cy + cfg.chanDy)} textAnchor="middle"
               fontSize={f(cfg.chanSize)} fontWeight="700" fill={INK}>{j + 1}</text>
           </g>
         )
@@ -206,7 +206,7 @@ const LAYERS = [
     body:'Four channels off the skin, sampled once a second, all day.' },
   { id:'skin', title:'Skin interface', face:AQUA2, wall:RULE, art:skinArt,
     spec:`${MM_LONG} by ${MM_CROSS} mm against the arm`,
-    body:'The face that sits against the outer upper arm. All four channels read through it.' },
+    body:'The face against the outer upper arm. All four channels read through it.' },
 ]
 
 const LAST = LAYERS.length - 1
@@ -246,10 +246,21 @@ const WIDE = build({ w:760, u:8, fore:0.4, wall:9, open:126, closed:60,
 /* Below sm the plate shrinks and the label column narrows to the longest
    title, "Skin interface". Labels stay beside the plates rather than under
    them: under them, the closed state could not compress at all without a
-   label landing on the next plate. */
-const NARROW = build({ w:330, u:3.3, fore:0.4, wall:7, open:76, closed:44,
-  cx:100, top:8, labelSize:13, specSize:0, keySize:10.5, chanSize:11, chanDy:-13,
-  lead:12, maxW:400, rulerNum:10.5, rulerCap:11, minor:4, major:7, spec:false })
+   label landing on the next plate.
+
+   SHORTER, 13 OCTOBER. Spec 0e section 14 caps a band at about one and a half
+   screens on a 390 phone and this figure ran well past two. The arithmetic in
+   build() is what sets the height, so the cut is made there and nothing is
+   hand-nudged: u 3.3 to 2.9 shrinks the plate, open 76 to 62 shortens the
+   travel, and top and wall each lose a unit. That takes the viewBox from
+   330 x 427 to 330 x 362, which is 65 units, or about 70px of rendered height
+   in a 358px column. `open` 62 still clears the tallest label stack, which is
+   the sensing layer at a 13-unit title over four 10.5-unit key lines, and
+   `closed` comes to 36 so it stays under the 41.8-unit plate depth and the
+   assembled stack still overlaps. */
+const NARROW = build({ w:330, u:2.9, fore:0.4, wall:6, open:62, closed:36,
+  cx:90, top:6, labelSize:13, specSize:0, keySize:10.5, chanSize:11, chanDy:-13,
+  lead:11, maxW:400, rulerNum:10.5, rulerCap:11, minor:4, major:7, spec:false })
 
 /* input.css --ease-out in array form, same as ui/motion.jsx. */
 const EASE = [0.23, 1, 0.32, 1]
@@ -301,13 +312,13 @@ function Ruler({ cfg }) {
         <line x1={f(at(MM_LONG))} y1={f(rulerY)} x2={f(at(MM_LONG))} y2={f(rulerY + major)}
           strokeWidth="1.3"/>
       </g>
-      <g className="font-mono" fontSize={f(rulerNum)} fill={INK3}>
+      <g fontSize={f(rulerNum)} fill={INK3}>
         {majors.map(mm => (
           <text key={mm} x={f(at(mm))} y={f(numY)}
             textAnchor={mm === 0 ? 'start' : 'middle'}>{mm}</text>
         ))}
       </g>
-      <text x={f((x0 + x1) / 2)} y={f(capY)} textAnchor="middle" className="font-mono"
+      <text x={f((x0 + x1) / 2)} y={f(capY)} textAnchor="middle"
         fontSize={f(cfg.rulerCap || rulerNum)} fill={INK3}>
         {MM_LONG} mm along the arm
       </text>
@@ -360,7 +371,7 @@ function Layer({ layer, i, t, cfg, hatch }) {
             <rect x={f(labelX)} y={f(ky - keySize * 0.72)} width="3" height={f(keySize * 0.84)}
               rx="1.5" fill={s.glow}/>
             <text x={f(labelX + 9)} y={f(ky)} fontSize={f(keySize)} fill={INK3}>
-              <tspan className="font-mono" fontWeight="700" fill={INK}>{j + 1}</tspan>
+              <tspan fontWeight="700" fill={INK}>{j + 1}</tspan>
               <tspan dx="4">{s.name}, {s.unit}</tspan>
             </text>
           </g>
@@ -460,7 +471,7 @@ function ArmInset() {
             x2={f(cx - rx + mm * u)} y2={f(dimY + 3)}/>
         ))}
       </g>
-      <g className="font-mono" fontSize={size} fill={INK3}>
+      <g fontSize={size} fill={INK3}>
         <text x={f(dimX + 10)} y={f(cy - 1)}>{MM_LONG} mm</text>
         <text x={f(dimX + 10)} y={f(cy + size + 2)} fontSize={f(size * 0.84)}>along the arm</text>
         <text x={cx} y={f(dimY + size * 1.5)} textAnchor="middle">{MM_CROSS} mm across</text>
@@ -486,10 +497,24 @@ function useNarrow() {
   return narrow
 }
 
+/* THE PHONE PUTS THE READING MATTER BEHIND A DISCLOSURE. Spec 0e section 14
+   caps a band at about one and a half screens at 390 and this one measured
+   2.78: the drawing is 347px, the orientation inset and its sentence another
+   266, and the five-layer table 684, which is 1545px of figure before the
+   page's own rail. The drawing, its control and the caption that says no unit
+   has been built stay in view at every width; the orientation inset and the
+   layer table - both of which repeat in words what the drawing already names
+   - sit behind one control on a phone and are open at every wider width.
+   Section 14 names a disclosure as the remedy, and this is the one band where
+   a reader on a phone is scrolling a drawing they have already seen. */
 export function PatchStack({ className, caption }) {
   const [shut, setShut] = React.useState(false)
+  const [more, setMore] = React.useState(false)
   const narrow = useNarrow()
   const cfg = narrow ? NARROW : WIDE
+  /* Wide is not a disclosure at all: `show` is simply true there, so no
+     keyboard or screen reader on a desktop meets a control that does nothing. */
+  const show = !narrow || more
   return (
     <div className={cn('min-w-0', className)}>
       <figure className="m-0">
@@ -506,45 +531,67 @@ export function PatchStack({ className, caption }) {
           {shut ? 'Separate the layers' : 'Close the stack'}
         </button>
 
-        <div className="mt-6 flex flex-wrap items-start gap-x-8 gap-y-4">
-          <div className="min-w-0 max-w-full shrink-0 basis-[300px]"><ArmInset/></div>
-          <p className="note m-0 max-w-[34ch]">
-            {MM_LONG} mm along the arm by {MM_CROSS} mm across it, worn on the outer upper arm with
-            the long axis parallel to the arm.
-          </p>
-        </div>
+        {/* The inset is held to 232px rather than 300 on a phone: it is an
+            orientation drawing, not the subject, and 300 of a 358px column
+            spent 238px of height on it. */}
+        {show && (
+          <div className="mt-5 flex flex-wrap items-start gap-x-6 gap-y-3">
+            <div className="min-w-0 max-w-full shrink-0 basis-[232px]"><ArmInset/></div>
+            <p className="note m-0 max-w-[34ch]">
+              {MM_LONG} mm along the arm by {MM_CROSS} mm across it, worn on the outer upper arm
+              with the long axis parallel to the arm.
+            </p>
+          </div>
+        )}
 
-        {/* The second sentence is not optional and is not behind the prop: a
-            judge must never read this drawing as a photograph of a build. */}
-        <figcaption className="note mt-5">
+        {/* The second sentence is not optional and is not behind the prop or
+            the disclosure: a judge must never read this drawing as a
+            photograph of a build. */}
+        <figcaption className="note mt-4">
           {caption ? `${caption} ` : ''}Drawing of the intended build. No unit has been built.
         </figcaption>
       </figure>
 
+      {/* Plain type on a control, no capsule and no case games. The label
+          names what opens rather than saying "see more". */}
+      {narrow && (
+        <button type="button" onClick={() => setMore(v => !v)} aria-expanded={more}
+          aria-controls="patchstack-detail"
+          className="mt-4 inline-flex min-h-[44px] items-center border-b-2 border-accent/35
+            font-display text-ui font-medium text-accent
+            hoverOnly:border-accent hoverOnly:text-accent-ink">
+          {more ? 'Hide the layer notes' : 'Layer notes and how it is worn'}
+        </button>
+      )}
+
       {/* A dl, not headings: another view wires this component in and this
           figure must not guess at the page's heading level. */}
-      <dl className="m-0 mt-7">
+      {show && (
+      <dl id="patchstack-detail" className="m-0 mt-5">
         {LAYERS.map(l => (
-          <div key={l.id} className="border-t border-rule py-4">
-            <dt className="font-display text-row font-bold leading-tight text-ink">{l.title}</dt>
-            <dd className="m-0 mt-1.5 max-w-[56ch] text-meta text-ink-2">{l.body}</dd>
+          <div key={l.id} className="border-t border-rule py-3">
+            {/* text-ui, not text-row: five layer names at 22px stacked over
+                17px bodies was a poster, and this list sits under a drawing
+                that already names every layer. */}
+            <dt className="font-display text-ui font-bold leading-tight text-ink">{l.title}</dt>
+            <dd className="m-0 mt-1 max-w-[56ch] text-note text-ink-2">{l.body}</dd>
             {l.id === 'sense' && (
-              <dd className="m-0 mt-3">
+              <dd className="m-0 mt-2">
                 <ul className="m-0 list-none p-0">
                   {SENSOR_ORDER.map((id, j) => {
                     const s = SENSORS[id]
                     return (
-                      <li key={id} className="flex items-start gap-3 py-1.5">
+                      <li key={id} className="flex items-start gap-2.5 py-1">
                         {/* The digit is the drawing's own callout number and
                             the bar is the drawing's own colour: two ways back
                             to the plate above. Neither touches the words. */}
                         <span aria-hidden className="mt-[0.34em] h-4 w-[3px] shrink-0 rounded-bar"
                           style={{ background: s.glow }}/>
-                        <p className="m-0 min-w-0 text-sec text-ink-2">
+                        <p className="m-0 min-w-0 text-note text-ink-2">
                           <b className="font-display font-bold text-ink">
-                            <span className="font-mono">{j + 1}</span> {s.name}
+                            {j + 1} {s.name}
                           </b>
-                          <span className="ml-1.5 font-mono text-fine text-ink-3">{s.unit}</span>
+                          <span className="ml-1.5 text-fine text-ink-3">{s.unit}</span>
                           {'. '}{s.short}
                         </p>
                       </li>
@@ -556,7 +603,10 @@ export function PatchStack({ className, caption }) {
           </div>
         ))}
       </dl>
+      )}
 
+      {/* Not behind the disclosure: a reader who takes the drawing at face
+          value would otherwise think movement is one of the four counted. */}
       <p className="note mt-4 max-w-[56ch]">
         Movement is not added to the {SCORE}. It gates the other three, so a hard run does not
         read as a hard day.

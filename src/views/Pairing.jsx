@@ -4,7 +4,7 @@ import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
 import { ArrowRight, Check, Always, Never, Minus, ChevronDown } from '../ui/marks'
 import { RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
-import { WirelessLink, ArmPlacement, StepArt } from '../charts/pairing-art'
+import { WirelessLink, StepArt } from '../charts/pairing-art'
 import { ITEMS, connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
@@ -17,8 +17,15 @@ import { cn } from '../lib/utils'
  * So it is one console. Pressing Connect runs lib/engine.js connectPatch for
  * real, and the ordered list under the button fills in as the flow moves. One
  * drawing is shown at a time, for whichever step is current, and the reader can
- * press any revealed step to see its drawing again. The five failures are
- * behind a quiet control and nothing else.
+ * press any revealed step to see its drawing again. The failures are behind a
+ * quiet control and nothing else.
+ *
+ * Cut on 13 October, because the page had grown back into the thing the owner
+ * rejected: the "Where it goes" band, which restated the patch page's own
+ * dimensions, charging slot, signal list and baseline word for word; and the
+ * `why` line on every failure, which explained a message the reader can
+ * already read. What is left is a button, the steps it reveals, and what to do
+ * when one of them stops.
  *
  * Three rules govern this file.
  *
@@ -72,47 +79,25 @@ const LINK_FACTS = [
    service filter is not a message, and labelling it as one would be a small
    lie in a page whose whole subject is what the code really does. */
 const TROUBLE = [
-  { /* engine.js:47, the navigator.bluetooth guard */
-    title:'A message about an embedded page',
+  { /* engine.js:47, the navigator.bluetooth guard. One guard, two causes: an
+       embedded page and plain http both land on this one message, so they are
+       one card rather than two cards quoting the same string. */
+    title:'No Bluetooth in the Browser',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
       + 'site directly in Chrome on a computer, or use the check-in below.',
-    why:'The app checks for Bluetooth before anything else, and an embedded page offers none.',
-    fix:'Open the site in its own browser window.' },
-  { /* engine.js:47 again: one guard, a different cause */
-    title:'The same message on plain http',
-    seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
-      + 'site directly in Chrome on a computer, or use the check-in below.',
-    why:'One guard covers every case where the browser offers no Bluetooth at all.',
-    fix:'Open the site over https in a browser that supports it.' },
+    fix:'Open the site over https, in its own browser window.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
-    title:'The list opens and stays empty',
+    title:'An Empty Device List',
     seen:'The browser’s own sheet, with no device in it and nothing to choose.',
-    code:'filters: [{ services: [6e400001-b5a3-f393-e0a9-e50e24dcca9e] }]',
-    why:'The request names one service, so nothing that is not the patch can be listed.',
     fix:'Take the patch off charge, keep it near the phone, press Connect again.' },
   { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
-    title:'You closed the list without choosing',
+    title:'The List Closed Without a Choice',
     seen:'No patch was selected. The check-in below works without one.',
-    why:'Dismissing the browser’s sheet is reported to the app as a cancel, not a fault.',
     fix:'Press Connect again and choose the patch.' },
   { /* engine.js:56: anything requestDevice or gatt.connect throws */
-    title:'Found, then could not connect',
+    title:'Connection Failed After Choosing',
     seen:'Could not connect: unknown. The check-in below works without a patch.',
-    why:'Anything the connection throws lands here, with the browser’s own reason after the colon.',
     fix:`Try once more with the patch close by, or take a ${SCORE} without one.` },
-]
-
-/* Four settled facts about where it sits. Nothing here needs a figure that is
-   still open. */
-const BODY = [
-  { t:'Outer upper arm, long axis along it',
-    d:'An oval, 54 mm along the arm by 36 mm across it.' },
-  { t:'The skin face does the reading',
-    d:'Heart, skin conductance, skin temperature, movement. Once a second, all day.' },
-  { t:'Charged through the side',
-    d:'A slot in the side of the shell, so the face against the skin carries no port.' },
-  { t:'Scored against the wearer',
-    d:'Readings become z-scores against the wearer’s own fourteen-day baseline.' },
 ]
 
 const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Streaming', stuck:'Stopped' }
@@ -158,27 +143,28 @@ export function Pairing({ go }) {
 
   return (
     <main>
-      <header className="border-t border-rule bg-mist">
+      <header className="border-t border-rule bg-accent-wash">
         <div className="wrap py-7 lg:py-10">
           <div className="grid items-end gap-5
             lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-8">
             <div className="min-w-0">
-              <p className="font-mono text-ui font-bold tracking-[0.005em] text-accent">
+              {/* An eyebrow is a line of type, per spec 0d rule 2. */}
+              <p className="font-body text-ui font-semibold text-accent-ink">
                 Using the patch
               </p>
-              {/* The break is explicit so a 390px column cannot split
-                  "plugged" across two lines. */}
+              {/* The heading is the owner's own, quoted in spec 0d rule 3 as
+                  the replacement for "Nothing is plugged into anything." */}
               <RevealLines as="h1"
                 className="mt-2 max-w-[20ch] font-display font-bold text-major leading-[1.05]
                   tracking-tight text-ink"
-                lines={['Nothing is plugged', 'into anything.']}/>
+                lines={['Fully Wireless,', '2 Minutes of Setup']}/>
               <ScrollIn className="mt-4 grid gap-3 sm:grid-cols-2">
                 {/* Containers on the tinted band, not text on it. */}
                 <Card className="p-3.5">
-                  <p className="font-display text-tick font-bold text-ink">Not needed to start</p>
+                  <p className="font-display text-tick font-bold text-ink">Not Needed to Start</p>
                   <ul className="m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0">
                     {NOTHING.map(t => (
-                      <li key={t} className="flex items-center gap-1.5 rounded-chip border border-rule
+                      <li key={t} className="flex items-center gap-1.5 rounded-field border border-rule
                         bg-paper px-2.5 py-1 text-fine text-ink">
                         <Never aria-hidden className="size-3.5 shrink-0 text-ink-3"/>{t}
                       </li>
@@ -192,8 +178,7 @@ export function Pairing({ go }) {
                     No unit has been built or worn.
                   </p>
                   <p className="mt-2 max-w-[44ch] text-fine text-ink-2">
-                    The enclosure is drawn at a settled size and the connect path below is the
-                    app’s real code.
+                    The enclosure is a drawing. The connect path below is the app’s real code.
                   </p>
                 </Card>
               </ScrollIn>
@@ -215,18 +200,21 @@ export function Pairing({ go }) {
 
       {/* The console. One button; the directions arrive when pressing it makes
           them relevant, and the failures stay behind their own control. */}
-      <Section name="The setup" tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">One button, {STEPS.length} steps</SectionHead>
+      <Section tone="card" className="bg-card">
+        <SectionHead className="mt-1 max-w-[26ch]">One Button, {STEPS.length} Steps</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
             {/* The bar states three settled facts even at rest, so a reader who
                 never presses the button still leaves with the link, the rate
                 and the way through without a patch. */}
             <div className="border-b border-rule bg-paper p-3.5 lg:p-4">
-              <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
+              {/* Column at 390: the button's label is nowrap and the two
+                  together ran 12px past the card. */}
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap
+                sm:items-center sm:justify-between sm:gap-x-5">
                 <div className="min-w-0" aria-live="polite">
                   <p className="font-display text-ui font-bold text-ink">{PHASE_WORD[phase]}</p>
-                  <p className="mt-0.5 font-mono text-fine tabular-nums text-ink-3">
+                  <p className="mt-0.5 text-fine tabular-nums text-ink-3">
                     {cursor} of {STEPS.length} steps
                   </p>
                 </div>
@@ -239,7 +227,7 @@ export function Pairing({ go }) {
               <dl className="m-0 mt-3 grid gap-2 border-t border-rule pt-2.5 sm:grid-cols-3">
                 {LINK_FACTS.map(f => (
                   <div key={f.k} className="min-w-0">
-                    <dt className="font-mono text-fine text-ink-3">{f.k}</dt>
+                    <dt className="text-fine font-semibold text-ink-3">{f.k}</dt>
                     <dd className="m-0 mt-0.5 font-display text-ui font-bold leading-tight text-ink">
                       {f.v}
                     </dd>
@@ -248,17 +236,17 @@ export function Pairing({ go }) {
               </dl>
             </div>
 
-            {/* The engine's own words, quoted. Mono and ruled rather than
-                coloured: this page carries grounds where warn fails. The live
-                region is here rather than on the status word so a reader using
-                a screen reader hears the whole outcome, not just the phase. */}
+            {/* The engine's own words, quoted. Ruled rather than coloured:
+                this page carries grounds where warn fails. The live region is
+                here rather than on the status word so a reader using a screen
+                reader hears the whole outcome, not just the phase. */}
             <div aria-live="polite">
               {msg && (
                 /* The tint is on the wrapper, not on the <p>: input.css caps
                    every paragraph at a 62ch measure, so a filled <p> paints a
                    box that stops in the middle of its own card. */
                 <div className="border-b border-rule bg-aqua px-3.5 py-3 lg:px-4">
-                  <p className="font-mono text-fine text-ink-2">{msg}</p>
+                  <p className="text-fine text-ink-2">{msg}</p>
                 </div>
               )}
             </div>
@@ -284,7 +272,7 @@ export function Pairing({ go }) {
                               'ease-[var(--ease-out)] hoverOnly:border-ruling',
                               on && 'border-l-[3px] border-l-accent')}>
                             <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
-                              <span className="font-mono text-tick tabular-nums text-ink-3">
+                              <span className="text-tick tabular-nums text-ink-3">
                                 {i + 1}
                               </span>
                               <Mk aria-hidden className={cn('size-4',
@@ -295,11 +283,11 @@ export function Pairing({ go }) {
                                 <span className="font-display text-ui font-bold leading-tight text-ink">
                                   {s.title}
                                 </span>
-                                <span className={cn('rounded-chip border px-2 py-[1px] font-mono',
-                                  'text-fine leading-[1.3]',
-                                  st === 'done'
-                                    ? 'border-accent/35 text-accent'
-                                    : 'border-rule text-ink-3')}>
+                                {/* Plain type beside what it describes, per
+                                    spec 0d rule 2: a status is never a filled
+                                    or outlined capsule. */}
+                                <span className={cn('text-fine font-semibold leading-[1.3]',
+                                  st === 'done' ? 'text-accent' : 'text-ink-3')}>
                                   {LABEL[st]}
                                 </span>
                               </span>
@@ -322,8 +310,8 @@ export function Pairing({ go }) {
                     className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-field
                       border border-ink bg-transparent px-4 font-display text-ui font-medium
                       text-ink touch-manipulation transition-[background-color] duration-150
-                      ease-[var(--ease-out)] active:bg-mist hoverOnly:bg-mist">
-                    {trouble ? 'Hide what can go wrong' : 'It is not working'}
+                      ease-[var(--ease-out)] active:bg-aqua hoverOnly:bg-aqua">
+                    {trouble ? 'Hide what can go wrong' : 'Not working'}
                     <ChevronDown aria-hidden
                       className={cn('transition-transform duration-150 ease-[var(--ease-out)]',
                         trouble && 'rotate-180')}/>
@@ -353,23 +341,9 @@ export function Pairing({ go }) {
                     <p className="mt-2 border-l-2 border-ruling pl-2.5 text-fine text-ink-2">
                       {t.seen}
                     </p>
-                    <dl className="m-0 mt-2.5 grid gap-1.5">
-                      {t.code && (
-                        <div className="flex gap-2">
-                          <dt className="shrink-0 font-mono text-fine text-ink-3">Code</dt>
-                          <dd className="m-0 min-w-0 break-words font-mono text-fine text-ink-2">
-                            {t.code}
-                          </dd>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <dt className="shrink-0 font-mono text-fine text-ink-3">Why</dt>
-                        <dd className="m-0 min-w-0 text-fine text-ink-2">{t.why}</dd>
-                      </div>
-                      <div className="flex gap-2">
-                        <dt className="shrink-0 font-mono text-fine text-ink-3">Do</dt>
-                        <dd className="m-0 min-w-0 text-fine text-ink-2">{t.fix}</dd>
-                      </div>
+                    <dl className="m-0 mt-2.5 flex gap-2">
+                      <dt className="shrink-0 text-fine font-semibold text-ink-3">Do</dt>
+                      <dd className="m-0 min-w-0 text-fine text-ink-2">{t.fix}</dd>
                     </dl>
                   </Card>
                 </ScrollRow>
@@ -379,42 +353,17 @@ export function Pairing({ go }) {
         )}
       </Section>
 
-      <Section name="On the body" tone="paper" tight className="bg-aqua-2">
-        <SectionHead className="mt-1 max-w-[24ch]">Where it goes</SectionHead>
-        <div className="mt-4 grid gap-3 lg:mt-5
-          lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:gap-4">
-          <Card className="p-3.5">
-            <figure className="m-0 min-w-0">
-              <ArmPlacement/>
-              <figcaption className="note mt-2 max-w-[40ch]">
-                The outer face of the upper arm, seen straight on. A drawing.
-              </figcaption>
-            </figure>
-          </Card>
-          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
-            {BODY.map((b, i) => (
-              <li key={b.t}>
-                <ScrollRow index={i} className="h-full">
-                  <Card className="h-full p-3.5">
-                    <p className="font-display text-ui font-bold leading-tight text-ink">{b.t}</p>
-                    <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">{b.d}</p>
-                  </Card>
-                </ScrollRow>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Section>
-
-      {/* The no-patch route makes the wireless point stronger rather than
-          weaker: there is nothing to plug in because there is nothing you have
-          to have. A container, not words on the tint. */}
-      <Section tone="paper" tight className="bg-aqua">
+      {/* Where the patch sits, its size, its charging slot and its baseline are
+          all on the patch page. This page used to restate every one of them in
+          a band of its own, which is the giant webpage the owner asked for one
+          button instead of. The one thing left is the way through without a
+          patch, because a reader who cannot connect needs it. */}
+      <Section tone="paper" tight className="bg-aqua-2">
         <Card className="p-3.5 lg:p-4">
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">
-                No patch, still a {SCORE}
+                A {SCORE} Without a Patch
               </h2>
               <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">
                 The phone camera and microphone, or {ITEMS.length} questions.

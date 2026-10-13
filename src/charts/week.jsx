@@ -73,7 +73,7 @@ export function WeekChart({ data, band }) {
           <g key={v}>
             <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className="stroke-accent"
               strokeWidth="1" strokeDasharray="5 4"/>
-            <text x={W - R + 6} y={y(v) + 5} className="fill-accent font-mono"
+            <text x={W - R + 6} y={y(v) + 5} className="fill-accent "
               fontSize={small ? 13 : 14}>{v}</text>
           </g>
         ))}
@@ -88,7 +88,7 @@ export function WeekChart({ data, band }) {
             <line x1={L} x2={W - R} y1={y(v)} y2={y(v)}
               className={v === 0 ? 'stroke-ink-3' : 'stroke-rule'} strokeWidth="1"/>
             <line x1={L - 7} x2={L} y1={y(v)} y2={y(v)} className="stroke-ink-3" strokeWidth="1"/>
-            <text x={L - 11} y={y(v) + 5} textAnchor="end" className="fill-ink-3 font-mono"
+            <text x={L - 11} y={y(v) + 5} textAnchor="end" className="fill-ink-3 "
               fontSize={tick}>{v}</text>
           </g>
         ))}
@@ -106,7 +106,7 @@ export function WeekChart({ data, band }) {
                   keeps two adjacent above-range days from running together */}
               {over && <path d={caret(cx, num - 24, 5)} className="fill-warn"/>}
               <text x={cx} y={num} textAnchor="middle"
-                className={`font-mono ${over ? 'fill-warn font-medium' : 'fill-ink-2'}`}
+                className={over ? 'fill-warn font-medium' : 'fill-ink-2'}
                 fontSize={tick + 2}>{d.v}</text>
               <text x={cx} y={H - B + 20} textAnchor="middle" className="fill-ink-3"
                 fontSize={tick}>{d.d}</text>
@@ -124,10 +124,10 @@ export function WeekChart({ data, band }) {
           Their usual range, {band.lo} to {band.hi}
         </li>
         <li className="flex items-center gap-2">
-          <span className="block h-2.5 w-2 shrink-0 rounded-xs bg-ink-3"/>Inside it
+          <span className="block h-2.5 w-2 shrink-0 rounded-xs bg-ink-3"/>Inside the range
         </li>
         <li className="flex items-center gap-2">
-          <span className="block h-2.5 w-2 shrink-0 rounded-xs bg-warn"/>▲ Above it
+          <span className="block h-2.5 w-2 shrink-0 rounded-xs bg-warn"/>▲ Above the range
         </li>
       </ul>
     </div>

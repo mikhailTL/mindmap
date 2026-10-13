@@ -1,5 +1,4 @@
 import React from 'react'
-import { ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
 
 /* The problem band, under the hero.
@@ -24,16 +23,20 @@ import { cn } from '../lib/utils'
  * figure, ten years earlier", which is prose doing a chart's job: no scale, no
  * axis, no comparison a reader could measure. Every figure here now carries a
  * value, a unit, a scale with ticks, the denominator it is counted out of, and
- * its source. The arrays also failed on their own ground: ink-3 against the
- * band's blended surface measures 1.99 : 1, so nine hundred of the thousand
- * marks were invisible.
+ * its source.
  *
- * CONTRAST ON THIS BAND. The panel behind these figures is ink-2 at 40% over
- * ink, which blends to about #133c45. Measured against it: paper 11.8 : 1,
- * mist 6.7, accent.lit 6.62, ruling 5.15, beam 4.53 (graphic only). accent,
- * ink-2 and ink-3 all fall under 2 : 1 here and are unusable, as a mark as
- * much as as a word. Every quantity below is therefore accent.lit or ruling,
- * and every one of them is also labelled in type. */
+ * CONTRAST ON THIS BAND, WHICH IS NOW LIGHT. Spec 0c retired the near-black
+ * ground: the band is bg-paper and the panel behind these figures is card,
+ * #ffffff. Every pair below was measured against #ffffff:
+ *   ink        #0b2b33  14.92 : 1   headings and the source links
+ *   ink-2      #1f5560   8.31 : 1   body copy, and the value over each bar
+ *   ink-3      #3c6a74   5.99 : 1   small print, axis labels, axis rules
+ *   accent.ink #07544f   8.79 : 1   the headline figures
+ *   accent     #0a6e68   6.10 : 1   the lit bar (graphic; clears as text too)
+ *   beam       #1d8fb0   3.74 : 1   the second bar, graphic only, never a word
+ * The three colours this band used to run on all fail outright on white and
+ * are gone from this file: ruling 2.32 : 1, mist 1.21 : 1, accent.lit 1.81.
+ * Colour is never the only carrier: every quantity is also printed in type. */
 
 export const SOURCES = [
   { label: 'CDC, Youth Risk Behavior Survey, 2023',
@@ -50,14 +53,14 @@ export const SOURCES = [
 function PctAxis({ ticks, className }) {
   const last = ticks.length - 1
   return (
-    <div aria-hidden="true" className={cn('relative h-7 border-t border-ruling', className)}>
+    <div aria-hidden="true" className={cn('relative h-7 border-t border-ink-3', className)}>
       {ticks.map(t => (
         <span key={`t${t}`} style={{ left: `${t}%` }}
-          className="absolute top-0 block h-1 w-px -translate-x-1/2 bg-ruling" />
+          className="absolute top-0 block h-1 w-px -translate-x-1/2 bg-ink-3" />
       ))}
       {ticks.map((t, i) => (
         <span key={t} style={{ left: `${t}%` }}
-          className={cn('absolute top-1.5 whitespace-nowrap font-mono text-fine tabular-nums text-ruling',
+          className={cn('absolute top-1.5 whitespace-nowrap text-fine tabular-nums text-ink-3',
             i === 0 ? 'translate-x-0' : i === last ? '-translate-x-full' : '-translate-x-1/2')}>
           {t}
         </span>
@@ -70,9 +73,9 @@ function PctAxis({ ticks, className }) {
    can see the hundred it is counted out of, which a bare bar never shows. */
 function PctTrack({ value, lit = true, className }) {
   return (
-    <span className={cn('block rounded-bar border border-ruling p-px', className)}>
+    <span className={cn('block rounded-bar border border-ink-3 p-px', className)}>
       <span style={{ width: `${value}%` }}
-        className={cn('block h-2.5 rounded-bar', lit ? 'bg-accent-lit' : 'bg-ruling')} />
+        className={cn('block h-2.5 rounded-bar', lit ? 'bg-accent' : 'bg-beam')} />
     </span>
   )
 }
@@ -87,25 +90,25 @@ const Y2023 = [
 function SurveyChart() {
   return (
     <figure className="m-0">
-      <figcaption className="text-fine text-ruling">
+      <figcaption className="text-fine text-ink-3">
         Out of every 100 US high school students, 2023
       </figcaption>
       <ul className="m-0 mt-3 grid list-none gap-4 p-0">
         {Y2023.map(h => (
           <li key={h.pct}>
             <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-              <span className="font-mono text-head font-bold tabular-nums leading-none text-accent-lit">
+              <span className="text-head font-bold tabular-nums leading-none text-accent-ink">
                 {h.pct}%
               </span>
-              <span className="text-fine text-ruling">of students, {h.exact}% exact</span>
+              <span className="text-fine text-ink-3">of students, {h.exact}% exact</span>
             </div>
-            <p className="mt-1 max-w-[46ch] text-sec leading-[1.4] text-mist">{h.of}</p>
+            <p className="mt-1 max-w-[46ch] text-sec leading-[1.4] text-ink-2">{h.of}</p>
             <PctTrack className="mt-2" value={h.exact} />
           </li>
         ))}
       </ul>
       <PctAxis className="mt-1.5" ticks={[0, 25, 50, 75, 100]} />
-      <p className="mt-0.5 font-mono text-fine text-ruling">Per 100 students. Outline: the hundred.</p>
+      <p className="mt-0.5 text-fine text-ink-3">Per 100 students. Outline: the hundred.</p>
     </figure>
   )
 }
@@ -126,7 +129,7 @@ const TREND = [
 function TrendChart() {
   return (
     <figure className="m-0">
-      <figcaption className="text-fine text-ruling">
+      <figcaption className="text-fine text-ink-3">
         The first question, ten years apart
       </figcaption>
       <div className="mt-3 flex gap-2">
@@ -136,27 +139,27 @@ function TrendChart() {
         <div aria-hidden="true" className="relative h-[150px] w-6 shrink-0">
           {TREND_TICKS.map(t => (
             <span key={t} style={{ bottom: `${(t / TREND_MAX) * 100}%` }}
-              className="absolute right-0 translate-y-1/2 whitespace-nowrap font-mono text-fine
-                tabular-nums text-ruling">
+              className="absolute right-0 translate-y-1/2 whitespace-nowrap text-fine
+                tabular-nums text-ink-3">
               {t}
             </span>
           ))}
         </div>
-        <div className="relative h-[150px] min-w-0 flex-1 border-b border-l border-ruling">
+        <div className="relative h-[150px] min-w-0 flex-1 border-b border-l border-ink-3">
           {TREND_TICKS.map(t => (
             <span key={t} aria-hidden="true" style={{ bottom: `${(t / TREND_MAX) * 100}%` }}
-              className="absolute inset-x-0 block h-px bg-ruling/40" />
+              className="absolute inset-x-0 block h-px bg-rule" />
           ))}
           {/* the 2013 level, carried across */}
           <span aria-hidden="true" style={{ bottom: `${(30 / TREND_MAX) * 100}%` }}
-            className="absolute inset-x-0 block border-t border-dashed border-ruling" />
+            className="absolute inset-x-0 block border-t border-dashed border-ink-3" />
           <div className="absolute inset-0 flex items-end">
             {TREND.map(b => (
               <div key={b.year} className="relative flex h-full flex-1 items-end justify-center">
                 <span style={{ height: `${(b.pct / TREND_MAX) * 100}%` }}
-                  className={cn('block w-6 rounded-t-xs', b.lit ? 'bg-accent-lit' : 'bg-ruling')} />
+                  className={cn('block w-6 rounded-t-xs', b.lit ? 'bg-accent' : 'bg-beam')} />
                 <span style={{ bottom: `${(b.pct / TREND_MAX) * 100}%` }}
-                  className="absolute left-1/2 mb-1 -translate-x-1/2 font-mono text-meta tabular-nums text-paper">
+                  className="absolute left-1/2 mb-1 -translate-x-1/2 text-meta tabular-nums text-ink-2">
                   {b.pct}%
                 </span>
               </div>
@@ -166,17 +169,17 @@ function TrendChart() {
       </div>
       <div aria-hidden="true" className="mt-1 flex gap-2 pl-8">
         {TREND.map(b => (
-          <span key={b.year} className="flex-1 text-center font-mono text-fine tabular-nums text-ruling">
+          <span key={b.year} className="flex-1 text-center text-fine tabular-nums text-ink-3">
             {b.year}
           </span>
         ))}
       </div>
-      <p className="mt-2.5 max-w-[34ch] text-sec leading-[1.4] text-mist">
+      <p className="mt-2.5 max-w-[34ch] text-sec leading-[1.4] text-ink-2">
         felt persistently sad or hopeless for two weeks or more
-        <span className="mt-1 block font-mono text-fine tabular-nums text-ruling">
+        <span className="mt-1 block text-fine tabular-nums text-ink-3">
           A rise of 10 points. Dashed: the 2013 level.
         </span>
-        <span className="mt-1 block text-fine text-ruling">
+        <span className="mt-1 block text-fine text-ink-3">
           CDC YRBS Data Summary and Trends Report, 2013 to 2023
         </span>
       </p>
@@ -197,7 +200,7 @@ function GapConnector() {
   return (
     <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"
       focusable="false" className="block h-3.5 w-full">
-      <path d={`M0 0 V10 M${GAP_EPISODE} 0 L100 10`} fill="none" className="stroke-ruling"
+      <path d={`M0 0 V10 M${GAP_EPISODE} 0 L100 10`} fill="none" className="stroke-ink-3"
         strokeWidth="1" vectorEffect="non-scaling-stroke" />
     </svg>
   )
@@ -210,43 +213,43 @@ function TreatmentGap() {
         aria-label={'1 in 5 US adolescents aged 12 to 17, or 20.1 percent, had a major depressive '
           + 'episode in the past year. Of that group, 3 in 5, or 59.4 percent, received no '
           + 'treatment for it. Source: NIMH, from NSDUH 2021.'}>
-        <figcaption className="text-fine text-ruling">
+        <figcaption className="text-fine text-ink-3">
           Out of every 100 US adolescents aged 12 to 17
         </figcaption>
 
         <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-          <span className="font-mono text-row font-bold tabular-nums leading-none text-accent-lit">
+          <span className="text-row font-bold tabular-nums leading-none text-accent-ink">
             1 in 5
           </span>
-          <span className="text-sec leading-[1.4] text-mist">
+          <span className="text-sec leading-[1.4] text-ink-2">
             had a major depressive episode in the past year
           </span>
-          <span className="font-mono text-fine tabular-nums text-ruling">20.1%</span>
+          <span className="text-fine tabular-nums text-ink-3">20.1%</span>
         </div>
         <PctTrack className="mt-2" value={GAP_EPISODE} />
         <GapConnector />
 
         {/* The second bar is the segment above, opened out to its own hundred,
             so the two percentages never look as though they share a scale. */}
-        <p className="font-mono text-fine text-ruling">
+        <p className="text-fine text-ink-3">
           Those 20.1%, counted again out of 100
         </p>
-        <span className="mt-1.5 flex gap-[2px] rounded-bar border border-ruling p-px">
-          <span style={{ width: `${GAP_UNTREATED}%` }} className="block h-2.5 rounded-l-bar bg-accent-lit" />
+        <span className="mt-1.5 flex gap-[2px] rounded-bar border border-ink-3 p-px">
+          <span style={{ width: `${GAP_UNTREATED}%` }} className="block h-2.5 rounded-l-bar bg-accent" />
           <span className="block h-2.5 flex-1 rounded-r-bar bg-beam" />
         </span>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-          <span className="font-mono text-row font-bold tabular-nums leading-none text-accent-lit">
+          <span className="text-row font-bold tabular-nums leading-none text-accent-ink">
             3 in 5
           </span>
-          <span className="text-sec leading-[1.4] text-mist">received no treatment for it</span>
-          <span className="font-mono text-fine tabular-nums text-ruling">59.4%</span>
+          <span className="text-sec leading-[1.4] text-ink-2">received no treatment for it</span>
+          <span className="text-fine tabular-nums text-ink-3">59.4%</span>
         </div>
         {/* Colour is never the only carrier: each block is named here and the
             figure above prints its own percentage. */}
-        <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-fine text-mist">
+        <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-fine text-ink-2">
           <span className="flex items-center gap-2">
-            <span aria-hidden="true" className="size-3 rounded-chip bg-accent-lit" />No treatment, 59.4%
+            <span aria-hidden="true" className="size-3 rounded-chip bg-accent" />No treatment, 59.4%
           </span>
           <span className="flex items-center gap-2">
             <span aria-hidden="true" className="size-3 rounded-chip bg-beam" />Treatment
@@ -262,7 +265,25 @@ function TreatmentGap() {
 /* The two headline figures are printed, never counted up to. A count-up starts
    at zero and passes through numbers that are not the statistic, and these sit
    beside their own exact values: a reader scrolling past saw "24%" next to
-   "39.7% exact". A published figure is not an animation. */
+   "39.7% exact". A published figure is not an animation.
+ *
+ * NO ENTRANCE ANIMATION IN THIS FILE EITHER, AND THE SAME REASON. The three
+ * figures were each wrapped in a ScrollIn, inside the band's own ScrollIn in
+ * views/Overview.jsx. Two opacity animations on one subtree MULTIPLY, and the
+ * pair was measured on a 1280 load at 0.76 x 0.76 = 0.575 effective: at that
+ * value ink-3 small print falls to 2.48 : 1 and ink-2 to 2.89, while the
+ * accent-ink headline figure still holds 3.02 and still reads at display size.
+ * That is exactly what a full-page capture of this band showed - "40%" in
+ * teal beside an invisible "of students, 39.7% exact" - and it is what any
+ * reader sees for the first second or so of every load, because the arrival
+ * watcher in ui/motion.jsx hides anything below the fold at opacity 0 and only
+ * restores it on a scroll event or a 1500ms fallback timer, and a page that
+ * reflows content into view (a lazy photograph, a late-mounting route) fires
+ * neither.
+ * A sourced statistic is content, not an entrance. The band around this one is
+ * free to animate; the figures inside it do not, so nothing here can be hidden
+ * by a second, compounding factor and the type is readable in the first frame
+ * it is painted. */
 export function ProblemStats({ className }) {
   return (
     <div className={cn(className)}>
@@ -272,26 +293,26 @@ export function ProblemStats({ className }) {
           reading order: the survey, then its ten year comparison, then the
           figure counted out of a different population. */}
       <div className="grid gap-x-7 gap-y-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]">
-        <ScrollRow index={0} className="lg:col-start-1 lg:row-start-1"><SurveyChart /></ScrollRow>
-        <ScrollRow index={1} className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className="lg:col-start-1 lg:row-start-1"><SurveyChart /></div>
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <TrendChart />
-        </ScrollRow>
-        <ScrollIn className="border-t border-ink-3 pt-5 lg:col-start-1 lg:row-start-2">
+        </div>
+        <div className="border-t border-rule pt-5 lg:col-start-1 lg:row-start-2">
           <TreatmentGap />
-        </ScrollIn>
+        </div>
 
         {/* The sources sit under the trend at lg, which is where the second
             column would otherwise run out of content, and under everything on a
-            phone. paper on ink is 14.47 : 1 and the accent.lit underline 7.67,
-            so the links read as links and not only as colour. */}
-        <p className="border-t border-ink-3 pt-4 text-fine text-mist
+            phone. ink on card is 14.92 : 1 and the accent underline
+            6.10, so the links read as links and not only as colour. */}
+        <p className="border-t border-rule pt-4 text-fine text-ink-2
           lg:col-start-2 lg:row-start-2 lg:self-end">
           Sources:{' '}
           {SOURCES.map((s, i) => (
             <React.Fragment key={s.href}>
               {i > 0 && ' · '}
               <a href={s.href} target="_blank" rel="noreferrer"
-                className="border-b border-accent-lit/50 text-paper hoverOnly:border-accent-lit">
+                className="border-b border-accent/50 text-ink hoverOnly:border-accent">
                 {s.label}
               </a>
             </React.Fragment>

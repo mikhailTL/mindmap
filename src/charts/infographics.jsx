@@ -23,7 +23,7 @@ import { SCORE, NOTES, LOCATION, PRO } from '../lib/terms'
 
 /* Each trace is an illustrative shape, not a reading: the product has never
    taken one off a patch. What is new here is BAND, the wearer's own usual
-   range, drawn behind the trace. Every signal enters the model as a distance
+   range, drawn behind the trace. Every signal enters the network as a distance
    from that band, so a trace drawn without it was the one thing the figure
    existed to show, left out. Lower y is higher on screen. */
 const TRACE = {
@@ -44,8 +44,15 @@ const BAND = {
 /* The root stays an <svg> sized by className, so a caller that passes a height
    keeps the height it asked for. Everything added is inside the viewBox: text
    in a scaled viewBox shrinks with the column, so the unit and the window
-   belong to the card around this, not to the drawing. */
-export function SignalTrace({ kind, className }) {
+   belong to the card around this, not to the drawing.
+
+   `muted` draws a signal this surface does NOT have, in `ruling` #8eb0b6 flat.
+   It exists because charts/camera.jsx was dimming the whole drawing with
+   `opacity-45`: the signal's own colour at 45% over card lands near 1.6 : 1
+   and partial-opacity decoration is not the idiom anywhere else in this
+   directory. The state is carried in words beside the figure either way, so
+   the muted trace is a shape and never the only thing saying so. */
+export function SignalTrace({ kind, muted = false, className }) {
   const s = SENSORS[kind]
   const g = BAND[kind]
   if (!s || !g) return null
@@ -62,10 +69,10 @@ export function SignalTrace({ kind, className }) {
       <path d={`M0 ${g.base} H80`} fill="none" className="stroke-ink-3" strokeWidth="1"
         vectorEffect="non-scaling-stroke" />
       <path d={TRACE[kind]} fill="none" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        stroke={s.glow || s.color} vectorEffect="non-scaling-stroke" />
+        stroke={muted ? '#8eb0b6' : (s.glow || s.color)} vectorEffect="non-scaling-stroke" />
       {/* the moment it leaves the band, ringed in the surface colour so it
           stays legible where it crosses its own trace */}
-      <circle cx={g.out[0]} cy={g.out[1]} r="2.6" fill={s.glow || s.color}
+      <circle cx={g.out[0]} cy={g.out[1]} r="2.6" fill={muted ? '#8eb0b6' : (s.glow || s.color)}
         className="stroke-card" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
     </svg>
   )
@@ -143,7 +150,7 @@ export function WhoSeesWhat({ className }) {
             audience is named inside each cell instead, which is the one string
             this figure repeats; every row label is written once. */}
         <div className={cn('hidden bg-mist/60 px-4 py-2.5', COLS)}>
-          <p className="font-mono text-tick text-ink-3">What</p>
+          <p className="text-tick text-ink-3">What</p>
           {SEES.map(p => (
             <p key={p.who} className="font-display text-ui font-bold leading-[1.2] text-ink">{p.who}</p>
           ))}
@@ -170,7 +177,7 @@ export function WhoSeesWhat({ className }) {
         </ul>
 
         <div className={cn('border-t border-rule bg-mist/60 px-4 py-2.5', COLS)}>
-          <p className="font-mono text-tick text-ink-3">Across the five</p>
+          <p className="text-tick text-ink-3">Across the five</p>
           {SEES.map(p => (
             <p key={p.who} className="mt-1 text-fine leading-[1.4] text-ink-2 md:mt-0">
               <span className="text-ink-3 md:hidden">{p.who}: </span>{summarise(p.sees)}
@@ -240,13 +247,13 @@ export function WeekStrip({ days, band, className }) {
           preview's width a label above the top marker has nowhere to sit. */}
       <div aria-hidden="true" className="flex">
         {rows.map(d => (
-          <span key={d.d} className="flex-1 text-center font-mono text-fine tabular-nums text-ink-2">
+          <span key={d.d} className="flex-1 text-center text-fine tabular-nums text-ink-2">
             {d.v > hi ? d.v : ''}
           </span>
         ))}
       </div>
       <figcaption className="mt-1 text-fine leading-[1.4] text-ink-3">
-        Usual range <span className="font-mono tabular-nums text-ink-2">{lo} to {hi}</span>. Days
+        Usual range <span className="tabular-nums text-ink-2">{lo} to {hi}</span>. Days
         above it are marked and their figure printed.
       </figcaption>
     </figure>

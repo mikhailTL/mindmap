@@ -1,6 +1,5 @@
 import React from 'react'
 import { Always, Never, Sometimes } from '../ui/marks'
-import { ScrollIn, ScrollRow } from '../ui/motion'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { MOVE_LIMIT_G } from '../signals/motion'
 import { SENSOR_ORDER } from '../lib/sensors'
@@ -19,19 +18,31 @@ import { cn } from '../lib/utils'
  *
  * No figure invents a fact. The patch signals come from lib/sensors.js, the
  * k floor from lib/caseload.js, the audience names from lib/terms.js, and every
- * model figure from signals/tnam-results.js, which ml/research.py generates. A
+ * network figure from signals/tnam-results.js, which ml/research.py generates. A
  * change in any of those reaches these drawings instead of disagreeing with
  * them.
  *
  * Every label here is a label. A figure earns its place by what it draws, so
  * the words beside it name the parts and stop; the sentence that would have
  * explained the drawing is the drawing's failure, not its caption.
+ *
+ * NO ENTRANCE ANIMATION. These figures each carried a ScrollIn or a ScrollRow,
+ * and the Methods bands that hold them carry their own, so the two opacity
+ * animations multiplied on one subtree. A measured 1280 load of this page put
+ * 261 text nodes at or near opacity 0 a second in, and the pair's product was
+ * 0.76 x 0.76 = 0.575, where ink-3 small print reads 2.48 : 1 against the 4.5
+ * it owes. The arrival watcher in ui/motion.jsx restores a hidden element on a
+ * scroll event or a 1500ms fallback and nothing else, so a load that reflows
+ * content into view leaves it faded for over a second. A figure is content, so
+ * it is painted, not revealed; the band around it may animate.
  */
 
-/* Mono, ink-3: the one label style every box in these figures opens with. On
-   paper 5.33 : 1, on aqua-2 4.66, on beam-wash 5.10, so it clears AA on each
-   ground a Methods band uses. */
-const TAG = 'font-mono text-tick text-ink-3'
+/* The one label style every box in these figures opens with: body face, no
+   case or tracking games, ink-3. On paper 5.33 : 1, on aqua-2 4.66, on
+   beam-wash 5.10, so it clears AA on each ground a Methods band uses. It is
+   deliberately not `font-mono`: spec 0d bans a typewriter face on a label, and
+   `font-code` is reserved for file paths and code identifiers. */
+const TAG = 'text-tick text-ink-3'
 const BOX = 'rounded-panel border border-rule bg-card p-4'
 
 const pct1 = v => (v * 100).toFixed(1) + '%'
@@ -67,7 +78,7 @@ function Ticks({ ticks, at, unit }) {
     <div aria-hidden="true" className="relative mt-1 h-5">
       {ticks.map((t, i) => (
         <span key={t} style={{ left: `${at(t)}%` }}
-          className={cn('absolute top-0 whitespace-nowrap font-mono text-tick tabular-nums text-ink-3',
+          className={cn('absolute top-0 whitespace-nowrap text-tick tabular-nums text-ink-3',
             i === 0 ? 'translate-x-0' : i === last ? '-translate-x-full' : '-translate-x-1/2')}>
           {t}{unit}
         </span>
@@ -85,7 +96,7 @@ function CaptureLanes() {
           <li key={l.tag}>
             <p className="flex items-baseline justify-between gap-3">
               <span className="text-fine leading-[1.3] text-ink-2">{l.tag}</span>
-              <span className="font-mono text-tick tabular-nums text-ink-3">{l.secs} s</span>
+              <span className="text-tick tabular-nums text-ink-3">{l.secs} s</span>
             </p>
             <span className="mt-1 block h-2 w-full rounded-bar bg-mist">
               <span style={{ width: `${at(l.secs)}%` }} className={cn('block h-2 rounded-bar', l.bar)}/>
@@ -116,7 +127,7 @@ function BaselineScale() {
       <Ticks ticks={SD_TICKS} at={at} unit=""/>
       <p className="mt-1 text-fine leading-[1.4] text-ink-3">
         Standard deviations from this person&rsquo;s own baseline. Shaded: their usual range.
-        Clamped at <span className="font-mono tabular-nums text-ink-2">3</span>.
+        Clamped at <span className="tabular-nums text-ink-2">3</span>.
       </p>
     </div>
   )
@@ -153,7 +164,7 @@ function ScoreScale() {
         {SCORE_BANDS.map(b => (
           <li key={b.tier} className="text-fine leading-[1.35] text-ink-3">
             {TIER_LABEL[b.tier]}{' '}
-            <span className="font-mono tabular-nums text-ink-2">{b.from} to {b.to}</span>
+            <span className="tabular-nums text-ink-2">{b.from} to {b.to}</span>
           </li>
         ))}
       </ul>
@@ -168,13 +179,13 @@ const FIG_UNIT = { capture: 'seconds', baseline: 'standard deviations', score: S
    has to come away correct, so step one names all three inputs and the caption
    carries the thing a short reader would otherwise assume: no patch exists. */
 const STEPS = [
-  { n: 1, fig: 'capture', title: 'A reading is taken',
+  { n: 1, fig: 'capture', title: 'Taking a Reading',
     line: 'The patch, a phone camera and microphone, or six questions.',
     note: 'Drawn: one phone capture, the only route running today.' },
-  { n: 2, fig: 'baseline', title: 'Set against your own two weeks',
+  { n: 2, fig: 'baseline', title: 'Two Weeks of Baseline',
     line: `Each signal as its distance from that person's own baseline.`,
     note: `${BASELINE_DAYS} days set the middle. Nobody is compared with anybody else.` },
-  { n: 3, fig: 'score', title: 'One number, one sentence',
+  { n: 3, fig: 'score', title: 'One Number, One Sentence',
     line: `${SCORE}, 0 to 100. 50 is an ordinary day for that person.`,
     note: 'The bands name where a reading sits. They are not clinical cut-offs.' },
 ]
@@ -184,7 +195,7 @@ export function ThreeSteps({ className }) {
     <figure className={cn('m-0', className)}>
       <ol className="m-0 grid list-none gap-3 p-0 lg:grid-cols-3">
         {STEPS.map((s, i) => (
-          <ScrollRow key={s.n} index={i} as="li" className="h-full">
+          <li key={s.n} className="h-full">
             <div className={cn(BOX, 'flex h-full flex-col p-5')}>
               <div className="flex items-baseline justify-between gap-4">
                 <span className={TAG}>{s.n}</span>
@@ -197,7 +208,7 @@ export function ThreeSteps({ className }) {
               <div className="mt-auto pt-4">{FIGURE[s.fig]}</div>
               <p className="mt-2 border-t border-rule pt-2 text-fine leading-[1.4] text-ink-3">{s.note}</p>
             </div>
-          </ScrollRow>
+          </li>
         ))}
       </ol>
       <figcaption className="note mt-3.5 max-w-[62ch]">
@@ -211,7 +222,7 @@ export function ThreeSteps({ className }) {
 
 /* The fitted movement curve, read straight out of the results file rather than
    drawn by hand. It is the whole argument of the section it sits in: the curve
-   rises, so the model reads movement as arousal, so a moving reading cannot be
+   rises, so the network reads movement as arousal, so a moving reading cannot be
    handed to it. Domain is the patch's own movement scale, where 1 is the
    MOVE_LIMIT_G line and everything past that line saturates at 1. */
 const MC = R.shapes.motion
@@ -243,7 +254,7 @@ function MotionCurve() {
       <div aria-hidden="true" className="relative w-9 shrink-0">
         {MC_LEVELS.map(l => (
           <span key={l.label} style={{ top: `${mcY(l.v)}%` }}
-            className="absolute right-0 -translate-y-1/2 font-mono text-fine tabular-nums text-ink-3">
+            className="absolute right-0 -translate-y-1/2 text-fine tabular-nums text-ink-3">
             {l.label}
           </span>
         ))}
@@ -259,12 +270,12 @@ function MotionCurve() {
           <path d={MC_PATH} fill="none" className="stroke-ink" strokeWidth="2.4"
             strokeLinecap="round" strokeLinejoin="round"/>
           {/* where the curve meets the line past which no reading is scored by
-              the model at all */}
+              the network at all */}
           <path d={`M${MC_X1} 10 V 94`} fill="none" className="stroke-warn" strokeWidth="1.4"
             strokeDasharray="4 3"/>
           <circle cx={MC_X1} cy={mcY(MC_HI)} r="4" className="fill-warn stroke-card" strokeWidth="1.6"/>
         </svg>
-        <div aria-hidden="true" className="mt-1 flex justify-between gap-3 font-mono text-fine text-ink-3">
+        <div aria-hidden="true" className="mt-1 flex justify-between gap-3 text-fine text-ink-3">
           <span>still</span>
           <span>{MOVE_LIMIT_G} g and above</span>
         </div>
@@ -299,24 +310,24 @@ export function MovementFallback({ className }) {
   return (
     <div className={cn(className)}>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <ScrollIn className="min-w-0">
+        <div className="min-w-0">
           <figure className={cn(BOX, 'm-0 h-full p-5')}>
             <p className={TAG}>The fitted movement curve, in the logit</p>
             <div className="mt-3"><MotionCurve/></div>
             <figcaption className="mt-3.5 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
               Climbs{' '}
-              <span className="font-mono tabular-nums text-ink">{MC_RISE.toFixed(2)}</span> from{' '}
-              <span className="font-mono tabular-nums text-ink">{f2(MC_LO)}</span> to{' '}
-              <span className="font-mono tabular-nums text-ink">{f2(MC_HI)}</span>: the model
+              <span className="tabular-nums text-ink">{MC_RISE.toFixed(2)}</span> from{' '}
+              <span className="tabular-nums text-ink">{f2(MC_LO)}</span> to{' '}
+              <span className="tabular-nums text-ink">{f2(MC_HI)}</span>: the network
               reading movement as arousal. Amber: the line past which it never scores a reading.
             </figcaption>
-            <p className="mt-2 font-mono text-fine text-ink-3">TNAM_RESULTS.shapes.motion</p>
+            <p className="mt-2 text-fine text-ink-3"><span className="font-code">TNAM_RESULTS.shapes.motion</span></p>
           </figure>
-        </ScrollIn>
+        </div>
 
         <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-3">
           {MEASURES.map((m, i) => (
-            <ScrollRow key={m.key} index={i} as="li" className="h-full">
+            <li key={m.key} className="h-full">
               <div className={cn(BOX, 'flex h-full flex-col p-5')}>
                 <p className={TAG}>{m.better}</p>
                 <h3 className="mt-1 font-display text-ui font-bold leading-[1.25] text-ink">{m.label}</h3>
@@ -326,9 +337,9 @@ export function MovementFallback({ className }) {
                       <p className="flex items-baseline justify-between gap-2">
                         <span className="min-w-0 text-fine leading-[1.35] text-ink-2">
                           {c.short}
-                          {c.ships ? <span className="ml-1.5 font-mono text-fine text-ink">ships</span> : null}
+                          {c.ships ? <span className="ml-1.5 text-fine text-ink">ships</span> : null}
                         </span>
-                        <span className="shrink-0 font-mono text-meta tabular-nums text-ink">
+                        <span className="shrink-0 text-meta tabular-nums text-ink">
                           {pct1(c.src[m.key])}
                         </span>
                       </p>
@@ -343,7 +354,7 @@ export function MovementFallback({ className }) {
                   <Ticks ticks={PCT_TICKS} at={v => v} unit="%"/>
                 </div>
               </div>
-            </ScrollRow>
+            </li>
           ))}
         </ul>
       </div>
@@ -365,7 +376,7 @@ function Nest({ label, count, items, className }) {
           and it is read off that list rather than typed beside it. */}
       <p className="flex flex-wrap items-baseline justify-between gap-x-3">
         <span className={TAG}>{label}</span>
-        <span className="font-mono text-tick tabular-nums text-ink-3">{count}</span>
+        <span className="text-tick tabular-nums text-ink-3">{count}</span>
       </p>
       {/* The measure is restated on the item: this box runs the full width of the
           device panel, and at 1680 an uncapped line in it sets at about 95
@@ -395,7 +406,7 @@ function Flow({ label }) {
         className="hidden size-5 shrink-0 text-ink-2 lg:block">
         <path d="M3.5 12h16M13.5 6l6 6-6 6"/>
       </svg>
-      <span className="font-mono text-tick text-ink-2 lg:max-w-[9rem] lg:text-center">{label}</span>
+      <span className="text-tick text-ink-2 lg:max-w-[9rem] lg:text-center">{label}</span>
     </div>
   )
 }
@@ -410,7 +421,7 @@ const ON_PHONE = [
 ]
 const IN_PAGE = [
   'Filters and frequency estimates: signals/dsp.js, ppg.js, voice.js.',
-  'The model: signals/tnam.js. One forward pass, no request, no worker.',
+  'The network: signals/tnam.js. One forward pass, no request, no worker.',
   `The baseline and calibration, in this browser’s storage.`,
 ]
 
@@ -418,7 +429,7 @@ const IN_PAGE = [
    Each line is checkable in the repository, which is the only reason to make
    a claim this strong. */
 const NOT_THERE = [
-  'No scoring endpoint, and no model fetched over a network.',
+  'No scoring endpoint, and no weights fetched over the wire.',
   `No account, and no store of anybody’s readings.`,
   'No analytics, and no third-party script.',
 ]
@@ -428,13 +439,13 @@ export function WhereItRuns({ className }) {
     <figure className={cn('m-0', className)}>
       <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,19rem)] lg:items-center lg:gap-5">
 
-        <ScrollIn className="min-w-0">
+        <div className="min-w-0">
           <div className={cn(BOX, 'p-5')}>
             <p className={TAG}>On the device</p>
             <h3 className="mt-1.5 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-              Everything that produces a score
+              The Whole Scoring Path
             </h3>
-            <p className="mt-2 font-mono text-tick text-ink-3">
+            <p className="mt-2 text-tick text-ink-3">
               Nothing inside this boundary is sent anywhere.
             </p>
             <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
@@ -444,21 +455,21 @@ export function WhereItRuns({ className }) {
             <Nest className="mt-3" label="In this page, in the browser"
               count={`${IN_PAGE.length} modules`} items={IN_PAGE}/>
           </div>
-        </ScrollIn>
+        </div>
 
         <Flow label="Survey answers only, and only if one is sent"/>
 
-        <ScrollIn className="min-w-0">
+        <div className="min-w-0">
           <div className={cn(BOX, 'p-5')}>
             <p className={TAG}>On a server</p>
             <h3 className="mt-1.5 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-              One function, and it is optional
+              One Optional Server Function
             </h3>
             <p className="mt-2 text-sec leading-[1.5] text-ink-2">
               api/responses.js takes the usability survey. The site is static and runs with that
               function off.
             </p>
-            <p className="mt-3.5 border-t border-rule pt-3.5 font-mono text-tick text-ink-3">
+            <p className="mt-3.5 border-t border-rule pt-3.5 text-tick text-ink-3">
               What crosses the boundary: {NOT_THERE.length} things do not
             </p>
             <ul className="m-0 mt-2 flex list-none flex-col gap-2 p-0">
@@ -470,7 +481,7 @@ export function WhereItRuns({ className }) {
               ))}
             </ul>
           </div>
-        </ScrollIn>
+        </div>
       </div>
 
       <figcaption className="note mt-3.5 max-w-[68ch]">
@@ -487,14 +498,14 @@ export function WhereItRuns({ className }) {
    happens on the way to the next box, and it is drawn on the connector rather
    than written underneath it. */
 const STAGES = [
-  { tag: 'Measured', title: 'What the sensors give',
+  { tag: 'Measured', title: 'The Raw Sensor Channels',
     life: 'Lives for the capture', after: 'Nothing is written down yet',
     items: [
       'Patch: four signals, once a second.',
       'Camera: 30 seconds, one number per frame. Microphone: 15 seconds, in memory.',
       'Accelerometer: movement during the capture.',
     ] },
-  { tag: 'Derived', title: 'What is computed from it',
+  { tag: 'Derived', title: 'Features Computed in the Capture',
     life: 'Lives for the capture', after: 'Every frame and sample is dropped',
     items: [
       'Heart rate, and a variation index that is not a clinical RMSSD.',
@@ -502,7 +513,7 @@ const STAGES = [
       `Pitch and steadiness. Peak movement against the ${MOVE_LIMIT_G} g line.`,
       `Each as a distance from this person’s own history, clamped to plus or minus 3.`,
     ] },
-  { tag: 'Kept', title: 'What is written down',
+  { tag: 'Kept', title: 'Records Written to the Phone',
     life: 'Outlives the capture',
     items: [
       'A mean and variance per feature: mindmap.phone.baseline.',
@@ -519,7 +530,7 @@ function Chevron({ label }) {
         className="size-5 shrink-0 text-ink-3">
         <path d="M9 5.5l6.5 6.5L9 18.5"/>
       </svg>
-      <span className="font-mono text-fine leading-[1.35] text-ink-3">{label}</span>
+      <span className="text-fine leading-[1.35] text-ink-3">{label}</span>
     </span>
   )
 }
@@ -564,11 +575,11 @@ export function DataFlow({ className }) {
                   <Chevron label={STAGES[i - 1].after}/>
                 </div>
               )}
-              <ScrollRow index={i} className="h-full min-w-0">
+              <div className="h-full min-w-0">
                 <div className={cn(BOX, 'flex h-full flex-col p-5')}>
                   <p className="flex flex-wrap items-baseline justify-between gap-x-3">
                     <span className={TAG}>{s.tag}</span>
-                    <span className="font-mono text-tick text-ink-3">{s.life}</span>
+                    <span className="text-tick text-ink-3">{s.life}</span>
                   </p>
                   <h3 className="mt-1.5 font-display text-row font-bold leading-[1.2] tracking-tight text-ink">
                     {s.title}
@@ -581,7 +592,7 @@ export function DataFlow({ className }) {
                     ))}
                   </ul>
                 </div>
-              </ScrollRow>
+              </div>
             </React.Fragment>
           ))}
         </div>
@@ -593,7 +604,7 @@ export function DataFlow({ className }) {
       <p className="mark mt-7">Who can see each thing</p>
       <div className="mt-3.5 grid auto-rows-fr gap-3 lg:grid-cols-3">
         {SEEN.map((p, i) => (
-          <ScrollRow key={p.who} index={i} className="h-full">
+          <div key={p.who} className="h-full">
             <div className={cn(BOX, 'flex h-full flex-col p-5')}>
               <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                 {p.who}
@@ -613,7 +624,7 @@ export function DataFlow({ className }) {
                 ))}
               </ul>
             </div>
-          </ScrollRow>
+          </div>
         ))}
       </div>
     </div>

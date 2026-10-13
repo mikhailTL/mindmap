@@ -1,102 +1,59 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { ActionRow, Fact, FeltCard, Greeting, HeroLine, Panel, PanelHead, SharedCard,
+import { ActionRow, Fact, FeltCard, Greeting, Panel, PanelHead, SeeDetails, SharedCard,
   Stat, StudentBody } from './Monitor'
 import { CheckInBody } from './CheckIn'
 import { SharingControls } from '../app'
 import { Chevron } from '../ui/marks'
-import { ScrollRow } from '../ui/motion'
 import { DayChart } from '../charts/day'
 import { Diverge } from '../charts/diverge'
-import { Bars, RainbowDial, RainbowKey, SensorTrace } from '../charts/rainbow'
+import { Bars, RainbowDial, RainbowKey } from '../charts/rainbow'
 import { DATA } from '../lib/assets'
 import { useMode } from '../lib/mode'
 import { studentRings } from '../lib/readings'
-import { SENSORS } from '../lib/sensors'
+import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { MOVE_LIMIT_G } from '../signals/motion'
-import { bandOf, emptyBaseline, scoreCapture, updateBaseline } from '../signals/score'
+import { bandOf } from '../signals/score'
+/* The demo reading and everything derived from it live in one module, so this
+   screen and the calendar cannot print two different numbers for the same
+   Thursday. */
+import { BAND, CROSSED, DEMO_MOTION, PEAK, READ, TAKEN_AT, TODAY, TODAY_SHORT, USUAL,
+  WBAND, WEEK, WEEK_COUNT, clock12 } from './reading/demo'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 
 /* The student app's Today screen, and the shell the three student tabs sit in.
  *
- * The screen used to be one dial and one sentence on the app's tint. It is now
- * eight modules, each in its own card: the day in a line with its header
- * figures, the dial with its key, what is behind the reading, which terms moved
- * it, the four signals, the day itself, what leaves the phone, and the action
- * row. Section 7 of docs/design-spec.md is the bar it is built to.
+ * WHAT THE 13 OCTOBER BATCH CHANGED HERE (design spec 0d section 6, 0e
+ * sections 14 and 17). The screen was thirteen modules in a twelve-column
+ * grid, all of them open, with the dial in a five-column card beside a
+ * seven-column stack of working. The owner's verdict was that the text and the
+ * boxes were too big, that the dial belonged in the centre rather than to one
+ * side, and that everything under it belonged behind one control.
+ *
+ * So the screen is now:
+ *
+ *   1. ONE CENTRED CARD above the fold: the sentence, then the dial under it,
+ *      then the band word and how today compares with a usual day. Nothing
+ *      else. The card is capped at 34rem and centred at every width, so the
+ *      dial is in the middle of the screen on a phone and on a laptop.
+ *   2. ONE `See details` DISCLOSURE, collapsed, holding the live signal
+ *      traces, the four bands, the week, what moved the reading and the day.
+ *   3. The action row and the two consent modules under it, outside the
+ *      disclosure, because they are not readings.
+ *
+ * LIVE TRACES. In the demo the four traces stream: `LIVE` below is four
+ * periodic series and the window walks them, so a trace moves the way a
+ * channel being written once a second moves. It is generated and the caption
+ * says so; no patch has been built or worn. `prefers-reduced-motion` stops the
+ * walk and the card says it is paused.
  *
  * Where the figures come from:
  *   rings      src/lib/readings.js, each signal's own distance from this
  *              person's fourteen-day normal, on a 0 to 100 scale
  *   day, band  src/lib/assets.js, injected at build time
- *   everything under the dial  scoreCapture() below, run for real */
-
-/* The reading is produced by the engine rather than typed in, so the band, the
-   baseline length, the movement hold, the signal quality and the two term
-   contributions on this screen are whatever scoreCapture actually returns for a
-   capture. The capture is synthetic and is tuned to land on 51, the figure the
-   launcher and the tour already draw for this student. Its raw heart inputs are
-   deliberately never printed: the heart numbers a reader sees are the patch
-   fixtures in readings.js, and the engine's own inputs are a separate demo
-   series, so the contribution module draws direction and size and never a
-   value. */
-const DEMO_PPG = { ok: true, hr: 64.6, rmssd: 60, hrvOk: true, quality: 0.86 }
-const DEMO_MOTION = { ok: true, peak: 0.01, still: true }
-/* Fourteen days of history, one capture a day, so baselineDays comes back 14
-   rather than asserted in copy. */
-const DEMO_HISTORY = [0, 3.5, -3, 6.5, -5.2, 2, -4, 0.8, 5.5, -6, 2.8, -2.2, 1.5, -2]
-
-function demoReading() {
-  let b = emptyBaseline()
-  DEMO_HISTORY.forEach((off, i) => {
-    b = updateBaseline(b, { hr: 64 + off, hrv: 60.6 + off * 1.3 }, 'day' + i)
-  })
-  return scoreCapture({ ppg: DEMO_PPG, voice: null, motion: DEMO_MOTION, baseline: b })
-}
-const READ = demoReading()
-
-const BAND = DATA.band || { lo: 0, hi: 1 }
-const USUAL = Math.round((BAND.lo + BAND.hi) / 2)
-
-/* 24-hour, because the day series is keyed that way and the chart's axis
-   prints it; everything a reader is shown is converted back. */
-function clock12(t) {
-  const [h, m] = String(t).split(':').map(Number)
-  if (!Number.isFinite(h)) return t
-  const half = h < 12 ? 'am' : 'pm'
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${half}`
-}
-
-/* When the capture was taken. Not a free choice: the day series is the same
-   0 to 100 scale as the dial, so the clock has to be the point on it where the
-   line is at the score, or the hero number contradicts the chart under it. */
-const TAKEN_AT = (() => {
-  const day = DATA.day || []
-  if (!day.length) return '13:10'
-  let best = day[0]
-  for (const d of day) if (Math.abs(d.v - READ.score) < Math.abs(best.v - READ.score)) best = d
-  return best.t
-})()
-const TODAY = { score: READ.score, day: 'Thursday', clock: clock12(TAKEN_AT),
-                at: `Thursday · ${clock12(TAKEN_AT)}` }
-
-/* The first reading after the morning that sits above the normal band. The day
-   chart picks the same point out in warn; this names the time it happened. */
-const CROSSED = (() => {
-  const day = DATA.day || []
-  const i = day.findIndex((d, k) => k > 20 && d.v > BAND.hi)
-  return i > 0 ? day[i].t : null
-})()
-
-/* The day's own maximum, named rather than left for a reader to find on the
-   line. Rounded the way the chart's own tooltip rounds. */
-const PEAK = (() => {
-  const day = DATA.day || []
-  if (!day.length) return { v: 0, t: '00:00' }
-  const hi = day.reduce((a, d) => (d.v > a.v ? d : a), day[0])
-  return { v: Math.round(hi.v), t: hi.t }
-})()
+ *   everything under the dial  src/views/reading/demo.js, where scoreCapture
+ *                            is run for real on the demo capture */
 
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
                'eight', 'nine', 'ten']
@@ -136,10 +93,7 @@ function direction(r) {
  * like "you are more anxious than usual" would be a claim this product cannot
  * make. Every branch below is generated from the same rings, normal band and
  * day series the rest of the screen draws, so the sentence stays true when the
- * data changes rather than being typed in beside it.
- *
- * The number does not go away. It sits under the sentence, smaller, with the
- * comparison against a usual day beside it. */
+ * data changes rather than being typed in beside it. */
 
 const HOURS = ['twelve', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
                'eight', 'nine', 'ten', 'eleven']
@@ -170,9 +124,7 @@ function heroFor({ tier, rings, day, band, crossed }) {
      range in the afternoon; the one capture under the sentence was taken
      earlier and sits inside that range. Neither cancels the other, so the
      sentence is about the day and says which range it crossed, and the figure
-     under it is labelled as one reading with the time it was taken. Saying
-     "above your usual" without naming the range is what made the headline and
-     the band word under it read as a contradiction. */
+     under it is labelled as one reading with the time it was taken. */
   let lead
   if (tier.key === 'high' || tier.key === 'up')
     lead = crossed
@@ -194,77 +146,173 @@ function heroFor({ tier, rings, day, band, crossed }) {
   return { lead, note }
 }
 
-/* The comparison the old sentence carried, kept under the number so no figure
-   is lost: how far today sits from a usual day. */
+/* The comparison the old sentence carried, kept under the dial so no figure is
+   lost: how far today sits from a usual day. */
+/* The dial prints the usual day under itself, so this line names the distance
+   and not the figure again. */
 function compareWords(score, usual) {
   const d = score - usual
-  if (d === 0) return `Level with a usual day of ${usual}.`
-  return `${cap(word(Math.abs(d)))} ${d > 0 ? 'above' : 'below'} a usual day of ${usual}.`
+  if (d === 0) return 'Level with a usual day for you.'
+  return `${cap(word(Math.abs(d)))} ${d > 0 ? 'above' : 'below'} a usual day for you.`
 }
 
 /* Whether the capture the screen is showing was taken before the day crossed
    above the usual range. Worked out from the two clocks rather than written
    into the copy, because it is the fact that stops the sentence above and the
-   band word under the number from looking like they disagree. */
+   band word under the dial from looking like they disagree. */
 const READ_BEFORE_RISE = !!(CROSSED && String(TAKEN_AT) < String(CROSSED))
 
 function figureWords(score, usual) {
   const c = compareWords(score, usual)
   return READ_BEFORE_RISE
-    ? `Taken before your day went above the range. ${c}`
-    : c
+    ? `This reading was taken at ${TODAY.clock}, before your day went above the range. ${c}`
+    : `This reading was taken at ${TODAY.clock}. ${c}`
+}
+
+/* ── The live traces ────────────────────────────────────────────────────── */
+
+/* Four periodic series, one per channel. Integer harmonics only, so the series
+   closes on itself and the walking window never shows a seam. Nothing here is
+   a measurement: it is the shape of a channel being written, drawn so the demo
+   reads as a device streaming rather than as a still picture. `lo` and `hi`
+   are a FIXED y-domain per channel, so a moving trace moves the line and never
+   the axis under it. */
+const LIVE_N = 300
+function periodic(base, terms) {
+  return Array.from({ length: LIVE_N }, (_, i) => {
+    const t = i / LIVE_N
+    let v = base
+    for (const [h, a, p] of terms) v += a * Math.sin(2 * Math.PI * (h * t + p))
+    return v
+  })
+}
+
+const LIVE = {
+  heart: { lo: 58, hi: 80, dp: 0,
+    series: periodic(69, [[1, 3.2, 0], [3, 1.4, 0.21], [8, 0.6, 0.63], [17, 0.25, 0.11]]) },
+  sweat: { lo: 2.4, hi: 3.6, dp: 2,
+    series: periodic(3.0, [[1, 0.24, 0.12], [2, 0.11, 0.44], [6, 0.05, 0.8], [13, 0.02, 0.3]]) },
+  temp:  { lo: 33.1, hi: 33.9, dp: 1,
+    series: periodic(33.5, [[1, 0.13, 0.3], [4, 0.05, 0.7], [11, 0.02, 0.5]]) },
+  move:  { lo: 0, hi: 0.14, dp: 2,
+    series: periodic(0.045, [[2, 0.022, 0.5], [5, 0.014, 0.08], [12, 0.008, 0.72]]) },
+}
+const WIN = 64
+
+function useReducedMotion() {
+  const [r, setR] = React.useState(false)
+  React.useEffect(() => {
+    const m = matchMedia('(prefers-reduced-motion: reduce)')
+    const on = () => setR(m.matches)
+    on()
+    m.addEventListener?.('change', on)
+    return () => m.removeEventListener?.('change', on)
+  }, [])
+  return r
+}
+
+/* One step every 200ms. Not requestAnimationFrame: the trace advances by a
+   whole sample, so sixty steps a second would walk the whole series in five
+   seconds and read as a scroll rather than as a channel. */
+function useStream(on, ms = 200) {
+  const [i, setI] = React.useState(0)
+  React.useEffect(() => {
+    if (!on) return
+    const id = setInterval(() => setI(n => (n + 1) % LIVE_N), ms)
+    return () => clearInterval(id)
+  }, [on, ms])
+  return i
+}
+
+const TW = 240, TH = 44, TP = 3
+
+function LiveTrace({ data, lo, hi, color, className }) {
+  const span = hi - lo || 1
+  const pts = data.map((v, i) => [
+    TP + (i / (data.length - 1)) * (TW - TP * 2),
+    TH - TP - ((Math.max(lo, Math.min(hi, v)) - lo) / span) * (TH - TP * 2),
+  ])
+  const d = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ')
+  const last = pts[pts.length - 1]
+  return (
+    <svg viewBox={`0 0 ${TW} ${TH}`} aria-hidden preserveAspectRatio="none"
+      className={cn('block h-11 w-full', className)}>
+      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
+        strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+      <circle cx={last[0]} cy={last[1]} r="3" fill={color} vectorEffect="non-scaling-stroke"/>
+    </svg>
+  )
+}
+
+/* The four channels as they arrive. The figure beside each name is the last
+   sample in that channel's window, so the number and the end of the line are
+   the same reading. */
+function LiveSignals({ rings }) {
+  const reduced = useReducedMotion()
+  const i = useStream(!reduced)
+  const byId = Object.fromEntries(rings.map(r => [r.id, r]))
+  return (
+    <Panel>
+      <PanelHead title="Four Channels, As Written"
+        meta={reduced ? 'motion off' : 'streaming'}/>
+      <p className="mt-2 max-w-[56ch] text-fine text-ink-2">
+        One sample a second, on each channel&rsquo;s own scale. The figure is the newest sample.
+      </p>
+      <ul className="m-0 mt-2.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4">
+        {SENSOR_ORDER.map(id => {
+          const s = SENSORS[id]
+          const L = LIVE[id]
+          const w = Array.from({ length: WIN }, (_, k) => L.series[(i + k) % LIVE_N])
+          const now = w[w.length - 1]
+          const ring = byId[id]
+          return (
+            <li key={id} className="min-w-0 rounded-panel border border-rule bg-card p-2.5">
+              <p className="flex items-center gap-2">
+                <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar"
+                  style={{ background: s.glow }}/>
+                <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">
+                  {s.name}</span>
+              </p>
+              <p className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="font-display text-row font-medium tabular-nums leading-none
+                  text-ink">{now.toFixed(L.dp)}</span>
+                <span className="text-fine text-ink-3">{s.unit}</span>
+              </p>
+              <LiveTrace className="mt-1.5" data={w} lo={L.lo} hi={L.hi} color={s.glow}/>
+              {ring && <p className="mt-1 text-fine text-ink-2">{direction(ring).word}</p>}
+            </li>
+          )
+        })}
+      </ul>
+      <p className="note mt-2.5 max-w-[56ch]">
+        Generated for the demo. No patch has been built or worn, so nothing on this card was
+        measured from anybody.
+      </p>
+    </Panel>
+  )
 }
 
 /* ── The week ───────────────────────────────────────────────────────────── */
 
-/* Seven rounded chips, which is the figure every reference dashboard opens
-   with and the one this screen never had. The series is the same generated
-   week the parent screen draws; the demo day's entry is replaced by the
-   reading this screen is actually showing, so the strip cannot contradict the
-   number above it. A chip is a figure and not a control: there is no second
-   day of readings to open, so none of them pretends to be tappable. */
-const TODAY_SHORT = TODAY.day.slice(0, 3)
-const WEEK = (DATA.week || []).map(d => (d.d === TODAY_SHORT ? { ...d, v: TODAY.score } : d))
-const WBAND = DATA.weekBand || BAND
+/* Inside the range, above it, below it. Height on a printed scale is what says
+   which, the figure is printed over every column and the range is a ruled zone
+   behind all seven, so the fill is the third thing carrying it, never the
+   first. Three fills from the green system: the brand green inside, warn above
+   it, the turquoise below it. */
+const dayFill = v => (v > WBAND.hi ? 'bg-warn' : v < WBAND.lo ? 'bg-beam' : 'bg-accent')
 
-/* Inside the range, above it, below it. Height on a printed scale is what
-   says which, the figure is printed over every column and the range is a
-   ruled zone behind all seven, so the colour is the third thing carrying it,
-   never the first. */
-const dayFill = v => (v > WBAND.hi ? 'bg-sun' : v < WBAND.lo ? 'bg-sky' : 'bg-mint')
-
-/* How the seven days fell against the week's own usual range. Counted from
-   the same array the columns are drawn from, so the three figures cannot drift
-   from the strip beside them. */
-const WEEK_COUNT = {
-  above: WEEK.filter(d => d.v > WBAND.hi).length,
-  inside: WEEK.filter(d => d.v >= WBAND.lo && d.v <= WBAND.hi).length,
-  below: WEEK.filter(d => d.v < WBAND.lo).length,
-}
-
-/* The figure used to be seven pills whose fill was the value as a percentage
-   of a 96px box, which is two faults at once: 43 and 52 came out nine pixels
-   apart inside a rounded-chip shape that read as the same circle twice, and
-   the caption promised a band that was a near-white fill on a white card and
-   could not be seen. Design spec 8b: a figure carries what it says it
-   carries.
- *
- * So the strip is a column chart on a printed scale. The scale is the data's
- * own extent widened to the nearest ten so a reader can read a height off the
- * axis beside it, and it is not 0 to 100: on the full scale the whole week
- * lands in a twenty-point sliver and every column is the same height again.
- * The usual range is one continuous zone across all seven columns, ruled top
- * and bottom in ink-3, which is 5.98 : 1 on card and 5.18 : 1 on its own
- * aqua-2 fill, so the zone and both its edges are visible well past the 3 : 1
- * a non-text graphic owes. Every column carries the same ink-3 edge, so a
- * column against the zone is delimited at the same ratio whatever its fill. */
+/* A column chart on a printed scale. The scale is the data's own extent
+   widened to the nearest ten so a reader can read a height off the axis beside
+   it, and it is not 0 to 100: on the full scale the whole week lands in a
+   twenty-point sliver and every column is the same height again. The usual
+   range is one continuous zone across all seven columns, ruled top and bottom
+   in ink-3, which is 5.98 : 1 on card. */
 const WSCALE = (() => {
   const vs = WEEK.map(d => d.v).concat([WBAND.lo, WBAND.hi])
   if (!vs.length) return { lo: 0, hi: 100 }
   return { lo: Math.max(0, Math.floor((Math.min(...vs) - 5) / 10) * 10),
            hi: Math.min(100, Math.ceil((Math.max(...vs) + 5) / 10) * 10) }
 })()
-/* A value as a share of the plot's height. */
 const wy = v => {
   const span = WSCALE.hi - WSCALE.lo || 1
   return ((Math.max(WSCALE.lo, Math.min(WSCALE.hi, v)) - WSCALE.lo) / span) * 100
@@ -272,32 +320,31 @@ const wy = v => {
 /* One cell. The three rows of the figure use the same cell geometry and the
    same gap, so the value above a column, the column and the day under it line
    up without a grid. */
-const CELL = 'min-w-0 flex-1 max-w-[3rem]'
+const CELL = 'min-w-0 flex-1 max-w-[2.75rem]'
 const TICKS = [WSCALE.hi, WBAND.hi, WBAND.lo, WSCALE.lo]
 
 function WeekStrip() {
   const read = WEEK.map(d => `${d.d} ${Math.round(d.v)}`).join(', ')
   return (
     <figure className="m-0">
-      {/* Three rows, one geometry. The axis gutter is w-10 with a gap-2.5
-          beside it, so the value row and the day row carry a 3.125rem left pad
-          and every cell in all three rows is the same width: a value sits over
-          its own column and a day label under it without a grid. */}
+      {/* Three rows, one geometry. The axis gutter is w-8 with a gap-2 beside
+          it, so the value row and the day row carry a 2.5rem left pad and
+          every cell in all three rows is the same width. */}
       <div>
-        <div aria-hidden className="flex items-end justify-between gap-1.5 pl-[3.125rem]">
+        <div aria-hidden className="flex items-end justify-between gap-1.5 pl-[2.5rem]">
           {WEEK.map(d => (
-            <span key={d.d} className={cn(CELL, 'text-center font-mono text-fine tabular-nums',
-              'text-ink')}>{Math.round(d.v)}</span>
+            <span key={d.d} className={cn(CELL, 'text-center text-fine tabular-nums text-ink')}>
+              {Math.round(d.v)}</span>
           ))}
         </div>
-        <div className="mt-1 flex gap-2.5">
-          <div aria-hidden className="relative h-40 w-10 shrink-0 border-r border-ruling">
+        <div className="mt-1 flex gap-2">
+          <div aria-hidden className="relative h-28 w-8 shrink-0 border-r border-ruling sm:h-32">
             {TICKS.map(v => (
-              <span key={v} className="absolute right-1.5 translate-y-1/2 font-mono text-fine
-                tabular-nums text-ink-3" style={{ bottom: `${wy(v)}%` }}>{v}</span>
+              <span key={v} className="absolute right-1 translate-y-1/2 text-fine tabular-nums
+                text-ink-3" style={{ bottom: `${wy(v)}%` }}>{v}</span>
             ))}
           </div>
-          <div role="img" className="relative h-40 min-w-0 flex-1 border-b border-ruling"
+          <div role="img" className="relative h-28 min-w-0 flex-1 border-b border-ruling sm:h-32"
             aria-label={`Seven days on a scale of ${WSCALE.lo} to ${WSCALE.hi}: ${read}. Your usual
               range for a week runs ${WBAND.lo} to ${WBAND.hi}, and ${WEEK_COUNT.above} of the seven
               days sat above it.`}>
@@ -314,7 +361,7 @@ function WeekStrip() {
             </div>
           </div>
         </div>
-        <div aria-hidden className="mt-1.5 flex items-start justify-between gap-1.5 pl-[3.125rem]">
+        <div aria-hidden className="mt-1 flex items-start justify-between gap-1.5 pl-[2.5rem]">
           {WEEK.map(d => {
             const today = d.d === TODAY_SHORT
             return (
@@ -324,10 +371,9 @@ function WeekStrip() {
           })}
         </div>
       </div>
-      <figcaption className="note mt-3 max-w-[52ch]">
-        Each day out of 100, drawn on the scale printed down the left. The ruled zone is your usual
-        range for a week, {WBAND.lo} to {WBAND.hi}. Nothing here is a streak and there is nothing to
-        keep up.
+      <figcaption className="note mt-2.5 max-w-[52ch]">
+        Each day out of 100, on the scale printed down the left. The ruled zone is your usual range
+        for a week, {WBAND.lo} to {WBAND.hi}.
       </figcaption>
     </figure>
   )
@@ -335,302 +381,220 @@ function WeekStrip() {
 
 /* A range on the 0 to 100 scale. Same grammar as RangeBar on the marketing
    pages: mist track, a darker block for the range, a solid mark for the figure
-   and a hairline for the usual day. Used twice, for the score's confidence band
-   and for each signal's own normal band, so the two read as one idea. */
+   and a hairline for the usual day. */
 function BandBar({ low, high, score, usual, color }) {
   return (
-    <div aria-hidden className="relative mt-2.5 h-6">
-      <div className="absolute inset-x-0 top-2 h-2.5 rounded-xs bg-mist"/>
-      <div className="absolute top-2 h-2.5 rounded-xs bg-ink-3/35"
+    <div aria-hidden className="relative mt-2 h-5">
+      <div className="absolute inset-x-0 top-1.5 h-2 rounded-xs bg-mist"/>
+      <div className="absolute top-1.5 h-2 rounded-xs bg-ink-3/35"
         style={{ left: `${low}%`, width: `${high - low}%` }}/>
-      {usual != null && <div className="absolute top-0 h-[26px] w-[2px] -translate-x-1/2 bg-ink"
+      {usual != null && <div className="absolute top-0 h-[20px] w-[2px] -translate-x-1/2 bg-ink"
         style={{ left: `${usual}%` }}/>}
-      <div className={cn('absolute top-0 h-[26px] w-[5px] -translate-x-1/2 rounded-bar',
+      <div className={cn('absolute top-0 h-[20px] w-[4px] -translate-x-1/2 rounded-bar',
         !color && 'bg-accent')}
         style={{ left: `${score}%`, background: color || undefined }}/>
     </div>
   )
 }
 
-/* One signal: its value out of 100, its own measured figure, its direction
-   against this person's normal, and its own trace. Opening it adds the
-   readings behind the figure, that signal's own normal band drawn on the same
-   0 to 100 scale, its day period by period, and dims the other three bands on
-   the dial. */
-/* Each signal's own hue, as the ground behind its figure. The wash and not the
-   whole card: the trace is drawn in the sensor's own colour and two of the four
-   fall under the 3 : 1 a non-text graphic owes once they sit on a tint, so the
-   line keeps its white ground and the hue arrives as a block behind the number,
-   where every value is ink and measured AA on all six washes. */
-const SIGNAL_WASH = { heart:'bg-coral-wash', sweat:'bg-sun-wash',
-                      temp:'bg-mint-wash', move:'bg-sky-wash' }
-
-function SignalCard({ ring, open, onToggle }) {
+/* The four bands, and the one that is open. This was four cards in a row,
+   which at 390 is a run of four identical boxes; it is one 56px-row list with
+   the open signal's working under it, which is the shape design spec 0e
+   section 14 asks for where a desktop grid would become a column of clones. */
+function SignalDetail({ ring }) {
   const s = SENSORS[ring.id] || ring
   const tone = s.glow || s.color
-  const d = direction(ring)
   const band = ring.band
   return (
-    <Panel className="flex h-full flex-col">
-      <button type="button" onClick={onToggle} aria-expanded={open}
-        className="flex min-h-[44px] w-full flex-col text-left">
-        <span className="flex items-center gap-2.5">
-          <span aria-hidden className="h-5 w-[3px] shrink-0 rounded-bar" style={{ background: tone }}/>
-          <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">{s.name}</span>
-          <span className={cn('shrink-0 rounded-chip px-2.5 py-1 font-mono text-num font-medium',
-            'tabular-nums leading-none text-ink', SIGNAL_WASH[ring.id] || 'bg-mist')}>
-            {ring.value}</span>
-          <Chevron aria-hidden className={cn('size-4 shrink-0 text-ink-3 transition-transform duration-200',
-            open && 'rotate-90')}/>
-        </span>
-        <SensorTrace className="mt-2 h-12" data={ring.series} color={tone}/>
-        <span className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <span className="font-mono text-tick tabular-nums text-ink">{ring.big} {s.unit}</span>
-          <span className={cn('text-fine', d.tone)}>{d.word}</span>
-        </span>
-      </button>
-      {open && (
-        <div className="mt-3 border-t border-rule pt-3">
-          <dl className="m-0 grid grid-cols-1 gap-y-1.5">
-            {ring.rows?.map(row => (
-              <div key={row.label} className="flex items-baseline justify-between gap-3">
-                <dt className="text-fine text-ink-2">{row.label}</dt>
-                <dd className="m-0 shrink-0 font-mono text-fine tabular-nums text-ink">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-          {band && (
-            <div className="mt-4" role="img"
-              aria-label={`${s.name} is ${ring.value} out of 100. Your own normal band runs
-                ${band.lo} to ${band.hi}.`}>
-              <p className="tick">Your normal band, {band.lo} to {band.hi}</p>
-              <BandBar low={band.lo} high={band.hi} score={ring.value} color={tone}/>
-            </div>
-          )}
-          <Bars className="mt-4" data={ring.bars} color={tone} unit={ring.barUnit}/>
-          <p className="mt-3 max-w-[48ch] text-fine text-ink-2">{ring.note || s.about}</p>
+    <div className="mt-3 rounded-panel border border-rule bg-card p-3">
+      <p className="flex items-baseline justify-between gap-3">
+        <span className="font-display text-ui font-medium text-ink">{s.name}</span>
+        <span className="shrink-0 text-fine tabular-nums text-ink-2">{ring.big} {s.unit}</span>
+      </p>
+      <dl className="m-0 mt-2 grid grid-cols-1 gap-y-1">
+        {ring.rows?.map(row => (
+          <div key={row.label} className="flex items-baseline justify-between gap-3">
+            <dt className="text-fine text-ink-2">{row.label}</dt>
+            <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {band && (
+        <div className="mt-3" role="img"
+          aria-label={`${s.name} is ${ring.value} out of 100. Your own normal band runs
+            ${band.lo} to ${band.hi}.`}>
+          <p className="tick">Your normal band, {band.lo} to {band.hi}</p>
+          <BandBar low={band.lo} high={band.hi} score={ring.value} color={tone}/>
         </div>
       )}
-    </Panel>
+      <Bars className="mt-3" data={ring.bars} color={tone} unit={ring.barUnit}/>
+      <p className="mt-2.5 max-w-[48ch] text-fine text-ink-2">{ring.note || s.about}</p>
+    </div>
   )
 }
 
-/* The two terms the engine actually used, drawn the way the check-in result
-   draws its six answers, so a reader who has taken a reading recognises the
-   figure. Direction and size only: the heart inputs behind them are a separate
-   demo series from the patch fixtures the rest of the screen prints, and
-   showing both sets of numbers on one screen would contradict. */
-function MovedCard() {
-  const items = READ.contrib.map(c => ({
-    label: c.label, x: Math.max(-1, Math.min(1, c.raw)),
-  }))
-  return (
-    <Panel tone="sun" className="h-full">
-      <PanelHead title="What moved the number" meta={`${items.length} terms used`}/>
-      <p className="mt-3 max-w-[72ch] text-fine text-ink-2">How far each term pushed
-        today&rsquo;s number, and which way. Right of the centre line raised it, left of it lowered
-        it.</p>
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-6">
-        <div className="min-w-0">
-          <Diverge items={items}/>
-        </div>
-        <div className="mt-3 border-t border-rule pt-3 lg:mt-3 lg:border-l lg:border-t-0 lg:pl-6
-          lg:pt-0">
-          <p className="max-w-[40ch] text-fine text-ink-2">Voice adds four more terms, from
-            pitch and loudness. A patch has no microphone, so they are missing here, which is part
-            of why the likely range is as wide as it is.</p>
-          <p className="mt-2.5 max-w-[40ch] text-fine text-ink-2">The two terms here are the ones the
-            model was fitted on. The figure beside each is in the model&rsquo;s own units, before the
-            0 to 100 scale.</p>
-        </div>
-      </div>
-    </Panel>
-  )
-}
+/* ── Today, in the demo ─────────────────────────────────────────────────── */
 
-/* `picked` lives here, not in a card: the dial, its key and the four cards
-   share one selection, so opening a signal dims the other three bands.
-
-   Tone per module, per design spec section 0b: a dashboard whose tiles are all
-   one tint reads as a spreadsheet, so the hero, the working, the week, the
-   self-report, the breakdown and the consent card each own a hue. The dial
-   keeps the plain card ground section 7 requires, and so does the day chart,
-   because both draw their own colour and a ground under them would compete. */
 function TodayDemo({ go, openTab }) {
   const rings = studentRings()
   const [picked, setPicked] = React.useState(null)
-  const pick = id => setPicked(p => (p === id ? null : id))
   const tier = bandOf(TODAY.score)
   const top = topSignal(rings)
   const open = route => (openTab ? openTab(route) : go(route))
   const hero = heroFor({ tier, rings, day: DATA.day || [], band: BAND, crossed: CROSSED })
+  const openRing = rings.find(r => r.id === picked)
+  const moved = READ.contrib.map(c => ({
+    label: c.label, x: Math.max(-1, Math.min(1, c.raw)),
+  }))
 
   return (
-    <div className="grid grid-cols-12 gap-3 lg:gap-4">
-      {/* The sentence, then the number. Never the other way round, and never
-          the number inside the sentence: design spec section 7c. The four
-          figures beside it are the frame the number is read in, and the first
-          of them names which of the screen's two ranges this tile is about:
-          the day's, 36 to 55. The week's own range is printed once, on the
-          week card, and labelled there as the week's. */}
-      <ScrollRow index={0} className="col-span-12">
-        <Panel tone="lilac">
-          <Greeting chips={[TODAY.day, `Read at ${TODAY.clock}`, 'Patch and phone']}/>
-          <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-6">
-            <HeroLine lead={hero.lead} under={hero.note}
-              figLabel={`This reading, taken at ${TODAY.clock}`} figure={TODAY.score}
-              unit="out of 100" note={figureWords(TODAY.score, USUAL)}>
-              <span className="flex items-center gap-2">
-                <span aria-hidden
-                  className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>
-                <span className="font-display text-ui font-medium text-ink">{cap(tier.word)}</span>
-              </span>
-            </HeroLine>
-            <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-rule pt-3
-              lg:mt-0 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              <Fact label="Usual range for a day" value={`${BAND.lo} to ${BAND.hi}`}
-                sub="out of 100, from your own last two weeks"/>
-              <Fact label="Taken" value={TODAY.clock} sub={TODAY.day}/>
-              <Fact label="Signals reading" value="4 of 4"
-                sub="heart, sweat, temperature, movement"/>
-              <Fact label="Compared with" value="Your own normal"
-                sub="never another student, and never a population average"/>
-            </div>
-          </div>
-        </Panel>
-      </ScrollRow>
+    <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-3 lg:gap-4">
+      {/* ONE CENTRED CARD. The sentence, then the dial under it, then the band
+          word and the comparison with a usual day. Nothing else above the
+          fold: design spec 0d section 6. */}
+      <Panel className="mx-auto w-full max-w-[34rem]">
+        <Greeting items={[TODAY.day, `Read at ${TODAY.clock}`]}/>
+        <div className="mt-3 flex flex-col items-center text-center">
+          <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
+            tracking-tight text-ink sm:text-head">{hero.lead}</p>
+          <p className="mt-1.5 max-w-[42ch] text-fine text-ink-2">{hero.note}</p>
+          {/* weather off: the clouds are a gradient, and a gradient is on the
+              AI-tell list everywhere but a photograph. */}
+          <RainbowDial className="mt-3" score={TODAY.score} usual={USUAL} rings={rings}
+            size={296} weather={false} picked={picked} onPick={id => setPicked(p => (p === id ? null : id))}/>
+          <p className="mt-2 flex items-center gap-2 font-display text-ui font-medium text-ink">
+            <span aria-hidden className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>
+            {cap(tier.word)}
+          </p>
+          <p className="mt-1 max-w-[42ch] text-fine text-ink-2">{figureWords(TODAY.score, USUAL)}</p>
+        </div>
+      </Panel>
 
-      <ScrollRow index={1} className="col-span-12 lg:col-span-5">
-        <Panel className="flex h-full flex-col">
-          <PanelHead title={`Your ${SCORE} today`} meta="out of 100"/>
-          <div className="mt-1 flex flex-col items-center">
-            <RainbowDial score={TODAY.score} usual={USUAL} rings={rings} size={360}
-              picked={picked} onPick={pick}/>
-            <p className="mt-3 flex items-center gap-2.5 font-display text-ui font-medium text-ink">
-              <span aria-hidden
-                className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>
-              {cap(tier.word)}
-            </p>
-          </div>
-          {/* The arch is aria-hidden and its bands are half a tap target wide,
-              so the key under it is what a keyboard and a screen reader get,
-              and it doubles as the legend the dial has never had. */}
-          <p className="mark mt-4">Each band, out of 100</p>
-          <RainbowKey rings={rings} picked={picked} onPick={setPicked} className="mt-1"/>
-          <p className="mt-3 max-w-[44ch] text-fine text-ink-2">Each band is one signal&rsquo;s distance
-            from your own last two weeks. The middle number blends all four, so the bands do not add
-            up to it.</p>
-        </Panel>
-      </ScrollRow>
+      {/* ONE DISCLOSURE. Everything else is in here, collapsed. */}
+      <SeeDetails label="See details"
+        sub="Live channels, the four bands, the week, and what moved the reading">
+        <div className="flex flex-col gap-3 lg:gap-4">
+          <LiveSignals rings={rings}/>
 
-      {/* The depth under the one number. Every figure in here is returned by
-          scoreCapture for the reading, not written into the copy. */}
-      <ScrollRow index={2} className="col-span-12 flex flex-col gap-3 lg:col-span-7 lg:gap-4">
-        <Panel tone="sky">
-          <PanelHead title="Behind this reading" meta="from the model"/>
-          <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3">
-            <div className="col-span-2 sm:col-span-3" role="img"
-              aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out of 100.
-                A usual day is ${USUAL}.`}>
-              <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
-              <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
-              <p className="mt-1.5 text-fine text-ink-2">Today is {TODAY.score}, give or take
-                {' '}{READ.half}. Thick mark is today, hairline is a usual day.</p>
-            </div>
-            <Stat label="Your normal" value={READ.baselineDays} unit="days"
-              sub="of your own readings behind the comparison"/>
-            <Stat label="Signal quality" value={pct(READ.quality)}
-              sub="of the pulse trace was clean enough to use"/>
-            <Stat label="Movement" value={DEMO_MOTION.peak.toFixed(2)} unit="g"
-              sub={`under the ${MOVE_LIMIT_G} g line, so the rise is counted rather than put down to exercise`}/>
-            <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
-              sub={`a reading taken while moving is scored by the plain formula instead`}/>
-            <Stat label="Moved most" value={nameOf(top)}
-              sub={`${over(top)} above the top of its own normal band`}/>
-            <Stat label="Voice" value={READ.missing.includes('voice') ? 'Not used' : 'Used'}
-              sub="a patch has no microphone, which is part of why the range is wide"/>
-          </div>
-        </Panel>
-        <FeltCard go={open} className="flex-1"/>
-      </ScrollRow>
+          <Panel>
+            <PanelHead title="Each Band, Out of 100" meta="tap a signal"/>
+            <p className="mt-2 max-w-[56ch] text-fine text-ink-2">Each band on the dial is one
+              signal&rsquo;s distance from your own last two weeks. The middle number blends all
+              four, so the bands do not add up to it.</p>
+            <RainbowKey rings={rings} picked={picked} onPick={setPicked} className="mt-2.5"/>
+            {openRing && <SignalDetail ring={openRing}/>}
+          </Panel>
 
-      <ScrollRow index={3} className="col-span-12">
-        <Panel tone="mint">
-          <PanelHead title="Your last seven days" meta="out of 100"/>
-          <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-6">
-            <WeekStrip/>
-            <div className="mt-4 border-t border-rule pt-3 lg:mt-0 lg:border-l lg:border-t-0
-              lg:pl-6 lg:pt-0">
-            <p className="tick">Against {WBAND.lo} to {WBAND.hi}, your usual range for a week</p>
-            <dl className="m-0 mt-1">
-              {[['Above it', WEEK_COUNT.above], ['Inside it', WEEK_COUNT.inside],
-                ['Below it', WEEK_COUNT.below]].map(([label, n]) => (
-                <div key={label} className="flex items-baseline justify-between gap-3
-                  border-b border-rule py-2.5 last:border-b-0">
-                  <dt className="min-w-0 text-meta text-ink-2">{label}</dt>
-                  <dd className="m-0 flex shrink-0 items-baseline gap-1.5 font-mono text-head
-                    font-medium tabular-nums leading-none text-ink">
-                    {n}<span className="font-body text-fine font-normal text-ink-3">
-                      {n === 1 ? 'day' : 'days'}</span></dd>
-                </div>
-              ))}
-            </dl>
-            </div>
-          </div>
-        </Panel>
-      </ScrollRow>
-
-      <div className="col-span-12 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-        {rings.map((r, i) => (
-          <ScrollRow key={r.id} index={5 + i}>
-            <SignalCard ring={r} open={picked === r.id} onToggle={() => pick(r.id)}/>
-          </ScrollRow>
-        ))}
-      </div>
-
-      <ScrollRow index={9} className="col-span-12">
-        <MovedCard/>
-      </ScrollRow>
-
-      <ScrollRow index={10} className="col-span-12 lg:col-span-7">
-        <Panel className="h-full">
-          <PanelHead title={`Your ${SCORE} through the day`} meta="07:00 to 16:00"/>
-          <p className="mt-2 text-fine text-ink-2">One point every ten minutes, on the same 0 to 100
-            scale as the dial. The shaded band is your usual range for a day,
-            {' '}{BAND.lo} to {BAND.hi}.</p>
-          <DayChart data={DATA.day} band={DATA.band}/>
-          <dl className="m-0 mt-3 grid grid-cols-1 gap-y-1.5 border-t border-rule pt-3 sm:grid-cols-2 sm:gap-x-6">
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-fine text-ink-2">Today&rsquo;s reading was taken at</dt>
-              <dd className="m-0 shrink-0 font-mono text-fine tabular-nums text-ink">{TODAY.clock}</dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-fine text-ink-2">Your normal range</dt>
-              <dd className="m-0 shrink-0 font-mono text-fine tabular-nums text-ink">
-                {BAND.lo} to {BAND.hi}</dd>
-            </div>
-            {CROSSED && (
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-fine text-ink-2">Above that range from</dt>
-                <dd className="m-0 shrink-0 font-mono text-fine tabular-nums text-ink">
-                  {clock12(CROSSED)}</dd>
+          <Panel tone="aqua">
+            <PanelHead title="Last Seven Days" meta="out of 100"/>
+            <div className="mt-3 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-5">
+              <WeekStrip/>
+              <div className="mt-3 border-t border-rule pt-2.5 lg:mt-0 lg:border-l lg:border-t-0
+                lg:pl-5 lg:pt-0">
+                <p className="tick">Against {WBAND.lo} to {WBAND.hi}, your usual range for a week</p>
+                <dl className="m-0 mt-1">
+                  {[['Above it', WEEK_COUNT.above], ['Inside it', WEEK_COUNT.inside],
+                    ['Below it', WEEK_COUNT.below]].map(([label, n]) => (
+                    <div key={label} className="flex items-baseline justify-between gap-3
+                      border-b border-rule py-2 last:border-b-0">
+                      <dt className="min-w-0 text-fine text-ink-2">{label}</dt>
+                      <dd className="m-0 flex shrink-0 items-baseline gap-1.5 font-display
+                        text-row font-medium tabular-nums leading-none text-ink">
+                        {n}<span className="font-body text-fine font-normal text-ink-3">
+                          {n === 1 ? 'day' : 'days'}</span></dd>
+                    </div>
+                  ))}
+                </dl>
+                <button type="button" onClick={() => open('calendar')}
+                  className="group mt-2.5 flex min-h-[44px] w-full items-center gap-3 border-t
+                    border-rule pt-2.5 text-left">
+                  <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
+                    transition-colors duration-150 groupHoverOnly:text-accent-ink">
+                    Open the calendar</span>
+                  <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+                </button>
               </div>
-            )}
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-fine text-ink-2">Highest point of the day</dt>
-              <dd className="m-0 shrink-0 font-mono text-fine tabular-nums text-ink">{PEAK.v} at {clock12(PEAK.t)}</dd>
             </div>
-          </dl>
-        </Panel>
-      </ScrollRow>
+          </Panel>
 
-      <ScrollRow index={11} className="col-span-12 lg:col-span-5">
+          {/* The working behind the one number, and the terms that moved it,
+              in one card rather than two: every figure in here is returned by
+              scoreCapture for the reading, not written into the copy. */}
+          <Panel>
+            <PanelHead title="What Moved the Reading" meta={`${moved.length} terms used`}/>
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+              <div className="col-span-2 sm:col-span-3" role="img"
+                aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out
+                  of 100. A usual day is ${USUAL}.`}>
+                <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
+                <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
+                <p className="mt-1 text-fine text-ink-2">Today is {TODAY.score}, give or take
+                  {' '}{READ.half}. Thick mark is today, hairline is a usual day.</p>
+              </div>
+              <Stat label="Your normal" value={READ.baselineDays} unit="days"
+                sub="of your own readings behind the comparison"/>
+              <Stat label="Signal quality" value={pct(READ.quality)}
+                sub="of the pulse trace was clean enough to use"/>
+              <Stat label="Movement" value={DEMO_MOTION.peak.toFixed(2)} unit="g"
+                sub={`under the ${MOVE_LIMIT_G} g line, so the rise is counted rather than put down to exercise`}/>
+              <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
+                sub="a reading taken while moving is scored by the plain formula instead"/>
+              <Stat label="Moved most" value={nameOf(top)}
+                sub={`${over(top)} above the top of its own normal band`}/>
+              <Stat label="Voice" value={READ.missing.includes('voice') ? 'Not used' : 'Used'}
+                sub="a patch has no microphone, which is part of why the range is wide"/>
+            </div>
+            <div className="mt-3 border-t border-rule pt-2.5">
+              <p className="max-w-[64ch] text-fine text-ink-2">How far each term pushed
+                today&rsquo;s number, and which way. Right of the centre line raised it, left of it
+                lowered it.</p>
+              <div className="mt-2.5"><Diverge items={moved}/></div>
+              <p className="mt-2 max-w-[56ch] text-fine text-ink-2">Voice adds four more terms,
+                from pitch and loudness. A patch has no microphone, so they are missing here, which
+                is part of why the likely range is as wide as it is.</p>
+            </div>
+          </Panel>
+
+          <Panel tone="aqua">
+            <PanelHead title={`${SCORE} Through the Day`} meta="07:00 to 16:00"/>
+            <p className="mt-2 max-w-[56ch] text-fine text-ink-2">One point every ten minutes, on
+              the same 0 to 100 scale as the dial. The shaded band is your usual range for a day,
+              {' '}{BAND.lo} to {BAND.hi}.</p>
+            <DayChart data={DATA.day} band={DATA.band}/>
+            <dl className="m-0 mt-2.5 grid grid-cols-1 gap-y-1 border-t border-rule pt-2.5
+              sm:grid-cols-2 sm:gap-x-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-fine text-ink-2">Today&rsquo;s reading was taken at</dt>
+                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">{TODAY.clock}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-fine text-ink-2">Your normal range</dt>
+                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                  {BAND.lo} to {BAND.hi}</dd>
+              </div>
+              {CROSSED && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-fine text-ink-2">Above that range from</dt>
+                  <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                    {clock12(CROSSED)}</dd>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-fine text-ink-2">Highest point of the day</dt>
+                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                  {PEAK.v} at {clock12(PEAK.t)}</dd>
+              </div>
+            </dl>
+          </Panel>
+        </div>
+      </SeeDetails>
+
+      <ActionRow go={open}/>
+
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+        <FeltCard go={open} className="h-full"/>
         <SharedCard go={go} className="h-full"/>
-      </ScrollRow>
-
-      <ScrollRow index={12} className="col-span-12">
-        <ActionRow go={open}/>
-      </ScrollRow>
+      </div>
     </div>
   )
 }
@@ -660,38 +624,36 @@ function Rows({ items }) {
   return (
     <dl className="m-0 list-none p-0">
       {items.map(([what, why]) => (
-        <div key={what} className="border-b border-rule py-2.5 last:border-b-0 last:pb-0">
+        <div key={what} className="border-b border-rule py-2 last:border-b-0 last:pb-0">
           <dt className="font-display text-ui font-medium text-ink">{what}</dt>
-          <dd className="m-0 mt-1 max-w-[56ch] text-fine text-ink-2">{why}</dd>
+          <dd className="m-0 mt-0.5 max-w-[56ch] text-fine text-ink-2">{why}</dd>
         </div>
       ))}
     </dl>
   )
 }
 
-/* The chooser is three short cards and then the fold, which is the blank space
-   this screen was called out for. These two modules say what the three cards
-   cannot: what the engine hands back whichever route is taken, and what the
-   capture drops. They sit under the two reading screens as well, where they
-   are below the fold and out of the way of somebody holding the phone. */
+/* The chooser is three short cards and then the fold. These two modules say
+   what the three cards cannot: what the engine hands back whichever route is
+   taken, and what the capture drops. They sit behind one disclosure, below the
+   fold and out of the way of somebody holding the phone. */
 function CheckBody({ go }) {
   return (
     <>
       <CheckInBody go={go}/>
-      <div className="mt-10 grid grid-cols-12 gap-3 lg:gap-4">
-        <ScrollRow index={0} className="col-span-12 lg:col-span-7">
+      <SeeDetails className="mt-8" label="See details"
+        sub="What a reading gives back, and what never leaves the phone">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <Panel className="h-full">
-            <PanelHead title="What a reading gives you" meta="any route"/>
-            <div className="mt-2"><Rows items={GIVES}/></div>
+            <PanelHead title="What a Reading Gives Back" meta="any route"/>
+            <div className="mt-1.5"><Rows items={GIVES}/></div>
           </Panel>
-        </ScrollRow>
-        <ScrollRow index={1} className="col-span-12 lg:col-span-5">
           <Panel className="h-full">
-            <PanelHead title="What never leaves this phone" meta="all routes"/>
-            <div className="mt-2"><Rows items={KEPT_HERE}/></div>
+            <PanelHead title="What Never Leaves the Phone" meta="all routes"/>
+            <div className="mt-1.5"><Rows items={KEPT_HERE}/></div>
           </Panel>
-        </ScrollRow>
-      </div>
+        </div>
+      </SeeDetails>
     </>
   )
 }
@@ -711,7 +673,7 @@ function StudentToday({ go, openTab }) {
 const PANES = { today: StudentToday, check: CheckBody, shared: SharingControls }
 
 const COPY = {
-  today: { sub: 'Your reading for today, what moved it, and what leaves your phone.',
+  today: { sub: 'Today in one sentence, with everything behind See details.',
            note: 'Every figure on this screen is generated. Take a reading scores your own answers for real.',
            realNote: 'No patch is paired, so today has no reading yet.' },
   check: { sub: 'About a minute, whichever way you pick. All three land on the same 0 to 100 scale.' },

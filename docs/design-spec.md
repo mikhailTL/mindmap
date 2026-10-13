@@ -253,3 +253,290 @@ Measurement is necessary and not sufficient. Every change to a surface is
 looked at, as a rendered image, at 390 and at 1280, before it is called done.
 `$HOME/pw/SEE.md` says how. An agent that reports "verified by geometry" and
 has not looked has not finished.
+
+---
+
+## 0c. The correction of 13 October: soothing, in the palette we already had
+
+Section 0b read the twelve references as a licence to saturate. The owner's
+verdict on the result, in his words: the colour scheme should not have been
+changed, things are "too deep now", the landing page "looks very messy and
+looked better before", the scaling "isnt right", and the design had started to
+copy the rival's. The direction that supersedes 0b:
+
+> keep the previous color scheme and make it more soothing while taking inspo
+> from my references
+
+The references supply *softness, air and variety of tile*. They do not supply a
+new palette. The palette is the green one in `tailwind.config.js` and it stays.
+
+### The five rules this adds
+
+**1. No saturated or dark ground on a whole section.** `bg-accent`, `bg-ink`,
+`bg-ink-2` and `bg-accent-ink` are for marks, buttons, bars and strokes. A
+band's ground comes from the near-whites: `paper`, `card`, `aqua`, `aqua-2`,
+`accent-wash`, `beam-wash`, and the six hue `-wash` steps. Variety between
+bands comes from which near-white, not from how dark.
+
+The problem band is the specific casualty. It was `bg-ink` with `PANEL_INK`
+cards and `text-ruling` small print. It becomes: section `bg-paper`, cards
+`PANEL`, headings `text-ink`, body `text-ink-2`, small print `text-ink-3`.
+
+**2. The six hues keep their jobs but only at `-wash`.** They label the four
+signals, the three routes and the three audiences. `DEFAULT` stays a graphic
+colour on charts, `ink` stays the text colour. Neither fills a band.
+
+**3. No capsule pill as an eyebrow or a label.** A rounded-full enclosure around
+a line of letterspaced type above a headline is the most recognisable mark of a
+generated landing page, and the owner named it as one. An eyebrow is a line of
+type: `font-body text-ui font-semibold text-accent-ink`. `rounded-chip` survives
+only where the thing is genuinely a chip a reader acts on or reads as one of a
+set -- a filter, a tab, a signal in a row of four -- and `rounded-field` is
+preferred even there when the set is static.
+
+**4. No monospace numerals.** `font-mono` now resolves to Chivo, the body face;
+`tabular-nums` is what lines figures up and it still does. A typewriter face on
+a display number reads as a generated page. `font-code` is the real monospace
+and is only for file paths and literal code.
+
+**5. A hero is not a collage.** One ground, one frame, and at most two objects
+standing in front of it, each entirely inside its own column. Nothing bleeds off
+the viewport, nothing is clipped by the band, no word sits over a face, and the
+band's height is its content's and not the viewport's -- forcing `100svh` is
+what crushed the left column and cut the phone in half.
+
+### What this does not undo
+
+The sentence still leads the app screens and still describes the body (7c). The
+photographs stay, paired with what they are about. The density, the three-click
+path and the sourced statistics are unchanged. This is a correction of weight
+and of ornament, not of structure.
+
+---
+
+## 0d. The 13 October batch, verbatim, and what each one binds
+
+Ten directives arrived together. They are recorded here as the contract; every
+worker reads this section and is judged against it.
+
+### 1. Colour: green, white, turquoise. Nothing else.
+
+> this color isnt allowed, not part of OG color scheme ... The purple as well,
+> color scheme needs to be consistent.
+
+The cream (`sun-wash`, roughly #f5ecd7) and the purple (`lilac`) are **out**.
+So is any other hue that is not in the original green system. The usable
+grounds are: `paper`, `card`, `aqua`, `aqua-2`, `accent-wash`, `beam-wash`.
+The usable inks: `ink`, `ink-2`, `ink-3`, `accent`, `accent-ink`, `beam-ink`.
+`warn` and `crit` keep their reserved meanings (out of range; critical) and are
+the only non-green colours allowed anywhere, used for those meanings only.
+
+`coral`, `lilac`, `sun`, `mint`, `sky` and `blush` are retired. Where a set of
+things needed telling apart by colour, tell them apart by **label, order, icon
+or ground step** (`paper` / `aqua` / `aqua-2` / `card`) instead.
+
+### 2. The capsule label is banned, in every form.
+
+> the for students in the circle is prime example of vibe coded slop, needs
+> severe restyling across the whole site where this font and deisgn appears.
+
+The pattern is: a rounded-full capsule, a monospace or letterspaced face,
+bold, in a hue. It appears as audience tags, as eyebrows, as status pills and
+as "n min" badges. **Every one of them goes.** Replacements, by job:
+
+- an eyebrow above a heading: a line of type, `font-body text-ui font-semibold
+  text-accent-ink`, no enclosure
+- a category tag on a card: the word, `font-body text-fine font-semibold
+  text-ink-3`, above the title, with a hairline under it if it needs separating
+- a status or duration: plain type beside what it describes, never a filled pill
+- a thing the reader clicks or toggles: `rounded-field`, body face, normal case
+
+`rounded-chip` survives only on the round score dial and on genuinely circular
+marks. No `font-mono` on any label, ever.
+
+### 3. Headings are plain, professional noun phrases.
+
+> titles like this arent allowed, should be replaced by "Fully Wireless, 2
+> minutes of setup" Stop with the cryptic and edgy titles and always exclude
+> words "it, thing, that, etc" and similar words bc sounds unprofessional
+
+Rules, applied to every heading on the site:
+
+- **No pronouns or empty nouns**: it, its, this, that, thing, anything,
+  nothing, stuff, something, everything.
+- **Name the subject.** "Nothing is plugged into anything." becomes "Fully
+  Wireless, 2 Minutes of Setup". "Who It Is For" becomes "Audiences".
+- **No epigrams, no reversals, no one-word drama.** A heading says what the
+  section contains, in Title Case, and reads the same to a judge as to a parent.
+- Keep them short: five words is plenty, eight is the ceiling.
+
+### 4. Every photograph is framed for its own subject.
+
+> many of the stock images are cutoff and hinder the design significantly, so
+> make sure each frame is adjusted and optmized for the contained images
+
+Faces cut in half, heads cropped at the eyebrow and bodies sliced down the
+middle are the most visible defect on the site. Each photograph gets a focal
+point recorded once, next to its dimensions, and every frame that uses it
+honours that focal point and gives it an aspect ratio its subject survives.
+A frame shorter than 170px is not allowed to hold a face.
+
+### 5. Opening the app lands on a chooser, not on a demo.
+
+> When the user or judge hits "open the app" it shouldnt take them to the demo
+> ... it should give options on the page that say like "take a reading" and 2
+> or 3 more options for the toolkit and features of the app ... the demo toggle
+> should be default set to real so judge can try out ... this applies to the
+> parent and med professional interfaces as will
+
+- The demo toggle **defaults to real** in every audience.
+- Opening any audience lands on a short start screen: what the audience can do
+  right now, as three or four actions. For the student: Take a reading, Open
+  the Toolkit, Ask MindMap AI, Try the worked day. Parent and Medical
+  Professional get the equivalents for their own features.
+- With no readings yet, the screen offers the actions. It never just says there
+  is nothing to show.
+- Connecting a patch is one of the offered actions, not a wall of instructions.
+
+### 6. The dashboard opens small and expands on request.
+
+> things are too big like the text and boxes themselves too big. The user
+> should be able to open the app and see in center the rainbow readings with
+> sentance above it within a card, not the rainbow to the side. Then ... a
+> clickable dropdown that says, see details, and when clicked expands to show
+> all the readings, charts, and graphs in real time.
+
+- The sentence and the dial are **one centred card**, the sentence above the
+  dial. Nothing else above the fold.
+- Everything else is behind one **See details** disclosure, collapsed by
+  default, holding the readings, the charts and the per-signal traces.
+- Type and box sizes come down a step throughout the app: the app is a phone
+  interface, not a poster.
+- **Weekly and monthly view on a calendar**, with streaks over a user-set
+  target score, and percentages for how often the reader stayed in the target
+  range and how often they ran above or below it.
+- In the demo, the charts under the dial are **live and moving**, as if the
+  patch were streaming, rather than a still.
+
+### 7. The Toolkit: smaller, routed, and genuinely capable.
+
+> the toolkit is too big of boxes, and i dont like how the activities open
+> within the same page like low effort instead of rerouting ... should
+> integrate more advanced things such as yolo model image recognition ...
+> Remove the privacy box at bottom.
+
+- Cards come down in size; the blank space goes.
+- **Each activity is its own route**, not an in-page accordion.
+- Activities get real capability behind a simple surface. Anything that claims
+  a technique must actually run it in the page, or not claim it.
+- The privacy panel at the foot of the Toolkit is removed.
+
+### 8. MindMap AI replaces Notes, on all three audiences.
+
+The owner's decision, taken on 13 October: **a real model behind a serverless
+function, with the owner supplying the key.** It is never shipped labelled "AI"
+while it is a script. Never diagnoses. One overarching adolescent mental health
+framework, with three adaptations: the teen, the parent, the medical
+professional. Explained on the How it works page.
+
+### 9. Get help is a directory, not an essay.
+
+> less descriptions and more actual info such as the numbers or how to contace,
+> less space taken up overall. Have a sound icon at the top of the popup to
+> make it list options outloud and have translation options for it as well.
+
+Name, number, how to reach it, one line at most. A speaker control at the top
+reads the options aloud (Web Speech API, already in the browser). A language
+control switches the list.
+
+### 10. The survey is replaced.
+
+The owner's decision, taken on 13 October: **drop the System Usability Scale**
+and ask questions that produce quotable credibility instead. "Tell me what to
+fix" is removed. Demographics (age group, role, education) are added. No item
+is the negative mirror of another. Every claim about a benchmark of 68 comes
+off the site with the instrument.
+
+### 11. The landing page's two card rows must read as two sections.
+
+"Three Ways to Start" and the audiences row currently read as one set of six.
+They need a visible break: a different ground, a rule, or their own band.
+
+---
+
+## 0e. The second 13 October batch
+
+### 12. The landing page goes back toward what it was
+
+> Ik i said to put things in cards and stuff, but you really overdid it,
+> especially on the main landing page ... when everyhing is carded and in
+> boxes, it makes the whole screen look like one section ... too many cards
+> now, too many ai signature elements, and now too many words, landing page
+> needs to be closer to befroe than now but with more glassmorphism and stock
+> images
+
+Spec 2 ("containers always") is **overruled on the landing page**. A container
+is for a thing that is genuinely a unit: a card a reader clicks, a figure with
+its caption, a panel with a border that means something. Running copy, section
+headings, lists and figures sit on the band. When every element is boxed, the
+boxes stop separating anything and the page reads as one grey slab.
+
+The landing page target: fewer bands, fewer boxes, more photograph, far fewer
+words. If a sentence is not carrying a fact a judge needs, delete it.
+
+### 13. Glassmorphism is allowed, by name, over photographs only
+
+The owner asked for it directly. This is the one exception to the AI-tell list:
+a translucent blurred panel is permitted **where it sits over a photograph**,
+because there it is doing a real job (keeping type legible over an image) and
+not imitating depth that is not there. It is not permitted on a flat ground,
+where it is pure ornament. Everything else on the AI-tell list stands.
+
+### 14. Mobile is the primary surface, and the bar is Apple Fitness and Oura
+
+> Optmize this entire experience for mobile UI so that its UI looks even better
+> on phone and rivals the apple fitness app and Oura, there shouldnt be any
+> cutting of elements, misplacements, or extensivley long scrolling thru
+> similar cards or text on the phone
+
+At 390px: nothing clipped, nothing overflowing, no horizontal scroll, no run of
+similar cards longer than three before something changes, and no band that
+takes more than about one and a half screens. Where a desktop layout would
+become a long column of identical cards on a phone, it becomes a horizontal
+rail, a disclosure, or a shorter list.
+
+### 15. The onboarding plays on every load, and leaves the nav
+
+> guided tour shouldnt be a thing on the taskbar. I still dont see the
+> onboarding everytime i refresh
+
+Remove **Guided tour** from the site navigation. The walkthrough plays on every
+page load, with a visible skip; no storage suppresses it. The tour remains
+reachable from the entry chooser's "Other" route.
+
+### 16. The clinician console is for a person in a hurry
+
+> The medical professional dashboard is too complex, like the words it uses,
+> and the jumble of data presented isnt clear and too overwhelming ... like
+> "Manage stress across the whole school" instead of a crisis protocol ... Also
+> tooooo much text on this one. Mindmap AI needs to be added to this as well.
+
+Plain words, a step-by-step shape, one thing per screenful, and far less prose.
+Headings name an outcome ("Manage Stress Across the School"), not a protocol.
+
+### 17. Parent and student dashboards share one shape
+
+Score and sentence first, in one centred card. Everything else behind a
+**See details** disclosure. Smaller type, smaller boxes.
+
+### 18. Route ids, fixed, so no two workers invent different ones
+
+```
+site  patch  pairing  without-patch  methods  privacy  monitor  survey  responses
+students  parents  pro                      (the three audience explainer pages)
+app  app-student  app-parent  app-pro        (the product)
+reading  calendar  toolkit  ai  help  shared  app-notify
+toolkit-breathing  toolkit-ground  toolkit-reframe  toolkit-scan  toolkit-move
+```
+`src/views/App.jsx` owns the route table. A worker needing a route it does not
+own names it in its report rather than adding it.

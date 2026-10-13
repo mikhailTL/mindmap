@@ -8,6 +8,7 @@ import { IntroSky } from '../charts/intro-sky'
 import { PHOTOS } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
+import { getMode, setMode } from '../lib/mode'
 
 /* Every plate is card at 85%: that keeps ink-3 at 4.74 : 1 over the worst band
  * the arch behind it can produce, and still lets the arch read through.
@@ -16,44 +17,38 @@ import { studentRings } from '../lib/readings'
  * on top, so reduced motion and an interrupted beat need no second artwork.
  */
 
-/* Skipping is a decision about this visit, not a permanent one: the walkthrough
-   is the site's user manual and it is meant to play on every load, with a skip
-   always visible. sessionStorage, so a refresh in the same tab does not replay
-   it on top of somebody who already said no, and a new visit starts clean.
+/* Spec 0e, section 15: "The walkthrough plays on every page load, with a
+   visible skip; no storage suppresses it."
 
-   It used to be localStorage, which meant one Skip hid the walkthrough from
-   that browser for good and the owner could not find it again. */
-const OFF_KEY = 'mindmap.intro.off'
+   So there is no suppression key and no `suppressIntro` any more. Skip ends
+   the sequence for the panel that is up and writes nothing, which is why a
+   refresh plays it again: that is the behaviour the owner asked for after
+   refusing to see the onboarding on reload. Entry.jsx holds a per-document
+   flag instead, so one load asks once.
+
+   The sessionStorage key `mindmap.intro.off` and the localStorage key
+   `mindmap.tour.off` from the old build are simply never read as a refusal,
+   so a browser still holding either plays the walkthrough regardless. */
 
 /* The one standing exception, and it is not a visitor's: the screenshot and
    measurement harness in $HOME/pw sets this, so a capture of a page is a
-   capture of that page and not of a panel standing in front of it. It is
-   deliberately NOT the key above, which some browsers still hold from when
-   Skip was permanent; honouring that one would hide the walkthrough from
-   exactly the people complaining they cannot find it. Nothing in the interface
-   ever writes this. */
+   capture of that page and not of a panel standing in front of it. Nothing in
+   the interface ever writes it and no control can set it, so it cannot become
+   a refusal a visitor is stuck with. */
 const AUTO_KEY = 'mindmap.tour.off'
 
-/** True when the visitor pressed Skip earlier in this browsing session. A
- *  throwing storage reads as "not suppressed", so the worst failure under
- *  blocked storage is that the walkthrough plays. */
-export function introSuppressed() {
-  try {
-    if (window.localStorage.getItem(AUTO_KEY) === '1') return true
-    return window.sessionStorage.getItem(OFF_KEY) === '1'
-  } catch { return false }
+/** True only inside the screenshot and measurement harness. A throwing storage
+ *  reads as false, so the worst failure under blocked storage is that the
+ *  walkthrough plays. */
+export function captureHarness() {
+  try { return window.localStorage.getItem(AUTO_KEY) === '1' } catch { return false }
 }
 
-/** Put the sequence away for the rest of this session. Called by Skip and Esc. */
-export function suppressIntro() {
-  try { window.sessionStorage.setItem(OFF_KEY, '1') } catch {}
-}
-
-/** Clears the refusal so the walkthrough plays again. Wired to a control in the
- *  header so it is reachable without clearing site data. */
-export function replayIntro() {
-  try { window.sessionStorage.removeItem(OFF_KEY) } catch {}
-}
+/** Puts the walkthrough back up. Nothing is stored any more, so there is no
+ *  refusal left to clear and the work is done by the caller moving the entry
+ *  store to 'ask' (see replayTour in Entry.jsx). Kept as an export because it
+ *  is the published name for "play it again" and callers import it. */
+export function replayIntro() {}
 
 /* The grounds sit .044 to .083 apart in relative luminance, which keeps
  * one distinguishable from the next across the crossfade. Worst case over all
@@ -290,7 +285,7 @@ function StagePatch({ still }) {
             <text x="458" y="152" textAnchor="middle" fontSize="42" fontWeight="700"
               className="font-display fill-ink">64</text>
             <text x="458" y="176" textAnchor="middle" fontSize="14"
-              className="font-mono fill-ink-2">out of 100</text>
+              className="tabular-nums fill-ink-2">out of 100</text>
           </g>
           <Chip x="458" y="264" t={6.8} still={still} size={16} tone="fill-ink-2">your phone</Chip>
         </svg>
@@ -394,7 +389,7 @@ function StageMark({ still }) {
                 <g key={h} className="iv-a iv-rise" style={{ '--d': '.4s', '--t': `${0.25 + i * 0.07}s` }}>
                   <line x1={x} y1="226" x2={x} y2="234" strokeWidth="1.25" className="stroke-ink-3" />
                   <text x={x} y="252" textAnchor="middle" fontSize="16"
-                    className="font-mono fill-ink-2">{h}</text>
+                    className="tabular-nums fill-ink-2">{h}</text>
                 </g>
               ))}
               <circle cx="419.1" cy="199.8" r="6.5" fill="#11677f" className="iv-a iv-pop"
@@ -522,14 +517,13 @@ export function Intro({ onDone }) {
     timerRef.current = setTimeout(finish, ms)
   }, [finish])
 
-  /* The only thing that suppresses the sequence, hence not in `finish`. */
+  /* Skip ends this showing and stores nothing: the next load plays it again. */
   const skip = React.useCallback(() => {
-    suppressIntro()
     close(SKIP_MS)
   }, [close])
 
-  /* A jump re-anchors the beat timer. Next past the last beat ends the sequence,
-     and that is not Skip: reaching the end suppresses nothing. */
+  /* A jump re-anchors the beat timer. Next past the last beat ends the
+     sequence. Neither that nor Skip writes anything down. */
   const goTo = React.useCallback(i => {
     if (doneRef.current || timerRef.current) return
     if (i > LAST) { close(EXIT_MS); return }
@@ -751,7 +745,7 @@ export function Intro({ onDone }) {
             Next
           </Button>
         </div>
-        <p aria-hidden className="mx-auto mt-2.5 w-full text-center font-mono text-fine text-ink-3">
+        <p aria-hidden className="mx-auto mt-2.5 w-full text-center text-fine text-ink-3">
           Arrow keys move between sections. Esc skips.
         </p>
       </div>
@@ -825,6 +819,17 @@ const dockBtn = 'min-h-[46px] shrink-0 rounded-field border border-rule bg-card 
 
 export function GuidedTour({ go, onDone }) {
   const reduced = useReducedMotion()
+  /* Four of the seven stops are app screens, and the demo switch now defaults
+     to real (spec 0d, section 5), where nothing has been measured and those
+     screens offer a start screen instead of a dashboard. A tour that turns the
+     pages itself has to show the pages it is describing, so it borrows the
+     worked set for its run and hands the reader's own choice back when it
+     ends. The switch in the app's top bar says which one is up throughout. */
+  React.useEffect(() => {
+    const was = getMode()
+    setMode('demo')
+    return () => setMode(was)
+  }, [])
   const [step, setStep] = React.useState(0)
   const [paused, setPaused] = React.useState(false)
   const [exiting, setExiting] = React.useState(false)
@@ -961,9 +966,13 @@ export function GuidedTour({ go, onDone }) {
            stays visible while the panel describes the screen it belongs to.
            The handset inset is the tab bar's business there, and this dock's
            own only on the marketing pages. */
-        style={{ bottom: stop?.inApp ? 'calc(56px + env(safe-area-inset-bottom))' : 0,
-          paddingBottom: stop?.inApp ? 0 : 'env(safe-area-inset-bottom)' }}
+        style={{ paddingBottom: stop?.inApp ? 0 : 'env(safe-area-inset-bottom)' }}
         className={cn('fixed inset-x-0 z-[310] border-t-2 border-ink bg-card outline-none',
+          /* Measured: the bar is 51px at 390 and 61 at 1280, so the lift is
+             two values and not one inline number. */
+          stop?.inApp
+            ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))]'
+            : 'bottom-0',
           'transition-opacity duration-300 ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
 
         {/* The rail is on the dock's top edge, where it reads as a progress bar
@@ -991,7 +1000,7 @@ export function GuidedTour({ go, onDone }) {
           <div className="flex items-start gap-4">
             {/* max-w-none because input.css caps every p at 62ch, which here
                 stops the counter growing and leaves the skip mid dock. */}
-            <p className="min-w-0 max-w-none flex-1 font-mono text-fine text-ink-3">
+            <p className="min-w-0 max-w-none flex-1 text-fine text-ink-3">
               Guided tour, step <span className="tabular-nums">{step + 1}</span> of{' '}
               <span className="tabular-nums">{TOTAL}</span>
             </p>

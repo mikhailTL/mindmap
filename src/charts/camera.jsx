@@ -1,5 +1,6 @@
 import React from 'react'
 import { SignalTrace } from './infographics'
+import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
 /* The rear camera, exploded: photoplethysmography drawn rather than described.
@@ -18,7 +19,11 @@ const INK = '#0b2b33', INK2 = '#1f5560', INK3 = '#3c6a74'
 const RULE = '#bed6da', RULING = '#8eb0b6', MIST = '#dfecee'
 const CARD = '#ffffff', ACCENT = '#0a6e68', WASH = '#d6eeeb'
 const BEAM = '#1d8fb0', BEAMWASH = '#ddf0f8'
-const BLOOD = '#e11919'                 // the heart signal's own colour, sitewide
+/* Read out of lib/sensors.js rather than typed again. That file is the
+   per-signal spectrum the score dial is built from and is the one place in
+   the project allowed a colour outside the green system; a copy of the hex
+   here would be a second source for it and could drift. */
+const BLOOD = SENSORS.heart.glow
 
 /* One oblique projection for the whole drawing: (x, y) in a plate's own plan
    lands at (cx + x - 0.42y, cy + 0.34y). A steeper angle turns the island into
@@ -28,7 +33,7 @@ const CX = 530                          // the stack's centre line
 const A = 64, RAD = 22, T = 6           // plate half-side, corner radius, thickness
 
 /* Paths are built through the map below, never handed to an SVG matrix
-   transform: a matrix squashes stroke width with the geometry — at 0.34
+   transform: a matrix squashes stroke width with the geometry: at 0.34
    vertical scale a 1.4 edge prints 0.48 across and 1.4 down. */
 const px = (cx, x, y) => cx + x + SHX * y
 const py = (cy, y) => cy + SY * y
@@ -61,7 +66,7 @@ const LENS_R = 20
 const FLASH_HOLE = [33, -24], FLASH_R = 10
 const TINY = [33, -47], TINY_R = 4.5
 
-/* Four plates 56 apart — the closest they can sit and still leave a gap the
+/* Four plates 56 apart, the closest they can sit and still leave a gap the
    beam's arrowhead fits in. */
 const ROW = { glass: 144, lens: 200, ir: 256, sensor: 312 }
 const PHONE = 388, ISLAND = 382        // phone body face, island top face
@@ -81,7 +86,7 @@ const PAD = { x: 513.2, y: 100, r: 16 }        // the skin actually against the 
 const FLASH = { cx: 420, cy: 76, a: 22, r: 9, t: 5 }
 
 /* ── The step table ───────────────────────────────────────────────────────
- * Six rows of one height. `to` is where each leader arrives — always a part's
+ * Six rows of one height. `to` is where each leader arrives, always a part's
  * left edge at its own mid height, so the arrow comes in parallel to the edge
  * it names. `elbow` is where the leader turns out of its row; values differ
  * per step only to keep vertical runs off the flash and off each other.
@@ -192,7 +197,7 @@ function Stack({ p }) {
       </g>
 
       {/* The flash, exploded to the side because it is not in the optical
-          stack — it sits beside the lenses in the same island, which is why
+          stack, since it sits beside the lenses in the same island, which is why
           its window is a cutout on every plate below. */}
       <path d={plateD(FLASH.cx, FLASH.cy + FLASH.t, FLASH.a, FLASH.a, FLASH.r)}
         fill={MIST} stroke={INK} strokeWidth="1.2"/>
@@ -316,7 +321,7 @@ function Defs({ p }) {
 }
 
 /* Media query as state, not CSS: the figure below mounts one of two drawings,
-   and a CSS-only answer would ship both and hide one — a second copy of a
+   and a CSS-only answer would ship both and hide one, a second copy of a
    200-line SVG in every payload. */
 export function useNarrow(q = '(max-width: 767px)') {
   const [v, setV] = React.useState(
@@ -357,7 +362,7 @@ function StepTable({ p }) {
           ))}
           <circle cx={TBL_R} cy={rowMid(i)} r="2.8" fill={INK3}/>
           <text x={TBL_X + NUM_W / 2} y={baseY(i)} fill={ACCENT} textAnchor="middle"
-            fontFamily="ui-monospace, monospace" fontSize="15">{s.n}</text>
+            fontFamily="Chivo, sans-serif" fontSize="15" fontWeight="700">{s.n}</text>
           {s.lines.map((l, j) => (
             <text key={j} x={TXT_X} y={baseY(i) + j * LEAD} fill={INK}
               fontFamily="Chivo, sans-serif" fontSize="16">{l}</text>
@@ -377,13 +382,22 @@ export function CameraModule({ className }) {
       {/* On xl the caption is a rail in the dead space beside the figure. One
           trace and its label only: the sensor rate and the absorption are
           already in rows 05 and 02 of the table beside it. */}
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-center xl:gap-9">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-center xl:gap-9">
         <div>
           <svg
             /* Narrow crops to the drawing rather than redrawing it, so phone
                and desktop cannot drift apart. */
+            /* HELD TO 244px ON A PHONE. The crop is 300 units wide by 470
+               tall, so at the full 358px of a 390 column it printed 561px of
+               drawing before a word of the step list, and at 288 still 451px.
+               Spec 0e section 14 caps a band at about one and a half screens
+               and this one ran to 1.95, so the cap comes down again: 244 puts
+               the drawing at 382px. The only type inside the crop is the
+               "camera island" label, which lands at 15 * 244 / 300 = 12.2px
+               and stays ink-2 on card, 8.31 : 1. Nothing else in the crop is
+               type. */
             viewBox={narrow ? `390 -4 300 ${VB_H + 8}` : `0 0 700 ${VB_H}`}
-            className="block w-full"
+            className={cn('block w-full', narrow && 'mx-auto max-w-[244px]')}
             role="img"
             aria-label="An exploded view of a phone's rear camera, numbered along the path the
               light takes. The flash shines into the side of a fingertip. Blood absorbs some of
@@ -408,7 +422,7 @@ export function CameraModule({ className }) {
             <g aria-hidden="true">
               <Stack p={p}/>
               <text x={CX} y={VB_H - 12} textAnchor="middle" fill={INK2}
-                fontFamily="ui-monospace, monospace" fontSize="15">camera island</text>
+                fontFamily="Chivo, sans-serif" fontSize="15">camera island</text>
               {!narrow && <StepTable p={p}/>}
             </g>
           </svg>
@@ -416,21 +430,25 @@ export function CameraModule({ className }) {
           {/* The steps again as HTML for the narrow crop: at 390px a 16-unit
               sentence inside a 700-unit viewBox renders at nine pixels. */}
           {narrow && (
-            <ol className="m-0 mt-5 list-none border-y border-rule p-0">
+            <ol className="m-0 mt-4 list-none border-y border-rule p-0">
               {CAMERA_STEPS.map((s, i) => (
                 <li key={s.id}
-                  className={cn('grid grid-cols-[2.25rem_1fr] gap-x-2 px-2 py-2.5',
+                  className={cn('grid grid-cols-[1.9rem_1fr] gap-x-2 px-2 py-1.5',
                     i && 'border-t border-rule', i % 2 && 'bg-mist')}>
-                  <span className="border-r border-rule pr-2 text-right font-mono
-                    text-fine tabular-nums text-accent">{s.n}</span>
-                  <span className="text-sec leading-[1.4] text-ink">{s.lines.join(' ')}</span>
+                  <span className="border-r border-rule pr-2 text-right text-fine tabular-nums text-accent">{s.n}</span>
+                  <span className="text-note leading-[1.35] text-ink">{s.lines.join(' ')}</span>
                 </li>
               ))}
             </ol>
           )}
         </div>
 
-        <figcaption className="m-0 flex flex-col gap-3 border-t border-rule pt-4
+        {/* NOT DRAWN ON A PHONE. This rail exists because xl leaves dead space
+            beside the drawing; at 390 there is none, and the sparkline says
+            again what step 06 of the list already says in words, for 73px of
+            a band that spec 0e section 14 wants under a screen and a half. */}
+        {!narrow && (
+        <figcaption className="m-0 flex flex-col gap-2 border-t border-rule pt-3
           sm:flex-row sm:items-center sm:gap-6
           xl:flex-col xl:items-start xl:gap-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
           <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px] xl:w-full">
@@ -440,6 +458,7 @@ export function CameraModule({ className }) {
             <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="13">one dip, one beat</text>
           </svg>
         </figcaption>
+        )}
       </div>
     </figure>
   )
@@ -458,11 +477,9 @@ export function SignalCoverage({ className }) {
     <ul className={cn('m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-3.5', className)}>
       {COVERAGE.map(s => (
         <li key={s.id}
-          className={cn('rounded-panel border px-3.5 py-3',
+          className={cn('rounded-panel border px-3 py-2.5',
             s.on ? 'border-rule bg-card' : 'border-dashed border-ruling bg-transparent')}>
-          <div className={cn(!s.on && 'opacity-45')}>
-            <SignalTrace kind={s.id}/>
-          </div>
+          <SignalTrace kind={s.id} muted={!s.on}/>
           <p className={cn('mt-1.5 font-display text-ui font-bold',
             s.on ? 'text-ink' : 'text-ink-3')}>{s.name}</p>
           <p className={cn('mt-0.5 text-fine', s.on ? 'text-accent' : 'text-ink-3')}>{s.note}</p>

@@ -1,4 +1,4 @@
-/* One colour per activity.
+/* One colour per activity, inside the green/white/turquoise system.
  *
  * design-spec.md section 7b carves the toolkit out of the site's restraint and
  * lets colour carry feeling here rather than only status, so that ten
@@ -12,13 +12,24 @@
  * it does not know at build time, but it can inherit a variable. If a token
  * moves in the config, it moves here too.
  *
+ * 13 OCTOBER: THE CREAM IS OUT. Spec 0d section 1 retires coral, lilac, sun,
+ * mint, sky and blush, and reserves warn and crit for out of range and for
+ * critical. The `sand` family was built on warn.wash, #f5ecdb, which is the
+ * cream the owner struck out by name, and it was wired to `words` and
+ * `worried`. It is a near-white from the green run now, `aqua`, and nothing in
+ * this file is outside green, white and turquoise.
+ *
+ * The five KEYS are kept as they are. src/kit/glyphs.jsx indexes FAMILIES by
+ * name and draws FiveMark off the same five, so a rename there is a silent
+ * blank shape; the keys are structural identifiers and no longer name a hue.
+ *
  * Five families, used by both lists, so neither list is one hue with five
  * shades. Each family is three values:
  *
- *   tint  the card's ground. A wash, never a saturated fill. Young people
- *         asked for exactly this in the Western Sydney aesthetics study:
- *         muted over vivid, because a bright screen on a bad day "is shouty,
- *         it hurts your head".
+ *   tint  the card's ground. A near-white, never a saturated fill. Young
+ *         people asked for exactly this in the Western Sydney aesthetics
+ *         study: muted over vivid, because a bright screen on a bad day "is
+ *         shouty, it hurts your head".
  *   deep  the family's ink. Clears 4.5 : 1 on its own tint AND on card, so
  *         anything drawn in it may also be a word.
  *   art   the family's second tone, for flat blocks inside a drawing. Clears
@@ -26,27 +37,29 @@
  *         never given a text node.
  *
  * Measured, tint then card:
- *   sky   deep #11677f 5.47 / 6.42   art #1d8fb0 3.19 / 3.74
- *   leaf  deep #07544f 7.23 / 8.79   art #0a6e68 5.02 / 6.10
- *   sand  deep #8f5a0c 4.92 / 5.78   art #8f5a0c 4.92 / 5.78
- *   stone deep #1f5560 6.47 / 8.31   art #3c6a74 4.66 / 5.99
- *   dusk  deep #0b2b33 12.34 / 14.92 art #0a6e68 5.04 / 6.10
+ *   sky   tint #ddf0f8  deep #11677f 5.47 / 6.42    art #1d8fb0 3.19 / 3.74
+ *   leaf  tint #d6eeeb  deep #07544f 7.23 / 8.79    art #0a6e68 5.02 / 6.10
+ *   sand  tint #edf7f7  deep #07544f 8.05 / 8.79    art #11677f 5.89 / 6.42
+ *   stone tint #cee8ea  deep #1f5560 6.47 / 8.31    art #3c6a74 4.66 / 5.99
+ *   dusk  tint #dfecee  deep #0b2b33 12.34 / 14.92  art #0a6e68 5.04 / 6.10
  *
  * crit red is absent on purpose and is not available to this file. It is the
  * site's alarm, and the same study found a harsh red reads as an emergency
  * app, which is the one thing a toolkit must not look like.
  *
- * `glow` is the mint, and it is only ever drawn on `deep` or on ink, where it
- * measures 8.26 : 1. It never touches a tint. */
+ * `glow` is accent.lit, the bright turquoise in the green palette, and NOT the
+ * retired `mint` token. It is only ever drawn on `deep` or on ink, where it
+ * measures 4.86 on accent.ink, 4.60 on ink-2 and 8.26 on ink. It never touches
+ * a tint: on the palest of them it is 1.66 : 1. */
 
 const GLOW = '#3fd6c4'                                   // accent.lit
 
 export const FAMILIES = {
-  sky:   { tint:'#ddf0f8', deep:'#11677f', art:'#1d8fb0', glow:GLOW },  // beam.wash / beam.ink / beam
-  leaf:  { tint:'#d6eeeb', deep:'#07544f', art:'#0a6e68', glow:GLOW },  // accent.wash / accent.ink / accent
-  sand:  { tint:'#f5ecdb', deep:'#8f5a0c', art:'#8f5a0c', glow:GLOW },  // warn.wash / warn
-  stone: { tint:'#cee8ea', deep:'#1f5560', art:'#3c6a74', glow:GLOW },  // aqua.2 / ink.2 / ink.3
-  dusk:  { tint:'#dfecee', deep:'#0b2b33', art:'#0a6e68', glow:GLOW },  // mist / ink / accent
+  sky:   { tint:'#ddf0f8', deep:'#11677f', art:'#1d8fb0', glow:GLOW },  // beam.wash  / beam.ink   / beam
+  leaf:  { tint:'#d6eeeb', deep:'#07544f', art:'#0a6e68', glow:GLOW },  // accent.wash/ accent.ink / accent
+  sand:  { tint:'#edf7f7', deep:'#07544f', art:'#11677f', glow:GLOW },  // aqua       / accent.ink / beam.ink
+  stone: { tint:'#cee8ea', deep:'#1f5560', art:'#3c6a74', glow:GLOW },  // aqua.2     / ink.2      / ink.3
+  dusk:  { tint:'#dfecee', deep:'#0b2b33', art:'#0a6e68', glow:GLOW },  // mist       / ink        / accent
 }
 
 /* Which activity owns which. Both lists run through all five, so a reader

@@ -12,7 +12,7 @@ import {
  * patch RMSSD: a fixed scale difference between methods cancels against each
  * method's own baseline.
  *
- * The heart terms go through the Mind Score model (tnam.js): the learned curve
+ * The heart terms go through the Mind Score network (tnam.js): the learned curve
  * for heart rate and the one for beat-to-beat variation, with this person's
  * calibration gains on top. The voice terms keep the hand allocation below —
  * no public dataset pairs the camera-and-microphone capture with stress
@@ -24,7 +24,7 @@ const K = 2.4                   /* the logistic constant the other two routes us
  *   beat-to-beat variation down                       -> load up (weight < 0)
  *   pitch up, pitch less steady, loudness less steady -> load up
  * Heart weights are now only used for the confidence band's channel
- * bookkeeping; their contribution to the score comes from the model. Voice
+ * bookkeeping; their contribution to the score comes from the network. Voice
  * weights are a starting allocation, NOT fitted. */
 export const TERMS = [
   { id: 'hr',        ch: 'heart', w:  1.2, label: 'Heart rate' },
@@ -106,8 +106,8 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   const z = {}
   for (const t of used) z[t.id] = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
 
-  /* Heart, through the model. A signal the phone cannot read enters as 0 --
-     "at your usual" -- which is what the model was trained to tolerate. Motion
+  /* Heart, through the network. A signal the phone cannot read enters as 0 --
+     "at your usual" -- which is what the network was trained to tolerate. Motion
      enters on the patch's scale, 1 = the 0.35 g line. */
   const peakG = motion?.ok ? motion.peak : 0
   const x = FEATURES.map(k =>
@@ -120,11 +120,11 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   const wTotal = TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
   const byHand = t => (K * t.w * z[t.id]) / wTotal / 2
 
-  /* Over the movement line the model does not score the reading. The formula
+  /* Over the movement line the network does not score the reading. The formula
      does.
 
      This is the shipped design the transfer study measured, not a safety net
-     bolted on afterwards. On real jogging data the model on its own calls 73%
+     bolted on afterwards. On real jogging data the network on its own calls 73%
      of moving windows stressed, because its motion curve rises with movement:
      the training set had no condition where someone exercised calmly, so
      "moving" and "aroused" are the same thing to it. Handing moving windows to
@@ -134,7 +134,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
 
      It also makes the saturation above harmless: every reading at or past the
      line takes this branch, so the fact that 0.35 g and 2 g are the same input
-     to the model never reaches a score. */
+     to the network never reaches a score. */
   const moving = motion?.ok ? !motion.still : false
   const heart = moving
     ? used.filter(t => t.ch === 'heart').reduce((a, t) => a + byHand(t), 0)
@@ -178,7 +178,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   return {
     ok: true,
     score, S, contrib, features,
-    /* What the model saw, kept so a check-in answer can become a label. */
+    /* What the network saw, kept so a check-in answer can become a label. */
     model: { contributions: FEATURES.map(k => fw.contributions[k]), temporal: fw.temporal, logit: fw.logit,
              scored: !moving },
     calibrationLabels: calibration.n || 0,

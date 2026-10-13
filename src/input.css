@@ -136,7 +136,7 @@
      against figures that have to line up; everything that was only a caption
      lost it. No box, so no radius: .mark, .note and .tick are marks on the
      sheet, not objects on it. */
-  .tick { @apply font-mono text-tick font-light tabular-nums text-ink-3; }
+  .tick { @apply text-tick font-light tabular-nums text-ink-3; }
   /* The one containment pattern that uses a border: a bordered field on card
      stock. Everything else groups with rules, space or a background field.
      rounded-field, because a 0px corner was inherited from the old green

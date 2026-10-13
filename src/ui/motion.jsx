@@ -52,17 +52,28 @@ function sweep() {
 
 const onMove = () => { if (!frame) frame = requestAnimationFrame(sweep) }
 
+/* A ResizeObserver on the document, as well as the two listeners. Lazy
+   photographs and late-mounting routes change the page's height without a
+   scroll or a resize, so without this nothing re-sweeps and an element that
+   has just been pushed into view stays waiting until its own timer fires. */
+let ro = null
 function start() {
   if (listening) return
   listening = true
   addEventListener('scroll', onMove, { passive: true })
   addEventListener('resize', onMove, { passive: true })
+  if (typeof ResizeObserver === 'function') {
+    ro = new ResizeObserver(onMove)
+    ro.observe(document.documentElement)
+    if (document.body) ro.observe(document.body)
+  }
 }
 function stop() {
   if (!listening) return
   listening = false
   removeEventListener('scroll', onMove)
   removeEventListener('resize', onMove)
+  if (ro) { ro.disconnect(); ro = null }
 }
 
 /* Whether `ref`'s element has arrived. `false` means below the fold and
@@ -78,7 +89,12 @@ function useArrival(ref) {
     waiting.add(w)
     start()
     onMove()
-    const t = setTimeout(() => { waiting.delete(w); setShown(true) }, 1500)
+    /* 90ms, not 1500. This is the blind fallback for the case where no sweep
+       ever runs, and at 1500 it was not a fallback, it was the main path: a
+       plain load left every below-fold element at opacity 0 for a second and a
+       half, and a screenshot or a slow phone caught the page with its text
+       invisible. The sweep still beats this timer in the normal case. */
+    const t = setTimeout(() => { waiting.delete(w); setShown(true) }, 90)
     return () => { clearTimeout(t); waiting.delete(w); if (!waiting.size) stop() }
   }, [ref])
   return shown
@@ -95,7 +111,11 @@ export function ScrollIn({ children, className, y = 26, delay = 0, once = true, 
   return (
     <Comp ref={ref} className={className}
       initial={false}
-      animate={hidden ? { opacity: 0, y } : { opacity: 1, y: 0 }}
+      /* Transform only, no opacity, which is the rule the scroll-linked
+         figures below already follow: if the watcher never reports, the
+         element sits at its `from` value and stays READABLE. Opacity was the
+         one property that could make a sentence disappear, and it did. */
+      animate={hidden ? { y } : { y: 0 }}
       transition={{ duration: 0.42, ease: EASE, delay: hidden ? 0 : delay }}>
       {children}
     </Comp>
@@ -120,7 +140,7 @@ export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) 
       {lines.map((line, i) => (
         <span key={i} className="block overflow-hidden">
           <motion.span className={cn('block', lineClassName)} initial={false}
-            animate={reduced || inView ? { y: '0%', opacity: 1 } : { y: '110%', opacity: 0 }}
+            animate={reduced || inView ? { y: '0%' } : { y: '110%' }}
             transition={{ duration: 0.5, ease: EASE, delay: reduced ? 0 : i * 0.06 }}>
             {line}
           </motion.span>

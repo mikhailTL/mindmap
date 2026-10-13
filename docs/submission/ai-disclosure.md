@@ -26,7 +26,7 @@ roles:
 - **The problem, the product and every design decision are mine**, including
   the decision the whole product rests on: that the reading describes the body
   and never claims a feeling.
-- **The model is mine.** The architecture (one additive curve per signal, then
+- **The Mind Score network is mine.** The architecture (one additive curve per signal, then
   a GRU over eight windows), the choice of WESAD, the leave-one-subject-out
   protocol, the significance testing, the movement-confound analysis and the
   fallback that fixes it. The failure modes in the written responses are ones
@@ -41,7 +41,7 @@ roles:
 The repository is public, with full commit history: every change is
 attributable and the sequence shows the work.
 
-The model is checkable rather than asserted. `ml/` holds the training code
+The network is checkable rather than asserted. `ml/` holds the training code
 (`ml/tnam.py`), the experiment run that produced the shipped weights
 (`ml/research.py`), the three dataset converters, and the result files the site
 prints its figures from. The datasets themselves are licensed and not

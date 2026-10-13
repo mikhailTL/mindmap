@@ -57,10 +57,11 @@ animate.*
 
 ## 1:06 - 1:52  ·  the engineering
 
-> That number comes from a neural network I wrote and trained myself.
+> That number comes from the Mind Score network, which I wrote and trained
+> myself.
 >
 > It is a temporal neural additive model, 4,572 parameters. Every signal gets
-> its own learned curve, so what the model believes about pulse is a line you
+> its own learned curve, so what the network believes about pulse is a line you
 > can read. Then a small recurrent layer looks across eight
 > windows - four minutes of history - because stress is a shape over time,
 > not a snapshot.
@@ -86,7 +87,7 @@ animate.*
 *On screen: the pairing flow.*
 
 > And without one, the phone camera reads your pulse from a fingertip. Same
-> model, fewer signals, and the app says so.
+> network, fewer signals, and the app says so.
 
 ## 2:20 - 2:40  ·  privacy, tools, close
 

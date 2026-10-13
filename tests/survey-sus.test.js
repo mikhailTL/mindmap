@@ -1,207 +1,487 @@
-import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
+import * as Q from '../src/survey/questions.js'
 import {
-  AGREE, ALL_ITEMS, REQUIRED, SUS_ITEMS, questionNumber, questionText, susGrade, susScore,
+  AGREE, CLEAR, ALL_ITEMS, REQUIRED, SECTIONS,
+  DEMOGRAPHIC_ITEMS, SCALE_ITEMS, BLOCKER_ITEM, TEXT_ITEM, STARS_ITEM,
+  TOP_BOX, SCALE_MAX, summariseItem, ratedAnswered,
+  questionNumber, questionText, itemById,
 } from '../src/survey/questions.js'
+/* The flat per-question payload the browser posts and tools/survey-endpoint.gs
+   writes as one column per question. Tested below because the two files agree
+   by convention and nothing else: if the id list or the number/label split
+   drifts apart, the sheet silently fills the wrong columns and the first
+   anyone notices is a mean taken over a column of words. */
+import { fields, FIELD_IDS, payload } from '../src/survey/mail.js'
 
-/* The System Usability Scale is a validated instrument, not house copy. Its
-   published benchmark (mean 68 across studies) only applies if the ten items
-   are the published ten, in the published order, on the published five-point
-   agreement scale. Reword, reorder or drop one and the number MindMap reports
-   stops being a SUS score while still looking like one, which is worse than
-   reporting nothing. Everything in this file exists to make that impossible
-   to do by accident. */
+/* ─── What this file replaced ────────────────────────────────────────────────
+ * Until 13 October this suite defended a published ten-item usability scale:
+ * verbatim wording, published order, alternating direction, a pinned digest,
+ * and an assertion that the composite returned exactly 50.0 when every item
+ * was answered "Agree". All of it existed because the published benchmark of
+ * 68 only applied if the instrument was untouched.
+ *
+ * The owner replaced the instrument. The benchmark is gone, so a test that
+ * protects it protects nothing, and the 50.0 assertion in particular was an
+ * artefact of the alternation that no longer exists: it was the signature of a
+ * straight-lined response hiding at the midpoint. The replacement below pins
+ * what the new instrument actually guarantees, and it also pins the two things
+ * that must never come back: a composite score, and a negative mirror of a
+ * question already asked.
+ *
+ * The filename still says "sus". It is kept so the CI job and anyone's muscle
+ * memory keep finding this file; nothing in it is a usability scale. */
 
-/* Brooke 1986, verbatim, with the product name substituted. */
-const PUBLISHED_PROMPTS = [
-  'I think that I would want to use MindMap regularly.',
-  'I found MindMap unnecessarily complex.',
-  'I thought MindMap was easy to use.',
-  'I think I would need help from someone technical to use MindMap.',
-  'I found the various parts of MindMap were well put together.',
-  'I thought there was too much inconsistency in MindMap.',
-  'I would imagine that most people would learn to use MindMap very quickly.',
-  'I found MindMap very awkward to use.',
-  'I felt confident using MindMap.',
-  'I needed to learn a lot of things before I could get going with MindMap.',
-]
+const ids = list => list.map(q => q.id)
+const prompts = list => list.map(q => q.prompt)
+const labels = item => item.points.map(p => p.label)
 
-/* A second, order-sensitive lock over id, wording and direction together, so a
-   change to any one of the three has to be deliberate enough to update this
-   digest. */
-const ITEM_BLOCK_SHA256 = '35fa34e8712a913e11f06e7905f6e8b5423aadd55ebb34956b12295fc72320c5'
-
-const digest = () => createHash('sha256')
-  .update(JSON.stringify(SUS_ITEMS.map(i => [i.id, i.prompt, i.sus])), 'utf8')
-  .digest('hex')
-
-const answerAll = v => new Map(SUS_ITEMS.map(i => [i.id, v]))
-
-describe('SUS instrument integrity', () => {
-  it('has exactly the ten published items', () => {
-    expect(SUS_ITEMS).toHaveLength(10)
+describe('the old instrument is gone and nothing replaced its benchmark', () => {
+  /* The whole point of the change. If one of these comes back, so does a claim
+     the site is no longer entitled to make. */
+  it('exports no scale, no composite score and no grade', () => {
+    expect(Q.SUS_ITEMS).toBeUndefined()
+    expect(Q.susScore).toBeUndefined()
+    expect(Q.susGrade).toBeUndefined()
+    expect(Q.BENCHMARK).toBeUndefined()
   })
 
-  it('carries the published wording in the published order', () => {
-    expect(SUS_ITEMS.map(i => i.prompt)).toEqual(PUBLISHED_PROMPTS)
+  it('exports nothing whose name suggests a composite or a benchmark', () => {
+    const offending = Object.keys(Q).filter(k =>
+      /sus|benchmark|grade|composite|percentile|curve/i.test(k))
+    expect(offending).toEqual([])
   })
 
-  it('matches the pinned digest of id, wording and direction', () => {
-    expect(digest()).toBe(ITEM_BLOCK_SHA256)
+  it('exports no numeric 68 under any name', () => {
+    const sixtyEights = Object.entries(Q).filter(([, v]) => v === 68)
+    expect(sixtyEights).toEqual([])
   })
 
-  /* Ids are storage keys. Reviewers already have answers under these ids in
-     their browsers; renaming one silently discards a response. */
-  it('keeps the stored answer ids', () => {
-    expect(SUS_ITEMS.map(i => i.id))
-      .toEqual(['sus-1', 'sus-2', 'sus-3', 'sus-4', 'sus-5', 'sus-6', 'sus-7', 'sus-8', 'sus-9', 'sus-10'])
+  it('asks no question carried over from the retired scale', () => {
+    for (const q of ALL_ITEMS) expect(q.id.startsWith('sus-')).toBe(false)
+    for (const id of ['sus-1', 'sus-5', 'sus-10']) expect(itemById(id)).toBeNull()
   })
 
-  /* The instrument requires alternation: the scoring below reads direction
-     from `sus`, and a run of two same-direction items would both bias the
-     score and remove the acquiescence control the alternation exists for. */
-  it('alternates positive and negative items', () => {
-    expect(SUS_ITEMS.map(i => i.sus))
-      .toEqual(['pos', 'neg', 'pos', 'neg', 'pos', 'neg', 'pos', 'neg', 'pos', 'neg'])
-    SUS_ITEMS.forEach((item, i) => {
-      expect(item.sus).toBe(i % 2 === 0 ? 'pos' : 'neg')
-    })
-    expect(SUS_ITEMS.filter(i => i.sus === 'pos')).toHaveLength(5)
-    expect(SUS_ITEMS.filter(i => i.sus === 'neg')).toHaveLength(5)
-  })
-
-  it('offers the published five-point agreement scale, negative to positive', () => {
-    expect(AGREE.map(p => p.value)).toEqual([1, 2, 3, 4, 5])
-    expect(AGREE.map(p => p.label))
-      .toEqual(['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'])
-    for (const item of SUS_ITEMS) {
-      expect(item.points).toBe(AGREE)
-      expect(item.kind).toBe('scale')
-    }
-  })
-
-  /* Every SUS item has to be compulsory: susScore returns null on a partial
-     set, so an optional item would mean a survey that can never be scored. */
-  it('makes all ten compulsory', () => {
-    for (const item of SUS_ITEMS) {
-      expect(item.optional).toBeUndefined()
-      expect(REQUIRED).toContain(item)
-    }
+  /* The scoring surface. There is exactly one scoring function and it takes one
+     item's values; there is deliberately no function that takes a whole
+     response, because that is the shape a composite would have. */
+  it('offers per-item scoring only', () => {
+    expect(typeof summariseItem).toBe('function')
+    expect(typeof ratedAnswered).toBe('function')
+    const fns = Object.entries(Q).filter(([, v]) => typeof v === 'function').map(([k]) => k)
+    expect(fns.sort()).toEqual(
+      ['itemById', 'pageLabel', 'questionNumber', 'questionText', 'ratedAnswered', 'summariseItem'])
   })
 })
 
-describe('susScore', () => {
-  it('returns exactly 50 when every item is answered Agree', () => {
-    const agreeValue = AGREE.find(p => p.label === 'Agree').value
-    expect(agreeValue).toBe(4)
-    expect(susScore(answerAll(agreeValue))).toBe(50)
+describe('no question is the negative mirror of another', () => {
+  it('asks twelve questions, each one once', () => {
+    expect(ALL_ITEMS).toHaveLength(12)
+    expect(new Set(ids(ALL_ITEMS)).size).toBe(12)
+    expect(new Set(prompts(ALL_ITEMS)).size).toBe(12)
   })
 
-  it('returns null unless all ten are answered', () => {
-    expect(susScore(new Map())).toBeNull()
-    for (const item of SUS_ITEMS) {
-      const partial = answerAll(4)
-      partial.delete(item.id)
-      expect(susScore(partial), `missing ${item.id}`).toBeNull()
-    }
-    /* Nine of ten plus an answer to something that is not a SUS item is still
-       not a SUS score. */
-    const decoy = answerAll(4)
-    decoy.delete('sus-10')
-    decoy.set('stars', 5)
-    expect(susScore(decoy)).toBeNull()
+  it('pins the ask order, so an insertion is deliberate', () => {
+    expect(ids(ALL_ITEMS)).toEqual([
+      'who-age', 'who-role', 'who-school',
+      'use-easy', 'sentence-clear', 'use-again',
+      'trust-parent', 'trust-clinician', 'would-recommend',
+      'stars', 'blocker', 'blocker-note',
+    ])
   })
 
-  /* The published formula, written out independently of the implementation:
-     positive items score (answer - 1), negative items score (5 - answer), sum
-     the ten, multiply by 2.5. */
-  it('implements the published formula and nothing else', () => {
-    const byFormula = answers => {
-      let sum = 0
-      for (const item of SUS_ITEMS) {
-        const a = answers.get(item.id)
-        sum += item.sus === 'pos' ? a - 1 : 5 - a
-      }
-      return Math.round(sum * 2.5 * 10) / 10
+  /* A direction field is how the retired scale knew which items to invert. Its
+     absence is what makes a mirror impossible to score, and therefore
+     pointless to write. */
+  it('carries no direction, tone or reversal marker on any item', () => {
+    for (const q of ALL_ITEMS) {
+      expect(q.sus).toBeUndefined()
+      expect(q.tone).toBeUndefined()
+      expect(q.reverse).toBeUndefined()
+      expect(q.negative).toBeUndefined()
     }
-    let seed = 20260926
+  })
+
+  /* The owner's complaint, verbatim in substance: "Is it easy to use" and then
+     "Is it too complex" are the same question twice. These are the phrasings
+     that made the pairs. */
+  it('uses none of the retired negative phrasings', () => {
+    const banned = [
+      'unnecessarily complex', 'too complex', 'awkward', 'inconsistency',
+      'help from someone technical', 'needed to learn a lot',
+    ]
+    const all = prompts(ALL_ITEMS).join(' · ').toLowerCase()
+    for (const phrase of banned) expect(all).not.toContain(phrase)
+  })
+
+  it('removes the free-text prompt the owner asked to drop', () => {
+    expect(itemById('change')).toBeNull()
+    expect(itemById('impact')).toBeNull()
+    const all = prompts(ALL_ITEMS).join(' ').toLowerCase()
+    expect(all).not.toContain('what to fix')
+    expect(all).not.toContain('what would you change')
+  })
+})
+
+describe('the demographics block', () => {
+  it('asks exactly three questions: age, role and education', () => {
+    expect(ids(DEMOGRAPHIC_ITEMS)).toEqual(['who-age', 'who-role', 'who-school'])
+    for (const q of DEMOGRAPHIC_ITEMS) {
+      expect(q.kind).toBe('scale')
+      expect(REQUIRED).toContain(q)
+      expect(q.optional).toBeUndefined()
+    }
+  })
+
+  it('lets every one of them be refused', () => {
+    for (const q of DEMOGRAPHIC_ITEMS) {
+      expect(labels(q)).toContain('Rather not say')
+    }
+  })
+
+  /* Bands, never an exact age, never a date of birth. */
+  it('asks age as bands only', () => {
+    const age = itemById('who-age')
+    expect(labels(age)).toEqual([
+      '19 or younger', '20 to 29', '30 to 44', '45 to 59', '60 or older', 'Rather not say',
+    ])
+    const text = (age.prompt + ' ' + labels(age).join(' ')).toLowerCase()
+    for (const bad of ['date of birth', 'birthday', 'born', 'how old are you', 'exact age']) {
+      expect(text).not.toContain(bad)
+    }
+    /* No free entry: a band list cannot take a typed number. */
+    expect(age.kind).toBe('scale')
+    expect(age.maxLength).toBeUndefined()
+  })
+
+  /* The youngest band spans the age of majority on purpose. "Under 18" or "17
+     or younger" would make a teenager declare that they are a minor in order
+     to answer at all; "19 or younger" does not. */
+  it('does not make anyone state that they are under 18', () => {
+    const all = DEMOGRAPHIC_ITEMS
+      .flatMap(q => [q.prompt, ...labels(q)])
+      .join(' · ')
+      .toLowerCase()
+    for (const bad of ['under 18', 'under eighteen', '17 or younger', '13 to 17', 'minor']) {
+      expect(all).not.toContain(bad)
+    }
+    const youngest = labels(itemById('who-age'))[0]
+    expect(youngest).toBe('19 or younger')
+  })
+
+  it('covers the five roles the owner named', () => {
+    const role = labels(itemById('who-role')).join(' | ').toLowerCase()
+    expect(role).toContain('student')
+    expect(role).toContain('parent')
+    expect(role).toContain('teacher')
+    expect(role).toContain('counsellor')
+    expect(role).toContain('something else')
+  })
+
+  it('asks education as steps a student can answer', () => {
+    const school = labels(itemById('who-school'))
+    expect(school[0]).toBe('Still in school')
+    expect(school.length).toBeGreaterThanOrEqual(5)
+    expect(school).toContain('Rather not say')
+  })
+})
+
+describe('what the survey is allowed to collect', () => {
+  it('has exactly one free text, and it is optional and short', () => {
+    const texts = ALL_ITEMS.filter(q => q.kind === 'text')
+    expect(texts).toEqual([TEXT_ITEM])
+    expect(TEXT_ITEM.optional).toBe(true)
+    expect(TEXT_ITEM.maxLength).toBeLessThanOrEqual(200)
+    expect(REQUIRED).not.toContain(TEXT_ITEM)
+  })
+
+  it('asks for no name, email, phone, address or birth date', () => {
+    const everything = ALL_ITEMS
+      .flatMap(q => [q.prompt, q.placeholder || '', ...(q.points ? labels(q) : [])])
+      .join(' · ')
+      .toLowerCase()
+    for (const bad of [
+      'your name', 'e-mail', 'email', 'phone', 'address',
+      'date of birth', 'birthday', 'which school', 'what school',
+    ]) {
+      expect(everything).not.toContain(bad)
+    }
+  })
+
+  it('makes every question but the free text compulsory', () => {
+    expect(REQUIRED).toHaveLength(ALL_ITEMS.length - 1)
+    expect(ids(REQUIRED)).not.toContain(TEXT_ITEM.id)
+  })
+})
+
+describe('the rated items', () => {
+  it('are six, all on a five-point scale, none of them a band', () => {
+    expect(SCALE_ITEMS).toHaveLength(6)
+    expect(ids(SCALE_ITEMS)).toEqual([
+      'use-easy', 'sentence-clear', 'use-again',
+      'trust-parent', 'trust-clinician', 'would-recommend',
+    ])
+    for (const q of SCALE_ITEMS) {
+      expect(q.kind).toBe('scale')
+      expect(q.rated).toBe(true)
+      expect(q.points).toHaveLength(SCALE_MAX)
+      expect(q.points.map(p => p.value)).toEqual([1, 2, 3, 4, 5])
+    }
+  })
+
+  /* The split that keeps a band out of a mean. If a demographic ever leaks
+     into SCALE_ITEMS, the page starts averaging "Parent or guardian". */
+  it('exclude the demographics, the blocker, the rating and the free text', () => {
+    for (const q of [...DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, STARS_ITEM, TEXT_ITEM]) {
+      expect(SCALE_ITEMS).not.toContain(q)
+      expect(q.rated).toBeUndefined()
+    }
+  })
+
+  it('cover the four credibility questions the owner asked for', () => {
+    const all = prompts(SCALE_ITEMS).join(' · ').toLowerCase()
+    expect(all).toContain('would use mindmap regularly')
+    expect(all).toContain('parent or guardian')
+    expect(all).toContain('doctor or counsellor')
+    expect(all).toContain('sentence above the score')
+    expect(BLOCKER_ITEM.prompt.toLowerCase()).toContain('stop you from using')
+  })
+
+  it('offer both five-point scales, each running negative to positive', () => {
+    expect(AGREE.map(p => p.value)).toEqual([1, 2, 3, 4, 5])
+    expect(AGREE.map(p => p.label)).toEqual(
+      ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'])
+    expect(CLEAR.map(p => p.value)).toEqual([1, 2, 3, 4, 5])
+    expect(CLEAR.map(p => p.label)).toEqual(
+      ['Not clear', 'Slightly clear', 'Fairly clear', 'Clear', 'Completely clear'])
+    for (const q of SCALE_ITEMS) expect([AGREE, CLEAR]).toContain(q.points)
+  })
+
+  it('puts the top box at the top two points of five', () => {
+    expect(TOP_BOX).toBe(4)
+    expect(SCALE_MAX).toBe(5)
+    expect(AGREE.filter(p => p.value >= TOP_BOX).map(p => p.label))
+      .toEqual(['Agree', 'Strongly agree'])
+    expect(CLEAR.filter(p => p.value >= TOP_BOX).map(p => p.label))
+      .toEqual(['Clear', 'Completely clear'])
+  })
+})
+
+describe('summariseItem', () => {
+  it('returns null rather than zero when nothing was answered', () => {
+    expect(summariseItem([])).toBeNull()
+    expect(summariseItem(null)).toBeNull()
+    expect(summariseItem([null, null])).toBeNull()
+    expect(summariseItem(['4', 'Agree', undefined, NaN])).toBeNull()
+  })
+
+  /* Out-of-range values are dropped, not clamped. A 7 in a record from a
+     future scale would otherwise pull a 1-5 mean above its own maximum. */
+  it('counts only finite values inside the scale', () => {
+    const s = summariseItem([1, 5, 0, 6, -2, 3.5, 'x', null])
+    expect(s.n).toBe(3)
+    expect(s.mean).toBe(3.17)
+  })
+
+  it('keeps the mean inside the scale for every input', () => {
+    let seed = 20261013
     const next = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return 1 + (seed % 5) }
     for (let trial = 0; trial < 500; trial++) {
-      const answers = new Map(SUS_ITEMS.map(i => [i.id, next()]))
-      expect(susScore(answers), JSON.stringify([...answers])).toBe(byFormula(answers))
+      const n = 1 + (next() % 9)
+      const values = Array.from({ length: n }, next)
+      const s = summariseItem(values)
+      expect(s.n).toBe(n)
+      expect(s.mean).toBeGreaterThanOrEqual(1)
+      expect(s.mean).toBeLessThanOrEqual(SCALE_MAX)
+      /* The formula, written out independently of the implementation. */
+      const raw = values.reduce((a, b) => a + b, 0) / n
+      expect(s.mean).toBe(Math.round(raw * 100) / 100)
+      expect(s.top).toBe(values.filter(v => v >= TOP_BOX).length)
+      expect(s.share).toBe(s.top / n)
+      expect(s.share).toBeGreaterThanOrEqual(0)
+      expect(s.share).toBeLessThanOrEqual(1)
     }
   })
 
-  it('spans the full 0 to 100 range at the extremes', () => {
-    const worst = new Map(SUS_ITEMS.map(i => [i.id, i.sus === 'pos' ? 1 : 5]))
-    const best = new Map(SUS_ITEMS.map(i => [i.id, i.sus === 'pos' ? 5 : 1]))
-    expect(susScore(worst)).toBe(0)
-    expect(susScore(best)).toBe(100)
+  it('scores a hand-worked response', () => {
+    const s = summariseItem([5, 4, 4, 3, 2])
+    expect(s.n).toBe(5)
+    expect(s.mean).toBe(3.6)
+    expect(s.top).toBe(3)
+    expect(s.share).toBe(0.6)
   })
 
-  it('scores a hand-worked mixed response the published way', () => {
-    /* pos 5,5,4,5,4 -> 4+4+3+4+3 = 18 ; neg 1,1,2,1,2 -> 4+4+3+4+3 = 18
-       36 * 2.5 = 90 */
-    const answers = new Map([
-      ['sus-1', 5], ['sus-2', 1], ['sus-3', 5], ['sus-4', 1], ['sus-5', 4],
-      ['sus-6', 2], ['sus-7', 5], ['sus-8', 1], ['sus-9', 4], ['sus-10', 2],
-    ])
-    expect(susScore(answers)).toBe(90)
+  it('puts the share at 1 only when everyone picked the top two', () => {
+    expect(summariseItem([4, 4, 5, 5]).share).toBe(1)
+    expect(summariseItem([1, 2, 3, 3]).share).toBe(0)
+    expect(summariseItem([3, 4]).share).toBe(0.5)
   })
 
-  /* Alternation makes every straight-line response land on 50. Any analysis
-     of the collected responses has to treat a 50 as suspect rather than as a
-     middling verdict, so the property is pinned here where it is visible. */
-  it('maps any uniform response to 50, which is the straight-lining signature', () => {
-    for (const v of [1, 2, 3, 4, 5]) expect(susScore(answerAll(v))).toBe(50)
+  /* This is what replaced the retired "every item Agree returns exactly 50"
+     assertion. On an alternating scale a straight-lined response collapsed to
+     the midpoint and was indistinguishable from a considered middling verdict.
+     Here a uniform response is reported as the value the respondent actually
+     picked, which is the whole behavioural difference between the two
+     instruments and the reason this test is named after it. */
+  it('reports a uniform response as the answer given, not as a midpoint', () => {
+    for (const v of [1, 2, 3, 4, 5]) {
+      const s = summariseItem([v, v, v, v])
+      expect(s.mean).toBe(v)
+      expect(s.share).toBe(v >= TOP_BOX ? 1 : 0)
+    }
+    /* Specifically: all-Agree is 4 of 5, not 50 of 100, and carries no grade. */
+    const agree = AGREE.find(p => p.label === 'Agree').value
+    expect(agree).toBe(4)
+    expect(summariseItem([agree, agree, agree]).mean).toBe(4)
   })
 
-  it('is not a percentage, and grades on the Sauro and Lewis curve', () => {
-    expect(susGrade(90).grade).toBe('A')
-    expect(susGrade(84.1).grade).toBe('A')
-    expect(susGrade(84).grade).toBe('B')
-    expect(susGrade(78.9).grade).toBe('B')
-    expect(susGrade(78.8).grade).toBe('C')
-    /* 71 looks like a pass mark and is not: it is a C, below the population
-       mean of 68 only by a little. */
-    expect(susGrade(71).grade).toBe('C')
-    expect(susGrade(68).grade).toBe('C')
-    expect(susGrade(67.9).grade).toBe('D')
-    expect(susGrade(51.7).grade).toBe('D')
-    expect(susGrade(51.6).grade).toBe('F')
-    expect(susGrade(null)).toBeNull()
+  it('never reports a figure out of 100', () => {
+    for (const values of [[5, 5, 5], [1], [3, 4, 5, 2]]) {
+      const s = summariseItem(values)
+      expect(s.mean).toBeLessThanOrEqual(SCALE_MAX)
+      expect(Object.keys(s).sort()).toEqual(['mean', 'n', 'share', 'top'])
+    }
   })
 })
 
-describe('questionNumber', () => {
-  /* Numbers are shown to reviewers and quoted in the write-up. They come from
-     ask order, so an inserted question renumbers the rest rather than
-     producing two of the same number. */
-  it('covers every item exactly once', () => {
-    const numbers = ALL_ITEMS.map(q => questionNumber(q.id))
-    expect(numbers).toHaveLength(ALL_ITEMS.length)
-    expect(new Set(numbers).size).toBe(ALL_ITEMS.length)
-    expect(numbers.every(n => Number.isInteger(n))).toBe(true)
+describe('ratedAnswered', () => {
+  const filled = extra => new Map([...SCALE_ITEMS.map(q => [q.id, 4]), ...(extra || [])])
+
+  it('counts nothing on an empty response', () => {
+    expect(ratedAnswered(new Map())).toBe(0)
+    expect(ratedAnswered(undefined)).toBe(0)
   })
 
-  it('runs 1 to 13 continuously across the whole survey, not per section', () => {
-    expect(ALL_ITEMS).toHaveLength(13)
+  it('counts every rated item when all are answered', () => {
+    expect(ratedAnswered(filled())).toBe(SCALE_ITEMS.length)
+  })
+
+  /* A partial response stays partial. The retired instrument refused to score
+     at all below ten of ten; this one contributes what it has to the items it
+     has and nothing to the rest, so the count has to be exact. */
+  it('counts a partial response exactly, and ignores anything not a rated item', () => {
+    for (const item of SCALE_ITEMS) {
+      const partial = filled()
+      partial.delete(item.id)
+      expect(ratedAnswered(partial), `missing ${item.id}`).toBe(SCALE_ITEMS.length - 1)
+    }
+    const decoys = filled([['stars', 5], ['who-age', 1], ['blocker', 2], ['not-a-question', 4]])
+    expect(ratedAnswered(decoys)).toBe(SCALE_ITEMS.length)
+  })
+})
+
+describe('sections', () => {
+  it('reach every item exactly once, in ask order', () => {
+    expect(SECTIONS.flatMap(s => s.items)).toEqual(ALL_ITEMS)
+    expect(SECTIONS.map(s => s.id)).toEqual(['background', 'using', 'trust', 'overall'])
+  })
+
+  /* The heading rule: plain Title Case noun phrases, no pronouns, no empty
+     nouns, eight words at most. */
+  it('are titled as plain noun phrases', () => {
+    const banned = /\b(it|its|this|that|thing|things|anything|nothing|stuff|something|everything|you|your|my|i)\b/i
+    for (const s of SECTIONS) {
+      expect(s.title.split(/\s+/).length).toBeLessThanOrEqual(8)
+      expect(s.title, s.title).not.toMatch(banned)
+      expect(s.title, s.title).not.toMatch(/[.!?]$/)
+    }
+  })
+
+  it('tells the reader in the background section what is not collected', () => {
+    const note = SECTIONS.find(s => s.id === 'background').note.toLowerCase()
+    expect(note).toContain('bands')
+    expect(note).toContain('no name')
+    expect(note).toContain('no school')
+  })
+})
+
+describe('questionNumber and questionText', () => {
+  it('numbers 1 to 12 continuously across the whole survey, not per section', () => {
     expect(ALL_ITEMS.map(q => questionNumber(q.id)))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
-    expect(ALL_ITEMS.map(q => q.id).slice(10)).toEqual(['stars', 'change', 'impact'])
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    expect(new Set(ALL_ITEMS.map(q => questionNumber(q.id))).size).toBe(12)
   })
 
   it('returns null for an id the survey does not ask', () => {
+    expect(questionNumber('sus-1')).toBeNull()
     expect(questionNumber('nps')).toBeNull()
     expect(questionNumber('not-a-question')).toBeNull()
   })
 
-  /* Answers to retired questions are still in reviewers' browsers. They have
-     to render as the question that was asked, not as a bare id. */
-  it('still names retired questions so old answers stay readable', () => {
+  /* Answers to all of these are still in reviewers' browsers and on the
+     owner's sheet. They have to render as the question that was asked, not as
+     a bare id, and they must never be scored. */
+  it('still names every retired question so old answers stay readable', () => {
+    expect(questionText('sus-1')).toBe('I think that I would want to use MindMap regularly.')
+    expect(questionText('sus-2')).toBe('I found MindMap unnecessarily complex.')
+    expect(questionText('sus-10'))
+      .toBe('I needed to learn a lot of things before I could get going with MindMap.')
+    expect(questionText('change')).toBe('What confused you, or what would you change?')
+    expect(questionText('impact'))
+      .toBe('If this were actually used, what difference would it make?')
     expect(questionText('nps')).toBe('How likely are you to recommend MindMap?')
     expect(questionText('about-age')).toBe('Your age range')
-    expect(questionText('sus-1')).toBe(PUBLISHED_PROMPTS[0])
     expect(questionText('never-asked')).toBe('never-asked')
+  })
+
+  it('names every live question from its own prompt', () => {
+    for (const q of ALL_ITEMS) expect(questionText(q.id)).toBe(q.prompt)
+  })
+})
+
+
+describe('the flat payload the endpoint stores', () => {
+  const row = (questionId, value, label) => ({ questionId, value, label, visitorId: 'v-abcdef123456' })
+  const sample = [
+    row('who-age', '1', '19 or younger'),
+    row('who-role', '2', 'Parent or guardian'),
+    row('who-school', '5', 'Four-year degree'),
+    row('use-easy', '5', 'Strongly agree'),
+    row('sentence-clear', '4', 'Clear'),
+    row('use-again', '3', 'Neutral'),
+    row('trust-parent', '4', 'Agree'),
+    row('trust-clinician', '2', 'Disagree'),
+    row('would-recommend', '5', 'Strongly agree'),
+    row('stars', '4.5', '4.5 of 5'),
+    row('blocker', '3', 'Who else could see a reading'),
+    row('blocker-note', 'the sharing', null),
+  ]
+
+  it('carries one field per question, in ask order', () => {
+    expect(FIELD_IDS).toEqual(ids(ALL_ITEMS))
+    expect(Object.keys(fields(sample))).toEqual(FIELD_IDS)
+  })
+
+  /* The split that decides whether a sheet column can be averaged. */
+  it('sends the number for every rated question and the rating', () => {
+    const f = fields(sample)
+    for (const q of SCALE_ITEMS) expect(Number.isFinite(Number(f[q.id]))).toBe(true)
+    expect(f['use-easy']).toBe('5')
+    expect(f['trust-clinician']).toBe('2')
+    expect(f.stars).toBe('4.5')
+  })
+
+  it('sends the label for every band and for the blocker', () => {
+    const f = fields(sample)
+    expect(f['who-age']).toBe('19 or younger')
+    expect(f['who-role']).toBe('Parent or guardian')
+    expect(f['who-school']).toBe('Four-year degree')
+    expect(f.blocker).toBe('Who else could see a reading')
+    expect(f['blocker-note']).toBe('the sharing')
+  })
+
+  it('leaves an unanswered question blank rather than zero', () => {
+    const f = fields([row('use-easy', '5', 'Strongly agree')])
+    expect(f['use-easy']).toBe('5')
+    for (const id of FIELD_IDS.filter(x => x !== 'use-easy')) expect(f[id]).toBe('')
+  })
+
+  it('sends no name, in the subject or anywhere else', () => {
+    const p = payload(sample)
+    expect(p.name).toBeUndefined()
+    expect(p.visitorName).toBeUndefined()
+    expect(p.respondent).toBe('123456')
+    expect(p._subject).toBe('MindMap feedback: 123456')
+    const flat = JSON.stringify(p).toLowerCase()
+    expect(flat).not.toContain('anonymous')
   })
 })

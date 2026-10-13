@@ -11,12 +11,17 @@ import {
 
 /* One survey, opened from a box in the corner. The box appears only once the
  * reviewer has been around the site and stays away once put away; the dialog
- * saves each answer as it is given, so closing it half-done loses nothing. */
+ * saves each answer as it is given, so closing it half-done loses nothing.
+ *
+ * The questions are src/survey/questions.js. It is a house questionnaire with
+ * no published benchmark, so nothing in here compares an answer against one,
+ * and the launcher no longer says "Tell me what to fix": that prompt was
+ * removed on 13 October along with the free-text question it opened. */
 
 /* An answer is a row on a ruled list, not a card: rules separate, and a bar, a
  * fill and a weight mark the chosen one. Kept byte for byte identical to the
  * page version in views/App.jsx so an answer looks the same whichever way it
- * is opened. Point values go to the store but are not printed — the label
+ * is opened. Point values go to the store but are not printed, the label
  * already says which end of the scale it is. */
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
@@ -187,13 +192,15 @@ export function ReviewLauncher({ page }) {
             className="flex min-h-[48px] items-center gap-3 px-4 text-left hoverOnly:bg-mist"
           >
             {/* This label reports the saved tally only. Delivery is the
-                dialog's business — the box must not claim a send it has not
+                dialog's business, the box must not claim a send it has not
                 checked. */}
             <span className="font-display text-ui font-medium text-ink">
-              {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Tell me what to fix'}
+              {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Give feedback'}
             </span>
+            {/* A count of questions, which is checkable, rather than a minute
+                estimate, which is not. */}
             <span className="text-fine font-medium tabular-nums text-ink-3">
-              {started ? `${done}/${total}` : '3 min'}
+              {started ? `${done}/${total}` : `${total} questions`}
             </span>
           </button>
           <button
@@ -271,7 +278,7 @@ function ReviewDialog({ onClose }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Tell me what to fix"
+        aria-label="Reviewer feedback"
         tabIndex={-1}
         ref={ref}
         className="mx-auto min-h-full w-full max-w-[42rem] bg-paper sm:min-h-0 sm:rounded-panel"
@@ -279,7 +286,7 @@ function ReviewDialog({ onClose }) {
         {/* The tally only; that answers save themselves is said below, once. */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-3.5 sm:rounded-t-panel sm:px-8">
           <div>
-            <h2 className="font-display text-sub font-bold text-ink">Tell me what to fix</h2>
+            <h2 className="font-display text-sub font-bold text-ink">Reviewer Feedback</h2>
             <p className="mt-0.5 text-fine font-medium tabular-nums text-ink-3">
               {done} of {total} answered
             </p>
@@ -288,10 +295,17 @@ function ReviewDialog({ onClose }) {
         </div>
 
         <div className="px-5 pb-9 pt-5 sm:px-8">
-          <p className="max-w-[52ch] text-sec text-ink-2">
-            {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
-            so closing this loses nothing, and they go on to the person building MindMap once you
-            are through. The only thing kept alongside them is the name you gave.
+          {/* Says what is stored, every time the dialog opens, and not only in
+              the consent panel: a reviewer who answered on one visit and came
+              back on another may never see that panel again. */}
+          <p className="max-w-[56ch] text-sec text-ink-2">
+            {total} questions. Answers save as you give them, so closing this loses nothing,
+            and they go on to the person building MindMap once you are through.
+          </p>
+          <p className="note mt-2 max-w-[56ch]">
+            Anonymous. What is stored is your answers, the age group, role and school level
+            you pick from the lists, the date, and a random code for this browser. No name,
+            no email, no school and no birth date is asked for anywhere in it.
           </p>
 
           {SECTIONS.map(section => (
@@ -306,7 +320,7 @@ function ReviewDialog({ onClose }) {
                     <div key={q.id} className="border-t border-rule pt-4">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         {/* The numeral comes from ask order, not the prompt. */}
-                        <span className="font-mono text-fine tabular-nums text-ink-3">
+                        <span className="text-fine tabular-nums text-ink-3">
                           {questionNumber(q.id)}
                         </span>
                         <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>

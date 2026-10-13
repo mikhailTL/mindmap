@@ -7,7 +7,9 @@ import { useSyncExternalStore } from 'react'
  *   real  nothing paired. Not an error screen — the product before a device. */
 
 const KEY = 'mindmap.mode'
-const FALLBACK = 'demo'
+/* Real, not demo. A judge opening the app must land on the working product;
+   the demo is something they choose, not something they are given. */
+const FALLBACK = 'real'
 
 export const MODES = ['demo', 'real']
 

@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import { Logo } from '../ui/logo'
 import { ArrowRight } from '../ui/marks'
 import { PRO, PRO_LC } from '../lib/terms'
-import { GuidedTour, introSuppressed, suppressIntro, replayIntro } from './Intro'
+import { GuidedTour, captureHarness, replayIntro } from './Intro'
 
 /* The front door, asked for in these words: "Upon entering app, there should be
  * an option for WHat best describes you, 'Student' 'parent' 'Medical
@@ -38,21 +38,34 @@ const OPTIONS = [
  * anywhere in the tree puts it back, and it is the same shape as the external
  * store the survey already uses. */
 let at = null                                  // null, 'ask' or 'tour'
+
+/* Spec 0e, section 15: the walkthrough plays on every page load and no storage
+ * suppresses it. This latch is per document, not per browser: it lives as long
+ * as the page does, so one load offers the chooser once and a refresh offers it
+ * again. It is what stops the question coming back when `enabled` flips, which
+ * it does whenever the admin route is entered or left. */
+let asked = false
 const watchers = new Set()
 const read = () => at
 const watch = f => { watchers.add(f); return () => { watchers.delete(f) } }
 const move = s => { at = s; watchers.forEach(f => f()) }
 
-/** Clears this visit's refusal and puts the chooser back up. Wire a control to
- *  this, or to the <ReplayTour> button below, so the tour is reachable without
- *  clearing site data. */
+/** Puts the chooser, and so the guided tour behind its fourth option, back up.
+ *  Nothing is stored any more, so there is no refusal to clear; replayIntro()
+ *  is kept in the call because it is the published name for "play it again".
+ *
+ *  Spec 0e, section 15 takes this off the site navigation. The export stays:
+ *  the tour is reachable from the chooser's "Other" option, and a caller that
+ *  wants a control of its own has one here. */
 export function replayTour() {
   replayIntro()
+  asked = true
   move('ask')
 }
 
-/** A plain button for the header or the footer. Nothing about it is clever; it
- *  exists so the one import gives a caller both the sequence and its way back. */
+/** A plain button, no longer mounted in the site navigation (spec 0e, section
+ *  15). Kept because it is the one import that gives a caller both the sequence
+ *  and its way back. */
 export function ReplayTour({ className, children = 'Guided tour' }) {
   return (
     <button type="button" onClick={replayTour}
@@ -110,9 +123,17 @@ function Chooser({ onPick, onSkip }) {
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={headId}
         className="max-h-[94dvh] w-full max-w-[36rem] overflow-y-auto overscroll-contain
           rounded-panel border border-rule bg-card shadow-lift">
-        <div className="flex items-center gap-3 border-b border-rule px-5 py-3.5 sm:px-6">
+        {/* The skip sits here as well as at the foot, because the walkthrough
+            now plays on every load and the way past it may never be hunted
+            for. Plain type on the label, no capsule, no mono. */}
+        <div className="flex items-center gap-3 border-b border-rule px-5 py-2.5 sm:px-6">
           <Logo tone="paper" className="text-ui"/>
-          <span className="ml-auto font-mono text-fine text-ink-3">Welcome</span>
+          <button type="button" onClick={onSkip}
+            className="ml-auto min-h-[44px] shrink-0 rounded-field px-3 font-display text-ui
+              font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash
+              active:bg-accent-wash">
+            Skip
+          </button>
         </div>
 
         <div className="px-5 py-5 sm:px-6">
@@ -167,12 +188,16 @@ function Chooser({ onPick, onSkip }) {
 export function Entry({ go, enabled = true }) {
   const now = React.useSyncExternalStore(watch, read, () => null)
 
-  /* Decided on mount, not at module load: whether this runs at all depends on a
-     prop, and the refusal is a sessionStorage read that belongs in an effect. A
-     throwing storage reads as "not refused", so the worst failure under blocked
-     storage is that the question gets asked. */
+  /* Decided on mount, not at module load, because whether this runs at all
+     depends on a prop. One ask per document: the latch is what makes `enabled`
+     flipping -- which it does on the way in and out of the admin route -- stop
+     putting the chooser back over a page somebody is already reading. The
+     screenshot harness is the only thing that can hold it down, and nothing in
+     the interface can set that. */
   React.useEffect(() => {
-    if (enabled && read() === null && !introSuppressed()) move('ask')
+    if (!enabled || asked || read() !== null || captureHarness()) return
+    asked = true
+    move('ask')
   }, [enabled])
 
   /* One exit for all four choices and both ways out, so there is one place where
@@ -180,7 +205,6 @@ export function Entry({ go, enabled = true }) {
      lands. App.jsx gives its main region an id and a tabindex for this; falling
      to <body> would lose a keyboard visitor the page they just arrived on. */
   const leave = React.useCallback(() => {
-    suppressIntro()
     move(null)
     /* A frame later, after the panel has gone: while the chooser is still
        mounted it holds the keyboard, so focusing anything else now would be
@@ -189,7 +213,7 @@ export function Entry({ go, enabled = true }) {
   }, [])
 
   const pick = React.useCallback(id => {
-    if (id === 'tour') { suppressIntro(); move('tour'); return }
+    if (id === 'tour') { move('tour'); return }
     leave()
     if (go) go(id)
     else location.hash = '#/' + id

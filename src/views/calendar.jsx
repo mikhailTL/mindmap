@@ -1,0 +1,487 @@
+import React from 'react'
+import { SectionShell } from './shell'
+import { Panel, PanelHead, SeeDetails } from './Monitor'
+import { ArrowLeft, ArrowRight, Chevron, Minus } from '../ui/marks'
+import { RealNotice } from '../ui/notice'
+import { useMode } from '../lib/mode'
+import { BAND, USUAL, WBAND, monthScores } from './reading/demo'
+import { cn } from '../lib/utils'
+import { SCORE } from '../lib/terms'
+
+/* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
+ * 18. The owner's words:
+ *
+ *   > Should also be able to see weekly and monthly stats on a calendar and
+ *   > have "streaks" over days above a user selected target score, with
+ *   > percentages detailing how often the user stayed in target range or
+ *   > deviated on either the low or high end.
+ *
+ * So the screen is four things and no more:
+ *
+ *   1. A TARGET the reader sets. One number, 0 to 100, and a range around it
+ *      the width of this reader's own usual week range. Nothing picks it for
+ *      them and nothing recommends one.
+ *   2. A WEEK and a MONTH, on one switch.
+ *   3. THREE PERCENTAGES: inside the target range, above it, below it.
+ *   4. A STREAK, which is a NEUTRAL COUNT. It is the longest run of days
+ *      inside the range and the run the reader is on. It never congratulates,
+ *      never warns, never says a run was broken and never compares this reader
+ *      with another one. A count of days is all it is, and the screen says so.
+ *
+ * WHAT IS GENERATED. Every number on this screen comes out of
+ * src/views/reading/demo.js, seeded, so the month is the same month on every
+ * load. No patch has been built or worn and nothing here was measured from
+ * anybody. In real mode there are no readings, so the target still works and
+ * the grid is honestly empty rather than drawn at zero.
+ *
+ * COLOUR. Three states, three grounds from the green system: the brand wash
+ * inside the range, warn where a day ran above it, the turquoise wash below
+ * it. Colour is never the only carrier: every square prints its own figure and
+ * the key prints the two edges of the range, so the state of a square is
+ * readable in greyscale. */
+
+const KEY = 'mindmap.target'
+const MIN_T = 20, MAX_T = 80
+
+/* The range is the target plus and minus half the width of this reader's own
+   usual week range, so a target carries the same tolerance their own normal
+   does rather than an arbitrary one. 38 to 56 is 18 wide, so the range is the
+   target plus or minus 9. */
+const HALF = Math.max(4, Math.round(((WBAND.hi - WBAND.lo) || 18) / 2))
+
+const clampT = n => Math.max(MIN_T, Math.min(MAX_T, Math.round(n)))
+
+function readTarget() {
+  try {
+    const v = Number(localStorage.getItem(KEY))
+    return Number.isFinite(v) && v >= MIN_T && v <= MAX_T ? v : USUAL
+  } catch { return USUAL }
+}
+
+function useTarget() {
+  const [t, setT] = React.useState(readTarget)
+  const set = n => {
+    const v = clampT(n)
+    setT(v)
+    try { localStorage.setItem(KEY, String(v)) } catch { /* session only is fine */ }
+  }
+  return [t, set]
+}
+
+/* Where one day sits against the range. The word is the state; the ground only
+   repeats it. */
+const stateOf = (v, lo, hi) => (v == null ? 'none' : v > hi ? 'above' : v < lo ? 'below' : 'inside')
+/* `ground` is the square's ground, pale enough that ink on it stays well past
+   AA. `mark` is the same state as a filled graphic, for a 4px mark or a share
+   bar, where a wash on mist would not clear the 3 : 1 a non-text graphic owes.
+   Each DEFAULT clears 3 : 1 on card and on mist. */
+const STATE = {
+  inside: { word: 'inside', ground: 'bg-accent-wash border-accent/30', mark: 'bg-accent border-accent' },
+  above:  { word: 'above',  ground: 'bg-warn-wash border-warn/40',    mark: 'bg-warn border-warn' },
+  below:  { word: 'below',  ground: 'bg-beam-wash border-beam/30',    mark: 'bg-beam border-beam' },
+  none:   { word: 'no reading', ground: 'bg-paper border-rule',       mark: 'bg-mist border-rule' },
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                'August', 'September', 'October', 'November', 'December']
+const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+/* Two letters in the grid header: a single M T W T F S S repeats T and S, and
+   a 45px square at 390 has room for two. */
+const DOW_2 = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+const DOW_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+/* Monday first, which is how the week series in src/lib/chartdata.js is keyed.
+   Date.getDay() is Sunday first, so it is shifted here once. */
+const mondayIndex = d => (d.getDay() + 6) % 7
+
+function counts(values, lo, hi) {
+  const scored = values.filter(v => v != null)
+  const n = scored.length || 1
+  const inside = scored.filter(v => v >= lo && v <= hi).length
+  const above = scored.filter(v => v > hi).length
+  const below = scored.filter(v => v < lo).length
+  return { n: scored.length, inside, above, below,
+           pInside: Math.round((inside / n) * 100),
+           pAbove: Math.round((above / n) * 100),
+           pBelow: Math.round((below / n) * 100) }
+}
+
+/* Two counts, both neutral. `longest` is the longest run of days inside the
+   range anywhere in the window; `current` is the run the last scored day is
+   on, which is 0 when that day was not inside it. Neither is a target and
+   neither is compared with anything. */
+function streaks(values, lo, hi) {
+  let longest = 0, run = 0, current = 0
+  for (const v of values) {
+    if (v == null) continue
+    if (v >= lo && v <= hi) { run += 1; longest = Math.max(longest, run) }
+    else run = 0
+    current = run
+  }
+  return { longest, current }
+}
+
+const dayLabel = n => `${n} day${n === 1 ? '' : 's'}`
+
+/* ── The target ─────────────────────────────────────────────────────────── */
+
+function TargetCard({ target, setTarget, lo, hi }) {
+  return (
+    <Panel className="mx-auto w-full max-w-[34rem]">
+      <PanelHead title="Target Score" meta="0 to 100"/>
+      <div className="mt-2.5 flex flex-col items-center text-center">
+        <p className="font-display text-stat font-medium tabular-nums leading-none text-ink">
+          {target}</p>
+        <p className="mt-1.5 max-w-[40ch] text-fine text-ink-2">
+          A target you pick for yourself. Your target range runs {lo} to {hi}, which is the width
+          of your own usual range for a week.
+        </p>
+        <div className="mt-3 flex w-full max-w-[22rem] items-center gap-2.5">
+          <button type="button" onClick={() => setTarget(target - 1)}
+            aria-label="Lower the target by one"
+            className="flex size-11 shrink-0 items-center justify-center rounded-field border
+              border-ink text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist">
+            <Minus aria-hidden className="size-4"/>
+          </button>
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">Target score, {MIN_T} to {MAX_T}</span>
+            <input type="range" min={MIN_T} max={MAX_T} step={1} value={target}
+              onChange={e => setTarget(Number(e.target.value))}
+              className="block h-11 w-full accent-accent"/>
+          </label>
+          <button type="button" onClick={() => setTarget(target + 1)}
+            aria-label="Raise the target by one"
+            className="flex size-11 shrink-0 items-center justify-center rounded-field border
+              border-ink font-display text-ui font-medium text-ink transition-colors duration-150
+              hoverOnly:bg-mist active:bg-mist">+</button>
+        </div>
+        <p className="mt-2 max-w-[44ch] text-fine text-ink-3">
+          Lower is calmer on this scale. A usual day for you is {USUAL}, and your usual range for a
+          day runs {BAND.lo} to {BAND.hi}.
+        </p>
+      </div>
+    </Panel>
+  )
+}
+
+/* ── The three percentages, and the streak ─────────────────────────────── */
+
+function Share({ label, n, pct, ground }) {
+  return (
+    <div className="border-b border-rule py-2.5 last:border-b-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="min-w-0 font-display text-ui font-medium text-ink">{label}</p>
+        <p className="flex shrink-0 items-baseline gap-1.5">
+          <span className="font-display text-row font-medium tabular-nums leading-none text-ink">
+            {pct}%</span>
+          <span className="text-fine text-ink-3">{dayLabel(n)}</span>
+        </p>
+      </div>
+      <div aria-hidden className="mt-1.5 h-2 w-full rounded-xs bg-mist">
+        <div className={cn('h-2 rounded-xs border', ground)} style={{ width: `${pct}%` }}/>
+      </div>
+    </div>
+  )
+}
+
+function Summary({ c, s, window: w, lo, hi }) {
+  return (
+    <Panel tone="aqua">
+      <PanelHead title={`How ${w} Fell Against the Target`} meta={`${c.n} scored`}/>
+      <p className="mt-2 max-w-[56ch] text-fine text-ink-2">
+        Against a target range of {lo} to {hi}. Percentages are of the days that have a reading.
+      </p>
+      <div className="mt-2.5 lg:grid lg:grid-cols-2 lg:gap-5">
+        <div className="min-w-0">
+          <Share label="Inside the range" n={c.inside} pct={c.pInside}
+            ground={STATE.inside.mark}/>
+          <Share label="Above the range" n={c.above} pct={c.pAbove} ground={STATE.above.mark}/>
+          <Share label="Below the range" n={c.below} pct={c.pBelow} ground={STATE.below.mark}/>
+        </div>
+        <div className="mt-3 border-t border-rule pt-2.5 lg:mt-0 lg:border-l lg:border-t-0
+          lg:pl-5 lg:pt-0">
+          <p className="tick">Runs of days inside the range</p>
+          <dl className="m-0 mt-1">
+            <div className="flex items-baseline justify-between gap-3 border-b border-rule py-2">
+              <dt className="min-w-0 text-fine text-ink-2">Longest run</dt>
+              <dd className="m-0 shrink-0 font-display text-row font-medium tabular-nums
+                leading-none text-ink">{dayLabel(s.longest)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3 py-2">
+              <dt className="min-w-0 text-fine text-ink-2">Run you are on</dt>
+              <dd className="m-0 shrink-0 font-display text-row font-medium tabular-nums
+                leading-none text-ink">{dayLabel(s.current)}</dd>
+            </div>
+          </dl>
+          <p className="mt-2 max-w-[40ch] text-fine text-ink-3">
+            A count of days, nothing more. It is not a score, there is nothing to keep up, and it is
+            never compared with anybody else.
+          </p>
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
+/* ── The month ──────────────────────────────────────────────────────────── */
+
+function MonthGrid({ year, month, values, today, lo, hi }) {
+  const pad = mondayIndex(new Date(year, month, 1))
+  const cells = [...Array(pad).fill(null), ...values.map((v, i) => ({ v, day: i + 1 }))]
+  return (
+    <figure className="m-0">
+      <div aria-hidden className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        {DOW_2.map(d => (
+          <span key={d} className="py-1 text-center text-fine text-ink-3">{d}</span>
+        ))}
+      </div>
+      <ul className="m-0 mt-0.5 grid list-none grid-cols-7 gap-1 p-0 sm:gap-1.5">
+        {cells.map((c, i) => {
+          if (!c) return <li key={`pad${i}`} aria-hidden/>
+          const st = STATE[stateOf(c.v, lo, hi)]
+          const isToday = c.day === today
+          const dow = DOW_LONG[mondayIndex(new Date(year, month, c.day))]
+          return (
+            <li key={c.day} className="min-w-0">
+              <div role="img" aria-label={c.v == null
+                ? `${dow} ${c.day} ${MONTHS[month]}, no reading yet`
+                : `${dow} ${c.day} ${MONTHS[month]}, ${c.v} out of 100, ${st.word} your target range`}
+                className={cn('flex aspect-square flex-col items-center justify-center rounded-field',
+                  'border px-0.5', st.ground, isToday && 'ring-1 ring-ink ring-offset-0')}>
+                <span aria-hidden className="text-fine leading-none text-ink-3">{c.day}</span>
+                <span aria-hidden className={cn('mt-0.5 text-ui font-medium tabular-nums leading-none',
+                  c.v == null ? 'text-ink-3' : 'text-ink')}>
+                  {c.v == null ? '·' : c.v}</span>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+      <figcaption className="note mt-2.5 max-w-[56ch]">
+        One figure a day out of 100. A square with a dot has no reading yet. The square with a ring
+        is today.
+      </figcaption>
+    </figure>
+  )
+}
+
+function StateKey({ lo, hi }) {
+  const rows = [
+    ['Inside the target range', `${lo} to ${hi}`, STATE.inside.ground],
+    ['Above the target range', `over ${hi}`, STATE.above.ground],
+    ['Below the target range', `under ${lo}`, STATE.below.ground],
+  ]
+  return (
+    <ul className="m-0 mt-3 grid list-none grid-cols-1 gap-x-5 gap-y-1.5 border-t border-rule
+      pt-2.5 p-0 sm:grid-cols-3">
+      {rows.map(([label, range, ground]) => (
+        <li key={label} className="flex min-w-0 items-center gap-2">
+          <span aria-hidden className={cn('size-4 shrink-0 rounded-xs border', ground)}/>
+          <span className="min-w-0 text-fine text-ink-2">{label}, <span
+            className="tabular-nums text-ink">{range}</span></span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/* ── The week ───────────────────────────────────────────────────────────── */
+
+/* Seven rows rather than seven columns: at 390 a row carries the day, the
+   figure, the state in words and the figure's position in the range, and a
+   column of 45px cannot carry four things. */
+function WeekRows({ days, lo, hi }) {
+  return (
+    <ul className="m-0 list-none border-t border-ink p-0">
+      {days.map(d => {
+        const st = STATE[stateOf(d.v, lo, hi)]
+        return (
+          <li key={d.label} className="border-b border-rule py-2">
+            <div className="flex items-center gap-3">
+              <span className={cn('w-[4ch] shrink-0 font-display text-ui text-ink',
+                d.today ? 'font-semibold' : 'font-medium')}>{d.label}</span>
+              <span className="w-[3ch] shrink-0 text-ui tabular-nums text-ink">
+                {d.v == null ? '·' : d.v}</span>
+              <span aria-hidden className="relative h-2 min-w-0 flex-1 rounded-xs bg-mist">
+                <span className="absolute inset-y-0 rounded-xs bg-ink-3/30"
+                  style={{ left: `${lo}%`, width: `${Math.max(1, hi - lo)}%` }}/>
+                {d.v != null && (
+                  <span className={cn('absolute -top-1 h-4 w-[4px] -translate-x-1/2 rounded-bar border',
+                    st.mark)} style={{ left: `${Math.max(1, Math.min(99, d.v))}%` }}/>
+                )}
+              </span>
+              <span className="w-[5ch] shrink-0 text-right text-fine text-ink-2">
+                {d.v == null ? 'none' : st.word}</span>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/* ── The screen ─────────────────────────────────────────────────────────── */
+
+export function CalendarBody({ go }) {
+  const [mode] = useMode()
+  const [target, setTarget] = useTarget()
+  const [view, setView] = React.useState('month')
+  const now = React.useMemo(() => new Date(), [])
+  const [offset, setOffset] = React.useState(0)
+  const lo = clampT(target - HALF), hi = clampT(target + HALF)
+
+  const shown = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const year = shown.getFullYear(), month = shown.getMonth()
+  const thisMonth = offset === 0
+  const today = thisMonth ? now.getDate() : null
+  const real = mode === 'real'
+
+  const monthVals = React.useMemo(
+    () => (real ? [] : monthScores(year, month, thisMonth ? now.getDate() : null)),
+    [real, year, month, thisMonth, now])
+
+  /* The week the calendar reads is the last seven days ending on the newest
+     scored day in the month shown, so the week and the month cannot disagree
+     about a Tuesday. */
+  const weekDays = React.useMemo(() => {
+    if (real) return []
+    const end = monthVals.reduce((a, v, i) => (v != null ? i : a), -1)
+    if (end < 0) return []
+    const out = []
+    for (let i = Math.max(0, end - 6); i <= end; i += 1) {
+      const d = new Date(year, month, i + 1)
+      out.push({ label: DOW[mondayIndex(d)], v: monthVals[i],
+                 today: today != null && i + 1 === today })
+    }
+    return out
+  }, [real, monthVals, year, month, today])
+
+  const vals = view === 'month' ? monthVals : weekDays.map(d => d.v)
+  const c = counts(vals, lo, hi)
+  const s = streaks(vals, lo, hi)
+  const windowWord = view === 'month' ? `${MONTHS[month]}` : 'The Week'
+
+  return (
+    <div className="mx-auto flex w-full max-w-[52rem] flex-col gap-3 lg:gap-4">
+      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi}/>
+
+      {real ? (
+        <Panel>
+          <PanelHead title="No Days to Draw Yet"/>
+          <div className="mt-2.5">
+            <RealNotice>
+              No patch is paired and nothing has been measured, so there is no day to put on the
+              calendar. The target above is saved and the squares fill in as readings arrive.
+            </RealNotice>
+          </div>
+          <button type="button" onClick={() => go('reading')}
+            className="group mt-3 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
+              pt-2.5 text-left">
+            <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
+              transition-colors duration-150 groupHoverOnly:text-accent-ink">Take a reading</span>
+            <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+          </button>
+        </Panel>
+      ) : (
+        <>
+          <Panel>
+            {/* The switch and the month stepper on one line. Two buttons in a
+                bordered field, body face, normal case: design spec 0d section
+                2, a thing a reader toggles is a field and never a capsule. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div role="group" aria-label="Week or month"
+                className="inline-flex overflow-hidden rounded-field border border-rule">
+                {[['week', 'Week'], ['month', 'Month']].map(([v, label]) => (
+                  <button key={v} type="button" onClick={() => setView(v)}
+                    aria-pressed={view === v}
+                    className={cn('min-h-[44px] px-4 font-display text-ui font-medium',
+                      'transition-colors duration-150',
+                      view === v ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {view === 'month' && (
+                <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={() => setOffset(o => o - 1)}
+                    aria-label="The month before"
+                    className="flex size-11 items-center justify-center rounded-field border
+                      border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua">
+                    <ArrowLeft aria-hidden className="size-4"/>
+                  </button>
+                  <p className="min-w-[9ch] text-center font-display text-ui font-medium text-ink">
+                    {MONTHS[month]} {year}</p>
+                  <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))}
+                    disabled={thisMonth} aria-label="The month after"
+                    className="flex size-11 items-center justify-center rounded-field border
+                      border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua
+                      disabled:border-rule disabled:text-ink-3">
+                    <ArrowRight aria-hidden className="size-4"/>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3">
+              {view === 'month'
+                ? <MonthGrid year={year} month={month} values={monthVals} today={today}
+                    lo={lo} hi={hi}/>
+                : <>
+                    <PanelHead title="The Last Seven Days" meta="out of 100"/>
+                    <div className="mt-2.5"><WeekRows days={weekDays} lo={lo} hi={hi}/></div>
+                    <p className="note mt-2.5 max-w-[56ch]">
+                      The shaded stretch on each row is your target range, {lo} to {hi}. The mark is
+                      that day&rsquo;s figure.
+                    </p>
+                  </>}
+            </div>
+            <StateKey lo={lo} hi={hi}/>
+          </Panel>
+
+          <Summary c={c} s={s} window={windowWord} lo={lo} hi={hi}/>
+
+          <SeeDetails label="See details" sub="What the target is, and what a run of days is not">
+            <Panel tone="aqua">
+              <PanelHead title="How the Target Works"/>
+              <dl className="m-0 mt-1.5 list-none p-0">
+                {[
+                  [`What the ${SCORE} is`,
+                   `One number a day, 0 to 100, measured against your own last two weeks and never against another student. A usual day for you is ${USUAL}.`],
+                  ['Where the range comes from',
+                   `The target plus and minus ${HALF}, which is half the width of your own usual range for a week, ${WBAND.lo} to ${WBAND.hi}. Picking a target does not change the readings.`],
+                  ['What a run of days counts',
+                   'Days in a row whose figure landed inside the range. A day with no reading is skipped rather than counted against the run.'],
+                  ['What it is not',
+                   'It is not a grade, it is not shared with anybody, and no run of days is compared with another person. A day outside the range is a day, not a failure.'],
+                  ['Where the figures come from',
+                   `Generated for the demo, on the same 0 to 100 scale the dial uses, and seeded so the month is the same month every time. Nobody has worn a patch and nothing here was measured.`],
+                ].map(([what, why]) => (
+                  <div key={what} className="border-b border-rule py-2 last:border-b-0 last:pb-0">
+                    <dt className="font-display text-ui font-medium text-ink">{what}</dt>
+                    <dd className="m-0 mt-0.5 max-w-[60ch] text-fine text-ink-2">{why}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Panel>
+          </SeeDetails>
+        </>
+      )}
+    </div>
+  )
+}
+
+const COPY = {
+  sub: 'A week, a month, and a target score you set for yourself.',
+  note: 'Every figure on this screen is generated. Nobody has worn a patch and nobody was measured.',
+  realNote: 'No patch is paired, so there is no day to draw yet.',
+}
+
+export function Calendar({ go }) {
+  return (
+    <SectionShell go={go} sub={COPY.sub} note={COPY.note} realNote={COPY.realNote}>
+      <CalendarBody go={go}/>
+    </SectionShell>
+  )
+}
+
+export default Calendar

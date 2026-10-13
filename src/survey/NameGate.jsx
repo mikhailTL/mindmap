@@ -3,109 +3,83 @@ import { Button } from '../ui/button'
 import { setVisitor } from './store'
 import { cn } from '../lib/utils'
 
-const MAX = 60
-
-/* The consent panel, asked once, at the top of the survey. States what is
- * collected and who reads it before anything is collected, and gives declining
- * a name equal weight to giving one.
+/* The consent panel, shown once, before a single answer is taken. It states
+ * what is stored and what is not, and then starts the survey.
  *
- * `inline` is how it is used now: a card at the head of the one page the name
- * is for. It used to cover the whole site before anybody had seen anything,
- * which charged every reader for a question that concerns one page.
+ * ─── Why there is no name field here any more ───────────────────────────────
+ * There was one until 13 October. It is gone, and the component keeps its old
+ * export name only so that src/views/App.jsx, which this worker does not own,
+ * keeps rendering the panel at the right moment. Teenagers answer this survey.
+ * A first name next to an age band and a school-level band is identifying in a
+ * way that none of the three is on its own, and the survey has no use for it:
+ * nothing on the responses page needed a name that an opaque id does not do
+ * better. store.js enforces the same thing from the other side, so passing a
+ * name to setVisitor now stores nothing whatever the caller intends.
  *
- * Deliberately not a dialog role and not a focus trap. Esc takes the Skip path,
- * the same as the button, so it cannot lose work. */
+ * Deliberately not a dialog role and not a focus trap. Escape starts the
+ * survey, the same as the button, so the panel cannot trap a reader. */
 export function NameGate({ onDone, inline = false }) {
-  const [name, setName] = React.useState('')
-  const [error, setError] = React.useState(null)
   const ref = React.useRef(null)
 
   /* Autofocus only when this covers the page. Inline, stealing focus would
      scroll a reader past the heading they were reading. */
   React.useEffect(() => { if (!inline) ref.current?.focus() }, [inline])
 
-  const finish = value => {
-    setVisitor(value)
+  const start = () => {
+    setVisitor()
     onDone?.()
   }
-
-  const submit = e => {
-    e?.preventDefault()
-    const clean = name.trim()
-    /* The button stays enabled and explains the refusal; a disabled button
-     * with no message blames the reader silently. */
-    if (!clean) {
-      setError('Type a name, or skip and stay anonymous.')
-      ref.current?.focus()
-      return
-    }
-    if (clean.length > MAX) {
-      setError(`That is ${clean.length} characters. Sixty is the limit, and a first name is plenty.`)
-      ref.current?.focus()
-      return
-    }
-    finish(clean)
-  }
-
-  const over = name.trim().length > MAX
 
   return (
     <div
       className={cn(inline
         ? 'w-full'
         : 'fixed inset-0 z-[70] flex items-center justify-center bg-paper/95 p-5')}
-      onKeyDown={e => { if (e.key === 'Escape') finish('') }}
+      onKeyDown={e => { if (e.key === 'Escape') start() }}
     >
-      <form
-        onSubmit={submit}
+      <div
         className={cn('w-full rounded-panel border border-rule bg-card p-6 sm:p-8',
           inline ? 'max-w-[42rem]' : 'max-w-[34rem] shadow-lift')}
       >
         {/* First person singular throughout: one student, not a team. */}
-        <h2 className="font-display text-sub font-bold text-ink">What should I call you?</h2>
+        <h2 className="font-display text-sub font-bold text-ink">Anonymous Feedback</h2>
 
-        <p className="mt-3 text-sec text-ink-2">
-          I am Mikhail. I built this for a school project, and I am the only person who
-          reads the names and the answers. Nothing else about you is collected.
+        <p className="mt-3 max-w-[56ch] text-sec text-ink-2">
+          I am Mikhail. I built this for a school project and I am the only person who
+          reads the answers. This survey is anonymous: there is nothing in it that
+          identifies you, and I have no way to work out who sent an answer.
         </p>
 
-        <label htmlFor="namegate-field" className="mt-5 block font-display text-ui font-medium text-ink">
-          Your name
-        </label>
-        <input
-          id="namegate-field"
-          ref={ref}
-          value={name}
-          onChange={e => { setName(e.target.value); if (error) setError(null) }}
-          autoComplete="given-name"
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? 'namegate-error' : 'namegate-hint'}
-          placeholder="First name, nickname, anything"
-          className={cn(
-            'mt-2 block min-h-[54px] w-full rounded-field border bg-paper px-4',
-            'font-body text-sec text-ink placeholder:text-ink-3',
-            'transition-[border-color,background-color] duration-150 ease-out',
-            'hoverOnly:border-ink-3 focus:bg-card',
-            error || over ? 'border-crit' : 'border-rule'
-          )}
-        />
-
-        <div className="mt-2 flex items-baseline justify-between gap-4">
-          {error
-            ? <p id="namegate-error" role="alert" className="font-body text-note text-crit">{error}</p>
-            : <p id="namegate-hint" className="note">Sixty characters or fewer.</p>}
-          <span className={cn('text-fine tabular-nums', over ? 'text-crit' : 'text-ink-3')}>
-            {name.trim().length}/{MAX}
-          </span>
+        <div className="mt-5 border-t border-rule pt-4">
+          <p className="font-display text-ui font-semibold text-ink">What is stored</p>
+          <ul className="mt-2 flex max-w-[56ch] list-disc flex-col gap-1 pl-5 text-sec text-ink-2">
+            <li>Your answers to the twelve questions.</li>
+            <li>An age group, a role and a school level, as bands.</li>
+            <li>The date and time, and a random code for this browser.</li>
+          </ul>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
-          <Button type="submit">Start</Button>
-          <Button type="button" variant="ghost" onClick={() => finish('')}>
-            Skip and stay anonymous
-          </Button>
+        <div className="mt-4 border-t border-rule pt-4">
+          <p className="font-display text-ui font-semibold text-ink">What is never asked</p>
+          <ul className="mt-2 flex max-w-[56ch] list-disc flex-col gap-1 pl-5 text-sec text-ink-2">
+            <li>Your name, your email or your phone number.</li>
+            <li>Your school, your town or your date of birth.</li>
+            <li>Your exact age. The age question is a band, and the youngest band
+              covers everyone 19 and under, so answering it says nothing about
+              whether you are over or under 18.</li>
+          </ul>
         </div>
-      </form>
+
+        <p className="note mt-4 max-w-[56ch]">
+          One question takes a written answer. Keep it to the app: a few words about
+          what would put you off is all it wants, and please leave yourself and
+          anyone else out of it.
+        </p>
+
+        <div className="mt-6">
+          <Button ref={ref} type="button" onClick={start}>Start the survey</Button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -33,12 +33,10 @@ import {
  *     three depths: the copy panel, the patch card and the phone. It used to
  *     be a pale band holding three tiles of equal weight in a bordered grid.
  *
- *   - "It is all monotonous in color." Five bands now carry five grounds:
- *     accent, ink, sun-wash, sky-wash, lilac-wash. The six hues in
- *     tailwind.config.js each carry exactly one meaning on this page, and no
- *     hue carries a meaning on its own: every tile that is coloured also says
- *     in words what it is. Routes are coral, mint and sun; audiences are sky,
- *     blush and lilac.
+ *   - Colour. Five bands used to carry five grounds, three of them hues the
+ *     owner has since struck out. The grounds are the green system's own
+ *     near-whites now: aqua, paper, card, aqua-2. Bands are told apart by
+ *     which near-white they sit on and by their heading, never by a hue.
  *
  *   - "All diagram and no realism." Thirteen photographs at six scales, from a
  *     148px strip the width of a column to the full height of the hero.
@@ -139,7 +137,6 @@ const PROBLEM_FRAMES = [
 const DOORS = [
   { id:'phone', go:'without-patch', title:'Use your phone', note:'No patch needed', lead:true,
     gets:'45 seconds on the camera, or six questions instead',
-    chip:'bg-coral-wash text-coral-ink', badge:'bg-coral-wash',
     photo:'student-bus',
     alt:'Two boys laughing together on a school bus seat, one holding a phone',
     art:(
@@ -148,24 +145,21 @@ const DOORS = [
         <rect x="86" y="19" width="48" height="48" rx="8" className="fill-ink"/>
         <circle cx="102" cy="39" r="8" className="fill-accent"/>
         <circle cx="122" cy="39" r="5" className="fill-beam"/>
-        <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
-          strokeWidth="2.4" strokeLinecap="round"/>
+        <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" strokeWidth="2.4" strokeLinecap="round" className="stroke-accent"/>
       </svg>) },
   { id:'patch', go:'patch', title:'Wear the patch', note:'Needs the patch',
     gets:'Pulse, sweat, temperature and movement, read together',
-    chip:'bg-mint-wash text-mint-ink', badge:'bg-mint-wash',
     photo:'student-basketball',
     alt:'A teenage boy dribbling a basketball past a defender on an outdoor court under a cloudy sky',
     art:(
       <svg viewBox="0 0 220 120" className="h-[34px] w-auto" aria-hidden focusable="false">
         <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
-        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
+        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-aqua stroke-ink" strokeWidth="1.6"/>
         <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
   { id:'demo', go:'app', title:'Try the demo', note:'No reading taken',
     gets:'A worked day of measurements, already filled in',
-    chip:'bg-sun-wash text-sun-ink', badge:'bg-sun-wash',
     photo:'student-game',
     alt:'Three teenage boys sitting along a sofa with game controllers, headphones round their necks',
     art:(
@@ -185,19 +179,16 @@ const DOORS = [
    reader meets them on this page. */
 const SCREENS = [
   { id:'student', who:'Student', photo:'friends-steps',
-    chip:'bg-sky-wash text-sky-ink',
     alt:'Two students sitting on concrete steps outside a building, heads together over an open notebook',
     title:`Your ${SCORE} today, and what moved it`,
     fact:'Four tabs: Today, Reading, Toolkit, Sharing',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent', photo:'parent-hero',
-    chip:'bg-blush-wash text-blush-ink',
     alt:'A mother and her teenage child smiling at an open laptop together at home',
     title:'One sentence a week',
     fact:`Never a raw reading, never ${NOTES}, never ${LOCATION}`,
     cta:'What a parent gets' },
   { id:'pro',     who:PRO, photo:'pro-hero',
-    chip:'bg-lilac-wash text-lilac-ink',
     alt:'A woman with a notepad and a teenager sitting and talking on a sofa in a bright room',
     title:CASELOAD_TITLE,
     fact:'Only what the student agreed to share, and never a group under five',
@@ -248,7 +239,6 @@ const NEVER = [
 
 /* Containers, per spec 2. Two grounds, because the ink band needs its own. */
 const PANEL = 'overflow-hidden rounded-panel border border-rule bg-card'
-const PANEL_INK = 'overflow-hidden rounded-panel border border-ink-2 bg-ink-2/40'
 
 /* The hero's phone floats over the photograph rather than sitting in a cell of
  * its own, so its size is bounded by the stage it floats on and by nothing
@@ -274,12 +264,12 @@ function usePhoneScale(ref) {
     const el = ref.current
     if (!el || typeof ResizeObserver !== 'function') return
     const fit = () => {
-      const wide = innerWidth >= 1024
-      /* The share of the stage the drawing may take. Below 1024 the stage is
-         the width of the screen and the photograph needs to stay readable
-         beside the drawing, so the drawing takes less of it. */
-      const byWidth = (el.clientWidth * (wide ? 0.46 : 0.42)) / PHONE_W
-      const byHeight = (el.clientHeight - (wide ? 40 : 24)) / PHONE_H
+      /* The share of the stage the drawing may take. A third of the column
+         wide, four fifths of it tall: the phone stands in front of the frame
+         with most of itself inside it and the rest in the padding below, and
+         the photograph stays readable beside it at every width. */
+      const byWidth = (el.clientWidth * 0.34) / PHONE_W
+      const byHeight = (el.clientHeight * 0.80) / PHONE_H
       const next = Math.max(0.12,
         Math.min(0.8, Math.floor(Math.min(byWidth, byHeight) * 100) / 100))
       setScale(prev => (Math.abs(prev - next) < 0.005 ? prev : next))
@@ -312,150 +302,127 @@ export function Overview({ go }) {
   return (
     <main>
       {/* -- the hero -------------------------------------------------------
-          `h-`, not `min-h-`: min-h lets tall content push the band past the
-          fold, which brings the next band's heading into view under the title
-          screen. At 1280 x 900 the viewport is the smaller of the two, so on a
-          laptop the band is still exactly one screen.
+          Rebuilt for calm. What this replaced: a saturated teal field at
+          exactly 100svh, with a photograph bleeding off the right edge, the
+          phone clipped by that edge, a copy panel floating on the teal and a
+          row of glass pills over the phone's foot. Four layers, three of them
+          overlapping, and the band's fixed height crushed the column on the
+          left while cutting the drawing on the right.
 
-          The ground is the brand teal, not paper. Spec 2 lets a heading sit on
-          a band and nothing else, so the eyebrow is a chip, the headline sits
-          on the teal and every other word on this band is inside the panel.
-          `accent-lit` is the only green legible on this ground: `accent`
-          itself is 1.0 : 1 on it. */}
-      <section id="hero" className="relative isolate flex h-[calc(100svh-58px)] flex-col
-        overflow-hidden border-t border-accent-ink bg-accent">
+          The ground is a near-white in the green family, so the brand green is
+          free to be the accent again rather than the field. The words sit
+          directly on it; nothing needs a panel to be legible. The height is
+          the content's, not the viewport's -- forcing one screen is what broke
+          the scale at both ends.
 
-        {/* min-h-0: without it this flex item cannot shrink under its own
-            content, so on a 667px phone the stage kept its natural height and
-            the band ran past the fold. */}
-        <div className="wrap relative z-10 flex min-h-0 flex-1 flex-col gap-3 py-4
-          lg:grid lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:gap-7 lg:py-5
-          xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
+          Three objects on the right, each fully inside its own column: the
+          photograph in a frame, the phone standing in front of it, the patch
+          at its foot. Nothing is clipped and nothing floats over a face. */}
+      <section id="hero" className="border-t border-rule bg-aqua">
+        <div className="wrap grid gap-7 py-7 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]
+          lg:items-center lg:gap-10 lg:py-10 xl:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]">
 
-          <div className="flex shrink-0 flex-col justify-center lg:min-h-0">
-            <ScrollIn as="p" className="w-fit rounded-chip bg-paper px-3 py-1 font-mono text-ui
-              font-bold tracking-[0.005em] text-accent-ink">
-              MindMap, a wellness app for teenagers
+          {/* The words. The eyebrow is a line of type, not a pill: a rounded
+              capsule of letterspaced monospace over a headline is the single
+              most recognisable mark of a generated landing page. */}
+          <div>
+            <ScrollIn as="p" className="font-body text-ui font-semibold text-accent-ink">
+              A wellness app for teenagers
             </ScrollIn>
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
-                1.06, not 1.02, where the descenders of "Making your stress"
-                landed in the cap height of "readable". */}
-            <h1 className="mt-3 max-w-[19ch] font-display text-view font-bold leading-[1.06]
-              tracking-tight text-paper lg:text-major">
-              Making your stress <span className="text-accent-lit">readable</span>.
+                1.06, where the descenders of "Making your stress" landed in
+                the cap height of "readable" at 1.02. */}
+            <h1 className="mt-2 max-w-[14ch] font-display text-view font-bold leading-[1.06]
+              tracking-tight text-ink lg:text-major">
+              Making your stress <span className="text-accent">readable</span>.
             </h1>
-            {/* One panel, floating on the teal, holding every word on this
-                band that is not the headline: the lede, both actions, the two
-                figures and, where there is room for it, the three steps of a
-                day and the one promise the product turns on. */}
-            <ScrollIn className={cn(PANEL, 'mt-4 shadow-lift')}>
-              <p className="px-3.5 pt-3.5 text-sec font-medium leading-[1.35] text-ink">
-                One {SCORE} a day. One sentence saying what changed.
-              </p>
-              {/* Two actions, not one. The second is the route a judge checking
-                  the working wants and it was previously only reachable five
-                  bands down the page. */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-3.5 pb-3.5 pt-3">
-                <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-                {/* sm and up. The two actions measure 406px side by side and a
-                    390px phone has 334px of column, so below sm the second one
-                    took a row of its own and cost the panel under it 58px. The
-                    header's own nav carries this route at every width, and so
-                    does the evidence band. */}
-                <Button variant="ghost" size="sm" onClick={() => go('methods')}
-                  className="hidden sm:inline-flex">
-                  How it works
-                  <ArrowRight className="size-[1.05rem]"/>
-                </Button>
-              </div>
-              {/* Two figures that are already on this site, each on its own
-                  ground with its label beside it rather than under it, which
-                  is what spec 3 asks of a number that carries weight. */}
-              <div className="grid border-t border-rule sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 bg-sky-wash p-3.5">
-                  <span className="font-mono text-row font-bold tabular-nums leading-none text-sky-ink">
-                    {SCORE_RANGE}
-                  </span>
-                  <span className="text-fine text-ink-2">{SCORE}, against your own normal</span>
-                </div>
-                {/* The rule moves with the wrap: a top rule when the two
-                    figures are stacked, a left rule when they sit side by
-                    side, so there is never a doubled edge or a missing one. */}
-                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 border-t border-rule
-                  bg-sun-wash p-3.5 sm:border-l sm:border-t-0 lg:border-l-0 lg:border-t
-                  xl:border-l xl:border-t-0">
-                  <span className="font-mono text-row font-bold tabular-nums leading-none text-sun-ink">
-                    45
-                  </span>
-                  <span className="text-fine text-ink-2">seconds, a reading off the camera</span>
-                </div>
-              </div>
-              {/* lg and up only. Below it the hero is already a screen of copy
-                  plus the stage, and three more rows would push the button
-                  under the fold on a 844px phone. The same three steps are the
-                  three cards in the band under this one.
+            <p className="mt-3.5 max-w-[36ch] text-lead text-ink-2">
+              One {SCORE} a day. One sentence saying what changed.
+            </p>
 
-                  Rows, not three columns: in a 416px column three cells set
-                  every step on two lines and the strip read as a caption. */}
-              <ol className="m-0 hidden list-none p-0 lg:block">
-                {DAY.map(([n, step]) => (
-                  <li key={n} className="flex items-center gap-2.5 border-t border-rule px-3.5 py-2">
-                    <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded-chip
-                      bg-accent font-mono text-fine font-bold leading-none text-paper">
-                      {n}
-                    </span>
-                    <span className="min-w-0 text-meta leading-[1.3] text-ink-2">{step}</span>
-                  </li>
-                ))}
-              </ol>
-              {/* The one promise this product turns on, in the one place a
-                  judge is certain to read. The privacy band states it in full
-                  further down; this is the same sentence from src/lib/terms.js
-                  and not a second wording of it. */}
-              <p className="hidden border-t border-rule px-3.5 py-2 text-fine leading-[1.4]
-                text-ink-3 lg:block">
-                {CONSENT_SHORT}
-              </p>
-            </ScrollIn>
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Button onClick={() => go('app')}>Open the app<span aria-hidden>&rarr;</span></Button>
+              {/* The route a judge checking the working wants. It used to be
+                  reachable only five bands down the page. */}
+              <Button variant="ghost" size="sm" onClick={() => go('methods')}>
+                How it works
+                <ArrowRight className="size-[1.05rem]"/>
+              </Button>
+            </div>
+
+            {/* Two figures already true of this site. Set in the display face
+                with tabular figures: they line up with each other without
+                being typed out on a typewriter. */}
+            <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-4 border-t border-rule pt-4">
+              {[[SCORE_RANGE, `${SCORE}, against your own normal`],
+                ['45', 'seconds, a reading off the camera']].map(([fig, label]) => (
+                <div key={label}>
+                  <dt className="font-display text-stat font-bold tabular-nums leading-none
+                    text-accent-ink">
+                    {fig}
+                  </dt>
+                  <dd className="m-0 mt-1.5 max-w-[18ch] text-fine text-ink-3">{label}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {/* lg and up. Below it the hero is already a screen of copy plus
+                the stage, and the same three steps are the three cards in the
+                band under this one. Numerals, not numbered discs: a row of
+                filled circles is decoration the list does not need. */}
+            <ol className="m-0 mt-5 hidden list-none border-t border-rule p-0 lg:block">
+              {DAY.map(([n, step]) => (
+                <li key={n} className="flex items-baseline gap-3 border-b border-rule py-2">
+                  <span aria-hidden className="w-3 shrink-0 font-display text-ui font-bold
+                    tabular-nums leading-none text-accent">
+                    {n}
+                  </span>
+                  <span className="min-w-0 text-meta leading-[1.35] text-ink-2">{step}</span>
+                </li>
+              ))}
+            </ol>
+            {/* The one promise this product turns on, in the one place a judge
+                is certain to read. Same sentence as the privacy band, from
+                src/lib/terms.js, not a second wording of it. */}
+            <p className="mt-3 hidden text-fine leading-[1.4] text-ink-3 lg:block">
+              {CONSENT_SHORT}
+            </p>
           </div>
 
-          {/* The stage. One photograph at the size the references use it,
-              running the full height of the band and off its right edge, with
-              two objects floating over it at two further depths: the patch in
-              the top corner and the phone standing on the bottom edge. The
-              three tiles of equal weight this replaced read as a contact
-              sheet rather than as a scene.
+          {/* The stage. One frame, and two objects standing in front of it at
+              one further depth each. The frame has its own aspect ratio so the
+              column has a height before the photograph lands; the phone
+              overhangs the frame's bottom edge by a sixth of itself, and the
+              padding below is what that overhang stands in, so nothing is ever
+              cut by the band. */}
+          <div ref={stage} className="relative mx-auto w-full max-w-[520px] pb-12 lg:max-w-none
+            lg:pb-14">
+            <div className="relative overflow-hidden rounded-panel border border-rule shadow-lift
+              aspect-[5/4] lg:aspect-[16/11]">
+              <Frame photo="students-hallway" eager={EAGER.has('students-hallway')}
+                alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
+                className="absolute inset-0 object-[50%_32%]"/>
+            </div>
 
-              The negative margins cancel the wrap's own padding at each step,
-              so the frame reaches the edge of the screen; the band clips, so
-              nothing can reach past it and raise a scrollbar. */}
-          <div ref={stage} className="relative -mx-[22px] min-h-[180px] flex-1 overflow-hidden
-            bg-accent-ink sm:-mx-10 lg:-mr-14 lg:ml-0 lg:min-h-0 lg:rounded-l-panel">
-            <Frame photo="students-hallway" eager={EAGER.has('students-hallway')}
-              alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
-              className="absolute inset-0 object-[50%_32%]"/>
-
-            {/* The patch, its drawing and the four signals it reads, in a card
-                of its own so the drawing is never a white oval on a white
-                card. The four chips are lg and up: at 390 the card would be
-                most of the stage, and the patch card in the band below names
-                the same four signals at every width. */}
-            <div className="absolute bottom-3 left-3 z-20 flex items-center gap-3 rounded-panel border
-              border-rule bg-accent-wash px-3 py-2.5 shadow-lift lg:bottom-5 lg:left-5 lg:gap-4
-              lg:px-4 lg:py-3">
-              <PatchFront className="w-[48px] shrink-0 lg:w-[64px]"/>
+            {/* The patch and the four signals it reads, in a card of its own so
+                the drawing is never a white oval on a white card. The chips are
+                sm and up: at 390 the card would be most of the frame, and the
+                patch card in the band below names the same four signals at
+                every width. */}
+            <div className="absolute bottom-10 left-0 z-20 flex items-center gap-3 rounded-panel
+              border border-rule bg-card px-3 py-2.5 shadow-lift lg:bottom-11 lg:gap-4 lg:px-4
+              lg:py-3">
+              <PatchFront className="w-[46px] shrink-0 lg:w-[58px]"/>
               <div className="min-w-0">
                 <p className="font-display text-ui font-bold leading-tight text-ink">The patch</p>
-                {/* A wrapping row, not a two column grid. On a grid the two
-                    tracks are equal, the longest of the four words is
-                    Temperature, and that track came out short of it: the word
-                    ran out through its own pill. Each chip sizes to its own
-                    word here, and the row wraps where it must. */}
-                <ul className="m-0 mt-2 hidden max-w-[260px] list-none flex-wrap gap-1.5 p-0 lg:flex">
+                {/* A wrapping row, not a two column grid: on a grid the tracks
+                    are equal, the longest word is Temperature, and that track
+                    came out short of it. */}
+                <ul className="m-0 mt-2 hidden max-w-[250px] list-none flex-wrap gap-1.5 p-0 sm:flex">
                   {SIGNALS.map(([name, Mark]) => (
                     <li key={name}
-                      className="flex items-center gap-1.5 whitespace-nowrap rounded-chip border
-                        border-rule bg-card px-2 py-1">
+                      className="flex items-center gap-1.5 whitespace-nowrap rounded-field border
+                        border-rule bg-aqua px-2 py-1">
                       <Mark aria-hidden className="size-3.5 shrink-0 text-beam-ink"/>
                       <span className="text-fine leading-none text-ink-2">{name}</span>
                     </li>
@@ -464,50 +431,45 @@ export function Overview({ go }) {
               </div>
             </div>
 
-            {/* The phone, and beside it the three screens it is cycling
-                through. The drawing moves on a four second beat, so without
-                the three names a judge sees one screen and cannot tell there
-                are three. */}
-            <div className="absolute bottom-3 right-3 z-10 flex flex-col items-center gap-2
-              lg:bottom-5 lg:right-8 lg:gap-2.5">
+            {/* The phone, whole. It cycles a reading, the number it returns and
+                the week that number lands in, on a four second beat, so the
+                drawing carries the product rather than a still of it. The row
+                of pills that used to name the three beats is gone: it sat over
+                the phone's own foot and read as chrome. */}
+            <div className="absolute bottom-0 right-2 z-10 lg:right-6">
               <IPhone model="15-pro" scale={phone} screenBg="#f5fafa"
                 label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="shrink-0">
                 <PhoneApp/>
               </IPhone>
-              <ul aria-hidden className="m-0 hidden list-none flex-wrap justify-center gap-1.5 p-0
-                sm:flex">
-                {BEATS.map(b => (
-                  <li key={b} className="rounded-chip border border-rule bg-card px-2 py-1 text-fine
-                    leading-none text-ink-2">
-                    {b}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* -- the dark chapter -----------------------------------------------
+      {/* -- the problem -----------------------------------------------------
+          This band used to be near-black, as a chapter break. Spec 0c retires
+          that: no saturated or dark ground on a whole section. It is paper now,
+          and the break from the band above is carried by the ground changing
+          from aqua to paper and by the rule between them.
+
           The heading sits on the band, which spec 2 allows it to. Everything
           else here is in a container: the frames, the small print, and the
           national figures. Every figure in ProblemStats is external and
           sourced; the rules for them live in charts/problem.jsx and are not
           this page's to bend. */}
-      <section id="problem" className="border-t border-rule bg-ink">
+      <section id="problem" className="border-t border-rule bg-paper">
         <div className="wrap py-5 lg:py-7">
-          {/* The eyebrow is a chip rather than a line of mono on the band: it
-              is the one warm thing on the darkest band on the page and it is
-              a container, which the band's rules require of it. */}
-          <p className="w-fit rounded-chip bg-coral-wash px-3 py-0.5 font-mono text-ui font-bold
-            tracking-[0.005em] text-coral-ink">
+          {/* A line of type, not a capsule. Spec 0c: a rounded-full enclosure
+              around letterspaced type above a headline is the mark of a
+              generated page, and this band had one. */}
+          <p className="font-body text-ui font-semibold text-accent-ink">
             Who this is about
           </p>
           <RevealLines as="h2"
             lines={['Most teenagers who are struggling', 'are not being reached.']}
             className="mt-2 max-w-[30ch] font-display text-sub font-bold leading-[1.12]
-              tracking-tight text-paper"/>
+              tracking-tight text-ink"/>
 
           {/* The three frames are sized so the column they make comes out
               within 30px of ProblemStats beside it. It used to run 125px
@@ -518,84 +480,67 @@ export function Overview({ go }) {
           <div className="mt-3 grid gap-3 lg:mt-4
             lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:gap-4">
             <div className="flex flex-col gap-3 lg:gap-4">
-              <ScrollIn className={PANEL_INK}>
+              <ScrollIn className={PANEL}>
                 <div className="h-[170px] overflow-hidden lg:h-[176px]">
                   <Frame photo="clinic-talk" eager={EAGER.has('clinic-talk')}
                     alt={`A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`}/>
                 </div>
                 {/* The one place the page says what the photographs are. */}
-                <p className="px-3.5 pb-3.5 pt-3 text-fine text-ruling">
+                <p className="px-3.5 pb-3.5 pt-3 text-fine text-ink-3">
                   Stock photographs of models. Nobody shown uses MindMap.
                 </p>
               </ScrollIn>
 
               {PROBLEM_FRAMES.map((f, i) => (
-                <ScrollRow key={f.photo} index={i} className={cn(PANEL_INK, f.h)}>
+                <ScrollRow key={f.photo} index={i} className={cn(PANEL, f.h)}>
                   <Frame photo={f.photo} alt={f.alt} eager={EAGER.has(f.photo)}/>
                 </ScrollRow>
               ))}
             </div>
 
-            <ScrollIn className={cn(PANEL_INK, 'p-4')}>
+            <ScrollIn className={cn(PANEL, 'p-4')}>
               <ProblemStats/>
             </ScrollIn>
           </div>
         </div>
       </section>
 
-      {/* -- getting in, and who it is for -----------------------------------
-          One band, two rows of three, on the warmest ground the palette has.
-          Both rows run the photograph down the side of the card from `sm` up
-          rather than across its top: the frame is then the full height of the
-          card, which is 200px and more rather than 124px, and the card is
-          shorter because its picture and its words share a line. That is the
-          mixed scale spec 5 asks for and about 130px of band height back.
+      {/* -- three ways to start ---------------------------------------------
+          Two rows of three used to sit inside one band on one ground, and they
+          read as a single set of six. They are two different questions, so they
+          are two bands on two grounds now, each with its own heading.
 
-          BOTH ROWS ARE AN EVEN THREE UP. The first row used to run 1.35fr /
-          1fr / 1fr with a wider picture on the lead card, to say that the
-          phone route is the only one a stranger can use in the next minute.
-          Rendered, it did not say that: it said one card had been laid out
-          differently from its two siblings, directly above a second row of
-          three equal cards doing the same job. Spec 5 allows mixed scale
-          across a page, not inside one row of three equals, and the two
-          narrow cards were paying for it in four-line wraps. The lead is
-          still marked, by the one device that costs no layout: the accent
-          rule down its left edge, which the other two do not carry. */}
-      <Section name="Getting started" tone="card" id="screens" className="bg-sun-wash" tight>
+          Each card is a photograph and three lines. The drawing that used to
+          ride beside the photograph, and the coloured capsule that used to
+          carry the caveat, are both gone: a card that says the same thing three
+          ways is not clearer, it is louder. The caveat is a line of type. */}
+      <Section name="Getting started" tone="card" id="screens" className="bg-card" tight>
         <SectionHead>Three Ways to Start</SectionHead>
         <div className="mt-3 grid auto-rows-fr gap-3 lg:grid-cols-3 lg:gap-4">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(d.go)}
                 className={cn('flex h-full flex-col p-0 sm:flex-row', d.lead && 'border-l-accent')}>
-                {/* One width for all three: the picture is the same share of
-                    every card, so the row reads as one decision. */}
-                <span className="relative block h-[150px] w-full shrink-0 overflow-hidden
+                {/* 190px, not 150: a frame under 170 cuts a face, which is the
+                    defect the owner photographed. The focal point for each
+                    photograph comes from lib/photos.js, not from this file. */}
+                <span className="relative block h-[190px] w-full shrink-0 overflow-hidden
                   sm:h-auto sm:w-[40%] sm:self-stretch">
                   <Frame photo={d.photo} alt={d.alt} eager={EAGER.has(d.photo)}
                     className="absolute inset-0"/>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col p-3.5">
-                  {/* The drawing sits beside the photograph rather than over
-                      it: the card is one object that says the same thing
-                      twice, once as a frame of a person and once as a
-                      diagram of the thing they would use. */}
-                  <span aria-hidden className={cn('grid w-fit place-items-center rounded-panel border',
-                    'border-rule px-2 py-1', d.badge)}>
-                    {d.art}
-                  </span>
-                  <span className="mt-2 block font-display text-row font-bold leading-tight text-ink">
+                  <span className="block text-fine font-semibold text-ink-3">{d.note}</span>
+                  <span className="mt-1 block font-display text-row font-bold leading-tight text-ink">
                     {d.title}
                   </span>
                   <span className="mt-1 block text-meta leading-[1.35] text-ink-2">
                     {d.gets}
                   </span>
-                  <span className="mt-auto flex items-center gap-2 pt-3">
-                    <span className={cn('rounded-chip px-2.5 py-1 font-display text-fine font-bold',
-                      d.chip)}>
-                      {d.note}
-                    </span>
-                    <ArrowRight aria-hidden className="size-[1.05rem] text-accent transition-transform
+                  <span className="mt-auto flex items-center gap-2 pt-3 font-display text-meta
+                    font-bold text-accent">
+                    Open
+                    <ArrowRight aria-hidden className="size-[1.05rem] transition-transform
                       duration-200 groupHoverOnly:translate-x-1.5"/>
                   </span>
                 </span>
@@ -603,8 +548,14 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
+      </Section>
 
-        <RowLabel className="mt-5 lg:mt-6">Who It Is For</RowLabel>
+      {/* -- the three audiences ----------------------------------------------
+          Its own band, on its own ground, with its own heading. The audience
+          used to be named in a monospace capsule in a colour of its own, which
+          is the element the owner singled out by name. It is a line of type. */}
+      <Section name="Audiences" tone="card" className="bg-aqua" tight>
+        <SectionHead>Audiences</SectionHead>
         <div className="mt-3 grid auto-rows-fr gap-3 lg:grid-cols-3 lg:gap-4">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
@@ -613,7 +564,7 @@ export function Overview({ go }) {
                   border border-rule bg-card text-left touch-manipulation sm:flex-row
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
                   motion-safe:active:scale-[0.99] hoverOnly:border-accent">
-                <span className="relative block h-[150px] w-full shrink-0 overflow-hidden
+                <span className="relative block h-[190px] w-full shrink-0 overflow-hidden
                   sm:h-auto sm:w-[36%] sm:self-stretch">
                   <Frame photo={s2.photo} alt={s2.alt}
                     className="absolute inset-0 motion-safe:transition-transform
@@ -621,11 +572,8 @@ export function Overview({ go }) {
                       motion-safe:groupHoverOnly:scale-[1.02]"/>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col p-3.5">
-                  <span className={cn('w-fit rounded-chip px-2.5 py-1 font-mono text-fine font-bold',
-                    'tracking-[0.005em]', s2.chip)}>
-                    {s2.who}
-                  </span>
-                  <span className="mt-2 block font-display text-row font-bold leading-[1.15]
+                  <span className="block text-fine font-semibold text-ink-3">{s2.who}</span>
+                  <span className="mt-1 block font-display text-row font-bold leading-[1.15]
                     tracking-tight text-ink">
                     {s2.title}
                   </span>
@@ -649,7 +597,7 @@ export function Overview({ go }) {
           The four promises used to be four hairline rows on the tint. They are
           one card, with the photograph as its top edge at the height spec 5
           asks of a frame inside a card, against the figure that proves them. */}
-      <Section name="Privacy" tone="card" className="bg-sky-wash" tight>
+      <Section name="Privacy" tone="card" className="bg-card" tight>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-4">
           <div>
             <SectionHead>Student Privacy</SectionHead>
@@ -675,7 +623,7 @@ export function Overview({ go }) {
           two sets of padding and two single-column grids; the limits are a
           promise about the same design decisions the cards beside them cite,
           and this leaves the page with exactly one ink band. */}
-      <Section name="Evidence" tone="paper" className="bg-lilac-wash" tight>
+      <Section name="Evidence" tone="paper" className="bg-aqua-2" tight>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:gap-4">
           <div>
             {/* The link rides the heading line. As its own row under the cards
@@ -698,7 +646,7 @@ export function Overview({ go }) {
                     {/* The source on its own ground. Four identical white
                         rectangles read as one block; two tones per card is
                         what separates the claim from what it rests on. */}
-                    <p className="mt-auto border-t border-rule bg-aqua-2 px-3.5 py-2 font-mono
+                    <p className="mt-auto border-t border-rule bg-aqua-2 px-3.5 py-2
                       text-fine leading-[1.4] text-ink-3">
                       {e.cite}
                     </p>

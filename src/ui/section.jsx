@@ -26,7 +26,7 @@ export function Section({ name, tone = 'paper', id, className, children, bleed =
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
       <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-5 lg:py-7' : 'py-7 lg:py-10')}>
         {name && (
-          <p className={cn('font-mono text-body font-bold tracking-[0.005em]', NAME[tone])}>{name}</p>
+          <p className={cn('font-body text-ui font-semibold', NAME[tone])}>{name}</p>
         )}
         {children}
       </div>

@@ -1,6 +1,6 @@
 import { TNAM_WEIGHTS as W } from './tnam-weights.js'
 
-/* The Mind Score model: a Temporal Neural Additive Model (T-NAM).
+/* The Mind Score network: a Temporal Neural Additive Model (T-NAM).
  *
  * Inputs are the wearer's readings as z-scores against their own baseline, one
  * per signal. The logit is a bias plus one learned curve per signal plus one
@@ -12,7 +12,7 @@ import { TNAM_WEIGHTS as W } from './tnam-weights.js'
  *
  * A personal calibration layer sits on top: one gain per curve, one on the
  * temporal term, one offset, fitted from the person's own check-ins. On 20
- * new people under a stressor the model never saw, eight signal-triggered
+ * new people under a stressor the network never saw, eight signal-triggered
  * check-ins took it from AUROC 0.78 to 0.95.
  *
  * Same port as src/engine/neural.ts in the Conrad and CAC repos. */
@@ -73,7 +73,7 @@ function gru(seq) {
 }
 
 /* Forward pass. `x` is the input vector in FEATURES order (missing signal = 0,
- * which is "at your usual" and what the model was trained to tolerate);
+ * which is "at your usual" and what the network was trained to tolerate);
  * `history` is the input vectors of the preceding windows, oldest first. */
 export function forward(x, history = []) {
   const contributions = {}

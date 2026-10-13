@@ -1,5 +1,5 @@
 import React from 'react'
-import { PHOTOS } from '../lib/photos'
+import { Frame } from '../ui/frame'
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { PatchStack } from '../charts/patchstack'
@@ -16,28 +16,24 @@ import { SCORE, SCORE_RANGE } from '../lib/terms'
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
-/* COLOUR, this pass. The page ran mist, aqua-2, white, white, ink: five
- * near-white teals and a dark band, which is the monotony the owner named on
- * the twelve reference screens. It now runs coral, white, sun, ink, with the
- * four signal cards carrying one hue each in the rainbow's own order, so the
- * set reads as four different things rather than one tint four times.
- *
- * Every value is from tailwind.config.js and every pairing was measured: each
- * hue's `ink` clears 4.5 : 1 on paper, card and all six washes, and the hue
- * `DEFAULT` is used only as a left edge against a white card, where the
- * weakest of the four, mint, is 3.22 : 1 against the 3 : 1 a non-text graphic
- * owes. No hue touches body text, which stays ink and ink-2. The signal's own
- * glow still draws its trace, so colour is never the only thing naming it: the
- * name is printed under every trace. */
+/* COLOUR, per spec 0d rule 1: green, white, turquoise, and nothing else. The
+ * page used to run coral, white, sun and a dark ink band, which spent three
+ * colours the palette no longer has and put a saturated ground under a whole
+ * section. Grounds are now accent-wash, card, aqua-2, paper, which is four
+ * near-whites a reader can tell apart, and the four signal cards are told
+ * apart by their name, their order and a ground step rather than by a hue
+ * each. The signal's own trace still draws in the sensor's colour, so the
+ * rainbow the dial is built on is unbroken, and the name is printed under
+ * every trace so colour is never the only thing naming a signal. */
 /* Nobody pictured anywhere on this site wears the patch, because no unit has
    been built or worn. This frame is a licensed stock photograph with a drawing
    of the oval placed on it, and its alt text says exactly that. */
 const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
   + 'of the patch placed on the outer upper arm to show where it would sit.'
 
-const SIGNAL_WASH = {
-  heart: 'bg-coral-wash', sweat: 'bg-sun-wash', temp: 'bg-mint-wash', move: 'bg-sky-wash',
-}
+/* One ground step per signal, in the rainbow's own order. A step, not a hue:
+   the four cards have to read as four things and the palette has one colour. */
+const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
 
 /* Claims here are limited to what the build is. Battery, charge time,
    adhesive, wear duration, electrode build, part numbers, ingress, weight and
@@ -186,17 +182,19 @@ export function PatchPage() {
     <main>
       {/* No border-b: the <Section> below supplies border-t, and two meeting
           hairlines render as a 2px rule. */}
-      <section className="relative overflow-hidden bg-coral-wash">
+      <section className="relative overflow-hidden bg-accent-wash">
         <div className="wrap relative py-7 lg:py-10
           lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-center lg:gap-8">
           <div className="min-w-0">
-          <p className="inline-flex rounded-chip border border-rule bg-card px-2.5 py-1
-            font-mono text-ui font-bold tracking-[0.005em] text-coral-ink">The patch</p>
+          {/* An eyebrow is a line of type, per spec 0d rule 2. The capsule it
+              replaced -- rounded-full, monospace, bold, in a hue -- is the
+              mark the owner named as vibe-coded slop. */}
+          <p className="font-body text-ui font-semibold text-accent-ink">The patch</p>
           {/* The line break is explicit so a 390px column cannot hyphen-break
               "sticker-sized" across two lines. */}
           <RevealLines as="h1"
             className="mt-2 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
-            lines={['A sticker-sized', 'patch for the upper arm.']}/>
+            lines={['A Sticker-Sized Patch', 'for the Upper Arm']}/>
           <ScrollIn className="mt-4">
             {/* A container, not text on the tinted band. */}
             <Card className="max-w-[46ch] p-3.5">
@@ -236,11 +234,17 @@ export function PatchPage() {
               edge. Raising it can. */}
           <figure className="m-0 mt-6 lg:mt-0">
             <Parallax2D distance={52}>
-              <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
-                decoding="async"
-                alt={ARM_ALT}
-                className="h-[230px] w-full rounded-panel border border-rule object-cover
-                  sm:h-[300px] lg:h-[380px]"/>
+              {/* Heights are the ones patch-worn survives: its face sits at the
+                  top edge and the arm low, so the frame never runs wider than
+                  1.8 : 1 at any breakpoint, and never under the 176px floor
+                  spec 0d rule 4 puts under a frame holding a face. */}
+              {/* The width cap from sm to lg is what keeps patch-worn inside
+                  the 1.8 : 1 its subject survives: between 768 and 1023 this
+                  column is the full width of the page. */}
+              <div className="h-[240px] overflow-hidden rounded-panel border border-rule
+                sm:mx-auto sm:h-[340px] sm:max-w-[600px] lg:h-[380px] lg:max-w-none">
+                <Frame photo="patch-worn" alt={ARM_ALT} eager/>
+              </div>
             </Parallax2D>
           </figure>
         </div>
@@ -249,12 +253,15 @@ export function PatchPage() {
       {/* Plain-language names only; EDA / PPG / nRF52840 belong on the signal
           pages. */}
       <Section tone="card" tight>
-        <SectionHead className="mt-0 max-w-[24ch]">Four signals off the skin</SectionHead>
+        <SectionHead className="mt-0 max-w-[24ch]">Four Signals Off the Skin</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
-              <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
-                <div className={cn('px-3 py-3 lg:px-4', SIGNAL_WASH[s2.id] || 'bg-mist/70')}>
+              {/* No coloured card edge: the heart signal's own red as a 3px
+                  rule reads as an alarm, and crit is the only red this site
+                  allows. The trace keeps the sensor's colour. */}
+              <Card className="flex h-full flex-col">
+                <div className={cn('px-3 py-3 lg:px-4', SIGNAL_GROUND[i] || 'bg-aqua')}>
                   <SignalTrace kind={s2.id} className="h-12"/>
                 </div>
                 <dl className="m-0 px-3 pb-3 pt-2 lg:px-4 lg:pb-3.5">
@@ -280,8 +287,8 @@ export function PatchPage() {
           The rail exists because the figure is one tall centred column and a
           wide section is owed two. It is a second column of real values, not
           decoration: every row is a number this project has settled on. */}
-      <Section name="Inside the patch" tone="card" tight className="bg-sun-wash">
-        <SectionHead className="mt-0 max-w-[26ch]">Five layers of one oval</SectionHead>
+      <Section tone="card" tight className="bg-aqua-2">
+        <SectionHead className="mt-0 max-w-[26ch]">Five Layers of One Oval</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
           <Card className="min-w-0 p-3.5 lg:p-5">
@@ -294,14 +301,14 @@ export function PatchPage() {
             {/* Where the oval goes, at the one scale the exploded figure beside
                 it cannot show: a human arm. A licensed stock frame of a model,
                 carrying no patch and no drawing of one. */}
-            <img src={PHOTOS['student-basketball']} width="1600" height="1066" loading="eager"
-              decoding="async"
-              alt="A teenager in a sleeveless vest dribbling a basketball on an outdoor court"
-              className="block h-[128px] w-full max-w-none border-b border-rule object-cover
-                object-[50%_38%] lg:h-[144px]"/>
+            <div className="h-[184px] border-b border-rule sm:h-[240px] md:h-[300px]
+              lg:h-[200px]">
+              <Frame photo="student-basketball" eager
+                alt="A teenager in a sleeveless vest dribbling a basketball on an outdoor court"/>
+            </div>
             <div className="p-3.5 lg:p-4">
             <h3 className="font-display text-row font-bold leading-tight text-ink">
-              Settled so far
+              Settled So Far
             </h3>
             {/* Two columns on a phone and one in the lg rail: five stacked
                 rows is 170px of mostly empty line on a 390px screen, and the
@@ -312,7 +319,7 @@ export function PatchPage() {
                   className="flex items-baseline gap-3 border-t border-rule py-1.5
                     first:border-t-0 lg:[&:nth-child(2)]:border-t">
                   <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
-                  <dd className="m-0 shrink-0 font-mono text-row font-bold tabular-nums text-ink">
+                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
                     {f.v}
                     <span className="ml-1.5 font-body text-fine font-normal text-ink-3">{f.u}</span>
                   </dd>
@@ -333,10 +340,10 @@ export function PatchPage() {
                 holes in it. Chips, not a sentence: this page carries no
                 paragraphs. */}
             <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="font-mono text-fine text-ink-3">Still open, nothing claimed</p>
+              <p className="text-fine font-semibold text-ink-3">Not yet settled</p>
               <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
                 {OPEN.map(o => (
-                  <li key={o} className="rounded-chip border border-rule bg-paper px-2.5 py-[3px]
+                  <li key={o} className="rounded-field border border-rule bg-paper px-2.5 py-[3px]
                     text-fine text-ink-2">
                     {o}
                   </li>
@@ -349,11 +356,15 @@ export function PatchPage() {
       </Section>
 
       {/* The isolate toggles must stay beside the model, not under it. */}
+      {/* A near-white ground, per spec 0c rule 1: bg-ink is for marks, bars
+          and strokes, never for a whole band. The one dark plate left on this
+          page is the small panel behind each part drawing, whose strokes are
+          drawn for it. */}
       <section ref={band} id="model" data-anchor
-        className="border-t border-rule bg-ink text-paper">
+        className="border-t border-rule bg-paper">
         <div className="wrap py-8 lg:py-12">
-          <SectionHead tone="ink" className="mt-0 max-w-[26ch]">
-            The three parts of a patch
+          <SectionHead className="mt-0 max-w-[26ch]">
+            The Three Parts of a Patch
           </SectionHead>
           {/* items-stretch: the rail's lg:h-full sizes from the figure. */}
           {/* With the model, two columns: the figure and a rail of three cards
@@ -385,7 +396,7 @@ export function PatchPage() {
               {/* The honesty line is the hero's, once. This caption says what
                   the figure is, and when the model is down it says in one line
                   why the drawing is standing in for it. */}
-              <figcaption className="mt-2.5 max-w-[70ch] text-fine text-mist">
+              <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
                 {down
                   ? 'The interactive model needs hardware acceleration this browser did not provide, so the drawing of the same patch stands in its place.'
                   : 'A model and a drawing, not a photograph.'}

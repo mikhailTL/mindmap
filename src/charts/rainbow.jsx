@@ -17,7 +17,10 @@ import { cn } from '../lib/utils'
  *    spec section 7 says they do not belong, and the parent screen had to
  *    suppress them with a CSS selector written against this file's internals
  *    (`[&_g:has(>_.mm-rain)]:hidden`). That selector breaks silently the day
- *    `mm-rain` is renamed. Pass `weather={false}` instead.
+ *    `mm-rain` is renamed. Pass `weather={false}` instead. The clouds
+ *    themselves are flat shapes now rather than gradients, so a call site that
+ *    passed `weather={false}` only to stay inside the no-gradient rule can
+ *    turn them back on.
  *
  * 2. THE DIAL HAS A SCALE. It had four radii and a usual-day mark and nothing
  *    else: no axis, no tick, no labelled end, so a band's fill could be
@@ -91,7 +94,7 @@ function Axis({ font }) {
         {MAJORS.map(v => <path key={v} d={ray(v, 8)}/>)}
         <path d={ray(50, 3)}/>
       </g>
-      <g className="font-mono" fill={INK3} fontSize={font.toFixed(2)} textAnchor="middle">
+      <g fill={INK3} fontSize={font.toFixed(2)} textAnchor="middle">
         <text x="41.2" y={(49.2 + font * 0.36).toFixed(1)}>25</text>
         <text x="160" y="13">50</text>
         <text x="278.8" y={(49.2 + font * 0.36).toFixed(1)}>75</text>
@@ -105,8 +108,24 @@ function Axis({ font }) {
    band. A cloud is unequal circles on a flat slab drawn twice: pass one
    strokes and fills every shape in the edge colour, painting the union's outer
    boundary only; pass two fills the same shapes on top so overlap seams cannot
-   show. edge #93a6ab; rain #2f7fd0, 3.94 on the plate. */
-const SKY = { edge:'#93a6ab', rain:'#2f7fd0' }
+   show.
+   FLAT, AND IN THE GREEN SYSTEM. Both clouds were linearGradient fills, the
+   fair one white to the plate value and the rain one a slate #7d8b96 to
+   #4c5967, and the rain was a blue #2f7fd0. Spec 0d allows green, white and
+   turquoise only, and a gradient is on the AI-tell list, so each cloud is one
+   flat fill inside one flat rim now and the rain is `beam`, the turquoise the
+   palette already nominates for drawing rain. One fill per shape, the same
+   idiom as every other drawing in this directory.
+   Measured, on card #ffffff and on the plate #e3eff2: rim `ruling` #8eb0b6
+   2.32 and 2.06, rain `beam` #1d8fb0 3.74 and 3.33, the fair cloud's own rim
+   against its white fill 2.32. None of these is text and none carries a value
+   on its own, so 3 : 1 is the only floor that applies and only the rain owes
+   it. The overcast cloud is `ink-3` #3c6a74 inside `ink-2` #1f5560: 5.99 on
+   card, and it is the one cloud that has to read as weather at a glance. */
+const SKY = { rain:'#1d8fb0' }
+/* fair: card inside ruling. overcast: ink-3 inside ink-2. */
+const FAIR = { fill:'#ffffff', rim:'#8eb0b6' }
+const OVERCAST = { fill:'#3c6a74', rim:'#1f5560' }
 
 /* A cloud is drawn in its own 96 x 30 box, base line at the box bottom, so it
    is placed by base position and foot width alone. Every circle top is at or
@@ -119,7 +138,7 @@ const PUFFS = {
 }
 const SLAB = { x:4, y:22, w:88, h:12, r:6 }
 
-function Cloud({ cx, base, kind, id, rim = 1.2 }) {
+function Cloud({ cx, base, kind, tone, rim = 1.2 }) {
   /* One <g> per pass, and the shapes are identical in both. */
   const shapes = props => (
     <>
@@ -129,8 +148,8 @@ function Cloud({ cx, base, kind, id, rim = 1.2 }) {
   )
   return (
     <g transform={`translate(${cx - CLOUD_W / 2} ${base - CLOUD_H})`}>
-      <g fill={SKY.edge} stroke={SKY.edge} strokeWidth={rim}>{shapes({})}</g>
-      <g fill={`url(#${id})`}>{shapes({})}</g>
+      <g fill={tone.rim} stroke={tone.rim} strokeWidth={rim}>{shapes({})}</g>
+      <g fill={tone.fill}>{shapes({})}</g>
     </g>
   )
 }
@@ -142,29 +161,14 @@ function Cloud({ cx, base, kind, id, rim = 1.2 }) {
 const FOOT = { calm: 52, peak: 268 }
 const BASE_Y = 184
 
+/* No <defs> and no per-instance ids any more: with both clouds flat there is
+   nothing to reference, which also removes the two dials-on-one-page hazard
+   the gradient version had to guard against. */
 export function ArchWeather() {
-  /* Gradient ids must be per-instance: two dials share a page on some routes
-     and the second <defs> would silently lose to the first. */
-  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
-  const calm = `mm-calm-${uid}`, peak = `mm-peak-${uid}`
   return (
     <g aria-hidden style={{ pointerEvents:'none' }}>
-      <defs>
-        {/* userSpaceOnUse, not objectBoundingBox: with the default each of
-            the seven shapes gets its own copy of the ramp scaled to its own
-            box and prints as a separately shaded disc. Stops are the cloud's
-            own y range. The white cloud's ramp ends at the old PLATE value. */}
-        <linearGradient id={calm} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
-          <stop offset="0" stopColor="#ffffff"/>
-          <stop offset="1" stopColor={PLATE}/>
-        </linearGradient>
-        <linearGradient id={peak} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="184">
-          <stop offset="0" stopColor="#7d8b96"/>
-          <stop offset="1" stopColor="#4c5967"/>
-        </linearGradient>
-      </defs>
-      <Cloud cx={FOOT.calm} base={BASE_Y} kind="calm" id={calm} rim={2}/>
-      <Cloud cx={FOOT.peak} base={BASE_Y} kind="peak" id={peak}/>
+      <Cloud cx={FOOT.calm} base={BASE_Y} kind="calm" tone={FAIR} rim={2}/>
+      <Cloud cx={FOOT.peak} base={BASE_Y} kind="peak" tone={OVERCAST}/>
       <g className="mm-rain" stroke={SKY.rain} strokeLinecap="round">
         <line x1="256" y1="187" x2="253" y2="196" strokeWidth="2.6"/>
         <line x1="272" y1="189" x2="269" y2="199" strokeWidth="3"/>
@@ -248,7 +252,24 @@ function UsualMark({ at }) {
   )
 }
 
-export function RainbowDial({ score, usual, rings, onPick, picked, size = 320,
+/* The default was 320, which on a 390 phone is the full column and makes the
+   score card alone most of a screen. 272 is the step down spec 0d section 6
+   asks for; the interior half-disc still gives ~129px for three digits, where
+   they need ~87, and axisFont holds the scale numbers at ~13px. Call sites
+   that pass a size are unaffected.
+
+   A PHONE CEILING WAS TRIED HERE AND TAKEN BACK OUT, which the next worker
+   should know before trying it again. Six call sites pass their own size, from
+   248 up to 430, and on a 390 phone the larger ones are the whole column:
+   capping them below 640px is the obvious way to bring the students Today band
+   under spec 0e section 14's screen and a half. It cannot be done from inside
+   this component. views/Intro.jsx overlays its own svg on this one at the same
+   320 x 232 viewBox and points an arrow at the usual-day mark BY COORDINATE,
+   and that overlay is sized by Intro's own wrapper rather than by this one, so
+   a dial narrower than the size the call site asked for leaves the arrow
+   pointing at nothing on every phone load of the walkthrough. The size has to
+   come down at the call site, where the overlay is, not here. */
+export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
   plate = false, weather = true, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
@@ -305,10 +326,10 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 320,
             number as well as their word: the scale is labelled, not implied. */}
         <span aria-hidden className="absolute bottom-[2.5%] left-[15%] -translate-x-1/2
           whitespace-nowrap text-tick text-ink-3">
-          <b className="font-mono font-normal text-ink-2">0</b> calm</span>
+          <b className="font-normal text-ink-2">0</b> calm</span>
         <span aria-hidden className="absolute bottom-[2.5%] left-[85%] -translate-x-1/2
           whitespace-nowrap text-tick text-ink-3">
-          <b className="font-mono font-normal text-ink-2">100</b> peak</span>
+          <b className="font-normal text-ink-2">100</b> peak</span>
       </div>
       {usual != null && (
         <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
@@ -339,7 +360,7 @@ export function RainbowKey({ rings, picked, onPick, className }) {
               <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">{s.name}</span>
               {/* the unit beside the figure, never under it */}
               <span className="flex shrink-0 items-baseline gap-1.5">
-                <span className="font-mono text-num font-medium tabular-nums leading-none text-ink">
+                <span className="text-num font-medium tabular-nums leading-none text-ink">
                   {r.value}</span>
                 <span className="text-fine text-ink-3">of 100</span>
               </span>
@@ -367,13 +388,10 @@ export function SensorTrace({ data, color, h = 96, className }) {
   return (
     <svg viewBox={`0 0 ${W} ${h}`} aria-hidden preserveAspectRatio="none"
       className={cn('block h-24 w-full', className)}>
-      <defs>
-        <linearGradient id={`mm-fill-${color.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.16"/>
-          <stop offset="100%" stopColor={color} stopOpacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d={`${d} L${W - p} ${h} L${p} ${h} Z`} fill={`url(#mm-fill-${color.slice(1)})`}/>
+      {/* One flat wash under the line, not a ramp: no gradient anywhere in
+          this directory. The area is decoration over the line that carries
+          the values, so it owes no contrast floor of its own. */}
+      <path d={`${d} L${W - p} ${h} L${p} ${h} Z`} fill={color} fillOpacity="0.12"/>
       <path d={d} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       <circle cx={last[0]} cy={last[1]} r="4" fill={color} vectorEffect="non-scaling-stroke"/>
@@ -409,7 +427,7 @@ export function Bars({ data, color, unit = 'class period', className }) {
         <div aria-hidden className="relative w-7 shrink-0" style={{ height: PLOT_H }}>
           {BAR_TICKS.map(t => (
             <span key={t} style={{ bottom: `${t}%` }}
-              className="absolute right-0 translate-y-1/2 font-mono text-fine tabular-nums text-ink-3">
+              className="absolute right-0 translate-y-1/2 text-fine tabular-nums text-ink-3">
               {t}
             </span>
           ))}
@@ -431,7 +449,7 @@ export function Bars({ data, color, unit = 'class period', className }) {
                   <span style={{ height: `${d.v}%`, background: color }}
                     className="block w-full max-w-[34px] rounded-t-xs transition-[height] duration-500"/>
                   <span style={{ bottom: `${d.v}%` }}
-                    className={cn('absolute left-1/2 mb-1 -translate-x-1/2 font-mono text-fine',
+                    className={cn('absolute left-1/2 mb-1 -translate-x-1/2 text-fine',
                       'tabular-nums', d.v === hi ? 'font-medium text-ink' : 'text-ink-2')}>
                     {d.v}
                   </span>
@@ -442,7 +460,7 @@ export function Bars({ data, color, unit = 'class period', className }) {
           <div aria-hidden className="mt-1.5 flex gap-1.5">
             {data.map(d => (
               <span key={d.label}
-                className="flex-1 text-center font-mono text-fine tabular-nums text-ink-3">
+                className="flex-1 text-center text-fine tabular-nums text-ink-3">
                 {d.label}
               </span>
             ))}
@@ -451,7 +469,7 @@ export function Bars({ data, color, unit = 'class period', className }) {
       </div>
       <p className="mt-1.5 text-fine text-ink-3">
         Dashed: this window&rsquo;s average,{' '}
-        <b className="font-mono font-normal tabular-nums text-ink-2">{mean.toFixed(1)}</b>.
+        <b className="font-normal tabular-nums text-ink-2">{mean.toFixed(1)}</b>.
       </p>
     </figure>
   )
@@ -477,7 +495,7 @@ export function RangeBar({ band, color, className }) {
             <span aria-hidden style={{ left: `${v}%` }}
               className="absolute top-[14px] block h-[26px] w-px bg-ink-3"/>
             <span aria-hidden style={{ left: `${v}%` }}
-              className={cn('absolute top-0 font-mono text-fine tabular-nums text-ink-3',
+              className={cn('absolute top-0 text-fine tabular-nums text-ink-3',
                 i === 0 ? '-translate-x-full pr-1' : 'pl-1')}>
               {v}
             </span>
@@ -485,7 +503,7 @@ export function RangeBar({ band, color, className }) {
         ))}
         <div className="absolute top-[15px] h-[24px] w-[5px] -translate-x-1/2 rounded-none"
           style={{ left: now + '%', background: color }}/>
-        <span className="absolute top-0 -translate-x-1/2 font-mono text-fine font-medium
+        <span className="absolute top-0 -translate-x-1/2 text-fine font-medium
           tabular-nums text-ink" style={{ left: Math.min(94, Math.max(6, now)) + '%' }}>{now}</span>
       </div>
       {/* the axis under it, ticked and numbered */}
@@ -495,7 +513,7 @@ export function RangeBar({ band, color, className }) {
             <span style={{ left: `${t}%` }}
               className="absolute top-0 block h-1.5 w-px -translate-x-1/2 bg-ink-3"/>
             <span style={{ left: `${t}%` }}
-              className={cn('absolute top-2 font-mono text-fine tabular-nums text-ink-3',
+              className={cn('absolute top-2 text-fine tabular-nums text-ink-3',
                 i === 0 ? 'translate-x-0' : t === 100 ? '-translate-x-full' : '-translate-x-1/2')}>
               {t}
             </span>
@@ -524,7 +542,7 @@ export function SensorDetail({ ring, onClose }) {
     <section ref={ref} tabIndex={-1} className="mt-8 border-t border-ink pt-5">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <h3 className="font-display text-row font-medium text-ink">{s.name}</h3>
-        <p className="m-0 font-mono text-stat font-medium leading-none tabular-nums text-ink">
+        <p className="m-0 text-stat font-medium leading-none tabular-nums text-ink">
           {ring.big}<span className="ml-1.5 text-meta text-ink-3">{s.unit}</span></p>
       </div>
       <SensorTrace className="mt-4" data={ring.series} color={s.glow || s.color}/>

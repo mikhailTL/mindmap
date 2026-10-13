@@ -64,12 +64,12 @@ src/
   charts/     every drawing: the score arch, the sensor traces, the 3D viewer,
               the problem statistics
   ui/         buttons, cards, section furniture, the logo
-  signals/    the scoring model and the generated readings behind it
+  signals/    the scoring network and the generated readings behind it
   survey/     the usability instrument, its store, and delivery
   lib/        design tokens, sensor definitions, shared vocabulary
   photos/     licensed photographs, imported so Vite content-hashes them
 api/          one serverless function, optional
-ml/           the model: training, evaluation, and the generated weights
+ml/           the network: training, evaluation, and the generated weights
 tools/        the scripts that produce and check what ships
 docs/         setup and design notes
 public/di/    the vendored 3D patch viewer (see below)
@@ -84,7 +84,7 @@ Two conventions worth knowing before editing:
   is invisible to anyone who has already visited. Going through Vite gives each
   file a content hash. `src/lib/photos.js` is the map.
 
-## The model
+## The network
 
 The daily reading is not a weighted formula. `src/signals/tnam.js` is a temporal
 neural additive model - one learned curve per signal, then a GRU over eight
@@ -92,7 +92,7 @@ four-minute windows, 4,572 parameters - running in the page with no server and
 no dependencies.
 
 `ml/` is how it was made, committed so the claim is checkable rather than
-asserted: `ml/tnam.py` is the model, `ml/research.py` is the run that produced
+asserted: `ml/tnam.py` is the network, `ml/research.py` is the run that produced
 the weights the browser loads, and `ml/results/` holds its output. On WESAD with
 leave-one-subject-out validation it reaches 0.997 AUROC against 0.887 for the
 formula it replaced, winning on 13 of 15 subjects (p = 0.0015).

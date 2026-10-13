@@ -11,7 +11,7 @@ import { cn } from '../../lib/utils'
  * reading screens hold xl:sticky columns, and a transform left on this wrapper
  * would make it their containing block instead of the viewport.
  *
- * Reduced motion keeps the fade — that is what reports the pane changed — and
+ * Reduced motion keeps the fade, which is what reports the pane changed, and
  * drops the travel. The universal rule in input.css collapses animation
  * duration rather than cancelling it, so the override is explicit and
  * !important, as .mm-pane's is. */
@@ -53,8 +53,10 @@ export const BackBar = React.forwardRef(function BackBar(
         <ArrowLeft aria-hidden className="size-4 shrink-0"/>
         {children}
       </button>
+      {/* No font-mono: design spec 0d section 2 bans a monospace label, and
+          `font-mono` resolves to the body face anyway. */}
       <span aria-hidden className="hidden rounded-field border border-rule px-1.5 py-0.5
-        font-mono text-fine text-ink-3 sm:inline">Esc</span>
+        text-fine text-ink-3 sm:inline">Esc</span>
     </div>
   )
 })

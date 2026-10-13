@@ -2,7 +2,7 @@ import React from 'react'
 import { SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Diverging bars off a neutral centre: one row per model term, right of the
+/* Diverging bars off a neutral centre: one row per network term, right of the
  * centre raised the score and left of it lowered it. Real DOM text, so a
  * label is the size it says it is at any width.
  *
@@ -10,7 +10,7 @@ import { cn } from '../lib/utils'
  * unstated length: there was no scale, so a reader could see which way a term
  * pushed but not how far, and the two bars either side of the line could not
  * be compared against anything. It carries a scale now: the track spans -1.00
- * to +1.00 in the model's own units, which are the units the figure column
+ * to +1.00 in the network's own units, which are the units the figure column
  * already printed, and the axis under the list names the five graduations and
  * both directions. Quarter grid lines at -0.50 and +0.50 let a bar be read to
  * the nearest quarter without the number.
@@ -20,7 +20,12 @@ import { cn } from '../lib/utils'
  * width. It is a real 1px element now, painted after the bar so the bar's
  * root sits on a visible baseline. ink-3 is 5.33 : 1 on paper and 5.61 on
  * card; these rules are non-text graphics and clear the 3 : 1 minimum at full
- * strength, and the quarter lines at 45% clear it against both grounds.
+ * strength. The quarter lines were `ink-3/45`, which the old note claimed
+ * cleared 3 : 1 and does not - it measures about 2.1 on card - so they are
+ * `rule` now, the flat gridline token the other charts in this directory use.
+ * They graduate a track whose ends and centre are numbered, so they carry no
+ * value of their own and owe no floor; the point of the change is that a flat
+ * token is measurable and a percentage of an ink is not.
  *
  * WIDTHS. Below sm the row was three stacked lines with the bar floating in
  * the middle of them. It is two lines now: the label owns the first, the bar
@@ -33,7 +38,7 @@ import { cn } from '../lib/utils'
  * NO EN DASH. The flat state is a filled circle and its own 0.00, never a
  * dash glyph: a harness counts U+2013 and U+2014 anywhere in the output. */
 
-/* The scale, in the model's units. -1 and +1 are where the call sites clamp,
+/* The scale, in the network's units. -1 and +1 are where the call sites clamp,
    so the track ends are the clamp and not an arbitrary round number. */
 const TICKS = [-1, -0.5, 0, 0.5, 1]
 /* Only the ends and the centre are numbered. The track is 204px at 390 and
@@ -57,12 +62,12 @@ function Track({ x }) {
     <span className="relative block h-[18px]">
       {[-0.5, 0.5].map(t => (
         <span key={t} aria-hidden style={{ left: `${PCT(t)}%` }}
-          className="absolute inset-y-0 block w-px bg-ink-3/45"/>
+          className="absolute inset-y-0 block w-px bg-rule"/>
       ))}
       <span aria-hidden style={{ width: `${Math.max(Math.abs(x), 0.012) * 50}%`,
         [x >= 0 ? 'left' : 'right']: '50%' }}
         className={cn('absolute top-px block h-4 rounded-sm',
-          up ? 'bg-warn' : down ? 'bg-calm' : 'bg-ink-3 opacity-45')}/>
+          up ? 'bg-warn' : down ? 'bg-accent' : 'bg-ruling')}/>
       {/* last, so the baseline stays visible through the bar's root */}
       <span aria-hidden
         className="absolute inset-y-0 left-1/2 block w-px -translate-x-1/2 bg-ink-3"/>
@@ -82,7 +87,7 @@ function Axis() {
             className="absolute top-0 block h-1.5 w-px -translate-x-1/2 bg-ink-3"/>
           {NUMBERED.includes(t) && (
             <span style={{ left: `${PCT(t)}%` }}
-              className={cn('absolute top-2 block whitespace-nowrap font-mono text-fine',
+              className={cn('absolute top-2 block whitespace-nowrap text-fine',
                 'tabular-nums text-ink-3',
                 t === -1 ? 'translate-x-0' : t === 1 ? '-translate-x-full' : '-translate-x-1/2')}>
               {t === 0 ? '0' : (t > 0 ? '+' : '') + t.toFixed(2)}
@@ -91,10 +96,10 @@ function Axis() {
         </React.Fragment>
       ))}
       <span className="absolute left-0 top-8 block whitespace-nowrap text-fine text-ink-3">
-        lowered it
+        lowered the score
       </span>
       <span className="absolute right-0 top-8 block whitespace-nowrap text-fine text-ink-3">
-        raised it
+        raised the score
       </span>
     </span>
   )
@@ -114,8 +119,8 @@ export function Diverge({ items }) {
               <Track x={it.x}/>
               {/* Shape as well as colour: a caret up, a caret down, or a dot
                   for a term that moved the score by under half a hundredth. */}
-              <span className={cn('whitespace-nowrap font-mono text-sec tabular-nums sm:text-right',
-                up ? 'text-warn' : down ? 'text-calm' : 'text-ink-3')}>
+              <span className={cn('whitespace-nowrap text-sec tabular-nums sm:text-right',
+                up ? 'text-warn' : down ? 'text-accent' : 'text-ink-3')}>
                 {up ? '▲' : down ? '▼' : '●'} {fmt(it.x)}
               </span>
             </li>
@@ -128,7 +133,7 @@ export function Diverge({ items }) {
         </li>
       </ul>
       <p className="mt-1.5 text-fine text-ink-3">
-        Model units, before the {SCORE_RANGE} scale. Each bar is that term against this
+        Network units, before the {SCORE_RANGE} scale. Each bar is that term against this
         person&rsquo;s own average.
       </p>
     </div>

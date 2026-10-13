@@ -11,11 +11,15 @@ import { sendResponse } from './mail'
 
 const KEY = 'mindmap.survey'
 const VERSION = 1
+
+/* The only value `visitor.name` ever holds. The survey collects no name; this
+ * fills a field the API's schema still has. */
+const ANON = 'Anonymous'
 const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
 
 /* Versioned shape: anything not v:1 is treated as absent rather than repaired
  * blind. Additive keys with a null default (sentAt, queuedAt) do NOT bump
- * VERSION — the spread in read() fills them in, and a bump would discard the
+ * VERSION, the spread in read() fills them in, and a bump would discard the
  * half-finished response already in a reviewer's browser. */
 const empty = () => ({ v: VERSION, visitor: null, answers: [], sentAt: null, queuedAt: null })
 
@@ -30,7 +34,14 @@ function read() {
     if (!raw) return empty()
     const parsed = JSON.parse(raw)
     if (!parsed || parsed.v !== VERSION || !Array.isArray(parsed.answers)) return empty()
-    return { ...empty(), ...parsed }
+    const next = { ...empty(), ...parsed }
+    /* A record written before 13 October may carry a name the survey used to
+     * ask for. It is dropped here, on the first read in every browser that has
+     * one, rather than left to be posted on the next answer. No VERSION bump:
+     * bumping would discard the answers alongside it, which is a worse trade
+     * than scrubbing one field in place. */
+    if (next.visitor) next.visitor = { ...next.visitor, name: ANON }
+    return next
   } catch {
     /* Private window, blocked site data, or a half-written record. */
     return empty()
@@ -85,18 +96,37 @@ export function getVisitor() {
   return state.visitor
 }
 
-/* An empty name is the Skip path and is still recorded: a null visitor would
- * make the gate ask again on the next page. */
-export function setVisitor(name) {
+/* The visitor record: an opaque id and a start time, and nothing else.
+ *
+ * THE ARGUMENT IS IGNORED, DELIBERATELY. The survey used to take a first name
+ * here. Teenagers answer it, and a first name beside an age band and a
+ * school-level band identifies a person in a way that none of the three does
+ * alone, so the field came off the panel on 13 October. The parameter is kept
+ * so that any caller still passing a name compiles and stores nothing; do not
+ * reconnect it. `name` stays in the record because api/responses.js reads
+ * `visitor.name`, and it is a constant, not an input.
+ *
+ * Called with no argument from NameGate's Start, which is the consent step:
+ * a null visitor would make the panel ask again on the next page. */
+export function setVisitor(_ignored) {
   load()
-  const clean = String(name ?? '').trim().slice(0, 60)
   state.visitor = {
     id: newId(),
-    name: clean || 'Anonymous',
+    name: ANON,
     startedAt: new Date().toISOString(),
   }
   commit()
   return state.visitor
+}
+
+/* A display handle for the responses page: the last six characters of the
+ * opaque id. It is not a name and cannot be turned into one. Printed so that
+ * two cards on the page can be told apart and an answer can be matched to the
+ * row it came from. */
+export function visitorCode(id) {
+  const s = String(id ?? '').replace(/[^a-zA-Z0-9]/g, '')
+  if (!s) return 'unknown'
+  return s.slice(-6).toLowerCase()
 }
 
 export function answersFor(page) {
@@ -104,7 +134,7 @@ export function answersFor(page) {
   return state.answers.filter(a => a.page === page)
 }
 
-/* Re-answering replaces rather than appends — completeness is decided by
+/* Re-answering replaces rather than appends, completeness is decided by
  * whether an answer for the question exists. */
 export function recordAnswer({ page, qid, kind, value, label }) {
   load()
@@ -142,9 +172,11 @@ function flatten(value) {
 
 export function exportRows() {
   load()
-  const v = state.visitor || { id: '', name: '' }
+  const v = state.visitor || { id: '', name: ANON }
   return state.answers.map(a => ({
-    visitorName: v.name,
+    /* Always the constant. The column is kept because existing spreadsheets
+     * expect this header in this position; it carries no personal data. */
+    visitorName: ANON,
     visitorId: v.id,
     page: a.page,
     questionId: a.qid,
@@ -238,8 +270,8 @@ export async function submitResponse({ force = false } = {}) {
       return 'sent'
     }
     /* Not delivered, not lost: stamped as queued and retried on every later
-     * visit and when the network returns. Both causes — an unclicked
-     * activation link, a relay that is down — are the owner's, not the
+     * visit and when the network returns. Both causes, an unclicked
+     * activation link, a relay that is down, are the owner's, not the
      * reviewer's, so this is not surfaced as a failure. */
     state.queuedAt = state.queuedAt || new Date().toISOString()
     commit()

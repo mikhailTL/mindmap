@@ -321,7 +321,7 @@ Source: <https://developer.apple.com/app-store/review/guidelines/>
     undercut the product: the score is defined against the wearer's own
     fourteen-day baseline captured the same way every time.
 * **OUTSTANDING, and the sharpest one in this section.** The repo collects a
-  System Usability Scale survey (`src/survey/`, `tools/survey-endpoint.gs`).
+  anonymous usability survey (`src/survey/`, `tools/survey-endpoint.gs`).
   If any version of the iOS app collects survey responses or readings from
   teenagers for research, 5.1.3(iii) and (iv) both bite: consent covering all
   five listed elements, from a parent or guardian because the participants are

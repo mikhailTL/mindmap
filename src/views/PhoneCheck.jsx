@@ -38,8 +38,8 @@ function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) 
 const dayKey = () => new Date().toISOString().slice(0, 10)
 
 /* The person's check-in answers, and the calibration fitted from them: one
-   gain per model curve, kept on this device like the baseline. Each answer is
-   the model's view of that reading plus what the person said; no raw signal. */
+   gain per network curve, kept on this device like the baseline. Each answer is
+   the network's view of that reading plus what the person said; no raw signal. */
 const CHECKINS = 'mindmap.phone.checkins'
 function loadCheckins() {
   try {
@@ -188,7 +188,7 @@ export function PhoneCheck() {
   }
 
   /* One answer becomes one label; the calibration is refitted on all of them.
-     A reading taken while moving is not labelled: the model did not score it. */
+     A reading taken while moving is not labelled: the network did not score it. */
   const answer = stressed => {
     if (!result?.model || result.held) return
     const next = [...checkins, { contributions: result.model.contributions, temporal: result.model.temporal, label: stressed ? 1 : 0, day: dayKey() }].slice(-200)
@@ -345,9 +345,9 @@ export function PhoneCheck() {
                     </p>
                   )}
 
-                  {/* The check-in. The answer is the label the model learns this
+                  {/* The check-in. The answer is the label the network learns this
                       person from: one gain per signal, refitted here, on this
-                      device. Eight answers took a lab-trained model from 0.78 to
+                      device. Eight answers took a lab-trained network from 0.78 to
                       0.95 on people it had never seen (see tnam-results.js). */}
                   {/* border-rule, not border-line: there is no `line` colour
                       in the config, so that rule never drew. */}

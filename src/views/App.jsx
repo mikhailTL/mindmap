@@ -6,7 +6,7 @@ import { Tour } from './Tour'
 import { Methods } from './Methods'
 import { Pairing } from './Pairing'
 import { Responses } from './Responses'
-import { Entry, ReplayTour } from './Entry'
+import { Entry } from './Entry'
 import { GetHelp, HelpBody, NotificationSettings, NotesJournal } from '../app'
 import { NameGate } from '../survey/NameGate'
 import { ReviewLauncher } from '../survey/Survey'
@@ -22,42 +22,79 @@ import { Pro } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { ModeToggle } from '../ui/mode-toggle'
+import { useMode, setMode } from '../lib/mode'
 import { Palette } from '../ui/palette'
 import { Logo } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Grid, PulseMark } from '../ui/marks'
+import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Grid,
+         PulseMark, Rule, Search, Wave } from '../ui/marks'
 import { ScrollProgress } from '../ui/motion'
 import { cn } from '../lib/utils'
 
-/* `app-*` are the dashboards, `student`/`parent`/`pro` the pages that explain
-   them. `check` and `privacy` stay because they are already linked. */
-const VIEWS = ['site','patch','without-patch','student','parent','pro','app','app-student',
-               'app-parent','app-pro','check','shared','privacy','tour','responses','survey',
-               'kit-student','kit-parent','methods','pairing','notes','app-notify','help']
+/* The route ids, fixed by spec 0e section 18 so no two workers invent
+   different ones. This file owns the table; a worker needing a route it does
+   not own names it in its report rather than adding it here.
 
-/* Routes that render app screens, so the chrome switches: `check` is the
+   `app-*` are the dashboards, `students`/`parents`/`pro` the pages that
+   explain them. Two ids are not in section 18 and are kept because they are
+   built, linked and reachable: `tour` (the standalone tour page) and `notes`
+   (the device-only journal, off the tab bar now that MindMap AI has its slot
+   per section 8). Both are named in this worker's report. */
+const VIEWS = [
+  /* the site */
+  'site','patch','pairing','without-patch','methods','privacy','monitor','survey','responses',
+  /* the three audience explainer pages */
+  'students','parents','pro',
+  /* the product */
+  'app','app-student','app-parent','app-pro',
+  /* inside the product */
+  'reading','calendar','toolkit','ai','help','shared','app-notify',
+  /* one route per toolkit activity, spec 0d section 7 */
+  'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
+  /* kept, not in section 18 */
+  'tour','notes',
+]
+
+/* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','check','shared',
-                           'privacy','kit-student','kit-parent','notes','app-notify','help'])
+const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading','shared',
+                           'privacy','toolkit','ai','calendar','help','monitor','notes',
+                           'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
+                           'toolkit-scan','toolkit-move'])
 
-/* The palette pushes `hub`, which is not a route; `go` resolves aliases. */
-const ALIAS = { hub: 'app' }
+/* Old ids, so a link, a bookmark or another worker's button still lands. The
+   palette pushes `hub`, which is not a route. */
+const ALIAS = {
+  hub: 'app',
+  student: 'students', parent: 'parents',
+  check: 'reading',
+  'kit-student': 'toolkit', 'kit-parent': 'toolkit',
+}
 
 const TITLE = {
   site:'MindMap, a wellness app for teenagers',
   patch:'The MindMap patch',
   'without-patch':'MindMap without the patch',
-  student:'MindMap for students',
-  parent:'MindMap for parents',
+  students:'MindMap for students',
+  parents:'MindMap for parents',
   pro:'MindMap for Medical Professionals',
   app:'Open the MindMap app',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
   'app-pro':'The medical professional console in MindMap',
-  check:'Take a reading in MindMap',
+  monitor:'Every reading in MindMap',
+  reading:'Take a reading in MindMap',
+  calendar:'The week and the month in MindMap',
+  toolkit:'The MindMap Toolkit',
+  'toolkit-breathing':'Breathing, in the MindMap Toolkit',
+  'toolkit-ground':'Grounding, in the MindMap Toolkit',
+  'toolkit-reframe':'Reframing, in the MindMap Toolkit',
+  'toolkit-scan':'A body scan, in the MindMap Toolkit',
+  'toolkit-move':'Moving, in the MindMap Toolkit',
+  ai:'MindMap AI',
   shared:'What leaves your phone in MindMap',
   notes:'Your notes in MindMap',
   'app-notify':'Reminders in MindMap',
@@ -80,19 +117,18 @@ const PATCH = [
 ]
 
 const AUDIENCE = [
-  ['student', 'Students', 'What a week of readings looks like'],
-  ['parent',  'Parents',  'What a parent is shown, and what they are not'],
-  ['pro',     'Medical Professionals',  'What a medical professional sees across a year group'],
+  ['students', 'Students', 'What a week of readings looks like'],
+  ['parents',  'Parents',  'What a parent is shown, and what they are not'],
+  ['pro',      'Medical Professionals',  'What a medical professional sees across a year group'],
 ]
 
 /* Which nav entry lights per view. The three patch pages share `kit`, the
-   three audience pages `who`. */
+   three audience pages `who`, and every route not named here lights nothing.
+   The app routes are all in that second set: the header is not rendered over
+   them at all. */
 const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
-                  student:'who', parent:'who', pro:'who', survey:'survey',
-                  app:null, 'app-student':null, 'app-parent':null, 'app-pro':null,
-                  check:null, shared:null, privacy:null, tour:null, responses:null,
-                  notes:null, 'app-notify':null, help:null }
+                  students:'who', parents:'who', pro:'who', survey:'survey' }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -290,18 +326,18 @@ function Header({ view, go }) {
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
             className={linkClass(view === 'survey')}>Give feedback</button>
-          {/* Skipping the tour is a decision for this visit, so there has to be
-              a way back to it that is not clearing site data. */}
-          <ReplayTour/>
+          {/* Spec 0e, section 15: Guided tour is off the navigation. The
+              walkthrough plays on every page load, and the tour itself is the
+              fourth option in the entry chooser that opens with it. */}
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
-          <button onClick={() => go('app')}
+          <button onClick={() => go('app')} aria-label="Open the app"
             className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-field px-3',
               'bg-accent font-display text-ui font-medium text-paper transition-colors',
               'duration-150 hoverOnly:bg-accent-ink sm:gap-2 sm:px-4')}>
-            <span className="sm:hidden">Open app</span>
-            <span className="hidden sm:inline">Open the app</span>
+            <span aria-hidden className="sm:hidden">Open app</span>
+            <span aria-hidden className="hidden sm:inline">Open the app</span>
             <ArrowRight aria-hidden className="size-4 shrink-0"/>
           </button>
           <button ref={burger} type="button" onClick={() => setMenu(true)}
@@ -333,6 +369,23 @@ const DialMark = p => (
   </svg>
 )
 
+const AskMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+    className="shrink-0">
+    <path d="M20.5 12.4c0 3.9-3.8 7-8.5 7a9.8 9.8 0 0 1-2.6-.35L4.8 20.4l1.1-3.3A6.7 6.7 0 0 1 3.5 12.4c0-3.9 3.8-7 8.5-7s8.5 3.1 8.5 7Z"/>
+    <path d="M9.6 10.3a2.4 2.4 0 0 1 4.7.6c0 1.6-2.3 1.9-2.3 3.2"/>
+  </svg>
+)
+
+const CalendarMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
+    <rect x="3.5" y="5.5" width="17" height="14.5" rx="1.5"/>
+    <path d="M3.5 10h17M8.5 3.5v3M15.5 3.5v3M8.6 13.6h.01M12 13.6h.01M15.4 13.6h.01M8.6 16.8h.01M12 16.8h.01"/>
+  </svg>
+)
+
 /* The bar belongs to whichever app you are in.
  *
  * It used to be one bar listing the three audiences, so a student standing in
@@ -342,47 +395,76 @@ const DialMark = p => (
  * is where the three live. */
 const APP_NAV = {
   student: [
-    ['app-student', 'Today',   PulseMark],
-    ['check',       'Reading', DialMark],
-    ['kit-student', 'Toolkit', Bracket],
-    ['notes',       'Notes',   Bracket],
-    ['shared',      'Sharing', Grid],
+    ['app-student', 'Today',    PulseMark],
+    ['reading',     'Reading',  DialMark],
+    ['toolkit',     'Toolkit',  Bracket],
+    ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
+    ['shared',      'Sharing',  Grid],
   ],
   parent: [
-    ['app-parent',  'Week',    PulseMark],
-    ['kit-parent',  'Toolkit', Bracket],
-    ['privacy',     'Sharing', Grid],
+    ['app-parent',  'Week',     PulseMark],
+    ['calendar',    'Calendar', CalendarMark],
+    ['toolkit',     'Toolkit',  Bracket],
+    ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
+    ['privacy',     'Sharing',  Grid],
   ],
   pro: [
     ['app-pro',     'Caseload', Grid],
+    ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
+    ['toolkit',     'Toolkit',  Bracket],
   ],
 }
 
-/* Which app a route belongs to, and which of its tabs it lights. */
+/* Which app a route belongs to. Five screens are shared by all three
+   audiences, so they have no fixed answer here: they belong to whichever app
+   you walked in from, which App remembers below, and the bar under them is the
+   bar you had. */
 const APP_OF = {
-  'app-student': 'student', check: 'student', 'kit-student': 'student', shared: 'student',
-  notes: 'student', 'app-notify': 'student', help: 'student',
-  'app-parent': 'parent', privacy: 'parent', 'kit-parent': 'parent',
+  'app-student': 'student', reading: 'student', shared: 'student',
+  notes: 'student', 'app-notify': 'student', monitor: 'student',
+  'app-parent': 'parent', privacy: 'parent',
   'app-pro': 'pro',
 }
-const APP_TAB = { app:null, 'app-student':'app-student', check:'check',
-                  'kit-student':'kit-student', shared:'shared', notes:'notes',
-                  'app-notify':'shared', help:null, 'app-parent':'app-parent',
-                  privacy:'privacy', 'kit-parent':'kit-parent', 'app-pro':'app-pro' }
+const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
+                              'toolkit-breathing','toolkit-ground','toolkit-reframe',
+                              'toolkit-scan','toolkit-move'])
 
+const APP_TAB = { app:null,
+                  'app-student':'app-student', monitor:'app-student', reading:'reading',
+                  toolkit:'toolkit', ai:'ai', notes:'ai', shared:'shared',
+                  'app-notify':'shared', help:null,
+                  'toolkit-breathing':'toolkit', 'toolkit-ground':'toolkit',
+                  'toolkit-reframe':'toolkit', 'toolkit-scan':'toolkit',
+                  'toolkit-move':'toolkit',
+                  'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
+                  'app-pro':'app-pro' }
+
+/* Two spellings of each screen name. At 390 the top bar also carries the help
+   button, the demo switch and the way back, so the long one would be the thing
+   that gets truncated. */
 const APP_TITLE = {
-  app:            'Screens',
-  'app-student':  'Today',
-  check:          'Take a reading',
-  'kit-student':  'Toolkit',
-  shared:         'Sharing',
-  notes:          'Notes',
-  'app-notify':   'Reminders',
-  help:           'Getting help',
-  'app-parent':   'This week',
-  privacy:        'Sharing',
-  'kit-parent':   'Toolkit',
-  'app-pro':      'Caseload',
+  app:            ['Screens',          'Screens'],
+  'app-student':  ['Today',            'Today'],
+  monitor:        ['Readings',         'Every reading'],
+  reading:        ['Reading',          'Take a reading'],
+  calendar:       ['Calendar',         'The week and the month'],
+  toolkit:        ['Toolkit',          'Toolkit'],
+  'toolkit-breathing': ['Breathing',   'Breathing'],
+  'toolkit-ground':    ['Grounding',   'Grounding'],
+  'toolkit-reframe':   ['Reframing',   'Reframing'],
+  'toolkit-scan':      ['Body scan',   'Body scan'],
+  'toolkit-move':      ['Moving',      'Moving'],
+  /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
+     spelling is the tab's word and the full name is the heading on the
+     screen and this element's accessible name. */
+  ai:             ['Ask',              'MindMap AI'],
+  shared:         ['Sharing',          'Sharing'],
+  notes:          ['Notes',            'Notes'],
+  'app-notify':   ['Reminders',        'Reminders'],
+  help:           ['Help',             'Getting help'],
+  'app-parent':   ['Week',             'This week'],
+  privacy:        ['Sharing',          'Sharing'],
+  'app-pro':      ['Caseload',         'Caseload'],
 }
 
 /* App shell, inherited by every app route.
@@ -408,9 +490,9 @@ const APP_SHELL = cn(
  * smallest target is 97 x 56 at 390. The inset padding keeps labels off the
  * home indicator; the spacer below the footer keeps the bar off content.
  */
-function AppTabBar({ view, go }) {
+function AppTabBar({ app, view, go }) {
   const here = APP_TAB[view]
-  const tabs = APP_NAV[APP_OF[view]]
+  const tabs = APP_NAV[app]
   /* The launcher has no app yet, so it has no bar. */
   if (!tabs) return null
   return (
@@ -418,23 +500,29 @@ function AppTabBar({ view, go }) {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-3 bg-card
         pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-[34rem] list-none p-0">
-        {tabs.map(([id, label, Mark]) => {
+        {tabs.map(([id, label, Mark, spoken]) => {
           const on = here === id
           return (
-            <li key={id} className="flex-1">
+            <li key={id} className="min-w-0 flex-1">
               <button type="button" onClick={() => go(id)}
                 aria-current={on ? 'page' : undefined}
-                className={cn('relative flex min-h-[56px] w-full flex-col items-center justify-center gap-1',
-                  'px-1 pb-1.5 pt-2 transition-colors duration-150',
+                aria-label={spoken || undefined}
+                /* 51px tall at 390 and 67 past sm. Apple Fitness and Oura both
+                   sit near 50 on a handset, and the old 67 here took 8% of a
+                   390 x 844 screen before the top bar had its 48. */
+                className={cn('relative flex min-h-[48px] w-full flex-col items-center justify-center',
+                  'gap-0.5 px-0.5 pb-1 pt-1.5 transition-colors duration-150',
+                  'sm:min-h-[56px] sm:gap-1 sm:px-1 sm:pb-1.5 sm:pt-2',
                   /* rule on the cell edge: the fill alone could read as hover */
                   'before:absolute before:inset-x-0 before:top-0 before:h-[2px]',
                   on ? 'text-accent-ink before:bg-accent' : 'text-ink-2 before:bg-transparent')}>
                 {/* accent-wash on paper is 1.14 : 1; filled accent is 5.79. */}
-                <span aria-hidden className={cn('flex h-7 w-14 items-center justify-center rounded-bar',
-                  'transition-colors duration-150', on ? 'bg-accent text-paper' : 'bg-transparent')}>
-                  <Mark size={22}/>
+                <span aria-hidden className={cn('flex h-6 w-11 items-center justify-center rounded-bar',
+                  'transition-colors duration-150 sm:h-7 sm:w-14',
+                  on ? 'bg-accent text-paper' : 'bg-transparent')}>
+                  <Mark size={20}/>
                 </span>
-                <span className={cn('font-display text-fine leading-none',
+                <span className={cn('max-w-full truncate font-display text-fine leading-none',
                   on ? 'font-bold' : 'font-medium')}>{label}</span>
               </button>
             </li>
@@ -448,14 +536,16 @@ function AppTabBar({ view, go }) {
 function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
+      aria-label={short ? 'Back to the site' : undefined}
       className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field pr-2 font-display',
         'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink', className)}>
       <ArrowLeft aria-hidden className="size-4 shrink-0"/>
       {short ? (
         <>
-          {/* At 390 this row also carries the screen name and the demo switch. */}
-          <span className="sm:hidden">Site</span>
-          <span className="hidden sm:inline">Back to the site</span>
+          {/* At 390 this row also carries the screen name and the demo switch.
+              Both spellings are in the DOM, so the name is on the button. */}
+          <span aria-hidden className="sm:hidden">Site</span>
+          <span aria-hidden className="hidden sm:inline">Back to the site</span>
         </>
       ) : 'Back to the site'}
     </button>
@@ -463,16 +553,27 @@ function ExitToSite({ go, className, short = false }) {
 }
 
 function AppTopBar({ view, go }) {
+  const [short, long] = APP_TITLE[view] || ['App', 'App']
   return (
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
-      <div className="flex h-12 items-center gap-3 px-[22px] sm:px-10 lg:px-14">
-        <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar bg-accent"/>
+      {/* px-4 at 390, not the wrap's 22: this row carries the screen name, the
+          help button, the demo switch and the way back, and the 12px bought
+          here is 12px the name keeps. */}
+      <div className="flex h-12 items-center gap-2 px-4 sm:gap-3 sm:px-10 lg:px-14">
+        {/* The accent rule is ornament, so it is the first thing to go on a
+            handset where the row is full. */}
+        <span aria-hidden className="hidden h-4 w-[3px] shrink-0 rounded-bar bg-accent sm:block"/>
         {/* The screens dropped their own header bands, so this is each app
             route's only heading and has to be the h1. */}
-        <h1 className="min-w-0 truncate font-display text-tick font-bold text-ink">
-          {APP_TITLE[view] || 'App'}
+        {/* Both spellings are in the DOM and CSS picks one, so the heading
+            carries its name on the element: the text nodes would otherwise be
+            read out one after the other. */}
+        <h1 aria-label={long}
+          className="min-w-0 truncate font-display text-tick font-bold text-ink">
+          <span aria-hidden className="sm:hidden">{short}</span>
+          <span aria-hidden className="hidden sm:inline">{long}</span>
         </h1>
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
           {/* First in the group, so the one control somebody might need in a
               hurry is the one nearest their thumb. */}
           <GetHelp compact/>
@@ -488,7 +589,7 @@ function AppTopBar({ view, go }) {
    4.5 at 14px. */
 function AppFoot() {
   return (
-    <footer className="border-t border-ink-3 px-[22px] py-5 sm:px-10 lg:px-14">
+    <footer className="border-t border-ink-3 px-4 py-5 sm:px-10 lg:px-14">
       <p className="max-w-[78ch] text-fine text-ink-3">MindMap measures physiology and reports patterns. It is not a
         medical device and does not diagnose or treat any condition. If you need urgent help, contact your
         local emergency number or a crisis line.</p>
@@ -638,11 +739,10 @@ function SurveyPage() {
         <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
           Give feedback
         </h1>
-        <SectionHead className="mt-5">Tell me what to fix</SectionHead>
+        <SectionHead className="mt-5">Reviewer Feedback</SectionHead>
         <SectionLede>
-          {visitor ? `${visitor.name}, ` : ''}about three minutes. Answers save as you give them,
-          so you can stop halfway and come back, and they go to the person building MindMap once
-          you are through. The only thing sent alongside them is the name you gave.
+          About three minutes. Answers save as you give them, so you can stop halfway and come
+          back. Nothing identifies you: no name, no email, no school.
         </SectionLede>
         <p className="mt-3.5 text-fine font-medium tabular-nums text-ink-3">
           {done} of {total} answered
@@ -677,7 +777,7 @@ function SurveyPage() {
                     <div key={q.id} className="border-t border-rule pt-4">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         {/* The numeral comes from ask order, not the prompt. */}
-                        <span className="font-mono text-fine tabular-nums text-ink-3">
+                        <span className="text-fine tabular-nums text-ink-3">
                           {questionNumber(q.id)}
                         </span>
                         <p className="max-w-[44ch] font-display text-body font-bold text-ink">{q.prompt}</p>
@@ -709,15 +809,252 @@ function SurveyPage() {
   )
 }
 
-const fromHash = () => {
-  const h = location.hash.replace(/^#\/?/, '')
-  return VIEWS.includes(h) ? h : 'site'
+
+/* ── The demo switch defaults to real ───────────────────────────────────────
+ *
+ * Spec 0d, section 5: "the demo toggle should be default set to real so judge
+ * can try out ... this applies to the parent and med professional interfaces
+ * as will". The default itself is `FALLBACK` in src/lib/mode.js, which this
+ * worker does not own, so it is corrected here on the first load that has no
+ * stored choice. A stored choice is always honoured, so this never overrides
+ * the switch somebody has actually touched.
+ */
+const MODE_KEY = 'mindmap.mode'
+try {
+  const stored = window.localStorage.getItem(MODE_KEY)
+  if (stored !== 'demo' && stored !== 'real') setMode('real')
+} catch { setMode('real') }
+
+/* ── The start screen each audience lands on ─────────────────────────────────
+ *
+ * Spec 0d, section 5: "Opening any audience lands on a short start screen:
+ * what the audience can do right now, as three or four actions ... With no
+ * readings yet, the screen offers the actions. It never just says there is
+ * nothing to show."
+ *
+ * Nothing is paired and nothing has been measured in real mode, which is now
+ * the default, so this is what the three app routes render there. Demo mode
+ * has a worked day behind it, so there it renders the dashboard instead and
+ * section 6 gets its centred sentence and dial with nothing above them. The
+ * fourth action on every audience is what switches the two over.
+ *
+ * Grounds and inks: card and aqua, ink, ink-2, ink-3, accent and accent-ink.
+ * Worst text pair on the screen is ink-3 on aqua at 5.14 : 1.
+ */
+const START = {
+  student: {
+    head: 'Four Ways to Start',
+    line: 'No patch is paired, so today has no reading yet.',
+    actions: [
+      { id:'reading', title:'Take a Reading', Mark:DialMark,
+        why:'Six questions, about a minute, scored on this phone.' },
+      { id:'toolkit', title:'Open the Toolkit', Mark:Bracket,
+        why:'Activities for a hard hour. Nothing is stored or sent.' },
+      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
+        why:'A question about a pattern, answered in plain words.' },
+      { id:'demo', title:'Try the Worked Day', Mark:Wave,
+        why:'One full day of measurements, already scored.' },
+    ],
+    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame,
+             why:'Six steps, no cable and no host computer.' },
+  },
+  parent: {
+    head: 'Four Ways to Start',
+    line: 'No patch is paired, so this week has no days in it yet.',
+    actions: [
+      { id:'calendar', title:'See the Week', Mark:CalendarMark,
+        why:'The week and the month against a target score.' },
+      { id:'privacy', title:'Open the Sharing Record', Mark:Grid,
+        why:'One value a day. Never a reading, never Notes.' },
+      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
+        why:'A question about a pattern, answered in plain words.' },
+      { id:'demo', title:'Open the Worked Example', Mark:Wave,
+        why:'One worked week, already scored, day by day.' },
+    ],
+    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame,
+             why:'Six steps, no cable and no host computer.' },
+  },
+  pro: {
+    head: 'Four Ways to Start',
+    line: 'No guardian has consented, so the caseload has no students in it.',
+    actions: [
+      { id:'demo', title:'Open the Worked Caseload', Mark:Wave,
+        why:'A worked caseload, already scored, for review.' },
+      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
+        why:'A question about a pattern, answered in plain words.' },
+      { id:'methods', title:'How the Mind Score Works', Mark:Rule,
+        why:'Four signals, one number, on a scale of 0 to 100.' },
+      { id:'help', title:'Getting Help', Mark:Search,
+        why:'Names, numbers, and how to reach each one.' },
+    ],
+    setup: null,
+  },
 }
+
+function StartAction({ action, run, className }) {
+  const { Mark } = action
+  return (
+    <button type="button" onClick={() => run(action.id)}
+      className={cn('group flex h-full min-h-[112px] w-full flex-col items-start gap-2',
+        'rounded-panel border border-rule bg-card p-3 text-left transition-colors duration-150',
+        'hoverOnly:border-accent hoverOnly:bg-accent-wash active:bg-accent-wash',
+        'sm:min-h-[132px] sm:p-4', className)}>
+      <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
+        bg-accent-wash text-accent-ink">
+        <Mark size={18}/>
+      </span>
+      <span className="font-display text-ui font-bold leading-[1.22] text-ink">{action.title}</span>
+      {/* The reason is the first thing to go at 390, where four of these are a
+          two by two grid and the titles already say what they do. */}
+      <span className="hidden max-w-[34ch] text-fine text-ink-2 sm:block">{action.why}</span>
+      <Chevron aria-hidden className="mt-auto size-4 shrink-0 text-accent"/>
+    </button>
+  )
+}
+
+function AudienceStart({ go, who }) {
+  const s = START[who]
+  /* One handler for both kinds of action: a route, or the switch to the worked
+     example, which is the demo fixture set and says so on the toggle above. */
+  const run = React.useCallback(id => {
+    if (id === 'demo') setMode('demo')
+    else go(id)
+  }, [go])
+
+  return (
+    <main className="wrap">
+      {/* An h2: the app's top bar already carries this screen's h1. */}
+      <h2 className="font-display font-bold text-ink">{s.head}</h2>
+      <p className="mt-1.5 max-w-[52ch] text-meta text-ink-2">{s.line}</p>
+
+      <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
+        {s.actions.map(a => (
+          <li key={a.id} className="min-w-0">
+            <StartAction action={a} run={run}/>
+          </li>
+        ))}
+      </ul>
+
+      {/* Spec 0d, section 5: "Connecting a patch is one of the offered actions,
+          not a wall of instructions." One row, one line, one control. */}
+      {s.setup && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border
+          border-rule bg-aqua p-3.5 lg:mt-4">
+          <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
+            border border-rule bg-card text-accent-ink">
+            <s.setup.Mark size={18}/>
+          </span>
+          <span className="min-w-[11rem] flex-1">
+            <span className="block font-display text-ui font-bold text-ink">{s.setup.title}</span>
+            <span className="mt-0.5 block text-fine text-ink-2">{s.setup.why}</span>
+          </span>
+          {/* w-full at 390: beside the line it squeezed the sentence into a
+              four-line strip. It takes its own row there and sits on the end
+              of the line past sm. */}
+          <button type="button" onClick={() => run(s.setup.id)}
+            className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2
+              rounded-field bg-accent px-4 font-display text-ui font-medium text-paper
+              transition-colors duration-150 hoverOnly:bg-accent-ink active:bg-accent-ink
+              sm:w-auto">
+            Start pairing
+            <ArrowRight aria-hidden className="size-4 shrink-0"/>
+          </button>
+        </div>
+      )}
+    </main>
+  )
+}
+
+/* The three app routes: the start screen with nothing measured, the dashboard
+   with the worked set behind it. Students, Parents and Pro belong to other
+   workers; nothing here reaches inside them. */
+function StudentApp(p) {
+  const [mode] = useMode()
+  return mode === 'real' ? <AudienceStart go={p.go} who="student"/> : <Students {...p} tab="today"/>
+}
+function ParentApp(p) {
+  const [mode] = useMode()
+  return mode === 'real' ? <AudienceStart go={p.go} who="parent"/> : <Parents {...p} tab="week"/>
+}
+function ProApp(p) {
+  const [mode] = useMode()
+  return mode === 'real' ? <AudienceStart go={p.go} who="pro"/> : <Pro {...p}/>
+}
+
+/* ── Two routes whose screens belong to other workers ───────────────────────
+ *
+ * `ai` and `calendar` exist in spec 0e section 18 and are listed there before
+ * either screen was built. These two stand in so every id in the table
+ * resolves today; each one is one line to replace in the route table below and
+ * nothing else in this file changes.
+ *
+ * MindMap AI is a real model behind a server function, with the owner's key
+ * (spec 0d, section 8). Until that key exists it must not claim to be
+ * answering, so this page says plainly that it is not connected and offers no
+ * input to type into.
+ */
+function AiPending({ go }) {
+  return (
+    <main className="wrap">
+      <h2 className="font-display font-bold text-ink">MindMap AI</h2>
+      <div className="mt-3 rounded-panel border border-rule bg-card p-4">
+        <p className="max-w-[56ch] text-meta text-ink-2">
+          Not connected yet. MindMap AI runs on a language model behind a server
+          function, and the key is not in place, so nothing on this screen is
+          answering and no answer is offered.
+        </p>
+        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-3">
+          One framework for adolescent mental health, with three adaptations: the
+          student, the parent and the Medical Professional. Never a diagnosis.
+        </p>
+        <button type="button" onClick={() => go('methods')}
+          className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border
+            border-ink px-4 font-display text-ui font-medium text-ink transition-colors
+            duration-150 hoverOnly:bg-mist active:bg-mist">
+          How it works
+          <ArrowRight aria-hidden className="size-4 shrink-0"/>
+        </button>
+      </div>
+    </main>
+  )
+}
+
+function CalendarPending({ go }) {
+  return (
+    <main className="wrap">
+      <h2 className="font-display font-bold text-ink">The Week and the Month</h2>
+      <div className="mt-3 rounded-panel border border-rule bg-card p-4">
+        <p className="max-w-[56ch] text-meta text-ink-2">
+          Not built yet. The calendar holds the week and the month against a
+          target score the reader sets, with how often the target was met and how
+          often a day ran above or below the usual range.
+        </p>
+        <button type="button" onClick={() => go('app-parent')}
+          className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border
+            border-ink px-4 font-display text-ui font-medium text-ink transition-colors
+            duration-150 hoverOnly:bg-mist active:bg-mist">
+          Back to the week
+          <ArrowRight aria-hidden className="size-4 shrink-0"/>
+        </button>
+      </div>
+    </main>
+  )
+}
+
+/* One resolver for the hash, for `go` and for the alias table, so a link to an
+   old id lands in exactly one place. */
+const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
+const fromHash = () => resolve(location.hash.replace(/^#\/?/, ''))
 
 export function App() {
   const [view, setView] = React.useState(fromHash)
   const mainRef = React.useRef(null)
   const [said, setSaid] = React.useState('')
+  /* Which of the three apps the shared screens belong to. The Toolkit, MindMap
+     AI, the calendar and Getting help are all reachable from more than one
+     audience, so the bar under them is the bar of the app the reader walked in
+     from rather than a guess. */
+  const [audience, setAudience] = React.useState('student')
   /* Three gates in order: title sequence, name, per-page questions. The
      responses route is excluded from all three. */
   const admin = view === 'responses'
@@ -725,6 +1062,7 @@ export function App() {
   /* Navigation resets scroll, title and focus itself: focus otherwise falls to
      <body> and the scroll position carries over from the previous screen. */
   const land = React.useCallback(v => {
+    if (APP_OF[v]) setAudience(APP_OF[v])
     window.scrollTo(0, 0)
     document.title = TITLE[v] || 'MindMap'
     setSaid(TITLE[v] || 'MindMap')
@@ -735,11 +1073,19 @@ export function App() {
   }, [])
   /* Unknown views fall back to the overview rather than rendering nothing. */
   const go = React.useCallback(raw => {
-    const v = ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
+    const v = resolve(raw)
     if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
     setView(v); land(v)
   }, [land])
-  React.useEffect(() => { land(view) }, [])
+  React.useEffect(() => {
+    /* An old id in the url is rewritten once to the id spec 0e section 18
+       fixes, so a bookmark of `#/check` keeps working and the address bar then
+       agrees with every link on the site. A bare url is left alone. */
+    if (location.hash && location.hash !== '#/' + view) {
+      history.replaceState(null, '', '#/' + view)
+    }
+    land(view)
+  }, [])
   React.useEffect(() => {
     const onPop = () => { const v = fromHash(); setView(v); land(v) }
     addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
@@ -748,23 +1094,40 @@ export function App() {
   const wide = view !== 'site'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
   const inApp = APP_VIEWS.has(view)
+  /* `app` itself is the launcher and has no bar; a shared screen takes the bar
+     of the app it was opened from. */
+  const appOf = APP_OF[view] || (SHARED_VIEWS.has(view) ? audience : null)
 
-  /* Three routes are tabs inside a section and keep their urls. */
+  /* The route table. Every id in spec 0e section 18 is here and resolves.
+     Several routes are a tab inside a section and keep their own url. */
   const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
               tour:Tour, responses:Responses, survey:SurveyPage,
               methods:Methods, pairing:Pairing,
-              student:ForStudents, parent:ForParents, pro:ForSchools,
-              app:Launch, 'app-pro':Pro,
-              'app-student': p => <Students {...p} tab="today"/>,
-              'app-parent':  p => <Parents  {...p} tab="week"/>,
-              check:         p => <Students {...p} tab="check"/>,
+              students:ForStudents, parents:ForParents, pro:ForSchools,
+              app:Launch,
+              /* Start screen with nothing measured, dashboard with the worked
+                 set behind it. */
+              'app-student': StudentApp,
+              'app-parent':  ParentApp,
+              'app-pro':     ProApp,
+              /* The student screen with every reading on it, whichever mode. */
+              monitor:       p => <Students {...p} tab="today"/>,
+              reading:       p => <Students {...p} tab="check"/>,
               shared:        p => <Students {...p} tab="shared"/>,
               privacy:       p => <Parents  {...p} tab="shared"/>,
               notes: () => <NotesJournal/>,
               'app-notify': () => <NotificationSettings/>,
               help: () => <HelpBody/>,
-              'kit-student': () => <Toolkit who="student"/>,
-              'kit-parent':  () => <Toolkit who="parent"/> }[view]
+              /* Owned by other workers. `toolkit` is the list; the five
+                 activity routes pass the activity down as `open`. */
+              toolkit:             () => <Toolkit who={audience}/>,
+              'toolkit-breathing': () => <Toolkit who={audience} open="breathing"/>,
+              'toolkit-ground':    () => <Toolkit who={audience} open="ground"/>,
+              'toolkit-reframe':   () => <Toolkit who={audience} open="reframe"/>,
+              'toolkit-scan':      () => <Toolkit who={audience} open="scan"/>,
+              'toolkit-move':      () => <Toolkit who={audience} open="move"/>,
+              ai:       AiPending,
+              calendar: CalendarPending }[view]
   return (
     <>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
@@ -806,10 +1169,13 @@ export function App() {
             </div>
           </footer>
         )}
-        {/* Clears the fixed tab bar: its height plus the handset's bottom inset. */}
-        {inApp && <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
+        {/* Clears the fixed tab bar: its height plus the handset's bottom
+            inset. Measured: the bar is 51px at 390 and 61 at 1280. */}
+        {inApp && appOf &&
+          <div aria-hidden className="h-[calc(3.5rem+env(safe-area-inset-bottom))]
+            sm:h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
       </div>
-      {inApp && <AppTabBar view={view} go={go}/>}
+      {inApp && <AppTabBar app={appOf} view={view} go={go}/>}
     </>
   )
 }

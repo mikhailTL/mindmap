@@ -103,7 +103,15 @@ export default {
       fontFamily: {
         display: ['Quicksand','-apple-system','system-ui','sans-serif'],
         body:    ['Chivo','-apple-system','system-ui','sans-serif'],
-        mono:    ['"Chivo Mono"','ui-monospace','monospace'],
+        /* `mono` is the body face, not a typewriter one. It is kept as a name
+           because ~200 call sites use it to mean "a figure that has to line up
+           with the figure above it", and `tabular-nums` is what actually does
+           that: Chivo's lining figures are fixed-width under that feature. A
+           monospaced face on a display number reads as a generated page, which
+           is the one thing this site cannot afford to look like.
+           `code` is the real monospace, for file paths and literal code. */
+        mono:    ['Chivo','-apple-system','system-ui','sans-serif'],
+        code:    ['"Chivo Mono"','ui-monospace','monospace'],
       },
       /* nine steps because the content has nine levels of meaning */
       fontSize: TYPE_SCALE,

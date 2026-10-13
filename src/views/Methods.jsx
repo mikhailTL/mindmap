@@ -4,6 +4,7 @@ import { ScrollIn, ScrollRow } from '../ui/motion'
 import { Button } from '../ui/button'
 import { List, Item } from '../ui/list'
 import { ArrowRight } from '../ui/marks'
+import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { DataFlow, MovementFallback, ThreeSteps, WhereItRuns } from '../charts/architecture'
 import { CONTEXT_WINDOWS, FEATURES, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
@@ -15,26 +16,41 @@ import { cn } from '../lib/utils'
 /* Where the Mind Score comes from, for a reader who will not open the
  * repository.
  *
- * THIS PAGE IS AN INSTRUMENT PANEL, NOT AN ESSAY. It was 11,200px of single
- * column prose, three times the whole landing page, and a judge with forty
- * entries to score read none of it. Every claim that was a paragraph is now a
- * labelled value or a short list inside its own card, three columns wide at
- * 1280. The facts did not change; the shape carrying them did. If a figure
- * below looks like it wants a sentence around it, the sentence was the problem.
+ * THIS PAGE IS AN INSTRUMENT PANEL, NOT AN ESSAY, AND IT IS NO LONGER A STACK
+ * OF IDENTICAL CARDS. It was 11,200px of prose, then 1,900 rendered words in
+ * eighteen interchangeable rectangles, which a judge with forty entries to
+ * score reads none of. It is now 853 words, and each kind of content has the
+ * one shape that fits it:
  *
- * THE RULE THIS PAGE IS WRITTEN UNDER. Every figure about the model is read out
- * of src/signals/tnam-results.js as the page renders, and the file or path it
- * came from is named on the card beside it, so a reader who doubts a number can
- * open one file and find it. Nothing is typed from memory.
+ *   figures           a band of large numbers, one line of label beside each
+ *   the three routes  one table, four columns
+ *   the model card    one definition grid, six rows, ONE LINE PER ROW
+ *   the comparisons   one table, formula against network
+ *   the limits        ONE caution panel with six ruled rows, not six red boxes
+ *   the sources       one dense table, not nine cards on a dark band
+ *   lists             short lists, and only where a list is the real shape
  *
- * The model is trained on people, which makes the card stronger and the limits
- * heavier at the same time. Both halves have to stay the same size, so the
- * limits were given shorter containers and not weaker content: they sit at the
- * same type size as the results, there are five of them against nine capability
- * rows, and the two worst are quoted in the headline card at the top of the
- * page rather than left at the bottom. A judge who finds either of them hidden
- * costs this project more than the headline figure earns it. Do not soften
+ * A sentence that restates the number beside it has been deleted, not reworded.
+ * Three sentences that made one point are one line. If a row below looks like
+ * it wants a paragraph, the paragraph was the problem.
+ *
+ * THE RULE THIS PAGE IS WRITTEN UNDER. Every figure about the network is read
+ * out of src/signals/tnam-results.js as the page renders, and the file or path
+ * it came from is named beside it, so a reader who doubts a number can open one
+ * file and find it. Nothing is typed from memory.
+ *
+ * WHAT MAY NOT BE COMPRESSED AWAY. Wording may shrink. These may not leave the
+ * page, and all six are in the limits panel, with the two worst also in the
+ * figure band at the top: the emotional-distress failure (0.281, below rest);
+ * every subject being an adult, with no patch built or worn; zero-shot transfer
+ * no better than the formula; the movement confound and its fallback; that it
+ * does not predict performance; and a source for every statistic. Do not soften
  * "ranks it backwards" into "performs less well".
+ *
+ * VOCABULARY. The neural network is "the Mind Score network", then "the
+ * network". Never "the model". "Temporal neural additive model" is still the
+ * right name for the architecture, and "model card" is the name of this kind of
+ * disclosure, not a name for the network.
  */
 
 const f1 = v => v.toFixed(1)
@@ -43,7 +59,7 @@ const f3 = v => v.toFixed(3)
 const pct = v => Math.round(v * 100) + '%'
 const pct1 = v => (v * 100).toFixed(1) + '%'
 
-/* The check-in count the calibration card quotes, located in the results
+/* The check-in count the calibration figures quote, located in the results
    file's own list rather than assumed to be at a fixed index. */
 const ASKS = 8
 const K8 = R.calibration.ks.indexOf(ASKS)
@@ -60,83 +76,58 @@ const CAUGHT_COST = (R.confound.tnam_raw.cognitive_caught
 const FALSE_GAIN = (R.confound.tnam_raw.physical_flagged
   - R.confound.tnam_fallback.physical_flagged) * 100
 
-/* ── the page's two containers ────────────────────────────────────────────
-   Section 2 of the design spec: no text sits on a tinted band. These are the
-   only grounds text lands on, and they are the shape the figures in
-   charts/architecture already use, so a fact card and a chart read as one kind
-   of object rather than two. */
-const CARD = 'rounded-panel border border-rule bg-card px-4 py-3'
-const CARD_INK = 'rounded-panel border border-ink-2 bg-ink-2/40 px-4 py-3'
-/* A limit keeps the 3px crit rule it carried as a bare block and gains the edge
-   section 2 requires. `border` is written first so tailwind-merge cannot drop
-   the left width when a caller appends a class. */
-const CARD_LIMIT = 'rounded-panel border border-rule border-l-[3px] border-l-crit bg-card px-4 py-3'
-const TAG = 'font-mono text-tick text-ink-3'
-/* A section's opening. The heading sits on the band, which section 2 allows,
-   and its one line sits in a container, which section 2 requires. Two columns
-   from lg, because 460px of empty band beside a 62ch column is the failure this
-   page was rebuilt out of. */
-function Head({ title, line, tone = 'paper' }) {
-  const ink = tone === 'ink'
-  return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-end lg:gap-4">
-      <SectionHead tone={tone} className="max-w-[26ch]">{title}</SectionHead>
-      <div className={ink ? CARD_INK : CARD}>
-        <p className={cn('text-sec leading-[1.35]', ink ? 'text-mist' : 'text-ink-2')}>{line}</p>
-      </div>
-    </div>
-  )
-}
+/* ── the page's shapes ───────────────────────────────────────────────────
+   Section 2 of the design spec: no text sits on a tinted band. PANEL is the
+   ground text lands on, and it is the shape charts/architecture already uses,
+   so a figure and a table read as one kind of object. CAUTION is used exactly
+   once, for the six limits, which is what still makes it mean caution. */
+const PANEL = 'rounded-panel border border-rule bg-card px-4 py-3'
+const CAUTION = 'rounded-panel border border-rule border-l-[3px] border-l-crit bg-warn-wash px-4 py-3'
+/* A label is a line of type, not a capsule (spec 0c rule 3), and a provenance
+   is a literal path or identifier, so it takes the real monospace (rule 4).
+   No numeral on this page is set in a typewriter face: tabular-nums aligns. */
+const LABEL = 'font-body text-tick font-semibold text-ink-2'
+const SRC = 'font-code text-fine text-ink-3'
 
-/* A heading inside a band, for the second figure in a band that carries two.
-   A band per figure cost 190px of its own padding, label and lede each time,
-   and section 1 says a band that is mostly air merges with its neighbour. */
+/* A band's opening is now the heading alone, full width, with the band's own
+   first object under it. The two-column Head with a one-line lede in a card
+   beside the title went when the ledes went: a lede is one line or it is
+   deleted, and five of the six were a sentence about the band rather than
+   about the product. */
+/* A heading inside a band, for the second figure in a band that carries two. */
 const Mark = ({ children }) => <h2 className="mark mt-4">{children}</h2>
 
-/* One fact of the model card. `label` is the row name the old <dl> carried and
-   `right` is the provenance, which belongs on the card rather than inside a
-   sentence. `note` pins itself to the bottom so two cards in a grid row end
-   level. */
-function Fact({ label, right, note, className, children }) {
+/* ── shape one: the figure ───────────────────────────────────────────────
+   A number large enough to be read first, its label beside it at caption
+   size, its interval under. `tone` is a status and the word beside the figure
+   says the same thing, so colour is never the only carrier. */
+function Figure({ v, label, sub, tone }) {
   return (
-    <div className={cn(CARD, 'flex h-full min-w-0 flex-col', className)}>
-      <p className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className={TAG}>{label}</span>
-        {right && <span className={cn(TAG, 'text-right')}>{right}</span>}
+    <div className="min-w-0 border-t-2 border-rule pt-2">
+      <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className={cn('text-stat tabular-nums leading-none',
+          tone === 'crit' ? 'text-crit' : 'text-ink')}>{v}</span>
+        <span className="min-w-0 text-fine leading-[1.3] text-ink-2">{label}</span>
       </p>
-      <div className="mt-2">{children}</div>
-      {note && <p className="mt-auto pt-2 text-fine leading-[1.35] text-ink-3">{note}</p>}
+      {sub && <p className="mt-1 text-fine tabular-nums text-ink-3">{sub}</p>}
     </div>
   )
 }
+const Figures = ({ className, children }) => (
+  <div className={cn('grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:gap-x-5', className)}>{children}</div>
+)
 
-/* A limit. Same object as a Fact, with the crit rule and a bold first line, so
-   it reads as the same weight of claim and not as a footnote. */
-function Limit({ title, right, note, children }) {
-  return (
-    <div className={cn(CARD_LIMIT, 'flex h-full min-w-0 flex-col')}>
-      <p className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className={TAG}>Known limit</span>
-        {right && <span className={cn(TAG, 'text-right')}>{right}</span>}
-      </p>
-      <p className="mt-1 font-display text-ui font-bold leading-[1.25] text-ink">{title}</p>
-      <div className="mt-2">{children}</div>
-      {note && <p className="mt-auto pt-2 text-fine leading-[1.35] text-ink-3">{note}</p>}
-    </div>
-  )
-}
-
-/* Label and figure on one line. Section 3: the label sits beside the number,
-   never under it. `sub` is an interval rather than a label, so it may follow
-   the figure and wrap away from it on a narrow card. */
+/* ── shape two: the row ──────────────────────────────────────────────────
+   Label and figure on one line, the label beside the number and never under
+   it. `sub` is an interval or a unit, so it may follow the figure. */
 function KV({ k, v, sub }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-t border-rule pt-1
       first:border-t-0 first:pt-0">
       <span className="min-w-0 text-fine leading-[1.35] text-ink-2">{k}</span>
       <span className="min-w-0 text-right">
-        <span className="font-mono text-meta tabular-nums text-ink">{v}</span>
-        {sub && <span className="ml-1.5 font-mono text-fine tabular-nums text-ink-3">{sub}</span>}
+        <span className="text-meta tabular-nums text-ink">{v}</span>
+        {sub && <span className="ml-1.5 text-fine tabular-nums text-ink-3">{sub}</span>}
       </span>
     </div>
   )
@@ -145,36 +136,24 @@ const KVs = ({ children, className }) => (
   <div className={cn('flex flex-col gap-1', className)}>{children}</div>
 )
 
-/* A figure that has to beat the labels around it: text-row, mono, tabular,
-   label beside it. */
-function Big({ v, label, sub }) {
-  return (
-    <div className="min-w-0">
-      <p className="flex items-baseline gap-2">
-        <span className="font-mono text-row tabular-nums text-ink">{v}</span>
-        <span className="min-w-0 text-fine leading-[1.25] text-ink-2">{label}</span>
-      </p>
-      {sub && <p className="mt-0.5 font-mono text-fine tabular-nums text-ink-3">{sub}</p>}
-    </div>
-  )
-}
-
-/* Two systems against one measure, which is how every comparison on this page
+/* ── shape three: the comparison ─────────────────────────────────────────
+   Two systems against one measure, which is how every comparison on this page
    is quoted. A bare mean beside a bare mean is the oldest way to make a
-   difference look settled, so the interval goes on the AUROC rows. */
-function Versus({ label, rows }) {
+   difference look settled, so an interval goes on the AUROC figures above. */
+function Versus({ label, rows, className }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-1 sm:gap-x-5">
-      <span className={TAG}>{label}</span>
-      <span className={cn(TAG, 'text-right')}>Formula</span>
-      <span className={cn(TAG, 'text-right')}>Model</span>
+    <div className={cn('grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-1 sm:gap-x-5',
+      className)}>
+      <span className={LABEL}>{label}</span>
+      <span className={cn(LABEL, 'text-right')}>Formula</span>
+      <span className={cn(LABEL, 'text-right')}>Network</span>
       {rows.map(([k, a, b]) => (
         <React.Fragment key={k}>
           <span className="min-w-0 border-t border-rule pt-1 text-fine leading-[1.35] text-ink-2">{k}</span>
-          <span className="border-t border-rule pt-1 text-right font-mono text-meta tabular-nums text-ink-2">
+          <span className="border-t border-rule pt-1 text-right text-meta tabular-nums text-ink-2">
             {f3(a)}
           </span>
-          <span className="border-t border-rule pt-1 text-right font-mono text-meta tabular-nums text-ink">
+          <span className="border-t border-rule pt-1 text-right text-meta tabular-nums text-ink">
             {f3(b)}
           </span>
         </React.Fragment>
@@ -183,144 +162,131 @@ function Versus({ label, rows }) {
   )
 }
 
-/* Short statements, which is what the paragraphs became. text-meta is the
-   spec's body size inside a card, and a limit is set at it too: a limit smaller
-   than the result it qualifies is one somebody chose not to have read. */
-const Lines = ({ items, className, tone = 'text-ink-2' }) => (
+/* ── shape four: the short list ──────────────────────────────────────────
+   Only where a list is the real shape of the thing. */
+const Lines = ({ items, className }) => (
   <List className={cn('gap-1', className)}>
-    {items.map(t => (
-      <Item key={t} className={cn('text-meta leading-[1.4]', tone)}>{t}</Item>
-    ))}
+    {items.map(t => <Item key={t} className="text-meta leading-[1.4] text-ink-2">{t}</Item>)}
   </List>
 )
 
-const INTENDED = [
-  `One person, against their own baseline.`,
-  `One ${SCORE}, ${SCORE_RANGE}.`,
-  'The signal that moved it most.',
-  '50 is an ordinary day for them.',
-  'A student project: Congressional App Challenge, Conrad Challenge.',
+/* A row of the model card. One line per row. */
+function Spec({ k, src, children }) {
+  return (
+    <div className="grid gap-x-4 gap-y-1 border-t border-rule py-2 first:border-t-0 first:pt-0
+      lg:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
+      <div className="min-w-0">
+        <p className={LABEL}>{k}</p>
+        {src && <p className={cn(SRC, 'mt-0.5')}>{src}</p>}
+      </div>
+      <div className="min-w-0 text-meta leading-[1.4] text-ink-2">{children}</div>
+    </div>
+  )
+}
+
+/* A limit. Six of these sit inside ONE caution panel, separated by a rule,
+   because five identical red boxes read as a template and one panel of six
+   ruled rows reads as a list somebody kept. The claim is at the size of the
+   result it qualifies: a limit smaller than its result is one somebody chose
+   not to have read. */
+function Limit({ n, title, src, figures, children }) {
+  return (
+    <div className="grid gap-x-5 gap-y-1.5 border-t border-rule pt-2.5 first:border-t-0 first:pt-0
+      lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <div className="min-w-0">
+        <p className="flex items-baseline gap-2">
+          <span className="text-fine tabular-nums text-ink-3">{n}</span>
+          <span className="min-w-0 font-display text-ui font-bold leading-[1.22] text-ink">{title}</span>
+        </p>
+        <p className="mt-1 text-meta leading-[1.4] text-ink-2">{children}</p>
+      </div>
+      <div className="min-w-0">
+        {figures && <KVs>{figures}</KVs>}
+        {src && <p className={cn(SRC, figures && 'mt-1.5')}>{src}</p>}
+      </div>
+    </div>
+  )
+}
+
+/* Each route's status is read off the code, not off intent. The patch row is
+   the one a judge checks first, so it says what the pairing code actually
+   does and then stops. */
+const ROUTES = [
+  { route: 'The patch', src: 'lib/engine.js', today: 'Not built',
+    reads: 'Pulse, sweat, skin temperature, movement. Upper arm, once a second.',
+    cannot: 'No unit assembled, so no signal: the repository holds only a pairing request.' },
+  { route: 'Phone camera and microphone', src: 'signals/score.js', today: 'Running',
+    reads: 'Camera, 30 s: heart rate, beat variation. Speech, 15 s: pitch, range, two steadiness measures. Accelerometer: peak movement.',
+    cannot: `Reaches 2 of ${FEATURES.length} features. The other ${FEATURES.length - 2} enter at the person’s usual.` },
+  { route: 'Six questions', src: 'lib/engine.js', today: 'Running',
+    reads: 'Six five-point answers: tension, on edge, sleep, energy, focus, the day’s demand.',
+    cannot: 'Anything about the body. One logistic puts them onto the same dial.' },
 ]
 
-const OUT_OF_SCOPE = [
-  'Diagnosis, screening or triage.',
-  'Any clinical cut-off.',
-  'Comparing one person with another.',
-  'Telling one kind of distress from another.',
-  'Deciding anything by itself.',
-]
+const OUT_OF_SCOPE =
+  'Diagnosis, screening, triage. Any clinical cut-off. Comparing people. Telling one distress from another. Deciding alone. Not a medical device.'
 
 const WOULD_CHANGE = [
-  ['1', 'The adolescent pilot reporting', 'The people this is for, in the figures at last.'],
-  ['2', 'A dataset with an emotional condition',
-    'The one failure that is a gap in the data rather than in the method.'],
-  ['3', 'Readings off the patch itself', 'Rather than a wrist device, which is what it assumes.'],
+  'The adolescent pilot reporting',
+  'A dataset with an emotional condition',
+  'Readings off the patch itself',
 ]
 
-/* Each route's status is read off the code, not off intent. The patch card is
-   the one a judge checks first, so it says what the pairing code actually does
-   and then stops. */
-const ROUTES = [
-  { route: 'The patch', today: 'Not running',
-    measures: ['Pulse, sweat, skin temperature, movement.',
-      `Off the upper arm, once a second. The four the model’s ten features come from.`],
-    cannot: ['Nothing yet. No unit has been assembled, so there is no signal to read.'],
-    code: 'lib/engine.js can open a pairing request against the service the firmware advertises, and that is all. No patch frame is parsed in this repository.' },
-  { route: 'Phone camera and microphone', today: 'Running',
-    measures: ['Rear camera, 30 s: heart rate, beat variation.',
-      'Speech, 15 s: pitch, range, two steadiness measures. Accelerometer: peak movement.'],
-    cannot: [`Fill the model. It reaches two of the ten features; the other eight enter at the person’s usual.`],
-    code: 'Those were a wrist sensor on an adult, not a phone camera on a teenager. The one route a stranger can take in the next minute, with no account.' },
-  { route: 'Six questions', today: 'Running',
-    measures: ['Six answers, five-point scale: body tension, on edge, sleep against usual, energy, focus, what the day has asked.'],
-    cannot: ['Anything about the body. It is what the person says, with every floor a self-report carries.'],
-    code: 'lib/engine.js puts the six through a logistic with the same constant, 2.4, and the same four bands, so all three land on one dial.' },
-]
+/* Published figures only, each beside its own source, and nothing here that is
+   not already sourced in this repository: the two statistics src/charts/
+   problem.jsx names, the instrument src/survey/questions.js implements, and
+   the datasets docs/tnam-handoff.md names.
 
-/* Published figures only, each beside its own source. Nothing is added here
-   that is not already sourced in this repository: the statistics are the two
-   entries src/charts/problem.jsx names, the instrument is the one
-   src/survey/questions.js implements, and the two datasets are named as
-   docs/tnam-handoff.md names them. */
+   TWO COLUMNS, NOT THREE. The third column used to be a sentence restating the
+   figure in the first one, which is the thing section 4 of the spec forbids.
+   The figure now sits in `holds`, where a reader checking one number finds it,
+   and any caveat belonging to the source sits in `cite` with it, so no
+   statistic has lost its value, its unit or its provenance. */
 const SOURCES = [
-  { title: 'The dataset the model is fitted on',
-    cite: 'WESAD. docs/tnam-handoff.md; training code in the Conrad repo under ml/',
-    body: `${R.per_subject.length} adults, wrist sensors, stress against baseline and amusement,
-      60 s windows at a ${HOP_S} s hop, leave one subject out. Protocol string: R.task.` },
-  { title: 'The transfer and calibration dataset',
-    cite: 'PhysioNet Non-EEG. docs/tnam-handoff.md',
-    body: `${R.transfer.subjects} people the model never saw, under stressors it was never fitted
-      on. Source of the ${f3(R.transfer.cognitive.tnam.mean)}, the calibration gain and the
-      emotional failure.` },
-  { title: 'The two statistics on the overview',
+  { holds: `Fitted dataset, ${R.per_subject.length} adults`,
+    cite: 'WESAD. docs/tnam-handoff.md; ml/ in the Conrad repo' },
+  { holds: `Transfer and calibration, ${R.transfer.subjects} people`,
+    cite: 'PhysioNet Non-EEG. docs/tnam-handoff.md' },
+  { holds: 'Sad or hopeless 39.7%, suicidal thought 20.4%',
     href: 'https://www.cdc.gov/yrbs/youth-health-in-focus/mental-health.html',
-    cite: 'CDC, Youth Risk Behavior Survey, 2023',
-    body: `40% of US high school students felt persistently sad or hopeless for two weeks or more
-      and 20% seriously considered attempting suicide: 39.7% and 20.4% as surveyed. The first read
-      30% in 2013, per the YRBS trends report.` },
-  { title: 'The treatment gap',
+    cite: 'CDC, Youth Risk Behavior Survey, 2023. The first read 30% in 2013.' },
+  { holds: 'Treatment gap, 20.1% and 59.4%',
     href: 'https://www.nimh.nih.gov/health/statistics/major-depression',
-    cite: 'NIMH, Major Depression, from NSDUH 2021',
-    body: `1 in 5 US adolescents aged 12 to 17, 20.1%, had a major depressive episode in the past
-      year; 3 in 5 of them, 59.4%, got no treatment. No trend: NSDUH cannot be spliced across its
-      2020 redesign.` },
-  { title: 'The usability instrument',
-    cite: 'Brooke, System Usability Scale, 1986. Grade curve: Sauro and Lewis',
-    body: `Ten statements on five-point agreement, alternating in direction, verbatim and in
-      published order in src/survey/questions.js. Positive items answer minus 1, negative 5 minus
-      answer, summed, times 2.5. 0 to 100, not a percentage. Published mean 68.` },
-  { title: 'The mark on the dial',
+    cite: 'NIMH, Major Depression, NSDUH 2021. No trend across the 2020 redesign.' },
+  { holds: 'The mark on the dial',
     href: 'https://doi.org/10.2196/jmir.8889',
-    cite: 'Zikmund-Fisher et al., J Med Internet Res, 2018, 20(3):e98',
-    body: `Shown a near-normal lab result against a labelled threshold rather than a bare scale,
-      the share of 1,618 adults who would contact a doctor urgently fell from about half to about
-      a third. For extreme values it made no difference.` },
-  { title: 'Why nobody is ranked, and why every share switches off',
+    cite: 'Zikmund-Fisher et al., JMIR 2018, 20(3):e98. 1,618 adults; no change at extremes.' },
+  { holds: 'Why nobody is ranked',
     href: 'https://doi.org/10.1037/0033-2909.130.3.355',
-    cite: 'Dickerson and Kemeny, Psychological Bulletin, 2004, 130(3):355-391',
-    body: `Across 208 laboratory studies, being judged by other people carried d = 0.67 against
-      d = 0.15 without it, and an uncontrollable stressor d = 0.52 against d = 0.16.` },
-  { title: 'The reading grade, measured',
+    cite: 'Dickerson and Kemeny, Psych Bulletin 2004, 130(3):355-391. 208 studies.' },
+  { holds: 'Reading grade, 4.5 and 7.4',
     href: 'https://doi.org/10.2196/69955',
-    cite: 'Will et al., J Med Internet Res, 2025, 27:e69955. tools/readability',
-    body: `Guidance for patient material is a sixth-grade reading level. This site measures 4.5 on
-      Flesch-Kincaid and 7.4 on SMOG. Both are given: SMOG lands two to three grades above it by
-      construction.` },
-  { title: 'The accessibility bar',
+    cite: 'Will et al., JMIR 2025, 27:e69955. tools/readability; guidance sixth grade.' },
+  { holds: 'Contrast and motion',
     href: 'https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum',
-    cite: 'WCAG 2.1, Contrast (Minimum) 1.4.3 AA, and Animation from Interactions 2.3.3 AAA',
-    body: `Every text node on every route clears 4.5 : 1, verified in a real browser on a
-      production build. All motion honours the system reduced-motion setting, which is the AAA
-      criterion.` },
+    cite: 'WCAG 2.1, 1.4.3 AA and 2.3.3 AAA. On a production build.' },
 ]
-
-/* Three to a column. Nine separate boxes left a ragged bottom edge on every
-   row and paid nine card paddings for what is, honestly, a bibliography: one
-   container per column with a hairline between entries is the same information
-   240px shorter. */
-const SOURCE_COLS = [SOURCES.slice(0, 3), SOURCES.slice(3, 6), SOURCES.slice(6)]
+const SOURCE_COLS = [SOURCES.slice(0, 4), SOURCES.slice(4)]
 
 const NOT_CLAIMED = [
-  'No colour-psychology claim appears anywhere on this site.',
-  `Nothing here says MindMap lowers anybody’s stress.`,
-  'It has not been tested on a teenager, and nothing claims it has.',
+  'No colour-psychology claim on this site.',
+  'Nothing says MindMap lowers stress.',
+  'Never tested on a teenager.',
 ]
 
 export function Methods({ go }) {
   return (
     <main>
 
-      {/* ── the plain reading, the two figures that qualify it, and the three
-          ways in. One band: each of the three was a figure under its own lede
-          under its own label, which section 1 calls a band that is mostly air. */}
+      {/* ── BAND 1, paper: six figures, the three steps, the three routes.
+          A figure band, then a diagram, then a table. */}
       <section className="border-t border-rule bg-paper">
         <div className="wrap py-7 lg:py-10">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,29rem)] lg:items-start lg:gap-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,37rem)] lg:items-start lg:gap-5">
             <div className="min-w-0">
-              <p className="font-mono text-body font-bold tracking-[0.005em] text-accent">
-                How it works
-              </p>
-              <h1 className="mt-2.5 max-w-[22ch] font-display font-bold text-major leading-[1.05]
+              {/* An eyebrow is a line of type. Not a capsule. */}
+              <p className="font-body text-ui font-semibold text-accent-ink">How it works</p>
+              <h1 className="mt-2 max-w-[20ch] font-display font-bold text-major leading-[1.05]
                 tracking-tight text-ink">
                 Where the {SCORE} comes from
               </h1>
@@ -328,7 +294,7 @@ export function Methods({ go }) {
                   sit on the band without breaking section 2. */}
               <div className="mt-3.5 flex flex-wrap gap-2.5">
                 <Button variant="outline" size="sm" onClick={() => go('site')}>
-                  Drag the model figure<ArrowRight aria-hidden/>
+                  Drag the network figure<ArrowRight aria-hidden/>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => go('check')}>
                   Take a reading<ArrowRight aria-hidden/>
@@ -336,79 +302,94 @@ export function Methods({ go }) {
               </div>
             </div>
 
-            {/* The headline and the two failures in one card, so neither half of
-                the claim can be read without the other. */}
-            <div className={CARD}>
-              <p className="text-sec leading-[1.35] text-ink-2">
-                Three steps, then the detail behind each one.
+            {/* The headline and the failure in one container, so neither half
+                of the claim can be read without the other. */}
+            <div className={PANEL}>
+              <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+                <span className={LABEL}>Headline figures, AUROC</span>
+                <span className={SRC}>signals/tnam-results.js</span>
               </p>
-              <p className={cn(TAG, 'mt-2 flex items-baseline justify-between gap-3',
-                'border-t border-rule pt-2')}>
-                <span>Headline figures, AUROC</span>
-                <span>tnam-results.js</span>
-              </p>
-              <KVs className="mt-1.5">
-                <KV k="Fitted data, held out" v={f3(R.summary.tnam.auroc.mean)}/>
-                <KV k="The hand formula" v={f3(R.summary.formula.auroc.mean)}/>
-                <KV k="New stressor, zero shot" v={f3(R.transfer.cognitive.tnam.mean)}/>
-                <KV k={`Then ${ASKS} check-ins`} v={f3(R.calibration.auroc.gains.triggered[K8])}/>
-                <KV k="Emotional, below rest" v={f3(R.transfer.emotional.tnam.mean)}/>
-              </KVs>
-              <p className="mt-2 text-fine leading-[1.35] text-crit">
-                The last row is a failure, not a near miss. Every figure read at render.
+              <Figures className="mt-2.5">
+                <Figure v={f3(R.summary.tnam.auroc.mean)} label="Fitted, held out"
+                  sub={`${f3(R.summary.tnam.auroc.lo)} to ${f3(R.summary.tnam.auroc.hi)}`}/>
+                <Figure v={f3(R.summary.formula.auroc.mean)} label="Hand formula"
+                  sub={`${f3(R.summary.formula.auroc.lo)} to ${f3(R.summary.formula.auroc.hi)}`}/>
+                <Figure v={f3(R.transfer.cognitive.tnam.mean)} label="Zero shot, new stressor"/>
+                <Figure v={f3(R.calibration.auroc.gains.triggered[K8])}
+                  label={`After ${ASKS} check-ins`}/>
+                <Figure tone="crit" v={f3(R.transfer.emotional.tnam.mean)}
+                  label="Emotional distress, below rest"
+                  sub={`${f3(R.transfer.emotional.tnam.lo)} to ${f3(R.transfer.emotional.tnam.hi)}`}/>
+                <Figure v={`${R.paired.wins} of ${R.per_subject.length}`} label="People it beats"
+                  sub="none worse"/>
+              </Figures>
+              <p className="mt-2.5 border-t border-rule pt-2 text-fine leading-[1.35] text-crit">
+                The emotional figure is a failure, not a near miss.
               </p>
             </div>
           </div>
 
-          <ThreeSteps className="mt-3"/>
+          <ThreeSteps className="mt-4"/>
 
-          <Mark>Three routes to one number, and which of them runs today</Mark>
-          <ul className="m-0 mt-3 grid list-none gap-3 p-0 lg:grid-cols-3 lg:gap-4">
-            {ROUTES.map((r, i) => (
-              <ScrollRow key={r.route} index={i} as="li" className="min-w-0">
-                <div className={cn(CARD, 'flex h-full min-w-0 flex-col')}>
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <h3 className="font-display text-row font-bold leading-[1.2] tracking-tight text-ink">
-                      {r.route}
-                    </h3>
-                    {/* The rule carries the colour and the word carries the
-                        state. warn measures 4.50 : 1 on the aqua-2 ground this
-                        card used to sit on, under the 4.5 text floor and over
-                        the 3 : 1 a graphic needs, so it stays on the rule and
-                        never on the type wherever the card is moved. */}
-                    <p className={cn('inline-flex items-baseline border-l-2 pl-2 text-fine text-ink',
-                      r.today === 'Running' ? 'border-accent' : 'border-warn')}>
-                      {r.today}
-                    </p>
-                  </div>
-                  <p className={cn(TAG, 'mt-2')}>Measures</p>
-                  <Lines className="mt-1" items={r.measures}/>
-                  <p className={cn(TAG, 'mt-2 border-t border-rule pt-2')}>Cannot</p>
-                  <Lines className="mt-1" items={r.cannot}/>
-                  {r.route === 'Phone camera and microphone' && (
-                    <KVs className="mt-2">
-                      <KV k="Heart features only: formula"
-                        v={f3(R.ppg_only.formula.auroc.mean)}/>
-                      <KV k="The same, the model" v={f3(R.ppg_only.tnam.auroc.mean)}/>
-                    </KVs>
-                  )}
-                  <p className="mt-auto pt-2 text-fine leading-[1.35] text-ink-3">{r.code}</p>
-                </div>
-              </ScrollRow>
-            ))}
-          </ul>
+          <Mark>Three routes in, and which runs today</Mark>
+          <ScrollIn className="mt-3">
+            <div className={cn(PANEL, 'py-1')}>
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Route</TH>
+                    <TH>Today</TH>
+                    <TH>Reads</TH>
+                    <TH>Cannot</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {ROUTES.map(r => (
+                    <TR key={r.route}>
+                      <TD className="min-w-[9rem] align-top">
+                        <span className="font-display font-bold text-ink">{r.route}</span>
+                        <span className={cn(SRC, 'mt-0.5 block')}>{r.src}</span>
+                      </TD>
+                      {/* The rule carries the colour and the word carries the
+                          state, so the status survives anywhere the table is
+                          moved and at any contrast. */}
+                      <TD className="align-top">
+                        <span className={cn('inline-flex border-l-2 pl-2 text-fine text-ink',
+                          r.today === 'Running' ? 'border-accent' : 'border-warn')}>
+                          {r.today}
+                        </span>
+                      </TD>
+                      <TD className="min-w-[14rem] align-top text-fine leading-[1.4] text-ink-2">
+                        {r.reads}
+                      </TD>
+                      <TD className="min-w-[13rem] align-top text-fine leading-[1.4] text-ink-2">
+                        {r.cannot}
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </div>
+          </ScrollIn>
 
           <ScrollIn className="mt-3">
-            <div className={cn(CARD, 'lg:flex lg:items-start lg:gap-5')}>
+            <div className={cn(PANEL, 'lg:flex lg:items-start lg:gap-5')}>
               <div className="min-w-0 lg:flex-1">
-                <p className={cn(TAG, 'flex flex-wrap items-baseline justify-between gap-x-3')}>
-                  <span>The voice weights, on the phone route</span>
-                  <span>signals/score.js</span>
+                <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <span className={LABEL}>On the phone route</span>
+                  <span className={SRC}>signals/score.js</span>
                 </p>
-                <Lines className="mt-1.5" items={[
-                  'The heart terms go through the model. The voice terms do not.',
-                  'No public dataset pairs a camera-and-microphone capture with stress labels, so the four voice weights are a starting allocation, fitted to nothing. The band comes back wider for it.',
-                ]}/>
+                <div className="mt-2 grid gap-2.5 sm:grid-cols-2 sm:gap-5">
+                  <KVs>
+                    <KV k="Heart only, formula" v={f3(R.ppg_only.formula.auroc.mean)}/>
+                    <KV k="Heart only, network" v={f3(R.ppg_only.tnam.auroc.mean)}/>
+                  </KVs>
+                  <p className="text-fine leading-[1.4] text-ink-2">
+                    Heart terms go through the network. Voice terms do not: no dataset pairs
+                    camera capture with stress labels, so the four voice weights are fitted to
+                    nothing.
+                  </p>
+                </div>
               </div>
               <div className="mt-2.5 flex flex-wrap gap-2.5 lg:mt-0 lg:shrink-0">
                 <Button variant="outline" size="sm" onClick={() => go('without-patch')}>
@@ -423,283 +404,241 @@ export function Methods({ go }) {
         </div>
       </section>
 
-      {/* ── the model card, and the movement limit that belongs to it ─────
-          Movement had its own band under its own lede. It is a known limit of
-          this model, so it sits under the card it qualifies. */}
-      <Section name="The model, and the six places it fails" tone="card" className="bg-aqua-2">
-        <Head title="Model Card"
-          line="What it is for, what it was trained on, and the six places it fails."/>
+      {/* ── BAND 2, aqua-2: the model card as a definition grid. Six rows,
+          one line each, which is what fourteen cards of paragraphs became. */}
+      <Section name="Model card" tone="card" className="bg-aqua-2">
+        <SectionHead className="max-w-[30ch]">What It Is, and What It Was Fitted On</SectionHead>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:gap-4 xl:grid-cols-3">
-          <ScrollRow index={0} className="min-w-0">
-            <Fact label="Intended use" right={`${SCORE}, ${SCORE_RANGE}`}>
-              <Lines items={INTENDED}/>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={1} className="min-w-0">
-            <Fact label="Out of scope" right={`${OUT_OF_SCOPE.length} things it is not`}
-              note="Not a medical device. Every input is a distance from one person's own baseline.">
-              <Lines items={OUT_OF_SCOPE}/>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={2} className="min-w-0">
-            <Fact label="Inputs" right={`${FEATURES.length} features per reading`}
-              note="A signal it cannot read enters at 0, at your usual. Its evidence is gone and the band widens.">
+        <ScrollIn className="mt-3">
+          <div className={PANEL}>
+            <Spec k="Purpose">
+              One {SCORE}, {SCORE_RANGE}, against one person’s own baseline, and the signal that
+              moved it. 50 is their ordinary day. A student project.
+            </Spec>
+            <Spec k="Out of scope">{OUT_OF_SCOPE}</Spec>
+            <Spec k="Inputs" src={`${FEATURES.length} features, four signals`}>
               <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                 {SENSOR_ORDER.map(id => (
-                  <li key={id} className="rounded-chip border border-rule bg-paper px-2.5
+                  <li key={id} className="rounded-field border border-rule bg-paper px-2
                     text-fine text-ink">
                     {SENSORS[id].name.toLowerCase()}
                   </li>
                 ))}
               </ul>
-              <KVs className="mt-2">
-                <KV k="Scale, per signal" v="own baseline" sub="14 d"/>
-                <KV k="An ordinary day" v="0"/>
-                <KV k="Clamp, signals/score.js" v="plus or minus 3"/>
-                <KV k="Movement, patch scale" v="1" sub={`${MOVE_LIMIT_G} g`}/>
-              </KVs>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={3} className="min-w-0">
-            <Fact label="Architecture" right="Temporal Neural Additive Model"
-              note="Additive, so the overview breakdown is the model's own arithmetic, exactly.">
-              <KVs>
-                <KV k="Weights, counted from the file"
-                  v={PARAM_COUNT.toLocaleString('en-US')}/>
-                <KV k="Terms" v="bias, a curve per signal, one over time"/>
-                <KV k="Context" v={`${CONTEXT_WINDOWS} windows`} sub={`${CONTEXT_MINUTES} min`}/>
-                <KV k="Anything else" v="nothing"/>
-              </KVs>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={4} className="min-w-0">
-            <Fact label="Training data" right="WESAD, public"
-              note="A public dataset with a named protocol. The protocol string is R.task.">
-              <KVs>
-                <KV k="Subjects" v={R.per_subject.length} sub="adults"/>
-                <KV k="Sensors" v="wrist"/>
-                <KV k="Windows" v={`60 s at a ${HOP_S} s hop`}/>
-                <KV k="Conditions" v="stress, baseline, amusement"/>
-                <KV k="Held out" v={`leave one subject out, ${R.per_subject.length} times`}/>
-              </KVs>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={5} className="min-w-0">
-            <Limit title="Every subject is an adult. No patch exists."
-              right="On the card beside this"
-              note="Teenagers are the only people this product is for.">
-              <Lines items={[
-                'The adolescent pilot has not reported.',
-                'No teenager is in any figure here. The sensors were on a wrist.',
-                'No patch has been built or worn, at any age. Every patch figure is generated.',
-              ]}/>
-            </Limit>
-          </ScrollRow>
-
-          <ScrollRow index={6} className="min-w-0 sm:col-span-2 xl:col-span-3">
-            <Fact label="Evaluation, on the data it was fitted on"
-              right={`Leave one subject out, ${R.summary.tnam.auroc.n} people, R.summary`}
-              note="The model interval reaches above 1, an artefact of the interval and not a claim: read it as a ceiling. Held out by person, not by stressor, sensor or age.">
-              <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                <div className="grid gap-2 sm:gap-3">
-                  <Big v={f3(R.summary.formula.auroc.mean)} label="Hand formula, AUROC"
-                    sub={`${f3(R.summary.formula.auroc.lo)} to ${f3(R.summary.formula.auroc.hi)}`}/>
-                  <Big v={f3(R.summary.tnam.auroc.mean)} label="The model, AUROC"
-                    sub={`${f3(R.summary.tnam.auroc.lo)} to ${f3(R.summary.tnam.auroc.hi)}`}/>
-                </div>
-                <Versus label="Also, same split" rows={[
-                  ['Balanced accuracy', R.summary.formula.bacc.mean, R.summary.tnam.bacc.mean],
-                  ['F1', R.summary.formula.f1.mean, R.summary.tnam.f1.mean],
-                  ['Heart features only, all a camera reaches',
-                    R.ppg_only.formula.auroc.mean, R.ppg_only.tnam.auroc.mean],
-                ]}/>
+              <p className="mt-1.5">
+                One it cannot read enters at 0, the person’s usual, and the band widens.
+              </p>
+            </Spec>
+            <Spec k="Scale and band"
+              src="signals/score.js; band in quadrature, through the logistic by its slope">
+              <div className="grid gap-x-5 gap-y-1 sm:grid-cols-2">
                 <KVs>
-                  <KV k="People the model is better on, R.paired"
-                    v={`${R.paired.wins} of ${R.per_subject.length}`} sub="none worse"/>
-                  <KV k="Ties" v={R.paired.ties}/>
-                  <KV k="p, paired across people" v={R.paired.p}/>
+                  <KV k="Per signal" v="own baseline" sub="14 d"/>
+                  <KV k="Ordinary day" v="0"/>
+                  <KV k="Clamp" v="plus or minus 3"/>
+                  <KV k="Movement, patch" v="1" sub={`${MOVE_LIMIT_G} g`}/>
+                </KVs>
+                <KVs>
+                  <KV k="Band: term weight" v="0.55"/>
+                  <KV k="Band: camera quality" v="0.45"/>
+                  <KV k="Band: baseline days" v="0.75"/>
+                  <KV k="Band, clamped" v="3 to 34" sub="points"/>
                 </KVs>
               </div>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={7} className="min-w-0">
-            <Fact label="Personal calibration"
-              right={`${R.transfer.subjects} new people, R.calibration`}
-              note="Asked when the band changes. Fitted on this device from answers held on it, and a moving reading is never a label.">
-              <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
-                <Big v={f3(R.calibration.base_auroc.mean)} label="Before any check-in"
-                  sub={`${f3(R.calibration.base_auroc.lo)} to ${f3(R.calibration.base_auroc.hi)}`}/>
-                <Big v={f3(R.calibration.auroc.gains.triggered[K8])}
-                  label={`After ${ASKS} check-ins`}
-                  sub={`${f3(R.calibration.auroc_ci.gains.triggered[K8][0])} to ${f3(R.calibration.auroc_ci.gains.triggered[K8][1])}`}/>
-              </div>
-              <KVs className="mt-2">
-                <KV k={`Balanced accuracy, same ${ASKS}`}
-                  v={`${f3(R.calibration.base_bacc.mean)} to ${f3(R.calibration.bacc.gains.triggered[K8])}`}/>
-                <KV k="Control: a model from scratch"
-                  v={f3(R.calibration.auroc.scratch.triggered[K8])}/>
-                <KV k="Control: asked on a schedule"
-                  v={f3(R.calibration.auroc.gains.scheduled[K8])}/>
-                <KV k="Control: threshold alone, where it began"
-                  v={f3(R.calibration.auroc.affine.triggered[K8])}/>
-              </KVs>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={8} className="min-w-0">
-            <Limit title="It does not detect emotional distress. It ranks it backwards."
-              right={`${R.transfer.subjects} people, R.transfer`}
-              note="Nothing here should be read as saying MindMap sees how somebody feels.">
-              <KVs>
-                <KV k="Emotional condition, the model"
-                  v={f3(R.transfer.emotional.tnam.mean)}
-                  sub={`${f3(R.transfer.emotional.tnam.lo)} to ${f3(R.transfer.emotional.tnam.hi)}`}/>
-                <KV k="The hand formula, which failed too"
-                  v={f3(R.transfer.emotional.formula.mean)}/>
-              </KVs>
-              <Lines className="mt-2" items={[
-                'Below 0.5 is not a miss. It ordered those windows as calmer than rest.',
-              ]}/>
-            </Limit>
-          </ScrollRow>
-
-          <ScrollRow index={9} className="min-w-0">
-            <Limit title="Zero shot on a new stressor, no better than the formula."
-              right="R.transfer"
-              note={`Pooled is near enough to chance to call it chance. The ${f3(R.summary.tnam.auroc.mean)} is on the data it was fitted on; the honest headline is the calibration card.`}>
-              <Versus label={`${R.transfer.subjects} new people`} rows={[
-                ['Cognitive condition',
-                  R.transfer.cognitive.formula.mean, R.transfer.cognitive.tnam.mean],
-                ['Pooled over all three',
-                  R.transfer.any_stress.formula.mean, R.transfer.any_stress.tnam.mean],
-              ]}/>
-            </Limit>
-          </ScrollRow>
-
-          <ScrollRow index={10} className="min-w-0">
-            <Limit title="It does not predict performance, and we checked." right="R.exams"
-              note="No relationship at all. A grade is not what this measures.">
-              <KVs>
-                <KV k="Real exams it was run over" v={R.exams.spearman_flagged_vs_grade.n}/>
-                <KV k="Flagged, against the grade"
-                  v={`rho ${f2(R.exams.spearman_flagged_vs_grade.rho)}`}
-                  sub={`p ${f2(R.exams.spearman_flagged_vs_grade.p)}`}/>
-                <KV k="Windows dropped for movement" v={pct(R.exams.motion_rejected)}/>
-              </KVs>
-            </Limit>
-          </ScrollRow>
-
-          <ScrollRow index={11} className="min-w-0">
-            <Limit title="The baseline has to be earned." right="scoreCapture"
-              note="A first reading on a phone that got no voice is reported wide, and nothing in the interface can narrow it.">
-              <Lines items={[
-                'A fourteen-day baseline means nothing on day one.',
-                `On the phone route a personal spread needs five captures. Under five the spread is borrowed and only the average is the person’s own.`,
-              ]}/>
-            </Limit>
-          </ScrollRow>
-
-          <ScrollRow index={12} className="min-w-0">
-            <Fact label="The confidence band, in scoreCapture"
-              right="Three shortfalls, in quadrature"
-              note="Carried through the logistic by its slope at the score.">
-              <KVs>
-                <KV k="Share of term weight missing" v="0.55"/>
-                <KV k="One minus camera quality" v="0.45"/>
-                <KV k="exp of minus baseline days over 6" v="0.75"/>
-                <KV k="Clamped to" v="3 to 34" sub="points"/>
-              </KVs>
-            </Fact>
-          </ScrollRow>
-
-          <ScrollRow index={13} className="min-w-0 sm:col-span-2 xl:col-span-3">
-            <Fact label="What would change this card" right="In the order they would matter"
-              note="Until those exist, this card is the whole claim.">
-              <div className="grid gap-2 lg:grid-cols-3 lg:gap-4">
-                {WOULD_CHANGE.map(([n, title, line]) => (
-                  <div key={n} className="min-w-0 border-t border-rule pt-1.5 lg:border-l
-                    lg:border-t-0 lg:pl-3 lg:pt-0 lg:first:border-l-0 lg:first:pl-0">
-                    <p className="flex items-baseline gap-2">
-                      <span className="font-mono text-meta tabular-nums text-ink-3">{n}</span>
-                      <span className="min-w-0 font-display text-ui font-bold leading-[1.2] text-ink">
-                        {title}
-                      </span>
-                    </p>
-                    <p className="mt-0.5 text-fine leading-[1.4] text-ink-2">{line}</p>
-                  </div>
-                ))}
-              </div>
-            </Fact>
-          </ScrollRow>
-        </div>
-
-        <Mark>A moving reading is not scored by the model at all</Mark>
-        <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
-          <ScrollIn className="min-w-0">
-            <Fact label="What the code does, in scoreCapture" right="Per reading"
-              note={`A limit before it is a feature: the reading is kept, the screen says the person was moving, and it counts as stressed neither way. Every reading past the line takes this branch, so ${MOVE_LIMIT_G} g and 2 g reaching the model as one value never reaches a score.`}>
-              <KVs>
-                <KV k="Peak movement over the line" v={MOVE_LIMIT_G} sub="g"/>
-                <KV k="Heart terms" v="the hand formula branch"/>
-                <KV k="Temporal term" v="dropped"/>
-                <KV k="The reading" v="marked held"/>
-                <KV k="As a calibration label" v="never used"/>
-              </KVs>
-            </Fact>
-          </ScrollIn>
-
-          <ScrollIn className="min-w-0">
-            <Fact label="The trade, measured" right="R.confound, real jogging and rest"
-              note="The training set had no calm exercise in it, so movement and arousal were never separated. The trade ships, and it is paid both ways.">
-              <KVs>
-                <KV k="Moving windows called stressed, model alone"
-                  v={pct1(R.confound.tnam_raw.physical_flagged)}/>
-                <KV k="The same, formula over the line" sub="ships"
-                  v={pct1(R.confound.tnam_fallback.physical_flagged)}/>
-                <KV k="The same, hand formula alone"
-                  v={pct1(R.confound.formula.physical_flagged)}/>
-                <KV k="Cognitive stress still caught, model alone"
-                  v={pct1(R.confound.tnam_raw.cognitive_caught)}/>
-                <KV k="The same, formula over the line" sub="ships"
-                  v={pct1(R.confound.tnam_fallback.cognitive_caught)}/>
-                <KV k="Cognitive points the fallback costs" v={f1(CAUGHT_COST)}/>
-                <KV k="False-alarm points it removes" v={f1(FALSE_GAIN)}/>
-              </KVs>
-            </Fact>
-          </ScrollIn>
-        </div>
-
-        <MovementFallback className="mt-3"/>
+            </Spec>
+            <Spec k="Architecture"
+              src={`${PARAM_COUNT.toLocaleString('en-US')} weights, ${CONTEXT_WINDOWS} windows, ${CONTEXT_MINUTES} min`}>
+              Temporal neural additive model: a bias, a curve per signal, one term over time.
+              Additive, so the overview breakdown is its own arithmetic.
+            </Spec>
+            <Spec k="Training data" src="WESAD, public">
+              {R.per_subject.length} adults, wrist, 60 s windows at a {HOP_S} s hop, stress against
+              baseline and amusement, leave one subject out.
+            </Spec>
+          </div>
+        </ScrollIn>
       </Section>
 
-      {/* ── where the code runs, and what survives a reading. One band: both
-          halves answer the same question and each was a figure under a lede. */}
-      <Section name="Where it runs, and what is kept" tone="card" className="bg-beam-wash">
-        <Head title="No Backend, and Nothing to Call"
-          line={`Every part that makes a ${SCORE} runs in the page you are reading.`}/>
+      {/* ── BAND 3, card: what was measured. A comparison table against the
+          formula, then the calibration figures. */}
+      <Section name="Measured" tone="card">
+        <SectionHead className="max-w-[30ch]">Against the Formula It Replaces</SectionHead>
+
+        <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
+          <ScrollRow index={0} className="min-w-0">
+            <div className={cn(PANEL, 'h-full')}>
+              <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+                <span className={LABEL}>Fitted data, leave one subject out</span>
+                <span className={SRC}>R.summary, R.paired</span>
+              </p>
+              <Versus className="mt-2.5" label="Same split" rows={[
+                ['AUROC', R.summary.formula.auroc.mean, R.summary.tnam.auroc.mean],
+                ['Balanced accuracy', R.summary.formula.bacc.mean, R.summary.tnam.bacc.mean],
+                ['F1', R.summary.formula.f1.mean, R.summary.tnam.f1.mean],
+                ['Heart features only', R.ppg_only.formula.auroc.mean, R.ppg_only.tnam.auroc.mean],
+              ]}/>
+              <KVs className="mt-2.5">
+                <KV k="People it beats" v={`${R.paired.wins} of ${R.per_subject.length}`}
+                  sub="none worse"/>
+                <KV k="Ties" v={R.paired.ties}/>
+                <KV k="p, paired" v={R.paired.p}/>
+              </KVs>
+              <p className="mt-2.5 text-fine leading-[1.35] text-ink-3">
+                Interval {f3(R.summary.tnam.auroc.lo)} to {f3(R.summary.tnam.auroc.hi)}: above 1 is
+                a ceiling, not a claim.
+              </p>
+            </div>
+          </ScrollRow>
+
+          <ScrollRow index={1} className="min-w-0">
+            <div className={cn(PANEL, 'h-full')}>
+              <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+                <span className={LABEL}>Calibration, {R.transfer.subjects} new people</span>
+                <span className={SRC}>R.calibration</span>
+              </p>
+              <Figures className="mt-2.5">
+                <Figure v={f3(R.calibration.base_auroc.mean)} label="Before any check-in"
+                  sub={`${f3(R.calibration.base_auroc.lo)} to ${f3(R.calibration.base_auroc.hi)}`}/>
+                <Figure v={f3(R.calibration.auroc.gains.triggered[K8])}
+                  label={`After ${ASKS} check-ins`}
+                  sub={`${f3(R.calibration.auroc_ci.gains.triggered[K8][0])} to ${f3(R.calibration.auroc_ci.gains.triggered[K8][1])}`}/>
+              </Figures>
+              <KVs className="mt-3">
+                <KV k="Balanced accuracy"
+                  v={`${f3(R.calibration.base_bacc.mean)} to ${f3(R.calibration.bacc.gains.triggered[K8])}`}/>
+                <KV k="Control: from scratch"
+                  v={f3(R.calibration.auroc.scratch.triggered[K8])}/>
+                <KV k="Control: scheduled asks"
+                  v={f3(R.calibration.auroc.gains.scheduled[K8])}/>
+                <KV k="Control: threshold only"
+                  v={f3(R.calibration.auroc.affine.triggered[K8])}/>
+              </KVs>
+              <p className="mt-2 text-fine leading-[1.35] text-ink-3">
+                Asked when the band changes, fitted on the device.
+              </p>
+            </div>
+          </ScrollRow>
+        </div>
+      </Section>
+
+      {/* ── BAND 4, paper: the limits. ONE caution panel, six ruled rows, the
+          movement figure under the row it belongs to. */}
+      <Section name="Known limits" tone="paper">
+        <SectionHead className="max-w-[30ch]">The Six Places It Fails</SectionHead>
+
+        <ScrollIn className="mt-3">
+          <div className={CAUTION}>
+            <p className="flex flex-wrap items-baseline justify-between gap-x-3 pb-2">
+              <span className={LABEL}>Six limits</span>
+              <span className={SRC}>signals/tnam-results.js</span>
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <Limit n="1" title="It does not detect emotional distress. It ranks it backwards."
+                src={`R.transfer, ${R.transfer.subjects} people`}
+                figures={<>
+                  <KV k="The network" v={f3(R.transfer.emotional.tnam.mean)}
+                    sub={`${f3(R.transfer.emotional.tnam.lo)} to ${f3(R.transfer.emotional.tnam.hi)}`}/>
+                  <KV k="Hand formula, also failed" v={f3(R.transfer.emotional.formula.mean)}/>
+                </>}>
+                Below 0.5 is not a miss: it ranked those windows calmer than rest.
+              </Limit>
+
+              <Limit n="2" title="Zero shot on a new stressor, no better than the formula."
+                src="R.transfer"
+                figures={<>
+                  <KV k="Cognitive: formula, network"
+                    v={`${f3(R.transfer.cognitive.formula.mean)} to ${f3(R.transfer.cognitive.tnam.mean)}`}/>
+                  <KV k="Pooled: formula, network"
+                    v={`${f3(R.transfer.any_stress.formula.mean)} to ${f3(R.transfer.any_stress.tnam.mean)}`}/>
+                </>}>
+                Pooled is near chance; the {f3(R.summary.tnam.auroc.mean)} is on the data it was
+                fitted on.
+              </Limit>
+
+              <Limit n="3" title="Every subject is an adult. No patch exists."
+                src="The adolescent pilot has not reported">
+                No teenager in any figure; the sensors were on a wrist. No patch built or worn:
+                every patch figure is generated.
+              </Limit>
+
+              <Limit n="4" title="It does not predict performance, and we checked." src="R.exams"
+                figures={<>
+                  <KV k="Real exams" v={R.exams.spearman_flagged_vs_grade.n}/>
+                  <KV k="Flagged vs grade"
+                    v={`rho ${f2(R.exams.spearman_flagged_vs_grade.rho)}`}
+                    sub={`p ${f2(R.exams.spearman_flagged_vs_grade.p)}`}/>
+                  <KV k="Dropped for movement" v={pct(R.exams.motion_rejected)}/>
+                </>}>
+                No relationship at all.
+              </Limit>
+
+              <Limit n="5" title="Movement and arousal were never separated."
+                src="R.confound, jogging and rest"
+                figures={<>
+                  <KV k="Moving called stressed: network, shipped"
+                    v={`${pct1(R.confound.tnam_raw.physical_flagged)} to ${pct1(R.confound.tnam_fallback.physical_flagged)}`}/>
+                  <KV k="Cognitive caught: network, shipped"
+                    v={`${pct1(R.confound.tnam_raw.cognitive_caught)} to ${pct1(R.confound.tnam_fallback.cognitive_caught)}`}/>
+                  <KV k="The trade, points"
+                    v={`${f1(CAUGHT_COST)} cost`} sub={`${f1(FALSE_GAIN)} gained`}/>
+                </>}>
+                No calm exercise in the training set. Over {MOVE_LIMIT_G} g the network does not
+                score the reading: the formula branch takes it, the temporal term drops, the
+                reading is marked held, never a label.
+              </Limit>
+
+              <Limit n="6" title="The baseline has to be earned." src="scoreCapture">
+                Fourteen days is nothing on day one; under five phone captures the spread is
+                borrowed.
+              </Limit>
+            </div>
+          </div>
+        </ScrollIn>
+
+        <MovementFallback className="mt-3"/>
+
+        <ScrollIn className="mt-3">
+          <div className={PANEL}>
+            <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className={LABEL}>What would change this</span>
+              <span className={SRC}>In order</span>
+            </p>
+            <div className="mt-2 grid gap-2 lg:grid-cols-3 lg:gap-4">
+              {WOULD_CHANGE.map((title, i) => (
+                <p key={title} className="flex min-w-0 items-baseline gap-2 border-t border-rule
+                  pt-1.5 lg:border-l lg:border-t-0 lg:pl-3 lg:pt-0 lg:first:border-l-0 lg:first:pl-0">
+                  <span className="text-fine tabular-nums text-ink-3">{i + 1}</span>
+                  <span className="min-w-0 font-display text-ui font-bold leading-[1.2] text-ink">
+                    {title}
+                  </span>
+                </p>
+              ))}
+            </div>
+          </div>
+        </ScrollIn>
+      </Section>
+
+      {/* ── BAND 5, beam-wash: where the code runs and what survives a
+          reading. Two labelled figures and one line, because a lede under
+          each figure was 190px of air. */}
+      <Section name="Where it runs" tone="card" className="bg-beam-wash">
+        <SectionHead className="max-w-[30ch]">No Backend, and Nothing to Call</SectionHead>
         <WhereItRuns className="mt-3"/>
 
-        <Mark>What is measured, what is kept, and who can see it</Mark>
+        <Mark>What is measured, what is kept, who sees it</Mark>
         <DataFlow className="mt-3"/>
 
         <ScrollIn className="mt-3">
-          <div className={cn(CARD, 'lg:flex lg:items-start lg:gap-5')}>
+          <div className={cn(PANEL, 'lg:flex lg:items-start lg:gap-5')}>
             <div className="min-w-0 lg:flex-1">
-              <p className={cn(TAG, 'flex flex-wrap items-baseline justify-between gap-x-3')}>
-                <span>What on the console is a demonstration</span>
-                <span>lib/caseload.js</span>
+              <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+                <span className={LABEL}>What on the console is a demonstration</span>
+                <span className={SRC}>lib/caseload.js</span>
               </p>
-              <Lines className="mt-1.5" items={[
-                `The consent records, the students and the audit entries on the ${PRO_LC} console are written by us.`,
-                'The rules they enforce are real code, defined in one place. The people are not real people.',
-              ]}/>
+              <p className="mt-1.5 text-meta leading-[1.4] text-ink-2">
+                The consent records, students and audit entries on the {PRO_LC} console are
+                written by us. The rules are real code; the people are not.
+              </p>
             </div>
             <div className="mt-2.5 flex flex-wrap gap-2.5 lg:mt-0 lg:shrink-0">
               <Button variant="outline" size="sm" onClick={() => go('privacy')}>
@@ -710,53 +649,51 @@ export function Methods({ go }) {
         </ScrollIn>
       </Section>
 
-      {/* ── sources ──────────────────────────────────────────────────────────
-          Dark band: accent fails here, so the only colours are paper, mist,
-          ruling and accent.lit. Links carry an underline as well as a colour. */}
-      <Section name="Sources" tone="ink">
-        <Head tone="ink" title="Every Figure, and Where It Came From"
-          line={`${SOURCES.length} sources: the datasets, the published figures, the instruments.`}/>
+      {/* ── BAND 6, aqua: the sources, as one table. Nine cards on a dark
+          ground paid nine card paddings for what is, honestly, a
+          bibliography, and the dark ground is gone besides (spec 0c rule 1). */}
+      <Section name="Sources" tone="card" className="bg-aqua">
+        <SectionHead className="max-w-[30ch]">Every Figure, and Its Source</SectionHead>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:gap-4 xl:grid-cols-3">
-          {SOURCE_COLS.map((col, ci) => (
-            <ScrollRow key={col[0].title} index={ci} className="min-w-0">
-              <dl className={cn(CARD_INK, 'm-0 flex h-full min-w-0 flex-col gap-2.5')}>
-                {col.map((s, i) => (
-                  <div key={s.title}
-                    className={cn('min-w-0', i && 'border-t border-ink-3 pt-2.5')}>
-                    <dt className="min-w-0">
-                      <span className="block font-display text-ui font-bold leading-[1.2] text-paper">
-                        {s.title}
-                      </span>
-                      <span className="mt-0.5 block font-mono text-fine leading-[1.35] text-ruling">
+        <ScrollIn className="mt-3">
+          <div className={cn(PANEL, 'grid gap-x-8 py-1 lg:grid-cols-2')}>
+            {SOURCE_COLS.map((col, ci) => (
+              <Table key={ci}>
+                <THead>
+                  <TR>
+                    <TH>Holds up</TH>
+                    <TH>Source</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {col.map(s => (
+                    <TR key={s.holds}>
+                      <TD className="min-w-[11rem] align-top">
+                        <span className="font-display font-bold leading-[1.25] text-ink">{s.holds}</span>
+                      </TD>
+                      <TD className="min-w-[15rem] align-top text-fine leading-[1.4] text-ink-2">
                         {s.href
                           ? <a href={s.href} target="_blank" rel="noreferrer"
-                              className="border-b border-accent-lit/50 text-mist hoverOnly:border-accent-lit">
+                              className="border-b border-accent/50 text-accent-ink hoverOnly:border-accent-ink">
                               {s.cite}
                             </a>
                           : s.cite}
-                      </span>
-                    </dt>
-                    <dd className="m-0 mt-1 min-w-0 text-meta leading-[1.4] text-mist">{s.body}</dd>
-                  </div>
-                ))}
-              </dl>
-            </ScrollRow>
-          ))}
-        </div>
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            ))}
+          </div>
+        </ScrollIn>
 
         <ScrollIn className="mt-3">
-          <div className={CARD_INK}>
-            <p className="flex flex-wrap items-baseline justify-between gap-x-3
-              font-mono text-tick text-ruling">
-              <span>What is not claimed</span>
-              <span>docs/design-evidence.md carries the rest</span>
+          <div className={PANEL}>
+            <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className={LABEL}>What is not claimed</span>
+              <span className={SRC}>docs/design-evidence.md</span>
             </p>
-            <div className="mt-1.5 grid gap-1 lg:grid-cols-3 lg:gap-4">
-              {NOT_CLAIMED.map(t => (
-                <p key={t} className="text-meta leading-[1.4] text-mist">{t}</p>
-              ))}
-            </div>
+            <Lines className="mt-1.5 lg:grid lg:grid-cols-3 lg:gap-4" items={NOT_CLAIMED}/>
           </div>
         </ScrollIn>
       </Section>

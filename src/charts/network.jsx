@@ -8,24 +8,24 @@ import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { bandOf } from '../signals/score'
 import { MOVE_LIMIT_G } from '../signals/motion'
 import { SENSORS } from '../lib/sensors'
-import { RuleDraw, ScrollIn } from '../ui/motion'
+import { RuleDraw } from '../ui/motion'
 import { cn } from '../lib/utils'
 
-/* The Mind Score model, drawn from the model.
+/* The Mind Score network figure, drawn from the network itself.
  *
  * Nothing here is an illustration. The ten curves are the fitted shape
  * functions, read out of TNAM_RESULTS.shapes, which ml/research.py samples
  * from the same weights tnam.js runs; the marker on each is forward()'s own
  * contribution for the current input; the score is displayScore(). Refit the
- * model and this figure changes with it.
+ * network and this figure changes with it.
  *
  * Why an additive model is worth drawing at all: the logit is a bias plus one
  * curve per signal plus one term over the last four minutes, and nothing
  * else. So the decomposition below is not an attribution method and not an
  * estimate. It is the arithmetic, it closes to the last decimal place, and a
- * reader can check it. Almost no network allows that.
+ * reader can check it. Almost no neural network allows that.
  *
- * Every number on screen is read out of TNAM_RESULTS or returned by the model
+ * Every number on screen is read out of TNAM_RESULTS or returned by the network
  * in this page. Paths are named beside each block so a reader who opens the
  * file can find the source of anything they doubt.
  *
@@ -181,8 +181,8 @@ function PairedPlot() {
     <div className="mt-3 max-w-[560px]">
       <svg viewBox={`0 0 ${SW} ${SH}`} role="img"
         aria-label={`Leave-one-subject-out AUROC for each of the ${R.per_subject.length} people, `
-          + `hand-weighted formula on the left and this model on the right: ${read}. `
-          + `${perfect} of them reach 1.000 with this model.`}
+          + `hand-weighted formula on the left and this network on the right: ${read}. `
+          + `${perfect} of them reach 1.000 with this network.`}
         className="block w-full" style={{ aspectRatio: `${SW} / ${SH}` }}>
         {[0.6, 0.7, 0.8, 0.9, 1.0].map(v => (
           <line key={v} x1="0" y1={sy(v)} x2={SW} y2={sy(v)} strokeWidth="1" className="stroke-rule"/>
@@ -201,8 +201,8 @@ function PairedPlot() {
         <circle cx={SRIGHT} cy={sy(mt)} r="4.4" className="fill-accent"/>
       </svg>
       <p aria-hidden className="mt-1.5 flex justify-between gap-4 text-fine text-ink">
-        <span>formula <span className="font-mono tabular-nums">{f3(mf)}</span></span>
-        <span>this model <span className="font-mono tabular-nums">{f3(mt)}</span></span>
+        <span>formula <span className="tabular-nums">{f3(mf)}</span></span>
+        <span>this network <span className="tabular-nums">{f3(mt)}</span></span>
       </p>
     </div>
   )
@@ -221,13 +221,19 @@ function Part({ label, value, tone, scale, note }) {
         {label}
         {note && <span className="tick ml-2">{note}</span>}
       </span>
+      {/* The centre line was a `linear-gradient` painting a half-pixel band of
+          `rule`, the same construction charts/diverge.jsx took out: a 1px rule
+          made of gradient stops cannot land on a device pixel and prints under
+          half strength at most widths, and a gradient is on the AI-tell list
+          besides. It is a real 1px element now, drawn after the bar so the
+          bar's root sits on a visible baseline. */}
       <span aria-hidden className="relative order-3 col-span-2 block h-[13px]
-        bg-[linear-gradient(to_right,transparent_calc(50%-0.5px),theme(colors.rule)_calc(50%-0.5px),theme(colors.rule)_calc(50%+0.5px),transparent_calc(50%+0.5px))]
         sm:order-2 sm:col-span-1">
         <span className="absolute top-[2px] block h-[9px] rounded-xs"
           style={{ width: `${w}%`, background: tone, [value >= 0 ? 'left' : 'right']: '50%' }}/>
+        <span className="absolute inset-y-0 left-1/2 block w-px -translate-x-1/2 bg-rule"/>
       </span>
-      <span className="order-2 text-right font-mono text-tick tabular-nums text-ink sm:order-3">
+      <span className="order-2 text-right text-tick tabular-nums text-ink sm:order-3">
         {signed(value)}
       </span>
     </li>
@@ -292,11 +298,16 @@ export function MindScoreNet({ className, initial = 'hard' }) {
   }
 
   return (
-    <ScrollIn className={cn('w-full', className)}>
+    /* No ScrollIn here. This figure sat inside its band's own reveal, and two
+       opacity animations on one subtree multiply: measured at 0.76 x 0.76 =
+       0.575, where ink-3 small print falls to 2.48 : 1. A figure is painted,
+       not revealed. RuleDraw stays: it animates scaleX on a hairline, so a
+       stalled watcher costs a rule and never a word. */
+    <div className={cn('w-full', className)}>
       <figure className="m-0 rounded-panel border border-rule bg-card p-4 sm:p-7">
 
         <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h3 className="font-display text-row font-bold text-ink">What the model learned</h3>
+          <h3 className="font-display text-row font-bold text-ink">Shapes the Network Learned</h3>
           <p className="tick">{PARAM_COUNT} weights, running in this page</p>
         </figcaption>
 
@@ -319,7 +330,7 @@ export function MindScoreNet({ className, initial = 'hard' }) {
                     className="font-display text-fine font-medium leading-tight text-ink">
                     {row.name}
                   </label>
-                  <span className="shrink-0 font-mono text-tick tabular-nums text-ink">
+                  <span className="shrink-0 text-tick tabular-nums text-ink">
                     {signed(fw.contributions[row.k])}
                   </span>
                 </div>
@@ -362,10 +373,10 @@ export function MindScoreNet({ className, initial = 'hard' }) {
 
         <p className="mt-4 max-w-[78ch] text-fine text-ink-3">
           Dashed hairline: that curve at the wearer's usual. Dot: the current reading.{' '}
-          <span className="font-mono">alone</span> is what the one signal scores by itself on
-          the held-out people, from TNAM_RESULTS.univariate_auroc. Beat-to-beat variation on
+          alone is what the one signal scores by itself on
+          the held-out people, from <span className="font-code">TNAM_RESULTS.univariate_auroc</span>. Beat-to-beat variation on
           its own is near a coin toss and the slow part of skin conductance is near the whole
-          answer. The model has to carry both. Each curve is drawn over the whole range it was
+          answer. The network has to carry both. Each curve is drawn over the whole range it was
           sampled at, plus and minus four standard deviations; a reading enters clamped
           at {Z_LIMIT}, which is where the sliders stop.
         </p>
@@ -418,14 +429,14 @@ export function MindScoreNet({ className, initial = 'hard' }) {
               ))}
             </div>
             <p className="mt-3 max-w-[66ch] text-fine text-ink-2">
-              At these readings the model gives {score} out of 100, {band.word}. The biggest
+              At these readings the network gives {score} out of 100, {band.word}. The biggest
               move away from this person's usual is {moved.r.name.toLowerCase()},{' '}
               {signed(moved.d)} on the logit. The last four minutes add {signed(fw.temporal)}.
             </p>
             {atLine && (
               <p className="mt-2 max-w-[66ch] text-fine text-ink">
                 Movement is at the {MOVE_LIMIT_G} g line, so in the app this reading is not
-                scored by the model at all. It goes to the hand-weighted formula, for the
+                scored by the network at all. It goes to the hand-weighted formula, for the
                 reason under the limits below.
               </p>
             )}
@@ -433,14 +444,14 @@ export function MindScoreNet({ className, initial = 'hard' }) {
         </div>
 
         {/* ── 3. the decomposition, which is exact ─────────────────────────── */}
-        <h4 className="mark mt-7">Why it said that</h4>
+        <h4 className="mark mt-7">Reasons Behind One Score</h4>
         <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
-          Because the model is additive, the parts are the answer rather than an estimate of
+          Because the network is additive, the parts are the answer rather than an estimate of
           it. These twelve numbers add up to the logit the score came from, exactly.
         </p>
         <ul className="mt-4 m-0 max-w-[720px] list-none p-0">
           <Part label="Bias" value={bias} tone={SENSORS.heart.glow} scale={scale}
-            note="the model's own offset"/>
+            note="the network's own offset"/>
           {ROWS.map(row => (
             <Part key={row.k} label={row.name} value={fw.contributions[row.k]} tone={row.tone}
               scale={scale} note={row.unit}/>
@@ -457,11 +468,11 @@ export function MindScoreNet({ className, initial = 'hard' }) {
           ].map(([k, v]) => (
             <React.Fragment key={k}>
               <dt className="text-ink-2">{k}</dt>
-              <dd className="m-0 text-right font-mono tabular-nums text-ink">{v}</dd>
+              <dd className="m-0 text-right tabular-nums text-ink">{v}</dd>
             </React.Fragment>
           ))}
           <dt className="mt-1 font-medium text-ink">Mind Score</dt>
-          <dd className="m-0 mt-1 text-right font-mono font-medium tabular-nums text-ink">{score}</dd>
+          <dd className="m-0 mt-1 text-right font-medium tabular-nums text-ink">{score}</dd>
         </dl>
         <p className="mt-2 max-w-[72ch] text-fine text-ink-3">
           The difference is divided by {SCORE_TEMPERATURE}, put through a logistic and
@@ -470,19 +481,19 @@ export function MindScoreNet({ className, initial = 'hard' }) {
         </p>
 
         {/* ── 4. the evidence ─────────────────────────────────────────────── */}
-        <h4 className="mark mt-7">What it scores</h4>
+        <h4 className="mark mt-7">Accuracy on Unseen People</h4>
         <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
           WESAD: {R.summary.formula.auroc.n} adults, wrist sensors, sixty second windows,
           stress against rest and amusement, leave-one-subject-out. Every number below is from
-          people the model had never seen. The hand-weighted formula it replaces
-          scores {f3(R.summary.formula.auroc.mean)} AUROC. This model
+          people the network had never seen. The hand-weighted formula it replaces
+          scores {f3(R.summary.formula.auroc.mean)} AUROC. This network
           scores {f3(R.summary.tnam.auroc.mean)}. It is better on {R.paired.wins} of
           the {R.summary.tnam.auroc.n} people, tied on {R.paired.ties}, worse on none,
           p = {R.paired.p}.
         </p>
         <PairedPlot/>
         <p className="mt-2 max-w-[78ch] text-fine text-ink-3">
-          One line per held-out person, formula on the left and this model on the right. The
+          One line per held-out person, formula on the left and this network on the right. The
           vertical axis runs 0.55 at the bottom to 1.00 at the top, ruled every 0.1. The heavy
           line is the two means.{' '}
           {R.per_subject.filter(s => s.tnam >= 1).length} of the {R.per_subject.length} reach
@@ -494,7 +505,7 @@ export function MindScoreNet({ className, initial = 'hard' }) {
           gap-y-0 text-fine">
           <dt className="border-b border-rule py-2"/>
           <dd className="m-0 border-b border-rule py-2 text-right font-medium text-ink">formula</dd>
-          <dd className="m-0 border-b border-rule py-2 text-right font-medium text-ink">this model</dd>
+          <dd className="m-0 border-b border-rule py-2 text-right font-medium text-ink">this network</dd>
           {[
             ['AUROC', R.summary.formula.auroc, R.summary.tnam.auroc],
             ['F1', R.summary.formula.f1, R.summary.tnam.f1],
@@ -504,10 +515,10 @@ export function MindScoreNet({ className, initial = 'hard' }) {
               <dt className="border-b border-rule py-2 text-ink-2">
                 {k}<span className="tick ml-2">95% interval</span>
               </dt>
-              <dd className="m-0 border-b border-rule py-2 text-right font-mono tabular-nums text-ink-2">
+              <dd className="m-0 border-b border-rule py-2 text-right tabular-nums text-ink-2">
                 {f3(a.mean)}<span className="tick block">{ci(a)}</span>
               </dd>
-              <dd className="m-0 border-b border-rule py-2 text-right font-mono tabular-nums text-ink">
+              <dd className="m-0 border-b border-rule py-2 text-right tabular-nums text-ink">
                 {f3(b.mean)}<span className="tick block">{ci(b)}</span>
               </dd>
             </React.Fragment>
@@ -515,13 +526,13 @@ export function MindScoreNet({ className, initial = 'hard' }) {
         </dl>
         <p className="mt-2 max-w-[78ch] text-fine text-ink-3">
           Intervals are bootstrap percentiles over the {R.summary.tnam.auroc.n} held-out
-          people, which is why this model's upper bound reads past 1.000: the bootstrap does
+          people, which is why this network's upper bound reads past 1.000: the bootstrap does
           not know that an AUROC cannot. The F1 gap carries p = {R.paired.f1_p}. {PARAM_COUNT}
           {' '}weights, counted off the shipped file by tnam.js itself.
         </p>
 
         {/* ── 5. the limits, same size as the results ──────────────────────── */}
-        <h4 className="mark mt-7">What it does not do</h4>
+        <h4 className="mark mt-7">Stated Limits</h4>
         <ul className="mt-3 m-0 max-w-[72ch] list-none space-y-2.5 p-0 text-sec text-ink-2">
           <li>
             Everybody in every study above is an adult. The adolescent pilot has not reported.
@@ -541,7 +552,7 @@ export function MindScoreNet({ className, initial = 'hard' }) {
             which is chance.
           </li>
           <li>
-            Movement fools it. On real jogging data the model alone
+            Movement fools it. On real jogging data the network alone
             calls {pct(R.confound.tnam_raw.physical_flagged)} of moving windows stressed,
             because the training set had no condition where somebody exercised calmly. Sending
             moving readings to the formula instead brings that
@@ -572,13 +583,13 @@ export function MindScoreNet({ className, initial = 'hard' }) {
         </ul>
 
         {/* ── 6. personal calibration ──────────────────────────────────────── */}
-        <h4 className="mark mt-7">Asking eight questions</h4>
+        <h4 className="mark mt-7">Eight Check-In Questions</h4>
         <p className="mt-3 max-w-[72ch] text-sec text-ink-2">
-          The {f3(cal.base)} on new people is what the model does knowing nothing about them.
+          The {f3(cal.base)} on new people is what the network does knowing nothing about them.
           Eight check-ins, asked when the displayed band changes rather than on a schedule, fit
-          one gain per curve on top of the frozen model and take it
+          one gain per curve on top of the frozen network and take it
           to {f3(cal.gains)} ({f3(cal.gainsCi[0])} to {f3(cal.gainsCi[1])}). The same eight
-          answers used to fit a model from scratch reach {f3(cal.scratch)}; moving the
+          answers used to fit a network from scratch reach {f3(cal.scratch)}; moving the
           threshold alone reaches {f3(cal.affine)}, where it started. The curves are worth
           keeping. What a person needs is their own scale on them.
         </p>
@@ -588,6 +599,6 @@ export function MindScoreNet({ className, initial = 'hard' }) {
           weights and results this figure reads are generated files and are not edited by hand.
         </p>
       </figure>
-    </ScrollIn>
+    </div>
   )
 }
