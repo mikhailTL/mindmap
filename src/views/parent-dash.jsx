@@ -3,6 +3,7 @@ import { Chevron } from '../ui/marks'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { List, Item } from '../ui/list'
 import { Panel } from '../ui/display'
+import { TONES } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { WeekChart } from '../charts/week'
 import { useMode } from '../lib/mode'
@@ -89,25 +90,57 @@ const TIER_TONE = { low:'#0a6e68', usual:'#0a6e68', up:'#8f5a0c', high:'#a8321f'
 const TIER_WORD = { low:'Easier than their usual week', usual:'Inside their usual range',
                     up:'A little above their usual range', high:'Above their usual range' }
 
-/* Weather at the dial's feet belongs to the student screen only (design spec
-   section 7, and the owner asked for it off here). RainbowDial takes no prop
-   for it and src/charts/rainbow.jsx is not this file's to edit, so it is
-   switched off from the call site: inside the dial, the weather group is the
-   one <g> that directly holds the rain group, and nothing else matches. If a
-   `weather={false}` prop is ever added there, this constant is what it
-   replaces. */
-const NO_WEATHER = '[&_g:has(>_.mm-rain)]:hidden'
+/* The same six tones the student screens use, read from `TONES` in
+   src/views/Monitor.jsx so the three app screens cannot drift apart, with one
+   addition this file needs: the hue's own ink, which is the only one of a
+   hue's three tokens allowed to be a word, and which labels a coloured tile
+   here. Measured on every wash: ink 12.57, ink-2 7.00, ink-3 5.03, warn 4.87,
+   crit 5.63 and each hue's own ink 5.00 at worst, so a coloured module keeps
+   AA on every text node.
+
+   The DEFAULT of each hue is used only as an edge. It owes 3 : 1 as a filled
+   graphic and clears that on paper and card alone; the grounds here are the
+   app canvas `beam/15` and the washes, where mint lands at 2.59 and coral at
+   2.78. So nothing on these screens is filled with a DEFAULT, and every bar,
+   strip and tier keeps a measured state token.
+
+   Colour says which module this is, never what state it is in: every coloured
+   module also prints its state in words. */
+const INK = { coral:'text-coral-ink', lilac:'text-lilac-ink', sun:'text-sun-ink',
+              mint:'text-mint-ink', sky:'text-sky-ink', blush:'text-blush-ink' }
+const TONE = Object.fromEntries(Object.entries(INK)
+  .map(([k, ink]) => [k, { ground: TONES[k], ink }]))
 
 /* ── 1. The week in one sentence ────────────────────────────────────────── */
-/* One score and one sentence is the product, so this is a first-class module
-   rather than a caption under the dial. Branched, not templated: a quiet week
-   must not read "no days ran above". */
-function weekSentence(w) {
+/* Design spec 7c. The sentence is the largest thing on the screen, in plain
+   readable words, with the number under it and smaller.
+
+   WHAT IT MAY NOT SAY. MindMap measures physiology. It does not measure
+   anxiety, mood or feeling, so a sentence here may say a body worked harder
+   and may never say a child was anxious, stressed, sad or struggling. "Three
+   days this week were harder on their body than usual" is what was measured.
+   "Your child was anxious" is not, and does not ship.
+
+   No figure goes in the sentence itself; the quieter line under it carries the
+   days and the range. Branched, not templated: a quiet week must not read
+   "no days were harder". */
+function heroSentence(w) {
   if (!w.days.length) return null
-  if (!w.over.length) return `${CHILD} stayed inside their usual range every day this week.`
-  if (w.over.length === w.days.length) return `Every day this week ran above ${CHILD_POSS} usual range.`
-  return `${cap(word(w.over.length))} days ran above ${CHILD_POSS} usual range this week, and `
-    + `${w.peak.name} was the furthest above.`
+  const n = w.over.length
+  if (!n) return 'This week looked like an ordinary week for their body.'
+  if (n === w.days.length) return 'Every day this week was harder on their body than usual.'
+  if (n === 1) return 'One day this week was harder on their body than usual.'
+  return `${cap(word(n))} days this week were harder on their body than usual.`
+}
+
+/* The quieter line: which days, and how far their own range runs. Still day
+   grain, still no signal and no reading. */
+function heroDetail(w) {
+  if (!w.days.length) return null
+  const range = `their own usual range, ${w.band.lo} to ${w.band.hi}`
+  if (!w.over.length) return `Every day sat inside ${range}, worked out from their own last two weeks.`
+  if (w.over.length === 1) return `${w.peak.name} was the one day above ${range}.`
+  return `${list(w.over.map(d => d.name))} sat above ${range}, and ${w.peak.name} went the furthest.`
 }
 
 /* ── 2. The week, at day grain and no finer ─────────────────────────────── */
@@ -126,10 +159,11 @@ function DayStrip({ on, tone, label }) {
 
 /* `pre` is the hedging word in front of a figure, small and on the same line.
    Set in the figure's own run it wrapped the tile over two lines at 1280. */
-function Tile({ label, pre, figure, unit, children }) {
+function Tile({ label, pre, figure, unit, tone, className, children }) {
+  const t = TONE[tone]
   return (
-    <div className="field p-4">
-      <p className="font-display text-tick font-bold text-ink-2">{label}</p>
+    <div className={cn('rounded-field border p-4', t ? t.ground : TONES.card, className)}>
+      <p className={cn('font-display text-tick font-bold', t ? t.ink : 'text-ink-2')}>{label}</p>
       <p className="mt-1.5 font-mono text-stat font-medium leading-none tabular-nums text-ink">
         {pre && <span className="mr-1.5 font-body text-tick font-light text-ink-3">{pre}</span>}
         {figure}
@@ -550,16 +584,40 @@ export function ParentDash({ go, openTab }) {
             model. No child is named or described here; nobody has worn a patch and nobody was
             measured.</DemoNotice>
 
-          {/* The sentence, then the number. Never the other way round. */}
+          {/* The hero, per design spec 7c: the sentence first and largest, in
+              plain words with no figure in it, then the quieter line, then the
+              number in its own field, smaller. `text-major` runs 34px at 390
+              and 46px at 1280; the score under it is `text-num`, 25px, so the
+              order of reading is the order of size at every width. The tier
+              word sits beside the tier's own rule, so colour never carries
+              that state alone. */}
           <div className={ROW}>
-            <Panel as="h3" label="The week in one sentence">
-              <p className="max-w-[48ch] font-display text-row font-medium text-ink">
-                {weekSentence(w)}</p>
-              <p className="mt-3 flex items-center gap-2.5 font-display text-ui font-medium text-ink">
-                <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar"
-                  style={{ background: TIER_TONE[tier] }}/>
-                {TIER_WORD[tier]}
-              </p>
+            <Panel as="h3" label="Their week in one sentence" className={TONE.blush.ground}
+              action={`${measured} of ${DAYS.length} days measured`}>
+              <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-8">
+                <div>
+                  <p className="max-w-[24ch] font-display text-major font-bold leading-[1.07] tracking-tight text-ink">
+                    {heroSentence(w)}</p>
+                  <p className="mt-3 max-w-[52ch] text-meta text-ink-2">{heroDetail(w)}</p>
+                  <p className="mt-3 flex items-center gap-2.5 font-display text-ui font-medium text-ink">
+                    <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar"
+                      style={{ background: TIER_TONE[tier] }}/>
+                    {TIER_WORD[tier]}
+                  </p>
+                </div>
+                <div className={cn('rounded-field border p-4', TONES.card)}>
+                  <p className={cn('font-display text-tick font-bold', TONE.blush.ink)}>
+                    {SCORE} for the week</p>
+                  <p className="mt-1.5 font-mono text-head font-medium leading-none tabular-nums text-ink">
+                    {w.avg}
+                    <span className="ml-1.5 font-body text-fine font-light text-ink-3">out of 100</span></p>
+                  <dl className="m-0 mt-3 p-0">
+                    <Fact k="A usual day for them" v={String(w.usual)}/>
+                    <Fact k="Their own usual range" v={`${w.band.lo} to ${w.band.hi}`}/>
+                    <Fact k="Grain shared with you" v="One day"/>
+                  </dl>
+                </div>
+              </div>
             </Panel>
           </div>
 
@@ -571,16 +629,17 @@ export function ParentDash({ go, openTab }) {
                     card wider than itself with the slack landing at its foot.
                     Under sm the card is narrower than either figure and the
                     dial takes the card's width, so nothing changes at 390. */}
-                <RainbowDial className={NO_WEATHER} score={w.avg} usual={w.usual}
+                {/* Clouds belong to the student dial only, and `weather` is a
+                    prop on RainbowDial now, so this is the switch rather than
+                    a selector written against that file's internals. */}
+                <RainbowDial weather={false} score={w.avg} usual={w.usual}
                   rings={[weekRing]} size={380}/>
               </div>
               <dl className="m-0 mt-4 p-0">
-                <Fact k="Their own usual range" v={`${w.band.lo} to ${w.band.hi}`}/>
                 {w.hiDay && <Fact k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
                   tone={w.hiDay.over ? 'text-warn' : 'text-ink'}/>}
                 {w.loDay && <Fact k="Lowest day" v={`${w.loDay.name}, ${w.loDay.v}`}/>}
                 <Fact k="Days measured" v={`${measured} of ${DAYS.length}`}/>
-                <Fact k="Grain shared with you" v="One day"/>
               </dl>
             </Panel>
 
@@ -594,8 +653,12 @@ export function ParentDash({ go, openTab }) {
               {/* items-start: these three tiles hold different amounts of
                   content, and stretched the two shorter ones printed about
                   150px of empty card stock each under their last line. */}
-              <div className="grid items-start gap-3 sm:grid-cols-3">
-                <Tile label="Above their usual range" figure={w.over.length}
+              {/* Not a uniform three. The first tile carries a strip, a list
+                  of days and a pair of bars, so it takes the full width and
+                  the two short ones share the row under it. */}
+              <div className="grid items-start gap-3 sm:grid-cols-2 lg:gap-4">
+                <Tile tone="coral" className="sm:col-span-2"
+                  label="Above their usual range" figure={w.over.length}
                   unit={`of ${measured} days`}>
                   <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
                     label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
@@ -616,11 +679,11 @@ export function ParentDash({ go, openTab }) {
                 {/* Hours as a decimal, not "5 h 30": the formatted string ran
                     past the tile at 390 and broke the figure over two lines.
                     "about" is the tile's `pre` for the same reason. */}
-                <Tile label={`Sleep, ${word(SLEEP.nights)} short nights`}
+                <Tile tone="sun" label={`Sleep, ${word(SLEEP.nights)} short nights`}
                   pre="about" figure={SLEEP.hours} unit="h a night">
                   <SleepBars/>
                 </Tile>
-                <Tile label="Patch worn" figure={measured} unit={`of ${DAYS.length} days`}>
+                <Tile tone="mint" label="Patch worn" figure={measured} unit={`of ${DAYS.length} days`}>
                   <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
                     label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
                   <p className="mt-2 text-fine text-ink-2">
@@ -632,7 +695,8 @@ export function ParentDash({ go, openTab }) {
           </div>
 
           <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
-            <Panel as="h3" label="What to ask about"><AskAbout w={w}/></Panel>
+            <Panel as="h3" label="What to ask about" className={TONE.lilac.ground}>
+              <AskAbout w={w}/></Panel>
             <Panel as="h3" label="Every time this record was opened" action="Append only">
               <RecordLog real={real}/>
             </Panel>
@@ -645,10 +709,15 @@ export function ParentDash({ go, openTab }) {
           past the bottom of the consent card. Equal widths put the three
           within a few dozen pixels of each other. */}
       <div className={cn(ROW, 'lg:grid-cols-2')}>
-        <Panel as="h3" label="What the school may see"><SchoolSharing real={real}/></Panel>
+        <Panel as="h3" label="What the school may see" className={TONE.sky.ground}>
+          <SchoolSharing real={real}/></Panel>
         <div className="flex flex-col gap-3 lg:gap-4">
-          <Panel as="h3" label="If a crisis alert is raised"><CrisisPath real={real}/></Panel>
-          <Panel as="h3" label="What this screen never shows you">
+          {/* The crisis module keeps card stock and a crit edge. Nothing on
+              this screen is coloured to mean urgency; crit is the one colour
+              that does, and it is the module's rule rather than its ground. */}
+          <Panel as="h3" label="If a crisis alert is raised" className="border-t-2 border-t-crit">
+            <CrisisPath real={real}/></Panel>
+          <Panel as="h3" label="What this screen never shows you" className={TONE.sky.ground}>
             <p className="max-w-[58ch] text-sec text-ink-2">There is no drawer, no export and no
               link that opens any of it.</p>
             <List className="mt-3 gap-0">

@@ -1,7 +1,8 @@
 import React from 'react'
 import { Panel } from '../ui/display'
+import { TONES } from './Monitor'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
-import { RuleDraw, ScrollIn } from '../ui/motion'
+import { ScrollIn } from '../ui/motion'
 import { Button } from '../ui/button'
 import { ConfirmClose } from '../ui/confirm'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
@@ -41,12 +42,38 @@ const ROW = 'mt-3 grid items-start gap-3 lg:mt-4 lg:gap-4'
    drawn by the track itself, so they are not in the list. */
 const TICKS = [25, 50, 75]
 
-/* A figure, its unit and one line of provenance, in a bordered field on card
-   stock. The summary strip is built from these. */
-function Stat({ label, figure, unit, sub, tone = 'text-ink' }) {
+/* The same six tones the student screens use, read from `TONES` in
+   src/views/Monitor.jsx so the three app screens cannot drift apart, with one
+   addition this file needs: the hue's own ink, which is the only one of a
+   hue's three tokens allowed to be a word, and which labels a coloured tile
+   here. Measured on every wash: ink 12.57, ink-2 7.00, ink-3 5.03, warn 4.87,
+   crit 5.63 and each hue's own ink 5.00 at worst, so a coloured module keeps
+   AA on every text node.
+
+   The DEFAULT of each hue is used only as an edge. It owes 3 : 1 as a filled
+   graphic and clears that on paper and card alone; the grounds here are the
+   app canvas `beam/15` and the washes, where mint lands at 2.59 and coral at
+   2.78. So nothing on these screens is filled with a DEFAULT, and every bar,
+   strip and tier keeps a measured state token.
+
+   Colour says which module this is, never what state it is in: every coloured
+   module also prints its state in words. */
+const INK = { coral:'text-coral-ink', lilac:'text-lilac-ink', sun:'text-sun-ink',
+              mint:'text-mint-ink', sky:'text-sky-ink', blush:'text-blush-ink' }
+const TONE = Object.fromEntries(Object.entries(INK)
+  .map(([k, ink]) => [k, { ground: TONES[k], ink }]))
+
+const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+const word = n => WORDS[n] ?? String(n)
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1)
+
+/* A figure, its unit and one line of provenance, in a bordered field. The
+   summary strip is built from these; `tone` is which module it belongs to. */
+function Stat({ label, figure, unit, sub, tone = 'text-ink', hue, className }) {
+  const h = TONE[hue]
   return (
-    <div className="field p-4">
-      <p className="font-display text-tick font-bold text-ink-2">{label}</p>
+    <div className={cn('rounded-field border p-4', h ? h.ground : TONES.card, className)}>
+      <p className={cn('font-display text-tick font-bold', h ? h.ink : 'text-ink-2')}>{label}</p>
       <p className={cn('mt-1.5 font-mono text-stat font-medium leading-none tabular-nums', tone)}>
         {figure}
         {unit && <span className="ml-1.5 font-body text-tick font-light text-ink-3">{unit}</span>}
@@ -274,30 +301,102 @@ const CASELOAD_NEEDS = [
    `A student consented to alerts only carries no ${SCORE} and no place on this list.`],
 ]
 
-function TriageHead({ consented, listed }) {
+/* The one line a clinician reads first, which is design spec 7c in this
+   console's own voice: plain words, largest type on the tab, the figures under
+   it and smaller.
+
+   WHAT IT MAY NOT SAY. This console reads physiology against each student's
+   own baseline. A rising Mind Score is a body working harder than that
+   student's own normal. It is not anxiety, not distress and not a diagnosis,
+   and no sentence here may say it is. An open crisis protocol outranks
+   everything else, because it is the thing on this caseload that is still
+   running.
+
+   Branched off the same records the list is built from, never templated. */
+function leadLine({ consented, listed, rising, openSteps }) {
+  if (!consented) return 'No student has paired a patch, so there is nobody to check in with.'
+  if (!listed) return 'Nobody on this caseload has a weekly change to read yet.'
+  if (openSteps) return 'A crisis protocol is still running on this caseload.'
+  if (!rising) return 'Nobody on this caseload is reading higher than last week.'
+  if (rising === 1) return 'One student is reading higher than their own normal this week.'
+  return `${cap(word(rising))} students are reading higher than their own normal this week.`
+}
+
+/* The quieter line under it: what the lead sentence is made of, in words. */
+function leadDetail({ consented, listed, rising, openSteps, lead }) {
+  if (!consented) return 'A student pairs a patch, a guardian signs a scope, and this list fills from the scope they signed.'
+  if (!listed) return `${cap(word(consented))} students have consented and no guardian signed for weekly change, so nothing can be ordered.`
+  if (openSteps) return `${PROTOCOL_DONE.length} of ${PROTOCOL.length} steps are ticked on Student 8241, and the last one is still open.`
+  if (!rising) return `All ${listed} students on the list are level with last week or below it.`
+  return `${lead.name} moved most, and ${listed - rising} of the ${listed} on the list are level or down.`
+}
+
+function LeadSentence({ consented, listed, rising, openSteps, lead }) {
+  const a = { consented, listed, rising, openSteps, lead }
   return (
-    <>
-      <h2 className="font-display text-head font-bold tracking-tight text-ink">{CASELOAD_TITLE}</h2>
-      <p className="mt-2 max-w-[68ch] text-sec text-ink-2">{CASELOAD_DEF}</p>
-      <p className="mt-1 text-tick text-ink-3">{consented} consented · {listed} on this list</p>
-    </>
+    <Panel as="h2" label={CASELOAD_TITLE} className={TONE.sky.ground}
+      action={`${consented} consented · ${listed} on this list`}>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-8">
+        <div>
+          <p className="max-w-[24ch] font-display text-major font-bold leading-[1.07] tracking-tight text-ink">
+            {leadLine(a)}</p>
+          <p className="mt-3 max-w-[58ch] text-meta text-ink-2">{leadDetail(a)}</p>
+          <p className="mt-2.5 max-w-[58ch] text-meta text-ink-3">{CASELOAD_DEF}</p>
+        </div>
+        {/* The figure the sentence is made of, under it and smaller: 25px
+            against the sentence's 34px at 390 and 46px at 1280. It follows the
+            branch the sentence took, so the console never leads with a crisis
+            and then prints a different number beside it. */}
+        <div className={cn('rounded-field border p-4', TONES.card)}>
+          <p className={cn('font-display text-tick font-bold',
+            openSteps ? 'text-crit' : TONE.sky.ink)}>
+            {openSteps ? 'Steps ticked on that protocol'
+              : lead ? 'Biggest move this week' : 'Students on this list'}</p>
+          <p className={cn('mt-1.5 font-mono text-head font-medium leading-none tabular-nums',
+            openSteps ? 'text-crit' : lead && lead.velocity > 0 ? 'text-warn' : 'text-ink')}>
+            {openSteps ? PROTOCOL_DONE.length
+              : lead ? `${lead.velocity > 0 ? '+' : ''}${lead.velocity}` : listed}
+            <span className="ml-1.5 font-body text-fine font-light text-ink-3">
+              {openSteps ? `of ${PROTOCOL.length} steps` : lead ? 'points' : 'students'}</span></p>
+          <dl className="m-0 mt-3 p-0">
+            {/* The open step is named in the line beside this field already,
+                so it is not repeated as a row here. Nothing in this field is
+                written down: with nobody consented every row below is a real
+                zero rather than a figure standing in for an absence. */}
+            {!openSteps && lead && <KV k={lead.name} v={`${lead.weekAgo} to ${lead.current}`}/>}
+            <KV k="Consented across the caseload" v={String(consented)}/>
+            <KV k="Weekly change shared" v={listed ? `${listed} of ${consented}` : 'Nobody'}/>
+            <KV k="Reading higher than last week" v={listed ? `${rising} of ${listed}` : 'Nobody'}/>
+          </dl>
+        </div>
+      </div>
+    </Panel>
   )
 }
 
 function EmptyTriage() {
   return (
     <>
-      <TriageHead consented={0} listed={0}/>
-      <h3 className="mark mt-6">How a student gets on this list</h3>
-      <List className="gap-0">
-        {CASELOAD_NEEDS.map(([what, why]) => (
-          <Item key={what} marker="none" className="border-b border-rule py-4">
-            <span className="block text-body text-ink">{what}</span>
-            <span className="mt-1 block max-w-[66ch] text-sec text-ink-2">{why}</span>
-          </Item>
-        ))}
-      </List>
-      {LIST_NOTE}
+      {/* Real mode: no protocol has run and nobody is on the list, so the
+          sentence says that rather than a figure of zero standing in for it. */}
+      <LeadSentence consented={0} listed={0} rising={0} openSteps={0} lead={null}/>
+      {/* Both blocks were sitting straight on the app's tinted canvas, which is
+          design spec 2's one prohibition. Two panels, two widths, so the empty
+          console reads like the full one. */}
+      <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+        <Panel as="h3" label="How a student gets on this list" className={TONE.mint.ground}>
+          <List className="gap-0">
+            {CASELOAD_NEEDS.map(([what, why]) => (
+              <Item key={what} marker="none" className="border-b border-rule py-4 last:border-b-0">
+                <span className="block text-body text-ink">{what}</span>
+                <span className="mt-1 block max-w-[52ch] text-sec text-ink-2">{why}</span>
+              </Item>
+            ))}
+          </List>
+        </Panel>
+        <Panel as="h3" label="What the order is, and what it is not"
+          className={TONE.lilac.ground}>{LIST_NOTE}</Panel>
+      </div>
     </>
   )
 }
@@ -355,7 +454,8 @@ function Triage({ onOpen, real }) {
   const lead = moved[0]
   return (
     <>
-      <TriageHead consented={all.length} listed={moved.length}/>
+      <LeadSentence consented={all.length} listed={moved.length} rising={rising.length}
+        openSteps={PROTOCOL.length - PROTOCOL_DONE.length} lead={lead}/>
 
       {/* The summary strip. Six figures the console already held in
           src/lib/caseload.js and never showed: the scope split, the direction
@@ -366,18 +466,25 @@ function Triage({ onOpen, real }) {
           The figures here are all two or three characters wide, so they take
           the narrow column; the record strip on the One student tab keeps its
           wider breakpoint because "withheld" does not. */}
-      <div className={cn(ROW, 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-6')}>
-        <Stat label="On this list" figure={moved.length} unit={`of ${all.length}`}
+      {/* Not six equal cells. The crisis tile takes two columns at every width
+          because it is the one thing on the strip that is still running, and it
+          keeps card stock: crit is the only colour on this console that means
+          urgency, and a wash under it would put a second colour on the same
+          tile. */}
+      <div className={cn(ROW, 'grid-cols-2 lg:grid-cols-4')}>
+        <Stat hue="sky" label="On this list" figure={moved.length} unit={`of ${all.length}`}
           sub="the rest withheld weekly change"/>
-        <Stat label="Up since last week" figure={rising.length} unit="students" tone="text-warn"
+        <Stat hue="sun" label="Up since last week" figure={rising.length} unit="students" tone="text-warn"
           sub={`${moved.length - rising.length} level or down`}/>
-        <Stat label="Biggest move" figure={`+${lead.velocity}`} unit="points" tone="text-warn"
+        <Stat hue="coral" className="col-span-2" label="Biggest move"
+          figure={`+${lead.velocity}`} unit="points" tone="text-warn"
           sub={`${lead.name}, ${lead.weekAgo} to ${lead.current}`}/>
-        <Stat label="Crisis protocol" figure={PROTOCOL_DONE.length} unit={`of ${PROTOCOL.length} steps`}
-          tone="text-crit" sub="step five still open"/>
-        <Stat label="Referrals open" figure={openRef.length} unit={`of ${REFERRALS.length}`}
+        <Stat className={cn(TONES.card, 'col-span-2 border-t-2 border-t-crit')}
+          label="Crisis protocol" figure={PROTOCOL_DONE.length} unit={`of ${PROTOCOL.length} steps`}
+          tone="text-crit" sub={`${PROTOCOL[PROTOCOL.length - 1]} is still open`}/>
+        <Stat hue="mint" label="Referrals open" figure={openRef.length} unit={`of ${REFERRALS.length}`}
           sub="awaiting intake or in progress"/>
-        <Stat label="Logged today" figure={today.length} unit="rows"
+        <Stat hue="lilac" label="Logged today" figure={today.length} unit="rows"
           sub="every record opened is logged"/>
       </div>
 
@@ -391,26 +498,44 @@ function Triage({ onOpen, real }) {
         </Panel>
 
         <div className="flex flex-col gap-3 lg:gap-4">
-          <Panel as="h3" label={`Bands on this caseload`} action={`${all.length} students`}>
+          <Panel as="h3" label={`Bands on this caseload`} action={`${all.length} students`}
+            className={TONE.blush.ground}>
             <BandSpread all={all}/>
             <Note>A band names where a {SCORE} sits today, never a verdict on a student. A student
               whose guardian withheld the {SCORE} is in no band.</Note>
           </Panel>
-          <Panel as="h3" label="What each signed scope allows">
+          <Panel as="h3" label="What each signed scope allows" className={TONE.mint.ground}>
             <ScopeMix listed={moved.length} scored={scored.length} quiet={quiet.length}
               total={all.length}/>
           </Panel>
-          <Panel as="h3" label="Open now" action="this afternoon"><OpenNow/></Panel>
+          <Panel as="h3" label="Open now" action="this afternoon" className={TONE.sun.ground}>
+            <OpenNow/></Panel>
         </div>
       </div>
 
       <div className={ROW}>
-        <Panel as="h3" label="Shared with a narrower scope">
+        <Panel as="h3" label="Shared with a narrower scope" className={TONE.lilac.ground}>
           <NarrowScopes onOpen={onOpen}/>
         </Panel>
       </div>
     </>
   )
+}
+
+/* The record's own first line, same grammar as the console's lead and held to
+   the same limit: it reports what this student's body did against their own
+   baseline, and never what they felt. A higher Mind Score is a body working
+   harder than its own normal; it is not anxiety and it is not a diagnosis.
+   Smaller than the console's lead, because the console has one hero. */
+function recordLead(s, series) {
+  if (!s.showScore) return `Nothing about ${s.name} reaches this console except a crisis alert.`
+  if (!s.showTrend) return `${s.name} is reading ${s.current} out of 100 today, and no weekly change is shared.`
+  const fortnight = s.current - series[31].v
+  if (s.velocity > 0 && fortnight > 0)
+    return `${s.name} has been reading above their own normal for about two weeks.`
+  if (s.velocity > 0) return `${s.name} read higher this week than last.`
+  if (s.velocity < 0) return `${s.name} is reading lower this week than last.`
+  return `${s.name} is level with last week.`
 }
 
 /* ── One student ────────────────────────────────────────────────────────── */
@@ -503,6 +628,8 @@ function OneStudent({ who, setWho, real }) {
           <h2 className="font-display text-head font-bold tracking-tight text-ink">{s.name}</h2>
           <p className="mt-1 text-tick text-ink-3">
             Grade {s.grade}{s.showScore ? ` · ${TIER_LABEL[s.tier]}` : ''}</p>
+          <p className="mt-2 max-w-[34ch] font-display text-row font-bold leading-tight text-ink">
+            {recordLead(s, series)}</p>
           <p className="mt-2 max-w-[46ch] text-sec text-ink-2">Consented: {s.scope}.</p>
         </div>
         <div>
@@ -524,19 +651,19 @@ function OneStudent({ who, setWho, real }) {
           reaches it, so an absence on this strip is a consent decision rather
           than a gap in the data. */}
       <div className={cn(ROW, 'sm:grid-cols-2 lg:grid-cols-4')}>
-        <Stat label={`${SCORE} today`}
+        <Stat hue="sky" label={`${SCORE} today`}
           figure={s.showScore ? s.current : 'withheld'} unit={s.showScore ? 'of 100' : null}
           tone={s.showScore ? 'text-ink' : 'text-ink-3'}
           sub={s.showScore ? TIER_LABEL[s.tier] + ' band' : 'no score in this scope'}/>
-        <Stat label="Change this week"
+        <Stat hue="sun" label="Change this week"
           figure={s.showTrend ? `${s.velocity > 0 ? '+' : ''}${s.velocity}` : 'withheld'}
           unit={s.showTrend ? 'points' : null}
           tone={!s.showTrend ? 'text-ink-3' : s.velocity > 0 ? 'text-warn' : s.velocity < 0 ? 'text-calm' : 'text-ink'}
           sub={s.showTrend ? `${s.weekAgo} to ${s.current}` : 'no trend in this scope'}/>
-        <Stat label="Raw readings" figure={s.showRaw ? 'shared' : 'never'}
+        <Stat hue="lilac" label="Raw readings" figure={s.showRaw ? 'shared' : 'never'}
           tone={s.showRaw ? 'text-ink' : 'text-ink-3'}
           sub={s.showRaw ? 'consented by student and guardian' : 'not in this scope'}/>
-        <Stat label="Consent" figure={s.basis} sub={`signed ${s.signedAt}, expires ${s.expires}`}/>
+        <Stat hue="blush" label="Consent" figure={s.basis} sub={`signed ${s.signedAt}, expires ${s.expires}`}/>
       </div>
 
       {!s.showScore && (
@@ -595,7 +722,8 @@ function OneStudent({ who, setWho, real }) {
             scale runs over this student&rsquo;s own window, {lo} to {hi}, not 0 to 100.</Note>
         </Panel>
 
-        <Panel as="h3" label="What is driving the rise" action="share of this week">
+        <Panel as="h3" label="What is driving the rise" action="share of this week"
+          className={TONE.coral.ground}>
           <ul className="m-0 list-none p-0">
             {drivers.map(d => (
               <BarRow key={d.label} label={d.label} figure={`${Math.round(d.share * 100)}%`}
@@ -612,7 +740,8 @@ function OneStudent({ who, setWho, real }) {
           row. As four panels in two rows the short one in each row ended 280px
           and 343px above its neighbour. */}
       <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
-        <Panel as="h3" label="Interventions tried" action="measured from physiology">
+        <Panel as="h3" label="Interventions tried" action="measured from physiology"
+          className={TONE.mint.ground}>
           <ul className="m-0 list-none p-0">
             {tried.map(i => (
               <BarRow key={i.name} label={`${i.name}, ${i.sessions} session${i.sessions === 1 ? '' : 's'}`}
@@ -644,7 +773,7 @@ function OneStudent({ who, setWho, real }) {
             <Button variant="outline" size="sm" disabled>New referral</Button>
           </div>
         </Panel>
-        <Panel as="h3" label={`${PRO} notes`}>
+        <Panel as="h3" label={`${PRO} notes`} className={TONE.sun.ground}>
           <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
           <textarea id="cnote" rows={4} value={note} onChange={e => setNote(e.target.value)}
             placeholder="Add a note…"
@@ -717,10 +846,8 @@ function EmptyCohort() {
         tab is ever identifiable.</Sub>
 
       <div className={cn(ROW, 'lg:grid-cols-3')}>
-        <section className="lg:col-span-2">
-          <h3 className="mark">What this tab shows</h3>
-          <RuleDraw className="mt-2.5"/>
-          <List className="mt-5 gap-0">
+        <Panel as="h3" label="What this tab shows" className={cn('lg:col-span-2', TONE.sun.ground)}>
+          <List className="gap-0">
             {/* The dashed lane is this row's rule as well as its blank; a solid border under
                 it put two hairlines 12px apart. */}
             {COHORT_REPORTS.map(([what, how]) => (
@@ -732,9 +859,9 @@ function EmptyCohort() {
             ))}
           </List>
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
-        </section>
+        </Panel>
 
-        <Panel as="h3" label="Smallest group we will show">
+        <Panel as="h3" label="Smallest group we will show" className={TONE.blush.ground}>
           <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
           <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
           <p className="mt-4 text-meta text-ink-2">
@@ -768,10 +895,9 @@ function Cohort({ real }) {
       <Sub className="mt-2">All {SCHOOL_N} consented students across the practice, not the eight on
         your own caseload. Nobody here is identifiable.</Sub>
       <div className={cn(ROW, 'lg:grid-cols-3')}>
-        <section className="lg:col-span-2">
-          <h3 className="mark">The two clearest patterns</h3>
-          <RuleDraw className="mt-2.5"/>
-          <ScrollIn className="mt-6">
+        <Panel as="h3" label="The two clearest patterns" className={cn('lg:col-span-2', TONE.sun.ground)}
+          action={`all ${SCHOOL_N} consented students`}>
+          <ScrollIn>
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {top.label} is the clearest spike across the whole group.</h4>
             <List className="mt-3 max-w-[58ch] text-sec text-ink-2">
@@ -783,7 +909,7 @@ function Cohort({ real }) {
                 {' '}{[...visible].sort((a, b) => b.mean - a.mean)[1].mean}</Item>
             </List>
           </ScrollIn>
-          <ScrollIn delay={0.08} className="mt-6 border-t border-rule pt-6">
+          <ScrollIn delay={0.08} className="mt-5 border-t border-rule pt-5">
             <h4 className="font-display text-row font-bold tracking-tight text-ink">
               {hardest.full} is the hardest day of the week across the whole group.</h4>
             <List className="mt-3 max-w-[58ch] text-sec text-ink-2">
@@ -795,9 +921,9 @@ function Cohort({ real }) {
             </List>
           </ScrollIn>
           <Note>Consented students only, from the same windows the individual {SCORE}s use.</Note>
-        </section>
+        </Panel>
 
-        <Panel as="h3" label="Smallest group we will show">
+        <Panel as="h3" label="Smallest group we will show" className={TONE.blush.ground}>
           <div className="font-mono text-stat font-medium tabular-nums text-ink">{K_ANONYMITY}</div>
           <p className="mt-1 text-sec text-ink-3">minimum cell size</p>
           <p className="mt-4 text-meta text-ink-2">
@@ -913,7 +1039,7 @@ function Cohort({ real }) {
         {/* Stacked under the weekday chart rather than run full width below the
             row: the two charts are different heights and the shorter column
             was ending 187px above the taller one. */}
-        <Panel as="h3" label={`What a ${PRO_LC} does with this`}>
+        <Panel as="h3" label={`What a ${PRO_LC} does with this`} className={TONE.lilac.ground}>
           {/* Do not restate the period figure here: the panel above computes it, and a
               hard-coded 31% disagrees with it the moment the data moves. */}
           <List className="max-w-[64ch] text-sec text-ink-2">
@@ -993,7 +1119,7 @@ function Escalation({ real }) {
           </CardContent>
         </Card>
 
-        <Panel as="h3" label="Referrals on these students">
+        <Panel as="h3" label="Referrals on these students" className={TONE.mint.ground}>
           <ul className="divide-y divide-rule">
             {real && <BlankRow>No referral has been opened. A referral is written from a
               student's record.</BlankRow>}
@@ -1090,7 +1216,7 @@ function Consent({ real }) {
       </Panel>
 
       <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
-        <Panel as="h3" label="Data retention">
+        <Panel as="h3" label="Data retention" className={TONE.lilac.ground}>
           {/* Read off RETENTION in src/app/store.js, which is the list the
               student's own Sharing screen offers. A 90 typed in here was the
               longest option dressed as a policy. */}

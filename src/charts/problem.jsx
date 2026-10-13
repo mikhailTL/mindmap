@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tally, ScrollIn, ScrollRow } from '../ui/motion'
+import { ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
 
 /* The problem band, under the hero.
@@ -95,7 +95,7 @@ function SurveyChart() {
           <li key={h.pct}>
             <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
               <span className="font-mono text-head font-bold tabular-nums leading-none text-accent-lit">
-                <Tally to={h.pct} suffix="%" />
+                {h.pct}%
               </span>
               <span className="text-fine text-ruling">of students, {h.exact}% exact</span>
             </div>
@@ -259,6 +259,10 @@ function TreatmentGap() {
 
 /* ── The band ──────────────────────────────────────────────────────────── */
 
+/* The two headline figures are printed, never counted up to. A count-up starts
+   at zero and passes through numbers that are not the statistic, and these sit
+   beside their own exact values: a reader scrolling past saw "24%" next to
+   "39.7% exact". A published figure is not an animation. */
 export function ProblemStats({ className }) {
   return (
     <div className={cn(className)}>

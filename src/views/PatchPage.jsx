@@ -16,6 +16,29 @@ import { SCORE, SCORE_RANGE } from '../lib/terms'
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
+/* COLOUR, this pass. The page ran mist, aqua-2, white, white, ink: five
+ * near-white teals and a dark band, which is the monotony the owner named on
+ * the twelve reference screens. It now runs coral, white, sun, ink, with the
+ * four signal cards carrying one hue each in the rainbow's own order, so the
+ * set reads as four different things rather than one tint four times.
+ *
+ * Every value is from tailwind.config.js and every pairing was measured: each
+ * hue's `ink` clears 4.5 : 1 on paper, card and all six washes, and the hue
+ * `DEFAULT` is used only as a left edge against a white card, where the
+ * weakest of the four, mint, is 3.22 : 1 against the 3 : 1 a non-text graphic
+ * owes. No hue touches body text, which stays ink and ink-2. The signal's own
+ * glow still draws its trace, so colour is never the only thing naming it: the
+ * name is printed under every trace. */
+/* Nobody pictured anywhere on this site wears the patch, because no unit has
+   been built or worn. This frame is a licensed stock photograph with a drawing
+   of the oval placed on it, and its alt text says exactly that. */
+const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
+  + 'of the patch placed on the outer upper arm to show where it would sit.'
+
+const SIGNAL_WASH = {
+  heart: 'bg-coral-wash', sweat: 'bg-sun-wash', temp: 'bg-mint-wash', move: 'bg-sky-wash',
+}
+
 /* Claims here are limited to what the build is. Battery, charge time,
    adhesive, wear duration, electrode build, part numbers, ingress, weight and
    cost are all open and no figure for any of them may be added.
@@ -93,11 +116,12 @@ export function PatchPage() {
     <main>
       {/* No border-b: the <Section> below supplies border-t, and two meeting
           hairlines render as a 2px rule. */}
-      <section className="relative overflow-hidden bg-mist">
+      <section className="relative overflow-hidden bg-coral-wash">
         <div className="wrap relative py-7 lg:py-10
-          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,40%)] lg:items-center lg:gap-8">
+          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-center lg:gap-8">
           <div className="min-w-0">
-          <p className="font-mono text-ui font-bold tracking-[0.005em] text-accent">The patch</p>
+          <p className="inline-flex rounded-chip border border-rule bg-card px-2.5 py-1
+            font-mono text-ui font-bold tracking-[0.005em] text-coral-ink">The patch</p>
           {/* The line break is explicit so a 390px column cannot hyphen-break
               "sticker-sized" across two lines. */}
           <RevealLines as="h1"
@@ -144,8 +168,9 @@ export function PatchPage() {
             <Parallax2D distance={52}>
               <img src={PHOTOS['patch-worn']} width="1024" height="688" loading="eager"
                 decoding="async"
-                alt="A teenager in a school gym with the MindMap patch on his upper arm"
-                className="h-[210px] w-full rounded-panel object-cover sm:h-[280px] lg:h-[320px]"/>
+                alt={ARM_ALT}
+                className="h-[230px] w-full rounded-panel border border-rule object-cover
+                  sm:h-[300px] lg:h-[380px]"/>
             </Parallax2D>
           </figure>
         </div>
@@ -153,14 +178,14 @@ export function PatchPage() {
 
       {/* Plain-language names only; EDA / PPG / nRF52840 belong on the signal
           pages. */}
-      <Section tone="card" tight className="bg-aqua-2">
+      <Section tone="card" tight>
         <SectionHead className="mt-0 max-w-[24ch]">Four signals off the skin</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <Card className="flex h-full flex-col border-l-[3px]" style={{ borderLeftColor: s2.glow }}>
-                <div className="bg-mist/70 px-3 py-2 lg:px-4">
-                  <SignalTrace kind={s2.id} className="h-10"/>
+                <div className={cn('px-3 py-3 lg:px-4', SIGNAL_WASH[s2.id] || 'bg-mist/70')}>
+                  <SignalTrace kind={s2.id} className="h-12"/>
                 </div>
                 <dl className="m-0 px-3 pb-3 pt-2 lg:px-4 lg:pb-3.5">
                   <dt className="font-display text-ui font-bold text-ink">{s2.name}</dt>
@@ -185,7 +210,7 @@ export function PatchPage() {
           The rail exists because the figure is one tall centred column and a
           wide section is owed two. It is a second column of real values, not
           decoration: every row is a number this project has settled on. */}
-      <Section name="Inside the patch" tone="card" tight className="bg-card">
+      <Section name="Inside the patch" tone="card" tight className="bg-sun-wash">
         <SectionHead className="mt-0 max-w-[26ch]">Five layers of one oval</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
@@ -195,7 +220,16 @@ export function PatchPage() {
 
           {/* lg:sticky, so the values stay beside the figure while the reader
               scrolls the layer table. top-24 clears the sticky header. */}
-          <Card className="p-3.5 lg:sticky lg:top-24 lg:p-4">
+          <Card className="lg:sticky lg:top-24">
+            {/* Where the oval goes, at the one scale the exploded figure beside
+                it cannot show: a human arm. A licensed stock frame of a model,
+                carrying no patch and no drawing of one. */}
+            <img src={PHOTOS['student-basketball']} width="1600" height="1066" loading="eager"
+              decoding="async"
+              alt="A teenager in a sleeveless vest dribbling a basketball on an outdoor court"
+              className="block h-[128px] w-full max-w-none border-b border-rule object-cover
+                object-[50%_38%] lg:h-[144px]"/>
+            <div className="p-3.5 lg:p-4">
             <h3 className="font-display text-row font-bold leading-tight text-ink">
               Settled so far
             </h3>
@@ -238,6 +272,7 @@ export function PatchPage() {
                   </li>
                 ))}
               </ul>
+            </div>
             </div>
           </Card>
         </div>

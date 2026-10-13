@@ -1,6 +1,6 @@
 import React from 'react'
 import * as C from '@radix-ui/react-collapsible'
-import { Chevron, Never, Sometimes } from '../ui/marks'
+import { Chevron, Never, PulseMark, Sometimes, Wave } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { SignalTrace } from '../charts/infographics'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
@@ -16,11 +16,29 @@ import { LOCATION, NOTES, PRO, SCORE, CONSENT_SHORT, CONSENT_OFF } from '../lib/
 
 /* ── Primitives ─────────────────────────────────────────────────────────── */
 
+/* Section 0b of the design spec: the six measured hues in tailwind.config.js
+   are here so the app stops reading as one tint. A tone is a ground and an
+   edge and never a state, so every tile that means something still says so in
+   words. ink 12.57, ink-2 7.00, ink-3 5.05, warn 4.87 and crit 5.63 are the
+   worst cases across all six washes, so nothing inside a tile has to change
+   when its tone does. */
+export const TONES = {
+  card:  'border-rule bg-card',
+  brand: 'border-accent/30 bg-accent-wash',
+  lilac: 'border-lilac/30 bg-lilac-wash',
+  sky:   'border-sky/30 bg-sky-wash',
+  mint:  'border-mint/35 bg-mint-wash',
+  sun:   'border-sun/35 bg-sun-wash',
+  coral: 'border-coral/30 bg-coral-wash',
+  blush: 'border-blush/30 bg-blush-wash',
+}
+
 /* Section 2 of the design spec: content may not sit on a tint. The app ground
    is bg-beam/15, so every module on a student screen is one of these. */
-export function Panel({ className, as: As = 'section', children, ...rest }) {
+export function Panel({ className, tone = 'card', as: As = 'section', children, ...rest }) {
   return (
-    <As className={cn('rounded-panel border border-rule bg-card p-4 lg:p-5', className)} {...rest}>
+    <As className={cn('rounded-panel border p-4 lg:p-5', TONES[tone] || TONES.card, className)}
+      {...rest}>
       {children}
     </As>
   )
@@ -68,34 +86,130 @@ export function Fact({ label, value, sub, bar, className }) {
   )
 }
 
+/* A rounded chip. The references all open with a row of them and so does this
+   screen; it is a label, not a control, so it carries no tap target and no
+   focus ring. Anything tappable is a button elsewhere in this file. */
+export function Chip({ children, className }) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 rounded-chip border border-rule bg-card',
+      'px-2.5 py-1 font-display text-fine font-medium text-ink-2', className)}>
+      {children}
+    </span>
+  )
+}
+
+/* The greeting the reference dashboards all open with, and the one thing they
+   do that this product may not copy: they greet by name. Design spec section 7
+   forbids an invented person's name and there is no account to hold a real
+   one, so the hour does the work instead. The hour is the reader's own clock,
+   not the demo day's. */
+const HELLO = h => (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon'
+  : h < 22 ? 'Good evening' : 'Hello')
+
+export function Greeting({ chips = [], className }) {
+  const hour = new Date().getHours()
+  return (
+    <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
+      <p className="font-display text-row font-bold leading-none text-ink">{HELLO(hour)}</p>
+      {chips.map(c => <Chip key={c}>{c}</Chip>)}
+    </div>
+  )
+}
+
+/* ── The one thing the patch cannot measure ─────────────────────────────── */
+
+/* Three faces, which is what every reference dashboard opens with and what
+   this product has to be careful about. MindMap measures a body and never a
+   feeling, so the faces are not a rating that gets stored and they are not an
+   inference drawn from the reading: they are the legend for the six questions,
+   and the whole tile is one button that opens them. Shape carries the meaning,
+   the word under each face repeats it, and colour only repeats the word. */
+const FACES = [
+  ['easier',      'bg-mint-wash',  'M8.5 14.6c1.4 1.7 5.6 1.7 7 0'],
+  ['about usual', 'bg-sun-wash',   'M8.5 15h7'],
+  ['harder',      'bg-coral-wash', 'M8.5 15.8c1.4 -1.7 5.6 -1.7 7 0'],
+]
+
+function Face({ d, className }) {
+  return (
+    <span aria-hidden className={cn('flex size-11 items-center justify-center rounded-chip',
+      'border border-rule', className)}>
+      <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="#0b2b33"
+        strokeWidth="1.6" strokeLinecap="round">
+        <circle cx="9" cy="10" r="1.05" fill="#0b2b33" stroke="none"/>
+        <circle cx="15" cy="10" r="1.05" fill="#0b2b33" stroke="none"/>
+        <path d={d}/>
+      </svg>
+    </span>
+  )
+}
+
+export function FeltCard({ go, className }) {
+  return (
+    <Panel tone="blush" className={cn('flex flex-col', className)}>
+      <PanelHead title="Only you can say how today felt" meta="six questions"/>
+      <p className="mt-3 max-w-[46ch] text-meta text-ink">The patch reads a body. It cannot
+        read a feeling, and it never guesses at one.</p>
+      <button type="button" onClick={() => go('check')}
+        className="group mt-3 flex min-h-[44px] w-full flex-col gap-3 rounded-panel border
+          border-rule bg-card p-3.5 text-left transition-colors duration-150
+          hoverOnly:bg-mist/50">
+        <span aria-hidden className="flex w-full items-end justify-around gap-2">
+          {FACES.map(([word, bg, d]) => (
+            <span key={word} className="flex min-w-0 flex-col items-center gap-1.5">
+              <Face d={d} className={bg}/>
+              <span className="text-fine text-ink-2">{word}</span>
+            </span>
+          ))}
+        </span>
+        <span className="flex w-full items-center gap-3 border-t border-rule pt-3">
+          <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
+            transition-colors duration-150 groupHoverOnly:text-accent-ink">
+            Answer the six questions</span>
+          <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+        </span>
+      </button>
+      <p className="mt-3 max-w-[46ch] text-fine text-ink-2">About a minute. Your answers are
+        scored on this phone and none of them is kept as a record of your mood.</p>
+    </Panel>
+  )
+}
+
 /* ── The action row ─────────────────────────────────────────────────────── */
 
 /* Section 7 of the spec asks every app screen for an action row. These are the
    three routes the bottom bar already carries, repeated here as the end of the
    screen rather than as a fourth navigation: a reader who has just been told
    what today looks like is at the point of doing something about it.
-   Subtitles are lifted from the screens they open, not written fresh. */
+   Subtitles are lifted from the screens they open, not written fresh. One hue
+   each, because three identical tiles read as one tile printed three times. */
 const ACTIONS = [
-  ['check',       'Take a reading',
+  ['check',       'Take a reading', 'coral', PulseMark,
    'The phone’s camera and microphone, a paired patch, or six questions.'],
-  ['kit-student', 'Open the Toolkit',
+  ['kit-student', 'Open the Toolkit', 'sun', Wave,
    'Short activities to run when the number is up, and when it is not.'],
-  ['shared',      'Who can see what',
+  ['shared',      'Who can see what', 'sky', Sometimes,
    'Change what leaves this phone, field by field, and switch any of it off.'],
 ]
+
+const ICON_INK = { coral:'text-coral', sun:'text-sun', sky:'text-sky' }
 
 export function ActionRow({ go, className }) {
   return (
     <Panel className={className}>
       <PanelHead title="What you can do next" meta="three screens"/>
       <ul className="m-0 mt-3 grid list-none gap-3 p-0 sm:grid-cols-3 lg:gap-4">
-        {ACTIONS.map(([route, title, why]) => (
+        {ACTIONS.map(([route, title, tone, Icon, why]) => (
           <li key={route} className="min-w-0">
             <button type="button" onClick={() => go(route)}
-              className="group flex h-full min-h-[76px] w-full flex-col items-start gap-1.5
-                rounded-panel border border-rule bg-card p-3.5 text-left
-                transition-colors duration-150 hoverOnly:bg-mist/50">
-              <span className="flex w-full items-center gap-2">
+              className={cn('group flex h-full min-h-[76px] w-full flex-col items-start gap-2',
+                'rounded-panel border p-3.5 text-left transition-colors duration-150',
+                TONES[tone], 'hoverOnly:bg-card')}>
+              <span className="flex w-full items-center gap-2.5">
+                <span aria-hidden className="flex size-9 shrink-0 items-center justify-center
+                  rounded-chip border border-rule bg-card">
+                  <Icon className={cn('size-5', ICON_INK[tone])}/>
+                </span>
                 <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
                   transition-colors duration-150 groupHoverOnly:text-accent-ink">{title}</span>
                 <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
@@ -125,9 +239,12 @@ const SCOPE = [
     what: `${NOTES}, ${LOCATION}, and anything the microphone hears.` },
 ]
 
+/* The brand tone rather than one of the six: this is the one tile on the
+   screen a reader has to trust, and the teal is the colour the rest of the
+   product keeps its promises in. */
 export function SharedCard({ go, className }) {
   return (
-    <Panel className={cn('flex flex-col', className)}>
+    <Panel tone="brand" className={cn('flex flex-col', className)}>
       <PanelHead title="What leaves your phone" meta="off by default"/>
       <p className="mt-3 max-w-[44ch] text-meta text-ink">{CONSENT_SHORT}</p>
       <ul className="m-0 mt-3 list-none p-0">
@@ -160,6 +277,27 @@ export function SharedCard({ go, className }) {
 export function Headline({ children }) {
   return <p className="max-w-[24ch] font-display text-major font-bold
     leading-[1.15] tracking-tight text-ink">{children}</p>
+}
+
+/* The hero sentence, which design spec section 7c makes the largest thing on
+   an app screen. Plain words at display size, the number under it and smaller,
+   and one quieter line naming the signal that moved most. The sentence itself
+   is generated by the screen from its own rings and bands; this only prints
+   it, so the demo screen and the unpaired screen set it the same way. */
+export function HeroLine({ lead, under, figure, unit, note, children }) {
+  return (
+    <div className="min-w-0">
+      <p className="max-w-[26ch] font-display text-sub font-bold text-ink">{lead}</p>
+      {under && <p className="mt-2.5 max-w-[46ch] text-meta text-ink-2">{under}</p>}
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule pt-3">
+        <span className="font-mono text-head font-medium tabular-nums leading-none text-ink">
+          {figure}</span>
+        {unit && <span className="text-fine text-ink-3">{unit}</span>}
+        {children}
+      </div>
+      {note && <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">{note}</p>}
+    </div>
+  )
 }
 
 /* Kept for the reading screens, which still fold their working away. The
@@ -220,7 +358,7 @@ function SignalShapes() {
         {SENSOR_ORDER.map(id => {
           const s = SENSORS[id]
           return (
-            <li key={id} className="rounded-panel border border-rule p-3">
+            <li key={id} className="rounded-panel border border-rule bg-card p-3">
               <p className="flex items-baseline justify-between gap-3">
                 <span className="font-display text-ui font-medium text-ink">{s.name}</span>
                 <span className="tick shrink-0">{s.unit}</span>
@@ -247,31 +385,42 @@ const PAIRING = [
   ['About two weeks of wear', `The ${SCORE} compares you with your own normal, and the first two weeks are what build that normal.`],
 ]
 
-/* Real mode. Same grid and the same card grammar as the demo screen, so the
-   screen is recognisably the same instrument with its readings missing. No
-   invented figure anywhere on it: every number below is a property of the
-   product, not a measurement. */
+/* Real mode. Same grid, the same card grammar and the same hero sentence as
+   the demo screen, so the screen is recognisably the same instrument with its
+   readings missing. No invented figure anywhere on it: every number below is a
+   property of the product, not a measurement. The sentence is the honest one,
+   and it says the thing an empty screen must never let a reader assume. */
 export function StudentBody({ go, openTab }) {
   const open = route => (openTab ? openTab(route) : go(route))
   return (
     <div className="grid grid-cols-12 gap-3 lg:gap-4">
-      <Panel className="col-span-12">
-        <PanelHead title={`Your ${SCORE} today`} meta="no patch paired"/>
-        <RealNotice className="mt-3">Nothing has been measured, so there is no {SCORE}.</RealNotice>
-        <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-rule pt-3 sm:grid-cols-4">
-          <Fact label="Signals reading" value="0 of 4" sub="heart, sweat, temperature, movement"/>
-          <Fact label="Your normal" value="0 days" sub="about fourteen days of your own readings build it"/>
-          <Fact label="Scale" value="0 to 100" sub="against your own normal, never anybody else"/>
-          <Fact label="Last reading" value="None yet" sub="nothing has been stored on this phone"/>
+      <Panel tone="lilac" className="col-span-12">
+        <Greeting chips={['No patch paired', 'Nothing measured']}/>
+        <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+          <HeroLine
+            lead="Nothing has been measured today."
+            under={`A ${SCORE} compares you with your own last two weeks, so an empty day is not a calm day and this screen will not draw it as one.`}
+            figure="No reading"
+            note="Six questions still work with no patch, and they score on this phone."/>
+          <div className="mt-4 border-t border-rule pt-3 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-6
+            lg:pt-0">
+            <RealNotice>Nothing has been measured, so there is no {SCORE}.</RealNotice>
+            <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
+              <Fact label="Signals reading" value="0 of 4" sub="heart, sweat, temperature, movement"/>
+              <Fact label="Your normal" value="0 days" sub="about fourteen days of your own readings build it"/>
+              <Fact label="Scale" value="0 to 100" sub="against your own normal, never anybody else"/>
+              <Fact label="Last reading" value="None yet" sub="nothing has been stored on this phone"/>
+            </div>
+          </div>
         </div>
       </Panel>
 
-      <Panel className="col-span-12 lg:col-span-5">
+      <Panel tone="sky" className="col-span-12 lg:col-span-5">
         <PanelHead title="The four channels" meta="0 of 4 reading"/>
         <div className="mt-3"><SilentChannels/></div>
       </Panel>
 
-      <Panel className="col-span-12 lg:col-span-7">
+      <Panel tone="mint" className="col-span-12 lg:col-span-7">
         <PanelHead title="What you need to take a reading"/>
         <ul className="m-0 list-none p-0">
           {PAIRING.map(([what, why]) => (
@@ -283,12 +432,14 @@ export function StudentBody({ go, openTab }) {
         </ul>
       </Panel>
 
-      <Panel className="col-span-12 lg:col-span-7">
+      <Panel tone="sun" className="col-span-12 lg:col-span-7">
         <PanelHead title="What each signal looks like" meta="drawings, not readings"/>
         <div className="mt-3"><SignalShapes/></div>
       </Panel>
 
-      <SharedCard go={go} className="col-span-12 h-full lg:col-span-5"/>
+      <FeltCard go={open} className="col-span-12 h-full lg:col-span-5"/>
+
+      <SharedCard go={go} className="col-span-12 h-full lg:col-span-7"/>
 
       {/* The only route a visitor can actually finish leads this row: six
           questions score the person reading, with no patch anywhere in it. */}

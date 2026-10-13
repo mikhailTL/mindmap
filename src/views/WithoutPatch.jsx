@@ -1,4 +1,5 @@
 import React from 'react'
+import { PHOTOS } from '../lib/photos'
 import { Button } from '../ui/button'
 import { Section, SectionHead } from '../ui/section'
 import { IPhone } from '../ui/iphone'
@@ -37,6 +38,33 @@ import { cn } from '../lib/utils'
 
 const PANEL = 'rounded-panel border border-rule bg-card'
 const PANEL_INK = 'rounded-panel border border-ink-2 bg-ink-2/40'
+
+/* COLOUR AND PHOTOGRAPHY, this pass. The page ran mist, white, aqua-2, paper,
+ * ink: four near-white teals and a dark band, and it carried no photograph at
+ * all, which is the register the owner rejected on the twelve reference
+ * screens. The ladder is sky, white, sun, paper, ink now, and two licensed
+ * stock frames land at two different scales: a wide one in the hero beside the
+ * phone, and a tall one inside the camera figure's own border, so the diagram
+ * and the person it is about are one container rather than two.
+ *
+ * Measured, from tools/brand: sky.ink 5.63 on paper and 5.08 on its own wash,
+ * sun.ink 5.67 and 5.08, and ink, ink-2, ink-3, accent and warn all clear
+ * 4.5 : 1 on both washes, so nothing on this page loses contrast to the
+ * change. No hue touches body text. */
+const PHOTO = {
+  'student-bus':      [1600, 1067],
+  'student-homework': [1592, 1194],
+}
+
+function Frame({ photo, alt, className }) {
+  const src = PHOTOS[photo]
+  if (!src || !alt) return null
+  const [w, h] = PHOTO[photo]
+  return (
+    <img src={src} alt={alt} width={w} height={h} loading="eager" decoding="async"
+      className={cn('block h-full w-full max-w-none object-cover', className)}/>
+  )
+}
 
 /* The three figures the hero used to spend a sentence on. 45 is PPG_SECONDS
    plus VOICE_SECONDS, the scale is the site's one scale, and the third is the
@@ -127,11 +155,12 @@ export function WithoutPatch({ go }) {
 
   return (
     <main>
-      <header className="border-t border-rule bg-mist">
+      <header className="border-t border-rule bg-sky-wash">
         <div className="wrap py-7 lg:py-10">
           <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-4">
             <div>
-              <p className="font-display text-tick font-bold tracking-[0.01em] text-accent">
+              <p className="inline-flex rounded-chip border border-rule bg-card px-2.5 py-1
+                font-display text-tick font-bold tracking-[0.01em] text-sky-ink">
                 Without the patch
               </p>
               {/* The heading is the one thing section 2 lets sit on a tinted
@@ -141,11 +170,20 @@ export function WithoutPatch({ go }) {
                 You do not need the patch.
               </h1>
 
-              <div className={cn(PANEL, 'mt-3 max-w-[34rem] p-3.5')}>
-                <p className="text-meta leading-[1.4] text-ink-2">
-                  Take a reading with the phone you already have.
-                </p>
-                <Figures items={HERO_FACTS} className="mt-2.5"/>
+              <div className={cn(PANEL, 'mt-3 max-w-[34rem] overflow-hidden border-l-[3px] border-l-sky')}>
+                {/* The widest frame on the page, and the only one in the hero.
+                    A licensed stock frame of models: nobody shown uses MindMap
+                    and nobody is wearing a patch. */}
+                <div className="h-[128px] border-b border-rule sm:h-[150px]">
+                  <Frame photo="student-bus"
+                    alt="Two boys laughing together on a school bus seat, one holding a phone"/>
+                </div>
+                <div className="p-3.5">
+                  <p className="text-meta leading-[1.4] text-ink-2">
+                    Take a reading with the phone you already have.
+                  </p>
+                  <Figures items={HERO_FACTS} className="mt-2.5"/>
+                </div>
               </div>
               <div className="mt-3">
                 <Button onClick={toCheck}>Take a reading<span aria-hidden>→</span></Button>
@@ -181,34 +219,49 @@ export function WithoutPatch({ go }) {
           </ScrollIn>
         </div>
         <ScrollIn className="mt-3 lg:mt-4">
-          {/* ScrollIn owns the entrance, Parallax2D the drift, on separate
-              elements: both write `transform`, so nesting is required. */}
-          <Parallax2D distance={30}>
-            <CameraModule className="mx-auto max-w-[66rem]"/>
-          </Parallax2D>
+          {/* The figure and the person it is about, inside one border. The
+              frame is a full height column at lg and a wide band below it, so
+              the same photograph is read at two quite different shapes. */}
+          <div className={cn(PANEL, 'grid overflow-hidden border-l-[3px] border-l-sky',
+            'lg:grid-cols-[minmax(0,1fr)_minmax(0,250px)]')}>
+            <div className="min-w-0 p-3.5 lg:p-4">
+              {/* ScrollIn owns the entrance, Parallax2D the drift, on separate
+                  elements: both write `transform`, so nesting is required. */}
+              <Parallax2D distance={30}>
+                <CameraModule className="mx-auto max-w-[66rem]"/>
+              </Parallax2D>
+            </div>
+            <div className="h-[150px] border-t border-rule lg:h-auto lg:border-l lg:border-t-0">
+              <Frame photo="student-homework"
+                alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them"/>
+            </div>
+          </div>
         </ScrollIn>
         <ScrollIn className="mt-3 lg:mt-4">
           <SignalCoverage/>
         </ScrollIn>
       </Section>
 
-      <Section name="Two ways" tone="mist" tight className="bg-aqua-2">
+      <Section name="Two ways" tone="mist" tight className="bg-sun-wash">
         <SectionHead>Two ways to take a reading.</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
-              <div className={cn(PANEL, 'flex h-full flex-col p-4 lg:p-5')}>
+              <div className={cn(PANEL, 'flex h-full flex-col border-l-[3px] p-4 lg:p-5',
+                i ? 'border-l-lilac' : 'border-l-sun')}>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                   {/* 16px travel = 8px either side, inside this panel's 10px of
                       vertical padding, so the drawing stays within its ground. */}
-                  <div className="w-fit rounded-panel bg-mist/70 px-3 py-2">
+                  <div className={cn('w-fit rounded-panel px-3 py-2',
+                    i ? 'bg-lilac-wash' : 'bg-sun-wash')}>
                     <Parallax2D distance={16}>
                       <RouteArt kind={r.art}/>
                     </Parallax2D>
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
-                    <p className="mt-0.5 font-mono text-fine tabular-nums text-accent">{r.when}</p>
+                    <p className={cn('mt-0.5 font-mono text-fine tabular-nums',
+                      i ? 'text-lilac-ink' : 'text-sun-ink')}>{r.when}</p>
                   </div>
                 </div>
                 <ul className="m-0 mt-3 flex list-none flex-wrap gap-1.5 border-t border-rule p-0 pt-3">
