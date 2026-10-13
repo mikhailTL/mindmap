@@ -551,20 +551,27 @@ export function Overview({ go }) {
           shorter because its picture and its words share a line. That is the
           mixed scale spec 5 asks for and about 130px of band height back.
 
-          The first row is three unequal tracks on purpose: an even three up
-          would say the three routes are equal, and the phone is the only one a
-          stranger can use in the next minute. */}
+          BOTH ROWS ARE AN EVEN THREE UP. The first row used to run 1.35fr /
+          1fr / 1fr with a wider picture on the lead card, to say that the
+          phone route is the only one a stranger can use in the next minute.
+          Rendered, it did not say that: it said one card had been laid out
+          differently from its two siblings, directly above a second row of
+          three equal cards doing the same job. Spec 5 allows mixed scale
+          across a page, not inside one row of three equals, and the two
+          narrow cards were paying for it in four-line wraps. The lead is
+          still marked, by the one device that costs no layout: the accent
+          rule down its left edge, which the other two do not carry. */}
       <Section name="Getting started" tone="card" id="screens" className="bg-sun-wash" tight>
         <SectionHead>Three Ways to Start</SectionHead>
-        <div className="mt-3 grid auto-rows-fr gap-3 lg:gap-4
-          lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="mt-3 grid auto-rows-fr gap-3 lg:grid-cols-3 lg:gap-4">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(d.go)}
                 className={cn('flex h-full flex-col p-0 sm:flex-row', d.lead && 'border-l-accent')}>
-                <span className={cn('relative block w-full shrink-0 overflow-hidden',
-                  'h-[150px] sm:h-auto sm:self-stretch',
-                  d.lead ? 'sm:w-[42%]' : 'sm:w-[38%]')}>
+                {/* One width for all three: the picture is the same share of
+                    every card, so the row reads as one decision. */}
+                <span className="relative block h-[150px] w-full shrink-0 overflow-hidden
+                  sm:h-auto sm:w-[40%] sm:self-stretch">
                   <Frame photo={d.photo} alt={d.alt} eager={EAGER.has(d.photo)}
                     className="absolute inset-0"/>
                 </span>

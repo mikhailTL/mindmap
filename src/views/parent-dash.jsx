@@ -50,7 +50,14 @@ const list = xs => xs.length < 2 ? (xs[0] ?? '')
 
 /* Still time off the movement channel, in hours. Same figures as the movement
    ring in src/lib/readings.js; held as numbers here because a bar needs a
-   length rather than a phrase. */
+   length rather than a phrase.
+
+   NOT A SCORING-MODEL OUTPUT. These three come off the patch's movement
+   channel against the same wearer's own usual, which is a different route from
+   the score the rest of this screen draws, and nobody wrote them down in an
+   app. So the tile says where they come from, both figures say "about", and
+   the demo notice at the head of the screen names the two routes separately
+   rather than crediting every figure here to the model. */
 const SLEEP = { nights: 3, hours: 5.5, usual: 8 }
 const hrs = h => {
   const m = Math.round((h % 1) * 60)
@@ -580,9 +587,14 @@ export function ParentDash({ go, openTab }) {
         </>
       ) : (
         <>
-          <DemoNotice className="mt-3">Every figure on this screen is generated from the scoring
-            model. No child is named or described here; nobody has worn a patch and nobody was
-            measured.</DemoNotice>
+          {/* Two routes, named separately: the scores are the scoring model's
+              output and the still-time figures are read off the movement
+              channel, so one sentence crediting the model for all of them was
+              not true of the sleep tile. */}
+          <DemoNotice className="mt-3">Every figure on this screen is generated: the scores by the
+            scoring model, the sleep figures off the patch&rsquo;s movement channel, which is why
+            those two say about. No child is named or described here; nobody has worn a patch and
+            nobody was measured.</DemoNotice>
 
           {/* The hero, per design spec 7c: the sentence first and largest, in
               plain words with no figure in it, then the quieter line, then the
@@ -621,7 +633,16 @@ export function ParentDash({ go, openTab }) {
             </Panel>
           </div>
 
+          {/* TWO STACKS, NOT A PANEL BESIDE A STACK. At 1280 the dial panel
+              stood alone in the left column at 567px while the right column ran
+              to 904px, so the row printed 337px of bare app ground under the
+              dial. The sleep tile moved under the dial and the other two moved
+              under the chart they belong to: the chart's amber days and the
+              above-range tile's amber strip are the same seven days, and the
+              patch-worn strip is the same seven again. Measured after:
+              796px against 865px. */}
           <div className={cn(ROW, 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+            <div className="flex flex-col gap-3 lg:gap-4">
             <Panel as="h3" label={`The week, ${SCORE} out of 100`}>
               <div className="flex flex-col items-center">
                 {/* 380 rather than 320: RainbowDial caps itself at `size` and
@@ -642,6 +663,18 @@ export function ParentDash({ go, openTab }) {
                 <Fact k="Days measured" v={`${measured} of ${DAYS.length}`}/>
               </dl>
             </Panel>
+              {/* Hours as a decimal, not "5 h 30": the formatted string ran
+                  past the tile at 390 and broke the figure over two lines.
+                  "about" is the tile's `pre` for the same reason. */}
+              <Tile tone="sun" label={`Sleep, ${word(SLEEP.nights)} short nights`}
+                pre="about" figure={SLEEP.hours} unit="h a night">
+                <SleepBars/>
+                {/* Provenance on the tile, because this is the one figure on
+                    the screen the scoring model did not produce. */}
+                <p className="mt-2 text-fine text-ink-2">Still time off the movement channel, not
+                  anything they wrote down.</p>
+              </Tile>
+            </div>
 
             <div className="flex flex-col gap-3 lg:gap-4">
               <Panel as="h3" label="Each day, out of 100">
@@ -650,47 +683,35 @@ export function ParentDash({ go, openTab }) {
                   usual range, worked out from their own last two weeks. They are never compared
                   with other students.</p>
               </Panel>
-              {/* items-start: these three tiles hold different amounts of
-                  content, and stretched the two shorter ones printed about
-                  150px of empty card stock each under their last line. */}
-              {/* Not a uniform three. The first tile carries a strip, a list
-                  of days and a pair of bars, so it takes the full width and
-                  the two short ones share the row under it. */}
-              <div className="grid items-start gap-3 sm:grid-cols-2 lg:gap-4">
-                <Tile tone="coral" className="sm:col-span-2"
-                  label="Above their usual range" figure={w.over.length}
-                  unit={`of ${measured} days`}>
-                  <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
-                    label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
-                      + `${list(w.over.map(d => d.name))}.`}/>
-                  <p className="mt-2 text-fine text-ink-2">
-                    {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
-                  {/* How far above, which the count alone does not say. Both
-                      bars run off the same 0 to 100 scale the score uses. */}
-                  {w.peak && (
-                    <PairBars top={100}
-                      aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
-                      rows={[
-                        { k:w.peak.name, v:w.peak.v, text:`${w.peak.v} of 100`, tone:'bg-warn' },
-                        { k:'usual day', v:w.usual, text:`${w.usual} of 100`, tone:'bg-ink-3/40' },
-                      ]}/>
-                  )}
-                </Tile>
-                {/* Hours as a decimal, not "5 h 30": the formatted string ran
-                    past the tile at 390 and broke the figure over two lines.
-                    "about" is the tile's `pre` for the same reason. */}
-                <Tile tone="sun" label={`Sleep, ${word(SLEEP.nights)} short nights`}
-                  pre="about" figure={SLEEP.hours} unit="h a night">
-                  <SleepBars/>
-                </Tile>
-                <Tile tone="mint" label="Patch worn" figure={measured} unit={`of ${DAYS.length} days`}>
-                  <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
-                    label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
-                  <p className="mt-2 text-fine text-ink-2">
-                    {measured === DAYS.length ? 'Every day reported'
-                      : `${cap(word(DAYS.length - measured))} days with no reading`}</p>
-                </Tile>
-              </div>
+              {/* The wide tile, under the chart that draws the same seven
+                  days. It carries a strip, the day names and a pair of bars,
+                  so it takes the column's full width. */}
+              <Tile tone="coral"
+                label="Above their usual range" figure={w.over.length}
+                unit={`of ${measured} days`}>
+                <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
+                  label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
+                    + `${list(w.over.map(d => d.name))}.`}/>
+                <p className="mt-2 text-fine text-ink-2">
+                  {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
+                {/* How far above, which the count alone does not say. Both
+                    bars run off the same 0 to 100 scale the score uses. */}
+                {w.peak && (
+                  <PairBars top={100}
+                    aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
+                    rows={[
+                      { k:w.peak.name, v:w.peak.v, text:`${w.peak.v} of 100`, tone:'bg-warn' },
+                      { k:'usual day', v:w.usual, text:`${w.usual} of 100`, tone:'bg-ink-3/40' },
+                    ]}/>
+                )}
+              </Tile>
+              <Tile tone="mint" label="Patch worn" figure={measured} unit={`of ${DAYS.length} days`}>
+                <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
+                  label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
+                <p className="mt-2 text-fine text-ink-2">
+                  {measured === DAYS.length ? 'Every day reported'
+                    : `${cap(word(DAYS.length - measured))} days with no reading`}</p>
+              </Tile>
             </div>
           </div>
 

@@ -165,17 +165,25 @@ function heroFor({ tier, rings, day, band, crossed }) {
   const moved = rings.filter(r => over(r) > 0)
   const last = day.length ? day[day.length - 1].v : null
   const stillUp = last != null && band && last > band.hi
+  /* Two things are true on this day and the sentence has to carry the one the
+     reader cannot see for themselves. The day's line crossed above the usual
+     range in the afternoon; the one capture under the sentence was taken
+     earlier and sits inside that range. Neither cancels the other, so the
+     sentence is about the day and says which range it crossed, and the figure
+     under it is labelled as one reading with the time it was taken. Saying
+     "above your usual" without naming the range is what made the headline and
+     the band word under it read as a contradiction. */
   let lead
   if (tier.key === 'high' || tier.key === 'up')
     lead = crossed
-      ? `You have been running high since ${hourWords(crossed)}.`
+      ? `Your day has been above your usual range since ${hourWords(crossed)}.`
       : 'Your body is working harder than usual today.'
   else if (tier.key === 'low')
     lead = 'Today is calmer than your last two weeks.'
   else if (crossed && stillUp)
-    lead = `You have been running above your usual since ${hourWords(crossed)}.`
+    lead = `Your day has been above your usual range since ${hourWords(crossed)}.`
   else if (crossed)
-    lead = `You ran above your usual ${hourWords(crossed)}, and you are back inside it now.`
+    lead = `Your day went above your usual range ${hourWords(crossed)} and is back inside it now.`
   else if (moved.length)
     lead = 'Your body is working a little harder than usual today.'
   else
@@ -187,11 +195,24 @@ function heroFor({ tier, rings, day, band, crossed }) {
 }
 
 /* The comparison the old sentence carried, kept under the number so no figure
-   is lost: how far today sits from a usual day, and what the normal range is. */
+   is lost: how far today sits from a usual day. */
 function compareWords(score, usual) {
   const d = score - usual
   if (d === 0) return `Level with a usual day of ${usual}.`
   return `${cap(word(Math.abs(d)))} ${d > 0 ? 'above' : 'below'} a usual day of ${usual}.`
+}
+
+/* Whether the capture the screen is showing was taken before the day crossed
+   above the usual range. Worked out from the two clocks rather than written
+   into the copy, because it is the fact that stops the sentence above and the
+   band word under the number from looking like they disagree. */
+const READ_BEFORE_RISE = !!(CROSSED && String(TAKEN_AT) < String(CROSSED))
+
+function figureWords(score, usual) {
+  const c = compareWords(score, usual)
+  return READ_BEFORE_RISE
+    ? `Taken before your day went above the range. ${c}`
+    : c
 }
 
 /* ── The week ───────────────────────────────────────────────────────────── */
@@ -206,14 +227,14 @@ const TODAY_SHORT = TODAY.day.slice(0, 3)
 const WEEK = (DATA.week || []).map(d => (d.d === TODAY_SHORT ? { ...d, v: TODAY.score } : d))
 const WBAND = DATA.weekBand || BAND
 
-/* Inside the band, above it, below it. Position on the track is what says
-   which: the band itself is drawn behind every chip and the figure is printed
-   over each one, so the colour is the third thing carrying it, never the
-   first. */
+/* Inside the range, above it, below it. Height on a printed scale is what
+   says which, the figure is printed over every column and the range is a
+   ruled zone behind all seven, so the colour is the third thing carrying it,
+   never the first. */
 const dayFill = v => (v > WBAND.hi ? 'bg-sun' : v < WBAND.lo ? 'bg-sky' : 'bg-mint')
 
-/* How the seven days fell against the week's own normal range. Counted from
-   the same array the chips are drawn from, so the three figures cannot drift
+/* How the seven days fell against the week's own usual range. Counted from
+   the same array the columns are drawn from, so the three figures cannot drift
    from the strip beside them. */
 const WEEK_COUNT = {
   above: WEEK.filter(d => d.v > WBAND.hi).length,
@@ -221,34 +242,92 @@ const WEEK_COUNT = {
   below: WEEK.filter(d => d.v < WBAND.lo).length,
 }
 
+/* The figure used to be seven pills whose fill was the value as a percentage
+   of a 96px box, which is two faults at once: 43 and 52 came out nine pixels
+   apart inside a rounded-chip shape that read as the same circle twice, and
+   the caption promised a band that was a near-white fill on a white card and
+   could not be seen. Design spec 8b: a figure carries what it says it
+   carries.
+ *
+ * So the strip is a column chart on a printed scale. The scale is the data's
+ * own extent widened to the nearest ten so a reader can read a height off the
+ * axis beside it, and it is not 0 to 100: on the full scale the whole week
+ * lands in a twenty-point sliver and every column is the same height again.
+ * The usual range is one continuous zone across all seven columns, ruled top
+ * and bottom in ink-3, which is 5.98 : 1 on card and 5.18 : 1 on its own
+ * aqua-2 fill, so the zone and both its edges are visible well past the 3 : 1
+ * a non-text graphic owes. Every column carries the same ink-3 edge, so a
+ * column against the zone is delimited at the same ratio whatever its fill. */
+const WSCALE = (() => {
+  const vs = WEEK.map(d => d.v).concat([WBAND.lo, WBAND.hi])
+  if (!vs.length) return { lo: 0, hi: 100 }
+  return { lo: Math.max(0, Math.floor((Math.min(...vs) - 5) / 10) * 10),
+           hi: Math.min(100, Math.ceil((Math.max(...vs) + 5) / 10) * 10) }
+})()
+/* A value as a share of the plot's height. */
+const wy = v => {
+  const span = WSCALE.hi - WSCALE.lo || 1
+  return ((Math.max(WSCALE.lo, Math.min(WSCALE.hi, v)) - WSCALE.lo) / span) * 100
+}
+/* One cell. The three rows of the figure use the same cell geometry and the
+   same gap, so the value above a column, the column and the day under it line
+   up without a grid. */
+const CELL = 'min-w-0 flex-1 max-w-[3rem]'
+const TICKS = [WSCALE.hi, WBAND.hi, WBAND.lo, WSCALE.lo]
+
 function WeekStrip() {
   const read = WEEK.map(d => `${d.d} ${Math.round(d.v)}`).join(', ')
   return (
     <figure className="m-0">
-      <div role="img" className="flex items-end justify-between gap-1.5"
-        aria-label={`Seven days out of 100: ${read}. Your normal range for the week runs
-          ${WBAND.lo} to ${WBAND.hi}.`}>
-        {WEEK.map(d => {
-          const today = d.d === TODAY_SHORT
-          return (
-            <div key={d.d} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-              <span className="font-mono text-fine tabular-nums text-ink">{Math.round(d.v)}</span>
-              <span aria-hidden className={cn('relative h-24 w-full max-w-[2.5rem] overflow-hidden',
-                'rounded-chip border bg-card', today ? 'border-ink' : 'border-rule')}>
-                <span className="absolute inset-x-0 border-y border-ruling bg-aqua-2"
-                  style={{ bottom: `${WBAND.lo}%`, height: `${WBAND.hi - WBAND.lo}%` }}/>
-                <span className={cn('absolute inset-x-0 bottom-0 rounded-chip', dayFill(d.v))}
-                  style={{ height: `${Math.max(4, Math.min(100, d.v))}%` }}/>
-              </span>
-              <span className={cn('text-fine', today ? 'font-medium text-ink' : 'text-ink-2')}>
-                {d.d}</span>
+      {/* Three rows, one geometry. The axis gutter is w-10 with a gap-2.5
+          beside it, so the value row and the day row carry a 3.125rem left pad
+          and every cell in all three rows is the same width: a value sits over
+          its own column and a day label under it without a grid. */}
+      <div>
+        <div aria-hidden className="flex items-end justify-between gap-1.5 pl-[3.125rem]">
+          {WEEK.map(d => (
+            <span key={d.d} className={cn(CELL, 'text-center font-mono text-fine tabular-nums',
+              'text-ink')}>{Math.round(d.v)}</span>
+          ))}
+        </div>
+        <div className="mt-1 flex gap-2.5">
+          <div aria-hidden className="relative h-40 w-10 shrink-0 border-r border-ruling">
+            {TICKS.map(v => (
+              <span key={v} className="absolute right-1.5 translate-y-1/2 font-mono text-fine
+                tabular-nums text-ink-3" style={{ bottom: `${wy(v)}%` }}>{v}</span>
+            ))}
+          </div>
+          <div role="img" className="relative h-40 min-w-0 flex-1 border-b border-ruling"
+            aria-label={`Seven days on a scale of ${WSCALE.lo} to ${WSCALE.hi}: ${read}. Your usual
+              range for a week runs ${WBAND.lo} to ${WBAND.hi}, and ${WEEK_COUNT.above} of the seven
+              days sat above it.`}>
+            <span aria-hidden className="absolute inset-x-0 border-y border-ink-3 bg-aqua-2"
+              style={{ bottom: `${wy(WBAND.lo)}%`, height: `${wy(WBAND.hi) - wy(WBAND.lo)}%` }}/>
+            <div aria-hidden className="absolute inset-0 flex items-end justify-between gap-1.5">
+              {WEEK.map(d => (
+                <span key={d.d} className={cn(CELL, 'flex h-full items-end')}>
+                  <span className={cn('w-full rounded-t-xs border', dayFill(d.v),
+                    d.d === TODAY_SHORT ? 'border-ink' : 'border-ink-3')}
+                    style={{ height: `${Math.max(2, wy(d.v))}%` }}/>
+                </span>
+              ))}
             </div>
-          )
-        })}
+          </div>
+        </div>
+        <div aria-hidden className="mt-1.5 flex items-start justify-between gap-1.5 pl-[3.125rem]">
+          {WEEK.map(d => {
+            const today = d.d === TODAY_SHORT
+            return (
+              <span key={d.d} className={cn(CELL, 'text-center text-fine',
+                today ? 'font-medium text-ink' : 'text-ink-2')}>{d.d}</span>
+            )
+          })}
+        </div>
       </div>
       <figcaption className="note mt-3 max-w-[52ch]">
-        Each day against your own normal range for the week, {WBAND.lo} to {WBAND.hi}, drawn as the
-        band behind every chip. Nothing here is a streak and there is nothing to keep up.
+        Each day out of 100, drawn on the scale printed down the left. The ruled zone is your usual
+        range for a week, {WBAND.lo} to {WBAND.hi}. Nothing here is a streak and there is nothing to
+        keep up.
       </figcaption>
     </figure>
   )
@@ -390,13 +469,17 @@ function TodayDemo({ go, openTab }) {
     <div className="grid grid-cols-12 gap-3 lg:gap-4">
       {/* The sentence, then the number. Never the other way round, and never
           the number inside the sentence: design spec section 7c. The four
-          figures beside it are the frame the number is read in. */}
+          figures beside it are the frame the number is read in, and the first
+          of them names which of the screen's two ranges this tile is about:
+          the day's, 36 to 55. The week's own range is printed once, on the
+          week card, and labelled there as the week's. */}
       <ScrollRow index={0} className="col-span-12">
         <Panel tone="lilac">
           <Greeting chips={[TODAY.day, `Read at ${TODAY.clock}`, 'Patch and phone']}/>
           <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-6">
-            <HeroLine lead={hero.lead} under={hero.note} figure={TODAY.score}
-              unit="out of 100" note={compareWords(TODAY.score, USUAL)}>
+            <HeroLine lead={hero.lead} under={hero.note}
+              figLabel={`This reading, taken at ${TODAY.clock}`} figure={TODAY.score}
+              unit="out of 100" note={figureWords(TODAY.score, USUAL)}>
               <span className="flex items-center gap-2">
                 <span aria-hidden
                   className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>
@@ -405,7 +488,7 @@ function TodayDemo({ go, openTab }) {
             </HeroLine>
             <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-rule pt-3
               lg:mt-0 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              <Fact label="Normal range" value={`${BAND.lo} to ${BAND.hi}`}
+              <Fact label="Usual range for a day" value={`${BAND.lo} to ${BAND.hi}`}
                 sub="out of 100, from your own last two weeks"/>
               <Fact label="Taken" value={TODAY.clock} sub={TODAY.day}/>
               <Fact label="Signals reading" value="4 of 4"
@@ -473,12 +556,14 @@ function TodayDemo({ go, openTab }) {
 
       <ScrollRow index={3} className="col-span-12">
         <Panel tone="mint">
-          <PanelHead title="Your last seven days" meta={`usual ${WBAND.lo} to ${WBAND.hi}`}/>
+          <PanelHead title="Your last seven days" meta="out of 100"/>
           <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-6">
             <WeekStrip/>
-            <dl className="m-0 mt-4 border-t border-rule pt-1 lg:mt-0 lg:border-l lg:border-t-0
+            <div className="mt-4 border-t border-rule pt-3 lg:mt-0 lg:border-l lg:border-t-0
               lg:pl-6 lg:pt-0">
-              {[['Above your usual range', WEEK_COUNT.above], ['Inside it', WEEK_COUNT.inside],
+            <p className="tick">Against {WBAND.lo} to {WBAND.hi}, your usual range for a week</p>
+            <dl className="m-0 mt-1">
+              {[['Above it', WEEK_COUNT.above], ['Inside it', WEEK_COUNT.inside],
                 ['Below it', WEEK_COUNT.below]].map(([label, n]) => (
                 <div key={label} className="flex items-baseline justify-between gap-3
                   border-b border-rule py-2.5 last:border-b-0">
@@ -490,6 +575,7 @@ function TodayDemo({ go, openTab }) {
                 </div>
               ))}
             </dl>
+            </div>
           </div>
         </Panel>
       </ScrollRow>
@@ -510,7 +596,8 @@ function TodayDemo({ go, openTab }) {
         <Panel className="h-full">
           <PanelHead title={`Your ${SCORE} through the day`} meta="07:00 to 16:00"/>
           <p className="mt-2 text-fine text-ink-2">One point every ten minutes, on the same 0 to 100
-            scale as the dial. The shaded band is your normal range.</p>
+            scale as the dial. The shaded band is your usual range for a day,
+            {' '}{BAND.lo} to {BAND.hi}.</p>
           <DayChart data={DATA.day} band={DATA.band}/>
           <dl className="m-0 mt-3 grid grid-cols-1 gap-y-1.5 border-t border-rule pt-3 sm:grid-cols-2 sm:gap-x-6">
             <div className="flex items-baseline justify-between gap-3">

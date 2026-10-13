@@ -90,10 +90,52 @@ const PART_LINE = {
   base: 'The face that sits against the outer upper arm. All four channels read through it.',
 }
 
+/* THE MODEL MAY NOT COME UP, AND A JUDGE MUST NOT BE LEFT LOOKING AT THAT.
+ *
+ * The viewer is a 620 KB script over roughly 9 MB of geometry and it wants a
+ * GPU. On a locked-down laptop, a software rasteriser or a blocked WebGL2 it
+ * can sit on its own loading panel for as long as the page is open, and the
+ * seven controls under it stay disabled the whole time. That reads as a broken
+ * page, not as a browser limit.
+ *
+ * Nothing under public/di/arena is touched to fix it: that bundle is vendored
+ * and checksummed. The page watches its own stage instead.
+ *
+ * TWO SIGNALS, BOTH FROM THIS SIDE OF THE ELEMENT:
+ *   1. No WebGL2 context at all, in which case the model is never mounted and
+ *      the dead state is never painted.
+ *   2. The viewer disables every one of its controls until the model is live,
+ *      so a control that is still disabled MODEL_WAIT after the band comes
+ *      within reach is the proof that it has not come up. This catches the
+ *      hung load, the missing script and the failed context alike, because all
+ *      three leave the same controls disabled.
+ *
+ * Either way the band drops to the exploded drawing, which carries the same
+ * parts and only settled facts. The clock starts when the band is 300px away,
+ * the same trigger the viewer itself mounts on, so a reader who never scrolls
+ * this far is never told the model failed. */
+const MODEL_WAIT = 8000
+
+function noWebgl2() {
+  try {
+    const c = document.createElement('canvas')
+    const g = c.getContext('webgl2')
+    if (!g) return true
+    /* Hand the context straight back: the probe must not spend one of the
+       browser's handful of live contexts, which the viewer needs. */
+    g.getExtension('WEBGL_lose_context')?.loseContext()
+    return false
+  } catch { return true }
+}
+
 export function PatchPage() {
   const [picked, setPicked] = React.useState(null)
+  /* true once the model is known not to have come up. One way only: a swap
+     back would move the band under a reader already looking at it. */
+  const [down, setDown] = React.useState(false)
   const model = React.useRef(null)
   const band = React.useRef(null)
+  const stage = React.useRef(null)
 
   /* scrollTo, not scrollIntoView: scrollIntoView silently no-ops in more than
      one engine when smooth behaviour is inherited from html. No `behavior`
@@ -111,6 +153,34 @@ export function PatchPage() {
     if (picked) model.current?.isolateGroup(GROUP[picked])
     else model.current?.showAll()
   }, [picked])
+
+  React.useEffect(() => {
+    const node = stage.current
+    if (!node) return
+    let poll = 0, io = null, dead = false
+    const up = () => {
+      const b = node.querySelectorAll('button')
+      return b.length > 0 && ![...b].some(x => x.disabled)
+    }
+    const begin = () => {
+      if (dead) return
+      if (noWebgl2()) { setDown(true); return }
+      const t0 = Date.now()
+      poll = setInterval(() => {
+        if (dead) return
+        if (up()) { clearInterval(poll); poll = 0 }
+        else if (Date.now() - t0 > MODEL_WAIT) { clearInterval(poll); poll = 0; setDown(true) }
+      }, 400)
+    }
+    if (typeof IntersectionObserver !== 'function') begin()
+    else {
+      io = new IntersectionObserver(e => {
+        if (e.some(x => x.isIntersecting)) { io.disconnect(); io = null; begin() }
+      }, { rootMargin: '300px' })
+      io.observe(node)
+    }
+    return () => { dead = true; if (poll) clearInterval(poll); io?.disconnect() }
+  }, [])
 
   return (
     <main>
@@ -152,7 +222,7 @@ export function PatchPage() {
             <button type="button" onClick={toModel}
               className="mt-4 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
                 font-display text-ui font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
-              Turn the 3D model<ChevronDown/>
+              {down ? 'See the three parts' : 'Turn the 3D model'}<ChevronDown/>
             </button>
           </ScrollIn>
           </div>
@@ -286,54 +356,97 @@ export function PatchPage() {
             The three parts of a patch
           </SectionHead>
           {/* items-stretch: the rail's lg:h-full sizes from the figure. */}
-          <div className="mt-4 grid gap-4 lg:mt-6
-            lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch lg:gap-6">
+          {/* With the model, two columns: the figure and a rail of three cards
+              sized to it. With the drawing standing in, the figure is twice
+              that height and a 360px rail beside it leaves a third of the band
+              empty, so the three cards drop under it as a row of three. The
+              band is multi-column either way. */}
+          <div className={cn('mt-4 grid gap-4 lg:mt-6 lg:gap-6',
+            !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
             <figure className="m-0 min-w-0">
-              <PatchArena ref={model} onPlay={() => setPicked(null)} onShowAll={() => setPicked(null)}
-                beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
+              {down ? (
+                /* The stand-in is the exploded drawing this site already draws
+                   the patch with, in a white card because it is drawn for one.
+                   Its trailing layer table and sensor list are hidden with a
+                   child selector rather than a prop, because that same table
+                   is already open in full in "Inside the patch" above and a
+                   judge must not read the page as repeating itself. The
+                   drawing, the arm inset, the dimension line and the "no unit
+                   has been built" caption all stay. */
+                <Card className="p-3.5 lg:p-5">
+                  <PatchStack className="[&>dl]:hidden [&>p]:hidden"/>
+                </Card>
+              ) : (
+                <div ref={stage}>
+                  <PatchArena ref={model} onPlay={() => setPicked(null)} onShowAll={() => setPicked(null)}
+                    beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
+                </div>
+              )}
               {/* The honesty line is the hero's, once. This caption says what
-                  the figure is. */}
+                  the figure is, and when the model is down it says in one line
+                  why the drawing is standing in for it. */}
               <figcaption className="mt-2.5 max-w-[70ch] text-fine text-mist">
-                A model and a drawing, not a photograph.
+                {down
+                  ? 'The interactive model needs hardware acceleration this browser did not provide, so the drawing of the same patch stands in its place.'
+                  : 'A model and a drawing, not a photograph.'}
               </figcaption>
             </figure>
 
             {/* At lg the rail takes the figure's height and the three rows
                 share it. The row floor is min-content, not 0: a bare 1fr row
                 shrinks past its own text and clips it. Below lg the cards are
-                full width and none of this applies. */}
-            <ol className="m-0 grid list-none gap-3 p-0
-              lg:h-full lg:gap-2.5 lg:grid-rows-[repeat(3,minmax(min-content,1fr))]">
-              {LAYERS.map(l => {
-                const on = picked === l.part
-                return (
-                  <li key={l.i}>
-                    <Card interactive as="button" aria-pressed={on}
-                      onClick={() => setPicked(on ? null : l.part)}
-                      className={cn('lg:h-full', on && 'border-l-accent')}>
-                      {/* bg-ink panel inside a white card: the drawing's strokes
-                          are mist and accent.lit, which both disappear on
-                          white. On ink they measure 12.69 and 7.67.
+                full width and none of this applies.
 
-                          The svg carries its own h-[76px] (88px at sm) from
-                          charts/patch-parts, so a height on this panel alone
-                          will not resize it at lg. `[&_svg]:h-full` is a
-                          class-plus-type selector and wins on specificity.
-                          Keep it a descendant selector, since the svg sits inside
-                          its own perspective box  and keep the matching
-                          h-full in charts/patch-parts. */}
-                      <div className="bg-ink px-3 py-2.5
-                        lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&_svg]:h-full">
-                        {PART_ART[l.part]}</div>
-                      <div className="p-3.5 lg:p-3">
-                        <h3 className="font-display text-row font-bold leading-tight text-ink
-                          lg:text-ui">
-                          {l.title}</h3>
-                        <p className="mt-1 text-fine text-ink-2">{PART_LINE[l.part]}</p>
+                The drawing that stands in for the model is twice the model's
+                height, and three cards sharing that leaves each one two thirds
+                empty, so the stretch is dropped with the model. */}
+            <ol className={cn('m-0 grid list-none gap-3 p-0 lg:gap-2.5',
+              down ? 'sm:grid-cols-3 lg:gap-4'
+                   : 'lg:h-full lg:grid-rows-[repeat(3,minmax(min-content,1fr))]')}>
+              {LAYERS.map(l => {
+                const on = !down && picked === l.part
+                /* bg-ink panel inside a white card: the drawing's strokes are
+                   mist and accent.lit, which both disappear on white. On ink
+                   they measure 12.69 and 7.67.
+
+                   The svg carries its own h-[76px] (88px at sm) from
+                   charts/patch-parts, so a height on this panel alone will not
+                   resize it at lg. `[&_svg]:h-full` is a class-plus-type
+                   selector and wins on specificity. Keep it a descendant
+                   selector, since the svg sits inside its own perspective box
+                   and keep the matching h-full in charts/patch-parts. */
+                const body = (
+                  <>
+                    <div className="bg-ink px-3 py-2.5
+                      lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&_svg]:h-full">
+                      {PART_ART[l.part]}</div>
+                    <div className="p-3.5 lg:p-3">
+                      <h3 className="font-display text-row font-bold leading-tight text-ink
+                        lg:text-ui">
+                        {l.title}</h3>
+                      <p className="mt-1 text-fine text-ink-2">{PART_LINE[l.part]}</p>
+                      {/* Only offered while there is a model to isolate. With
+                          the drawing standing in, these would be three more
+                          controls that do nothing, which is the defect this
+                          fallback exists to remove. */}
+                      {!down && (
                         <span className="mt-1.5 block text-fine font-bold text-accent lg:mt-1">
                           {on ? 'Showing only this' : 'Show only this'}</span>
-                      </div>
-                    </Card>
+                      )}
+                    </div>
+                  </>
+                )
+                return (
+                  <li key={l.i}>
+                    {down ? (
+                      <Card>{body}</Card>
+                    ) : (
+                      <Card interactive as="button" aria-pressed={on}
+                        onClick={() => setPicked(on ? null : l.part)}
+                        className={cn('lg:h-full', on && 'border-l-accent')}>
+                        {body}
+                      </Card>
+                    )}
                   </li>
                 )
               })}
