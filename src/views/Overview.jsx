@@ -249,7 +249,14 @@ export function Overview({ go }) {
         <SectionLede tone="ink">
           MindMap returns one {SCORE} a day.
         </SectionLede>
-        <ProblemStats className="mt-5"/>
+        {/* The figures sit in a light panel on the dark band. ProblemStats
+            draws itself for a light ground now (ink-3 small print, accent-ink
+            figures), and on the band directly those measured 2.49:1 and 1.7:1,
+            with the source links at 1:1. The band stays dark; the panel is
+            where the numbers are read. */}
+        <div className="mt-5 rounded-panel border border-rule bg-card p-4 lg:p-5">
+          <ProblemStats/>
+        </div>
       </Section>
 
       {/* -- who this is about ---------------------------------------------
