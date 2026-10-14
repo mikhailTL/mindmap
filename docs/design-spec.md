@@ -540,3 +540,44 @@ toolkit-breathing  toolkit-ground  toolkit-reframe  toolkit-scan  toolkit-move
 ```
 `src/views/App.jsx` owns the route table. A worker needing a route it does not
 own names it in its report rather than adding it.
+
+---
+
+## 0f. 14 October: the text budget, measured from the apps the owner named
+
+The owner sent six screens: Dexcom G7, Dexcom Clarity, the Dexcom profile,
+Publix Pharmacy, Apple Fitness, and a rival. Counting every word on each,
+labels included:
+
+| screen | words above the fold | longest run of prose |
+|---|---|---|
+| Dexcom G7 glucose | 12 | none |
+| Dexcom Clarity summary | about 40 | one 8-word line |
+| Dexcom profile | about 30 | one 11-word line |
+| Apple Fitness summary | about 20 | none |
+| Publix home | about 45 | one 22-word footnote |
+
+Ours, measured the same way on the student dashboard before this pass: over
+200, with four paragraphs.
+
+### The rules, from those numbers
+
+1. **An app screen above the fold holds 15 to 45 words, labels included.**
+2. **No paragraph in the app.** A paragraph is three or more sentences in a
+   row. Anything that needs one moves behind a disclosure or a "?" control, the
+   way Clarity hides its definitions.
+3. **No sentence over ten words in the app.** Headings are two to four.
+4. **Every tab and every action has an icon.** The bar is Apple Fitness and
+   Dexcom: icon above a one-word label.
+5. **The app fills a laptop.** Content runs to about 1100px wide at 1280;
+   cards sit in two or three columns. Nothing is centred in a narrow column
+   with empty margins either side. Phone layout is for phones.
+6. **The marketing site may carry more words than the app, and still fewer
+   than it does.** Landing page bands: one heading, one line, one figure or
+   image. The How it works page: four categories (Hardware, AI, Machine
+   Learning, Other Software), each a short band, and no AUROC, p-value or
+   interval anywhere a judge reads. Those live in docs/ and in the repo.
+7. **Colour has range.** The original scheme had near-white grounds AND dark
+   ink bands AND solid accent fills. All three are in use again. "Soothing"
+   meant not a saturated field behind the headline; it never meant every
+   band the same near-white.

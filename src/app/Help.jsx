@@ -84,7 +84,7 @@ const LANGS = [
 const COPY = {
   en: {
     title: 'Get Help',
-    intro: 'Other organisations’ numbers, not MindMap’s. No reading, no patch and no account.',
+    intro: 'Other organisations’ numbers. No reading or account needed.',
     readAloud: 'Read aloud',
     stop: 'Stop',
     speaking: 'Reading the list aloud.',
@@ -93,13 +93,13 @@ const COPY = {
     lines: 'Help Lines',
     theirPage: 'Their page',
     also: 'Also',
-    verified: 'Every number and link here was opened and read on ',
-    drift: 'Numbers and hours do change. Where one does not connect, the service’s own page is linked on the row.',
+    verified: 'Checked on ',
+    drift: 'Numbers change. Each row links the service’s own page.',
     getHelp: 'Get help',
   },
   es: {
     title: 'Pedir ayuda',
-    intro: 'Son números de otras organizaciones, no de MindMap. No hace falta una lectura, el parche ni una cuenta.',
+    intro: 'Números de otras organizaciones. No hace falta una lectura ni una cuenta.',
     readAloud: 'Leer en voz alta',
     stop: 'Detener',
     speaking: 'Leyendo la lista en voz alta.',
@@ -108,8 +108,8 @@ const COPY = {
     lines: 'Líneas de ayuda',
     theirPage: 'Su página',
     also: 'Además',
-    verified: 'Cada número y enlace se abrió y se leyó el ',
-    drift: 'Los números y los horarios cambian. Si alguno no conecta, la página del servicio está enlazada en la fila.',
+    verified: 'Comprobado el ',
+    drift: 'Los números cambian. Cada fila enlaza la página del servicio.',
     getHelp: 'Pedir ayuda',
   },
 }
@@ -139,7 +139,7 @@ const LINE = {
     teenline: 'Answered by trained teenagers.',
     trevor: 'For LGBTQ young people.',
     trans: 'A peer line for trans and questioning people.',
-    eating: 'Eating and food. Their page says it is not a 24 hour crisis line.',
+    eating: 'Eating and food. Not a 24 hour crisis line, per their page.',
     samhsa: 'Referrals to treatment nearby, rather than a crisis line.',
   },
   es: {
@@ -148,7 +148,7 @@ const LINE = {
     teenline: 'Atendida por adolescentes capacitados.',
     trevor: 'Para jóvenes LGBTQ.',
     trans: 'Una línea de pares para personas trans y en cuestionamiento.',
-    eating: 'Alimentación y comida. Su página dice que no es una línea de crisis de 24 horas.',
+    eating: 'Alimentación y comida. No es una línea de crisis de 24 horas.',
     samhsa: 'Referencias a tratamiento cercano, no es una línea de crisis.',
   },
 }
@@ -182,12 +182,12 @@ const ACTION_ES = {
 
 const ACCESS_ES = {
   'Relay users dial 711, then 988. For ASL, call 988 from a videophone number.':
-    'Con servicio de relé, marca el 711 y luego el 988. Para ASL, llama al 988 desde un número de videoteléfono.',
+    'Con relé, marca el 711 y luego el 988. Para ASL, llama al 988 por videoteléfono.',
 }
 
 const EMERGENCY_ES = {
   label: 'Llama al 911',
-  line: 'Si alguien está herido ahora, o está a punto de estarlo, el número es el 911.',
+  line: 'Si alguien está herido o en peligro ahora, llama al 911.',
 }
 
 /* One reader for every translated field, so a missing entry is an English
@@ -393,7 +393,8 @@ export function HelpBody({ className, onLang }) {
           other. */}
       <ul className="mt-2.5 m-0 list-none divide-y divide-rule overflow-hidden rounded-panel
         border border-rule bg-card p-0 md:grid md:grid-cols-2 md:items-start md:gap-3
-        md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent">
+        md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent
+        xl:grid-cols-3">
         {RESOURCES.map(r => <Resource key={r.id} r={r} code={code} copy={copy}/>)}
       </ul>
 

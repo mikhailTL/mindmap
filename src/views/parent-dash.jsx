@@ -2,7 +2,7 @@ import React from 'react'
 import { Chevron, Grid, Sometimes, Stack, Wave } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { List, Item } from '../ui/list'
-import { Greeting, Panel, PanelHead, SeeDetails } from './Monitor'
+import { ActionRow, Panel, PanelHead, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { WeekChart } from '../charts/week'
 import { useMode } from '../lib/mode'
@@ -32,19 +32,11 @@ import { SCORE, NOTES, LOCATION, PRO_LC, CONSENT_SHORT, CONSENT_OFF } from '../l
  * "they", which is also what makes the same copy true in real mode, where
  * there is no child on the account at all.
  *
- * SHAPE, 13 OCTOBER (design spec 0d section 6, 0e sections 14 and 17). The
- * screen was nine open modules in a two-column grid with a 34px sentence, a
- * 380px dial, 34px tile figures and a typewriter face on them. The verdict:
- * "score and sentance come first, everythign else as a dropdown, things are
- * too big rn". So it is now the same two-part shape as the student dashboard
- * in src/views/Students.jsx:
- *
- *   1. ONE CENTRED CARD, capped at 34rem: the week's sentence, the quieter
- *      line under it, then the dial. Nothing else above the fold.
- *   2. ONE `See details` DISCLOSURE, collapsed by default, holding the week
- *      chart, the day figures, the openers, the consent scope, the record log,
- *      the crisis path and the never-shown list.
- *   3. One action row under it, because a route is not a reading.
+ * SHAPE, 14 OCTOBER (design spec 0f). Sentence and dial in one card, the
+ * seven days beside it at 1280 and under it at 390. Nothing else above the
+ * fold. Every sentence is ten words or fewer; the range and the grain are
+ * behind a "?". Everything else is behind one `See details`, two cards
+ * abreast at 1280. No 34rem cap and nothing centred in a narrow column.
  *
  * COLOUR. The six retired hues (design spec 0d section 1) are gone from this
  * file. It no longer indexes Monitor's tone map by hue name and the map of hue
@@ -152,10 +144,10 @@ function heroSentence(w) {
    grain, still no signal and no reading. */
 function heroDetail(w) {
   if (!w.days.length) return null
-  const range = `their own usual range, ${w.band.lo} to ${w.band.hi}`
-  if (!w.over.length) return `Every day sat inside ${range}, worked out from their own last two weeks.`
-  if (w.over.length === 1) return `${w.peak.name} was the one day above ${range}.`
-  return `${list(w.over.map(d => d.name))} sat above ${range}, and ${w.peak.name} went the furthest.`
+  const range = `Their usual range is ${w.band.lo} to ${w.band.hi}.`
+  if (!w.over.length) return `Every day sat inside it. ${range}`
+  if (w.over.length === 1) return `${w.peak.name} sat above it. ${range}`
+  return `${list(w.over.map(d => d.name))} sat above it. ${w.peak.name} went furthest. ${range}`
 }
 
 /* ── 2. The week, at day grain and no finer ─────────────────────────────── */
@@ -196,7 +188,7 @@ function Row({ k, v, tone = 'text-ink' }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
       <dt className="min-w-0 text-fine text-ink-2">{k}</dt>
-      <dd className={cn('m-0 shrink-0 font-display text-ui font-medium tabular-nums', tone)}>{v}</dd>
+      <dd className={cn('m-0 min-w-0 text-right font-display text-ui font-medium tabular-nums', tone)}>{v}</dd>
     </div>
   )
 }
@@ -262,7 +254,7 @@ function AskAbout({ w }) {
   if (!w.peak) {
     return (
       <p className="mt-2.5 max-w-[48ch] text-fine text-ink-2">No day sat above {CHILD_POSS} own
-        range, so nothing is flagged.</p>
+        range.</p>
     )
   }
   return (
@@ -274,8 +266,8 @@ function AskAbout({ w }) {
           {w.peak.v}
           <span className="font-body text-fine font-normal text-ink-3">out of 100</span></p>
       </div>
-      <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Their body was working harder that
-        day than it usually does. This screen cannot say why, and it is not a diagnosis.</p>
+      <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Their body worked harder than usual
+        that day. Why is not something this screen knows.</p>
       {/* The flagged day on its own leaves the other days above the range
           unnamed, and a parent who asks about one of three has been told a
           third of what this screen knows. Day grain, like everything here. */}
@@ -293,9 +285,9 @@ function AskAbout({ w }) {
         ))}
       </List>
       <p className="mt-2.5 max-w-[50ch] text-fine text-ink-2">Not this: &ldquo;Your patch says you
-        were stressed on {w.peak.name}.&rdquo; They can see this page too.</p>
-      <p className="mt-1.5 max-w-[50ch] text-fine text-ink-2">If you are worried about their
-        safety, contact their {PRO_LC} or your local crisis line now, not next week.</p>
+        were stressed.&rdquo; They can see this page too.</p>
+      <p className="mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call
+        their {PRO_LC} or a crisis line now.</p>
     </>
   )
 }
@@ -304,12 +296,11 @@ function AskAbout({ w }) {
 /* Third person, so the same list is true in both modes: in real mode there is
    no child on the account to call "they". */
 const NEVER = [
-  [NOTES, 'What a student writes in their own journal stays on their phone.'],
-  [LOCATION, 'No location is collected, so none can be shared.'],
-  ['Their second-by-second readings', 'You get a day, never a moment.'],
-  ['Anything they say', 'The microphone is never recorded and never sent.'],
-  ['The four signals behind the score',
-   'Heart, sweat, temperature and movement stay on your child’s own screen. You get the one number they add up to.'],
+  [NOTES, 'Their journal stays on their phone.'],
+  [LOCATION, 'Never collected, so never shared.'],
+  ['Second-by-second readings', 'You get a day, never a moment.'],
+  ['Anything they say', 'The microphone is never recorded.'],
+  ['The four signals', 'You get the one number they add up to.'],
 ]
 
 /* ── 5. What the school may see ─────────────────────────────────────────── */
@@ -325,7 +316,7 @@ const SCOPES = [
   { id:'trends', label:`Whether the ${SCORE} moved week to week`,
     sub:'Direction only, at week grain.' },
   { id:'raw',    label:'Second-by-second readings',
-    sub:'Off unless both you and your child turn it on. You cannot turn it on from this screen.',
+    sub:'Off unless you and your child both turn it on.',
     /* The student holds the other half of this one, so a parent cannot widen
        it alone. The row stays, because a scope a parent cannot find reads as a
        scope that does not exist, and it is locked rather than merely defaulted
@@ -380,7 +371,7 @@ function SchoolSharing({ real }) {
   }))
   return (
     <>
-      <p className="mt-2.5 max-w-[56ch] text-meta text-ink">{CONSENT_SHORT}</p>
+      <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">{CONSENT_SHORT}</p>
       <List className="mt-2.5 gap-0">
         {SCOPES.map(s => (
           <ScopeRow key={s.id} label={s.label} sub={s.sub}>
@@ -402,15 +393,13 @@ function SchoolSharing({ real }) {
         {/* Not a choice, but listed as a disabled control rather than omitted:
             a scope a parent cannot find reads as a scope that does not
             exist. */}
-        <ScopeRow label="A crisis alert"
-          sub="Cannot be turned off by you or by your child. Both of you are told this before the patch is first worn.">
+        <ScopeRow label="A crisis alert" sub="Cannot be turned off by anybody.">
           <Switch on disabled label="A crisis alert"/>
         </ScopeRow>
       </List>
       {real ? (
-        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">No consent has been signed, because
-          no patch is paired. These controls become live when a patch is paired and a guardian
-          consent is signed.</p>
+        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">Nothing signed yet. These controls
+          go live once a guardian signs.</p>
       ) : (
         <>
           <dl className="m-0 mt-2.5 p-0">
@@ -419,26 +408,18 @@ function SchoolSharing({ real }) {
             <Row k="Signed" v={RECORD.signedAt}/>
             <Row k="Scope expires" v={LEDGER.expires ?? 'Not set'}/>
           </dl>
-          <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">{CONSENT_OFF} Second-by-second
-            readings are kept only for the window your child sets, then deleted, and you are never
-            shown them.</p>
+          <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">{CONSENT_OFF}</p>
           <p className="mt-1.5 max-w-[56ch] text-fine text-ink-3">On the school console your child
-            is {SCHOOL_CODE}. Here a switch changes this page only; in the product it writes a
-            dated row in the school&rsquo;s consent log and your child is told the same day.</p>
+            is {SCHOOL_CODE}. A switch here writes a dated row there.</p>
         </>
       )}
       <div className="mt-3 border-t border-rule pt-2.5">
-        <Figure label="The smallest group the school may report on" figure={K_ANONYMITY}
+        <Figure label="Smallest group the school may report on" figure={K_ANONYMITY}
           unit="students"/>
-        <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Under {K_ANONYMITY} consented
-          students a group figure returns nothing, so no year group report can single your child
-          out.</p>
-        {/* The floor means little without the population it is a floor on, so
-            the school-wide count is read from the same module the console
-            aggregates over rather than written down here. */}
+        <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Under {K_ANONYMITY}, a group
+          figure returns nothing.</p>
         <dl className="m-0 mt-2.5 p-0">
           <Row k="Consented students across the school" v={String(SCHOOL_N)}/>
-          <Row k="Smallest group a report may cover" v={`${K_ANONYMITY} students`}/>
         </dl>
       </div>
     </>
@@ -455,8 +436,8 @@ function RecordLog({ real }) {
   return (
     <>
       {real ? (
-        <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Nothing has been logged, because
-          there is no record yet. A row is written the first time one is opened.</p>
+        <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">No record yet, so nothing
+          logged.</p>
       ) : (
         <ul className="m-0 mt-1.5 list-none p-0">
           {MY_ROWS.map(r => (
@@ -471,9 +452,8 @@ function RecordLog({ real }) {
           ))}
         </ul>
       )}
-      <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Every open, export and setting change
-        writes a row. No setting on any screen turns the log off, and no row can be edited or
-        deleted.</p>
+      <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Every open writes a row. No row can
+        be deleted.</p>
     </>
   )
 }
@@ -501,8 +481,7 @@ function CrisisPath({ real }) {
       {!real && (
         <div className="mt-2.5 border-b border-rule pb-2.5">
           <Figure label="From the alert to the call to you" figure={TO_GUARDIAN} unit="minutes"/>
-          <p className="mt-1 max-w-[40ch] text-fine text-ink-2">In the one run logged on this
-            record.</p>
+          <p className="mt-1 max-w-[40ch] text-fine text-ink-2">In the one run logged.</p>
         </div>
       )}
       <ol className={cn('m-0 list-none p-0', real && 'mt-1.5')}>
@@ -522,9 +501,7 @@ function CrisisPath({ real }) {
         ))}
       </ol>
       <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Step {GUARDIAN_STEP + 1} is the call
-        to you. A crisis alert cannot be switched off by you or by your child, and every step above
-        is written to the record log.{real ? '' : ' Step ' + PROTOCOL.length + ' is still open on'
-        + ' this record, so it carries no time yet.'}</p>
+        to you. Every step is written to the log.</p>
     </>
   )
 }
@@ -542,9 +519,9 @@ function PatchStatus() {
         {rows.map(([k, v]) => <Row key={k} k={k} v={v} tone="text-crit"/>)}
       </dl>
       <List className="mt-2.5">
-        {['Open MindMap on your child’s phone and pair a patch.',
-          'Check the patch is charged and sitting on the upper arm.',
-          'This page fills in at the end of the first full week it reports.'].map(s => (
+        {['Pair a patch on your child’s phone.',
+          'Check it is charged and on the upper arm.',
+          'This page fills after the first full week.'].map(s => (
           <Item key={s} className="max-w-[52ch] text-fine text-ink-2">{s}</Item>
         ))}
       </List>
@@ -553,54 +530,20 @@ function PatchStatus() {
 }
 
 /* ── The action row ─────────────────────────────────────────────────────── */
-/* Four routes the parent's bottom bar already carries, repeated as the end of
-   the screen rather than as a second navigation, which is the shape the
-   student dashboard ends on. MindMap AI is another worker's screen; this
-   links to it and builds none of it. */
+/* Four routes the parent's bottom bar already carries. Icon and two to four
+   words each, nothing under them. */
 const ACTIONS = [
-  ['calendar', 'See the Calendar', Grid,
-   'Their week and their month against a target score, at day grain.'],
-  ['toolkit',  'Open the Toolkit', Wave,
-   'Short activities to run together, and what to do after a harder day.'],
-  ['ai',       'Ask MindMap AI', Stack,
-   'Questions about adolescent stress, answered for a parent.'],
-  ['privacy',  'Who Can See What', Sometimes,
-   'Every row on this record, and which audience is shown it.'],
+  ['calendar', 'See the Calendar', Grid],
+  ['toolkit',  'Open the Toolkit', Wave],
+  ['ai',       'Ask MindMap AI',   Stack],
+  ['privacy',  'Who Sees What',    Sometimes],
 ]
-
-function ActionRow({ go, className }) {
-  return (
-    <Panel className={className}>
-      <PanelHead title="Where to Go Next" meta="four screens"/>
-      <ul className="m-0 mt-2.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-3">
-        {ACTIONS.map(([route, title, Icon, why]) => (
-          <li key={route} className="min-w-0">
-            <button type="button" onClick={() => go(route)}
-              className="group flex h-full min-h-[64px] w-full flex-col items-start gap-1.5
-                rounded-panel border border-rule bg-aqua p-2.5 text-left transition-colors
-                duration-150 hoverOnly:bg-card">
-              <span className="flex w-full items-center gap-2">
-                <Icon aria-hidden className="size-4 shrink-0 text-accent"/>
-                <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
-                  transition-colors duration-150 groupHoverOnly:text-accent-ink">{title}</span>
-                <Chevron aria-hidden className="size-3.5 shrink-0 text-accent"/>
-              </span>
-              <span className="max-w-[40ch] text-fine text-ink-2">{why}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Panel>
-  )
-}
 
 /* ── The never-shown module ─────────────────────────────────────────────── */
 function NeverShown({ go, openTab }) {
   return (
     <Panel tone="beam">
-      <PanelHead title="What a Parent Is Never Shown" meta="no drawer, no export"/>
-      <p className="mt-2.5 max-w-[52ch] text-meta text-ink">There is no drawer, no export and no
-        link on this screen that opens any of the five below.</p>
+      <PanelHead title="Never Shown to a Parent" meta="no export"/>
       <List className="mt-2.5 gap-0">
         {NEVER.map(([t, s]) => (
           <Item key={t} marker="none" className="border-b border-rule py-2">
@@ -614,7 +557,7 @@ function NeverShown({ go, openTab }) {
           pt-2.5 text-left">
         <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
           transition-colors duration-150 groupHoverOnly:text-accent-ink">
-          Student, parent and medical professional, side by side</span>
+          All three audiences, side by side</span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </button>
     </Panel>
@@ -634,194 +577,154 @@ export function ParentDash({ go, openTab }) {
   const measured = w.days.length
   const open = route => (openTab ? openTab(route) : go(route))
 
-  /* REAL MODE. The same two-part shape as the demo and as the student screen's
-     unpaired state: one centred card carrying the honest sentence, then one
-     disclosure. No dial, because 0 is a calm day and drawing it would be a
-     measurement. */
+  /* REAL MODE. One card carrying the honest sentence, the seven empty days
+     beside it, then one disclosure. No dial. */
   if (real) {
     return (
-      <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-3 lg:gap-4">
-        <Panel className="mx-auto w-full max-w-[34rem]">
-          <Greeting items={['No patch paired', 'Nothing measured']}/>
-          <div className="mt-3 flex flex-col items-center text-center">
-            <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
-              tracking-tight text-ink sm:text-head">Nothing has been measured this week.</p>
-            <p className="mt-1.5 max-w-[42ch] text-fine text-ink-2">An empty week is not a calm
-              week, and this screen will not draw it as one. A {SCORE} compares your child with
-              their own last two weeks, so there is nothing yet to compare.</p>
-          </div>
-          <div className="mt-3 border-t border-rule pt-2.5">
-            <RealNotice>Nothing has been measured, so there is no {SCORE} and no day to ask
-              about.</RealNotice>
-          </div>
-        </Panel>
-
-        <SeeDetails label="See details"
-          sub="Patch status, the seven days, and what is shared either way">
-          <div className="flex flex-col gap-3 lg:gap-4">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-              <Panel className="h-full border-t-2 border-t-crit">
-                <PanelHead title="Patch Reporting Status" meta="0 of 7 days"/>
-                <PatchStatus/>
-              </Panel>
-              <Panel tone="aqua" className="h-full">
-                <PanelHead title="The Last Seven Days" meta="none measured"/>
-                <div className="mt-1.5"><EmptyWeek/></div>
-                <p className="mt-2.5 max-w-[46ch] text-fine text-ink-2">Seven days, none of them
-                  measured. Nothing is flagged because nothing was measured, and that is not the
-                  same as a week with nothing in it.</p>
-              </Panel>
+      <div className="flex w-full flex-col gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+          <Panel className="flex flex-col justify-center">
+            <div className="flex flex-col items-center text-center">
+              <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
+                tracking-tight text-ink sm:text-head">Nothing measured this week.</p>
+              <Why label="Why there is no score" align="center" className="mt-2">
+                A {SCORE} compares your child with their own last two weeks. An empty week is not
+                a calm week. No dial is drawn.
+              </Why>
             </div>
+            <div className="mt-3 border-t border-rule pt-2.5">
+              <RealNotice>Nothing paired yet.</RealNotice>
+            </div>
+          </Panel>
+          <Panel tone="aqua">
+            <PanelHead title="Seven Days" meta="0 of 7"/>
+            <div className="mt-1.5"><EmptyWeek/></div>
+          </Panel>
+        </div>
 
-            <Panel tone="brand">
+        <SeeDetails label="See details">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+            <Panel className="h-full border-t-2 border-t-crit">
+              <PanelHead title="Patch Status" meta="not reporting"/>
+              <PatchStatus/>
+            </Panel>
+            <Panel tone="brand" className="h-full">
               <PanelHead title="What the School May See" meta="nothing signed"/>
               <SchoolSharing real={real}/>
             </Panel>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-              <Panel tone="deep" className="h-full">
-                <PanelHead title="Who Opened the Record" meta="append only"/>
-                <RecordLog real={real}/>
-              </Panel>
-              <Panel className="h-full border-t-2 border-t-crit">
-                <PanelHead title="The Crisis Alert Path" meta="five steps"/>
-                <CrisisPath real={real}/>
-              </Panel>
-            </div>
-
-            <NeverShown go={go} openTab={openTab}/>
+            <Panel tone="deep" className="h-full">
+              <PanelHead title="Who Opened the Record" meta="append only"/>
+              <RecordLog real={real}/>
+            </Panel>
+            <Panel className="h-full border-t-2 border-t-crit">
+              <PanelHead title="The Crisis Alert Path" meta="five steps"/>
+              <CrisisPath real={real}/>
+            </Panel>
+            <div className="lg:col-span-2"><NeverShown go={go} openTab={openTab}/></div>
           </div>
         </SeeDetails>
 
-        <ActionRow go={open}/>
+        <ActionRow go={open} actions={ACTIONS}/>
       </div>
     )
   }
 
   /* DEMO MODE. */
   return (
-    <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-3 lg:gap-4">
-      {/* ONE CENTRED CARD. The week's sentence, then the dial under it, then
-          the tier word and their own range. Nothing else above the fold:
-          design spec 0d section 6 and 0e section 17. */}
-      <Panel className="mx-auto w-full max-w-[34rem]">
-        <Greeting items={[`${w.days[0]?.name} to ${w.last?.name}`, 'Day grain only']}/>
-        <div className="mt-3 flex flex-col items-center text-center">
-          <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
-            tracking-tight text-ink sm:text-head">{heroSentence(w)}</p>
-          <p className="mt-1.5 max-w-[42ch] text-fine text-ink-2">{heroDetail(w)}</p>
-          {/* Clouds belong to the student dial only, and 296 is the student
-              dashboard's size, so the two screens draw one dial at one size. */}
-          <RainbowDial className="mt-3" weather={false} score={w.avg} usual={w.usual}
-            rings={[weekRing]} size={296}/>
-          <p className="mt-2 flex items-center gap-2 font-display text-ui font-medium text-ink">
-            <span aria-hidden className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier])}/>
-            {TIER_WORD[tier]}
-          </p>
-          <p className="mt-1 max-w-[42ch] text-fine text-ink-2">Their own usual range for a week
-            runs {w.band.lo} to {w.band.hi}, and a usual day for them is {w.usual}. You are shown
-            one day at a time and nothing finer.</p>
-        </div>
-      </Panel>
+    <div className="flex w-full flex-col gap-3 lg:gap-4">
+      {/* THE FOLD. The week's sentence, the dial, the tier word, and beside
+          them at 1280 the seven days. Nothing else. */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+        <Panel className="flex flex-col justify-center">
+          <div className="flex flex-col items-center text-center">
+            <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
+              tracking-tight text-ink sm:text-head">{heroSentence(w)}</p>
+            <RainbowDial className="mt-3" weather={false} score={w.avg} usual={w.usual}
+              rings={[weekRing]} size={352}/>
+            <p className="mt-2 flex items-center gap-2 font-display text-ui font-medium text-ink">
+              <span aria-hidden className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier])}/>
+              {TIER_WORD[tier]}
+            </p>
+            <Why label="What this week's score means" align="center" className="mt-2">
+              {heroDetail(w)} You are shown one day at a time, nothing finer.
+            </Why>
+          </div>
+        </Panel>
+        <Panel tone="aqua" className="flex flex-col">
+          <PanelHead title="Each Day" meta={`${measured} of 7`}/>
+          <WeekChart data={DATA.week} band={DATA.weekBand}/>
+          <dl className="m-0 mt-auto border-t border-rule p-0 pt-1">
+            {w.hiDay && <Row k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
+              tone={w.hiDay.over ? 'text-warn' : 'text-ink'}/>}
+            {w.loDay && <Row k="Lowest day" v={`${w.loDay.name}, ${w.loDay.v}`}/>}
+          </dl>
+        </Panel>
+      </div>
 
-      {/* ONE DISCLOSURE. Everything else is in here, collapsed. */}
-      <SeeDetails label="See details"
-        sub="The seven days, what to ask about, what is shared, and who opened the record">
-        <div className="flex flex-col gap-3 lg:gap-4">
-          <Panel>
-            <PanelHead title="Each Day, Out of 100" meta={`${measured} of 7 measured`}/>
-            <WeekChart data={DATA.week} band={DATA.weekBand}/>
-            <p className="mt-2 max-w-[50ch] text-fine text-ink-2">The shaded band is their own
-              usual range, worked out from their own last two weeks. They are never compared with
-              other students.</p>
-            <dl className="m-0 mt-2.5 border-t border-rule p-0">
-              {w.hiDay && <Row k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
-                tone={w.hiDay.over ? 'text-warn' : 'text-ink'}/>}
-              {w.loDay && <Row k="Lowest day" v={`${w.loDay.name}, ${w.loDay.v}`}/>}
-              <Row k="Days measured" v={`${measured} of ${DAYS.length}`}/>
-              <Row k="Grain shared with you" v="One day"/>
-            </dl>
+      {/* ONE DISCLOSURE. Everything else is in here, collapsed, two abreast
+          at 1280. */}
+      <SeeDetails label="See details">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+          <Panel tone="aqua" className="h-full">
+            <PanelHead title="Days Above the Range" meta={`${w.band.lo} to ${w.band.hi}`}/>
+            <div className="mt-2.5">
+              <Figure label="This week" figure={w.over.length} unit={`of ${measured} days`}/>
+            </div>
+            <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
+              label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
+                + `${list(w.over.map(d => d.name))}.`}/>
+            <p className="mt-1.5 text-fine text-ink-2">
+              {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
+            {w.peak && (
+              <PairBars top={100}
+                aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
+                rows={[
+                  { k:w.peak.name, v:w.peak.v, text:`${w.peak.v} of 100`, tone:'bg-warn' },
+                  { k:'usual day', v:w.usual, text:`${w.usual} of 100`, tone:'bg-ink-3/40' },
+                ]}/>
+            )}
           </Panel>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-            <Panel tone="aqua" className="h-full">
-              <PanelHead title="Days Above the Usual Range" meta={`${w.band.lo} to ${w.band.hi}`}/>
-              <div className="mt-2.5">
-                <Figure label="Count for the week" figure={w.over.length}
-                  unit={`of ${measured} days`}/>
-              </div>
-              <DayStrip tone="bg-warn" on={w.days.map(d => d.over)}
-                label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
-                  + `${list(w.over.map(d => d.name))}.`}/>
-              <p className="mt-1.5 text-fine text-ink-2">
-                {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
-              {/* How far above, which the count alone does not say. Both bars
-                  run off the same 0 to 100 scale the score uses. */}
-              {w.peak && (
-                <PairBars top={100}
-                  aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
-                  rows={[
-                    { k:w.peak.name, v:w.peak.v, text:`${w.peak.v} of 100`, tone:'bg-warn' },
-                    { k:'usual day', v:w.usual, text:`${w.usual} of 100`, tone:'bg-ink-3/40' },
-                  ]}/>
-              )}
-            </Panel>
+          <Panel tone="deep" className="h-full">
+            <PanelHead title="Wear and Still Time" meta="movement channel"/>
+            <div className="mt-2.5">
+              <Figure label="Days the patch reported" figure={measured} unit={`of ${DAYS.length}`}/>
+            </div>
+            <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
+              label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
+            <div className="mt-3 border-t border-rule pt-2.5">
+              <Figure label={`Still time, ${word(SLEEP.nights)} short nights`} pre="about"
+                figure={SLEEP.hours} unit="h a night"/>
+              <SleepBars/>
+              <p className="mt-1.5 max-w-[44ch] text-fine text-ink-2">Off the movement channel,
+                not written down.</p>
+            </div>
+          </Panel>
 
-            <Panel tone="deep" className="h-full">
-              <PanelHead title="Patch Wear and Still Time" meta="movement channel"/>
-              <div className="mt-2.5">
-                <Figure label="Days the patch reported" figure={measured}
-                  unit={`of ${DAYS.length}`}/>
-              </div>
-              <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
-                label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
-              <p className="mt-1.5 text-fine text-ink-2">
-                {measured === DAYS.length ? 'Every day reported'
-                  : `${cap(word(DAYS.length - measured))} days with no reading`}</p>
-              <div className="mt-3 border-t border-rule pt-2.5">
-                {/* Hours as a decimal, not "5 h 30": the formatted string ran
-                    past the block at 390 and broke the figure over two lines.
-                    "about" is the hedge, in the figure's own run. */}
-                <Figure label={`Still time, ${word(SLEEP.nights)} short nights`} pre="about"
-                  figure={SLEEP.hours} unit="h a night"/>
-                <SleepBars/>
-                {/* Provenance here, because this is the one figure on the
-                    screen the scoring model did not produce. */}
-                <p className="mt-1.5 max-w-[44ch] text-fine text-ink-2">Still time off the
-                  patch&rsquo;s movement channel, not anything they wrote down.</p>
-              </div>
-            </Panel>
-          </div>
-
-          <Panel tone="brand">
+          <Panel tone="brand" className="h-full">
             <PanelHead title="What to Ask About" meta={w.peak ? w.peak.name : 'nothing flagged'}/>
             <AskAbout w={w}/>
           </Panel>
 
-          <Panel>
+          <Panel className="h-full">
             <PanelHead title="What the School May See" meta="signed scope"/>
             <SchoolSharing real={real}/>
           </Panel>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-            <Panel tone="aqua" className="h-full">
-              <PanelHead title="Who Opened the Record" meta="append only"/>
-              <RecordLog real={real}/>
-            </Panel>
-            <Panel className="h-full border-t-2 border-t-crit">
-              <PanelHead title="The Crisis Alert Path" meta={`${PROTOCOL.length} steps`}/>
-              <CrisisPath real={real}/>
-            </Panel>
-          </div>
+          <Panel tone="aqua" className="h-full">
+            <PanelHead title="Who Opened the Record" meta="append only"/>
+            <RecordLog real={real}/>
+          </Panel>
+          <Panel className="h-full border-t-2 border-t-crit">
+            <PanelHead title="The Crisis Alert Path" meta={`${PROTOCOL.length} steps`}/>
+            <CrisisPath real={real}/>
+          </Panel>
 
-          <NeverShown go={go} openTab={openTab}/>
+          <div className="lg:col-span-2"><NeverShown go={go} openTab={openTab}/></div>
         </div>
       </SeeDetails>
 
-      <ActionRow go={open}/>
-      {/* No medical disclaimer here. AppFoot in src/views/App.jsx prints one
-          immediately below this screen, and the same sentence twice, 24px
-          apart, reads as a template rather than as a statement. */}
+      <ActionRow go={open} actions={ACTIONS}/>
     </div>
   )
 }

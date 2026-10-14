@@ -1,6 +1,6 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { Panel, PanelHead, SeeDetails } from './Monitor'
+import { Panel, PanelHead, SeeDetails, Why } from './Monitor'
 import { ArrowLeft, ArrowRight, Chevron, Minus } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
@@ -125,17 +125,20 @@ const dayLabel = n => `${n} day${n === 1 ? '' : 's'}`
 
 /* ── The target ─────────────────────────────────────────────────────────── */
 
-function TargetCard({ target, setTarget, lo, hi }) {
+function TargetCard({ target, setTarget, lo, hi, className }) {
   return (
-    <Panel className="mx-auto w-full max-w-[34rem]">
-      <PanelHead title="Target Score" meta="0 to 100"/>
+    <Panel className={className}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PanelHead title="Target Score" meta="0 to 100" className="min-w-0 flex-1"/>
+        <Why label="What the target is" className="pt-1.5">
+          A target you pick for yourself. The range around it is the width of your own usual
+          week. Lower is calmer. A usual day for you is {USUAL}.
+        </Why>
+      </div>
       <div className="mt-2.5 flex flex-col items-center text-center">
         <p className="font-display text-stat font-medium tabular-nums leading-none text-ink">
           {target}</p>
-        <p className="mt-1.5 max-w-[40ch] text-fine text-ink-2">
-          A target you pick for yourself. Your target range runs {lo} to {hi}, which is the width
-          of your own usual range for a week.
-        </p>
+        <p className="mt-1.5 text-fine text-ink-2">Range {lo} to {hi}</p>
         <div className="mt-3 flex w-full max-w-[22rem] items-center gap-2.5">
           <button type="button" onClick={() => setTarget(target - 1)}
             aria-label="Lower the target by one"
@@ -155,10 +158,6 @@ function TargetCard({ target, setTarget, lo, hi }) {
               border-ink font-display text-ui font-medium text-ink transition-colors duration-150
               hoverOnly:bg-mist active:bg-mist">+</button>
         </div>
-        <p className="mt-2 max-w-[44ch] text-fine text-ink-3">
-          Lower is calmer on this scale. A usual day for you is {USUAL}, and your usual range for a
-          day runs {BAND.lo} to {BAND.hi}.
-        </p>
       </div>
     </Panel>
   )
@@ -184,41 +183,34 @@ function Share({ label, n, pct, ground }) {
   )
 }
 
-function Summary({ c, s, window: w, lo, hi }) {
+function Summary({ c, s, window: w, lo, hi, className }) {
   return (
-    <Panel tone="aqua">
-      <PanelHead title={`How ${w} Fell Against the Target`} meta={`${c.n} scored`}/>
-      <p className="mt-2 max-w-[56ch] text-fine text-ink-2">
-        Against a target range of {lo} to {hi}. Percentages are of the days that have a reading.
-      </p>
-      <div className="mt-2.5 lg:grid lg:grid-cols-2 lg:gap-5">
-        <div className="min-w-0">
-          <Share label="Inside the range" n={c.inside} pct={c.pInside}
-            ground={STATE.inside.mark}/>
-          <Share label="Above the range" n={c.above} pct={c.pAbove} ground={STATE.above.mark}/>
-          <Share label="Below the range" n={c.below} pct={c.pBelow} ground={STATE.below.mark}/>
-        </div>
-        <div className="mt-3 border-t border-rule pt-2.5 lg:mt-0 lg:border-l lg:border-t-0
-          lg:pl-5 lg:pt-0">
-          <p className="tick">Runs of days inside the range</p>
-          <dl className="m-0 mt-1">
-            <div className="flex items-baseline justify-between gap-3 border-b border-rule py-2">
-              <dt className="min-w-0 text-fine text-ink-2">Longest run</dt>
-              <dd className="m-0 shrink-0 font-display text-row font-medium tabular-nums
-                leading-none text-ink">{dayLabel(s.longest)}</dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-3 py-2">
-              <dt className="min-w-0 text-fine text-ink-2">Run you are on</dt>
-              <dd className="m-0 shrink-0 font-display text-row font-medium tabular-nums
-                leading-none text-ink">{dayLabel(s.current)}</dd>
-            </div>
-          </dl>
-          <p className="mt-2 max-w-[40ch] text-fine text-ink-3">
-            A count of days, nothing more. It is not a score, there is nothing to keep up, and it is
-            never compared with anybody else.
-          </p>
-        </div>
+    <Panel tone="aqua" className={className}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PanelHead title={`${w} Against the Target`} meta={`${c.n} scored`}
+          className="min-w-0 flex-1"/>
+        <Why label="How the percentages and runs are counted" className="pt-1.5">
+          Percentages are of days with a reading. A run is days in a row inside the range. It is
+          a count, not a score, and never compared with anybody.
+        </Why>
       </div>
+      <div className="mt-2.5">
+        <Share label="Inside" n={c.inside} pct={c.pInside} ground={STATE.inside.mark}/>
+        <Share label="Above" n={c.above} pct={c.pAbove} ground={STATE.above.mark}/>
+        <Share label="Below" n={c.below} pct={c.pBelow} ground={STATE.below.mark}/>
+      </div>
+      <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 border-t border-rule pt-2.5">
+        <div className="min-w-0">
+          <dt className="tick">Longest run</dt>
+          <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums
+            leading-none text-ink">{dayLabel(s.longest)}</dd>
+        </div>
+        <div className="min-w-0">
+          <dt className="tick">Current run</dt>
+          <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums
+            leading-none text-ink">{dayLabel(s.current)}</dd>
+        </div>
+      </dl>
     </Panel>
   )
 }
@@ -257,19 +249,16 @@ function MonthGrid({ year, month, values, today, lo, hi }) {
           )
         })}
       </ul>
-      <figcaption className="note mt-2.5 max-w-[56ch]">
-        One figure a day out of 100. A square with a dot has no reading yet. The square with a ring
-        is today.
-      </figcaption>
+      <figcaption className="note mt-2.5">A dot is no reading. The ring is today.</figcaption>
     </figure>
   )
 }
 
 function StateKey({ lo, hi }) {
   const rows = [
-    ['Inside the target range', `${lo} to ${hi}`, STATE.inside.ground],
-    ['Above the target range', `over ${hi}`, STATE.above.ground],
-    ['Below the target range', `under ${lo}`, STATE.below.ground],
+    ['Inside', `${lo} to ${hi}`, STATE.inside.ground],
+    ['Above', `over ${hi}`, STATE.above.ground],
+    ['Below', `under ${lo}`, STATE.below.ground],
   ]
   return (
     <ul className="m-0 mt-3 grid list-none grid-cols-1 gap-x-5 gap-y-1.5 border-t border-rule
@@ -362,17 +351,16 @@ export function CalendarBody({ go }) {
   const windowWord = view === 'month' ? `${MONTHS[month]}` : 'The Week'
 
   return (
-    <div className="mx-auto flex w-full max-w-[52rem] flex-col gap-3 lg:gap-4">
-      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi}/>
+    <div className={cn('grid w-full grid-cols-1 gap-3 lg:gap-4',
+      !real && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_auto_1fr]')}>
+      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi}
+        className="lg:col-start-1 lg:row-start-1"/>
 
       {real ? (
         <Panel>
-          <PanelHead title="No Days to Draw Yet"/>
+          <PanelHead title="No Days Yet"/>
           <div className="mt-2.5">
-            <RealNotice>
-              No patch is paired and nothing has been measured, so there is no day to put on the
-              calendar. The target above is saved and the squares fill in as readings arrive.
-            </RealNotice>
+            <RealNotice>Nothing paired yet. The target is saved.</RealNotice>
           </div>
           <button type="button" onClick={() => go('reading')}
             className="group mt-3 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
@@ -384,7 +372,7 @@ export function CalendarBody({ go }) {
         </Panel>
       ) : (
         <>
-          <Panel>
+          <Panel className="lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:self-start">
             {/* The switch and the month stepper on one line. Two buttons in a
                 bordered field, body face, normal case: design spec 0d section
                 2, a thing a reader toggles is a field and never a capsule. */}
@@ -427,34 +415,32 @@ export function CalendarBody({ go }) {
                 ? <MonthGrid year={year} month={month} values={monthVals} today={today}
                     lo={lo} hi={hi}/>
                 : <>
-                    <PanelHead title="The Last Seven Days" meta="out of 100"/>
+                    <PanelHead title="Last Seven Days" meta="out of 100"/>
                     <div className="mt-2.5"><WeekRows days={weekDays} lo={lo} hi={hi}/></div>
-                    <p className="note mt-2.5 max-w-[56ch]">
-                      The shaded stretch on each row is your target range, {lo} to {hi}. The mark is
-                      that day&rsquo;s figure.
-                    </p>
+                    <p className="note mt-2.5">Shaded stretch: your target range.</p>
                   </>}
             </div>
             <StateKey lo={lo} hi={hi}/>
           </Panel>
 
-          <Summary c={c} s={s} window={windowWord} lo={lo} hi={hi}/>
+          <Summary c={c} s={s} window={windowWord} lo={lo} hi={hi}
+            className="lg:col-start-1 lg:row-start-2"/>
 
-          <SeeDetails label="See details" sub="What the target is, and what a run of days is not">
+          <SeeDetails label="See details" className="lg:col-start-1 lg:row-start-3">
             <Panel tone="aqua">
               <PanelHead title="How the Target Works"/>
               <dl className="m-0 mt-1.5 list-none p-0">
                 {[
-                  [`What the ${SCORE} is`,
-                   `One number a day, 0 to 100, measured against your own last two weeks and never against another student. A usual day for you is ${USUAL}.`],
-                  ['Where the range comes from',
-                   `The target plus and minus ${HALF}, which is half the width of your own usual range for a week, ${WBAND.lo} to ${WBAND.hi}. Picking a target does not change the readings.`],
-                  ['What a run of days counts',
-                   'Days in a row whose figure landed inside the range. A day with no reading is skipped rather than counted against the run.'],
-                  ['What it is not',
-                   'It is not a grade, it is not shared with anybody, and no run of days is compared with another person. A day outside the range is a day, not a failure.'],
-                  ['Where the figures come from',
-                   `Generated for the demo, on the same 0 to 100 scale the dial uses, and seeded so the month is the same month every time. Nobody has worn a patch and nothing here was measured.`],
+                  [`The ${SCORE}`,
+                   `One number a day, against your own last two weeks. A usual day for you is ${USUAL}.`],
+                  ['The range',
+                   `The target plus and minus ${HALF}. Picking a target never changes a reading.`],
+                  ['A run',
+                   'Days in a row inside the range. A day with no reading is skipped.'],
+                  ['Not a grade',
+                   'Not shared, not compared with anybody. A day outside the range is a day.'],
+                  ['The figures',
+                   'Generated for the demo, seeded, so the month repeats. Nobody was measured.'],
                 ].map(([what, why]) => (
                   <div key={what} className="border-b border-rule py-2 last:border-b-0 last:pb-0">
                     <dt className="font-display text-ui font-medium text-ink">{what}</dt>
@@ -471,9 +457,8 @@ export function CalendarBody({ go }) {
 }
 
 const COPY = {
-  sub: 'A week, a month, and a target score you set for yourself.',
-  note: 'Every figure on this screen is generated. Nobody has worn a patch and nobody was measured.',
-  realNote: 'No patch is paired, so there is no day to draw yet.',
+  note: 'Generated figures. Nobody was measured.',
+  realNote: 'Nothing paired yet.',
 }
 
 export function Calendar({ go }) {

@@ -32,6 +32,7 @@ import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Grid,
          PulseMark, Rule, Search, Wave } from '../ui/marks'
 import { ScrollProgress } from '../ui/motion'
+import { RealNotice } from '../ui/notice'
 import { cn } from '../lib/utils'
 
 /* The route ids, fixed by spec 0e section 18 so no two workers invent
@@ -478,6 +479,10 @@ const APP_TITLE = {
  */
 const APP_SHELL = cn(
   'min-h-[100dvh] bg-beam/15',
+  /* Design spec 0f rule 5: the app fills a laptop. The wrap runs to 1168 at
+     1280 (the wrap's own 56px gutters) and stops at 1200 on anything wider,
+     so a 1920 display gets a laptop layout and not a 1680 one. */
+  '[&_.wrap]:max-w-[1200px]',
   /* `.mark` is exempt: it is a ruled 16px label marked up as a heading, and a
      step on it would blow a hairline annotation up to 25px. */
   '[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
@@ -498,9 +503,12 @@ function AppTabBar({ app, view, go }) {
   if (!tabs) return null
   return (
     <nav aria-label="App screens"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-3 bg-card
+      /* The one dark band the app keeps (design spec 0f rule 7): the bar is
+         ink, the way Apple Fitness and Dexcom draw theirs. mist on ink is
+         12.1 : 1, accent-lit on ink 7.67. */
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink bg-ink
         pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto flex max-w-[34rem] list-none p-0">
+      <ul className="mx-auto flex max-w-[40rem] list-none p-0">
         {tabs.map(([id, label, Mark, spoken]) => {
           const on = here === id
           return (
@@ -516,11 +524,10 @@ function AppTabBar({ app, view, go }) {
                   'sm:min-h-[56px] sm:gap-1 sm:px-1 sm:pb-1.5 sm:pt-2',
                   /* rule on the cell edge: the fill alone could read as hover */
                   'before:absolute before:inset-x-0 before:top-0 before:h-[2px]',
-                  on ? 'text-accent-ink before:bg-accent' : 'text-ink-2 before:bg-transparent')}>
-                {/* accent-wash on paper is 1.14 : 1; filled accent is 5.79. */}
+                  on ? 'text-accent-lit before:bg-accent-lit' : 'text-mist before:bg-transparent')}>
                 <span aria-hidden className={cn('flex h-6 w-11 items-center justify-center rounded-bar',
                   'transition-colors duration-150 sm:h-7 sm:w-14',
-                  on ? 'bg-accent text-paper' : 'bg-transparent')}>
+                  on ? 'bg-accent-lit text-ink' : 'bg-transparent')}>
                   <Mark size={20}/>
                 </span>
                 <span className={cn('max-w-full truncate font-display text-fine leading-none',
@@ -541,14 +548,7 @@ function ExitToSite({ go, className, short = false }) {
       className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field pr-2 font-display',
         'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink', className)}>
       <ArrowLeft aria-hidden className="size-4 shrink-0"/>
-      {short ? (
-        <>
-          {/* At 390 this row also carries the screen name and the demo switch.
-              Both spellings are in the DOM, so the name is on the button. */}
-          <span aria-hidden className="sm:hidden">Site</span>
-          <span aria-hidden className="hidden sm:inline">Back to the site</span>
-        </>
-      ) : 'Back to the site'}
+      {short ? <span aria-hidden>Site</span> : 'Back to the site'}
     </button>
   )
 }
@@ -591,10 +591,9 @@ function AppTopBar({ view, go }) {
 function AppFoot() {
   return (
     <footer className="border-t border-ink-3 px-4 py-5 sm:px-10 lg:px-14">
-      <p className="max-w-[78ch] text-fine text-ink-3">MindMap measures physiology and reports patterns. It is not a
-        medical device and does not diagnose or treat any condition. If you need urgent help, contact your
-        local emergency number or a crisis line.</p>
-      <p className="mt-2 text-fine text-ink-3">MindMap · Solace Innovation</p>
+      {/* Two lines, ten words each at most (design spec 0f). */}
+      <p className="text-fine text-ink-3">Not a medical device. Nothing here is a diagnosis.</p>
+      <p className="mt-1 text-fine text-ink-3">Urgent help: your local emergency number. MindMap · Solace Innovation</p>
     </footer>
   )
 }
@@ -829,71 +828,55 @@ function SurveyPage() {
  */
 const START = {
   student: {
-    head: 'Four Ways to Start',
-    line: 'No patch is paired, so today has no reading yet.',
+    head: 'Start Here',
     actions: [
-      { id:'reading', title:'Take a Reading', Mark:DialMark,
-        why:'Six questions, about a minute, scored on this phone.' },
-      { id:'toolkit', title:'Open the Toolkit', Mark:Bracket,
-        why:'Activities for a hard hour. Nothing is stored or sent.' },
-      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
-        why:'A question about a pattern, answered in plain words.' },
-      { id:'demo', title:'Try the Worked Day', Mark:Wave,
-        why:'One full day of measurements, already scored.' },
+      { id:'reading', title:'Take a Reading',    Mark:DialMark },
+      { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket },
+      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark },
+      { id:'demo',    title:'Try the Worked Day', Mark:Wave },
     ],
-    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame,
-             why:'Six steps, no cable and no host computer.' },
+    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
   },
   parent: {
-    head: 'Four Ways to Start',
-    line: 'No patch is paired, so this week has no days in it yet.',
+    head: 'Start Here',
     actions: [
-      { id:'calendar', title:'See the Week', Mark:CalendarMark,
-        why:'The week and the month against a target score.' },
-      { id:'privacy', title:'Open the Sharing Record', Mark:Grid,
-        why:'One value a day. Never a reading, never Notes.' },
-      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
-        why:'A question about a pattern, answered in plain words.' },
-      { id:'demo', title:'Open the Worked Example', Mark:Wave,
-        why:'One worked week, already scored, day by day.' },
+      { id:'calendar', title:'See the Week',      Mark:CalendarMark },
+      { id:'privacy',  title:'Sharing Record',    Mark:Grid },
+      { id:'ai',       title:'Ask MindMap AI',    Mark:AskMark },
+      { id:'demo',     title:'Try the Worked Week', Mark:Wave },
     ],
-    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame,
-             why:'Six steps, no cable and no host computer.' },
+    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
   },
   pro: {
-    head: 'Four Ways to Start',
-    line: 'No guardian has consented, so the caseload has no students in it.',
+    head: 'Start Here',
     actions: [
-      { id:'demo', title:'Open the Worked Caseload', Mark:Wave,
-        why:'A worked caseload, already scored, for review.' },
-      { id:'ai', title:'Ask MindMap AI', Mark:AskMark,
-        why:'A question about a pattern, answered in plain words.' },
-      { id:'methods', title:'How the Mind Score Works', Mark:Rule,
-        why:'Four signals, one number, on a scale of 0 to 100.' },
-      { id:'help', title:'Getting Help', Mark:Search,
-        why:'Names, numbers, and how to reach each one.' },
+      { id:'demo',    title:'Open the Worked Caseload', Mark:Wave },
+      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark },
+      { id:'methods', title:'How Scoring Works', Mark:Rule },
+      { id:'help',    title:'Get Help',          Mark:Search },
     ],
     setup: null,
   },
 }
 
+/* An action is an icon and two to four words (design spec 0f rule 4). No
+   sentence under it at any width. */
 function StartAction({ action, run, className }) {
   const { Mark } = action
   return (
     <button type="button" onClick={() => run(action.id)}
-      className={cn('group flex h-full min-h-[112px] w-full flex-col items-start gap-2',
-        'rounded-panel border border-rule bg-card p-3 text-left transition-colors duration-150',
-        'hoverOnly:border-accent hoverOnly:bg-accent-wash active:bg-accent-wash',
-        'sm:min-h-[132px] sm:p-4', className)}>
+      className={cn('group flex h-full min-h-[104px] w-full flex-col items-start justify-between',
+        'gap-3 rounded-panel border border-rule bg-card p-3 text-left transition-colors',
+        'duration-150 hoverOnly:border-accent hoverOnly:bg-accent-wash active:bg-accent-wash',
+        'sm:min-h-[120px] sm:p-4 lg:min-h-[168px] lg:p-5', className)}>
       <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
         bg-accent-wash text-accent-ink">
         <Mark size={18}/>
       </span>
-      <span className="font-display text-ui font-bold leading-[1.22] text-ink">{action.title}</span>
-      {/* The reason is the first thing to go at 390, where four of these are a
-          two by two grid and the titles already say what they do. */}
-      <span className="hidden max-w-[34ch] text-fine text-ink-2 sm:block">{action.why}</span>
-      <Chevron aria-hidden className="mt-auto size-4 shrink-0 text-accent"/>
+      <span className="flex w-full items-end justify-between gap-2">
+        <span className="font-display text-ui font-bold leading-[1.22] text-ink">{action.title}</span>
+        <Chevron aria-hidden className="mb-0.5 size-4 shrink-0 text-accent"/>
+      </span>
     </button>
   )
 }
@@ -911,7 +894,7 @@ function AudienceStart({ go, who }) {
     <main className="wrap">
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="font-display font-bold text-ink">{s.head}</h2>
-      <p className="mt-1.5 max-w-[52ch] text-meta text-ink-2">{s.line}</p>
+      <RealNotice className="mt-2" inline>Nothing paired yet.</RealNotice>
 
       <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
         {s.actions.map(a => (
@@ -921,28 +904,24 @@ function AudienceStart({ go, who }) {
         ))}
       </ul>
 
-      {/* Spec 0d, section 5: "Connecting a patch is one of the offered actions,
-          not a wall of instructions." One row, one line, one control. */}
+      {/* Spec 0d section 5: connecting a patch is one of the offered actions.
+          The one dark card on the screen (spec 0f rule 7): paper on ink is
+          14.47 : 1, and the control is the solid accent fill. */}
       {s.setup && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border
-          border-rule bg-aqua p-3.5 lg:mt-4">
+          border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
           <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
-            border border-rule bg-card text-accent-ink">
+            bg-paper/10 text-accent-lit">
             <s.setup.Mark size={18}/>
           </span>
-          <span className="min-w-[11rem] flex-1">
-            <span className="block font-display text-ui font-bold text-ink">{s.setup.title}</span>
-            <span className="mt-0.5 block text-fine text-ink-2">{s.setup.why}</span>
-          </span>
-          {/* w-full at 390: beside the line it squeezed the sentence into a
-              four-line strip. It takes its own row there and sits on the end
-              of the line past sm. */}
+          <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
+            {s.setup.title}</span>
           <button type="button" onClick={() => run(s.setup.id)}
             className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2
               rounded-field bg-accent px-4 font-display text-ui font-medium text-paper
-              transition-colors duration-150 hoverOnly:bg-accent-ink active:bg-accent-ink
-              sm:w-auto">
-            Start pairing
+              transition-colors duration-150 hoverOnly:bg-accent-lit hoverOnly:text-ink
+              active:bg-accent-lit active:text-ink sm:w-auto">
+            {s.setup.cta}
             <ArrowRight aria-hidden className="size-4 shrink-0"/>
           </button>
         </div>
@@ -1054,8 +1033,10 @@ export function App() {
               shared:        p => <Students {...p} tab="shared"/>,
               privacy:       p => <Parents  {...p} tab="shared"/>,
               notes: () => <NotesJournal/>,
-              'app-notify': () => <NotificationSettings/>,
-              help: () => <HelpBody/>,
+              /* Both bodies arrive without the app's gutters, so they get the
+                 wrap here. */
+              'app-notify': () => <main className="wrap"><NotificationSettings/></main>,
+              help: () => <main className="wrap"><HelpBody/></main>,
               /* Owned by other workers. `toolkit` is the list; the five
                  activity routes pass the activity down as `open`. */
               toolkit:             () => <Toolkit who={audience}/>,
@@ -1086,9 +1067,12 @@ export function App() {
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {/* Nothing in here is clipped or transformed: a transform creates a
           containing block and breaks the sticky columns in the reading screen. */}
-      <div className={cn(inApp && APP_SHELL)}>
+      {/* In the app the shell is a column, so a short screen (the start
+          screen, MindMap AI unconnected) keeps its foot at the bottom of the
+          viewport rather than a third of the way down a blank page. */}
+      <div className={cn(inApp && APP_SHELL, inApp && 'flex flex-col')}>
         {inApp && <AppTopBar view={view} go={go}/>}
-        <div id="main" ref={mainRef} tabIndex={-1} className="outline-none">
+        <div id="main" ref={mainRef} tabIndex={-1} className={cn('outline-none', inApp && 'flex-1')}>
           <V go={go} key={view}/>
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}

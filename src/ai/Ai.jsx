@@ -25,6 +25,11 @@ import { AUDIENCES, PILLARS, SOURCES, pillarSources } from './framework'
  * Nothing typed here reaches storage. There is no localStorage, no store.js
  * and no endpoint other than the one model call, and the server writes no
  * copy. Leaving the screen ends the conversation.
+ *
+ * 14 OCTOBER, design spec 0f: no paragraph, no sentence over ten words, and
+ * the screen fills a laptop. At 1280 the conversation sits left and the
+ * data-sent card, the help lines and the framework sit right; at 390 it is
+ * one column.
  */
 
 const ENDPOINT = '/api/mindmap-ai'
@@ -65,21 +70,17 @@ function Disclosure({ label, children, className }) {
 /* ── What leaves the phone ──────────────────────────────────────────────── */
 
 const LEAVES = [
-  ['Sent', 'The words typed below, and the earlier turns on this screen, to MindMap’s own server and on to the language model that writes the reply.'],
-  ['Not sent', `No name, no reading, no ${SCORE}, no ${NOTES.toLowerCase()} and no location. The request carries none of them.`],
-  ['Kept', 'Nothing. The server stores no copy, and leaving this screen ends the conversation.'],
-  ['Shown to', `Nobody else in MindMap. Not a parent, not a ${PRO_LC}.`],
+  ['Sent', 'Your words, to MindMap’s server and on to the model.'],
+  ['Not sent', `No name, reading, ${SCORE}, ${NOTES.toLowerCase()} or location.`],
+  ['Kept', 'Nothing. Leaving this screen ends the conversation.'],
+  ['Shown to', `Nobody else. Not a parent, not a ${PRO_LC}.`],
 ]
 
 function Leaves() {
   return (
-    <section className="mt-3 overflow-hidden rounded-panel border border-rule bg-aqua">
+    <section className="overflow-hidden rounded-panel border border-rule bg-aqua">
       <div className="border-b border-rule px-4 py-3">
-        <Heading>Data Sent To The Model</Heading>
-        <p className="mt-1 max-w-[62ch] text-fine text-ink-2">
-          Pressing Send takes words off this phone. {NOTES} never left the device at all,
-          which is the difference worth knowing before typing.
-        </p>
+        <Heading>Data Sent</Heading>
       </div>
       <dl className="m-0 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3 text-fine
         sm:grid-cols-[6.5rem_minmax(0,1fr)]">
@@ -100,11 +101,8 @@ function Framework() {
   return (
     <div>
       <p className="max-w-[62ch] text-fine text-ink-2">
-        One framework for adolescent mental health, with three adaptations: the student,
-        the parent and the {PRO_LC}. Eight rules hold for all three, and the published
-        guidance each rule rests on is named beside it. Two rules are MindMap’s own and
-        are marked as such, because attributing a rule to a body that did not write it
-        would be the same failure as inventing a document number.
+        One framework, three adaptations: student, parent, {PRO_LC}. The guidance each rule
+        rests on is named beside it.
       </p>
       <ul className="mt-3 m-0 list-none p-0">
         {PILLARS.map(p => {
@@ -137,9 +135,7 @@ function Framework() {
         ))}
       </ul>
       <p className="mt-3 max-w-[62ch] text-fine text-ink-3">
-        The Food and Drug Administration is not among them. It publishes no general
-        adolescent mental health standards framework, so no document could be named for
-        one, and an unnamed authority on a page like this is worse than none.
+        The FDA publishes no such framework. None is cited.
       </p>
     </div>
   )
@@ -265,60 +261,60 @@ export function MindMapAI({ who = 'student', go, className }) {
   const fine = typeof window !== 'undefined'
     && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches
 
+  const helpLines = (
+    <section className="rounded-panel border border-rule bg-aqua p-4">
+      <Heading>A Person Instead</Heading>
+      <p className="mt-1 max-w-[52ch] text-fine text-ink-2">
+        Help lines need no reading and no account.
+      </p>
+      <GetHelp className="mt-2.5"/>
+    </section>
+  )
+
   return (
     <div className={cn('wrap', className)}>
-      <div className="mx-auto w-full max-w-[48rem]">
-        <h2 className="font-display font-bold text-ink">{spec.heading}</h2>
+      <h2 className="font-display font-bold text-ink">{spec.heading}</h2>
 
-        {state === 'checking' && (
-          <p aria-live="polite" className="mt-2 max-w-[56ch] text-meta text-ink-2">
-            Checking whether MindMap AI is connected on this deployment.
-          </p>
-        )}
+      {state === 'checking' && (
+        <p aria-live="polite" className="mt-2 max-w-[56ch] text-meta text-ink-2">
+          Checking the connection.
+        </p>
+      )}
 
-        {(state === 'unconfigured' || state === 'unreachable') && (
-          <>
-            <section className="mt-3 rounded-panel border border-ink-3 bg-card p-4">
-              <Heading>Not Connected Yet</Heading>
-              <p className="mt-1.5 max-w-[58ch] text-meta text-ink-2">
-                {state === 'unconfigured'
-                  ? 'No model key is set on this deployment, so nothing on this screen is answering and no field is offered to type into.'
-                  : 'The server function did not answer, so there is no way to tell a model is behind this screen. Nothing here is answering and no field is offered.'}
-              </p>
-              <p className="mt-2 max-w-[58ch] text-fine text-ink-3">
-                MindMap AI is a language model behind a server function. Until the key is in
-                place the honest version of this screen is an empty one.
-              </p>
-              {typeof go === 'function' && (
-                <button type="button" onClick={() => go('methods')}
-                  className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field
-                    border border-ink px-4 font-display text-ui font-medium text-ink
-                    transition-colors duration-150 ease hoverOnly:bg-mist">
-                  How it works
-                  <ArrowRight aria-hidden size={16}/>
-                </button>
-              )}
-            </section>
-            <Disclosure className="mt-3" label="Framework And Sources"><Framework/></Disclosure>
-            <section className="mt-3 rounded-panel border border-rule bg-aqua p-4">
-              <Heading>A Person Instead</Heading>
-              <p className="mt-1 max-w-[52ch] text-fine text-ink-2">
-                The help lines answer with no reading, no patch and no account, and none of
-                them depend on this screen working.
-              </p>
-              <GetHelp className="mt-2.5"/>
-            </section>
-          </>
-        )}
+      {(state === 'unconfigured' || state === 'unreachable') && (
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+          <section className="rounded-panel border border-ink-3 bg-card p-4">
+            <Heading>Not Connected Yet</Heading>
+            <p className="mt-1.5 max-w-[58ch] text-meta text-ink-2">
+              {state === 'unconfigured'
+                ? 'No model key is set, so nothing here answers.'
+                : 'The server did not answer, so nothing here answers.'}
+            </p>
+            <p className="mt-2 max-w-[58ch] text-fine text-ink-3">
+              No field is offered until the key is in place.
+            </p>
+            {typeof go === 'function' && (
+              <button type="button" onClick={() => go('methods')}
+                className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field
+                  border border-ink px-4 font-display text-ui font-medium text-ink
+                  transition-colors duration-150 ease hoverOnly:bg-mist">
+                How it works
+                <ArrowRight aria-hidden size={16}/>
+              </button>
+            )}
+          </section>
+          <div className="flex flex-col gap-3 lg:gap-4">
+            {helpLines}
+            <Disclosure label="Framework And Sources"><Framework/></Disclosure>
+          </div>
+        </div>
+      )}
 
-        {state === 'ready' && (
-          <>
-            <p className="mt-1.5 max-w-[58ch] text-meta text-ink-2">{spec.opener}</p>
-
-            <Leaves/>
-
+      {state === 'ready' && (
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+          <div className="min-w-0">
             {turns.length === 0 ? (
-              <section className="mt-3 rounded-panel border border-rule bg-card p-4">
+              <section className="rounded-panel border border-rule bg-card p-4">
                 <Heading>Somewhere To Start</Heading>
                 <ul className="mt-2 m-0 flex list-none flex-col gap-2 p-0">
                   {spec.starters.map(s => (
@@ -335,7 +331,7 @@ export function MindMapAI({ who = 'student', go, className }) {
               </section>
             ) : (
               <ul role="log" aria-live="polite" aria-label="Conversation"
-                className="mt-3 m-0 flex list-none flex-col gap-3 p-0">
+                className="m-0 flex list-none flex-col gap-3 p-0">
                 {turns.map((t, i) => <Turn key={i} turn={t}/>)}
               </ul>
             )}
@@ -354,9 +350,7 @@ export function MindMapAI({ who = 'student', go, className }) {
 
             <form className="mt-3" onSubmit={e => { e.preventDefault(); send(draft) }}>
               <label className="block">
-                <span className="block font-display text-fine font-medium text-ink-2">
-                  Your message
-                </span>
+                <span className="sr-only">Your message</span>
                 {/* text-ui is 16px: the floor that stops iOS Safari zooming the
                     page when a field takes focus. Do not shrink it. */}
                 <textarea rows={3} value={draft} maxLength={MAX_CHARS}
@@ -366,8 +360,8 @@ export function MindMapAI({ who = 'student', go, className }) {
                       e.preventDefault(); send(draft)
                     }
                   }}
-                  placeholder="A sentence is enough."
-                  className="mt-1.5 block w-full resize-y rounded-field border border-rule bg-card
+                  placeholder={spec.opener}
+                  className="block w-full resize-y rounded-field border border-rule bg-card
                     p-3 font-body text-ui leading-[1.55] text-ink placeholder:text-ink-3
                     transition-colors duration-150 ease hoverOnly:border-ink-3"/>
               </label>
@@ -386,7 +380,7 @@ export function MindMapAI({ who = 'student', go, className }) {
                     className="inline-flex min-h-[44px] items-center rounded-field px-3
                       font-display text-ui font-medium text-ink-2 transition-colors
                       duration-150 ease hoverOnly:text-ink">
-                    Clear the screen
+                    Clear
                   </button>
                 )}
                 <span className="ml-auto text-fine tabular-nums text-ink-3">
@@ -394,25 +388,19 @@ export function MindMapAI({ who = 'student', go, className }) {
                 </span>
               </div>
               <p className="mt-2 max-w-[62ch] text-fine text-ink-3">
-                MindMap AI is a language model, not a clinician. It does not diagnose, it
-                reads no readings, and it is not watching between messages.
+                A language model, not a clinician. It never diagnoses.
               </p>
             </form>
+          </div>
 
-            <section className="mt-4 rounded-panel border border-rule bg-aqua p-4">
-              <Heading>A Person Instead</Heading>
-              <p className="mt-1 max-w-[52ch] text-fine text-ink-2">
-                For anything urgent the help lines answer with no reading, no patch and no
-                account.
-              </p>
-              <GetHelp className="mt-2.5"/>
-            </section>
-
-            <Disclosure className="mt-3" label="Framework And Sources"><Framework/></Disclosure>
-          </>
-        )}
-        <div ref={foot}/>
-      </div>
+          <div className="flex flex-col gap-3 lg:gap-4">
+            <Leaves/>
+            {helpLines}
+            <Disclosure label="Framework And Sources"><Framework/></Disclosure>
+          </div>
+        </div>
+      )}
+      <div ref={foot}/>
     </div>
   )
 }
