@@ -293,9 +293,6 @@ export function Methods({ go }) {
               {/* Controls, not prose: a button carries its own edge, so these
                   sit on the band without breaking section 2. */}
               <div className="mt-3.5 flex flex-wrap gap-2.5">
-                <Button variant="outline" size="sm" onClick={() => go('site')}>
-                  Drag the network figure<ArrowRight aria-hidden/>
-                </Button>
                 <Button variant="outline" size="sm" onClick={() => go('check')}>
                   Take a reading<ArrowRight aria-hidden/>
                 </Button>
