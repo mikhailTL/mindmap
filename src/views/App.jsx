@@ -811,21 +811,6 @@ function SurveyPage() {
 }
 
 
-/* ── The demo switch defaults to real ───────────────────────────────────────
- *
- * Spec 0d, section 5: "the demo toggle should be default set to real so judge
- * can try out ... this applies to the parent and med professional interfaces
- * as will". The default itself is `FALLBACK` in src/lib/mode.js, which this
- * worker does not own, so it is corrected here on the first load that has no
- * stored choice. A stored choice is always honoured, so this never overrides
- * the switch somebody has actually touched.
- */
-const MODE_KEY = 'mindmap.mode'
-try {
-  const stored = window.localStorage.getItem(MODE_KEY)
-  if (stored !== 'demo' && stored !== 'real') setMode('real')
-} catch { setMode('real') }
-
 /* ── The start screen each audience lands on ─────────────────────────────────
  *
  * Spec 0d, section 5: "Opening any audience lands on a short start screen:

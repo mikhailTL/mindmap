@@ -21,9 +21,14 @@ const listeners = new Set()
 
 /* Guarded: Safari private mode throws on getItem as well as setItem, and an
  * embedded webview can have storage disabled. */
+/* sessionStorage, not localStorage. The owner, after the default was already
+   real: "it stilll opens to demo when it should open to real". It did, for
+   him and for any judge who had visited before, because a stored 'demo' from
+   an earlier visit outranked the new default. The demo is a choice for this
+   visit; a fresh visit opens on the real product. */
 function readStored() {
   try {
-    const v = localStorage.getItem(KEY)
+    const v = sessionStorage.getItem(KEY)
     return MODES.includes(v) ? v : FALLBACK
   } catch {
     return FALLBACK
@@ -37,7 +42,7 @@ export function getMode() {
 export function setMode(m) {
   if (!MODES.includes(m) || m === current) return
   current = m
-  try { localStorage.setItem(KEY, m) } catch { /* session-only is acceptable */ }
+  try { sessionStorage.setItem(KEY, m) } catch { /* in-memory is acceptable */ }
   for (const fn of listeners) fn(m)
 }
 
