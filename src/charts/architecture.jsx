@@ -1,14 +1,16 @@
 import React from 'react'
-import { Always, Never, Sometimes } from '../ui/marks'
+import { Always, Never } from '../ui/marks'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
-import { MOVE_LIMIT_G } from '../signals/motion'
-import { SENSOR_ORDER } from '../lib/sensors'
-import { K_ANONYMITY, TIER_LABEL, tierOf } from '../lib/caseload'
-import { LOCATION, NOTES, PRO, SCORE } from '../lib/terms'
+import { CONTEXT_WINDOWS } from '../signals/tnam'
+import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
+import { K_ANONYMITY } from '../lib/caseload'
+import { PRO, SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* The figures on the Methods page. They live here so that page stays a page
- * rather than a drawing.
+/* The figures on the How it works page, one per category: the patch and its
+ * link to the phone (Hardware), the framework and its three adaptations (AI),
+ * the path from four signals to one number (Machine Learning), and the three
+ * consent rules (Other Software).
  *
  * Every label is HTML and no figure carries <text> inside its viewBox. Text in
  * a scaled SVG shrinks with the column, so a 12px label set to fit 1280px is a
@@ -16,617 +18,224 @@ import { cn } from '../lib/utils'
  * matters most. The SVGs here hold shapes only and are aria-hidden; the reading
  * order is the HTML beside them.
  *
- * No figure invents a fact. The patch signals come from lib/sensors.js, the
- * k floor from lib/caseload.js, the audience names from lib/terms.js, and every
- * network figure from signals/tnam-results.js, which ml/research.py generates. A
- * change in any of those reaches these drawings instead of disagreeing with
- * them.
+ * No figure invents a fact. The patch signals come from lib/sensors.js, the k
+ * floor from lib/caseload.js, the audience names from lib/terms.js, and the
+ * four curves in the network figure are read out of signals/tnam-results.js,
+ * which ml/research.py generates. A change in any of those reaches these
+ * drawings instead of disagreeing with them.
  *
- * Every label here is a label. A figure earns its place by what it draws, so
- * the words beside it name the parts and stop; the sentence that would have
- * explained the drawing is the drawing's failure, not its caption.
+ * NO ENTRANCE ANIMATION on a figure: the band around it may animate, and two
+ * opacity animations on one subtree once left ink-3 small print at 2.48 : 1 for
+ * over a second. A figure is content, so it is painted, not revealed.
  *
- * NO ENTRANCE ANIMATION. These figures each carried a ScrollIn or a ScrollRow,
- * and the Methods bands that hold them carry their own, so the two opacity
- * animations multiplied on one subtree. A measured 1280 load of this page put
- * 261 text nodes at or near opacity 0 a second in, and the pair's product was
- * 0.76 x 0.76 = 0.575, where ink-3 small print reads 2.48 : 1 against the 4.5
- * it owes. The arrival watcher in ui/motion.jsx restores a hidden element on a
- * scroll event or a 1500ms fallback and nothing else, so a load that reflows
- * content into view leaves it faded for over a second. A figure is content, so
- * it is painted, not revealed; the band around it may animate.
- */
+ * Each figure takes `dark` for the one band set on the ink ground (spec 0f
+ * rule 7). On ink the labels are mist and the drawing is accent-lit, which is
+ * the only accent allowed to be a word there (7.67 : 1). */
 
-/* The one label style every box in these figures opens with: body face, no
-   case or tracking games, ink-3. On paper 5.33 : 1, on aqua-2 4.66, on
-   beam-wash 5.10, so it clears AA on each ground a Methods band uses. It is
-   deliberately not `font-mono`: spec 0d bans a typewriter face on a label, and
-   `font-code` is reserved for file paths and code identifiers. */
-const TAG = 'text-tick text-ink-3'
-const BOX = 'rounded-panel border border-rule bg-card p-4'
+const LABEL = (dark) => cn('text-tick font-semibold', dark ? 'text-mist' : 'text-ink-2')
+const SMALL = (dark) => cn('text-fine', dark ? 'text-mist' : 'text-ink-3')
+const STROKE = (dark) => (dark ? 'text-accent-lit' : 'text-accent')
+const FAINT = (dark) => (dark ? 'text-ink-3' : 'text-rule')
 
-const pct1 = v => (v * 100).toFixed(1) + '%'
-const f2 = v => v.toFixed(2)
+/* ── 1. The patch and the phone ─────────────────────────────────────────── */
 
-/* ── 1. The three steps ─────────────────────────────────────────────────── */
-
-/* Each step carries a figure and not a picture of itself. None of the three
-   plots a reading, because there are no readings to plot: the first is the
-   shape of one capture in seconds, the second is the scale every signal is
-   converted to, and the third is the scale the answer lands on. The last two
-   are read out of the code that enforces them, so a boundary moved there moves
-   the drawing with it.
-   The figure this replaced drew fourteen hand-written bar heights, which is
-   invented data wearing a chart's clothes. */
-
-const BASELINE_DAYS = 14
-const CAPTURE_S = 30
-const CAPTURE_TICKS = [0, 15, 30]
-/* The phone route, which is the only one a visitor can take today. The lengths
-   are the ones the capture code runs and the Methods page quotes. */
-const LANES = [
-  { tag: 'Rear camera',   secs: 30, bar: 'bg-accent' },
-  { tag: 'Microphone',    secs: 15, bar: 'bg-beam' },
-  { tag: 'Accelerometer', secs: 30, bar: 'bg-ink-3' },
-]
-
-/* A labelled axis under a scale. The two end labels are pulled inside their own
-   ends: a centred label at the right-hand end paints past the card. */
-function Ticks({ ticks, at, unit }) {
-  const last = ticks.length - 1
+/* Upper arm, patch, a dashed link, a phone. The patch is a stadium with the
+   four sensor points under its face, which is the engineering layout in
+   views/Patch.jsx reduced to its outline. Nothing here claims a built unit:
+   the Methods band beside it says so in words. */
+export function PatchLink({ className, dark = false }) {
   return (
-    <div aria-hidden="true" className="relative mt-1 h-5">
-      {ticks.map((t, i) => (
-        <span key={t} style={{ left: `${at(t)}%` }}
-          className={cn('absolute top-0 whitespace-nowrap text-tick tabular-nums text-ink-3',
-            i === 0 ? 'translate-x-0' : i === last ? '-translate-x-full' : '-translate-x-1/2')}>
-          {t}{unit}
-        </span>
-      ))}
+    <figure className={cn('m-0', className)}>
+      <svg viewBox="0 0 320 128" aria-hidden focusable="false" className="block w-full"
+        fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {/* the arm */}
+        <rect x="18" y="14" width="78" height="100" rx="39" className={FAINT(dark)}
+          stroke="currentColor" strokeWidth="1.6"/>
+        {/* the patch, a stadium on the arm, and its four sensor points */}
+        <rect x="37" y="34" width="40" height="60" rx="20" className={STROKE(dark)}
+          stroke="currentColor" strokeWidth="2"/>
+        <g className={STROKE(dark)} fill="currentColor">
+          <circle cx="50" cy="52" r="3"/><circle cx="64" cy="52" r="3"/>
+          <circle cx="50" cy="76" r="3"/><circle cx="64" cy="76" r="3"/>
+        </g>
+        {/* the link, drawn as three arcs and a dashed run, which is the
+            radio mark everybody reads as a radio */}
+        <g className={STROKE(dark)} stroke="currentColor" strokeWidth="1.6">
+          <path d="M104 64h118" strokeDasharray="4 6"/>
+          <path d="M150 50a18 18 0 0 1 0 28M158 42a30 30 0 0 1 0 44M142 56a9 9 0 0 1 0 16"/>
+        </g>
+        {/* the phone, and the dial on its screen */}
+        <rect x="236" y="10" width="64" height="108" rx="10" className={FAINT(dark)}
+          stroke="currentColor" strokeWidth="1.6"/>
+        <circle cx="268" cy="64" r="18" className={STROKE(dark)} stroke="currentColor"
+          strokeWidth="2" strokeDasharray="85 30" transform="rotate(135 268 64)"/>
+      </svg>
+      <figcaption className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2">
+        <span className={LABEL(dark)}>Upper arm</span>
+        <span className={cn(LABEL(dark), 'text-center')}>Bluetooth Low Energy</span>
+        <span className={cn(LABEL(dark), 'text-right')}>Phone</span>
+      </figcaption>
+      <ul className="m-0 mt-2.5 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0">
+        {SENSOR_ORDER.map(id => {
+          const Icon = SENSORS[id].icon
+          return (
+            <li key={id} className={cn('flex items-center gap-1.5', dark ? 'text-mist' : 'text-ink')}>
+              <Icon aria-hidden size={16} className={STROKE(dark)}/>
+              <span className="text-fine">{SENSORS[id].name}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </figure>
+  )
+}
+
+/* ── 2. One framework, three adaptations ───────────────────────────────── */
+
+const PUBLISHERS = ['SAMHSA', 'NIMH', 'AAP', 'CDC']
+const ADAPTATIONS = ['Student', 'Parent', PRO]
+
+function Box({ dark, strong, className, children }) {
+  return (
+    <div className={cn('rounded-panel border px-3 py-2 text-center',
+      dark ? 'border-ink-3 bg-ink-2' : 'border-rule bg-card',
+      strong && (dark ? 'border-accent-lit' : 'border-accent'),
+      className)}>
+      {children}
     </div>
   )
 }
 
-function CaptureLanes() {
-  const at = v => (v / CAPTURE_S) * 100
+export function FrameworkFan({ className, dark = false }) {
   return (
-    <div>
-      <ul className="m-0 grid list-none gap-2 p-0">
-        {LANES.map(l => (
-          <li key={l.tag}>
-            <p className="flex items-baseline justify-between gap-3">
-              <span className="text-fine leading-[1.3] text-ink-2">{l.tag}</span>
-              <span className="text-tick tabular-nums text-ink-3">{l.secs} s</span>
-            </p>
-            <span className="mt-1 block h-2 w-full rounded-bar bg-mist">
-              <span style={{ width: `${at(l.secs)}%` }} className={cn('block h-2 rounded-bar', l.bar)}/>
+    <figure className={cn('m-0 mx-auto w-full max-w-[22rem]', className)}>
+      <Box dark={dark} strong>
+        <p className={LABEL(dark)}>One framework</p>
+        <p className={cn(SMALL(dark), 'mt-0.5')}>{PUBLISHERS.join(', ')}</p>
+      </Box>
+      <svg viewBox="0 0 300 36" preserveAspectRatio="none" aria-hidden focusable="false"
+        className={cn('block h-9 w-full', STROKE(dark))}
+        fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+        <path vectorEffect="non-scaling-stroke" d="M150 2v10M150 12L50 34M150 12v22M150 12l100 22"/>
+      </svg>
+      <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0">
+        {ADAPTATIONS.map(a => (
+          <li key={a} className="h-full">
+            <Box dark={dark} className="flex h-full items-center justify-center">
+              <span className={LABEL(dark)}>{a}</span>
+            </Box>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  )
+}
+
+/* ── 3. Four signals, a short memory, one number ────────────────────────── */
+
+/* One fitted curve per signal, read out of the results file rather than drawn
+   by hand. Each signal has several features in the network; the one drawn is
+   the plainest of its signal: heart rate, tonic sweat, temperature slope and
+   movement. The y range is normalised per tile, so a tile shows the shape of
+   its curve and nothing about its size. */
+const CURVE_OF = { heart: 'hr', sweat: 'edaTonic', temp: 'tempSlope', move: 'motion' }
+const TILE_W = 100, TILE_H = 44, PAD = 5
+/* The temporal term reads the preceding windows at the 30 second hop R.task
+   states, so the minutes are arithmetic rather than a typed figure. */
+const HOP_S = 30
+const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
+
+function curvePath(shape) {
+  const lo = Math.min(...shape.y), hi = Math.max(...shape.y), span = hi - lo || 1
+  const n = shape.x.length
+  return shape.y.map((y, i) => {
+    const px = PAD + (i / (n - 1)) * (TILE_W - 2 * PAD)
+    const py = TILE_H - PAD - ((y - lo) / span) * (TILE_H - 2 * PAD)
+    return `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`
+  }).join('')
+}
+
+const Arrow = ({ dark, className }) => (
+  <svg viewBox="0 0 24 24" aria-hidden focusable="false" fill="none" stroke="currentColor"
+    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+    className={cn('size-5 shrink-0', dark ? 'text-mist' : 'text-ink-3', className)}>
+    <path d="M3.5 12h16M13.5 6l6 6-6 6"/>
+  </svg>
+)
+
+export function NetworkPath({ className, dark = false }) {
+  const cells = Array.from({ length: CONTEXT_WINDOWS }, (_, i) => i)
+  return (
+    <figure className={cn('m-0 flex flex-col items-center gap-2', className)}>
+      <ul className="m-0 grid w-full max-w-[20rem] list-none grid-cols-2 gap-2 p-0">
+        {SENSOR_ORDER.map(id => (
+          <li key={id} className={cn('min-w-0 rounded-panel border px-2 pb-1.5 pt-2',
+            dark ? 'border-ink-3 bg-ink-2' : 'border-rule bg-card')}>
+            <svg viewBox={`0 0 ${TILE_W} ${TILE_H}`} aria-hidden focusable="false"
+              className={cn('block w-full', STROKE(dark))} fill="none" stroke="currentColor"
+              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d={curvePath(R.shapes[CURVE_OF[id]])}/>
+            </svg>
+            <p className={cn(SMALL(dark), 'mt-1')}>{SENSORS[id].name}</p>
+          </li>
+        ))}
+      </ul>
+      <Arrow dark={dark} className="rotate-90"/>
+      <div className="w-full max-w-[20rem]">
+        <div className="grid grid-cols-8 gap-1">
+          {cells.map(i => (
+            <span key={i} className={cn('block h-7 rounded-xs border',
+              dark ? 'border-ink-3' : 'border-rule',
+              i === cells.length - 1 && (dark ? 'bg-accent-lit' : 'bg-accent'))}/>
+          ))}
+        </div>
+        <p className={cn(SMALL(dark), 'mt-1 text-center')}>Last {MEMORY_MIN} minutes</p>
+      </div>
+      <Arrow dark={dark} className="rotate-90"/>
+      <div className="flex flex-col items-center">
+        <svg viewBox="0 0 64 64" aria-hidden focusable="false" className={cn('size-16', STROKE(dark))}
+          fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+          <circle cx="32" cy="32" r="24" strokeDasharray="113 38" transform="rotate(135 32 32)"/>
+        </svg>
+        <p className={cn(SMALL(dark), 'mt-1')}>{SCORE}</p>
+      </div>
+    </figure>
+  )
+}
+
+/* ── 4. The three consent rules ─────────────────────────────────────────── */
+
+/* Each rule is checkable in lib/caseload.js and the parent dashboard. The mark
+   repeats the word so colour is never the only carrier. */
+const RULES = [
+  { ok: false, who: 'Parent', what: 'Anything finer than one day' },
+  { ok: false, who: PRO, what: `A group under ${K_ANONYMITY} students` },
+  { ok: true, who: 'Audit log', what: 'Every record opened' },
+]
+
+export function ConsentRules({ className, dark = false }) {
+  return (
+    <figure className={cn('m-0', className)}>
+      <ul className={cn('m-0 flex list-none flex-col gap-0 rounded-panel border p-0',
+        dark ? 'border-ink-3 bg-ink-2' : 'border-rule bg-card')}>
+        {RULES.map(r => (
+          <li key={r.what} className={cn('grid grid-cols-[1rem_minmax(0,1fr)_auto] items-start gap-3',
+            'border-t px-3 py-2 first:border-t-0', dark ? 'border-ink-3' : 'border-rule')}>
+            <span className="mt-[0.2rem]">
+              {r.ok ? <Always aria-hidden className={cn('size-4', STROKE(dark))}/>
+                    : <Never aria-hidden className={cn('size-4', dark ? 'text-mist' : 'text-ink-3')}/>}
+            </span>
+            <span className="min-w-0">
+              <span className={cn('block', LABEL(dark))}>{r.who}</span>
+              <span className={cn('block', SMALL(dark))}>{r.what}</span>
+            </span>
+            <span className={cn('text-fine font-semibold',
+              r.ok ? STROKE(dark) : (dark ? 'text-mist' : 'text-ink-3'))}>
+              {r.ok ? 'Always' : 'Never'}
             </span>
           </li>
         ))}
       </ul>
-      <Ticks ticks={CAPTURE_TICKS} at={at} unit=" s"/>
-    </div>
-  )
-}
-
-/* Minus three to plus three, which is where signals/score.js clamps. The band
-   is the person's own ordinary range and the figure plots nothing inside it. */
-const SD_LIMIT = 3
-const SD_TICKS = [-3, -1, 0, 1, 3]
-
-function BaselineScale() {
-  const at = v => ((v + SD_LIMIT) / (SD_LIMIT * 2)) * 100
-  return (
-    <div>
-      <div className="relative h-8 rounded-xs border border-rule bg-mist/50">
-        <span aria-hidden="true" style={{ left: `${at(-1)}%`, width: `${at(1) - at(-1)}%` }}
-          className="absolute inset-y-0 block border-x border-accent bg-accent/15"/>
-        <span aria-hidden="true" style={{ left: `${at(0)}%` }}
-          className="absolute inset-y-0 block w-0.5 -translate-x-1/2 bg-ink"/>
-      </div>
-      <Ticks ticks={SD_TICKS} at={at} unit=""/>
-      <p className="mt-1 text-fine leading-[1.4] text-ink-3">
-        Standard deviations from this person&rsquo;s own baseline. Shaded: their usual range.
-        Clamped at <span className="tabular-nums text-ink-2">3</span>.
-      </p>
-    </div>
-  )
-}
-
-/* The four bands, scanned off tierOf rather than typed, so the drawing cannot
-   carry a boundary the code does not have. */
-const SCORE_BANDS = (() => {
-  const out = []
-  let start = 0, cur = tierOf(0)
-  for (let s = 1; s <= 100; s++) {
-    const t = tierOf(s)
-    if (t !== cur) { out.push({ tier: cur, from: start, to: s }); cur = t; start = s }
-  }
-  out.push({ tier: cur, from: start, to: 100 })
-  return out
-})()
-const SCORE_TICKS = [0, 25, 50, 75, 100]
-
-function ScoreScale() {
-  const at = v => v
-  return (
-    <div>
-      <div className="relative h-8 rounded-xs border border-rule bg-mist/50">
-        {SCORE_BANDS.slice(1).map(b => (
-          <span key={b.tier} aria-hidden="true" style={{ left: `${at(b.from)}%` }}
-            className="absolute inset-y-0 block w-px bg-ink-3"/>
-        ))}
-        <span aria-hidden="true" style={{ left: `${at(50)}%` }}
-          className="absolute inset-y-0 block w-0.5 -translate-x-1/2 bg-ink"/>
-      </div>
-      <Ticks ticks={SCORE_TICKS} at={at} unit=""/>
-      <ul className="m-0 mt-1 grid list-none grid-cols-2 gap-x-3 gap-y-0.5 p-0">
-        {SCORE_BANDS.map(b => (
-          <li key={b.tier} className="text-fine leading-[1.35] text-ink-3">
-            {TIER_LABEL[b.tier]}{' '}
-            <span className="tabular-nums text-ink-2">{b.from} to {b.to}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-const FIGURE = { capture: <CaptureLanes/>, baseline: <BaselineScale/>, score: <ScoreScale/> }
-const FIG_UNIT = { capture: 'seconds', baseline: 'standard deviations', score: SCORE }
-
-/* The plain reading of the whole method. Somebody who reads only this figure
-   has to come away correct, so step one names all three inputs and the caption
-   carries the thing a short reader would otherwise assume: no patch exists. */
-const STEPS = [
-  { n: 1, fig: 'capture', title: 'Taking a Reading',
-    line: 'The patch, a phone camera and microphone, or six questions.',
-    note: 'Drawn: one phone capture, the only route running today.' },
-  { n: 2, fig: 'baseline', title: 'Two Weeks of Baseline',
-    line: `Each signal as its distance from that person's own baseline.`,
-    note: `${BASELINE_DAYS} days set the middle. Nobody is compared with anybody else.` },
-  { n: 3, fig: 'score', title: 'One Number, One Sentence',
-    line: `${SCORE}, 0 to 100. 50 is an ordinary day for that person.`,
-    note: 'The bands name where a reading sits. They are not clinical cut-offs.' },
-]
-
-export function ThreeSteps({ className }) {
-  return (
-    <figure className={cn('m-0', className)}>
-      <ol className="m-0 grid list-none gap-3 p-0 lg:grid-cols-3">
-        {STEPS.map((s, i) => (
-          <li key={s.n} className="h-full">
-            <div className={cn(BOX, 'flex h-full flex-col p-5')}>
-              <div className="flex items-baseline justify-between gap-4">
-                <span className={TAG}>{s.n}</span>
-                <span className={TAG}>{FIG_UNIT[s.fig]}</span>
-              </div>
-              <h3 className="mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                {s.title}
-              </h3>
-              <p className="mt-2 text-sec leading-[1.5] text-ink-2">{s.line}</p>
-              <div className="mt-auto pt-4">{FIGURE[s.fig]}</div>
-              <p className="mt-2 border-t border-rule pt-2 text-fine leading-[1.4] text-ink-3">{s.note}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <figcaption className="note mt-3.5 max-w-[62ch]">
-        One scale, whichever way in. No patch has been built.
-      </figcaption>
     </figure>
-  )
-}
-
-/* ── 2. Movement, and why it takes a different path ─────────────────────── */
-
-/* The fitted movement curve, read straight out of the results file rather than
-   drawn by hand. It is the whole argument of the section it sits in: the curve
-   rises, so the network reads movement as arousal, so a moving reading cannot be
-   handed to it. Domain is the patch's own movement scale, where 1 is the
-   MOVE_LIMIT_G line and everything past that line saturates at 1. */
-const MC = R.shapes.motion
-const MC_LO = Math.min(...MC.y)
-const MC_HI = Math.max(...MC.y)
-const MC_RISE = MC_HI - MC_LO
-/* The plot runs x 8 to 280 and y 86 to 18 inside a 288 by 100 box. The box is
-   fixed because the labels beside it are HTML positioned as percentages of it:
-   1 viewBox unit is 1% of the drawing's height at every width. */
-const MC_X0 = 8, MC_X1 = 280, MC_Y0 = 86, MC_Y1 = 18
-const mcX = t => MC_X0 + t * (MC_X1 - MC_X0)
-const mcY = v => MC_Y0 - ((v - MC_LO) / (MC_RISE || 1)) * (MC_Y0 - MC_Y1)
-const MC_PATH = MC.x
-  .map((xv, i) => (i ? 'L' : 'M') + mcX(xv).toFixed(1) + ' ' + mcY(MC.y[i]).toFixed(1))
-  .join(' ')
-/* The levels worth ruling: both ends of the fitted curve, and the level at
-   which movement pushes the score neither way, when the curve crosses it. */
-const MC_LEVELS = [
-  { v: MC_HI, label: f2(MC_HI) },
-  ...(MC_LO < 0 && MC_HI > 0 ? [{ v: 0, label: '0' }] : []),
-  { v: MC_LO, label: f2(MC_LO) },
-]
-
-function MotionCurve() {
-  return (
-    <div className="flex gap-2">
-      {/* The y labels are HTML: text inside a scaled viewBox shrinks with the
-          column and fails the contrast sweep at 390. */}
-      <div aria-hidden="true" className="relative w-9 shrink-0">
-        {MC_LEVELS.map(l => (
-          <span key={l.label} style={{ top: `${mcY(l.v)}%` }}
-            className="absolute right-0 -translate-y-1/2 text-fine tabular-nums text-ink-3">
-            {l.label}
-          </span>
-        ))}
-      </div>
-      <div className="min-w-0 flex-1">
-        <svg viewBox="0 0 288 100" aria-hidden="true" focusable="false" className="block h-auto w-full">
-          {MC_LEVELS.map(l => (
-            <path key={l.label} d={`M${MC_X0} ${mcY(l.v).toFixed(1)} H${MC_X1}`} fill="none"
-              className="stroke-rule" strokeWidth="1"/>
-          ))}
-          <path d={`M${MC_X0} 94 H${MC_X1}`} fill="none" className="stroke-ink-3" strokeWidth="1"/>
-          <path d={`M${MC_X0} 94 V 10`} fill="none" className="stroke-ink-3" strokeWidth="1"/>
-          <path d={MC_PATH} fill="none" className="stroke-ink" strokeWidth="2.4"
-            strokeLinecap="round" strokeLinejoin="round"/>
-          {/* where the curve meets the line past which no reading is scored by
-              the network at all */}
-          <path d={`M${MC_X1} 10 V 94`} fill="none" className="stroke-warn" strokeWidth="1.4"
-            strokeDasharray="4 3"/>
-          <circle cx={MC_X1} cy={mcY(MC_HI)} r="4" className="fill-warn stroke-card" strokeWidth="1.6"/>
-        </svg>
-        <div aria-hidden="true" className="mt-1 flex justify-between gap-3 text-fine text-ink-3">
-          <span>still</span>
-          <span>{MOVE_LIMIT_G} g and above</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* Three systems, three measures, nine figures on one scale. Two of the three
-   measures are false alarms and one is a catch, so they never share a bar
-   colour, and each card says which direction is better once rather than
-   restating it against every bar. */
-const CONFOUND = [
-  { id: 'formula', short: 'Hand formula alone', src: R.confound.formula },
-  { id: 'raw', short: 'Model alone', src: R.confound.tnam_raw },
-  { id: 'ships', short: 'Model, formula over the line', src: R.confound.tnam_fallback, ships: true },
-]
-const MEASURES = [
-  { key: 'physical_flagged', label: 'Moving windows called stressed',
-    better: 'Lower is better', bar: 'bg-warn' },
-  { key: 'relax_flagged', label: 'Calm windows called stressed',
-    better: 'Lower is better', bar: 'bg-warn' },
-  { key: 'cognitive_caught', label: 'Cognitive stress still caught',
-    better: 'Higher is better', bar: 'bg-accent' },
-]
-const PCT_TICKS = [0, 50, 100]
-
-export function MovementFallback({ className }) {
-  /* The curve and the three outcomes side by side at lg: the curve is the
-     cause and the bars are the cost, and a reader who sees them together does
-     not have to hold one in memory while scrolling to the other. */
-  return (
-    <div className={cn(className)}>
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <div className="min-w-0">
-          <figure className={cn(BOX, 'm-0 h-full p-5')}>
-            <p className={TAG}>The fitted movement curve, in the logit</p>
-            <div className="mt-3"><MotionCurve/></div>
-            <figcaption className="mt-3.5 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
-              Climbs{' '}
-              <span className="tabular-nums text-ink">{MC_RISE.toFixed(2)}</span> from{' '}
-              <span className="tabular-nums text-ink">{f2(MC_LO)}</span> to{' '}
-              <span className="tabular-nums text-ink">{f2(MC_HI)}</span>: the network
-              reading movement as arousal. Amber: the line past which it never scores a reading.
-            </figcaption>
-            <p className="mt-2 text-fine text-ink-3"><span className="font-code">TNAM_RESULTS.shapes.motion</span></p>
-          </figure>
-        </div>
-
-        <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-3">
-          {MEASURES.map((m, i) => (
-            <li key={m.key} className="h-full">
-              <div className={cn(BOX, 'flex h-full flex-col p-5')}>
-                <p className={TAG}>{m.better}</p>
-                <h3 className="mt-1 font-display text-ui font-bold leading-[1.25] text-ink">{m.label}</h3>
-                <ul className="m-0 mt-4 flex list-none flex-col gap-3 p-0">
-                  {CONFOUND.map(c => (
-                    <li key={c.id}>
-                      <p className="flex items-baseline justify-between gap-2">
-                        <span className="min-w-0 text-fine leading-[1.35] text-ink-2">
-                          {c.short}
-                          {c.ships ? <span className="ml-1.5 text-fine text-ink">ships</span> : null}
-                        </span>
-                        <span className="shrink-0 text-meta tabular-nums text-ink">
-                          {pct1(c.src[m.key])}
-                        </span>
-                      </p>
-                      <span className="mt-1.5 block h-2 w-full rounded-bar bg-mist">
-                        <span className={cn('block h-2 rounded-bar', m.bar)}
-                          style={{ width: `${Math.round(c.src[m.key] * 100)}%` }}/>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto">
-                  <Ticks ticks={PCT_TICKS} at={v => v} unit="%"/>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="note mt-3.5 max-w-[68ch]">
-        Real jogging and rest data, from TNAM_RESULTS.confound, on one 0 to 100% scale. The third
-        bar in each card is the shipped code.
-      </p>
-    </div>
-  )
-}
-/* ── 3. Where each piece runs ───────────────────────────────────────────── */
-
-/* A box inside the device panel. Nested rather than listed, because the point
-   of the figure is containment: these things are inside the phone. */
-function Nest({ label, count, items, className }) {
-  return (
-    <div className={cn('rounded-panel border border-rule bg-paper p-4', className)}>
-      {/* The count is the part a reader can check against the list under it,
-          and it is read off that list rather than typed beside it. */}
-      <p className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className={TAG}>{label}</span>
-        <span className="text-tick tabular-nums text-ink-3">{count}</span>
-      </p>
-      {/* The measure is restated on the item: this box runs the full width of the
-          device panel, and at 1680 an uncapped line in it sets at about 95
-          characters. Widening the page widens the layout, not the line. */}
-      <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0">
-        {items.map(t => (
-          <li key={t} className="max-w-[62ch] text-sec leading-[1.45] text-ink">{t}</li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-/* Down on a phone, right at lg, because the two panels sit side by side there.
-   Two drawings rather than one rotated: a rotate paints outside the element's
-   box and this element sits in the middle of a grid. */
-function Flow({ label }) {
-  return (
-    <div className="flex items-center justify-center gap-2.5 lg:flex-col lg:gap-2">
-      <svg viewBox="0 0 24 24" aria-hidden focusable="false" fill="none" stroke="currentColor"
-        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        className="size-5 shrink-0 text-ink-2 lg:hidden">
-        <path d="M12 3.5v16M6 13.5l6 6 6-6"/>
-      </svg>
-      <svg viewBox="0 0 24 24" aria-hidden focusable="false" fill="none" stroke="currentColor"
-        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        className="hidden size-5 shrink-0 text-ink-2 lg:block">
-        <path d="M3.5 12h16M13.5 6l6 6-6 6"/>
-      </svg>
-      <span className="text-tick text-ink-2 lg:max-w-[9rem] lg:text-center">{label}</span>
-    </div>
-  )
-}
-
-const ON_PATCH = ['Pulse, sweat, skin temperature and movement, off the upper arm.']
-/* Three sensors, each with the length of capture the code runs, so this box and
-   the capture figure in step one cannot drift apart. */
-const ON_PHONE = [
-  'Rear camera, 30 seconds, one number per frame.',
-  'Microphone, 15 seconds, held in memory.',
-  'Accelerometer, across the whole capture.',
-]
-const IN_PAGE = [
-  'Filters and frequency estimates: signals/dsp.js, ppg.js, voice.js.',
-  'The network: signals/tnam.js. One forward pass, no request, no worker.',
-  `The baseline and calibration, in this browser’s storage.`,
-]
-
-/* Stated as absences, with the Never mark the privacy figures already use.
-   Each line is checkable in the repository, which is the only reason to make
-   a claim this strong. */
-const NOT_THERE = [
-  'No scoring endpoint, and no weights fetched over the wire.',
-  `No account, and no store of anybody’s readings.`,
-  'No analytics, and no third-party script.',
-]
-
-export function WhereItRuns({ className }) {
-  return (
-    <figure className={cn('m-0', className)}>
-      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,19rem)] lg:items-center lg:gap-5">
-
-        <div className="min-w-0">
-          <div className={cn(BOX, 'p-5')}>
-            <p className={TAG}>On the device</p>
-            <h3 className="mt-1.5 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-              The Whole Scoring Path
-            </h3>
-            <p className="mt-2 text-tick text-ink-3">
-              Nothing inside this boundary is sent anywhere.
-            </p>
-            <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
-              <Nest label="On the arm" count={`${SENSOR_ORDER.length} signals, 1 Hz`} items={ON_PATCH}/>
-              <Nest label="In the hand" count={`${ON_PHONE.length} sensors`} items={ON_PHONE}/>
-            </div>
-            <Nest className="mt-3" label="In this page, in the browser"
-              count={`${IN_PAGE.length} modules`} items={IN_PAGE}/>
-          </div>
-        </div>
-
-        <Flow label="Survey answers only, and only if one is sent"/>
-
-        <div className="min-w-0">
-          <div className={cn(BOX, 'p-5')}>
-            <p className={TAG}>On a server</p>
-            <h3 className="mt-1.5 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-              One Optional Server Function
-            </h3>
-            <p className="mt-2 text-sec leading-[1.5] text-ink-2">
-              api/responses.js takes the usability survey. The site is static and runs with that
-              function off.
-            </p>
-            <p className="mt-3.5 border-t border-rule pt-3.5 text-tick text-ink-3">
-              What crosses the boundary: {NOT_THERE.length} things do not
-            </p>
-            <ul className="m-0 mt-2 flex list-none flex-col gap-2 p-0">
-              {NOT_THERE.map(t => (
-                <li key={t} className="flex items-start gap-2.5 text-sec leading-[1.45] text-ink-2">
-                  <Never aria-hidden className="mt-[0.15rem] size-4 text-ink-3"/>
-                  <span className="min-w-0 flex-1">{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <figcaption className="note mt-3.5 max-w-[68ch]">
-        Three network calls exist in src/, all of them the survey. A {SCORE} needs none.
-      </figcaption>
-    </figure>
-  )
-}
-
-/* ── 4. Data flow and who can see it ────────────────────────────────────── */
-
-/* `life` is the axis the three boxes are really arranged on: the figure is
-   about what outlives the capture, and only the third box does. `after` is what
-   happens on the way to the next box, and it is drawn on the connector rather
-   than written underneath it. */
-const STAGES = [
-  { tag: 'Measured', title: 'The Raw Sensor Channels',
-    life: 'Lives for the capture', after: 'Nothing is written down yet',
-    items: [
-      'Patch: four signals, once a second.',
-      'Camera: 30 seconds, one number per frame. Microphone: 15 seconds, in memory.',
-      'Accelerometer: movement during the capture.',
-    ] },
-  { tag: 'Derived', title: 'Features Computed in the Capture',
-    life: 'Lives for the capture', after: 'Every frame and sample is dropped',
-    items: [
-      'Heart rate, and a variation index that is not a clinical RMSSD.',
-      'Capture quality, 0 to 1, which sets the band width.',
-      `Pitch and steadiness. Peak movement against the ${MOVE_LIMIT_G} g line.`,
-      `Each as a distance from this person’s own history, clamped to plus or minus 3.`,
-    ] },
-  { tag: 'Kept', title: 'Records Written to the Phone',
-    life: 'Outlives the capture',
-    items: [
-      'A mean and variance per feature: mindmap.phone.baseline.',
-      'Check-in answers: mindmap.phone.checkins, no raw signal.',
-      'Nothing else. Every frame and sample becomes a number and is dropped, so no reading can be replayed.',
-    ] },
-]
-
-function Chevron({ label }) {
-  return (
-    <span className="flex max-w-[8rem] flex-col items-center gap-1 text-center">
-      <svg viewBox="0 0 24 24" aria-hidden focusable="false" fill="none" stroke="currentColor"
-        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        className="size-5 shrink-0 text-ink-3">
-        <path d="M9 5.5l6.5 6.5L9 18.5"/>
-      </svg>
-      <span className="text-fine leading-[1.35] text-ink-3">{label}</span>
-    </span>
-  )
-}
-
-/* Always / only with consent / never, the three states the privacy figure on
-   the overview already names. The mark repeats the word in its own row rather
-   than carrying it, so a reader of one panel never has to look away. */
-const SEEN = [
-  { who: 'Student', lead: 'Everything, and first.',
-    rows: [
-      [2, `Every reading, every number from it, their own ${NOTES}.`],
-      [2, 'Each reading before anybody else has anything.'],
-    ] },
-  { who: 'Parent', lead: 'A day at a time, and only with consent.',
-    rows: [
-      [1, `The ${SCORE} for each day and for the week.`],
-      [0, `${NOTES}, ${LOCATION}, raw readings, anything finer than a day.`],
-    ] },
-  { who: PRO, lead: 'Only what the consent record allows.',
-    rows: [
-      [1, `Per student, exactly as consented. A group under ${K_ANONYMITY} returns nothing.`],
-      [2, 'Crisis alerts no guardian can consent away. An audit entry per record opened.'],
-    ] },
-]
-const STATE = { 2: 'Always', 1: 'Only if the student agrees', 0: 'Never' }
-const Mark = ({ v }) => (
-  v === 2 ? <Always aria-hidden className="size-4 text-accent"/>
-  : v === 1 ? <Sometimes aria-hidden className="size-4 text-accent"/>
-  : <Never aria-hidden className="size-4 text-ink-3"/>
-)
-
-export function DataFlow({ className }) {
-  return (
-    <div className={cn(className)}>
-      <figure className="m-0">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)]
-          lg:items-stretch lg:gap-4">
-          {STAGES.map((s, i) => (
-            <React.Fragment key={s.tag}>
-              {i > 0 && (
-                <div className="hidden items-center justify-center lg:flex">
-                  <Chevron label={STAGES[i - 1].after}/>
-                </div>
-              )}
-              <div className="h-full min-w-0">
-                <div className={cn(BOX, 'flex h-full flex-col p-5')}>
-                  <p className="flex flex-wrap items-baseline justify-between gap-x-3">
-                    <span className={TAG}>{s.tag}</span>
-                    <span className="text-tick text-ink-3">{s.life}</span>
-                  </p>
-                  <h3 className="mt-1.5 font-display text-row font-bold leading-[1.2] tracking-tight text-ink">
-                    {s.title}
-                  </h3>
-                  <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0">
-                    {s.items.map(t => (
-                      <li key={t} className="border-t border-rule pt-2 text-sec leading-[1.45] text-ink-2">
-                        {t}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </React.Fragment>
-          ))}
-        </div>
-        <figcaption className="note mt-3.5 max-w-[68ch]">
-          Only the third box survives the reading. The first two last as long as the capture.
-        </figcaption>
-      </figure>
-
-      <p className="mark mt-7">Who can see each thing</p>
-      <div className="mt-3.5 grid auto-rows-fr gap-3 lg:grid-cols-3">
-        {SEEN.map((p, i) => (
-          <div key={p.who} className="h-full">
-            <div className={cn(BOX, 'flex h-full flex-col p-5')}>
-              <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                {p.who}
-              </h3>
-              <p className="mt-1 text-sec text-ink-2">{p.lead}</p>
-              <ul className="m-0 mt-3.5 flex list-none flex-col gap-3 p-0">
-                {p.rows.map(([v, t]) => (
-                  <li key={t} className="grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-3">
-                    <span className="mt-[0.2rem]"><Mark v={v}/></span>
-                    <span className="min-w-0">
-                      <span className={cn('block font-display text-fine font-bold',
-                        v === 0 ? 'text-ink-3' : 'text-accent')}>{STATE[v]}</span>
-                      <span className={cn('mt-0.5 block text-sec leading-[1.45]',
-                        v === 0 ? 'text-ink-2' : 'text-ink')}>{t}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   )
 }
