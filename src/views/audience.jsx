@@ -161,6 +161,11 @@ function Chips({ head, rows, as: As = 'p', className }) {
  * tall and narrow and is the shape a group of people actually fits. It is
  * drawn from lg only: on a phone it would be the same wide band again, and a
  * phone has enough photographs on these pages without it. */
+/* The aside photograph appears at 2xl, not lg. At 1280 a 230px photograph left
+   the dial and the four signal cards about 530px of track between them, and
+   the two bottom cards ran under the photograph's left edge: "Temperatu" and
+   "Movement" were cut in half. The figure is the content and the photograph is
+   company for it, so the photograph is the thing that waits for room. */
 function Fig({ title, aside, asideAlt, children, className }) {
   const body = (
     <div className="min-w-0 p-3.5 lg:p-4">
@@ -177,9 +182,9 @@ function Fig({ title, aside, asideAlt, children, className }) {
         </figcaption>
       )}
       {aside ? (
-        <div className="grid min-w-0 flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,230px)]">
+        <div className="grid min-w-0 flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,230px)]">
           {body}
-          <div className="hidden border-l border-rule lg:block">
+          <div className="hidden border-l border-rule 2xl:block">
             <Frame photo={aside} alt={asideAlt} eager/>
           </div>
         </div>

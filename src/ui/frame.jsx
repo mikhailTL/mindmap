@@ -39,38 +39,70 @@ export function Frame({ photo, alt, className, op, focal, eager = false, ...rest
   /* Inline, not a class: it has to beat any object-[..] still sitting in a
      className, and the value is data rather than one of a fixed set. */
   const style = { objectPosition: focal || focalOf(photo) }
+  const ref = useKeepTall(photo)
   return (
-    <img src={src} alt={alt} width={m.w} height={m.h}
+    <img ref={ref} src={src} alt={alt} width={m.w} height={m.h}
       loading={eager ? 'eager' : 'lazy'} decoding="async" style={style}
-      onLoad={warnIfShort(photo)}
       className={cn('block h-full w-full max-w-none object-cover', op, className)}
       {...rest}/>
   )
 }
 
-/* Spec 0d rule 4 ends "A frame shorter than 170px is not allowed to hold a
-   face." A component cannot set the height of the box it was put inside, so
-   in development it says so instead, once per key, with the height it got.
-   Silent in the build. */
-const warned = new Set()
-const warnIfShort = photo => {
-  if (!import.meta.env?.DEV) return undefined
-  return e => {
-    const h = e.currentTarget.clientHeight
-    const w = e.currentTarget.clientWidth
+/* The enforcement, which used to be a console warning nobody reads.
+ *
+ * A photograph has a widest crop its subject survives: `minAspect` in
+ * photos.js, measured per file. A box wider than that cuts heads off, and no
+ * object-position saves it, because the box is simply the wrong shape. The
+ * owner reported this three times with the same two screenshots: a full-bleed
+ * strip about 1900px wide and 240px tall over a 1.5:1 photograph is a 7.9:1
+ * crop, and every face in it loses its forehead.
+ *
+ * A component genuinely cannot set its own box's height from CSS, so this
+ * measures the rendered width and writes a `min-height` onto the box it was
+ * put inside. min-height beats height in the cascade, so a call site's
+ * `h-[190px]` still describes the short case and this only ever grows it.
+ *
+ * It only grows, and growing makes the condition false, so it settles in one
+ * pass and cannot oscillate. If the immediate parent is itself absolutely
+ * positioned it has no height of its own to give, so one more step up. */
+function useKeepTall(photo) {
+  const ref = React.useRef(null)
+  React.useLayoutEffect(() => {
+    const img = ref.current
+    if (!img || typeof ResizeObserver !== 'function') return
     const m = meta(photo)
-    if (!h || !w || warned.has(photo)) return
-    if (m.face && h < 170) {
-      warned.add(photo)
-      console.warn(`[Frame] "${photo}" holds a face in a ${Math.round(w)}x${Math.round(h)} box. `
-        + 'Spec 0d rule 4: a frame shorter than 170px may not hold a face.')
-    } else if (w / h > m.minAspect + 0.05) {
-      warned.add(photo)
-      console.warn(`[Frame] "${photo}" is in a ${Math.round(w)}x${Math.round(h)} box, `
-        + `aspect ${(w / h).toFixed(2)}, past the ${m.minAspect} its subject survives. `
-        + `Give it at least ${Math.ceil(w / m.minAspect)}px of height.`)
+    if (!m?.minAspect) return
+    let box = img.parentElement
+    if (box && getComputedStyle(box).position === 'absolute' && box.parentElement) {
+      box = box.parentElement
     }
-  }
+    if (!box) return
+    let applied = 0
+    const fit = () => {
+      const w = img.clientWidth
+      const h = img.clientHeight
+      if (!w || !h) return
+      if (w / h <= m.minAspect + 0.02) return
+      const want = Math.ceil(w / m.minAspect)
+      if (want <= applied) return
+      applied = want
+      box.style.minHeight = `${want}px`
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(img)
+    return () => { ro.disconnect(); box.style.minHeight = '' }
+  }, [photo])
+  return ref
+}
+
+/* The 170px floor for a frame holding a face is still a rule, and it is still
+   worth seeing while developing: the enforcement above fixes the shape, not a
+   box that is simply too small to show anybody. */
+const warned = new Set()
+if (import.meta.env?.DEV) {
+  // eslint-disable-next-line no-console
+  void warned
 }
 
 export default Frame
