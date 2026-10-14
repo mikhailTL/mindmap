@@ -50,9 +50,9 @@ const STEPS = [
   { k:'open',    title:'Open the app in a browser',
     line:'Nothing to install, but the browser has to offer Bluetooth.' },
   { k:'tap',     title:'Press Connect to the patch',
-    line:'The app asks the browser for a device and touches nothing else.' },
+    line:'The app asks the browser for a device, nothing else.' },
   { k:'chooser', title:'The browser puts up its own list',
-    line:'That sheet is the browser’s, filtered to the one service the patch advertises.' },
+    line:'The browser’s own sheet, filtered to the patch’s one service.' },
   { k:'pick',    title:'Choose the patch, then Pair',
     line:'The app sees nothing at all until you choose.' },
   { k:'stream',  title:'It streams',
@@ -88,8 +88,8 @@ const TROUBLE = [
     fix:'Open the site over https, in its own browser window.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
     title:'An Empty Device List',
-    seen:'The browser’s own sheet, with no device in it and nothing to choose.',
-    fix:'Take the patch off charge, keep it near the phone, press Connect again.' },
+    seen:'The browser’s own sheet, with nothing in it.',
+    fix:'Off charge, near the phone, press Connect again.' },
   { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
     title:'The List Closed Without a Choice',
     seen:'No patch was selected. The check-in below works without one.',
@@ -97,7 +97,7 @@ const TROUBLE = [
   { /* engine.js:56: anything requestDevice or gatt.connect throws */
     title:'Connection Failed After Choosing',
     seen:'Could not connect: unknown. The check-in below works without a patch.',
-    fix:`Try once more with the patch close by, or take a ${SCORE} without one.` },
+    fix:`Try again, or take a ${SCORE} without the patch.` },
 ]
 
 const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Streaming', stuck:'Stopped' }
@@ -190,7 +190,7 @@ export function Pairing({ go }) {
               <figure className="m-0 min-w-0">
                 <WirelessLink/>
                 <figcaption className="mt-2 max-w-[42ch] text-fine text-ink-2">
-                  A drawing. The link is Bluetooth Low Energy and there is no second path.
+                  A drawing. One link: Bluetooth Low Energy.
                 </figcaption>
               </figure>
             </Card>
@@ -363,7 +363,7 @@ export function Pairing({ go }) {
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">
-                A {SCORE} Without a Patch
+                Without a Patch
               </h2>
               <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">
                 The phone camera and microphone, or {ITEMS.length} questions.

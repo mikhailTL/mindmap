@@ -194,7 +194,7 @@ export function PatchPage() {
               "sticker-sized" across two lines. */}
           <RevealLines as="h1"
             className="mt-2 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
-            lines={['A Sticker-Sized Patch', 'for the Upper Arm']}/>
+            lines={['A Sticker-Sized Patch']}/>
           <ScrollIn className="mt-4">
             {/* A container, not text on the tinted band. */}
             <Card className="max-w-[46ch] p-3.5">
@@ -253,7 +253,7 @@ export function PatchPage() {
       {/* Plain-language names only; EDA / PPG / nRF52840 belong on the signal
           pages. */}
       <Section tone="card" tight>
-        <SectionHead className="mt-0 max-w-[24ch]">Four Signals Off the Skin</SectionHead>
+        <SectionHead className="mt-0 max-w-[24ch]">Four Signals</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
@@ -288,7 +288,7 @@ export function PatchPage() {
           wide section is owed two. It is a second column of real values, not
           decoration: every row is a number this project has settled on. */}
       <Section tone="card" tight className="bg-aqua-2">
-        <SectionHead className="mt-0 max-w-[26ch]">Five Layers of One Oval</SectionHead>
+        <SectionHead className="mt-0 max-w-[26ch]">Five Layers</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
           <Card className="min-w-0 p-3.5 lg:p-5">
@@ -363,9 +363,7 @@ export function PatchPage() {
       <section ref={band} id="model" data-anchor
         className="border-t border-rule bg-paper">
         <div className="wrap py-8 lg:py-12">
-          <SectionHead className="mt-0 max-w-[26ch]">
-            The Three Parts of a Patch
-          </SectionHead>
+          <SectionHead className="mt-0 max-w-[26ch]">Three Parts</SectionHead>
           {/* items-stretch: the rail's lg:h-full sizes from the figure. */}
           {/* With the model, two columns: the figure and a rail of three cards
               sized to it. With the drawing standing in, the figure is twice
@@ -398,7 +396,7 @@ export function PatchPage() {
                   why the drawing is standing in for it. */}
               <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
                 {down
-                  ? 'The interactive model needs hardware acceleration this browser did not provide, so the drawing of the same patch stands in its place.'
+                  ? 'No 3D in this browser, so the drawing stands in.'
                   : 'A model and a drawing, not a photograph.'}
               </figcaption>
             </figure>

@@ -51,7 +51,7 @@ const HERO_FACTS = [
    frame rate are all drawn below; do not restate them here. */
 const CAMERA_FACTS = [
   ['Against', 'Your own history, never another student'],
-  ['Scale', `A phone reading and a patch reading both return one ${SCORE}`],
+  ['Scale', `One ${SCORE}, from the phone or the patch`],
 ]
 
 const ROUTES = [
@@ -66,7 +66,7 @@ const ROUTES = [
 const LIMITS = [
   ['Heart rate', 'Within half a beat per minute of a known signal.'],
   ['Our own index',
-   'The beat-to-beat figure is this project’s own index, not a clinical RMSSD. Withheld when the signal is noisy.'],
+   'The beat-to-beat figure is our own index, not clinical RMSSD. Withheld when the signal is noisy.'],
   ['Where it stands', 'Nothing has been tested on a person. Every figure here is generated.'],
 ]
 
@@ -136,7 +136,7 @@ export function WithoutPatch({ go }) {
               </p>
               <h1 className="mt-2 max-w-[16ch] font-display font-bold text-major
                 leading-[1.04] tracking-tight text-ink">
-                A {SCORE} Without the Patch
+                {SCORE} by Phone
               </h1>
 
               <div className={cn(PANEL, 'mt-3 max-w-[34rem] overflow-hidden border-l-[3px] border-l-accent')}>
@@ -177,7 +177,7 @@ export function WithoutPatch({ go }) {
       {/* White ground: the figure's own mist bands vanish on a mist section. */}
       <Section tone="card" tight id="camera">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-4">
-          <SectionHead>How the Camera Reads a Pulse</SectionHead>
+          <SectionHead>Reading a Pulse</SectionHead>
           {/* The reach of the phone, stated beside the heading rather than
               left for a reader to work out from the drawing. */}
           <ScrollIn className={cn(PANEL, 'self-end p-3.5')}>
@@ -216,7 +216,7 @@ export function WithoutPatch({ go }) {
       </Section>
 
       <Section tone="paper" tight className="bg-aqua-2">
-        <SectionHead>Two Ways to Take a Reading</SectionHead>
+        <SectionHead>Two Routes</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
@@ -281,7 +281,7 @@ export function WithoutPatch({ go }) {
       {/* A near-white ground, per spec 0c rule 1: no saturated or dark ground
           under a whole section. */}
       <Section tone="paper" tight className="bg-accent-wash">
-        <SectionHead>Limits of a Phone Reading</SectionHead>
+        <SectionHead>Known Limits</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
           {LIMITS.map(([k, v], i) => (
             <ScrollRow key={k} index={i} className="h-full">

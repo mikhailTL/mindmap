@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
 import { WhoSeesWhat } from '../charts/infographics'
-import { SCORE, NOTES, NOTES_DEF, LOCATION, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
+import { SCORE, NOTES, NOTES_DEF, LOCATION, CONSENT_SHORT } from '../lib/terms'
 
 /* Consent scope for a parent account. A parent may be shown only what is in
    YOU_SEE; nothing in YOU_NEVER may reach a parent screen, export or share
@@ -107,22 +107,23 @@ export function PrivacyBody({ go }) {
     <>
       {/* The heading is the one thing allowed to sit on the app's tint. Every
           figure and every line under it is inside a container. */}
-      <h2 className="font-display font-bold text-ink">What a parent can see</h2>
+      <h2 className="font-display font-bold text-ink">What parents see</h2>
 
       <ScrollIn className={`${PANEL} mt-3 p-3.5`}>
-        <p className="text-meta leading-[1.4] text-ink-2">{CONSENT_SHORT} {CONSENT_OFF}</p>
+        <p className="text-meta leading-[1.4] text-ink-2">{CONSENT_SHORT}</p>
+        <p className="mt-1 text-meta leading-[1.4] text-ink-2">Switched off by the student, at any time.</p>
         <Figures items={LIMITS} className="mt-2.5"/>
       </ScrollIn>
 
       <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
         <Scope index={0} title="Shared with a parent" meta="only with consent"
           items={YOU_SEE} Mark={Yes} ink="text-ink"/>
-        <Scope index={1} title="Never shared with a parent" meta="closed to everyone"
+        <Scope index={1} title="Never shared" meta="closed to everyone"
           items={YOU_NEVER} Mark={No} ink="text-ink-2"/>
       </div>
 
       <ScrollIn className="mt-3 lg:mt-4">
-        <h3 className="mark">Student, parent and medical professional compared</h3>
+        <h3 className="mark">Three audiences compared</h3>
         <div className="mt-3"><WhoSeesWhat/></div>
       </ScrollIn>
     </>

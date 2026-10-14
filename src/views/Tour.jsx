@@ -7,7 +7,7 @@ import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
 import { ScrollIn, ScrollRow } from '../ui/motion'
-import { PHOTOS } from '../lib/photos'
+import { PHOTOS, dims, focal } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
 import { SignalTrace, WeekStrip } from '../charts/infographics'
 import { studentRings } from '../lib/readings'
@@ -18,7 +18,7 @@ import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
 import {
   SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE, CASELOAD_DEF,
-  PRO, PRO_LC, PRO_PLURAL_LC, CONSENT_SHORT,
+  PRO, PRO_LC, CONSENT_SHORT,
 } from '../lib/terms'
 
 /* The guided tour, in eight stops. This is the route "Other" lands on from the
@@ -68,15 +68,6 @@ const PER_DAY = SCHOOL_HOURS * 60 * 60
 const CASELOAD_ASSUMED = 400
 const num = n => n.toLocaleString('en-US')
 
-/* Intrinsic size per key, so the browser holds the box before the file lands.
-   Same numbers views/Overview.jsx keeps for the frames it owns. */
-const DIMS = {
-  'clinic-talk':      [1600, 1066],
-  'parent-laptop':    [1600, 1066],
-  'student-homework': [1592, 1194],
-  'students-hallway': [1600, 1068],
-}
-
 /* Every frame is a licensed stock photograph of models. Nobody in one uses
  * MindMap, nobody is wearing the patch, and no alt text here may say or imply
  * otherwise. The tour prints that out loud once, on the first stop.
@@ -90,10 +81,13 @@ const DIMS = {
 function PhotoCard({ photo, alt, className }) {
   const src = PHOTOS[photo]
   if (!src || !alt) return null
-  const [w, h] = DIMS[photo] || [1600, 1066]
+  /* Size and focal point from lib/photos, so the crop lands on the subject
+     rather than on the centre of the file. */
+  const [w, h] = dims(photo)
   return (
     <div className={cn(PANEL, 'h-[152px] lg:h-[172px]', className)}>
       <img src={src} alt={alt} width={w} height={h} loading="eager" decoding="async"
+        style={{ objectPosition: focal(photo) }}
         className="block h-full w-full max-w-none object-cover"/>
     </div>
   )
@@ -156,9 +150,9 @@ function EvidenceGap() {
         </div>
       ))}
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        A drawing, not data. The lower row is one reading a second:{' '}
+        A drawing, not data. One reading a second:{' '}
         <span className="font-mono tabular-nums text-ink-2">{num(PER_DAY)}</span>{' '}
-        readings in a {SCHOOL_HOURS} hour school day, per student.
+        in a {SCHOOL_HOURS} hour day.
       </figcaption>
     </figure>
   )
@@ -173,8 +167,7 @@ function Hardware() {
       <ExplodedStack className="h-[min(44vh,360px)] w-full" caption={null}
         size="w-[min(94%,420px)]"/>
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        Shell, electronics pod, skin-side base. Drawn to the real dimensions.
-        No unit has been assembled.
+        Drawn to the real dimensions. No unit has been assembled.
       </figcaption>
     </figure>
   )
@@ -245,7 +238,7 @@ function Caseload() {
         })}
       </ol>
       <p className="mt-3 border-t border-rule pt-2.5 font-display text-fine font-bold
-        leading-tight text-ink">Consented out of this list</p>
+        leading-tight text-ink">Consented out</p>
       <ul className="m-0 mt-2 list-none p-0">
         {held.map(s => (
           <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5
@@ -271,13 +264,13 @@ const HONESTY = [
   ['The patch', 'Drawn, not built', 'demo',
     'A CAD model, three printed parts and a bought board. No assembled unit exists to photograph.'],
   ['The scoring model', 'Written, not validated', 'demo',
-    'Four signals scored against a fourteen-day baseline and blended through a logistic. It has never been compared with any clinical measure.'],
+    'Four signals against a fourteen-day baseline, blended by a logistic. Never compared with any clinical measure.'],
   ['Accuracy', 'None claimed', 'demo',
     'No study, no participants, no error rate.'],
   ['The eight students', 'Invented', 'demo',
-    'Student 8241 and the rest are numbers, carrying consent records we wrote ourselves.'],
+    'Numbers, with consent records we wrote ourselves.'],
   ['Regulatory status', 'Not a medical device', 'fact',
-    'It does not diagnose, treat or screen for any condition, and nothing on this site should be read as saying it does.'],
+    'It does not diagnose, treat or screen for any condition.'],
 ]
 
 /* ── 08 ─────────────────────────────────────────────────────────────────── */
@@ -296,7 +289,7 @@ function ScaleFigure() {
   return (
     <figure className="m-0">
       <figcaption className="font-display text-fine font-bold leading-tight text-ink">
-        What one caseload would produce in a day
+        One caseload, one day
       </figcaption>
       <dl className="m-0 mt-2">
         {SCALE_ROWS.map(([label, value, unit, from]) => (
@@ -313,9 +306,7 @@ function ScaleFigure() {
         ))}
       </dl>
       <p className="mt-3 border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        What would prove this wrong: a trial in which {PRO_PLURAL_LC} using this list reach
-        students no earlier than {PRO_PLURAL_LC} using their existing referral queue. We have
-        not run it.
+        Unproven until trialled against a referral queue.
       </p>
     </figure>
   )
@@ -329,7 +320,7 @@ const STOPS = [
   {
     id: 'problem', nav: 'The problem',
     title: 'The problem',
-    lede: 'The record an adult has is the days somebody spoke up.',
+    lede: 'An adult’s record is the days somebody spoke up.',
     photo: 'students-hallway',
     alt: 'Four high school students walking along a bright corridor with folders and backpacks, talking as they go',
     facts: [
@@ -346,7 +337,6 @@ const STOPS = [
     lede: 'Three printed parts and one board we did not design.',
     facts: [
       ...LAYERS.map(l => [l.title, l.body]),
-      ['Board', 'Seeed XIAO nRF52840 Sense. Bought, not designed by us.'],
       ['Status', 'Drawn to the real dimensions. No unit has been assembled.'],
     ],
     art: Hardware,
@@ -359,7 +349,7 @@ const STOPS = [
       ['Moves first', 'Sweat. Changes too small to feel.'],
       ['Moves furthest', 'Heart rate variability, not the rate itself.'],
       ['Rules illness in or out', 'Skin temperature, which drifts slowly.'],
-      ['A control, not a reading', `Above 0.35 g the ${SCORE} is held back, so a hard run cannot be scored as a hard day.`],
+      ['A control, not a reading', `Above 0.35 g the ${SCORE} is held back.`],
     ],
     art: Signals,
   },
@@ -417,7 +407,7 @@ const STOPS = [
             {over} of {days.length} days above their usual range
           </p>
           <p className="mt-auto border-t border-rule pt-2.5 font-display text-fine font-bold
-            leading-tight text-ink">Never shown to a parent</p>
+            leading-tight text-ink">Never shown</p>
           {/* A card holding a row of chips: one level of nesting, which spec 2
               allows. The mark is each chip's marker, so the list has none. */}
           <ul className="m-0 mt-2 grid list-none gap-1.5 p-0 sm:grid-cols-2">
@@ -435,7 +425,7 @@ const STOPS = [
   },
   {
     id: 'pro', nav: `${PRO} console`,
-    title: `What the ${PRO_LC} sees`,
+    title: `The ${PRO_LC}’s view`,
     lede: CASELOAD_DEF,
     photo: 'clinic-talk',
     alt: `A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`,
@@ -449,7 +439,7 @@ const STOPS = [
         ['Appear with a change', `${trends} guardians agreed to trends.`],
         ['Appear without one', `${partial} agreed to a ${SCORE} without trends.`],
         [`Carry no ${SCORE} at all`, `${alerts} agreed to crisis alerts only.`],
-        ['Cannot be consented away', `Crisis alerts reach the ${PRO_LC} in every case, and students are told so before they wear it.`],
+        ['Cannot be consented away', `Crisis alerts reach the ${PRO_LC} in every case.`],
       ]
     },
     art: Caseload,
@@ -457,21 +447,18 @@ const STOPS = [
   },
   {
     id: 'honest', nav: 'Real vs demo',
-    title: 'What is real and what is a demo',
+    title: 'Real and demo',
     lede: 'Nothing on this site has been measured on a person.',
-    facts: [
-      ['Built', 'The screens, as hash-routed React on fixture data.'],
-      ['Generated', 'Every figure on them, from invented baselines.'],
-      ['Drawn, not built', 'The patch. No assembled unit exists to photograph.'],
-      ['Not claimed', 'Accuracy. No study, no participants, no error rate.'],
-    ],
+    /* The table beside is the whole list; a rail repeating four of its rows
+       was the paragraph the owner asked to cut. */
+    facts: [],
     art: () => (
       <Table>
         <THead>
           <TR>
-            <TH>Thing</TH>
+            <TH>Item</TH>
             <TH>Status</TH>
-            <TH>What that means</TH>
+            <TH>Meaning</TH>
           </TR>
         </THead>
         <TBody>
@@ -492,8 +479,10 @@ const STOPS = [
   },
   {
     id: 'scale', nav: 'At scale',
-    title: 'What this would change on a caseload',
+    title: 'On a caseload',
     lede: 'A projection, not a finding.',
+    photo: 'school-card',
+    alt: 'A woman and a teenage boy talking in a room lined with shelves',
     facts: [
       ['A queue today', 'Ordered by who asked first, or who was referred.'],
       ['This queue', `Ordered by whose ${SCORE} moved most since last week.`],
@@ -536,11 +525,8 @@ export function Tour({ go }) {
             </p>
             <h1 className="mt-2 max-w-[18ch] font-display text-major font-bold leading-[1.06]
               tracking-tight text-ink">
-              What we built and how it works
+              How MindMap Works
             </h1>
-            <p className="mt-3 max-w-[44ch] text-sec font-medium leading-[1.35] text-ink">
-              Eight stops, in the order the product works.
-            </p>
           </div>
           <Facts className="self-end" rows={[
             ['Stops', `${STOPS.length}, each one a screen or a part.`],
@@ -582,14 +568,14 @@ export function Tour({ go }) {
                   {/* Two columns from lg, per spec 1. The rail is fixed and the
                       figure takes the rest, so a wide figure is not squeezed
                       into half the band to keep the two tracks even. */}
-                  <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]
-                    lg:gap-4">
+                  <div className={cn('mt-3 grid gap-3 lg:gap-4',
+                    (s.photo || rows.length) && 'lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]')}>
                     <div className="flex flex-col gap-3 lg:gap-4">
                       <ScrollIn as="p" className="text-sec font-medium leading-[1.35] text-ink">
                         {s.lede}
                       </ScrollIn>
                       {s.photo && <ScrollIn><PhotoCard photo={s.photo} alt={s.alt}/></ScrollIn>}
-                      <ScrollIn><Facts rows={rows}/></ScrollIn>
+                      {rows.length > 0 && <ScrollIn><Facts rows={rows}/></ScrollIn>}
                       {s.go && (
                         <Button variant="outline" size="sm" className="w-fit"
                           onClick={() => go(s.go[0])}>
@@ -649,7 +635,7 @@ export function Tour({ go }) {
             </div>
           </div>
           <Facts className="self-start" rows={[
-            ['The launcher', `The student screen, the parent screen and the ${PRO_LC} console.`],
+            ['The launcher', `Student, parent and ${PRO_LC} screens.`],
             ['Six questions', `A ${SCORE} with no patch and nothing stored.`],
             ['What is stored', 'Nothing typed anywhere on this site leaves the device.'],
           ]}/>

@@ -18,7 +18,7 @@ import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roste
 import { ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
 import {
-  CASELOAD_DEF, CASELOAD_TITLE, CONSENT_OFF, CONSENT_SHORT, LOCATION, NOTES, SCORE,
+  CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
 } from '../lib/terms'
 
@@ -218,7 +218,9 @@ function Hero({ label, title, lede, go, photo, photoAlt, facts, ground }) {
           <p className="font-body text-ui font-semibold text-accent-ink">{label}</p>
           <h1 className="mt-2 max-w-[16ch] font-display text-major font-bold leading-[1.06]
             tracking-tight text-ink">{title}</h1>
-          <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">{lede}</p>
+          {lede && (
+            <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">{lede}</p>
+          )}
           {/* The hero's own facts sit beside the photograph from lg and under
               the title below it, so a phone gets the statement without the
               frame pushing it off the fold. */}
@@ -246,7 +248,7 @@ function Closer({ title, line, label, view, go, rows, ground }) {
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-4">
         <div className="min-w-0">
           <SectionHead>{title}</SectionHead>
-          <SectionLede>{line}</SectionLede>
+          {line && <SectionLede>{line}</SectionLede>}
           <Button size="sm" className="mt-3" onClick={() => go(view)}>
             {label} <ArrowRight aria-hidden/>
           </Button>
@@ -308,11 +310,11 @@ export function ForStudents({ go }) {
     <main>
       <Hero go={go} label="For students" ground="bg-accent-wash" photo="student-hero"
         photoAlt="A teenager in headphones sitting in front of a sofa, holding a games controller"
-        title={`One ${SCORE} Each Day`}
+        title={`${SCORE} Each Day`}
         lede="You decide what leaves your phone."
         facts={[
           ['One number a day', `${SCORE_RANGE}, measured against your own normal.`],
-          ['Shared by default', `Nothing. ${CONSENT_SHORT}`],
+          ['Shared by default', 'Nothing.'],
           STOCK,
         ]}/>
 
@@ -324,7 +326,7 @@ export function ForStudents({ go }) {
         <SectionHead>{SCORE} Today</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title={`Today's ${SCORE} and the Four Signals`}
+            <Fig title={`Today's ${SCORE}`}
               aside="student-game"
               asideAlt="Three teenage boys sitting on a sofa with games controllers and headphones">
               <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-6">
@@ -353,10 +355,10 @@ export function ForStudents({ go }) {
       {/* -- the week ------------------------------------------------------
           The chart and the people it is about, in one container. */}
       <Section tone="paper" className="bg-aqua-2" tight>
-        <SectionHead>Days That Ran High</SectionHead>
+        <SectionHead>Days Above Range</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title="Seven Days and the Usual Range"
+            <Fig title="Seven Days"
               aside="students-hallway"
               asideAlt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go">
               <WeekChart data={DATA.week} band={DATA.weekBand}/>
@@ -392,8 +394,8 @@ export function ForStudents({ go }) {
               photoAlt="Two students sitting on concrete steps outside a building, heads together over an open notebook"
               rows={[
                 ['Who opens the account', 'A guardian. You choose what is shared after that.'],
-                ['Set per audience', `Sharing a week with a parent shares nothing with a ${PRO_LC}.`],
-                ['Switching off', CONSENT_OFF],
+                ['Set per audience', `A week shared with a parent reaches no ${PRO_LC}.`],
+                ['Switching off', 'Any of it, by you, at any time.'],
                 ['What a parent can see at most', `A ${SCORE} a day, and which days ran high.`],
                 [`What a ${PRO_LC} can see at most`, `A ${SCORE}, and the direction it moved.`],
               ]}/>
@@ -413,10 +415,10 @@ export function ForStudents({ go }) {
 
       <Closer go={go} view="app-student" ground="bg-beam-wash"
         label="Open the student screen" title="The Student Screen"
-        line={`The ${SCORE}, the check-in and the Toolkit. Sample readings only.`}
+        line="Sample readings only."
         rows={[
           ['Four tabs', 'Today, Reading, Toolkit, Sharing.'],
-          ['No account', 'Nothing is sent anywhere and nothing is kept off the device.'],
+          ['No account', 'Nothing leaves the device.'],
           ['No patch needed', 'The demo opens on a worked day already filled in.'],
         ]}/>
     </main>
@@ -471,7 +473,6 @@ export function ForParents({ go }) {
       <Hero go={go} label="For parents" ground="bg-beam-wash" photo="parent-hero"
         photoAlt="A mother and her teenage child smiling at an open laptop together at home"
         title="What a Parent Sees"
-        lede="A week, one value a day."
         facts={[
           ['Never an hour, never a moment', 'A day is the finest this screen goes.'],
           ['Never shown to you', `A raw reading, ${NOTES}, or ${LOCATION}.`],
@@ -481,10 +482,10 @@ export function ForParents({ go }) {
       {/* -- the week ------------------------------------------------------
           The chart and the household it is about, in one container. */}
       <Section tone="card" tight>
-        <SectionHead>The Week, Day by Day</SectionHead>
+        <SectionHead>Day by Day</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title="Monday, Wednesday and Thursday Ran High"
+            <Fig title="The Week"
               aside="parent-kitchen"
               asideAlt="A mother and her teenage son chopping vegetables side by side at a kitchen counter">
               <WeekChart data={DATA.week} band={DATA.weekBand}/>
@@ -514,11 +515,11 @@ export function ForParents({ go }) {
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           <SeenUnseen/>
           <ScrollIn className="sm:col-span-2 lg:col-span-1">
-            <Facts head="Why the Second List Is Empty" rows={[
-              ['Not withheld', 'There is no parent view of any of it to open.'],
+            <Facts head="No Parent View" rows={[
+              ['Not withheld', 'No parent view of any of it exists.'],
               ['Who decides', CONSENT_SHORT],
-              ['Set per audience', `Granting a week to you grants nothing to a ${PRO_LC}.`],
-              ['Revoking consent', CONSENT_OFF],
+              ['Set per audience', `A week granted to you reaches no ${PRO_LC}.`],
+              ['Revoking consent', 'By the student, at any time.'],
             ]}/>
           </ScrollIn>
         </div>
@@ -534,7 +535,7 @@ export function ForParents({ go }) {
         <SectionLede>A hard day is named, never its cause.</SectionLede>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-4">
           <ScrollIn>
-            <Facts head="What the Screen Is For" rows={[
+            <Facts head="What the Screen Does" rows={[
                 ['A prompt, not a report', 'A reason to be around on a Thursday evening.'],
                 ['Not a diagnosis', 'MindMap is not a medical device and screens for nothing.'],
                 ['No ranking', 'Your child is never compared with another student.'],
@@ -550,11 +551,11 @@ export function ForParents({ go }) {
 
       <Closer go={go} view="app-parent" ground="bg-accent-wash"
         label="Open the parent screen" title="The Parent Screen"
-        line="The week, and what is shared. Sample readings only."
+        line="Sample readings only."
         rows={[
           ['Opens on', `The week, one ${SCORE} a day.`],
           ['Never opened', 'A reading, a note, or a location. There is no view of them.'],
-          ['Crisis alerts', 'Reach a guardian in every case, with no way to consent them away.'],
+          ['Crisis alerts', 'Reach a guardian in every case. Cannot be consented away.'],
         ]}/>
     </main>
   )
@@ -661,7 +662,7 @@ export function ForSchools({ go }) {
     <main>
       <Hero go={go} label={PRO_FOR} ground="bg-aqua-2" photo="clinic-talk"
         photoAlt="A teenager and an adult sitting and talking on a sofa by a sunlit window"
-        title={`What a ${PRO} Sees`}
+        title={`The ${PRO} View`}
         lede="Caseload-wide patterns, and a floor under small groups."
         facts={[
           ['What you are given', `A ${SCORE}, and the direction it moved.`],
@@ -675,10 +676,10 @@ export function ForSchools({ go }) {
           claiming it. The strip across the figure's top is the frame of the
           conversation the figure is meant to start. */}
       <Section tone="card" tight>
-        <SectionHead>The Week Across the Caseload</SectionHead>
+        <SectionHead>Across the Caseload</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title={`The School Week by Mean ${SCORE}`}
+            <Fig title={`Mean ${SCORE}, by Day`}
               aside="students-hallway"
               asideAlt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go">
               {/* Width cap: `Bars` splits its width evenly between five bars,
@@ -705,10 +706,10 @@ export function ForSchools({ go }) {
 
       {/* -- by class period ----------------------------------------------- */}
       <Section tone="paper" className="bg-accent-wash" tight>
-        <SectionHead>The Floor Under Small Groups</SectionHead>
+        <SectionHead>The Small Group Floor</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title={`Mean ${SCORE} by Class Period`}>
+            <Fig title={`Mean ${SCORE}, by Period`}>
               <SmallGroups/>
             </Fig>
           </ScrollIn>
@@ -719,7 +720,7 @@ export function ForSchools({ go }) {
               rows={[
               ['The floor', `${K_ANONYMITY} students. Below it, no mean is computed or shown.`],
               ['Withheld here', `${suppressed} of ${COHORT_PERIOD.length} periods.`],
-              ['Why a row stays', 'A missing row would say as much as the mean would.'],
+              ['Why a row stays', 'A missing row says as much as the mean.'],
               ['Cannot be turned off', 'There is no setting for it anywhere in the product.'],
             ]}/>
           </ScrollIn>
@@ -732,16 +733,16 @@ export function ForSchools({ go }) {
         <SectionLede>{CASELOAD_DEF}</SectionLede>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn>
-            <Fig title="Was, Now, and the Change Since Last Week">
+            <Fig title="Was, Now, Change">
               <Caseload/>
             </Fig>
           </ScrollIn>
           <div className="flex flex-col gap-3 lg:gap-4">
             <ScrollIn>
-              <Facts head="Who Is on the List" rows={[
+              <Facts head="On the List" rows={[
                 ['On this list', `${BOARD.length} students, all consented to trends.`],
-                ['Off this list', 'Students consented to a score without trends, or to alerts only.'],
-                ['Why movement, not score', 'A student steady at 86 for a month is not the change.'],
+                ['Off this list', 'Score without trends, or alerts only.'],
+                ['Why movement, not score', 'Steady at 86 for a month is not a change.'],
                 ['Never a rank', 'No position numerals, and no student is compared with another.'],
               ]}/>
             </ScrollIn>
@@ -760,17 +761,17 @@ export function ForSchools({ go }) {
           to turn it off. The full who-sees-what matrix is on the overview and
           privacy pages. */}
       <Section tone="paper" className="bg-beam-wash" tight>
-        <SectionHead>Access and the Audit Log</SectionHead>
+        <SectionHead>Access and Logging</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
           <ScrollIn className="h-full">
-            <Chips as="h3" head={`Never Given to a ${PRO}`}
+            <Chips as="h3" head="Never Given"
               rows={['A single reading', NOTES, LOCATION, `A group under ${K_ANONYMITY} students`]}/>
           </ScrollIn>
           <ScrollIn className="h-full">
             <Facts className="h-full" head="The Audit Log" rows={[
               ['Every record opened', 'Written to the audit log, with who and when.'],
               ['No setting turns it off', 'Not for a guardian, not for you, not for us.'],
-              ['Consent is per student', `Only what that student agreed to share with a ${PRO_LC}.`],
+              ['Consent is per student', 'Only what each student agreed to share.'],
               ['Crisis alerts', 'Reach you in every case. No guardian can consent that away.'],
             ]}/>
           </ScrollIn>
@@ -779,11 +780,11 @@ export function ForSchools({ go }) {
 
       <Closer go={go} view="app-pro" ground="bg-card" label="Open the console"
         title={`The ${PRO} Console`}
-        line="The check-in list and the audit log. Sample students only."
+        line="Sample students only."
         rows={[
           ['Opens on', CASELOAD_TITLE + '.'],
           ['The consent tab', 'What each guardian signed, and when it expires.'],
-          ['The audit tab', 'Every record opened, in order, with no way to clear it.'],
+          ['The audit tab', 'Every record opened, in order, never cleared.'],
         ]}/>
     </main>
   )
