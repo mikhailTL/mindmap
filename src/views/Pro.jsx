@@ -742,11 +742,13 @@ function Urgent({ real }) {
   const log = real ? [] : AUDIT_LOG.filter(r => r.rel === 'Today')
   return (
     <>
-      <Panel tone="brand" className="border-t-2 border-t-crit/40">
+      {/* Red, on purpose: the one alarm on the console. The owner: red is
+          allowed in the alert and emergency sections. */}
+      <Panel className={cn('border-l-4 border-l-crit', real ? 'border-rule bg-card' : 'border-crit/40 bg-[#fbeae6]')}>
         <PanelHead title={real ? 'Urgent Alerts' : 'One Urgent Alert'}
           meta={real ? 'nothing open' : PROTOCOL_TIMES[0]}/>
-        <p className="mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.16] text-ink
-          sm:text-head">
+        <p className={cn('mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.16] sm:text-head',
+          real ? 'text-ink' : 'text-[#7a2314]')}>
           {real ? 'No alert has been raised.'
                 : 'An alert was raised for Student 8241 during AP Chemistry.'}</p>
         {real && <p className="mt-2 max-w-[52ch] text-fine text-ink-2">Only a paired patch can

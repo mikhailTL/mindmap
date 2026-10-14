@@ -32,16 +32,21 @@ import { cn } from '../lib/utils'
  *
  * max-w-none is load-bearing: Tailwind's preflight sets img { max-width: 100% }
  * and that undoes a frame set to fill a box wider than its own file. */
-export function Frame({ photo, alt, className, op, focal, eager = false, ...rest }) {
+/* `wash`: a photograph used as a band's ground, faded under the band's own
+   colour. The face rule does not apply to a ground, so the box is not grown
+   to the photograph's shape: a 1280-wide band would otherwise be forced to
+   430px tall by a 3:1 floor. Decorative, so alt is empty and it is hidden
+   from readers. */
+export function Frame({ photo, alt, className, op, focal, eager = false, wash = false, ...rest }) {
   const src = PHOTOS[photo]
-  if (!src || !alt) return null
+  if (!src || (!alt && !wash)) return null
   const m = meta(photo)
   /* Inline, not a class: it has to beat any object-[..] still sitting in a
      className, and the value is data rather than one of a fixed set. */
   const style = { objectPosition: focal || focalOf(photo) }
-  const ref = useKeepTall(photo)
+  const ref = useKeepTall(wash ? null : photo)
   return (
-    <img ref={ref} src={src} alt={alt} width={m.w} height={m.h}
+    <img ref={ref} src={src} alt={wash ? '' : alt} aria-hidden={wash || undefined} width={m.w} height={m.h}
       loading={eager ? 'eager' : 'lazy'} decoding="async" style={style}
       className={cn('block h-full w-full max-w-none object-cover', op, className)}
       {...rest}/>
@@ -70,7 +75,7 @@ function useKeepTall(photo) {
   React.useLayoutEffect(() => {
     const img = ref.current
     if (!img || typeof ResizeObserver !== 'function') return
-    const m = meta(photo)
+    const m = photo ? meta(photo) : null
     if (!m?.minAspect) return
     let box = img.parentElement
     if (box && getComputedStyle(box).position === 'absolute' && box.parentElement) {

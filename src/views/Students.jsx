@@ -226,9 +226,17 @@ function LiveTrace({ data, lo, hi, color, className }) {
   ])
   const d = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ')
   const last = pts[pts.length - 1]
+  const gid = 'lt-' + color.replace('#', '')
   return (
     <svg viewBox={`0 0 ${TW} ${TH}`} aria-hidden preserveAspectRatio="none"
       className={cn('block h-11 w-full', className)}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={color} stopOpacity="0.28"/>
+          <stop offset="1" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d={`${d} L${last[0].toFixed(1)} ${TH} L${pts[0][0].toFixed(1)} ${TH} Z`} fill={`url(#${gid})`}/>
       <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       <circle cx={last[0]} cy={last[1]} r="3" fill={color} vectorEffect="non-scaling-stroke"/>
@@ -258,7 +266,9 @@ function LiveSignals({ className }) {
           const w = Array.from({ length: WIN }, (_, k) => L.series[(i + k) % LIVE_N])
           const now = w[w.length - 1]
           return (
-            <li key={id} className="flex min-w-0 flex-col rounded-panel border border-rule bg-card p-2.5">
+            <li key={id} className="flex min-w-0 flex-col rounded-panel border p-2.5"
+              style={{ borderColor: s.glow + '55',
+                       background: `linear-gradient(160deg, #ffffff 0%, ${s.glow}12 100%)` }}>
               <p className="flex items-center gap-2">
                 <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar"
                   style={{ background: s.glow }}/>
@@ -448,16 +458,23 @@ function TodayDemo({ go, openTab }) {
           Beside it at 1280, the four live channels (design spec 0f rule 5).
           Everything the old card said under the dial is behind the "?". */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
-        <Panel className="flex flex-col justify-center">
-          <div className="flex flex-col items-center text-center">
+        {/* The owner, 14 October: "add some gradients or cool effects to the
+            cards to make it like a dashboard". The card runs card to aqua, a
+            radial glow sits behind the dial, the clouds are back on, and the
+            card lifts on a soft shadow. */}
+        <Panel className="relative flex flex-col justify-center overflow-hidden
+          bg-gradient-to-b from-card via-card to-aqua
+          shadow-[0_24px_48px_-32px_rgba(10,110,104,0.55)]">
+          <span aria-hidden className="pointer-events-none absolute left-1/2 top-[46%] h-[70%] w-[82%]
+            -translate-x-1/2 -translate-y-1/2 rounded-[50%]
+            bg-[radial-gradient(closest-side,rgba(10,110,104,0.14),rgba(10,110,104,0))]"/>
+          <div className="relative flex flex-col items-center text-center">
             <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
               tracking-tight text-ink sm:text-head">{hero.lead}</p>
-            {/* weather off: the clouds are a gradient, and a gradient is on the
-                AI-tell list everywhere but a photograph. */}
             {/* 352 is a ceiling: the dial is w-full under it, so at 390 it
                 takes the card's 318 and at 1280 the full 352. */}
             <RainbowDial className="mt-3" score={TODAY.score} usual={USUAL} rings={rings}
-              size={352} weather={false} picked={picked}
+              size={352} picked={picked}
               onPick={id => setPicked(p => (p === id ? null : id))}/>
             <p className="mt-2 flex items-center gap-2 font-display text-ui font-medium text-ink">
               <span aria-hidden className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>

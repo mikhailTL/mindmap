@@ -375,12 +375,16 @@ export function HelpBody({ className, onLang }) {
 
       <p className="mt-2.5 max-w-[66ch] text-fine text-ink-2">{copy.intro}</p>
 
+      {/* Red, on purpose. The owner: "Just bc ur adhering to color scheme
+          doesnt mean u cant use colors like red or anything in the alerts or
+          emergency call sections." crit on its wash is 5.58 : 1 and paper on
+          crit 6.36 : 1. */}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-panel
-        border border-rule bg-aqua px-3.5 py-3">
-        <p className="min-w-0 flex-1 basis-full text-fine text-ink-2 sm:basis-0">{em.line}</p>
+        border border-crit/40 bg-[#fbeae6] px-3.5 py-3">
+        <p className="min-w-0 flex-1 basis-full text-fine font-medium text-[#7a2314] sm:basis-0">{em.line}</p>
         <a href={EMERGENCY.href}
-          className={cn(tap, 'border-accent-ink bg-accent font-bold text-paper',
-            'hoverOnly:bg-accent-ink')}>
+          className={cn(tap, 'border-[#7a2314] bg-crit font-bold text-paper',
+            'hoverOnly:bg-[#7a2314]')}>
           <CallMark size={17}/>{em.label}
         </a>
       </div>
@@ -458,8 +462,8 @@ export function GetHelp({ compact = false, className }) {
     <>
       <button type="button" onClick={() => setOpen(true)}
         className={cn('inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2',
-          'rounded-field border border-accent-ink bg-accent font-display text-ui font-medium',
-          'text-paper transition-colors duration-150 ease hoverOnly:bg-accent-ink',
+          'rounded-field border border-[#7a2314] bg-crit font-display text-ui font-medium',
+          'text-paper transition-colors duration-150 ease hoverOnly:bg-[#7a2314]',
           compact ? 'w-11 px-0 sm:w-auto sm:gap-2 sm:px-3' : 'px-3', className)}>
         <CallMark size={16}/>
         {compact

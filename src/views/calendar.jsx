@@ -1,12 +1,11 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { Panel, PanelHead, SeeDetails, Why } from './Monitor'
+import { Panel, PanelHead, Why } from './Monitor'
 import { ArrowLeft, ArrowRight, Chevron, Minus } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { BAND, USUAL, WBAND, monthScores } from './reading/demo'
 import { cn } from '../lib/utils'
-import { SCORE } from '../lib/terms'
 
 /* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
  * 18. The owner's words:
@@ -125,91 +124,47 @@ const dayLabel = n => `${n} day${n === 1 ? '' : 's'}`
 
 /* ── The target ─────────────────────────────────────────────────────────── */
 
-function TargetCard({ target, setTarget, lo, hi, className }) {
+/* The owner, 14 October: "Calendar is too complex and not user friendly".
+   One card for the target and what the month did against it: the number, a
+   minus and a plus, the range, and three facts. The slider, the three
+   percentage bars and the how-it-works list are gone. */
+function TargetCard({ target, setTarget, lo, hi, c, s, className }) {
+  const facts = [
+    ['In range', c.n ? `${c.inside} of ${c.n} days` : 'No days yet'],
+    ['Best run', dayLabel(s.longest)],
+    ['Right now', dayLabel(s.current)],
+  ]
   return (
     <Panel className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="Target Score" meta="0 to 100" className="min-w-0 flex-1"/>
+        <PanelHead title="Your Target" meta="0 to 100" className="min-w-0 flex-1"/>
         <Why label="What the target is" className="pt-1.5">
-          A target you pick for yourself. The range around it is the width of your own usual
-          week. Lower is calmer. A usual day for you is {USUAL}.
+          A number you pick. Lower is calmer. A usual day for you is {USUAL}. Never shared.
         </Why>
       </div>
-      <div className="mt-2.5 flex flex-col items-center text-center">
-        <p className="font-display text-stat font-medium tabular-nums leading-none text-ink">
+      <div className="mt-3 flex items-center justify-center gap-4">
+        <button type="button" onClick={() => setTarget(target - 1)}
+          aria-label="Lower the target by one"
+          className="flex size-11 shrink-0 items-center justify-center rounded-field border
+            border-ink text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist">
+          <Minus aria-hidden className="size-4"/>
+        </button>
+        <p className="min-w-[3ch] text-center font-display text-stat font-medium tabular-nums leading-none text-ink">
           {target}</p>
-        <p className="mt-1.5 text-fine text-ink-2">Range {lo} to {hi}</p>
-        <div className="mt-3 flex w-full max-w-[22rem] items-center gap-2.5">
-          <button type="button" onClick={() => setTarget(target - 1)}
-            aria-label="Lower the target by one"
-            className="flex size-11 shrink-0 items-center justify-center rounded-field border
-              border-ink text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist">
-            <Minus aria-hidden className="size-4"/>
-          </button>
-          <label className="min-w-0 flex-1">
-            <span className="sr-only">Target score, {MIN_T} to {MAX_T}</span>
-            <input type="range" min={MIN_T} max={MAX_T} step={1} value={target}
-              onChange={e => setTarget(Number(e.target.value))}
-              className="block h-11 w-full accent-accent"/>
-          </label>
-          <button type="button" onClick={() => setTarget(target + 1)}
-            aria-label="Raise the target by one"
-            className="flex size-11 shrink-0 items-center justify-center rounded-field border
-              border-ink font-display text-ui font-medium text-ink transition-colors duration-150
-              hoverOnly:bg-mist active:bg-mist">+</button>
-        </div>
+        <button type="button" onClick={() => setTarget(target + 1)}
+          aria-label="Raise the target by one"
+          className="flex size-11 shrink-0 items-center justify-center rounded-field border
+            border-ink font-display text-ui font-medium text-ink transition-colors duration-150
+            hoverOnly:bg-mist active:bg-mist">+</button>
       </div>
-    </Panel>
-  )
-}
-
-/* ── The three percentages, and the streak ─────────────────────────────── */
-
-function Share({ label, n, pct, ground }) {
-  return (
-    <div className="border-b border-rule py-2.5 last:border-b-0">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="min-w-0 font-display text-ui font-medium text-ink">{label}</p>
-        <p className="flex shrink-0 items-baseline gap-1.5">
-          <span className="font-display text-row font-medium tabular-nums leading-none text-ink">
-            {pct}%</span>
-          <span className="text-fine text-ink-3">{dayLabel(n)}</span>
-        </p>
-      </div>
-      <div aria-hidden className="mt-1.5 h-2 w-full rounded-xs bg-mist">
-        <div className={cn('h-2 rounded-xs border', ground)} style={{ width: `${pct}%` }}/>
-      </div>
-    </div>
-  )
-}
-
-function Summary({ c, s, window: w, lo, hi, className }) {
-  return (
-    <Panel tone="aqua" className={className}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title={`${w} Against the Target`} meta={`${c.n} scored`}
-          className="min-w-0 flex-1"/>
-        <Why label="How the percentages and runs are counted" className="pt-1.5">
-          Percentages are of days with a reading. A run is days in a row inside the range. It is
-          a count, not a score, and never compared with anybody.
-        </Why>
-      </div>
-      <div className="mt-2.5">
-        <Share label="Inside" n={c.inside} pct={c.pInside} ground={STATE.inside.mark}/>
-        <Share label="Above" n={c.above} pct={c.pAbove} ground={STATE.above.mark}/>
-        <Share label="Below" n={c.below} pct={c.pBelow} ground={STATE.below.mark}/>
-      </div>
-      <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 border-t border-rule pt-2.5">
-        <div className="min-w-0">
-          <dt className="tick">Longest run</dt>
-          <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums
-            leading-none text-ink">{dayLabel(s.longest)}</dd>
-        </div>
-        <div className="min-w-0">
-          <dt className="tick">Current run</dt>
-          <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums
-            leading-none text-ink">{dayLabel(s.current)}</dd>
-        </div>
+      <p className="mt-2 text-center text-fine text-ink-2">In range means {lo} to {hi}</p>
+      <dl className="m-0 mt-3 grid grid-cols-3 gap-x-3 border-t border-rule pt-3">
+        {facts.map(([k, v]) => (
+          <div key={k} className="min-w-0">
+            <dt className="tick">{k}</dt>
+            <dd className="m-0 mt-0.5 font-display text-ui font-bold tabular-nums leading-tight text-ink">{v}</dd>
+          </div>
+        ))}
       </dl>
     </Panel>
   )
@@ -348,12 +303,11 @@ export function CalendarBody({ go }) {
   const vals = view === 'month' ? monthVals : weekDays.map(d => d.v)
   const c = counts(vals, lo, hi)
   const s = streaks(vals, lo, hi)
-  const windowWord = view === 'month' ? `${MONTHS[month]}` : 'The Week'
 
   return (
     <div className={cn('grid w-full grid-cols-1 gap-3 lg:gap-4',
-      !real && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_auto_1fr]')}>
-      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi}
+      !real && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi} c={c} s={s}
         className="lg:col-start-1 lg:row-start-1"/>
 
       {real ? (
@@ -372,7 +326,7 @@ export function CalendarBody({ go }) {
         </Panel>
       ) : (
         <>
-          <Panel className="lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:self-start">
+          <Panel className="lg:col-start-2 lg:row-start-1 lg:self-start">
             {/* The switch and the month stepper on one line. Two buttons in a
                 bordered field, body face, normal case: design spec 0d section
                 2, a thing a reader toggles is a field and never a capsule. */}
@@ -423,33 +377,6 @@ export function CalendarBody({ go }) {
             <StateKey lo={lo} hi={hi}/>
           </Panel>
 
-          <Summary c={c} s={s} window={windowWord} lo={lo} hi={hi}
-            className="lg:col-start-1 lg:row-start-2"/>
-
-          <SeeDetails label="See details" className="lg:col-start-1 lg:row-start-3">
-            <Panel tone="aqua">
-              <PanelHead title="How the Target Works"/>
-              <dl className="m-0 mt-1.5 list-none p-0">
-                {[
-                  [`The ${SCORE}`,
-                   `One number a day, against your own last two weeks. A usual day for you is ${USUAL}.`],
-                  ['The range',
-                   `The target plus and minus ${HALF}. Picking a target never changes a reading.`],
-                  ['A run',
-                   'Days in a row inside the range. A day with no reading is skipped.'],
-                  ['Not a grade',
-                   'Not shared, not compared with anybody. A day outside the range is a day.'],
-                  ['The figures',
-                   'Generated for the demo, seeded, so the month repeats. Nobody was measured.'],
-                ].map(([what, why]) => (
-                  <div key={what} className="border-b border-rule py-2 last:border-b-0 last:pb-0">
-                    <dt className="font-display text-ui font-medium text-ink">{what}</dt>
-                    <dd className="m-0 mt-0.5 max-w-[60ch] text-fine text-ink-2">{why}</dd>
-                  </div>
-                ))}
-              </dl>
-            </Panel>
-          </SeeDetails>
         </>
       )}
     </div>

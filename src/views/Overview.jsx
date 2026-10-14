@@ -8,7 +8,6 @@ import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { ProblemFigures } from '../charts/problem'
-import { Faces } from '../charts/people'
 import { Frame } from '../ui/frame'
 import { Card } from '../ui/card'
 import { List, Item } from '../ui/list'
@@ -236,7 +235,7 @@ export function Overview({ go }) {
             frosted panel: ProblemStats draws itself for a light ground (ink-3
             small print, accent-ink figures), and on the band directly those
             measured 2.49:1 and 1.7:1. The panel is where the numbers are read. */}
-        <Frame photo="student-homework"
+        <Frame wash photo="student-homework"
           alt="A teenager at a desk late in the evening, head in one hand over an open notebook"
           className="absolute inset-0 -z-10 opacity-[0.22]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
@@ -247,15 +246,16 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- who this is about ---------------------------------------------
-          The band above states the problem in national figures. Figures at that
-          size stop reading as people, so the faces follow immediately. */}
-      <Section name="Who this is about" tone="paper" tight>
-        <Faces/>
-      </Section>
-
       {/* -- the three doors ----------------------------------------------- */}
-      <Section name="Getting started" tone="card" className="bg-accent-wash">
+      {/* The photographs of teenagers used to be a row of six under the problem
+          band. The owner: "placed in different parts of the site, like in a
+          gradation, background overlays, not js a row of images". Three of
+          them sit under three bands, faded into the band's own ground. */}
+      <Section name="Getting started" tone="card" className="relative isolate overflow-hidden bg-accent-wash">
+        <Frame wash photo="student-bus"
+          alt="Two boys laughing together on a school bus seat, one holding a phone, trees going past the window behind them"
+          className="absolute inset-0 -z-20 opacity-[0.28]"/>
+        <span aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-accent-wash via-accent-wash/85 to-accent-wash/35"/>
         <SectionHead>3 Ways to Use MindMap</SectionHead>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-3">
           {DOORS.map((d, i) => (
@@ -349,7 +349,11 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── the design, and where it comes from ─────────────────────────── */}
-      <Section name="Evidence" tone="paper">
+      <Section name="Evidence" tone="paper" className="relative isolate overflow-hidden">
+        <Frame wash photo="student-game"
+          alt="Three teenage boys sitting along a sofa with game controllers, headphones round their necks, one leaning in to argue a point"
+          className="absolute inset-0 -z-20 opacity-[0.2]"/>
+        <span aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/90 to-paper/40"/>
         <SectionHead>Designed From the Research</SectionHead>
         <dl className="mt-5 grid gap-x-10 sm:grid-cols-2">
           {EVIDENCE.map(e => (
@@ -368,7 +372,10 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
-      <Section name="Limits" tone="ink" tight>
+      <Section name="Limits" tone="ink" tight className="relative isolate overflow-hidden">
+        <Frame wash photo="friends-steps"
+          alt="Two students sitting on concrete steps outside a building, heads together over an open notebook"
+          className="absolute inset-0 -z-10 opacity-[0.2]"/>
         <SectionHead tone="ink">What MindMap Will Never Do</SectionHead>
         {/* marker="none": the filled panel is the marker. */}
         <List className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
