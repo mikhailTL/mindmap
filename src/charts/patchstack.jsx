@@ -507,14 +507,16 @@ function useNarrow() {
    - sit behind one control on a phone and are open at every wider width.
    Section 14 names a disclosure as the remedy, and this is the one band where
    a reader on a phone is scrolling a drawing they have already seen. */
-export function PatchStack({ className, caption }) {
+/* `brief`: the drawing, its toggle and its caption only. The overview wires
+   it in this way; the patch page carries the inset and the layer notes. */
+export function PatchStack({ className, caption, brief = false }) {
   const [shut, setShut] = React.useState(false)
   const [more, setMore] = React.useState(false)
   const narrow = useNarrow()
   const cfg = narrow ? NARROW : WIDE
   /* Wide is not a disclosure at all: `show` is simply true there, so no
      keyboard or screen reader on a desktop meets a control that does nothing. */
-  const show = !narrow || more
+  const show = !brief && (!narrow || more)
   return (
     <div className={cn('min-w-0', className)}>
       <figure className="m-0">
@@ -554,7 +556,7 @@ export function PatchStack({ className, caption }) {
 
       {/* Plain type on a control, no capsule and no case games. The label
           names what opens rather than saying "see more". */}
-      {narrow && (
+      {narrow && !brief && (
         <button type="button" onClick={() => setMore(v => !v)} aria-expanded={more}
           aria-controls="patchstack-detail"
           className="mt-4 inline-flex min-h-[44px] items-center border-b-2 border-accent/35

@@ -304,22 +304,6 @@ export function Parallax({ children, distance = 60, className }) {
   return <div ref={ref} className={className}><motion.div style={reduced ? undefined : { y }}>{children}</motion.div></div>
 }
 
-/** Hairline that draws itself across as it enters. scaleX on a 1px div, so the
-    draw is a transform and not an animated width. */
-export function RuleDraw({ className }) {
-  const reduced = useReducedMotion()
-  const ref = React.useRef(null)
-  /* Same arrival watcher as everything else: whileInView is framer's own
-     observer and carries the same stall. */
-  const shown = useArrival(ref)
-  return (
-    <motion.div ref={ref} className={cn('h-px w-full origin-left bg-rule', className)}
-      initial={false}
-      animate={reduced ? undefined : { scaleX: shown === false ? 0 : 1 }}
-      transition={{ duration: 0.5, ease: EASE }}/>
-  )
-}
-
 /** 1px reading-position bar pinned under the header. scaleX, never width. */
 export function ScrollProgress({ className }) {
   const { scrollYProgress } = useScroll()

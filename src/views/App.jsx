@@ -102,7 +102,7 @@ const TITLE = {
   'app-notify':'Reminders in MindMap',
   help:'Getting help',
   privacy:'Who can see what in MindMap',
-  methods:'How the Mind Score is computed',
+  methods:'How MindMap works',
   pairing:'Pairing the MindMap patch',
   tour:'A guided tour of MindMap',
   responses:'Survey responses in MindMap',

@@ -9,7 +9,6 @@ import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { ProblemStats } from '../charts/problem'
 import { WhoSeesWhat } from '../charts/infographics'
-import { MindScoreNet } from '../charts/network'
 import { PatchStack } from '../charts/patchstack'
 import { Faces } from '../charts/people'
 import { Frame } from '../ui/frame'
@@ -19,7 +18,7 @@ import { cn } from '../lib/utils'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC,
-  CONSENT_SHORT, CONSENT_OFF, CASELOAD_TITLE,
+  CONSENT_SHORT, CASELOAD_TITLE,
 } from '../lib/terms'
 
 /* Grounds are set here rather than in the bands. Between the two dark bands the
@@ -96,34 +95,17 @@ const SCREENS = [
  */
 const EVIDENCE = [
   { title: 'The mark on the dial',
-    line: `A bare number makes an ordinary day look like bad news. Shown against a labelled
-      usual day, the share of readers who wanted to call a doctor about a near-normal result
-      fell from about half to about a third.`,
+    line: 'A number shown next to a usual day reads calmly.',
     cite: 'Zikmund-Fisher et al., J Med Internet Res, 2018. 1,618 adults.' },
   { title: 'Nobody is ranked',
-    line: `Across 208 lab studies, being judged by other people was the biggest single driver of
-      the stress hormone. No student here is ever compared with another
-      student.`,
-    cite: 'Dickerson & Kemeny, Psychological Bulletin, 2004. d = 0.67 against 0.15.' },
+    line: 'Being judged by others is the biggest stress driver.',
+    cite: 'Dickerson & Kemeny, Psychological Bulletin, 2004. 208 studies.' },
   { title: 'You decide what is shared',
-    line: `In those same studies, a stressor you cannot control raised cortisol more than three
-      times as much as one you can. Every share on this site is yours to switch off.`,
+    line: 'Stress you cannot control raises cortisol three times more.',
     cite: 'Dickerson & Kemeny, 2004. d = 0.52 against 0.16.' },
   { title: 'Plain words, measured',
-    line: `The writing here is scored, not described. It reads below grade 5 on Flesch-Kincaid
-      and about grade 7 on SMOG. Health material is meant to sit at or below grade 6.`,
+    line: 'Every page reads at grade 7 or below.',
     cite: 'Measured on the prose of all 13 pages. tools/readability.' },
-]
-
-const TRUST = [
-  { title:'The student sees everything first',
-    line:'Every reading lands on their phone before anybody else has anything.' },
-  { title:'Nothing is shared by default',
-    line:CONSENT_SHORT },
-  { title:'Never shared with anyone',
-    line:`${NOTES}, ${LOCATION}, and every raw reading.` },
-  { title:'Sharing switches off',
-    line:CONSENT_OFF },
 ]
 
 /* The wording is the promise. "A group under five" is the k floor; "fewer than
@@ -146,12 +128,13 @@ export function Overview({ go }) {
   return (
     <main>
       {/* -- the hero -------------------------------------------------------
-          `h-`, not `min-h-`: min-h lets tall content push the band past the
-          fold, which brings the next band's heading into view under the title
-          screen. Capped at 44rem; at 1280 x 720 the viewport is the smaller of
-          the two, so on a laptop the band is still exactly one screen. */}
-      <section id="hero" className="relative isolate flex h-[calc(100svh-58px)] flex-col
-        overflow-hidden border-t border-rule bg-paper">
+          `h-`, not `min-h-`, from lg up: min-h lets tall content push the band
+          past the fold, which brings the next band's heading into view under
+          the title screen. Under lg the two halves stack and are taller than a
+          phone, so there the band takes its own height: a fixed one clipped
+          the phone and the patch caption at 390. */}
+      <section id="hero" className="relative isolate flex flex-col overflow-hidden border-t
+        border-rule bg-paper lg:h-[calc(100svh-58px)]">
 
         <div className="wrap relative z-10 flex flex-1 flex-col
           lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]
@@ -242,19 +225,22 @@ export function Overview({ go }) {
 
       {/* -- the problem, on the one dark band -----------------------------
           Every figure on this band is external and sourced. */}
-      <Section name="The problem" tone="ink">
+      <Section name="The problem" tone="ink" className="relative isolate overflow-hidden">
+        {/* One photograph under the band, held at 22% under ink so the paper
+            headline still measures above 7:1 on it. The figures sit on a
+            frosted panel: ProblemStats draws itself for a light ground (ink-3
+            small print, accent-ink figures), and on the band directly those
+            measured 2.49:1 and 1.7:1. The panel is where the numbers are read. */}
+        <Frame photo="student-homework"
+          alt="A teenager at a desk late in the evening, head in one hand over an open notebook"
+          className="absolute inset-0 -z-10 opacity-[0.22]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
           Most teenagers who are struggling are not being reached.
         </SectionHead>
         <SectionLede tone="ink">
           MindMap returns one {SCORE} a day.
         </SectionLede>
-        {/* The figures sit in a light panel on the dark band. ProblemStats
-            draws itself for a light ground now (ink-3 small print, accent-ink
-            figures), and on the band directly those measured 2.49:1 and 1.7:1,
-            with the source links at 1:1. The band stays dark; the panel is
-            where the numbers are read. */}
-        <div className="mt-5 rounded-panel border border-rule bg-card p-4 lg:p-5">
+        <div className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-5">
           <ProblemStats/>
         </div>
       </Section>
@@ -294,25 +280,19 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- what actually computes the number ------------------------------
-          The two things a reader has to take on trust everywhere else on this
-          page: what the patch is, and where the number comes from. Both are
-          drawn here and both can be driven by hand, because a figure somebody
-          moves is believed and a claim is not. */}
-      <Section name="The model" tone="paper">
-        <SectionHead>Where the Number Comes From</SectionHead>
-        <SectionLede>
-          Ten learned curves, added up. Move a slider and watch the {SCORE} change.
-        </SectionLede>
-        <MindScoreNet className="mt-6"/>
-      </Section>
-
+      {/* -- the patch -------------------------------------------------------
+          The drawing only. The layer notes and the orientation inset live on
+          the patch page; where the number comes from lives on How it works. */}
       <Section name="The patch" tone="card" className="bg-aqua-2">
         <SectionHead>Inside the Patch</SectionHead>
         <SectionLede>
           Five layers, 54 mm by 36 mm, worn on the outer upper arm.
         </SectionLede>
-        <PatchStack className="mt-6"/>
+        <PatchStack brief className="mt-6"/>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" onClick={() => go('patch')}>The patch<span aria-hidden>→</span></Button>
+          <Button variant="outline" size="sm" onClick={() => go('methods')}>How it works<span aria-hidden>→</span></Button>
+        </div>
       </Section>
 
       {/* -- the three audiences ------------------------------------------- */}
@@ -358,18 +338,7 @@ export function Overview({ go }) {
       {/* ── privacy ─────────────────────────────────────────────────────── */}
       <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
-        <div className="mt-5 grid auto-rows-fr gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          {TRUST.map((t, i) => (
-            <ScrollRow key={t.title} index={i} className="h-full">
-              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-5">
-                <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                  {t.title}
-                </h3>
-                <p className="mt-3 text-sec leading-[1.5] text-ink-2">{t.line}</p>
-              </div>
-            </ScrollRow>
-          ))}
-        </div>
+        <SectionLede>{CONSENT_SHORT}</SectionLede>
         <WhoSeesWhat className="mt-5 max-w-[62rem]"/>
       </Section>
 
@@ -379,26 +348,20 @@ export function Overview({ go }) {
         <SectionLede>
           Four decisions on this site, and the published finding behind each one.
         </SectionLede>
-        <div className="mt-5 grid auto-rows-fr gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          {EVIDENCE.map((e, i) => (
-            <ScrollRow key={e.title} index={i} className="h-full">
-              <div className="flex h-full flex-col rounded-panel border border-rule bg-card p-5">
-                <h3 className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                  {e.title}
-                </h3>
-                <p className="mt-3 text-sec leading-[1.5] text-ink-2">{e.line}</p>
-                <p className="mt-auto pt-4 text-fine leading-[1.45] text-ink-3">{e.cite}</p>
-              </div>
-            </ScrollRow>
+        <dl className="mt-5 grid gap-x-10 sm:grid-cols-2">
+          {EVIDENCE.map(e => (
+            <div key={e.title} className="border-t border-rule py-4">
+              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                {e.title}
+              </dt>
+              <dd className="m-0 mt-1.5 text-sec leading-[1.5] text-ink-2">{e.line}</dd>
+              <dd className="m-0 mt-1.5 text-fine leading-[1.45] text-ink-3">{e.cite}</dd>
+            </div>
           ))}
-        </div>
-        <ScrollIn>
-          <p className="mt-5 max-w-[74ch] text-meta text-ink-3">
-            None of this says MindMap lowers anyone&rsquo;s stress. It has not been tested and
-            nothing here claims it has. These are the reasons behind the design, and every one of
-            them can be looked up.
-          </p>
-        </ScrollIn>
+        </dl>
+        <p className="mt-4 max-w-[60ch] text-meta text-ink-3">
+          None of this says MindMap lowers anyone&rsquo;s stress. Nothing here has been tested.
+        </p>
       </Section>
 
       {/* ── the limits ──────────────────────────────────────────────────── */}
