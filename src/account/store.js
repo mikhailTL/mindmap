@@ -29,6 +29,32 @@ export const ROLES = ['student', 'parent', 'pro']
 
 export const ROLE_LABEL = { student: 'Student', parent: 'Parent', pro: PRO }
 
+/* Where a Medical Professional works. The console reads the words off this;
+   the k-floor and the consent rules are the same for all three. */
+export const SETTINGS = [
+  { value: 'school',   label: 'School counselor' },
+  { value: 'practice', label: 'Private practice' },
+  { value: 'other',    label: 'Other professional' },
+]
+const SETTING_IDS = SETTINGS.map(s => s.value)
+
+/* The twelve premade pictures, drawn in ./avatars.jsx. Ids only here, so the
+   store stays free of JSX. */
+export const AVATAR_IDS = [
+  'coral-sun', 'coral-bolt', 'lilac-moon', 'lilac-spiral', 'sun-star', 'sun-hill',
+  'mint-leaf', 'mint-sprout', 'sky-wave', 'sky-cloud', 'blush-heart', 'blush-bloom',
+]
+
+/* Who may link to whom. Two of the same role never link: a teen to teen link
+   is social comparison on a product about stress, and is not offered. */
+export const LINK_KINDS = {
+  'parent-student': ['parent', 'student'],
+  'pro-student':    ['pro', 'student'],
+  'parent-pro':     ['parent', 'pro'],
+}
+const kindOf = (a, b) => Object.keys(LINK_KINDS)
+  .find(k => LINK_KINDS[k].includes(a) && LINK_KINDS[k].includes(b) && a !== b) || null
+
 /* Six characters from an alphabet with no 0/O, 1/I/L, so a code read out
    loud or copied by hand cannot be misread. */
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -97,6 +123,8 @@ function newId(prefix) {
 /* ── Slots ──────────────────────────────────────────────────────────────── */
 
 export const NAME_MAX = 40
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const cleanEmail = v => (typeof v === 'string' ? v.trim().toLowerCase() : '')
 
 const blankAccounts = () => ({ v: VERSION, items: [] })
 function normaliseAccounts(s) {
@@ -110,6 +138,9 @@ function normaliseAccounts(s) {
         id: a.id,
         role: a.role,
         name: a.name.trim().slice(0, NAME_MAX),
+        email: EMAIL.test(cleanEmail(a.email)) ? cleanEmail(a.email) : null,
+        avatar: AVATAR_IDS.includes(a.avatar) ? a.avatar : null,
+        setting: a.role === 'pro' && SETTING_IDS.includes(a.setting) ? a.setting : null,
         passcodeHash: a.passcodeHash,
         createdAt: iso(a.createdAt) || now(),
       })),
@@ -119,24 +150,27 @@ function normaliseAccounts(s) {
 const blankSession = () => ({ v: VERSION, accountId: null })
 const normaliseSession = s => ({ v: VERSION, accountId: typeof s.accountId === 'string' ? s.accountId : null })
 
-const LINK_ROLES = ['parent', 'pro']
 const STATUSES = ['pending', 'active', 'declined']
+const id = v => (typeof v === 'string' && v ? v : null)
 
+/* A link names its two members by role: `student`, `parent`, `pro`, with the
+   third null. `kind` says which two. */
 const blankLinks = () => ({ v: VERSION, items: [] })
 function normaliseLinks(s) {
   const items = Array.isArray(s.items) ? s.items : []
   return {
     v: VERSION,
     items: items
-      .filter(l => l && typeof l.id === 'string' && typeof l.studentId === 'string'
-                   && typeof l.otherId === 'string' && LINK_ROLES.includes(l.role))
+      .filter(l => l && typeof l.id === 'string' && LINK_KINDS[l.kind]
+                   && LINK_KINDS[l.kind].every(r => id(l[r])))
       .map(l => ({
         id: l.id,
-        studentId: l.studentId,
-        otherId: l.otherId,
-        role: l.role,
+        kind: l.kind,
+        student: LINK_KINDS[l.kind].includes('student') ? l.student : null,
+        parent:  LINK_KINDS[l.kind].includes('parent')  ? l.parent  : null,
+        pro:     LINK_KINDS[l.kind].includes('pro')     ? l.pro     : null,
         status: oneOf(l.status, STATUSES, 'pending'),
-        invitedBy: str(l.invitedBy, l.otherId),
+        invitedBy: str(l.invitedBy, l[LINK_KINDS[l.kind][0]]),
         needsApprovalFrom: l.needsApprovalFrom === 'parent' ? 'parent' : null,
         createdAt: iso(l.createdAt) || now(),
         decidedAt: iso(l.decidedAt),
@@ -157,7 +191,6 @@ function normaliseInvites(s) {
         code: i.code,
         fromId: i.fromId,
         role: i.role,
-        forStudentId: typeof i.forStudentId === 'string' ? i.forStudentId : null,
         createdAt: iso(i.createdAt) || now(),
         expiresAt: i.expiresAt,
       })),
@@ -193,29 +226,44 @@ export function current() {
   return id ? byId(id) : null
 }
 
+const pub = a => ({ id: a.id, name: a.name, role: a.role, avatar: a.avatar })
+
 export function listAccounts() {
-  return accounts.get().items.map(({ id, name, role, createdAt }) => ({ id, name, role, createdAt }))
+  return accounts.get().items.map(pub)
 }
 
-/* reason: role | name | passcode | taken */
-export async function createAccount({ role, name, passcode }) {
+/* reason: role | name | passcode | email | setting | taken
+   Email is required for a parent and a professional and optional for a
+   student, who may not have one. A professional also says where they work. */
+export async function createAccount({ role, name, passcode, email, avatar, setting }) {
   if (!ROLES.includes(role)) return { ok: false, reason: 'role' }
   const clean = String(name ?? '').trim().slice(0, NAME_MAX)
   if (!clean) return { ok: false, reason: 'name' }
+  const mail = cleanEmail(email)
+  if (mail && !EMAIL.test(mail)) return { ok: false, reason: 'email' }
+  if (!mail && role !== 'student') return { ok: false, reason: 'email' }
+  if (role === 'pro' && !SETTING_IDS.includes(setting)) return { ok: false, reason: 'setting' }
   if (!PASSCODE.test(String(passcode ?? ''))) return { ok: false, reason: 'passcode' }
   if (accounts.get().items.some(a => sameName(a.name, clean))) return { ok: false, reason: 'taken' }
+  if (mail && accounts.get().items.some(a => a.email === mail)) return { ok: false, reason: 'taken' }
   const account = {
-    id: newId('a'), role, name: clean, passcodeHash: await hash(String(passcode)), createdAt: now(),
+    id: newId('a'), role, name: clean,
+    email: mail || null,
+    avatar: AVATAR_IDS.includes(avatar) ? avatar : null,
+    setting: role === 'pro' ? setting : null,
+    passcodeHash: await hash(String(passcode)), createdAt: now(),
   }
   accounts.merge({ items: [...accounts.get().items, account] })
   session.merge({ accountId: account.id })
   return { ok: true, account }
 }
 
-/* 'wrong' for an unknown name as well: the screen says one line either way. */
-export async function signIn(name, passcode) {
-  const clean = String(name ?? '').trim()
-  const a = accounts.get().items.find(x => sameName(x.name, clean))
+/* A name or an email. 'wrong' for an unknown one as well: the screen says
+   one line either way. */
+export async function signIn(nameOrEmail, passcode) {
+  const clean = String(nameOrEmail ?? '').trim()
+  const mail = cleanEmail(clean)
+  const a = accounts.get().items.find(x => sameName(x.name, clean) || (x.email && x.email === mail))
   if (!a) return 'wrong'
   const h = await hash(String(passcode ?? ''))
   if (h !== a.passcodeHash) return 'wrong'
@@ -227,13 +275,27 @@ export function signOut() {
   session.merge({ accountId: null })
 }
 
-export function updateProfile(patch) {
+/* name, email, avatar, setting. A field left out is left alone; a bad value
+   is ignored rather than written. */
+export function updateProfile(patch = {}) {
   const me = current()
   if (!me) return null
-  const name = typeof patch?.name === 'string' ? patch.name.trim().slice(0, NAME_MAX) : me.name
-  if (!name) return me
-  if (accounts.get().items.some(a => a.id !== me.id && sameName(a.name, name))) return me
-  accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? { ...a, name } : a) })
+  const next = { ...me }
+  if (typeof patch.name === 'string') {
+    const name = patch.name.trim().slice(0, NAME_MAX)
+    if (name && !accounts.get().items.some(a => a.id !== me.id && sameName(a.name, name))) next.name = name
+  }
+  if ('email' in patch) {
+    const mail = cleanEmail(patch.email)
+    if (!mail && me.role === 'student') next.email = null
+    else if (EMAIL.test(mail) && !accounts.get().items.some(a => a.id !== me.id && a.email === mail)) next.email = mail
+  }
+  if ('avatar' in patch) {
+    if (patch.avatar === null) next.avatar = null
+    else if (AVATAR_IDS.includes(patch.avatar)) next.avatar = patch.avatar
+  }
+  if ('setting' in patch && me.role === 'pro' && SETTING_IDS.includes(patch.setting)) next.setting = patch.setting
+  accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? next : a) })
   return current()
 }
 
@@ -250,13 +312,15 @@ export async function changePasscode(oldPasscode, newPasscode) {
 
 /* Removes the account, every link it is on and every code it issued. There
    is no bin and nothing elsewhere to withdraw. */
-export function deleteAccount(id = session.get().accountId) {
-  if (!id) return
-  links.merge({ items: links.get().items.filter(l => l.studentId !== id && l.otherId !== id) })
-  invites.merge({ items: invites.get().items.filter(i => i.fromId !== id && i.forStudentId !== id) })
-  accounts.merge({ items: accounts.get().items.filter(a => a.id !== id) })
-  if (session.get().accountId === id) session.merge({ accountId: null })
+export function deleteAccount(who = session.get().accountId) {
+  if (!who) return
+  links.merge({ items: links.get().items.filter(l => !members(l).includes(who)) })
+  invites.merge({ items: invites.get().items.filter(i => i.fromId !== who) })
+  accounts.merge({ items: accounts.get().items.filter(a => a.id !== who) })
+  if (session.get().accountId === who) session.merge({ accountId: null })
 }
+
+const members = l => LINK_KINDS[l.kind].map(r => l[r])
 
 /* ── Invitations ────────────────────────────────────────────────────────── */
 
@@ -272,9 +336,8 @@ function randomCode() {
 
 const live = (i, at = new Date()) => Date.parse(i.expiresAt) > at.getTime()
 
-/* The signed in account issues a code. A student's code names the student;
-   a parent's or a Medical Professional's names nobody yet, because the
-   student who enters it is the one it is for. */
+/* The signed in account issues a code. Whoever enters it is the other end
+   of the link, so the code names nobody but its issuer. */
 export function createInvite() {
   const me = current()
   if (!me) return null
@@ -284,7 +347,6 @@ export function createInvite() {
     code,
     fromId: me.id,
     role: me.role,
-    forStudentId: me.role === 'student' ? me.id : null,
     createdAt: now(),
     expiresAt: new Date(Date.now() + INVITE_DAYS * 86400000).toISOString(),
   }
@@ -302,16 +364,16 @@ export function myInvite(accountId = session.get().accountId) {
   return listInvites(accountId)[0] || null
 }
 
-function findLink(studentId, otherId) {
-  return links.get().items.find(l => l.studentId === studentId && l.otherId === otherId) || null
+function findLink(a, b) {
+  return links.get().items.find(l => members(l).includes(a) && members(l).includes(b)) || null
 }
 
 /* reason: signedout | unknown | expired | own | role | exists
  *
- *   student enters a parent's code   active parent link
- *   student enters a pro's code      pending pro link, a parent approves
- *   parent enters a student's code   active parent link
- *   pro enters a student's code      pending pro link, a parent approves
+ *   parent and student     active on redeem, either way round
+ *   parent and pro         active on redeem, either way round
+ *   pro and student        pending, a parent approves, either way round
+ *   two of the same role   refused
  */
 export function redeemInvite(rawCode, at = new Date()) {
   const me = current()
@@ -329,20 +391,16 @@ export function redeemInvite(rawCode, at = new Date()) {
     invites.merge({ items: invites.get().items.filter(i => i.code !== code) })
     return { ok: false, reason: 'unknown' }
   }
-  let studentId, otherId, role
-  if (me.role === 'student' && (from.role === 'parent' || from.role === 'pro')) {
-    studentId = me.id; otherId = from.id; role = from.role
-  } else if (from.role === 'student' && (me.role === 'parent' || me.role === 'pro')) {
-    studentId = from.id; otherId = me.id; role = me.role
-  } else {
-    return { ok: false, reason: 'role' }
-  }
-  const existing = findLink(studentId, otherId)
+  const kind = kindOf(me.role, from.role)
+  if (!kind) return { ok: false, reason: 'role' }
+  const existing = findLink(me.id, from.id)
   if (existing && existing.status !== 'declined') return { ok: false, reason: 'exists' }
-  const pending = role === 'pro'
+  const pending = kind === 'pro-student'
   const link = {
     id: newId('l'),
-    studentId, otherId, role,
+    kind,
+    student: null, parent: null, pro: null,
+    [me.role]: me.id, [from.role]: from.id,
     status: pending ? 'pending' : 'active',
     invitedBy: from.id,
     needsApprovalFrom: pending ? 'parent' : null,
@@ -356,9 +414,9 @@ export function redeemInvite(rawCode, at = new Date()) {
 
 /* ── Links ──────────────────────────────────────────────────────────────── */
 
-function isParentOf(accountId, studentId) {
+function isParentOf(parentId, studentId) {
   return links.get().items.some(l =>
-    l.role === 'parent' && l.status === 'active' && l.studentId === studentId && l.otherId === accountId)
+    l.kind === 'parent-student' && l.status === 'active' && l.student === studentId && l.parent === parentId)
 }
 
 /* ok | forbidden | unknown. Only an account with an active parent link to
@@ -369,7 +427,7 @@ function decide(linkId, status) {
   const link = links.get().items.find(l => l.id === linkId)
   if (!link) return 'unknown'
   if (link.status !== 'pending') return 'unknown'
-  if (!isParentOf(me.id, link.studentId)) return 'forbidden'
+  if (!isParentOf(me.id, link.student)) return 'forbidden'
   links.merge({
     items: links.get().items.map(l => l.id === linkId
       ? { ...l, status, needsApprovalFrom: null, decidedAt: now() } : l),
@@ -386,26 +444,24 @@ export function removeLink(linkId) {
   if (!me) return 'forbidden'
   const link = links.get().items.find(l => l.id === linkId)
   if (!link) return 'unknown'
-  if (link.studentId !== me.id && link.otherId !== me.id) return 'forbidden'
+  if (!members(link).includes(me.id)) return 'forbidden'
   links.merge({ items: links.get().items.filter(l => l.id !== linkId) })
   return 'ok'
 }
 
-const person = id => {
-  const a = byId(id)
-  return a ? { id: a.id, name: a.name, role: a.role } : { id, name: 'Removed', role: null }
+const person = who => {
+  const a = byId(who)
+  return a ? pub(a) : { id: who, name: 'Removed', role: null, avatar: null }
 }
 
-/* Every link the account is on, each with the other person named. For a
-   student, `person` is the parent or pro; for a parent or pro, the student. */
+/* Every link the account is on, each with the other person named. */
 export function listNetwork(accountId = session.get().accountId) {
   if (!accountId) return []
   return links.get().items
-    .filter(l => l.studentId === accountId || l.otherId === accountId)
+    .filter(l => members(l).includes(accountId))
     .map(l => ({
       ...l,
-      person: person(l.studentId === accountId ? l.otherId : l.studentId),
-      student: person(l.studentId),
+      person: person(members(l).find(m => m !== accountId)),
     }))
 }
 
@@ -413,8 +469,8 @@ export function listNetwork(accountId = session.get().accountId) {
 export function listPendingApprovals(parentId = session.get().accountId) {
   if (!parentId) return []
   return links.get().items
-    .filter(l => l.role === 'pro' && l.status === 'pending' && isParentOf(parentId, l.studentId))
-    .map(l => ({ ...l, person: person(l.otherId), student: person(l.studentId) }))
+    .filter(l => l.kind === 'pro-student' && l.status === 'pending' && isParentOf(parentId, l.student))
+    .map(l => ({ ...l, person: person(l.pro), who: person(l.student) }))
 }
 
 /* ── Your data ──────────────────────────────────────────────────────────── */
@@ -426,7 +482,8 @@ export function exportAll(accountId = session.get().accountId) {
   return JSON.stringify({
     v: VERSION,
     exportedAt: now(),
-    account: { id: a.id, role: a.role, name: a.name, createdAt: a.createdAt },
+    account: { id: a.id, role: a.role, name: a.name, email: a.email, avatar: a.avatar,
+               setting: a.setting, createdAt: a.createdAt },
     links: listNetwork(a.id),
     invites: listInvites(a.id),
   }, null, 2)

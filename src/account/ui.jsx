@@ -1,7 +1,8 @@
 import React from 'react'
 import { cn } from '../lib/utils'
-import { Chevron, Person } from '../ui/marks'
+import { Check, Chevron, Person } from '../ui/marks'
 import { ROLE_LABEL, useAccount } from './store'
+import { AVATARS, AvatarArt } from './avatars'
 
 /* The pieces the three account screens share. Same idiom as
    src/app/controls.jsx: a row is 56 tall, carries an icon, and says its state
@@ -15,16 +16,47 @@ export const field = cn(
 
 export const fieldError = 'border-crit'
 
-/* A circle with the first letter. Signed out, the outline person mark. */
-export function Avatar({ name, size = 'md', className }) {
+/* The chosen picture; with none, a circle with the first letter; signed out,
+   the outline person mark. */
+export function Avatar({ name, avatar = null, size = 'md', className }) {
   const letter = String(name || '').trim().charAt(0).toUpperCase()
   const box = size === 'lg' ? 'size-14 text-row' : size === 'sm' ? 'size-8 text-fine' : 'size-10 text-ui'
+  if (avatar) return <AvatarArt id={avatar} className={cn(box, 'rounded-chip', className)}/>
   return (
     <span aria-hidden
       className={cn('grid shrink-0 place-items-center rounded-chip font-display font-bold', box,
         letter ? 'bg-accent text-paper' : 'border border-ink-2 text-ink-2', className)}>
       {letter || <Person className="size-[55%]"/>}
     </span>
+  )
+}
+
+/* The twelve pictures as a radiogroup, 44 square each. `none` is the
+   initial circle. */
+export function AvatarPicker({ value, onChange, name, label = 'Your picture', className }) {
+  return (
+    <div role="radiogroup" aria-label={label}
+      className={cn('grid grid-cols-[repeat(auto-fill,minmax(46px,1fr))] gap-2', className)}>
+      {[{ id: null }, ...AVATARS].map(a => {
+        const on = value === a.id
+        return (
+          <button key={a.id || 'none'} type="button" role="radio" aria-checked={on}
+            aria-label={a.id ? a.label : 'Your initial'}
+            onClick={() => onChange(a.id)}
+            className={cn('relative grid aspect-square min-h-[44px] w-full place-items-center rounded-chip',
+              'border-2 transition-colors duration-150',
+              on ? 'border-accent' : 'border-transparent hoverOnly:border-rule')}>
+            <Avatar name={name || 'A'} avatar={a.id} size="md" className="size-9"/>
+            {on && (
+              <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center
+                rounded-chip bg-accent text-paper">
+                <Check className="size-2.5"/>
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -53,16 +85,21 @@ export function Row({ label, hint, Mark, onClick, aside, className }) {
 }
 
 /* A person on a network list: initial, name, role, and a status word. */
-export function PersonRow({ person, status, hint, comma = false, children, className }) {
+/* `role` false drops the second line: under a heading that already names
+   the role, the row is the name alone. */
+export function PersonRow({ person, status, hint, comma = false, role = true, children, className }) {
   return (
     <div className={cn('flex min-h-[56px] items-center gap-3 border-t border-rule px-4 py-2.5',
       'first:border-t-0', className)}>
-      <Avatar name={person.name} size="sm"/>
+      <Avatar name={person.name} avatar={person.avatar} size="sm"/>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-ui font-medium text-ink">{person.name}</span>
-        <span className="block text-fine text-ink-3">
-          {person.role ? ROLE_LABEL[person.role] : 'Removed'}{hint ? `${comma ? ',' : ' ·'} ${hint}` : ''}
-        </span>
+        {(role || hint) && (
+          <span className="block text-fine text-ink-3">
+            {role ? (person.role ? ROLE_LABEL[person.role] : 'Removed') : ''}
+            {hint ? `${role ? (comma ? ', ' : ' · ') : ''}${hint}` : ''}
+          </span>
+        )}
       </span>
       {status && <span className="shrink-0 font-display text-fine font-bold text-ink-2">{status}</span>}
       {children}
@@ -110,7 +147,7 @@ export function AccountButton({ go, className }) {
       onClick={() => go(me ? 'account' : 'signin')}
       className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-field transition-colors',
         'duration-150 hoverOnly:bg-mist', className)}>
-      <Avatar name={me?.name} size="sm"/>
+      <Avatar name={me?.name} avatar={me?.avatar} size="sm"/>
     </button>
   )
 }

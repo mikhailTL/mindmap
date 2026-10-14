@@ -2,8 +2,8 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
 import { Bell, Bin, Check, Download, Exit, Grid, Key, People } from '../ui/marks'
-import { ROLE_LABEL, changePasscode, deleteAccount, exportAll, signOut, updateProfile, useAccount } from './store'
-import { Avatar, Row, field, fieldError, outline, solid } from './ui'
+import { ROLE_LABEL, SETTINGS, changePasscode, deleteAccount, exportAll, signOut, updateProfile, useAccount } from './store'
+import { Avatar, AvatarPicker, Row, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
 
 /* The account portal and its settings, one screen.
@@ -26,27 +26,67 @@ function download(name, text) {
   } catch {}
 }
 
-function NameRow({ me }) {
+/* Picture, name and email. The picture saves on the tap; the two fields
+   save together. */
+function Profile({ me }) {
   const [name, setName] = React.useState(me.name)
+  const [email, setEmail] = React.useState(me.email || '')
   const [saved, setSaved] = React.useState(false)
-  React.useEffect(() => { setName(me.name) }, [me.name])
+  const [err, setErr] = React.useState(null)
+  React.useEffect(() => { setName(me.name); setEmail(me.email || '') }, [me.name, me.email])
+  const dirty = name.trim() !== me.name || email.trim().toLowerCase() !== (me.email || '')
   function save(e) {
     e.preventDefault()
-    const next = updateProfile({ name })
-    setName(next?.name || me.name)
-    setSaved(true); setTimeout(() => setSaved(false), 2000)
+    const next = updateProfile({ name, email })
+    const mailKept = (next?.email || '') === email.trim().toLowerCase()
+    setName(next?.name || me.name); setEmail(next?.email || '')
+    if (!mailKept && email.trim()) { setErr('Check the email address.'); return }
+    if (!mailKept && me.role !== 'student') { setErr('An email is needed.'); return }
+    setErr(null); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
   return (
-    <form onSubmit={save} className="flex items-end gap-2.5 px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <label htmlFor="acct-name" className="block font-display text-fine font-medium text-ink-2">Name</label>
-        <input id="acct-name" type="text" value={name} maxLength={40} autoComplete="username"
-          onChange={e => setName(e.target.value)} className={field}/>
+    <form onSubmit={save} noValidate className="p-4">
+      <AvatarPicker value={me.avatar} onChange={a => updateProfile({ avatar: a })} name={me.name}/>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+        <div>
+          <label htmlFor="acct-name" className="block font-display text-fine font-medium text-ink-2">Name</label>
+          <input id="acct-name" type="text" value={name} maxLength={40} autoComplete="username"
+            onChange={e => setName(e.target.value)} className={field}/>
+        </div>
+        <div>
+          <label htmlFor="acct-email" className="block font-display text-fine font-medium text-ink-2">Email</label>
+          <input id="acct-email" type="email" value={email} autoComplete="email" inputMode="email"
+            autoCapitalize="none" spellCheck={false} aria-invalid={err ? true : undefined}
+            aria-describedby={err ? 'acct-email-err' : undefined}
+            onChange={e => { setEmail(e.target.value); setErr(null) }} className={cn(field, err && fieldError)}/>
+        </div>
       </div>
-      <button type="submit" className={cn(outline, 'shrink-0')} disabled={name.trim() === me.name || !name.trim()}>
+      {err && <p id="acct-email-err" role="alert" className="mt-2 font-display text-fine font-medium text-crit">{err}</p>}
+      <button type="submit" className={cn(outline, 'mt-3')} disabled={!dirty || !name.trim()}>
         {saved ? <><Check aria-hidden className="size-4"/>Saved</> : 'Save'}
       </button>
     </form>
+  )
+}
+
+/* Where a professional works. The console reads the words off the choice.
+   The options say where, so the group's name is spoken only. */
+function Setting({ me }) {
+  return (
+    <div role="radiogroup" aria-label="Where you work" className="grid grid-cols-3 gap-2 border-t border-rule p-4">
+      {SETTINGS.map(s => {
+        const on = me.setting === s.value
+        return (
+          <button key={s.value} type="button" role="radio" aria-checked={on}
+            onClick={() => updateProfile({ setting: s.value })}
+            className={cn('min-h-[44px] rounded-field border px-2 font-display text-fine transition-colors duration-150',
+              on ? 'border-accent-ink bg-accent font-bold text-paper'
+                 : 'border-rule bg-card font-medium text-ink-2 hoverOnly:bg-mist')}>
+            {s.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -80,7 +120,7 @@ function PasscodeForm() {
           <label htmlFor="pass-new" className="block font-display text-fine font-medium text-ink-2">New</label>
           <input id="pass-new" ref={nextRef} type="password" value={next} inputMode="numeric" pattern="[0-9]*"
             autoComplete="new-password" maxLength={6} aria-invalid={invalid || undefined}
-            aria-describedby={invalid ? 'pass-err' : 'pass-hint'}
+            placeholder="4 to 6 digits" aria-describedby={invalid ? 'pass-err' : undefined}
             onChange={e => { setNext(digits(e.target.value)); setState(null) }}
             className={cn(field, invalid && fieldError)}/>
         </div>
@@ -90,12 +130,9 @@ function PasscodeForm() {
           {wrong ? 'Wrong passcode. Try again.' : 'Passcode is 4 to 6 digits.'}
         </p>
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button type="submit" className={outline} disabled={!cur || !next}>
-          <Key aria-hidden className="size-4"/>{state === 'ok' ? 'Saved' : 'Save passcode'}
-        </button>
-        <span id="pass-hint" className="text-fine text-ink-3">4 to 6 digits.</span>
-      </div>
+      <button type="submit" className={cn(outline, 'mt-3')} disabled={!cur || !next}>
+        <Key aria-hidden className="size-4"/>{state === 'ok' ? 'Saved' : 'Save'}
+      </button>
     </form>
   )
 }
@@ -111,25 +148,28 @@ export function Account({ go }) {
   return (
     <main className="wrap">
       <div className="flex items-center gap-3.5">
-        <Avatar name={me.name} size="lg"/>
+        <Avatar name={me.name} avatar={me.avatar} size="lg"/>
         <div className="min-w-0">
           <p className="truncate font-display text-row font-bold text-ink">{me.name}</p>
-          <p className="text-fine text-ink-3">{ROLE_LABEL[role]}</p>
+          <p className="truncate text-fine text-ink-3">{ROLE_LABEL[role]}</p>
         </div>
       </div>
 
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-3 lg:gap-4">
+        <Panel title="Your profile">
+          <Profile me={me}/>
+          {role === 'pro' && <Setting me={me}/>}
+        </Panel>
+
+        <Panel title="Your passcode" className="self-start">
+          <PasscodeForm/>
+        </Panel>
+
+        <div className="grid gap-3 self-start lg:gap-4">
         <Panel title="Your people">
           <Row label="Network" Mark={People} onClick={() => go('network')}/>
           <Row label={SHARING_LABEL[role]} Mark={Grid} onClick={() => go(SHARING_ROUTE[role])}/>
-          <Row label="Reminders" Mark={Bell} onClick={() => go('app-notify')}/>
-        </Panel>
-
-        <Panel title="Name and passcode">
-          <NameRow me={me}/>
-          <div className="border-t border-rule">
-            <PasscodeForm/>
-          </div>
+          {role === 'student' && <Row label="Reminders" Mark={Bell} onClick={() => go('app-notify')}/>}
         </Panel>
 
         <Panel title="Your data">
@@ -145,6 +185,7 @@ export function Account({ go }) {
             </ArmedButton>
           </div>
         </Panel>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

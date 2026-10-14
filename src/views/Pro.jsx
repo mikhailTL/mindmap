@@ -13,6 +13,7 @@ import {
   PROTOCOL_DONE, REFERRALS, driversFor, INTERVENTIONS, profile45,
 } from '../lib/caseload'
 import { RETENTION } from '../app/store'
+import { useAccount } from '../account/store'
 import { CASELOAD_TITLE, CONSENT_SHORT, SCORE, PRO } from '../lib/terms'
 import { cn } from '../lib/utils'
 
@@ -75,17 +76,43 @@ import { cn } from '../lib/utils'
  * on every step; they are read on request.
  */
 
+/* Where the professional works, from their account (src/account/store.js
+   `setting`). The words on the first step and the console heading change;
+   the k-floor and the consent rules do not. Signed out, the demo is a
+   school. */
+const SETTING_WORDS = {
+  school: {
+    step: 'The Whole School',
+    head: 'Manage Stress Across the School',
+    lead: 'Across the Whole School',
+    across: 'across the school',
+  },
+  practice: {
+    step: 'The Whole Practice',
+    head: 'Manage Stress Across the Practice',
+    lead: 'Across the Practice',
+    across: 'across the practice',
+  },
+  other: {
+    step: 'Everyone You Follow',
+    head: 'Manage Stress Across Everyone You Follow',
+    lead: 'Across Everyone You Follow',
+    across: 'across everyone you follow',
+  },
+}
+const wordsFor = me => SETTING_WORDS[(me && me.role === 'pro' && me.setting) || 'school']
+
 /* The five steps, in working order. */
-const STEPS = [
-  ['school',  'The Whole School'],
+const stepsFor = words => [
+  ['school',  words.step],
   ['list',    'Who to Check In With'],
   ['student', 'One Student'],
   ['urgent',  'Urgent Alerts'],
-  ['agreed',  'What Guardians Agreed'],
+  ['agreed',  'Parental Consent'],
 ]
-const nextOf = id => {
-  const i = STEPS.findIndex(s => s[0] === id)
-  return i >= 0 && i < STEPS.length - 1 ? STEPS[i + 1] : null
+const nextOf = (steps, id) => {
+  const i = steps.findIndex(s => s[0] === id)
+  return i >= 0 && i < steps.length - 1 ? steps[i + 1] : null
 }
 
 /* The four safeguards, in the plainest words they can be put in. They are on
@@ -256,7 +283,7 @@ function Weekday({ wAvg }) {
   )
 }
 
-function School() {
+function School({ words }) {
   const all = roster()
   const visible = COHORT_PERIOD.filter(p => !p.suppressed)
   const avg = Math.round(visible.reduce((a, b) => a + b.mean, 0) / visible.length)
@@ -265,8 +292,8 @@ function School() {
   const wAvg = Math.round(COHORT_WEEKDAY.reduce((a, b) => a + b.mean, 0) / COHORT_WEEKDAY.length)
   return (
     <>
-      <Lead title="Across the Whole School" meta={`${SCHOOL_N} consented students`}
-        sentence={`${top.label.replace(' · ', ', ')} reads highest across the school.`}
+      <Lead title={words.lead} meta={`${SCHOOL_N} consented students`}
+        sentence={`${top.label.replace(' · ', ', ')} reads highest ${words.across}.`}
         label="Highest class period" figure={top.mean} unit="out of 100" tone="text-warn"
         sub={`An average period reads ${avg}.`}/>
 
@@ -814,7 +841,7 @@ function Urgent({ real }) {
   )
 }
 
-/* ── Step 5. What guardians agreed ──────────────────────────────────────── */
+/* ── Step 5. Parental consent ───────────────────────────────────────────── */
 
 const FACTS = [
   ['Raw readings a parent can see', 'Never'],
@@ -829,7 +856,7 @@ function Agreed({ real }) {
   return (
     <>
       <Panel tone="brand">
-        <PanelHead title="What Each Guardian Agreed" meta={`${rows.length} signed`}/>
+        <PanelHead title="Parental Consent" meta={`${rows.length} signed`}/>
         <p className="mt-3 max-w-[48ch] text-fine text-ink-2">{CONSENT_SHORT}</p>
         <ul className="m-0 mt-3 list-none p-0">
           {real && <BlankRow>Nobody has signed yet.</BlankRow>}
@@ -943,6 +970,8 @@ const NothingYet = ({ go }) => (
 export function Pro({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
+  const words = wordsFor(useAccount())
+  const STEPS = stepsFor(words)
   const [step, setStep] = React.useState('school')
   const [who, setWho] = React.useState('Student 8241')
   const [said, setSaid] = React.useState('')
@@ -954,14 +983,14 @@ export function Pro({ go }) {
     setWho(name); setStep('student'); announce(`Opened the record for ${name}`)
   }
   const PANES = {
-    school:  () => real ? <NothingYet go={go}/> : <School/>,
+    school:  () => real ? <NothingYet go={go}/> : <School words={words}/>,
     list:    () => real ? <NothingYet go={go}/> : <CheckIn onOpen={openStudent} onStep={onStep}/>,
     student: () => real ? <NothingYet go={go}/> : <OneStudent who={who} setWho={setWho}/>,
     urgent:  () => <Urgent real={real}/>,
     agreed:  () => <Agreed real={real}/>,
   }
   const at = STEPS.findIndex(s => s[0] === step)
-  const nx = nextOf(step)
+  const nx = nextOf(STEPS, step)
   return (
     <main>
       <Tabs value={step} onValueChange={onStep}>
@@ -971,7 +1000,7 @@ export function Pro({ go }) {
               named after, and not a protocol. */}
           <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
             <h2 className="max-w-[24ch] font-display text-row font-bold tracking-tight text-ink
-              sm:text-head">Manage Stress Across the School</h2>
+              sm:text-head">{words.head}</h2>
             {/* The four safeguards, behind a "?" (design spec 0f rule 2). They
                 hold on every step and nothing on this console switches any of
                 them off. */}

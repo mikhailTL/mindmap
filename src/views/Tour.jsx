@@ -436,7 +436,7 @@ const STOPS = [
       const partial = scoreOnly().length, alerts = alertsOnly().length
       return [
         ['On this caseload', `${all} students.`],
-        ['Appear with a change', `${trends} guardians agreed to trends.`],
+        ['Appear with a change', `${trends} with parental consent for trends.`],
         ['Appear without one', `${partial} agreed to a ${SCORE} without trends.`],
         [`Carry no ${SCORE} at all`, `${alerts} agreed to crisis alerts only.`],
         ['Cannot be consented away', `Crisis alerts reach the ${PRO_LC} in every case.`],

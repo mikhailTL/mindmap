@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
 import { Check, Copy, Cross, Grid, Plus } from '../ui/marks'
-import { CONSENT_SHORT, PRO } from '../lib/terms'
+import { CONSENT_SHORT, PRO, PRO_PLURAL } from '../lib/terms'
 import {
   approveLink, createInvite, declineLink, getVersion, listNetwork, listPendingApprovals,
   myInvite, redeemInvite, removeLink, subscribe, useAccount,
@@ -18,11 +18,22 @@ import { SignIn } from './SignIn'
  * a code. Nothing on any of the three shows a reading, a score or a trend,
  * only names and link status. */
 
+/* The status word, by who is looking. Only a pro to student link is ever
+   pending, and a parent never sees one in their own list: for them it sits
+   under Waiting for you. */
 const STATUS = {
   student: { active: 'Linked', pending: 'Needs a parent’s approval', declined: 'Declined' },
   parent:  { active: 'Linked', pending: 'Waiting',                    declined: 'Declined' },
   pro:     { active: 'Linked', pending: 'Waiting for a parent',       declined: 'Declined' },
 }
+
+/* Linked people, one panel per role, in a fixed order. */
+const GROUP = {
+  student: { student: null,            parent: 'Your parents', pro: `Your ${PRO_PLURAL}` },
+  parent:  { student: 'Your teens',    parent: null,           pro: `Your ${PRO_PLURAL}` },
+  pro:     { student: 'Your students', parent: 'Linked parents', pro: null },
+}
+const ORDER = ['student', 'parent', 'pro']
 
 const REDEEM_ERROR = {
   unknown:   'Code not found. Check the letters.',
@@ -35,7 +46,7 @@ const REDEEM_ERROR = {
 
 /* ── Pieces ─────────────────────────────────────────────────────────────── */
 
-function CodeField({ label = 'Enter a code', onDone }) {
+function CodeField({ label = 'Code', onDone }) {
   const [code, setCode] = React.useState('')
   const [err, setErr] = React.useState(null)
   const [done, setDone] = React.useState(null)
@@ -77,7 +88,7 @@ function daysLeft(iso) {
 }
 
 /* The code, shown large, with a copy button. */
-function InviteCode({ title, cta, line, accountId }) {
+function InviteCode({ title, cta, line, accountId, children }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const inv = myInvite(accountId)
   const [copied, setCopied] = React.useState(false)
@@ -116,6 +127,7 @@ function InviteCode({ title, cta, line, accountId }) {
           </>
         )}
       </div>
+      {children}
     </Panel>
   )
 }
@@ -127,22 +139,37 @@ function Remove({ link }) {
   )
 }
 
+/* ── Pieces, continued ──────────────────────────────────────────────────── */
+
+function Groups({ me, empty }) {
+  const rows = listNetwork(me.id)
+  const groups = ORDER.filter(r => GROUP[me.role][r] && rows.some(l => l.person.role === r))
+  if (!groups.length) return <Panel title="Your people"><Empty>{empty}</Empty></Panel>
+  return groups.map(r => {
+    const list = rows.filter(l => l.person.role === r)
+    return (
+      <Panel key={r} title={GROUP[me.role][r]} aside={list.length > 1 ? String(list.length) : undefined}>
+        {list.map(l => (
+          <PersonRow key={l.id} person={l.person} status={STATUS[me.role][l.status]} role={false}>
+            <Remove link={l}/>
+          </PersonRow>
+        ))}
+      </Panel>
+    )
+  })
+}
+
 /* ── Three shapes ───────────────────────────────────────────────────────── */
 
 function StudentNetwork({ me, go }) {
-  const rows = listNetwork(me.id)
   return (
     <>
       <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
-        <Panel title="Your people">
-          {rows.length ? rows.map(l => (
-            <PersonRow key={l.id} person={l.person} status={STATUS.student[l.status]}>
-              <Remove link={l}/>
-            </PersonRow>
-          )) : <Empty>Nobody yet. Enter a code to link someone.</Empty>}
-        </Panel>
-        <div className="grid gap-3 lg:gap-4">
+        <div className="grid gap-3 self-start lg:gap-4">
+          <Groups me={me} empty="Nobody yet. Enter a code to link someone."/>
+        </div>
+        <div className="grid gap-3 self-start lg:gap-4">
           <Panel title="Enter a code">
             <CodeField/>
           </Panel>
@@ -158,29 +185,24 @@ function StudentNetwork({ me, go }) {
 }
 
 function ParentNetwork({ me }) {
-  const rows = listNetwork(me.id)
   const waiting = listPendingApprovals(me.id)
   return (
     <>
       <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-3 lg:gap-4">
-        <Panel title="Your teens">
-          {rows.length ? rows.map(l => (
-            <PersonRow key={l.id} person={l.person} status={STATUS.parent[l.status]}>
-              <Remove link={l}/>
-            </PersonRow>
-          )) : <Empty>Nobody yet. Share a code with your teen.</Empty>}
-        </Panel>
-        <div className="grid gap-3 lg:gap-4">
-          <InviteCode title="Invite your teen" cta="Make a code" accountId={me.id}
-            line="Your teen enters the code."/>
-          <Panel title="Or enter a code">
-            <CodeField label="Your teen’s code"/>
-          </Panel>
+        <div className="grid gap-3 self-start lg:gap-4">
+          <Groups me={me} empty="Nobody yet. Share a code with your teen."/>
         </div>
-        <Panel title="Waiting for you" aside={waiting.length ? String(waiting.length) : undefined}>
+        <div className="grid gap-3 self-start lg:gap-4">
+          <InviteCode title="Invite someone" cta="Make a code" accountId={me.id}
+            line="Whoever you invite enters the code.">
+            <div className="border-t border-rule"><CodeField label="Enter a code"/></div>
+          </InviteCode>
+        </div>
+        <Panel title="Waiting for you" aside={waiting.length ? String(waiting.length) : undefined}
+          className="self-start">
           {waiting.length ? waiting.map(l => (
-            <PersonRow key={l.id} person={l.person} hint={`for ${l.student.name}`} comma>
+            <PersonRow key={l.id} person={l.person} hint={`for ${l.who.name}`} comma>
               <IconButton label={`Approve ${l.person.name}`} Mark={Check} tone="accent"
                 onClick={() => approveLink(l.id)}/>
               <IconButton label={`Decline ${l.person.name}`} Mark={Cross} tone="crit"
@@ -194,20 +216,19 @@ function ParentNetwork({ me }) {
 }
 
 function ProNetwork({ me }) {
-  const rows = listNetwork(me.id)
   return (
     <>
-      <h2 className="font-display font-bold text-ink">Your students</h2>
+      <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
-        <Panel title="Linked students" aside={rows.length ? String(rows.length) : undefined}>
-          {rows.length ? rows.map(l => (
-            <PersonRow key={l.id} person={l.person} status={STATUS.pro[l.status]}>
-              <Remove link={l}/>
-            </PersonRow>
-          )) : <Empty>Nobody yet. Make a code to add a student.</Empty>}
-        </Panel>
-        <InviteCode title="Add a student" cta="Make a code" accountId={me.id}
-          line="The student enters the code. A parent approves."/>
+        <div className="grid gap-3 self-start lg:gap-4">
+          <Groups me={me} empty="Nobody yet. Make a code to add a student."/>
+        </div>
+        <div className="grid gap-3 self-start lg:gap-4">
+          <InviteCode title="Add a student" cta="Make a code" accountId={me.id}
+            line="A student or parent enters the code. A parent approves a student link.">
+            <div className="border-t border-rule"><CodeField label="Enter a code"/></div>
+          </InviteCode>
+        </div>
       </div>
     </>
   )

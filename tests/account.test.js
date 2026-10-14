@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  approveLink, changePasscode, createAccount, createInvite, current, declineLink,
-  deleteAccount, exportAll, listNetwork, listPendingApprovals, redeemInvite, removeLink,
-  signIn, signOut, updateProfile, wipe,
+  AVATAR_IDS, SETTINGS, approveLink, changePasscode, createAccount, createInvite, current,
+  declineLink, deleteAccount, exportAll, listNetwork, listPendingApprovals, redeemInvite,
+  removeLink, signIn, signOut, updateProfile, wipe,
 } from '../src/account/store.js'
 
 /* Accounts, links and invitations are kept on this device. These tests run
@@ -11,9 +11,16 @@ import {
    a pro invites, a student redeems, a parent approves, all on one device by
    signing in and out in turn. */
 
-async function make(role, name, passcode = '1234') {
-  const r = await createAccount({ role, name, passcode })
-  expect(r.ok, `${role} ${name}`).toBe(true)
+/* Email is required for a parent and a professional, optional for a
+   student; a professional also says where they work. */
+const EXTRA = {
+  student: {},
+  parent: { email: 'dana@example.com' },
+  pro: { email: 'lee@example.com', setting: 'school' },
+}
+async function make(role, name, passcode = '1234', extra = {}) {
+  const r = await createAccount({ role, name, passcode, ...EXTRA[role], ...extra })
+  expect(r.ok, `${role} ${name} ${r.reason}`).toBe(true)
   return r.account
 }
 
@@ -33,6 +40,9 @@ async function family() {
   return { parent, student, pro }
 }
 
+/* Ambiguous glyphs are out of the alphabet: no 0/O, no 1/I/L. */
+const CODE = /^[A-HJ-KM-NP-Z2-9]{6}$/
+
 beforeEach(() => wipe())
 
 describe('accounts', () => {
@@ -44,7 +54,53 @@ describe('accounts', () => {
     expect(a.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     expect(a.passcodeHash).toMatch(/^[0-9a-f]{64}$/)
     expect(a.passcodeHash).not.toContain('2468')
+    expect(a.email).toBeNull()
+    expect(a.avatar).toBeNull()
+    expect(a.setting).toBeNull()
     expect(current()?.id).toBe(a.id)
+  })
+
+  it('keeps an avatar id, an email and a professional setting on the account', async () => {
+    expect(AVATAR_IDS.length).toBe(12)
+    const a = await make('pro', 'Dr Lee', '975310', { avatar: AVATAR_IDS[3], setting: 'practice' })
+    expect(a.avatar).toBe(AVATAR_IDS[3])
+    expect(a.email).toBe('lee@example.com')
+    expect(a.setting).toBe('practice')
+    expect(updateProfile({ avatar: AVATAR_IDS[7] }).avatar).toBe(AVATAR_IDS[7])
+    expect(updateProfile({ avatar: 'not-an-avatar' }).avatar).toBe(AVATAR_IDS[7])
+    expect(updateProfile({ avatar: null }).avatar).toBeNull()
+    expect(updateProfile({ setting: 'other' }).setting).toBe('other')
+    expect(updateProfile({ setting: 'nowhere' }).setting).toBe('other')
+    expect(updateProfile({ email: ' Lee@Clinic.org ' }).email).toBe('lee@clinic.org')
+    expect(SETTINGS.map(s => s.value)).toEqual(['school', 'practice', 'other'])
+  })
+
+  it('requires an email for a parent and a professional, and a setting for a professional', async () => {
+    expect((await createAccount({ role: 'parent', name: 'Dana', passcode: '1234' })).reason).toBe('email')
+    expect((await createAccount({ role: 'parent', name: 'Dana', passcode: '1234', email: 'nope' })).reason).toBe('email')
+    expect((await createAccount({ role: 'pro', name: 'Dr Lee', passcode: '1234', email: 'lee@example.com' })).reason).toBe('setting')
+    const s = await createAccount({ role: 'student', name: 'Sam', passcode: '1234' })
+    expect(s.ok).toBe(true)
+    expect(s.account.email).toBeNull()
+    /* A student may not set a setting. */
+    expect(updateProfile({ setting: 'school' }).setting).toBeNull()
+  })
+
+  it('refuses a second account with the same email', async () => {
+    await make('parent', 'Dana')
+    signOut()
+    const r = await createAccount({ role: 'pro', name: 'Dr Lee', passcode: '1234', email: 'DANA@example.com', setting: 'school' })
+    expect(r.ok).toBe(false)
+    expect(r.reason).toBe('taken')
+  })
+
+  it('signs in with a name or an email', async () => {
+    await make('parent', 'Dana', '1234')
+    signOut()
+    expect(await signIn('dana@example.com', '1234')).toBe('ok')
+    signOut()
+    expect(await signIn('Dana@Example.com', '0000')).toBe('wrong')
+    expect(await signIn('dana', '1234')).toBe('ok')
   })
 
   it('refuses a passcode outside four to six digits, and a blank name', async () => {
@@ -59,7 +115,7 @@ describe('accounts', () => {
   it('refuses a second account with the same name', async () => {
     await make('student', 'Sam')
     signOut()
-    const r = await createAccount({ role: 'parent', name: 'sam', passcode: '1234' })
+    const r = await createAccount({ role: 'parent', name: 'sam', passcode: '1234', email: 'sam@example.com' })
     expect(r.ok).toBe(false)
     expect(r.reason).toBe('taken')
   })
@@ -91,10 +147,9 @@ describe('invites and links', () => {
   it('makes a six character code with no ambiguous glyphs', async () => {
     await make('parent', 'Dana')
     const inv = createInvite()
-    expect(inv.code).toMatch(/^[A-HJ-KM-NP-Z2-9]{6}$/)
+    expect(inv.code).toMatch(CODE)
     expect(inv.fromId).toBe(current().id)
     expect(inv.role).toBe('parent')
-    expect(inv.forStudentId).toBeNull()
     expect(new Date(inv.expiresAt).getTime()).toBeGreaterThan(Date.now())
   })
 
@@ -103,24 +158,28 @@ describe('invites and links', () => {
     const mine = listNetwork(student.id)
     expect(mine).toHaveLength(1)
     expect(mine[0].person.id).toBe(parent.id)
-    expect(mine[0].role).toBe('parent')
+    expect(mine[0].person.role).toBe('parent')
+    expect(mine[0].kind).toBe('parent-student')
     expect(mine[0].status).toBe('active')
     const theirs = listNetwork(parent.id)
     expect(theirs).toHaveLength(1)
     expect(theirs[0].person.id).toBe(student.id)
+    expect(theirs[0].person.role).toBe('student')
   })
 
   it('links a parent when the parent enters the student code', async () => {
     const student = await make('student', 'Sam')
     const inv = createInvite()
-    expect(inv.forStudentId).toBe(student.id)
+    expect(inv.role).toBe('student')
     signOut()
-    await make('parent', 'Dana')
+    const parent = await make('parent', 'Dana')
     const r = redeemInvite(inv.code)
     expect(r.ok).toBe(true)
     expect(r.link.status).toBe('active')
-    expect(r.link.role).toBe('parent')
-    expect(r.link.studentId).toBe(student.id)
+    expect(r.link.kind).toBe('parent-student')
+    expect(r.link.student).toBe(student.id)
+    expect(r.link.parent).toBe(parent.id)
+    expect(r.link.pro).toBeNull()
   })
 
   it('leaves a pro link pending until a parent approves it', async () => {
@@ -133,6 +192,7 @@ describe('invites and links', () => {
     const r = redeemInvite(inv.code)
     expect(r.ok).toBe(true)
     expect(r.link.status).toBe('pending')
+    expect(r.link.kind).toBe('pro-student')
     expect(r.link.needsApprovalFrom).toBe('parent')
     expect(r.link.invitedBy).toBe(pro.id)
     /* A used code is a used code. */
@@ -174,7 +234,7 @@ describe('invites and links', () => {
     expect(approveLink(link.id)).toBe('forbidden')
     signOut()
     /* Nor can a parent who is not linked to this student. */
-    await make('parent', 'Robin', '4321')
+    await make('parent', 'Robin', '4321', { email: 'robin@example.com' })
     expect(approveLink(link.id)).toBe('forbidden')
     expect(declineLink(link.id)).toBe('forbidden')
     signOut()
@@ -194,6 +254,57 @@ describe('invites and links', () => {
     const r = redeemInvite(inv.code, new Date(Date.parse(inv.expiresAt) + 1000))
     expect(r.ok).toBe(false)
     expect(r.reason).toBe('expired')
+  })
+
+  it('links a parent and a professional, active on redeem, either way round', async () => {
+    const { parent, pro } = await family()
+    await signIn('Dr Lee', '975310')
+    const inv = createInvite()
+    signOut()
+    await signIn('Dana', '1234')
+    const r = redeemInvite(inv.code)
+    expect(r.ok).toBe(true)
+    expect(r.link.kind).toBe('parent-pro')
+    expect(r.link.status).toBe('active')
+    expect(r.link.needsApprovalFrom).toBeNull()
+    expect(r.link.parent).toBe(parent.id)
+    expect(r.link.pro).toBe(pro.id)
+    expect(r.link.student).toBeNull()
+    expect(listNetwork(parent.id).map(l => l.person.role).sort()).toEqual(['pro', 'student'])
+    expect(listNetwork(pro.id)[0].person.id).toBe(parent.id)
+    /* The other way round: a second professional redeems the parent's code. */
+    const inv2 = createInvite()
+    signOut()
+    await make('pro', 'Ms Ortiz', '2222', { email: 'ortiz@example.com' })
+    const r2 = redeemInvite(inv2.code)
+    expect(r2.ok).toBe(true)
+    expect(r2.link.kind).toBe('parent-pro')
+    expect(r2.link.status).toBe('active')
+    /* A parent to professional link is nobody's approval to give. */
+    expect(listPendingApprovals(parent.id)).toHaveLength(0)
+  })
+
+  it('refuses a link between two students, or two of any role', async () => {
+    await make('student', 'Sam')
+    const inv = createInvite()
+    signOut()
+    await make('student', 'Alex', '1111')
+    const r = redeemInvite(inv.code)
+    expect(r.ok).toBe(false)
+    expect(r.reason).toBe('role')
+    expect(listNetwork()).toHaveLength(0)
+    signOut()
+    await make('parent', 'Dana')
+    const pinv = createInvite()
+    signOut()
+    await make('parent', 'Robin', '4321', { email: 'robin@example.com' })
+    expect(redeemInvite(pinv.code).reason).toBe('role')
+    signOut()
+    await make('pro', 'Dr Lee', '975310')
+    const dinv = createInvite()
+    signOut()
+    await make('pro', 'Ms Ortiz', '2222', { email: 'ortiz@example.com' })
+    expect(redeemInvite(dinv.code).reason).toBe('role')
   })
 
   it('lets a student remove a link', async () => {
@@ -232,11 +343,12 @@ describe('your data', () => {
     expect(out.v).toBe(1)
     expect(out.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     expect(out.account).toEqual({
-      id: student.id, role: 'student', name: 'Sam', createdAt: student.createdAt,
+      id: student.id, role: 'student', name: 'Sam', email: null, avatar: null, setting: null,
+      createdAt: student.createdAt,
     })
     expect(out.links).toHaveLength(1)
-    expect(out.links[0]).toMatchObject({ studentId: student.id, otherId: parent.id, role: 'parent', status: 'active' })
-    expect(out.links[0].person).toEqual({ id: parent.id, name: 'Dana', role: 'parent' })
+    expect(out.links[0]).toMatchObject({ kind: 'parent-student', student: student.id, parent: parent.id, pro: null, status: 'active' })
+    expect(out.links[0].person).toEqual({ id: parent.id, name: 'Dana', role: 'parent', avatar: null })
     expect(out.invites).toHaveLength(1)
     expect(out.invites[0].code).toBe(inv.code)
     expect(JSON.stringify(out)).not.toMatch(/passcode/i)

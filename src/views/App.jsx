@@ -963,8 +963,10 @@ function AudienceStart({ go, who }) {
       {s.setup && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border
           border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
-          <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10">
-            <PatchFront className="h-10 w-auto"/>
+          {/* The patch drawing for the pairing card; the pro card is about
+              people, so it keeps its mark. */}
+          <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10 text-accent-lit">
+            {s.setup.id === 'pairing' ? <PatchFront className="h-10 w-auto"/> : <s.setup.Mark size={22}/>}
           </span>
           <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
             {s.setup.title}</span>
