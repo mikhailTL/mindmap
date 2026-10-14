@@ -262,6 +262,60 @@ function TreatmentGap() {
 
 /* ── The band ──────────────────────────────────────────────────────────── */
 
+/* Four figures in a row. The owner, on the fuller version above: "it was less
+   unnecessary text and easier to read". So: the figure, one line under it, the
+   exact value and the source in small print, and one small graphic each. The
+   rules at the top of this file still hold: every figure prints its exact
+   value and names its source. The fuller charts stay in this file for the
+   patch page or a report; the landing page carries these. */
+const FIGURES = [
+  { big: '40%', line: 'felt sad or hopeless for two weeks or more',
+    exact: '39.7% of US high school students, 2023', src: 0,
+    art: <PctTrack value={39.7} className="mt-3"/> },
+  { big: '20%', line: 'seriously considered attempting suicide',
+    exact: '20.4% of US high school students, 2023', src: 0,
+    art: <PctTrack value={20.4} className="mt-3"/> },
+  { big: '30% → 40%', line: 'the first figure, ten years apart',
+    exact: '2013 to 2023, same question', srcLabel: 'CDC YRBS Trends, 2013 to 2023',
+    srcHref: 'https://www.cdc.gov/yrbs/dstr/index.html',
+    art: (
+      <span aria-hidden="true" className="mt-3 flex items-end gap-1.5">
+        <span className="block h-2.5 w-[30%] rounded-bar bg-beam"/>
+        <span className="block h-2.5 w-[40%] rounded-bar bg-accent"/>
+      </span>) },
+  { big: '3 in 5', line: 'with depression got no treatment for it',
+    exact: '59.4% of the 1 in 5 with depression, aged 12 to 17, 2021', src: 1,
+    art: (
+      <span aria-hidden="true" className="mt-3 flex gap-1.5">
+        {[1,1,1,0,0].map((on, i) => (
+          <span key={i} className={cn('block h-2.5 flex-1 rounded-bar', on ? 'bg-accent' : 'bg-beam')}/>
+        ))}
+      </span>) },
+]
+
+export function ProblemFigures({ className }) {
+  return (
+    <div className={cn('grid gap-x-7 gap-y-6 sm:grid-cols-2 lg:grid-cols-4', className)}>
+      {FIGURES.map(f => {
+        const src = f.src != null ? SOURCES[f.src] : { label: f.srcLabel, href: f.srcHref }
+        return (
+          <figure key={f.big} className="m-0" aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${src.label}.`}>
+            <p className="font-display text-sub font-bold tabular-nums leading-none text-accent-ink">{f.big}</p>
+            <p className="mt-2 max-w-[22ch] text-sec leading-[1.4] text-ink-2">{f.line}</p>
+            {f.art}
+            <figcaption className="mt-2.5 text-fine leading-[1.45] text-ink-3">
+              {f.exact}.{' '}
+              <a href={src.href} target="_blank" rel="noreferrer"
+                className="border-b border-accent/50 text-ink hoverOnly:border-accent">{src.label}</a>
+            </figcaption>
+          </figure>
+        )
+      })}
+    </div>
+  )
+}
+
+
 /* The two headline figures are printed, never counted up to. A count-up starts
    at zero and passes through numbers that are not the statistic, and these sit
    beside their own exact values: a reader scrolling past saw "24%" next to

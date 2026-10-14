@@ -7,9 +7,7 @@ import { ArrowRight } from '../ui/marks'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
-import { ProblemStats } from '../charts/problem'
-import { WhoSeesWhat } from '../charts/infographics'
-import { PatchStack } from '../charts/patchstack'
+import { ProblemFigures } from '../charts/problem'
 import { Faces } from '../charts/people'
 import { Frame } from '../ui/frame'
 import { Card } from '../ui/card'
@@ -18,7 +16,7 @@ import { cn } from '../lib/utils'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC,
-  CONSENT_SHORT, CASELOAD_TITLE,
+  CONSENT_SHORT,
 } from '../lib/terms'
 
 /* Grounds are set here rather than in the bands. Between the two dark bands the
@@ -36,7 +34,7 @@ import {
    minute. */
 const DOORS = [
   { id:'patch', go:'patch', title:'Wear the patch', note:'Needs the patch',
-    line:'A reading off a sticker on your arm, all day.',
+    line:'All day, from your arm.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -45,7 +43,7 @@ const DOORS = [
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
   { id:'phone', go:'without-patch', title:'Use your phone', note:'No patch needed', lead:true,
-    line:'A reading in forty five seconds, off the camera.',
+    line:'45 seconds, off the camera.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -56,7 +54,7 @@ const DOORS = [
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
   { id:'demo', go:'app', title:'Try the demo', note:'No reading taken',
-    line:'Every screen filled with made up data.',
+    line:'Every screen, made-up data.',
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="18" y="13" width="184" height="94" rx="10" fill="none" className="stroke-ruling"
@@ -70,18 +68,18 @@ const DOORS = [
 const SCREENS = [
   { id:'student', who:'Student', photo:'student-card',
     alt:'Five teenagers walking home together through a park',
-    title:`Your ${SCORE} today, and what moved it`,
-    line:'The four signals behind it, and every reading ever taken.',
+    title:'Your Score Each Day',
+    line:'See every reading you take.',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent', photo:'parent-card',
     alt:'A mother and her teenage son looking at something together at home',
-    title:'One sentence a week, and which days ran high',
-    line:`Never a raw reading, never ${NOTES}, never ${LOCATION}.`,
+    title:'One Sentence a Week',
+    line:'Never a raw reading.',
     cta:'What a parent gets' },
   { id:'pro',     who:PRO, photo:'school-card',
     alt:`A ${PRO_LC} and a student talking on a sofa`,
-    title:CASELOAD_TITLE,
-    line:'Only the students who share it.',
+    title:'Students to Check On',
+    line:'Only students who share.',
     cta:`What a ${PRO_LC} gets` },
 ]
 
@@ -106,6 +104,13 @@ const EVIDENCE = [
   { title: 'Plain words, measured',
     line: 'Every page reads at grade 7 or below.',
     cite: 'Measured on the prose of all 13 pages. tools/readability.' },
+]
+
+/* One line per audience. The full matrix is on the privacy page. */
+const SEES = [
+  { who:'Student', sees:'Sees everything first' },
+  { who:'Parent',  sees:'Only what the student allows' },
+  { who:PRO,       sees:'Only what the student allows' },
 ]
 
 /* The wording is the promise. "A group under five" is the k floor; "fewer than
@@ -237,11 +242,8 @@ export function Overview({ go }) {
         <SectionHead tone="ink" className="max-w-[30ch]">
           Most teenagers who are struggling are not being reached.
         </SectionHead>
-        <SectionLede tone="ink">
-          MindMap returns one {SCORE} a day.
-        </SectionLede>
-        <div className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-5">
-          <ProblemStats/>
+        <div className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
+          <ProblemFigures/>
         </div>
       </Section>
 
@@ -255,9 +257,6 @@ export function Overview({ go }) {
       {/* -- the three doors ----------------------------------------------- */}
       <Section name="Getting started" tone="card" className="bg-accent-wash">
         <SectionHead>3 Ways to Use MindMap</SectionHead>
-        <SectionLede>
-          All three open the same app: one {SCORE} a day, and one sentence back.
-        </SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-3">
           {DOORS.map((d, i) => (
             <ScrollRow key={d.id} index={i} className="h-full">
@@ -278,19 +277,10 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
-      </Section>
-
-      {/* -- the patch -------------------------------------------------------
-          The drawing only. The layer notes and the orientation inset live on
-          the patch page; where the number comes from lives on How it works. */}
-      <Section name="The patch" tone="card" className="bg-aqua-2">
-        <SectionHead>Inside the Patch</SectionHead>
-        <SectionLede>
-          Five layers, 54 mm by 36 mm, worn on the outer upper arm.
-        </SectionLede>
-        <PatchStack brief className="mt-6"/>
+        {/* The drawing of the patch and where the number comes from each have
+            a page. The overview links to them rather than carrying them. */}
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" onClick={() => go('patch')}>The patch<span aria-hidden>→</span></Button>
+          <Button variant="outline" size="sm" onClick={() => go('patch')}>Inside the patch<span aria-hidden>→</span></Button>
           <Button variant="outline" size="sm" onClick={() => go('methods')}>How it works<span aria-hidden>→</span></Button>
         </div>
       </Section>
@@ -339,15 +329,28 @@ export function Overview({ go }) {
       <Section name="Privacy" tone="card" className="bg-aqua-2">
         <SectionHead>Student Privacy</SectionHead>
         <SectionLede>{CONSENT_SHORT}</SectionLede>
-        <WhoSeesWhat className="mt-5 max-w-[62rem]"/>
+        <dl className="mt-5 grid gap-3.5 sm:grid-cols-3">
+          {SEES.map(r => (
+            <div key={r.who} className="rounded-panel border border-rule bg-card p-5">
+              <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
+              <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                {r.sees}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-4 text-meta text-ink-2">
+          {NOTES}, {LOCATION} and every raw reading never leave the phone.
+          <button type="button" onClick={() => go('privacy')}
+            className="ml-3 border-b-2 border-accent/35 font-display font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
+            Who sees what
+          </button>
+        </p>
       </Section>
 
       {/* ── the design, and where it comes from ─────────────────────────── */}
       <Section name="Evidence" tone="paper">
         <SectionHead>Designed From the Research</SectionHead>
-        <SectionLede>
-          Four decisions on this site, and the published finding behind each one.
-        </SectionLede>
         <dl className="mt-5 grid gap-x-10 sm:grid-cols-2">
           {EVIDENCE.map(e => (
             <div key={e.title} className="border-t border-rule py-4">
