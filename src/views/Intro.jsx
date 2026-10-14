@@ -35,7 +35,12 @@ import { getMode, setMode } from '../lib/mode'
    capture of that page and not of a panel standing in front of it. Nothing in
    the interface ever writes it and no control can set it, so it cannot become
    a refusal a visitor is stuck with. */
-const AUTO_KEY = 'mindmap.tour.off'
+/* 'mindmap.capture', not 'mindmap.tour.off'. The old key was once written by
+   a "skip" control in an earlier build, so a browser that had pressed it never
+   saw the chooser again, whatever this file did. The owner: "onboarding still
+   isnt working". Only the screenshot harness writes this key, and the old
+   one is ignored. */
+const AUTO_KEY = 'mindmap.capture'
 
 /** True only inside the screenshot and measurement harness. A throwing storage
  *  reads as false, so the worst failure under blocked storage is that the
