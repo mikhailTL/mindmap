@@ -38,6 +38,8 @@ import { AccountButton } from '../account/ui'
 import { useAccount } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
 import { RealNotice } from '../ui/notice'
+import { Frame as Photo } from '../ui/frame'
+import { PatchFront } from '../charts/patch-front'
 import { cn } from '../lib/utils'
 
 /* The route ids, fixed by spec 0e section 18 so no two workers invent
@@ -862,30 +864,40 @@ const START = {
   student: {
     head: 'Start Here',
     actions: [
-      { id:'reading', title:'Take a Reading',    Mark:DialMark },
-      { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket },
-      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark },
-      { id:'demo',    title:'Try the Worked Day', Mark:Wave },
+      { id:'reading', title:'Take a Reading',    Mark:DialMark, art:'patch' },
+      { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket,
+        photo:'student-basketball', alt:'A teenager dribbling a basketball on an outdoor court' },
+      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
+        photo:'friends-steps', alt:'Two students on concrete steps outside, heads together over a notebook' },
+      { id:'demo',    title:'Try the Worked Day', Mark:Wave,
+        photo:'student-bus', alt:'Two boys laughing together on a school bus seat, one holding a phone' },
     ],
     setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
   },
   parent: {
     head: 'Start Here',
     actions: [
-      { id:'calendar', title:'See the Week',      Mark:CalendarMark },
-      { id:'privacy',  title:'Sharing Record',    Mark:Grid },
-      { id:'ai',       title:'Ask MindMap AI',    Mark:AskMark },
-      { id:'demo',     title:'Try the Worked Week', Mark:Wave },
+      { id:'calendar', title:'See the Week',      Mark:CalendarMark,
+        photo:'parent-laptop', alt:'A mother and her teenage son at a dining table, looking at an open laptop' },
+      { id:'privacy',  title:'Sharing Record',    Mark:Grid,
+        photo:'parent-kitchen', alt:'A mother and her teenage son chopping vegetables side by side at a kitchen counter' },
+      { id:'ai',       title:'Ask MindMap AI',    Mark:AskMark,
+        photo:'parent-hero', alt:'A mother and her teenage child smiling at an open laptop together at home' },
+      { id:'demo',     title:'Try the Worked Week', Mark:Wave,
+        photo:'parent-card', alt:'A mother and her teenage child sitting close together on a sofa at home' },
     ],
     setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
   },
   pro: {
     head: 'Start Here',
     actions: [
-      { id:'demo',    title:'Try the Worked Week', Mark:Wave },
-      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark },
-      { id:'methods', title:'How Scoring Works', Mark:Rule },
-      { id:'help',    title:'Get Help',          Mark:Search },
+      { id:'demo',    title:'Try the Worked Week', Mark:Wave,
+        photo:'pro-hero', alt:'A teenager and an adult sitting and talking on a sofa by a sunlit window' },
+      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
+        photo:'clinic-talk', alt:'A woman and a teenage boy talking in a room lined with shelves' },
+      { id:'methods', title:'How Scoring Works', Mark:Rule, art:'patch' },
+      { id:'help',    title:'Get Help',          Mark:Search,
+        photo:'school-card', alt:'A medical professional and a student talking on a sofa' },
     ],
     /* The setup slot the other two audiences use for the patch: here it is
        the network, where a code is made for a student to enter. */
@@ -893,21 +905,28 @@ const START = {
   },
 }
 
-/* An action is an icon and two to four words (design spec 0f rule 4). No
-   sentence under it at any width. */
+/* An action is a picture, an icon and two to four words (design spec 0f rule
+   4). No sentence under it at any width. The owner on the icon-only tiles:
+   "needs to add images of hardware or examples of stuff ... needs to be
+   visual regardless of if its real or demo". A photograph, or the patch
+   drawing where the action is about the patch. */
 function StartAction({ action, run, className }) {
   const { Mark } = action
   return (
     <button type="button" onClick={() => run(action.id)}
-      className={cn('group flex h-full min-h-[104px] w-full flex-col items-start justify-between',
-        'gap-3 rounded-panel border border-rule bg-card p-3 text-left transition-colors',
-        'duration-150 hoverOnly:border-accent hoverOnly:bg-accent-wash active:bg-accent-wash',
-        'sm:min-h-[120px] sm:p-4 lg:min-h-[168px] lg:p-5', className)}>
-      <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
-        bg-accent-wash text-accent-ink">
-        <Mark size={18}/>
+      className={cn('group flex h-full w-full flex-col items-start overflow-hidden',
+        'rounded-panel border border-rule bg-card text-left transition-colors',
+        'duration-150 hoverOnly:border-accent active:bg-accent-wash', className)}>
+      <span aria-hidden className="relative block h-[96px] w-full overflow-hidden bg-accent-wash sm:h-[112px] lg:h-[132px]">
+        {action.art === 'patch'
+          ? <span className="flex h-full w-full items-center justify-center"><PatchFront className="h-[84%] w-auto"/></span>
+          : <Photo photo={action.photo} alt={action.alt} className="absolute inset-0"/>}
+        <span className="absolute left-2.5 top-2.5 flex size-8 items-center justify-center rounded-field
+          bg-card/90 text-accent-ink shadow-[0_1px_4px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+          <Mark size={16}/>
+        </span>
       </span>
-      <span className="flex w-full items-end justify-between gap-2">
+      <span className="flex w-full items-center justify-between gap-2 p-3 sm:p-3.5 lg:px-4 lg:py-3.5">
         <span className="font-display text-ui font-bold leading-[1.22] text-ink">{action.title}</span>
         <Chevron aria-hidden className="mb-0.5 size-4 shrink-0 text-accent"/>
       </span>
@@ -944,9 +963,8 @@ function AudienceStart({ go, who }) {
       {s.setup && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border
           border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
-          <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-field
-            bg-paper/10 text-accent-lit">
-            <s.setup.Mark size={18}/>
+          <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10">
+            <PatchFront className="h-10 w-auto"/>
           </span>
           <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
             {s.setup.title}</span>
