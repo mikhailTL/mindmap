@@ -1,9 +1,9 @@
 import React from 'react'
 import { ScrollRow } from '../ui/motion'
 
-import { Headline, AllDetail } from './Monitor'
+import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
-import { ArrowRight } from '../ui/marks'
+import { ArrowRight, Camera, Link, Stack } from '../ui/marks'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
@@ -33,17 +33,11 @@ import { cn } from '../lib/utils'
  * there is no app around the guide, so it stays inline there; see
  * views/WithoutPatch.jsx.
  *
- * What changed in this pass, and why:
- *   - The chooser opened with a three line paragraph set straight on the app's
- *     tint, which is the one thing section 2 of the spec rules out, and the
- *     shell above already carries the screen's one line. It is gone rather
- *     than boxed: a second lede would have said the same thing twice.
- *   - The sensor card carried a six line paragraph. Every card now states one
- *     line and then a four row spec table, so the three cards hold more true
- *     detail in less height and reach the same depth. That table is what fills
- *     the foot of "Connect a patch", which was about 150px of blank card.
- *   - Padding and gaps follow the spec's instrument-panel rhythm rather than
- *     the portfolio one: gap-3, lg:gap-4, and no mt-10 between neighbours.
+ * Design spec 0f: the chooser holds 15 to 45 words above the fold, every
+ * sentence is ten words or fewer, and every action carries a mark. Each card
+ * is a mark, a title, one line, one figure and its action. The four row spec
+ * tables and the privacy footnotes are kept, behind one SeeDetails under the
+ * grid, so the comparison is still one table read three times.
  */
 
 const PANEL = 'rounded-panel border border-rule bg-card'
@@ -54,47 +48,48 @@ const PANEL = 'rounded-panel border border-rule bg-card'
    one scale. Nothing may be added that is not measured somewhere. */
 const SCREENS = {
   sensors: {
-    title: 'Use your phone’s camera and microphone',
+    title: 'Camera and microphone',
     lede: `The same ${SCORE}, measured rather than answered.`,
     facts: [['45', 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames or audio kept']],
   },
   survey: {
-    title: 'Answer six questions',
-    lede: 'No patch and no camera. Six scales, then one number.',
+    title: 'Six questions',
+    lede: 'Six scales, then one number.',
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
       ['0', 'answers that leave this phone']],
   },
 }
 
-/* The three ways in, each one the same four facts in the same order, so a
-   reader comparing them is reading one table three times rather than three
-   different cards. `gives` is what comes back, which is the line the draft did
-   not have and the reason the patch card ran out of content a third of the way
-   down. */
+/* The three ways in. On the card: the mark, the title, one line, one figure
+   and the action. In the comparison under the grid: the same four facts in
+   the same order, so a reader comparing them is reading one table three
+   times rather than three different cards. */
 const WAYS = [
-  { id:'sensors', title:'Use the phone’s sensors', opens:true,
-    line:'A fingertip over the rear lens, then one sentence out loud.',
-    cta:'Start the sensor reading',
+  { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
+    line:'Fingertip on the lens, then speak.',
+    fact:['45', 'seconds'],
+    cta:'Start',
     spec:[
       ['Takes', '45 seconds'],
       ['Reads', 'Heart rate and beat-to-beat variation'],
       ['Also', 'Pitch and steadiness of one spoken line'],
       ['Needs', 'A camera and a microphone'],
     ],
-    foot:'Frames and audio are turned into numbers here and dropped. Neither is stored or sent.' },
-  { id:'survey', title:'Answer six questions', opens:true,
-    line:'Six scales, no camera and no patch.',
-    cta:'Open the six questions',
+    foot:'Frames and audio become numbers here, then are dropped. Nothing is stored or sent.' },
+  { id:'survey', title:'Six questions', opens:true, Mark:Stack,
+    line:'No camera, no patch.',
+    fact:['30', 'seconds'],
+    cta:'Answer',
     spec:[
       ['Takes', 'About 30 seconds'],
       ['Reads', 'Tension, sleep, energy, focus and load'],
       ['Also', 'Which answer moved the number, and which way'],
       ['Needs', 'Nothing but this phone'],
     ],
-    foot:'Your answers stay on this device. Nothing is stored or sent.' },
-  { id:'patch', title:'Connect a patch', opens:false,
-    line:'A paired patch, reading four signals at once.',
-    cta:'Connect a patch',
+    foot:'Answers stay on this phone. Nothing is stored or sent.' },
+  { id:'patch', title:'Connect a patch', opens:false, Mark:Link,
+    line:'Pulse, sweat, temperature, movement.',
+    cta:'Connect',
     spec:[
       ['Takes', 'One pairing, then nothing'],
       ['Reads', 'Pulse, sweat, temperature and movement'],
@@ -145,12 +140,16 @@ function Spec({ rows }) {
    the whole card is the hit area. Title and footnote are spans, for the same
    reason Spec is. */
 const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
+  const Mark = way.Mark
   return (
     <Card interactive as="button" type="button" ref={ref} onClick={onOpen}
       className="group flex h-full flex-col p-4 lg:p-5">
-      <span className="block font-display text-row font-bold leading-tight text-ink">{way.title}</span>
-      <span className="mt-1 block max-w-[38ch] text-meta leading-[1.4] text-ink-2">{way.line}</span>
-      <Spec rows={way.spec}/>
+      <span className="flex items-center gap-2.5">
+        <Mark aria-hidden className="size-6 shrink-0 text-accent"/>
+        <span className="block font-display text-row font-bold leading-tight text-ink">{way.title}</span>
+      </span>
+      <span className="mt-1.5 block max-w-[38ch] text-meta leading-[1.4] text-ink-2">{way.line}</span>
+      {way.fact && <Figures items={[way.fact]} className="mt-3"/>}
       {children}
       <span className="mt-auto flex items-center gap-2 pt-3 font-display text-meta
         font-bold text-accent">
@@ -158,10 +157,34 @@ const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
         <ArrowRight aria-hidden className="size-[1.05rem] transition-transform
           duration-200 groupHoverOnly:translate-x-1.5"/>
       </span>
-      <span className="mt-1.5 block max-w-[44ch] text-fine leading-[1.4] text-ink-3">{way.foot}</span>
     </Card>
   )
 })
+
+/* The four facts per way, behind one disclosure under the grid. Closed, it is
+   one line; open, it is the comparison the cards used to carry. */
+function Compare() {
+  return (
+    <SeeDetails label="Compare ways" className="mt-3 lg:mt-4">
+      <div className="grid gap-3 lg:grid-cols-3 lg:gap-4">
+        {WAYS.map(way => {
+          const Mark = way.Mark
+          return (
+            <section key={way.id} className={cn(PANEL, 'p-4')}>
+              <h3 className="flex items-center gap-2 font-display text-meta font-bold text-ink">
+                <Mark aria-hidden className="size-5 text-accent"/>{way.title}
+              </h3>
+              <Spec rows={way.spec}/>
+              {way.foot && (
+                <p className="mt-2.5 max-w-[44ch] text-fine leading-[1.4] text-ink-3">{way.foot}</p>
+              )}
+            </section>
+          )
+        })}
+      </div>
+    </SeeDetails>
+  )
+}
 
 /* The top of a reading: the way out, then what this reading is. Module level,
    not an inner component; one declared in the body is a new type on every
@@ -170,16 +193,17 @@ const ReadingHead = React.forwardRef(function ReadingHead({ id, onBack }, ref) {
   const s = SCREENS[id]
   return (
     <>
-      <BackBar onBack={onBack}>Back to the three ways</BackBar>
-      <h2 ref={ref} tabIndex={-1}
-        className="mt-2 max-w-[26ch] font-display font-bold text-ink">
-        {s.title}
-      </h2>
-      {/* The lede and its figures are one container. On the app's tint neither
-          may stand on its own. */}
-      <div className={cn(PANEL, 'mt-3 p-3.5')}>
-        <p className="text-meta leading-[1.4] text-ink-2">{s.lede}</p>
-        <Figures items={s.facts} className="mt-2.5"/>
+      <BackBar onBack={onBack}>Back</BackBar>
+      {/* The lede and its figures sit behind the "?", so the screen opens on
+          the title and the reading itself. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h2 ref={ref} tabIndex={-1} className="max-w-[26ch] font-display font-bold text-ink">
+          {s.title}
+        </h2>
+        <Why label={`What ${s.title.toLowerCase()} measures`}>
+          <p>{s.lede}</p>
+          <Figures items={s.facts} className="mt-2"/>
+        </Why>
       </div>
     </>
   )
@@ -292,14 +316,14 @@ export function CheckInBody({ go }){
       {screen === 'choose' && (
         <Stage dir={dir}>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            <h2 className="font-display font-bold text-ink">Take a reading now</h2>
+            <h2 className="font-display font-bold text-ink">Take a reading</h2>
             {/* This screen scores real answers in both modes, so the notice
                 describes the surrounding screens rather than this one. Both
                 variants are required: demo figures elsewhere are generated, and
                 in real mode no patch is paired. */}
             {mode === 'real'
-              ? <RealNotice inline>No patch is paired, and these six questions do not need one.</RealNotice>
-              : <DemoNotice inline>Every other screen is generated. These six are not.</DemoNotice>}
+              ? <RealNotice inline>None needed.</RealNotice>
+              : <DemoNotice inline>Real scoring here.</DemoNotice>}
           </div>
 
           <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
@@ -312,7 +336,7 @@ export function CheckInBody({ go }){
                 onOpen={() => open('survey')}>
                 <span className="mt-3 block border-t border-rule pt-2.5">
                   <span className="block font-mono text-fine tabular-nums text-ink-3">
-                    {answered} of {ITEMS.length} answered
+                    {`${answered}/${ITEMS.length}`}
                   </span>
                   {/* aria-hidden: the line above already says the figure, and a
                       progressbar inside a button joins its accessible name. */}
@@ -327,25 +351,23 @@ export function CheckInBody({ go }){
                 a panel with a control in it and not a card-sized button. */}
             <ScrollRow index={2} className="h-full">
               <section className={cn(PANEL, 'flex h-full flex-col p-4 lg:p-5')}>
-                <h3 className="font-display text-row font-bold leading-tight text-ink">
-                  {patch.title}
+                <h3 className="flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
+                  <Link aria-hidden className="size-6 shrink-0 text-accent"/>{patch.title}
                 </h3>
-                <p className="mt-1 max-w-[38ch] text-meta leading-[1.4] text-ink-2">{patch.line}</p>
-                <Spec rows={patch.spec}/>
+                <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.4] text-ink-2">{patch.line}</p>
                 <div className="mt-auto pt-3">
                   <Button variant="outline" size="sm" onClick={pairUp} disabled={busy}>
-                    {busy ? 'Connecting…' : patch.cta}
+                    <Link aria-hidden/>{busy ? 'Connecting…' : patch.cta}
                   </Button>
                 </div>
                 <p aria-live="polite"
                   className="mt-1.5 min-h-[2.8em] max-w-[44ch] text-fine leading-[1.4] text-ink-3">
-                  {pair?.msg || (mode === 'real'
-                    ? 'Nothing is paired to this account, so the dashboard has no reading to show yet.'
-                    : 'Nothing is paired yet. The other two ways need no patch.')}
+                  {pair?.msg || 'Not paired.'}
                 </p>
               </section>
             </ScrollRow>
           </div>
+          <Compare/>
         </Stage>
       )}
 
@@ -385,7 +407,7 @@ export function CheckInBody({ go }){
               className={cn(PANEL, 'mt-3 min-h-[10rem] p-4 lg:p-5 xl:mt-0 xl:sticky xl:top-[65px]')}>
               {!done && (
                 <p className="max-w-[40ch] text-meta text-ink-3">
-                  Answer all six and your {SCORE} appears here, as a sentence first.
+                  Your {SCORE} appears here after six answers.
                 </p>
               )}
               {done && (
@@ -409,8 +431,8 @@ export function CheckInBody({ go }){
                     </div>
                   </div>
                   <AllDetail label={`See what moved your ${SCORE}`}>
-                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">Right of the line raised the
-                      {' '}{SCORE}, left of it lowered it.</p>
+                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">Right of the line raised
+                      {' '}the {SCORE}. Left lowered it.</p>
                     <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),
                       x: Math.max(-1, Math.min(1, c.raw)) }))}/>
                     <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
@@ -419,8 +441,7 @@ export function CheckInBody({ go }){
                       <dt className="text-ink-3">The six together</dt>
                       <dd className="m-0 text-ink-2">Averaged, then turned into one number out of 100</dd>
                       <dt className="text-ink-3">A patch instead</dt>
-                      <dd className="m-0 text-ink-2">Same last step, from heart rate, sweat, temperature
-                        and movement, so both give one number on one scale</dd>
+                      <dd className="m-0 text-ink-2">Same last step, from four signals, on one scale</dd>
                     </dl>
                   </AllDetail>
                 </>

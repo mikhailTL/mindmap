@@ -331,10 +331,9 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
           whitespace-nowrap text-tick text-ink-3">
           <b className="font-normal text-ink-2">100</b> peak</span>
       </div>
-      {usual != null && (
-        <p aria-hidden className="mt-2 text-center text-sec text-ink-2">
-          The mark is a usual day: <b className="font-medium text-ink">{usual}</b></p>
-      )}
+      {/* No caption under the dial. The usual-day mark is drawn on the scale
+          and named in the aria-label above; design spec 0f holds the dial to
+          its key, the two foot labels. */}
     </div>
   )
 }

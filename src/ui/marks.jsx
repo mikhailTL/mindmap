@@ -48,3 +48,7 @@ export const Bell       = p => <S {...p}><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l
 export const Exit       = p => <S {...p}><path d="M14 4.5h4.5v15H14M3.5 12h11M10.5 8l4 4-4 4"/></S>
 export const Plus       = p => <S {...p}><path d="M12 5v14M5 12h14"/></S>
 export const Bin        = p => <S {...p}><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></S>
+
+/* Reading marks: the two ways in and the device handshake. */
+export const Camera     = p => <S {...p}><path d="M3.5 8h4l1.5-2.5h6L16.5 8h4v11h-17z"/><circle cx="12" cy="13" r="3.2"/></S>
+export const Link       = p => <S {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></S>

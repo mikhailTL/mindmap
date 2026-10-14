@@ -1,6 +1,8 @@
 import React from 'react'
 import { ScrollIn } from '../ui/motion'
 import { cn } from '../lib/utils'
+import { SeeDetails, Why } from '../views/Monitor'
+import { SCORE } from '../lib/terms'
 import { Chips, ChoiceRows, Panel, SwitchRow, TimeField } from './controls'
 import {
   DAYS, LOCK_COPY, LOCK_LEVELS, getNotify, getVersion, lockLine, setNotify, subscribe,
@@ -20,11 +22,31 @@ import {
  * The lock screen preview is built by store.js's lockLine() from the live
  * setting rather than written out per option, so the sample cannot drift from
  * the thing that was chosen.
+ *
+ * Design spec 0f: 15 to 45 words above the fold. Every row is its label; the
+ * hints and the delivery note sit behind a "?" on each panel, and the four
+ * promises about what a reminder is not sit behind one disclosure.
  */
 
 const DAY_CHIPS = DAYS.map(d => ({ value: d.n, label: d.short, full: d.full }))
 
-const LOCK_OPTIONS = LOCK_LEVELS.map(v => ({ value: v, ...LOCK_COPY[v] }))
+/* Short labels for the three levels. store.js keeps the long ones, which
+   the "?" shows beside their hints. */
+const LOCK_SHORT = { name: 'Name only', plain: 'Plain reminder', score: `Reminder and ${SCORE}` }
+const LOCK_WHY = {
+  name: 'Only the app name shows.',
+  plain: 'One neutral line. No figure.',
+  score: `Your ${SCORE}, readable without unlocking.`,
+}
+const LOCK_OPTIONS = LOCK_LEVELS.map(v => ({ value: v, label: LOCK_SHORT[v] || LOCK_COPY[v].label }))
+
+/* The four promises. One line each, none a paragraph. */
+const PROMISES = [
+  ['A reminder', 'A line on your phone, at your time.'],
+  ['Not a score', 'No streaks, no tallies, no awards.'],
+  ['Not a check', 'A missed day is never mentioned.'],
+  ['Not a message', 'Turning reminders on or off tells nobody.'],
+]
 
 /* 20:30 reads as 8:30 pm here, because nothing else in the app speaks in 24
    hours. The field itself stays on the browser's own clock. */
@@ -69,14 +91,9 @@ function LockPreview({ settings, score }) {
       <div className="mt-3 rounded-field border border-ink-2 bg-ink-2/60 px-3 py-2.5">
         <p className="font-display text-fine font-bold text-paper">{app}</p>
         <p className="mt-0.5 text-fine text-mist">
-          {rest.length ? rest.join(' · ') : 'No text. The name is all that shows.'}
+          {rest.length ? rest.join(' · ') : 'Name only.'}
         </p>
       </div>
-      <p className="mt-2.5 text-center text-fine text-mist">
-        {settings.on
-          ? `What somebody holding your phone would read, ${dayPhrase(settings.days)}.`
-          : 'Reminders are off, so this is what would show if you turned them on.'}
-      </p>
     </div>
   )
 }
@@ -113,14 +130,22 @@ export function NotificationSettings({ score = null, className }) {
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
         <Panel title="Reminders"
-          lede="Off until you turn them on. Nothing about a reminder is sent to a parent or a Medical Professional."
           aside={s.on ? `${spoken(s.time)}, ${dayPhrase(s.days)}` : 'Off'}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
+            <Why label="How reminders work" className="ml-auto">
+              <ul className="m-0 list-disc pl-4">
+                <li>One reminder, at the time you pick.</li>
+                <li>Off until you turn them on.</li>
+                <li>Held overnight, a reminder waits until morning.</li>
+                <li>No reminder reaches a parent or a Medical Professional.</li>
+                <li>In this build the choice is saved on the phone. Nothing is scheduled.</li>
+              </ul>
+            </Why>
+          </div>
           <SwitchRow
-            label="Remind me to take a reading"
-            hint="One reminder, at the time you pick."
+            label="Remind me"
             checked={s.on}
-            onChange={on => setNotify({ on })}
-            note="Delivery belongs to the installed app. In this build the choice is saved on the phone and nothing is scheduled."/>
+            onChange={on => setNotify({ on })}/>
 
           <div className={cn('border-t border-rule px-4 py-4',
             !s.on && 'opacity-60')}>
@@ -133,8 +158,7 @@ export function NotificationSettings({ score = null, className }) {
           </div>
 
           <SwitchRow
-            label="Hold a reminder overnight"
-            hint="Anything due inside these hours waits until morning."
+            label="Hold overnight"
             checked={s.hold}
             onChange={hold => setNotify({ hold })}/>
           <div className={cn('grid max-w-[22rem] gap-3 border-t border-rule px-4 py-4 sm:grid-cols-2',
@@ -149,15 +173,27 @@ export function NotificationSettings({ score = null, className }) {
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-4">
         <ScrollIn delay={0.05}>
-          <Panel title="What it may say on a locked screen"
-            lede="A phone on a desk is read by whoever walks past it. The quietest option is the one it starts on.">
+          <Panel title="Lock screen text">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
+              <Why label="What each lock screen option shows" className="ml-auto">
+                <p>A phone on a desk is read by anyone. The quietest option is the default.</p>
+                <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  {LOCK_LEVELS.map(v => (
+                    <React.Fragment key={v}>
+                      <dt className="font-medium text-ink">{LOCK_SHORT[v]}</dt>
+                      <dd className="m-0">{LOCK_WHY[v]}</dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
+              </Why>
+            </div>
             <ChoiceRows label="What a reminder may say on a locked screen"
               value={s.lock} options={LOCK_OPTIONS} onChange={lock => setNotify({ lock })}/>
           </Panel>
         </ScrollIn>
 
         <ScrollIn delay={0.1}>
-          <Panel title="Preview" aside="Live">
+          <Panel title="Preview">
             <div className="p-4">
               <LockPreview settings={s} score={score}/>
             </div>
@@ -166,14 +202,9 @@ export function NotificationSettings({ score = null, className }) {
       </div>
 
       <ScrollIn delay={0.15}>
-        <Panel className="mt-3" title="What a reminder is">
-          <ul className="m-0 list-none p-0">
-            {[
-              ['A reminder', 'A line on your phone at a time you chose. That is the whole of it.'],
-              ['Not a score', 'Nothing counts days in a row and nothing is awarded for a run of them.'],
-              ['Not a check', 'A day without a reading is a day without a reading. You will not be told you missed one.'],
-              ['Not a message', 'Turning reminders on or off tells nobody. It is a setting on this phone.'],
-            ].map(([k, v]) => (
+        <SeeDetails label="Reminder rules" className="mt-3 lg:mt-4">
+          <ul className="m-0 list-none rounded-panel border border-rule bg-card p-0">
+            {PROMISES.map(([k, v]) => (
               <li key={k} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 border-t
                 border-rule px-4 py-3 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)]">
                 <span className="font-mono text-fine text-ink-3">{k}</span>
@@ -181,7 +212,7 @@ export function NotificationSettings({ score = null, className }) {
               </li>
             ))}
           </ul>
-        </Panel>
+        </SeeDetails>
       </ScrollIn>
     </div>
   )

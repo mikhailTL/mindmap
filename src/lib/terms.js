@@ -22,9 +22,8 @@ export const PRO_PLURAL_LC = 'medical professionals'
 export const PRO_FOR = 'For Medical Professionals'
 
 /* Their view. Never "ranked", never "instability", never a leaderboard. */
-export const CASELOAD_TITLE = 'Who to check in with this week'
-export const CASELOAD_DEF =
-  'The students whose Mind Score moved most since last week, so a check-in starts with the biggest change.'
+export const CASELOAD_TITLE = 'Students to check in with'
+export const CASELOAD_DEF = 'Whose Mind Score moved most since last week.'
 
 /* Consent, in this order: a guardian opens the account, then the student
    chooses per audience. Nothing is shared by default. */

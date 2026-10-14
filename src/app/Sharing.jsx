@@ -1,7 +1,10 @@
 import React from 'react'
 import { ScrollIn } from '../ui/motion'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
+import { Cross } from '../ui/marks'
+import { Why } from '../views/Monitor'
 import { cn } from '../lib/utils'
-import { CONSENT_OFF, PRO_LC, SCORE } from '../lib/terms'
+import { PRO_LC, SCORE } from '../lib/terms'
 import { ArmedButton, ChoiceRows, FixedRow, NeverRow, Panel, SwitchRow } from './controls'
 import {
   AUDIENCES, RETENTION, SHARING,
@@ -27,10 +30,14 @@ import {
  *     say Never rather than left off the screen, because an absence nobody
  *     can see is not a reassurance.
  *
- * Crisis handling is the one thing with no switch. caseload.js has no consent
+ * Crisis handling is the one row with no switch. caseload.js has no consent
  * key for it, which is the structural reason: there is nothing to turn off.
- * It is stated here plainly instead of being drawn as a switch that does not
- * move.
+ * It sits in the Medical Professional column as a row that says Always on.
+ *
+ * Design spec 0f: 15 to 45 words above the fold. The two audiences are tabs,
+ * one list at a time, and each row is its short label; the full label and
+ * its hint sit behind the "?" at the top of the list. store.js keeps the
+ * long labels because the change log is written from them.
  *
  * Note for the reviewer: src/charts/infographics.jsx marks raw readings as
  * Never for the Medical Professional at every consent level, while
@@ -38,6 +45,19 @@ import {
  * data layer is what this screen expresses, per its brief, and the raw row is
  * off by default. The two files disagree and one of them should change.
  */
+
+/* Row labels as they are drawn, two or three words each. Keyed by the
+   store's field key so a field added there without a line here still shows
+   its full label rather than nothing. */
+const SHORT = {
+  parent: { score: `Daily ${SCORE}`, week: 'Days above usual', sleep: 'Hours slept', worn: 'Patch worn' },
+  pro:    { score: SCORE, trends: 'Weekly change', raw: 'Raw readings' },
+}
+const SHORT_NEVER = {
+  'My readings second by second': 'Raw readings',
+  'Anything I say': 'Voice',
+}
+const label = (audience, f) => SHORT[audience]?.[f.key] || f.label
 
 function count(state) {
   return AUDIENCES.reduce((n, a) =>
@@ -56,18 +76,14 @@ function TheirView({ audience, state }) {
         {SHARING[audience].who} would see
       </p>
       {on.length === 0 ? (
-        <p className="mt-1 max-w-[62ch] text-fine text-ink-2">
-          Nothing. {audience === 'pro'
-            ? 'The console would list you with no figure beside your name.'
-            : 'The week would be blank.'}
-        </p>
+        <p className="mt-1 text-fine text-ink-2">Nothing.</p>
       ) : (
         <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
           {on.map(f => (
             <li key={f.key}
               className="rounded-field border border-rule bg-card px-2 py-0.5 font-display
                 text-fine font-medium text-ink">
-              {f.label.replace(/^My /, '')}
+              {label(audience, f)}
             </li>
           ))}
         </ul>
@@ -76,31 +92,73 @@ function TheirView({ audience, state }) {
   )
 }
 
+/* The full label and hint for every row, behind the "?" so the list itself
+   is the short labels. One list item per row: no paragraph forms. */
+function RowMeanings({ audience }) {
+  const spec = SHARING[audience]
+  return (
+    <>
+      <p className="font-display font-bold text-ink">
+        {audience === 'parent' ? 'One figure a day at most.' : 'What the console may hold.'}
+      </p>
+      <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        {spec.fields.map(f => (
+          <React.Fragment key={f.key}>
+            <dt className="font-medium text-ink">{label(audience, f)}</dt>
+            <dd className="m-0">{f.hint}</dd>
+          </React.Fragment>
+        ))}
+        {spec.never.map(n => (
+          <React.Fragment key={n.label}>
+            <dt className="font-medium text-ink">{SHORT_NEVER[n.label] || n.label}</dt>
+            <dd className="m-0">{n.hint}</dd>
+          </React.Fragment>
+        ))}
+        {audience === 'pro' && (
+          <>
+            <dt className="font-medium text-ink">Crisis alerts</dt>
+            <dd className="m-0">Consent does not cover a crisis. What follows is their own protocol.</dd>
+          </>
+        )}
+      </dl>
+    </>
+  )
+}
+
 function Audience({ audience, state }) {
   const spec = SHARING[audience]
   const mine = state[audience]
+  const on = spec.fields.filter(f => mine[f.key]).length
   return (
-    <Panel className="flex h-full flex-col" title={spec.who}
-      aside={`${spec.fields.filter(f => mine[f.key]).length} of ${spec.fields.length} on`}
-      lede={audience === 'parent'
-        ? 'One figure a day at most. Never an hour, never a minute.'
-        : `What the console beside your name may hold.`}>
+    <div className="flex h-full flex-col">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
+        <span className="font-mono text-fine tabular-nums text-ink-3">{`${on}/${spec.fields.length} on`}</span>
+        <Why label={`What each row means for ${spec.whom}`} className="ml-auto">
+          <RowMeanings audience={audience}/>
+        </Why>
+      </div>
       {spec.fields.map(f => {
         const blocked = f.needs && !mine[f.needs]
         const parent = blocked && spec.fields.find(x => x.key === f.needs)
         return (
           <SwitchRow key={f.key}
-            label={f.label}
-            hint={f.hint}
+            label={label(audience, f)}
             checked={mine[f.key]}
             disabled={blocked}
-            note={blocked ? `Needs “${parent.label}” on first: this is movement in it.` : undefined}
+            note={blocked ? `Needs “${label(audience, parent)}” first.` : undefined}
             onChange={on => setShared(audience, f.key, on)}/>
         )
       })}
-      {spec.never.map(n => <NeverRow key={n.label} label={n.label} hint={n.hint}/>)}
+      {spec.never.map(n => <NeverRow key={n.label} label={SHORT_NEVER[n.label] || n.label}/>)}
+      {audience === 'pro' && (
+        /* "Crisis alert" is caseload.js's own word for this, and the band is
+           named rather than its number: a threshold printed on a student's
+           settings screen is a clinical cut-off, and this is not the screen
+           for one. */
+        <FixedRow label="Crisis alerts" hint={`Always reaches a ${PRO_LC}. No switch.`}/>
+      )}
       <TheirView audience={audience} state={state}/>
-    </Panel>
+    </div>
   )
 }
 
@@ -125,99 +183,75 @@ export function SharingControls({ className }) {
   return (
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
-        <Panel title="What leaves this phone" aside={`${on} of ${TOTAL} on`}
-          lede={CONSENT_OFF}>
-          <div className="px-4 py-4">
-            <p className="max-w-[62ch] text-meta text-ink">
-              Every switch below starts off. You turn one on, and you turn it off again, and
-              the thing it names stops being shared from that moment.
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <ArmedButton armedLabel="Yes, stop sharing everything" onConfirm={revokeAll}>
-                Turn everything off
-              </ArmedButton>
-              <p className="text-fine text-ink-3">
-                {on === 0 ? 'Nothing is being shared right now.'
-                  : `${on} of ${TOTAL} things are being shared.`}
-              </p>
-            </div>
+        <Panel title="What is shared" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4">
+            <ArmedButton armedLabel="Yes, stop sharing everything" onConfirm={revokeAll}>
+              <Cross aria-hidden className="size-4"/>Turn everything off
+            </ArmedButton>
+            <Why label="How sharing works" className="ml-auto">
+              Every switch starts off. Turn any off again, at any time.
+            </Why>
           </div>
         </Panel>
       </ScrollIn>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
-        {AUDIENCES.map((a, i) => (
-          <ScrollIn key={a} delay={0.05 * (i + 1)} className="h-full">
-            <Audience audience={a} state={state}/>
-          </ScrollIn>
-        ))}
-      </div>
+      <ScrollIn delay={0.05}>
+        <Tabs defaultValue={AUDIENCES[0]}
+          className="mt-3 overflow-hidden rounded-panel border border-rule bg-card lg:mt-4">
+          <TabsList scroll aria-label="Who" className="border-rule px-4">
+            {AUDIENCES.map(a => (
+              <TabsTrigger key={a} value={a}>{SHARING[a].who}</TabsTrigger>
+            ))}
+          </TabsList>
+          {AUDIENCES.map(a => (
+            <TabsContent key={a} value={a} className="mt-0">
+              <Audience audience={a} state={state}/>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </ScrollIn>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
-        <ScrollIn delay={0.15}>
-          <Panel title="The one thing with no switch">
-            {/* "Crisis alert" is caseload.js's own word for this, and the
-                band is named rather than its number: a threshold printed on a
-                student's settings screen is a clinical cut-off, and this is
-                not the screen for one. */}
-            <FixedRow label="Crisis alerts"
-              hint={`A crisis alert reaches a ${PRO_LC} whatever else here is switched off. There is no switch for it because there is none in the product: it is the one thing consent does not cover. What happens after that is their own protocol, and nothing on this screen can promise you what it will be.`}/>
-            <div className="border-t border-rule px-4 py-3">
-              <p className="max-w-[62ch] text-fine text-ink-3">
-                Everything else on this screen is yours to turn off, including the {SCORE}
-                {' '}itself. This row is the exception and it is the only one.
-              </p>
-            </div>
-          </Panel>
-        </ScrollIn>
-
-        <ScrollIn delay={0.2}>
-          <Panel title="How long raw readings are kept"
-            lede="On this phone. Nothing is kept anywhere else."
-            aside={`${state.retention} days`}>
+        <ScrollIn delay={0.1}>
+          <Panel title="Keep raw readings for" aside={`${state.retention} days`}>
             <ChoiceRows label="How long raw readings are kept on this phone"
               value={state.retention}
               onChange={setRetention}
               options={RETENTION.map(d => ({
                 value: d,
                 label: `${d} days`,
-                hint: d === 7 ? 'The shortest, and where this starts.'
-                  : d === 30 ? 'A month of samples behind each score.'
-                  : 'A term of samples. The longest this offers.',
+                hint: d === 7 ? 'Shortest. Where this starts.'
+                  : d === 30 ? 'A month of samples.'
+                  : 'A term of samples. The longest.',
               }))}/>
             <div className="border-t border-rule px-4 py-3">
               <p className="max-w-[62ch] text-fine text-ink-3">
-                Older samples are dropped. The daily {SCORE} they were behind stays, because
-                it is one number a day rather than a reading.
+                Older samples are dropped. The daily {SCORE} stays.
               </p>
             </div>
           </Panel>
         </ScrollIn>
-      </div>
 
-      {state.log.length > 0 && (
-        <ScrollIn delay={0.25}>
-          <Panel className="mt-3" title="What you changed, on this phone"
-            aside={`${state.log.length} of the last 12`}>
-            <ul className="m-0 list-none p-0">
-              {state.log.map((r, i) => (
-                <li key={r.at + i}
-                  className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 border-t border-rule
-                    px-4 py-2.5 first:border-t-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]">
-                  <span className="font-mono text-fine tabular-nums text-ink-3">{stamp(r.at)}</span>
-                  <span className="max-w-[62ch] text-fine text-ink-2">{r.text}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="border-t border-rule px-4 py-3">
-              <p className="max-w-[62ch] text-fine text-ink-3">
-                This list is on the phone and goes nowhere. It is here so a switch you
-                changed last week is still something you can check.
-              </p>
-            </div>
-          </Panel>
-        </ScrollIn>
-      )}
+        {state.log.length > 0 && (
+          <ScrollIn delay={0.15}>
+            <Panel title="Your changes" aside={`${state.log.length} of the last 12`}>
+              <ul className="m-0 list-none p-0">
+                {state.log.map((r, i) => (
+                  <li key={r.at + i}
+                    className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 border-t border-rule
+                      px-4 py-2.5 first:border-t-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]">
+                    <span className="font-mono text-fine tabular-nums text-ink-3">{stamp(r.at)}</span>
+                    <span className="max-w-[62ch] text-fine text-ink-2">{r.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="border-t border-rule px-4 py-3">
+                <p className="max-w-[62ch] text-fine text-ink-3">Kept on this phone. Sent nowhere.</p>
+              </div>
+            </Panel>
+          </ScrollIn>
+        )}
+      </div>
     </div>
   )
 }

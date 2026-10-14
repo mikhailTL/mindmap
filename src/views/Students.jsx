@@ -619,7 +619,7 @@ function CheckBody({ go }) {
   return (
     <>
       <CheckInBody go={go}/>
-      <SeeDetails className="mt-6" label="See details">
+      <SeeDetails className="mt-6" label="What you get back">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <Panel className="h-full">
             <PanelHead title="What You Get Back" meta="any route"/>
