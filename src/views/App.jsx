@@ -30,7 +30,12 @@ import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Grid,
-         PulseMark, Rule, Search, Wave } from '../ui/marks'
+         People, PulseMark, Rule, Search, Wave } from '../ui/marks'
+import { SignIn } from '../account/SignIn'
+import { Account } from '../account/Account'
+import { Network } from '../account/Network'
+import { AccountButton } from '../account/ui'
+import { useAccount } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
 import { RealNotice } from '../ui/notice'
 import { cn } from '../lib/utils'
@@ -57,6 +62,8 @@ const VIEWS = [
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
   /* kept, not in section 18 */
   'tour','notes',
+  /* accounts: sign in, the portal, and who is linked to whom */
+  'signin','account','network',
 ]
 
 /* Routes that render app screens, so the chrome switches: `reading` is the
@@ -65,7 +72,11 @@ const VIEWS = [
 const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
-                           'toolkit-scan','toolkit-move'])
+                           'toolkit-scan','toolkit-move','signin','account','network'])
+
+/* The three account routes belong to whichever app the signed in account is
+   for, and otherwise to the app the reader walked in from. */
+const ACCOUNT_VIEWS = new Set(['account','network'])
 
 /* Old ids, so a link, a bookmark or another worker's button still lands. The
    palette pushes `hub`, which is not a route. */
@@ -107,6 +118,9 @@ const TITLE = {
   tour:'A guided tour of MindMap',
   responses:'Survey responses in MindMap',
   survey:'Give feedback on MindMap',
+  signin:'Sign in to MindMap',
+  account:'Your account in MindMap',
+  network:'Your network in MindMap',
 }
 
 /* Two menus, because five flat tabs plus a dropdown did not fit a laptop and
@@ -411,7 +425,8 @@ const APP_NAV = {
     ['privacy',     'Sharing',  Grid],
   ],
   pro: [
-    ['app-pro',     'Caseload', Grid],
+    ['app-pro',     'Students', Grid],
+    ['network',     'Network',  People],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['toolkit',     'Toolkit',  Bracket],
   ],
@@ -439,7 +454,10 @@ const APP_TAB = { app:null,
                   'toolkit-reframe':'toolkit', 'toolkit-scan':'toolkit',
                   'toolkit-move':'toolkit',
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
-                  'app-pro':'app-pro' }
+                  'app-pro':'app-pro',
+                  /* Network is a tab only on the pro bar; on the other two it
+                     lights nothing and is reached from the account portal. */
+                  signin:null, account:null, network:'network' }
 
 /* Two spellings of each screen name. At 390 the top bar also carries the help
    button, the demo switch and the way back, so the long one would be the thing
@@ -466,7 +484,10 @@ const APP_TITLE = {
   help:           ['Help',             'Getting help'],
   'app-parent':   ['Week',             'This week'],
   privacy:        ['Sharing',          'Sharing'],
-  'app-pro':      ['Caseload',         'Caseload'],
+  'app-pro':      ['Students',         'Students'],
+  signin:         ['Sign in',          'Sign in'],
+  account:        ['Account',          'Account'],
+  network:        ['Network',          'Network'],
 }
 
 /* App shell, inherited by every app route.
@@ -485,7 +506,10 @@ const APP_SHELL = cn(
   '[&_.wrap]:max-w-[1200px]',
   /* `.mark` is exempt: it is a ruled 16px label marked up as a heading, and a
      step on it would blow a hairline annotation up to 25px. */
-  '[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
+  /* The h1 is the top bar's title. Below sm the row also carries five
+     controls, so it steps down to `row` (22px): "Reminders" is 125px at
+     `head` and the title has 115. */
+  '[&_h1:not(.mark)]:text-row sm:[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
   '[&_h3:not(.mark)]:text-meta [&_h4:not(.mark)]:text-ui',
   '[&_.wrap]:py-6 lg:[&_.wrap]:py-8',
 )
@@ -545,10 +569,13 @@ function ExitToSite({ go, className, short = false }) {
   return (
     <button type="button" onClick={() => go('site')}
       aria-label={short ? 'Back to the site' : undefined}
-      className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field pr-2 font-display',
-        'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink', className)}>
+      className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field font-display',
+        'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink',
+        /* Below sm the word goes and the arrow sits in a 44 square: the row
+           at 390 also carries the account button now. */
+        short ? 'min-w-[44px] justify-center sm:min-w-0 sm:justify-start sm:pr-2' : 'pr-2', className)}>
       <ArrowLeft aria-hidden className="size-4 shrink-0"/>
-      {short ? <span aria-hidden>Site</span> : 'Back to the site'}
+      {short ? <span aria-hidden className="hidden sm:inline">Site</span> : 'Back to the site'}
     </button>
   )
 }
@@ -574,12 +601,17 @@ function AppTopBar({ view, go }) {
           <span aria-hidden className="sm:hidden">{short}</span>
           <span aria-hidden className="hidden sm:inline">{long}</span>
         </h1>
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
+        {/* Five controls at 390: help 44, the toggle 101, the way back 44 and
+            the account 40, at 4px gaps, which leaves the heading the 121px it
+            had before the account button arrived. */}
+        <div className="ml-auto flex items-center gap-1 sm:gap-3">
           {/* First in the group, so the one control somebody might need in a
               hurry is the one nearest their thumb. */}
           <GetHelp compact/>
-          <ModeToggle compact className="[&_button]:min-h-[44px]"/>
+          <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-2 sm:[&_button]:px-3"/>
           <ExitToSite go={go} short/>
+          {/* Last, at the right: the way to sign in, or to the account. */}
+          <AccountButton go={go} className="-mr-2 w-10 sm:w-11"/>
         </div>
       </div>
     </div>
@@ -850,12 +882,14 @@ const START = {
   pro: {
     head: 'Start Here',
     actions: [
-      { id:'demo',    title:'Open the Worked Caseload', Mark:Wave },
+      { id:'demo',    title:'Try the Worked Week', Mark:Wave },
       { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark },
       { id:'methods', title:'How Scoring Works', Mark:Rule },
       { id:'help',    title:'Get Help',          Mark:Search },
     ],
-    setup: null,
+    /* The setup slot the other two audiences use for the patch: here it is
+       the network, where a code is made for a student to enter. */
+    setup: { id:'network', title:'Your Students', Mark:People, cta:'Add a student' },
   },
 }
 
@@ -972,6 +1006,10 @@ export function App() {
      audience, so the bar under them is the bar of the app the reader walked in
      from rather than a guess. */
   const [audience, setAudience] = React.useState('student')
+  /* The signed in account, if any. Signing in moves the shared screens to
+     that account's app; nothing is gated on it. */
+  const me = useAccount()
+  React.useEffect(() => { if (me) setAudience(me.role) }, [me?.id, me?.role])
   /* Three gates in order: title sequence, name, per-page questions. The
      responses route is excluded from all three. */
   const admin = view === 'responses'
@@ -1013,7 +1051,9 @@ export function App() {
   const inApp = APP_VIEWS.has(view)
   /* `app` itself is the launcher and has no bar; a shared screen takes the bar
      of the app it was opened from. */
-  const appOf = APP_OF[view] || (SHARED_VIEWS.has(view) ? audience : null)
+  const appOf = APP_OF[view]
+    || (ACCOUNT_VIEWS.has(view) && me ? me.role : null)
+    || (SHARED_VIEWS.has(view) || ACCOUNT_VIEWS.has(view) ? audience : null)
 
   /* The route table. Every id in spec 0e section 18 is here and resolves.
      Several routes are a tab inside a section and keep their own url. */
@@ -1046,7 +1086,11 @@ export function App() {
               'toolkit-scan':      () => <Toolkit who={audience} open="scan"/>,
               'toolkit-move':      () => <Toolkit who={audience} open="move"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
-              calendar: Calendar }[view]
+              calendar: Calendar,
+              /* Accounts, kept on this device. */
+              signin:   SignIn,
+              account:  Account,
+              network:  Network }[view]
   return (
     <>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target

@@ -36,3 +36,15 @@ export const Frame      = p => <S {...p}><rect x="4" y="5" width="16" height="14
 export const Bracket    = p => <S {...p}><path d="M9 4H5v16h4M15 4h4v16h-4"/></S>
 export const Wave       = p => <S {...p}><path d="M2 12c3 0 3-5 6-5s3 10 6 10 3-5 8-5"/></S>
 export const Grid       = p => <S {...p}><path d="M4 4v16M12 4v16M20 4v16M4 9h16M4 15h16"/></S>
+
+/* Account marks: a person, a network of people, and the actions on an
+   account. Same 24 box, same 1.6 stroke. */
+export const Person     = p => <S {...p}><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></S>
+export const People     = p => <S {...p}><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 6.5M18.5 13.5a6 6 0 0 1 3 5.5"/></S>
+export const Key        = p => <S {...p}><circle cx="8" cy="14" r="4.5"/><path d="M11.5 10.5L20 2M16 6l2.5 2.5M13.5 8.5l2.5 2.5"/></S>
+export const Download   = p => <S {...p}><path d="M12 3.5v12M7 11l5 5 5-5M4 20.5h16"/></S>
+export const Copy       = p => <S {...p}><rect x="8.5" y="8.5" width="12" height="12" rx="1.5"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></S>
+export const Bell       = p => <S {...p}><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15ZM10 20.5a2 2 0 0 0 4 0"/></S>
+export const Exit       = p => <S {...p}><path d="M14 4.5h4.5v15H14M3.5 12h11M10.5 8l4 4-4 4"/></S>
+export const Plus       = p => <S {...p}><path d="M12 5v14M5 12h14"/></S>
+export const Bin        = p => <S {...p}><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></S>

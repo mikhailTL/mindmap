@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Badge } from '../ui/badge'
 import { DemoNotice, RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
-import { ArrowRight, Chevron } from '../ui/marks'
+import { ArrowRight, Chevron, Plus } from '../ui/marks'
 import { List, Item } from '../ui/list'
 import {
   K_ANONYMITY, TIER_LABEL, triage, scoreOnly, alertsOnly, roster,
@@ -911,6 +911,18 @@ const AskAi = ({ go, className }) => (
   </button>
 )
 
+/* The way into the network screen (src/account/Network.jsx): a code the
+   student enters and a parent approves. */
+const AddStudent = ({ go, className }) => (
+  <button type="button" onClick={() => go('network')}
+    className={cn('inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-field border',
+      'border-accent-ink bg-accent px-3 font-display text-ui font-medium text-paper',
+      'transition-colors duration-150 hoverOnly:bg-accent-ink active:bg-accent-ink', className)}>
+    <Plus aria-hidden className="size-4 shrink-0"/>
+    Add a student
+  </button>
+)
+
 const NothingYet = ({ go }) => (
   <Panel tone="brand">
     <PanelHead title="No Readings Yet"/>
@@ -919,7 +931,10 @@ const NothingYet = ({ go }) => (
     <List className="mt-3 max-w-[54ch] text-fine text-ink-2">
       {WHAT_FILLS.map(t => <Item key={t}>{t}</Item>)}
     </List>
-    <AskAi go={go} className="mt-3.5"/>
+    <div className="mt-3.5 flex flex-wrap gap-2.5">
+      <AddStudent go={go}/>
+      <AskAi go={go}/>
+    </div>
   </Panel>
 )
 
@@ -992,7 +1007,10 @@ export function Pro({ go }) {
               builds. Nothing on this screen answers anything. */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p className="tick">Step {at + 1} of {STEPS.length}</p>
-            <AskAi go={go}/>
+            <div className="flex flex-wrap gap-2.5">
+              <AddStudent go={go}/>
+              <AskAi go={go}/>
+            </div>
           </div>
           {STEPS.map(([v]) => {
             const Pane = PANES[v]
