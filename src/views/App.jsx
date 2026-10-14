@@ -23,7 +23,8 @@ import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { ModeToggle } from '../ui/mode-toggle'
 import { useMode, setMode } from '../lib/mode'
-import { Palette } from '../ui/palette'
+import { MindMapAI } from '../ai'
+import { Calendar } from './calendar'
 import { Logo } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
@@ -993,54 +994,6 @@ function ProApp(p) {
  * answering, so this page says plainly that it is not connected and offers no
  * input to type into.
  */
-function AiPending({ go }) {
-  return (
-    <main className="wrap">
-      <h2 className="font-display font-bold text-ink">MindMap AI</h2>
-      <div className="mt-3 rounded-panel border border-rule bg-card p-4">
-        <p className="max-w-[56ch] text-meta text-ink-2">
-          Not connected yet. MindMap AI runs on a language model behind a server
-          function, and the key is not in place, so nothing on this screen is
-          answering and no answer is offered.
-        </p>
-        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-3">
-          One framework for adolescent mental health, with three adaptations: the
-          student, the parent and the Medical Professional. Never a diagnosis.
-        </p>
-        <button type="button" onClick={() => go('methods')}
-          className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border
-            border-ink px-4 font-display text-ui font-medium text-ink transition-colors
-            duration-150 hoverOnly:bg-mist active:bg-mist">
-          How it works
-          <ArrowRight aria-hidden className="size-4 shrink-0"/>
-        </button>
-      </div>
-    </main>
-  )
-}
-
-function CalendarPending({ go }) {
-  return (
-    <main className="wrap">
-      <h2 className="font-display font-bold text-ink">The Week and the Month</h2>
-      <div className="mt-3 rounded-panel border border-rule bg-card p-4">
-        <p className="max-w-[56ch] text-meta text-ink-2">
-          Not built yet. The calendar holds the week and the month against a
-          target score the reader sets, with how often the target was met and how
-          often a day ran above or below the usual range.
-        </p>
-        <button type="button" onClick={() => go('app-parent')}
-          className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border
-            border-ink px-4 font-display text-ui font-medium text-ink transition-colors
-            duration-150 hoverOnly:bg-mist active:bg-mist">
-          Back to the week
-          <ArrowRight aria-hidden className="size-4 shrink-0"/>
-        </button>
-      </div>
-    </main>
-  )
-}
-
 /* One resolver for the hash, for `go` and for the alias table, so a link to an
    old id lands in exactly one place. */
 const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
@@ -1126,8 +1079,8 @@ export function App() {
               'toolkit-reframe':   () => <Toolkit who={audience} open="reframe"/>,
               'toolkit-scan':      () => <Toolkit who={audience} open="scan"/>,
               'toolkit-move':      () => <Toolkit who={audience} open="move"/>,
-              ai:       AiPending,
-              calendar: CalendarPending }[view]
+              ai:       p => <MindMapAI {...p} who={audience}/>,
+              calendar: Calendar }[view]
   return (
     <>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
@@ -1145,7 +1098,6 @@ export function App() {
           has seen anything. A full-screen panel between a first-time reader and
           the product is a cost paid by everybody to serve one page. */}
       {!inApp && <Header view={view} go={go}/>}
-      <Palette go={go}/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {/* Nothing in here is clipped or transformed: a transform creates a
           containing block and breaks the sticky columns in the reading screen. */}
