@@ -24,7 +24,7 @@ const call = async (op, body = {}, token) => {
   const r = res(); await handler(req('POST', { op, ...body }, token), r); return r
 }
 const create = (over = {}) => call('create', {
-  role: 'parent', name: 'Dana', email: 'dana@example.com', passcode: '1234', avatar: 'sky-wave', ...over,
+  role: 'parent', name: 'Dana', email: 'dana@example.com', passcode: '1234', avatar: 'owl', ...over,
 })
 
 beforeEach(() => { kv = memoryKV(); handler = makeHandler({ kv }) })
@@ -83,13 +83,45 @@ describe('create and sign in', () => {
     await call('signout', {}, body.token)
     expect((await call('me', {}, body.token)).statusCode).toBe(401)
   })
+  it('records the last sign-in time, and never an address', async () => {
+    const { body } = await create()
+    expect(body.snapshot.me.lastSignInAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    const first = body.snapshot.me.lastSignInAt
+    await new Promise(r => setTimeout(r, 5))
+    const again = (await call('signin', { who: 'Dana', passcode: '1234' })).body.snapshot.me
+    expect(again.lastSignInAt > first).toBe(true)
+    expect(JSON.stringify(again)).not.toMatch(/203\.0\.113|ip/i)
+  })
+  it('signout_all ends every other session and keeps the current one', async () => {
+    const { body } = await create()
+    const a = body.token
+    const b = (await call('signin', { who: 'Dana', passcode: '1234' })).body.token
+    const c = (await call('signin', { who: 'Dana', passcode: '1234' })).body.token
+    expect(a !== b && b !== c).toBe(true)
+    const r = await call('signout_all', {}, b)
+    expect(r.body.ok).toBe(true)
+    expect(r.body.ended).toBe(2)
+    expect((await call('me', {}, a)).statusCode).toBe(401)
+    expect((await call('me', {}, c)).statusCode).toBe(401)
+    expect((await call('me', {}, b)).statusCode).toBe(200)
+    /* Nothing left to end. */
+    expect((await call('signout_all', {}, b)).body.ended).toBe(0)
+  })
+  it('delete ends every session for the account', async () => {
+    const { body } = await create()
+    const other = (await call('signin', { who: 'Dana', passcode: '1234' })).body.token
+    expect((await call('delete', {}, body.token)).body.ok).toBe(true)
+    expect((await call('me', {}, other)).statusCode).toBe(401)
+    expect(await kv.smembers('sessions:' + body.snapshot.me.id)).toHaveLength(0)
+  })
 })
 
 describe('profile and passcode', () => {
   it('updates name, email, avatar and setting with the same rules as create', async () => {
     const { body } = await create({ role: 'pro', name: 'Lee', email: 'lee@example.com', setting: 'school' })
-    const r = await call('update', { name: 'Dr Lee', setting: 'practice', avatar: 'mint-leaf' }, body.token)
-    expect(r.body.snapshot.me).toMatchObject({ name: 'Dr Lee', setting: 'practice', avatar: 'mint-leaf' })
+    const r = await call('update', { name: 'Dr Lee', setting: 'practice', avatar: 'frog' }, body.token)
+    expect(r.body.snapshot.me).toMatchObject({ name: 'Dr Lee', setting: 'practice', avatar: 'frog' })
+    expect((await call('update', { avatar: 'sky-wave' }, body.token)).body.snapshot.me.avatar).toBe('frog')
     expect((await call('signin', { who: 'Dr Lee', passcode: '1234' })).body.ok).toBe(true)
     expect((await call('signin', { who: 'Lee', passcode: '1234' })).body.ok).toBe(false)
   })

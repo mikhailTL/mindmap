@@ -52,3 +52,7 @@ export const Bin        = p => <S {...p}><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 
 /* Reading marks: the two ways in and the device handshake. */
 export const Camera     = p => <S {...p}><path d="M3.5 8h4l1.5-2.5h6L16.5 8h4v11h-17z"/><circle cx="12" cy="13" r="3.2"/></S>
 export const Link       = p => <S {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></S>
+
+/* Account settings marks: the about row and the other devices row. */
+export const Info       = p => <S {...p}><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></S>
+export const Devices    = p => <S {...p}><rect x="3" y="5" width="13" height="10" rx="1.5"/><path d="M7 19h5M9.5 15v4"/><rect x="17" y="9" width="4.5" height="10" rx="1.2"/></S>

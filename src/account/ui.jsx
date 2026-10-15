@@ -36,7 +36,7 @@ export function Avatar({ name, avatar = null, size = 'md', className }) {
 export function AvatarPicker({ value, onChange, name, label = 'Your picture', className }) {
   return (
     <div role="radiogroup" aria-label={label}
-      className={cn('grid grid-cols-[repeat(auto-fill,minmax(46px,1fr))] gap-2', className)}>
+      className={cn('grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-2', className)}>
       {[{ id: null }, ...AVATARS].map(a => {
         const on = value === a.id
         return (
@@ -46,7 +46,7 @@ export function AvatarPicker({ value, onChange, name, label = 'Your picture', cl
             className={cn('relative grid aspect-square min-h-[44px] w-full place-items-center rounded-chip',
               'border-2 transition-colors duration-150',
               on ? 'border-accent' : 'border-transparent hoverOnly:border-rule')}>
-            <Avatar name={name || 'A'} avatar={a.id} size="md" className="size-9"/>
+            <Avatar name={name || 'A'} avatar={a.id} size="md" className="size-12"/>
             {on && (
               <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center
                 rounded-chip bg-accent text-paper">

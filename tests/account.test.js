@@ -60,8 +60,20 @@ describe('accounts', () => {
     expect(current()?.id).toBe(a.id)
   })
 
+  it('records the last sign-in time on the account', async () => {
+    const a = await make('student', 'Sam', '2468')
+    expect(a.lastSignInAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    signOut()
+    await new Promise(r => setTimeout(r, 5))
+    await signIn('Sam', '2468')
+    expect(current().lastSignInAt > a.lastSignInAt).toBe(true)
+    expect(JSON.parse(exportAll()).account.lastSignInAt).toBe(current().lastSignInAt)
+  })
+
   it('keeps an avatar id, an email and a professional setting on the account', async () => {
     expect(AVATAR_IDS.length).toBe(12)
+    expect(AVATAR_IDS).toEqual(['fox', 'owl', 'panda', 'frog', 'cat', 'bear',
+                                'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth'])
     const a = await make('pro', 'Dr Lee', '975310', { avatar: AVATAR_IDS[3], setting: 'practice' })
     expect(a.avatar).toBe(AVATAR_IDS[3])
     expect(a.email).toBe('lee@example.com')
@@ -344,7 +356,7 @@ describe('your data', () => {
     expect(out.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     expect(out.account).toEqual({
       id: student.id, role: 'student', name: 'Sam', email: null, avatar: null, setting: null,
-      createdAt: student.createdAt,
+      createdAt: student.createdAt, lastSignInAt: current().lastSignInAt,
     })
     expect(out.links).toHaveLength(1)
     expect(out.links[0]).toMatchObject({ kind: 'parent-student', student: student.id, parent: parent.id, pro: null, status: 'active' })

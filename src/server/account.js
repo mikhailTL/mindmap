@@ -26,9 +26,11 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 
 export const ROLES = ['student', 'parent', 'pro']
 export const SETTINGS = ['school', 'practice', 'other']
+/* The same list as AVATAR_IDS in src/account/store.js. An id not on it is
+   stored as null, and the client draws the initial instead. */
 export const AVATARS = [
-  'coral-sun', 'coral-bolt', 'lilac-moon', 'lilac-spiral', 'sun-star', 'sun-hill',
-  'mint-leaf', 'mint-sprout', 'sky-wave', 'sky-cloud', 'blush-heart', 'blush-bloom',
+  'fox', 'owl', 'panda', 'frog', 'cat', 'bear',
+  'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth',
 ]
 export const LINK_KINDS = {
   'parent-student': ['parent', 'student'],
@@ -76,9 +78,10 @@ function randomCode() {
 
 /* The public face of an account: what another person in the network sees. */
 const pub = a => ({ id: a.id, name: a.name, role: a.role, avatar: a.avatar })
-/* What the account sees of itself. Never the hash, the salt or the lock. */
+/* What the account sees of itself. Never the hash, the salt or the lock.
+   lastSignInAt is a time only; no address is ever kept. */
 const me = a => ({ id: a.id, role: a.role, name: a.name, email: a.email, avatar: a.avatar,
-                   setting: a.setting, createdAt: a.createdAt })
+                   setting: a.setting, createdAt: a.createdAt, lastSignInAt: a.lastSignInAt || null })
 
 export function makeHandler({ kv }) {
   const K = {
@@ -86,6 +89,8 @@ export function makeHandler({ kv }) {
     name: n => 'name:' + lower(n),
     email: e => 'email:' + cleanEmail(e),
     sess: t => 'sess:' + sha(t),
+    /* Every live session hash for an account, so one op can end them all. */
+    sessions: id => 'sessions:' + id,
     inv: c => 'inv:' + c,
     invby: id => 'invby:' + id,
     link: id => 'link:' + id,
@@ -146,7 +151,25 @@ export function makeHandler({ kv }) {
   async function issue(a) {
     const token = randomBytes(32).toString('base64url')
     await kv.set(K.sess(token), a.id, { ex: SESSION_S })
+    await kv.sadd(K.sessions(a.id), sha(token))
     return token
+  }
+  /* Ends every session but `keep` (a token hash, or null for all of them).
+     Returns how many were live. */
+  async function endSessions(id, keep = null) {
+    let ended = 0
+    for (const h of await kv.smembers(K.sessions(id))) {
+      if (h === keep) continue
+      if (await kv.get('sess:' + h)) ended += 1
+      await kv.del('sess:' + h)
+      await kv.srem(K.sessions(id), h)
+    }
+    if (!keep) await kv.del(K.sessions(id))
+    return ended
+  }
+  async function stamp(a) {
+    a.lastSignInAt = now()
+    await putAccount(a)
   }
 
   /* ── ops ── */
@@ -174,7 +197,7 @@ export function makeHandler({ kv }) {
         avatar: AVATARS.includes(b.avatar) ? b.avatar : null,
         setting: role === 'pro' ? b.setting : null,
         salt, passHash: hashPasscode(b.passcode, salt),
-        failed: 0, lockedUntil: 0, createdAt: now(),
+        failed: 0, lockedUntil: 0, createdAt: now(), lastSignInAt: now(),
       }
       await putAccount(a)
       return { ok: true, token: await issue(a), snapshot: await snapshot(a) }
@@ -192,13 +215,24 @@ export function makeHandler({ kv }) {
         await putAccount(a)
         return { ok: false, reason: a.lockedUntil > Date.now() ? 'locked' : 'wrong' }
       }
-      if (a.failed || a.lockedUntil) { a.failed = 0; a.lockedUntil = 0; await putAccount(a) }
+      if (a.failed || a.lockedUntil) { a.failed = 0; a.lockedUntil = 0 }
+      await stamp(a)
       return { ok: true, token: await issue(a), snapshot: await snapshot(a) }
     },
 
     async me(s) { return { ok: true, snapshot: await snapshot(s.a) } },
 
-    async signout(s) { await kv.del(K.sess(s.token)); return { ok: true } },
+    async signout(s) {
+      await kv.del(K.sess(s.token))
+      await kv.srem(K.sessions(s.a.id), sha(s.token))
+      return { ok: true }
+    },
+
+    /* Every other device signed out; the one asking stays signed in. */
+    async signout_all(s) {
+      const ended = await endSessions(s.a.id, sha(s.token))
+      return { ok: true, ended }
+    },
 
     async update(s, b) {
       const a = s.a
@@ -244,6 +278,7 @@ export function makeHandler({ kv }) {
       await kv.del(K.invby(a.id))
       await kv.del(K.name(a.name))
       if (a.email) await kv.del(K.email(a.email))
+      await endSessions(a.id)
       await kv.del(K.sess(s.token))
       await kv.del(K.acct(a.id))
       return { ok: true }

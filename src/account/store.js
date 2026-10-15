@@ -47,8 +47,8 @@ const SETTING_IDS = SETTINGS.map(s => s.value)
 /* The twelve premade pictures, drawn in ./avatars.jsx. Ids only here, so the
    store stays free of JSX. */
 export const AVATAR_IDS = [
-  'coral-sun', 'coral-bolt', 'lilac-moon', 'lilac-spiral', 'sun-star', 'sun-hill',
-  'mint-leaf', 'mint-sprout', 'sky-wave', 'sky-cloud', 'blush-heart', 'blush-bloom',
+  'fox', 'owl', 'panda', 'frog', 'cat', 'bear',
+  'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth',
 ]
 
 /* Who may link to whom. Two of the same role never link: a teen to teen link
@@ -150,6 +150,7 @@ function normaliseAccounts(s) {
         setting: a.role === 'pro' && SETTING_IDS.includes(a.setting) ? a.setting : null,
         passcodeHash: a.passcodeHash || null,
         createdAt: iso(a.createdAt) || now(),
+        lastSignInAt: iso(a.lastSignInAt),
       })),
   }
 }
@@ -314,7 +315,7 @@ export async function createAccount({ role, name, passcode, email, avatar, setti
     email: mail || null,
     avatar: AVATAR_IDS.includes(avatar) ? avatar : null,
     setting: role === 'pro' ? setting : null,
-    passcodeHash: await hash(String(passcode)), createdAt: now(),
+    passcodeHash: await hash(String(passcode)), createdAt: now(), lastSignInAt: now(),
   }
   accounts.merge({ items: [...accounts.get().items, account] })
   session.merge({ accountId: account.id })
@@ -337,8 +338,18 @@ export async function signIn(nameOrEmail, passcode) {
   if (!a) return 'wrong'
   const h = await hash(String(passcode ?? ''))
   if (h !== a.passcodeHash) return 'wrong'
+  accounts.merge({ items: accounts.get().items.map(x => x.id === a.id ? { ...x, lastSignInAt: now() } : x) })
   session.merge({ accountId: a.id })
   return 'ok'
+}
+
+/* Every other device signed out; this one stays. Only the server holds more
+   than one session, so on the device path there is nothing to end. */
+export async function signOutOthers() {
+  if (!current()) return { ok: false, ended: 0 }
+  if (!remote()) return { ok: true, ended: 0 }
+  const r = await call('signout_all')
+  return { ok: r.ok === true, ended: r.ended || 0 }
 }
 
 export function signOut() {
@@ -593,7 +604,7 @@ export function exportAll(accountId = session.get().accountId) {
     v: VERSION,
     exportedAt: now(),
     account: { id: a.id, role: a.role, name: a.name, email: a.email, avatar: a.avatar,
-               setting: a.setting, createdAt: a.createdAt },
+               setting: a.setting, createdAt: a.createdAt, lastSignInAt: a.lastSignInAt },
     links: listNetwork(a.id),
     invites: listInvites(a.id),
   }, null, 2)

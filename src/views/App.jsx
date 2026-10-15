@@ -64,9 +64,15 @@ const VIEWS = [
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
   /* kept, not in section 18 */
   'tour','notes',
-  /* accounts: sign in, the portal, and who is linked to whom */
-  'signin','account','network',
+  /* accounts: sign in, the portal, its sections, and who is linked to whom */
+  'signin','account','account-section','network',
 ]
+
+/* The portal's sections live at #/account/<section>. The view string keeps
+   the whole path; `idOf` folds it to the one route id the tables know. */
+const SECTION_RE = /^account\/(profile|passcode|sharing|data|about)$/
+const idOf = v => (SECTION_RE.test(v) ? 'account-section' : v)
+const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
@@ -74,11 +80,11 @@ const VIEWS = [
 const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
-                           'toolkit-scan','toolkit-move','signin','account','network'])
+                           'toolkit-scan','toolkit-move','signin','account','account-section','network'])
 
 /* The three account routes belong to whichever app the signed in account is
    for, and otherwise to the app the reader walked in from. */
-const ACCOUNT_VIEWS = new Set(['account','network'])
+const ACCOUNT_VIEWS = new Set(['account','account-section','network'])
 
 /* Old ids, so a link, a bookmark or another worker's button still lands. The
    palette pushes `hub`, which is not a route. */
@@ -122,6 +128,7 @@ const TITLE = {
   survey:'Give feedback on MindMap',
   signin:'Sign in to MindMap',
   account:'Your account in MindMap',
+  'account-section':'Account settings in MindMap',
   network:'Your network in MindMap',
 }
 
@@ -459,7 +466,7 @@ const APP_TAB = { app:null,
                   'app-pro':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
                      lights nothing and is reached from the account portal. */
-                  signin:null, account:null, network:'network' }
+                  signin:null, account:null, 'account-section':null, network:'network' }
 
 /* Two spellings of each screen name. At 390 the top bar also carries the help
    button, the demo switch and the way back, so the long one would be the thing
@@ -489,6 +496,7 @@ const APP_TITLE = {
   'app-pro':      ['Students',         'Students'],
   signin:         ['Sign in',          'Sign in'],
   account:        ['Account',          'Account'],
+  'account-section': ['Account',       'Account'],
   network:        ['Network',          'Network'],
 }
 
@@ -1014,7 +1022,7 @@ function ProApp(p) {
  */
 /* One resolver for the hash, for `go` and for the alias table, so a link to an
    old id lands in exactly one place. */
-const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) ? raw : 'site')
+const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) || SECTION_RE.test(raw) ? raw : 'site')
 const fromHash = () => resolve(location.hash.replace(/^#\/?/, ''))
 
 export function App() {
@@ -1036,7 +1044,8 @@ export function App() {
   /* Plays on every load. Only Skip suppresses it, and it does so permanently. */
   /* Navigation resets scroll, title and focus itself: focus otherwise falls to
      <body> and the scroll position carries over from the previous screen. */
-  const land = React.useCallback(v => {
+  const land = React.useCallback(raw => {
+    const v = idOf(raw)
     if (APP_OF[v]) setAudience(APP_OF[v])
     window.scrollTo(0, 0)
     document.title = TITLE[v] || 'MindMap'
@@ -1068,12 +1077,14 @@ export function App() {
   }, [land])
   const wide = view !== 'site'
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
-  const inApp = APP_VIEWS.has(view)
+  /* The route id: a portal section folds to `account-section`. */
+  const id = idOf(view)
+  const inApp = APP_VIEWS.has(id)
   /* `app` itself is the launcher and has no bar; a shared screen takes the bar
      of the app it was opened from. */
-  const appOf = APP_OF[view]
-    || (ACCOUNT_VIEWS.has(view) && me ? me.role : null)
-    || (SHARED_VIEWS.has(view) || ACCOUNT_VIEWS.has(view) ? audience : null)
+  const appOf = APP_OF[id]
+    || (ACCOUNT_VIEWS.has(id) && me ? me.role : null)
+    || (SHARED_VIEWS.has(id) || ACCOUNT_VIEWS.has(id) ? audience : null)
 
   /* The route table. Every id in spec 0e section 18 is here and resolves.
      Several routes are a tab inside a section and keep their own url. */
@@ -1110,7 +1121,8 @@ export function App() {
               /* Accounts, kept on this device. */
               signin:   SignIn,
               account:  Account,
-              network:  Network }[view]
+              'account-section': p => <Account {...p} section={sectionOf(view)}/>,
+              network:  Network }[id]
   return (
     <>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
@@ -1135,7 +1147,7 @@ export function App() {
           screen, MindMap AI unconnected) keeps its foot at the bottom of the
           viewport rather than a third of the way down a blank page. */}
       <div className={cn(inApp && APP_SHELL, inApp && 'flex flex-col')}>
-        {inApp && <AppTopBar view={view} go={go}/>}
+        {inApp && <AppTopBar view={id} go={go}/>}
         <div id="main" ref={mainRef} tabIndex={-1} className={cn('outline-none', inApp && 'flex-1')}>
           <V go={go} key={view}/>
         </div>
@@ -1160,7 +1172,7 @@ export function App() {
           <div aria-hidden className="h-[calc(3.5rem+env(safe-area-inset-bottom))]
             sm:h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
       </div>
-      {inApp && <AppTabBar app={appOf} view={view} go={go}/>}
+      {inApp && <AppTabBar app={appOf} view={id} go={go}/>}
     </>
   )
 }
