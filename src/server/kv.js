@@ -33,10 +33,17 @@ export function memoryKV() {
    plain objects and strings, so no wrapper is needed beyond the import. */
 let kvPromise = null
 export async function vercelKV() {
-  if (!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)) return null
+  /* The Upstash marketplace integration names its variables either way
+     depending on when the store was made; both spellings are read. */
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!(url && token)) return null
   if (!kvPromise) {
     kvPromise = (async () => {
-      try { const mod = await import('@vercel/kv'); return mod?.kv || null } catch { return null }
+      try {
+        const mod = await import('@vercel/kv')
+        return mod?.createClient ? mod.createClient({ url, token }) : (mod?.kv || null)
+      } catch { return null }
     })()
   }
   return kvPromise
