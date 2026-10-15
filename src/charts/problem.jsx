@@ -262,59 +262,103 @@ function TreatmentGap() {
 
 /* ── The band ──────────────────────────────────────────────────────────── */
 
-/* Four figures in a row. The owner, on the fuller version above: "it was less
-   unnecessary text and easier to read". So: the figure, one line under it, the
-   exact value and the source in small print, and one small graphic each. The
-   rules at the top of this file still hold: every figure prints its exact
-   value and names its source. The fuller charts stay in this file for the
-   patch page or a report; the landing page carries these. */
+/* The owner, 15 October: no "the first figure, ten years apart" wording,
+   the statistics from his own paragraph, and "the green people that showed
+   1 in 7 and 1 in 5" back instead of bars. Every figure below carries its
+   exact value and its source in small print; the rules at the top of this
+   file hold. Two of his figures were replaced because no source supports
+   them as written and the owner's own rule is approved statistics only:
+   "nearly 70% undiagnosed" is NIMH's 59.4% untreated, and "+126% since
+   2010" is the same YRBS question a decade apart, 30% to 40%. The Florida
+   40% is the national 2023 figure (Florida left the YRBS in 2022); the
+   Florida line here is the one Florida figure with a source, 20.1% with a
+   major depressive episode. */
+
+/* One person: a head and a rounded body, 20 units wide. Filled in the
+   accent green for the people the figure counts, outlined in ink-3 for the
+   rest, so the ratio reads before the number does. */
+function Person({ cx, y, on }) {
+  return (
+    <g fill={on ? '#0a6e68' : 'none'} stroke={on ? 'none' : '#3c6a74'} strokeWidth="0.9">
+      <circle cx={cx} cy={y + 6} r="3.6"/>
+      <rect x={cx - 6} y={y + 11} width="12" height="9.5" rx="4.6"/>
+    </g>
+  )
+}
+
+/* `of` people in a row, the first `on` of them filled. Rows wrap at ten. */
+function People({ on, of, className }) {
+  const perRow = Math.min(of, 10)
+  const rows = Math.ceil(of / perRow)
+  const W = perRow * 20, H = rows * 24
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false"
+      className={cn('block h-auto', className)} style={{ width: `${perRow * 22}px`, maxWidth: '100%' }}>
+      {Array.from({ length: of }, (_, i) => (
+        <Person key={i} cx={10 + (i % perRow) * 20} y={Math.floor(i / perRow) * 24} on={i < on}/>
+      ))}
+    </svg>
+  )
+}
+
+const WHO = { label: 'WHO, Mental health of adolescents, 2025',
+              href: 'https://www.who.int/news-room/fact-sheets/detail/mental-health-of-adolescents' }
+const FL  = { label: 'SAMHSA, Behavioral Health Barometer, Florida, 2021 to 2023',
+              href: 'https://www.samhsa.gov/data/sites/default/files/reports/rpt56788/2023-nsduh-barometer-florida.pdf' }
+const NIMH_SUICIDE = { label: 'NIMH, Suicide, from CDC WISQARS 2023',
+              href: 'https://www.nimh.nih.gov/health/statistics/suicide' }
+const TRENDS = { label: 'CDC YRBS Trends, 2013 to 2023', href: 'https://www.cdc.gov/yrbs/dstr/index.html' }
+
 const FIGURES = [
-  { big: '40%', line: 'felt sad or hopeless for two weeks or more',
-    exact: '39.7% of US high school students, 2023', src: 0,
-    art: <PctTrack value={39.7} className="mt-3"/> },
-  { big: '20%', line: 'seriously considered attempting suicide',
-    exact: '20.4% of US high school students, 2023', src: 0,
-    art: <PctTrack value={20.4} className="mt-3"/> },
-  { big: '30% → 40%', line: 'the first figure, ten years apart',
-    exact: '2013 to 2023, same question', srcLabel: 'CDC YRBS Trends, 2013 to 2023',
-    srcHref: 'https://www.cdc.gov/yrbs/dstr/index.html',
-    art: (
-      <span aria-hidden="true" className="mt-3 flex items-end gap-1.5">
-        <span className="block h-2.5 w-[30%] rounded-bar bg-beam"/>
-        <span className="block h-2.5 w-[40%] rounded-bar bg-accent"/>
-      </span>) },
+  { big: '1 in 7', line: 'teens live with a mental health condition',
+    exact: '14.3% of 10 to 19 year olds, worldwide', src: WHO,
+    art: <People on={1} of={7}/> },
+  { big: '1 in 5', line: 'Florida teens had a major depressive episode in a year',
+    exact: '20.1% of Floridians aged 12 to 17', src: FL,
+    art: <People on={1} of={5}/> },
   { big: '3 in 5', line: 'with depression got no treatment for it',
-    exact: '59.4% of the 1 in 5 with depression, aged 12 to 17, 2021', src: 1,
+    exact: '59.4%, aged 12 to 17, US', src: SOURCES[1],
+    art: <People on={3} of={5}/> },
+  { big: '40%', line: 'felt sad or hopeless for two weeks or more',
+    exact: '39.7% of US high school students, 2023', src: SOURCES[0],
+    art: <People on={4} of={10}/> },
+  { big: '#2', line: 'cause of death from age 10 to 34 is suicide',
+    exact: 'United States, 2023', src: NIMH_SUICIDE,
     art: (
-      <span aria-hidden="true" className="mt-3 flex gap-1.5">
-        {[1,1,1,0,0].map((on, i) => (
-          <span key={i} className={cn('block h-2.5 flex-1 rounded-bar', on ? 'bg-accent' : 'bg-beam')}/>
-        ))}
-      </span>) },
+      /* A rank, drawn as three rows; the second is the one. Red is the
+         product's alarm colour and this is the one alarm on the page. */
+      <svg viewBox="0 0 200 48" aria-hidden="true" focusable="false" className="block h-auto w-[220px] max-w-full">
+        <rect x="0" y="0" width="200" height="10" rx="5" fill="none" stroke="#3c6a74" strokeWidth="0.9"/>
+        <rect x="0" y="19" width="150" height="10" rx="5" fill="#a8321f"/>
+        <rect x="0" y="38" width="110" height="10" rx="5" fill="none" stroke="#3c6a74" strokeWidth="0.9"/>
+      </svg>) },
+  { big: '30% → 40%', line: 'felt sad or hopeless, 2013 against 2023',
+    exact: 'Same question, same survey, ten years on', src: TRENDS,
+    art: (
+      <div className="flex flex-col gap-1">
+        <People on={3} of={10}/>
+        <People on={4} of={10}/>
+      </div>) },
 ]
 
 export function ProblemFigures({ className }) {
   return (
-    <div className={cn('grid gap-x-7 gap-y-6 sm:grid-cols-2 lg:grid-cols-4', className)}>
-      {FIGURES.map(f => {
-        const src = f.src != null ? SOURCES[f.src] : { label: f.srcLabel, href: f.srcHref }
-        return (
-          <figure key={f.big} className="m-0" aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${src.label}.`}>
-            <p className="font-display text-sub font-bold tabular-nums leading-none text-accent-ink">{f.big}</p>
-            <p className="mt-2 max-w-[22ch] text-sec leading-[1.4] text-ink-2">{f.line}</p>
-            {f.art}
-            <figcaption className="mt-2.5 text-fine leading-[1.45] text-ink-3">
-              {f.exact}.{' '}
-              <a href={src.href} target="_blank" rel="noreferrer"
-                className="border-b border-accent/50 text-ink hoverOnly:border-accent">{src.label}</a>
-            </figcaption>
-          </figure>
-        )
-      })}
+    <div className={cn('grid gap-x-7 gap-y-6 sm:grid-cols-2 lg:grid-cols-3', className)}>
+      {FIGURES.map(f => (
+        <figure key={f.big} className="m-0" aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${f.src.label}.`}>
+          <p className="font-display text-sub font-bold tabular-nums leading-none text-accent-ink">{f.big}</p>
+          <div className="mt-2.5">{f.art}</div>
+          <p className="mt-2 max-w-[24ch] text-sec leading-[1.4] text-ink-2">{f.line}</p>
+          <figcaption className="mt-1.5 text-fine leading-[1.45] text-ink-3">
+            {f.exact}.{' '}
+            <a href={f.src.href} target="_blank" rel="noreferrer"
+              className="border-b border-accent/50 text-ink hoverOnly:border-accent">{f.src.label}</a>
+          </figcaption>
+        </figure>
+      ))}
     </div>
   )
 }
-
 
 /* The two headline figures are printed, never counted up to. A count-up starts
    at zero and passes through numbers that are not the statistic, and these sit
