@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
 import { Bell, Bin, Check, Download, Exit, Grid, Key, People } from '../ui/marks'
-import { ROLE_LABEL, SETTINGS, changePasscode, deleteAccount, exportAll, signOut, updateProfile, useAccount } from './store'
+import { ROLE_LABEL, SETTINGS, backend, changePasscode, deleteAccount, exportAll, signOut, updateProfile, useAccount } from './store'
 import { Avatar, AvatarPicker, Row, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
 
@@ -189,7 +189,10 @@ export function Account({ go }) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-fine text-ink-3">Accounts are kept on this device.</p>
+        <p className="text-fine text-ink-3">
+          {backend() === 'remote' ? 'Saved to your MindMap account. Works on any device.'
+                                  : 'Accounts are kept on this device.'}
+        </p>
         <button type="button" onClick={leave} className={outline}>
           <Exit aria-hidden className="size-4"/>Sign out
         </button>

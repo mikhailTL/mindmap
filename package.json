@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "preview:api": "node tools/serve-with-api.mjs 4174",
     "readability": "node tools/readability/dump.mjs && python3 tools/readability/grade.py text.json",
     "test": "vitest run",
     "test:watch": "vitest"

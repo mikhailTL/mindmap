@@ -1,14 +1,20 @@
 import { useSyncExternalStore } from 'react'
 import { PRO } from '../lib/terms'
+import { call, probe, readToken, writeToken } from './remote'
 
-/* Accounts, links and invitations, kept on this device.
+/* Accounts, links and invitations.
  *
- * There is no endpoint behind any of this. An account is a name, a role and
- * a hashed passcode in localStorage; a link is a row joining a student to a
- * parent or a Medical Professional; an invitation is a six character code
- * that another account on the same device redeems. The whole flow (invite,
- * redeem, approve) is complete here, and the one screen that says where the
- * data lives is the account settings screen.
+ * Two backends, one store. With the account API behind the deploy (GET
+ * /api/account says configured), the server holds the truth: every write
+ * goes there and the reply carries a snapshot of what this account may see,
+ * which replaces the mirror below. Without it, the whole flow runs on this
+ * device, as it did before the API existed, and the settings screen says so.
+ * Screens read the same slots either way and never know which.
+ *
+ * The device-only path: an account is a name, a role and a hashed passcode
+ * in localStorage; a link is a row joining a student to a parent or a
+ * Medical Professional; an invitation is a six character code that another
+ * account on the same device redeems.
  *
  * The slot pattern is src/app/store.js's, copied rather than imported so
  * that a change to the app slots cannot quietly change what an account is:
@@ -133,7 +139,8 @@ function normaliseAccounts(s) {
     v: VERSION,
     items: items
       .filter(a => a && typeof a.id === 'string' && typeof a.name === 'string' && a.name.trim()
-                   && ROLES.includes(a.role) && /^[0-9a-f]{64}$/.test(a.passcodeHash || ''))
+                   && ROLES.includes(a.role)
+                   && (a.passcodeHash == null || /^[0-9a-f]{64}$/.test(a.passcodeHash)))
       .map(a => ({
         id: a.id,
         role: a.role,
@@ -141,7 +148,7 @@ function normaliseAccounts(s) {
         email: EMAIL.test(cleanEmail(a.email)) ? cleanEmail(a.email) : null,
         avatar: AVATAR_IDS.includes(a.avatar) ? a.avatar : null,
         setting: a.role === 'pro' && SETTING_IDS.includes(a.setting) ? a.setting : null,
-        passcodeHash: a.passcodeHash,
+        passcodeHash: a.passcodeHash || null,
         createdAt: iso(a.createdAt) || now(),
       })),
   }
@@ -202,6 +209,55 @@ const session  = makeSlot('mindmap.account.session',  blankSession,  normaliseSe
 const links    = makeSlot('mindmap.account.links',    blankLinks,    normaliseLinks)
 const invites  = makeSlot('mindmap.account.invites',  blankInvites,  normaliseInvites)
 
+/* ── Which backend ──────────────────────────────────────────────────────── */
+
+/* 'unknown' until the probe answers, then 'remote' or 'device'. */
+let backendState = 'unknown'
+export const backend = () => backendState
+const remote = () => backendState === 'remote'
+
+/* The server's view of this account becomes the mirror, wholesale. */
+function applySnapshot(snap) {
+  if (!snap || !snap.me) return
+  const mine = { ...snap.me, passcodeHash: null }
+  const people = (snap.people || []).map(p => ({ ...p, passcodeHash: null, createdAt: now() }))
+  accounts.replace({ items: [mine, ...people] })
+  links.replace({ items: [...(snap.links || []), ...(snap.approvals || [])] })
+  invites.replace({ items: snap.invite
+    ? [{ code: snap.invite.code, fromId: mine.id, role: mine.role, createdAt: now(), expiresAt: snap.invite.expiresAt }]
+    : [] })
+  session.replace({ accountId: mine.id })
+}
+function clearMirror() {
+  session.replace({}); links.replace({}); invites.replace({}); accounts.replace({})
+}
+
+/* Decided once per page: ask the deploy, and if it has a store and this
+   browser holds a token, pull the account back in. */
+let probed = null
+export function ready() {
+  if (probed) return probed
+  probed = (async () => {
+    if (typeof window === 'undefined') { backendState = 'device'; return backendState }
+    const has = await probe()
+    backendState = has ? 'remote' : 'device'
+    if (has) {
+      if (readToken()) {
+        const r = await call('me')
+        if (r.ok) applySnapshot(r.snapshot)
+        else if (r.reason === 'signedout') { writeToken(null); clearMirror() }
+      } else if (session.get().accountId) {
+        /* A device-only session from before the store was wired. */
+        clearMirror()
+      }
+    }
+    commit()
+    return backendState
+  })()
+  return probed
+}
+if (typeof window !== 'undefined') ready()
+
 /* ── Passcode ───────────────────────────────────────────────────────────── */
 
 export const PASSCODE = /^\d{4,6}$/
@@ -236,6 +292,13 @@ export function listAccounts() {
    Email is required for a parent and a professional and optional for a
    student, who may not have one. A professional also says where they work. */
 export async function createAccount({ role, name, passcode, email, avatar, setting }) {
+  if (remote()) {
+    const r = await call('create', { role, name, passcode, email, avatar, setting })
+    if (!r.ok) return { ok: false, reason: r.reason }
+    writeToken(r.token)
+    applySnapshot(r.snapshot)
+    return { ok: true, account: r.snapshot.me }
+  }
   if (!ROLES.includes(role)) return { ok: false, reason: 'role' }
   const clean = String(name ?? '').trim().slice(0, NAME_MAX)
   if (!clean) return { ok: false, reason: 'name' }
@@ -261,6 +324,13 @@ export async function createAccount({ role, name, passcode, email, avatar, setti
 /* A name or an email. 'wrong' for an unknown one as well: the screen says
    one line either way. */
 export async function signIn(nameOrEmail, passcode) {
+  if (remote()) {
+    const r = await call('signin', { who: nameOrEmail, passcode })
+    if (!r.ok) return r.reason === 'locked' || r.reason === 'offline' ? r.reason : 'wrong'
+    writeToken(r.token)
+    applySnapshot(r.snapshot)
+    return 'ok'
+  }
   const clean = String(nameOrEmail ?? '').trim()
   const mail = cleanEmail(clean)
   const a = accounts.get().items.find(x => sameName(x.name, clean) || (x.email && x.email === mail))
@@ -272,6 +342,12 @@ export async function signIn(nameOrEmail, passcode) {
 }
 
 export function signOut() {
+  if (remote()) {
+    call('signout')
+    writeToken(null)
+    clearMirror()
+    return
+  }
   session.merge({ accountId: null })
 }
 
@@ -296,6 +372,12 @@ export function updateProfile(patch = {}) {
   }
   if ('setting' in patch && me.role === 'pro' && SETTING_IDS.includes(patch.setting)) next.setting = patch.setting
   accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? next : a) })
+  if (remote()) {
+    call('update', patch).then(r => {
+      if (r.ok) applySnapshot(r.snapshot)
+      else call('me').then(m => m.ok && applySnapshot(m.snapshot))
+    })
+  }
   return current()
 }
 
@@ -303,6 +385,10 @@ export function updateProfile(patch = {}) {
 export async function changePasscode(oldPasscode, newPasscode) {
   const me = current()
   if (!me) return 'wrong'
+  if (remote()) {
+    const r = await call('passcode', { old: oldPasscode, next: newPasscode })
+    return r.ok ? 'ok' : (r.reason === 'invalid' ? 'invalid' : 'wrong')
+  }
   if (!PASSCODE.test(String(newPasscode ?? ''))) return 'invalid'
   if (await hash(String(oldPasscode ?? '')) !== me.passcodeHash) return 'wrong'
   const passcodeHash = await hash(String(newPasscode))
@@ -314,6 +400,12 @@ export async function changePasscode(oldPasscode, newPasscode) {
    is no bin and nothing elsewhere to withdraw. */
 export function deleteAccount(who = session.get().accountId) {
   if (!who) return
+  if (remote()) {
+    call('delete')
+    writeToken(null)
+    clearMirror()
+    return
+  }
   links.merge({ items: links.get().items.filter(l => !members(l).includes(who)) })
   invites.merge({ items: invites.get().items.filter(i => i.fromId !== who) })
   accounts.merge({ items: accounts.get().items.filter(a => a.id !== who) })
@@ -341,6 +433,10 @@ const live = (i, at = new Date()) => Date.parse(i.expiresAt) > at.getTime()
 export function createInvite() {
   const me = current()
   if (!me) return null
+  if (remote()) {
+    call('invite').then(r => r.ok && applySnapshot(r.snapshot))
+    return null
+  }
   let code = randomCode()
   while (invites.get().items.some(i => i.code === code)) code = randomCode()
   const invite = {
@@ -378,6 +474,12 @@ function findLink(a, b) {
 export function redeemInvite(rawCode, at = new Date()) {
   const me = current()
   if (!me) return { ok: false, reason: 'signedout' }
+  if (remote()) {
+    return call('redeem', { code: rawCode }).then(r => {
+      if (r.ok) applySnapshot(r.snapshot)
+      return r.ok ? { ok: true, link: r.link } : { ok: false, reason: r.reason }
+    })
+  }
   const code = String(rawCode ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
   const inv = invites.get().items.find(i => i.code === code)
   if (!inv) return { ok: false, reason: 'unknown' }
@@ -424,6 +526,10 @@ function isParentOf(parentId, studentId) {
 function decide(linkId, status) {
   const me = current()
   if (!me) return 'forbidden'
+  if (remote()) {
+    call(status === 'active' ? 'approve' : 'decline', { linkId }).then(r => r.ok && applySnapshot(r.snapshot))
+    return 'ok'
+  }
   const link = links.get().items.find(l => l.id === linkId)
   if (!link) return 'unknown'
   if (link.status !== 'pending') return 'unknown'
@@ -442,6 +548,10 @@ export const declineLink = linkId => decide(linkId, 'declined')
 export function removeLink(linkId) {
   const me = current()
   if (!me) return 'forbidden'
+  if (remote()) {
+    call('remove', { linkId }).then(r => r.ok && applySnapshot(r.snapshot))
+    return 'ok'
+  }
   const link = links.get().items.find(l => l.id === linkId)
   if (!link) return 'unknown'
   if (!members(link).includes(me.id)) return 'forbidden'

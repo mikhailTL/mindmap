@@ -42,6 +42,7 @@ const REDEEM_ERROR = {
   role:      'Code is for a different kind of account.',
   exists:    'Already linked.',
   signedout: 'Sign in first.',
+  offline:   'No connection. Try again.',
 }
 
 /* ── Pieces ─────────────────────────────────────────────────────────────── */
@@ -51,9 +52,9 @@ function CodeField({ label = 'Code', onDone }) {
   const [err, setErr] = React.useState(null)
   const [done, setDone] = React.useState(null)
   const ref = React.useRef(null)
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    const r = redeemInvite(code)
+    const r = await redeemInvite(code)
     if (r.ok) {
       setCode(''); setErr(null)
       setDone(r.link.status === 'pending' ? 'Linked. A parent approves next.' : 'Linked.')

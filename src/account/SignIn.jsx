@@ -41,6 +41,8 @@ const ERROR = {
   passcode: 'Passcode is 4 to 6 digits.',
   taken:    'Name or email already in use here.',
   wrong:    'Wrong passcode. Try again.',
+  locked:   'Five wrong tries. Wait fifteen minutes.',
+  offline:  'No connection. Try again.',
 }
 
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
@@ -86,7 +88,7 @@ export function SignIn({ go, note }) {
     const r = await signIn(name, pass)
     setBusy(false)
     if (r === 'ok') { setErr(null); go('account'); return }
-    fail('passcode', 'wrong')
+    fail('passcode', ERROR[r] ? r : 'wrong')
   }
 
   const errId = 'signin-error'
