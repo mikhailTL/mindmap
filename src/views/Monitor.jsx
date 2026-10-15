@@ -53,7 +53,7 @@ export const TONES = {
 
 export function Panel({ className, tone = 'card', as: As = 'section', children, ...rest }) {
   return (
-    <As className={cn('rounded-panel border p-3.5 lg:p-4', TONES[tone] || TONES.card, className)}
+    <As className={cn('rounded-panel border p-3.5 shadow-card lg:p-4', TONES[tone] || TONES.card, className)}
       {...rest}>
       {children}
     </As>

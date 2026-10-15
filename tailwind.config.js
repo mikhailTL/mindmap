@@ -101,8 +101,8 @@ export default {
          is a tell. The kit is back and the habit is gone. `mono` is for
          figures that have to line up, not for labels. */
       fontFamily: {
-        display: ['Quicksand','-apple-system','system-ui','sans-serif'],
-        body:    ['Chivo','-apple-system','system-ui','sans-serif'],
+        display: ['Manrope','-apple-system','system-ui','sans-serif'],
+        body:    ['Manrope','-apple-system','system-ui','sans-serif'],
         /* `mono` is the body face, not a typewriter one. It is kept as a name
            because ~200 call sites use it to mean "a figure that has to line up
            with the figure above it", and `tabular-nums` is what actually does
@@ -110,7 +110,7 @@ export default {
            monospaced face on a display number reads as a generated page, which
            is the one thing this site cannot afford to look like.
            `code` is the real monospace, for file paths and literal code. */
-        mono:    ['Chivo','-apple-system','system-ui','sans-serif'],
+        mono:    ['Manrope','-apple-system','system-ui','sans-serif'],
         code:    ['"Chivo Mono"','ui-monospace','monospace'],
       },
       /* nine steps because the content has nine levels of meaning */
@@ -120,15 +120,19 @@ export default {
          the palette is a soft one, so the 0px panel the old green system used
          now reads as an oversight rather than as rigour. */
       borderRadius: {
-        none:'0', panel:'10px', field:'6px', chip:'999px', bar:'999px',
-        xs:'4px', sm:'6px', DEFAULT:'6px', lg:'10px',
+        none:'0', panel:'14px', field:'8px', chip:'999px', bar:'999px',
+        xs:'4px', sm:'6px', DEFAULT:'8px', lg:'14px',
       },
       /* Depth is one mechanism here: the surface shifts and a rule thickens.
          These two are the hard offset a card gets from the sheet under it —
          no blur, no spread, no light source to be inconsistent about, no glow. */
       boxShadow: {
-        raise:'3px 3px 0 0 rgb(13 43 30 / 0.10)',
-        lift: '5px 5px 0 0 rgb(13 43 30 / 0.16)',
+        /* Soft and layered, one light source from above: the hard 3px offset
+           these replaced read as a sticker. `card` is every resting surface,
+           `raise` a hovered or lifted one. */
+        card: '0 1px 2px rgb(11 43 51 / 0.04), 0 10px 28px -16px rgb(11 43 51 / 0.14)',
+        raise:'0 2px 4px rgb(11 43 51 / 0.05), 0 18px 40px -20px rgb(11 43 51 / 0.22)',
+        lift: '0 2px 4px rgb(11 43 51 / 0.05), 0 18px 40px -20px rgb(11 43 51 / 0.22)',
       },
       maxWidth: { measure:'62ch', read:'44ch' },
       /* `out` is the house curve and predates the rest; it is left alone

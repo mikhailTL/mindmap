@@ -19,11 +19,11 @@ const button = cva(
   {
     variants: {
       variant: {
-        solid:   'rounded-field font-display font-medium bg-ink text-paper active:bg-accent-ink ' +
+        solid:   'rounded-field font-display font-semibold bg-ink text-paper shadow-card active:bg-accent-ink ' +
                  'hoverOnly:bg-accent-ink',
-        outline: 'rounded-field font-display font-medium text-ink bg-transparent ' +
-                 'border border-ink active:bg-mist ' +
-                 'hoverOnly:bg-mist',
+        outline: 'rounded-field font-display font-semibold text-ink bg-card ' +
+                 'border border-rule shadow-card active:bg-mist ' +
+                 'hoverOnly:border-ink-3 hoverOnly:bg-mist',
         ghost:   'rounded-none px-0 font-display font-medium text-accent bg-transparent ' +
                  'border-b-2 border-accent/35 active:text-accent-ink ' +
                  'hoverOnly:border-accent ' +

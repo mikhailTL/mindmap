@@ -37,11 +37,11 @@ const SKIN_CSS = `
 .shell .layout{grid-template-columns:minmax(0,1fr)}
 .shell .stage{min-height:0;background:transparent}
 .busy{background:${SKIN.bg};padding:20px;font-family:Chivo,system-ui,sans-serif}
-.busy strong{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.busy strong{font-family:Manrope,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .busy p{font-size:15px;color:#3c6a74;margin:6px 0 0}
 .selection{bottom:16px;left:16px;padding:16px;max-height:min(80%,320px);border:1px solid ${SKIN.border};border-radius:10px;
   box-shadow:5px 5px 0 0 rgb(13 43 30 / .16);font-family:Chivo,system-ui,sans-serif}
-.selection h3{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.selection h3{font-family:Manrope,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .selection p{font-size:13px;color:#1f5560}
 .selection .kicker{color:#3c6a74}
 .selection-actions{gap:7px}

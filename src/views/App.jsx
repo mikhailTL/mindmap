@@ -324,7 +324,7 @@ function Header({ view, go }) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-ink bg-mist">
+    <header className="sticky top-0 z-50 border-b border-rule bg-paper/80 backdrop-blur-md supports-[backdrop-filter]:bg-paper/70">
       <div className="wrap flex h-14 items-center gap-1">
         <button onClick={() => go('site')} aria-label="MindMap, go to the overview"
           className="mr-1 shrink-0 rounded-field px-1 py-1 text-row text-ink

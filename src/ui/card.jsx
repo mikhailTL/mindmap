@@ -8,17 +8,16 @@ export const Card = React.forwardRef(function Card(
     <As
       ref={ref}
       className={cn(
-        'bg-card text-ink border border-rule rounded-panel overflow-hidden',
+        'bg-card text-ink border border-rule rounded-panel overflow-hidden shadow-card',
         /* Transition properties are explicit: `transition-all` would animate
            border-left-width, so the 3px rule would grow in from 0 instead of
            appearing. Hover is gated to a fine pointer or the rule latches on
            after a tap. Press squeeze is behind motion-safe:. */
         interactive && [
           'w-full text-left cursor-pointer touch-manipulation',
-          'border-l-[3px] border-l-transparent',
-          'transition-[border-color,box-shadow,transform] duration-150 ease-[var(--ease-out)]',
-          'hoverOnly:border-l-accent',
-          'focus-visible:border-l-accent',
+          'transition-[border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]',
+          'hoverOnly:border-accent/50 hoverOnly:shadow-raise motion-safe:hoverOnly:-translate-y-0.5',
+          'focus-visible:border-accent',
           'active:shadow-none motion-safe:active:scale-[0.99]',
           'disabled:pointer-events-none disabled:opacity-45 disabled:active:scale-100',
         ],

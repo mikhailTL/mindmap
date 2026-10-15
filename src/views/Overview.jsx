@@ -152,7 +152,7 @@ export function Overview({ go }) {
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
                 1.06, not 1.02, where the descenders of "Making your stress"
                 landed in the cap height of "readable". */}
-            <h1 className="mt-4 max-w-[19ch] font-display text-view font-medium leading-[1.06]
+            <h1 className="mt-4 max-w-[19ch] font-display text-view font-semibold leading-[1.06]
               tracking-tight text-ink lg:text-sect 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
