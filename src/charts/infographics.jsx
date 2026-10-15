@@ -35,10 +35,10 @@ const TRACE = {
 /* [top, bottom] of the usual band, the baseline, and the point where the shape
    first leaves the band, in the same viewBox units as the path above. */
 const BAND = {
-  heart: { band: [15, 25], base: 20, out: [37, 9],  says: 'beats faster and the gaps between beats get more even' },
+  heart: { band: [15, 25], base: 20, out: [37, 9],  says: 'beats faster, with more even gaps between beats' },
   sweat: { band: [24, 33], base: 30, out: [22, 7],  says: 'rises first, and fastest, when the body tenses' },
   temp:  { band: [10, 19], base: 14, out: [54, 21], says: 'drifts down under strain and back up on settling' },
-  move:  { band: [17, 23], base: 20, out: [62, 16], says: 'spikes, which is how a hard run is told from a hard day' },
+  move:  { band: [17, 23], base: 20, out: [62, 16], says: 'spikes, telling a hard run from a hard day' },
 }
 
 /* The root stays an <svg> sized by className, so a caller that passes a height
@@ -59,8 +59,8 @@ export function SignalTrace({ kind, muted = false, className }) {
   const [hi, lo] = g.band
   return (
     <svg viewBox="0 0 80 36" preserveAspectRatio="none" role="img" focusable="false"
-      aria-label={`${s.name}, an illustrative shape in ${s.unit}, drawn against the wearer's own `
-        + `usual range. It ${g.says}.`}
+      aria-label={`${s.name}, ${s.unit}: an illustrative shape against the usual range. `
+        + `It ${g.says}.`}
       className={cn('h-10 w-full', className)}>
       {/* the usual range, and the middle of it */}
       <rect x="0" y={hi} width="80" height={lo - hi} className="fill-ink-3 opacity-[0.1]" />
@@ -120,14 +120,14 @@ function Mark({ v }) {
   )
 }
 
-/* "2 of 5 only if the student agrees, 3 of 5 never", counted off the table
+/* "2 only if the student agrees, 3 never", counted off the table
    rather than typed, so a row moved between states cannot leave the summary
    saying the old thing. */
 function summarise(sees) {
   return [2, 1, 0]
     .map(v => ({ v, n: sees.filter(x => x === v).length }))
     .filter(x => x.n)
-    .map(x => `${x.n} of ${sees.length} ${STATE[x.v].toLowerCase()}`)
+    .map(x => `${x.n} ${STATE[x.v].toLowerCase()}`)
     .join(', ')
 }
 
@@ -186,7 +186,7 @@ export function WhoSeesWhat({ className }) {
         </div>
 
         <figcaption className="border-t border-rule px-4 py-3 text-sec text-ink-3">Crisis alerts
-          are the exception, and students are told so before they start.</figcaption>
+          are the exception. Students are told so before they start.</figcaption>
       </div>
     </figure>
   )

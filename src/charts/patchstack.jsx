@@ -200,10 +200,10 @@ const LAYERS = [
     spec:'Four channels in, one score out',
     /* Cut from four lines to one: the baseline window and the network shape
        are the methods page's subject, not a patch drawing's. */
-    body:`Turns the four channels into one ${SCORE}, on the patch itself.` },
+    body:`Turns four channels into one ${SCORE}, on the patch.` },
   { id:'sense', title:'Sensing', face:PAPER, wall:MIST, art:senseArt,
     spec:'4 channels, 1 reading a second',
-    body:'Four channels off the skin, sampled once a second, all day.' },
+    body:'Four channels off the skin, once a second, all day.' },
   { id:'skin', title:'Skin interface', face:AQUA2, wall:RULE, art:skinArt,
     spec:`${MM_LONG} by ${MM_CROSS} mm against the arm`,
     body:'The face against the outer upper arm. All four channels read through it.' },
@@ -268,13 +268,12 @@ const EASE = [0.23, 1, 0.32, 1]
 const CHAN = SENSOR_ORDER.map((id, i) => `${i + 1} ${SENSORS[id].name} in ${SENSORS[id].unit}`)
   .join(', ')
 
-const ALT = 'An exploded drawing of the MindMap patch: five layers of one oval '
-  + `${MM_LONG} mm along the arm by ${MM_CROSS} mm across it, separated along a single axis. `
-  + 'From the outside in, the shell with the charging slot in its side, the radio, the board, '
-  + 'the sensing layer, and the skin interface that sits against the outer upper arm. '
-  + `The sensing layer carries four numbered channels: ${CHAN}. `
-  + `A millimetre ruler under the bottom plate runs 0 to ${MM_LONG} mm, ticked every 5 mm and `
-  + 'numbered every 10.'
+const ALT = 'An exploded drawing of the MindMap patch, five layers of one oval. '
+  + `${MM_LONG} mm along the arm, ${MM_CROSS} mm across. `
+  + 'Outside in: shell with charging slot, radio, board, sensing layer, skin interface. '
+  + `Sensing layer channels: ${CHAN}. `
+  + `A millimetre ruler under the bottom plate runs 0 to ${MM_LONG} mm. `
+  + 'Ticked every 5 mm, numbered every 10.'
 
 /* The millimetre ruler: the drawing's scale, not just its overall size. Minor
    ticks every 5 mm, majors numbered every 10, arrowheads and witness lines at
@@ -431,7 +430,7 @@ function ArmInset() {
   const fives = n => Array.from({ length: Math.floor(n / 5) + 1 }, (_, i) => i * 5)
   return (
     <svg viewBox={`0 0 ${IN.w} ${IN.h}`} role="img"
-      aria-label={`The patch in plan on the outer upper arm, long axis parallel to the arm, ${MM_LONG} mm along the arm by ${MM_CROSS} mm across it. Both dimension lines are ticked every 5 mm.`}
+      aria-label={`The patch in plan on the outer upper arm, long axis parallel to the arm. ${MM_LONG} mm along the arm, ${MM_CROSS} mm across. Both dimension lines ticked every 5 mm.`}
       className="block h-auto w-full" style={{ maxWidth: IN.w }}>
       {/* The limb is the one shape here that is drawn rather than calculated:
           an arm has no arithmetic. It only has to be wider than the plate. */}
@@ -475,8 +474,6 @@ function ArmInset() {
         <text x={f(dimX + 10)} y={f(cy - 1)}>{MM_LONG} mm</text>
         <text x={f(dimX + 10)} y={f(cy + size + 2)} fontSize={f(size * 0.84)}>along the arm</text>
         <text x={cx} y={f(dimY + size * 1.5)} textAnchor="middle">{MM_CROSS} mm across</text>
-        <text x={cx} y={f(dimY + size * 2.7)} textAnchor="middle" fontSize={f(size * 0.84)}>
-          ticks every 5 mm</text>
       </g>
     </svg>
   )
@@ -540,8 +537,7 @@ export function PatchStack({ className, caption, brief = false }) {
           <div className="mt-5 flex flex-wrap items-start gap-x-6 gap-y-3">
             <div className="min-w-0 max-w-full shrink-0 basis-[232px]"><ArmInset/></div>
             <p className="note m-0 max-w-[34ch]">
-              {MM_LONG} mm along the arm by {MM_CROSS} mm across it, worn on the outer upper arm
-              with the long axis parallel to the arm.
+              {MM_LONG} by {MM_CROSS} mm. Outer upper arm, long axis along the arm.
             </p>
           </div>
         )}
@@ -590,11 +586,13 @@ export function PatchStack({ className, caption, brief = false }) {
                         <span aria-hidden className="mt-[0.34em] h-4 w-[3px] shrink-0 rounded-bar"
                           style={{ background: s.glow }}/>
                         <p className="m-0 min-w-0 text-note text-ink-2">
-                          <b className="font-display font-bold text-ink">
-                            {j + 1} {s.name}
-                          </b>
-                          <span className="ml-1.5 text-fine text-ink-3">{s.unit}</span>
-                          {'. '}{s.short}
+                          <span className="block">
+                            <b className="font-display font-bold text-ink">
+                              {j + 1} {s.name}
+                            </b>
+                            <span className="ml-1.5 text-fine text-ink-3">{s.unit}</span>
+                          </span>
+                          <span className="block">{s.short}</span>
                         </p>
                       </li>
                     )
@@ -610,8 +608,7 @@ export function PatchStack({ className, caption, brief = false }) {
       {/* Not behind the disclosure: a reader who takes the drawing at face
           value would otherwise think movement is one of the four counted. */}
       <p className="note mt-4 max-w-[56ch]">
-        Movement is not added to the {SCORE}. It gates the other three, so a hard run does not
-        read as a hard day.
+        Movement is not added to the {SCORE}. It gates the other three.
       </p>
     </div>
   )

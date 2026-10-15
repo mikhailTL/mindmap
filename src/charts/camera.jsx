@@ -399,12 +399,11 @@ export function CameraModule({ className }) {
             viewBox={narrow ? `390 -4 300 ${VB_H + 8}` : `0 0 700 ${VB_H}`}
             className={cn('block w-full', narrow && 'mx-auto max-w-[244px]')}
             role="img"
-            aria-label="An exploded view of a phone's rear camera, numbered along the path the
-              light takes. The flash shines into the side of a fingertip. Blood absorbs some of
-              that light, and every heartbeat changes how much. What comes back out crosses the
-              cover glass, and the lens focuses it. The infrared filter drops the light the eye
-              cannot see. The image sensor turns it into a number thirty times a second, and that
-              number rising and falling is the pulse.">
+            aria-label="An exploded view of a phone's rear camera, numbered along the light path.
+              The flash shines into the side of a fingertip. Blood absorbs some of that light,
+              more with every heartbeat. What comes back crosses the cover glass; the lens
+              focuses it. The infrared filter drops the light the eye cannot see. The image
+              sensor reads it thirty times a second. That number rising and falling is the pulse.">
             {/* Keyframes live in the drawing, not input.css: the class names
                 are namespaced per instance, and two of these on one page must
                 not share a keyframe name. */}
@@ -524,7 +523,7 @@ function GripFig() {
         <text x="116" y="61">lens</text>
       </g>
       <text x="6" y="90" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
-        index fingertip pad, resting
+        fingertip pad, resting
       </text>
     </svg>
   )
@@ -548,7 +547,7 @@ function RestArt() {
       <ellipse cx="62" cy="57" rx="10" ry="3.2" fill={WASH} stroke={INK2} strokeWidth="1.1"/>
       <circle cx="62" cy="57" r="2.4" fill={ACCENT}/>
       <text x="4" y="88" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
-        a table or your lap, both down
+        table or lap, both down
       </text>
     </g>
   )

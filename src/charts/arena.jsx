@@ -346,8 +346,8 @@ export const PatchArena = React.forwardRef(function PatchArena(
             <div className="absolute inset-0 grid place-items-center p-6 text-center">
               {phase === 'error' ? (
                 <p className="max-w-[34ch] text-sec text-ink-2">
-                  The 3D model needs WebGL2, which this browser has turned off. The drawing beside it
-                  shows the same three parts.
+                  The 3D model needs WebGL2, off in this browser. The drawing beside it shows
+                  the same three parts.
                 </p>
               ) : (
                 <p className="max-w-[30ch] text-sec text-ink-3">
@@ -414,7 +414,7 @@ export const PatchArena = React.forwardRef(function PatchArena(
             </Button>
           </div>
         )}
-        <p className="note mt-2">Drag the model to turn it. Scroll to zoom. Click any part to name it.</p>
+        <p className="note mt-2">Drag to turn, scroll to zoom. Click any part to name it.</p>
       </div>
     </Card>
   )
