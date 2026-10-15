@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
 import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
 import { PRO } from '../lib/terms'
-import { SETTINGS, createAccount, signIn } from './store'
+import { SETTINGS, createAccount, signIn, takePreferredRole, current } from './store'
 import { AvatarPicker, field, fieldError, outline, solid } from './ui'
 
 /* Sign in, or create an account.
@@ -48,8 +48,10 @@ const ERROR = {
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
 export function SignIn({ go, note }) {
-  const [mode, setMode] = React.useState('signin')
-  const [role, setRole] = React.useState(null)
+  /* Arriving from the front door's chooser: Create, with that role pressed. */
+  const preset = React.useMemo(() => takePreferredRole(), [])
+  const [mode, setMode] = React.useState(preset ? 'create' : 'signin')
+  const [role, setRole] = React.useState(preset)
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [pass, setPass] = React.useState('')
@@ -74,7 +76,7 @@ export function SignIn({ go, note }) {
     setBusy(true)
     const r = await createAccount({ role, name, passcode: pass, email, setting, avatar })
     setBusy(false)
-    if (r.ok) { setErr(null); go('account'); return }
+    if (r.ok) { setErr(null); go('app-' + r.account.role); return }
     const at = { passcode: 'passcode', email: 'email', setting: 'setting', role: 'role' }[r.reason] || 'name'
     fail(at, r.reason)
   }
@@ -87,7 +89,7 @@ export function SignIn({ go, note }) {
     setBusy(true)
     const r = await signIn(name, pass)
     setBusy(false)
-    if (r === 'ok') { setErr(null); go('account'); return }
+    if (r === 'ok') { setErr(null); go('app-' + (current()?.role || 'student')); return }
     fail('passcode', ERROR[r] ? r : 'wrong')
   }
 

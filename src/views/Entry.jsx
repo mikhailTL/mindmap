@@ -2,8 +2,9 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { Logo } from '../ui/logo'
 import { ArrowRight } from '../ui/marks'
-import { PRO, PRO_LC } from '../lib/terms'
+import { PRO } from '../lib/terms'
 import { GuidedTour, captureHarness, replayIntro } from './Intro'
+import { setPreferredRole, signedInHere } from '../account/store'
 
 /* The front door, asked for in these words: "Upon entering app, there should be
  * an option for WHat best describes you, 'Student' 'parent' 'Medical
@@ -23,9 +24,9 @@ import { GuidedTour, captureHarness, replayIntro } from './Intro'
  * so the chooser and the menu cannot describe the same page two ways. The
  * audience names come from lib/terms.js. */
 const OPTIONS = [
-  { id: 'student', label: 'Student', hint: 'What a week of readings looks like' },
-  { id: 'parent',  label: 'Parent',  hint: 'What a parent is shown, and what they are not' },
-  { id: 'pro',     label: PRO,       hint: `What a ${PRO_LC} sees across a year group` },
+  { id: 'student', label: 'Student', hint: 'Sign in, or make an account' },
+  { id: 'parent',  label: 'Parent',  hint: 'Sign in, or make an account' },
+  { id: 'pro',     label: PRO,       hint: 'Sign in, or make an account' },
   { id: 'tour',    label: 'Other',
     hint: 'A guided tour: the site turns its own pages and explains each one' },
 ]
@@ -141,7 +142,7 @@ function Chooser({ onPick, onSkip }) {
             What best describes you?
           </p>
           <p className="mt-1.5 max-w-[46ch] text-meta text-ink-2">
-            It only decides which page you start on. Every page stays in the menu.
+            Pick one to sign in. Every page stays in the menu either way.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -195,7 +196,9 @@ export function Entry({ go, enabled = true }) {
      screenshot harness is the only thing that can hold it down, and nothing in
      the interface can set that. */
   React.useEffect(() => {
-    if (!enabled || asked || read() !== null || captureHarness()) return
+    /* A device with an account signed in is not asked again: the owner,
+       "NOT repeatedly do this on the same device where theyre signed in". */
+    if (!enabled || asked || read() !== null || captureHarness() || signedInHere()) return
     asked = true
     move('ask')
   }, [enabled])
@@ -212,11 +215,17 @@ export function Entry({ go, enabled = true }) {
     requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
   }, [])
 
+  /* Student, Parent and Medical Professional go to sign-in, opening on
+     Create with that role pressed; signing in lands in that role's app. The
+     fourth choice is the tour. */
   const pick = React.useCallback(id => {
     if (id === 'tour') { move('tour'); return }
     leave()
-    if (go) go(id)
-    else location.hash = '#/' + id
+    const role = id === 'student' ? 'student' : id === 'parent' ? 'parent' : id === 'pro' ? 'pro' : null
+    const to = role ? 'signin' : id
+    if (role) setPreferredRole(role)
+    if (go) go(to)
+    else location.hash = '#/' + to
   }, [go, leave])
 
   if (!enabled || now === null) return null

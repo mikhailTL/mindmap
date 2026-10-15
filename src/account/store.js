@@ -210,6 +210,23 @@ const session  = makeSlot('mindmap.account.session',  blankSession,  normaliseSe
 const links    = makeSlot('mindmap.account.links',    blankLinks,    normaliseLinks)
 const invites  = makeSlot('mindmap.account.invites',  blankInvites,  normaliseInvites)
 
+/* ── The front door ─────────────────────────────────────────────────────── */
+
+/* The chooser on the site's front door hands the role it was told to the
+   sign-in screen, which opens on Create with that tile pressed. Held in
+   memory only: it is a hint for the next screen, not a setting. */
+let preferredRole = null
+export const setPreferredRole = r => { preferredRole = ROLES.includes(r) ? r : null }
+export const takePreferredRole = () => { const r = preferredRole; preferredRole = null; return r }
+
+/* Whether this device has an account signed in, before the probe has
+   answered: a server token, or a device-only session. The chooser reads it
+   to stay away from somebody who already signed in here. */
+export function signedInHere() {
+  if (readToken()) return true
+  return !!session.get().accountId
+}
+
 /* ── Which backend ──────────────────────────────────────────────────────── */
 
 /* 'unknown' until the probe answers, then 'remote' or 'device'. */
