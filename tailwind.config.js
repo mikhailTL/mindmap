@@ -101,8 +101,8 @@ export default {
          is a tell. The kit is back and the habit is gone. `mono` is for
          figures that have to line up, not for labels. */
       fontFamily: {
-        display: ['Manrope','-apple-system','system-ui','sans-serif'],
-        body:    ['Manrope','-apple-system','system-ui','sans-serif'],
+        display: ['Quicksand','-apple-system','system-ui','sans-serif'],
+        body:    ['Chivo','-apple-system','system-ui','sans-serif'],
         /* `mono` is the body face, not a typewriter one. It is kept as a name
            because ~200 call sites use it to mean "a figure that has to line up
            with the figure above it", and `tabular-nums` is what actually does
@@ -110,7 +110,7 @@ export default {
            monospaced face on a display number reads as a generated page, which
            is the one thing this site cannot afford to look like.
            `code` is the real monospace, for file paths and literal code. */
-        mono:    ['Manrope','-apple-system','system-ui','sans-serif'],
+        mono:    ['Chivo','-apple-system','system-ui','sans-serif'],
         code:    ['"Chivo Mono"','ui-monospace','monospace'],
       },
       /* nine steps because the content has nine levels of meaning */

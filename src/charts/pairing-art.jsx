@@ -250,7 +250,7 @@ function PatchWake({ height }) {
    Screen type is set large for that reason. Every value below was taken from
    the palette and every pair clears 4.5:1 on its own ground. */
 
-const DISPLAY = 'Manrope,sans-serif'
+const DISPLAY = 'Quicksand,sans-serif'
 const BODY = 'Chivo,sans-serif'
 const MONO = '"Chivo Mono",monospace'
 

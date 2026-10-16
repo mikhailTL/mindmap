@@ -26,7 +26,7 @@ function useBeat() {
 function Reading() {
   return (
     <div style={{ padding:'0 26px' }}>
-      <p style={{ margin:0, fontFamily:'Manrope,sans-serif', fontWeight:700, fontSize:27,
+      <p style={{ margin:0, fontFamily:'Quicksand,sans-serif', fontWeight:700, fontSize:27,
         letterSpacing:'-0.02em', color:'#0b2b33' }}>Hold still.</p>
       <p style={{ margin:'6px 0 0', fontFamily:'Chivo,sans-serif', fontSize:16, color:'#1f5560' }}>
         Fingertip over the camera. Twenty eight seconds left.</p>
@@ -52,7 +52,7 @@ function Score() {
   return (
     <div style={{ padding:'0 22px', display:'flex', flexDirection:'column', alignItems:'center' }}>
       <RainbowDial score={38} usual={46} rings={studentRings()} size={300}/>
-      <p style={{ margin:'14px 0 0', textAlign:'center', fontFamily:'Manrope,sans-serif',
+      <p style={{ margin:'14px 0 0', textAlign:'center', fontFamily:'Quicksand,sans-serif',
         fontWeight:700, fontSize:24, lineHeight:1.2, letterSpacing:'-0.02em', color:'#0b2b33' }}>
         Today is running easy.</p>
       <p style={{ margin:'8px 0 0', textAlign:'center', fontFamily:'Chivo,sans-serif',
@@ -65,7 +65,7 @@ function Week() {
   const hi = Math.max(...WEEK)
   return (
     <div style={{ padding:'0 26px' }}>
-      <p style={{ margin:0, fontFamily:'Manrope,sans-serif', fontWeight:700, fontSize:27,
+      <p style={{ margin:0, fontFamily:'Quicksand,sans-serif', fontWeight:700, fontSize:27,
         letterSpacing:'-0.02em', color:'#0b2b33' }}>Your week.</p>
       <p style={{ margin:'6px 0 0', fontFamily:'Chivo,sans-serif', fontSize:16, color:'#1f5560' }}>
         Two harder days, both after Wednesday.</p>
@@ -101,7 +101,7 @@ export function PhoneApp() {
             strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
           <circle cx="29.5" cy="17.6" r="2.4" fill="#0a6e68"/>
         </svg>
-        <span style={{ fontFamily:'Manrope,sans-serif', fontWeight:700, fontSize:20,
+        <span style={{ fontFamily:'Quicksand,sans-serif', fontWeight:700, fontSize:20,
           letterSpacing:'-0.015em', color:'#0b2b33' }}>MindMap</span>
         <span style={{ marginLeft:'auto', fontFamily:'Chivo,sans-serif', fontSize:14, color:'#3c6a74' }}>
           Thursday</span>
@@ -114,7 +114,7 @@ export function PhoneApp() {
       <div style={{ display:'flex', borderTop:'1px solid #bed6da', background:'#ffffff' }}>
         {TAB.map((t, n) => (
           <span key={t} style={{ flex:1, textAlign:'center', padding:'13px 0',
-            fontFamily:'Manrope,sans-serif', fontWeight:700, fontSize:14,
+            fontFamily:'Quicksand,sans-serif', fontWeight:700, fontSize:14,
             color: n === (i === 2 ? 1 : 0) ? '#0a6e68' : '#3c6a74' }}>{t}</span>
         ))}
       </div>

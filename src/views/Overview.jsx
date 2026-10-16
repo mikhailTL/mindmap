@@ -182,9 +182,10 @@ export function Overview({ go }) {
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
                 1.06, not 1.02, where the descenders of "Making your stress"
                 landed in the cap height of "readable". */}
-            <h1 className="mt-4 max-w-[19ch] font-display text-view font-semibold leading-[1.06]
-              tracking-tight text-ink lg:text-sect 2xl:text-fig">
-              Track your stress. <span className="text-accent">Feel better.</span>
+            <h1 className="mt-4 max-w-[13ch] font-display text-view font-bold leading-[1.06]
+              tracking-tight text-ink [text-wrap:balance] lg:text-sect
+              2xl:max-w-[11ch] 2xl:text-fig">
+              Making your stress <span className="text-accent">readable</span>.
             </h1>
             <ScrollIn as="p" className="mt-5 max-w-[30ch] text-lead font-medium leading-[1.3] text-ink">
               MindMap is an app that helps teenagers track and monitor their stress levels.

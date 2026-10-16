@@ -1,29 +1,49 @@
-/* One family, Manrope, for display and body. The owner, 14 October: the app
-   has to look "polished and less babyish ... sleeker and more modern like
-   the app i showed u as well as modern startups", colours unchanged. The
-   rounded terminals of Quicksand were the babyish part; Manrope is the
-   geometric sans the apps he named are set in, one family at every size, so
-   a heading and the line under it differ by weight and size and not by
-   voice. Chivo Mono stays for `font-code` only: literal paths.
+/* The project's own kit, restored: Quicksand for display, Chivo for body,
+   Chivo Mono for figures. It was briefly swapped wholesale for Satoshi and
+   that was the wrong read of the note behind it. What was actually wrong was
+   one habit, not the kit: a monospace caption sitting under every heading.
+   The kit is back; that habit is not, and `font-mono` now means Chivo Mono
+   only where figures have to line up.
 
-   Variable files, latin and latin-ext, self-hosted: the Google stylesheet
-   cost a round trip to two more hosts before a glyph could be measured. */
+   All three are variable files, so one download per family covers every
+   weight the site uses, including the 700 headings need. latin and latin-ext
+   only, six files, 180 KB. Self-hosted because the Google stylesheet cost a
+   round trip to two more hosts before a single glyph could be measured, and
+   the audit timed out on it every run. */
 /* latin */
 @font-face {
-  font-family: 'Manrope';
+  font-family: 'Quicksand';
   font-style: normal;
-  font-weight: 200 800;
+  font-weight: 300 700;
   font-display: swap;
-  src: url(/fonts/manrope-latin.woff2) format('woff2');
+  src: url(/fonts/6xKtdSZaM9iE8KbpRA_hK1QNYuDyPw.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 /* latin-ext */
 @font-face {
-  font-family: 'Manrope';
+  font-family: 'Quicksand';
   font-style: normal;
-  font-weight: 200 800;
+  font-weight: 300 700;
   font-display: swap;
-  src: url(/fonts/manrope-latin-ext.woff2) format('woff2');
+  src: url(/fonts/6xKtdSZaM9iE8KbpRA_hJVQNYuDyP7bh.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Chivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/va9I4kzIxd1KFrBoQeNVkqDO.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Chivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/va9I4kzIxd1KFrBmQeNVkqDOeTY.woff2) format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 /* latin */
