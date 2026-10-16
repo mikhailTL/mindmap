@@ -310,7 +310,7 @@ const NIMH_SUICIDE = { label: 'NIMH, Suicide, from CDC WISQARS 2023',
 const TRENDS = { label: 'CDC YRBS Trends, 2013 to 2023', href: 'https://www.cdc.gov/yrbs/dstr/index.html' }
 
 const FIGURES = [
-  { big: '1 in 7', line: 'teens live with a mental health condition',
+  { big: '1 in 7', line: 'teens live with a mental health condition globally',
     exact: '14.3% of 10 to 19 year olds, worldwide', src: WHO,
     art: <People on={1} of={7}/> },
   { big: '1 in 5', line: 'Florida teens had a major depressive episode in a year',
@@ -342,18 +342,17 @@ const FIGURES = [
 ]
 
 export function ProblemFigures({ className }) {
+  /* The owner, 16 October: no sources on the band, the numbers as large as
+     they go. The exact value and the source stay on each figure for a screen
+     reader and as a hover title, so the file's sourcing rule still holds. */
   return (
-    <div className={cn('grid gap-x-7 gap-y-6 sm:grid-cols-2 lg:grid-cols-3', className)}>
+    <div className={cn('grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3', className)}>
       {FIGURES.map(f => (
-        <figure key={f.big} className="m-0" aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${f.src.label}.`}>
-          <p className="font-display text-sub font-bold tabular-nums leading-none text-accent-ink">{f.big}</p>
-          <div className="mt-2.5">{f.art}</div>
-          <p className="mt-2 max-w-[24ch] text-sec leading-[1.4] text-ink-2">{f.line}</p>
-          <figcaption className="mt-1.5 text-fine leading-[1.45] text-ink-3">
-            {f.exact}.{' '}
-            <a href={f.src.href} target="_blank" rel="noreferrer"
-              className="border-b border-accent/50 text-ink hoverOnly:border-accent">{f.src.label}</a>
-          </figcaption>
+        <figure key={f.big} className="m-0" title={`${f.exact}. ${f.src.label}`}
+          aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${f.src.label}.`}>
+          <p className="font-display text-fig font-bold tabular-nums leading-none text-accent-ink">{f.big}</p>
+          <div className="mt-3">{f.art}</div>
+          <p className="mt-3 max-w-[22ch] font-display text-row font-semibold leading-[1.25] text-ink">{f.line}</p>
         </figure>
       ))}
     </div>
