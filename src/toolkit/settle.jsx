@@ -42,7 +42,7 @@ function SettleStrip({ times, span, offset }) {
   const hours = []
   for (let m = a; m <= b; m += 60) hours.push(m)
   const read = times.length
-    ? times.map(t => `${clock(offset + t.peakAt)} ${t.minutes} minutes${t.carried ? ', carried over' : ''}`).join('; ')
+    ? times.map(t => `${clock(offset + t.peakAt)} ${t.minutes} minutes${t.carried ? ', ran into the next peak' : ''}`).join('; ')
     : 'no peaks'
   return (
     <figure className="m-0">
@@ -84,7 +84,7 @@ function SettleKey() {
         <span className="inline-block h-2.5 w-4 rounded-xs bg-accent"/>settled</span>
       <span className="flex items-center gap-1.5">
         <span className="inline-block h-2.5 w-4 rounded-xs border border-beam
-          bg-[repeating-linear-gradient(45deg,#ddf0f8_0_2px,#1d8fb0_2px_3px)]"/>carried over</span>
+          bg-[repeating-linear-gradient(45deg,#ddf0f8_0_2px,#1d8fb0_2px_3px)]"/>ran into the next peak</span>
     </p>
   )
 }
@@ -155,7 +155,7 @@ export function SettleCard({ className }) {
         <SettleKey/>
       </div>
       <dl className="m-0 mt-3 grid grid-cols-2 gap-x-3 border-t border-rule pt-2.5">
-        {[['Peaks today', day.events], ['Carried over', day.unsettled]].map(([label, n]) => (
+        {[['Peaks today', day.events], ['Back-to-back', day.unsettled]].map(([label, n]) => (
           <div key={label} className="min-w-0">
             <dt className="tick">{label}</dt>
             <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none

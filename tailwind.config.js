@@ -86,7 +86,7 @@ export default {
         lilac:  { DEFAULT:'#a024f2', ink:'#6f09b2', wash:'#f6e8ff' },
         sun:    { DEFAULT:'#b5871b', ink:'#825d07', wash:'#f5ecd7' },
         mint:   { DEFAULT:'#18a370', ink:'#067049', wash:'#d5f2e8' },
-        sky:    { DEFAULT:'#2294e6', ink:'#0967ab', wash:'#def0fc' },
+        sky:    { DEFAULT:'#2294e6', ink:'#0967ab', wash:'#def0fc', band:'#d4e9fb' },
         blush:  { DEFAULT:'#f2248b', ink:'#b2095e', wash:'#fce6f1' },
         calm:   '#157446',
         crit:   '#a8321f',

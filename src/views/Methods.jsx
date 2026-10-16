@@ -114,7 +114,7 @@ const CATEGORIES = [
       ['Breath counter', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
       ['Reaction test', 'A sixty second reaction test validated for alertness, not stress (Basner 2011; Benderoth 2021).'],
       ['Typing rhythm', "Key timing in MindMap's own fields, never the keys, weak in teenagers (Zulueta 2018; Braund 2023)."],
-      ['Reach', 'How far from home your readings happened this week, never a map (Saeb 2015).'],
+      ['Distance from home', 'How far from home your readings happened this week, never a map (Saeb 2015).'],
       ['Pulse check', 'Camera pulse before and after each tool shows which lowers yours most.'],
       ['Heads Up', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
     ],

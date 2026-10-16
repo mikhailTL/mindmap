@@ -73,7 +73,7 @@ function Head() {
   return (
     <h2 className="mark flex items-center gap-2">
       <ReachMark/>
-      <span>Reach</span>
+      <span>Distance from home</span>
     </h2>
   )
 }

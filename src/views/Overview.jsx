@@ -311,7 +311,7 @@ export function Overview({ go }) {
           The photograph sits at 0.14 with no scrim so the ground stays blue.
           Over it accent measured 4.0, so the band's name takes accent.ink. */}
       <Section name="Getting started" tone="card"
-        className="relative isolate overflow-hidden bg-sky-wash [&>div>p:first-child]:text-accent-ink">
+        className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
         <Frame wash photo="student-bus"
           alt="Two boys laughing together on a school bus seat, one holding a phone, trees going past the window behind them"
           className="absolute inset-0 -z-10 opacity-[0.14]"/>
@@ -398,7 +398,7 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── privacy, on blue, with a rounded photograph beside it at lg ───── */}
-      <Section name="Privacy" tone="card" className="bg-beam-wash">
+      <Section name="Privacy" tone="card" className="bg-sky-band">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
           xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div className="min-w-0">
