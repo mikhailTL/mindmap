@@ -8,7 +8,7 @@ import { askMotion } from '../signals/motion'
 import { breathsFromMotion } from '../signals/breath'
 import { DidItWork } from './after'
 
-/* Chest Breathing: the phone lies on the chest and counts the breaths. Every
+/* Breath Counter: the phone lies on the chest and counts the breaths. Every
  * devicemotion z goes into a sixty-second buffer; every two seconds
  * breathsFromMotion turns it into breaths per minute. A tone and a buzz cue
  * each breath, easing from the first measured rate toward six per minute.
@@ -191,7 +191,7 @@ export default function Chest() {
   const measured = result?.end != null
 
   return (
-    <ActivityScreen family="pool" title="Chest Breathing">
+    <ActivityScreen family="pool" title="Breath Counter">
       <DarkSheet on={dark} onStop={stop} line={`${cueWords(sound)} Tap to stop.`}>
         <p className="font-display text-fig font-bold tabular-nums text-paper">{count}</p>
         <p aria-live="polite" className="mt-3 font-display text-ui font-semibold text-mist/80">

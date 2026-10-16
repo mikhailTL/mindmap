@@ -10,7 +10,7 @@ import React from 'react'
  * 2. The upward fade is a type budget. The group is painted at 0.55 and masked
  *    by a ramp holding 0.30 above y 420 and reaching 1 at the feet, so
  *    effective paint is at most 0.165 where the headline and sub-line sit.
- *    ink-2 #1f5560 clears 4.98 : 1 on the worst band at 0.165, ink #0b2b33
+ *    ink-2 #2a5744 clears 4.98 : 1 on the worst band at 0.165, ink #0d2b1e
  *    clears 4.98 : 1 on the worst band at 0.55. Raising either spends that.
  * 3. ONE linearGradient for the whole cloud, gradientUnits="userSpaceOnUse",
  *    shared by every lobe. With the default objectBoundingBox each lobe gets

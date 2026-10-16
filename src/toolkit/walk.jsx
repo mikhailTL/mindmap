@@ -9,7 +9,7 @@ import { askMotion } from '../signals/motion'
 import { countSteps, walkWords } from '../signals/steps'
 import { DidItWork } from './after'
 
-/* Walk it off: three minutes on foot, the phone counting. Every devicemotion
+/* Short walk: three minutes on foot, the phone counting. Every devicemotion
  * magnitude less one g goes into a buffer for the walk; every two seconds
  * countSteps turns it into a count and a cadence. The Wake Lock holds the
  * screen; a tone and a buzz mark halfway and the end. The walk is never
@@ -188,7 +188,7 @@ export default function Walk() {
   const left = SECONDS - secs
 
   return (
-    <ActivityScreen family="night" title="Walk It Off">
+    <ActivityScreen family="night" title="Short Walk">
       {result ? (
         <>
         <Sheet className="mx-auto w-full max-w-[32rem]">

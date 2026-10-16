@@ -140,7 +140,7 @@ export function SettleCard({ className }) {
     <Panel className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="How Your Body Settles" meta="demo" className="min-w-0 flex-1"/>
-        <Why label="What settle time means" className="pt-1.5">{WHY}</Why>
+        <Why label="What recovery time means" className="pt-1.5">{WHY}</Why>
       </div>
       <div className="mt-3 flex items-end gap-4">
         <p className="min-w-0">

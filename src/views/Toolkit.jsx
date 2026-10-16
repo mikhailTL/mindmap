@@ -23,12 +23,12 @@ import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } 
  *   toolkit-reframe    -> open="reframe"     Thought Reframe
  *   toolkit-scan       -> open="scan"        Body Scan
  *   toolkit-move       -> open="move"        Movement Break
- *   toolkit-sigh       -> open="sigh"        Sigh coach
- *   toolkit-chest      -> open="chest"       Chest breathing
- *   toolkit-steady     -> open="steady"      Steady hand
- *   toolkit-alert      -> open="alert"       Alertness check
- *   toolkit-pocket     -> open="pocket"      Pocket pacer
- *   toolkit-walk       -> open="walk"        Walk it off
+ *   toolkit-sigh       -> open="sigh"        Long exhale
+ *   toolkit-chest      -> open="chest"       Breath counter
+ *   toolkit-steady     -> open="steady"      Hold still
+ *   toolkit-alert      -> open="alert"       Reaction test
+ *   toolkit-pocket     -> open="pocket"      Breathing by sound
+ *   toolkit-walk       -> open="walk"        Short walk
  *
  * With no `open` this renders the index. With an `open` it renders that one
  * activity as the whole screen. The eleven student activities are audience

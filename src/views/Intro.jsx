@@ -93,7 +93,7 @@ function headPath(x, y, deg, s = 10) {
   return `M${p(0, 0)} L${p(-s, s * 0.5)} L${p(-s * 0.72, 0)} L${p(-s, -s * 0.5)} Z`
 }
 
-function Arrow({ d, len, x, y, deg, t, dur = 0.8, color = '#0b2b33', w = 2.4, still }) {
+function Arrow({ d, len, x, y, deg, t, dur = 0.8, color = '#0d2b1e', w = 2.4, still }) {
   if (still) {
     return (
       <g stroke={color} fill={color}>
@@ -112,7 +112,7 @@ function Arrow({ d, len, x, y, deg, t, dur = 0.8, color = '#0b2b33', w = 2.4, st
   )
 }
 
-function Spot({ cx, cy, r, t, still, color = '#0a6e68' }) {
+function Spot({ cx, cy, r, t, still, color = '#157446' }) {
   if (still) return <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="2.4"/>
   return (
     <g fill="none" stroke={color} strokeWidth="2.6">
@@ -135,7 +135,7 @@ function Chip({ x, y, t, still, anchor = 'middle', size = 17, tone = 'fill-ink',
 function Card({ x, y, w, h, t, still, dim = false }) {
   return (
     <rect x={x} y={y} width={w} height={h} rx="16"
-      fill="#ffffff" fillOpacity={dim ? 0.34 : 0.85} stroke="#8eb0b6"
+      fill="#ffffff" fillOpacity={dim ? 0.34 : 0.85} stroke="#93b2a1"
       strokeOpacity={dim ? 0.45 : 1} strokeWidth="1.5"
       className={cn(!still && 'iv-a iv-lift')}
       style={still ? undefined : { '--d': '.6s', '--t': `${t}s` }}/>
@@ -162,7 +162,7 @@ function StageOneNumber({ still }) {
           <Arrow still={still} t={3.3} dur={0.9} d="M318 168 C 348 178, 366 176, 386 166"
             len={92} x={390} y={164} deg={-24}/>
 
-          <circle cx="462" cy="150" r="62" fill="#ffffff" fillOpacity="0.85" stroke="#0a6e68"
+          <circle cx="462" cy="150" r="62" fill="#ffffff" fillOpacity="0.85" stroke="#157446"
             strokeWidth="2.4" className={cn(a, !still && 'iv-pop')}
             style={still ? undefined : { '--d': '.5s', '--t': '4.15s' }}/>
           {still
@@ -222,17 +222,17 @@ function StagePatch({ still }) {
             </svg>
           </g>
           <rect x={PANEL.x} y={PANEL.y} width={PANEL.w} height={PANEL.h} rx="20" fill="none"
-            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-fade')}
+            stroke="#93b2a1" strokeWidth="1.6" className={cn(a, !still && 'iv-fade')}
             style={still ? undefined : { '--d': '.9s', '--t': '.3s' }}/>
 
           <Spot cx={SPOT_AT.x} cy={SPOT_AT.y} r={26} t={1.8} still={still}/>
 
           <Arrow still={still} t={3.4} dur={0.9} d="M312 152 C 344 150, 370 142, 392 134"
-            len={100} x={396} y={132} deg={-20} color="#1f5560" w={2.2}/>
+            len={100} x={396} y={132} deg={-20} color="#2a5744" w={2.2}/>
           {!still && SENSOR_ORDER.map((i2, i) => dot(i, SENSORS[i2].glow))}
 
           <rect x="408" y="62" width="100" height="176" rx="18" fill="#ffffff" fillOpacity="0.92"
-            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
+            stroke="#93b2a1" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
             style={still ? undefined : { '--d': '.6s', '--t': '3.2s' }}/>
           <g className={cn(a, !still && 'iv-fade')}
             style={still ? undefined : { '--d': '.5s', '--t': '6.4s' }}>
@@ -279,7 +279,7 @@ function StageShare({ still }) {
       <div className="aspect-[16/9] w-full">
         <svg {...svgProps} viewBox="0 0 560 300">
           <rect x="232" y="64" width="96" height="164" rx="18" fill="#ffffff" fillOpacity="0.92"
-            stroke="#8eb0b6" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
+            stroke="#93b2a1" strokeWidth="1.6" className={cn(a, !still && 'iv-lift')}
             style={still ? undefined : { '--d': '.6s', '--t': '.3s' }}/>
           <g className={cn(a, !still && 'iv-fade')}
             style={still ? undefined : { '--d': '.5s', '--t': '.8s' }}>
@@ -297,15 +297,15 @@ function StageShare({ still }) {
           </g>
 
           <Arrow still={still} t={3.2} dur={0.7} d="M224 138 L 186 140" len={50}
-            x={182} y={140} deg={183} color="#1f5560" w={2.2}/>
+            x={182} y={140} deg={183} color="#2a5744" w={2.2}/>
           <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
             <Arrow still={still} t={4.0} dur={0.7} d="M336 138 L 374 140" len={50}
-              x={378} y={140} deg={3} color="#1f5560" w={2.2}/>
+              x={378} y={140} deg={3} color="#2a5744" w={2.2}/>
           </g>
 
           <g className={cn(a, !still && 'iv-lift')}
             style={still ? undefined : { '--d': '.55s', '--t': '5.2s' }}>
-            <rect x="424" y="212" width="78" height="38" rx="19" fill="#0a6e68"
+            <rect x="424" y="212" width="78" height="38" rx="19" fill="#157446"
               className={cn(!still && 'iv-a iv-switch')}
               style={still ? undefined : { '--d': '.6s', '--t': '6.9s' }}/>
             <circle cx="483" cy="231" r="14" fill="#ffffff"
@@ -351,7 +351,7 @@ function StageMark({ still }) {
             ? { transform: 'translate(136px,125.2px) scale(5.2)', transformBox: 'view-box',
                 transformOrigin: '0 0', strokeWidth: 0.5 }
             : { '--d': '1s', '--t': '1.55s', transformBox: 'view-box', transformOrigin: '0 0' }}>
-            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#0b2b33"
+            <rect x="2" y="4" width="36" height="20" rx="10" fill="none" stroke="#0d2b1e"
               className={cn(a, !still && 'iv-draw')}
               style={still ? undefined : { '--len': 96, '--d': '.8s', '--t': '2.3s' }} />
             <path d={RIDGE} fill="none" stroke="#11677f" strokeLinecap="round" strokeLinejoin="round"
@@ -561,7 +561,7 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      style={{ background: BEATS[beat]?.bg || '#0b2b33',
+      style={{ background: BEATS[beat]?.bg || '#0d2b1e',
         transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
 
       onScroll={e => { e.currentTarget.scrollLeft = 0 }}

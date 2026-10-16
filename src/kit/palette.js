@@ -14,7 +14,7 @@
  *
  * 13 OCTOBER: THE CREAM IS OUT. Spec 0d section 1 retires coral, lilac, sun,
  * mint, sky and blush, and reserves warn and crit for out of range and for
- * critical. The `sand` family was built on warn.wash, #f5ecdb, which is the
+ * critical. The `sand` family was built on warn.wash, #f6ecdc, which is the
  * cream the owner struck out by name, and it was wired to `words` and
  * `worried`. It is a near-white from the green run now, `aqua`, and nothing in
  * this file is outside green, white and turquoise.
@@ -38,10 +38,10 @@
  *
  * Measured, tint then card:
  *   sky   tint #ddf0f8  deep #11677f 5.47 / 6.42    art #1d8fb0 3.19 / 3.74
- *   leaf  tint #d6eeeb  deep #07544f 7.23 / 8.79    art #0a6e68 5.02 / 6.10
- *   sand  tint #edf7f7  deep #07544f 8.05 / 8.79    art #11677f 5.89 / 6.42
- *   stone tint #cee8ea  deep #1f5560 6.47 / 8.31    art #3c6a74 4.66 / 5.99
- *   dusk  tint #dfecee  deep #0b2b33 12.34 / 14.92  art #0a6e68 5.04 / 6.10
+ *   leaf  tint #dcefe4  deep #0f5836 7.23 / 8.79    art #157446 5.02 / 6.10
+ *   sand  tint #edf7f7  deep #0f5836 8.05 / 8.79    art #11677f 5.89 / 6.42
+ *   stone tint #cee8ea  deep #2a5744 6.47 / 8.31    art #426a58 4.66 / 5.99
+ *   dusk  tint #e3ede7  deep #0d2b1e 12.34 / 14.92  art #157446 5.04 / 6.10
  *
  * crit red is absent on purpose and is not available to this file. It is the
  * site's alarm, and the same study found a harsh red reads as an emergency
@@ -52,14 +52,14 @@
  * measures 4.86 on accent.ink, 4.60 on ink-2 and 8.26 on ink. It never touches
  * a tint: on the palest of them it is 1.66 : 1. */
 
-const GLOW = '#3fd6c4'                                   // accent.lit
+const GLOW = '#3ecf9a'                                   // accent.lit
 
 export const FAMILIES = {
   sky:   { tint:'#ddf0f8', deep:'#11677f', art:'#1d8fb0', glow:GLOW },  // beam.wash  / beam.ink   / beam
-  leaf:  { tint:'#d6eeeb', deep:'#07544f', art:'#0a6e68', glow:GLOW },  // accent.wash/ accent.ink / accent
-  sand:  { tint:'#edf7f7', deep:'#07544f', art:'#11677f', glow:GLOW },  // aqua       / accent.ink / beam.ink
-  stone: { tint:'#cee8ea', deep:'#1f5560', art:'#3c6a74', glow:GLOW },  // aqua.2     / ink.2      / ink.3
-  dusk:  { tint:'#dfecee', deep:'#0b2b33', art:'#0a6e68', glow:GLOW },  // mist       / ink        / accent
+  leaf:  { tint:'#dcefe4', deep:'#0f5836', art:'#157446', glow:GLOW },  // accent.wash/ accent.ink / accent
+  sand:  { tint:'#edf7f7', deep:'#0f5836', art:'#11677f', glow:GLOW },  // aqua       / accent.ink / beam.ink
+  stone: { tint:'#cee8ea', deep:'#2a5744', art:'#426a58', glow:GLOW },  // aqua.2     / ink.2      / ink.3
+  dusk:  { tint:'#e3ede7', deep:'#0d2b1e', art:'#157446', glow:GLOW },  // mist       / ink        / accent
 }
 
 /* Which activity owns which. Both lists run through all five, so a reader

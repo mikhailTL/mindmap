@@ -25,7 +25,7 @@ import { SCORE, SCORE_RANGE } from '../lib/terms'
  *
  * COLOUR IS NEVER ALONE. An above-range day is amber, bold, and carries the
  * caret; an in-range day is ink-3 and plain. The legend under the plot names
- * all three marks. warn #8f5a0c measures 5.27 : 1 on paper and 4.63 on mist,
+ * all three marks. warn #99590c measures 5.27 : 1 on paper and 4.63 on mist,
  * ink-2 7.85, ink-3 5.33, accent 5.52, so every label here clears AA on any
  * ground this figure lands on. */
 

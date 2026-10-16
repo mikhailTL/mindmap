@@ -62,7 +62,7 @@ describe('rankTools', () => {
 
 describe('effectWords', () => {
   it('names a number and a tool', () => {
-    expect(effectWords('sigh', 6.2)).toBe('After the sigh coach your pulse is 6 beats lower.')
+    expect(effectWords('sigh', 6.2)).toBe('After the long exhale your pulse is 6 beats lower.')
   })
   it('uses the singular for one beat', () => {
     expect(effectWords('breathing', 1.4)).toBe('After the box breathing your pulse is 1 beat lower.')
@@ -87,18 +87,18 @@ describe('effectWords', () => {
   })
   it('reads the walk as a walk inside a sentence', () => {
     expect(effectWords('walk', 5)).toBe('After the walk your pulse is 5 beats lower.')
-    expect(effectWords('pocket', null)).toBe('Two checks after the pocket pacer are needed.')
+    expect(effectWords('pocket', null)).toBe('Two checks after the sound breathing are needed.')
   })
-  it('reads the alertness check inside a sentence', () => {
-    expect(effectWords('alert', 12)).toBe('After the alertness check your pulse is 12 beats lower.')
-    expect(effectWords('alert', null)).toBe('Two checks after the alertness check are needed.')
+  it('reads the reaction test inside a sentence', () => {
+    expect(effectWords('alert', 12)).toBe('After the reaction test your pulse is 12 beats lower.')
+    expect(effectWords('alert', null)).toBe('Two checks after the reaction test are needed.')
   })
   it('maps every tool id to its display name', () => {
-    expect(toolName('alert')).toBe('Alertness Check')
-    expect(toolName('sigh')).toBe('Sigh Coach')
-    expect(toolName('steady')).toBe('Steady Hand')
-    expect(toolName('walk')).toBe('Walk It Off')
-    expect(toolName('pocket')).toBe('Pocket Pacer')
+    expect(toolName('alert')).toBe('Reaction Test')
+    expect(toolName('sigh')).toBe('Long Exhale')
+    expect(toolName('steady')).toBe('Hold Still')
+    expect(toolName('walk')).toBe('Short Walk')
+    expect(toolName('pocket')).toBe('Breathing by Sound')
     expect(toolName('unknown')).toBe('unknown')
   })
 })

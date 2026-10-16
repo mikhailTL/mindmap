@@ -7,8 +7,8 @@
   "display": "standalone",
   "orientation": "portrait",
   "lang": "en",
-  "background_color": "#f5fafa",
-  "theme_color": "#f5fafa",
+  "background_color": "#f7faf8",
+  "theme_color": "#f7faf8",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

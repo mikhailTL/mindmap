@@ -356,7 +356,7 @@ export function removeNote(id) {
   return notes.merge({ items: listNotes().filter(n => n.id !== id) }).items
 }
 
-/* ── Beyond the screen: four more device-only slots ───────────────────── */
+/* ── Phone sensors: four more device-only slots ───────────────────── */
 
 /* Every row below is a measurement the phone made in the page: a reaction
  * time, a typing rhythm, a position at the moment of a reading, a mark on
@@ -369,7 +369,7 @@ const iso = v => (typeof v === 'string' && v ? v : new Date().toISOString())
 
 const KEEP = 60
 
-/* Alertness checks: one row per completed check. */
+/* Reaction tests: one row per completed check. */
 const blankAlert = () => ({ v: VERSION, items: [] })
 function normaliseAlert(s) {
   const items = Array.isArray(s.items) ? s.items : []

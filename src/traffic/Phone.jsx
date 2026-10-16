@@ -6,23 +6,33 @@ import {
 } from '../signals/light'
 import { startMotion, askMotion } from '../signals/motion'
 import { useReduced } from '../toolkit/useReduced'
-import { LightPill } from './Parent'
+import { IOS, IosNotification, BANNER_TOP } from './ios'
+import MessagesScene from './Messages'
+import ReelsScene from './Reels'
 
-/* The teen's phone. A feed to scroll and a thread to type in, and the Traffic
- * Light engine running against them exactly as it would in the product: the
- * scroll container records {t, y}, the field records {t, del} and never the
- * key, and every two seconds the last minute is turned into features, an
- * index and a light. Nothing here is stored, sent or kept past the page.
+/* The teen's phone. Two live scenes, a text conversation and a short video
+ * feed, and the Heads Up engine running against them exactly as it would in
+ * the product: the feed reports its position as {t, y}, every key reports
+ * {t, del} and never the key, and every two seconds the last minute is
+ * turned into features, an index and a light. The teen sees nothing of the
+ * light. The only thing that reaches them is the notification, on red.
+ * Nothing here is stored, sent or kept past the page.
  *
- * Props (T2 builds the page against this):
- *   baseline   the teen's learnt usual, from src/traffic/baseline.js
- *   scale      true multiplier for the IPhone drawing
- *   onState    ({ index, light, top, words, features, state }) every 2 s
- *   onBreak    called when the teen taps "Take a breath"
- *   driverRef  ref; set to { scrollTo(y), key(del, ch), focusField(),
- *              reset(), setClockRate(r), feedMax() } so the demo driver
- *              drives the same event paths a visitor would
- *   clock      wall source for the session clock, default performance.now
+ * Props (the page builds against this):
+ *   scene        'messages' | 'reels'. Both stay mounted so a switch is
+ *                instant, and the session carries across the switch.
+ *   baseline     the teen's learnt usual, from src/traffic/baseline.js
+ *   scale        true multiplier for the IPhone drawing
+ *   onState      ({ index, light, top, words, features, state }) every 2 s
+ *   onBreak      called when the teen taps "Take a break"
+ *   driverRef    ref; set to { scene, key(del, ch), send(), receive(text, ms),
+ *                swipe(dir, ms), flick(dir), scrollTo(y), focusField(),
+ *                reset(), setClockRate(r), feedMax(), drive(on), motion() }
+ *                so the demo driver goes through the same paths a visitor's
+ *                keys and swipes go through. Input meant for the scene that
+ *                is not showing is dropped.
+ *   clock        wall source for the session clock, default performance.now
+ *   interactive  the IPhone is a group of live controls, not a picture
  *
  * Time. Scroll and key timestamps are always wall time, so a speed or a gap
  * is the real one. The SESSION clock (minutes, the one-minute red rule, the
@@ -35,6 +45,21 @@ const TICK_MS = 2000
 const WINDOW_MS = 60 * 1000
 const RING = 400
 const NUDGE_SHOW_MS = 12 * 1000
+/* The feed's position is sampled ten times a second, the rate a phone would
+   log it at, so one swipe is a few samples and a reversal counts once. */
+const SAMPLE_MS = 100
+const BANNER_MS = 450
+/* A swipe is a run of feed samples; a pause longer than this ends it. Speed
+   and reversals are not computed from fewer than two swipes: one swipe alone
+   is all motion and no watching, and reads as fast scrolling. */
+const SWIPE_GAP_MS = 400
+const MIN_SWIPES = 2
+
+function swipesIn(samples) {
+  let n = samples.length ? 1 : 0
+  for (let i = 1; i < samples.length; i++) if (samples[i].t - samples[i - 1].t > SWIPE_GAP_MS) n++
+  return n
+}
 
 function ring(size) {
   const buf = new Array(size)
@@ -50,35 +75,17 @@ function ring(size) {
   }
 }
 
-const HUES = [
-  ['bg-coral-wash', 'bg-coral'], ['bg-lilac-wash', 'bg-lilac'], ['bg-sun-wash', 'bg-sun'],
-  ['bg-mint-wash', 'bg-mint'], ['bg-sky-wash', 'bg-sky'], ['bg-blush-wash', 'bg-blush'],
-]
-const KINDS = ['A post', 'A clip', 'A photo']
-const CARDS = Array.from({ length: 40 }, (_, i) => ({
-  hue: HUES[(i * 5) % HUES.length], kind: KINDS[i % KINDS.length], h: 120 + ((i * 7) % 4) * 28,
-}))
-
-const SEED = [
-  { who: 'Someone', text: 'You around later?' },
-  { who: 'You', text: 'Maybe, still finishing stuff' },
-  { who: 'Someone', text: 'Ok, tell me' },
-]
-
 export default function TeenPhone({
-  baseline, scale = 0.9, onState, onBreak, driverRef, clock = () => performance.now(),
+  scene = 'messages', baseline, scale = 0.9, onState, onBreak, driverRef,
+  clock = () => performance.now(), interactive = true,
 }) {
   const reduced = useReduced()
-  const [tab, setTab] = React.useState('feed')
-  const [light, setLight] = React.useState(Light.GREEN)
-  const [banner, setBanner] = React.useState(false)
-  const [draft, setDraft] = React.useState('')
-  const [bubbles, setBubbles] = React.useState(SEED)
-  const [motion, setMotion] = React.useState('off')
-  const [hotField, setHotField] = React.useState(false)
+  /* off, enter (mounted, still above the screen), on, leave */
+  const [banner, setBanner] = React.useState('off')
+  const [expanded, setExpanded] = React.useState(false)
 
-  const feedRef = React.useRef(null)
-  const threadRef = React.useRef(null)
+  const msgRef = React.useRef(null)
+  const reelsRef = React.useRef(null)
   const scrollRing = React.useRef(ring(RING)).current
   const keyRing = React.useRef(ring(RING)).current
   const startRef = React.useRef(null)
@@ -86,15 +93,13 @@ export default function TeenPhone({
   const lastNudgeRef = React.useRef(null)
   const bannerTimer = React.useRef(0)
   const motionRef = React.useRef(null)
-  const muteScroll = React.useRef(false)
-  const lastKeyRef = React.useRef(-1e9)
-  const draftRef = React.useRef('')
+  const sample = React.useRef({ last: -1e9, pending: null, timer: 0 })
+  const drivenRef = React.useRef(false)
+  const [driven, setDriven] = React.useState(false)
   const sess = React.useRef(null)
-  /* `mounted` gates the await in toggleMotion: a late answer is dropped. */
-  const mounted = React.useRef(true)
-  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   /* latest props, read from the 2 s loop and the driver handle */
+  const sceneRef = React.useRef(scene); sceneRef.current = scene
   const clockRef = React.useRef(clock); clockRef.current = clock
   const baselineRef = React.useRef(baseline); baselineRef.current = baseline
   const onStateRef = React.useRef(onState); onStateRef.current = onState
@@ -106,21 +111,49 @@ export default function TeenPhone({
   const setRate = r => { const s = getSess(); s.c0 = now(); s.t0 = wall(); s.rate = r }
 
   const startSession = () => { if (startRef.current == null) startRef.current = now() }
-  const recordKey = del => { keyRing.push({ t: wall(), del: !!del }); startSession() }
-  const putDraft = v => { draftRef.current = v; setDraft(v) }
 
+  /* every key, from every source, lands here: when, and whether it deleted */
+  const recordKey = React.useCallback(del => {
+    keyRing.push({ t: wall(), del: !!del }); startSession()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* every feed position, from a finger, a wheel or the driver, lands here.
+     The time is stamped from the same wall the keys use. */
+  const onSample = React.useCallback(({ y }) => {
+    const s = sample.current, w = wall()
+    const push = (t, v) => { scrollRing.push({ t, y: v }); s.last = t; s.pending = null; startSession() }
+    if (w - s.last >= SAMPLE_MS) { clearTimeout(s.timer); push(w, y); return }
+    s.pending = y
+    if (!s.timer) {
+      s.timer = setTimeout(() => {
+        s.timer = 0
+        if (s.pending != null) push(wall(), s.pending)
+      }, SAMPLE_MS - (w - s.last))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── the notification ──────────────────────────────────────────────── */
+  const hideBanner = () => {
+    clearTimeout(bannerTimer.current)
+    setExpanded(false)
+    setBanner(b => (b === 'off' ? 'off' : 'leave'))
+    bannerTimer.current = setTimeout(() => setBanner('off'), BANNER_MS)
+  }
   const showBanner = () => {
     clearTimeout(bannerTimer.current)
-    setBanner(true)
-    bannerTimer.current = setTimeout(() => setBanner(false), NUDGE_SHOW_MS)
+    setExpanded(false)
+    setBanner('enter')
+    /* two frames so the banner is painted above the screen before it moves */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setBanner(b => (b === 'enter' ? 'on' : b))
+      bannerTimer.current = setTimeout(hideBanner, NUDGE_SHOW_MS)
+    }))
   }
-  const hideBanner = () => { clearTimeout(bannerTimer.current); setBanner(false) }
-
-  const send = () => {
-    const text = draftRef.current.trim()
-    if (text) setBubbles(b => [...b, { who: 'You', text }])
-    putDraft('')
+  const expand = () => {
+    clearTimeout(bannerTimer.current)
+    setExpanded(true)
   }
+  const takeBreak = () => { hideBanner(); onBreakRef.current?.() }
 
   /* ── the feature loop ──────────────────────────────────────────────── */
   const tick = () => {
@@ -132,15 +165,15 @@ export default function TeenPhone({
       motionRms = r.ok ? r.rms : null
     }
     const started = startRef.current
+    const scroll = scrollRing.since(w - WINDOW_MS)
     const features = sessionFeatures({
-      scroll: scrollRing.since(w - WINDOW_MS),
+      scroll: swipesIn(scroll) >= MIN_SWIPES ? scroll : [],
       keys: keyRing.since(w - WINDOW_MS),
       startedAt: started ?? t, endedAt: t, motionRms,
     })
     const s = strainIndex(features, baselineRef.current || emptyBaseline())
     const st = decideLight(lightRef.current, s.index, t)
     lightRef.current = st
-    setLight(st.light)
     const n = nudgeFor({ light: st.light, lastNudgeAt: lastNudgeRef.current, now: t })
     if (n.show) { lastNudgeRef.current = t; showBanner() }
     onStateRef.current?.({ index: s.index, light: st.light, top: s.top, words: s.words, features, state: st })
@@ -153,179 +186,122 @@ export default function TeenPhone({
     return () => {
       clearInterval(id)
       clearTimeout(bannerTimer.current)
+      clearTimeout(sample.current.timer)
       if (motionRef.current) { motionRef.current.stop(); motionRef.current = null }
     }
   }, [])
 
   const reset = () => {
     scrollRing.clear(); keyRing.clear()
+    clearTimeout(sample.current.timer)
+    sample.current = { last: -1e9, pending: null, timer: 0 }
     startRef.current = null
     lightRef.current = { light: Light.GREEN, since: now() }
     lastNudgeRef.current = null
-    lastKeyRef.current = -1e9
-    hideBanner()
-    setLight(Light.GREEN)
-    putDraft('')
-    setBubbles(SEED)
-    setTab('feed')
-    setHotField(false)
-    const el = feedRef.current
-    if (el && el.scrollTop !== 0) { muteScroll.current = true; el.scrollTop = 0 }
+    clearTimeout(bannerTimer.current)
+    setExpanded(false)
+    setBanner('off')
+    msgRef.current?.reset()
     tickRef.current()
+  }
+
+  const toggleMotion = async () => {
+    if (motionRef.current) { motionRef.current.stop(); motionRef.current = null; return false }
+    const ok = await askMotion()
+    if (!ok) return false
+    motionRef.current = startMotion()
+    return true
   }
 
   /* ── the driver handle ─────────────────────────────────────────────── */
   React.useEffect(() => {
     if (!driverRef) return
+    const inMessages = () => sceneRef.current === 'messages'
+    const inReels = () => sceneRef.current === 'reels'
+    let lastY = 0
     driverRef.current = {
-      scrollTo(y) { const el = feedRef.current; if (el) el.scrollTop = y },
-      key(del, ch) {
-        if (ch === '\n') { send(); return }
-        recordKey(del)
-        putDraft(del ? draftRef.current.slice(0, -1) : draftRef.current + (ch ?? 'a'))
+      get scene() { return sceneRef.current },
+      key(del, ch) { if (inMessages()) msgRef.current?.key(!!del, ch) },
+      send() { if (inMessages()) msgRef.current?.send() },
+      receive(text, ms) { msgRef.current?.receive(text, ms) },
+      swipe(dir = 1, ms) { if (inReels()) reelsRef.current?.swipe(dir, ms) },
+      flick(dir = 1) { if (inReels()) reelsRef.current?.flick(dir) },
+      /* kept from the scrolling feed: a move to y is one swipe toward it */
+      scrollTo(y) {
+        const dir = Math.sign(y - lastY); lastY = y
+        if (dir && inReels()) reelsRef.current?.swipe(dir)
       },
-      focusField() { setTab('messages'); setHotField(true) },
+      focusField() { msgRef.current?.focus() },
       reset,
       setClockRate(r) { setRate(r) },
-      feedMax() { const el = feedRef.current; return el ? el.scrollHeight - el.clientHeight : 0 },
+      feedMax() { return 0 },
+      drive(on) { drivenRef.current = !!on; setDriven(!!on) },
+      motion: toggleMotion,
     }
     return () => { driverRef.current = null }
   }, [driverRef]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── events the visitor makes ──────────────────────────────────────── */
-  const onScroll = e => {
-    if (muteScroll.current) { muteScroll.current = false; return }
-    scrollRing.push({ t: wall(), y: e.currentTarget.scrollTop })
-    startSession()
-  }
-  const onKeyDown = e => {
-    if (e.key === 'Enter') { e.preventDefault(); send(); return }
-    const del = e.key === 'Backspace' || e.key === 'Delete'
-    if (!del && e.key.length !== 1) return
-    lastKeyRef.current = wall()
-    recordKey(del)
-  }
-  /* some phone keyboards send keydown as "Unidentified"; the input event
-     still says whether it was a deletion, and that is all we keep */
-  const onInput = e => {
-    putDraft(e.target.value)
-    if (wall() - lastKeyRef.current < 40) return
-    const kind = e.nativeEvent?.inputType || ''
-    if (kind.startsWith('delete')) recordKey(true)
-    else if (kind.startsWith('insert')) recordKey(false)
-  }
-
-  const toggleMotion = async () => {
-    if (motionRef.current) { motionRef.current.stop(); motionRef.current = null; setMotion('off'); return }
-    const ok = await askMotion()
-    if (!mounted.current) return
-    if (!ok) { setMotion('none'); return }
-    motionRef.current = startMotion()
-    setMotion('on')
-  }
-
-  React.useEffect(() => {
-    const el = threadRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [bubbles])
-
-  const motionWord = motion === 'on' ? 'Motion on' : motion === 'none' ? 'No sensor' : 'Motion off'
+  const showing = banner === 'on'
+  const mounted = banner !== 'off'
 
   return (
-    <IPhone interactive scale={scale} screenBg="#f5fafa" label="The teen's phone">
-      <div className="relative flex h-full min-h-0 flex-col font-body text-ink">
+    <IPhone interactive={interactive} scale={scale} screenBg="#000" showHomeIndicator={false} label="The teen's phone">
+      {/* edge to edge: positioned against the screen, not its safe areas.
+          isolate keeps the scenes' own layers (the frosted header, the
+          banner) under the Dynamic Island, which is drawn by the IPhone. */}
+      <div className="absolute inset-0 isolate overflow-hidden" style={{ fontFamily: IOS.font }}>
+        {[
+          ['messages', <MessagesScene key="m" active={scene === 'messages'} onKey={recordKey}
+            handleRef={msgRef} reduced={reduced} autoReply={!driven}/>],
+          ['reels', <ReelsScene key="r" active={scene === 'reels'} onSample={onSample}
+            handleRef={reelsRef} reduced={reduced}/>],
+        ].map(([k, el]) => (
+          <div key={k} className={cn('absolute inset-0', scene !== k && 'invisible')}
+            aria-hidden={scene !== k} inert={scene !== k ? '' : undefined}>
+            {el}
+          </div>
+        ))}
 
-        {/* status bar */}
-        <div className="flex h-9 shrink-0 items-center px-5">
-          <span className="w-[72px] text-fine font-semibold tabular-nums">9:41</span>
-          <span className="mx-auto" aria-live="polite">
-            <LightPill light={light}/>
-          </span>
-          <button type="button" onClick={toggleMotion} aria-pressed={motion === 'on'}
-            aria-label="Use the motion sensor"
-            className="w-[72px] text-right text-fine text-ink-3 active:text-ink">
-            {motionWord}
-          </button>
-        </div>
+        {/* an expanded notification blurs what is behind it; a tap outside
+            puts it away, as on the phone */}
+        {expanded && (
+          <div aria-hidden onClick={hideBanner}
+            className={cn('absolute inset-0 z-20 bg-black/20', !reduced && 'animate-[mm-fade_200ms_ease-out]')}
+            style={{ backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}/>
+        )}
 
-        {/* content */}
-        <div className="relative min-h-0 flex-1">
-
-          {/* the feed: scrollTop goes into the ring, nothing else */}
-          <div ref={feedRef} onScroll={onScroll}
-            className={cn('absolute inset-0 overflow-y-auto overscroll-contain px-4 pb-4 pt-1',
-              tab !== 'feed' && 'invisible')}
-            aria-hidden={tab !== 'feed'} aria-label="Feed">
-            {CARDS.map((c, i) => (
-              <div key={i} className="mb-3 rounded-lg bg-card p-3 shadow-card">
-                <div className={cn('relative overflow-hidden rounded', c.hue[0])} style={{ height: c.h }}>
-                  <span aria-hidden className={cn('absolute left-3 top-3 h-2 w-2/5 rounded-full opacity-70', c.hue[1])}/>
-                </div>
-                <p className="mt-2.5 text-ui text-ink-2">{c.kind}</p>
+        {mounted && (
+          <div className="absolute inset-x-2 z-30 flex flex-col gap-2" style={{ top: BANNER_TOP }}>
+            <IosNotification show={showing} title="MindMap" body={NUDGE_TEXT} time="now" reduced={reduced}
+              top={0} className="relative inset-x-0">
+              {/* the whole banner is one button: a tap opens its actions */}
+              {showing && (
+                <button type="button" aria-expanded={expanded}
+                  aria-label={expanded ? 'Close the notification options' : 'Show the notification options'}
+                  onClick={() => (expanded ? setExpanded(false) : expand())}
+                  className="absolute inset-0 rounded-[22px] outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"/>
+              )}
+            </IosNotification>
+            {expanded && showing && (
+              <div role="group" aria-label="Notification options"
+                className={cn('overflow-hidden rounded-[14px]', !reduced && 'animate-[mm-pop_260ms_cubic-bezier(0.32,0.72,0,1)]')}
+                style={{ background: 'rgba(246,246,248,0.9)', backdropFilter: 'blur(28px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(28px) saturate(180%)', boxShadow: '0 8px 30px rgba(0,0,0,0.18)' }}>
+                {[['Take a break', takeBreak], ['Not now', hideBanner]].map(([word, fn], i) => (
+                  <button key={word} type="button" onClick={fn}
+                    className="block min-h-[48px] w-full px-4 text-left text-[17px] leading-[22px] outline-none active:bg-black/10 focus-visible:bg-black/10"
+                    style={{ color: IOS.label, borderTop: i ? '0.5px solid rgba(60,60,67,0.29)' : 'none' }}>
+                    {word}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* the thread: the field times keys and keeps none */}
-          <div className={cn('absolute inset-0 flex flex-col', tab !== 'messages' && 'invisible')}
-            aria-hidden={tab !== 'messages'}>
-            <div ref={threadRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-2">
-              {bubbles.map((b, i) => (
-                <div key={i} className={cn('mb-2.5 flex flex-col', b.who === 'You' ? 'items-end' : 'items-start')}>
-                  <span className="mb-1 px-1 text-fine text-ink-3">{b.who}</span>
-                  <span className={cn('max-w-[78%] rounded-panel px-3.5 py-2.5 text-ui',
-                    b.who === 'You' ? 'bg-mist text-ink' : 'bg-card text-ink shadow-card')}>
-                    {b.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="shrink-0 border-t border-rule bg-card px-4 py-3">
-              <label htmlFor="mm-teen-field" className="sr-only">Message</label>
-              <input id="mm-teen-field" type="text" value={draft} placeholder="Type here"
-                autoComplete="off" autoCorrect="off" spellCheck={false}
-                onKeyDown={onKeyDown} onInput={onInput} onChange={() => {}}
-                onFocus={() => setHotField(false)}
-                className={cn('h-11 w-full rounded-chip border bg-paper px-4 text-ui text-ink',
-                  'placeholder:text-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/30',
-                  hotField ? 'border-accent ring-2 ring-accent/30' : 'border-rule')}/>
-            </div>
-          </div>
-
-          {/* the nudge: one quiet offer, on red, at most every half hour */}
-          <div role="status" aria-live="polite" aria-hidden={!banner}
-            className={cn('absolute inset-x-3 top-2 rounded-panel bg-card p-4 shadow-raise',
-              !reduced && 'transition-[transform,opacity] duration-300 ease-quint',
-              banner ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-[130%] opacity-0')}>
-            {banner && (
-              <>
-                <p className="font-display text-fine font-bold text-accent">MindMap</p>
-                <p className="mt-1 text-ui text-ink">{NUDGE_TEXT}</p>
-                <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => { hideBanner(); onBreakRef.current?.() }}
-                    className="min-h-[44px] flex-1 rounded-field bg-ink font-display text-ui font-semibold text-paper active:bg-accent-ink">
-                    Take a breath
-                  </button>
-                  <button type="button" onClick={hideBanner}
-                    className="min-h-[44px] flex-1 rounded-field border border-rule bg-card font-display text-ui font-semibold text-ink active:bg-mist">
-                    Not now
-                  </button>
-                </div>
-              </>
             )}
           </div>
-        </div>
+        )}
 
-        {/* tabs */}
-        <div className="flex shrink-0 border-t border-rule bg-card">
-          {[['feed', 'Feed'], ['messages', 'Messages']].map(([k, w]) => (
-            <button key={k} type="button" onClick={() => setTab(k)} aria-pressed={tab === k}
-              className={cn('min-h-[52px] flex-1 font-display text-ui font-bold',
-                tab === k ? 'text-accent' : 'text-ink-3')}>
-              {w}
-            </button>
-          ))}
-        </div>
+        <span aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 z-40 h-[5px] w-[140px] -translate-x-1/2 rounded-full"
+          style={{ background: scene === 'reels' ? '#fff' : '#000' }}/>
+        <style>{`@keyframes mm-fade{from{opacity:0}to{opacity:1}}@keyframes mm-pop{from{opacity:0;transform:scale(.94) translateY(-6px)}to{opacity:1;transform:none}}`}</style>
       </div>
     </IPhone>
   )
@@ -333,50 +309,137 @@ export default function TeenPhone({
 
 /* ── the demo driver ───────────────────────────────────────────────────── */
 
-/* A scripted seventy seconds: a steady scroll, then a fast one with
- * reversals, then the thread, typed at a hot cadence with a lot of deleting.
- * It goes through the same handle a visitor's scroll and keys go through,
- * so the engine cannot be fed numbers it would not measure. The session
- * clock runs at DEMO_RATE for the length of the script and returns to the
- * wall when it ends. */
+/* A scripted seventy seconds per scene, deterministic: the same keys, gaps
+ * and swipes every play. It goes through the same handle a visitor's keys
+ * and swipes go through, so the engine cannot be fed numbers it would not
+ * measure. The session clock runs at DEMO_RATE for the length of the script
+ * and returns to the wall when it ends.
+ *
+ * Messages: calm typing for about ten seconds, then faster and faster,
+ * with whole lines typed and deleted, so the index passes 70 near eighteen
+ * seconds and red, which needs a sustained minute of session clock, arrives
+ * in the mid thirties. The stress is in the typing, never in the words.
+ *
+ * Reels: two unhurried swipes, each clip watched for about four seconds as
+ * a calm viewer would, then quicker swipes, then flicks with reversals, the
+ * same climb. */
 const DEMO_RATE = 4
-const WARM_UNTIL = 9000
-const SCROLL_UNTIL = 35000
 const DEMO_TOTAL = 70000
-const WORDS = ['ok', 'wait', 'no', 'yeah', 'what', 'later', 'sure', 'idk', 'fine', 'maybe', 'soon', 'why']
 
-function typingScript() {
-  const ops = []
-  let w = 0
-  while (ops.length < 480) {
-    const word = WORDS[w++ % WORDS.length]
-    for (const c of word) ops.push({ ch: c })
-    const back = Math.min(3, word.length)
-    for (let i = 0; i < back; i++) ops.push({ del: true })
-    for (const c of word.slice(word.length - back)) ops.push({ ch: c })
-    if (w % 3 === 0) {
-      for (let i = 0; i < word.length; i++) ops.push({ del: true })
-      for (const c of word) ops.push({ ch: c })
-    }
-    ops.push({ ch: ' ' })
-    if (w % 5 === 0) ops.push({ ch: '\n' })
-  }
-  return ops
+/* a small seeded generator so the jitter is the same every run */
+function seeded(n) {
+  let s = n >>> 0
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }
 }
 
-export function useDemoDriver(driverRef) {
+/* '<' is one press of delete, '\n' is the send button */
+const INCOMING = [
+  { at: 800, ms: 1500, text: 'like 7 i think' },
+  { at: 5400, ms: 1300, text: 'wait did you see the group chat' },
+  { at: 10200, ms: 1000, text: 'did you see what they posted' },
+  { at: 16500, ms: 1200, text: 'idk its kind of about you' },
+  { at: 23000, ms: 1000, text: 'everyone is being weird' },
+  { at: 30500, ms: 1400, text: 'ok text me later' },
+  { at: 44000, ms: 1600, text: 'i didnt say anything btw' },
+  { at: 55000, ms: 1600, text: 'anyway did you do q6' },
+  { at: 64500, ms: 1200, text: 'ok cool' },
+]
+const TEEN = [
+  { at: 3000, pace: 'calm', text: 'ok coll<<ol\n' },
+  { at: 7300, pace: 'calm', text: 'no whay<t happened\n' },
+  { at: 11400, pace: 'hot', text: 'who poste<<<<<<<<<what did they say\n' },
+  { at: 0, pace: 'hot', text: 'why would thry<<ey say that\n' },
+  { at: 0, pace: 'hot', text: 'thats so<<<<<<<<i dont even ca<<<<<<<<<<<<<<<<whatever\n' },
+  { at: 18000, pace: 'hot', text: 'about me<<<<<<<<like whst<<at\n' },
+  { at: 0, pace: 'hot', text: 'never mind<<<<<<<<<<its fine\n' },
+  { at: 24200, pace: 'hot', text: 'whatever\n' },
+  { at: 0, pace: 'hot', text: 'they always d<<<<<<<<<<<<<i dont care\n' },
+  { at: 0, pace: 'hot', text: 'can we talk lster<<<<ater\n' },
+  { at: 0, pace: 'hot', text: 'like i didnt ev<<<<<<<<<<<<<<<sorry<<<<<\n' },
+  { at: 33000, pace: 'warm', text: 'ok\n' },
+  { at: 46000, pace: 'warm', text: 'i know<<<<<<ok\n' },
+  { at: 57000, pace: 'warm', text: 'not yet<<<<<<<yeah its b i think\n' },
+  { at: 66500, pace: 'warm', text: 'brb\n' },
+]
+const PACE = {
+  calm: { gap: 205, jit: 60, del: 240, space: 40, beforeSend: 450, afterSend: 600 },
+  warm: { gap: 115, jit: 40, del: 105, space: 20, beforeSend: 240, afterSend: 380 },
+  hot: { gap: 80, jit: 34, del: 56, space: 8, beforeSend: 110, afterSend: 240 },
+}
+
+export function messagesScript() {
+  const rnd = seeded(7)
+  const out = INCOMING.map(m => ({ at: m.at, op: 'receive', text: m.text, ms: m.ms }))
+  let t = 0
+  for (const seg of TEEN) {
+    t = Math.max(t, seg.at)
+    const p = PACE[seg.pace]
+    for (const c of seg.text) {
+      if (c === '<') { out.push({ at: t, op: 'key', del: true }); t += p.del + (rnd() - 0.5) * p.jit * 0.5 }
+      else if (c === '\n') { t += p.beforeSend; out.push({ at: t, op: 'send' }); t += p.afterSend }
+      else { out.push({ at: t, op: 'key', ch: c }); t += p.gap + (rnd() - 0.5) * p.jit + (c === ' ' ? p.space : 0) }
+    }
+  }
+  return out.sort((a, b) => a.at - b.at)
+}
+
+export function reelsScript() {
+  const rnd = seeded(11)
+  const out = []
+  /* calm: a clip watched for a few seconds before the next */
+  for (const t of [600, 5000]) out.push({ at: t, op: 'swipe', dir: 1, ms: 380 })
+  for (let t = 9600; t < 13500; t += 1300) out.push({ at: t, op: 'swipe', dir: t > 10500 && t < 11500 ? -1 : 1, ms: 260 })
+  /* restless: quick flicks, mostly back and forth */
+  const DIRS = [1, -1, 1, -1, 1, 1, -1, 1, -1, 1, -1, -1]
+  let i = 0
+  for (let t = 13500; t < 46000; t += 340 + rnd() * 120) out.push({ at: t, op: 'flick', dir: DIRS[i++ % DIRS.length] })
+  for (let t = 46500; t < DEMO_TOTAL; t += 1600) out.push({ at: t, op: 'swipe', dir: 1, ms: 300 })
+  return out
+}
+
+export function useDemoDriver(driverRef, scene = 'messages') {
   const [playing, setPlaying] = React.useState(false)
   const run = React.useRef(null)
 
   const stop = React.useCallback(() => {
     const r = run.current
     if (!r) return
-    cancelAnimationFrame(r.raf)
     clearTimeout(r.timer)
     run.current = null
     driverRef.current?.setClockRate(1)
+    driverRef.current?.drive?.(false)
     setPlaying(false)
   }, [driverRef])
+
+  /* run one scene's script from its start; the session is not touched */
+  const start = React.useCallback(sc => {
+    const prev = run.current
+    if (prev) clearTimeout(prev.timer)
+    const steps = sc === 'reels' ? reelsScript() : messagesScript()
+    const r = { scene: sc, t0: performance.now(), i: 0, timer: 0 }
+    run.current = r
+
+    const step = () => {
+      if (run.current !== r) return
+      /* read the handle fresh each step: the phone may remount under us */
+      const x = driverRef.current
+      if (!x) { stop(); return }
+      const el = performance.now() - r.t0
+      while (r.i < steps.length && steps[r.i].at <= el) {
+        const s = steps[r.i++]
+        if (s.op === 'key') x.key(!!s.del, s.ch)
+        else if (s.op === 'send') x.key(false, '\n')
+        else if (s.op === 'receive') x.receive(s.text, s.ms)
+        else if (s.op === 'swipe') x.swipe(s.dir, s.ms)
+        else if (s.op === 'flick') x.flick(s.dir)
+      }
+      if (r.i >= steps.length || el >= DEMO_TOTAL) { stop(); return }
+      r.timer = setTimeout(step, Math.max(0, steps[r.i].at - el))
+    }
+    step()
+  }, [driverRef, stop])
+
+  const sceneRef = React.useRef(scene); sceneRef.current = scene
 
   const play = React.useCallback(() => {
     const h = driverRef.current
@@ -384,41 +447,17 @@ export function useDemoDriver(driverRef) {
     stop()
     h.reset()
     h.setClockRate(DEMO_RATE)
-    const r = { raf: 0, timer: 0, t0: performance.now(), last: performance.now(), y: 0, dir: 1, frame: 0, i: 0 }
-    const ops = typingScript()
-    run.current = r
-
-    /* read the handle fresh each step: the phone may remount under us */
-    const live = () => { const x = driverRef.current; if (!x) stop(); return x }
-
-    const scroll = () => {
-      if (run.current !== r) return
-      const x = live(); if (!x) return
-      const t = performance.now(), el = t - r.t0
-      if (el >= SCROLL_UNTIL) { x.focusField(); r.timer = setTimeout(type, 500); return }
-      const k = Math.min(3, (t - r.last) / 16.7); r.last = t
-      const hot = el >= WARM_UNTIL
-      const step = !hot ? 9 : (r.frame % 4 === 3 ? -22 : 30)
-      r.frame++
-      const max = x.feedMax() || 4000
-      let y = r.y + step * k * r.dir
-      if (y > max) { r.dir = -1; y = max - 1 } else if (y < 0) { r.dir = 1; y = 1 }
-      r.y = y
-      x.scrollTo(Math.round(y))
-      r.raf = requestAnimationFrame(scroll)
-    }
-    const type = () => {
-      if (run.current !== r) return
-      const x = live(); if (!x) return
-      if (performance.now() - r.t0 >= DEMO_TOTAL) { stop(); return }
-      const op = ops[r.i++ % ops.length]
-      x.key(!!op.del, op.ch)
-      r.timer = setTimeout(type, op.ch === ' ' ? 160 : 70 + Math.random() * 50)
-    }
-
-    r.raf = requestAnimationFrame(scroll)
+    h.drive?.(true)
     setPlaying(true)
-  }, [driverRef, stop])
+    start(sceneRef.current)
+  }, [driverRef, stop, start])
+
+  /* a scene switch mid-demo keeps the session and the fast clock and runs
+     the other scene's script */
+  React.useEffect(() => {
+    const r = run.current
+    if (r && r.scene !== scene) start(scene)
+  }, [scene, start])
 
   React.useEffect(() => stop, [stop])
   return { play, stop, playing }

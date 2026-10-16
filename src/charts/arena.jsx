@@ -21,11 +21,11 @@ const BASE   = '/di/arena/'
 /* The element's colour variables are written as inline style by its own
    setArena(), so a rule in the shadow root cannot beat them. */
 const SKIN = {
-  bg:     '#dfecee',
-  ink:    '#0b2b33',
+  bg:     '#e3ede7',
+  ink:    '#0d2b1e',
   panel:  '#ffffff',
-  border: '#bed6da',
-  accent: '#0a6e68',
+  border: '#c2d7ca',
+  accent: '#157446',
 }
 
 /* Appended to the shadow root, so it lands after the bundle's own sheet and
@@ -38,14 +38,14 @@ const SKIN_CSS = `
 .shell .stage{min-height:0;background:transparent}
 .busy{background:${SKIN.bg};padding:20px;font-family:Chivo,system-ui,sans-serif}
 .busy strong{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.busy p{font-size:15px;color:#3c6a74;margin:6px 0 0}
+.busy p{font-size:15px;color:#426a58;margin:6px 0 0}
 .selection{bottom:16px;left:16px;padding:16px;max-height:min(80%,320px);border:1px solid ${SKIN.border};border-radius:10px;
   box-shadow:5px 5px 0 0 rgb(13 43 30 / .16);font-family:Chivo,system-ui,sans-serif}
 .selection h3{font-family:Quicksand,system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.selection p{font-size:13px;color:#1f5560}
-.selection .kicker{color:#3c6a74}
+.selection p{font-size:13px;color:#2a5744}
+.selection .kicker{color:#426a58}
 .selection-actions{gap:7px}
-.selection-actions button{min-height:44px;padding:8px 12px;font-size:13px;border-radius:6px;border-color:#0b2b33}
+.selection-actions button{min-height:44px;padding:8px 12px;font-size:13px;border-radius:6px;border-color:#0d2b1e}
 .selection .close{min-height:34px;min-width:34px;font-size:17px;border:0}
 .toast{border:1px solid ${SKIN.border};border-radius:10px;font-family:Chivo,system-ui,sans-serif}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SKIN.accent};outline-offset:2px}

@@ -329,10 +329,10 @@ export function ForParents({ go }) {
         ]}/>
 
       <Section tone="card" tight>
-        <SectionHead>The Traffic Light</SectionHead>
-        <SectionLede>One light tells you when to check in, never what they watched.</SectionLede>
-        <Button size="sm" className="mt-3" onClick={() => go('traffic-light')}>
-          See the Traffic Light <ArrowRight aria-hidden/>
+        <SectionHead>Heads Up</SectionHead>
+        <SectionLede>Heads Up shows a green, yellow or red light for your teen's phone use.</SectionLede>
+        <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
+          See Heads Up <ArrowRight aria-hidden/>
         </Button>
       </Section>
 
@@ -385,8 +385,8 @@ export function ForParents({ go }) {
 
 /* ═══════════════════════════ for medical professionals ══════════════════ */
 
-/* `Bars` takes a paint, not a class; #0a6e68 is the accent token. */
-const ACCENT = '#0a6e68'
+/* `Bars` takes a paint, not a class; #157446 is the accent token. */
+const ACCENT = '#157446'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
 /* Ordered on the week's movement, as CASELOAD_DEF states above the table. */

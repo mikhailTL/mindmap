@@ -7,7 +7,7 @@ import { analysePPG } from '../signals/ppg'
 import { addEffect } from '../app/store'
 import { effectOf } from '../signals/effect'
 
-/* Did it work: a 20-second camera pulse before an exercise and one after.
+/* Did it help: a 20-second camera pulse before an exercise and one after.
  * `phase="before"` is one outline button on the idle screen; `phase="after"`
  * is a small sheet. The before reading waits in a module map keyed by tool;
  * when the after reading lands the pair goes to the `effects` slot. Frames

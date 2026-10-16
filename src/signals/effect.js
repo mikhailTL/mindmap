@@ -1,4 +1,4 @@
-/* Did it work. The loop between an exercise and a measurement.
+/* Did it help. The loop between an exercise and a measurement.
  *
  * A pair is one tool, one camera pulse taken before it and one taken after.
  * The effect of a pair is how far the pulse fell and, where the camera
@@ -15,17 +15,17 @@ export const TOOL_NAMES = {
   move:      'Movement Break',
   ground:    'Grounding',
   reframe:   'Thought Reframe',
-  sigh:      'Sigh Coach',
-  chest:     'Chest Breathing',
-  steady:    'Steady Hand',
-  walk:      'Walk It Off',
-  pocket:    'Pocket Pacer',
-  alert:     'Alertness Check',
+  sigh:      'Long Exhale',
+  chest:     'Breath Counter',
+  steady:    'Hold Still',
+  walk:      'Short Walk',
+  pocket:    'Breathing by Sound',
+  alert:     'Reaction Test',
 }
 
 /* How a tool reads inside a sentence where its title does not: "after the
-   walk it off" is three words and no noun. The rest lowercase their title. */
-const IN_SENTENCE = { walk: 'walk' }
+   short walk" is three words and no noun. The rest lowercase their title. */
+const IN_SENTENCE = { walk: 'walk', pocket: 'sound breathing' }
 
 export const MIN_PAIRS = 2
 

@@ -18,7 +18,7 @@ export default {
 
            ink    #0d2b1e  14.47 : 15.20 : 12.69
            ink-2  #2a5744   7.85 :  8.25 :  6.89
-           ink-3  #47705e   5.33 :  5.61 :  4.68   (clears 4.5 on all three)
+           ink-3  #426a58   5.33 :  5.61 :  4.68   (clears 4.5 on all three)
            accent #157446   5.52 :  5.80 :  4.85   paper on it, 5.52
            beam   #0e9c9c   3.20 on paper, so it is a GRAPHIC and never a word
            beam.ink #0b7d7d 4.71, which is the turquoise when it must be a word
@@ -33,13 +33,13 @@ export default {
            accent #3d52a0 / ink #2c3c78 / wash #dde3f6        beam #7091e6
            warn #97482a / wash #f2e9e4          calm #2a6350  crit #a11b1b  */
       colors: {
-        paper:  '#f5fafa',
+        paper:  '#f7faf8',
         card:   '#ffffff',
-        mist:   '#dfecee',
-        ink:    { DEFAULT:'#0b2b33', 2:'#1f5560', 3:'#3c6a74' },
-        rule:   '#bed6da',
-        ruling: '#8eb0b6',
-        accent: { DEFAULT:'#0a6e68', ink:'#07544f', wash:'#d6eeeb', lit:'#3fd6c4' },
+        mist:   '#e3ede7',
+        ink:    { DEFAULT:'#0d2b1e', 2:'#2a5744', 3:'#426a58' },
+        rule:   '#c2d7ca',
+        ruling: '#93b2a1',
+        accent: { DEFAULT:'#157446', ink:'#0f5836', wash:'#dcefe4', lit:'#3ecf9a' },
         /* The turquoise. 3.20 : 1 on paper clears the 3 : 1 a non-text graphic
            needs and clears nothing at all as text, so it rules charts, fills
            bars and draws rain, and `beam.ink` is the only one allowed to be a
@@ -62,7 +62,7 @@ export default {
            glance. Measured on paper : mist
              warn #99590c  5.27 : 4.63
              crit #a8321f  6.36 : 5.58 */
-        warn:   { DEFAULT:'#8f5a0c', wash:'#f5ecdb' },
+        warn:   { DEFAULT:'#99590c', wash:'#f6ecdc' },
         /* Six hues the product can be cheerful in. The teal above is the brand
            and stays the brand; these exist because an app a teenager opens
            every day cannot be one colour, and because a dashboard whose tiles
@@ -88,7 +88,7 @@ export default {
         mint:   { DEFAULT:'#18a370', ink:'#067049', wash:'#d5f2e8' },
         sky:    { DEFAULT:'#2294e6', ink:'#0967ab', wash:'#def0fc' },
         blush:  { DEFAULT:'#f2248b', ink:'#b2095e', wash:'#fce6f1' },
-        calm:   '#0a6e68',
+        calm:   '#157446',
         crit:   '#a8321f',
       },
       /* Quicksand for display, Chivo for body, Chivo Mono for figures.

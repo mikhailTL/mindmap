@@ -18,21 +18,21 @@
  *         a text node.
  *
  * Measured against tint, then against card:
- *   leaf  deep #07544f  7.23 / 8.79    art #0a6e68  5.02 / 6.10
+ *   leaf  deep #0f5836  7.23 / 8.79    art #157446  5.02 / 6.10
  *   tide  deep #11677f  5.47 / 6.42    art #1d8fb0  3.19 / 3.74
- *   stone deep #1f5560  6.47 / 8.31    art #3c6a74  4.66 / 5.99
- *   night deep #0b2b33 12.34 / 14.92   art #0a6e68  5.04 / 6.10
- *   pool  deep #07544f  8.22 / 8.79    art #11677f  5.98 / 6.42
+ *   stone deep #2a5744  6.47 / 8.31    art #426a58  4.66 / 5.99
+ *   night deep #0d2b1e 12.34 / 14.92   art #157446  5.04 / 6.10
+ *   pool  deep #0f5836  8.22 / 8.79    art #11677f  5.98 / 6.42
  *
  * The four .kit-* helpers in src/kit/kit.css read these, so a control several
  * files down inherits its activity's colour without being passed a class. */
 
 export const FAMILIES = {
-  leaf:  { tint:'#d6eeeb', deep:'#07544f', art:'#0a6e68' },  // accent.wash / accent.ink / accent
+  leaf:  { tint:'#dcefe4', deep:'#0f5836', art:'#157446' },  // accent.wash / accent.ink / accent
   tide:  { tint:'#ddf0f8', deep:'#11677f', art:'#1d8fb0' },  // beam.wash  / beam.ink   / beam
-  stone: { tint:'#cee8ea', deep:'#1f5560', art:'#3c6a74' },  // aqua.2     / ink.2      / ink.3
-  night: { tint:'#dfecee', deep:'#0b2b33', art:'#0a6e68' },  // mist       / ink        / accent
-  pool:  { tint:'#edf7f7', deep:'#07544f', art:'#11677f' },  // aqua       / accent.ink / beam.ink
+  stone: { tint:'#cee8ea', deep:'#2a5744', art:'#426a58' },  // aqua.2     / ink.2      / ink.3
+  night: { tint:'#e3ede7', deep:'#0d2b1e', art:'#157446' },  // mist       / ink        / accent
+  pool:  { tint:'#edf7f7', deep:'#0f5836', art:'#11677f' },  // aqua       / accent.ink / beam.ink
 }
 
 /* The four properties a surface sets on itself. `--kit-glow` is deliberately

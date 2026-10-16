@@ -294,7 +294,7 @@ export function PhoneCheck() {
             <>
               <div className="flex flex-col items-start gap-4">
                 <RainbowDial score={result.score} size={248}
-                  rings={[{ id:'phone', name:'Phone sensors', color:'#0a6e68', glow:'#1d8fb0',
+                  rings={[{ id:'phone', name:'Phone sensors', color:'#157446', glow:'#1d8fb0',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div className="w-full">
                   <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>

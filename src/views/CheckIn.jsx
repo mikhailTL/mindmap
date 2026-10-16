@@ -360,9 +360,9 @@ export function CheckInBody({ go }){
               {done && (
                 <>
                   <div className="flex flex-col items-start gap-4">
-                    {/* RainbowDial takes raw hex: #0a6e68 is accent, #1d8fb0 is beam. */}
+                    {/* RainbowDial takes raw hex: #157446 is accent, #1d8fb0 is beam. */}
                     <RainbowDial score={r.score} size={268}
-                      rings={[{ id:'self', name:'Your answers', color:'#0a6e68', glow:'#1d8fb0',
+                      rings={[{ id:'self', name:'Your answers', color:'#157446', glow:'#1d8fb0',
                                 value:r.score, reading:'Six questions' }]}/>
                     <div className="w-full">
                       <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>

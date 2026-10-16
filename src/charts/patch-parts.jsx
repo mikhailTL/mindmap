@@ -26,16 +26,16 @@ import { ScrollScene } from '../ui/motion'
  * and dimensioned on charts/patchstack.jsx, which is the figure that carries
  * the millimetre ruler.
  *
- * These sit on the ink band. Against #0b2b33, ink is 1.00 and accent 2.80 -
+ * These sit on the ink band. Against #0d2b1e, ink is 1.00 and accent 2.80 -
  * both unusable - so every stroke is one of three measured values:
- *   paper      #f5fafa   14.47 : 1   the raised body
- *   mist       #dfecee   12.69 : 1   the plastic
- *   accent.lit #3fd6c4    7.67 : 1   the one thing each card is about
+ *   paper      #f7faf8   14.47 : 1   the raised body
+ *   mist       #e3ede7   12.69 : 1   the plastic
+ *   accent.lit #3ecf9a    7.67 : 1   the one thing each card is about
  * Under reduced motion ScrollScene resolves each drawing to its `to` angle. */
-const PAPER = '#f5fafa'
-const MIST  = '#dfecee'
-const LIT   = '#3fd6c4'
-const GND   = '#0b2b33'   /* the panel's own ground, used to mask, never to draw */
+const PAPER = '#f7faf8'
+const MIST  = '#e3ede7'
+const LIT   = '#3ecf9a'
+const GND   = '#0d2b1e'   /* the panel's own ground, used to mask, never to draw */
 
 /* Stroke hierarchy. The strip renders at about half a viewBox unit per CSS
    pixel, so nothing thinner than 1.6 survives: the previous file's 1.0

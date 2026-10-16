@@ -104,25 +104,25 @@ const CATEGORIES = [
     figure: ConsentRules },
   /* The fifth category has no drawing. Its right column is the sources list,
      author, year, journal, so a judge can check each row against a paper. */
-  { id: 'beyond', tab: 'Beyond the screen', tone: 'paper', ground: 'bg-paper',
-    title: 'Beyond the screen',
+  { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
+    title: 'Phone sensors',
     line: 'Measurements no other teen wellbeing app makes, from sensors you already carry.',
     rows: [
-      ['Settle time, carry-over', 'Minutes from a peak to halfway back, and peaks that ran together.'],
-      ['Run-up', "Your body's rise in the two hours before a marked exam (Pulopulos 2018; Kazdagli 2024)."],
-      ['Sigh coach', 'The microphone measures each exhale during cyclic sighing, shown to lift mood (Balban 2023).'],
-      ['Chest breathing', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
-      ['Alertness check', 'A sixty second reaction test validated for alertness, not stress (Basner 2011; Benderoth 2021).'],
+      ['Recovery time, back-to-back stress', 'Minutes from a peak to halfway back, and peaks that ran together.'],
+      ['Stress before events', "Your body's rise in the two hours before a marked exam (Pulopulos 2018; Kazdagli 2024)."],
+      ['Long exhale', 'The microphone measures each exhale during cyclic sighing, shown to lift mood (Balban 2023).'],
+      ['Breath counter', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
+      ['Reaction test', 'A sixty second reaction test validated for alertness, not stress (Basner 2011; Benderoth 2021).'],
       ['Typing rhythm', "Key timing in MindMap's own fields, never the keys, weak in teenagers (Zulueta 2018; Braund 2023)."],
       ['Reach', 'How far from home your readings happened this week, never a map (Saeb 2015).'],
       ['Pulse check', 'Camera pulse before and after each tool shows which lowers yours most.'],
-      ['Traffic Light', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
+      ['Heads Up', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
     ],
     note: "Not built: other apps' keyboards, calls, background location.",
     figure: Sources },
 ]
 
-/* The papers behind the "Beyond the screen" rows: author, year, journal.
+/* The papers behind the "Phone sensors" rows: author, year, journal.
    Plain text, no links; the full record is in docs/. */
 const SOURCES = [
   'Pulopulos et al. 2018, Psychoneuroendocrinology',

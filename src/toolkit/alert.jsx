@@ -8,7 +8,7 @@ import { useReduced } from './useReduced'
 import { cn } from '../lib/utils'
 import { DidItWork } from './after'
 
-/* Alertness check: the PVT-B on a phone. The whole sheet is the button. After
+/* Reaction test: the PVT-B on a phone. The whole sheet is the button. After
  * a random wait the ring fills and a counter runs from performance.now(); the
  * next pointerdown ends the trial, a tap in the wait is a false start. Sixty
  * seconds or twenty trials, then pvtStats; the summary alone is stored. The
@@ -147,7 +147,7 @@ export default function Alertness() {
   if (phase === 'done' && result) {
     const { stats, usual } = result
     return (
-      <ActivityScreen family="night" title="Alertness Check">
+      <ActivityScreen family="night" title="Reaction Test">
         <Sheet className="mx-auto w-full max-w-[40rem]">
           <h3 className="font-display text-row font-bold text-ink">Your Reaction Time</h3>
           {stats.ok ? (
@@ -174,9 +174,9 @@ export default function Alertness() {
 
   const running = phase !== 'idle'
   return (
-    <ActivityScreen family="night" title="Alertness Check">
+    <ActivityScreen family="night" title="Reaction Test">
       <div role="button" tabIndex={0}
-        aria-label={running ? 'Tap as soon as the ring fills' : 'Start the alertness check'}
+        aria-label={running ? 'Tap as soon as the ring fills' : 'Start the reaction test'}
         onPointerDown={tap} onKeyDown={onKey}
         className="block w-full cursor-pointer select-none touch-manipulation rounded-panel">
         <Sheet className="grid min-h-[60vh] place-items-center">

@@ -5,7 +5,7 @@ import { askMotion } from '../signals/motion'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Steady Hand: a dot the hand keeps inside a ring. Acceleration minus a slow
+/* Hold Still: a dot the hand keeps inside a ring. Acceleration minus a slow
  * mean places the dot; the ring breathes only while the hand is still. The
  * result is movement RMS per block, first minute against last. */
 
@@ -199,7 +199,7 @@ export default function Steady() {
     : null
 
   return (
-    <ActivityScreen family="stone" title="Steady Hand">
+    <ActivityScreen family="stone" title="Hold Still">
       {result ? (
         <>
           <Sheet className="mx-auto w-full max-w-[32rem]">

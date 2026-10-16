@@ -28,11 +28,11 @@ import { cn } from '../lib/utils'
  * CONTRAST ON THIS BAND, WHICH IS NOW LIGHT. Spec 0c retired the near-black
  * ground: the band is bg-paper and the panel behind these figures is card,
  * #ffffff. Every pair below was measured against #ffffff:
- *   ink        #0b2b33  14.92 : 1   headings and the source links
- *   ink-2      #1f5560   8.31 : 1   body copy, and the value over each bar
- *   ink-3      #3c6a74   5.99 : 1   small print, axis labels, axis rules
- *   accent.ink #07544f   8.79 : 1   the headline figures
- *   accent     #0a6e68   6.10 : 1   the lit bar (graphic; clears as text too)
+ *   ink        #0d2b1e  14.92 : 1   headings and the source links
+ *   ink-2      #2a5744   8.31 : 1   body copy, and the value over each bar
+ *   ink-3      #426a58   5.99 : 1   small print, axis labels, axis rules
+ *   accent.ink #0f5836   8.79 : 1   the headline figures
+ *   accent     #157446   6.10 : 1   the lit bar (graphic; clears as text too)
  *   beam       #1d8fb0   3.74 : 1   the second bar, graphic only, never a word
  * The three colours this band used to run on all fail outright on white and
  * are gone from this file: ruling 2.32 : 1, mist 1.21 : 1, accent.lit 1.81.
@@ -279,7 +279,7 @@ function TreatmentGap() {
    rest, so the ratio reads before the number does. */
 function Person({ cx, y, on }) {
   return (
-    <g fill={on ? '#0a6e68' : 'none'} stroke={on ? 'none' : '#3c6a74'} strokeWidth="0.9">
+    <g fill={on ? '#157446' : 'none'} stroke={on ? 'none' : '#426a58'} strokeWidth="0.9">
       <circle cx={cx} cy={y + 6} r="3.6"/>
       <rect x={cx - 6} y={y + 11} width="12" height="9.5" rx="4.6"/>
     </g>
@@ -328,9 +328,9 @@ const FIGURES = [
       /* A rank, drawn as three rows; the second is the one. Red is the
          product's alarm colour and this is the one alarm on the page. */
       <svg viewBox="0 0 200 48" aria-hidden="true" focusable="false" className="block h-auto w-[220px] max-w-full">
-        <rect x="0" y="0" width="200" height="10" rx="5" fill="none" stroke="#3c6a74" strokeWidth="0.9"/>
+        <rect x="0" y="0" width="200" height="10" rx="5" fill="none" stroke="#426a58" strokeWidth="0.9"/>
         <rect x="0" y="19" width="150" height="10" rx="5" fill="#a8321f"/>
-        <rect x="0" y="38" width="110" height="10" rx="5" fill="none" stroke="#3c6a74" strokeWidth="0.9"/>
+        <rect x="0" y="38" width="110" height="10" rx="5" fill="none" stroke="#426a58" strokeWidth="0.9"/>
       </svg>) },
   { big: '30%\u00a0→\u00a040%', wide: true, line: 'felt sad or hopeless, 2013 against 2023',
     exact: 'Same question, same survey, ten years on', src: TRENDS,

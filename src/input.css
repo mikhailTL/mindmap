@@ -47,11 +47,11 @@
   /* One focus treatment for the whole site, and only one. What this replaces
      was two: an accent-wash underline plus an accent baseline for most
      controls, and a separate inset ring for tabs and radios. The underline
-     was the real failure — accent-wash #d6eeeb sits at 1.20 : 1 on card
+     was the real failure — accent-wash #dcefe4 sits at 1.20 : 1 on card
      #ffffff, so on any card surface the focused control was indistinguishable
      from the unfocused one.
 
-     An accent outline replaces both. #0a6e68 measures 5.52 : 1 on paper and
+     An accent outline replaces both. #157446 measures 5.52 : 1 on paper and
      5.80 : 1 on card, so it clears the 3 : 1 graphics minimum on either
      surface. It is an outline rather than a box-shadow on purpose: box-shadow
      is now carrying depth on .lift, and a focus ring drawn in the same
@@ -129,7 +129,7 @@
            text-tick font-bold text-ink-2;
   }
   /* A caption or an annotation. Body face, sentence case, no tracking games.
-     ink-3 #3c6a74 is 5.33 : 1 on paper and 4.68 : 1 on mist, so a caption
+     ink-3 #426a58 is 5.33 : 1 on paper and 4.68 : 1 on mist, so a caption
      still clears 4.5 : 1 wherever it lands. */
   .note { @apply font-body text-note text-ink-3; }
   /* A figure's unit or scale label. It keeps the mono face because it sits

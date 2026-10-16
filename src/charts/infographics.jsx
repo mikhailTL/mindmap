@@ -46,7 +46,7 @@ const BAND = {
    in a scaled viewBox shrinks with the column, so the unit and the window
    belong to the card around this, not to the drawing.
 
-   `muted` draws a signal this surface does NOT have, in `ruling` #8eb0b6 flat.
+   `muted` draws a signal this surface does NOT have, in `ruling` #93b2a1 flat.
    It exists because charts/camera.jsx was dimming the whole drawing with
    `opacity-45`: the signal's own colour at 45% over card lands near 1.6 : 1
    and partial-opacity decoration is not the idiom anywhere else in this
@@ -69,10 +69,10 @@ export function SignalTrace({ kind, muted = false, className }) {
       <path d={`M0 ${g.base} H80`} fill="none" className="stroke-ink-3" strokeWidth="1"
         vectorEffect="non-scaling-stroke" />
       <path d={TRACE[kind]} fill="none" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-        stroke={muted ? '#8eb0b6' : (s.glow || s.color)} vectorEffect="non-scaling-stroke" />
+        stroke={muted ? '#93b2a1' : (s.glow || s.color)} vectorEffect="non-scaling-stroke" />
       {/* the moment it leaves the band, ringed in the surface colour so it
           stays legible where it crosses its own trace */}
-      <circle cx={g.out[0]} cy={g.out[1]} r="2.6" fill={muted ? '#8eb0b6' : (s.glow || s.color)}
+      <circle cx={g.out[0]} cy={g.out[1]} r="2.6" fill={muted ? '#93b2a1' : (s.glow || s.color)}
         className="stroke-card" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
     </svg>
   )

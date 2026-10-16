@@ -167,10 +167,10 @@ function Face({ d, className }) {
   return (
     <span aria-hidden className={cn('flex size-9 items-center justify-center rounded-chip',
       'border border-rule', className)}>
-      <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="#0b2b33"
+      <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="#0d2b1e"
         strokeWidth="1.6" strokeLinecap="round">
-        <circle cx="9" cy="10" r="1.05" fill="#0b2b33" stroke="none"/>
-        <circle cx="15" cy="10" r="1.05" fill="#0b2b33" stroke="none"/>
+        <circle cx="9" cy="10" r="1.05" fill="#0d2b1e" stroke="none"/>
+        <circle cx="15" cy="10" r="1.05" fill="#0d2b1e" stroke="none"/>
         <path d={d}/>
       </svg>
     </span>

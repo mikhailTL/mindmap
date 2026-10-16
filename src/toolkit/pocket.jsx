@@ -6,7 +6,7 @@ import { PATTERNS, pacerSchedule, phaseAt, renderPacerWav } from './wav'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Pocket pacer: the pacer that keeps going when the phone locks. The session
+/* Breathing by sound: the pacer that keeps going when the phone locks. The session
  * is rendered to a WAV (src/toolkit/wav.js) ahead of the tap, so Start is a
  * synchronous audio.play() that survives the lock screen. The phase is read
  * from audio.currentTime, so word and sound never drift. */
@@ -171,7 +171,7 @@ export default function Pocket() {
   const running = state === 'playing' || state === 'paused'
 
   return (
-    <ActivityScreen family="leaf" title="Pocket Pacer">
+    <ActivityScreen family="leaf" title="Breathing by Sound">
       <audio ref={audio} controls playsInline muted={false} preload="auto"
         className="sr-only" aria-label="Pacer sound"
         onPlay={onPlay} onPause={onPause} onEnded={onEnded}/>

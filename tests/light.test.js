@@ -138,7 +138,7 @@ describe('parentSummary', () => {
   it('shows the parent only the light on green and yellow', () => {
     const s = parentSummary({ light: Light.GREEN, at: 0, minutes: 40, top: 'pxPerSec' })
     expect(s.light).toBe(Light.GREEN)
-    expect(s.line).toBe('Nothing to see.')
+    expect(s.line).toBe('Their phone use looks usual.')
     expect(s.detail).toBeNull()
   })
   it('on red gives the time and the kind of signal, never an app, a person or content', () => {

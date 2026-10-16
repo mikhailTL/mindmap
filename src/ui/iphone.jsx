@@ -13,10 +13,10 @@ const MODELS = {
 }
 
 const SHELL = {
-  graphite: { frame:'#1f5560', edge:'#0b2b33' },
-  natural:  { frame:'#8eb0b6', edge:'#3c6a74' },
-  silver:   { frame:'#bed6da', edge:'#8eb0b6' },
-  ink:      { frame:'#0b2b33', edge:'#000000' },
+  graphite: { frame:'#2a5744', edge:'#0d2b1e' },
+  natural:  { frame:'#93b2a1', edge:'#426a58' },
+  silver:   { frame:'#c2d7ca', edge:'#93b2a1' },
+  ink:      { frame:'#0d2b1e', edge:'#000000' },
 }
 
 export function IPhone({
@@ -84,7 +84,7 @@ export function IPhone({
           </div>
           {showHomeIndicator && (
             <span aria-hidden style={{ position:'absolute', bottom:9, left:'50%', transform:'translateX(-50%)',
-              width:140, height:5, borderRadius:3, background:'#0b2b33', opacity:0.28 }}/>
+              width:140, height:5, borderRadius:3, background:'#0d2b1e', opacity:0.28 }}/>
           )}
         </div>
       </div>

@@ -32,7 +32,7 @@ const SETTLE_DAYS = 2
  * NO NAME: the child is never named. Where a code is needed it is the
  * pseudonym the console uses. Pronouns are "they", true in both modes.
  *
- * SHAPE. One hero card and the Traffic Light beside it at 1280, under it at
+ * SHAPE. One hero card and the Heads Up beside it at 1280, under it at
  * 390. Everything else, the seven days first, behind one `See details`. */
 
 const CHILD_POSS = 'your child’s'
@@ -78,7 +78,7 @@ function readWeek() {
    student screen agree on what "usual" means. Colour is never the only
    carrier: the word sits under the dial. */
 const TIER_BAR = { low:'bg-calm', usual:'bg-calm', up:'bg-warn', high:'bg-crit' }
-const TIER_STROKE = { low:'#0a6e68', usual:'#0a6e68', up:'#8f5a0c', high:'#a8321f' }
+const TIER_STROKE = { low:'#157446', usual:'#157446', up:'#99590c', high:'#a8321f' }
 const TIER_WORD = { low:'Easier than their usual week', usual:'Inside their usual range',
                     up:'A little above their usual range', high:'Above their usual range' }
 
@@ -456,26 +456,26 @@ function PatchStatus() {
   )
 }
 
-/* ── The Traffic Light, the one block under the hero ────────────────────── */
+/* ── The Heads Up, the one block under the hero ────────────────────── */
 /* The demo's one red day: the pill, one line, the link. The time and minutes
-   live on the Traffic Light screen itself. The clock in parentSummary reads
+   live on the Heads Up screen itself. The clock in parentSummary reads
    UTC. */
 const LIGHT_DAY = parentSummary({ light: 'red', at: Date.UTC(2026, 9, 13, 21, 40), minutes: 23, top: 'pxPerSec' })
 
 function TrafficLightCard({ go }) {
   return (
     <Panel className="flex h-full flex-col justify-center">
-      <PanelHead title="The Traffic Light" meta="phone only"/>
+      <PanelHead title="Heads Up" meta="phone only"/>
       <div className="mt-2.5 flex items-center gap-3">
         <LightPill light={LIGHT_DAY.light} className="shrink-0"/>
         <p className="min-w-0 font-display text-ui font-medium text-ink">{LIGHT_DAY.line}</p>
       </div>
-      <button type="button" onClick={() => go('traffic-light')}
+      <button type="button" onClick={() => go('heads-up')}
         className="group mt-2.5 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
           pt-2.5 text-left">
         <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
           transition-colors duration-150 groupHoverOnly:text-accent-ink">
-          Open the Traffic Light</span>
+          Open Heads Up</span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </button>
     </Panel>
@@ -581,7 +581,7 @@ export function ParentDash({ go, openTab }) {
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       {/* THE FOLD. The week's sentence, the dial, the tier word, and beside
-          them at 1280 the Traffic Light. Nothing else. */}
+          them at 1280 the Heads Up. Nothing else. */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
         <Panel className="flex flex-col justify-center">
           <div className="flex flex-col items-center text-center">

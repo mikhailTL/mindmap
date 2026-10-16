@@ -209,8 +209,8 @@ function WeekRows({ days, lo, hi }) {
 
 /* ── Mark an event ──────────────────────────────────────────────────────── */
 
-/* A day, a time and a word; src/signals/recovery.js works out the run-up and
-   the settle time around it. Marks live in the device store and never leave
+/* A day, a time and a word; src/signals/recovery.js works out the stress before events and
+   the recovery time around it. Marks live in the device store and never leave
    the phone. */
 const KIND_WORD = { test: 'Test', talk: 'Presentation', game: 'Game', other: 'Other' }
 const pad2 = n => String(n).padStart(2, '0')

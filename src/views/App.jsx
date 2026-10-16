@@ -1,4 +1,5 @@
 import React from 'react'
+import { SCORE } from '../lib/terms'
 import { Overview } from './Overview'
 import { PatchPage } from './PatchPage'
 import { WithoutPatch } from './WithoutPatch'
@@ -55,8 +56,8 @@ import { cn } from '../lib/utils'
 const VIEWS = [
   /* the site */
   'site','patch','pairing','without-patch','methods','privacy','monitor','survey','responses',
-  /* the three audience explainer pages, and the Traffic Light under Parents */
-  'students','parents','pro','traffic-light',
+  /* the three audience explainer pages, and Heads Up under Parents */
+  'students','parents','pro','heads-up',
   /* the product */
   'app','app-student','app-parent','app-pro',
   /* inside the product */
@@ -64,6 +65,8 @@ const VIEWS = [
   /* one route per toolkit activity, spec 0d section 7 */
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
   'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
+  /* the five parent activities, which belong to the parent app */
+  'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules','toolkit-reach',
   /* kept, not in section 18 */
   'tour','notes',
   /* accounts: sign in, the portal, its sections, and who is linked to whom */
@@ -84,6 +87,8 @@ const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
                            'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
+                           'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules',
+                           'toolkit-reach',
                            'signin','account','account-section','network'])
 
 /* The three account routes belong to whichever app the signed in account is
@@ -93,11 +98,17 @@ const ACCOUNT_VIEWS = new Set(['account','account-section','network'])
 /* Old ids, so a link, a bookmark or another worker's button still lands. The
    palette pushes `hub`, which is not a route. */
 const ALIAS = {
+  'traffic-light': 'heads-up',
   hub: 'app',
   student: 'students', parent: 'parents',
   check: 'reading',
   'kit-student': 'toolkit', 'kit-parent': 'toolkit',
 }
+
+/* Both kit ids land on the one Toolkit route, so the audience they name is
+   carried here: `kit-parent` opens the parent Toolkit, not the teen one. */
+const KIT_OF = { 'kit-student': 'student', 'kit-parent': 'parent' }
+const rawHash = () => location.hash.replace(/^#\/?/, '')
 
 const TITLE = {
   site:'MindMap, a wellbeing app for teenagers',
@@ -106,7 +117,7 @@ const TITLE = {
   students:'MindMap for students',
   parents:'MindMap for parents',
   pro:'MindMap for Medical Professionals',
-  'traffic-light':'The Traffic Light, by MindMap',
+  'heads-up':'Heads Up, by MindMap',
   app:'Open the MindMap app',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
@@ -120,12 +131,17 @@ const TITLE = {
   'toolkit-reframe':'Reframing, in the MindMap Toolkit',
   'toolkit-scan':'A body scan, in the MindMap Toolkit',
   'toolkit-move':'Moving, in the MindMap Toolkit',
-  'toolkit-sigh':'Sigh Coach, in the MindMap Toolkit',
-  'toolkit-chest':'Chest Breathing, in the MindMap Toolkit',
-  'toolkit-steady':'Steady Hand, in the MindMap Toolkit',
-  'toolkit-alert':'Alertness Check, in the MindMap Toolkit',
-  'toolkit-pocket':'Pocket Pacer, in the MindMap Toolkit',
-  'toolkit-walk':'Walk It Off, in the MindMap Toolkit',
+  'toolkit-sigh':'Long Exhale, in the MindMap Toolkit',
+  'toolkit-chest':'Breath Counter, in the MindMap Toolkit',
+  'toolkit-steady':'Hold Still, in the MindMap Toolkit',
+  'toolkit-alert':'Reaction Test, in the MindMap Toolkit',
+  'toolkit-pocket':'Breathing by Sound, in the MindMap Toolkit',
+  'toolkit-walk':'Short Walk, in the MindMap Toolkit',
+  'toolkit-openers':'Conversation Openers, in the MindMap Toolkit',
+  'toolkit-phrasing':'Opening Line Check, in the MindMap Toolkit',
+  'toolkit-score':`Reading the ${SCORE}, in the MindMap Toolkit`,
+  'toolkit-rules':'Conversation Ground Rules, in the MindMap Toolkit',
+  'toolkit-reach':'When to Get Help, in the MindMap Toolkit',
   ai:'MindMap AI',
   shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
@@ -155,7 +171,7 @@ const PATCH = [
 const AUDIENCE = [
   ['students', 'Students', 'What a student sees each day.'],
   ['parents',  'Parents',  'What a parent can and cannot see.'],
-  ['traffic-light', 'The Traffic Light', 'One light for how your teen reacts to their phone.'],
+  ['heads-up', 'Heads Up', 'A light for when your teen\'s phone use looks stressful.'],
   ['pro',      'Medical Professionals',  'What a Medical Professional sees across a group.'],
 ]
 
@@ -165,7 +181,7 @@ const AUDIENCE = [
    them at all. */
 const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
-                  students:'who', parents:'who', pro:'who', 'traffic-light':'who', survey:'survey' }
+                  students:'who', parents:'who', pro:'who', 'heads-up':'who', survey:'survey' }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -461,6 +477,8 @@ const APP_OF = {
   'app-student': 'student', reading: 'student', shared: 'student',
   notes: 'student', 'app-notify': 'student', monitor: 'student',
   'app-parent': 'parent', privacy: 'parent',
+  'toolkit-openers': 'parent', 'toolkit-phrasing': 'parent', 'toolkit-score': 'parent',
+  'toolkit-rules': 'parent', 'toolkit-reach': 'parent',
   'app-pro': 'pro',
 }
 const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
@@ -478,6 +496,9 @@ const APP_TAB = { app:null,
                   'toolkit-chest':'toolkit', 'toolkit-steady':'toolkit',
                   'toolkit-alert':'toolkit', 'toolkit-pocket':'toolkit',
                   'toolkit-walk':'toolkit',
+                  'toolkit-openers':'toolkit', 'toolkit-phrasing':'toolkit',
+                  'toolkit-score':'toolkit', 'toolkit-rules':'toolkit',
+                  'toolkit-reach':'toolkit',
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
                   'app-pro':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
@@ -499,12 +520,17 @@ const APP_TITLE = {
   'toolkit-reframe':   ['Reframing',   'Reframing'],
   'toolkit-scan':      ['Body scan',   'Body scan'],
   'toolkit-move':      ['Moving',      'Moving'],
-  'toolkit-sigh':      ['Sigh',        'Sigh Coach'],
-  'toolkit-chest':     ['Chest',       'Chest Breathing'],
-  'toolkit-steady':    ['Steady',      'Steady Hand'],
-  'toolkit-alert':     ['Alertness',   'Alertness Check'],
-  'toolkit-pocket':    ['Pocket',      'Pocket Pacer'],
-  'toolkit-walk':      ['Walk',        'Walk It Off'],
+  'toolkit-sigh':      ['Sigh',        'Long Exhale'],
+  'toolkit-chest':     ['Chest',       'Breath Counter'],
+  'toolkit-steady':    ['Steady',      'Hold Still'],
+  'toolkit-alert':     ['Alertness',   'Reaction Test'],
+  'toolkit-pocket':    ['Pocket',      'Breathing by Sound'],
+  'toolkit-walk':      ['Walk',        'Short Walk'],
+  'toolkit-openers':   ['Openers',     'Conversation Openers'],
+  'toolkit-phrasing':  ['Line check',  'Opening Line Check'],
+  'toolkit-score':     [SCORE,         `Reading the ${SCORE}`],
+  'toolkit-rules':     ['Ground rules','Conversation Ground Rules'],
+  'toolkit-reach':     ['Get help',    'When to Get Help'],
   /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
      spelling is the tab's word and the full name is the heading on the
      screen and this element's accessible name. */
@@ -1046,7 +1072,7 @@ function ProApp(p) {
 /* One resolver for the hash, for `go` and for the alias table, so a link to an
    old id lands in exactly one place. */
 const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) || SECTION_RE.test(raw) ? raw : 'site')
-const fromHash = () => resolve(location.hash.replace(/^#\/?/, ''))
+const fromHash = () => resolve(rawHash())
 
 export function App() {
   const [view, setView] = React.useState(fromHash)
@@ -1080,6 +1106,7 @@ export function App() {
   }, [])
   /* Unknown views fall back to the overview rather than rendering nothing. */
   const go = React.useCallback(raw => {
+    if (KIT_OF[raw]) setAudience(KIT_OF[raw])
     const v = resolve(raw)
     if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
     setView(v); land(v)
@@ -1088,13 +1115,17 @@ export function App() {
     /* An old id in the url is rewritten once to the id spec 0e section 18
        fixes, so a bookmark of `#/check` keeps working and the address bar then
        agrees with every link on the site. A bare url is left alone. */
+    if (KIT_OF[rawHash()]) setAudience(KIT_OF[rawHash()])
     if (location.hash && location.hash !== '#/' + view) {
       history.replaceState(null, '', '#/' + view)
     }
     land(view)
   }, [])
   React.useEffect(() => {
-    const onPop = () => { const v = fromHash(); setView(v); land(v) }
+    const onPop = () => {
+      if (KIT_OF[rawHash()]) setAudience(KIT_OF[rawHash()])
+      const v = fromHash(); setView(v); land(v)
+    }
     addEventListener('hashchange', onPop); addEventListener('popstate', onPop)
     return () => { removeEventListener('hashchange', onPop); removeEventListener('popstate', onPop) }
   }, [land])
@@ -1115,7 +1146,7 @@ export function App() {
               tour:Tour, responses:Responses, survey:SurveyPage,
               methods:Methods, pairing:Pairing,
               students:ForStudents, parents:ForParents, pro:ForSchools,
-              'traffic-light': TrafficLightPage,
+              'heads-up': TrafficLightPage,
               app:Launch,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */
@@ -1146,6 +1177,12 @@ export function App() {
               'toolkit-alert':     () => <Toolkit who={audience} open="alert"/>,
               'toolkit-pocket':    () => <Toolkit who={audience} open="pocket"/>,
               'toolkit-walk':      () => <Toolkit who={audience} open="walk"/>,
+              /* The parent set: parent routes, so always the parent shell. */
+              'toolkit-openers':   () => <Toolkit who="parent" open="openers"/>,
+              'toolkit-phrasing':  () => <Toolkit who="parent" open="phrasing"/>,
+              'toolkit-score':     () => <Toolkit who="parent" open="score"/>,
+              'toolkit-rules':     () => <Toolkit who="parent" open="rules"/>,
+              'toolkit-reach':     () => <Toolkit who="parent" open="reach"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: p => <Calendar {...p} who={audience}/>,
               /* Accounts, kept on this device. */

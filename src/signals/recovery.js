@@ -1,5 +1,5 @@
 /* Three measures from the continuous patch stream that no consumer product
- * reports: settle time, run-up and carry-over. All three are per event. Every
+ * reports: recovery time, stress before events and back-to-back stress. All three are per event. Every
  * wearable on the market reports a level (Whoop 0 to 3, Garmin 0 to 100, Oura
  * zones, Fitbit Body Response alerts) or a daily aggregate; none labels a
  * stress episode and says how long the body took to come back from it.
@@ -10,19 +10,19 @@
  * band {lo, hi} from their last fourteen days. Nothing here knows about any
  * other person: every comparison is the wearer against themself.
  *
- *   settle time   minutes from a peak until the index has come half way back
+ *   recovery time   minutes from a peak until the index has come half way back
  *                 to the top of the band. This is the half-recovery time of
  *                 a skin conductance response (Dawson, Schell and Filion,
  *                 Handbook of Psychophysiology), scaled from seconds on a
  *                 single response to minutes on a day. Slower recovery goes
  *                 with rumination and worry in adolescents (Aldao 2014;
  *                 Capobianco 2018; Borlimi 2025).
- *   run-up        how far the index rose in the two hours before a marked
+ *   stress before events        how far the index rose in the two hours before a marked
  *                 event, against the wearer's usual for those minutes. The
  *                 anticipatory phase is separable from the event itself
  *                 (Pulopulos 2018; Juster 2012) and ambulatory pulse and EDA
  *                 rise the day before an exam (Kazdagli 2024).
- *   carry-over    the share of today's peaks that never settled before the
+ *   back-to-back stress    the share of today's peaks that never settled before the
  *                 next peak began. Perseverative cognition keeps activation
  *                 up between stressors (Brosschot 2006).
  *
@@ -120,7 +120,7 @@ const median = xs => {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
 }
 
-/* The day's figure: how many events, the median settle time, and how many
+/* The day's figure: how many events, the median recovery time, and how many
  * did not settle. */
 export function dailySettle(series, band, opts) {
   const t = settleTimes(series, band, opts)
@@ -137,7 +137,7 @@ export function dailySettle(series, band, opts) {
   }
 }
 
-/* Carry-over on its own, for the card that only needs the share. */
+/* Back-to-back stress on its own, for the card that only needs the share. */
 export function carryOver(series, band, opts) {
   const d = dailySettle(series, band, opts)
   /* a peak that ran into the next peak, or into the end of the day */
@@ -180,7 +180,7 @@ export function settleWords(todayMinutes, usualMinutes) {
 /* ── demo ───────────────────────────────────────────────────────────────── */
 
 /* A per-minute index for the worked demo day, deterministic, shaped so the
- * card has something true to compute: a run-up before the maths test, a peak
+ * card has something true to compute: a stress before events before the maths test, a peak
  * that settles, a lunch bump, a presentation whose peak carries into the
  * next one. The dashboard's 10-minute Mind Score line is the smoothed daily
  * number and stays as it is; this is the finer series beneath it. */
@@ -203,11 +203,11 @@ export function demoDay() {
     for (let m = centre - riseMin; m < centre; m++) if (m >= 0) index[m] += height * (m - (centre - riseMin)) / riseMin
     for (let m = centre; m < centre + fallMin; m++) if (m < 1440) index[m] += height * (1 - (m - centre) / fallMin)
   }
-  /* run-up from 09:20, peak at the test, settles over about 15 minutes */
+  /* stress before events from 09:20, peak at the test, settles over about 15 minutes */
   bump(10 * 60 + 8, 24, 48, 34)
   /* lunch */
   bump(11 * 60 + 55, 13, 10, 20)
-  /* run-up from 13:00, the presentation's peak at 14:05 settles slowly and
+  /* stress before events from 13:00, the presentation's peak at 14:05 settles slowly and
      carries into a second rise at 14:40 that has not settled by 16:00 */
   bump(14 * 60 + 5, 34, 65, 95)
   bump(14 * 60 + 42, 14, 12, 900)

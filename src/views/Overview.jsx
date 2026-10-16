@@ -1,5 +1,4 @@
 import React from 'react'
-import { PHOTOS } from '../lib/photos'
 import { Button } from '../ui/button'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ScrollIn, ScrollRow } from '../ui/motion'
@@ -13,26 +12,78 @@ import { Card } from '../ui/card'
 import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
+import { Different } from './landing/Different'
+import { ToolsBand } from './landing/Tools'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC,
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* Nine bands, one idea each: hero, problem, what it does, the two ways in,
- * the tools, what no other app has, who it is for, privacy, every age.
+/* Nine bands, one idea each: hero, what MindMap is, the problem, the two ways
+ * in, the tools, what makes it different, who it is for, privacy, every age.
  *
- * Grounds are set here rather than in the bands. They are tints and not
- * alternating near-whites because paper and card differ by about 2% in
- * luminance, which reads as no change at all. ink 12.7 : 1, ink.2 6.9,
- * ink.3 4.67 and accent 4.84 all clear AA on every wash.
+ * Grounds alternate green, white and blue so the page reads as a sequence:
+ *   hero paper, what it is accent.wash, problem ink, two ways sky.wash,
+ *   tools paper, different (its own), who for accent.wash, privacy
+ *   beam.wash, every age aqua.2.
+ * Measured on each wash (ink : ink.2 : ink.3 : accent : accent.ink):
+ *   accent.wash 12.68 : 6.88 : 4.67 : 4.84 : 7.09
+ *   sky.wash    13.01 : 7.06 : 4.80 : 4.97 : 7.28
+ *   beam.wash   12.95 : 7.03 : 4.78 : 4.95 : 7.25
+ *   aqua.2      11.84 : 6.43 : 4.36 : 4.52 : 6.62
+ * ink.3 fails on aqua.2, so that band sets no ink.3 and its green words take
+ * accent.ink. Photographs never sit under text without an opaque ground.
+ *
+ * One photograph per band at most, each in a different treatment, so they
+ * read as part of the page rather than as a strip.
  */
 
-const DOES = [
-  { title: 'Gives you a score', line: 'One stress score a day, against your own usual.' },
-  { title: 'Shows your trend',  line: 'See how a week or a month went.' },
-  { title: 'Helps you act',     line: 'Tools and resources to feel better, in the app.' },
+/* The owner's description, condensed by cutting and never by rewording.
+   Do not edit these sentences. */
+const IS_LEAD = 'MindMap is an adolescent wellness and mental health regulation app and wearable designed for teens, parents, and medical professionals and schools. Its goal is to provide comprehensive and causal data to all three audiences in an understandable way, addressing adolescent mental needs from their root cause while reducing stigma.'
+
+const IS = [
+  { id: 'patch', text: "Vital signs from a small, comfortable patch, worn on the upper arm or back, feed MindMap's neural network, which produces a simple and readable Mind Score and shows when stress rose or shifted." },
+  { id: 'phone', text: 'MindMap also works without the patch, with phone based pulse readings, survey scoring, and a parental extension that links teen phone activity to stress.' },
+  { id: 'kit',   text: 'Teens and parents get strategy and activity based toolkits, MindMap AI for guidance, and resources such as videos.' },
+  { id: 'lock',  text: "Teens decide what is shared with parents and medical professionals and schools, and data stays private within a teen's network." },
 ]
+
+/* Small drawn marks for the four paragraphs. Ink outlines, one brand colour
+   each, so the four read as a set without being one repeated shape. */
+const IS_ICON = {
+  patch: (
+    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
+      <rect x="3" y="14" width="42" height="20" rx="10" className="fill-card stroke-ink" strokeWidth="2"/>
+      <rect x="13" y="18" width="22" height="12" rx="6" className="fill-accent-wash stroke-ink" strokeWidth="1.6"/>
+      <circle cx="24" cy="24" r="2.8" className="fill-accent"/>
+    </svg>
+  ),
+  phone: (
+    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
+      <rect x="13" y="3" width="22" height="42" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
+      <path d="M17 26 h4 l2 -6 l3 11 l2 -5 h3" fill="none" className="stroke-sky" strokeWidth="2.2"
+        strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="20" y="8" width="8" height="2" rx="1" className="fill-ink"/>
+    </svg>
+  ),
+  kit: (
+    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
+      <path d="M18 14 v-4 a2 2 0 0 1 2 -2 h8 a2 2 0 0 1 2 2 v4" fill="none" className="stroke-ink" strokeWidth="2"/>
+      <rect x="5" y="14" width="38" height="27" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
+      <path d="M24 21 v13 M17.5 27.5 h13" className="stroke-coral" strokeWidth="3" strokeLinecap="round"/>
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
+      <path d="M15 21 v-5 a9 9 0 0 1 18 0 v5" fill="none" className="stroke-ink" strokeWidth="2"/>
+      <rect x="9" y="21" width="30" height="22" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
+      <circle cx="24" cy="30" r="3" className="fill-lilac"/>
+      <path d="M24 32 v5" className="stroke-lilac" strokeWidth="2.4" strokeLinecap="round"/>
+    </svg>
+  ),
+}
 
 /* The two ways in. Each card is the steps themselves, so the band needs no
    second block explaining them. `lead` is the phone route: the only one a
@@ -60,46 +111,16 @@ const WAYS = [
       </svg>) },
 ]
 
-const RESOURCES = [
-  { title: 'Exercise and meditation on YouTube', items: [
-    { name: 'Yoga With Adriene', what: 'Yoga and stretching, all levels', href: 'https://www.youtube.com/@yogawithadriene' },
-    { name: 'MadFit', what: 'Short home workouts, no equipment', href: 'https://www.youtube.com/@MadFit' },
-    { name: 'Headspace', what: 'Guided meditation and breathing', href: 'https://www.youtube.com/@headspace' },
-    { name: 'The Honest Guys', what: 'Guided meditations for sleep and calm', href: 'https://www.youtube.com/@TheHonestGuys' },
-  ] },
-  { title: 'Podcasts on meditation and calm', items: [
-    { name: 'Meditation Minis', what: 'Ten minute guided meditations', href: 'https://podcasts.apple.com/us/podcast/meditation-minis-podcast/id963597166' },
-    { name: 'Happier Meditation', what: 'Dan Harris on meditation for sceptics', href: 'https://www.meditatehappier.com/explore-happier-meditation' },
-    { name: 'NAMI for teens', what: 'Where to find help, by a national nonprofit', href: 'https://www.nami.org/kids-teens-and-young-adults/' },
-  ] },
-]
-
-/* What no other wellbeing app for teenagers measures. The Traffic Light leads
-   because it is the one a parent asks about first; the six under it are the
-   sensors the phone or the patch already has (project doc
-   beyond-the-screen-research). */
-const BEYOND = [
-  { title: 'Settle time',     line: 'How fast your body settles after a stress peak.' },
-  { title: 'Run-up',          line: 'How much your body rose before a marked exam.' },
-  { title: 'Sigh coach',      line: 'The microphone measures each exhale as you breathe.' },
-  { title: 'Chest breathing', line: 'Your phone on your chest counts your breaths.' },
-  { title: 'Alertness check', line: 'Sixty seconds of taps show a short night.' },
-  { title: 'Pocket pacer',    line: 'Breathing cues keep going with the phone locked.' },
-]
-
 const SCREENS = [
-  { id:'student', who:'Student', photo:'student-card',
-    alt:'Five teenagers walking home together through a park',
+  { id:'student', who:'Student',
     title:'Your score each day',
     line:'See every reading you take, and what moved it.',
     cta:'What a student gets' },
-  { id:'parent',  who:'Parent', photo:'parent-card',
-    alt:'A mother and her teenage son looking at something together at home',
-    title:'One light, one sentence',
-    line:'How the week went, in plain words. Never a raw reading.',
+  { id:'parent',  who:'Parent',
+    title:'A weekly summary',
+    line:'How the week went, in plain words, with no raw readings.',
     cta:'What a parent gets' },
-  { id:'pro',     who:PRO, photo:'school-card',
-    alt:`A ${PRO_LC} and a student talking on a sofa`,
+  { id:'pro',     who:PRO,
     title:'Students to check on',
     line:'Only the students who chose to share.',
     cta:`What a ${PRO_LC} gets` },
@@ -108,8 +129,7 @@ const SCREENS = [
 /* One line per audience. The full matrix is on the privacy page. */
 const SEES = [
   { who:'Student', sees:'Sees everything first' },
-  { who:'Parent',  sees:'Only what the student allows' },
-  { who:PRO,       sees:'Only what the student allows' },
+  { who:`Parent and ${PRO}`, sees:'Only what the student allows' },
 ]
 
 /* The wording is the promise. "A group under five" is the k floor; "fewer than
@@ -120,7 +140,7 @@ const NEVER = [
   'Keep data past what the student chooses',
   'Open a record without logging it',
   'Sell or share anything',
-  'Diagnose anything. Not a medical device',
+  'Diagnose anything or act as a medical device',
 ]
 
 const FUTURE = [
@@ -134,16 +154,15 @@ const HERO_FACTS = [
   'You decide who else can see it.',
 ]
 
-/* The three lamps of the Traffic Light, drawn once for the landing tile. */
-function Lamps() {
-  return (
-    <svg viewBox="0 0 44 112" className="h-[92px] w-auto shrink-0" aria-hidden focusable="false">
-      <rect x="2" y="2" width="40" height="108" rx="20" className="fill-ink"/>
-      <circle cx="22" cy="24" r="12" className="fill-crit"/>
-      <circle cx="22" cy="56" r="12" className="fill-sun"/>
-      <circle cx="22" cy="88" r="12" className="fill-mint"/>
-    </svg>
-  )
+/* The hero's third button. The site routes by hash, so a plain #different
+   link would change the route; this scrolls instead, under the sticky header,
+   and jumps without animating when the reader asks for reduced motion. */
+function toDifferent() {
+  const el = document.getElementById('different')
+  if (!el) return
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const head = document.querySelector('header')?.offsetHeight ?? 58
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - head, behavior: reduced ? 'auto' : 'smooth' })
 }
 
 export function Overview({ go }) {
@@ -183,9 +202,12 @@ export function Overview({ go }) {
                 ))}
               </List>
             </ScrollIn>
-            <ScrollIn className="mt-7 flex flex-wrap gap-3">
+            <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
               <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
               <Button variant="outline" onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo</Button>
+              <Button variant="ghost" className="min-h-[44px] px-0 sm:ml-3" onClick={toDifferent}>
+                What makes MindMap different
+              </Button>
             </ScrollIn>
           </div>
 
@@ -220,17 +242,17 @@ export function Overview({ go }) {
               <Frame photo="students-hallway" eager
                 alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
                 className="absolute inset-0"/>
-              <IPhone model="15-pro" scale={0.3} screenBg="#f5fafa"
+              <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"
                 label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="shrink-0 lg:hidden">
                 <PhoneApp/>
               </IPhone>
-              <IPhone model="15-pro" scale={0.52} screenBg="#f5fafa"
+              <IPhone model="15-pro" scale={0.52} screenBg="#f7faf8"
                 label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="hidden shrink-0 lg:block xl:hidden">
                 <PhoneApp/>
               </IPhone>
-              <IPhone model="15-pro" scale={0.62} screenBg="#f5fafa"
+              <IPhone model="15-pro" scale={0.62} screenBg="#f7faf8"
                 label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="hidden shrink-0 xl:block">
                 <PhoneApp/>
@@ -239,6 +261,36 @@ export function Overview({ go }) {
           </div>
         </div>
       </section>
+
+      {/* -- what MindMap is, in the owner's own words, on green -------------
+          The lead and a tall photograph on the left; the four paragraphs as a
+          two by two set on the right from lg. */}
+      <Section name="What MindMap is" tone="card" id="what" className="bg-accent-wash">
+        <h2 className="sr-only">What MindMap is</h2>
+        <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-10
+          xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-5">
+            <p className="m-0 max-w-[60ch] font-display text-lead font-bold leading-[1.4] tracking-tight
+              text-ink sm:text-row lg:text-head lg:leading-[1.28]">
+              {IS_LEAD}
+            </p>
+            <div className="relative h-[260px] overflow-hidden rounded-panel border border-rule
+              shadow-card sm:h-[320px] lg:h-auto lg:min-h-[300px] lg:flex-1">
+              <Frame photo="friends-steps"
+                alt="Two teenagers sitting on outdoor steps, smiling at an open notebook, a backpack at their feet"
+                className="absolute inset-0"/>
+            </div>
+          </div>
+          <ul className="m-0 grid list-none content-start gap-3.5 p-0 sm:grid-cols-2">
+            {IS.map(item => (
+              <li key={item.id} className="flex gap-4 rounded-panel border border-rule bg-card p-5">
+                <span className="shrink-0 pt-0.5">{IS_ICON[item.id]}</span>
+                <p className="m-0 text-sec leading-[1.55] text-ink-2">{item.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Section>
 
       {/* -- the problem, on the one dark band -----------------------------
           Every figure on this band is external and sourced. The figures sit
@@ -255,25 +307,14 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- what it does ---------------------------------------------------- */}
-      <Section name="What MindMap does" tone="paper">
-        <SectionHead>What MindMap does</SectionHead>
-        <dl className="mt-5 grid gap-3.5 md:grid-cols-3">
-          {DOES.map(d => (
-            <div key={d.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
-              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{d.title}</dt>
-              <dd className="m-0 mt-2 text-sec leading-[1.5] text-ink-2">{d.line}</dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-
-      {/* -- the two ways in ------------------------------------------------- */}
-      <Section name="Getting started" tone="card" className="relative isolate overflow-hidden bg-accent-wash">
+      {/* -- the two ways in, on blue ---------------------------------------
+          The photograph sits at 0.14 with no scrim so the ground stays blue.
+          Over it accent measured 4.0, so the band's name takes accent.ink. */}
+      <Section name="Getting started" tone="card"
+        className="relative isolate overflow-hidden bg-sky-wash [&>div>p:first-child]:text-accent-ink">
         <Frame wash photo="student-bus"
           alt="Two boys laughing together on a school bus seat, one holding a phone, trees going past the window behind them"
-          className="absolute inset-0 -z-20 opacity-[0.28]"/>
-        <span aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-accent-wash via-accent-wash/85 to-accent-wash/35"/>
+          className="absolute inset-0 -z-10 opacity-[0.14]"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
         <SectionLede>Both give you the same score and the same app.</SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-2">
@@ -288,7 +329,7 @@ export function Overview({ go }) {
                 <ol className="m-0 mt-3 list-none space-y-2 p-0">
                   {w.steps.map((step, n) => (
                     <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
-                      <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-accent-wash font-display text-xs font-bold text-accent">{n + 1}</span>
+                      <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-sky-wash font-display text-xs font-bold text-sky-ink">{n + 1}</span>
                       <span>{step}</span>
                     </li>
                   ))}
@@ -309,91 +350,36 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- the tools, and the resources inside them ----------------------- */}
-      <Section name="Toolkit" tone="paper">
-        <SectionHead>Tools inside the app</SectionHead>
-        <SectionLede>Exercises, plus the best free videos and podcasts, in one place.</SectionLede>
-        <div className="mt-5 grid gap-3.5 md:grid-cols-2">
-          {RESOURCES.map(group => (
-            <div key={group.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
-              <p className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{group.title}</p>
-              <ul className="m-0 mt-3 list-none p-0">
-                {group.items.map(it => (
-                  <li key={it.href} className="border-t border-rule py-2.5 first:border-t-0 first:pt-0">
-                    <a href={it.href} target="_blank" rel="noreferrer"
-                      className="group flex items-center gap-3 text-ink hoverOnly:text-accent-ink">
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-display text-ui font-semibold">{it.name}</span>
-                        <span className="block text-fine text-ink-3">{it.what}</span>
-                      </span>
-                      <ArrowRight className="size-4 shrink-0 text-accent"/>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5">
-          <Button variant="outline" size="sm" onClick={() => go('toolkit')}>Open the Toolkit<span aria-hidden>→</span></Button>
-        </div>
-      </Section>
+      {/* -- the tools, on white (views/landing/Tools.jsx) ------------------ */}
+      <ToolsBand go={go}/>
 
-      {/* -- what no other app has: the Traffic Light first ------------------ */}
-      <Section name="Beyond the screen" tone="card" className="bg-aqua-2">
-        <SectionHead>What other apps do not have</SectionHead>
-        <SectionLede>Measured by sensors your phone and the patch already have.</SectionLede>
-        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-3">
-          <Card interactive as="button" type="button" onClick={() => go('traffic-light')}
-            className="col-span-2 flex w-full items-center gap-5 border-l-accent p-5 text-left lg:col-span-3">
-            <Lamps/>
-            <span className="min-w-0 flex-1">
-              <span className="block font-body text-ui font-semibold text-accent-ink">For parents</span>
-              <span className="mt-1 block font-display text-[1.75rem] font-bold leading-[1.1] tracking-tight text-ink">
-                The Traffic Light
-              </span>
-              <span className="mt-2 block max-w-[46ch] text-sec leading-[1.5] text-ink-2">
-                Measures how a teen reacts to their phone, never what is on it.
-              </span>
-              <span className="mt-3 flex items-center gap-2 font-display text-meta font-bold text-accent">
-                See the Traffic Light
-                <ArrowRight className="size-[1.1rem] transition-transform duration-200 groupHoverOnly:translate-x-1.5"/>
-              </span>
-            </span>
-          </Card>
-          {BEYOND.map(b => (
-            <div key={b.title} className="rounded-panel border border-rule bg-card p-4 shadow-card sm:p-5">
-              <p className="font-display text-ui sm:text-head font-bold leading-[1.15] tracking-tight text-ink">{b.title}</p>
-              <p className="m-0 mt-1.5 text-meta leading-[1.45] text-ink-2 sm:text-sec">{b.line}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5">
-          <Button variant="outline" size="sm" onClick={() => go('methods')}>How each one is measured<span aria-hidden>→</span></Button>
-        </div>
-      </Section>
+      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
+      <Different go={go}/>
 
-      {/* -- the three audiences ------------------------------------------- */}
-      <Section name="Who it is for" tone="card" id="screens" className="bg-beam-wash">
+      {/* -- the three audiences, on green ----------------------------------
+          From lg the cards stack in the left column and the kitchen
+          photograph is the band's right edge, faded in from the green, so no
+          card or word ever sits over a face. Under lg it is a rounded frame
+          between the lede and the cards. */}
+      <Section name="Who it is for" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
+        <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
+          [mask-image:linear-gradient(to_right,transparent,black_45%)]">
+          <Frame wash photo="parent-kitchen" className="absolute inset-0 opacity-90"/>
+        </div>
         <SectionHead>Who MindMap is for</SectionHead>
-        <SectionLede>Each person sees only what the student allows.</SectionLede>
-        <div className="mt-5 grid auto-rows-fr gap-3.5 lg:grid-cols-3">
+        <div className="relative mt-5 h-[220px] overflow-hidden rounded-panel border border-rule sm:h-[280px] lg:hidden">
+          <Frame photo="parent-kitchen"
+            alt="A mother and her teenage son cooking together in a bright kitchen, chopping vegetables"
+            className="absolute inset-0"/>
+        </div>
+        <div className="mt-5 grid auto-rows-fr gap-3.5 lg:max-w-[34rem] xl:max-w-[40rem]">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
-                className="group flex h-full w-full flex-col gap-3 overflow-hidden rounded-panel
-                  border border-rule bg-card p-5 text-left touch-manipulation
+                className="group flex h-full w-full flex-col gap-3 rounded-panel
+                  border border-rule bg-card p-5 text-left shadow-card touch-manipulation
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
                   motion-safe:active:scale-[0.99] hoverOnly:border-accent">
-                {/* max-w-none is load-bearing: preflight's `img { max-width:
-                    100% }` would undo the negative-margin bleed. */}
-                <img src={PHOTOS[s2.photo]} alt={s2.alt} loading="lazy" decoding="async"
-                  width="1200" height="423"
-                  className="-mx-5 -mt-5 mb-1 h-[160px] w-[calc(100%_+_2.5rem)] max-w-none
-                    rounded-t-panel object-cover
-                    motion-safe:transition-transform motion-safe:duration-[260ms]
-                    motion-safe:ease-[var(--ease-out)]
-                    motion-safe:groupHoverOnly:scale-[1.02]"/>
                 <span className="font-body text-ui font-semibold text-accent-ink">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
@@ -411,48 +397,68 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* ── privacy, with the promises that used to be their own band ─────── */}
-      <Section name="Privacy" tone="paper">
-        <SectionHead>Your data stays yours</SectionHead>
-        <SectionLede>{CONSENT_SHORT}</SectionLede>
-        <dl className="mt-5 grid gap-3.5 sm:grid-cols-3">
-          {SEES.map(r => (
-            <div key={r.who} className="rounded-panel border border-rule bg-card p-5">
-              <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
-              <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                {r.sees}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-5 font-display text-ui font-semibold text-ink">MindMap will never</p>
-        <ul className="m-0 mt-2.5 flex list-none flex-wrap gap-2 p-0">
-          {NEVER.map(t => (
-            <li key={t} className="rounded-full border border-rule bg-card px-3.5 py-1.5 text-meta text-ink-2">{t}</li>
-          ))}
-        </ul>
-        <p className="mt-4 text-meta text-ink-2">
-          {NOTES}, {LOCATION} and every raw reading never leave the phone.
-          <button type="button" onClick={() => go('privacy')}
-            className="ml-3 border-b-2 border-accent/35 font-display font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
-            Who sees what
-          </button>
-        </p>
+      {/* ── privacy, on blue, with a rounded photograph beside it at lg ───── */}
+      <Section name="Privacy" tone="card" className="bg-beam-wash">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
+          xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+          <div className="min-w-0">
+            <SectionHead>Your data stays yours</SectionHead>
+            <SectionLede>{CONSENT_SHORT}</SectionLede>
+            <dl className="mt-5 grid gap-3.5 sm:grid-cols-2">
+              {SEES.map(r => (
+                <div key={r.who} className="rounded-panel border border-rule bg-card p-5">
+                  <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
+                  <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                    {r.sees}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-6 font-display text-ui font-semibold text-ink">MindMap will never</p>
+            <List className="mt-2.5 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+              {NEVER.map(t => (
+                <Item key={t} className="text-meta text-ink-2">{t}</Item>
+              ))}
+            </List>
+            <p className="mt-5 text-meta text-ink-2">
+              {NOTES}, {LOCATION} and every raw reading never leave the phone.
+              <button type="button" onClick={() => go('privacy')}
+                className="ml-3 border-b-2 border-accent/35 font-display font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
+                Who sees what
+              </button>
+            </p>
+          </div>
+          <div className="relative h-[220px] overflow-hidden rounded-[28px] border border-rule shadow-card
+            sm:h-[280px] lg:h-auto lg:min-h-[340px]">
+            <Frame photo="parent-laptop"
+              alt="A mother and her teenage daughter sitting close together at a laptop on a living room table, both smiling"
+              className="absolute inset-0"/>
+          </div>
+        </div>
       </Section>
 
-      {/* ── what comes next, and the closing line ───────────────────────── */}
-      <Section name="What comes next" tone="card" className="bg-accent-wash">
+      {/* ── what comes next, and the closing line, on turquoise ────────────
+          ink.3 measures 4.36 on aqua.2, so nothing here is set in it, and the
+          band's name takes accent.ink rather than accent. */}
+      <Section name="What comes next" tone="card"
+        className="relative isolate overflow-hidden bg-aqua-2 [&>div>p:first-child]:text-accent-ink">
+        {/* A soft, low-opacity vignette of the photograph in the right half,
+            from lg only: under lg the text runs the full width. */}
+        <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 lg:block
+          [mask-image:radial-gradient(ellipse_62%_75%_at_55%_45%,black_35%,transparent_75%)]">
+          <Frame wash photo="student-basketball" className="absolute inset-0 opacity-[0.55] mix-blend-multiply"/>
+        </div>
         <SectionHead>MindMap for every age</SectionHead>
-        <SectionLede>Teens first. The same patch and score can serve adults and seniors.</SectionLede>
-        <ul className="m-0 mt-5 flex list-none flex-wrap gap-2.5 p-0">
+        <SectionLede className="text-ink-2">MindMap starts with teens. Adults and seniors come next.</SectionLede>
+        <ol className="m-0 mt-5 grid max-w-[40rem] list-none grid-cols-3 gap-2.5 p-0">
           {FUTURE.map(f => (
-            <li key={f.title} className={cn('flex items-center gap-2.5 rounded-full border px-4 py-2',
-              f.now ? 'border-accent/40 bg-card shadow-card' : 'border-rule bg-card/70')}>
-              <span className="font-display text-ui font-bold text-ink">{f.title}</span>
-              <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-3')}>{f.when}</span>
+            <li key={f.title} className={cn('flex flex-col gap-1 rounded-panel border bg-card p-4',
+              f.now ? 'border-accent shadow-card' : 'border-rule')}>
+              <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-2')}>{f.when}</span>
+              <span className="font-display text-ui font-bold leading-[1.2] text-ink sm:text-row">{f.title}</span>
             </li>
           ))}
-        </ul>
+        </ol>
         <p className="mt-6 max-w-[40ch] font-display text-head font-bold leading-[1.2] tracking-tight text-ink">
           Quantify the stress. Find the resources. Start feeling better.
         </p>

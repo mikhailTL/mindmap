@@ -1,117 +1,167 @@
 import React from 'react'
 import { IPhone } from '../ui/iphone'
-import { Never } from '../ui/marks'
+import { IOS, IosNotification, StatusBar } from './ios'
 import { Light, NEVER_SHOWN, parentSummary } from '../signals/light.js'
+import { useReduced } from '../toolkit/useReduced'
 import { cn } from '../lib/utils'
 
-/* The parent's phone. One light, one line, the week as seven small lights,
- * and under a rule the six things the parent never sees. Everything it shows
- * comes from the same live state as the teen's phone.
+/* The parent's phone, drawn as an iOS app screen: a large title, the light
+ * as a real traffic light housing, one line under it, the week as seven small
+ * housings, and an inset grouped list of what the parent never sees.
  *
- * Colour never carries the state alone: every light has its word beside it,
- * for colour-blind readers and for anyone glancing. The three fills are
- * tokens from tailwind.config.js: mint (a green that reads as green), sun
- * (an amber) and crit (the one red the site has). */
+ * Colour never carries the state alone. The lit lamp's position says it too
+ * (red on top, green at the bottom, as on a street), and the word is always
+ * printed beside or under it. Inside the phone the lamps use the iOS system
+ * colours; nothing here is a capsule with text inside. */
 
-export const LIGHT_STYLE = {
-  [Light.GREEN]:  { fill: 'bg-mint', wash: 'bg-mint-wash', ink: 'text-mint-ink', border: 'border-mint/40', word: 'Green' },
-  [Light.YELLOW]: { fill: 'bg-sun',  wash: 'bg-sun-wash',  ink: 'text-sun-ink',  border: 'border-sun/40',  word: 'Yellow' },
-  [Light.RED]:    { fill: 'bg-crit', wash: 'bg-coral-wash', ink: 'text-crit',    border: 'border-crit/40', word: 'Red' },
-}
+const ORDER = [Light.RED, Light.YELLOW, Light.GREEN]
+const LAMP = { [Light.GREEN]: IOS.green, [Light.YELLOW]: IOS.yellow, [Light.RED]: IOS.red }
+const WORD = { [Light.GREEN]: 'Green', [Light.YELLOW]: 'Yellow', [Light.RED]: 'Red' }
+const HOUSING = '#1c1c1e'
 
-export const styleFor = light => LIGHT_STYLE[light] || LIGHT_STYLE[Light.GREEN]
+const known = light => (LAMP[light] ? light : Light.GREEN)
 
-/* A small pill: dot plus word. Used on both phones and on the parent app. */
-export function LightPill({ light, className }) {
-  const s = styleFor(light)
+/* Word and lamp colour for a light. Kept under its old name for callers. */
+export const styleFor = light => ({ word: WORD[known(light)], color: LAMP[known(light)] })
+
+/* One lamp in a dark rounded housing: the small status indicator used
+   wherever a light is named in a line of text. `size` is the housing in px. */
+export function Lamp({ light, size = 18, className }) {
+  const c = LAMP[known(light)]
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-chip border px-2.5 py-1',
-      'font-display text-fine font-bold leading-none', s.wash, s.ink, s.border, className)}>
-      <span aria-hidden className={cn('size-2.5 shrink-0 rounded-full', s.fill)}/>
-      {s.word}
+    <span aria-hidden className={cn('inline-grid shrink-0 place-items-center', className)}
+      style={{ width: size, height: size, borderRadius: size * 0.28, background: HOUSING }}>
+      <span className="block rounded-full transition-[background-color] duration-300"
+        style={{ width: size * 0.58, height: size * 0.58, background: c, boxShadow: `0 0 ${size * 0.35}px ${c}` }}/>
     </span>
   )
 }
 
-/* The light itself: a large circle with its word under it. `size` in px. */
-export function BigLight({ light, size = 150, className }) {
-  const s = styleFor(light)
+/* The lamp and its word, side by side, as plain text. */
+export function LampLabel({ light, className, textClassName }) {
   return (
-    <div className={cn('flex flex-col items-center', className)}>
-      <span aria-hidden className={cn('block rounded-full', s.fill)}
-        style={{ width: size, height: size, boxShadow: 'inset 0 -6px 0 rgb(11 43 51 / 0.14)' }}/>
-      <span className="mt-3 font-display text-head font-bold leading-none tracking-tight text-ink">
-        {s.word}
+    <span className={cn('inline-flex items-center gap-2', className)}>
+      <Lamp light={light}/>
+      <span className={cn('font-display text-ui font-bold leading-none text-ink', textClassName)}>
+        {WORD[known(light)]}
       </span>
-    </div>
+    </span>
   )
 }
 
-/* The demo week: six fixed days (five green, one yellow) and today, which is
-   the live light. The week never shows more than one red. */
-const WEEK_FIXED = [Light.GREEN, Light.GREEN, Light.YELLOW, Light.GREEN, Light.GREEN, Light.GREEN]
-const DAY = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+/* Old name, still imported by the parent dashboard. Now the drawn lamp. */
+export function LightPill({ light, className }) {
+  return <LampLabel light={light} className={className}/>
+}
 
-export function WeekLights({ today }) {
-  const week = [...WEEK_FIXED, today]
-  const words = week.map(l => styleFor(l).word.toLowerCase())
+/* The traffic light itself: three lamps stacked in a dark housing, the live
+   one bright with a soft glow, the other two dim. `lamp` in px. */
+export function TrafficLight({ light, lamp = 46, reduced, className }) {
+  const on = known(light)
+  const pad = lamp * 0.22
   return (
-    <ol aria-label={`This week: ${words.join(', ')}`}
-      className="m-0 flex list-none justify-between gap-1 p-0">
-      {week.map((l, i) => {
-        const s = styleFor(l)
-        const isToday = i === week.length - 1
+    <span aria-hidden className={cn('inline-flex flex-col items-center', className)}
+      style={{ background: HOUSING, borderRadius: lamp * 0.5, padding: pad, gap: pad,
+        boxShadow: '0 6px 18px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.06)' }}>
+      {ORDER.map(l => {
+        const lit = l === on
         return (
-          <li key={i} className="flex flex-col items-center gap-1.5">
-            <span aria-hidden className={cn('block size-7 rounded-full', s.fill,
-              isToday && 'ring-2 ring-ink ring-offset-2 ring-offset-card')}/>
-            <span className="text-fine font-medium leading-none text-ink-3">
-              <span aria-hidden>{DAY[i]}</span>
-              <span className="sr-only">{s.word}</span>
-            </span>
-          </li>
+          <span key={l} className={cn('block rounded-full', !reduced && 'transition-[opacity,box-shadow] duration-500')}
+            style={{ width: lamp, height: lamp, background: LAMP[l], opacity: lit ? 1 : 0.2,
+              boxShadow: lit ? `0 0 ${lamp * 0.5}px ${LAMP[l]}, inset 0 -3px 6px rgba(0,0,0,0.18)` : 'inset 0 2px 6px rgba(0,0,0,0.5)' }}/>
         )
       })}
+    </span>
+  )
+}
+
+/* The demo week: six fixed days and today, which is the live light. */
+const WEEK_FIXED = [Light.GREEN, Light.GREEN, Light.YELLOW, Light.GREEN, Light.GREEN, Light.GREEN]
+const DAY = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const DAY_NAME = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Today']
+
+export function WeekLights({ today }) {
+  const week = [...WEEK_FIXED, known(today)]
+  return (
+    <ol aria-label={`This week: ${week.map((l, i) => `${DAY_NAME[i]} ${WORD[l].toLowerCase()}`).join(', ')}`}
+      className="m-0 flex list-none justify-between p-0">
+      {week.map((l, i) => (
+        <li key={i} className="flex flex-col items-center gap-1.5">
+          <TrafficLight light={l} lamp={9}/>
+          <span aria-hidden className="text-[13px] leading-none"
+            style={{ color: i === week.length - 1 ? IOS.label : IOS.secondary, fontWeight: i === week.length - 1 ? 600 : 400 }}>
+            {DAY[i]}
+          </span>
+        </li>
+      ))}
     </ol>
   )
 }
 
+const weekLine = today => {
+  const week = [...WEEK_FIXED, known(today)]
+  const n = l => week.filter(x => x === l).length
+  const parts = [`${n(Light.GREEN)} green`, n(Light.YELLOW) && `${n(Light.YELLOW)} yellow`, n(Light.RED) && `${n(Light.RED)} red`]
+  return `${parts.filter(Boolean).join(', ')} this week.`
+}
+
+const NOTIFY_MS = 10 * 1000
+
 /* `live` is the state the teen's phone lifts every two seconds. */
-export function ParentLight({ live, scale = 0.9, className }) {
-  const light = live?.light || Light.GREEN
+export function ParentLight({ live, scale = 0.7, className }) {
+  const reduced = useReduced()
+  const light = known(live?.light)
   const minutes = live?.features?.minutes ?? 0
   const at = live?.state?.since ?? Date.now()
   const sum = parentSummary({ light, at, minutes, top: live?.top })
+
+  /* The banner drops in when the light turns red, and goes after ten seconds. */
+  const [notify, setNotify] = React.useState(false)
+  const prev = React.useRef(light)
+  React.useEffect(() => {
+    const was = prev.current
+    prev.current = light
+    if (light !== Light.RED) { setNotify(false); return }
+    if (was === Light.RED) return
+    setNotify(true)
+    const id = setTimeout(() => setNotify(false), NOTIFY_MS)
+    return () => clearTimeout(id)
+  }, [light])
+
   return (
-    <IPhone interactive scale={scale} label="The parent's phone" className={className}>
-      <div className="flex h-full min-h-0 flex-col bg-paper px-5 pb-2 pt-1 text-left">
-        <div className="flex items-center justify-between">
-          <span className="font-display text-ui font-bold text-ink">MindMap</span>
-          <LightPill light={light}/>
-        </div>
+    <IPhone interactive scale={scale} screenBg="#f2f2f7" label="The parent's phone" className={className}>
+      <div className="relative flex min-h-0 flex-1 flex-col text-left"
+        style={{ marginTop: -60, fontFamily: IOS.font, color: IOS.label }}>
+        <StatusBar time="9:41"/>
+        <IosNotification show={notify} title="Heads Up" body="Your teen's light turned red. Open to see when."
+          reduced={reduced} className="top-[52px]"/>
 
-        <div className="mt-7 flex flex-col items-center text-center">
-          <BigLight light={light}/>
-          <p aria-live="polite" className="mt-4 max-w-[26ch] font-display text-meta font-semibold leading-snug text-ink">
-            {sum.line}
-          </p>
-          {sum.detail && (
-            <p className="mt-1 max-w-[30ch] text-fine leading-snug text-ink-2">{sum.detail}</p>
-          )}
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+          <h2 className="m-0 px-1 text-[34px] font-bold leading-[41px] tracking-[0.01em]">Heads Up</h2>
 
-        <div className="mt-6 rounded-panel border border-rule bg-card px-3.5 py-3">
-          <p className="mark mb-2.5">This week</p>
-          <WeekLights today={light}/>
-        </div>
+          <div className="mt-3 flex flex-col items-center rounded-[12px] bg-white px-4 pb-3.5 pt-4 text-center">
+            <TrafficLight light={light} lamp={34} reduced={reduced}/>
+            <p aria-live="polite" className="m-0 mt-3 text-[22px] font-bold leading-7">{WORD[light]}</p>
+            <p className="m-0 mt-1 text-[17px] leading-[22px]">{sum.line}</p>
+            {sum.detail && (
+              <p className="m-0 mt-1 max-w-[30ch] text-[15px] leading-5" style={{ color: IOS.secondary }}>{sum.detail}</p>
+            )}
+          </div>
 
-        <div className="mt-6 flex-1">
-          <p className="mark">What you never see</p>
-          <ul className="m-0 mt-1.5 list-none p-0">
+          <h3 className="m-0 mt-4 px-1 text-[20px] font-bold leading-[25px]">This week</h3>
+          <div className="mt-2 rounded-[12px] bg-white px-4 pb-3 pt-3.5">
+            <WeekLights today={light}/>
+            <p className="m-0 mt-3 text-[15px] leading-5" style={{ color: IOS.secondary }}>{weekLine(light)}</p>
+          </div>
+
+          <h3 className="m-0 mt-4 px-1 text-[20px] font-bold leading-[25px]">What you never see</h3>
+          <ul className="m-0 mt-2 list-none overflow-hidden rounded-[12px] bg-white p-0">
             {NEVER_SHOWN.map(t => (
-              <li key={t} className="flex items-start gap-2 border-b border-rule py-1.5 text-fine leading-snug text-ink-2 last:border-b-0">
-                <Never aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3"/>
-                <span className="min-w-0">{t}</span>
+              <li key={t} className="flex min-h-[40px] items-center pl-4">
+                <span className="flex min-h-[40px] flex-1 items-center border-b border-[rgba(60,60,67,0.18)] pr-4 text-[16px] leading-5
+                  [li:last-child_&]:border-b-0">
+                  {t}
+                </span>
               </li>
             ))}
           </ul>

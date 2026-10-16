@@ -44,14 +44,14 @@ const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
 /* PLATE/EDGE are the framed backing, off unless a call site passes `plate`;
    ink-3 on PLATE is 5.26 : 1, which keeps the foot labels and caption AA.
    TRACK is the unfilled part of each band and, plate off, the only thing
-   drawing the arch at a low score: #8eb0b6 measures 2.32 on card #ffffff down
+   drawing the arch at a low score: #93b2a1 measures 2.32 on card #ffffff down
    to 1.81 on the palest ground a dial lands on (aqua-2 #cee8ea). Not text,
    carries no value, so 3 : 1 does not apply. */
-const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#8eb0b6'
+const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#93b2a1'
 /* The axis. ink-3 clears 4.5 : 1 as text on every ground a dial lands on -
    card 5.61, paper 5.33, PLATE 5.26, aqua-2 4.86, mist 4.68 - so the same
    value draws the rule, the ticks and their numbers. */
-const INK3 = '#3c6a74'
+const INK3 = '#426a58'
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
 /* 180° is the left foot, 360° the right; increasing angle sweeps up and over. */
@@ -116,16 +116,16 @@ function Axis({ font }) {
    flat fill inside one flat rim now and the rain is `beam`, the turquoise the
    palette already nominates for drawing rain. One fill per shape, the same
    idiom as every other drawing in this directory.
-   Measured, on card #ffffff and on the plate #e3eff2: rim `ruling` #8eb0b6
+   Measured, on card #ffffff and on the plate #e3eff2: rim `ruling` #93b2a1
    2.32 and 2.06, rain `beam` #1d8fb0 3.74 and 3.33, the fair cloud's own rim
    against its white fill 2.32. None of these is text and none carries a value
    on its own, so 3 : 1 is the only floor that applies and only the rain owes
-   it. The overcast cloud is `ink-3` #3c6a74 inside `ink-2` #1f5560: 5.99 on
+   it. The overcast cloud is `ink-3` #426a58 inside `ink-2` #2a5744: 5.99 on
    card, and it is the one cloud that has to read as weather at a glance. */
 const SKY = { rain:'#1d8fb0' }
 /* fair: card inside ruling. overcast: ink-3 inside ink-2. */
-const FAIR = { fill:'#ffffff', rim:'#8eb0b6' }
-const OVERCAST = { fill:'#3c6a74', rim:'#1f5560' }
+const FAIR = { fill:'#ffffff', rim:'#93b2a1' }
+const OVERCAST = { fill:'#426a58', rim:'#2a5744' }
 
 /* A cloud is drawn in its own 96 x 30 box, base line at the box bottom, so it
    is placed by base position and foot width alone. Every circle top is at or
@@ -245,9 +245,9 @@ function UsualMark({ at }) {
   return (
     <g aria-hidden>
       <g stroke="#f7fbfa" strokeOpacity="0.95">{line(6)}</g>
-      <g stroke="#0b2b33" strokeOpacity="0.62">{line(2.2)}</g>
+      <g stroke="#0d2b1e" strokeOpacity="0.62">{line(2.2)}</g>
       <circle cx={x2.toFixed(2)} cy={y2.toFixed(2)} r="3.2"
-        fill="#0b2b33" fillOpacity="0.62" stroke="#f7fbfa" strokeOpacity="0.95" strokeWidth="1.4"/>
+        fill="#0d2b1e" fillOpacity="0.62" stroke="#f7fbfa" strokeOpacity="0.95" strokeWidth="1.4"/>
     </g>
   )
 }

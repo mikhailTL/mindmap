@@ -20,19 +20,19 @@ import { cn } from '../lib/utils'
  * take a Tailwind class, and the phone screens are inline styles for the same
  * reason: they lay out in device points inside ui/iphone. */
 
-const INK = '#0b2b33'      /* ink */
-const INK2 = '#1f5560'     /* ink-2 */
-const INK3 = '#3c6a74'     /* ink-3 */
-const RULE = '#bed6da'
-const RULING = '#8eb0b6'
-const PAPER = '#f5fafa'
+const INK = '#0d2b1e'      /* ink */
+const INK2 = '#2a5744'     /* ink-2 */
+const INK3 = '#426a58'     /* ink-3 */
+const RULE = '#c2d7ca'
+const RULING = '#93b2a1'
+const PAPER = '#f7faf8'
 const CARD = '#ffffff'
-const MIST = '#dfecee'
-const WASH = '#d6eeeb'     /* accent.wash */
+const MIST = '#e3ede7'
+const WASH = '#dcefe4'     /* accent.wash */
 const BEAM = '#1d8fb0'     /* beam: 3.20 on paper, so a graphic and never a word */
-const ACCENT = '#0a6e68'
-const PRESSED = '#07544f'  /* accent.ink, the solid button's active ground */
-const LIT = '#3fd6c4'      /* accent.lit, the only green that works on ink */
+const ACCENT = '#157446'
+const PRESSED = '#0f5836'  /* accent.ink, the solid button's active ground */
+const LIT = '#3ecf9a'      /* accent.lit, the only green that works on ink */
 
 /* The settled footprint. Every plate and every dimension in this file is
    scaled off these two numbers, so a drawing cannot drift from the stated

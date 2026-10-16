@@ -48,17 +48,17 @@ import { cn } from '../lib/utils'
  * decoration. Token values are inlined as hex the way patch-parts.jsx does it,
  * because SVG attributes cannot take a Tailwind class. */
 
-const INK = '#0b2b33'      /* ink */
-const INK3 = '#3c6a74'     /* ink-3: 5.33 on paper, 5.61 on card */
-const RULE = '#bed6da'     /* rule */
-const RULING = '#8eb0b6'   /* ruling */
-const PAPER = '#f5fafa'
+const INK = '#0d2b1e'      /* ink */
+const INK3 = '#426a58'     /* ink-3: 5.33 on paper, 5.61 on card */
+const RULE = '#c2d7ca'     /* rule */
+const RULING = '#93b2a1'   /* ruling */
+const PAPER = '#f7faf8'
 const CARD = '#ffffff'
-const MIST = '#dfecee'
+const MIST = '#e3ede7'
 const AQUA = '#edf7f7'
 const AQUA2 = '#cee8ea'
 const BEAM = '#1d8fb0'     /* beam: 3.20 on paper, so a graphic and never a word */
-const ACCENT = '#0a6e68'   /* accent */
+const ACCENT = '#157446'   /* accent */
 
 /* The settled footprint, in millimetres. Every plate in the figure, the
    millimetre ruler and the orientation inset are scaled off these two

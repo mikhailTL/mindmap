@@ -59,18 +59,18 @@
  *
  * Every fallback is the leaf family, so a kit component rendered outside a
  * panel still draws itself rather than drawing nothing. */
-.kit-ground  { background-color: var(--kit-tint, #d6eeeb) }
-.kit-fill    { background-color: var(--kit-deep, #07544f) }
-.kit-fill-art{ background-color: var(--kit-art,  #0a6e68) }
-.kit-ink     { color: var(--kit-deep, #07544f) }
-.kit-art     { color: var(--kit-art,  #0a6e68) }
-.kit-edge    { border-color: var(--kit-deep, #07544f) }
-.kit-s       { stroke: var(--kit-deep, #07544f) }
-.kit-s-art   { stroke: var(--kit-art,  #0a6e68) }
-.kit-f       { fill: var(--kit-deep, #07544f) }
-.kit-f-art   { fill: var(--kit-art,  #0a6e68) }
-.kit-f-glow  { fill: var(--kit-glow, #3fd6c4) }
-.kit-f-tint  { fill: var(--kit-tint, #d6eeeb) }
+.kit-ground  { background-color: var(--kit-tint, #dcefe4) }
+.kit-fill    { background-color: var(--kit-deep, #0f5836) }
+.kit-fill-art{ background-color: var(--kit-art,  #157446) }
+.kit-ink     { color: var(--kit-deep, #0f5836) }
+.kit-art     { color: var(--kit-art,  #157446) }
+.kit-edge    { border-color: var(--kit-deep, #0f5836) }
+.kit-s       { stroke: var(--kit-deep, #0f5836) }
+.kit-s-art   { stroke: var(--kit-art,  #157446) }
+.kit-f       { fill: var(--kit-deep, #0f5836) }
+.kit-f-art   { fill: var(--kit-art,  #157446) }
+.kit-f-glow  { fill: var(--kit-glow, #3ecf9a) }
+.kit-f-tint  { fill: var(--kit-tint, #dcefe4) }
 
 /* ── THE CARD ────────────────────────────────────────────────────────────
  * The one structural idea this page runs on, and the reason it stops reading
@@ -86,7 +86,7 @@
  * lit. Nothing about the layout moves, because a shadow has no size on the
  * page and the translate is composited. */
 .kit-block, .kit-card {
-  box-shadow: 4px 4px 0 0 var(--kit-art, #0a6e68);
+  box-shadow: 4px 4px 0 0 var(--kit-art, #157446);
   transition: box-shadow .16s var(--ease-out), transform .16s var(--ease-out);
 }
 /* .kit-block is the look without the press. A card that travels under the
@@ -95,10 +95,10 @@
    buttons. The page's own intro, the chooser's frame and the closing line are
    blocks, and they hold still. */
 @media (hover: hover) and (pointer: fine) {
-  .kit-card:hover { transform: translate(1px, 1px); box-shadow: 3px 3px 0 0 var(--kit-deep, #07544f) }
+  .kit-card:hover { transform: translate(1px, 1px); box-shadow: 3px 3px 0 0 var(--kit-deep, #0f5836) }
 }
-.kit-card:has(:focus-visible) { box-shadow: 3px 3px 0 0 var(--kit-deep, #07544f) }
-.kit-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--kit-deep, #07544f) }
+.kit-card:has(:focus-visible) { box-shadow: 3px 3px 0 0 var(--kit-deep, #0f5836) }
+.kit-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--kit-deep, #0f5836) }
 @media (prefers-reduced-motion: reduce) {
   .kit-card, .kit-card:hover, .kit-card:active { transform: none; transition: box-shadow .16s }
 }
@@ -167,5 +167,5 @@
    out here instead: a tap on a touch screen fires a hover and it sticks, which
    would leave the last chip a reader touched looking chosen. */
 @media (hover: hover) and (pointer: fine) {
-  .kit-hoverable:hover { background-color: var(--kit-tint, #d6eeeb) }
+  .kit-hoverable:hover { background-color: var(--kit-tint, #dcefe4) }
 }

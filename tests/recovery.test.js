@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { excursions, settleTimes, dailySettle, runUp, carryOver, settleWords, demoDay } from '../src/signals/recovery.js'
 
 /* A per-minute arousal index, 0 to 100. The usual band is lo..hi. An
-   excursion is a run above hi; its settle time is the minutes from the peak
+   excursion is a run above hi; its recovery time is the minutes from the peak
    until the index first comes back to halfway between the peak and hi. */
 
 const flat = (n, v) => Array.from({ length: n }, () => v)
@@ -45,7 +45,7 @@ describe('settleTimes', () => {
     expect(t[0].settled).toBe(false)
     expect(t[0].minutes).toBe(90)
   })
-  it('settle time is zero when the peak itself is the last high minute and the next minute is back', () => {
+  it('recovery time is zero when the peak itself is the last high minute and the next minute is back', () => {
     const s = [...flat(10, 45), 70, 45, ...flat(10, 45)]
     const t = settleTimes(s, BAND, { minLength: 1 })
     expect(t[0].minutes).toBe(1)
@@ -53,7 +53,7 @@ describe('settleTimes', () => {
 })
 
 describe('dailySettle', () => {
-  it('gives the median settle time and the count of events', () => {
+  it('gives the median recovery time and the count of events', () => {
     const two = [...ramp, ...ramp]
     const d = dailySettle(two, BAND)
     expect(d.events).toBe(2)

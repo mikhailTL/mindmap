@@ -1,7 +1,7 @@
-/* The Traffic Light: how a teenager reacts to their phone, not what is on it.
+/* Heads Up: how a teenager reacts to their phone, not what is on it.
  *
  * Parental control apps (Qustodio, Apple Screen Time, Bark) watch content and
- * time: which apps, which contacts, how many hours. MindMap's Traffic Light
+ * time: which apps, which contacts, how many hours. MindMap's Heads Up
  * watches none of that. It measures HOW the teen is using the phone, from
  * signals the phone already has: how fast they scroll and how often they
  * reverse, how fast they type and how much they delete, how long a session
@@ -223,12 +223,12 @@ const clock = ms => {
 
 /* What the parent's phone shows. Green and yellow carry the colour only. */
 export function parentSummary({ light, at, minutes, top }) {
-  if (light === Light.GREEN) return { light, line: 'Nothing to see.', detail: null }
-  if (light === Light.YELLOW) return { light, line: 'Above their usual today.', detail: null }
+  if (light === Light.GREEN) return { light, line: 'Their phone use looks usual.', detail: null }
+  if (light === Light.YELLOW) return { light, line: 'Their phone use is above their usual today.', detail: null }
   const kind = KIND[top] || 'a long run'
   return {
     light,
-    line: 'Worth checking in tonight.',
+    line: 'It may be worth checking in tonight.',
     detail: `Red at ${clock(at)}, ${Math.round(minutes)} minutes of ${kind}.`,
   }
 }

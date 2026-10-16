@@ -58,19 +58,19 @@ export const STUDENT_GROUPS = [
     { id:'reframe',   route:'toolkit-reframe',   family:'leaf',  icon:ReframeIcon,
       title:'Thought Reframe',     line:'Three fields, your own words' },
   ]},
-  { label:'Beyond the screen', items:[
+  { label:'Phone sensors', items:[
     { id:'sigh',      route:'toolkit-sigh',      family:'tide',  icon:SighIcon,
-      title:'Sigh Coach',          line:'The mic measures your exhale' },
+      title:'Long Exhale',          line:'The mic measures your exhale' },
     { id:'chest',     route:'toolkit-chest',     family:'pool',  icon:ChestIcon,
-      title:'Chest Breathing',     line:'Phone on chest, eyes closed' },
+      title:'Breath Counter',     line:'Phone on chest, eyes closed' },
     { id:'steady',    route:'toolkit-steady',    family:'stone', icon:SteadyIcon,
-      title:'Steady Hand',         line:'Keep the dot still' },
+      title:'Hold Still',         line:'Keep the dot still' },
     { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
-      title:'Alertness Check',     line:'Sixty seconds of taps' },
+      title:'Reaction Test',     line:'Sixty seconds of taps' },
     { id:'pocket',    route:'toolkit-pocket',    family:'leaf',  icon:PocketIcon,
-      title:'Pocket Pacer',        line:'Keeps pacing, phone locked' },
+      title:'Breathing by Sound',        line:'Keeps pacing, phone locked' },
     { id:'walk',      route:'toolkit-walk',      family:'night', icon:WalkIcon,
-      title:'Walk It Off',         line:'Three minutes, steps counted' },
+      title:'Short Walk',         line:'Three minutes, steps counted' },
   ]},
 ]
 

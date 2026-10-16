@@ -15,9 +15,9 @@ import { cn } from '../lib/utils'
 
 /* Palette by hand: these are SVG paint attributes and Tailwind tokens do not
    reach them. Values are tailwind.config.js, unchanged. */
-const INK = '#0b2b33', INK2 = '#1f5560', INK3 = '#3c6a74'
-const RULE = '#bed6da', RULING = '#8eb0b6', MIST = '#dfecee'
-const CARD = '#ffffff', ACCENT = '#0a6e68', WASH = '#d6eeeb'
+const INK = '#0d2b1e', INK2 = '#2a5744', INK3 = '#426a58'
+const RULE = '#c2d7ca', RULING = '#93b2a1', MIST = '#e3ede7'
+const CARD = '#ffffff', ACCENT = '#157446', WASH = '#dcefe4'
 const BEAM = '#1d8fb0', BEAMWASH = '#ddf0f8'
 /* Read out of lib/sensors.js rather than typed again. That file is the
    per-signal spectrum the score dial is built from and is the one place in

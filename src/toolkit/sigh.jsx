@@ -8,7 +8,7 @@ import { breathsFromEnvelope } from '../signals/breath'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Sigh coach: cyclic sighing (Balban 2023), paced and measured. The
+/* Long exhale: cyclic sighing (Balban 2023), paced and measured. The
  * microphone level (read once a frame and dropped) is the exhale detector; the
  * same level, sampled into a 60-second ring, gives breaths per minute. With
  * the microphone refused the pacer runs on counts. No audio is kept. */
@@ -275,7 +275,7 @@ export default function Sigh() {
     : 'Twice in through the nose, slowly out the mouth.'
 
   return (
-    <ActivityScreen family="tide" title="Sigh Coach">
+    <ActivityScreen family="tide" title="Long Exhale">
       <DarkSheet on={eyes && running} onStop={end} line={`${cueWords(sound)} Tap to stop.`}>
         <p className="font-display text-view font-bold tracking-tight text-mist">{frame.phase.word}</p>
         <p className="mt-2 font-display text-dial font-bold tabular-nums text-mist/80">
