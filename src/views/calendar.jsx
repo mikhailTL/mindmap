@@ -4,6 +4,7 @@ import { Panel, PanelHead, Why } from './Monitor'
 import { ArrowLeft, ArrowRight, Check, Chevron, Cross, Minus, Plus } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
+import { useAccount } from '../account/store'
 import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
 import { BAND, USUAL, WBAND, clock12, monthScores } from './reading/demo'
 import { cn } from '../lib/utils'
@@ -389,8 +390,15 @@ function MarkEvent({ className }) {
 
 /* ── The screen ─────────────────────────────────────────────────────────── */
 
-export function CalendarBody({ go }) {
+export function CalendarBody({ go, who }) {
   const [mode] = useMode()
+  /* Event marks are the student's own and never reach a parent or a Medical
+     Professional (spec 0g), so only a student, or a reader whose app is not
+     known, gets the form. The audience is the one App passes, or failing
+     that the signed in account's role. */
+  const me = useAccount()
+  const reader = who || (me && me.role) || null
+  const canMark = !reader || reader === 'student'
   const [target, setTarget] = useTarget()
   const [view, setView] = React.useState('month')
   const now = React.useMemo(() => new Date(), [])
@@ -503,7 +511,7 @@ export function CalendarBody({ go }) {
         </>
       )}
 
-      <MarkEvent className={cn(!real && 'lg:col-span-2')}/>
+      {canMark && <MarkEvent className={cn(!real && 'lg:col-span-2')}/>}
     </div>
   )
 }
@@ -513,10 +521,10 @@ const COPY = {
   realNote: 'No patch is paired yet.',
 }
 
-export function Calendar({ go }) {
+export function Calendar({ go, who }) {
   return (
     <SectionShell go={go} sub={COPY.sub} note={COPY.note} realNote={COPY.realNote}>
-      <CalendarBody go={go}/>
+      <CalendarBody go={go} who={who}/>
     </SectionShell>
   )
 }

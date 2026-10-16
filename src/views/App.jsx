@@ -18,7 +18,7 @@ import {
 import Toolkit from './Toolkit'
 import { Students } from './Students'
 import { Parents } from './Parents'
-import { Pro, SETTING_WORDS } from './Pro'
+import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { ModeToggle } from '../ui/mode-toggle'
@@ -960,11 +960,6 @@ function StartAction({ action, run, className }) {
   )
 }
 
-/* The line under "Start here" for a Medical Professional names the setting
-   they chose at sign-up: the console's own `head` words, one source. */
-const settingLineFor = me =>
-  me && me.role === 'pro' && SETTING_WORDS[me.setting] ? SETTING_WORDS[me.setting].head + '.' : null
-
 function AudienceStart({ go, who }) {
   const s = START[who]
   const me = useAccount()
@@ -1148,7 +1143,7 @@ export function App() {
               'toolkit-pocket':    () => <Toolkit who={audience} open="pocket"/>,
               'toolkit-walk':      () => <Toolkit who={audience} open="walk"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
-              calendar: Calendar,
+              calendar: p => <Calendar {...p} who={audience}/>,
               /* Accounts, kept on this device. */
               signin:   SignIn,
               account:  Account,

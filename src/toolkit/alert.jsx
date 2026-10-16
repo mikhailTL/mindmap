@@ -6,6 +6,7 @@ import { pvtStats, pvtWords, LAPSE_MS } from '../signals/pvt'
 import { addAlertness, listAlertness, usualAlertness } from '../app/store'
 import { useReduced } from './useReduced'
 import { cn } from '../lib/utils'
+import { DidItWork } from './after'
 
 /* Alertness check. The PVT-B, brief form, on a phone screen.
  *
@@ -223,6 +224,7 @@ export default function Alertness() {
             Check again <ArrowRight aria-hidden/>
           </Button>
         </Sheet>
+        <DidItWork tool="alert" phase="after" className="mx-auto mt-3 w-full max-w-[40rem]"/>
       </ActivityScreen>
     )
   }
@@ -250,6 +252,7 @@ export default function Alertness() {
       {running && early > 0 && (
         <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine tabular-nums text-ink-3">False starts: {early}</p>
       )}
+      {!running && <DidItWork tool="alert" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
     </ActivityScreen>
   )
 }

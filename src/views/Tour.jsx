@@ -347,7 +347,7 @@ const STOPS = [
     art: Hardware,
   },
   {
-    id: 'signals', nav: 'Four signals',
+    id: 'signals', nav: 'The four signals',
     title: 'What the patch records',
     lede: 'The patch records four signals from the upper arm, once a second.',
     facts: [
@@ -429,7 +429,7 @@ const STOPS = [
     go: ['privacy', 'See who can see what'],
   },
   {
-    id: 'pro', nav: `${PRO} console`,
+    id: 'pro', nav: `${PRO} screen`,
     title: `What the ${PRO} sees`,
     lede: `The ${PRO} sees a list of students to check in with, ordered by whose ${SCORE} moved most since last week.`,
     photo: 'clinic-talk',
@@ -448,7 +448,7 @@ const STOPS = [
       ]
     },
     art: Caseload,
-    go: ['pro', `Open the ${PRO} console`],
+    go: ['pro', `Open the ${PRO} screen`],
   },
   {
     id: 'honest', nav: 'Real and demo',

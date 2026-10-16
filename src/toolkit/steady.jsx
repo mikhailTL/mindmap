@@ -113,7 +113,10 @@ export default function Steady() {
     latest.current = { x:0, y:0 }
   }, [])
 
-  React.useEffect(() => () => detach(), [detach])
+  /* `mounted` gates the await in start: a permission prompt that resolves
+     after leaving the screen must not attach a listener nobody removes. */
+  const mounted = React.useRef(true)
+  React.useEffect(() => () => { mounted.current = false; detach() }, [detach])
 
   const attach = React.useCallback(() => {
     const on = e => {
@@ -199,6 +202,7 @@ export default function Steady() {
     if (typeof DeviceMotionEvent === 'undefined') { setMotion('unsupported'); setRunning(true); return }
     setMotion('asking')
     const ok = await askMotion()
+    if (!mounted.current) return
     if (!ok) { setMotion('refused'); setRunning(true); return }
     attach()
     setMotion('on')

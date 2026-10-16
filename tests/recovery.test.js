@@ -120,6 +120,26 @@ describe('carryOver', () => {
   })
 })
 
+describe('the spec numbers are pinned', () => {
+  it('an event that takes longer than the default 90-minute cap did not settle', () => {
+    const s = [...flat(10, 45), ...Array.from({ length: 200 }, (_, i) => 85 - i * 0.1), ...flat(10, 45)]
+    const t = settleTimes(s, BAND)
+    expect(t[0].minutes).toBe(90)
+    expect(t[0].settled).toBe(false)
+  })
+  it('a peak that runs into the end of the day counts as carried over', () => {
+    const s = [...flat(10, 45), ...flat(30, 80)]
+    const c = carryOver(s, BAND)
+    expect(c.events).toBe(1)
+    expect(c.carried).toBe(1)
+  })
+  it('splits at a dip of 8 points, not 7', () => {
+    const mk = dip => [...flat(10, 45), ...flat(10, 80), ...flat(5, 80 - dip), ...flat(10, 82), ...flat(40, 45)]
+    expect(excursions(mk(7), BAND)).toHaveLength(1)
+    expect(excursions(mk(8), BAND)).toHaveLength(2)
+  })
+})
+
 describe('settleWords', () => {
   it('says longer, shorter or about the same against the usual', () => {
     expect(settleWords(18, 11).key).toBe('longer')

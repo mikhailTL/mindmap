@@ -124,7 +124,7 @@ export function SettleCard({ className }) {
         <SettleKey/>
       </div>
       <dl className="m-0 mt-3 grid grid-cols-2 gap-x-3 border-t border-rule pt-2.5">
-        {[['Peaks today', day.events], ['Carried over', day.carried]].map(([label, n]) => (
+        {[['Peaks today', day.events], ['Carried over', day.unsettled]].map(([label, n]) => (
           <div key={label} className="min-w-0">
             <dt className="tick">{label}</dt>
             <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none

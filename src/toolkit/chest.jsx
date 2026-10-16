@@ -106,7 +106,11 @@ export default function Chest() {
     buf.current = []
   }, [])
 
+  /* `mounted` gates the awaits in start: a permission prompt that resolves
+     after leaving the screen must not attach a listener nobody removes. */
+  const mounted = React.useRef(true)
   React.useEffect(() => () => {
+    mounted.current = false
     detach()
     pacer.current?.close(); pacer.current = null
   }, [detach])
@@ -192,9 +196,11 @@ export default function Chest() {
   const start = async () => {
     setResult(null)
     if (sound) { pacer.current ||= createPacer(); await pacer.current.start() }
+    if (!mounted.current) return
     if (typeof DeviceMotionEvent === 'undefined') { setMotion('unsupported'); setDark(true); return }
     setMotion('asking')
     const ok = await askMotion()
+    if (!mounted.current) return
     if (!ok) { setMotion('refused'); setDark(true); return }
     attach()
     setMotion('on')

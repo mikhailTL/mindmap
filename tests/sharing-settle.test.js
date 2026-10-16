@@ -38,11 +38,31 @@ describe('settle sharing', () => {
   })
 })
 
-import { SETTING_WORDS } from '../src/views/Pro.jsx'
+import { SETTING_WORDS, settingLineFor } from '../src/views/Pro.jsx'
+import { YOU_SEE } from '../src/views/Privacy.jsx'
 describe('SETTING_WORDS, the one source for the console and the start screen', () => {
   it('names the practice and the school in the head words', () => {
     expect(SETTING_WORDS.practice.head.toLowerCase()).toContain('practice')
     expect(SETTING_WORDS.school.head.toLowerCase()).toContain('school')
     expect(SETTING_WORDS.other.head.split(' ').length).toBeLessThanOrEqual(10)
+  })
+})
+
+describe('settingLineFor, the setting line under Start here', () => {
+  it('names the practice for a Medical Professional in a practice', () => {
+    const line = settingLineFor({ role: 'pro', setting: 'practice' })
+    expect(line).toBeTruthy()
+    expect(line.toLowerCase()).toContain('practice')
+  })
+  it('is null for a student, a parent and nobody', () => {
+    expect(settingLineFor({ role: 'student', setting: 'practice' })).toBeNull()
+    expect(settingLineFor({ role: 'parent' })).toBeNull()
+    expect(settingLineFor(null)).toBeNull()
+  })
+})
+
+describe('YOU_SEE, the privacy page list of what a parent may see', () => {
+  it('has one entry that names days slow to settle', () => {
+    expect(YOU_SEE.some(e => /slow to settle/i.test(e))).toBe(true)
   })
 })

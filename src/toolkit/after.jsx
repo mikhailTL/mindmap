@@ -52,7 +52,11 @@ export function DidItWork({ tool, phase = 'after', className }) {
 
   const supported = mediaAvailable()
 
+  /* The camera prompt can resolve after this sheet is gone, so `mounted`
+     gates every await in run: a stream that arrives late is stopped at once. */
+  const mounted = React.useRef(true)
   React.useEffect(() => () => {
+    mounted.current = false
     live.current.ppg?.cancel()
     stopStream(live.current.cam?.stream)
   }, [])
@@ -63,16 +67,19 @@ export function DidItWork({ tool, phase = 'after', className }) {
     try {
       setState('camera')
       cam = await openCamera()
+      if (!mounted.current) { stopStream(cam.stream); return }
       live.current.cam = cam
       const video = videoRef.current
       video.srcObject = cam.stream
       video.muted = true
       await video.play().catch(() => {})
+      if (!mounted.current) { stopStream(cam.stream); live.current.cam = null; return }
       const cap = capturePPG(video, { seconds: SECONDS, onTick: p => setProgress(p) })
       live.current.ppg = cap
       const frames = await cap.done
       live.current.ppg = null
       stopStream(cam.stream); live.current.cam = null
+      if (!mounted.current) return
       const ppg = analysePPG(frames)
       if (!ppg.ok) { setLine(ppg.message); setState('error'); return }
       const r = { hr: ppg.hr, rmssd: ppg.rmssd, t: Date.now() }
@@ -90,6 +97,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
     } catch (e) {
       live.current.ppg = null
       stopStream(cam?.stream); live.current.cam = null
+      if (!mounted.current) return
       setLine(e?.name === 'NotAllowedError' ? 'The camera was not allowed.' : 'The camera did not open.')
       setState('error')
     }
@@ -147,7 +155,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
   return (
     <Sheet className={className}>
       {video}
-      <h3 className="font-display text-ui font-bold text-ink">Did it work?</h3>
+      <h3 className="font-display text-ui font-bold text-ink">Check your pulse</h3>
 
       {state === 'idle' && (
         supported

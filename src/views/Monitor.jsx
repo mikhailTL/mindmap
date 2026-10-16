@@ -459,7 +459,7 @@ export function StudentBody({ go, openTab }) {
           </div>
         </Panel>
         <Panel>
-          <PanelHead title="Four Signals" meta="0 of 4"/>
+          <PanelHead title="Your Four Signals" meta="0 of 4"/>
           <div className="mt-2.5"><SilentChannels/></div>
         </Panel>
       </div>

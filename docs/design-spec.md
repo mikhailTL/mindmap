@@ -603,8 +603,8 @@ history. The app may say "your body took longer to settle than usual", never
 anxiety, depression or risk; no normative threshold. Oura Cumulative Stress is
 the nearest neighbour (monthly, 18+). Sources: claude/beyond-the-screen-research.md.
 
-**Nine phone tools**, each with the line it shows at the point of use (Methods
-adds: Typing rhythm is exploratory, Steady Hand unvalidated for anxiety):
+**Nine phone tools**, each with the line it shows at the point of use (Methods has
+no Steady Hand row; its only label is the table's, as steady.jsx shows on screen):
 
 | Tool | Line on screen |
 |---|---|

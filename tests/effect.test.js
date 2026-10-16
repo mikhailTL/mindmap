@@ -78,7 +78,7 @@ describe('effectWords', () => {
   })
   it('keeps every sentence to ten words or fewer with no feeling word', () => {
     const tools = Object.keys(TOOL_NAMES)
-    expect(tools).toEqual(expect.arrayContaining(['walk', 'pocket']))
+    expect(tools).toEqual(expect.arrayContaining(['walk', 'pocket', 'alert']))
     for (const t of tools) for (const d of [null, 0, 1, 6, -3, 12]) {
       const s = effectWords(t, d)
       expect(s.split(/\s+/).length).toBeLessThanOrEqual(10)
@@ -89,7 +89,12 @@ describe('effectWords', () => {
     expect(effectWords('walk', 5)).toBe('After the walk your pulse is 5 beats lower.')
     expect(effectWords('pocket', null)).toBe('Two checks after the pocket pacer are needed.')
   })
+  it('reads the alertness check inside a sentence', () => {
+    expect(effectWords('alert', 12)).toBe('After the alertness check your pulse is 12 beats lower.')
+    expect(effectWords('alert', null)).toBe('Two checks after the alertness check are needed.')
+  })
   it('maps every tool id to its display name', () => {
+    expect(toolName('alert')).toBe('Alertness Check')
     expect(toolName('sigh')).toBe('Sigh Coach')
     expect(toolName('steady')).toBe('Steady Hand')
     expect(toolName('walk')).toBe('Walk It Off')

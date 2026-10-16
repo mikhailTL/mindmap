@@ -101,12 +101,17 @@ export const SETTING_WORDS = {
   },
 }
 const wordsFor = me => SETTING_WORDS[(me && me.role === 'pro' && me.setting) || 'school']
+/* The line under "Start here" for a Medical Professional names the setting
+   they chose at sign-up: the console's own `head` words, one source. A
+   student or a parent gets null. */
+export const settingLineFor = me =>
+  me && me.role === 'pro' && SETTING_WORDS[me.setting] ? SETTING_WORDS[me.setting].head + '.' : null
 
 /* The five steps, in working order. */
 const stepsFor = words => [
   ['school',  words.step],
   ['list',    'Students to check on'],
-  ['student', 'One student'],
+  ['student', 'Student record'],
   ['urgent',  'Urgent alerts'],
   ['agreed',  'Parental Consent'],
 ]
@@ -758,7 +763,7 @@ function Urgent({ real }) {
       {/* Red, on purpose: the one alarm on the console. The owner: red is
           allowed in the alert and emergency sections. */}
       <Panel className={cn('border-l-4 border-l-crit', real ? 'border-rule bg-card' : 'border-crit/40 bg-[#fbeae6]')}>
-        <PanelHead title={real ? 'Urgent alerts' : 'One urgent alert'}
+        <PanelHead title="Urgent alerts"
           meta={real ? 'nothing open' : PROTOCOL_TIMES[0]}/>
         <p className={cn('mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.16] sm:text-head',
           real ? 'text-ink' : 'text-[#7a2314]')}>

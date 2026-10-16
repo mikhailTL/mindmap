@@ -20,6 +20,7 @@ export const TOOL_NAMES = {
   steady:    'Steady Hand',
   walk:      'Walk It Off',
   pocket:    'Pocket Pacer',
+  alert:     'Alertness Check',
 }
 
 /* How a tool reads inside a sentence where its title does not: "after the

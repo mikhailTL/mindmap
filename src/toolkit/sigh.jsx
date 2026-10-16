@@ -262,8 +262,12 @@ export default function Sigh() {
   }, [])
   endRef.current = end
 
-  /* The microphone and the audio context are let go on leaving the screen. */
+  /* The microphone and the audio context are let go on leaving the screen.
+     A permission prompt can resolve after that, so `mounted` gates every
+     await below: what arrives late is released, not kept. */
+  const mounted = React.useRef(true)
   React.useEffect(() => () => {
+    mounted.current = false
     meter.current?.stop(); meter.current = null
     pacer.current?.close(); pacer.current = null
   }, [])
@@ -271,15 +275,21 @@ export default function Sigh() {
   const askMic = async () => {
     if (!audioSupported() || !navigator.mediaDevices?.getUserMedia) { setMic('unsupported'); return }
     setMic('asking')
-    try { meter.current = await createMicMeter(); setMic('on') }
-    catch (e) { setMic(e?.message === 'unsupported' ? 'unsupported' : 'refused') }
+    try {
+      const m = await createMicMeter()
+      if (!mounted.current) { m.stop(); return }
+      meter.current = m; setMic('on')
+    }
+    catch (e) { if (mounted.current) setMic(e?.message === 'unsupported' ? 'unsupported' : 'refused') }
   }
 
   const start = async () => {
     all.current = []; ring.current.reset(); bpmStart.current = null; bpmNow.current = null
     setBars([]); setBpm(null); setResult(null); setDone(false)
     if (sound) { pacer.current ||= createPacer(); await pacer.current.start() }
+    if (!mounted.current) return
     if (mic === 'off' || mic === 'refused') await askMic()
+    if (!mounted.current) return
     setRunning(true)
   }
 

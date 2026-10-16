@@ -102,7 +102,9 @@ export function settleTimes(series, band, { cap = HALF_CAP, minLength = 2, promi
     let k = e.peakAt + 1
     while (k < n && k < nextStart && series[k] > target) k++
     if (k < n && k < nextStart) {
-      return { ...e, target, minutes: Math.min(cap, k - e.peakAt), settled: true, carried: false }
+      /* past the cap it counts as not settled, at the cap, as the spec says */
+      const m = k - e.peakAt
+      return { ...e, target, minutes: Math.min(cap, m), settled: m <= cap, carried: false }
     }
     if (k >= nextStart) {
       return { ...e, target, minutes: Math.min(cap, nextStart - e.peakAt), settled: false, carried: true }
@@ -138,7 +140,8 @@ export function dailySettle(series, band, opts) {
 /* Carry-over on its own, for the card that only needs the share. */
 export function carryOver(series, band, opts) {
   const d = dailySettle(series, band, opts)
-  return { events: d.events, carried: d.carried, share: d.events ? d.carried / d.events : 0 }
+  /* a peak that ran into the next peak, or into the end of the day */
+  return { events: d.events, carried: d.unsettled, share: d.events ? d.unsettled / d.events : 0 }
 }
 
 /* The rise in the two hours before `eventMinute` (a minute of the day,
