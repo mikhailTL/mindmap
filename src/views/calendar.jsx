@@ -1,9 +1,10 @@
 import React from 'react'
 import { SectionShell } from './shell'
 import { Panel, PanelHead, Why } from './Monitor'
-import { ArrowLeft, ArrowRight, Chevron, Minus } from '../ui/marks'
+import { ArrowLeft, ArrowRight, Chevron, Cross, Minus, Plus } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
+import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
 import { BAND, USUAL, WBAND, monthScores } from './reading/demo'
 import { cn } from '../lib/utils'
 
@@ -40,6 +41,7 @@ import { cn } from '../lib/utils'
  * readable in greyscale. */
 
 const KEY = 'mindmap.target'
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 const MIN_T = 20, MAX_T = 80
 
 /* The range is the target plus and minus half the width of this reader's own
@@ -264,6 +266,114 @@ function WeekRows({ days, lo, hi }) {
   )
 }
 
+/* ── Mark an event ──────────────────────────────────────────────────────── */
+
+/* A test, a presentation, a game: the student marks it with a day, a time and
+   a word, and the patch works out the run-up and the settle time around it
+   (src/signals/recovery.js). The marks live in the device store's `events`
+   slot and never leave the phone: not to a parent, not to a Medical
+   Professional, not to the server. */
+const KIND_WORD = { test: 'Test', talk: 'Presentation', game: 'Game', other: 'Other' }
+const pad2 = n => String(n).padStart(2, '0')
+const dayKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const hhmm = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`
+const toMinute = t => {
+  const [h, m] = String(t).split(':').map(Number)
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null
+}
+
+const FIELD = cn('min-h-[44px] w-full rounded-field border border-rule bg-card px-3 font-body',
+  'text-ui text-ink placeholder:text-ink-3 transition-colors duration-150 focus:border-ink')
+
+function MarkEvent({ className }) {
+  React.useSyncExternalStore(subscribe, getVersion, () => 0)
+  const [day, setDay] = React.useState(() => dayKey(new Date()))
+  const [time, setTime] = React.useState('09:00')
+  const [label, setLabel] = React.useState('')
+  const [kind, setKind] = React.useState('test')
+  const minute = toMinute(time)
+  const ready = label.trim().length > 0 && minute != null && DAY_RE.test(day)
+  const marks = DAY_RE.test(day) ? eventsOn(day) : []
+  const dayWords = React.useMemo(() => {
+    if (!DAY_RE.test(day)) return ''
+    const [y, m, d] = day.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    return `${DOW[mondayIndex(dt)]} ${d} ${MONTHS[m - 1]}`
+  }, [day])
+
+  const add = e => {
+    e.preventDefault()
+    if (!ready) return
+    addEvent({ day, minute, label: label.trim(), kind })
+    setLabel('')
+  }
+
+  return (
+    <Panel className={className}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PanelHead title="Mark an Event" meta={dayWords} className="min-w-0 flex-1"/>
+        <Why label="What a mark is for" className="pt-1.5">
+          The patch reads the two hours before it and how long you took to settle after.
+        </Why>
+      </div>
+      <form onSubmit={add} className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_9.5rem_8rem]">
+        <label className="block min-w-0">
+          <span className="tick">Event</span>
+          <input type="text" value={label} maxLength={40} placeholder="Maths test…"
+            onChange={e => setLabel(e.target.value)} className={cn(FIELD, 'mt-1')}/>
+        </label>
+        <label className="block min-w-0">
+          <span className="tick">Day</span>
+          <input type="date" value={day} onChange={e => setDay(e.target.value)}
+            className={cn(FIELD, 'mt-1 tabular-nums')}/>
+        </label>
+        <label className="block min-w-0">
+          <span className="tick">Time</span>
+          <input type="time" value={time} onChange={e => setTime(e.target.value)}
+            className={cn(FIELD, 'mt-1 tabular-nums')}/>
+        </label>
+        <div role="group" aria-label="Kind of event"
+          className="inline-flex w-full overflow-hidden rounded-field border border-rule sm:col-span-2">
+          {EVENT_KINDS.map(k => (
+            <button key={k} type="button" onClick={() => setKind(k)} aria-pressed={kind === k}
+              className={cn('min-h-[44px] min-w-0 flex-1 px-2 font-display text-ui font-medium',
+                'transition-colors duration-150',
+                kind === k ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+              {KIND_WORD[k]}
+            </button>
+          ))}
+        </div>
+        <button type="submit" disabled={!ready}
+          className={cn('flex min-h-[44px] items-center justify-center gap-2 rounded-field border',
+            'font-display text-ui font-semibold transition-colors duration-150',
+            ready ? 'border-accent-ink bg-accent text-paper hoverOnly:bg-accent-ink'
+                  : 'border-rule bg-mist text-ink-3')}>
+          <Plus aria-hidden className="size-4"/>Add
+        </button>
+      </form>
+      {marks.length > 0 && (
+        <ul className="m-0 mt-3 list-none border-t border-ink p-0">
+          {marks.map(ev => (
+            <li key={ev.id} className="flex items-center gap-3 border-b border-rule py-1.5">
+              <span className="w-[5ch] shrink-0 text-ui tabular-nums text-ink">{hhmm(ev.minute)}</span>
+              <span className="min-w-0 flex-1 truncate font-display text-ui font-medium text-ink">
+                {ev.label}</span>
+              <span className="shrink-0 text-fine text-ink-2">{KIND_WORD[ev.kind] || 'Other'}</span>
+              <button type="button" onClick={() => removeEvent(ev.id)}
+                aria-label={`Remove ${ev.label}`}
+                className="flex size-11 shrink-0 items-center justify-center rounded-field
+                  text-ink-2 transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink">
+                <Cross aria-hidden className="size-4"/>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="note mt-2.5">Events stay on this phone and are never shared.</p>
+    </Panel>
+  )
+}
+
 /* ── The screen ─────────────────────────────────────────────────────────── */
 
 export function CalendarBody({ go }) {
@@ -379,6 +489,8 @@ export function CalendarBody({ go }) {
 
         </>
       )}
+
+      <MarkEvent className={cn(!real && 'lg:col-span-2')}/>
     </div>
   )
 }

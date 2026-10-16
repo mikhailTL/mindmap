@@ -15,6 +15,7 @@ import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateB
 import { fitCalibration, identityCalibration } from '../signals/tnam'
 import { SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
+import { addReachPoint, getReach } from '../app/store'
 
 /* Camera + mic reading, no patch. Features match the patch's (rate,
    beat-to-beat variation, voice) so both feed one scale.
@@ -36,6 +37,21 @@ function loadBaseline() {
 }
 function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
+
+/* Reach: one coarse position when a reading finishes, only while the student
+   has Reach on. Foreground only, asked once, stored rounded by the slot. A
+   refusal or a timeout is one quiet line and nothing else. */
+function captureReachPoint(onDone) {
+  if (!getReach().on) return
+  const geo = typeof navigator !== 'undefined' ? navigator.geolocation : null
+  if (!geo?.getCurrentPosition) { onDone(false); return }
+  try {
+    geo.getCurrentPosition(
+      pos => { addReachPoint(pos.coords.latitude, pos.coords.longitude); onDone(true) },
+      () => onDone(false),
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 })
+  } catch { onDone(false) }
+}
 
 /* The person's check-in answers, and the calibration fitted from them: one
    gain per network curve, kept on this device like the baseline. Each answer is
@@ -107,6 +123,7 @@ export function PhoneCheck() {
   const [checkins, setCheckins] = React.useState([])
   const [calibration, setCalibration] = React.useState(identityCalibration)
   const [answered, setAnswered] = React.useState(false)
+  const [noPosition, setNoPosition] = React.useState(false)
   const videoRef = React.useRef(null)
   const live = React.useRef({ cam: null, ppg: null, motion: null })
 
@@ -177,6 +194,8 @@ export function PhoneCheck() {
       setAnswered(false)
       setDetail({ ppg, voice, move, torch: cam.torch })
       setPhase('done')
+      setNoPosition(false)
+      captureReachPoint(ok => setNoPosition(!ok))
     } catch (e) {
       stopStream(cam?.stream)
       live.current.motion?.stop(); live.current.motion = null
@@ -338,6 +357,10 @@ export function PhoneCheck() {
                     <dt className="text-ink-3">The band</dt>
                     <dd className="m-0 text-ink-2">How sure the app is, based on signal quality</dd>
                   </dl>
+
+                  {noPosition && (
+                    <p className="mt-2 text-fine text-ink-3">No position this time.</p>
+                  )}
 
                   {result.held && (
                     <p className="mt-4 max-w-[44ch] border-l-2 border-warn pl-3 text-meta text-warn">

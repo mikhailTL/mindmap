@@ -2,6 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { NOTES, PRO_LC } from '../lib/terms'
 import { GetHelp } from './Help'
+import { TypingWeek } from '../toolkit/typing-line'
 
 /* Notes, retired.
  *
@@ -60,6 +61,7 @@ export function NotesJournal({ className }) {
           </p>
           <GetHelp className="mt-2.5"/>
         </section>
+        <TypingWeek className="mt-3"/>
       </div>
     </div>
   )

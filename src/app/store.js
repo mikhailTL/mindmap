@@ -351,3 +351,111 @@ export function editNote(id, text) {
 export function removeNote(id) {
   return notes.merge({ items: listNotes().filter(n => n.id !== id) }).items
 }
+
+/* ── Beyond the screen: four more device-only slots ───────────────────── */
+
+/* Every row below is a measurement the phone made in the page: a reaction
+ * time, a typing rhythm, a position at the moment of a reading, a mark on
+ * the calendar. None of it is sent anywhere, none of it is shared with a
+ * parent or a Medical Professional, and each list is capped so the slot can
+ * never grow past a phone's patience. */
+
+const num = (v, fallback = null) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
+const iso = v => (typeof v === 'string' && v ? v : new Date().toISOString())
+
+const KEEP = 60
+
+/* Alertness checks: one row per completed check. */
+const blankAlert = () => ({ v: VERSION, items: [] })
+function normaliseAlert(s) {
+  const items = Array.isArray(s.items) ? s.items : []
+  return { v: VERSION, items: items
+    .filter(r => r && num(r.mean) != null)
+    .slice(0, KEEP)
+    .map(r => ({ at: iso(r.at), mean: num(r.mean), median: num(r.median), slowest10: num(r.slowest10),
+                 lapses: num(r.lapses, 0), falseStarts: num(r.falseStarts, 0), n: num(r.n, 0) })) }
+}
+const alertness = makeSlot('mindmap.app.alertness', blankAlert, normaliseAlert)
+export const listAlertness = () => alertness.get().items
+export function addAlertness(stats) {
+  const row = { at: new Date().toISOString(), mean: stats.mean, median: stats.median,
+                slowest10: stats.slowest10, lapses: stats.lapses, falseStarts: stats.falseStarts, n: stats.n }
+  return alertness.merge({ items: [row, ...listAlertness()] }).items
+}
+/* The student's own usual: the mean of the last seven checks before today. */
+export function usualAlertness() {
+  const rows = listAlertness().slice(1, 8)
+  if (rows.length < 2) return null
+  return rows.reduce((a, r) => a + r.mean, 0) / rows.length
+}
+
+/* Typing rhythm: one row per field session (a note saved, a check-in sent). */
+const blankTyping = () => ({ v: VERSION, items: [] })
+function normaliseTyping(s) {
+  const items = Array.isArray(s.items) ? s.items : []
+  return { v: VERSION, items: items
+    .filter(r => r && num(r.medianGap) != null)
+    .slice(0, KEEP)
+    .map(r => ({ at: iso(r.at), medianGap: num(r.medianGap), pauses: num(r.pauses, 0),
+                 deletions: num(r.deletions, 0), keys: num(r.keys, 0) })) }
+}
+const typing = makeSlot('mindmap.app.typing', blankTyping, normaliseTyping)
+export const listTyping = () => typing.get().items
+export function addTyping(r) {
+  if (!r || !r.ok) return listTyping()
+  const row = { at: new Date().toISOString(), medianGap: r.medianGap, pauses: r.pauses, deletions: r.deletions, keys: r.keys }
+  return typing.merge({ items: [row, ...listTyping()] }).items
+}
+export function usualTypingGap() {
+  const rows = listTyping().slice(0, 14)
+  if (rows.length < 3) return null
+  const g = rows.map(r => r.medianGap).sort((a, b) => a - b)
+  const m = g.length >> 1
+  return g.length % 2 ? g[m] : (g[m - 1] + g[m]) / 2
+}
+
+/* Reach: a coarse position at the moment of a reading. Rounded to three
+ * decimals (about 100 m) before it is stored, so the slot never holds a
+ * doorstep. */
+const blankReach = () => ({ v: VERSION, items: [], on: false })
+const round3 = x => Math.round(x * 1000) / 1000
+function normaliseReach(s) {
+  const items = Array.isArray(s.items) ? s.items : []
+  return { v: VERSION, on: bool(s.on), items: items
+    .filter(p => p && num(p.lat) != null && num(p.lon) != null && num(p.t) != null)
+    .slice(0, 120)
+    .map(p => ({ lat: round3(p.lat), lon: round3(p.lon), t: p.t })) }
+}
+const reach = makeSlot('mindmap.app.reach', blankReach, normaliseReach)
+export const getReach = () => reach.get()
+export const setReachOn = on => reach.merge({ on: !!on })
+export function addReachPoint(lat, lon, t = Date.now()) {
+  return reach.merge({ items: [{ lat, lon, t }, ...getReach().items] }).items
+}
+export function clearReach() { return reach.replace({ on: getReach().on, items: [] }) }
+
+/* Calendar marks: an exam, a presentation, a game. `day` is YYYY-MM-DD,
+ * `minute` the minute of that day, `label` the student's own word. */
+export const EVENT_KINDS = ['test', 'talk', 'game', 'other']
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
+const blankEvents = () => ({ v: VERSION, items: [] })
+function normaliseEvents(s) {
+  const items = Array.isArray(s.items) ? s.items : []
+  return { v: VERSION, items: items
+    .filter(e => e && DAY_RE.test(e.day) && num(e.minute) != null)
+    .slice(0, 200)
+    .map(e => ({ id: str(e.id, 'e-' + Math.random().toString(36).slice(2, 10)), day: e.day,
+                 minute: Math.max(0, Math.min(1439, Math.round(e.minute))),
+                 label: String(e.label ?? '').trim().slice(0, 40) || 'Event',
+                 kind: oneOf(e.kind, EVENT_KINDS, 'other') })) }
+}
+const events = makeSlot('mindmap.app.events', blankEvents, normaliseEvents)
+export const listEvents = () => events.get().items
+export const eventsOn = day => listEvents().filter(e => e.day === day).sort((a, b) => a.minute - b.minute)
+export function addEvent({ day, minute, label, kind }) {
+  const row = { id: newId(), day, minute, label, kind }
+  return events.merge({ items: [row, ...listEvents()] }).items
+}
+export function removeEvent(id) {
+  return events.merge({ items: listEvents().filter(e => e.id !== id) }).items
+}

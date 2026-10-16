@@ -5,6 +5,10 @@ import Grounding from '../toolkit/ground'
 import Reframe from '../toolkit/reframe'
 import BodyScan from '../toolkit/scan'
 import MoveBreak from '../toolkit/move'
+import SighCoach from '../toolkit/sigh'
+import ChestBreathing from '../toolkit/chest'
+import SteadyHand from '../toolkit/steady'
+import AlertnessCheck from '../toolkit/alert'
 import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } from '../toolkit/parent'
 
 /* The Toolkit, as a router.
@@ -17,9 +21,13 @@ import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } 
  *   toolkit-reframe    -> open="reframe"     Thought Reframe
  *   toolkit-scan       -> open="scan"        Body Scan
  *   toolkit-move       -> open="move"        Movement Break
+ *   toolkit-sigh       -> open="sigh"        Sigh coach
+ *   toolkit-chest      -> open="chest"       Chest breathing
+ *   toolkit-steady     -> open="steady"      Steady hand
+ *   toolkit-alert      -> open="alert"       Alertness check
  *
  * With no `open` this renders the index. With an `open` it renders that one
- * activity as the whole screen. The five student activities are audience
+ * activity as the whole screen. The nine student activities are audience
  * independent, so a parent who lands on one gets the activity.
  *
  * THE PARENT SET HAS NO ROUTES YET. Its five activities open in place in the
@@ -42,6 +50,10 @@ const ROUTED = {
   reframe:   Reframe,
   scan:      BodyScan,
   move:      MoveBreak,
+  sigh:      SighCoach,
+  chest:     ChestBreathing,
+  steady:    SteadyHand,
+  alert:     AlertnessCheck,
 }
 
 const IN_PLACE = {

@@ -135,6 +135,18 @@ const FUTURE = [
   { title: 'MindMap Seniors', when: 'Later', now: false, line: 'The same patch and score, with family and carers in the loop.' },
 ]
 
+/* What no other wellbeing app for teenagers measures. Each row is a sensor
+   the phone or the patch already has, and each claim is the one the research
+   record supports (project doc beyond-the-screen-research). */
+const BEYOND = [
+  { title: 'Settle time',     line: 'Minutes from a stress peak until your body is half way back to usual. From the patch.' },
+  { title: 'Run-up',          line: 'How much your body rose before an exam you marked. From the patch.' },
+  { title: 'Sigh coach',      line: 'The microphone measures each exhale while you breathe it out.' },
+  { title: 'Chest breathing', line: 'Phone on your chest, eyes closed. The accelerometer counts your breaths.' },
+  { title: 'Alertness check', line: 'Sixty seconds of taps show a short night before anything else does.' },
+  { title: 'Reach',           line: 'How far from home your readings happened this week. Never shared, never a map.' },
+]
+
 /* One line per audience. The full matrix is on the privacy page. */
 const SEES = [
   { who:'Student', sees:'Sees everything first' },
@@ -400,6 +412,25 @@ export function Overview({ go }) {
         </div>
         <div className="mt-5">
           <Button variant="outline" size="sm" onClick={() => go('toolkit')}>Open the Toolkit<span aria-hidden>→</span></Button>
+        </div>
+      </Section>
+
+
+      {/* -- what no other app has ------------------------------------------- */}
+      <Section name="Beyond the screen" tone="paper">
+        <SectionHead>What other apps do not have</SectionHead>
+        <SectionLede>Measurements from sensors your phone and the patch already have. Nothing leaves the device.</SectionLede>
+        <dl className="mt-5 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {BEYOND.map(b => (
+            <div key={b.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
+              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{b.title}</dt>
+              <dd className="m-0 mt-2 text-sec leading-[1.5] text-ink-2">{b.line}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" onClick={() => go('toolkit')}>Open the Toolkit<span aria-hidden>→</span></Button>
+          <Button variant="outline" size="sm" onClick={() => go('methods')}>How each one is measured<span aria-hidden>→</span></Button>
         </div>
       </Section>
 

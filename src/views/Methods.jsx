@@ -12,7 +12,10 @@ import { STUDENT_GROUPS } from '../toolkit/index'
 import { PRO_LC, SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* How it works, in four categories, one at a time.
+/* How it works, in five categories, one at a time. The fifth, "Beyond the
+ * screen", lists the measurements no other teen wellbeing app makes, each
+ * with the paper behind it; the sources sit where the other bands put a
+ * drawing.
  *
  * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
  * everything is cluttered and still too complex, like nobody needs to know
@@ -98,7 +101,51 @@ const CATEGORIES = [
       ['Offline', 'Your readings and your baseline stay on your phone.'],
     ],
     figure: ConsentRules },
+  /* The fifth category has no drawing. Its right column is the sources list,
+     author, year, journal, so a judge can check each row against a paper. */
+  { id: 'beyond', tab: 'Beyond the screen', tone: 'paper', ground: 'bg-paper',
+    title: 'Beyond the screen',
+    line: 'Measurements no other wellbeing app for teenagers makes, each from a sensor the phone or the patch already has.',
+    rows: [
+      ['Settle time', 'Minutes from a stress peak until your body is half way back to your usual. No consumer wearable reports it per event.'],
+      ['Run-up', 'How much your body rose in the two hours before an exam or a presentation you marked. Anticipation is a separate, measurable phase (Pulopulos 2018; Kazdagli 2024).'],
+      ['Carry-over', 'The share of peaks that ran into the next one before settling. Oura reports a monthly cumulative stress; MindMap reports it per event.'],
+      ['Sigh coach', 'The microphone measures each exhale while you do cyclic sighing, shown in a 108-person trial to lift mood and slow breathing (Balban 2023).'],
+      ['Chest breathing', 'A phone on your chest counts breaths from the accelerometer, matched to a breathing band in a 2025 study (Cinotti 2025).'],
+      ['Alertness check', 'A sixty-second reaction test validated for alertness and sleep loss, not for stress (Basner 2011; Benderoth 2021).'],
+      ['Typing rhythm', "The time between keys inside MindMap's own fields, never the keys. Exploratory: an adult signal, weak in teenagers (Zulueta 2018; Braund 2023)."],
+      ['Reach', 'How far from home your readings happened this week. Only where you took readings, never shared, never a map (Saeb 2015).'],
+      ['Not built', "Reading other apps' keyboards, listening to calls and background tracking are not possible on the web and not acceptable here."],
+    ],
+    figure: Sources },
 ]
+
+/* The papers behind the "Beyond the screen" rows: author, year, journal.
+   Plain text, no links; the full record is in docs/. */
+const SOURCES = [
+  'Pulopulos et al. 2018, Psychoneuroendocrinology',
+  'Kazdagli et al. 2024, Physiology International',
+  'Balban et al. 2023, Cell Reports Medicine',
+  'Cinotti et al. 2025, Sensors',
+  'Basner, Mollicone and Dinges 2011, Acta Astronautica',
+  'Benderoth et al. 2021, Sleep',
+  'Zulueta et al. 2018, Journal of Medical Internet Research',
+  'Braund et al. 2023, JMIR Mental Health',
+  'Saeb et al. 2015, Journal of Medical Internet Research',
+]
+
+function Sources({ className }) {
+  return (
+    <aside className={cn('border-t border-rule pt-3 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0', className)}>
+      <p className="font-body text-ui font-semibold text-ink">Sources</p>
+      <ul className="mt-2 space-y-1.5">
+        {SOURCES.map(s => (
+          <li key={s} className="text-meta leading-[1.45] text-ink-2">{s}</li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
 
 /* A row: label, one line. Ruled, never boxed. */
 function Row({ k, dark, children }) {
@@ -111,7 +158,7 @@ function Row({ k, dark, children }) {
   )
 }
 
-/* The switcher. Four controls a reader presses, so rounded-field, body face,
+/* The switcher. Five controls a reader presses, so rounded-field, body face,
    normal case (spec 0d rule 2). Two by two on a phone, one row from sm. */
 const TRIGGER = cn(
   'min-h-[44px] rounded-field border px-3 font-display text-ui font-medium',
@@ -133,7 +180,7 @@ export function Methods({ go }) {
               <div className="min-w-0">
                 <p className="font-body text-ui font-semibold text-accent-ink">How it works</p>
                 <h1 className="mt-2 font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-                  The four parts of MindMap
+                  The five parts of MindMap
                 </h1>
               </div>
               <Button variant="outline" size="sm" onClick={() => go('check')}>

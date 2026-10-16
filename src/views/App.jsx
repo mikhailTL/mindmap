@@ -62,6 +62,7 @@ const VIEWS = [
   'reading','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
+  'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert',
   /* kept, not in section 18 */
   'tour','notes',
   /* accounts: sign in, the portal, its sections, and who is linked to whom */
@@ -80,7 +81,9 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
-                           'toolkit-scan','toolkit-move','signin','account','account-section','network'])
+                           'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
+                           'toolkit-steady','toolkit-alert',
+                           'signin','account','account-section','network'])
 
 /* The three account routes belong to whichever app the signed in account is
    for, and otherwise to the app the reader walked in from. */
@@ -115,6 +118,10 @@ const TITLE = {
   'toolkit-reframe':'Reframing, in the MindMap Toolkit',
   'toolkit-scan':'A body scan, in the MindMap Toolkit',
   'toolkit-move':'Moving, in the MindMap Toolkit',
+  'toolkit-sigh':'Sigh coach, in the MindMap Toolkit',
+  'toolkit-chest':'Chest breathing, in the MindMap Toolkit',
+  'toolkit-steady':'Steady hand, in the MindMap Toolkit',
+  'toolkit-alert':'Alertness check, in the MindMap Toolkit',
   ai:'MindMap AI',
   shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
@@ -453,7 +460,8 @@ const APP_OF = {
 }
 const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-breathing','toolkit-ground','toolkit-reframe',
-                              'toolkit-scan','toolkit-move'])
+                              'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
+                              'toolkit-steady','toolkit-alert'])
 
 const APP_TAB = { app:null,
                   'app-student':'app-student', monitor:'app-student', reading:'reading',
@@ -461,7 +469,9 @@ const APP_TAB = { app:null,
                   'app-notify':'shared', help:null,
                   'toolkit-breathing':'toolkit', 'toolkit-ground':'toolkit',
                   'toolkit-reframe':'toolkit', 'toolkit-scan':'toolkit',
-                  'toolkit-move':'toolkit',
+                  'toolkit-move':'toolkit', 'toolkit-sigh':'toolkit',
+                  'toolkit-chest':'toolkit', 'toolkit-steady':'toolkit',
+                  'toolkit-alert':'toolkit',
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
                   'app-pro':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
@@ -483,6 +493,10 @@ const APP_TITLE = {
   'toolkit-reframe':   ['Reframing',   'Reframing'],
   'toolkit-scan':      ['Body scan',   'Body scan'],
   'toolkit-move':      ['Moving',      'Moving'],
+  'toolkit-sigh':      ['Sigh',        'Sigh coach'],
+  'toolkit-chest':     ['Chest',       'Chest breathing'],
+  'toolkit-steady':    ['Steady',      'Steady hand'],
+  'toolkit-alert':     ['Alertness',   'Alertness check'],
   /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
      spelling is the tab's word and the full name is the heading on the
      screen and this element's accessible name. */
@@ -1107,7 +1121,7 @@ export function App() {
                  wrap here. */
               'app-notify': () => <main className="wrap"><NotificationSettings/></main>,
               help: () => <main className="wrap"><HelpBody/></main>,
-              /* Owned by other workers. `toolkit` is the list; the five
+              /* Owned by other workers. `toolkit` is the list; the nine
                  activity routes pass the activity down as `open`. */
               toolkit:             () => <Toolkit who={audience}/>,
               'toolkit-breathing': () => <Toolkit who={audience} open="breathing"/>,
@@ -1115,6 +1129,10 @@ export function App() {
               'toolkit-reframe':   () => <Toolkit who={audience} open="reframe"/>,
               'toolkit-scan':      () => <Toolkit who={audience} open="scan"/>,
               'toolkit-move':      () => <Toolkit who={audience} open="move"/>,
+              'toolkit-sigh':      () => <Toolkit who={audience} open="sigh"/>,
+              'toolkit-chest':     () => <Toolkit who={audience} open="chest"/>,
+              'toolkit-steady':    () => <Toolkit who={audience} open="steady"/>,
+              'toolkit-alert':     () => <Toolkit who={audience} open="alert"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: Calendar,
               /* Accounts, kept on this device. */

@@ -13,8 +13,10 @@ import '../kit/kit.css'
  * carries a 24px line mark, the activity's name and at most eight words, and
  * the tool itself is on the activity's own route.
  *
- * Text budget (spec 0f): the whole index is under 45 words. One line of
- * reassurance, two group labels, five names, five lines.
+ * Text budget (spec 0f): counted whole, the index is 78 words. One line of
+ * reassurance (6), three group labels (5), nine names (18), nine lines (49).
+ * Names and lines alone are 67. At 390 only the first group is above the
+ * fold, and that is 23 words.
  *
  * At 1280 the rows sit three across; at 390 one under another, broken into
  * two groups so no run of similar rows passes three (spec 0e section 14). */
@@ -35,6 +37,10 @@ const CheckIcon   = () => <I><path d="M4 7h16M4 12h9M5 18l3 3 7-7"/></I>
 const DialIcon    = () => <I><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.5"/></I>
 const RulesIcon   = () => <I><path d="M5 7h14M5 12h10M5 17h12"/></I>
 const ReachIcon   = () => <I><circle cx="9" cy="12" r="5"/><path d="M15 12h6m-3-3l3 3-3 3"/></I>
+const SighIcon    = () => <I><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/></I>
+const ChestIcon   = () => <I><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M9.5 12h1.5l1-3 2 6 1-3h1.5"/></I>
+const SteadyIcon  = () => <I><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></I>
+const AlertIcon   = () => <I><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M10 3h4M12 3v3"/></I>
 
 /* `items` is read by src/views/Methods.jsx for a count, so the shape stays. */
 export const STUDENT_GROUPS = [
@@ -51,6 +57,16 @@ export const STUDENT_GROUPS = [
       title:'5-4-3-2-1 Grounding', line:'Tap what the camera finds' },
     { id:'reframe',   route:'toolkit-reframe',   family:'leaf',  icon:ReframeIcon,
       title:'Thought Reframe',     line:'Three fields, your own words' },
+  ]},
+  { label:'Beyond the screen', items:[
+    { id:'sigh',      route:'toolkit-sigh',      family:'tide',  icon:SighIcon,
+      title:'Sigh coach',          line:'Your exhale, measured by the mic' },
+    { id:'chest',     route:'toolkit-chest',     family:'pool',  icon:ChestIcon,
+      title:'Chest breathing',     line:'Phone on your chest, eyes closed' },
+    { id:'steady',    route:'toolkit-steady',    family:'stone', icon:SteadyIcon,
+      title:'Steady hand',         line:'Keep the dot still, ring breathes' },
+    { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
+      title:'Alertness check',     line:'Sixty seconds of taps' },
   ]},
 ]
 

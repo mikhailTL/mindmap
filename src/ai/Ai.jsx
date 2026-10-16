@@ -3,6 +3,8 @@ import { cn } from '../lib/utils'
 import { NOTES, PRO_LC, SCORE } from '../lib/terms'
 import { ArrowRight, ChevronDown } from '../ui/marks'
 import { GetHelp } from '../app/Help'
+import { useTypingRecorder, TypingLine } from '../toolkit/typing-line'
+import { usualTypingGap } from '../app/store'
 import { AUDIENCES, PILLARS, SOURCES, pillarSources } from './framework'
 
 /* MindMap AI.
@@ -184,6 +186,9 @@ export function MindMapAI({ who = 'student', go, className }) {
   const [model, setModel] = React.useState(null)
   const [turns, setTurns] = React.useState([])
   const [draft, setDraft] = React.useState('')
+  /* Typing rhythm: the time between keys in this one field, never the
+     keys. Summarised on send, kept on the device (src/signals/typing.js). */
+  const typing = useTypingRecorder()
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState('')
   const foot = React.useRef(null)
@@ -226,6 +231,7 @@ export function MindMapAI({ who = 'student', go, className }) {
     const next = [...turns, { role: 'user', content: body }]
     setTurns(next)
     setDraft('')
+    typing.finish()
     setError('')
     setPending(true)
     try {
@@ -356,6 +362,7 @@ export function MindMapAI({ who = 'student', go, className }) {
                 <textarea rows={3} value={draft} maxLength={MAX_CHARS}
                   onChange={e => setDraft(e.target.value)}
                   onKeyDown={e => {
+                    typing.onKeyDown(e)
                     if (e.key === 'Enter' && !e.shiftKey && fine) {
                       e.preventDefault(); send(draft)
                     }
@@ -365,6 +372,7 @@ export function MindMapAI({ who = 'student', go, className }) {
                     p-3 font-body text-ui leading-[1.55] text-ink placeholder:text-ink-3
                     transition-colors duration-150 ease hoverOnly:border-ink-3"/>
               </label>
+              <TypingLine rhythm={typing.rhythm} usual={usualTypingGap()} className="mt-2"/>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <button type="submit" disabled={!draft.trim() || pending}
                   className={cn('inline-flex min-h-[48px] items-center gap-2 rounded-field border',

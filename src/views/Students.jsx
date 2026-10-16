@@ -14,6 +14,8 @@ import { studentRings } from '../lib/readings'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf } from '../signals/score'
+import { RunUpCard, SettleCard } from '../toolkit/settle'
+import { ReachCard } from '../toolkit/reach'
 /* The demo reading and everything derived from it live in one module, so this
    screen and the calendar cannot print two different numbers for the same
    Thursday. */
@@ -488,6 +490,15 @@ function TodayDemo({ go, openTab }) {
         <LiveSignals/>
       </div>
 
+      {/* AFTER THE FOLD. The two cards no other product has: how long the
+          body took to settle after each peak, and how far it had climbed
+          before each marked event. Both from src/signals/recovery.js over
+          the demo day. */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+        <SettleCard className="h-full"/>
+        <RunUpCard className="h-full"/>
+      </div>
+
       {/* ONE DISCLOSURE. Everything else is in here, collapsed, two abreast
           at 1280. */}
       <SeeDetails label="See details">
@@ -504,6 +515,10 @@ function TodayDemo({ go, openTab }) {
             {openRing && <SignalDetail ring={openRing}/>}
           </Panel>
 
+          {/* The week and, under it, how far this week's readings reached
+              from the reader's own usual point: one column, so the two
+              week-shaped cards sit together. */}
+          <div className="flex flex-col gap-3 lg:gap-4">
           <Panel tone="aqua">
             <PanelHead title="Last Seven Days" meta="out of 100"/>
             <div className="mt-3">
@@ -530,6 +545,8 @@ function TodayDemo({ go, openTab }) {
               </button>
             </div>
           </Panel>
+          <ReachCard/>
+          </div>
 
           {/* The working behind the one number. Every figure in here is
               returned by scoreCapture for the reading, not written in. */}
@@ -656,7 +673,20 @@ function CheckBody({ go }) {
    unpaired screen in Monitor.jsx answers for the whole tab. */
 function StudentToday({ go, openTab }) {
   const [mode] = useMode()
-  if (mode === 'real') return <StudentBody go={go} openTab={openTab}/>
+  if (mode === 'real') {
+    /* The three device-only cards still have something true to say with no
+       patch: no readings, today's marked events, and reach. */
+    return (
+      <div className="flex w-full flex-col gap-3 lg:gap-4">
+        <StudentBody go={go} openTab={openTab}/>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
+          <SettleCard className="h-full"/>
+          <RunUpCard className="h-full"/>
+          <ReachCard className="h-full"/>
+        </div>
+      </div>
+    )
+  }
   return <TodayDemo go={go} openTab={openTab}/>
 }
 
