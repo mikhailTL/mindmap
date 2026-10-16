@@ -11,8 +11,8 @@ const PANES = { week: ParentDash, shared: PrivacyBody }
    sentence about what the screen is for is gone: the screen shows it. */
 const COPY = {
   week: {
-    note: 'Generated figures. No child is named.',
-    realNote: 'Nothing paired yet.',
+    note: 'These figures are made up. No child is named.',
+    realNote: 'No patch is paired yet.',
   },
   shared: {},
 }

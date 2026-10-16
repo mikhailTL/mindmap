@@ -133,7 +133,7 @@ export function Diverge({ items }) {
         </li>
       </ul>
       <p className="mt-1.5 text-fine text-ink-3">
-        Network units, before the {SCORE_RANGE} scale. Each bar is that term against this
+        Bars use network units, not {SCORE_RANGE}. Zero is this
         person&rsquo;s own average.
       </p>
     </div>

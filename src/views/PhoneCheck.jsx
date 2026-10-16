@@ -169,7 +169,7 @@ export function PhoneCheck() {
       if (!ppg.ok) { setError(ppg.message); setPhase('idle'); return }
 
       const scored = scoreCapture({ ppg, voice, motion: move, baseline, calibration })
-      if (!scored.ok) { setError('Nothing came through to score. Try again.'); setPhase('idle'); return }
+      if (!scored.ok) { setError('No signal came through. Try again.'); setPhase('idle'); return }
 
       const next = updateBaseline(baseline, featuresFrom({ ppg, voice }), dayKey())
       setBaseline(next); saveBaseline(next)
@@ -181,7 +181,7 @@ export function PhoneCheck() {
       stopStream(cam?.stream)
       live.current.motion?.stop(); live.current.motion = null
       setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. A reading needs it; the questions do not.'
+        ? 'The camera was not allowed. A reading needs the camera. The questions do not.'
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
@@ -209,8 +209,8 @@ export function PhoneCheck() {
                 the drawings in prose. */}
             <div>
               <Step on={PHASES[phase] >= 1}
-                title={`Index fingertip over the camera · ${PPG_SECONDS}s`}
-                note="Pad flat over lens and flash. Phone and forearm on a table.">
+                title={`Fingertip on the camera · ${PPG_SECONDS}s`}
+                note="Rest your index fingertip flat over the lens and flash. Keep the phone and your forearm on a table.">
                 <div className="mt-2.5 grid gap-2 sm:grid-cols-2 sm:gap-4">
                   <StepFigure kind="grip"/>
                   <StepFigure kind="rest"/>
@@ -218,7 +218,7 @@ export function PhoneCheck() {
               </Step>
               <Step on={PHASES[phase] >= 2}
                 title={`Say one sentence · ${VOICE_SECONDS}s`}
-                note="Quiet room. No words are kept.">
+                note="Find a quiet room. The app keeps none of your words.">
                 <div className="mt-2.5"><StepFigure kind="quiet"/></div>
                 {/* The accent rule is the marker here: these are the lines to
                     say, not a run of separate points. */}
@@ -229,8 +229,8 @@ export function PhoneCheck() {
                 </List>
               </Step>
               <Step on={PHASES[phase] >= 3}
-                title="Your Mind Score and band"
-                note="0 to 100, against your own normal."/>
+                title="See your Mind Score"
+                note="The score runs 0 to 100, against your own normal."/>
             </div>
 
             {/* Frames are read off this element. It must stay in the DOM and
@@ -263,7 +263,7 @@ export function PhoneCheck() {
               </div>
             )}
 
-            {phase === 'working' && <p className="mt-4 text-meta text-ink-2" aria-live="polite">Working it out…</p>}
+            {phase === 'working' && <p className="mt-4 text-meta text-ink-2" aria-live="polite">Working out your score…</p>}
 
             {error && (
               <p role="alert" className="mt-4 max-w-[46ch] border-l-2 border-warn pl-3 text-meta text-warn">
@@ -321,7 +321,7 @@ export function PhoneCheck() {
                     </dd>
                     <dt className="text-ink-3">Your history</dt>
                     <dd className="m-0 text-ink">{result.baselineDays === 0
-                      ? 'none yet, so the band is wide on purpose'
+                      ? 'none yet, so the band is wide for now'
                       : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
@@ -329,14 +329,14 @@ export function PhoneCheck() {
                       one to a row. Nothing may be dropped from this block: it
                       is what stops the figure being read as a diagnosis. */}
                   <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
-                    <dt className="text-ink-3">What it is</dt>
+                    <dt className="text-ink-3">What the score is</dt>
                     <dd className="m-0 text-ink-2">{SCORE_DEF}</dd>
-                    <dt className="text-ink-3">Higher</dt>
-                    <dd className="m-0 text-ink-2">Working harder, not worse</dd>
-                    <dt className="text-ink-3">What to read</dt>
-                    <dd className="m-0 text-ink-2">The direction it moved, more than the figure</dd>
+                    <dt className="text-ink-3">A higher score</dt>
+                    <dd className="m-0 text-ink-2">Your body is working harder, not doing worse</dd>
+                    <dt className="text-ink-3">What to watch</dt>
+                    <dd className="m-0 text-ink-2">Which way the score moved matters more than the number</dd>
                     <dt className="text-ink-3">The band</dt>
-                    <dd className="m-0 text-ink-2">How sure, from how clean the signal was</dd>
+                    <dd className="m-0 text-ink-2">How sure the app is, based on signal quality</dd>
                   </dl>
 
                   {result.held && (
@@ -368,8 +368,8 @@ export function PhoneCheck() {
                         </>
                       ) : (
                         <p className="max-w-[44ch] text-meta text-ink-2">
-                          Noted. <span className="font-mono tabular-nums">{checkins.length}</span> answer{checkins.length === 1 ? '' : 's'} now
-                          shape how your readings are weighed. The next reading uses them.
+                          Noted. Your <span className="font-mono tabular-nums">{checkins.length}</span> answer{checkins.length === 1 ? '' : 's'} now
+                          shape your next reading.
                         </p>
                       )}
                     </div>
@@ -379,8 +379,8 @@ export function PhoneCheck() {
 
               <AllDetail label="See what moved your Mind Score">
                 <p className="mt-2 max-w-[52ch] text-meta text-ink-3">
-                  Right of the line raised the Mind Score, left of it lowered it. Each bar is that feature
-                  against your own average, not against anybody else’s.
+                  Right bars raised the score, left bars lowered it. Each bar compares you
+                  with your own average only.
                 </p>
                 <Diverge items={result.contrib.map(c => ({ label: c.label,
                   x: Math.max(-1, Math.min(1, c.raw)) }))}/>
@@ -401,12 +401,12 @@ function Readings({ detail, result }) {
   const { ppg, voice, move, torch } = detail
   const rows = []
   rows.push(['Heart rate', `${ppg.hr.toFixed(0)} bpm`])
-  rows.push(['Beats used', `${ppg.beats}${ppg.dropped ? ` · ${ppg.dropped} rejected as artefact` : ''}`])
+  rows.push(['Beats used', `${ppg.beats}${ppg.dropped ? ` · ${ppg.dropped} dropped as noise` : ''}`])
   rows.push(['Beat-to-beat index',
-    !ppg.hrvOk ? `withheld. Beat timing was uncertain to ${ppg.jitterMs.toFixed(0)} ms`
+    !ppg.hrvOk ? `held back. Beat timing was uncertain by ${ppg.jitterMs.toFixed(0)} ms`
     : ppg.hrvResolved ? `${ppg.rmssd.toFixed(0)} ms ± ${ppg.rmssdBand.toFixed(0)}`
-    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms, steadier than this can resolve`])
-  rows.push(['Signal quality', `${Math.round(ppg.quality * 100)}%${torch ? '' : ' · no torch on this device'}`])
+    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms, too steady for the camera to measure`])
+  rows.push(['Signal quality', `${Math.round(ppg.quality * 100)}%${torch ? '' : ' · no torch on this phone'}`])
   if (voice?.ok) {
     rows.push(['Pitch', `${voice.f0Mean.toFixed(0)} Hz`])
     rows.push(['Speech found', `${voice.voicedS.toFixed(1)} s of ${voice.durS.toFixed(0)} s`])
@@ -429,16 +429,16 @@ function Readings({ detail, result }) {
           and must never be called one, and nothing here has been validated
           against a person. Do not shorten this block. */}
       <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
-        <dt className="text-ink-3">The camera gives</dt>
-        <dd className="m-0 text-ink-2">Heart rate, and a beat-to-beat index on a scale of its own</dd>
-        <dt className="text-ink-3">Not an RMSSD</dt>
-        <dd className="m-0 text-ink-2">The filter that steadies beat timing also trims some real
-          variation, so the index runs about a fifth below a clinical RMSSD and is never called one</dd>
-        <dt className="text-ink-3">Measured against</dt>
-        <dd className="m-0 text-ink-2">Your own history, which is what lets a phone reading and a
-          patch reading share one scale</dd>
-        <dt className="text-ink-3">Where it stands</dt>
-        <dd className="m-0 text-ink-2">Nothing here has been validated against a person</dd>
+        <dt className="text-ink-3">What the camera gives</dt>
+        <dd className="m-0 text-ink-2">Heart rate, and a beat-to-beat index on its own scale</dd>
+        <dt className="text-ink-3">Not a clinical RMSSD</dt>
+        <dd className="m-0 text-ink-2">The filter that steadies beat timing trims some real
+          variation. So the index runs about a fifth below a clinical RMSSD.</dd>
+        <dt className="text-ink-3">Compared to</dt>
+        <dd className="m-0 text-ink-2">Your own history. That lets phone and patch readings share
+          one scale.</dd>
+        <dt className="text-ink-3">Testing so far</dt>
+        <dd className="m-0 text-ink-2">No reading has been tested on a person yet</dd>
       </dl>
     </>
   )

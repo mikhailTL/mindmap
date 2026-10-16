@@ -36,13 +36,13 @@ const GROUP = {
 const ORDER = ['student', 'parent', 'pro']
 
 const REDEEM_ERROR = {
-  unknown:   'Code not found. Check the letters.',
-  expired:   'Code expired. Ask for a new one.',
-  own:       'Your own code. Share it instead.',
-  role:      'Code is for a different kind of account.',
-  exists:    'Already linked.',
-  signedout: 'Sign in first.',
-  offline:   'No connection. Try again.',
+  unknown:   'Code not found. Check the letters and try again.',
+  expired:   'This code has expired. Ask for a new one.',
+  own:       'This is your own code. Share it with someone else.',
+  role:      'This code is for another kind of account. Ask for a different one.',
+  exists:    'You are already linked to this person. Nothing changed.',
+  signedout: 'You are signed out. Sign in, then enter the code.',
+  offline:   'No connection. Check your internet and try again.',
 }
 
 /* ── Pieces ─────────────────────────────────────────────────────────────── */
@@ -57,7 +57,7 @@ function CodeField({ label = 'Code', onDone }) {
     const r = await redeemInvite(code)
     if (r.ok) {
       setCode(''); setErr(null)
-      setDone(r.link.status === 'pending' ? 'Linked. A parent approves next.' : 'Linked.')
+      setDone(r.link.status === 'pending' ? 'Linked. A parent needs to approve it next.' : 'You are now linked.')
       onDone?.(r.link)
     } else {
       setDone(null); setErr(REDEEM_ERROR[r.reason] || REDEEM_ERROR.unknown)
@@ -85,7 +85,7 @@ function CodeField({ label = 'Code', onDone }) {
 
 function daysLeft(iso) {
   const d = Math.max(1, Math.ceil((Date.parse(iso) - Date.now()) / 86400000))
-  return d === 1 ? 'Good for 1 day.' : `Good for ${d} days.`
+  return d === 1 ? 'The code works for 1 day.' : `The code works for ${d} days.`
 }
 
 /* The code, shown large, with a copy button. */
@@ -168,7 +168,7 @@ function StudentNetwork({ me, go }) {
       <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
         <div className="grid gap-3 self-start lg:gap-4">
-          <Groups me={me} empty="Nobody yet. Enter a code to link someone."/>
+          <Groups me={me} empty="Nobody is linked yet. Enter a code to link someone."/>
         </div>
         <div className="grid gap-3 self-start lg:gap-4">
           <Panel title="Enter a code">
@@ -192,15 +192,15 @@ function ParentNetwork({ me }) {
       <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-3 lg:gap-4">
         <div className="grid gap-3 self-start lg:gap-4">
-          <Groups me={me} empty="Nobody yet. Share a code with your teen."/>
+          <Groups me={me} empty="Nobody is linked yet. Share a code with your teen."/>
         </div>
         <div className="grid gap-3 self-start lg:gap-4">
           <InviteCode title="Invite someone" cta="Make a code" accountId={me.id}
-            line="Whoever you invite enters the code.">
+            line="The person you invite enters this code.">
             <div className="border-t border-rule"><CodeField label="Enter a code"/></div>
           </InviteCode>
         </div>
-        <Panel title="Waiting for you" aside={waiting.length ? String(waiting.length) : undefined}
+        <Panel title="Waiting for your approval" aside={waiting.length ? String(waiting.length) : undefined}
           className="self-start">
           {waiting.length ? waiting.map(l => (
             <PersonRow key={l.id} person={l.person} hint={`for ${l.who.name}`} comma>
@@ -209,7 +209,7 @@ function ParentNetwork({ me }) {
               <IconButton label={`Decline ${l.person.name}`} Mark={Cross} tone="crit"
                 onClick={() => declineLink(l.id)}/>
             </PersonRow>
-          )) : <Empty>Nothing waiting. A {PRO} asks here.</Empty>}
+          )) : <Empty>No requests yet. A {PRO} asks for approval here.</Empty>}
         </Panel>
       </div>
     </>
@@ -222,11 +222,11 @@ function ProNetwork({ me }) {
       <h2 className="font-display font-bold text-ink">Your network</h2>
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
         <div className="grid gap-3 self-start lg:gap-4">
-          <Groups me={me} empty="Nobody yet. Make a code to add a student."/>
+          <Groups me={me} empty="Nobody is linked yet. Make a code to add a student."/>
         </div>
         <div className="grid gap-3 self-start lg:gap-4">
           <InviteCode title="Add a student" cta="Make a code" accountId={me.id}
-            line="A student or parent enters the code. A parent approves a student link.">
+            line="A student or parent enters this code. A parent then approves the link.">
             <div className="border-t border-rule"><CodeField label="Enter a code"/></div>
           </InviteCode>
         </div>

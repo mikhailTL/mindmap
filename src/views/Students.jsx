@@ -97,8 +97,8 @@ function hourWords(t) {
   const [h, m] = String(t).split(':').map(Number)
   if (!Number.isFinite(h)) return 'earlier today'
   const near = (m >= 30 ? h + 1 : h) % 24
-  const part = near < 12 ? 'in the morning' : near < 17 ? 'in the afternoon' : 'in the evening'
-  return `about ${HOURS[near % 12]} ${part}`
+  const part = near < 12 ? 'this morning' : near < 17 ? 'this afternoon' : 'this evening'
+  return `around ${HOURS[near % 12]} ${part}`
 }
 
 /* How far above its own normal, in words rather than in standard deviations,
@@ -120,18 +120,18 @@ function heroFor({ tier, rings, day, band, crossed }) {
   let lead
   if (tier.key === 'high' || tier.key === 'up')
     lead = crossed
-      ? `Above your usual range since ${hourWords(crossed)}.`
-      : 'Your body is working harder than usual today.'
+      ? `Your score rose above usual ${hourWords(crossed)}.`
+      : 'Your score is above your usual range today.'
   else if (tier.key === 'low')
-    lead = 'Today is calmer than your last two weeks.'
+    lead = 'Your score is below your usual range today.'
   else if (crossed && stillUp)
-    lead = `Above your usual range since ${hourWords(crossed)}.`
+    lead = `Your score rose above usual ${hourWords(crossed)}.`
   else if (crossed)
-    lead = 'Above your usual range earlier, back inside now.'
+    lead = 'Your score rose above usual earlier, then came back.'
   else if (moved.length)
-    lead = 'Your body is working a little harder than usual today.'
+    lead = `Your score is in range, but ${word(moved.length)} signal${moved.length === 1 ? '' : 's'} moved.`
   else
-    lead = 'Today looks like an ordinary day for you.'
+    lead = 'Your score is inside your usual range today.'
   const note = top && over(top) > 0
     ? `${nameOf(top)} moved the most, ${amountWords(over(top))}.`
     : 'All four signals stayed inside their normal ranges.'
@@ -144,8 +144,8 @@ function heroFor({ tier, rings, day, band, crossed }) {
    and not the figure again. */
 function compareWords(score, usual) {
   const d = score - usual
-  if (d === 0) return 'Level with a usual day for you.'
-  return `${cap(word(Math.abs(d)))} ${d > 0 ? 'above' : 'below'} a usual day for you.`
+  if (d === 0) return 'The score is level with your usual day.'
+  return `The score is ${word(Math.abs(d))} ${d > 0 ? 'above' : 'below'} your usual day.`
 }
 
 /* Whether the capture the screen is showing was taken before the day crossed
@@ -157,8 +157,8 @@ const READ_BEFORE_RISE = !!(CROSSED && String(TAKEN_AT) < String(CROSSED))
 function figureWords(score, usual) {
   const c = compareWords(score, usual)
   return READ_BEFORE_RISE
-    ? `Read at ${TODAY.clock}, before the rise. ${c}`
-    : `Read at ${TODAY.clock}. ${c}`
+    ? `This reading was taken at ${TODAY.clock}, before the rise. ${c}`
+    : `This reading was taken at ${TODAY.clock}. ${c}`
 }
 
 /* ── The live traces ────────────────────────────────────────────────────── */
@@ -255,8 +255,8 @@ function LiveSignals({ className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Live Signals" meta={reduced ? 'motion off' : 'demo stream'}
           className="min-w-0 flex-1"/>
-        <Why label="What the four traces are" className="pt-1.5">
-          One sample a second on each channel. Generated for the demo. No patch has been worn.
+        <Why label="What the live signals show" className="pt-1.5">
+          Each line updates once a second. The figures are generated for this demo.
         </Why>
       </div>
       <ul className="m-0 mt-2.5 grid flex-1 list-none grid-cols-2 grid-rows-2 gap-2.5 p-0">
@@ -370,7 +370,7 @@ function WeekStrip() {
         </div>
       </div>
       <figcaption className="note mt-2.5">
-        Ruled zone: your usual range, {WBAND.lo} to {WBAND.hi}.
+        The shaded zone is your usual range, {WBAND.lo} to {WBAND.hi}.
       </figcaption>
     </figure>
   )
@@ -435,9 +435,9 @@ function SignalDetail({ ring }) {
 const MOVED_SUB = {
   normal: 'days of your own readings',
   quality: 'of the pulse trace was clean',
-  move: `under the ${MOVE_LIMIT_G} g line, so counted`,
-  scored: 'a moving reading uses the formula',
-  voice: 'a patch has no microphone',
+  move: `under the ${MOVE_LIMIT_G} g limit, so the reading counts`,
+  scored: 'the formula scores a moving reading',
+  voice: 'the patch has no microphone',
 }
 
 function TodayDemo({ go, openTab }) {
@@ -494,8 +494,8 @@ function TodayDemo({ go, openTab }) {
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <Panel>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <PanelHead title="Each Band" meta="tap a signal" className="min-w-0 flex-1"/>
-              <Why label="What a band is" className="pt-1.5">
+              <PanelHead title="Your Four Signals" meta="tap a signal" className="min-w-0 flex-1"/>
+              <Why label="What each band shows" className="pt-1.5">
                 Each band is one signal against your own last two weeks. The middle number
                 blends all four.
               </Why>
@@ -534,32 +534,32 @@ function TodayDemo({ go, openTab }) {
           {/* The working behind the one number. Every figure in here is
               returned by scoreCapture for the reading, not written in. */}
           <Panel className="lg:col-span-2">
-            <PanelHead title="What Moved the Reading" meta={`${moved.length} terms`}/>
+            <PanelHead title="What Moved Your Score" meta={`${moved.length} inputs`}/>
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
               <div className="col-span-2 sm:col-span-3" role="img"
                 aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out
                   of 100. A usual day is ${USUAL}.`}>
                 <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
                 <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
-                <p className="mt-1 text-fine text-ink-2">Thick mark today, hairline a usual day.</p>
+                <p className="mt-1 text-fine text-ink-2">The thick mark is today. The thin line is your usual day.</p>
               </div>
               <Stat label="Your normal" value={READ.baselineDays} unit="days" sub={MOVED_SUB.normal}/>
               <Stat label="Signal quality" value={pct(READ.quality)} sub={MOVED_SUB.quality}/>
               <Stat label="Movement" value={DEMO_MOTION.peak.toFixed(2)} unit="g" sub={MOVED_SUB.move}/>
               <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
                 sub={MOVED_SUB.scored}/>
-              <Stat label="Moved most" value={nameOf(top)} sub={`${over(top)} above its band`}/>
+              <Stat label="Moved most" value={nameOf(top)} sub={`${over(top)} above its normal band`}/>
               <Stat label="Voice" value={READ.missing.includes('voice') ? 'Not used' : 'Used'}
                 sub={MOVED_SUB.voice}/>
             </div>
             <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="text-fine text-ink-2">Right of centre raised the number, left lowered it.</p>
+              <p className="text-fine text-ink-2">Bars to the right raised the score. Bars to the left lowered it.</p>
               <div className="mt-2.5"><Diverge items={moved}/></div>
             </div>
           </Panel>
 
           <Panel tone="aqua" className="lg:col-span-2">
-            <PanelHead title={`${SCORE} Through the Day`} meta="07:00 to 16:00"/>
+            <PanelHead title={`${SCORE} Today`} meta="07:00 to 16:00"/>
             <DayChart data={DATA.day} band={DATA.band}/>
             <dl className="m-0 mt-2.5 grid grid-cols-1 gap-y-1 border-t border-rule pt-2.5
               sm:grid-cols-2 sm:gap-x-5">
@@ -574,7 +574,7 @@ function TodayDemo({ go, openTab }) {
               </div>
               {CROSSED && (
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-fine text-ink-2">Above it from</dt>
+                  <dt className="text-fine text-ink-2">Above range from</dt>
                   <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
                     {clock12(CROSSED)}</dd>
                 </div>
@@ -605,16 +605,16 @@ function TodayDemo({ go, openTab }) {
    scoreCapture returns or something the capture screens drop on the device.
    One short line each. */
 const GIVES = [
-  ['One number, 0 to 100', 'Against your own normal, never another student.'],
-  ['A likely range', 'Wider when a channel is missing or noisy.'],
-  ['Which terms moved it', 'Each term, how far, and which way.'],
+  ['One number, 0 to 100', 'The score is compared with your own normal only.'],
+  ['A likely range', 'The range widens when a signal is missing or noisy.'],
+  ['What moved your score', 'Each input, how far it moved, and which way.'],
   ['Whether you were moving', `Over ${MOVE_LIMIT_G} g, movement is not counted as stress.`],
 ]
 
 const KEPT_HERE = [
-  ['Camera frames', 'Turned into numbers here, then dropped.'],
-  ['Microphone audio', 'Turned into pitch figures here, then dropped.'],
-  ['Your six answers', 'Scored on this device. Nothing typed leaves it.'],
+  ['Camera frames', 'The phone turns them into numbers, then deletes them.'],
+  ['Microphone audio', 'The phone turns it into pitch figures, then deletes it.'],
+  ['Your six answers', 'Scored on this phone. Nothing you type leaves it.'],
 ]
 
 function Rows({ items }) {
@@ -639,11 +639,11 @@ function CheckBody({ go }) {
       <SeeDetails className="mt-6" label="What you get back">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <Panel className="h-full">
-            <PanelHead title="What You Get Back" meta="any route"/>
+            <PanelHead title="What You Get Back" meta="every way"/>
             <div className="mt-1.5"><Rows items={GIVES}/></div>
           </Panel>
           <Panel className="h-full">
-            <PanelHead title="What Stays on the Phone" meta="all routes"/>
+            <PanelHead title="What Stays on the Phone" meta="every way"/>
             <div className="mt-1.5"><Rows items={KEPT_HERE}/></div>
           </Panel>
         </div>
@@ -667,8 +667,8 @@ const PANES = { today: StudentToday, check: CheckBody, shared: SharingControls }
 /* The shell's lines, held to a few words each. The sentence about what the
    screen is for is gone: the screen shows it. */
 const COPY = {
-  today: { note: 'Generated figures. Nobody was measured.',
-           realNote: 'Nothing paired yet.' },
+  today: { note: 'These are demo figures. Nobody has been measured.',
+           realNote: 'No patch is paired yet.' },
   check: {},
   shared: {},
 }

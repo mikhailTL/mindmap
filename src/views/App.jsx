@@ -96,7 +96,7 @@ const ALIAS = {
 }
 
 const TITLE = {
-  site:'MindMap, a wellness app for teenagers',
+  site:'MindMap, a wellbeing app for teenagers',
   patch:'The MindMap patch',
   'without-patch':'MindMap without the patch',
   students:'MindMap for students',
@@ -105,10 +105,10 @@ const TITLE = {
   app:'Open the MindMap app',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
-  'app-pro':'The medical professional console in MindMap',
+  'app-pro':'The Medical Professional screen in MindMap',
   monitor:'Every reading in MindMap',
   reading:'Take a reading in MindMap',
-  calendar:'The week and the month in MindMap',
+  calendar:'Your calendar in MindMap',
   toolkit:'The MindMap Toolkit',
   'toolkit-breathing':'Breathing, in the MindMap Toolkit',
   'toolkit-ground':'Grounding, in the MindMap Toolkit',
@@ -116,11 +116,11 @@ const TITLE = {
   'toolkit-scan':'A body scan, in the MindMap Toolkit',
   'toolkit-move':'Moving, in the MindMap Toolkit',
   ai:'MindMap AI',
-  shared:'What leaves your phone in MindMap',
+  shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
   'app-notify':'Reminders in MindMap',
-  help:'Getting help',
-  privacy:'Who can see what in MindMap',
+  help:'Getting help in MindMap',
+  privacy:'Who can see your score in MindMap',
   methods:'How MindMap works',
   pairing:'Pairing the MindMap patch',
   tour:'A guided tour of MindMap',
@@ -136,15 +136,15 @@ const TITLE = {
    read as a pile. Pairing and the no-patch route are both about the patch, so
    they live under it. */
 const PATCH = [
-  ['patch',         'The patch',          'What it is, and what the four signals are'],
-  ['pairing',       'Pairing it',         'Six steps, no cable and no host computer'],
-  ['without-patch', 'Without the patch',  'The camera and microphone, or six questions'],
+  ['patch',         'The patch',          'What the patch is and what it records.'],
+  ['pairing',       'Pairing the patch',  'How to connect the patch to your phone.'],
+  ['without-patch', 'Without the patch',  'Take a reading with your phone camera instead.'],
 ]
 
 const AUDIENCE = [
-  ['students', 'Students', 'What a week of readings looks like'],
-  ['parents',  'Parents',  'What a parent is shown, and what they are not'],
-  ['pro',      'Medical Professionals',  'What a medical professional sees across a year group'],
+  ['students', 'Students', 'What a student sees each day.'],
+  ['parents',  'Parents',  'What a parent can and cannot see.'],
+  ['pro',      'Medical Professionals',  'What a Medical Professional sees across a group.'],
 ]
 
 /* Which nav entry lights per view. The three patch pages share `kit`, the
@@ -472,11 +472,11 @@ const APP_TAB = { app:null,
    button, the demo switch and the way back, so the long one would be the thing
    that gets truncated. */
 const APP_TITLE = {
-  app:            ['Screens',          'Screens'],
+  app:            ['Screens',          'Choose a screen'],
   'app-student':  ['Today',            'Today'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
-  calendar:       ['Calendar',         'The week and the month'],
+  calendar:       ['Calendar',         'Calendar'],
   toolkit:        ['Toolkit',          'Toolkit'],
   'toolkit-breathing': ['Breathing',   'Breathing'],
   'toolkit-ground':    ['Grounding',   'Grounding'],
@@ -634,8 +634,8 @@ function AppFoot() {
   return (
     <footer className="border-t border-ink-3 px-4 py-5 sm:px-10 lg:px-14">
       {/* Two lines, ten words each at most (design spec 0f). */}
-      <p className="text-fine text-ink-3">Not a medical device. Nothing here is a diagnosis.</p>
-      <p className="mt-1 text-fine text-ink-3">Urgent help: your local emergency number. MindMap · Solace Innovation</p>
+      <p className="text-fine text-ink-3">MindMap is not a medical device and gives no diagnosis.</p>
+      <p className="mt-1 text-fine text-ink-3">For urgent help, call your local emergency number. MindMap · Solace Innovation</p>
     </footer>
   )
 }
@@ -732,10 +732,10 @@ function SubmitRow({ done, total }) {
 
   /* 'queued' is saved and retried on its own, so the line is a receipt. */
   const line =
-    state === 'sent' ? 'Sent. Thank you.'
-      : state === 'queued' ? 'Saved. It will send on its own.'
-      : done >= total ? 'That is all of them.'
-      : `${total - done} to go.`
+    state === 'sent' ? 'Your answers were sent. Thank you.'
+      : state === 'queued' ? 'Your answers are saved and will send on their own.'
+      : done >= total ? 'You have answered every question.'
+      : `${total - done} left to answer.`
 
   return (
     <div className="border-t border-rule pt-5">
@@ -752,8 +752,7 @@ function SubmitRow({ done, total }) {
       </div>
       {state === 'queued' && (
         <p className="note mt-2.5">
-          Nothing is lost. It goes out the next time this page is open, or as soon as
-          you are back online.
+          Your answers will send the next time you open this page online.
         </p>
       )}
       {state !== 'sent' && state !== 'queued' && !empty && done < total && (
@@ -781,10 +780,10 @@ function SurveyPage() {
         <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
           Give feedback
         </h1>
-        <SectionHead className="mt-5">Reviewer Feedback</SectionHead>
+        <SectionHead className="mt-5">Tell us what you think</SectionHead>
         <SectionLede>
-          About three minutes. Answers save as you give them, so you can stop halfway and come
-          back. Nothing identifies you: no name, no email, no school.
+          The survey takes about three minutes. Answers save as you go, so you can stop
+          halfway and come back. No email or school is collected.
         </SectionLede>
         <p className="mt-3.5 text-fine font-medium tabular-nums text-ink-3">
           {done} of {total} answered
@@ -870,46 +869,46 @@ function SurveyPage() {
  */
 const START = {
   student: {
-    head: 'Start Here',
+    head: 'Start here',
     actions: [
-      { id:'reading', title:'Take a Reading',    Mark:DialMark, art:'patch' },
+      { id:'reading', title:'Take a reading',    Mark:DialMark, art:'patch' },
       { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket,
         photo:'student-basketball', alt:'A teenager dribbling a basketball on an outdoor court' },
       { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
         photo:'friends-steps', alt:'Two students on concrete steps outside, heads together over a notebook' },
-      { id:'demo',    title:'Try the Worked Day', Mark:Wave,
+      { id:'demo',    title:'See an example day', Mark:Wave,
         photo:'student-bus', alt:'Two boys laughing together on a school bus seat, one holding a phone' },
     ],
-    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
+    setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
   },
   parent: {
-    head: 'Start Here',
+    head: 'Start here',
     actions: [
-      { id:'calendar', title:'See the Week',      Mark:CalendarMark,
+      { id:'calendar', title:'See the week',      Mark:CalendarMark,
         photo:'parent-laptop', alt:'A mother and her teenage son at a dining table, looking at an open laptop' },
-      { id:'privacy',  title:'Sharing Record',    Mark:Grid,
+      { id:'privacy',  title:'What is shared',    Mark:Grid,
         photo:'parent-kitchen', alt:'A mother and her teenage son chopping vegetables side by side at a kitchen counter' },
       { id:'ai',       title:'Ask MindMap AI',    Mark:AskMark,
         photo:'parent-hero', alt:'A mother and her teenage child smiling at an open laptop together at home' },
-      { id:'demo',     title:'Try the Worked Week', Mark:Wave,
+      { id:'demo',     title:'See an example week', Mark:Wave,
         photo:'parent-card', alt:'A mother and her teenage child sitting close together on a sofa at home' },
     ],
-    setup: { id:'pairing', title:'Connect a Patch', Mark:Frame, cta:'Start pairing' },
+    setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
   },
   pro: {
-    head: 'Start Here',
+    head: 'Start here',
     actions: [
-      { id:'demo',    title:'Try the Worked Week', Mark:Wave,
+      { id:'demo',    title:'See an example week', Mark:Wave,
         photo:'pro-hero', alt:'A teenager and an adult sitting and talking on a sofa by a sunlit window' },
       { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
         photo:'clinic-talk', alt:'A woman and a teenage boy talking in a room lined with shelves' },
-      { id:'methods', title:'How Scoring Works', Mark:Rule, art:'patch' },
-      { id:'help',    title:'Get Help',          Mark:Search,
-        photo:'school-card', alt:'A medical professional and a student talking on a sofa' },
+      { id:'methods', title:'How scoring works', Mark:Rule, art:'patch' },
+      { id:'help',    title:'Get help',          Mark:Search,
+        photo:'school-card', alt:'A Medical Professional and a student talking on a sofa' },
     ],
     /* The setup slot the other two audiences use for the patch: here it is
        the network, where a code is made for a student to enter. */
-    setup: { id:'network', title:'Your Students', Mark:People, cta:'Add a student' },
+    setup: { id:'network', title:'Your students', Mark:People, cta:'Add a student' },
   },
 }
 
@@ -955,7 +954,7 @@ function AudienceStart({ go, who }) {
     <main className="wrap">
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="font-display font-bold text-ink">{s.head}</h2>
-      <RealNotice className="mt-2" inline>Nothing paired yet.</RealNotice>
+      <RealNotice className="mt-2" inline>No patch is paired yet.</RealNotice>
 
       <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
         {s.actions.map(a => (
@@ -1159,8 +1158,8 @@ export function App() {
         {inApp ? <AppFoot/> : (
           <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
-              <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures physiology and reports patterns. It is not a
-                medical device and does not diagnose or treat any condition. If you need urgent help, contact your
+              <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures body signals and shows patterns. It is not a
+                medical device and does not diagnose or treat any condition. If you need urgent help, call your
                 local emergency number or a crisis line.</p>
               <p className="note mt-3.5">MindMap · Solace Innovation</p>
             </div>

@@ -16,7 +16,7 @@ export const YOU_SEE = [
   `The ${SCORE} for each day, and for the week`,
   'Whether a day was above their usual',
   'Roughly how long they slept',
-  'Whether the patch was being worn',
+  'Whether the patch was worn',
 ]
 export const YOU_NEVER = [
   `${NOTES}. ${NOTES_DEF}`,
@@ -30,9 +30,9 @@ export const YOU_NEVER = [
    group report. Each one is the same promise the two lists below state in
    words, which is why no fourth figure may be invented here. */
 const LIMITS = [
-  ['1 day', 'finest detail a parent is shown'],
-  ['0', `raw readings, ${NOTES} or ${LOCATION}`],
-  ['5', 'smallest group a report may cover'],
+  ['1 day', 'finest detail a parent sees'],
+  ['0', `raw readings, ${NOTES} or ${LOCATION} shared`],
+  ['5', 'smallest group a report covers'],
 ]
 
 const PANEL = 'rounded-panel border border-rule bg-card'
@@ -111,19 +111,19 @@ export function PrivacyBody({ go }) {
 
       <ScrollIn className={`${PANEL} mt-3 p-3.5`}>
         <p className="text-meta leading-[1.4] text-ink-2">{CONSENT_SHORT}</p>
-        <p className="mt-1 text-meta leading-[1.4] text-ink-2">Switched off by the student, at any time.</p>
+        <p className="mt-1 text-meta leading-[1.4] text-ink-2">The student can switch sharing off at any time.</p>
         <Figures items={LIMITS} className="mt-2.5"/>
       </ScrollIn>
 
       <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
-        <Scope index={0} title="Shared with a parent" meta="only with consent"
+        <Scope index={0} title="What a parent can see" meta="with the student's consent"
           items={YOU_SEE} Mark={Yes} ink="text-ink"/>
-        <Scope index={1} title="Never shared" meta="closed to everyone"
+        <Scope index={1} title="What a parent never sees" meta="closed to everyone"
           items={YOU_NEVER} Mark={No} ink="text-ink-2"/>
       </div>
 
       <ScrollIn className="mt-3 lg:mt-4">
-        <h3 className="mark">Three audiences compared</h3>
+        <h3 className="mark">Who can see what</h3>
         <div className="mt-3"><WhoSeesWhat/></div>
       </ScrollIn>
     </>

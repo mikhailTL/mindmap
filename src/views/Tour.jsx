@@ -126,7 +126,7 @@ function Fig({ children, className }) {
 function EvidenceGap() {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   const rows = [
-    { label: 'What an adult has to go on', on: [2], count: '1 of 7 days' },
+    { label: 'What an adult knows about', on: [2], count: '1 of 7 days' },
     { label: 'What the patch records',     on: [0, 1, 2, 3, 4, 5, 6], count: '7 of 7 days' },
   ]
   return (
@@ -150,7 +150,7 @@ function EvidenceGap() {
         </div>
       ))}
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        A drawing, not data. One reading a second:{' '}
+        This is a drawing, not data. One reading a second adds up to{' '}
         <span className="font-mono tabular-nums text-ink-2">{num(PER_DAY)}</span>{' '}
         in a {SCHOOL_HOURS} hour day.
       </figcaption>
@@ -167,7 +167,7 @@ function Hardware() {
       <ExplodedStack className="h-[min(44vh,360px)] w-full" caption={null}
         size="w-[min(94%,420px)]"/>
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        Drawn to the real dimensions. No unit has been assembled.
+        The drawing is at real size. No unit has been built.
       </figcaption>
     </figure>
   )
@@ -238,7 +238,7 @@ function Caseload() {
         })}
       </ol>
       <p className="mt-3 border-t border-rule pt-2.5 font-display text-fine font-bold
-        leading-tight text-ink">Consented out</p>
+        leading-tight text-ink">Students who share less</p>
       <ul className="m-0 mt-2 list-none p-0">
         {held.map(s => (
           <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5
@@ -258,19 +258,19 @@ function Caseload() {
    column still separates in grayscale. */
 const HONESTY = [
   ['The screens on this site', 'Built', 'fact',
-    'Hash-routed React, running on fixture data.'],
-  ['Every figure on them', 'Generated', 'demo',
-    'Produced by the scoring model from invented baselines. Nobody has been measured.'],
+    'The screens are real React, running on sample data.'],
+  ['The numbers on them', 'Generated', 'demo',
+    'The scoring model produced them from invented baselines. Nobody has been measured.'],
   ['The patch', 'Drawn, not built', 'demo',
-    'A CAD model, three printed parts and a bought board. No assembled unit exists to photograph.'],
+    'The patch exists as a CAD model. No unit has been built or photographed.'],
   ['The scoring model', 'Written, not validated', 'demo',
-    'Four signals against a fourteen-day baseline, blended by a logistic. Never compared with any clinical measure.'],
+    'The model blends four signals against a fourteen day baseline. It has never been compared with a clinical measure.'],
   ['Accuracy', 'None claimed', 'demo',
-    'No study, no participants, no error rate.'],
+    'No study has been run with MindMap users, so no accuracy is claimed here.'],
   ['The eight students', 'Invented', 'demo',
-    'Numbers, with consent records we wrote ourselves.'],
+    'The eight students are made up, and so are their consent records.'],
   ['Regulatory status', 'Not a medical device', 'fact',
-    'It does not diagnose, treat or screen for any condition.'],
+    'MindMap does not diagnose, treat or screen for any condition.'],
 ]
 
 /* ── 08 ─────────────────────────────────────────────────────────────────── */
@@ -278,18 +278,18 @@ const HONESTY = [
    the row and is never left blank: a number with no source is the thing spec 9
    exists to stop. */
 const SCALE_ROWS = [
-  ['Caseload', num(CASELOAD_ASSUMED), 'students', 'Assumption. No ratio has been surveyed.'],
-  ['Sampling', '1', 'Hz', `Design target, across a ${SCHOOL_HOURS} hour school day.`],
-  ['Per student, per day', num(PER_DAY), 'readings', 'Arithmetic from the two rows above.'],
-  ['Across the caseload', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Arithmetic. Not a measurement.'],
-  ['Reporting floor', String(K_ANONYMITY), 'students', 'Nothing is reported for a smaller group.'],
+  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'This is an assumption. No ratio has been surveyed.'],
+  ['Readings per second', '1', 'Hz', `This is the design target, across a ${SCHOOL_HOURS} hour school day.`],
+  ['Per student, per day', num(PER_DAY), 'readings', 'The two rows above multiply to this.'],
+  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'This is arithmetic, not a measurement.'],
+  ['Smallest group reported', String(K_ANONYMITY), 'students', 'A smaller group shows nothing.'],
 ]
 
 function ScaleFigure() {
   return (
     <figure className="m-0">
       <figcaption className="font-display text-fine font-bold leading-tight text-ink">
-        One caseload, one day
+        One list, one day
       </figcaption>
       <dl className="m-0 mt-2">
         {SCALE_ROWS.map(([label, value, unit, from]) => (
@@ -306,7 +306,7 @@ function ScaleFigure() {
         ))}
       </dl>
       <p className="mt-3 border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        Unproven until trialled against a referral queue.
+        A trial against a real referral list has not been run.
       </p>
     </figure>
   )
@@ -319,51 +319,51 @@ function ScaleFigure() {
 const STOPS = [
   {
     id: 'problem', nav: 'The problem',
-    title: 'The problem',
-    lede: 'An adult’s record is the days somebody spoke up.',
+    title: 'Why stress is hard to track',
+    lede: 'An adult only knows about the days a student spoke up.',
     photo: 'students-hallway',
     alt: 'Four high school students walking along a bright corridor with folders and backpacks, talking as they go',
     facts: [
-      ['What an adult has', 'The days a student spoke up, or somebody noticed.'],
-      ['What the patch records', `Every school day, at 1 Hz: ${num(PER_DAY)} readings a day.`],
-      ['Compared against', `That student's own last two weeks, and nobody else's.`],
-      ['The photographs', 'Stock photographs of models. Nobody shown uses MindMap.'],
+      ['What an adult knows', 'Only the days a student spoke up, or somebody noticed.'],
+      ['What the patch records', `One reading a second all school day, which is ${num(PER_DAY)} readings a day.`],
+      ['Compared with', `The student's own last two weeks, and nobody else's.`],
+      ['The photographs', 'These are stock photographs of models. Nobody shown uses MindMap.'],
     ],
     art: EvidenceGap,
   },
   {
-    id: 'hardware', nav: 'The hardware',
+    id: 'hardware', nav: 'The patch',
     title: 'The patch',
-    lede: 'Three printed parts and one board we did not design.',
+    lede: 'The patch is three printed parts around a ready made board.',
     facts: [
       ...LAYERS.map(l => [l.title, l.body]),
-      ['Status', 'Drawn to the real dimensions. No unit has been assembled.'],
+      ['Status', 'The patch is drawn at real size. No unit has been built.'],
     ],
     art: Hardware,
   },
   {
     id: 'signals', nav: 'Four signals',
-    title: 'The four signals',
-    lede: 'Four signals off the upper arm, once a second.',
+    title: 'What the patch records',
+    lede: 'The patch records four signals from the upper arm, once a second.',
     facts: [
-      ['Moves first', 'Sweat. Changes too small to feel.'],
-      ['Moves furthest', 'Heart rate variability, not the rate itself.'],
-      ['Rules illness in or out', 'Skin temperature, which drifts slowly.'],
-      ['A control, not a reading', `Above 0.35 g the ${SCORE} is held back.`],
+      ['Changes first', 'Sweat changes first, in amounts too small to feel.'],
+      ['Changes most', 'Heart rate variability changes the most, not the heart rate itself.'],
+      ['Checks for illness', 'Skin temperature drifts slowly and helps tell illness from stress.'],
+      ['Movement is a check', `When movement goes above 0.35 g, the ${SCORE} is held back.`],
     ],
     art: Signals,
   },
   {
     id: 'student', nav: 'Student screen',
     title: 'What the student sees',
-    lede: `One ${SCORE}, ${SCORE_RANGE}, and one plain sentence.`,
+    lede: `The student sees one ${SCORE}, ${SCORE_RANGE}, and one plain sentence.`,
     photo: 'student-homework',
     alt: 'A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them',
     facts: [
-      ['Each ring', `One signal's distance from this person's fourteen day baseline.`],
-      ['The number in the middle', 'All four signals, blended.'],
-      ['The student sees', `Every reading, second by second, and their own ${NOTES}.`],
-      ['Withheld from the student', 'Nothing on their own screen.'],
+      ['Each ring', `Each ring shows how far one signal is from this student's fourteen day baseline.`],
+      ['The number in the middle', 'The number blends all four signals.'],
+      ['What the student sees', `The student sees every reading, second by second, and their own ${NOTES}.`],
+      ['Hidden from the student', `Nothing is hidden on the student's own screen.`],
     ],
     art: () => (
       <div className="flex h-full flex-col">
@@ -373,7 +373,7 @@ const STOPS = [
           Today is a little higher than your normal.</p>
         <p className="mt-1 text-meta leading-[1.35] text-ink-2">
           It went up in third period and has stayed there.</p>
-        <DemoNotice className="mt-auto pt-3">Sample data, not a real person.</DemoNotice>
+        <DemoNotice className="mt-auto pt-3">This is sample data, not a real person.</DemoNotice>
       </div>
     ),
     go: ['student', 'Open the student screen'],
@@ -381,13 +381,13 @@ const STOPS = [
   {
     id: 'parent', nav: 'Parent screen',
     title: 'What the parent sees',
-    lede: `One ${SCORE} a day, and one sentence a week.`,
+    lede: `A parent sees one ${SCORE} a day and one sentence a week.`,
     photo: 'parent-laptop',
     alt: 'A mother and her teenage son sitting together at a dining table, both looking at an open laptop',
     facts: [
-      ['Finest a parent is shown', 'A day. Never an hour, never a moment.'],
-      ['Never shown to a parent', `A raw reading, ${NOTES}, or ${LOCATION}.`],
-      ['Shown each week', `Which days sat above their child's own range.`],
+      ['The finest detail', 'A parent sees a whole day, never an hour or a moment.'],
+      ['Never shown to a parent', `A parent never sees a raw reading, ${NOTES} or ${LOCATION}.`],
+      ['Each week', `A parent sees which days sat above their child's own range.`],
       ['Who decides', CONSENT_SHORT],
     ],
     art: () => {
@@ -404,10 +404,10 @@ const STOPS = [
             Your child had a harder week than usual.</p>
           <div className="mt-3"><WeekStrip days={DATA.week} band={DATA.weekBand}/></div>
           <p className="mt-2 font-mono text-fine tabular-nums text-ink-3">
-            {over} of {days.length} days above their usual range
+            {over} of {days.length} days sat above their usual range
           </p>
           <p className="mt-auto border-t border-rule pt-2.5 font-display text-fine font-bold
-            leading-tight text-ink">Never shown</p>
+            leading-tight text-ink">Never shown to a parent</p>
           {/* A card holding a row of chips: one level of nesting, which spec 2
               allows. The mark is each chip's marker, so the list has none. */}
           <ul className="m-0 mt-2 grid list-none gap-1.5 p-0 sm:grid-cols-2">
@@ -425,8 +425,8 @@ const STOPS = [
   },
   {
     id: 'pro', nav: `${PRO} console`,
-    title: `The ${PRO_LC}’s view`,
-    lede: CASELOAD_DEF,
+    title: `What the ${PRO} sees`,
+    lede: `The ${PRO} sees a list of students to check in with, ordered by whose ${SCORE} moved most since last week.`,
     photo: 'clinic-talk',
     alt: `A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`,
     /* Read off the same roster the list draws. A typed "five of eight" goes
@@ -435,20 +435,20 @@ const STOPS = [
       const all = roster().length, trends = triage().length
       const partial = scoreOnly().length, alerts = alertsOnly().length
       return [
-        ['On this caseload', `${all} students.`],
-        ['Appear with a change', `${trends} with parental consent for trends.`],
-        ['Appear without one', `${partial} agreed to a ${SCORE} without trends.`],
-        [`Carry no ${SCORE} at all`, `${alerts} agreed to crisis alerts only.`],
-        ['Cannot be consented away', `Crisis alerts reach the ${PRO_LC} in every case.`],
+        ['Students on the list', `${all} students are on this list.`],
+        ['Shown with trends', `${trends} students have Parental Consent to share trends.`],
+        ['Shown with a score only', `${partial} students agreed to share a ${SCORE} but not trends.`],
+        ['Shown with alerts only', `${alerts} students agreed to crisis alerts and nothing else.`],
+        ['Always on', `Crisis alerts reach the ${PRO} in every case.`],
       ]
     },
     art: Caseload,
-    go: ['pro', `Open the ${PRO_LC} console`],
+    go: ['pro', `Open the ${PRO} console`],
   },
   {
-    id: 'honest', nav: 'Real vs demo',
-    title: 'Real and demo',
-    lede: 'Nothing on this site has been measured on a person.',
+    id: 'honest', nav: 'Real and demo',
+    title: 'What is real and what is demo',
+    lede: 'Every reading on this site is generated, and nobody has worn the patch.',
     /* The table beside is the whole list; a rail repeating four of its rows
        was the paragraph the owner asked to cut. */
     facts: [],
@@ -479,15 +479,15 @@ const STOPS = [
   },
   {
     id: 'scale', nav: 'At scale',
-    title: 'On a caseload',
-    lede: 'A projection, not a finding.',
+    title: 'How the numbers add up',
+    lede: 'These numbers are a projection, not a finding.',
     photo: 'school-card',
     alt: 'A woman and a teenage boy talking in a room lined with shelves',
     facts: [
-      ['A queue today', 'Ordered by who asked first, or who was referred.'],
-      ['This queue', `Ordered by whose ${SCORE} moved most since last week.`],
-      ['Why a list, not a dashboard', `A ${PRO_LC} cannot read ${num(CASELOAD_ASSUMED)} charts.`],
-      ['What is not claimed', 'No adoption figure, no effect size, no trial.'],
+      ['A waiting list today', 'A list today is ordered by who asked first or who was referred.'],
+      ['This list', `This list is ordered by whose ${SCORE} moved most since last week.`],
+      ['Why a list', `A ${PRO} cannot read ${num(CASELOAD_ASSUMED)} charts, so the app shows a short list.`],
+      ['Not claimed', 'No trial has been run, and no effect or adoption figure is claimed.'],
     ],
     art: ScaleFigure,
   },
@@ -525,13 +525,13 @@ export function Tour({ go }) {
             </p>
             <h1 className="mt-2 max-w-[18ch] font-display text-major font-bold leading-[1.06]
               tracking-tight text-ink">
-              How MindMap Works
+              How MindMap works
             </h1>
           </div>
           <Facts className="self-end" rows={[
-            ['Stops', `${STOPS.length}, each one a screen or a part.`],
-            ['Time', 'About five minutes, start to finish.'],
-            ['What you are looking at', 'The live components the real screens run, not recordings.'],
+            ['Stops', `The tour has ${STOPS.length} stops. Each one shows a screen or a part of the patch.`],
+            ['Time', 'The tour takes about five minutes.'],
+            ['What you are looking at', 'Every figure is the live component the real screen runs, not a recording.'],
           ]}/>
         </div>
       </section>
@@ -623,7 +623,7 @@ export function Tour({ go }) {
               Open the app yourself
             </h2>
             <p className="mt-2 max-w-[40ch] text-sec font-medium leading-[1.35] text-ink">
-              Nothing below needs a patch or an account.
+              You do not need a patch or an account to try the app.
             </p>
             <div className="mt-3 flex flex-wrap gap-2.5">
               <Button size="sm" onClick={() => go('app')}>
@@ -635,9 +635,9 @@ export function Tour({ go }) {
             </div>
           </div>
           <Facts className="self-start" rows={[
-            ['The launcher', `Student, parent and ${PRO_LC} screens.`],
-            ['Six questions', `A ${SCORE} with no patch and nothing stored.`],
-            ['What is stored', 'Nothing typed anywhere on this site leaves the device.'],
+            ['The app', `The app has student, parent and ${PRO} screens.`],
+            ['Six questions', `Six questions give you a ${SCORE} with no patch, and nothing is stored.`],
+            ['Your data', 'Nothing you type on this site leaves your device.'],
           ]}/>
         </div>
       </section>

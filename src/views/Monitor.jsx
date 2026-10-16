@@ -222,8 +222,8 @@ export function FeltCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="How Today Felt" meta="six questions" className="min-w-0 flex-1"/>
         <Why label="What the six questions are" className="pt-1.5">
-          The patch reads a body, never a feeling. Six questions ask how today felt. Scored on
-          this phone, never stored.
+          The patch cannot read a feeling, so six questions ask. Your answers are scored on
+          this phone and never stored.
         </Why>
       </div>
       <button type="button" onClick={() => go('check')}
@@ -292,7 +292,7 @@ export function ActionRow({ go, className, actions = ACTIONS }) {
    state. Each line is under ten words. */
 const SCOPE = [
   { mark: Sometimes, who: 'A parent, if you agree',
-    what: `One ${SCORE} a day. Never a reading.` },
+    what: `One ${SCORE} a day, never a raw reading.` },
   { mark: Sometimes, who: `A ${PRO}, if you agree`,
     what: `The ${SCORE} and its weekly change.` },
   { mark: Never, who: 'Nobody, ever',
@@ -304,7 +304,7 @@ export function SharedCard({ go, className }) {
     <Panel tone="brand" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Who Sees What" meta="off by default" className="min-w-0 flex-1"/>
-        <Why label="How sharing is decided" className="pt-1.5">
+        <Why label="How sharing works" className="pt-1.5">
           {CONSENT_SHORT} Any of it can be switched off, at any time.
         </Why>
       </div>
@@ -429,16 +429,16 @@ function SignalShapes() {
           )
         })}
       </ul>
-      <figcaption className="note mt-2.5">Drawings, not readings.</figcaption>
+      <figcaption className="note mt-2.5">These are drawings, not readings.</figcaption>
     </figure>
   )
 }
 
 /* Requirements, not wizard steps. */
 const PAIRING = [
-  ['A charged patch', 'On the upper arm. None exists to send yet.'],
-  ['A phone with Bluetooth', 'Four channels, once a second.'],
-  ['About two weeks of wear', 'That is what builds your own normal.'],
+  ['A charged patch', 'Worn on the upper arm. No patch has been built yet.'],
+  ['A phone with Bluetooth', 'The patch sends four signals once a second.'],
+  ['About two weeks of wear', 'Two weeks of readings build your own normal.'],
 ]
 
 /* Real mode. The same shape as the demo screen: the sentence in one card,
@@ -451,15 +451,15 @@ export function StudentBody({ go, openTab }) {
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
         <Panel className="flex flex-col justify-center">
           <HeroLine centred
-            lead="Nothing measured today."
+            lead="No reading has been taken today."
             whyLabel="Why there is no score"
-            why={`A ${SCORE} compares you with your own last two weeks. An empty day is not a calm day. No dial is drawn.`}/>
+            why={`A ${SCORE} compares you with your last two weeks. An empty day is not a calm day.`}/>
           <div className="mt-3 border-t border-rule pt-2.5">
-            <RealNotice>Nothing paired yet.</RealNotice>
+            <RealNotice>No patch is paired yet.</RealNotice>
           </div>
         </Panel>
         <Panel>
-          <PanelHead title="Four Channels" meta="0 of 4"/>
+          <PanelHead title="Four Signals" meta="0 of 4"/>
           <div className="mt-2.5"><SilentChannels/></div>
         </Panel>
       </div>
@@ -487,7 +487,7 @@ export function StudentBody({ go, openTab }) {
             </ul>
           </Panel>
           <Panel tone="deep" className="lg:col-span-2">
-            <PanelHead title="Each Signal's Shape" meta="drawings"/>
+            <PanelHead title="How Each Signal Looks" meta="drawings"/>
             <div className="mt-2.5"><SignalShapes/></div>
           </Panel>
         </div>

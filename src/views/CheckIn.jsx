@@ -49,12 +49,12 @@ const PANEL = 'rounded-panel border border-rule bg-card'
 const SCREENS = {
   sensors: {
     title: 'Camera and microphone',
-    lede: `The same ${SCORE}, measured rather than answered.`,
+    lede: `The phone measures your ${SCORE} instead of asking.`,
     facts: [['45', 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames or audio kept']],
   },
   survey: {
     title: 'Six questions',
-    lede: 'Six scales, then one number.',
+    lede: 'Six answers become one number.',
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
       ['0', 'answers that leave this phone']],
   },
@@ -66,7 +66,7 @@ const SCREENS = {
    times rather than three different cards. */
 const WAYS = [
   { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
-    line:'Fingertip on the lens, then speak.',
+    line:'Put a fingertip on the lens, then speak.',
     fact:['45', 'seconds'],
     cta:'Start',
     spec:[
@@ -75,25 +75,25 @@ const WAYS = [
       ['Also', 'Pitch and steadiness of one spoken line'],
       ['Needs', 'A camera and a microphone'],
     ],
-    foot:'Frames and audio become numbers here, then are dropped. Nothing is stored or sent.' },
+    foot:'Frames and audio become numbers, then get deleted. Nothing is stored or sent.' },
   { id:'survey', title:'Six questions', opens:true, Mark:Stack,
-    line:'No camera, no patch.',
+    line:'You need no camera or patch.',
     fact:['30', 'seconds'],
     cta:'Answer',
     spec:[
       ['Takes', 'About 30 seconds'],
       ['Reads', 'Tension, sleep, energy, focus and load'],
       ['Also', 'Which answer moved the number, and which way'],
-      ['Needs', 'Nothing but this phone'],
+      ['Needs', 'Only this phone'],
     ],
     foot:'Answers stay on this phone. Nothing is stored or sent.' },
   { id:'patch', title:'Connect a patch', opens:false, Mark:Link,
-    line:'Pulse, sweat, temperature, movement.',
+    line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
     spec:[
-      ['Takes', 'One pairing, then nothing'],
+      ['Takes', 'One pairing, then no setup'],
       ['Reads', 'Pulse, sweat, temperature and movement'],
-      ['Rate', '1 Hz over Bluetooth'],
+      ['Rate', 'Once a second over Bluetooth'],
       ['Needs', 'A MindMap patch'],
     ] },
 ]
@@ -165,7 +165,7 @@ const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
    one line; open, it is the comparison the cards used to carry. */
 function Compare() {
   return (
-    <SeeDetails label="Compare ways" className="mt-3 lg:mt-4">
+    <SeeDetails label="Compare the three ways" className="mt-3 lg:mt-4">
       <div className="grid gap-3 lg:grid-cols-3 lg:gap-4">
         {WAYS.map(way => {
           const Mark = way.Mark
@@ -246,7 +246,7 @@ export function CheckInBody({ go }){
 
   const leave = React.useCallback(() => {
     setDir('back'); setScreen('choose')
-    setSaid('Three ways in, showing now')
+    setSaid('Three ways to take a reading, showing now')
     if (pushed.current) { pushed.current = false; history.back() }
   }, [])
 
@@ -302,7 +302,7 @@ export function CheckInBody({ go }){
   }, [done, screen])
 
   async function pairUp(){
-    setBusy(true); setPair({ ok:null, msg:'Choosing a device…' })
+    setBusy(true); setPair({ ok:null, msg:'Choosing a patch…' })
     setPair(await connectPatch()); setBusy(false)
   }
 
@@ -322,8 +322,8 @@ export function CheckInBody({ go }){
                 variants are required: demo figures elsewhere are generated, and
                 in real mode no patch is paired. */}
             {mode === 'real'
-              ? <RealNotice inline>None needed.</RealNotice>
-              : <DemoNotice inline>Real scoring here.</DemoNotice>}
+              ? <RealNotice inline>No patch is needed here.</RealNotice>
+              : <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
           </div>
 
           <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
@@ -362,7 +362,7 @@ export function CheckInBody({ go }){
                 </div>
                 <p aria-live="polite"
                   className="mt-1.5 min-h-[2.8em] max-w-[44ch] text-fine leading-[1.4] text-ink-3">
-                  {pair?.msg || 'Not paired.'}
+                  {pair?.msg || 'No patch is paired.'}
                 </p>
               </section>
             </ScrollRow>
@@ -425,14 +425,14 @@ export function CheckInBody({ go }){
                         <dd className="m-0 font-mono tabular-nums text-ink">{r.score} out of 100</dd>
                         <dt className="text-ink-3">Read from</dt>
                         <dd className="m-0 text-ink">{ITEMS.length} answers</dd>
-                        <dt className="text-ink-3">Four rings</dt>
+                        <dt className="text-ink-3">The other rings</dt>
                         <dd className="m-0 text-ink">A patch fills heart, sweat, temperature and movement</dd>
                       </dl>
                     </div>
                   </div>
                   <AllDetail label={`See what moved your ${SCORE}`}>
-                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">Right of the line raised
-                      {' '}the {SCORE}. Left lowered it.</p>
+                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">Bars to the right raised
+                      {' '}your {SCORE}. Bars to the left lowered it.</p>
                     <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),
                       x: Math.max(-1, Math.min(1, c.raw)) }))}/>
                     <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
@@ -440,8 +440,8 @@ export function CheckInBody({ go }){
                       <dd className="m-0 text-ink-2">Measured from its middle option, then weighted</dd>
                       <dt className="text-ink-3">The six together</dt>
                       <dd className="m-0 text-ink-2">Averaged, then turned into one number out of 100</dd>
-                      <dt className="text-ink-3">A patch instead</dt>
-                      <dd className="m-0 text-ink-2">Same last step, from four signals, on one scale</dd>
+                      <dt className="text-ink-3">With a patch</dt>
+                      <dd className="m-0 text-ink-2">The same last step, from four signals, on one scale</dd>
                     </dl>
                   </AllDetail>
                 </>

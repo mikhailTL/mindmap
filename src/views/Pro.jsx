@@ -82,21 +82,21 @@ import { cn } from '../lib/utils'
    school. */
 const SETTING_WORDS = {
   school: {
-    step: 'The Whole School',
-    head: 'Manage Stress Across the School',
-    lead: 'Across the Whole School',
+    step: 'The whole school',
+    head: 'Manage stress across the school',
+    lead: 'The whole school',
     across: 'across the school',
   },
   practice: {
-    step: 'The Whole Practice',
-    head: 'Manage Stress Across the Practice',
-    lead: 'Across the Practice',
+    step: 'The whole practice',
+    head: 'Manage stress across the practice',
+    lead: 'The whole practice',
     across: 'across the practice',
   },
   other: {
-    step: 'Everyone You Follow',
-    head: 'Manage Stress Across Everyone You Follow',
-    lead: 'Across Everyone You Follow',
+    step: 'Everyone you follow',
+    head: 'Manage stress for everyone you follow',
+    lead: 'Everyone you follow',
     across: 'across everyone you follow',
   },
 }
@@ -105,9 +105,9 @@ const wordsFor = me => SETTING_WORDS[(me && me.role === 'pro' && me.setting) || 
 /* The five steps, in working order. */
 const stepsFor = words => [
   ['school',  words.step],
-  ['list',    'Who to Check In With'],
-  ['student', 'One Student'],
-  ['urgent',  'Urgent Alerts'],
+  ['list',    'Students to check on'],
+  ['student', 'One student'],
+  ['urgent',  'Urgent alerts'],
   ['agreed',  'Parental Consent'],
 ]
 const nextOf = (steps, id) => {
@@ -119,9 +119,9 @@ const nextOf = (steps, id) => {
    the screen on every step, above the step itself, and nothing on this console
    can switch any of them off. Do not shorten these four lines away. */
 const RULES = [
-  'Only what a student agreed to share.',
+  'You see only what a student agreed to share.',
   'A group under five shows nothing.',
-  'Every record opened is written down.',
+  'Every record you open is logged.',
   'Nothing here is a diagnosis.',
 ]
 
@@ -235,7 +235,7 @@ function Weekday({ wAvg }) {
   const lightest = [...COHORT_WEEKDAY].sort((a, b) => a.mean - b.mean)[0]
   return (
     <Panel>
-      <PanelHead as="h3" title={`${SCORE} by Day of the Week`} meta="out of 100"/>
+      <PanelHead as="h3" title={`${SCORE} by weekday`} meta="out of 100"/>
       <div className="mt-3 grid gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]
         lg:gap-5">
       <div>
@@ -276,7 +276,7 @@ function Weekday({ wAvg }) {
       <dl className="m-0 p-0">
         <KV k="Hardest day" v={`${hardest.full}, ${hardest.mean}`}/>
         <KV k="Lightest day" v={`${lightest.full}, ${lightest.mean}`}/>
-        <KV k="An average day" v={String(wAvg)}/>
+        <KV k="Average day" v={String(wAvg)}/>
       </dl>
       </div>
     </Panel>
@@ -299,7 +299,7 @@ function School({ words }) {
 
       <div className={ROW}>
         <Panel>
-          <PanelHead as="h3" title={`${SCORE} by Class Period`} meta="bars start at zero"/>
+          <PanelHead as="h3" title={`${SCORE} by class period`} meta="out of 100"/>
           <ul className="m-0 mt-3 list-none space-y-3 p-0">
             {COHORT_PERIOD.map(p => (
               <li key={p.key}>
@@ -341,18 +341,18 @@ function School({ words }) {
             text-fine tabular-nums text-ink-3">
             {[0, ...TICKS, 100].map(t => <span key={t}>{t}</span>)}
           </div>
-          <Note>Upright line: the average period, {avg}. Never a finding about one student.</Note>
+          <Note>The dark line marks the average period, {avg}.</Note>
           {hidden > 0 && (
             <div className="mt-2.5 flex items-center gap-2.5">
               <HatchKey className="w-16 shrink-0"/>
-              <p className="text-fine text-ink-2">Hatched: fewer than {K_ANONYMITY} students.</p>
+              <p className="text-fine text-ink-2">A hatched bar has fewer than {K_ANONYMITY} students.</p>
             </div>
           )}
         </Panel>
       </div>
 
       <div className={ROW}>
-        <SeeDetails label="See the week, day by day">
+        <SeeDetails label="See each weekday">
           <Weekday wAvg={wAvg}/>
         </SeeDetails>
       </div>
@@ -366,9 +366,9 @@ function School({ words }) {
    of order rules came down to. Nobody with forty entries to read reads the
    long version, and the safeguards in it are in RULES above. */
 const ORDER_RULES = [
-  'A big move comes before a high score.',
-  `A band says where a ${SCORE} sits today, never what a student is.`,
-  'No raw reading, journal entry or location is on this list.',
+  'A big change comes before a high score.',
+  `A band shows where the ${SCORE} sits today.`,
+  'This list holds no raw reading, journal or location.',
 ]
 
 /* The figure columns, named once on the rule the list hangs from. */
@@ -376,7 +376,7 @@ const ListHead = () => (
   <div aria-hidden className="mt-3 flex items-center gap-3 border-b border-ink pb-2">
     <span className="tick min-w-0 flex-1">student</span>
     <span className="hidden w-14 shrink-0 sm:block"/>
-    <span className="tick w-10 shrink-0 text-right">move</span>
+    <span className="tick w-10 shrink-0 text-right">change</span>
     <span className="w-4 shrink-0"/>
   </div>
 )
@@ -477,7 +477,7 @@ function CheckIn({ onOpen, onStep }) {
     <>
       <Lead title={CASELOAD_TITLE} meta={`${moved.length} of ${all.length} students`}
         sentence={weekLine(rising.length)}
-        label="Biggest move this week" tone={lead.velocity > 0 ? 'text-warn' : 'text-ink'}
+        label="Biggest change this week" tone={lead.velocity > 0 ? 'text-warn' : 'text-ink'}
         figure={`${lead.velocity > 0 ? '+' : ''}${lead.velocity}`} unit="points"
         sub={`${lead.name}, ${lead.weekAgo} to ${lead.current}.`}>
         {open > 0 && (
@@ -493,14 +493,14 @@ function CheckIn({ onOpen, onStep }) {
 
       <div className={cn(ROW, '[&>*]:min-w-0 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
         <Panel>
-          <PanelHead as="h3" title="Students to Open" meta="biggest change first"/>
+          <PanelHead as="h3" title="Students to open" meta="biggest change first"/>
           <ListHead/>
           <ol className="m-0 list-none p-0">
             {moved.map(s => <Row key={s.id} s={s} onOpen={onOpen} max={max}/>)}
           </ol>
         </Panel>
         <Panel>
-          <PanelHead as="h3" title="Shared With Less" meta="not ordered"/>
+          <PanelHead as="h3" title="Students who share less" meta="in no order"/>
           <SharedWithLess onOpen={onOpen}/>
         </Panel>
       </div>
@@ -508,7 +508,7 @@ function CheckIn({ onOpen, onStep }) {
       <div className={ROW}>
         <SeeDetails label="See how the order works">
           <Panel tone="aqua">
-            <PanelHead as="h3" title="How the Order Works"/>
+            <PanelHead as="h3" title="How the order works"/>
             <List className="mt-3 max-w-[56ch] text-fine text-ink-2">
               {ORDER_RULES.map(r => <Item key={r}>{r}</Item>)}
             </List>
@@ -525,13 +525,13 @@ function CheckIn({ onOpen, onStep }) {
    says what this student's body did against their own normal, never what they
    felt, and never that anything is wrong with them. */
 function recordLead(s, series) {
-  if (!s.showScore) return `Nothing about ${s.name} reaches this console except an urgent alert.`
-  if (!s.showTrend) return `${s.name} is reading ${s.current} out of 100 today. No weekly change is shared.`
+  if (!s.showScore) return `Only an urgent alert about ${s.name} reaches you.`
+  if (!s.showTrend) return `${s.name} reads ${s.current} out of 100 today. No weekly change is shared.`
   const fortnight = s.current - series[31].v
   if (s.velocity > 0 && fortnight > 0)
-    return `${s.name}: above their own normal for about two weeks.`
+    return `${s.name} has read above their normal for two weeks.`
   if (s.velocity > 0) return `${s.name} read higher this week than last.`
-  if (s.velocity < 0) return `${s.name} is reading lower this week than last.`
+  if (s.velocity < 0) return `${s.name} read lower this week than last.`
   return `${s.name} is level with last week.`
 }
 
@@ -587,7 +587,7 @@ function OneStudent({ who, setWho }) {
             value={s.showTrend ? `${s.velocity > 0 ? '+' : ''}${s.velocity}` : 'not shared'}
             unit={s.showTrend ? 'points' : null}
             sub={s.showTrend ? `${s.weekAgo} to ${s.current}` : null}/>
-          <Stat className="col-span-2 lg:col-span-1" label="Agreed to share" value={agreed(s)}
+          <Stat className="col-span-2 lg:col-span-1" label="Parent agreed to share" value={agreed(s)}
             sub={`Signed ${s.signedAt}, runs out ${s.expires}.`}/>
         </div>
       </Panel>
@@ -595,10 +595,10 @@ function OneStudent({ who, setWho }) {
       {!s.showScore && (
         <div className={ROW}>
           <Panel>
-            <PanelHead as="h3" title="No Readings Shared"/>
+            <PanelHead as="h3" title="No readings shared"/>
             <List className="mt-3 max-w-[48ch] text-fine text-ink-2">
               <Item>The guardian agreed to urgent alerts and nothing else.</Item>
-              <Item>You are paged if a reading raises one.</Item>
+              <Item>You are told if a reading raises one.</Item>
             </List>
           </Panel>
         </div>
@@ -607,7 +607,7 @@ function OneStudent({ who, setWho }) {
       {s.showScore && !s.showTrend && (
         <div className={ROW}>
           <Panel>
-            <PanelHead as="h3" title={`${SCORE} Today, ${s.current} Out of 100`}/>
+            <PanelHead as="h3" title={`${SCORE} today`} meta={`${s.current} out of 100`}/>
             <List className="mt-3 max-w-[48ch] text-fine text-ink-2">
               <Item>Weekly change, breakdown and 45-day line are not shared.</Item>
               <Item>Urgent alerts still reach you.</Item>
@@ -619,7 +619,7 @@ function OneStudent({ who, setWho }) {
       {s.showTrend && <>
       <div className={ROW}>
         <Panel>
-          <PanelHead as="h3" title="The Last 45 Days" meta="one point a day"/>
+          <PanelHead as="h3" title="The last 45 days" meta="one point a day"/>
           <svg viewBox="0 0 720 200" className="mt-3 block w-full overflow-visible" role="img"
             aria-label={`Daily ${SCORE} over 45 days, ending at ${s.current}.`}>
             {ticks.map(v => {
@@ -641,22 +641,22 @@ function OneStudent({ who, setWho }) {
             <text x="710" y="195" textAnchor="end" className="fill-ink-3 text-[15px]">today</text>
           </svg>
           <dl className="m-0 mt-2.5 p-0">
-            <KV k="Lowest and highest over the window" v={`${lo} to ${hi}`}/>
+            <KV k="Lowest and highest in 45 days" v={`${lo} to ${hi}`}/>
             <KV k="Last two weeks" v={`${series[31].v} to ${s.current}`}/>
           </dl>
-          <Note>Coloured stretch: the last two weeks. Scale: this student&rsquo;s own window.</Note>
+          <Note>The coloured part is the last two weeks. The scale fits this student&rsquo;s own readings.</Note>
         </Panel>
       </div>
 
       <div className={ROW}>
         <SeeDetails label="See more about the student"
-          sub="What moved, what has been tried, referrals and notes">
+          sub="What changed, what has been tried, referrals and notes">
           {/* 7fr and 5fr: at 6 and 6 the right column ended 165px above the
               left one, which is a quarter of a screen of empty card stock. */}
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
             <div className="flex flex-col gap-3 lg:gap-4">
               <Panel tone="aqua">
-                <PanelHead as="h3" title="What Moved Most" meta="share of this week"/>
+                <PanelHead as="h3" title="What changed most" meta="share of this week"/>
                 <ul className="m-0 mt-3 list-none p-0">
                   {drivers.map(d => (
                     <BarRow key={d.label} label={d.label}
@@ -665,10 +665,10 @@ function OneStudent({ who, setWho }) {
                       aria={`${d.label}, ${Math.round(d.share * 100)} percent of this week's change`}/>
                   ))}
                 </ul>
-                <Note>Against this student&rsquo;s own normal. Never a raw reading.</Note>
+                <Note>Bars compare with this student&rsquo;s own normal, not raw readings.</Note>
               </Panel>
               <Panel>
-                <PanelHead as="h3" title="What Has Been Tried" meta="measured, not reported"/>
+                <PanelHead as="h3" title="What has been tried" meta="measured by the patch"/>
                 <ul className="m-0 mt-3 list-none p-0">
                   {tried.map(i => (
                     <BarRow key={i.name}
@@ -681,7 +681,7 @@ function OneStudent({ who, setWho }) {
                         + `${Math.abs(i.hrvDeltaPct)} percent`}/>
                   ))}
                 </ul>
-                <Note>How much steadier the heartbeat was.</Note>
+                <Note>Each bar shows how much steadier the heartbeat was.</Note>
               </Panel>
             </div>
             <div className="flex flex-col gap-3 lg:gap-4">
@@ -704,7 +704,7 @@ function OneStudent({ who, setWho }) {
                 </div>
               </Panel>
               <Panel tone="aqua">
-                <PanelHead as="h3" title="Your Notes"/>
+                <PanelHead as="h3" title="Your notes"/>
                 <label htmlFor="cnote" className="sr-only">{PRO} note for {s.name}</label>
                 <textarea id="cnote" rows={3} value={note} onChange={e => setNote(e.target.value)}
                   placeholder="Add a note…"
@@ -713,7 +713,7 @@ function OneStudent({ who, setWho }) {
                     focus-visible:border-ink focus-visible:outline focus-visible:outline-2
                     focus-visible:outline-offset-2 focus-visible:outline-accent"/>
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                  <span className="text-fine text-ink-3">Saving is written down</span>
+                  <span className="text-fine text-ink-3">Every saved note is logged</span>
                   <Button size="sm" disabled={!note.trim()}>Save note</Button>
                 </div>
               </Panel>
@@ -745,7 +745,7 @@ function Urgent({ real }) {
       {/* Red, on purpose: the one alarm on the console. The owner: red is
           allowed in the alert and emergency sections. */}
       <Panel className={cn('border-l-4 border-l-crit', real ? 'border-rule bg-card' : 'border-crit/40 bg-[#fbeae6]')}>
-        <PanelHead title={real ? 'Urgent Alerts' : 'One Urgent Alert'}
+        <PanelHead title={real ? 'Urgent alerts' : 'One urgent alert'}
           meta={real ? 'nothing open' : PROTOCOL_TIMES[0]}/>
         <p className={cn('mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.16] sm:text-head',
           real ? 'text-ink' : 'text-[#7a2314]')}>
@@ -786,23 +786,22 @@ function Urgent({ real }) {
               {ticked.length} of {PROTOCOL.length} steps done</span>
             <Button size="sm" onClick={() => setClosed(true)}
               disabled={real || closed || ticked.length < PROTOCOL.length || !what.trim()}>
-              {closed ? 'Finished' : 'Finish and write it down'}</Button>
+              {closed ? 'Finished' : 'Finish and log it'}</Button>
           </div>
           {closed && (
             <p className="mt-2.5 border-l-2 border-accent py-1 pl-3 text-fine text-ink-2">
-              Written down at {PROTOCOL_TIMES[PROTOCOL_TIMES.length - 1]}. The clock on this alert
-              has stopped.
+              Logged at {PROTOCOL_TIMES[PROTOCOL_TIMES.length - 1]}. This alert is now closed.
               <span className="mt-0.5 block text-fine text-ink-3">&ldquo;{what}&rdquo;</span></p>
           )}
         </div>
       </Panel>
 
       <div className={ROW}>
-        <SeeDetails label="See referrals and the written record"
-          sub="Every line here is kept whatever happens next">
+        <SeeDetails label="See referrals and the log"
+          sub="Every line here is kept">
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
             <Panel tone="aqua">
-              <PanelHead as="h3" title="Referrals Open"/>
+              <PanelHead as="h3" title="Open referrals"/>
               <ul className="m-0 mt-2 list-none divide-y divide-rule p-0">
                 {real && <BlankRow>No referral has been opened.</BlankRow>}
                 {referrals.map(r => (
@@ -820,9 +819,9 @@ function Urgent({ real }) {
               </div>
             </Panel>
             <Panel>
-              <PanelHead as="h3" title="Who Looked, and When" meta="nothing can be deleted"/>
+              <PanelHead as="h3" title="Who opened what today" meta="nothing can be deleted"/>
               <ul className="m-0 mt-2 list-none p-0">
-                {real && <BlankRow>Nothing has been written yet.</BlankRow>}
+                {real && <BlankRow>Nothing has been logged yet.</BlankRow>}
                 {log.map(r => (
                   <li key={r.at + r.action} className="flex flex-wrap items-baseline
                     justify-between gap-x-3 gap-y-0.5 border-b border-rule py-2.5 last:border-b-0">
@@ -834,7 +833,7 @@ function Urgent({ real }) {
                   </li>
                 ))}
               </ul>
-              <Note>Today&rsquo;s lines. No line can be edited or deleted.</Note>
+              <Note>No line can be edited or deleted.</Note>
             </Panel>
           </div>
         </SeeDetails>
@@ -849,7 +848,7 @@ const FACTS = [
   ['Raw readings a parent can see', 'Never'],
   ['Raw readings you can see', 'Only if the student agrees'],
   ['Readings sold or passed to anyone else', 'Never'],
-  ['Where a student has been, collected by default', 'No'],
+  ['Location collected by default', 'No'],
 ]
 
 function Agreed({ real }) {
@@ -881,18 +880,18 @@ function Agreed({ real }) {
 
       <div className={ROW}>
         <SeeDetails label="See how long readings are kept"
-          sub="And who has looked at anything on this console">
+          sub="And how to export a copy">
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
             <Panel tone="aqua">
-              <PanelHead as="h3" title="How Long Readings Are Kept"/>
-              <p className="mt-3 max-w-[46ch] text-fine text-ink-2">Starts at the shortest. Raw
-                readings are then deleted.</p>
+              <PanelHead as="h3" title="How long readings are kept"/>
+              <p className="mt-3 max-w-[46ch] text-fine text-ink-2">The shortest is the default.
+                Raw readings are then deleted.</p>
               <ul className="m-0 mt-3 list-none border-t border-rule p-0">
                 {RETENTION.map(d => (
-                  <BarRow key={d} label={d === RETENTION[0] ? `${d} days, the one it starts on` : `${d} days`}
+                  <BarRow key={d} label={d === RETENTION[0] ? `${d} days, the default` : `${d} days`}
                     figure={`${d} days`} pct={(d / longest) * 100}
                     tone={d === RETENTION[0] ? 'bg-accent' : 'bg-ink-3'}
-                    aria={`${d} days${d === RETENTION[0] ? ', the one it starts on' : ''}`}/>
+                    aria={`${d} days${d === RETENTION[0] ? ', the default' : ''}`}/>
                 ))}
               </ul>
               <ul className="m-0 mt-3 list-none divide-y divide-rule border-t border-rule p-0">
@@ -905,12 +904,12 @@ function Agreed({ real }) {
               </ul>
             </Panel>
             <Panel>
-              <PanelHead as="h3" title="Taking a Copy" meta="both write a line"/>
+              <PanelHead as="h3" title="Export a copy" meta="both are logged"/>
               <div className="mt-3 flex flex-wrap items-center gap-2.5">
                 <Button variant="outline" size="sm" disabled>Export the record</Button>
                 <Button variant="outline" size="sm" disabled>Export what was agreed</Button>
               </div>
-              <Note>Every export is written down.</Note>
+              <Note>Every export is logged.</Note>
             </Panel>
           </div>
         </SeeDetails>
@@ -954,7 +953,7 @@ const AddStudent = ({ go, className }) => (
 
 const NothingYet = ({ go }) => (
   <Panel tone="brand">
-    <PanelHead title="No Readings Yet"/>
+    <PanelHead title="No readings yet"/>
     <p className="mt-3 max-w-[28ch] font-display text-row font-bold leading-[1.16] text-ink
       sm:text-head">No student has paired a patch yet.</p>
     <List className="mt-3 max-w-[54ch] text-fine text-ink-2">
@@ -1006,15 +1005,15 @@ export function Pro({ go }) {
             {/* The four safeguards, behind a "?" (design spec 0f rule 2). They
                 hold on every step and nothing on this console switches any of
                 them off. */}
-            <Why label="The four safeguards on this console" className="pt-1">
+            <Why label="The four rules on this screen" className="pt-1">
               <ul className="m-0 list-none p-0">
                 {RULES.map(r => <li key={r} className="py-0.5">{r}</li>)}
               </ul>
             </Why>
           </div>
           {real
-            ? <RealNotice className="mt-2" inline>Nothing paired, nothing signed.</RealNotice>
-            : <DemoNotice className="mt-2" inline>Generated figures. No student was measured.</DemoNotice>}
+            ? <RealNotice className="mt-2" inline>No patch is paired and nothing is signed.</RealNotice>
+            : <DemoNotice className="mt-2" inline>These figures are generated. No student was measured.</DemoNotice>}
         </div>
 
         {/* The five steps are this console's whole navigation, so they stay

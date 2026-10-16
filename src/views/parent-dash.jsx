@@ -134,10 +134,10 @@ const TIER_WORD = { low:'Easier than their usual week', usual:'Inside their usua
 function heroSentence(w) {
   if (!w.days.length) return null
   const n = w.over.length
-  if (!n) return 'This week looked like an ordinary week for their body.'
-  if (n === w.days.length) return 'Every day this week was harder on their body than usual.'
-  if (n === 1) return 'One day this week was harder on their body than usual.'
-  return `${cap(word(n))} days this week were harder on their body than usual.`
+  if (!n) return 'This week looked ordinary for their body.'
+  if (n === w.days.length) return 'Every day was harder on their body than usual.'
+  if (n === 1) return 'One day was harder on their body than usual.'
+  return `${cap(word(n))} days were harder on their body than usual.`
 }
 
 /* The quieter line: which days, and how far their own range runs. Still day
@@ -247,7 +247,7 @@ function EmptyWeek() {
 const openers = day => [
   `How was ${day}?`,
   'Anything this week you want to get off your chest?',
-  'Do you want me to do something about it, or just listen?',
+  'Do you want help with it, or just to talk?',
 ]
 
 function AskAbout({ w }) {
@@ -267,7 +267,7 @@ function AskAbout({ w }) {
           <span className="font-body text-fine font-normal text-ink-3">out of 100</span></p>
       </div>
       <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Their body worked harder than usual
-        that day. Why is not something this screen knows.</p>
+        that day. The app cannot say why.</p>
       {/* The flagged day on its own leaves the other days above the range
           unnamed, and a parent who asks about one of three has been told a
           third of what this screen knows. Day grain, like everything here. */}
@@ -284,10 +284,10 @@ function AskAbout({ w }) {
             &ldquo;{o}&rdquo;</Item>
         ))}
       </List>
-      <p className="mt-2.5 max-w-[50ch] text-fine text-ink-2">Not this: &ldquo;Your patch says you
-        were stressed.&rdquo; They can see this page too.</p>
+      <p className="mt-2.5 max-w-[50ch] text-fine text-ink-2">Try not to say &ldquo;Your patch says
+        you were stressed.&rdquo; They can see this page too.</p>
       <p className="mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call
-        their {PRO_LC} or a crisis line now.</p>
+        their {PRO_LC} or a crisis line.</p>
     </>
   )
 }
@@ -297,10 +297,10 @@ function AskAbout({ w }) {
    no child on the account to call "they". */
 const NEVER = [
   [NOTES, 'Their journal stays on their phone.'],
-  [LOCATION, 'Never collected, so never shared.'],
-  ['Second-by-second readings', 'You get a day, never a moment.'],
+  [LOCATION, 'MindMap never collects it.'],
+  ['Second-by-second readings', 'You see whole days, never a moment.'],
   ['Anything they say', 'The microphone is never recorded.'],
-  ['The four signals', 'You get the one number they add up to.'],
+  ['The four signals', 'You see the one number they make.'],
 ]
 
 /* ── 5. What the school may see ─────────────────────────────────────────── */
@@ -312,9 +312,9 @@ const LEDGER = CONSENT_LEDGER.find(r => r.student === SCHOOL_CODE) ?? {}
 
 const SCOPES = [
   { id:'score',  label:`The ${SCORE} for the week`,
-    sub:'One number for a week. Never a reading.' },
+    sub:'One number for the week, never a reading.' },
   { id:'trends', label:`Whether the ${SCORE} moved week to week`,
-    sub:'Direction only, at week grain.' },
+    sub:'Up or down only, week by week.' },
   { id:'raw',    label:'Second-by-second readings',
     sub:'Off unless you and your child both turn it on.',
     /* The student holds the other half of this one, so a parent cannot widen
@@ -393,33 +393,33 @@ function SchoolSharing({ real }) {
         {/* Not a choice, but listed as a disabled control rather than omitted:
             a scope a parent cannot find reads as a scope that does not
             exist. */}
-        <ScopeRow label="A crisis alert" sub="Cannot be turned off by anybody.">
+        <ScopeRow label="A crisis alert" sub="Nobody can turn this off.">
           <Switch on disabled label="A crisis alert"/>
         </ScopeRow>
       </List>
       {real ? (
-        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">Nothing signed yet. These controls
-          go live once a guardian signs.</p>
+        <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">Nothing is signed yet. These
+          switches work once a guardian signs.</p>
       ) : (
         <>
           <dl className="m-0 mt-2.5 p-0">
-            <Row k="Signed scope" v={RECORD.scope}/>
+            <Row k="What was signed" v={RECORD.scope}/>
             <Row k="Legal basis" v={RECORD.basis}/>
             <Row k="Signed" v={RECORD.signedAt}/>
-            <Row k="Scope expires" v={LEDGER.expires ?? 'Not set'}/>
+            <Row k="Runs out" v={LEDGER.expires ?? 'Not set'}/>
           </dl>
           <p className="mt-2.5 max-w-[56ch] text-fine text-ink-2">{CONSENT_OFF}</p>
-          <p className="mt-1.5 max-w-[56ch] text-fine text-ink-3">On the school console your child
-            is {SCHOOL_CODE}. A switch here writes a dated row there.</p>
+          <p className="mt-1.5 max-w-[56ch] text-fine text-ink-3">The {PRO_LC} sees your child
+            as {SCHOOL_CODE}. Every switch here is logged.</p>
         </>
       )}
       <div className="mt-3 border-t border-rule pt-2.5">
-        <Figure label="Smallest group the school may report on" figure={K_ANONYMITY}
+        <Figure label="Smallest group that shows a figure" figure={K_ANONYMITY}
           unit="students"/>
-        <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">Under {K_ANONYMITY}, a group
-          figure returns nothing.</p>
+        <p className="mt-1.5 max-w-[48ch] text-fine text-ink-2">A group under {K_ANONYMITY} shows
+          nothing.</p>
         <dl className="m-0 mt-2.5 p-0">
-          <Row k="Consented students across the school" v={String(SCHOOL_N)}/>
+          <Row k="Students with consent across the school" v={String(SCHOOL_N)}/>
         </dl>
       </div>
     </>
@@ -436,8 +436,8 @@ function RecordLog({ real }) {
   return (
     <>
       {real ? (
-        <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">No record yet, so nothing
-          logged.</p>
+        <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">There is no record yet, so nothing
+          is logged.</p>
       ) : (
         <ul className="m-0 mt-1.5 list-none p-0">
           {MY_ROWS.map(r => (
@@ -452,7 +452,7 @@ function RecordLog({ real }) {
           ))}
         </ul>
       )}
-      <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Every open writes a row. No row can
+      <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Every open is logged. No row can
         be deleted.</p>
     </>
   )
@@ -480,8 +480,8 @@ function CrisisPath({ real }) {
           a step would be a measurement nobody made. */}
       {!real && (
         <div className="mt-2.5 border-b border-rule pb-2.5">
-          <Figure label="From the alert to the call to you" figure={TO_GUARDIAN} unit="minutes"/>
-          <p className="mt-1 max-w-[40ch] text-fine text-ink-2">In the one run logged.</p>
+          <Figure label="Time from the alert to your call" figure={TO_GUARDIAN} unit="minutes"/>
+          <p className="mt-1 max-w-[40ch] text-fine text-ink-2">This comes from the one logged run.</p>
         </div>
       )}
       <ol className={cn('m-0 list-none p-0', real && 'mt-1.5')}>
@@ -501,7 +501,7 @@ function CrisisPath({ real }) {
         ))}
       </ol>
       <p className="mt-2.5 max-w-[54ch] text-fine text-ink-2">Step {GUARDIAN_STEP + 1} is the call
-        to you. Every step is written to the log.</p>
+        to you. Every step is logged.</p>
     </>
   )
 }
@@ -520,7 +520,7 @@ function PatchStatus() {
       </dl>
       <List className="mt-2.5">
         {['Pair a patch on your child’s phone.',
-          'Check it is charged and on the upper arm.',
+          'Check the patch sits on the upper arm.',
           'This page fills after the first full week.'].map(s => (
           <Item key={s} className="max-w-[52ch] text-fine text-ink-2">{s}</Item>
         ))}
@@ -543,7 +543,7 @@ const ACTIONS = [
 function NeverShown({ go, openTab }) {
   return (
     <Panel tone="beam">
-      <PanelHead title="Never Shown to a Parent" meta="no export"/>
+      <PanelHead title="What you never see" meta="no export"/>
       <List className="mt-2.5 gap-0">
         {NEVER.map(([t, s]) => (
           <Item key={t} marker="none" className="border-b border-rule py-2">
@@ -557,7 +557,7 @@ function NeverShown({ go, openTab }) {
           pt-2.5 text-left">
         <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
           transition-colors duration-150 groupHoverOnly:text-accent-ink">
-          All three audiences, side by side</span>
+          Compare what each audience sees</span>
         <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
       </button>
     </Panel>
@@ -586,18 +586,18 @@ export function ParentDash({ go, openTab }) {
           <Panel className="flex flex-col justify-center">
             <div className="flex flex-col items-center text-center">
               <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
-                tracking-tight text-ink sm:text-head">Nothing measured this week.</p>
+                tracking-tight text-ink sm:text-head">Nothing was measured this week.</p>
               <Why label="Why there is no score" align="center" className="mt-2">
-                A {SCORE} compares your child with their own last two weeks. An empty week is not
-                a calm week. No dial is drawn.
+                Each day is scored against their own last two weeks. An empty week is not
+                a calm week.
               </Why>
             </div>
             <div className="mt-3 border-t border-rule pt-2.5">
-              <RealNotice>Nothing paired yet.</RealNotice>
+              <RealNotice>No patch is paired yet.</RealNotice>
             </div>
           </Panel>
           <Panel tone="aqua">
-            <PanelHead title="Seven Days" meta="0 of 7"/>
+            <PanelHead title="Each day" meta="0 of 7"/>
             <div className="mt-1.5"><EmptyWeek/></div>
           </Panel>
         </div>
@@ -605,19 +605,19 @@ export function ParentDash({ go, openTab }) {
         <SeeDetails label="See details">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
             <Panel className="h-full border-t-2 border-t-crit">
-              <PanelHead title="Patch Status" meta="not reporting"/>
+              <PanelHead title="Patch status" meta="not reporting"/>
               <PatchStatus/>
             </Panel>
             <Panel tone="brand" className="h-full">
-              <PanelHead title="What the School May See" meta="nothing signed"/>
+              <PanelHead title="What the Medical Professional sees" meta="nothing signed"/>
               <SchoolSharing real={real}/>
             </Panel>
             <Panel tone="deep" className="h-full">
-              <PanelHead title="Who Opened the Record" meta="append only"/>
+              <PanelHead title="Who opened the record" meta="nothing deleted"/>
               <RecordLog real={real}/>
             </Panel>
             <Panel className="h-full border-t-2 border-t-crit">
-              <PanelHead title="The Crisis Alert Path" meta="five steps"/>
+              <PanelHead title="Steps after a crisis alert" meta="five steps"/>
               <CrisisPath real={real}/>
             </Panel>
             <div className="lg:col-span-2"><NeverShown go={go} openTab={openTab}/></div>
@@ -646,12 +646,12 @@ export function ParentDash({ go, openTab }) {
               {TIER_WORD[tier]}
             </p>
             <Why label="What this week's score means" align="center" className="mt-2">
-              {heroDetail(w)} You are shown one day at a time, nothing finer.
+              {heroDetail(w)} You see one day at a time, never a moment.
             </Why>
           </div>
         </Panel>
         <Panel tone="aqua" className="flex flex-col">
-          <PanelHead title="Each Day" meta={`${measured} of 7`}/>
+          <PanelHead title="Each day" meta={`${measured} of 7`}/>
           <WeekChart data={DATA.week} band={DATA.weekBand}/>
           <dl className="m-0 mt-auto border-t border-rule p-0 pt-1">
             {w.hiDay && <Row k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
@@ -666,7 +666,7 @@ export function ParentDash({ go, openTab }) {
       <SeeDetails label="See details">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <Panel tone="aqua" className="h-full">
-            <PanelHead title="Days Above the Range" meta={`${w.band.lo} to ${w.band.hi}`}/>
+            <PanelHead title="Days above their usual" meta={`usual is ${w.band.lo} to ${w.band.hi}`}/>
             <div className="mt-2.5">
               <Figure label="This week" figure={w.over.length} unit={`of ${measured} days`}/>
             </div>
@@ -674,7 +674,7 @@ export function ParentDash({ go, openTab }) {
               label={`${cap(word(w.over.length))} of ${word(measured)} days above their usual range: `
                 + `${list(w.over.map(d => d.name))}.`}/>
             <p className="mt-1.5 text-fine text-ink-2">
-              {w.over.length ? list(w.over.map(d => d.name)) : 'No day above their range'}</p>
+              {w.over.length ? list(w.over.map(d => d.name)) : 'No day sat above their usual'}</p>
             {w.peak && (
               <PairBars top={100}
                 aria={`${w.peak.name} scored ${w.peak.v} out of 100, against their usual day of ${w.usual}.`}
@@ -686,37 +686,37 @@ export function ParentDash({ go, openTab }) {
           </Panel>
 
           <Panel tone="deep" className="h-full">
-            <PanelHead title="Wear and Still Time" meta="movement channel"/>
+            <PanelHead title="Wear and rest" meta="from movement"/>
             <div className="mt-2.5">
               <Figure label="Days the patch reported" figure={measured} unit={`of ${DAYS.length}`}/>
             </div>
             <DayStrip tone="bg-calm" on={DAYS.map(k => w.days.some(d => d.key === k))}
               label={`The patch reported on ${word(measured)} of ${word(DAYS.length)} days.`}/>
             <div className="mt-3 border-t border-rule pt-2.5">
-              <Figure label={`Still time, ${word(SLEEP.nights)} short nights`} pre="about"
+              <Figure label={`Rest on ${word(SLEEP.nights)} short nights`} pre="about"
                 figure={SLEEP.hours} unit="h a night"/>
               <SleepBars/>
-              <p className="mt-1.5 max-w-[44ch] text-fine text-ink-2">Off the movement channel,
-                not written down.</p>
+              <p className="mt-1.5 max-w-[44ch] text-fine text-ink-2">Rest is estimated from
+                movement, so both figures say about.</p>
             </div>
           </Panel>
 
           <Panel tone="brand" className="h-full">
-            <PanelHead title="What to Ask About" meta={w.peak ? w.peak.name : 'nothing flagged'}/>
+            <PanelHead title="What to ask about" meta={w.peak ? w.peak.name : 'nothing flagged'}/>
             <AskAbout w={w}/>
           </Panel>
 
           <Panel className="h-full">
-            <PanelHead title="What the School May See" meta="signed scope"/>
+            <PanelHead title="What the Medical Professional sees" meta="what was signed"/>
             <SchoolSharing real={real}/>
           </Panel>
 
           <Panel tone="aqua" className="h-full">
-            <PanelHead title="Who Opened the Record" meta="append only"/>
+            <PanelHead title="Who opened the record" meta="nothing deleted"/>
             <RecordLog real={real}/>
           </Panel>
           <Panel className="h-full border-t-2 border-t-crit">
-            <PanelHead title="The Crisis Alert Path" meta={`${PROTOCOL.length} steps`}/>
+            <PanelHead title="Steps after a crisis alert" meta={`${PROTOCOL.length} steps`}/>
             <CrisisPath real={real}/>
           </Panel>
 

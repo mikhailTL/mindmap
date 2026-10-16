@@ -84,7 +84,7 @@ const LANGS = [
 const COPY = {
   en: {
     title: 'Get Help',
-    intro: 'Other organisations’ numbers. No reading or account needed.',
+    intro: 'These numbers belong to other organisations. You do not need a reading or an account.',
     readAloud: 'Read aloud',
     stop: 'Stop',
     speaking: 'Reading the list aloud.',
@@ -94,12 +94,12 @@ const COPY = {
     theirPage: 'Their page',
     also: 'Also',
     verified: 'Checked on ',
-    drift: 'Numbers change. Each row links the service’s own page.',
+    drift: 'Numbers can change. Each row links to the service’s own page.',
     getHelp: 'Get help',
   },
   es: {
     title: 'Pedir ayuda',
-    intro: 'Números de otras organizaciones. No hace falta una lectura ni una cuenta.',
+    intro: 'Estos números son de otras organizaciones. No necesitas una lectura ni una cuenta.',
     readAloud: 'Leer en voz alta',
     stop: 'Detener',
     speaking: 'Leyendo la lista en voz alta.',
@@ -109,7 +109,7 @@ const COPY = {
     theirPage: 'Su página',
     also: 'Además',
     verified: 'Comprobado el ',
-    drift: 'Los números cambian. Cada fila enlaza la página del servicio.',
+    drift: 'Los números pueden cambiar. Cada fila enlaza a la página del servicio.',
     getHelp: 'Pedir ayuda',
   },
 }
@@ -134,22 +134,22 @@ function verifiedDate(code) {
    row's own `what` and is still correct, only longer. */
 const LINE = {
   en: {
-    '988': 'Any crisis, including thoughts of suicide.',
-    ctl: 'Anything at all, by message rather than by voice.',
-    teenline: 'Answered by trained teenagers.',
-    trevor: 'For LGBTQ young people.',
-    trans: 'A peer line for trans and questioning people.',
-    eating: 'Eating and food. Not a 24 hour crisis line, per their page.',
-    samhsa: 'Referrals to treatment nearby, rather than a crisis line.',
+    '988': 'Helps with any crisis, including thoughts of suicide.',
+    ctl: 'Helps with anything, by text message instead of voice.',
+    teenline: 'Trained teenagers answer the line.',
+    trevor: 'Supports LGBTQ young people.',
+    trans: 'Run by trans people, for trans and questioning people.',
+    eating: 'Helps with eating and food. They are not a crisis line.',
+    samhsa: 'Refers you to treatment nearby. They are not a crisis line.',
   },
   es: {
-    '988': 'Cualquier crisis, incluidos los pensamientos de suicidio.',
-    ctl: 'Cualquier tema, por mensaje en vez de por voz.',
-    teenline: 'Atendida por adolescentes capacitados.',
-    trevor: 'Para jóvenes LGBTQ.',
-    trans: 'Una línea de pares para personas trans y en cuestionamiento.',
-    eating: 'Alimentación y comida. No es una línea de crisis de 24 horas.',
-    samhsa: 'Referencias a tratamiento cercano, no es una línea de crisis.',
+    '988': 'Ayuda con cualquier crisis, incluidos los pensamientos de suicidio.',
+    ctl: 'Ayuda con cualquier tema, por mensaje en vez de por voz.',
+    teenline: 'Adolescentes capacitados atienden la línea.',
+    trevor: 'Apoya a jóvenes LGBTQ.',
+    trans: 'Atendida por personas trans, para personas trans y en cuestionamiento.',
+    eating: 'Ayuda con la alimentación y la comida. No es una línea de crisis.',
+    samhsa: 'Te refiere a tratamiento cercano. No es una línea de crisis.',
   },
 }
 

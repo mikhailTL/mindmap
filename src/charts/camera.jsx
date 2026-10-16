@@ -109,7 +109,7 @@ export const CAMERA_STEPS = [
     lines: ['Blood absorbs it. Each beat', 'changes how much.'],
     to: [[486, 82]] },
   { id: 'optics', n: '03', elbow: 400,
-    lines: ['Back through the cover glass.', 'The lens focuses it.'],
+    lines: ['Light comes back through the', 'glass. The lens focuses it.'],
     to: [[460, ROW.glass], [460, ROW.lens]] },
   { id: 'ir', n: '04', elbow: 408,
     lines: ['The infrared filter drops', 'invisible light.'],
@@ -401,7 +401,7 @@ export function CameraModule({ className }) {
             role="img"
             aria-label="An exploded view of a phone's rear camera, numbered along the light path.
               The flash shines into the side of a fingertip. Blood absorbs some of that light,
-              more with every heartbeat. What comes back crosses the cover glass; the lens
+              more with every heartbeat. What comes back crosses the cover glass, and the lens
               focuses it. The infrared filter drops the light the eye cannot see. The image
               sensor reads it thirty times a second. That number rising and falling is the pulse.">
             {/* Keyframes live in the drawing, not input.css: the class names
@@ -454,7 +454,7 @@ export function CameraModule({ className }) {
             <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
                      L142 14 L150 30 L158 14 L180 14 L202 14 L210 30 L218 14"
               fill="none" stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="13">one dip, one beat</text>
+            <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="13">Each dip is one heartbeat.</text>
           </svg>
         </figcaption>
         )}
@@ -465,10 +465,10 @@ export function CameraModule({ className }) {
 
 /* ── What the phone gets, and what it does not ───────────────────────────── */
 const COVERAGE = [
-  { id:'heart', name:'Heart rate',  on:true,  note:'Camera.' },
-  { id:'move',  name:'Movement',    on:true,  note:'Phone.' },
-  { id:'sweat', name:'Sweat',       on:false, note:'Patch only.' },
-  { id:'temp',  name:'Skin temperature', on:false, note:'Patch only.' },
+  { id:'heart', name:'Heart rate',  on:true,  note:'The camera reads this.' },
+  { id:'move',  name:'Movement',    on:true,  note:'The phone reads this.' },
+  { id:'sweat', name:'Sweat',       on:false, note:'Only the patch reads this.' },
+  { id:'temp',  name:'Skin temperature', on:false, note:'Only the patch reads this.' },
 ]
 
 export function SignalCoverage({ className }) {
@@ -523,7 +523,7 @@ function GripFig() {
         <text x="116" y="61">lens</text>
       </g>
       <text x="6" y="90" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
-        fingertip pad, resting
+        the fingertip pad rests here
       </text>
     </svg>
   )
@@ -547,7 +547,7 @@ function RestArt() {
       <ellipse cx="62" cy="57" rx="10" ry="3.2" fill={WASH} stroke={INK2} strokeWidth="1.1"/>
       <circle cx="62" cy="57" r="2.4" fill={ACCENT}/>
       <text x="4" y="88" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="12.5">
-        table or lap, both down
+        phone and forearm on a table
       </text>
     </g>
   )
@@ -584,7 +584,7 @@ function QuietFig() {
         <line x1="40" y1="74" x2="150" y2="74"/>
       </g>
       <text x="95" y="90" textAnchor="middle" fill={INK3}
-        fontFamily="Chivo, sans-serif" fontSize="12.5">an arm’s length</text>
+        fontFamily="Chivo, sans-serif" fontSize="12.5">about an arm’s length away</text>
     </svg>
   )
 }

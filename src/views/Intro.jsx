@@ -61,14 +61,14 @@ export function replayIntro() {}
  * appears inside a plate; paper, mist, rule and ruling have no contrast left.
  */
 const BEATS = [
-  { ms: 6300, bg: '#e8f6f4', head: 'One number for your day.' },
-  { ms: 7000, bg: '#dcf0ef', head: 'The patch goes on your arm.' },
-  { ms: 5200, bg: '#e3f2ed', head: 'Your usual day is marked.',
-    sub: 'So an ordinary day reads as ordinary.' },
-  { ms: 6300, bg: '#eef7f3', head: 'You choose who sees it.',
+  { ms: 6300, bg: '#e8f6f4', head: 'MindMap gives you one number for your day.' },
+  { ms: 7000, bg: '#dcf0ef', head: 'The patch sticks to your upper arm.' },
+  { ms: 5200, bg: '#e3f2ed', head: 'The app learns your usual day.',
+    sub: 'An ordinary day for you shows as ordinary.' },
+  { ms: 6300, bg: '#eef7f3', head: 'You choose who sees your score.',
     sub: 'Nothing leaves your phone unless you say so.' },
   { ms: 5000, bg: '#eaf6f2', head: 'MindMap',
-    sub: 'A patch, or six questions. One score a day.' },
+    sub: 'Wear the patch, or answer six questions. Either way you get one score a day.' },
 ]
 const LAST = BEATS.length - 1
 const EXIT_MS = 620          // must match the opacity transition on the overlay
@@ -784,19 +784,19 @@ export function Intro({ onDone }) {
    over the app's own tab bar so the bar stays visible while it is described. */
 const STOPS = [
   { view: 'site', name: 'Overview',
-    line: 'The front page: what MindMap is, who it is for, and the figures behind it.' },
+    line: 'The front page says what MindMap is and who it is for.' },
   { view: 'patch', name: 'The patch',
-    line: 'A patch for the upper arm, the four signals it records, and what is inside it.' },
+    line: 'The patch sticks to your upper arm and records four body signals.' },
   { view: 'methods', name: 'How it works',
-    line: 'How the four signals become one Mind Score, on a scale of 0 to 100.' },
+    line: 'Four signals become one Mind Score, from 0 to 100.' },
   { view: 'app-student', name: 'The student screen', inApp: true,
-    line: 'The score for today, the four signals behind it, and the week so far.' },
+    line: 'The student sees today’s score, the four signals behind it, and the week so far.' },
   { view: 'shared', name: 'Sharing', inApp: true,
-    line: 'The student picks what leaves the phone, field by field, and can switch it off.' },
+    line: 'The student picks what leaves the phone and can switch sharing off.' },
   { view: 'app-parent', name: 'The parent screen', inApp: true,
-    line: 'A parent sees one value a day. Never a reading, never Notes, never Location.' },
+    line: 'A parent sees one score a day, and never a raw reading, Notes or Location.' },
   { view: 'app-pro', name: 'The Medical Professional console', inApp: true,
-    line: 'Who to check in with this week, across the students who agreed to be seen.' },
+    line: 'The Medical Professional sees which students to check in with this week, among those who agreed to share.' },
 ]
 
 const DWELL = 5800        // how long a page stop holds before the next one
@@ -949,10 +949,10 @@ export function GuidedTour({ go, onDone }) {
   }, [])
 
   const stop = STOPS[step]
-  const title = stop ? stop.name : 'That is the whole site'
+  const title = stop ? stop.name : 'You have seen the whole site'
   const line = stop
     ? stop.line
-    : 'The menu at the top of every page opens any of these again, in any order.'
+    : 'The menu at the top of every page opens any of these pages again.'
 
   return (
     <>

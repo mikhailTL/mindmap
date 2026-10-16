@@ -72,11 +72,11 @@ export const Face = (
    not modelled, so 'pcb' is the tray, not the chip. */
 export const LAYERS = [
   { i:0, part:'pod', art:Shell, title:'Printed shell',
-    body:'Charging slot in the side.' },
+    body:'The shell has a charging slot in the side.' },
   { i:1, part:'pcb', art:Board, title:'Electronics pod',
-    body:'Takes a XIAO nRF52840 Sense board, bought not designed.' },
+    body:'The pod holds a XIAO nRF52840 Sense board, which we bought rather than designed.' },
   { i:2, part:'base', art:Face,  title:'Skin-side base',
-    body:'Sensor window and adhesive. Three signals read through it.' },
+    body:'The base holds the sensor window and the adhesive. The signals read through it.' },
 ]
 
 /* Owns its own scroll motion via ScrollScene. Do not drive `#stack` or `.lyr`
@@ -119,7 +119,7 @@ function Sheet({ layer, size, progress, narrow }) {
 
 export function ExplodedStack({
   className,
-  caption = 'Drawing · engineering labels',
+  caption = 'A drawing with engineering labels',
   shift = '0%, 0%',
   /* 76% below sm: rotation widens the painted box past the element box, and
      84% overran the left edge by 4px at 390. */

@@ -76,7 +76,7 @@ function TheirView({ audience, state }) {
         {SHARING[audience].who} would see
       </p>
       {on.length === 0 ? (
-        <p className="mt-1 text-fine text-ink-2">Nothing.</p>
+        <p className="mt-1 text-fine text-ink-2">Nothing is shared.</p>
       ) : (
         <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
           {on.map(f => (
@@ -99,7 +99,7 @@ function RowMeanings({ audience }) {
   return (
     <>
       <p className="font-display font-bold text-ink">
-        {audience === 'parent' ? 'One figure a day at most.' : 'What the console may hold.'}
+        {audience === 'parent' ? 'A parent sees one figure a day at most.' : 'A Medical Professional sees only what you share.'}
       </p>
       <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         {spec.fields.map(f => (
@@ -117,7 +117,7 @@ function RowMeanings({ audience }) {
         {audience === 'pro' && (
           <>
             <dt className="font-medium text-ink">Crisis alerts</dt>
-            <dd className="m-0">Consent does not cover a crisis. What follows is their own protocol.</dd>
+            <dd className="m-0">Consent does not cover a crisis. Their own protocol decides what follows.</dd>
           </>
         )}
       </dl>
@@ -145,7 +145,7 @@ function Audience({ audience, state }) {
             label={label(audience, f)}
             checked={mine[f.key]}
             disabled={blocked}
-            note={blocked ? `Needs “${label(audience, parent)}” first.` : undefined}
+            note={blocked ? `Turn on “${label(audience, parent)}” first.` : undefined}
             onChange={on => setShared(audience, f.key, on)}/>
         )
       })}
@@ -155,7 +155,7 @@ function Audience({ audience, state }) {
            named rather than its number: a threshold printed on a student's
            settings screen is a clinical cut-off, and this is not the screen
            for one. */
-        <FixedRow label="Crisis alerts" hint={`Always reaches a ${PRO_LC}. No switch.`}/>
+        <FixedRow label="Crisis alerts" hint={`A crisis alert always reaches a ${PRO_LC}.`}/>
       )}
       <TheirView audience={audience} state={state}/>
     </div>
@@ -189,7 +189,7 @@ export function SharingControls({ className }) {
               <Cross aria-hidden className="size-4"/>Turn everything off
             </ArmedButton>
             <Why label="How sharing works" className="ml-auto">
-              Every switch starts off. Turn any off again, at any time.
+              Every switch starts off. You can turn any off again, any time.
             </Why>
           </div>
         </Panel>
@@ -220,9 +220,9 @@ export function SharingControls({ className }) {
               options={RETENTION.map(d => ({
                 value: d,
                 label: `${d} days`,
-                hint: d === 7 ? 'Shortest. Where this starts.'
-                  : d === 30 ? 'A month of samples.'
-                  : 'A term of samples. The longest.',
+                hint: d === 7 ? 'This is the shortest option, and the default.'
+                  : d === 30 ? 'Keeps a month of samples.'
+                  : 'Keeps a term of samples, the longest option.',
               }))}/>
             <div className="border-t border-rule px-4 py-3">
               <p className="max-w-[62ch] text-fine text-ink-3">
@@ -246,7 +246,7 @@ export function SharingControls({ className }) {
                 ))}
               </ul>
               <div className="border-t border-rule px-4 py-3">
-                <p className="max-w-[62ch] text-fine text-ink-3">Kept on this phone. Sent nowhere.</p>
+                <p className="max-w-[62ch] text-fine text-ink-3">This log stays on your phone and is never sent.</p>
               </div>
             </Panel>
           </ScrollIn>

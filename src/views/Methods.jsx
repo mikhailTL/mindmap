@@ -51,29 +51,30 @@ const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
    the range spec 0f rule 7 asks for; the dark one is the network, so the one
    drawing with real data on it sits on the one ground that sets it apart. */
 const CATEGORIES = [
-  { id: 'hardware', tab: 'Hardware', tone: 'paper', ground: 'bg-paper',
-    title: 'A Patch on the Upper Arm',
-    line: 'Reads four body signals and sends them to the phone.',
+  { id: 'hardware', tab: 'The patch', tone: 'paper', ground: 'bg-paper',
+    title: 'A patch on your upper arm',
+    line: 'The patch reads four body signals and sends them to your phone.',
     rows: [
-      ['Measures', `${SIGNAL_NAMES[0]}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
-      ['Worn', 'On the upper arm, inside a small printed shell.'],
-      ['Connects', 'To the phone over Bluetooth. No wires.'],
-      ['Today', 'A design, not a built unit. Patch readings on this site are generated.'],
+      ['What the patch measures', `The patch measures ${SIGNAL_NAMES[0]}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
+      ['Where the patch goes', 'The patch sticks to your upper arm, inside a small printed shell.'],
+      ['How the patch connects', 'The patch pairs with your phone over Bluetooth, with no wires.'],
+      ['Status today', 'The patch is a design, not a built unit. Patch readings on this site are generated.'],
     ],
     figure: PatchLink },
-  { id: 'ai', tab: 'AI', tone: 'card', ground: 'bg-aqua',
+  { id: 'ai', tab: 'MindMap AI', tone: 'card', ground: 'bg-aqua',
     title: 'MindMap AI',
-    line: 'A language model that answers questions and never diagnoses.',
+    line: 'MindMap AI answers questions in plain words and never diagnoses.',
     rows: [
-      ['Answers', `Questions about stress, sleep, school and the ${SCORE}, in plain words.`],
-      ['Follows', 'Guidance from SAMHSA, NIMH, AAP and CDC.'],
-      ['Speaks to', `Teens, parents and ${PRO_LC}s, each differently.`],
-      ['Never', 'Diagnoses, scores severity or names a medication.'],
-      ['In a crisis', 'Gives a crisis line first, before anything else.'],
+      ['Answers', `MindMap AI answers questions about stress, sleep, school and the ${SCORE}.`],
+      ['Follows', 'The answers follow guidance from SAMHSA, NIMH, AAP and CDC.'],
+      ['Speaks to', 'Teens, parents and Medical Professionals each get a different voice.'],
+      ['Never', 'MindMap AI never diagnoses, scores severity or names a medication.'],
+      ['In a crisis', 'In a crisis, MindMap AI gives a crisis line before anything else.'],
+      ['Status today', 'MindMap AI is not connected yet, so nothing on this site answers a question.'],
     ],
     figure: FrameworkFan },
   { id: 'ml', tab: 'Machine Learning', tone: 'ink', ground: 'bg-ink',
-    title: 'A Novel Neural Network',
+    title: 'A novel neural network',
     line: `A novel and never before seen approach to turning four body signals into one ${SCORE}.`,
     rows: [
       ['Learns', `Its own curve for each signal, with the last ${MEMORY_MIN} minutes in memory.`],
@@ -86,15 +87,15 @@ const CATEGORIES = [
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkPath },
-  { id: 'software', tab: 'Other Software', tone: 'card', ground: 'bg-beam-wash',
-    title: 'The App and the Site',
-    line: 'Everything runs on the phone. Nothing is stored anywhere else.',
+  { id: 'software', tab: 'The app and the site', tone: 'card', ground: 'bg-beam-wash',
+    title: 'The app and the site',
+    line: 'Everything runs on your phone, and nothing is stored anywhere else.',
     rows: [
-      ['Built with', 'React, running in the browser.'],
-      ['Phone reading', 'Camera for 30 seconds, microphone for 15. No patch needed.'],
+      ['Built with', 'The app is built with React and runs in the browser.'],
+      ['Reading without the patch', 'The camera reads for 30 seconds and the microphone for 15. No patch is needed.'],
       ['Privacy', `Parents see one day at a time. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
-      ['Toolkit', `${TOOLS} activities, each on a page of its own.`],
-      ['Offline', 'Readings and the baseline stay on the phone.'],
+      ['Toolkit', `The toolkit has ${TOOLS} activities, each on its own page.`],
+      ['Offline', 'Your readings and your baseline stay on your phone.'],
     ],
     figure: ConsentRules },
 ]
@@ -132,7 +133,7 @@ export function Methods({ go }) {
               <div className="min-w-0">
                 <p className="font-body text-ui font-semibold text-accent-ink">How it works</p>
                 <h1 className="mt-2 font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-                  Four Parts of MindMap
+                  The four parts of MindMap
                 </h1>
               </div>
               <Button variant="outline" size="sm" onClick={() => go('check')}>

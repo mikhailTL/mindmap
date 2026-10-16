@@ -162,7 +162,7 @@ export function WirelessLink({ className }) {
 
       <g className="font-mono" fontSize="12.5" fill={INK3}>
         <text x="232" y="62" textAnchor="middle">Bluetooth Low Energy</text>
-        <text x="232" y="212" textAnchor="middle">no cable, no host computer</text>
+        <text x="232" y="212" textAnchor="middle">no cable, no computer</text>
       </g>
       <g className="font-display" fontSize="15" fontWeight="700" fill={INK}>
         <text x={cx} y="196" textAnchor="middle">The patch</text>
@@ -236,8 +236,8 @@ function PatchWake({ height }) {
       <circle cx="30" cy="246" r="2.6" fill={RULING}/>
       <g className="font-mono" fontSize="12.5" fill={INK3}>
         <text x="18" y="268">charging slot</text>
-        <text x="132" y="76">advertising</text>
-        <text x="132" y="94">over Bluetooth</text>
+        <text x="132" y="76">sending a</text>
+        <text x="132" y="94">Bluetooth signal</text>
       </g>
     </svg>
   )
@@ -273,7 +273,7 @@ function AppHome({ tap = false }) {
       <p style={{ margin:0, fontFamily:MONO, fontSize:17, color:INK3 }}>MindMap</p>
       <p style={{ ...H1, marginTop:16 }}>Pair your patch.</p>
       <p style={{ margin:'10px 0 0', fontFamily:BODY, fontSize:19, lineHeight:1.4, color:INK2 }}>
-        Bluetooth Low Energy. Nothing to install first.
+        The patch connects over Bluetooth. Nothing to install.
       </p>
       {/* The screen used to be a title, a line and then a button pushed to the
           bottom by marginTop:auto, which left the middle of a 852-point phone
@@ -306,7 +306,7 @@ function AppHome({ tap = false }) {
         </div>
         <p style={{ margin:'14px 0 0', textAlign:'center', fontFamily:DISPLAY, fontWeight:500,
           fontSize:19, color:ACCENT }}>
-          {ITEMS.length} questions instead
+          Answer {ITEMS.length} questions instead
         </p>
         {tap && (
           <span aria-hidden style={{ position:'absolute', left:'50%', top:9, width:56, height:56,
@@ -345,7 +345,7 @@ function Chooser({ picked = false }) {
           </span>
         </div>
         <p style={{ margin:'12px 0 0', fontFamily:MONO, fontSize:15, color:INK3 }}>
-          filtered to one service
+          only the patch is listed
         </p>
         <div style={{ marginTop:18, display:'flex', gap:12 }}>
           <div style={{ flex:1, borderRadius:12, border:`1px solid ${INK}`, padding:'13px 0',
@@ -371,7 +371,7 @@ function Streaming() {
     <Pad>
       <p style={H1}>Connected to the patch.</p>
       <p style={{ margin:'10px 0 0', fontFamily:MONO, fontSize:18, color:ACCENT }}>
-        Streaming at 1 Hz.
+        Readings arrive once a second.
       </p>
       <div style={{ marginTop:22, borderRadius:14, background:INK, padding:'18px 16px' }}>
         {SENSOR_ORDER.map((id, i) => {
@@ -391,7 +391,7 @@ function Streaming() {
         })}
       </div>
       <p style={{ margin:'16px 0 0', fontFamily:BODY, fontSize:18, lineHeight:1.4, color:INK2 }}>
-        Four channels, once a second, all day.
+        The patch sends four signals once a second, all day.
       </p>
     </Pad>
   )
@@ -408,7 +408,7 @@ const PHONE_H = Math.round((852 + 20) * SCALE)
 const SCREENS = {
   open: {
     bg: PAPER,
-    label: 'The MindMap app open in a browser, listing the four channels with no reading against any of them, above one button reading Connect to the patch.',
+    label: 'The MindMap app open in a browser, listing the four signals with no reading against any of them, above one button reading Connect to the patch.',
     node: <AppHome/>,
   },
   tap: {
@@ -429,8 +429,8 @@ const SCREENS = {
   },
   stream: {
     bg: PAPER,
-    label: 'The app reading Connected to the patch, Streaming at 1 Hz, above the four channels: '
-      + 'heart, sweat, temperature and movement.',
+    label: 'The app reading Connected to the patch, readings arrive once a second, above the four '
+      + 'signals: heart, sweat, temperature and movement.',
     node: <Streaming/>,
   },
 }

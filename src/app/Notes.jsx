@@ -34,21 +34,16 @@ export function NotesJournal({ className }) {
   return (
     <div className={cn('wrap', className)}>
       <div className="mx-auto w-full max-w-[42rem]">
-        <h2 className="font-display font-bold text-ink">{NOTES} Replaced By MindMap AI</h2>
+        <h2 className="font-display font-bold text-ink">{NOTES} has moved</h2>
         <section className="mt-3 rounded-panel border border-rule bg-card p-4">
           <p className="max-w-[58ch] text-meta text-ink-2">
-            The journal is gone. The writing surface on all three screens is MindMap AI,
-            which answers rather than only storing, and which reaches a language model
-            through MindMap&rsquo;s own server.
+            The journal is gone. You can now write to MindMap AI instead.
           </p>
           <p className="mt-2 max-w-[58ch] text-fine text-ink-3">
-            The two are not the same thing in one respect worth knowing. A note never left
-            the phone. A message to MindMap AI does leave it, and only when Send is
-            pressed. That screen says so above the field, every time.
+            A note never left your phone. Messages to MindMap AI go to MindMap&rsquo;s own server.
           </p>
           <p className="mt-2 max-w-[58ch] text-fine text-ink-3">
-            Anything written in the old journal stayed in this browser and was never sent
-            to a parent, a {PRO_LC} or to us, because there was no address for it to go to.
+            Old notes stayed in this browser. No parent or {PRO_LC} ever saw them.
           </p>
           <a href="#/ai"
             className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border
@@ -58,10 +53,10 @@ export function NotesJournal({ className }) {
           </a>
         </section>
         <section className="mt-3 rounded-panel border border-rule bg-aqua p-4">
-          <h3 className="font-display font-bold text-ink">A Person Instead</h3>
+          <h3 className="font-display font-bold text-ink">Talk to a person</h3>
           <p className="mt-1 max-w-[52ch] text-fine text-ink-2">
-            Writing something down is not the same as telling somebody. The help lines
-            answer with no reading, no patch and no account.
+            Writing is not the same as telling somebody. The help lines need no reading,
+            patch or account.
           </p>
           <GetHelp className="mt-2.5"/>
         </section>

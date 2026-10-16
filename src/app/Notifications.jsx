@@ -35,17 +35,17 @@ const DAY_CHIPS = DAYS.map(d => ({ value: d.n, label: d.short, full: d.full }))
 const LOCK_SHORT = { name: 'Name only', plain: 'Plain reminder', score: `Reminder and ${SCORE}` }
 const LOCK_WHY = {
   name: 'Only the app name shows.',
-  plain: 'One neutral line. No figure.',
-  score: `Your ${SCORE}, readable without unlocking.`,
+  plain: 'One plain line, with no score.',
+  score: `Your ${SCORE} shows without unlocking.`,
 }
 const LOCK_OPTIONS = LOCK_LEVELS.map(v => ({ value: v, label: LOCK_SHORT[v] || LOCK_COPY[v].label }))
 
 /* The four promises. One line each, none a paragraph. */
 const PROMISES = [
-  ['A reminder', 'A line on your phone, at your time.'],
-  ['Not a score', 'No streaks, no tallies, no awards.'],
-  ['Not a check', 'A missed day is never mentioned.'],
-  ['Not a message', 'Turning reminders on or off tells nobody.'],
+  ['One line', 'A reminder is one line, at your time.'],
+  ['No streaks', 'There are no streaks, tallies or awards.'],
+  ['Missed days', 'A missed day is never mentioned.'],
+  ['Private', 'Turning reminders on or off tells nobody.'],
 ]
 
 /* 20:30 reads as 8:30 pm here, because nothing else in the app speaks in 24
@@ -134,11 +134,11 @@ export function NotificationSettings({ score = null, className }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
             <Why label="How reminders work" className="ml-auto">
               <ul className="m-0 list-disc pl-4">
-                <li>One reminder, at the time you pick.</li>
-                <li>Off until you turn them on.</li>
-                <li>Held overnight, a reminder waits until morning.</li>
+                <li>You get one reminder, at the time you pick.</li>
+                <li>Reminders stay off until you turn them on.</li>
+                <li>Hold overnight makes a reminder wait until morning.</li>
                 <li>No reminder reaches a parent or a Medical Professional.</li>
-                <li>In this build the choice is saved on the phone. Nothing is scheduled.</li>
+                <li>This build saves your choice on the phone. Nothing is scheduled yet.</li>
               </ul>
             </Why>
           </div>
@@ -176,7 +176,7 @@ export function NotificationSettings({ score = null, className }) {
           <Panel title="Lock screen text">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
               <Why label="What each lock screen option shows" className="ml-auto">
-                <p>A phone on a desk is read by anyone. The quietest option is the default.</p>
+                <p>Anyone can read a phone on a desk. The quietest option is the default.</p>
                 <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                   {LOCK_LEVELS.map(v => (
                     <React.Fragment key={v}>

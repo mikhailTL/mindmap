@@ -40,9 +40,9 @@ const PANEL = 'rounded-panel border border-rule bg-card'
    plus VOICE_SECONDS, the scale is the site's one scale, and the third is the
    promise PhoneCheck keeps further down the page. */
 const HERO_FACTS = [
-  ['45', 'seconds, camera and voice'],
+  ['45', 'seconds, with camera and voice'],
   [SCORE_RANGE, SCORE],
-  ['0', 'readings that leave the phone'],
+  ['0', 'readings leave your phone'],
 ]
 
 /* The bridge between a phone reading and a patch reading, which is the one
@@ -50,24 +50,24 @@ const HERO_FACTS = [
    coverage strip under it. What the camera reads, what it cannot, and the
    frame rate are all drawn below; do not restate them here. */
 const CAMERA_FACTS = [
-  ['Against', 'Your own history, never another student'],
-  ['Scale', `One ${SCORE}, from the phone or the patch`],
+  ['Compared to', 'Your own history, not other students'],
+  ['Scale', `The same ${SCORE} from the phone or the patch`],
 ]
 
 const ROUTES = [
-  { id:'sensors', title:'Camera and Microphone', when:'45 seconds', art:'sensors',
+  { id:'sensors', title:'Read with the camera', when:'45 seconds', art:'sensors',
     gives:['Heart rate', 'Beat-to-beat', 'Voice'] },
-  { id:'ask', title:`${ITEMS.length} Questions`, when:'30 seconds', art:'ask',
+  { id:'ask', title:`Answer ${ITEMS.length} questions`, when:'30 seconds', art:'ask',
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
 /* Approved claim language; all three must stay. Do not reframe as trial-report
    columns (proved / not proved). This is a build. */
 const LIMITS = [
-  ['Heart rate', 'Within half a beat per minute of a known signal.'],
-  ['Our own index',
-   'The beat-to-beat figure is our own index, not clinical RMSSD. Withheld when the signal is noisy.'],
-  ['Where it stands', 'Nothing has been tested on a person. Every figure here is generated.'],
+  ['Heart rate', 'The heart rate comes within half a beat per minute of a known signal.'],
+  ['Beat-to-beat index',
+   'The beat-to-beat figure is our own index, not a clinical RMSSD. The app holds it back when the signal is noisy.'],
+  ['Testing so far', 'No reading has been tested on a person yet. Every figure on this page is generated.'],
 ]
 
 function RouteArt({ kind }) {
@@ -136,7 +136,7 @@ export function WithoutPatch({ go }) {
               </p>
               <h1 className="mt-2 max-w-[16ch] font-display font-bold text-major
                 leading-[1.04] tracking-tight text-ink">
-                {SCORE} by Phone
+                A {SCORE} from your phone
               </h1>
 
               <div className={cn(PANEL, 'mt-3 max-w-[34rem] overflow-hidden border-l-[3px] border-l-accent')}>
@@ -177,7 +177,7 @@ export function WithoutPatch({ go }) {
       {/* White ground: the figure's own mist bands vanish on a mist section. */}
       <Section tone="card" tight id="camera">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-4">
-          <SectionHead>Reading a Pulse</SectionHead>
+          <SectionHead>How the camera reads your pulse</SectionHead>
           {/* The reach of the phone, stated beside the heading rather than
               left for a reader to work out from the drawing. */}
           <ScrollIn className={cn(PANEL, 'self-end p-3.5')}>
@@ -216,7 +216,7 @@ export function WithoutPatch({ go }) {
       </Section>
 
       <Section tone="paper" tight className="bg-aqua-2">
-        <SectionHead>Two Routes</SectionHead>
+        <SectionHead>Two ways to take a reading</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
           {ROUTES.map((r, i) => (
             <ScrollRow key={r.id} index={i} className="h-full">
@@ -261,7 +261,7 @@ export function WithoutPatch({ go }) {
                         Start the questions<span aria-hidden>→</span>
                       </Button>
                     : <Button variant="outline" size="sm" onClick={toCheck}>
-                        Go to the reading<span aria-hidden>→</span>
+                        Go to the camera reading<span aria-hidden>→</span>
                       </Button>}
                 </div>
               </div>
@@ -274,14 +274,14 @@ export function WithoutPatch({ go }) {
           band are just borders. paper is a 10% step from the aqua above; mist
           and both washes land within 6% and read as one surface. */}
       <Section tone="paper" tight id="take">
-        <SectionHead>Take a Reading</SectionHead>
+        <SectionHead>Take a reading now</SectionHead>
         <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
       </Section>
 
       {/* A near-white ground, per spec 0c rule 1: no saturated or dark ground
           under a whole section. */}
       <Section tone="paper" tight className="bg-accent-wash">
-        <SectionHead>Known Limits</SectionHead>
+        <SectionHead>What has been tested so far</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
           {LIMITS.map(([k, v], i) => (
             <ScrollRow key={k} index={i} className="h-full">

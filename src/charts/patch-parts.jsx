@@ -119,12 +119,12 @@ const TILT = {
    does not break the outline is a sticker. */
 export const ShellArt = (
   <Frame tilt={TILT.shell}
-    label={'Three views of the printed shell. Left, the face: the adhesive flange hatched '
-      + 'around a raised body 54 mm along the arm by 36 mm across it, with the charging slot '
-      + 'breaking the body wall and centre lines on both axes. Middle, the long-axis '
-      + 'elevation: the raised body standing on the flange, the slot breaking its side wall, '
-      + 'and the skin surface hatched beneath. Right, the slot enlarged through the cut wall. '
-      + 'Depth is not dimensioned; no unit has been built.'}>
+    label={'Three views of the printed shell. On the left, the face: the adhesive flange is '
+      + 'hatched around a raised body 54 mm along the arm by 36 mm across it, the charging slot '
+      + 'breaks the body wall, and centre lines cross both axes. In the middle, the long side '
+      + 'view: the raised body stands on the flange, the slot breaks its side wall, and the '
+      + 'skin surface is hatched beneath. On the right, the slot is enlarged through the cut '
+      + 'wall. Depth is not dimensioned. No unit has been built.'}>
     <defs>
       <pattern id="pp-shell-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
@@ -182,11 +182,11 @@ export const ShellArt = (
    board dropping in, and one pad row enlarged. */
 export const PodArt = (
   <Frame tilt={TILT.pod}
-    label={'Three views of the electronics pod. Left, the tray in plan with the bought board '
-      + 'seated in it, its two pad rows and its connector, inside the dashed outline of the '
-      + 'patch footprint. Middle, the tray in section with the board above it and arrows '
-      + 'showing it dropping in. Right, one pad row enlarged against the cut tray wall. '
-      + 'Depth is not dimensioned; no unit has been built.'}>
+    label={'Three views of the electronics pod. On the left, the tray from above, with the '
+      + 'bought board seated in it, its two pad rows and its connector, inside the dashed '
+      + 'outline of the patch footprint. In the middle, the tray in section, with the board '
+      + 'above it and arrows showing it dropping in. On the right, one pad row is enlarged '
+      + 'against the cut tray wall. Depth is not dimensioned. No unit has been built.'}>
     <defs>
       <pattern id="pp-pod-cut" width="6" height="6" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
@@ -250,12 +250,13 @@ export const PodArt = (
    is the window: two emitters, one detector, and the path between them. */
 export const BaseArt = (
   <Frame tilt={TILT.base}
-    label={'Three views of the skin-side base. Left, the adhesive face, hatched over the whole '
-      + '54 by 36 mm stadium, with a wing electrode at each end, the central sensing window '
-      + 'between them and the pod outline dashed behind. Middle, the base in section against '
-      + 'the skin, electrodes proud of the face and the window flush with it. Right, the '
-      + 'window enlarged: two emitters, one detector, and the path each takes through the '
-      + 'skin. Depth is not dimensioned; no unit has been built.'}>
+    label={'Three views of the skin-side base. On the left, the adhesive face, hatched over the '
+      + 'whole 54 by 36 mm stadium, with a wing electrode at each end, the central sensing '
+      + 'window between them, and the pod outline dashed behind. In the middle, the base in '
+      + 'section against the skin, with the electrodes standing out from the face and the '
+      + 'window flush with it. On the right, the window is enlarged: two emitters, one '
+      + 'detector, and the path each takes through the skin. Depth is not dimensioned. '
+      + 'No unit has been built.'}>
     <defs>
       <pattern id="pp-base-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">

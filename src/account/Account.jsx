@@ -130,8 +130,8 @@ function Profile({ me, go }) {
     const next = updateProfile({ name, email })
     const mailKept = (next?.email || '') === email.trim().toLowerCase()
     setName(next?.name || me.name); setEmail(next?.email || '')
-    if (!mailKept && email.trim()) { setErr('Check the email address.'); return }
-    if (!mailKept && me.role !== 'student') { setErr('An email is needed.'); return }
+    if (!mailKept && email.trim()) { setErr('That email address is not valid. Check it and try again.'); return }
+    if (!mailKept && me.role !== 'student') { setErr('Your account needs an email. Enter one.'); return }
     setErr(null); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
   return (
@@ -234,7 +234,7 @@ function Passcode({ me, go }) {
           </div>
           {state && state !== 'ok' && (
             <p id="pass-err" role="alert" className="mt-2 font-display text-fine font-medium text-crit">
-              {wrong ? 'Wrong passcode. Try again.' : 'Passcode is 4 to 6 digits.'}
+              {wrong ? 'Wrong passcode. Try again.' : 'Passcode not saved. Use 4 to 6 digits.'}
             </p>
           )}
           <button type="submit" className={cn(outline, 'mt-3')} disabled={!cur || !next}>
@@ -271,7 +271,7 @@ function Passcode({ me, go }) {
 function Sharing({ me, go }) {
   return (
     <Section title={SECTIONS.sharing.title} go={go}>
-      <Panel title="What leaves your phone" className="self-start">
+      <Panel title="What you share" className="self-start">
         <Row label={SHARING_LABEL[me.role]} hint={CONSENT_SHORT} Mark={Grid} onClick={() => go(SHARING_ROUTE[me.role])}/>
       </Panel>
       <Panel title="Who is linked" className="self-start">
@@ -289,13 +289,13 @@ function Data({ me, go }) {
   function erase() { deleteAccount(); go('app-' + me.role) }
   return (
     <Section title={SECTIONS.data.title} go={go}>
-      <Panel title="Take a copy" className="self-start">
+      <Panel title="Download a copy" className="self-start">
         <div className="p-4">
           <button type="button" className={solid}
             onClick={() => download(`mindmap-${me.name.replace(/\s+/g, '-').toLowerCase()}.json`, exportAll())}>
-            <Download aria-hidden className="size-4"/>{remote ? 'Download what the server holds' : 'Export as JSON'}
+            <Download aria-hidden className="size-4"/>{remote ? 'Download from your account' : 'Export as JSON'}
           </button>
-          <p className="mt-2 text-fine text-ink-3">Your account, links and code, as JSON.</p>
+          <p className="mt-2 text-fine text-ink-3">The file holds your account, links and code.</p>
         </div>
       </Panel>
       <Panel title="Delete account" className="self-start">
@@ -332,8 +332,8 @@ function About({ go }) {
           </div>
         ))}
       </Panel>
-      <Panel title="Need help" className="self-start">
-        <Row label="Getting help" Mark={Info} onClick={() => go('help')}/>
+      <Panel title="Help" className="self-start">
+        <Row label="Open the help page" Mark={Info} onClick={() => go('help')}/>
       </Panel>
     </Section>
   )

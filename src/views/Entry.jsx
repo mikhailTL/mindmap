@@ -28,7 +28,7 @@ const OPTIONS = [
   { id: 'parent',  label: 'Parent',  hint: 'Sign in, or make an account' },
   { id: 'pro',     label: PRO,       hint: 'Sign in, or make an account' },
   { id: 'tour',    label: 'Other',
-    hint: 'A guided tour: the site turns its own pages and explains each one' },
+    hint: 'Take a guided tour that explains each page' },
 ]
 
 /* Which of the two panels is up, held at module scope rather than in Entry.
@@ -142,7 +142,7 @@ function Chooser({ onPick, onSkip }) {
             What best describes you?
           </p>
           <p className="mt-1.5 max-w-[46ch] text-meta text-ink-2">
-            Pick one to sign in. Every page stays in the menu either way.
+            Pick one to sign in. You can still open every page from the menu.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -170,7 +170,7 @@ function Chooser({ onPick, onSkip }) {
             Skip and look around
           </button>
           <p className="max-w-[34ch] text-fine text-ink-3">
-            Nothing you pick here leaves your device.
+            Your choice stays on this device.
           </p>
         </div>
       </div>

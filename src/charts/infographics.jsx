@@ -59,8 +59,8 @@ export function SignalTrace({ kind, muted = false, className }) {
   const [hi, lo] = g.band
   return (
     <svg viewBox="0 0 80 36" preserveAspectRatio="none" role="img" focusable="false"
-      aria-label={`${s.name}, ${s.unit}: an illustrative shape against the usual range. `
-        + `It ${g.says}.`}
+      aria-label={`${s.name}, ${s.unit}. This is an example shape against the usual range, not a real reading. `
+        + `Under stress it ${g.says}.`}
       className={cn('h-10 w-full', className)}>
       {/* the usual range, and the middle of it */}
       <rect x="0" y={hi} width="80" height={lo - hi} className="fill-ink-3 opacity-[0.1]" />
@@ -177,7 +177,7 @@ export function WhoSeesWhat({ className }) {
         </ul>
 
         <div className={cn('border-t border-rule bg-mist/60 px-4 py-2.5', COLS)}>
-          <p className="text-tick text-ink-3">Across the five</p>
+          <p className="text-tick text-ink-3">Across all five rows</p>
           {SEES.map(p => (
             <p key={p.who} className="mt-1 text-fine leading-[1.4] text-ink-2 md:mt-0">
               <span className="text-ink-3 md:hidden">{p.who}: </span>{summarise(p.sees)}
@@ -186,7 +186,7 @@ export function WhoSeesWhat({ className }) {
         </div>
 
         <figcaption className="border-t border-rule px-4 py-3 text-sec text-ink-3">Crisis alerts
-          are the exception. Students are told so before they start.</figcaption>
+          are the one exception. Students are told this before they start.</figcaption>
       </div>
     </figure>
   )
@@ -222,8 +222,8 @@ export function WeekStrip({ days, band, className }) {
       <div className="relative h-16" role="img"
         aria-label={`${rows.length} days against a usual range of ${lo} to ${hi}. `
           + (over.length
-            ? `Above it: ${over.map(d => `${d.d} ${d.v}`).join(', ')}.`
-            : 'No day above it.')}>
+            ? `Days above it: ${over.map(d => `${d.d} ${d.v}`).join(', ')}.`
+            : 'No day was above it.')}>
         <span aria-hidden="true" style={{ bottom: `${y(lo)}%`, height: `${y(hi) - y(lo)}%` }}
           className="absolute inset-x-0 block border-y border-accent/40 bg-accent/10"/>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"
@@ -253,8 +253,8 @@ export function WeekStrip({ days, band, className }) {
         ))}
       </div>
       <figcaption className="mt-1 text-fine leading-[1.4] text-ink-3">
-        Usual range <span className="tabular-nums text-ink-2">{lo} to {hi}</span>. Days
-        above it are marked and their figure printed.
+        The usual range is <span className="tabular-nums text-ink-2">{lo} to {hi}</span>. Days
+        above it are marked, with their score printed under them.
       </figcaption>
     </figure>
   )

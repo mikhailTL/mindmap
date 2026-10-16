@@ -46,30 +46,30 @@ import { cn } from '../lib/utils'
    these was a paragraph nobody read. Art for each is in charts/pairing-art. */
 const STEPS = [
   { k:'wake',    title:'Take the patch off charge',
-    line:'Off charge it advertises itself over Bluetooth Low Energy.' },
+    line:'Once off charge, the patch sends out a Bluetooth signal.' },
   { k:'open',    title:'Open the app in a browser',
-    line:'Nothing to install, but the browser has to offer Bluetooth.' },
+    line:'There is nothing to install. The browser needs to support Bluetooth.' },
   { k:'tap',     title:'Press Connect to the patch',
-    line:'The app asks the browser for a device, nothing else.' },
-  { k:'chooser', title:'The browser puts up its own list',
-    line:'The browser’s own sheet, filtered to the patch’s one service.' },
-  { k:'pick',    title:'Choose the patch, then Pair',
-    line:'The app sees nothing at all until you choose.' },
-  { k:'stream',  title:'It streams',
-    line:'Four channels, once a second, all day.' },
+    line:'The app asks the browser to look for the patch.' },
+  { k:'chooser', title:'The browser shows a list',
+    line:'The browser lists the patch and nothing else.' },
+  { k:'pick',    title:'Choose the patch and tap Pair',
+    line:'The app cannot see any device until you choose one.' },
+  { k:'stream',  title:'The patch starts sending readings',
+    line:'The patch sends four signals once a second, all day.' },
 ]
 
 /* Stated as the five things a reader does not have to find, because the point
    of the list is the absence. */
-const NOTHING = ['A cable', 'A host computer', 'A driver', 'A download', 'A development tool']
+const NOTHING = ['A cable', 'A computer', 'A driver', 'A download', 'A developer tool']
 
 /* The three settled facts about the link itself, carried on the console's own
    status bar so the bar states something true before anything is pressed.
    Range, pairing time and battery are all open and none of them is here. */
 const LINK_FACTS = [
   { k:'Link',     v:'Bluetooth Low Energy' },
-  { k:'Channels', v:'4, once a second' },
-  { k:'Fallback', v:`${ITEMS.length} questions` },
+  { k:'Signals',  v:'4, once a second' },
+  { k:'Without the patch', v:`${ITEMS.length} questions` },
 ]
 
 /* Every quoted string is from src/lib/engine.js; the line it comes from is in
@@ -82,25 +82,25 @@ const TROUBLE = [
   { /* engine.js:47, the navigator.bluetooth guard. One guard, two causes: an
        embedded page and plain http both land on this one message, so they are
        one card rather than two cards quoting the same string. */
-    title:'No Bluetooth in the Browser',
+    title:'The browser has no Bluetooth',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
       + 'site directly in Chrome on a computer, or use the check-in below.',
-    fix:'Open the site over https, in its own browser window.' },
+    fix:'Open the site in its own Chrome window, over https.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
-    title:'An Empty Device List',
-    seen:'The browser’s own sheet, with nothing in it.',
-    fix:'Off charge, near the phone, press Connect again.' },
+    title:'The list is empty',
+    seen:'The browser’s list shows no devices.',
+    fix:'Take the patch off charge, keep it near the phone, and press Connect again.' },
   { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
-    title:'The List Closed Without a Choice',
+    title:'You closed the list',
     seen:'No patch was selected. The check-in below works without one.',
     fix:'Press Connect again and choose the patch.' },
   { /* engine.js:56: anything requestDevice or gatt.connect throws */
-    title:'Connection Failed After Choosing',
+    title:'The connection failed',
     seen:'Could not connect: unknown. The check-in below works without a patch.',
     fix:`Try again, or take a ${SCORE} without the patch.` },
 ]
 
-const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Streaming', stuck:'Stopped' }
+const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Connected', stuck:'Stopped' }
 
 /* done / now / stuck, and nothing else: a step past the cursor is not rendered
    at all, which is the whole point of the control. */
@@ -161,7 +161,7 @@ export function Pairing({ go }) {
               <ScrollIn className="mt-4 grid gap-3 sm:grid-cols-2">
                 {/* Containers on the tinted band, not text on it. */}
                 <Card className="p-3.5">
-                  <p className="font-display text-tick font-bold text-ink">Not Needed to Start</p>
+                  <p className="font-display text-tick font-bold text-ink">What you do not need</p>
                   <ul className="m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0">
                     {NOTHING.map(t => (
                       <li key={t} className="flex items-center gap-1.5 rounded-field border border-rule
@@ -175,10 +175,10 @@ export function Pairing({ go }) {
                     below believing a unit has been assembled or worn. */}
                 <Card className="p-3.5">
                   <p className="font-display text-tick font-bold text-ink">
-                    No unit has been built or worn.
+                    The patch is still a design
                   </p>
                   <p className="mt-2 max-w-[44ch] text-fine text-ink-2">
-                    The enclosure is a drawing. The connect path below is the app’s real code.
+                    No unit has been built or worn yet. The connect steps below run the app’s real code.
                   </p>
                 </Card>
               </ScrollIn>
@@ -190,7 +190,7 @@ export function Pairing({ go }) {
               <figure className="m-0 min-w-0">
                 <WirelessLink/>
                 <figcaption className="mt-2 max-w-[42ch] text-fine text-ink-2">
-                  A drawing. One link: Bluetooth Low Energy.
+                  The patch talks to your phone over Bluetooth Low Energy. No cable is needed.
                 </figcaption>
               </figure>
             </Card>
@@ -201,7 +201,7 @@ export function Pairing({ go }) {
       {/* The console. One button; the directions arrive when pressing it makes
           them relevant, and the failures stay behind their own control. */}
       <Section tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">One Button, {STEPS.length} Steps</SectionHead>
+        <SectionHead className="mt-1 max-w-[26ch]">How pairing works</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
             {/* The bar states three settled facts even at rest, so a reader who
@@ -311,7 +311,7 @@ export function Pairing({ go }) {
                       border border-ink bg-transparent px-4 font-display text-ui font-medium
                       text-ink touch-manipulation transition-[background-color] duration-150
                       ease-[var(--ease-out)] active:bg-aqua hoverOnly:bg-aqua">
-                    {trouble ? 'Hide what can go wrong' : 'Not working'}
+                    {trouble ? 'Hide the fixes' : 'Not working?'}
                     <ChevronDown aria-hidden
                       className={cn('transition-transform duration-150 ease-[var(--ease-out)]',
                         trouble && 'rotate-180')}/>
@@ -363,10 +363,10 @@ export function Pairing({ go }) {
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">
-                Without a Patch
+                Without the patch
               </h2>
               <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">
-                The phone camera and microphone, or {ITEMS.length} questions.
+                Use the phone camera and microphone, or answer {ITEMS.length} questions.
               </p>
             </div>
             <Button onClick={() => go && go('without-patch')}>

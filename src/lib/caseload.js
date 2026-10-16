@@ -19,13 +19,13 @@ export const SCHOOL_N = 96
    Crisis alerts reach the medical professional either way: the one thing a guardian
    cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
-  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends, academic correlation',                 basis:'FERPA', signedAt:'Aug 22, 2025' },
-  'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no trends',                  basis:'FERPA', signedAt:'Aug 24, 2025' },
-  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Mind Score, trends, academic correlation, raw readings',   basis:'Both',  signedAt:'Sep 03, 2025' },
-  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends',                                       basis:'FERPA', signedAt:'Aug 29, 2025' },
-  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends, academic correlation',                 basis:'FERPA', signedAt:'Sep 05, 2025' },
-  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Mind Score, trends',                                       basis:'COPPA', signedAt:'Sep 09, 2025' },
-  'Student 6053': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no trends',                  basis:'Both',  signedAt:'Sep 08, 2025' },
+  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Aug 22, 2025' },
+  'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'FERPA', signedAt:'Aug 24, 2025' },
+  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Mind Score, weekly change, class period patterns and raw readings',    basis:'Both',  signedAt:'Sep 03, 2025' },
+  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'FERPA', signedAt:'Aug 29, 2025' },
+  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Sep 05, 2025' },
+  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'COPPA', signedAt:'Sep 09, 2025' },
+  'Student 6053': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'Both',  signedAt:'Sep 08, 2025' },
   'Student 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
 }
 const EXPIRES = 'Jun 12, 2026'
@@ -43,7 +43,7 @@ const SEED = [
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'moderate' : 'info'
 /* Labels name the band the Mind Score sits in, not a verdict on the student. */
-export const TIER_LABEL = { info:'Low', moderate:'Moderate', high:'Elevated', crisis:'Urgent' }
+export const TIER_LABEL = { info:'Low', moderate:'Moderate', high:'High', crisis:'Urgent' }
 export const TIER_ORDER = ['crisis','high','moderate','info']
 
 /* Every student, carrying what may be shown about them. Rendering `current`
@@ -108,39 +108,39 @@ export const CONSENT_LEDGER = roster().map(s => ({
    professional signs into. */
 export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
-  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'In-person welfare check completed',                subject:'Student 8241' },
+  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the student in person',                 subject:'Student 8241' },
   { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Student 8241' },
   { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised, medical professional notified',         subject:'Student 8241' },
   { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Student 5512' },
   { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:PRO,                action:'Exported year-group report (no group under five)', subject:'Grade 11' },
   { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed weekly summary',                            subject:'Student 8241' },
-  { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Shortened raw-signal retention to 30 days',        subject:'Student 8241' },
+  { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Set raw readings to be kept 30 days',              subject:'Student 8241' },
 ]
 
 export const PROTOCOL = [
   'Acknowledge the alert',
-  'Locate the student',
-  'In-person welfare check',
-  'Contact guardian',
-  'Document outcome and next step',
+  'Find the student',
+  'Check on the student in person',
+  'Call the guardian',
+  'Write down what happened and the next step',
 ]
 export const PROTOCOL_TIMES = ['2:14 PM','2:21 PM','2:26 PM','2:34 PM','2:41 PM']
 export const PROTOCOL_DONE = [0,1,2,3]   // step five is the one still open
 
 export const REFERRALS = [
-  { student:'Student 8241', to:'External referral: elevated arousal pattern', opened:'Today',  status:'Awaiting intake' },
-  { student:'Student 5512', to:'Medical Professional',                          opened:'Monday', status:'Scheduled' },
-  { student:'Student 3907', to:'External counseling service',                  opened:'Mar 04', status:'In progress' },
+  { student:'Student 8241', to:'Outside referral: body working harder than usual', opened:'Today',  status:'Waiting for intake' },
+  { student:'Student 5512', to:'Medical Professional',                             opened:'Monday', status:'Scheduled' },
+  { student:'Student 3907', to:'Outside counselling service',                      opened:'Mar 04', status:'In progress' },
   { student:'Student 1184', to:'Medical Professional',                          opened:'Feb 18', status:'Closed' },
 ]
 
 /* Which signals account for a student's change this week. Generated per
    student from their own id, so two names never carry the same breakdown. */
 const SIGNALS = [
-  'Heart rate variability below their own normal',
-  'Sweat responses clustered in single lessons',
-  'Resting heart rate above their own baseline',
-  'Resting sweat level above their own baseline',
+  'Heartbeat less steady than their own normal',
+  'Sweat spikes bunched in single lessons',
+  'Resting heart rate above their own normal',
+  'Resting sweat level above their own normal',
   'Skin temperature falling through a lesson',
   'Restlessness during seated work',
 ]
@@ -161,8 +161,8 @@ export const INTERVENTIONS = [
 ]
 export const efficacyLabel = i =>
   i.sessions === 0 ? `${i.name}: not tried yet`
-  : i.hrvDeltaPct === 0 ? `${i.name}: no measurable effect (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
-  : `${i.name}: HRV ${i.hrvDeltaPct > 0 ? '+' : ''}${i.hrvDeltaPct}% (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
+  : i.hrvDeltaPct === 0 ? `${i.name}: no measured change (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
+  : `${i.name}: heartbeat steadiness ${i.hrvDeltaPct > 0 ? '+' : ''}${i.hrvDeltaPct}% (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
 
 /* 45 days of daily means, built from that student's own base and drift so the
    line ends where the board says they are today. */

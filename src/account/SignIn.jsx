@@ -34,15 +34,15 @@ const TILES = [
 ]
 
 const ERROR = {
-  role:     'Choose who you are.',
-  name:     'Enter a name.',
-  email:    'Enter a working email address.',
-  setting:  'Choose where you work.',
-  passcode: 'Passcode is 4 to 6 digits.',
-  taken:    'Name or email already in use here.',
+  role:     'No role chosen yet. Pick who you are first.',
+  name:     'The name field is empty. Fill it in.',
+  email:    'Email is missing or not valid. Enter a working address.',
+  setting:  'Nothing chosen under Where you work. Pick one.',
+  passcode: 'Passcode is missing or too short. Use 4 to 6 digits.',
+  taken:    'That name or email already has an account. Sign in instead.',
   wrong:    'Wrong passcode. Try again.',
-  locked:   'Five wrong tries. Wait fifteen minutes.',
-  offline:  'No connection. Try again.',
+  locked:   'Five wrong tries. Wait fifteen minutes, then try again.',
+  offline:  'No connection. Check your internet and try again.',
 }
 
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
@@ -99,7 +99,7 @@ export function SignIn({ go, note }) {
 
   return (
     <main className="wrap">
-      <h2 className="font-display font-bold text-ink">{creating ? 'Who are you?' : 'Welcome back'}</h2>
+      <h2 className="font-display font-bold text-ink">{creating ? 'Create your account' : 'Welcome back'}</h2>
       {note && <p className="mt-1 text-fine text-ink-3">{note}</p>}
 
       <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-4">
@@ -159,7 +159,7 @@ export function SignIn({ go, note }) {
                     onChange={e => { setEmail(e.target.value); if (bad('email')) setErr(null) }}
                     className={cn(field, bad('email') && fieldError)}/>
                   {role === 'student' && (
-                    <span id="signin-email-hint" className="mt-1 block text-fine text-ink-3">Optional for a student.</span>
+                    <span id="signin-email-hint" className="mt-1 block text-fine text-ink-3">A student can leave this blank.</span>
                   )}
                 </div>
               )}
@@ -171,7 +171,7 @@ export function SignIn({ go, note }) {
                   aria-invalid={bad('passcode')} aria-describedby={describe('passcode', 'signin-hint')}
                   onChange={e => { setPass(e.target.value.replace(/\D/g, '')); if (bad('passcode')) setErr(null) }}
                   className={cn(field, bad('passcode') && fieldError)}/>
-                <span id="signin-hint" className="mt-1 block text-fine text-ink-3">4 to 6 digits.</span>
+                <span id="signin-hint" className="mt-1 block text-fine text-ink-3">Use 4 to 6 digits.</span>
               </div>
               {creating && role === 'pro' && (
                 <div className="sm:col-span-2" role="radiogroup" aria-label="Where you work"

@@ -44,10 +44,10 @@ const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
    it belongs under the patch. It carries its own caption and its own layer
    table, so nothing here repeats either. */
 const CHAIN = [
-  'Upper arm, under a sleeve.',
-  'Four signals, once a second.',
-  'Bluetooth to your phone.',
-  `One ${SCORE} a day, ${SCORE_RANGE}.`,
+  'The patch sticks to your upper arm, under a sleeve.',
+  'The patch records four signals, once a second.',
+  'Readings go to your phone over Bluetooth.',
+  `You get one ${SCORE} a day, ${SCORE_RANGE}.`,
 ]
 
 /* The settled numbers, as values rather than as sentences. They sit beside the
@@ -58,16 +58,16 @@ const CHAIN = [
 const FIGURES = [
   { k: 'Along the arm',    v: '54', u: 'mm' },
   { k: 'Across the arm',   v: '36', u: 'mm' },
-  { k: 'Sensing channels', v: '4',  u: 'at once' },
+  { k: 'Signals',          v: '4',  u: 'at once' },
   { k: 'Readings',         v: '1',  u: 'a second' },
-  { k: 'Baseline',         v: '14', u: 'days' },
+  { k: 'Learning your usual', v: '14', u: 'days' },
 ]
 
 /* Two settled facts that are not numbers. Kept out of the table above so a
    reader never has to decode a blank cell. */
 const PLAIN = [
-  { k: 'Link',     v: 'Bluetooth Low Energy to the phone. No wire, no host computer.' },
-  { k: 'Charging', v: 'Through a slot in the side of the shell.' },
+  { k: 'Connection', v: 'The patch talks to your phone over Bluetooth Low Energy. No wire is needed.' },
+  { k: 'Charging',   v: 'The patch charges through a slot in the side of the shell.' },
 ]
 
 /* Named so the table above cannot be read as a complete datasheet. Every one
@@ -81,9 +81,9 @@ const OPEN = ['Battery', 'Charge time', 'Adhesive', 'Wear time', 'Weight', 'Cost
    counts three signals where there are four. A page a judge reads must carry
    only settled facts, so this page states its own. */
 const PART_LINE = {
-  pod:  'The oval that closes the stack. Charging runs through a slot in its side.',
-  pcb:  'Carries the radio. Bluetooth Low Energy to the phone, and nothing else.',
-  base: 'The face that sits against the outer upper arm. All four channels read through it.',
+  pod:  'The shell closes the stack. Charging runs through a slot in its side.',
+  pcb:  'The pod carries the radio, which sends readings to your phone over Bluetooth Low Energy.',
+  base: 'The base sits against the outer upper arm. All four signals read through it.',
 }
 
 /* THE MODEL MAY NOT COME UP, AND A JUDGE MUST NOT BE LEFT LOOKING AT THAT.
@@ -194,7 +194,7 @@ export function PatchPage() {
               "sticker-sized" across two lines. */}
           <RevealLines as="h1"
             className="mt-2 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
-            lines={['A Sticker-Sized Patch']}/>
+            lines={['A patch that sticks to your arm']}/>
           <ScrollIn className="mt-4">
             {/* A container, not text on the tinted band. */}
             <Card className="max-w-[46ch] p-3.5">
@@ -253,7 +253,7 @@ export function PatchPage() {
       {/* Plain-language names only; EDA / PPG / nRF52840 belong on the signal
           pages. */}
       <Section tone="card" tight>
-        <SectionHead className="mt-0 max-w-[24ch]">Four Signals</SectionHead>
+        <SectionHead className="mt-0 max-w-[24ch]">What the patch records</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
@@ -288,7 +288,7 @@ export function PatchPage() {
           wide section is owed two. It is a second column of real values, not
           decoration: every row is a number this project has settled on. */}
       <Section tone="card" tight className="bg-aqua-2">
-        <SectionHead className="mt-0 max-w-[26ch]">Five Layers</SectionHead>
+        <SectionHead className="mt-0 max-w-[26ch]">What is inside the patch</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
           <Card className="min-w-0 p-3.5 lg:p-5">
@@ -308,7 +308,7 @@ export function PatchPage() {
             </div>
             <div className="p-3.5 lg:p-4">
             <h3 className="font-display text-row font-bold leading-tight text-ink">
-              Settled So Far
+              What is decided so far
             </h3>
             {/* Two columns on a phone and one in the lg rail: five stacked
                 rows is 170px of mostly empty line on a 390px screen, and the
@@ -340,7 +340,7 @@ export function PatchPage() {
                 holes in it. Chips, not a sentence: this page carries no
                 paragraphs. */}
             <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="text-fine font-semibold text-ink-3">Not yet settled</p>
+              <p className="text-fine font-semibold text-ink-3">Not decided yet</p>
               <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
                 {OPEN.map(o => (
                   <li key={o} className="rounded-field border border-rule bg-paper px-2.5 py-[3px]
@@ -363,7 +363,7 @@ export function PatchPage() {
       <section ref={band} id="model" data-anchor
         className="border-t border-rule bg-paper">
         <div className="wrap py-8 lg:py-12">
-          <SectionHead className="mt-0 max-w-[26ch]">Three Parts</SectionHead>
+          <SectionHead className="mt-0 max-w-[26ch]">The three parts of the patch</SectionHead>
           {/* items-stretch: the rail's lg:h-full sizes from the figure. */}
           {/* With the model, two columns: the figure and a rail of three cards
               sized to it. With the drawing standing in, the figure is twice
@@ -396,8 +396,8 @@ export function PatchPage() {
                   why the drawing is standing in for it. */}
               <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
                 {down
-                  ? 'No 3D in this browser, so the drawing stands in.'
-                  : 'A model and a drawing, not a photograph.'}
+                  ? 'This browser cannot show the 3D model, so the drawing stands in.'
+                  : 'This is a 3D model and a drawing, not a photograph.'}
               </figcaption>
             </figure>
 
@@ -440,7 +440,7 @@ export function PatchPage() {
                           fallback exists to remove. */}
                       {!down && (
                         <span className="mt-1.5 block text-fine font-bold text-accent lg:mt-1">
-                          {on ? 'Showing only this' : 'Show only this'}</span>
+                          {on ? 'Showing only this part' : 'Show only this part'}</span>
                       )}
                     </div>
                   </>

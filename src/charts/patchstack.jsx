@@ -192,21 +192,21 @@ function skinArt({ cx, cy, a, b, hatch, fore }) {
 const LAYERS = [
   { id:'shell', title:'Shell', face:CARD, wall:MIST, art:shellArt,
     spec:'Charging slot in the side',
-    body:'The oval that closes the stack. Charging runs through a slot in its side.' },
+    body:'The shell closes the stack. Charging runs through a slot in its side.' },
   { id:'radio', title:'Radio', face:AQUA, wall:MIST, art:radioArt,
     spec:'Bluetooth Low Energy',
-    body:'Bluetooth Low Energy to the phone.' },
+    body:'The radio sends readings to the phone over Bluetooth Low Energy.' },
   { id:'board', title:'Board', face:MIST, wall:RULE, art:boardArt,
-    spec:'Four channels in, one score out',
+    spec:'Four signals in, one score out',
     /* Cut from four lines to one: the baseline window and the network shape
        are the methods page's subject, not a patch drawing's. */
-    body:`Turns four channels into one ${SCORE}, on the patch.` },
+    body:`The board turns four signals into one ${SCORE}, on the patch itself.` },
   { id:'sense', title:'Sensing', face:PAPER, wall:MIST, art:senseArt,
-    spec:'4 channels, 1 reading a second',
-    body:'Four channels off the skin, once a second, all day.' },
-  { id:'skin', title:'Skin interface', face:AQUA2, wall:RULE, art:skinArt,
+    spec:'4 signals, 1 reading a second',
+    body:'The sensing layer reads four signals off the skin, once a second, all day.' },
+  { id:'skin', title:'Skin side', face:AQUA2, wall:RULE, art:skinArt,
     spec:`${MM_LONG} by ${MM_CROSS} mm against the arm`,
-    body:'The face against the outer upper arm. All four channels read through it.' },
+    body:'The skin side sits against the outer upper arm. All four signals read through it.' },
 ]
 
 const LAST = LAYERS.length - 1
@@ -270,8 +270,8 @@ const CHAN = SENSOR_ORDER.map((id, i) => `${i + 1} ${SENSORS[id].name} in ${SENS
 
 const ALT = 'An exploded drawing of the MindMap patch, five layers of one oval. '
   + `${MM_LONG} mm along the arm, ${MM_CROSS} mm across. `
-  + 'Outside in: shell with charging slot, radio, board, sensing layer, skin interface. '
-  + `Sensing layer channels: ${CHAN}. `
+  + 'Outside in: shell with charging slot, radio, board, sensing layer, skin side. '
+  + `Sensing layer signals: ${CHAN}. `
   + `A millimetre ruler under the bottom plate runs 0 to ${MM_LONG} mm. `
   + 'Ticked every 5 mm, numbered every 10.'
 
@@ -430,7 +430,7 @@ function ArmInset() {
   const fives = n => Array.from({ length: Math.floor(n / 5) + 1 }, (_, i) => i * 5)
   return (
     <svg viewBox={`0 0 ${IN.w} ${IN.h}`} role="img"
-      aria-label={`The patch in plan on the outer upper arm, long axis parallel to the arm. ${MM_LONG} mm along the arm, ${MM_CROSS} mm across. Both dimension lines ticked every 5 mm.`}
+      aria-label={`The patch seen from above on the outer upper arm, with its long axis along the arm. ${MM_LONG} mm along the arm, ${MM_CROSS} mm across. Both dimension lines are ticked every 5 mm.`}
       className="block h-auto w-full" style={{ maxWidth: IN.w }}>
       {/* The limb is the one shape here that is drawn rather than calculated:
           an arm has no arithmetic. It only has to be wider than the plate. */}
@@ -537,7 +537,7 @@ export function PatchStack({ className, caption, brief = false }) {
           <div className="mt-5 flex flex-wrap items-start gap-x-6 gap-y-3">
             <div className="min-w-0 max-w-full shrink-0 basis-[232px]"><ArmInset/></div>
             <p className="note m-0 max-w-[34ch]">
-              {MM_LONG} by {MM_CROSS} mm. Outer upper arm, long axis along the arm.
+              The patch is {MM_LONG} by {MM_CROSS} mm. It sits on the outer upper arm, with its long side along the arm.
             </p>
           </div>
         )}
@@ -546,7 +546,7 @@ export function PatchStack({ className, caption, brief = false }) {
             the disclosure: a judge must never read this drawing as a
             photograph of a build. */}
         <figcaption className="note mt-4">
-          {caption ? `${caption} ` : ''}Drawing of the intended build. No unit has been built.
+          {caption ? `${caption} ` : ''}This drawing shows the planned build. No unit has been built.
         </figcaption>
       </figure>
 
@@ -558,7 +558,7 @@ export function PatchStack({ className, caption, brief = false }) {
           className="mt-4 inline-flex min-h-[44px] items-center border-b-2 border-accent/35
             font-display text-ui font-medium text-accent
             hoverOnly:border-accent hoverOnly:text-accent-ink">
-          {more ? 'Hide the layer notes' : 'Layer notes and how it is worn'}
+          {more ? 'Hide the layer notes' : 'Show the layer notes'}
         </button>
       )}
 
@@ -608,7 +608,7 @@ export function PatchStack({ className, caption, brief = false }) {
       {/* Not behind the disclosure: a reader who takes the drawing at face
           value would otherwise think movement is one of the four counted. */}
       <p className="note mt-4 max-w-[56ch]">
-        Movement is not added to the {SCORE}. It gates the other three.
+        Movement is not added to the {SCORE}. The app only uses it to decide when the other three signals count.
       </p>
     </div>
   )

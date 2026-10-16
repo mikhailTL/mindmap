@@ -64,7 +64,7 @@ export const RESOURCES = [
   {
     id: '988',
     name: '988 Suicide and Crisis Lifeline',
-    what: 'Anything to do with wanting to die, or a crisis of any other kind.',
+    what: 'Helps with any crisis, including thoughts of suicide.',
     hours: 'Every hour of every day',
     who: 'Trained crisis counsellors across a network of local centres',
     actions: [
@@ -79,7 +79,7 @@ export const RESOURCES = [
   {
     id: 'ctl',
     name: 'Crisis Text Line',
-    what: 'For anything at all, by message, if talking out loud is not going to happen.',
+    what: 'Helps with anything, by text message instead of voice.',
     hours: 'Every hour of every day',
     who: 'Trained volunteer crisis counsellors',
     actions: [
@@ -93,7 +93,7 @@ export const RESOURCES = [
   {
     id: 'teenline',
     name: 'Teen Line',
-    what: 'A teenager on the other end rather than an adult. School, home, friends, anything.',
+    what: 'Trained teenagers answer, about school, home, friends or anything.',
     hours: '6 pm to 10 pm Pacific by phone, 6 pm to 9 pm Pacific by text',
     who: 'Trained teenagers, supervised by Didi Hirsch Mental Health Services',
     actions: [
@@ -106,7 +106,7 @@ export const RESOURCES = [
   {
     id: 'trevor',
     name: 'The Trevor Project',
-    what: 'For LGBTQ young people, on anything, with counsellors who already know the ground.',
+    what: 'Supports LGBTQ young people with anything.',
     hours: 'Every hour of every day',
     who: 'Trained crisis counsellors',
     actions: [
@@ -120,7 +120,7 @@ export const RESOURCES = [
   {
     id: 'trans',
     name: 'Trans Lifeline',
-    what: 'A peer line run by and for trans and questioning people.',
+    what: 'Run by trans people, for trans and questioning people.',
     hours: '1 pm to 9 pm Eastern, Monday to Friday',
     who: 'Trans peer operators',
     actions: [
@@ -132,7 +132,7 @@ export const RESOURCES = [
   {
     id: 'eating',
     name: 'National Alliance for Eating Disorders',
-    what: 'Eating and food. Their own page says this is not a 24 hour crisis line.',
+    what: 'Helps with eating and food. They are not a crisis line.',
     hours: '9 am to 7 pm Eastern, Monday to Friday',
     who: 'Licensed clinicians',
     actions: [
@@ -144,7 +144,7 @@ export const RESOURCES = [
   {
     id: 'samhsa',
     name: 'SAMHSA National Helpline',
-    what: 'Finding treatment nearby. A referral line rather than a crisis line.',
+    what: 'Refers you to treatment nearby. They are not a crisis line.',
     hours: 'Every hour of every day',
     who: 'Information and referral specialists',
     actions: [
@@ -159,5 +159,5 @@ export const RESOURCES = [
 export const EMERGENCY = {
   label: 'Call 911',
   href: 'tel:911',
-  line: 'If somebody is hurt right now, or about to be, 911 is the number.',
+  line: 'If somebody is hurt or in danger right now, call 911.',
 }

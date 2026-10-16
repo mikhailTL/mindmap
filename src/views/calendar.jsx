@@ -131,15 +131,15 @@ const dayLabel = n => `${n} day${n === 1 ? '' : 's'}`
 function TargetCard({ target, setTarget, lo, hi, c, s, className }) {
   const facts = [
     ['In range', c.n ? `${c.inside} of ${c.n} days` : 'No days yet'],
-    ['Best run', dayLabel(s.longest)],
-    ['Right now', dayLabel(s.current)],
+    ['Longest run', dayLabel(s.longest)],
+    ['Current run', dayLabel(s.current)],
   ]
   return (
     <Panel className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Your Target" meta="0 to 100" className="min-w-0 flex-1"/>
         <Why label="What the target is" className="pt-1.5">
-          A number you pick. Lower is calmer. A usual day for you is {USUAL}. Never shared.
+          You pick the number, and lower is calmer. Your usual day is {USUAL}, and nobody else sees it.
         </Why>
       </div>
       <div className="mt-3 flex items-center justify-center gap-4">
@@ -204,7 +204,7 @@ function MonthGrid({ year, month, values, today, lo, hi }) {
           )
         })}
       </ul>
-      <figcaption className="note mt-2.5">A dot is no reading. The ring is today.</figcaption>
+      <figcaption className="note mt-2.5">A dot means no reading. The ring marks today.</figcaption>
     </figure>
   )
 }
@@ -312,9 +312,9 @@ export function CalendarBody({ go }) {
 
       {real ? (
         <Panel>
-          <PanelHead title="No Days Yet"/>
+          <PanelHead title="No Readings Yet"/>
           <div className="mt-2.5">
-            <RealNotice>Nothing paired yet. The target is saved.</RealNotice>
+            <RealNotice>No patch is paired yet. Your target is saved.</RealNotice>
           </div>
           <button type="button" onClick={() => go('reading')}
             className="group mt-3 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
@@ -346,7 +346,7 @@ export function CalendarBody({ go }) {
               {view === 'month' && (
                 <div className="flex items-center gap-1.5">
                   <button type="button" onClick={() => setOffset(o => o - 1)}
-                    aria-label="The month before"
+                    aria-label="Previous month"
                     className="flex size-11 items-center justify-center rounded-field border
                       border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua">
                     <ArrowLeft aria-hidden className="size-4"/>
@@ -354,7 +354,7 @@ export function CalendarBody({ go }) {
                   <p className="min-w-[9ch] text-center font-display text-ui font-medium text-ink">
                     {MONTHS[month]} {year}</p>
                   <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))}
-                    disabled={thisMonth} aria-label="The month after"
+                    disabled={thisMonth} aria-label="Next month"
                     className="flex size-11 items-center justify-center rounded-field border
                       border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua
                       disabled:border-rule disabled:text-ink-3">
@@ -371,7 +371,7 @@ export function CalendarBody({ go }) {
                 : <>
                     <PanelHead title="Last Seven Days" meta="out of 100"/>
                     <div className="mt-2.5"><WeekRows days={weekDays} lo={lo} hi={hi}/></div>
-                    <p className="note mt-2.5">Shaded stretch: your target range.</p>
+                    <p className="note mt-2.5">The shaded stretch is your target range.</p>
                   </>}
             </div>
             <StateKey lo={lo} hi={hi}/>
@@ -384,8 +384,8 @@ export function CalendarBody({ go }) {
 }
 
 const COPY = {
-  note: 'Generated figures. Nobody was measured.',
-  realNote: 'Nothing paired yet.',
+  note: 'These are demo figures. Nobody has been measured.',
+  realNote: 'No patch is paired yet.',
 }
 
 export function Calendar({ go }) {
