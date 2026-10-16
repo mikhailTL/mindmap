@@ -28,4 +28,4 @@ export const CASELOAD_DEF = 'Whose Mind Score moved most since last week.'
 /* Consent, in this order: a guardian opens the account, then the student
    chooses per audience. Nothing is shared by default. */
 export const CONSENT_SHORT = 'A guardian opens the account. The student chooses what is shared.'
-export const CONSENT_OFF = 'Any of it can be switched off by the student, at any time.'
+export const CONSENT_OFF = 'The student can switch any of it off at any time.'

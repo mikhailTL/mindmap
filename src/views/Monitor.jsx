@@ -305,7 +305,7 @@ export function SharedCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Who Sees What" meta="off by default" className="min-w-0 flex-1"/>
         <Why label="How sharing works" className="pt-1.5">
-          {CONSENT_SHORT} Any of it can be switched off, at any time.
+          {CONSENT_SHORT} The student can switch any of it off at any time.
         </Why>
       </div>
       <ul className="m-0 mt-2.5 list-none p-0">

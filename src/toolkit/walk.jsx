@@ -7,6 +7,7 @@ import { useWakeLock, buzz, cueWords } from './dark'
 import { useReduced } from './useReduced'
 import { askMotion } from '../signals/motion'
 import { countSteps, walkWords } from '../signals/steps'
+import { DidItWork } from './after'
 
 /* Walk it off. Three minutes on foot, the phone counting in the hand or the
  * pocket.
@@ -202,6 +203,7 @@ export default function Walk() {
   return (
     <ActivityScreen family="night" title="Walk It Off">
       {result ? (
+        <>
         <Sheet className="mx-auto w-full max-w-[32rem]">
           <h3 className="font-display text-row font-bold text-ink">Your walk</h3>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -218,6 +220,8 @@ export default function Walk() {
             <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
           </div>
         </Sheet>
+        <DidItWork tool="walk" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>
+        </>
       ) : (
         <>
           <Ring t={running ? Math.min(1, elapsed / SECONDS) : 0}>
@@ -259,6 +263,7 @@ export default function Walk() {
             Motion is measured here and never recorded.
           </OnDevice>
           <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">{cueWords(sound)}</p>
+          {!running && <DidItWork tool="walk" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
         </>
       )}
     </ActivityScreen>

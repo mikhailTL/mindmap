@@ -71,7 +71,7 @@ function SettleStrip({ times, span, offset }) {
       <div aria-hidden className="mt-0.5 flex justify-between text-fine tabular-nums text-ink-3">
         <span>{clock(a)}</span><span>{clock(b)}</span>
       </div>
-      <figcaption className="sr-only">Each bar runs from a peak until the body had settled.</figcaption>
+      <figcaption className="sr-only">Each bar runs from a peak until the body settled.</figcaption>
     </figure>
   )
 }

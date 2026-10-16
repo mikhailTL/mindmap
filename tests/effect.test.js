@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { effectOf, rankTools, effectWords, toolName, MIN_PAIRS } from '../src/signals/effect.js'
+import { effectOf, rankTools, effectWords, toolName, TOOL_NAMES, MIN_PAIRS } from '../src/signals/effect.js'
 
 const pair = (tool, hb, ha, vb = null, va = null) =>
   ({ tool, at: '2026-10-16T15:00:00.000Z', before: { hr: hb, rmssd: vb }, after: { hr: ha, rmssd: va } })
@@ -77,16 +77,23 @@ describe('effectWords', () => {
     expect(effectWords('ground', null)).toBe('Two checks after the grounding are needed.')
   })
   it('keeps every sentence to ten words or fewer with no feeling word', () => {
-    const tools = ['breathing', 'scan', 'move', 'ground', 'reframe', 'sigh', 'chest', 'steady']
+    const tools = Object.keys(TOOL_NAMES)
+    expect(tools).toEqual(expect.arrayContaining(['walk', 'pocket']))
     for (const t of tools) for (const d of [null, 0, 1, 6, -3, 12]) {
       const s = effectWords(t, d)
       expect(s.split(/\s+/).length).toBeLessThanOrEqual(10)
       expect(s).not.toMatch(/calm|anx|stress|relax|better|worse|feel/i)
     }
   })
+  it('reads the walk as a walk inside a sentence', () => {
+    expect(effectWords('walk', 5)).toBe('After the walk your pulse is 5 beats lower.')
+    expect(effectWords('pocket', null)).toBe('Two checks after the pocket pacer are needed.')
+  })
   it('maps every tool id to its display name', () => {
     expect(toolName('sigh')).toBe('Sigh Coach')
     expect(toolName('steady')).toBe('Steady Hand')
+    expect(toolName('walk')).toBe('Walk It Off')
+    expect(toolName('pocket')).toBe('Pocket Pacer')
     expect(toolName('unknown')).toBe('unknown')
   })
 })

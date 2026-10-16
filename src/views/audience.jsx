@@ -779,7 +779,7 @@ export function ForSchools({ go }) {
         </div>
       </Section>
 
-      <Closer go={go} view="app-pro" ground="bg-card" label="Open the console"
+      <Closer go={go} view="app-pro" ground="bg-card" label={`Open the ${PRO} screen`}
         title={`Try the ${PRO} console`}
         line="The demo uses sample students."
         rows={[

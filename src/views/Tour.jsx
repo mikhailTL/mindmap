@@ -17,9 +17,14 @@ import { roster, triage, scoreOnly, alertsOnly, tierOf, TIER_LABEL, K_ANONYMITY 
 import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
 import {
-  SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE, CASELOAD_DEF,
+  SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE,
   PRO, PRO_LC, CONSENT_SHORT,
 } from '../lib/terms'
+import { TNAM_RESULTS as R } from '../signals/tnam-results'
+
+/* Same sum Methods.jsx uses for its "Tested on" row, so the two pages read
+ * one number from one file and cannot drift. */
+const TESTED_ADULTS = R.per_subject.length + R.transfer.subjects
 
 /* The guided tour, in eight stops. This is the route "Other" lands on from the
  * entry chooser, so for a share of visitors it is the first real page of the
@@ -265,8 +270,8 @@ const HONESTY = [
     'The patch exists as a CAD model. No unit has been built or photographed.'],
   ['The scoring model', 'Written, not validated', 'demo',
     'The model blends four signals against a fourteen day baseline. It has never been compared with a clinical measure.'],
-  ['Accuracy', 'None claimed', 'demo',
-    'No study has been run with MindMap users, so no accuracy is claimed here.'],
+  ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
+    `Tested on ${TESTED_ADULTS} adults in two public lab datasets, see Machine Learning. No study has been run with MindMap users yet.`],
   ['The eight students', 'Invented', 'demo',
     'The eight students are made up, and so are their consent records.'],
   ['Regulatory status', 'Not a medical device', 'fact',

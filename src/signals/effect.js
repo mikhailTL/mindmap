@@ -18,7 +18,13 @@ export const TOOL_NAMES = {
   sigh:      'Sigh Coach',
   chest:     'Chest Breathing',
   steady:    'Steady Hand',
+  walk:      'Walk It Off',
+  pocket:    'Pocket Pacer',
 }
+
+/* How a tool reads inside a sentence where its title does not: "after the
+   walk it off" is three words and no noun. The rest lowercase their title. */
+const IN_SENTENCE = { walk: 'walk' }
 
 export const MIN_PAIRS = 2
 
@@ -77,7 +83,7 @@ export function rankTools(pairs) {
 export function effectWords(tool, meanHrDrop) {
   const name = toolName(tool)
   /* the name reads as words inside a sentence, so Title Case comes off */
-  const lower = name.toLowerCase()
+  const lower = (IN_SENTENCE[tool] || name).toLowerCase()
   const d = num(meanHrDrop)
   if (d == null) return `Two checks after the ${lower} are needed.`
   const r = Math.round(Math.abs(d))

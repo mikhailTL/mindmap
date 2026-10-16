@@ -181,6 +181,8 @@ export const SHARING = {
       { key: 'worn',  label: 'Whether the patch was being worn',
         short: 'whether the patch was being worn',
         hint: 'On or off. Not where it was.' },
+      { key: 'settle', label: 'Days slow to settle', short: 'days slow to settle',
+        hint: 'A count of days each week. Never the time of day.' },
     ],
     never: [
       { label: `${NOTES}`, hint: NOTES_DEF },
@@ -203,6 +205,8 @@ export const SHARING = {
       { key: 'raw',    label: 'My raw readings, second by second', needs: 'score',
         short: 'my raw readings',
         hint: 'The samples behind the score. Off unless I turn it on.' },
+      { key: 'settle', label: 'Days slow to settle', short: 'days slow to settle',
+        hint: 'A count of days each week. Never the time of day.' },
     ],
     never: [
       { label: `${NOTES}`, hint: NOTES_DEF },
@@ -222,8 +226,8 @@ const blankSharing = () => ({
   v: VERSION,
   /* Nothing is shared by default. terms.js states that as the product's own
    * rule, and a switch that starts on is not a choice the student made. */
-  parent: { score: false, week: false, sleep: false, worn: false },
-  pro: { score: false, trends: false, raw: false },
+  parent: { score: false, week: false, sleep: false, worn: false, settle: false },
+  pro: { score: false, trends: false, raw: false, settle: false },
   retention: 7,
   log: [],
 })

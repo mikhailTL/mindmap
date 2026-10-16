@@ -17,6 +17,7 @@ export const YOU_SEE = [
   'Whether a day was above their usual',
   'Roughly how long they slept',
   'Whether the patch was worn',
+  'How many days a week were slow to settle, never the time of day',
 ]
 export const YOU_NEVER = [
   `${NOTES}. ${NOTES_DEF}`,

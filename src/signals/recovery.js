@@ -169,8 +169,8 @@ export function settleWords(todayMinutes, usualMinutes) {
     return { key: 'first', line: `Your body took ${todayMinutes} minutes to settle today.` }
   }
   const d = todayMinutes - usualMinutes
-  if (d >= 3) return { key: 'longer', line: `Your body took ${todayMinutes} minutes to settle today, longer than your usual ${usualMinutes}.` }
-  if (d <= -3) return { key: 'shorter', line: `Your body settled in ${todayMinutes} minutes today, faster than your usual ${usualMinutes}.` }
+  if (d >= 3) return { key: 'longer', line: `Your body took ${todayMinutes} minutes to settle today. Your usual is ${usualMinutes}.` }
+  if (d <= -3) return { key: 'shorter', line: `Your body settled in ${todayMinutes} minutes today. Your usual is ${usualMinutes}.` }
   return { key: 'usual', line: `Your body settled in ${todayMinutes} minutes today, about your usual.` }
 }
 

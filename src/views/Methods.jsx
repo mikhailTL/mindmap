@@ -9,7 +9,7 @@ import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { K_ANONYMITY } from '../lib/caseload'
 import { STUDENT_GROUPS } from '../toolkit/index'
-import { PRO_LC, SCORE } from '../lib/terms'
+import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* How it works, in five categories, one at a time. The fifth, "Beyond the
@@ -95,7 +95,7 @@ const CATEGORIES = [
     line: 'Everything runs on your phone, and nothing is stored anywhere else.',
     rows: [
       ['Built with', 'The app is built with React and runs in the browser.'],
-      ['Reading without the patch', 'The camera reads for 30 seconds and the microphone for 15. No patch is needed.'],
+      ['Reading without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone. No patch is needed.'],
       ['Privacy', `Parents see one day at a time. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
       ['Toolkit', `The toolkit has ${TOOLS} activities, each on its own page.`],
       ['Offline', 'Your readings and your baseline stay on your phone.'],

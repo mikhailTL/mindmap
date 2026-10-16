@@ -50,8 +50,9 @@ import {
    store's field key so a field added there without a line here still shows
    its full label rather than nothing. */
 const SHORT = {
-  parent: { score: `Daily ${SCORE}`, week: 'Days above usual', sleep: 'Hours slept', worn: 'Patch worn' },
-  pro:    { score: SCORE, trends: 'Weekly change', raw: 'Raw readings' },
+  parent: { score: `Daily ${SCORE}`, week: 'Days above usual', sleep: 'Hours slept', worn: 'Patch worn',
+            settle: 'Days slow to settle' },
+  pro:    { score: SCORE, trends: 'Weekly change', raw: 'Raw readings', settle: 'Days slow to settle' },
 }
 const SHORT_NEVER = {
   'My readings second by second': 'Raw readings',

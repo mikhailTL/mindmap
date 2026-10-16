@@ -4,6 +4,7 @@ import { ArrowRight, Cross } from '../ui/marks'
 import { ActivityScreen, OnDevice, Choice } from './shell'
 import { PATTERNS, pacerSchedule, phaseAt, renderPacerWav } from './wav'
 import { useReduced } from './useReduced'
+import { DidItWork } from './after'
 
 /* Pocket pacer. The one breathing pacer that keeps going when the phone locks.
  *
@@ -246,6 +247,8 @@ export default function Pocket() {
           No lock screen controls here. The sound still plays.
         </p>
       )}
+      {idle && <DidItWork tool="pocket" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
+      {state === 'done' && <DidItWork tool="pocket" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
     </ActivityScreen>
   )
 }

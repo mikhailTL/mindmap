@@ -18,7 +18,7 @@ import {
 import Toolkit from './Toolkit'
 import { Students } from './Students'
 import { Parents } from './Parents'
-import { Pro } from './Pro'
+import { Pro, SETTING_WORDS } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { ModeToggle } from '../ui/mode-toggle'
@@ -960,8 +960,15 @@ function StartAction({ action, run, className }) {
   )
 }
 
+/* The line under "Start here" for a Medical Professional names the setting
+   they chose at sign-up: the console's own `head` words, one source. */
+const settingLineFor = me =>
+  me && me.role === 'pro' && SETTING_WORDS[me.setting] ? SETTING_WORDS[me.setting].head + '.' : null
+
 function AudienceStart({ go, who }) {
   const s = START[who]
+  const me = useAccount()
+  const settingLine = who === 'pro' ? settingLineFor(me) : null
   /* One handler for both kinds of action: a route, or the switch to the worked
      example, which is the demo fixture set and says so on the toggle above. */
   const run = React.useCallback(id => {
@@ -973,7 +980,7 @@ function AudienceStart({ go, who }) {
     <main className="wrap">
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="font-display font-bold text-ink">{s.head}</h2>
-      <RealNotice className="mt-2" inline>No patch is paired yet.</RealNotice>
+      <RealNotice className="mt-2" inline>{settingLine || 'No patch is paired yet.'}</RealNotice>
 
       <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
         {s.actions.map(a => (

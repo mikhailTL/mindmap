@@ -12,6 +12,11 @@ import { AUDIT_LOG, CONSENT, CONSENT_LEDGER, K_ANONYMITY, PROTOCOL, PROTOCOL_DON
 import { bandOf } from '../signals/score'
 import { cn } from '../lib/utils'
 import { SCORE, NOTES, LOCATION, PRO_LC, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
+import { getSharing, getVersion, subscribe } from '../app/store'
+
+/* Demo figure for the settle row: days the body took longer than usual to
+   settle. A count of days and nothing finer. */
+const SETTLE_DAYS = 2
 
 /* The parent dashboard.
  *
@@ -570,6 +575,10 @@ export function ParentDash({ go, openTab }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const w = readWeek()
+  /* Day-level settle count. Off by default and the student's switch, so the
+     row is absent rather than blank until it is shared. */
+  React.useSyncExternalStore(subscribe, getVersion, () => 0)
+  const settle = getSharing().parent.settle === true
   const tier = w.avg == null ? 'usual' : bandOf(w.avg).key
   /* One band, the week's score. Never a dial at 0 as an empty state: 0 is a
      calm day on this scale, so real mode draws no dial at all. */
@@ -657,7 +666,11 @@ export function ParentDash({ go, openTab }) {
             {w.hiDay && <Row k="Highest day" v={`${w.hiDay.name}, ${w.hiDay.v}`}
               tone={w.hiDay.over ? 'text-warn' : 'text-ink'}/>}
             {w.loDay && <Row k="Lowest day" v={`${w.loDay.name}, ${w.loDay.v}`}/>}
+            {settle && <Row k="Days slow to settle" v={`${SETTLE_DAYS} of ${DAYS.length}`}/>}
           </dl>
+          {settle && (
+            <p className="mt-1.5 text-fine text-ink-3">Shown only when your child shares it.</p>
+          )}
         </Panel>
       </div>
 

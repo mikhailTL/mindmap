@@ -12,7 +12,7 @@ import {
   SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY, AUDIT_LOG, PROTOCOL, PROTOCOL_TIMES,
   PROTOCOL_DONE, REFERRALS, driversFor, INTERVENTIONS, profile45,
 } from '../lib/caseload'
-import { RETENTION } from '../app/store'
+import { RETENTION, getSharing, getVersion, subscribe } from '../app/store'
 import { useAccount } from '../account/store'
 import { CASELOAD_TITLE, CONSENT_SHORT, SCORE, PRO } from '../lib/terms'
 import { cn } from '../lib/utils'
@@ -80,7 +80,7 @@ import { cn } from '../lib/utils'
    `setting`). The words on the first step and the console heading change;
    the k-floor and the consent rules do not. Signed out, the demo is a
    school. */
-const SETTING_WORDS = {
+export const SETTING_WORDS = {
   school: {
     step: 'The whole school',
     head: 'Manage stress across the school',
@@ -202,8 +202,12 @@ function BarRow({ label, figure, pct, tone, aria }) {
    the screen does not use two names for one thing. A referral's target keeps
    only its first clause: the rest of the string is the clinical phrase a
    counsellor should not have to read off a queue. */
-const plain = t => t.replace('Crisis alert', 'Urgent alert')
+const plain = t => t.replace(/crisis alert/gi, m => (m[0] === 'C' ? 'Urgent alert' : 'urgent alert'))
 const shortRef = t => t.split(':')[0]
+
+/* Demo figure for the settle row: days the body took longer than usual to
+   settle. A count of days and nothing finer. */
+const SETTLE_DAYS = 2
 
 const BlankRow = ({ children }) => (
   <li className="flex items-center gap-3 py-3">
@@ -537,6 +541,8 @@ function recordLead(s, series) {
 
 function OneStudent({ who, setWho }) {
   const [note, setNote] = React.useState('')
+  React.useSyncExternalStore(subscribe, getVersion, () => 0)
+  const settle = getSharing().pro.settle === true
   const all = roster()
   const s = all.find(x => x.name === who) || all[0]
   /* Per student, not module constants: as constants every student on the
@@ -590,6 +596,13 @@ function OneStudent({ who, setWho }) {
           <Stat className="col-span-2 lg:col-span-1" label="Parent agreed to share" value={agreed(s)}
             sub={`Signed ${s.signedAt}, runs out ${s.expires}.`}/>
         </div>
+        {/* Day-level settle count. The student's own switch in Sharing, off by
+            default, so the row is absent rather than blank until it is shared. */}
+        {settle && (
+          <dl className="m-0 mt-3 border-t border-rule p-0 pt-1">
+            <KV k="Slow to settle" v={`${SETTLE_DAYS} days this week`}/>
+          </dl>
+        )}
       </Panel>
 
       {!s.showScore && (

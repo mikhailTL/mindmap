@@ -581,3 +581,65 @@ Ours, measured the same way on the student dashboard before this pass: over
    ink bands AND solid accent fills. All three are in use again. "Soothing"
    meant not a saturated field behind the headline; it never meant every
    band the same near-white.
+
+---
+
+## 0g. 16 October: beyond the screen
+
+The owner asked for features no other adolescent wellbeing app has: Toolkit
+activities on the phone's own sensors, and a patch measure beyond the score.
+
+**Three patch measures**, all per event, which no consumer wearable reports, on
+the per minute arousal index against the wearer's own fourteen day band:
+
+| Measure | Computed |
+|---|---|
+| Settle time | Minutes from a peak until the index is half way back to the top of the band; capped at 90, then "did not settle"; the day's figure is the median across peaks |
+| Run-up | Mean index in the 120 minutes before a marked event, less the wearer's mean for those minutes on unmarked days, in index points |
+| Carry-over | Peaks whose settle target was not reached before the next peak or the end of the day, divided by all peaks |
+
+Events are the student's own calendar marks; a comparison needs seven days of
+history. The app may say "your body took longer to settle than usual", never
+anxiety, depression or risk; no normative threshold. Oura Cumulative Stress is
+the nearest neighbour (monthly, 18+). Sources: claude/beyond-the-screen-research.md.
+
+**Nine phone tools**, each with the line it shows at the point of use (Methods
+adds: Typing rhythm is exploratory, Steady Hand unvalidated for anxiety):
+
+| Tool | Line on screen |
+|---|---|
+| Sigh Coach | Sound level is measured here and never recorded. |
+| Chest Breathing | Motion is measured here and never recorded. |
+| Steady Hand | Movement is measured here and never recorded. Experimental. A grounding exercise with a measured result. |
+| Alertness Check | Taps are timed here and never sent. Validated for alertness and sleep loss, not for stress. |
+| Typing rhythm | The time between keys, never the keys. |
+| Reach | Only where you took readings. Never shared, never a map. |
+| Did it work | Measured by the camera, never recorded. |
+| Pocket Pacer | A sound file made on this phone. Nothing is recorded. |
+| Walk It Off | Motion is measured here and never recorded. The walk is never scored as stress. |
+
+**Consent.** Everything above stays on the device. Reach, events and Run-up are
+never shared with anyone. Settle time and Carry-over reach a parent or a Medical
+Professional only as one day level field, "Days slow to settle", off by default,
+listed in the sharing screen and switchable off by the student: no event, no
+time, nothing finer than a day.
+
+**What the browser allowed.** An iPhone web app in October 2026 has DeviceMotion
+after a tap, the microphone through Web Audio, foreground geolocation, the camera
+and the Screen Wake Lock; it has no Web Bluetooth, no Vibration API (the switch
+input trick closed in iOS 26.5) and no background sensing, since page JavaScript
+stops at lock. So the eyes closed exercises hold the screen on with the Wake Lock
+and cue by sound everywhere, by vibration only on Android; Reach records a point
+only at a reading; Pocket Pacer renders the session to a sound file that keeps
+playing through the lock screen.
+
+**Ruled out.** Keystroke timing in other apps (no web or iPhone app can read
+another app's keyboard), listening to calls (not possible, not acceptable),
+background GPS (not possible on the web), posture, touch pressure or tremor as
+anxiety measures (no validation; current iPhones report no touch pressure).
+
+**Not yet tried on a phone.** No unit has been worn, so the patch measures have
+run only on the demo series and in tests. Unverified on a handset: the iPhone
+motion prompt, the microphone envelope in Safari, the Wake Lock holding a dark
+screen for a whole session, Pocket Pacer continuing after lock, Android vibration
+cues, the geolocation prompt, step counting from a pocket (owner's iPhone trial).
