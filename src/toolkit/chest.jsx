@@ -5,6 +5,7 @@ import { createPacer, audioSupported } from './audio'
 import { DarkSheet, buzz, cueWords } from './dark'
 import { askMotion } from '../signals/motion'
 import { breathsFromMotion } from '../signals/breath'
+import { DidItWork } from './after'
 
 /* Chest Breathing. The phone lies on the chest and counts the breaths.
  *
@@ -233,6 +234,8 @@ export default function Chest() {
         </Sheet>
       )}
 
+      {result ? <DidItWork tool="chest" phase="after" className="mt-3"/>
+        : !dark && <DidItWork tool="chest" phase="before" className="mt-3"/>}
       <div className="mt-3 space-y-1.5">
         <OnDevice>Motion is measured here and never recorded.</OnDevice>
         <p className="text-fine text-ink-3">{cueWords(sound)}</p>

@@ -3,6 +3,7 @@ import { Button } from '../ui/button'
 import { ActivityScreen, Sheet, OnDevice, Meter, Note } from './shell'
 import { askMotion } from '../signals/motion'
 import { useReduced } from './useReduced'
+import { DidItWork } from './after'
 
 /* Steady Hand. A dot the hand keeps inside a ring.
  *
@@ -259,6 +260,8 @@ export default function Steady() {
           </div>
         </>
       )}
+      {result ? <DidItWork tool="steady" phase="after" className="mt-3"/>
+        : !running && <DidItWork tool="steady" phase="before" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
       <OnDevice className="mt-3">Movement is measured here and never recorded.</OnDevice>
     </ActivityScreen>
   )

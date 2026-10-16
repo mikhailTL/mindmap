@@ -16,6 +16,7 @@ import { MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf } from '../signals/score'
 import { RunUpCard, SettleCard } from '../toolkit/settle'
 import { ReachCard } from '../toolkit/reach'
+import { WhatWorksCard } from '../toolkit/works'
 /* The demo reading and everything derived from it live in one module, so this
    screen and the calendar cannot print two different numbers for the same
    Thursday. */
@@ -546,6 +547,7 @@ function TodayDemo({ go, openTab }) {
             </div>
           </Panel>
           <ReachCard/>
+          <WhatWorksCard/>
           </div>
 
           {/* The working behind the one number. Every figure in here is
@@ -679,10 +681,11 @@ function StudentToday({ go, openTab }) {
     return (
       <div className="flex w-full flex-col gap-3 lg:gap-4">
         <StudentBody go={go} openTab={openTab}/>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <SettleCard className="h-full"/>
           <RunUpCard className="h-full"/>
           <ReachCard className="h-full"/>
+          <WhatWorksCard className="h-full"/>
         </div>
       </div>
     )

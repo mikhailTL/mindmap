@@ -62,7 +62,7 @@ const VIEWS = [
   'reading','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
-  'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert',
+  'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
   /* kept, not in section 18 */
   'tour','notes',
   /* accounts: sign in, the portal, its sections, and who is linked to whom */
@@ -82,7 +82,7 @@ const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
-                           'toolkit-steady','toolkit-alert',
+                           'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
                            'signin','account','account-section','network'])
 
 /* The three account routes belong to whichever app the signed in account is
@@ -122,6 +122,8 @@ const TITLE = {
   'toolkit-chest':'Chest breathing, in the MindMap Toolkit',
   'toolkit-steady':'Steady hand, in the MindMap Toolkit',
   'toolkit-alert':'Alertness check, in the MindMap Toolkit',
+  'toolkit-pocket':'Pocket pacer, in the MindMap Toolkit',
+  'toolkit-walk':'Walk it off, in the MindMap Toolkit',
   ai:'MindMap AI',
   shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
@@ -461,7 +463,7 @@ const APP_OF = {
 const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-breathing','toolkit-ground','toolkit-reframe',
                               'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
-                              'toolkit-steady','toolkit-alert'])
+                              'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk'])
 
 const APP_TAB = { app:null,
                   'app-student':'app-student', monitor:'app-student', reading:'reading',
@@ -471,7 +473,8 @@ const APP_TAB = { app:null,
                   'toolkit-reframe':'toolkit', 'toolkit-scan':'toolkit',
                   'toolkit-move':'toolkit', 'toolkit-sigh':'toolkit',
                   'toolkit-chest':'toolkit', 'toolkit-steady':'toolkit',
-                  'toolkit-alert':'toolkit',
+                  'toolkit-alert':'toolkit', 'toolkit-pocket':'toolkit',
+                  'toolkit-walk':'toolkit',
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
                   'app-pro':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
@@ -497,6 +500,8 @@ const APP_TITLE = {
   'toolkit-chest':     ['Chest',       'Chest breathing'],
   'toolkit-steady':    ['Steady',      'Steady hand'],
   'toolkit-alert':     ['Alertness',   'Alertness check'],
+  'toolkit-pocket':    ['Pocket',      'Pocket pacer'],
+  'toolkit-walk':      ['Walk',        'Walk it off'],
   /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
      spelling is the tab's word and the full name is the heading on the
      screen and this element's accessible name. */
@@ -1121,7 +1126,7 @@ export function App() {
                  wrap here. */
               'app-notify': () => <main className="wrap"><NotificationSettings/></main>,
               help: () => <main className="wrap"><HelpBody/></main>,
-              /* Owned by other workers. `toolkit` is the list; the nine
+              /* Owned by other workers. `toolkit` is the list; the eleven
                  activity routes pass the activity down as `open`. */
               toolkit:             () => <Toolkit who={audience}/>,
               'toolkit-breathing': () => <Toolkit who={audience} open="breathing"/>,
@@ -1133,6 +1138,8 @@ export function App() {
               'toolkit-chest':     () => <Toolkit who={audience} open="chest"/>,
               'toolkit-steady':    () => <Toolkit who={audience} open="steady"/>,
               'toolkit-alert':     () => <Toolkit who={audience} open="alert"/>,
+              'toolkit-pocket':    () => <Toolkit who={audience} open="pocket"/>,
+              'toolkit-walk':      () => <Toolkit who={audience} open="walk"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: Calendar,
               /* Accounts, kept on this device. */

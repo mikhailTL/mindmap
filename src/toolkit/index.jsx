@@ -13,10 +13,10 @@ import '../kit/kit.css'
  * carries a 24px line mark, the activity's name and at most eight words, and
  * the tool itself is on the activity's own route.
  *
- * Text budget (spec 0f): counted whole, the index is 78 words. One line of
- * reassurance (6), three group labels (5), nine names (18), nine lines (49).
- * Names and lines alone are 67. At 390 only the first group is above the
- * fold, and that is 23 words.
+ * Text budget (spec 0f): counted whole, the index is 94 words. One line of
+ * reassurance (6), three group labels (5), eleven names (23), eleven lines
+ * (60). Names and lines alone are 83. At 390 only the first group is above
+ * the fold, and that is 23 words.
  *
  * At 1280 the rows sit three across; at 390 one under another, broken into
  * two groups so no run of similar rows passes three (spec 0e section 14). */
@@ -41,6 +41,8 @@ const SighIcon    = () => <I><rect x="9" y="3" width="6" height="11" rx="3"/><pa
 const ChestIcon   = () => <I><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M9.5 12h1.5l1-3 2 6 1-3h1.5"/></I>
 const SteadyIcon  = () => <I><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></I>
 const AlertIcon   = () => <I><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M10 3h4M12 3v3"/></I>
+const PocketIcon  = () => <I><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M9.5 12c1 0 1-2.5 2.5-2.5s1.5 5 2.5 5 1-2.5 2.5-2.5"/></I>
+const WalkIcon    = () => <I><circle cx="13" cy="4.5" r="1.8"/><path d="M9.5 21l2.5-7M12 9l-2 5 3.5 2 1 5M12 9l3 3h3M12 9l-3.5 1-1.5 3"/></I>
 
 /* `items` is read by src/views/Methods.jsx for a count, so the shape stays. */
 export const STUDENT_GROUPS = [
@@ -67,6 +69,10 @@ export const STUDENT_GROUPS = [
       title:'Steady hand',         line:'Keep the dot still, ring breathes' },
     { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
       title:'Alertness check',     line:'Sixty seconds of taps' },
+    { id:'pocket',    route:'toolkit-pocket',    family:'leaf',  icon:PocketIcon,
+      title:'Pocket pacer',        line:'Lock the phone, the pacer keeps going' },
+    { id:'walk',      route:'toolkit-walk',      family:'night', icon:WalkIcon,
+      title:'Walk it off',         line:'Three minutes, steps counted' },
   ]},
 ]
 

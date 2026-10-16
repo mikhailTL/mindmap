@@ -145,6 +145,9 @@ const BEYOND = [
   { title: 'Chest breathing', line: 'Phone on your chest, eyes closed. The accelerometer counts your breaths.' },
   { title: 'Alertness check', line: 'Sixty seconds of taps show a short night before anything else does.' },
   { title: 'Reach',           line: 'How far from home your readings happened this week. Never shared, never a map.' },
+  { title: 'Did it work?',    line: 'A twenty-second pulse before and after any tool. The app learns which tool works for you.' },
+  { title: 'Pocket pacer',    line: 'Lock your phone. The breathing cues keep going, played like music.' },
+  { title: 'Walk it off',     line: 'Three minutes of walking, steps counted by the phone, never scored as stress.' },
 ]
 
 /* One line per audience. The full matrix is on the privacy page. */

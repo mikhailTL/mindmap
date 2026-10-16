@@ -3,6 +3,7 @@ import { Button } from '../ui/button'
 import { ActivityScreen, OnDevice, Choice, Meter } from './shell'
 import { createPacer, createMicMeter, audioSupported } from './audio'
 import { useReduced } from './useReduced'
+import { DidItWork } from './after'
 
 /* Box Breathing. The pacer ring is the screen.
  *
@@ -154,6 +155,8 @@ export default function Breathing() {
       )}
       {mic === 'refused' && <p className="mt-3 text-center text-fine text-ink-3">Microphone off. The pacer still runs.</p>}
       {mic === 'unsupported' && <p className="mt-3 text-center text-fine text-ink-3">No microphone here. The pacer still runs.</p>}
+      {!started && <DidItWork tool="breathing" phase="before" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
+      {started && !running && <DidItWork tool="breathing" phase="after" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
     </ActivityScreen>
   )
 }

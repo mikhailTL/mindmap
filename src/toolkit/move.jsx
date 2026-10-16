@@ -2,6 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { ActivityScreen, OnDevice, Meter, Video } from './shell'
 import { openCamera, stopStream, createMotionMeter, cameraSupported } from './vision'
+import { DidItWork } from './after'
 
 /* Movement Break. The camera motion meter is the screen.
  *
@@ -144,6 +145,8 @@ export default function MoveBreak() {
         {i < MOVES.length - 1 && <Button size="sm" variant="outline" onClick={next}>Next</Button>}
         <span className="self-center text-fine text-ink-3">Move {i + 1} of {MOVES.length}</span>
       </div>
+      {!running && i === 0 && left === MOVES[0].secs && <DidItWork tool="move" phase="before" className="mx-auto mt-4 w-full max-w-[64rem]"/>}
+      {done && <DidItWork tool="move" phase="after" className="mx-auto mt-4 w-full max-w-[64rem]"/>}
     </ActivityScreen>
   )
 }

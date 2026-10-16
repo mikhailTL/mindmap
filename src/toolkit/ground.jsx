@@ -3,6 +3,7 @@ import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
 import { ActivityScreen, OnDevice, Choice, FIELD, Video } from './shell'
 import { openCamera, stopStream, loadDetector, phraseFor, cameraSupported } from './vision'
+import { DidItWork } from './after'
 
 /* 5-4-3-2-1 Grounding. The camera view is the screen.
  *
@@ -208,6 +209,8 @@ export default function Grounding() {
           </div>
         </div>
       )}
+      {!finished && at === 0 && !list.length && <DidItWork tool="ground" phase="before" className="mt-3"/>}
+      {finished && <DidItWork tool="ground" phase="after" className="mt-3"/>}
     </ActivityScreen>
   )
 }

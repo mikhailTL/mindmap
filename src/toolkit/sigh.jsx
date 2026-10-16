@@ -6,6 +6,7 @@ import { createPacer, createMicMeter, audioSupported } from './audio'
 import { DarkSheet, buzz, cueWords } from './dark'
 import { breathsFromEnvelope } from '../signals/breath'
 import { useReduced } from './useReduced'
+import { DidItWork } from './after'
 
 /* Sigh coach. Cyclic sighing, paced and measured.
  *
@@ -342,6 +343,7 @@ export default function Sigh() {
               </>
             )}
           </div>
+          {idle && <DidItWork tool="sigh" phase="before" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
         </>
       )}
 
@@ -374,6 +376,7 @@ export default function Sigh() {
           </div>
         </Sheet>
       )}
+      {done && <DidItWork tool="sigh" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
     </ActivityScreen>
   )
 }

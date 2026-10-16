@@ -2,6 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
 import { ActivityScreen, FIELD } from './shell'
+import { DidItWork } from './after'
 
 /* Thought Reframe. Three fields and nothing else.
  *
@@ -37,6 +38,8 @@ export default function Reframe() {
           onClick={() => setV({ what:'', told:'', else:'' })}>Clear</Button>
         <span className="text-fine text-ink-3">Stays on this device.</span>
       </div>
+      {!filled && <DidItWork tool="reframe" phase="before" className="mt-3"/>}
+      {v.else.trim() !== '' && <DidItWork tool="reframe" phase="after" className="mt-3"/>}
     </ActivityScreen>
   )
 }

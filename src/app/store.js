@@ -459,3 +459,23 @@ export function addEvent({ day, minute, label, kind }) {
 export function removeEvent(id) {
   return events.merge({ items: listEvents().filter(e => e.id !== id) }).items
 }
+
+/* Effects: one row per exercise with a camera pulse taken before it and one
+ * taken after. Two readings and a tool id, nothing else: no frames, no
+ * waveform, no time of day finer than the stamp. src/signals/effect.js turns
+ * the rows into the "What works for you" ranking. */
+const reading = r => (r && num(r.hr) != null ? { hr: num(r.hr), rmssd: num(r.rmssd) } : null)
+const blankEffects = () => ({ v: VERSION, items: [] })
+function normaliseEffects(s) {
+  const items = Array.isArray(s.items) ? s.items : []
+  return { v: VERSION, items: items
+    .filter(r => r && typeof r.tool === 'string' && r.tool && reading(r.before) && reading(r.after))
+    .slice(0, 120)
+    .map(r => ({ at: iso(r.at), tool: r.tool.slice(0, 24), before: reading(r.before), after: reading(r.after) })) }
+}
+const effects = makeSlot('mindmap.app.effects', blankEffects, normaliseEffects)
+export const listEffects = () => effects.get().items
+export function addEffect({ tool, before, after, at }) {
+  const row = { at: iso(at), tool, before, after }
+  return effects.merge({ items: [row, ...listEffects()] }).items
+}

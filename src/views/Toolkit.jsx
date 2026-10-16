@@ -9,6 +9,8 @@ import SighCoach from '../toolkit/sigh'
 import ChestBreathing from '../toolkit/chest'
 import SteadyHand from '../toolkit/steady'
 import AlertnessCheck from '../toolkit/alert'
+import PocketPacer from '../toolkit/pocket'
+import WalkItOff from '../toolkit/walk'
 import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } from '../toolkit/parent'
 
 /* The Toolkit, as a router.
@@ -25,9 +27,11 @@ import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } 
  *   toolkit-chest      -> open="chest"       Chest breathing
  *   toolkit-steady     -> open="steady"      Steady hand
  *   toolkit-alert      -> open="alert"       Alertness check
+ *   toolkit-pocket     -> open="pocket"      Pocket pacer
+ *   toolkit-walk       -> open="walk"        Walk it off
  *
  * With no `open` this renders the index. With an `open` it renders that one
- * activity as the whole screen. The nine student activities are audience
+ * activity as the whole screen. The eleven student activities are audience
  * independent, so a parent who lands on one gets the activity.
  *
  * THE PARENT SET HAS NO ROUTES YET. Its five activities open in place in the
@@ -54,6 +58,8 @@ const ROUTED = {
   chest:     ChestBreathing,
   steady:    SteadyHand,
   alert:     AlertnessCheck,
+  pocket:    PocketPacer,
+  walk:      WalkItOff,
 }
 
 const IN_PLACE = {

@@ -4,6 +4,7 @@ import { cn } from '../lib/utils'
 import { ActivityScreen, Choice } from './shell'
 import { createPacer, audioSupported } from './audio'
 import { useReduced } from './useReduced'
+import { DidItWork } from './after'
 
 /* Body Scan. A guided timer with a body outline that lights the current region.
  *
@@ -154,6 +155,8 @@ export default function BodyScan() {
           <p className="mt-3 text-fine text-ink-2">Skip any part that hurts.</p>
         </div>
       </div>
+      {!started && <DidItWork tool="scan" phase="before" className="mt-4"/>}
+      {finished && <DidItWork tool="scan" phase="after" className="mt-4"/>}
     </ActivityScreen>
   )
 }
