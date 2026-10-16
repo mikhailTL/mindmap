@@ -190,7 +190,7 @@ export default function TrafficLightPage({ go }) {
             One light, not a report
           </h1>
           <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">
-            MindMap measures how your teen reacts to their phone, never what is on it.
+            MindMap reads how your teen reacts, never what is on their phone.
           </p>
         </div>
       </div>

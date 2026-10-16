@@ -130,7 +130,7 @@ const FUTURE = [
 ]
 
 const HERO_FACTS = [
-  'One stress score a day, from a patch on your arm or from your phone camera.',
+  'One stress score a day, from a patch or your phone camera.',
   'You decide who else can see it.',
 ]
 

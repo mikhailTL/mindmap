@@ -594,7 +594,7 @@ export function ParentDash({ go, openTab }) {
               {TIER_WORD[tier]}
             </p>
             <Why label="What this week's score means" align="center" className="mt-2">
-              {heroDetail(w)} You see one day at a time, never a moment.
+              {heroDetail(w)} You see whole days, never a single moment.
             </Why>
           </div>
         </Panel>
