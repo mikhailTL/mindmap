@@ -290,12 +290,16 @@ export default function Sigh() {
   }
 
   const idle = !running && !done
-  const barsLine = mic === 'refused' ? 'Allow the microphone to see your exhales.'
+  /* The one line under the controls: the sensor's state when it has one,
+     the cue words with the eyes shut, the instruction otherwise. */
+  const line = mic === 'refused' ? 'Allow the microphone to see your exhales.'
     : mic === 'unsupported' ? 'No microphone here. The pacer still runs.'
-    : mic === 'asking' ? 'Asking for the microphone.' : null
+    : mic === 'asking' ? 'Asking for the microphone.'
+    : eyes ? cueWords(sound)
+    : 'Twice in through the nose, slowly out the mouth.'
 
   return (
-    <ActivityScreen family="tide" title="Sigh coach">
+    <ActivityScreen family="tide" title="Sigh Coach">
       <DarkSheet on={eyes && running} onStop={end} line={`${cueWords(sound)} Tap to stop.`}>
         <p className="font-display text-view font-bold tracking-tight text-mist">{frame.phase.word}</p>
         <p className="mt-2 font-display text-dial font-bold tabular-nums text-mist/80">
@@ -308,14 +312,16 @@ export default function Sigh() {
           <Ring phase={frame.phase} t={frame.t} count={frame.count} scale={frame.scale}
             still={reduced} idle={idle} level={frame.level} micOn={mic === 'on'}/>
 
-          <div className="mx-auto mt-2 flex w-full max-w-[32rem] items-baseline justify-between">
-            <p className="font-display text-ui font-semibold tabular-nums text-ink-2" aria-live="off">
-              {mmss(frame.left)} left
+          <p className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui font-semibold
+            tabular-nums text-ink-2" aria-live="off">
+            {mmss(frame.left)} left
+          </p>
+          {bpm != null && (
+            <p className="mx-auto mt-1 max-w-[32rem] text-center font-display text-ui font-semibold
+              tabular-nums text-ink" aria-live="polite">
+              {Math.round(bpm)} breaths per minute
             </p>
-            <p className="font-display text-ui font-semibold tabular-nums text-ink" aria-live="polite">
-              {bpm != null ? `${Math.round(bpm)} breaths per minute` : ''}
-            </p>
-          </div>
+          )}
 
           <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
             {running
@@ -327,23 +333,18 @@ export default function Sigh() {
             <Choice on={eyes} onClick={() => setEyes(e => !e)}
               className="inline-flex items-center gap-2"><EyeShut/>Eyes closed</Choice>
           </div>
-          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
-            {eyes ? cueWords(sound) : 'In through the nose twice, out slowly through the mouth.'}
-          </p>
+          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">{line}</p>
+          <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
+            Sound level is measured here and never recorded.
+          </OnDevice>
 
-          <div className="mx-auto mt-5 w-full max-w-[32rem]">
-            <h3 className="font-display text-ui font-bold text-ink">Your exhales</h3>
-            {barsLine && <p className="mt-2 text-fine text-ink-3">{barsLine}</p>}
-            {mic === 'on' && (
-              <>
-                {bars.length
-                  ? <div className="mt-2"><Bars bars={bars} still={reduced}/></div>
-                  : <p className="mt-2 text-fine text-ink-3">Each exhale draws a bar here.</p>}
-                <OnDevice className="mt-3">Sound level is measured here and never recorded.</OnDevice>
-              </>
-            )}
-          </div>
-          {idle && <DidItWork tool="sigh" phase="before" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
+          {bars.length > 0 && (
+            <div className="mx-auto mt-5 w-full max-w-[32rem]">
+              <h3 className="font-display text-ui font-bold text-ink">Your exhales</h3>
+              <div className="mt-2"><Bars bars={bars} still={reduced}/></div>
+            </div>
+          )}
+          {idle && <DidItWork tool="sigh" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
         </>
       )}
 
@@ -368,9 +369,9 @@ export default function Sigh() {
               {result.bpmStart == null ? 'Needs the microphone.' : `${result.n} exhales heard.`}
             </p>
           </div>
-          <OnDevice className="mt-4">
-            Shown in one 108-person trial to lift mood and slow breathing. Nothing is recorded.
-          </OnDevice>
+          <p className="mt-4 text-fine text-ink-2">
+            A 108-person trial found better mood and slower breathing.
+          </p>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Button size="sm" className="min-w-[9rem]" onClick={start}><ArrowRight/>Again</Button>
           </div>

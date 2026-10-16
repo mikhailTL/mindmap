@@ -3,7 +3,7 @@ import { Panel, PanelHead } from '../views/Monitor'
 import { cn } from '../lib/utils'
 import { useMode } from '../lib/mode'
 import { getVersion, listEffects, subscribe } from '../app/store'
-import { effectWords, rankTools, toolName } from '../signals/effect'
+import { rankTools, toolName } from '../signals/effect'
 
 /* What works for you. The tools ranked by the student's own pulse, from the
    before-and-after pairs in the `effects` slot. One bar per tool, the mean
@@ -16,6 +16,17 @@ const DEMO = [
   { tool: 'breathing', n: 3, meanHrDrop: 4, meanHrvRise: 3 },
   { tool: 'move',      n: 2, meanHrDrop: 2, meanHrvRise: null },
 ]
+
+/* The sentence for the tool at the top. Nine words at most, a tool and a
+   count of beats, never a feeling. */
+function leadLine(tool, meanHrDrop) {
+  const name = toolName(tool)
+  const lower = name.charAt(0).toLowerCase() + name.slice(1)
+  const r = Math.round(Math.abs(meanHrDrop))
+  if (r === 0) return `The ${lower} leaves your pulse about the same.`
+  const beats = r === 1 ? 'beat' : 'beats'
+  return `After the ${lower}, your pulse ${meanHrDrop > 0 ? 'drops' : 'rises'} ${r} ${beats}.`
+}
 
 function Rows({ rows }) {
   const top = Math.max(1, ...rows.map(r => Math.abs(r.meanHrDrop ?? 0)))
@@ -58,12 +69,12 @@ export function WhatWorksCard({ className }) {
     <Panel className={className}>
       <PanelHead title="What Works for You" meta={mode === 'demo' ? 'demo' : 'your pulse'}/>
       {rows.length === 0 ? (
-        <p className="mt-3 max-w-[40ch] text-meta text-ink">Check your pulse after a tool to see it here.</p>
+        <p className="mt-3 max-w-[40ch] text-meta text-ink">Check your pulse after a tool to start.</p>
       ) : (
         <>
           {lead && (
             <p className="mt-3 max-w-[40ch] text-meta text-ink" aria-live="polite">
-              {effectWords(lead.tool, lead.meanHrDrop)}
+              {leadLine(lead.tool, lead.meanHrDrop)}
             </p>
           )}
           <Rows rows={rows}/>

@@ -62,17 +62,17 @@ export const STUDENT_GROUPS = [
   ]},
   { label:'Beyond the screen', items:[
     { id:'sigh',      route:'toolkit-sigh',      family:'tide',  icon:SighIcon,
-      title:'Sigh coach',          line:'Your exhale, measured by the mic' },
+      title:'Sigh Coach',          line:'Your exhale, measured by the mic' },
     { id:'chest',     route:'toolkit-chest',     family:'pool',  icon:ChestIcon,
-      title:'Chest breathing',     line:'Phone on your chest, eyes closed' },
+      title:'Chest Breathing',     line:'Phone on your chest, eyes closed' },
     { id:'steady',    route:'toolkit-steady',    family:'stone', icon:SteadyIcon,
-      title:'Steady hand',         line:'Keep the dot still, ring breathes' },
+      title:'Steady Hand',         line:'Keep the dot still, ring breathes' },
     { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
-      title:'Alertness check',     line:'Sixty seconds of taps' },
+      title:'Alertness Check',     line:'Sixty seconds of taps' },
     { id:'pocket',    route:'toolkit-pocket',    family:'leaf',  icon:PocketIcon,
-      title:'Pocket pacer',        line:'Lock the phone, the pacer keeps going' },
+      title:'Pocket Pacer',        line:'Lock the phone, the pacer keeps going' },
     { id:'walk',      route:'toolkit-walk',      family:'night', icon:WalkIcon,
-      title:'Walk it off',         line:'Three minutes, steps counted' },
+      title:'Walk It Off',         line:'Three minutes, steps counted' },
   ]},
 ]
 

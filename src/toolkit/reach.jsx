@@ -26,15 +26,16 @@ export function weekStart(now = new Date()) {
 
 const DEMO = { thisWeek: 4.2, lastWeek: 6.0, readings: 9 }
 
-/* A ring with an arrow leaving it: readings around home, and the farthest
-   one. Same 24 box and 1.6 stroke as src/ui/marks. */
+/* A ring with an arrow leaving it sideways: readings around home, and the
+   farthest one. Sideways, so it never reads as a gender sign. Same 24 box and
+   1.6 stroke as src/ui/marks. */
 function ReachMark({ className }) {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden
       stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
       className={cn('shrink-0', className)}>
-      <circle cx="10" cy="14" r="6"/>
-      <path d="M13.5 10.5L21 3M15.5 3H21v5.5"/>
+      <circle cx="8.5" cy="12" r="5.5"/>
+      <path d="M14 12h7.5M18 8.5l3.5 3.5-3.5 3.5"/>
     </svg>
   )
 }

@@ -85,8 +85,8 @@ describe('effectWords', () => {
     }
   })
   it('maps every tool id to its display name', () => {
-    expect(toolName('sigh')).toBe('Sigh coach')
-    expect(toolName('steady')).toBe('Steady hand')
+    expect(toolName('sigh')).toBe('Sigh Coach')
+    expect(toolName('steady')).toBe('Steady Hand')
     expect(toolName('unknown')).toBe('unknown')
   })
 })

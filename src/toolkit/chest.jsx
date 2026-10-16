@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '../ui/button'
+import { Wave } from '../ui/marks'
 import { ActivityScreen, Sheet, OnDevice, Choice } from './shell'
 import { createPacer, audioSupported } from './audio'
 import { DarkSheet, buzz, cueWords } from './dark'
@@ -58,6 +59,28 @@ const axisOf = e => {
 }
 
 const fmt = v => (v == null ? '--' : Math.round(v))
+
+/* The idle ring, the same track and disc as the other pacers. The screen is
+   dark while the session runs, so the ring only ever says Ready and carries
+   the live figure under it. */
+function Ring({ bpm }) {
+  return (
+    <div className="relative mx-auto grid aspect-square w-full max-w-[22rem] place-items-center
+      sm:max-w-[26rem]">
+      <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
+        <circle cx="100" cy="100" r="92" fill="none" className="stroke-rule" strokeWidth="4"/>
+        <circle cx="100" cy="100" r="68" className="kit-f-tint kit-s-art" strokeWidth="3"
+          style={{ transformBox:'fill-box', transformOrigin:'center', transform:'scale(0.78)' }}/>
+      </svg>
+      <div className="relative text-center">
+        <p className="font-display text-row font-bold tracking-tight text-ink">Ready</p>
+        <p aria-live="polite" className="mt-1 font-display text-ui font-semibold tabular-nums text-ink-2">
+          {fmt(bpm)} per minute
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function Chest() {
   const [motion, setMotion] = React.useState('off')   // off | asking | on | refused | unsupported
@@ -191,7 +214,7 @@ export default function Chest() {
     : null
 
   return (
-    <ActivityScreen family="pool" title="Chest breathing">
+    <ActivityScreen family="pool" title="Chest Breathing">
       <DarkSheet on={dark} onStop={stop}>
         <p className="font-display text-fig font-bold tabular-nums text-paper">{count}</p>
         <p aria-live="polite" className="mt-3 font-display text-ui font-semibold text-mist/80">
@@ -200,46 +223,43 @@ export default function Chest() {
       </DarkSheet>
 
       {result ? (
-        <Sheet>
-          <h3 className="font-display text-row font-bold text-ink">Your breathing</h3>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Figure label="At the start" value={result.start}/>
-            <Figure label="At the end" value={result.end}/>
-          </div>
-          <p className="mt-4 text-fine text-ink-2">
-            A phone on the chest matched a breathing band in a 2025 study of ten adults.
-          </p>
-          {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
-          </div>
-        </Sheet>
+        <>
+          <Sheet className="mx-auto w-full max-w-[32rem]">
+            <h3 className="font-display text-row font-bold text-ink">Your breathing</h3>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <Figure label="At the start" value={result.start}/>
+              <Figure label="At the end" value={result.end}/>
+            </div>
+            <p className="mt-4 text-fine text-ink-2">
+              Matched a breathing band in a 2025 ten-adult study.
+            </p>
+            {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
+            </div>
+          </Sheet>
+          <DidItWork tool="chest" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>
+        </>
       ) : (
-        <Sheet>
-          <p className="font-display text-row font-bold text-ink">Lie down, phone on the chest.</p>
-          <p className="mt-1 text-sec text-ink-2">Start, then close your eyes.</p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
+        <>
+          <Ring bpm={bpm}/>
+          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
             <Button size="sm" className="min-w-[9rem]" disabled={motion === 'asking'} onClick={start}>
               <Play/>{motion === 'asking' ? 'Asking' : 'Start'}
             </Button>
-            <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}>
-              <span aria-hidden className="mr-2 inline-block size-2 rounded-bar bg-current align-middle"/>
-              Sound
-            </Choice>
+            <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}
+              className="inline-flex items-center gap-2"><Wave size={18}/>Sound</Choice>
           </div>
-          <p aria-live="polite" className="mt-4 font-display text-stat font-bold tabular-nums text-ink">
-            {fmt(bpm)}<span className="ml-1.5 text-fine font-semibold text-ink-2">per minute</span>
+          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
+            {sensorLine ?? 'Lie down, phone on your chest, then close your eyes.'}
           </p>
-          {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
-        </Sheet>
+          <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
+            Motion is measured here and never recorded.
+          </OnDevice>
+          <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">{cueWords(sound)}</p>
+          {!dark && <DidItWork tool="chest" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
+        </>
       )}
-
-      {result ? <DidItWork tool="chest" phase="after" className="mt-3"/>
-        : !dark && <DidItWork tool="chest" phase="before" className="mt-3"/>}
-      <div className="mt-3 space-y-1.5">
-        <OnDevice>Motion is measured here and never recorded.</OnDevice>
-        <p className="text-fine text-ink-3">{cueWords(sound)}</p>
-      </div>
     </ActivityScreen>
   )
 }

@@ -212,31 +212,40 @@ export default function Steady() {
     : null
 
   return (
-    <ActivityScreen family="stone" title="Steady hand">
+    <ActivityScreen family="stone" title="Steady Hand">
       {result ? (
-        <Sheet>
-          <h3 className="font-display text-row font-bold text-ink">How still</h3>
-          {result.blocks >= 2 ? (
-            <div className="mt-4 space-y-4">
-              <Meter tall value={stillness(result.first)} label="First minute"
-                right={`${Math.round(stillness(result.first) * 100)}%`}/>
-              <Meter tall value={stillness(result.last)} label="Last minute"
-                right={`${Math.round(stillness(result.last) * 100)}%`}/>
+        <>
+          <Sheet className="mx-auto w-full max-w-[32rem]">
+            <h3 className="font-display text-row font-bold text-ink">How still</h3>
+            {result.blocks >= 2 ? (
+              <div className="mt-4 space-y-4">
+                <Meter tall value={stillness(result.first)} label="First minute"
+                  right={`${Math.round(stillness(result.first) * 100)}%`}/>
+                <Meter tall value={stillness(result.last)} label="Last minute"
+                  right={`${Math.round(stillness(result.last) * 100)}%`}/>
+              </div>
+            ) : (
+              <p className="mt-3 text-sec text-ink-2">
+                {motion === 'on' ? 'Under twenty seconds. Nothing to compare.' : 'No measurement here.'}
+              </p>
+            )}
+            <Note className="mt-4">Experimental. A grounding exercise with a measured result.</Note>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
             </div>
-          ) : (
-            <p className="mt-3 text-sec text-ink-2">
-              {motion === 'on' ? 'Under twenty seconds. Nothing to compare.' : 'No measurement here.'}
-            </p>
-          )}
-          <Note className="mt-4">Experimental. A grounding exercise with a measured result.</Note>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
-          </div>
-        </Sheet>
+          </Sheet>
+          <DidItWork tool="steady" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>
+        </>
       ) : (
         <>
           <Ring {...frame} hasDot={running && motion === 'on'} reduced={reduced} idle={!running}/>
-          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap items-center gap-3">
+          {running && (
+            <p aria-live="polite" className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui
+              font-semibold tabular-nums text-ink-2">
+              {elapsed} s
+            </p>
+          )}
+          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
             {running ? (
               <Button size="sm" className="min-w-[9rem]" onClick={stop}><Square/>Stop</Button>
             ) : (
@@ -244,25 +253,19 @@ export default function Steady() {
                 <Play/>{motion === 'asking' ? 'Asking' : 'Start'}
               </Button>
             )}
-            <p aria-live="polite" className="font-display text-stat font-bold tabular-nums text-ink">
-              {elapsed}<span className="ml-1.5 text-fine font-semibold text-ink-2">s</span>
-            </p>
           </div>
-          <div className="mx-auto mt-3 w-full max-w-[32rem]">
-            {!running && (
-              <>
-                <p className="font-display text-row font-bold text-ink">Hold the phone in one hand.</p>
-                <p className="mt-1 text-sec text-ink-2">Keep the dot inside the ring.</p>
-              </>
-            )}
-            {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
-            <Note className="mt-3">Experimental. A grounding exercise with a measured result.</Note>
-          </div>
+          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
+            {sensorLine ?? 'One hand. Keep the dot inside the ring.'}
+          </p>
+          <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
+            Movement is measured here and never recorded.
+          </OnDevice>
+          <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">
+            Experimental. A grounding exercise with a measured result.
+          </p>
+          {!running && <DidItWork tool="steady" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
         </>
       )}
-      {result ? <DidItWork tool="steady" phase="after" className="mt-3"/>
-        : !running && <DidItWork tool="steady" phase="before" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
-      <OnDevice className="mt-3">Movement is measured here and never recorded.</OnDevice>
     </ActivityScreen>
   )
 }

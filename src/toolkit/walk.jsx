@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '../ui/button'
+import { Wave } from '../ui/marks'
 import { ActivityScreen, Sheet, OnDevice, Choice } from './shell'
 import { createPacer, audioSupported } from './audio'
 import { useWakeLock, buzz, cueWords } from './dark'
@@ -70,9 +71,11 @@ function Ring({ t, children }) {
       sm:max-w-[26rem]">
       <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
         <circle cx="100" cy="100" r="92" fill="none" className="stroke-rule" strokeWidth="4"/>
-        <circle cx="100" cy="100" r="92" fill="none" className="stroke-accent" strokeWidth="7"
+        <circle cx="100" cy="100" r="92" fill="none" className="kit-s" strokeWidth="7"
           strokeLinecap="round" transform="rotate(-90 100 100)"
           strokeDasharray={`${t * RING} ${RING}`}/>
+        <circle cx="100" cy="100" r="68" className="kit-f-tint kit-s-art" strokeWidth="3"
+          style={{ transformBox:'fill-box', transformOrigin:'center', transform:'scale(0.78)' }}/>
       </svg>
       <div className="relative text-center">{children}</div>
     </div>
@@ -197,25 +200,9 @@ export default function Walk() {
   const left = SECONDS - secs
 
   return (
-    <ActivityScreen family="night" title="Walk it off">
-      {running ? (
-        <>
-          <Ring t={Math.min(1, elapsed / SECONDS)}>
-            <p aria-live="polite" className="font-display text-fig font-bold tabular-nums text-ink">
-              {noSensor ? <span className="text-row">no sensor</span> : live.steps}
-            </p>
-            <p className="mt-1 font-display text-ui font-semibold text-ink-2">
-              {noSensor ? '' : live.perMinute == null ? 'steps' : `${Math.round(live.perMinute)} per minute`}
-            </p>
-            <p className="mt-2 font-display text-row font-bold tabular-nums text-ink">{clock(left)}</p>
-          </Ring>
-          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" onClick={stop}><Stop/>Stop</Button>
-          </div>
-          {sensorLine && <p className="mt-3 text-center text-fine text-ink-3">{sensorLine}</p>}
-        </>
-      ) : result ? (
-        <Sheet>
+    <ActivityScreen family="night" title="Walk It Off">
+      {result ? (
+        <Sheet className="mx-auto w-full max-w-[32rem]">
           <h3 className="font-display text-row font-bold text-ink">Your walk</h3>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Figure label="Steps" value={noSensor ? null : result.steps} unit=""/>
@@ -224,35 +211,56 @@ export default function Walk() {
           <p className="mt-4 text-sec text-ink">
             {noSensor ? `${clock(secs)} walked.` : walkWords(result.steps, result.perMinute)}
           </p>
-          <p className="mt-2 text-fine text-ink-2">
-            Movement separates a hard run from a hard day. The walk itself is never scored as stress.
-          </p>
+          <p className="mt-2 text-fine text-ink-2">The walk is never scored as stress.</p>
           {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
+          <OnDevice className="mt-3">Motion is measured here and never recorded.</OnDevice>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
           </div>
         </Sheet>
       ) : (
-        <Sheet>
-          <p className="font-display text-row font-bold text-ink">Three minutes, phone in hand or pocket.</p>
-          <p className="mt-1 text-sec text-ink-2">Keep the screen on. The phone counts in the page.</p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" disabled={motion === 'asking'} onClick={start}>
-              <Play/>{motion === 'asking' ? 'Asking' : 'Start'}
-            </Button>
-            <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}>
-              <span aria-hidden className="mr-2 inline-block size-2 rounded-bar bg-current align-middle"/>
-              Sound
-            </Choice>
+        <>
+          <Ring t={running ? Math.min(1, elapsed / SECONDS) : 0}>
+            {running ? (
+              <>
+                <p aria-live="polite" className="font-display text-fig font-bold tabular-nums text-ink">
+                  {noSensor ? <span className="text-row">no sensor</span> : live.steps}
+                </p>
+                <p className="mt-1 font-display text-ui font-semibold text-ink-2">
+                  {noSensor ? '' : live.perMinute == null ? 'steps' : `${Math.round(live.perMinute)} per minute`}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-display text-row font-bold tracking-tight text-ink">Ready</p>
+                <p className="mt-1 font-display text-ui font-semibold tabular-nums text-ink-2">0 steps</p>
+              </>
+            )}
+          </Ring>
+          <p className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui font-semibold
+            tabular-nums text-ink-2" aria-live="off">
+            {clock(left)} left
+          </p>
+          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
+            {running ? (
+              <Button size="sm" className="min-w-[9rem]" onClick={stop}><Stop/>Stop</Button>
+            ) : (
+              <Button size="sm" className="min-w-[9rem]" disabled={motion === 'asking'} onClick={start}>
+                <Play/>{motion === 'asking' ? 'Asking' : 'Start'}
+              </Button>
+            )}
+            <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}
+              className="inline-flex items-center gap-2"><Wave size={18}/>Sound</Choice>
           </div>
-          {sensorLine && <p className="mt-3 text-fine text-ink-3">{sensorLine}</p>}
-        </Sheet>
+          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
+            {sensorLine ?? 'Three minutes. Keep the screen on.'}
+          </p>
+          <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
+            Motion is measured here and never recorded.
+          </OnDevice>
+          <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">{cueWords(sound)}</p>
+        </>
       )}
-
-      <div className="mt-3 space-y-1.5">
-        <OnDevice>Motion is measured here and never recorded.</OnDevice>
-        {!result && <p className="text-fine text-ink-3">{cueWords(sound)}</p>}
-      </div>
     </ActivityScreen>
   )
 }

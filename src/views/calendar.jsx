@@ -1,11 +1,11 @@
 import React from 'react'
 import { SectionShell } from './shell'
 import { Panel, PanelHead, Why } from './Monitor'
-import { ArrowLeft, ArrowRight, Chevron, Cross, Minus, Plus } from '../ui/marks'
+import { ArrowLeft, ArrowRight, Check, Chevron, Cross, Minus, Plus } from '../ui/marks'
 import { RealNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
-import { BAND, USUAL, WBAND, monthScores } from './reading/demo'
+import { BAND, USUAL, WBAND, clock12, monthScores } from './reading/demo'
 import { cn } from '../lib/utils'
 
 /* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
@@ -277,6 +277,8 @@ const KIND_WORD = { test: 'Test', talk: 'Presentation', game: 'Game', other: 'Ot
 const pad2 = n => String(n).padStart(2, '0')
 const dayKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 const hhmm = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`
+/* The 12-hour clock the dashboard prints, from a minute of the day. */
+const clock = m => clock12(hhmm(m))
 const toMinute = t => {
   const [h, m] = String(t).split(':').map(Number)
   return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null
@@ -313,52 +315,63 @@ function MarkEvent({ className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Mark an Event" meta={dayWords} className="min-w-0 flex-1"/>
         <Why label="What a mark is for" className="pt-1.5">
-          The patch reads the two hours before it and how long you took to settle after.
+          The patch reads the two hours before it. Then how long you took to settle.
         </Why>
       </div>
-      <form onSubmit={add} className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_9.5rem_8rem]">
-        <label className="block min-w-0">
-          <span className="tick">Event</span>
-          <input type="text" value={label} maxLength={40} placeholder="Maths test…"
-            onChange={e => setLabel(e.target.value)} className={cn(FIELD, 'mt-1')}/>
-        </label>
-        <label className="block min-w-0">
-          <span className="tick">Day</span>
-          <input type="date" value={day} onChange={e => setDay(e.target.value)}
-            className={cn(FIELD, 'mt-1 tabular-nums')}/>
-        </label>
-        <label className="block min-w-0">
-          <span className="tick">Time</span>
-          <input type="time" value={time} onChange={e => setTime(e.target.value)}
-            className={cn(FIELD, 'mt-1 tabular-nums')}/>
-        </label>
-        <div role="group" aria-label="Kind of event"
-          className="inline-flex w-full overflow-hidden rounded-field border border-rule sm:col-span-2">
-          {EVENT_KINDS.map(k => (
-            <button key={k} type="button" onClick={() => setKind(k)} aria-pressed={kind === k}
-              className={cn('min-h-[44px] min-w-0 flex-1 px-2 font-display text-ui font-medium',
-                'transition-colors duration-150',
-                kind === k ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
-              {KIND_WORD[k]}
-            </button>
-          ))}
+      {/* On a phone: the event, then day and time side by side, then the four
+          kinds as a two-by-two of chips, then Add across the width. Every target
+          is 44px tall. On a wider screen the three fields share one row. */}
+      <form onSubmit={add} className="mt-3 grid gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem]">
+          <label className="col-span-2 block min-w-0 sm:col-span-1">
+            <span className="tick">Event</span>
+            <input type="text" value={label} maxLength={40} placeholder="Maths test…"
+              onChange={e => setLabel(e.target.value)} className={cn(FIELD, 'mt-1')}/>
+          </label>
+          <label className="block min-w-0">
+            <span className="tick">Day</span>
+            <input type="date" value={day} onChange={e => setDay(e.target.value)}
+              className={cn(FIELD, 'mt-1 tabular-nums')}/>
+          </label>
+          <label className="block min-w-0">
+            <span className="tick">Time</span>
+            <input type="time" value={time} onChange={e => setTime(e.target.value)}
+              className={cn(FIELD, 'mt-1 tabular-nums')}/>
+          </label>
         </div>
-        <button type="submit" disabled={!ready}
-          className={cn('flex min-h-[44px] items-center justify-center gap-2 rounded-field border',
-            'font-display text-ui font-semibold transition-colors duration-150',
-            ready ? 'border-accent-ink bg-accent text-paper hoverOnly:bg-accent-ink'
-                  : 'border-rule bg-mist text-ink-3')}>
-          <Plus aria-hidden className="size-4"/>Add
-        </button>
+        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-end">
+          <div role="group" aria-label="Kind of event" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {EVENT_KINDS.map(k => {
+              const on = kind === k
+              return (
+                <button key={k} type="button" onClick={() => setKind(k)} aria-pressed={on}
+                  className={cn('flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 rounded-field',
+                    'border px-2 font-display text-ui font-medium transition-colors duration-150',
+                    on ? 'border-ink bg-ink text-paper' : 'border-rule bg-card text-ink hoverOnly:bg-aqua')}>
+                  {on && <Check aria-hidden className="size-4 shrink-0"/>}
+                  <span className="truncate">{KIND_WORD[k]}</span>
+                </button>
+              )
+            })}
+          </div>
+          <button type="submit" disabled={!ready}
+            className={cn('flex min-h-[44px] items-center justify-center gap-2 rounded-field border',
+              'font-display text-ui font-semibold transition-colors duration-150',
+              ready ? 'border-accent-ink bg-accent text-paper hoverOnly:bg-accent-ink'
+                    : 'border-rule bg-mist text-ink-3')}>
+            <Plus aria-hidden className="size-4"/>Add
+          </button>
+        </div>
       </form>
       {marks.length > 0 && (
         <ul className="m-0 mt-3 list-none border-t border-ink p-0">
           {marks.map(ev => (
             <li key={ev.id} className="flex items-center gap-3 border-b border-rule py-1.5">
-              <span className="w-[5ch] shrink-0 text-ui tabular-nums text-ink">{hhmm(ev.minute)}</span>
-              <span className="min-w-0 flex-1 truncate font-display text-ui font-medium text-ink">
-                {ev.label}</span>
-              <span className="shrink-0 text-fine text-ink-2">{KIND_WORD[ev.kind] || 'Other'}</span>
+              <span className="w-[7ch] shrink-0 text-ui tabular-nums text-ink">{clock(ev.minute)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-display text-ui font-medium text-ink">{ev.label}</span>
+                <span className="block text-fine text-ink-2">{KIND_WORD[ev.kind] || 'Other'}</span>
+              </span>
               <button type="button" onClick={() => removeEvent(ev.id)}
                 aria-label={`Remove ${ev.label}`}
                 className="flex size-11 shrink-0 items-center justify-center rounded-field

@@ -10,14 +10,14 @@
  * taken or who took them. */
 
 export const TOOL_NAMES = {
-  breathing: 'Box breathing',
-  scan:      'Body scan',
-  move:      'Movement break',
+  breathing: 'Box Breathing',
+  scan:      'Body Scan',
+  move:      'Movement Break',
   ground:    'Grounding',
-  reframe:   'Thought reframe',
-  sigh:      'Sigh coach',
-  chest:     'Chest breathing',
-  steady:    'Steady hand',
+  reframe:   'Thought Reframe',
+  sigh:      'Sigh Coach',
+  chest:     'Chest Breathing',
+  steady:    'Steady Hand',
 }
 
 export const MIN_PAIRS = 2
@@ -76,7 +76,8 @@ export function rankTools(pairs) {
 /* A number and a tool, never a feeling. Ten words at most. */
 export function effectWords(tool, meanHrDrop) {
   const name = toolName(tool)
-  const lower = name.charAt(0).toLowerCase() + name.slice(1)
+  /* the name reads as words inside a sentence, so Title Case comes off */
+  const lower = name.toLowerCase()
   const d = num(meanHrDrop)
   if (d == null) return `Two checks after the ${lower} are needed.`
   const r = Math.round(Math.abs(d))

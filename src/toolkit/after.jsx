@@ -15,6 +15,11 @@ import { effectOf } from '../signals/effect'
  * after reading lands and a before reading is waiting, the pair goes to the
  * `effects` slot and the sheet shows the two figures side by side.
  *
+ * ON THE IDLE SCREEN the before phase is one outline button and nothing
+ * else: the meter and the honesty line appear only while the camera is on,
+ * and the result is one line. The after phase is a small sheet with a
+ * heading, because the result is what that screen is for.
+ *
  * The pipeline is PhoneCheck's: openCamera, capturePPG, analysePPG. Each frame
  * becomes one number as it arrives and the frames are dropped; the only
  * things that outlive this sheet are two pulse figures. The exercise never
@@ -97,14 +102,52 @@ export function DidItWork({ tool, phase = 'after', className }) {
     setState('idle')
   }
 
-  const title = phase === 'before' ? 'Before you start' : 'Did it work?'
   const left = Math.max(0, Math.ceil(SECONDS * (1 - progress)))
-  const drop = before && reading ? effectOf(before, reading).hrDrop : null
+  const video = <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
+  /* The idle screen's row. */
+  if (phase === 'before') {
+    if (!supported) return null
+    return (
+      <div className={className}>
+        {video}
+        {state === 'idle' && (
+          <div className="flex justify-center">
+            <Button size="sm" variant="outline" onClick={run}>
+              <Camera/>Check my pulse first, {SECONDS} seconds
+            </Button>
+          </div>
+        )}
+        {state === 'camera' && (
+          <>
+            <Meter value={progress} label="Fingertip over the lens" right={`${left} s`}/>
+            <OnDevice className="mt-2 justify-center">Measured by the camera, never recorded.</OnDevice>
+            <div className="mt-3 flex justify-center">
+              <Button size="sm" variant="outline" onClick={cancel}><Cross/>Stop</Button>
+            </div>
+          </>
+        )}
+        {state === 'done' && reading && (
+          <p className="text-center font-display text-ui font-semibold tabular-nums text-ink" aria-live="polite">
+            {bpm(reading.hr)} bpm, kept until you finish.
+          </p>
+        )}
+        {state === 'error' && (
+          <div className="text-center">
+            <p className="text-fine text-ink-2">{line}</p>
+            <Button size="sm" variant="outline" className="mt-2" onClick={run}><Camera/>Try again</Button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  /* The finished screen's sheet. One honesty line, under the result. */
+  const drop = before && reading ? effectOf(before, reading).hrDrop : null
   return (
     <Sheet className={className}>
-      <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
-      <h3 className="font-display text-ui font-bold text-ink">{title}</h3>
+      {video}
+      <h3 className="font-display text-ui font-bold text-ink">Did it work?</h3>
 
       {state === 'idle' && (
         supported
@@ -127,8 +170,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
             : <p className="font-display text-row font-bold tabular-nums text-ink">
                 {bpm(reading.hr)}<span className="ml-1.5 text-fine font-semibold text-ink-2">bpm</span></p>}
           <p className="mt-1 text-fine text-ink-2">
-            {phase === 'before' ? 'Kept until you finish.'
-              : before ? (drop > 0 ? `${Math.round(drop)} lower.` : drop < 0 ? `${Math.round(-drop)} higher.` : 'About the same.')
+            {before ? (drop > 0 ? `${Math.round(drop)} lower.` : drop < 0 ? `${Math.round(-drop)} higher.` : 'About the same.')
               : 'No reading from before.'}
           </p>
         </div>
@@ -141,7 +183,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
         </div>
       )}
 
-      <OnDevice className="mt-3">Measured by the camera, never recorded.</OnDevice>
+      {supported && <OnDevice className="mt-3">Measured by the camera, never recorded.</OnDevice>}
     </Sheet>
   )
 }

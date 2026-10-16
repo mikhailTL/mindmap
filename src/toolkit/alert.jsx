@@ -57,7 +57,7 @@ function Ring({ phase, ms }) {
           </p>
         ) : (
           <p className="font-display text-row font-bold tracking-tight text-ink">
-            {phase === 'idle' ? 'Tap to start' : phase === 'early' ? 'Too early' : 'Wait'}
+            {phase === 'idle' ? 'Ready' : phase === 'early' ? 'Too early' : 'Wait'}
           </p>
         )}
       </div>
@@ -198,7 +198,7 @@ export default function Alertness() {
   if (phase === 'done' && result) {
     const { stats, usual, rows } = result
     return (
-      <ActivityScreen family="night" title="Alertness check">
+      <ActivityScreen family="night" title="Alertness Check">
         <Sheet className="mx-auto w-full max-w-[40rem]">
           {stats.ok ? (
             <>
@@ -229,7 +229,7 @@ export default function Alertness() {
 
   const running = phase !== 'idle'
   return (
-    <ActivityScreen family="night" title="Alertness check">
+    <ActivityScreen family="night" title="Alertness Check">
       <div role="button" tabIndex={0}
         aria-label={running ? 'Tap as soon as the ring fills' : 'Start the alertness check'}
         onPointerDown={tap} onKeyDown={onKey}
@@ -237,18 +237,18 @@ export default function Alertness() {
         <Sheet className="grid min-h-[60vh] place-items-center">
           <div className="w-full">
             <Ring phase={phase} ms={ms}/>
-            <p className="mt-4 text-center font-display text-ui font-semibold text-ink-2" aria-live="polite">
+            <p className="mt-3 text-center text-fine text-ink-2" aria-live="polite">
               {running
-                ? <span className="tabular-nums">Tap {Math.min(count + 1, MAX_TRIALS)} of {MAX_TRIALS}</span>
-                : 'Tap when the ring fills.'}
+                ? <span className="font-display text-ui font-semibold tabular-nums">Tap {Math.min(count + 1, MAX_TRIALS)} of {MAX_TRIALS}</span>
+                : 'Tap to start, then tap when the ring fills.'}
             </p>
           </div>
         </Sheet>
       </div>
-      <OnDevice className="mt-3">Taps are timed here and never sent.</OnDevice>
-      <p className="mt-1 text-fine text-ink-2">{label}</p>
+      <OnDevice className="mx-auto mt-3 max-w-[32rem] justify-center">Taps are timed here and never sent.</OnDevice>
+      <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-2">{label}</p>
       {running && early > 0 && (
-        <p className="mt-1 text-fine tabular-nums text-ink-3">False starts: {early}</p>
+        <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine tabular-nums text-ink-3">False starts: {early}</p>
       )}
     </ActivityScreen>
   )

@@ -188,21 +188,20 @@ export default function Pocket() {
   const noSession = !hasSession()
 
   return (
-    <ActivityScreen family="leaf" title="Pocket pacer">
+    <ActivityScreen family="leaf" title="Pocket Pacer">
       <audio ref={audio} controls playsInline muted={false} preload="auto"
         className="sr-only" aria-label="Pacer sound"
         onPlay={onPlay} onPause={onPause} onEnded={onEnded}/>
 
       <Ring phase={frame.phase} t={frame.t} count={frame.count} still={reduced} idle={idle}/>
 
-      <div className="mx-auto mt-2 flex w-full max-w-[32rem] items-baseline justify-between">
-        <p className="font-display text-ui font-semibold tabular-nums text-ink-2" aria-live="off">
-          {running ? `${mmss(frame.left)} left` : state === 'done' ? `${minutes} minutes done` : ''}
-        </p>
-        <p className="font-display text-ui font-semibold text-ink-2" aria-live="polite">
-          {idle && !ready ? 'Preparing' : blocked ? 'Tap Start again' : ''}
-        </p>
-      </div>
+      <p className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui font-semibold
+        tabular-nums text-ink-2" aria-live="polite">
+        {blocked ? 'Tap Start again'
+          : running ? `${mmss(frame.left)} left`
+          : state === 'done' ? `${minutes} minutes done`
+          : ready ? `${mmss(sched.current.seconds)} left` : 'Preparing'}
+      </p>
 
       <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
         {state === 'playing' && (
@@ -235,18 +234,18 @@ export default function Pocket() {
         ))}
       </div>
 
-      <p className="mx-auto mt-4 flex max-w-[32rem] items-center justify-center gap-2 text-center
+      <p className="mx-auto mt-3 flex max-w-[32rem] items-center justify-center gap-2 text-center
         text-fine text-ink-2">
         <Lock/>Lock your phone. The cues keep going.
       </p>
+      <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
+        A sound file made on this phone. Nothing is recorded.
+      </OnDevice>
       {noSession && (
-        <p className="mx-auto mt-2 max-w-[32rem] text-center text-fine text-ink-3">
-          This browser has no lock screen controls. The sound still plays.
+        <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">
+          No lock screen controls here. The sound still plays.
         </p>
       )}
-      <OnDevice className="mx-auto mt-3 max-w-[32rem] justify-center">
-        A sound file made on this phone, played like music. Nothing is recorded.
-      </OnDevice>
     </ActivityScreen>
   )
 }

@@ -101,7 +101,7 @@ export function TypingWeek({ className }) {
   return (
     <section className={cn('rounded-panel border border-rule bg-card p-4', className)}>
       <div className="flex items-baseline justify-between gap-4">
-        <h3 className="font-display font-bold text-ink">Typing rhythm</h3>
+        <h3 className="font-display font-bold text-ink">Typing Rhythm</h3>
         <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
           {rows.length} {rows.length === 1 ? 'session' : 'sessions'}
         </span>

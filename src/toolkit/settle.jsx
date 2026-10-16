@@ -4,6 +4,7 @@ import { cn } from '../lib/utils'
 import { useMode } from '../lib/mode'
 import { eventsOn, getVersion, subscribe } from '../app/store'
 import { dailySettle, demoDay, runUp, settleWords } from '../signals/recovery'
+import { clock12 } from '../views/reading/demo'
 
 /* Two dashboard cards from the continuous patch stream: how long the body
  * took to settle after each peak today, and how far it had climbed before
@@ -17,7 +18,8 @@ import { dailySettle, demoDay, runUp, settleWords } from '../signals/recovery'
 
 const pad2 = n => String(n).padStart(2, '0')
 const hhmm = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`
-const KIND = { test: 'Test', talk: 'Presentation', game: 'Game', other: 'Other' }
+/* Every time a reader sees is the dashboard's 12-hour clock. */
+const clock = m => clock12(hhmm(m))
 
 /* Local YYYY-MM-DD, which is how store.js keys an event's day. */
 export function dayKey(d = new Date()) {
@@ -39,12 +41,12 @@ function SettleStrip({ times, span, offset }) {
   const hours = []
   for (let m = a; m <= b; m += 60) hours.push(m)
   const read = times.length
-    ? times.map(t => `${hhmm(offset + t.peakAt)} ${t.minutes} minutes${t.carried ? ', carried over' : ''}`).join('; ')
+    ? times.map(t => `${clock(offset + t.peakAt)} ${t.minutes} minutes${t.carried ? ', carried over' : ''}`).join('; ')
     : 'no peaks'
   return (
     <figure className="m-0">
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img"
-        aria-label={`Peaks between ${hhmm(a)} and ${hhmm(b)}: ${read}.`}
+        aria-label={`Peaks between ${clock(a)} and ${clock(b)}: ${read}.`}
         className="block h-8 w-full">
         <defs>
           <pattern id={pid} width="4" height="4" patternUnits="userSpaceOnUse"
@@ -67,7 +69,7 @@ function SettleStrip({ times, span, offset }) {
         ))}
       </svg>
       <div aria-hidden className="mt-0.5 flex justify-between text-fine tabular-nums text-ink-3">
-        <span>{hhmm(a)}</span><span>{hhmm(b)}</span>
+        <span>{clock(a)}</span><span>{clock(b)}</span>
       </div>
       <figcaption className="sr-only">Each bar runs from a peak until the body had settled.</figcaption>
     </figure>
@@ -88,7 +90,7 @@ function SettleKey() {
 
 /* ── How your body settles ──────────────────────────────────────────────── */
 
-const WHY = 'Slower settling goes with worry and rumination in studies of teenagers. MindMap shows the minutes, never a diagnosis.'
+const WHY = 'Slower settling goes with worry in studies of teenagers. MindMap shows the minutes, never a diagnosis.'
 
 export function SettleCard({ className }) {
   const [mode] = useMode()
@@ -103,7 +105,6 @@ export function SettleCard({ className }) {
   const d = demoDay()
   const day = dailySettle(d.index.slice(d.span[0], d.span[1]), d.band)
   const words = settleWords(day.median, d.usualSettle)
-  const settled = day.events - day.unsettled
   return (
     <Panel className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -122,9 +123,8 @@ export function SettleCard({ className }) {
         <SettleStrip times={day.times} span={d.span} offset={d.span[0]}/>
         <SettleKey/>
       </div>
-      <dl className="m-0 mt-3 grid grid-cols-3 gap-x-3 border-t border-rule pt-2.5">
-        {[['Peaks today', day.events], ['Settled', settled], ['Carried over', day.carried]]
-          .map(([label, n]) => (
+      <dl className="m-0 mt-3 grid grid-cols-2 gap-x-3 border-t border-rule pt-2.5">
+        {[['Peaks today', day.events], ['Carried over', day.carried]].map(([label, n]) => (
           <div key={label} className="min-w-0">
             <dt className="tick">{label}</dt>
             <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none
@@ -132,7 +132,7 @@ export function SettleCard({ className }) {
           </div>
         ))}
       </dl>
-      <p className="note mt-2.5">Minutes from a peak until half way back to your usual.</p>
+      <p className="note mt-2.5">Minutes from a peak to halfway back to usual.</p>
     </Panel>
   )
 }
@@ -169,13 +169,7 @@ function RunUpLine({ day, usual, from, to }) {
 /* The line under an event. Nine words at most, a time and a count. */
 function runUpLine(r, minute) {
   if (r.points < 1 || r.climbFrom >= r.to) return 'Your body stayed near usual before this one.'
-  return `Your body started climbing at ${hhmm(r.climbFrom)}, ${minute - r.climbFrom} minutes before.`
-}
-
-/* The kind, unless the label already says it. */
-const kindWord = ev => {
-  const k = KIND[ev.kind] || KIND.other
-  return k.toLowerCase() === String(ev.label).trim().toLowerCase() ? '' : `${k}, `
+  return `Started climbing at ${clock(r.climbFrom)}, ${minute - r.climbFrom} minutes before.`
 }
 
 function EventRow({ ev, index, usual, children }) {
@@ -184,8 +178,7 @@ function EventRow({ ev, index, usual, children }) {
     <li className="border-b border-rule py-2.5 last:border-b-0 last:pb-0">
       <p className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 font-display text-ui font-medium text-ink">{ev.label}</span>
-        <span className="shrink-0 text-fine tabular-nums text-ink-2">
-          {kindWord(ev)}{hhmm(ev.minute)}</span>
+        <span className="shrink-0 text-fine tabular-nums text-ink-2">{clock(ev.minute)}</span>
       </p>
       {r ? (
         <div className="mt-1.5 flex items-center gap-3">
@@ -212,7 +205,7 @@ export function RunUpCard({ className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Before Your Events" meta={demo ? 'demo' : 'today'} className="min-w-0 flex-1"/>
         <Why label="What the run-up means" className="pt-1.5">
-          Each line is the two hours before the event. Points are the rise against your usual for that time.
+          Each line is the two hours before the event. Points are the rise against your usual.
         </Why>
       </div>
       {events.length ? (
