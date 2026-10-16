@@ -1,41 +1,43 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { ActionRow, FeltCard, Panel, PanelHead, SeeDetails, SharedCard, Stat, StudentBody,
+import { FeltCard, Panel, PanelHead, SeeDetails, SharedCard, Stat, StudentBody,
   Why } from './Monitor'
 import { CheckInBody } from './CheckIn'
 import { SharingControls } from '../app'
 import { Chevron } from '../ui/marks'
 import { DayChart } from '../charts/day'
 import { Diverge } from '../charts/diverge'
-import { Bars, RainbowDial, RainbowKey } from '../charts/rainbow'
+import { Bars, RainbowDial } from '../charts/rainbow'
 import { DATA } from '../lib/assets'
 import { useMode } from '../lib/mode'
 import { studentRings } from '../lib/readings'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf } from '../signals/score'
-import { RunUpCard, SettleCard } from '../toolkit/settle'
+import { SettleCard } from '../toolkit/settle'
 import { ReachCard } from '../toolkit/reach'
 import { WhatWorksCard } from '../toolkit/works'
 /* The demo reading and everything derived from it live in one module, so this
    screen and the calendar cannot print two different numbers for the same
    Thursday. */
-import { BAND, CROSSED, DEMO_MOTION, PEAK, READ, TAKEN_AT, TODAY, TODAY_SHORT, USUAL,
+import { BAND, CROSSED, PEAK, READ, TAKEN_AT, TODAY, TODAY_SHORT, USUAL,
   WBAND, WEEK, WEEK_COUNT, clock12 } from './reading/demo'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 
 /* The student app's Today screen, and the shell the three student tabs sit in.
  *
- * 14 OCTOBER, design spec 0f. The screen is:
+ * 16 OCTOBER, simplicity run. The screen is:
  *
  *   1. ONE CARD with the sentence and the dial, and beside it at 1280 the
- *      four live channels. At 390 the channels drop under the card. Above the
- *      fold: sentence, dial, band word, and nothing else. Every sentence is
- *      ten words or fewer; the working behind the sentence is behind a "?".
- *   2. ONE `See details` DISCLOSURE, collapsed, holding the four bands, the
- *      week, what moved the reading and the day, in two columns at 1280.
- *   3. The action row and the two consent cards under it.
+ *      four live channels. At 390 the channels drop under the card. Tapping a
+ *      ring on the dial opens that signal's working under the dial. Every
+ *      sentence is ten words or fewer; the working behind the sentence is
+ *      behind a "?".
+ *   2. The settle card.
+ *   3. ONE `See details` DISCLOSURE, collapsed, holding what moved the
+ *      score, the day, the week, reach, what works, how today felt and who
+ *      sees what, in two columns at 1280.
  *
  * No narrow column: the content runs the width of the app shell.
  *
@@ -397,10 +399,7 @@ function BandBar({ low, high, score, usual, color }) {
   )
 }
 
-/* The four bands, and the one that is open. This was four cards in a row,
-   which at 390 is a run of four identical boxes; it is one 56px-row list with
-   the open signal's working under it, which is the shape design spec 0e
-   section 14 asks for where a desktop grid would become a column of clones. */
+/* The working behind one ring of the dial, opened by tapping the ring. */
 function SignalDetail({ ring }) {
   const s = SENSORS[ring.id] || ring
   const tone = s.glow || s.color
@@ -436,11 +435,8 @@ function SignalDetail({ ring }) {
 /* ── Today, in the demo ─────────────────────────────────────────────────── */
 
 const MOVED_SUB = {
-  normal: 'days of your own readings',
   quality: 'of the pulse trace was clean',
-  move: `under the ${MOVE_LIMIT_G} g limit, so the reading counts`,
   scored: 'the formula scores a moving reading',
-  voice: 'the patch has no microphone',
 }
 
 function TodayDemo({ go, openTab }) {
@@ -487,33 +483,62 @@ function TodayDemo({ go, openTab }) {
               {hero.note} {figureWords(TODAY.score, USUAL)}
             </Why>
           </div>
+          {openRing && <SignalDetail ring={openRing}/>}
         </Panel>
         <LiveSignals/>
       </div>
 
-      {/* AFTER THE FOLD. The two cards no other product has: how long the
-          body took to settle after each peak, and how far it had climbed
-          before each marked event. Both from src/signals/recovery.js over
-          the demo day. */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-        <SettleCard className="h-full"/>
-        <RunUpCard className="h-full"/>
-      </div>
+      {/* The card no other product has: how long the body took to settle
+          after each peak, and the climb before each marked event. From
+          src/signals/recovery.js over the demo day. */}
+      <SettleCard/>
 
       {/* ONE DISCLOSURE. Everything else is in here, collapsed, two abreast
           at 1280. */}
       <SeeDetails label="See details">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-          <Panel>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <PanelHead title="Your Four Signals" meta="tap a signal" className="min-w-0 flex-1"/>
-              <Why label="What each band shows" className="pt-1.5">
-                Each band is one signal against your own last two weeks. The middle number
-                blends all four.
-              </Why>
+          {/* The working behind the one number. Every figure in here is
+              returned by scoreCapture for the reading, not written in. */}
+          <Panel className="lg:col-span-2">
+            <PanelHead title="What Moved Your Score" meta={`${moved.length} inputs`}/>
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+              <div className="col-span-2 sm:col-span-3" role="img"
+                aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out
+                  of 100. A usual day is ${USUAL}.`}>
+                <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
+                <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
+              </div>
+              <Stat label="Moved most" value={nameOf(top)} sub={`${over(top)} above its normal band`}/>
+              <Stat label="Signal quality" value={pct(READ.quality)} sub={MOVED_SUB.quality}/>
+              <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
+                sub={MOVED_SUB.scored}/>
             </div>
-            <RainbowKey rings={rings} picked={picked} onPick={setPicked} className="mt-2.5"/>
-            {openRing && <SignalDetail ring={openRing}/>}
+            <div className="mt-3 border-t border-rule pt-2.5"><Diverge items={moved}/></div>
+          </Panel>
+
+          <Panel tone="aqua" className="lg:col-span-2">
+            <PanelHead title={`${SCORE} Today`} meta="07:00 to 16:00"/>
+            <DayChart data={DATA.day} band={DATA.band}/>
+            <dl className="m-0 mt-2.5 grid grid-cols-1 gap-y-1 border-t border-rule pt-2.5
+              sm:grid-cols-3 sm:gap-x-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-fine text-ink-2">Your usual range</dt>
+                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                  {BAND.lo} to {BAND.hi}</dd>
+              </div>
+              {CROSSED && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-fine text-ink-2">Above range from</dt>
+                  <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                    {clock12(CROSSED)}</dd>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-fine text-ink-2">Highest point</dt>
+                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
+                  {PEAK.v} at {clock12(PEAK.t)}</dd>
+              </div>
+            </dl>
           </Panel>
 
           {/* The week and, under it, how far this week's readings reached
@@ -550,70 +575,12 @@ function TodayDemo({ go, openTab }) {
           <WhatWorksCard/>
           </div>
 
-          {/* The working behind the one number. Every figure in here is
-              returned by scoreCapture for the reading, not written in. */}
-          <Panel className="lg:col-span-2">
-            <PanelHead title="What Moved Your Score" meta={`${moved.length} inputs`}/>
-            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <div className="col-span-2 sm:col-span-3" role="img"
-                aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out
-                  of 100. A usual day is ${USUAL}.`}>
-                <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
-                <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
-                <p className="mt-1 text-fine text-ink-2">The thick mark is today. The thin line is your usual day.</p>
-              </div>
-              <Stat label="Your normal" value={READ.baselineDays} unit="days" sub={MOVED_SUB.normal}/>
-              <Stat label="Signal quality" value={pct(READ.quality)} sub={MOVED_SUB.quality}/>
-              <Stat label="Movement" value={DEMO_MOTION.peak.toFixed(2)} unit="g" sub={MOVED_SUB.move}/>
-              <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
-                sub={MOVED_SUB.scored}/>
-              <Stat label="Moved most" value={nameOf(top)} sub={`${over(top)} above its normal band`}/>
-              <Stat label="Voice" value={READ.missing.includes('voice') ? 'Not used' : 'Used'}
-                sub={MOVED_SUB.voice}/>
-            </div>
-            <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="text-fine text-ink-2">Bars to the right raised the score. Bars to the left lowered it.</p>
-              <div className="mt-2.5"><Diverge items={moved}/></div>
-            </div>
-          </Panel>
-
-          <Panel tone="aqua" className="lg:col-span-2">
-            <PanelHead title={`${SCORE} Today`} meta="07:00 to 16:00"/>
-            <DayChart data={DATA.day} band={DATA.band}/>
-            <dl className="m-0 mt-2.5 grid grid-cols-1 gap-y-1 border-t border-rule pt-2.5
-              sm:grid-cols-2 sm:gap-x-5">
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-fine text-ink-2">Reading taken</dt>
-                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">{TODAY.clock}</dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-fine text-ink-2">Your usual range</dt>
-                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
-                  {BAND.lo} to {BAND.hi}</dd>
-              </div>
-              {CROSSED && (
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-fine text-ink-2">Above range from</dt>
-                  <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
-                    {clock12(CROSSED)}</dd>
-                </div>
-              )}
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-fine text-ink-2">Highest point</dt>
-                <dd className="m-0 shrink-0 text-fine tabular-nums text-ink">
-                  {PEAK.v} at {clock12(PEAK.t)}</dd>
-              </div>
-            </dl>
-          </Panel>
+          <div className="flex flex-col gap-3 lg:gap-4">
+          <FeltCard go={open}/>
+          <SharedCard go={go}/>
+          </div>
         </div>
       </SeeDetails>
-
-      <ActionRow go={open}/>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-        <FeltCard go={open} className="h-full"/>
-        <SharedCard go={go} className="h-full"/>
-      </div>
     </div>
   )
 }
@@ -681,9 +648,8 @@ function StudentToday({ go, openTab }) {
     return (
       <div className="flex w-full flex-col gap-3 lg:gap-4">
         <StudentBody go={go} openTab={openTab}/>
+        <SettleCard/>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-          <SettleCard className="h-full"/>
-          <RunUpCard className="h-full"/>
           <ReachCard className="h-full"/>
           <WhatWorksCard className="h-full"/>
         </div>

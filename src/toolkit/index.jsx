@@ -10,13 +10,11 @@ import '../kit/kit.css'
  * The drawn tiles that used to lead each row (src/toolkit/marks.jsx) are gone.
  * The owner read them as self-designed diagrams standing in for tools, and
  * he was right: a picture of a breathing square is not a pacer. Each row now
- * carries a 24px line mark, the activity's name and at most eight words, and
+ * carries a 24px line mark, the activity's name and at most five words, and
  * the tool itself is on the activity's own route.
  *
- * Text budget (spec 0f): counted whole, the index is 94 words. One line of
- * reassurance (6), three group labels (5), eleven names (23), eleven lines
- * (60). Names and lines alone are 83. At 390 only the first group is above
- * the fold, and that is 23 words.
+ * Text budget (spec 0f): every row's line is under six words (simplicity run,
+ * 16 October 2026). The reassurance line and the group labels stay.
  *
  * At 1280 the rows sit three across; at 390 one under another, broken into
  * two groups so no run of similar rows passes three (spec 0e section 14). */
@@ -48,11 +46,11 @@ const WalkIcon    = () => <I><circle cx="13" cy="4.5" r="1.8"/><path d="M9.5 21l
 export const STUDENT_GROUPS = [
   { label:'Body', items:[
     { id:'breathing', route:'toolkit-breathing', family:'tide',  icon:BreathIcon,
-      title:'Box Breathing',       line:'Four counts, a ring keeps pace' },
+      title:'Box Breathing',       line:'Four counts, ring keeps pace' },
     { id:'scan',      route:'toolkit-scan',      family:'pool',  icon:ScanIcon,
       title:'Body Scan',           line:'Seven regions on a timer' },
     { id:'move',      route:'toolkit-move',      family:'night', icon:MoveIcon,
-      title:'Movement Break',      line:'Camera meter fills as you move' },
+      title:'Movement Break',      line:'Move until the meter fills' },
   ]},
   { label:'Mind', items:[
     { id:'ground',    route:'toolkit-ground',    family:'stone', icon:GroundIcon,
@@ -62,15 +60,15 @@ export const STUDENT_GROUPS = [
   ]},
   { label:'Beyond the screen', items:[
     { id:'sigh',      route:'toolkit-sigh',      family:'tide',  icon:SighIcon,
-      title:'Sigh Coach',          line:'Your exhale, measured by the mic' },
+      title:'Sigh Coach',          line:'The mic measures your exhale' },
     { id:'chest',     route:'toolkit-chest',     family:'pool',  icon:ChestIcon,
-      title:'Chest Breathing',     line:'Phone on your chest, eyes closed' },
+      title:'Chest Breathing',     line:'Phone on chest, eyes closed' },
     { id:'steady',    route:'toolkit-steady',    family:'stone', icon:SteadyIcon,
-      title:'Steady Hand',         line:'Keep the dot still, ring breathes' },
+      title:'Steady Hand',         line:'Keep the dot still' },
     { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
       title:'Alertness Check',     line:'Sixty seconds of taps' },
     { id:'pocket',    route:'toolkit-pocket',    family:'leaf',  icon:PocketIcon,
-      title:'Pocket Pacer',        line:'Lock the phone, the pacer keeps going' },
+      title:'Pocket Pacer',        line:'Keeps pacing, phone locked' },
     { id:'walk',      route:'toolkit-walk',      family:'night', icon:WalkIcon,
       title:'Walk It Off',         line:'Three minutes, steps counted' },
   ]},
@@ -79,7 +77,7 @@ export const STUDENT_GROUPS = [
 export const PARENT_GROUPS = [
   { label:'Talking', items:[
     { id:'openers',  family:'leaf',  icon:TalkIcon,  title:'Conversation Openers',    line:'One intention, said two ways' },
-    { id:'phrasing', family:'tide',  icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked in the page' },
+    { id:'phrasing', family:'tide',  icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked here' },
   ]},
   { label:'Reading', items:[
     { id:'score',    family:'stone', icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What a high fortnight carries' },

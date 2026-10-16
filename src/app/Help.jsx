@@ -4,51 +4,15 @@ import { Cross } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { EMERGENCY, RESOURCES, VERIFIED_ON } from './resources'
 
-/* Getting help.
- *
- * Reachable from every app screen, and it works with no reading, no patch and
- * no account, because the moment somebody needs this is not the moment to pair
- * a device. It is a directory of other people's phone numbers: it does not
- * score anybody, it does not decide whether a person is in crisis, and it
- * never opens itself.
- *
- * Rebuilt as a directory on the owner's instruction: name, number, how to
- * reach it, one line at most, far less space. Two controls sit at the top, in
- * this order, because both change the whole list under them:
- *
- *   Read aloud   speechSynthesis, already in every current browser. The list
- *                is queued one row per utterance so the voice pauses between
- *                services, and Stop calls cancel(). Digit runs of three or
- *                more are spaced out before they are spoken, so a voice reads
- *                "9 8 8" rather than "nine hundred and eighty eight", in
- *                either language. The control is not rendered at all where the
- *                API is missing, rather than rendered dead.
- *   Language     switches the copy, the action labels, the hours and the
- *                `lang` the voice is given.
- *
- * TRANSLATION POLICY. Every organisation's name stays in English, in both
- * languages, including inside the spoken text. Their own pages are the
- * authority on what they are called and an invented Spanish name on a crisis
- * directory is a real harm, so only the surrounding text is translated. The
- * same rule holds inside an action: the keyword in "Text HOME to 741741" is
- * literal and stays HOME, and only the instruction around it moves. Where a
- * translation is missing for a row, the English string shows rather than
- * nothing: untranslated and correct beats translated and wrong.
- *
- * Three things it deliberately does not say: that any of this is confidential,
- * what any service will do with what it is told, and what any authority will
- * or will not do. All three vary and none of them are ours to promise. Every
- * row links to the service's own page, which is where those words live.
- *
- * Numbers, codes, hours and links are in ./resources.js with the URL each one
- * was read from and the date it was checked. Nothing is added here that is not
- * on a row there.
+/* Getting help: a directory of other organisations' numbers, reachable from
+ * every app screen with no reading, no patch and no account. Numbers, hours
+ * and links live in ./resources.js. Organisation names and action keywords
+ * (HOME, TEEN) are never translated; a missing translation shows the English.
+ * Nothing here promises confidentiality or what a service will do.
  */
 
 /* ── Marks ──────────────────────────────────────────────────────────────── */
 
-/* Local glyphs rather than additions to ui/marks.jsx: five shapes, used
-   nowhere else, drawn in the same 24-box single-stroke idiom as that file. */
 const G = p => (
   <svg viewBox="0 0 24 24" width={p.size || 18} height={p.size || 18} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
@@ -74,8 +38,6 @@ const MARK = { call: CallMark, text: TextMark, chat: ChatMark }
 
 /* ── Languages ──────────────────────────────────────────────────────────── */
 
-/* `speech` is the BCP 47 tag handed to the utterance. US variants, because
-   every number on these rows is a United States number. */
 const LANGS = [
   { code: 'en', label: 'English', speech: 'en-US' },
   { code: 'es', label: 'Español', speech: 'es-US' },
@@ -114,9 +76,6 @@ const COPY = {
   },
 }
 
-/* VERIFIED_ON is written in English in resources.js. Rather than keep a second
-   date that can drift away from it, the month is translated and the day and
-   year are reused. An unmapped month falls through unchanged. */
 const MONTH_ES = {
   January: 'enero', February: 'febrero', March: 'marzo', April: 'abril',
   May: 'mayo', June: 'junio', July: 'julio', August: 'agosto',
@@ -129,9 +88,7 @@ function verifiedDate(code) {
   return es ? `${day} de ${es} de ${year}` : VERIFIED_ON
 }
 
-/* One line per service, short enough for a directory. Keyed by the row id in
-   resources.js, so a row added there without a line here falls back to that
-   row's own `what` and is still correct, only longer. */
+/* Keyed by the row id in resources.js; a missing line falls back to `what`. */
 const LINE = {
   en: {
     '988': 'Helps with any crisis, including thoughts of suicide.',
@@ -153,8 +110,6 @@ const LINE = {
   },
 }
 
-/* Keyed by the exact English string in resources.js, so a change there shows
-   as an untranslated row rather than as a wrong one. */
 const HOURS_ES = {
   'Every hour of every day': 'Todas las horas, todos los días',
   '6 pm to 10 pm Pacific by phone, 6 pm to 9 pm Pacific by text':
@@ -165,7 +120,6 @@ const HOURS_ES = {
     'De 9 am a 7 pm del Este, de lunes a viernes',
 }
 
-/* The keyword and the number are literal and never translated. */
 const ACTION_ES = {
   'Call 988': 'Llama al 988',
   'Text 988': 'Envía un mensaje al 988',
@@ -190,8 +144,6 @@ const EMERGENCY_ES = {
   line: 'Si alguien está herido o en peligro ahora, llama al 911.',
 }
 
-/* One reader for every translated field, so a missing entry is an English
-   string on the screen and never an empty one. */
 function t(code, map, key) {
   if (code === 'en') return key
   return map[key] || key
@@ -199,8 +151,7 @@ function t(code, map, key) {
 
 /* ── Reading it aloud ───────────────────────────────────────────────────── */
 
-/* A run of three or more digits is a number to read out, digit by digit. Left
-   alone, both voices say "seven hundred and forty one thousand" at 741741. */
+/* Three or more digits are spoken one by one. */
 function spoken(text) {
   return String(text).replace(/\d{3,}/g, m => m.split('').join(' '))
 }
@@ -211,9 +162,6 @@ function useSpeech(code) {
   const synth = typeof window !== 'undefined' ? window.speechSynthesis : null
   const supported = Boolean(synth && typeof window.SpeechSynthesisUtterance === 'function')
 
-  /* Chrome fills the voice list asynchronously and fires voiceschanged once it
-     has. With none matching, the browser's default voice reads the text and
-     only the accent is wrong. */
   React.useEffect(() => {
     if (!supported) return
     const read = () => setVoices(synth.getVoices() || [])
@@ -228,10 +176,7 @@ function useSpeech(code) {
     setSpeaking(false)
   }, [supported, synth])
 
-  /* Unmounting is a stop: closing the sheet must not leave a voice running. */
   React.useEffect(() => () => { if (supported) synth.cancel() }, [supported, synth])
-  /* A language change is a stop, so the rest of the list is not read in the
-     language the reader just left. */
   React.useEffect(() => { stop() }, [code, stop])
 
   const speak = React.useCallback(parts => {
@@ -260,8 +205,6 @@ function useSpeech(code) {
 
 /* ── Rows ───────────────────────────────────────────────────────────────── */
 
-/* `rounded-field`, 6px, not `rounded-chip`: these are things a reader taps,
-   and the capsule pill is banned in every form. */
 const tap = cn('inline-flex min-h-[44px] items-center gap-1.5 rounded-field border px-2.5',
   'font-display text-ui font-medium transition-colors duration-150 ease')
 
@@ -297,8 +240,6 @@ function Resource({ r, code, copy }) {
           {copy.theirPage}
         </a>
       </div>
-      {/* A way in that is not a button, so it is a line rather than a chip:
-          nothing here is tappable. */}
       {access && (
         <p className="mt-1.5 max-w-[60ch] text-fine text-ink-3">
           <span className="font-display font-semibold text-ink-3">{copy.also}: </span>{access}
@@ -326,9 +267,7 @@ export function HelpBody({ className, onLang }) {
   const copy = COPY[code]
   const { supported, speaking, speak, stop } = useSpeech(code)
 
-  /* The spoken list is the printed list, in the printed order, built from the
-     same strings. One utterance per row, so the voice pauses between
-     services and a listener can act on one before the next starts. */
+  /* One utterance per row, so the voice pauses between services. */
   const parts = React.useMemo(() => {
     const em = code === 'en' ? EMERGENCY : EMERGENCY_ES
     const rows = RESOURCES.map(r => [
@@ -344,7 +283,6 @@ export function HelpBody({ className, onLang }) {
 
   return (
     <div className={cn('min-w-0', className)} lang={code}>
-      {/* Both controls change the whole list, so both sit above it. */}
       <div className="flex flex-wrap items-center gap-2">
         {supported && (
           <button type="button" aria-pressed={speaking}
@@ -375,10 +313,7 @@ export function HelpBody({ className, onLang }) {
 
       <p className="mt-2.5 max-w-[66ch] text-fine text-ink-2">{copy.intro}</p>
 
-      {/* Red, on purpose. The owner: "Just bc ur adhering to color scheme
-          doesnt mean u cant use colors like red or anything in the alerts or
-          emergency call sections." crit on its wash is 5.58 : 1 and paper on
-          crit 6.36 : 1. */}
+      {/* Red on purpose: the owner asked for red in emergency sections. */}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-panel
         border border-crit/40 bg-[#fbeae6] px-3.5 py-3">
         <p className="min-w-0 flex-1 basis-full text-fine font-medium text-[#7a2314] sm:basis-0">{em.line}</p>
@@ -390,11 +325,6 @@ export function HelpBody({ className, onLang }) {
       </div>
 
       <h3 className="mark mt-4">{copy.lines}</h3>
-      {/* One container with hairline dividers on a phone, which is the dense
-          spelling the owner asked for; two cards abreast from md, where a
-          single column would be a long thin ribbon. `divide-y` draws the rule
-          between rows rather than on them, so neither spelling fights the
-          other. */}
       <ul className="mt-2.5 m-0 list-none divide-y divide-rule overflow-hidden rounded-panel
         border border-rule bg-card p-0 md:grid md:grid-cols-2 md:items-start md:gap-3
         md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent
@@ -411,11 +341,7 @@ export function HelpBody({ className, onLang }) {
 
 /* ── The sheet ──────────────────────────────────────────────────────────── */
 
-/* Full height on a phone, a panel on a laptop. Radix owns the focus trap, the
-   Escape key and the return of focus to the trigger. */
 export function HelpSheet({ open, onOpenChange }) {
-  /* The language control lives in the body, below this bar, so the title is
-     told which language the list is in rather than guessing. */
   const [code, setCode] = React.useState('en')
   React.useEffect(() => { if (!open) setCode('en') }, [open])
   return (
@@ -453,9 +379,7 @@ export function HelpSheet({ open, onOpenChange }) {
 
 /* ── Trigger plus sheet ─────────────────────────────────────────────────── */
 
-/* So a screen mounts one element and gets the whole path. `compact` is the
-   top-bar spelling, where the label shortens on a phone and the row already
-   carries three other controls. */
+/* `compact` is the top-bar spelling: icon only on a phone. */
 export function GetHelp({ compact = false, className }) {
   const [open, setOpen] = React.useState(false)
   return (

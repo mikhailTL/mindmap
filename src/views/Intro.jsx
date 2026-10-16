@@ -10,56 +10,18 @@ import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { getMode, setMode } from '../lib/mode'
 
-/* Every plate is card at 85%: that keeps ink-3 at 4.74 : 1 over the worst band
- * the arch behind it can produce, and still lets the arch read through.
- *
- * Every drawing's RESTING state is the finished picture and motion is layered
- * on top, so reduced motion and an interrupted beat need no second artwork.
- */
-
-/* Spec 0e, section 15: "The walkthrough plays on every page load, with a
-   visible skip; no storage suppresses it."
-
-   So there is no suppression key and no `suppressIntro` any more. Skip ends
-   the sequence for the panel that is up and writes nothing, which is why a
-   refresh plays it again: that is the behaviour the owner asked for after
-   refusing to see the onboarding on reload. Entry.jsx holds a per-document
-   flag instead, so one load asks once.
-
-   The sessionStorage key `mindmap.intro.off` and the localStorage key
-   `mindmap.tour.off` from the old build are simply never read as a refusal,
-   so a browser still holding either plays the walkthrough regardless. */
-
-/* The one standing exception, and it is not a visitor's: the screenshot and
-   measurement harness in $HOME/pw sets this, so a capture of a page is a
-   capture of that page and not of a panel standing in front of it. Nothing in
-   the interface ever writes it and no control can set it, so it cannot become
-   a refusal a visitor is stuck with. */
-/* 'mindmap.capture', not 'mindmap.tour.off'. The old key was once written by
-   a "skip" control in an earlier build, so a browser that had pressed it never
-   saw the chooser again, whatever this file did. The owner: "onboarding still
-   isnt working". Only the screenshot harness writes this key, and the old
-   one is ignored. */
+/* Spec 0e, section 15: the walkthrough plays on every load and nothing stored
+   suppresses it. Only the screenshot harness sets this key. */
 const AUTO_KEY = 'mindmap.capture'
 
-/** True only inside the screenshot and measurement harness. A throwing storage
- *  reads as false, so the worst failure under blocked storage is that the
- *  walkthrough plays. */
 export function captureHarness() {
   try { return window.localStorage.getItem(AUTO_KEY) === '1' } catch { return false }
 }
 
-/** Puts the walkthrough back up. Nothing is stored any more, so there is no
- *  refusal left to clear and the work is done by the caller moving the entry
- *  store to 'ask' (see replayTour in Entry.jsx). Kept as an export because it
- *  is the published name for "play it again" and callers import it. */
+/* Nothing is stored, so there is nothing to clear; Entry.jsx moves its store. */
 export function replayIntro() {}
 
-/* The grounds sit .044 to .083 apart in relative luminance, which keeps
- * one distinguishable from the next across the crossfade. Worst case over all
- * five: ink 12.16 : 1, ink-2 6.60, ink-3 4.48, accent 4.64. ink-3 only ever
- * appears inside a plate; paper, mist, rule and ruling have no contrast left.
- */
+/* Grounds sit .044 to .083 apart in luminance; ink-3 only appears inside a plate. */
 const BEATS = [
   { ms: 6300, bg: '#e8f6f4', head: 'MindMap gives you one number for your day.' },
   { ms: 7000, bg: '#dcf0ef', head: 'The patch sticks to your upper arm.' },
@@ -71,10 +33,10 @@ const BEATS = [
     sub: 'Wear the patch, or answer six questions. Either way you get one score a day.' },
 ]
 const LAST = BEATS.length - 1
-const EXIT_MS = 620          // must match the opacity transition on the overlay
-const SKIP_MS = 180          // a skip is an interruption, so it clears faster
-const OUT_MS = 900           // how long before a beat ends its stage starts leaving
-const FADE_MS = 1500         // the ground crossfade, in step with the longer beats
+const EXIT_MS = 620          // matches the overlay opacity transition
+const SKIP_MS = 180
+const OUT_MS = 900           // the stage leaves this long before the beat ends
+const FADE_MS = 1500
 
 const svgProps = {
   preserveAspectRatio: 'xMidYMid meet',
@@ -83,12 +45,10 @@ const svgProps = {
   focusable: 'false',
 }
 
-/* beam #1d8fb0 measures 2.69 on a pale aqua and fails even as a graphic, so the
-   peak is beam-ink #11677f: the same turquoise, 3.96 on the lightest ground. */
+/* beam-ink: 3.96 on the lightest ground, where beam measures 2.69. */
 const PEAK = { '--logo-peak': '#11677f' }
 
-/* Deterministic; Math.random() would redraw every render. --len has to be at
-   least the path length or the stroke-draw never completes. */
+/* Deterministic; --len must cover the path length or the draw never completes. */
 function waveLine(y, seed, amp, steps, x0, x1) {
   let d = '', len = 0, px = 0, py = 0
   for (let i = 0; i <= steps; i++) {
@@ -102,7 +62,7 @@ function waveLine(y, seed, amp, steps, x0, x1) {
   return { d, len: Math.ceil(len) + 4 }
 }
 
-/* Written to the node: as state this re-rendered the stage 60x a second. */
+/* Written to the node: as state the stage re-rendered 60x a second. */
 function Count({ to, ms = 1400, delay = 0, ...p }) {
   const ref = React.useRef(null)
   React.useEffect(() => {
@@ -120,14 +80,11 @@ function Count({ to, ms = 1400, delay = 0, ...p }) {
   return <text ref={ref} {...p}>0</text>
 }
 
-/* The logo's five ridge points, shared by the route beat and the closing morph. */
+/* The logo's ridge, shared by the closing morph. */
 const RIDGE = 'M10.5 18.2 15 10.2 20 15.8 25.4 11 29.5 17.6'
 
-/* Five marks on the closing line's 40-440 span; the last sits under the morph. */
 const HOURS = [['6am', 60], ['10am', 150], ['2pm', 240], ['6pm', 330], ['10pm', 420]]
 
-/* Point and bearing rather than three corners. The notch at -0.72 stops it
-   reading as a paper dart. */
 function headPath(x, y, deg, s = 10) {
   const r = (deg * Math.PI) / 180
   const c = Math.cos(r), si = Math.sin(r)
@@ -175,7 +132,6 @@ function Chip({ x, y, t, still, anchor = 'middle', size = 17, tone = 'fill-ink',
   )
 }
 
-/* Drawn, not laid out: an arrow can be aimed at a rect, not at a moving box. */
 function Card({ x, y, w, h, t, still, dim = false }) {
   return (
     <rect x={x} y={y} width={w} height={h} rx="16"
@@ -186,7 +142,7 @@ function Card({ x, y, w, h, t, still, dim = false }) {
   )
 }
 
-/* -- Beat 1 -- a whole day arrives as one number ------------------------- */
+/* Beat 1: a whole day arrives as one number. */
 const DAYLINE = waveLine(150, 1.05, 30, 30, 48, 300)
 
 function StageOneNumber({ still }) {
@@ -222,22 +178,15 @@ function StageOneNumber({ still }) {
   )
 }
 
-/* -- Beat 2 -- where it goes, and where the readings go -------------------
- * The licensed plate from the patch page, patch composited onto the outer upper
- * arm at its real 36 x 54 mm. Placed by arithmetic: the patch sits at
- * (0.5737, 0.7869) of the plate and is 0.0352 of its width, measured off the
- * file, and PATCH_W is how wide it reads here. Re-crop and only these change.
- */
+/* Beat 2: the patch on the arm, cropped by arithmetic off the licensed plate.
+   A nested svg, not a clipPath: a clip keeps its full geometry and scrolled the
+   dialog sideways on a 390px phone. */
 const PHOTO = { w: 1024, h: 688 }
 const PATCH_AT = { x: 0.5737, y: 0.7869, w: 0.0352 }
 const PANEL = { x: 20, y: 20, w: 280, h: 200 }
-const PATCH_W = 27                               // how wide the patch reads, in viewBox units
-const SPOT_AT = { x: 168, y: 146 }               // where it lands in the 560 x 300 viewBox
+const PATCH_W = 27
+const SPOT_AT = { x: 168, y: 146 }
 
-/* A nested <svg>, not a full-size <image> behind a clipPath: a clip hides the
- * pixels but the element keeps its real geometry, which measured 479px inside a
- * 350px column, gave the dialog a 33px horizontal scroll, and on a 390px phone
- * pushed every heading 13px off the left edge. */
 const CROP_W = (PATCH_AT.w * PHOTO.w * PANEL.w) / PATCH_W
 const CROP_H = (CROP_W * PANEL.h) / PANEL.w
 const CROP_X = PATCH_AT.x * PHOTO.w - ((SPOT_AT.x - PANEL.x) / PANEL.w) * CROP_W
@@ -299,10 +248,7 @@ function StagePatch({ still }) {
   )
 }
 
-/* -- Beat 4 -- the mark on the dial --------------------------------------
-   The overlay shares the dial's own 320 x 232 viewBox, so the arrow lands on the
-   mark by coordinates rather than by nudging. The mark sits at 180 + 1.8 x usual
-   degrees from the arch's centre, so changing USUAL moves the arrow. */
+/* Beat 3: the overlay shares the dial's 320 x 232 viewBox. */
 const USUAL = 46
 const DIAL_SCORE = 64
 
@@ -324,7 +270,7 @@ function StageMarkOnDial({ still }) {
   )
 }
 
-/* -- Beat 6 -- the switch, and what happens when it goes off ------------- */
+/* Beat 4: the switch, and the card that goes when it is off. */
 function StageShare({ still }) {
   const a = still ? undefined : 'iv-a'
   const off = still ? undefined : 'iv-a iv-fade-out'
@@ -345,7 +291,6 @@ function StageShare({ still }) {
           <Card x={22} y={102} w={150} h={88} t={1.6} still={still}/>
           <Chip x="97" y="152" t={2.0} still={still} size={19}>Parent</Chip>
 
-          {/* the medical professional's card is the one that goes */}
           <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
             <Card x={388} y={102} w={150} h={88} t={2.0} still={still}/>
             <Chip x="463" y="152" t={2.4} still={still} size={19}>Medical Professional</Chip>
@@ -377,17 +322,17 @@ function StageShare({ still }) {
   )
 }
 
+/* Closing beat: the day's line folds into the logo. */
 function StageMark({ still }) {
   const a = still ? undefined : 'iv-a'
   return (
     <div className="mx-auto flex h-full w-full max-w-[820px] flex-col items-center justify-center">
       <div className="mx-auto aspect-[16/9] w-[min(100%,500px)]">
         <svg {...svgProps} viewBox="0 0 480 270">
-          {/* the chart furniture, present only while the line is a day */}
+
           {!still && (
             <g className="iv-a iv-fade-out" style={{ '--d': '.4s', '--t': '1.55s' }}>
-              {/* --t is restated at every level: custom properties inherit,
-                  so a child that omits it adopts the group's 1.55s cue. */}
+
               <line x1="40" y1="226" x2="440" y2="226" strokeWidth="1.25"
                 className="stroke-ink-3 iv-a iv-draw" style={{ '--len': 402, '--d': '.5s', '--t': '0s' }} />
               {HOURS.map(([h, x], i) => (
@@ -419,14 +364,11 @@ function StageMark({ still }) {
         </svg>
       </div>
 
-      {/* beam-ink, not text-beam: beam measures 2.69 here. The wordmark is
-          36px or larger, so 3.96 clears the 3 : 1 large-text bar. */}
       <p className={cn(a, !still && 'iv-rise', 'mt-2 font-display text-view font-bold tracking-tight text-ink')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.15s' }}>
         Mind<span className="text-beam-ink">Map</span>
       </p>
 
-      {/* The four signal hues, in the arch's order; names from lib/sensors.js. */}
       <ul className={cn(a, !still && 'iv-rise',
         'm-0 mt-5 flex list-none flex-wrap items-center justify-center gap-x-5 gap-y-2 p-0')}
         style={still ? undefined : { '--d': '.6s', '--t': '3.5s' }}>
@@ -445,17 +387,14 @@ function StageMark({ still }) {
 
 const STAGES = [StageOneNumber, StagePatch, StageMarkOnDial, StageShare, StageMark]
 
-/* Keyframes are local to this sequence, not the design system. The
-   reduced-motion rule at the bottom of the sheet is the whole no-motion story. */
+/* --t is when a mark starts and --d how long, in seconds from its beat's start.
+   Reduced motion: no animation; every stage renders finished. */
 const CSS = `
-/* Cue vocabulary. --t is when a mark starts and --d how long it takes, both
-   relative to the start of its beat, both authored in seconds. --iv-pace and
-   --iv-dur scale every cue from one place; .iv-real is the walkthrough stages,
-   which run faster than the closing beat. */
+
 .iv-root{--iv-pace:1;--iv-dur:1}
 .iv-root .iv-real{--iv-pace:.62;--iv-dur:.82}
 .iv-root .iv-a{animation-duration:calc(var(--d,1s) * var(--iv-dur,1));animation-delay:calc(var(--t,0s) * var(--iv-pace,1));animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.7,.3,1)}
-/* --len must be >= the real path length or the stroke never finishes drawing. */
+
 .iv-root .iv-draw{stroke-dasharray:var(--len);stroke-dashoffset:0;animation-name:iv-draw}
 .iv-root .iv-rise{animation-name:iv-rise}
 .iv-root .iv-pop{transform-box:fill-box;transform-origin:center;animation-name:iv-pop}
@@ -465,8 +404,7 @@ const CSS = `
 .iv-root .iv-stage{animation:iv-stage .55s cubic-bezier(.2,.7,.3,1) both}
 .iv-root .iv-ring{transform-box:fill-box;transform-origin:center;animation-name:iv-ring}
 .iv-root .iv-lift{animation-name:iv-lift}
-/* Dots travelling a wire. One pass each, staggered by --t; a loop would still
-   be moving while the next beat is being read. */
+
 .iv-root .iv-run{offset-rotate:0deg;animation-name:iv-run;animation-iteration-count:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}
 .iv-root .iv-switch{animation-name:iv-switch}
 .iv-root .iv-knob{animation-name:iv-knob}
@@ -485,8 +423,7 @@ const CSS = `
 to{transform:translate(136px,125.2px) scale(5.2);stroke-width:.5px}}
 @keyframes iv-stage{from{opacity:0;transform:translateY(16px)}}
 @keyframes iv-out{to{opacity:0;transform:translateY(-14px)}}
-/* Reduced motion: no animation at all. Every stage renders its finished state,
-   so the sequence is still readable. */
+
 @media (prefers-reduced-motion:reduce){.iv-root [class*="iv-"]{animation:none !important}}
 `
 
@@ -499,8 +436,7 @@ export function Intro({ onDone }) {
   const skipRef = React.useRef(null)
   const prevRef = React.useRef(null)
   const nextRef = React.useRef(null)
-  /* When the beat now playing began. Zero means "re-anchor on the next frame",
-     which is how a jump hands the beat it lands on that beat's whole dwell. */
+
   const startRef = React.useRef(0)
   const fills = React.useRef([])
   const beatRef = React.useRef(0)
@@ -508,8 +444,7 @@ export function Intro({ onDone }) {
   const doneRef = React.useRef(false)
   const timerRef = React.useRef(0)
 
-  /* The latch is a ref, not state: a skip landing on the frame the timeline ends,
-     or an exit timer resolving after unmount, must not fire onDone twice. */
+  /* A ref, not state: onDone must fire once however the sequence ends. */
   const finish = React.useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
@@ -522,13 +457,10 @@ export function Intro({ onDone }) {
     timerRef.current = setTimeout(finish, ms)
   }, [finish])
 
-  /* Skip ends this showing and stores nothing: the next load plays it again. */
   const skip = React.useCallback(() => {
     close(SKIP_MS)
   }, [close])
 
-  /* A jump re-anchors the beat timer. Next past the last beat ends the
-     sequence. Neither that nor Skip writes anything down. */
   const goTo = React.useCallback(i => {
     if (doneRef.current || timerRef.current) return
     if (i > LAST) { close(EXIT_MS); return }
@@ -544,9 +476,8 @@ export function Intro({ onDone }) {
   const goNext = React.useCallback(() => goTo(beatRef.current + 1), [goTo])
   const goPrev = React.useCallback(() => goTo(beatRef.current - 1), [goTo])
 
-  /* Boundaries come off the frame timestamp, so a dropped frame or a backgrounded
-     tab cannot leave the headline and the rail disagreeing. Under reduced motion
-     it does not run at all: every beat renders finished, Back/Next are the clock. */
+  /* Boundaries come off the frame timestamp, so a backgrounded tab cannot leave
+     the headline and the rail disagreeing. Reduced motion: Back and Next are the clock. */
   React.useEffect(() => {
     if (reduced) return
     let raf = 0
@@ -557,11 +488,11 @@ export function Intro({ onDone }) {
       const dur = BEATS[i].ms
       const e = t - startRef.current
       const p = Math.min(1, e / dur)
-      /* Straight to the DOM: this runs 60x a second for a decorative rail. */
+
       fills.current.forEach((el, k) => {
         if (el) el.style.transform = `scaleX(${k < i ? 1 : k === i ? p : 0})`
       })
-      /* The stage clears before the beat ends. Two state writes per beat. */
+
       const out = i < LAST && e > dur - OUT_MS
       if (out !== leaveRef.current) { leaveRef.current = out; setLeaving(out) }
       if (e >= dur) {
@@ -580,9 +511,7 @@ export function Intro({ onDone }) {
 
   React.useEffect(() => () => clearTimeout(timerRef.current), [])
 
-  /* Scroll lock, and the document taken out of the accessibility tree. Siblings
-     are walked from this node up because the caller decides where this mounts,
-     and their previous aria-hidden values are restored, not removed. */
+  /* Scroll lock, siblings out of the accessibility tree, focus held in the dialog. */
   React.useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -595,9 +524,7 @@ export function Intro({ onDone }) {
       }
     }
     rootRef.current?.focus({ preventScroll: true })
-    /* Focus has to be held, not just taken: this app focuses its main region from
-       a rAF that runs after this effect, which pulled the keyboard out of the
-       dialog and left Esc and the tab trap doing nothing. */
+
     const onFocusIn = e => {
       const el = rootRef.current
       if (el && !el.contains(e.target)) el.focus({ preventScroll: true })
@@ -611,8 +538,6 @@ export function Intro({ onDone }) {
     }
   }, [])
 
-  /* Tab walks Back, Skip, Next and wraps; Back leaves the ring on the first beat,
-     where it is disabled. Arrows mirror the buttons. Esc is Skip. */
   const ring = () =>
     [prevRef.current, skipRef.current, nextRef.current].filter(el => el && !el.disabled)
 
@@ -638,14 +563,12 @@ export function Intro({ onDone }) {
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
       style={{ background: BEATS[beat]?.bg || '#0b2b33',
         transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
-      /* Belt and braces: an oversized drawing must not push the words off. */
+
       onScroll={e => { e.currentTarget.scrollLeft = 0 }}
       className={cn('iv-root fixed inset-0 z-[400] flex flex-col overflow-hidden outline-none',
         'transition-opacity duration-[480ms] ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
       <style>{CSS}</style>
 
-      {/* The arch is the only transition between beats. Off entirely for the
-          dial, where no opacity makes two concentric arches read as one. */}
       {beat !== 3 && (
         <div aria-hidden className="pointer-events-none absolute inset-0 transition-opacity
           duration-[900ms]" style={{ opacity: beat === LAST ? 1 : 0.26 }}>
@@ -653,13 +576,10 @@ export function Intro({ onDone }) {
         </div>
       )}
 
-      {/* Its own node, so the visible headline is not announced twice. */}
       <p aria-live="polite" aria-atomic="true" className="sr-only">{b.head + (b.sub ? ' ' + b.sub : '')}</p>
 
-      {/* ── the frame, top: wordmark, beat number, and the rail ───────────── */}
       <div className="relative z-10 shrink-0">
-        {/* --logo-peak on a wrapper: Logo takes no style prop. tone="paper" is
-            the light-ground lockup, accent #0a6e68 at 4.64 : 1. */}
+
         <div aria-hidden style={PEAK}
           className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4
             px-5 py-3 text-ink sm:px-10 sm:py-4">
@@ -686,7 +606,6 @@ export function Intro({ onDone }) {
         )}
       </div>
 
-      {/* ── the stage ─────────────────────────────────────────────────────── */}
       <main className="relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-hidden">
         <div key={beat} className={cn('mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col',
           'justify-center gap-4 px-5 py-5 sm:gap-6 sm:px-10 sm:py-7', leaving && 'iv-out')}>
@@ -704,7 +623,7 @@ export function Intro({ onDone }) {
                 <>
                   <p className="iv-a iv-rise font-display text-sub font-bold text-ink"
                     style={{ '--d': '.7s' }}>{b.head}</p>
-                  {/* 1s between head and sub; at 160ms they read as one block. */}
+
                   {b.sub && (
                     <p className="iv-a iv-rise mt-2.5 max-w-[52ch] text-sec text-ink-2 sm:mt-3 sm:text-body"
                       style={{ '--d': '.7s', '--t': '.9s' }}>{b.sub}</p>
@@ -712,7 +631,7 @@ export function Intro({ onDone }) {
                 </>
               )}
             </div>
-            {/* overflow-hidden: a taller drawing bled over the head on beat 1. */}
+
             <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
               <Stage still={reduced}/>
             </div>
@@ -721,13 +640,8 @@ export function Intro({ onDone }) {
 
       </main>
 
-      {/* ── the frame, bottom: the three controls ──────────────────────────── */}
       <div className="relative z-10 shrink-0 px-5 py-4 sm:px-10 sm:py-5">
-        {/* Back and Next are the drawings' plate: ink on card at 85%, 11.8 : 1
-            over the worst band behind them, 4.74 : 1 when Back dims to ink-3.
-            Button's disabled state is opacity 45, which would take that label to
-            about 2.4, so it is overridden to a colour. Skip is the one dark
-            object. 54px tall, never narrower than 44. */}
+
         <div className="mx-auto flex w-full max-w-[660px] items-stretch justify-center gap-2 sm:gap-3">
           <Button ref={prevRef} onClick={goPrev} disabled={beat === 0}
             aria-label="Previous section"
@@ -758,54 +672,31 @@ export function Intro({ onDone }) {
   )
 }
 
-/* ── The guided tour ───────────────────────────────────────────────────────
- *
- * The owner asked for a tour where "the site automatically goes thru pages and
- * simply explains them". So this one does not draw its own pictures: it
- * navigates the real routes and docks a manual panel at the bottom of the real
- * page. Three things follow from that and are the reason it is not another
- * five beat sequence like the one above.
- *
- *   The page under the panel IS the explanation, so a visitor who stops the
- *   tour on stop five is already standing on the page they were reading about,
- *   with the site's own navigation in reach.
- *
- *   The sequence above explains the PRODUCT in five drawings. This explains the
- *   SITE. They are different jobs and the second one is what was asked for.
- *
- *   Its last stop is the sequence's closing beat, the day's line folding into
- *   the logo, because that is the one piece of it the owner has said he likes.
- *
- * One line per stop: the panel is read in a glance and the page is the content.
- */
-
-/* Routes, in the order a stranger needs them: what it is, what it runs on, how
-   the number is made, then the three people who see it. `inApp` lifts the panel
-   over the app's own tab bar so the bar stays visible while it is described. */
+/* The guided tour. The real pages are the explanation; a dock at the foot
+   names each one, and the closing beat ends it. `inApp` lifts the dock over
+   the app's tab bar. */
 const STOPS = [
   { view: 'site', name: 'Overview',
-    line: 'The front page says what MindMap is and who it is for.' },
+    line: 'What MindMap is, and who uses it.' },
   { view: 'patch', name: 'The patch',
-    line: 'The patch sticks to your upper arm and records four body signals.' },
+    line: 'The patch sits on your upper arm, recording four signals.' },
   { view: 'methods', name: 'How it works',
     line: 'Four signals become one Mind Score, from 0 to 100.' },
   { view: 'app-student', name: 'The student screen', inApp: true,
-    line: 'The student sees today’s score, the four signals behind it, and the week so far.' },
+    line: 'Today’s score, its four signals, and the week so far.' },
   { view: 'shared', name: 'Sharing', inApp: true,
     line: 'The student picks what leaves the phone and can switch sharing off.' },
   { view: 'app-parent', name: 'The parent screen', inApp: true,
-    line: 'A parent sees one score a day, and never a raw reading, Notes or Location.' },
+    line: 'One score a day. Never a raw reading, Notes or Location.' },
   { view: 'app-pro', name: 'The Medical Professional console', inApp: true,
-    line: 'The Medical Professional sees which students to check in with this week, among those who agreed to share.' },
+    line: 'Which students to check in with this week. Only students who agreed to share appear.' },
 ]
 
-const DWELL = 5800        // how long a page stop holds before the next one
-const CLOSE_MS = 6400     // the closing beat draws for about 3.5s of that
-const TOUR_OUT_MS = 320   // must match the opacity transition on the panel
+const DWELL = 5800          // how long a page stop holds
+const CLOSE_MS = 6400       // the closing beat
+const TOUR_OUT_MS = 320     // matches the panel opacity transition
 
-/** The closing beat on its own, for the tour to end on. The sheet and the
- *  `.iv-root` scope travel with it: every cue in this file is written against
- *  that scope and does nothing outside it. */
+/* The closing beat alone; the sheet and the .iv-root scope travel with it. */
 export function ClosingBeat({ still }) {
   return (
     <div className="iv-root flex min-h-0 w-full flex-1 items-center justify-center px-5 py-6">
@@ -815,21 +706,16 @@ export function ClosingBeat({ still }) {
   )
 }
 
-/* Back and Next sit on card, so ink is 15.2 : 1 and the disabled label is
-   forced to ink-3 at 5.61 rather than Button's opacity 45, which would take it
-   to about 2.4. Everything here is at least 46px tall. */
+/* Disabled label forced to ink-3 (5.61 : 1), not Button's opacity 45. */
 const dockBtn = 'min-h-[46px] shrink-0 rounded-field border border-rule bg-card px-3.5 font-display ' +
   'text-ui font-medium text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist ' +
   'disabled:pointer-events-none disabled:text-ink-3 sm:px-5'
 
 export function GuidedTour({ go, onDone }) {
   const reduced = useReducedMotion()
-  /* Four of the seven stops are app screens, and the demo switch now defaults
-     to real (spec 0d, section 5), where nothing has been measured and those
-     screens offer a start screen instead of a dashboard. A tour that turns the
-     pages itself has to show the pages it is describing, so it borrows the
-     worked set for its run and hands the reader's own choice back when it
-     ends. The switch in the app's top bar says which one is up throughout. */
+
+  /* Four stops are app screens, which show a start screen in real mode, so the
+     tour borrows the demo set and hands the reader's own choice back. */
   React.useEffect(() => {
     const was = getMode()
     setMode('demo')
@@ -838,8 +724,7 @@ export function GuidedTour({ go, onDone }) {
   const [step, setStep] = React.useState(0)
   const [paused, setPaused] = React.useState(false)
   const [exiting, setExiting] = React.useState(false)
-  /* The dock's measured height, which the page below it is padded by and the
-     closing beat is inset by, so neither ends up underneath it. */
+
   const [dock, setDock] = React.useState(0)
   const panelRef = React.useRef(null)
   const fills = React.useRef([])
@@ -847,11 +732,10 @@ export function GuidedTour({ go, onDone }) {
   const doneRef = React.useRef(false)
   const timerRef = React.useRef(0)
 
-  const END = STOPS.length                 // the closing beat's index
+  const END = STOPS.length
   const TOTAL = STOPS.length + 1
 
-  /* A latch, not state: the exit timer can resolve after unmount and Escape can
-     land on the frame the clock runs out, and onDone must fire once. */
+  /* A ref, not state: onDone must fire once however the sequence ends. */
   const finish = React.useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
@@ -877,30 +761,23 @@ export function GuidedTour({ go, onDone }) {
   const next = React.useCallback(() => goTo(stepRef.current + 1), [goTo])
   const prev = React.useCallback(() => goTo(stepRef.current - 1), [goTo])
 
-  /* Each stop navigates before it explains. The closing beat has no page of its
-     own and leaves the last one standing behind it. */
+  /* Each stop navigates before it explains; `go` or the hash, same router.
+     Focus is taken back two frames later, after the app focuses its main region. */
   React.useEffect(() => {
     const stop = STOPS[step]
     if (!stop) return
     const was = document.activeElement
     const held = panelRef.current?.contains(was) ? was : null
-    /* `go` is the site's router when the caller has it. The hash is the same
-       router's public contract, so the tour also works unwired. */
+
     if (go) go(stop.view)
     else if (location.hash !== '#/' + stop.view) location.hash = '#/' + stop.view
-    /* The app focuses its main region from a rAF after navigating, which takes
-       the keyboard out of this panel. Two frames later it is ours again, so a
-       visitor driving with the arrow keys keeps driving. */
+
     if (held) requestAnimationFrame(() => requestAnimationFrame(() => {
       const el = panelRef.current
       if (el && !el.contains(document.activeElement)) (el.contains(held) ? held : el).focus({ preventScroll: true })
     }))
   }, [step, go])
 
-  /* The clock. Under reduced motion it does not exist: Next is the only thing
-     that moves the tour, which is what no auto-advance has to mean for a tour
-     that turns the pages itself. Boundaries come off the frame timestamp, so a
-     backgrounded tab cannot leave the rail and the panel disagreeing. */
   React.useEffect(() => {
     if (reduced || paused || exiting) return
     const dur = step === END ? CLOSE_MS : DWELL
@@ -908,7 +785,7 @@ export function GuidedTour({ go, onDone }) {
     const tick = t => {
       if (!t0) t0 = t
       const p = Math.min(1, (t - t0) / dur)
-      /* Straight to the node: this runs 60x a second for one rail segment. */
+
       const el = fills.current[step]
       if (el) el.style.transform = `scaleX(${p})`
       if (p >= 1) { if (step === END) close(); else goTo(step + 1); return }
@@ -918,8 +795,6 @@ export function GuidedTour({ go, onDone }) {
     return () => cancelAnimationFrame(raf)
   }, [step, paused, reduced, exiting, END, goTo, close])
 
-  /* Escape anywhere ends the tour. Arrows only when the keyboard is in the
-     panel, or they would stop being page scroll for everybody else. */
   React.useEffect(() => {
     const onKey = e => {
       if (e.key === 'Escape') { e.preventDefault(); close(); return }
@@ -931,8 +806,7 @@ export function GuidedTour({ go, onDone }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [close, next, prev])
 
-  /* Measured, not guessed: the dock is four rows at 390 and three at 1280, and
-     the pages it stands on end in a footer that would be underneath it. */
+  /* The page below is padded by the dock's measured height. */
   React.useEffect(() => {
     const el = panelRef.current
     if (!el) return
@@ -952,12 +826,11 @@ export function GuidedTour({ go, onDone }) {
   const title = stop ? stop.name : 'You have seen the whole site'
   const line = stop
     ? stop.line
-    : 'The menu at the top of every page opens any of these pages again.'
+    : 'The menu at the top opens any page again.'
 
   return (
     <>
-      {/* The closing beat covers the page rather than sitting in the dock: the
-          morph is 500px of drawing and there is no room for it down there. */}
+
       {step === END && (
         <div aria-hidden style={{ paddingBottom: dock }}
           className={cn('fixed inset-0 z-[300] flex flex-col bg-paper',
@@ -967,21 +840,15 @@ export function GuidedTour({ go, onDone }) {
       )}
 
       <section ref={panelRef} tabIndex={-1} role="region" aria-label="Guided tour"
-        /* Lifted clear of the app's own tab bar on the app stops, so the bar
-           stays visible while the panel describes the screen it belongs to.
-           The handset inset is the tab bar's business there, and this dock's
-           own only on the marketing pages. */
+
         style={{ paddingBottom: stop?.inApp ? 0 : 'env(safe-area-inset-bottom)' }}
         className={cn('fixed inset-x-0 z-[310] border-t-2 border-ink bg-card outline-none',
-          /* Measured: the bar is 51px at 390 and 61 at 1280, so the lift is
-             two values and not one inline number. */
+
           stop?.inApp
             ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))]'
             : 'bottom-0',
           'transition-opacity duration-300 ease-out', exiting ? 'opacity-0' : 'opacity-100')}>
 
-        {/* The rail is on the dock's top edge, where it reads as a progress bar
-            for the tour and not as a chart on the page. */}
         <div className="flex h-[3px] w-full gap-px" role="progressbar"
           aria-label="Guided tour progress" aria-valuemin={1} aria-valuemax={TOTAL}
           aria-valuenow={step + 1}>
@@ -999,12 +866,9 @@ export function GuidedTour({ go, onDone }) {
         </p>
 
         <div className="mx-auto w-full max-w-[1180px] px-5 pb-3.5 pt-3 sm:px-10">
-          {/* Its own full width row, so the skip is at the dock's top right at
-              every size rather than wherever the column beside it happens to
-              end. It is never the thing that has to be hunted for. */}
+
           <div className="flex items-start gap-4">
-            {/* max-w-none because input.css caps every p at 62ch, which here
-                stops the counter growing and leaves the skip mid dock. */}
+
             <p className="min-w-0 max-w-none flex-1 text-fine text-ink-3">
               Guided tour, step <span className="tabular-nums">{step + 1}</span> of{' '}
               <span className="tabular-nums">{TOTAL}</span>

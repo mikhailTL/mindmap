@@ -27,6 +27,9 @@ export function IPhone({
   screenBg = '#ffffff',
   showHomeIndicator = true,
   label = 'The MindMap app',
+  /* true when the screen holds live controls: a group, not an image,
+     so screen readers reach the buttons and live regions inside */
+  interactive = false,
   className,
   children,
 }) {
@@ -38,7 +41,7 @@ export function IPhone({
   const H = m.h + bezel * 2
   return (
     <div
-      role="img"
+      role={interactive ? 'group' : 'img'}
       aria-label={label}
       className={cn('relative shrink-0 select-none', className)}
       style={{

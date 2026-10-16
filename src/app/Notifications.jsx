@@ -8,30 +8,14 @@ import {
   DAYS, LOCK_COPY, LOCK_LEVELS, getNotify, getVersion, lockLine, setNotify, subscribe,
 } from './store'
 
-/* Reminder settings.
- *
- * Four questions and no fifth: whether to be reminded at all, on which days,
- * at what time, and what the phone may put on a locked screen. Every default
- * is the quietest answer the control offers, and the master switch starts off.
- *
- * What is deliberately not here: a streak, a count of days in a row, a tally
- * of readings missed, a second reminder sent because the first was ignored,
- * and any copy that treats a skipped day as a failure. A reminder that keeps
- * score is not a reminder.
- *
- * The lock screen preview is built by store.js's lockLine() from the live
- * setting rather than written out per option, so the sample cannot drift from
- * the thing that was chosen.
- *
- * Design spec 0f: 15 to 45 words above the fold. Every row is its label; the
- * hints and the delivery note sit behind a "?" on each panel, and the four
- * promises about what a reminder is not sit behind one disclosure.
+/* Reminder settings: whether, which days, what time, and what a locked
+ * screen may show. Every default is the quietest option and the switch starts
+ * off. No streaks, tallies or second reminders. The preview comes from
+ * store.js's lockLine() so it cannot drift from the setting.
  */
 
 const DAY_CHIPS = DAYS.map(d => ({ value: d.n, label: d.short, full: d.full }))
 
-/* Short labels for the three levels. store.js keeps the long ones, which
-   the "?" shows beside their hints. */
 const LOCK_SHORT = { name: 'Name only', plain: 'Plain reminder', score: `Reminder and ${SCORE}` }
 const LOCK_WHY = {
   name: 'Only the app name shows.',
@@ -40,7 +24,6 @@ const LOCK_WHY = {
 }
 const LOCK_OPTIONS = LOCK_LEVELS.map(v => ({ value: v, label: LOCK_SHORT[v] || LOCK_COPY[v].label }))
 
-/* The four promises. One line each, none a paragraph. */
 const PROMISES = [
   ['One line', 'A reminder is one line, at your time.'],
   ['No streaks', 'There are no streaks, tallies or awards.'],
@@ -48,8 +31,6 @@ const PROMISES = [
   ['Private', 'Turning reminders on or off tells nobody.'],
 ]
 
-/* 20:30 reads as 8:30 pm here, because nothing else in the app speaks in 24
-   hours. The field itself stays on the browser's own clock. */
 function spoken(hhmm) {
   const [h, m] = String(hhmm).split(':').map(Number)
   if (!Number.isFinite(h) || !Number.isFinite(m)) return hhmm
@@ -69,12 +50,7 @@ function dayPhrase(days) {
   return names.length === 1 ? `on ${names[0]}` : `on ${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
 
-/* The preview. A phone's own lock screen, drawn with the tokens this project
-   already has: one rule, no gradient and no blur. It is on `ink` because a
-   locked phone is dark and drawing it on `card` would not read as one; it is
-   a figure inside a card rather than the page's ink band, which section 6 of
-   the design spec allows one of and this screen does not use.
-   It updates as the choice changes, which is the whole reason it is here. */
+/* A lock screen, on `ink` because a locked phone is dark. */
 function LockPreview({ settings, score }) {
   const line = lockLine(settings, score)
   const [app, ...rest] = line.split(' · ')
@@ -83,8 +59,6 @@ function LockPreview({ settings, score }) {
       <p className="text-center font-mono text-stat tabular-nums text-paper">
         {spoken(settings.time).replace(/ (am|pm)$/, '')}
       </p>
-      {/* The chosen days, not the first of them: a Monday-to-Friday choice
-          previewed as "Monday" reads as a reminder that comes once. */}
       <p className="mt-0.5 text-center text-fine text-mist">
         {cap(dayPhrase(settings.days))}
       </p>
@@ -98,30 +72,28 @@ function LockPreview({ settings, score }) {
   )
 }
 
-/**
- * The reminder screen.
- *
- * Props
- *   score      number | null  Optional. A reading to print in the lock screen
- *                             preview when the top setting is chosen. With
- *                             none, the preview says the figure is ready
- *                             rather than inventing one. Pass the screen's own
- *                             demo score, or leave it out.
- *   className  string         Optional.
- *
- * Mount at: the student app, as a new route `app-notify`, tab label
- * "Reminders", inside <SectionShell>. It is a settings screen rather than a
- * reading, so it belongs beside Sharing in APP_NAV.student rather than on
- * Today.
- */
+/* Panel's frame with the Why button in its head row. */
+function WhyPanel({ title, aside, why, whyLabel, children }) {
+  return (
+    <section className="overflow-hidden rounded-panel border border-rule bg-card">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2.5">
+        <h3 className="font-display text-meta font-bold text-ink">{title}</h3>
+        {aside && <span className="ml-auto font-mono text-fine tabular-nums text-ink-3">{aside}</span>}
+        <Why label={whyLabel} className={aside ? undefined : 'ml-auto'}>{why}</Why>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/* The reminder screen, at route `app-notify`. `score` feeds the preview. */
 export function NotificationSettings({ score = null, className }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const s = getNotify()
 
   const toggleDay = n => {
     const next = s.days.includes(n) ? s.days.filter(d => d !== n) : [...s.days, n]
-    /* Clearing the last day would be a reminder that never arrives. Off is
-       the honest way to say that, so that is what it does. */
+    /* No days left means off. */
     if (!next.length) setNotify({ on: false })
     else setNotify({ days: next })
   }
@@ -129,19 +101,17 @@ export function NotificationSettings({ score = null, className }) {
   return (
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
-        <Panel title="Reminders"
-          aside={s.on ? `${spoken(s.time)}, ${dayPhrase(s.days)}` : 'Off'}>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
-            <Why label="How reminders work" className="ml-auto">
-              <ul className="m-0 list-disc pl-4">
-                <li>You get one reminder, at the time you pick.</li>
-                <li>Reminders stay off until you turn them on.</li>
-                <li>Hold overnight makes a reminder wait until morning.</li>
-                <li>No reminder reaches a parent or a Medical Professional.</li>
-                <li>This build saves your choice on the phone. Nothing is scheduled yet.</li>
-              </ul>
-            </Why>
-          </div>
+        <WhyPanel title="Reminders"
+          aside={s.on ? `${spoken(s.time)}, ${dayPhrase(s.days)}` : 'Off'}
+          whyLabel="How reminders work"
+          why={
+            <ul className="m-0 list-disc pl-4">
+              <li>One reminder, at the time you pick.</li>
+              <li>Hold overnight waits until morning.</li>
+              <li>No reminder reaches a parent or a Medical Professional.</li>
+              <li>This build saves your choice. Nothing is scheduled yet.</li>
+            </ul>
+          }>
           <SwitchRow
             label="Remind me"
             checked={s.on}
@@ -168,28 +138,27 @@ export function NotificationSettings({ score = null, className }) {
             <TimeField label="Until" value={s.holdTo} disabled={!s.hold}
               onChange={holdTo => setNotify({ holdTo })}/>
           </div>
-        </Panel>
+        </WhyPanel>
       </ScrollIn>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-4">
         <ScrollIn delay={0.05}>
-          <Panel title="Lock screen text">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2">
-              <Why label="What each lock screen option shows" className="ml-auto">
-                <p>Anyone can read a phone on a desk. The quietest option is the default.</p>
-                <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                  {LOCK_LEVELS.map(v => (
-                    <React.Fragment key={v}>
-                      <dt className="font-medium text-ink">{LOCK_SHORT[v]}</dt>
-                      <dd className="m-0">{LOCK_WHY[v]}</dd>
-                    </React.Fragment>
-                  ))}
-                </dl>
-              </Why>
-            </div>
+          <WhyPanel title="Lock Screen Text"
+            whyLabel="What each lock screen option shows"
+            why={<>
+              <p>Anyone can read a phone on a desk.</p>
+              <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                {LOCK_LEVELS.map(v => (
+                  <React.Fragment key={v}>
+                    <dt className="font-medium text-ink">{LOCK_SHORT[v]}</dt>
+                    <dd className="m-0">{LOCK_WHY[v]}</dd>
+                  </React.Fragment>
+                ))}
+              </dl>
+            </>}>
             <ChoiceRows label="What a reminder may say on a locked screen"
               value={s.lock} options={LOCK_OPTIONS} onChange={lock => setNotify({ lock })}/>
-          </Panel>
+          </WhyPanel>
         </ScrollIn>
 
         <ScrollIn delay={0.1}>

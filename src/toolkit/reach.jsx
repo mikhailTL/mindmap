@@ -5,7 +5,7 @@ import { Meter } from './shell'
 import { cn } from '../lib/utils'
 import { useMode } from '../lib/mode'
 import { clearReach, getReach, getVersion, setReachOn, subscribe } from '../app/store'
-import { homePoint, reachWords, weeklyReach } from '../signals/reach'
+import { homePoint, weeklyReach } from '../signals/reach'
 
 /* Reach: a dashboard card for the Week pane. One number from a week of
    readings: how far from the student's own most common point they happened.
@@ -85,16 +85,11 @@ export function ReachCard({ className }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
 
   if (mode === 'demo') {
-    const words = reachWords({ farthestKm: DEMO.thisWeek }, { farthestKm: DEMO.lastWeek })
     return (
       <section className={cn(CARD, className)}>
         <Head/>
-        <p className="mt-3 max-w-[40ch] text-meta text-ink">{words}</p>
         <Bars thisKm={DEMO.thisWeek} lastKm={DEMO.lastWeek}/>
-        <p className="mt-3 text-fine text-ink-2">
-          <span className="font-mono tabular-nums">{DEMO.readings}</span> readings with a position.
-        </p>
-        <p className="mt-1 text-fine text-ink-3">Demo figures.</p>
+        <p className="mt-3 text-fine text-ink-3">Demo figures.</p>
         <p className="mt-3 text-fine text-ink-2">{REACH_LABEL}</p>
       </section>
     )
@@ -123,18 +118,13 @@ export function ReachCard({ className }) {
   const home = homePoint(items)
   const thisWeek = weeklyReach(items, home, start, now + 1)
   const lastWeek = weeklyReach(items, home, start - 7 * 86400000, start)
-  const words = reachWords(thisWeek, lastWeek)
   const n = items.length
 
   return (
     <section className={cn(CARD, className)}>
       <Head/>
-      <p className="mt-3 max-w-[40ch] text-meta text-ink" aria-live="polite">{words}</p>
       <Bars thisKm={thisWeek.farthestKm} lastKm={lastWeek.farthestKm}/>
-      <p className="mt-3 text-fine text-ink-2" aria-live="polite">
-        <span className="font-mono tabular-nums">{n}</span> reading{n === 1 ? '' : 's'} with a position.
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <Switch on label="Turn off" onClick={() => setReachOn(false)}/>
         <Button variant="outline" size="sm" onClick={() => clearReach()} disabled={n === 0}>
           <Bin/> Clear

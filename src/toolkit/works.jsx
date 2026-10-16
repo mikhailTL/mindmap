@@ -17,17 +17,6 @@ const DEMO = [
   { tool: 'move',      n: 2, meanHrDrop: 2, meanHrvRise: null },
 ]
 
-/* The sentence for the tool at the top. Nine words at most, a tool and a
-   count of beats, never a feeling. */
-function leadLine(tool, meanHrDrop) {
-  const name = toolName(tool)
-  const lower = name.charAt(0).toLowerCase() + name.slice(1)
-  const r = Math.round(Math.abs(meanHrDrop))
-  if (r === 0) return `The ${lower} leaves your pulse about the same.`
-  const beats = r === 1 ? 'beat' : 'beats'
-  return `After the ${lower}, your pulse ${meanHrDrop > 0 ? 'drops' : 'rises'} ${r} ${beats}.`
-}
-
 function Rows({ rows }) {
   const top = Math.max(1, ...rows.map(r => Math.abs(r.meanHrDrop ?? 0)))
   return (
@@ -62,24 +51,15 @@ export function WhatWorksCard({ className }) {
   const [mode] = useMode()
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
 
-  const rows = mode === 'demo' ? DEMO : rankTools(listEffects())
-  const lead = rows.find(r => r.meanHrDrop != null) || null
+  const rows = (mode === 'demo' ? DEMO : rankTools(listEffects())).slice(0, 3)
 
   return (
     <Panel className={className}>
-      <PanelHead title="What Works for You" meta={mode === 'demo' ? 'demo' : 'your pulse'}/>
+      <PanelHead title="What Works for You" meta="pulse drop"/>
       {rows.length === 0 ? (
         <p className="mt-3 max-w-[40ch] text-meta text-ink">Check your pulse after a tool to start.</p>
       ) : (
-        <>
-          {lead && (
-            <p className="mt-3 max-w-[40ch] text-meta text-ink" aria-live="polite">
-              {leadLine(lead.tool, lead.meanHrDrop)}
-            </p>
-          )}
-          <Rows rows={rows}/>
-          <p className="note mt-2.5">Mean pulse drop, before to after.</p>
-        </>
+        <Rows rows={rows}/>
       )}
       {mode === 'demo' && <p className="mt-1 text-fine text-ink-3">Demo figures.</p>}
     </Panel>

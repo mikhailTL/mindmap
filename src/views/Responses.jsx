@@ -2,7 +2,6 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
-import { List, Item } from '../ui/list'
 import {
   PAGE, ALL_ITEMS, REQUIRED,
   SCALE_ITEMS, DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, TEXT_ITEM, STARS_ITEM,
@@ -11,56 +10,21 @@ import {
 } from '../survey/questions'
 import { exportRows, toCSV, getVisitor, visitorCode } from '../survey/store'
 
-/* Peer-review survey results.
+/* Peer review survey results. A house questionnaire since 13 October
+ * (docs/design-spec.md, section 0d, directive 10): no composite, no grade,
+ * no benchmark, no percentage of a maximum. Per item: count, mean on its own
+ * 1 to 5 scale, top two count, full distribution. Bands are never averaged.
  *
- * ─── What this page may and may not say ─────────────────────────────────────
- * The survey behind it is a HOUSE QUESTIONNAIRE. Until 13 October it was a
- * published ten-item usability scale, and this page printed one 0-100 figure,
- * a letter grade and a rule drawn at a published population mean of 68. The
- * owner replaced the instrument (docs/design-spec.md, section 0d, directive
- * 10). The benchmark went with it, and so did everything on this page that
- * depended on one:
- *
- *   NO composite score. Six rated items written for one product do not sum
- *     into a figure with any outside reference.
- *   NO letter grade, NO curve, NO benchmark rule, NO "above average".
- *   NO percentage of a maximum, anywhere.
- *
- * What it prints instead, per item: the count, the mean of that item's own
- * 1-5 scale, and how many chose one of the top two points, each stated with
- * its denominator beside it and the full distribution underneath. Every one of
- * those is a statement a reader can check.
- *
- * Demographics are bands and are NEVER averaged: the numbers under them are
- * positions in a list, so a mean of them would be arithmetic on labels.
- *
- * ─── On access ──────────────────────────────────────────────────────────────
- * THIS PAGE IS UNLISTED, WHICH IS NOT SECURITY. There is deliberately no login:
- * a password check in a static bundle is either done in the client or compared
- * against a secret shipped in the bundle, and both are readable.
- *
- * The route resolves but is in no nav bar and linked from nowhere. When
- * VITE_RESPONSES_KEY is set, the page reads a key from the URL query and
- * forwards it as a header for the API to check against its own server-side env
- * var. VITE_RESPONSES_KEY is only ever read as a flag meaning "this deployment
- * expects a key", never as the key itself, so no secret lands in dist/.
- *
- * Real protection requires one of: Vercel deployment protection on the project,
- * or an access-controlled store the function reads with credentials the browser
- * never holds. Until one is on, treat everything here as public. SURVEY-SETUP.md
- * states the same thing. */
+ * Unlisted, not protected. VITE_RESPONSES_KEY is a flag only: when set, a key
+ * from the URL is forwarded as a header for the API to check. Until deployment
+ * protection or a credentialed store is on, everything here is public. */
 
 const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
-/* Flag, not secret. Its value is never compared against anything and never
- * sent; only its presence switches the header on. */
 const KEY_EXPECTED = !!import.meta.env?.VITE_RESPONSES_KEY
 
 const STORE_KEY = 'mindmap.survey'
 
-/* Below this many answers to one item, the page still prints the mean but puts
- * a line under it saying not to read it as a result. There is no published
- * guidance behind the figure and none is claimed: it is a hard floor chosen so
- * that a mean of one or two answers is never presented bare. */
+/* Below this, the mean prints with a caution. A chosen floor. */
 const MIN_REPORT = 3
 
 const REQUIRED_IDS = REQUIRED.map(q => q.id)
@@ -68,8 +32,7 @@ const REQUIRED_COUNT = REQUIRED_IDS.length
 const STAR_MAX = STARS_ITEM.max
 const STAR_STEP = STARS_ITEM.step
 
-/* The app routes on the hash, so a shared link can carry its query on either
- * side of the '#'. Both sides are read. */
+/* The app routes on the hash, so the key may sit on either side of '#'. */
 function urlKey() {
   try {
     const fromSearch = new URLSearchParams(location.search).get('key')
@@ -85,18 +48,14 @@ function urlKey() {
 
 /* ------------------------------------------------------------ question map */
 
-/* Sort answers by ask order, not timestamp: a revised answer must not jump to
- * the bottom of the card, away from its question. */
+/* Ask order, not timestamp: a revised answer must stay by its question. */
 const ASK_ORDER = new Map()
 ALL_ITEMS.forEach((item, i) => ASK_ORDER.set(item.id, i))
 const askIndex = r => ASK_ORDER.get(r.questionId) ?? 9999
 
 /* ------------------------------------------------------------- normalising */
 
-/* Deliberate duplicate of the store's module-private flattener (the server
- * returns the unflattened original). Do not extract a shared helper: the
- * store's copy defines the exported CSV column, and sharing it would let a
- * display change here alter that column. */
+/* Deliberate duplicate of the store's flattener, which defines the CSV column. */
 function flat(value) {
   if (value == null) return ''
   if (typeof value === 'object') {
@@ -118,15 +77,8 @@ function mean(list) {
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 
-/* Rows arrive in exportRows() shape so the server and local paths converge
- * before anything renders or downloads.
- *
- * An answer counts as current only if it was given on this page and its
- * question is still asked. Everything else, the retired per-page scheme, the
- * ten usability statements, the two free-text prompts and the older
- * demographic and recommendation questions, is split out here and must never
- * reach a figure: it answered a different question, so averaging it in would
- * invent a number. It is still kept and shown in full. */
+/* exportRows() shape. Current means given on this page to a question still
+ * asked; the rest is retired, shown in full, never counted. */
 function build(id, rows, startedAt) {
   const sorted = rows.slice().sort((a, b) => askIndex(a) - askIndex(b))
   const live = r => r.page === PAGE && !!itemById(r.questionId)
@@ -136,8 +88,7 @@ function build(id, rows, startedAt) {
 
   const by = new Map(current.map(r => [r.questionId, r]))
   const value = qid => (by.has(qid) ? num(by.get(qid).value) : null)
-  /* Demographics and the blocker are read as their LABEL, never their number:
-     the number is a position in a list and means nothing on its own. */
+  /* Bands and the blocker are read as their label, never their number. */
   const picked = qid => {
     const r = by.get(qid)
     if (!r) return null
@@ -145,9 +96,7 @@ function build(id, rows, startedAt) {
     return label || null
   }
 
-  /* One map of rated answers per respondent. Partial is fine and is kept
-     partial: an unanswered item contributes nothing to that item's mean
-     rather than being filled in or scaling the rest up. */
+  /* Partial stays partial: an unanswered item contributes nothing. */
   const scales = new Map()
   SCALE_ITEMS.forEach(item => {
     const v = value(item.id)
@@ -198,9 +147,7 @@ function group(rows, startedFor) {
     build(id, rs, startedFor ? startedFor(id) : null))
 }
 
-/* Returns '' for anything no longer asked, which is what marks a row as
- * retired for display. questions.js still knows the old wording; this is the
- * live-question lookup. */
+/* '' for anything no longer asked, which marks a row as retired. */
 function textFor(qid) {
   return itemById(qid) ? questionText(qid) : ''
 }
@@ -209,8 +156,7 @@ function fromRespondents(list) {
   return (Array.isArray(list) ? list : []).map(r => {
     const id = String(r?.id || '')
     const rows = (Array.isArray(r?.answers) ? r.answers : []).map(a => ({
-      /* The column is kept because existing spreadsheets expect it in this
-         position. The survey collects no name, so it is a constant. */
+      /* Kept: existing spreadsheets expect the column. The survey collects no name. */
       visitorName: 'Anonymous',
       visitorId: id,
       page: String(a?.page || ''),
@@ -225,11 +171,8 @@ function fromRespondents(list) {
   })
 }
 
-/* The store keeps one visitor per browser. A stored record may also carry a
- * `respondents` array in the shape the API returns and this page's JSON download
- * writes (an archive pasted back in to read offline). Both are read; the store's
- * own copy wins on an id clash. Guarded throughout: in a private window the
- * first localStorage access throws. */
+/* The store may also carry a `respondents` archive pasted back in. The
+ * store's own copy wins on an id clash. Guarded: a private window throws. */
 function archived() {
   try {
     const raw = window.localStorage.getItem(STORE_KEY)
@@ -251,14 +194,9 @@ function fromLocal() {
   return [...mine, ...archived().filter(p => !seen.has(p.id))]
 }
 
-function fromServer(payload) {
-  return fromRespondents(payload?.respondents)
-}
-
 /* ------------------------------------------------------------- aggregating */
 
-/* A count per option, over a question's own option list. Options nobody chose
- * still print, at zero, because an empty row is a result. */
+/* A count per option. Options nobody chose still print at zero. */
 function spread(people, valueOf, points) {
   const counts = {}
   let total = 0
@@ -271,13 +209,10 @@ function spread(people, valueOf, points) {
   return { points, counts, total }
 }
 
-/* Option lists keyed by their LABEL, because that is what a demographic or
- * blocker answer is stored and compared as. */
 const labelPoints = item => item.points.map(p => ({ value: p.label, label: p.label }))
 
 function summarise(people) {
-  /* Per item, over everyone who answered that item. Nothing is summed across
-     items: see the header. */
+  /* Per item, over everyone who answered it. Nothing is summed across items. */
   const items = SCALE_ITEMS.map(item => ({
     item,
     sum: summariseItem(people.map(p => p.scales.get(item.id) ?? null)),
@@ -295,7 +230,6 @@ function summarise(people) {
     people: people.length,
     answers: people.reduce((n, p) => n + p.answered, 0),
     items,
-    /* Coverage, not a score: how many respondents answered every rated item. */
     fullyRated: people.filter(p => p.rated === SCALE_ITEMS.length).length,
     partlyRated: people.filter(p => p.rated > 0 && p.rated < SCALE_ITEMS.length).length,
     unrated: people.filter(p => p.rated === 0).length,
@@ -320,9 +254,7 @@ function stamp() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-/* RFC4180 quoting, restated for the per-respondent sheet. The store's
- * serialiser is bound to its own answer-row header, and that header is the
- * column order existing spreadsheets expect, do not widen it to share this. */
+/* RFC4180 quoting. The store's serialiser is bound to its own header. */
 function cell(v) {
   const s = v == null ? '' : String(v)
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -333,11 +265,8 @@ function csv(head, rows) {
   return [head.join(','), ...body].join('\r\n')
 }
 
-/* One row per respondent, one column per question, in ask order. No composite
- * column and no grade column: there is nothing to put in either, and a blank
- * one would invite somebody to fill it in. The rated items carry their number
- * so the sheet can average a column; the bands carry their label, because
- * averaging a column of bands is the mistake this layout exists to prevent. */
+/* One row per respondent, one column per question. Rated items carry their
+ * number, bands their label, so a band column cannot be averaged. */
 const PERSON_HEAD = [
   'respondent', 'startedAt', 'lastAt',
   ...DEMOGRAPHIC_ITEMS.map(q => q.id),
@@ -369,8 +298,7 @@ function personRows(people) {
   })
 }
 
-/* Wrapped: a blocked or revoked blob URL must not take the page down, every
- * answer is already on screen. */
+/* Wrapped: a blocked blob URL must not take the page down. */
 function save(text, filename, mime) {
   try {
     const url = URL.createObjectURL(new Blob([text], { type: mime }))
@@ -389,37 +317,19 @@ function save(text, filename, mime) {
 
 /* ------------------------------------------------------------------ pieces */
 
-function when(iso) {
-  if (!iso) return 'time not recorded'
+function fmt(iso, opts, fallback) {
   try {
     const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return 'time not recorded'
-    return d.toLocaleString(undefined, {
-      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-    })
+    if (!iso || Number.isNaN(d.getTime())) return fallback
+    return d.toLocaleString(undefined, opts)
   } catch {
-    return 'time not recorded'
+    return fallback
   }
 }
+const when = iso => fmt(iso, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }, 'time not recorded')
+const shortWhen = iso => fmt(iso, { day: 'numeric', month: 'short' }, 'not recorded')
 
-function shortWhen(iso) {
-  if (!iso) return 'not recorded'
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return 'not recorded'
-    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-  } catch {
-    return 'not recorded'
-  }
-}
-
-/* A rect in a viewBox; no rounded end, which distorts under the non-uniform
- * scale. accent on mist clears the 3:1 graphics minimum, and the count is
- * printed beside it so bar length is never the only carrier.
- *
- * This is the only bar on the page now. The 0-100 meter that used to sit under
- * the headline, with an ink rule drawn at a published mean, is gone: there is
- * no published mean to draw. */
+/* The count prints beside the bar, so length is never the only carrier. */
 function Bar({ frac }) {
   const w = frac > 0 ? Math.max(1.2, frac * 100) : 0
   return (
@@ -478,9 +388,7 @@ function Spread({ title, note, points, counts, total, children }) {
   )
 }
 
-/* One rated item: its own mean on its own 1-5 scale, the top-two-point count
- * stated as a fraction of the people who answered it, and the distribution.
- * Never a percentage of a maximum, and never a figure from another item. */
+/* One rated item on its own scale. Never a percentage of a maximum. */
 function RatedItem({ item, sum, dist }) {
   const thin = sum != null && sum.n < MIN_REPORT
   return (
@@ -488,34 +396,21 @@ function RatedItem({ item, sum, dist }) {
       <figcaption className="max-w-read font-display text-ui font-bold text-ink">
         {item.prompt}
       </figcaption>
-      {sum == null ? (
-        <p className="note mt-1">Nobody has answered this one yet.</p>
-      ) : (
-        <>
-          <p className="mt-1 max-w-read text-meta text-ink-2">
-            Mean <span className="tabular-nums">{sum.mean.toFixed(2)}</span> of {SCALE_MAX},
-            across <span className="tabular-nums">{sum.n}</span>{' '}
-            answer{sum.n === 1 ? '' : 's'}.{' '}
-            <span className="tabular-nums">{sum.top}</span> of{' '}
-            <span className="tabular-nums">{sum.n}</span> picked one of the top two points.
-          </p>
-          {thin && (
-            <p className="note mt-1">
-              {sum.n === 1
-                ? 'One answer. It is not a mean and must not be quoted as one.'
-                : `Only ${sum.n} answers. Read it as an early signal, not a result.`}
-            </p>
-          )}
-        </>
+      {sum != null && (
+        <p className="mt-1 max-w-read text-meta text-ink-2">
+          Mean <span className="tabular-nums">{sum.mean.toFixed(2)}</span> of {SCALE_MAX} from{' '}
+          <span className="tabular-nums">{sum.n}</span>.{' '}
+          <span className="tabular-nums">{sum.top}</span> of{' '}
+          <span className="tabular-nums">{sum.n}</span> picked the top two points.
+          {thin && (sum.n === 1 ? ' One answer, not a mean.' : ' Too few to read as a result.')}
+        </p>
       )}
       <Rows points={item.points} counts={dist.counts} total={dist.total} />
     </figure>
   )
 }
 
-/* Rating is given as a shape and as a figure, so it never depends on the fill.
- * Read-only on purpose: ui/stars is a slider, and an immovable slider traps
- * keyboard users. */
+/* Read only: ui/stars is a slider, and an immovable slider traps keyboard users. */
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
 
@@ -576,8 +471,7 @@ function Notice({ title, children }) {
   )
 }
 
-/* Native <details>, not an accordion component: keyboard-operable, findable by
- * the browser's in-page search when open, and no state to get wrong. */
+/* Native <details>: keyboard operable, searchable when open, no state. */
 function Fold({ summary, note, children }) {
   return (
     <details className="group mt-6 rounded-panel border border-rule bg-card">
@@ -613,8 +507,8 @@ function Respondent({ p }) {
         <Stars value={p.stars} />
       </header>
       <p className="note mt-1.5">
-        Started {when(p.startedAt)} · {p.done} of {REQUIRED_COUNT} required answered ·{' '}
-        {p.rated} of {SCALE_ITEMS.length} rated questions
+        Started {when(p.startedAt)} · {p.done} of {REQUIRED_COUNT} required ·{' '}
+        {p.rated} of {SCALE_ITEMS.length} rated
         {role ? ` · ${role}` : ''}{age ? ` · ${age}` : ''}
         {p.commented ? ' · left a note' : ''}
       </p>
@@ -630,12 +524,10 @@ function Respondent({ p }) {
                   {r.questionId}
                 </span>
                 <span className="max-w-read font-display text-ui font-bold text-ink-2">
-                  {textFor(r.questionId) || 'This question is no longer asked'}
+                  {textFor(r.questionId) || 'No longer asked'}
                 </span>
               </dt>
-              {/* Never clamp, ellipsise or scroll reviewer prose, truncating it
-                  loses the data. break-words so a pasted URL cannot push the
-                  card wider than the screen. */}
+              {/* Never clamp reviewer prose; break-words keeps a pasted URL in the card. */}
               <dd className="mt-2 max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
                 {String(r.label || r.value || '').trim() || <span className="text-ink-3">left blank</span>}
               </dd>
@@ -649,8 +541,7 @@ function Respondent({ p }) {
 
 /* -------------------------------------------------------------------- page */
 
-/* Sorting on a composite is impossible now, deliberately: there is none. These
- * are the orders that remain meaningful. */
+/* No sort on a composite: there is none. */
 const SORTS = {
   when:  (a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')),
   stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
@@ -659,9 +550,7 @@ const SORTS = {
 }
 
 export function Responses() {
-  /* Paint from local records synchronously; the fetch only upgrades them.
-     Gating the body on a loading state measured CLS 0.32 at 1280px. It also
-     means a reviewer with no network still sees their own answers. */
+  /* Local records paint first; the fetch upgrades them. Gating measured CLS 0.32. */
   const [status, setStatus] = React.useState('local') // local | server
   const [problem, setProblem] = React.useState(null)
   const [ephemeral, setEphemeral] = React.useState(false)
@@ -691,16 +580,16 @@ export function Responses() {
       })
       if (!res.ok) {
         fallback(res.status === 401 || res.status === 403
-          ? `The server refused the request (${res.status}). The key in this page's URL is missing or wrong.`
-          : `The server answered ${res.status}, so there is nothing to read from it.`)
+          ? `The server refused the request (${res.status}). The key in the URL is missing or wrong.`
+          : `The server answered ${res.status}, so nothing could be read.`)
         return
       }
       const data = await res.json()
-      setPeople(fromServer(data))
+      setPeople(fromRespondents(data?.respondents))
       setEphemeral(!!data?.ephemeral)
       setStatus('server')
     } catch {
-      fallback('No response endpoint answered. Either this is a local build with no functions running, or the API is not deployed.')
+      fallback('No response endpoint answered. The API may not be deployed.')
     }
   }, [])
 
@@ -715,8 +604,7 @@ export function Responses() {
     return list
   }, [people, query, sort, onlyCommented])
 
-  /* Computed over everyone, never the filtered view: a mean that moves when
-     you type in the search box is a mean of nothing. */
+  /* Over everyone, never the filtered view. */
   const s = React.useMemo(() => summarise(people), [people])
 
   const notes = React.useMemo(
@@ -725,9 +613,8 @@ export function Responses() {
     })),
     [people])
 
-  /* Grouped by label, not by page id: a dropped question was asked on the
-     page that is still current, so grouping on the id alone would file it
-     under "Site review". */
+  /* Grouped by label, not page id: a dropped question was asked on the page
+     that is still current. */
   const retiredGroups = React.useMemo(() => {
     const by = new Map()
     people.forEach(p => p.retired.forEach(r => {
@@ -738,13 +625,7 @@ export function Responses() {
     return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [people])
 
-  /* Every download carries everyone, not the filtered view, the file is the
-     archive.
-
-     The question column is filled in here rather than trusted from the row.
-     questionText keeps the wording of retired questions, and falls back to the
-     id, because an empty spreadsheet cell reads as a missing value rather than
-     a deliberate one. */
+  /* Downloads carry everyone. questionText keeps retired wording. */
   const rows = React.useMemo(() => people.flatMap(p =>
     [...p.rows, ...p.retired].map(r => ({
       ...r,
@@ -769,24 +650,19 @@ export function Responses() {
             Reviewer Responses
           </h1>
           <p className="mt-3 max-w-[60ch] text-sec text-ink-2">
-            Each question's own figures first, then every answer underneath, grouped by
-            the browser that left it. This page is unlisted, not protected: treat
-            anything here as readable by anyone who has the link.
+            Unlisted, not protected. Anyone with the link can read every answer here.
           </p>
         </div>
       </div>
 
-      {/* min-h is the taller of the two notices, so swapping or dropping them
-          moves nothing below. Without it the swap measured CLS 0.32 at 1280px,
-          past the 0.1 the audit allows. */}
+      {/* min-h is the taller notice, so swapping them moves nothing below. */}
       <div className="wrap min-h-[16rem]">
         {status === 'local' && (
           <Notice title="Showing this browser's records only">
             <p>{problem}</p>
             <p className="mt-2">
-              What is below is what was answered in this browser. Other reviewers'
-              answers are in their own browsers and cannot be read from here until
-              the API and its store are deployed. See SURVEY-SETUP.md.
+              Other reviewers' answers stay in their browsers until the API is deployed.
+              See SURVEY-SETUP.md.
             </p>
           </Notice>
         )}
@@ -794,10 +670,8 @@ export function Responses() {
         {status === 'server' && ephemeral && (
           <Notice title="The server is not keeping these">
             <p>
-              The API answered, but it has no store attached, so it is holding
-              responses in memory on one instance. They disappear on the next
-              deploy or cold start. Download the CSV now, and set up the KV store
-              before asking anyone else to review.
+              The API has no store, so responses live in memory on one instance.
+              Download the CSV now and set up the KV store.
             </p>
           </Notice>
         )}
@@ -805,12 +679,15 @@ export function Responses() {
         {/* ------------------------------------------------------- headline */}
         <section aria-label="Headline figures" className="mt-14">
           <p className="mark">Headline Figures</p>
+          <p className="mt-4 max-w-measure text-sec text-ink-2">
+            One question at a time. No total, no grade, no benchmark, no percentage.
+          </p>
 
           <div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             <Figure label="Respondents" value={s.people}>
               {s.people === 0
-                ? 'Send the site to a reviewer and this fills in as they read.'
-                : `${s.fullyRated} answered every rated question, ${s.partlyRated} answered some, ${s.unrated} answered none. ${s.answers} answers in total.`}
+                ? 'Send the site to a reviewer and the figures fill in.'
+                : `${s.fullyRated} rated every question, ${s.partlyRated} some, ${s.unrated} none. ${s.answers} answers in all.`}
             </Figure>
 
             <Figure
@@ -819,47 +696,17 @@ export function Responses() {
               unit={s.starMean == null ? null : `of ${STAR_MAX}`}
             >
               {s.starsAnswered === 0
-                ? 'Nobody has rated the whole thing yet.'
-                : `From ${s.starsAnswered} rating${s.starsAnswered === 1 ? '' : 's'}, given in half stars.`}
+                ? 'No overall rating yet.'
+                : thinStars
+                  ? `From ${s.starsAnswered} rating${s.starsAnswered === 1 ? '' : 's'}. Too few to average.`
+                  : `From ${s.starsAnswered} ratings, in half stars.`}
             </Figure>
 
             <Figure label="Written notes" value={s.commented}>
               {s.commented === 0
-                ? 'The one written question is optional and nobody has used it yet.'
+                ? 'The one written question is optional. Nobody has used it.'
                 : `${s.commented} of ${s.people} named something that would put them off.`}
             </Figure>
-          </div>
-
-          {thinStars && (
-            <p className="note mt-5 max-w-measure">
-              {s.starsAnswered === 1
-                ? 'The rating is one person’s. It is not an average and must not be reported as one.'
-                : `The rating comes from ${s.starsAnswered} people. Far too few to average with confidence.`}
-            </p>
-          )}
-
-          {/* The honesty panel. It replaced a paragraph explaining a published
-              0-100 scale and its population mean; the instrument it described
-              is no longer the one being used. */}
-          <div className="mt-10 max-w-measure border-t border-ink pt-4">
-            <p className="font-display text-ui font-bold text-ink">What These Figures Are</p>
-            <p className="mt-2 text-meta text-ink-2">
-              These questions were written for MindMap. There is no outside population
-              to compare them against, so nothing on this page is scored against a
-              benchmark and no figure here is a percentage of anything.
-            </p>
-            <p className="mt-2 text-meta text-ink-2">
-              There is no total and no grade, on purpose. Adding up items written for
-              one product gives a number with nothing to read it against, and a mark
-              drawn on that number would be invented. What is reported is one question
-              at a time: how many answered, the mean of that question's own one-to-five
-              scale, how many picked one of the top two points, and the full spread
-              underneath it.
-            </p>
-            <p className="note mt-2">
-              The age, role and school questions are bands. They are counted and never
-              averaged: the number behind a band is its place in a list, not a quantity.
-            </p>
           </div>
         </section>
 
@@ -867,8 +714,7 @@ export function Responses() {
         <section aria-label="Rated questions" className="mt-20">
           <p className="mark">Rated Questions</p>
           <p className="mt-4 max-w-measure text-sec text-ink-2">
-            {SCALE_ITEMS.length} questions, each on its own five-point scale, each
-            reported on its own. No two of them ask the same thing from opposite ends.
+            {SCALE_ITEMS.length} questions, each on its own five point scale.
           </p>
           <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {s.items.map(({ item, sum, dist }) => (
@@ -895,8 +741,7 @@ export function Responses() {
         <section aria-label="Who answered" className="mt-20">
           <p className="mark">Bands Of Respondents</p>
           <p className="mt-4 max-w-measure text-sec text-ink-2">
-            Counted, never averaged. Every one of these questions offers a refusal,
-            and a refusal is printed here as the answer it is.
+            Counted, never averaged. A refusal is printed as the answer it is.
           </p>
           <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {s.demo.map(({ item, dist }) => (
@@ -924,7 +769,7 @@ export function Responses() {
           <p className="mark">Each Respondent</p>
 
           <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
-            <Field label="Find a respondent code">
+            <Field label="Find a code">
               <input
                 type="search"
                 value={query}
@@ -935,14 +780,13 @@ export function Responses() {
             </Field>
             <Field label="Sort by">
               <select value={sort} onChange={e => setSort(e.target.value)} className={CONTROL}>
-                <option value="when">Most recent answer first</option>
+                <option value="when">Newest first</option>
                 <option value="stars">Highest rating first</option>
                 <option value="done">Most complete first</option>
                 <option value="code">Code, A to Z</option>
               </select>
             </Field>
-            {/* aria-pressed, not a checkbox: a view filter applied immediately,
-                not a value being submitted. */}
+            {/* aria-pressed, not a checkbox: a view filter, not a submitted value. */}
             <button
               type="button"
               aria-pressed={onlyCommented}
@@ -973,29 +817,17 @@ export function Responses() {
               </Button>
             </div>
           </div>
-          <p className="note mt-3 max-w-measure">
-            Two sheets. <em>Respondents</em> is one row per person, one column per
-            question: the rated questions carry their number so a column can be
-            averaged, the bands carry their label so a column cannot be.
-            <em> Answers</em> is one row per answer, the full archive, questions that
-            are no longer asked included.
-          </p>
 
           {nothing ? (
-            /* The empty state must distinguish the two cases: nobody answered,
-               or answers cannot reach this page. They need different fixes. */
+            /* Two empty states: nobody answered, or answers cannot reach here. */
             <div className="mt-8 rounded-panel border border-rule bg-card p-8">
               <h2 className="font-display text-head font-bold text-ink">
                 {status === 'server' ? 'Nobody Has Answered Yet' : 'Nothing Recorded In This Browser'}
               </h2>
               <p className="mt-3 max-w-measure text-sec text-ink-2">
                 {status === 'server'
-                  ? 'The API answered and its store is empty. Send the site to a reviewer and this page fills in as they read.'
-                  : 'This machine has no saved answers and the server could not be reached, so there is genuinely nothing to show, not an empty result from a working backend.'}
-              </p>
-              <p className="note mt-3">
-                The figures above read “No data” because there is nothing to
-                compute, not because anything failed.
+                  ? 'The store is empty. Send the site to a reviewer.'
+                  : 'No saved answers here, and the server could not be reached.'}
               </p>
             </div>
           ) : shown.length === 0 ? (
@@ -1004,8 +836,7 @@ export function Responses() {
                 No Match For That Filter
               </h2>
               <p className="mt-3 max-w-measure text-sec text-ink-2">
-                {people.length} respondent{people.length === 1 ? '' : 's'} recorded, none of
-                them matching the current code and note filter.
+                {people.length} respondent{people.length === 1 ? '' : 's'} recorded, none matching.
               </p>
               <div className="mt-5">
                 <Button size="sm" type="button" variant="outline"
@@ -1017,9 +848,7 @@ export function Responses() {
           ) : (
             <>
               <p className="note mt-6">
-                Showing {shown.length} of {people.length}. A row here is one browser,
-                named by the last six characters of its random code, which is the only
-                handle the survey has. On a narrow screen the table scrolls sideways.
+                Showing {shown.length} of {people.length}. One row per browser, named by its code.
               </p>
               <div className="mt-4 rounded-panel border border-rule bg-card px-5 py-1 sm:px-6">
                 <Table>
@@ -1031,7 +860,7 @@ export function Responses() {
                       <TH>Age group</TH>
                       <TH align="right">Stars</TH>
                       <TH align="right">Rated</TH>
-                      <TH align="right">Done</TH>
+                      <TH align="right">Required</TH>
                     </TR>
                   </THead>
                   <TBody>
@@ -1059,11 +888,6 @@ export function Responses() {
                   </TBody>
                 </Table>
               </div>
-              <p className="note mt-3">
-                “Rated” counts the {SCALE_ITEMS.length} five-point questions. “Done”
-                counts all {REQUIRED_COUNT} questions that were not optional. The one
-                written question is optional and is in neither.
-              </p>
             </>
           )}
         </section>
@@ -1073,15 +897,12 @@ export function Responses() {
           <p className="mark">Written Notes</p>
           {notes.length === 0 ? (
             <p className="mt-4 max-w-measure text-sec text-ink-2">
-              Nobody has written a note yet. The survey has one written question, it is
-              optional, and this section stays empty until someone uses it.
+              No notes yet. The one written question is optional.
             </p>
           ) : (
             <>
               <p className="mt-4 max-w-measure text-sec text-ink-2">
-                Quoted in full, from the one written question: “{TEXT_ITEM.prompt}”{' '}
-                {notes.length} note{notes.length === 1 ? '' : 's'} from {s.people}{' '}
-                respondent{s.people === 1 ? '' : 's'}.
+                {notes.length} of {s.people} answered “{TEXT_ITEM.prompt}” Quoted in full.
               </p>
               <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
                 {notes.map(c => (
@@ -1097,8 +918,8 @@ export function Responses() {
           <section aria-label="Every answer" className="mt-20">
             <p className="mark">Every Answer</p>
             <Fold
-              summary="Every answer as it was given"
-              note={`${shown.length} shown, in the order the questions were asked`}
+              summary="all answers"
+              note={`${shown.length} shown, in ask order`}
             >
               <div className="flex flex-col gap-6">
                 {shown.map(p => <Respondent key={p.id} p={p} />)}
@@ -1109,25 +930,12 @@ export function Responses() {
 
         {retiredGroups.length > 0 && (
           <section aria-label="Retired answers" className="mt-20">
-            <p className="mark">Answers To Questions No Longer Asked</p>
+            <p className="mark">Retired Questions</p>
             <p className="mt-4 max-w-measure text-sec text-ink-2">
-              Real answers, kept here in full, to questions the survey has since
-              dropped. None of them is counted in any figure above: they answered a
-              different question, so averaging them in would invent a number.
+              Answers to questions since dropped. Kept in full, counted in no figure.
             </p>
-            <List className="mt-4 max-w-measure text-sec text-ink-2">
-              <Item>
-                The ten usability statements, dropped on 13 October with the
-                instrument they belonged to. Half of them were the negative mirror of
-                the other half, and the published score they summed into no longer
-                applies to anything on this site.
-              </Item>
-              <Item>The two written prompts: what you would change, and what difference it would make.</Item>
-              <Item>The four older questions about you, and the 0 to 10 recommendation question.</Item>
-              <Item>The two questions the survey used to ask on every page.</Item>
-            </List>
             <Fold
-              summary="The older answers"
+              summary="older answers"
               note={`${s.retired} answer${s.retired === 1 ? '' : 's'} in ${retiredGroups.length} group${retiredGroups.length === 1 ? '' : 's'}`}
             >
               <div className="flex flex-col gap-8">
@@ -1142,8 +950,7 @@ export function Responses() {
                             <span className="text-fine tabular-nums text-ink-3">
                               {r.questionId}
                             </span>
-                            {/* questions.js keeps the old wording, so a real
-                                answer never shows under a bare id. */}
+                            {/* questions.js keeps the old wording. */}
                             <span className="max-w-read font-display text-ui font-bold text-ink-2">
                               {questionText(r.questionId)}
                             </span>

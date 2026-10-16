@@ -6,11 +6,12 @@ import { eventsOn, getVersion, subscribe } from '../app/store'
 import { dailySettle, demoDay, runUp, settleWords } from '../signals/recovery'
 import { clock12 } from '../views/reading/demo'
 
-/* Two dashboard cards from the continuous patch stream: how long the body
- * took to settle after each peak today, and how far it had climbed before
- * each event the student marked. Both come from src/signals/recovery.js and
- * nothing here invents a figure: in the demo the series is demoDay(), in real
- * mode there is no patch stream yet and the cards say so.
+/* One dashboard card from the continuous patch stream: how long the body
+ * took to settle after each peak today, and under a rule how far it had
+ * climbed before each event the student marked. All of it comes from
+ * src/signals/recovery.js and nothing here invents a figure: in the demo the
+ * series is demoDay(), in real mode there is no patch stream yet and the card
+ * says so.
  *
  * Every number is the wearer against themself. The sentence under the figure
  * names minutes, never a feeling, and the "?" holds the two sentences of
@@ -90,15 +91,45 @@ function SettleKey() {
 
 /* ── How your body settles ──────────────────────────────────────────────── */
 
-const WHY = 'Slower settling goes with worry in studies of teenagers. MindMap shows the minutes, never a diagnosis.'
+const WHY = 'Minutes from a peak to halfway back to usual. Slower settling goes with worry in studies of teenagers. MindMap shows the minutes, never a diagnosis.'
+
+/* One marked event as one short row: the label and clock, then the rise
+   against usual in the two hours before it and when the climb began. */
+function eventLine(ev, index, usual) {
+  if (!index) return null
+  const r = runUp(index, ev.minute, usual)
+  if (r.points < 1 || r.climbFrom >= r.to) return 'near usual before'
+  return `+${Math.round(r.points)} points, climb from ${clock(r.climbFrom)}`
+}
+
+function EventRows({ events, index, usual }) {
+  if (!events.length) return null
+  return (
+    <ul className="m-0 mt-3 list-none border-t border-rule p-0 pt-2.5">
+      {events.map((ev, i) => {
+        const line = eventLine(ev, index, usual)
+        return (
+          <li key={ev.id || i} className="py-1 text-fine tabular-nums text-ink-2">
+            <span className="font-display text-ui font-medium text-ink">
+              {ev.label}, {clock(ev.minute)}{line ? ':' : ''}</span>
+            {line && <> {line}</>}
+          </li>
+        )
+      })}
+      <li className="note mt-1.5">Marked events never leave this phone.</li>
+    </ul>
+  )
+}
 
 export function SettleCard({ className }) {
   const [mode] = useMode()
+  React.useSyncExternalStore(subscribe, getVersion, () => 0)
   if (mode !== 'demo') {
     return (
       <Panel className={className}>
         <PanelHead title="How Your Body Settles" meta="patch"/>
         <p className="mt-3 text-meta text-ink">No patch readings today.</p>
+        <EventRows events={eventsOn(dayKey())}/>
       </Panel>
     )
   }
@@ -132,95 +163,7 @@ export function SettleCard({ className }) {
           </div>
         ))}
       </dl>
-      <p className="note mt-2.5">Minutes from a peak to halfway back to usual.</p>
-    </Panel>
-  )
-}
-
-/* ── Before your events ─────────────────────────────────────────────────── */
-
-/* The two hours before one event: the index as a line, the wearer's usual for
-   those minutes as a hairline under it. 120 samples wide, so one unit is one
-   minute. */
-function RunUpLine({ day, usual, from, to }) {
-  const n = Math.max(1, to - from)
-  const H = 28
-  const vals = []
-  for (let m = from; m < to; m++) vals.push(day[m], usual[m])
-  const lo = Math.min(...vals), hi = Math.max(...vals)
-  const span = hi - lo || 1
-  const y = v => H - 2 - ((v - lo) / span) * (H - 4)
-  const path = (s) => {
-    let d = ''
-    for (let m = from; m < to; m++) d += (m === from ? 'M' : 'L') + (m - from) + ' ' + y(s[m]).toFixed(1)
-    return d
-  }
-  return (
-    <svg viewBox={`0 0 ${n} ${H}`} preserveAspectRatio="none" aria-hidden
-      className="block h-7 w-24 shrink-0 sm:w-28">
-      <path d={path(usual)} fill="none" className="stroke-ruling" strokeWidth="1"
-        strokeDasharray="3 3" vectorEffect="non-scaling-stroke"/>
-      <path d={path(day)} fill="none" className="stroke-beam" strokeWidth="2"
-        strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
-    </svg>
-  )
-}
-
-/* The line under an event. Nine words at most, a time and a count. */
-function runUpLine(r, minute) {
-  if (r.points < 1 || r.climbFrom >= r.to) return 'Your body stayed near usual before this one.'
-  return `Started climbing at ${clock(r.climbFrom)}, ${minute - r.climbFrom} minutes before.`
-}
-
-function EventRow({ ev, index, usual, children }) {
-  const r = index ? runUp(index, ev.minute, usual) : null
-  return (
-    <li className="border-b border-rule py-2.5 last:border-b-0 last:pb-0">
-      <p className="flex items-baseline justify-between gap-3">
-        <span className="min-w-0 font-display text-ui font-medium text-ink">{ev.label}</span>
-        <span className="shrink-0 text-fine tabular-nums text-ink-2">{clock(ev.minute)}</span>
-      </p>
-      {r ? (
-        <div className="mt-1.5 flex items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-ui font-semibold tabular-nums leading-none text-ink">
-              {r.points >= 0 ? '+' : ''}{Math.round(r.points)} points</p>
-            <p className="mt-1 text-fine text-ink-2">{runUpLine(r, ev.minute)}</p>
-          </div>
-          <RunUpLine day={index} usual={usual} from={r.from} to={r.to}/>
-        </div>
-      ) : children}
-    </li>
-  )
-}
-
-export function RunUpCard({ className }) {
-  const [mode] = useMode()
-  React.useSyncExternalStore(subscribe, getVersion, () => 0)
-  const demo = mode === 'demo'
-  const d = demo ? demoDay() : null
-  const events = demo ? d.events : eventsOn(dayKey())
-  return (
-    <Panel className={className}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="Before Your Events" meta={demo ? 'demo' : 'today'} className="min-w-0 flex-1"/>
-        <Why label="What the run-up means" className="pt-1.5">
-          Each line is the two hours before the event. Points are the rise against your usual.
-        </Why>
-      </div>
-      {events.length ? (
-        <ul className="m-0 mt-1 list-none p-0">
-          {events.map((ev, i) => (
-            <EventRow key={ev.id || i} ev={ev} index={d?.index} usual={d?.usual}>
-              <p className="mt-1 text-fine text-ink-2">Wear the patch to see the run-up.</p>
-            </EventRow>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-3 text-meta text-ink">No events marked today.</p>
-      )}
-      <p className="note mt-2.5 border-t border-rule pt-2.5">
-        Marked on the calendar. Never shared with anyone.</p>
+      <EventRows events={d.events} index={d.index} usual={d.usual}/>
     </Panel>
   )
 }

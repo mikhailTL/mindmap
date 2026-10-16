@@ -6,6 +6,7 @@ import { DemoNotice } from '../ui/notice'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
+import { SeeDetails } from './Monitor'
 import { ScrollIn, ScrollRow } from '../ui/motion'
 import { PHOTOS, dims, focal } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
@@ -22,72 +23,33 @@ import {
 } from '../lib/terms'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 
-/* Same sum Methods.jsx uses for its "Tested on" row, so the two pages read
- * one number from one file and cannot drift. */
+/* Same sum Methods.jsx uses for "Tested on", so the two cannot drift. */
 const TESTED_ADULTS = R.per_subject.length + R.transfer.subjects
 
-/* The guided tour, in eight stops. This is the route "Other" lands on from the
- * entry chooser, so for a share of visitors it is the first real page of the
- * site, and it is held to docs/design-spec.md like any other surface.
+/* The guided tour, in eight stops. Every stop renders the live component the
+ * real screen runs, or a drawing of the real part, never a mockup. The HONESTY
+ * stop lists everything on this site that is not real; keep it current.
  *
- * What changed in this pass, and why:
- *   - The page predated the spec. Section padding was py-14, the stop grid ran
- *     gap-10 / lg:gap-14 and the closer opened on mt-20, so one stop filled
- *     about a third of its own band and the rest was paper. Padding is now the
- *     spec's py-10 / lg:py-14 cap through Band, gaps are gap-3 / lg:gap-4.
- *   - Every stop was a column of ledes set directly on the band beside a
- *     figure set directly on the band. Spec 2 allows a heading there and
- *     nothing else, so each stop is now a rail of containers (a photograph, a
- *     card of labelled facts, the route out) against the figure in its own
- *     card, which is also what makes every stop two columns at 1280.
- *   - The ledes were paragraphs, which spec 4 does not allow anywhere on the
- *     marketing pages. Each one is now a single line plus three or four
- *     labelled rows, so the same stop carries more true statements in less
- *     height than the prose did.
- *   - Stop five opened by naming an invented teenager. Requirement B5 is that
- *     no invented person's name appears anywhere on the site, so the line
- *     names the relationship instead, which is the wording that
- *     views/parent-dash.jsx already uses for the same reader, and the count
- *     under the strip follows it from "her" to "their".
- *   - Stop eight stated its assumptions and drew nothing. It now carries the
- *     arithmetic those assumptions imply, with the unit and the provenance of
- *     every row, which is what spec 8b asks of a figure.
- *
- * Every stop still renders the live component the real screen runs, or a
- * drawing of the real part, never a recording or a mockup. The HONESTY stop is
- * the list of everything on this site that is not real; keep it current.
- *
- * The current stop is deliberately NOT in the URL. The router matches the whole
- * hash against a fixed list of view names, so `#/tour/3` or any sub-path,
- * query or suffix fails the match and lands the visitor on the overview.
- * Deep-linking a stop requires changing the router first. */
+ * The current stop is NOT in the URL: the router matches the whole hash against
+ * a fixed list, so `#/tour/3` lands on the overview. Deep-linking a stop means
+ * changing the router first. */
 
-/* Containers, per spec 2. One ground, because the tour has no ink band. */
 const PANEL = 'overflow-hidden rounded-panel border border-rule bg-card'
 
-/* Arithmetic, not a measurement: 1 Hz over a seven-hour school day, and then
-   that figure across one assumed caseload. Computed rather than typed, so the
-   numbers in stop one and stop eight cannot drift apart. */
+/* Arithmetic, not a measurement: 1 Hz over a seven-hour school day, then that
+   across one assumed caseload. Computed so stop one and stop eight agree. */
 const SCHOOL_HOURS = 7
 const PER_DAY = SCHOOL_HOURS * 60 * 60
 const CASELOAD_ASSUMED = 400
 const num = n => n.toLocaleString('en-US')
 
 /* Every frame is a licensed stock photograph of models. Nobody in one uses
- * MindMap, nobody is wearing the patch, and no alt text here may say or imply
- * otherwise. The tour prints that out loud once, on the first stop.
- *
- * Eager at every stop: Radix mounts only the open tab, so at most one of these
- * is ever in the tree and it is always above the fold when its tab opens. Lazy
- * would hand a judge an empty box on every tab switch.
- *
- * max-w-none is load-bearing: Tailwind's preflight sets img { max-width: 100% }
- * and that undoes a frame set to fill a box wider than its own file. */
+ * MindMap or wears the patch, and no alt text may imply otherwise.
+ * Eager: Radix mounts only the open tab, so at most one is ever in the tree.
+ * max-w-none is load-bearing against preflight's img { max-width: 100% }. */
 function PhotoCard({ photo, alt, className }) {
   const src = PHOTOS[photo]
   if (!src || !alt) return null
-  /* Size and focal point from lib/photos, so the crop lands on the subject
-     rather than on the centre of the file. */
   const [w, h] = dims(photo)
   return (
     <div className={cn(PANEL, 'h-[152px] lg:h-[172px]', className)}>
@@ -98,8 +60,7 @@ function PhotoCard({ photo, alt, className }) {
   )
 }
 
-/* The rail's workhorse: a card of labelled rows. A label and its value, never a
-   label over a value, so a row costs one line of height wherever it fits. */
+/* A card of labelled rows: a label and its value, one line each. */
 function Facts({ rows, className }) {
   return (
     <div className={cn(PANEL, className)}>
@@ -113,26 +74,19 @@ function Facts({ rows, className }) {
   )
 }
 
-/* A figure's own container. Spec 2: no figure sits on the band.
- *
- * h-full and a column: the rail beside it is a photograph, a card of facts and
- * a button, and on the shorter stops it is the taller of the two tracks. Left
- * to its content the figure card stopped 230px above the rail's foot at 1280
- * and the band showed paper through the gap, which is the hole spec 1 counts
- * against a section. The figures that are shorter than the rail push their own
- * caption to the foot with mt-auto instead. */
+/* A figure's own container. A column, so a short figure can push its caption
+   to the foot with mt-auto. */
 function Fig({ children, className }) {
   return <div className={cn(PANEL, 'flex h-full flex-col p-3.5 lg:p-4', className)}>{children}</div>
 }
 
 /* ── 01 ─────────────────────────────────────────────────────────────────── */
-/* Nothing in this figure is a statistic, and the caption must keep saying the
-   drawing is a drawing. */
+/* Nothing here is a statistic; the caption must keep saying so. */
 function EvidenceGap() {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   const rows = [
-    { label: 'What an adult knows about', on: [2], count: '1 of 7 days' },
-    { label: 'What the patch records',     on: [0, 1, 2, 3, 4, 5, 6], count: '7 of 7 days' },
+    { label: 'What an adult hears about', on: [2], count: '1 of 7 days' },
+    { label: 'What the patch records',    on: [0, 1, 2, 3, 4, 5, 6], count: '7 of 7 days' },
   ]
   return (
     <figure className="m-0 flex h-full flex-col">
@@ -155,33 +109,30 @@ function EvidenceGap() {
         </div>
       ))}
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        This is a drawing, not data. One reading a second adds up to{' '}
+        A drawing, not data. One reading a second is{' '}
         <span className="font-mono tabular-nums text-ink-2">{num(PER_DAY)}</span>{' '}
-        in a {SCHOOL_HOURS} hour day.
+        a school day.
       </figcaption>
     </figure>
   )
 }
 
 /* ── 02 ─────────────────────────────────────────────────────────────────── */
-/* ExplodedStack owns its own scroll motion and its own reduced-motion branch.
-   Do not write transforms onto `.lyr` here. */
+/* ExplodedStack owns its own scroll motion. Do not write transforms onto `.lyr`. */
 function Hardware() {
   return (
     <figure className="m-0 flex h-full flex-col">
       <ExplodedStack className="h-[min(44vh,360px)] w-full" caption={null}
         size="w-[min(94%,420px)]"/>
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        The drawing is at real size. No unit has been built.
+        Drawn at real size. No unit has been built.
       </figcaption>
     </figure>
   )
 }
 
 /* ── 03 ─────────────────────────────────────────────────────────────────── */
-/* Copy comes from lib/sensors.js. Do not retype it here, or the patch page and
-   the tour describe the same sensor two different ways. `short` rather than
-   `about`: `about` is three sentences and spec 4 allows no paragraph here. */
+/* Copy comes from lib/sensors.js; do not retype it here. */
 function Signals() {
   return (
     <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:gap-4">
@@ -206,12 +157,8 @@ function Signals() {
 }
 
 /* ── 06 ─────────────────────────────────────────────────────────────────── */
-/* The check-in list plus the students consent keeps off it. Every count is read
- * off the same fixture the medical professional console reads, so the rail
- * cannot claim a consent split the list does not show.
- *
- * No position numerals: a column of ranks is a leaderboard whatever the heading
- * says. Order is largest change first. */
+/* Read off the same fixture the console reads. No position numerals: a column
+ * of ranks is a leaderboard. Order is largest change first. */
 function Caseload() {
   const moved = triage()
   const held = [...scoreOnly(), ...alertsOnly()]
@@ -234,8 +181,6 @@ function Caseload() {
                 </span>
               </span>
               <span className="text-fine text-ink-2">{TIER_LABEL[tier]}</span>
-              {/* Change since last week orders the list, so it is the figure on
-                  the row: the score alone makes the order look wrong. */}
               <span className="text-right font-mono text-fine tabular-nums text-ink">
                 {s.velocity > 0 ? '+' : ''}{s.velocity}</span>
             </li>
@@ -258,35 +203,32 @@ function Caseload() {
 }
 
 /* ── 07 ─────────────────────────────────────────────────────────────────── */
-/* Third column is a cell treatment ('demo' | 'fact'), not a Badge variant.
-   The two differ by shape, face and weight before they differ by hue, so the
-   column still separates in grayscale. */
+/* Third column is a cell treatment ('demo' | 'fact'). The two differ by shape
+   and weight before hue, so the column still separates in grayscale. */
 const HONESTY = [
   ['The screens on this site', 'Built', 'fact',
-    'The screens are real React, running on sample data.'],
+    'Real React, running on sample data.'],
   ['The numbers on them', 'Generated', 'demo',
-    'The scoring model produced them from invented baselines. Nobody has been measured.'],
+    'The model made them from invented baselines. Nobody was measured.'],
   ['The patch', 'Drawn, not built', 'demo',
-    'The patch exists as a CAD model. No unit has been built or photographed.'],
+    'A CAD model. No unit built or photographed.'],
   ['The scoring model', 'Written, not validated', 'demo',
-    'The model blends four signals against a fourteen day baseline. It has never been compared with a clinical measure.'],
+    'Four signals against a fourteen day baseline. Never compared with a clinical measure.'],
   ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
-    `Tested on ${TESTED_ADULTS} adults in two public lab datasets, see Machine Learning. No study has been run with MindMap users yet.`],
+    'Two public lab datasets, see Machine Learning. No MindMap user study yet.'],
   ['The eight students', 'Invented', 'demo',
-    'The eight students are made up, and so are their consent records.'],
+    'Made up, and so are their consent records.'],
   ['Regulatory status', 'Not a medical device', 'fact',
-    'MindMap does not diagnose, treat or screen for any condition.'],
+    'No diagnosis, treatment or screening for any condition.'],
 ]
 
 /* ── 08 ─────────────────────────────────────────────────────────────────── */
-/* Four assumptions and the two figures they imply. `from` is the provenance of
-   the row and is never left blank: a number with no source is the thing spec 9
-   exists to stop. */
+/* `from` is the provenance of the row and is never blank. */
 const SCALE_ROWS = [
-  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'This is an assumption. No ratio has been surveyed.'],
-  ['Readings per second', '1', 'Hz', `This is the design target, across a ${SCHOOL_HOURS} hour school day.`],
-  ['Per student, per day', num(PER_DAY), 'readings', 'The two rows above multiply to this.'],
-  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'This is arithmetic, not a measurement.'],
+  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'An assumption. No ratio has been surveyed.'],
+  ['Readings per second', '1', 'Hz', `The design target, over a ${SCHOOL_HOURS} hour school day.`],
+  ['Per student, per day', num(PER_DAY), 'readings', 'The two rows above, multiplied.'],
+  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Arithmetic, not a measurement.'],
   ['Smallest group reported', String(K_ANONYMITY), 'students', 'A smaller group shows nothing.'],
 ]
 
@@ -311,7 +253,7 @@ function ScaleFigure() {
         ))}
       </dl>
       <p className="mt-3 border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        A trial against a real referral list has not been run.
+        No trial has been run. No effect figure is claimed.
       </p>
     </figure>
   )
@@ -325,50 +267,43 @@ const STOPS = [
   {
     id: 'problem', nav: 'The problem',
     title: 'Why stress is hard to track',
-    lede: 'An adult only knows about the days a student spoke up.',
+    lede: 'An adult hears only what a student says.',
     photo: 'students-hallway',
     alt: 'Four high school students walking along a bright corridor with folders and backpacks, talking as they go',
     facts: [
-      ['What an adult knows', 'Only the days a student spoke up, or somebody noticed.'],
-      ['What the patch records', `One reading a second all school day, which is ${num(PER_DAY)} readings a day.`],
-      ['Compared with', `The student's own last two weeks, and nobody else's.`],
-      ['The photographs', 'These are stock photographs of models. Nobody shown uses MindMap.'],
+      ['Compared with', `The student's own last two weeks, nobody else.`],
+      ['The photographs', 'Stock photographs of models. Nobody shown uses MindMap.'],
     ],
     art: EvidenceGap,
   },
   {
     id: 'hardware', nav: 'The patch',
     title: 'The patch',
-    lede: 'The patch is three printed parts around a ready made board.',
-    facts: [
-      ...LAYERS.map(l => [l.title, l.body]),
-      ['Status', 'The patch is drawn at real size. No unit has been built.'],
-    ],
+    lede: 'Three printed parts around a ready made board.',
+    facts: LAYERS.map(l => [l.title, l.body]),
     art: Hardware,
   },
   {
     id: 'signals', nav: 'The four signals',
     title: 'What the patch records',
-    lede: 'The patch records four signals from the upper arm, once a second.',
+    lede: 'Four signals from the upper arm, once a second.',
     facts: [
-      ['Changes first', 'Sweat changes first, in amounts too small to feel.'],
-      ['Changes most', 'Heart rate variability changes the most, not the heart rate itself.'],
-      ['Checks for illness', 'Skin temperature drifts slowly and helps tell illness from stress.'],
-      ['Movement is a check', `When movement goes above 0.35 g, the ${SCORE} is held back.`],
+      ['Illness check', 'Skin temperature drifts slowly, telling illness from stress.'],
+      ['Movement check', `Movement above 0.35 g holds the ${SCORE} back.`],
     ],
     art: Signals,
   },
   {
     id: 'student', nav: 'Student screen',
     title: 'What the student sees',
-    lede: `The student sees one ${SCORE}, ${SCORE_RANGE}, and one plain sentence.`,
+    lede: `One ${SCORE}, ${SCORE_RANGE}, and a plain sentence.`,
     photo: 'student-homework',
     alt: 'A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them',
     facts: [
-      ['Each ring', `Each ring shows how far one signal is from this student's fourteen day baseline.`],
-      ['The number in the middle', 'The number blends all four signals.'],
-      ['What the student sees', `The student sees every reading, second by second, and their own ${NOTES}.`],
-      ['Hidden from the student', `Nothing is hidden on the student's own screen.`],
+      ['Each ring', 'One signal against the fourteen day baseline.'],
+      ['The number in the middle', 'All four signals blended.'],
+      ['Every reading', `Second by second, plus their own ${NOTES}.`],
+      ['Hidden from the student', 'Nothing.'],
     ],
     art: () => (
       <div className="flex h-full flex-col">
@@ -377,7 +312,7 @@ const STOPS = [
           leading-tight text-ink">
           Today is a little higher than your normal.</p>
         <p className="mt-1 text-meta leading-[1.35] text-ink-2">
-          It went up in third period and has stayed there.</p>
+          Up since third period.</p>
         <DemoNotice className="mt-auto pt-3">This is sample data, not a real person.</DemoNotice>
       </div>
     ),
@@ -386,22 +321,19 @@ const STOPS = [
   {
     id: 'parent', nav: 'Parent screen',
     title: 'What the parent sees',
-    lede: `A parent sees one ${SCORE} a day and one sentence a week.`,
+    lede: `A day's ${SCORE} and one sentence a week.`,
     photo: 'parent-laptop',
     alt: 'A mother and her teenage son sitting together at a dining table, both looking at an open laptop',
     facts: [
-      ['The finest detail', 'A parent sees a whole day, never an hour or a moment.'],
-      ['Never shown to a parent', `A parent never sees a raw reading, ${NOTES} or ${LOCATION}.`],
-      ['Each week', `A parent sees which days sat above their child's own range.`],
+      ['The finest detail', 'A whole day, never an hour or a moment.'],
+      ['Each week', `Which days sat above their child's own range.`],
       ['Who decides', CONSENT_SHORT],
     ],
     art: () => {
       const band = DATA.weekBand || { hi: 1 }
       const days = DATA.week || []
       const over = days.filter(d => d.v > band.hi).length
-      /* The relationship, never a name. views/parent-dash.jsx addresses the
-         same reader with the same two words, so the tour and the screen it is
-         describing cannot drift apart on it. */
+      /* The relationship, never a name: the same words parent-dash.jsx uses. */
       const never = ['A raw reading', NOTES, LOCATION, 'Anything said near the microphone']
       return (
         <div className="flex h-full flex-col">
@@ -409,12 +341,10 @@ const STOPS = [
             Your child had a harder week than usual.</p>
           <div className="mt-3"><WeekStrip days={DATA.week} band={DATA.weekBand}/></div>
           <p className="mt-2 font-mono text-fine tabular-nums text-ink-3">
-            {over} of {days.length} days sat above their usual range
+            {over} of {days.length} days above their usual range
           </p>
           <p className="mt-auto border-t border-rule pt-2.5 font-display text-fine font-bold
             leading-tight text-ink">Never shown to a parent</p>
-          {/* A card holding a row of chips: one level of nesting, which spec 2
-              allows. The mark is each chip's marker, so the list has none. */}
           <ul className="m-0 mt-2 grid list-none gap-1.5 p-0 sm:grid-cols-2">
             {never.map(t => (
               <li key={t} className="flex items-start gap-2 rounded-field border border-rule
@@ -431,19 +361,18 @@ const STOPS = [
   {
     id: 'pro', nav: `${PRO} screen`,
     title: `What the ${PRO} sees`,
-    lede: `The ${PRO} sees a list of students to check in with, ordered by whose ${SCORE} moved most since last week.`,
+    lede: `A short list, ordered by biggest ${SCORE} change.`,
     photo: 'clinic-talk',
     alt: `A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`,
-    /* Read off the same roster the list draws. A typed "five of eight" goes
-       stale the moment a consent record changes. */
+    /* Read off the roster the list draws, so a consent change cannot go stale. */
     facts: () => {
       const all = roster().length, trends = triage().length
       const partial = scoreOnly().length, alerts = alertsOnly().length
       return [
-        ['Students on the list', `${all} students are on this list.`],
-        ['Shown with trends', `${trends} students have Parental Consent to share trends.`],
-        ['Shown with a score only', `${partial} students agreed to share a ${SCORE} but not trends.`],
-        ['Shown with alerts only', `${alerts} students agreed to crisis alerts and nothing else.`],
+        ['On the list', `${all} students.`],
+        ['Trends shared', `${trends}, with Parental Consent.`],
+        ['Score only', `${partial}, sharing a ${SCORE} but not trends.`],
+        ['Alerts only', `${alerts}, sharing crisis alerts and nothing else.`],
         ['Always on', `Crisis alerts reach the ${PRO} in every case.`],
       ]
     },
@@ -453,9 +382,7 @@ const STOPS = [
   {
     id: 'honest', nav: 'Real and demo',
     title: 'What is real and what is demo',
-    lede: 'Every reading on this site is generated, and nobody has worn the patch.',
-    /* The table beside is the whole list; a rail repeating four of its rows
-       was the paragraph the owner asked to cut. */
+    lede: 'Every reading is generated. Nobody has worn the patch.',
     facts: [],
     art: () => (
       <Table>
@@ -485,14 +412,13 @@ const STOPS = [
   {
     id: 'scale', nav: 'At scale',
     title: 'How the numbers add up',
-    lede: 'These numbers are a projection, not a finding.',
+    lede: 'A projection, not a finding.',
     photo: 'school-card',
     alt: 'A woman and a teenage boy talking in a room lined with shelves',
     facts: [
-      ['A waiting list today', 'A list today is ordered by who asked first or who was referred.'],
-      ['This list', `This list is ordered by whose ${SCORE} moved most since last week.`],
-      ['Why a list', `A ${PRO} cannot read ${num(CASELOAD_ASSUMED)} charts, so the app shows a short list.`],
-      ['Not claimed', 'No trial has been run, and no effect or adoption figure is claimed.'],
+      ['A waiting list today', 'Ordered by who asked first or was referred.'],
+      ['This list', `Ordered by whose ${SCORE} moved most.`],
+      ['Why a list', `A ${PRO} cannot read ${num(CASELOAD_ASSUMED)} charts.`],
     ],
     art: ScaleFigure,
   },
@@ -504,11 +430,9 @@ export function Tour({ go }) {
   const first = React.useRef(true)
   const stop = STOPS[i]
 
-  /* Changing stop replaces content above the control that changed it, so the
-     reader is moved back to the top. Skipped on first paint, or the page
-     scrolls itself on arrival. `behavior` is set explicitly because the global
-     `scroll-behavior: smooth` would otherwise animate it under reduced
-     motion. */
+  /* Changing stop replaces content above the control, so scroll the reader
+     back to the top. Skipped on first paint. `behavior` is explicit because
+     the global smooth scroll would otherwise animate under reduced motion. */
   React.useEffect(() => {
     if (first.current) { first.current = false; return }
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -517,10 +441,6 @@ export function Tour({ go }) {
 
   return (
     <main>
-      {/* -- the title band -------------------------------------------------
-          Two columns from lg: the title on the left and what the tour costs a
-          reader on the right, in a container, rather than as a second line of
-          prose under the first. */}
       <section className="border-t border-rule bg-mist">
         <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]
           lg:gap-4 lg:py-7">
@@ -534,21 +454,17 @@ export function Tour({ go }) {
             </h1>
           </div>
           <Facts className="self-end" rows={[
-            ['Stops', `The tour has ${STOPS.length} stops. Each one shows a screen or a part of the patch.`],
-            ['Time', 'The tour takes about five minutes.'],
-            ['What you are looking at', 'Every figure is the live component the real screen runs, not a recording.'],
+            ['Stops', `${STOPS.length} stops, about five minutes.`],
+            ['Figures', 'Every figure is the live screen, not a recording.'],
           ]}/>
         </div>
       </section>
 
-      {/* -- the stops ------------------------------------------------------ */}
       <section className="border-t border-rule bg-paper">
         <div className="wrap py-5 lg:py-7">
           <Tabs value={stop.id} onValueChange={v => setI(STOPS.findIndex(s => s.id === v))}>
-            {/* Radix gives the strip roving focus and arrow keys. Previous and
-                Next below exist for in-order readers who should not have to
-                aim at a tab. `scroll` rather than wrap: eight triggers wrap to
-                three rows on a 390px screen and cost a third of the fold. */}
+            {/* Radix gives the strip roving focus and arrow keys. `scroll` rather
+                than wrap: eight triggers wrap to three rows on a 390px screen. */}
             <div ref={anchor} data-anchor>
               <TabsList scroll aria-label="Tour stops" className="gap-x-5">
                 {STOPS.map(s => (
@@ -558,45 +474,46 @@ export function Tour({ go }) {
               </TabsList>
             </div>
 
-            {STOPS.map((s, n) => {
+            {STOPS.map(s => {
               const A = s.art
               const rows = typeof s.facts === 'function' ? s.facts() : s.facts
+              const more = s.photo || rows.length > 0
               return (
                 <TabsContent key={s.id} value={s.id} className="mt-3 lg:mt-4">
-                  <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
-                    <h2 className="font-display text-sub font-bold leading-[1.12] tracking-tight
-                      text-ink">{s.title}</h2>
-                    <p className="font-mono text-fine tabular-nums text-ink-2">
-                      Stop {n + 1} of {STOPS.length}
-                    </p>
-                  </div>
-                  {/* Two columns from lg, per spec 1. The rail is fixed and the
-                      figure takes the rest, so a wide figure is not squeezed
-                      into half the band to keep the two tracks even. */}
+                  <h2 className="font-display text-sub font-bold leading-[1.12] tracking-tight
+                    text-ink">{s.title}</h2>
+                  <ScrollIn as="p" className="mt-1 text-sec font-medium leading-[1.35] text-ink">
+                    {s.lede}
+                  </ScrollIn>
+                  {/* Above the fold: the figure, then the route out. The rail of
+                      facts and the photograph sit behind See details. Two columns
+                      from lg, with the figure taking the wider track. */}
                   <div className={cn('mt-3 grid gap-3 lg:gap-4',
-                    (s.photo || rows.length) && 'lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]')}>
-                    <div className="flex flex-col gap-3 lg:gap-4">
-                      <ScrollIn as="p" className="text-sec font-medium leading-[1.35] text-ink">
-                        {s.lede}
-                      </ScrollIn>
-                      {s.photo && <ScrollIn><PhotoCard photo={s.photo} alt={s.alt}/></ScrollIn>}
-                      {rows.length > 0 && <ScrollIn><Facts rows={rows}/></ScrollIn>}
+                    more && 'lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]')}>
+                    <ScrollIn className="min-w-0 lg:col-start-2"><Fig><A/></Fig></ScrollIn>
+                    <div className="flex flex-col gap-3 lg:col-start-1 lg:row-start-1 lg:gap-4">
                       {s.go && (
                         <Button variant="outline" size="sm" className="w-fit"
                           onClick={() => go(s.go[0])}>
                           {s.go[1]}<ArrowRight aria-hidden/>
                         </Button>
                       )}
+                      {more && (
+                        <SeeDetails label="See details">
+                          <div className="flex flex-col gap-3 lg:gap-4">
+                            {rows.length > 0 && <Facts rows={rows}/>}
+                            {s.photo && <PhotoCard photo={s.photo} alt={s.alt}/>}
+                          </div>
+                        </SeeDetails>
+                      )}
                     </div>
-                    <ScrollIn className="min-w-0"><Fig><A/></Fig></ScrollIn>
                   </div>
                 </TabsContent>
               )
             })}
           </Tabs>
 
-          {/* aria-live on the position: the tab strip scrolls on a phone, so
-              the reader cannot always see where they are in it. */}
+          {/* aria-live on the position: the tab strip scrolls on a phone. */}
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel border
             border-rule bg-card px-3.5 py-3">
             <p aria-live="polite" className="font-mono text-fine tabular-nums text-ink-2">
@@ -616,34 +533,22 @@ export function Tour({ go }) {
         </div>
       </section>
 
-      {/* -- the way out ----------------------------------------------------
-          Two columns from lg, and the three routes carry what each one opens
-          rather than a heading and a single button on an otherwise empty
-          band. */}
       <section className="border-t border-rule bg-aqua-2">
-        <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]
-          lg:gap-4 lg:py-7">
-          <div className="min-w-0">
-            <h2 className="font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
-              Open the app yourself
-            </h2>
-            <p className="mt-2 max-w-[40ch] text-sec font-medium leading-[1.35] text-ink">
-              You do not need a patch or an account to try the app.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              <Button size="sm" onClick={() => go('app')}>
-                Open the app<ArrowRight aria-hidden/>
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => go('check')}>
-                Get a {SCORE} in six questions
-              </Button>
-            </div>
+        <div className="wrap py-5 lg:py-7">
+          <h2 className="font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
+            Open the app yourself
+          </h2>
+          <p className="mt-2 max-w-[40ch] text-sec font-medium leading-[1.35] text-ink">
+            No patch or account needed. Nothing you type leaves your device.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2.5">
+            <Button size="sm" onClick={() => go('app')}>
+              Open the app<ArrowRight aria-hidden/>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => go('check')}>
+              Get a {SCORE} in six questions
+            </Button>
           </div>
-          <Facts className="self-start" rows={[
-            ['The app', `The app has student, parent and ${PRO} screens.`],
-            ['Six questions', `Six questions give you a ${SCORE} with no patch, and nothing is stored.`],
-            ['Your data', 'Nothing you type on this site leaves your device.'],
-          ]}/>
         </div>
       </section>
     </main>

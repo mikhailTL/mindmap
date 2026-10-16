@@ -1,5 +1,4 @@
 import React from 'react'
-import { SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* Diverging bars off a neutral centre: one row per network term, right of the
@@ -95,11 +94,9 @@ function Axis() {
           )}
         </React.Fragment>
       ))}
-      <span className="absolute left-0 top-8 block whitespace-nowrap text-fine text-ink-3">
-        lowered the score
-      </span>
-      <span className="absolute right-0 top-8 block whitespace-nowrap text-fine text-ink-3">
-        raised the score
+      <span className="absolute inset-x-0 top-8 flex justify-between text-fine text-ink-3">
+        <span>lowered</span>
+        <span>raised</span>
       </span>
     </span>
   )
@@ -132,10 +129,6 @@ export function Diverge({ items }) {
           <span aria-hidden className="hidden sm:block"/>
         </li>
       </ul>
-      <p className="mt-1.5 text-fine text-ink-3">
-        Bars use network units, not {SCORE_RANGE}. Zero is this
-        person&rsquo;s own average.
-      </p>
     </div>
   )
 }

@@ -12,46 +12,17 @@ import { ITEMS } from '../lib/engine'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Taking a reading with nothing on your arm.
- *
- * Band ladder: accent-wash, card, aqua-2, paper, accent-wash. Four of the six
- * grounds spec 0d rule 1 leaves, alternating tinted and white so no two
- * neighbours read as one surface. `aqua-2` is not a Section tone, so it comes
- * in as a class and tailwind-merge drops the tone's own background.
- *
- * Capture instructions (which fingertip, resting on a table, a quiet room, a
- * sentence to say, what the score is measured against) live in PhoneCheck, at
- * the point of use. Do not duplicate them onto this page.
- *
- * Every figure here is 2D, so all use Parallax2D, never a 3D scene. Distances
- * are deliberately unequal (hero phone 64, camera module 30, route drawings 16)
- * because figures at one shared distance read as a rendering fault rather than
- * as depth.
- *
- * What changed on 13 October: the four retired hues came off (sky, sun, lilac
- * and the mist ground), the capsule eyebrow became a line of type, the dark
- * limits band became a near-white one, every frame went through ui/frame so a
- * photograph's focal point is read from lib/photos rather than guessed at the
- * call site, and no frame holding a face is under the 176px floor. */
+/* Taking a reading with nothing on your arm. Capture instructions live in
+   PhoneCheck, at the point of use; do not duplicate them here. Every figure
+   is 2D, so Parallax2D only, at unequal distances. */
 
 const PANEL = 'rounded-panel border border-rule bg-card'
 
-/* The three figures the hero states instead of a sentence. 45 is PPG_SECONDS
-   plus VOICE_SECONDS, the scale is the site's one scale, and the third is the
-   promise PhoneCheck keeps further down the page. */
+/* 45 is PPG_SECONDS plus VOICE_SECONDS. */
 const HERO_FACTS = [
   ['45', 'seconds, with camera and voice'],
   [SCORE_RANGE, SCORE],
   ['0', 'readings leave your phone'],
-]
-
-/* The bridge between a phone reading and a patch reading, which is the one
-   thing about this page a reader cannot get from the drawing or from the
-   coverage strip under it. What the camera reads, what it cannot, and the
-   frame rate are all drawn below; do not restate them here. */
-const CAMERA_FACTS = [
-  ['Compared to', 'Your own history, not other students'],
-  ['Scale', `The same ${SCORE} from the phone or the patch`],
 ]
 
 const ROUTES = [
@@ -61,8 +32,7 @@ const ROUTES = [
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
-/* Approved claim language; all three must stay. Do not reframe as trial-report
-   columns (proved / not proved). This is a build. */
+/* Approved claim language; all three stay verbatim. */
 const LIMITS = [
   ['Heart rate', 'The heart rate comes within half a beat per minute of a known signal.'],
   ['Beat-to-beat index',
@@ -100,11 +70,6 @@ function RouteArt({ kind }) {
   )
 }
 
-/* Figures as a row of fields inside the panel rather than as a row of cells.
-   At 390 three cells stacked into three rows of their own cost this block
-   about 140px of height for the same three numbers. Label beside the figure,
-   never under it. rounded-field, not rounded-chip: the set is static and
-   nobody acts on it, which is what spec 0c rule 3 asks for. */
 function Figures({ items, className }) {
   return (
     <ul className={cn('m-0 flex list-none flex-wrap gap-1.5 p-0', className)}>
@@ -130,7 +95,6 @@ export function WithoutPatch({ go }) {
         <div className="wrap py-7 lg:py-10">
           <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-4">
             <div>
-              {/* An eyebrow is a line of type, per spec 0d rule 2. */}
               <p className="font-body text-ui font-semibold text-accent-ink">
                 Without the patch
               </p>
@@ -140,12 +104,7 @@ export function WithoutPatch({ go }) {
               </h1>
 
               <div className={cn(PANEL, 'mt-3 max-w-[34rem] overflow-hidden border-l-[3px] border-l-accent')}>
-                {/* The widest frame on the page, and the only one in the hero.
-                    A licensed stock frame of models: nobody shown uses MindMap
-                    and nobody is wearing a patch. 184px is the floor spec 0d
-                    rule 4 puts under a frame holding a face; at 544px of panel
-                    the 240px step keeps student-bus inside the 3.0 : 1 its two
-                    subjects survive. */}
+                {/* A licensed stock frame of models: nobody shown uses MindMap. */}
                 <div className="h-[184px] border-b border-rule sm:h-[240px]">
                   <Frame photo="student-bus" eager
                     alt="Two boys laughing together on a school bus seat, one holding a phone"/>
@@ -162,8 +121,6 @@ export function WithoutPatch({ go }) {
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
-              {/* 64px travel = 32px either side, inside this band's padding, so
-                  nothing reaches the edge and no layout shifts. */}
               <Parallax2D distance={64} className="shrink-0">
                 <IPhone scale={0.44} label="The MindMap app running on a phone">
                   <PhoneApp/>
@@ -174,44 +131,15 @@ export function WithoutPatch({ go }) {
         </div>
       </header>
 
-      {/* White ground: the figure's own mist bands vanish on a mist section. */}
       <Section tone="card" tight id="camera">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-4">
-          <SectionHead>How the camera reads your pulse</SectionHead>
-          {/* The reach of the phone, stated beside the heading rather than
-              left for a reader to work out from the drawing. */}
-          <ScrollIn className={cn(PANEL, 'self-end p-3.5')}>
-            {CAMERA_FACTS.map(([k, v], i) => (
-              <div key={k} className={cn('flex items-baseline gap-3 py-1.5',
-                i && 'border-t border-rule')}>
-                <span className="tick w-[4.2rem] shrink-0">{k}</span>
-                <span className="min-w-0 flex-1 text-fine leading-[1.45] text-ink-2">{v}</span>
-              </div>
-            ))}
-          </ScrollIn>
-        </div>
+        <SectionHead>How the camera reads your pulse</SectionHead>
         <ScrollIn className="mt-3 lg:mt-4">
-          {/* The figure and the person it is about, inside one border. The
-              frame is a full height column at lg and a wide band below it, so
-              the same photograph is read at two quite different shapes. */}
-          <div className={cn(PANEL, 'grid overflow-hidden border-l-[3px] border-l-accent',
-            'lg:grid-cols-[minmax(0,1fr)_minmax(0,250px)]')}>
-            <div className="min-w-0 p-3.5 lg:p-4">
-              {/* ScrollIn owns the entrance, Parallax2D the drift, on separate
-                  elements: both write `transform`, so nesting is required. */}
-              <Parallax2D distance={30}>
-                <CameraModule className="mx-auto max-w-[66rem]"/>
-              </Parallax2D>
-            </div>
-            <div className="h-[200px] border-t border-rule sm:h-[260px] md:h-[340px]
-              lg:h-auto lg:border-l lg:border-t-0">
-              <Frame photo="student-homework" eager
-                alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them"/>
-            </div>
+          <div className={cn(PANEL, 'overflow-hidden border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
+            <Parallax2D distance={30}>
+              <CameraModule className="mx-auto max-w-[66rem]"/>
+            </Parallax2D>
+            <SignalCoverage className="mt-4 border-t border-rule pt-4"/>
           </div>
-        </ScrollIn>
-        <ScrollIn className="mt-3 lg:mt-4">
-          <SignalCoverage/>
         </ScrollIn>
       </Section>
 
@@ -223,10 +151,6 @@ export function WithoutPatch({ go }) {
               <div className={cn(PANEL, 'flex h-full flex-col border-l-[3px] border-l-accent',
                 'p-4 lg:p-5')}>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                  {/* 16px travel = 8px either side, inside this panel's 10px of
-                      vertical padding, so the drawing stays within its ground. */}
-                  {/* A ground step tells the two routes apart, since the two
-                      hues that used to do it are retired. */}
                   <div className={cn('w-fit rounded-panel px-3 py-2',
                     i ? 'bg-aqua' : 'bg-accent-wash')}>
                     <Parallax2D distance={16}>
@@ -248,12 +172,8 @@ export function WithoutPatch({ go }) {
                     </li>
                   ))}
                 </ul>
-                {/* Both labels must differ from the hero's "Take a reading":
-                    duplicate names are one control to a screen reader. The
-                    questions live inside the app, on a screen of their own, so
-                    the intent is handed over and the app opens on it rather
-                    than on its chooser. The sensor reading is on this page,
-                    below, which is where that one goes. */}
+                {/* Labels differ from the hero's "Take a reading": duplicate
+                    names are one control to a screen reader. */}
                 <div className="mt-auto pt-3">
                   {r.id === 'ask'
                     ? <Button variant="outline" size="sm"
@@ -270,16 +190,11 @@ export function WithoutPatch({ go }) {
         </div>
       </Section>
 
-      {/* tone="paper", not "card": PhoneCheck is white cards, which on a white
-          band are just borders. paper is a 10% step from the aqua above; mist
-          and both washes land within 6% and read as one surface. */}
       <Section tone="paper" tight id="take">
         <SectionHead>Take a reading now</SectionHead>
         <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
       </Section>
 
-      {/* A near-white ground, per spec 0c rule 1: no saturated or dark ground
-          under a whole section. */}
       <Section tone="paper" tight className="bg-accent-wash">
         <SectionHead>What has been tested so far</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">

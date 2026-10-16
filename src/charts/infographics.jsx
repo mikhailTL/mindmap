@@ -120,17 +120,6 @@ function Mark({ v }) {
   )
 }
 
-/* "2 only if the student agrees, 3 never", counted off the table
-   rather than typed, so a row moved between states cannot leave the summary
-   saying the old thing. */
-function summarise(sees) {
-  return [2, 1, 0]
-    .map(v => ({ v, n: sees.filter(x => x === v).length }))
-    .filter(x => x.n)
-    .map(x => `${x.n} ${STATE[x.v].toLowerCase()}`)
-    .join(', ')
-}
-
 const COLS = 'md:grid md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] md:items-start md:gap-4'
 
 export function WhoSeesWhat({ className }) {
@@ -175,15 +164,6 @@ export function WhoSeesWhat({ className }) {
             </li>
           ))}
         </ul>
-
-        <div className={cn('border-t border-rule bg-mist/60 px-4 py-2.5', COLS)}>
-          <p className="text-tick text-ink-3">Across all five rows</p>
-          {SEES.map(p => (
-            <p key={p.who} className="mt-1 text-fine leading-[1.4] text-ink-2 md:mt-0">
-              <span className="text-ink-3 md:hidden">{p.who}: </span>{summarise(p.sees)}
-            </p>
-          ))}
-        </div>
 
         <figcaption className="border-t border-rule px-4 py-3 text-sec text-ink-3">Crisis alerts
           are the one exception. Students are told this before they start.</figcaption>

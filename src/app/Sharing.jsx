@@ -11,44 +11,15 @@ import {
   getSharing, getVersion, revokeAll, setRetention, setShared, subscribe,
 } from './store'
 
-/* The student's own sharing controls, per field and per audience.
- *
- * The model is not invented here and this screen may not exceed it. The
- * parent column is src/views/Privacy.jsx's YOU_SEE and YOU_NEVER; the
- * Medical Professional column is the three consent keys every record in
- * src/lib/caseload.js carries. Both lists live in store.js as one table, so
- * there is no second copy to disagree with the first.
- *
- * Three consequences of that, visible on the screen:
- *   - Nothing starts on. terms.js states it as the product's rule.
- *   - A trend cannot be shared without the score it is movement in, and a raw
- *     reading cannot be shared without the score it sits under. caseload.js
- *     enforces that nesting; the switches here express it rather than
- *     re-deciding it.
- *   - A parent never sees anything finer than a day, and never Notes,
- *     Location, a raw reading or anything said. Those are drawn as rows that
- *     say Never rather than left off the screen, because an absence nobody
- *     can see is not a reassurance.
- *
- * Crisis handling is the one row with no switch. caseload.js has no consent
- * key for it, which is the structural reason: there is nothing to turn off.
- * It sits in the Medical Professional column as a row that says Always on.
- *
- * Design spec 0f: 15 to 45 words above the fold. The two audiences are tabs,
- * one list at a time, and each row is its short label; the full label and
- * its hint sit behind the "?" at the top of the list. store.js keeps the
- * long labels because the change log is written from them.
- *
- * Note for the reviewer: src/charts/infographics.jsx marks raw readings as
- * Never for the Medical Professional at every consent level, while
- * src/lib/caseload.js carries a `raw` key and one student with it set. The
- * data layer is what this screen expresses, per its brief, and the raw row is
- * off by default. The two files disagree and one of them should change.
+/* The student's sharing controls. The model is store.js's SHARING table:
+ * nothing starts on, a dependent row needs its parent row, a parent never
+ * sees finer than a day and never Notes, Location, raw readings or anything
+ * said. Those are drawn as Never rows. Crisis alerts have no switch.
+ * Known disagreement: infographics.jsx marks raw readings Never for the
+ * Medical Professional while caseload.js carries a `raw` key.
  */
 
-/* Row labels as they are drawn, two or three words each. Keyed by the
-   store's field key so a field added there without a line here still shows
-   its full label rather than nothing. */
+/* Short row labels, keyed by the store's field key. */
 const SHORT = {
   parent: { score: `Daily ${SCORE}`, week: 'Days above usual', sleep: 'Hours slept', worn: 'Patch worn',
             settle: 'Days slow to settle' },
@@ -66,9 +37,7 @@ function count(state) {
 }
 const TOTAL = AUDIENCES.reduce((n, a) => n + SHARING[a].fields.length, 0)
 
-/* What the audience would actually be shown, derived from the switches rather
-   than described. A switch whose consequence is invisible is a switch nobody
-   trusts. */
+/* What the audience would be shown, derived from the switches. */
 function TheirView({ audience, state }) {
   const on = SHARING[audience].fields.filter(f => state[audience][f.key])
   return (
@@ -93,8 +62,6 @@ function TheirView({ audience, state }) {
   )
 }
 
-/* The full label and hint for every row, behind the "?" so the list itself
-   is the short labels. One list item per row: no paragraph forms. */
 function RowMeanings({ audience }) {
   const spec = SHARING[audience]
   return (
@@ -152,10 +119,6 @@ function Audience({ audience, state }) {
       })}
       {spec.never.map(n => <NeverRow key={n.label} label={SHORT_NEVER[n.label] || n.label}/>)}
       {audience === 'pro' && (
-        /* "Crisis alert" is caseload.js's own word for this, and the band is
-           named rather than its number: a threshold printed on a student's
-           settings screen is a clinical cut-off, and this is not the screen
-           for one. */
         <FixedRow label="Crisis alerts" hint={`A crisis alert always reaches a ${PRO_LC}.`}/>
       )}
       <TheirView audience={audience} state={state}/>
@@ -163,19 +126,7 @@ function Audience({ audience, state }) {
   )
 }
 
-/**
- * The student's sharing screen.
- *
- * Props
- *   className  string  Optional.
- *
- * Mount at: route `shared`, in place of <PrivacyBody/> in the `shared` entry
- * of PANES in src/views/Students.jsx. PrivacyBody is the parent's read-only
- * statement of scope and should stay on the `privacy` route, which is the
- * parent app; this is the student side of the same model, and it is the one
- * with the switches. The bottom tab already reads "Sharing", so no nav change
- * is needed.
- */
+/* The student's sharing screen, at route `shared`. */
 export function SharingControls({ className }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const state = getSharing()
@@ -184,7 +135,7 @@ export function SharingControls({ className }) {
   return (
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
-        <Panel title="What is shared" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
+        <Panel title="What Is Shared" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4">
             <ArmedButton armedLabel="Yes, stop sharing everything" onConfirm={revokeAll}>
               <Cross aria-hidden className="size-4"/>Turn everything off
@@ -214,16 +165,16 @@ export function SharingControls({ className }) {
 
       <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
         <ScrollIn delay={0.1}>
-          <Panel title="Keep raw readings for" aside={`${state.retention} days`}>
+          <Panel title="Keep Raw Readings For" aside={`${state.retention} days`}>
             <ChoiceRows label="How long raw readings are kept on this phone"
               value={state.retention}
               onChange={setRetention}
               options={RETENTION.map(d => ({
                 value: d,
                 label: `${d} days`,
-                hint: d === 7 ? 'This is the shortest option, and the default.'
-                  : d === 30 ? 'Keeps a month of samples.'
-                  : 'Keeps a term of samples, the longest option.',
+                hint: d === 7 ? 'The shortest, and the default.'
+                  : d === 30 ? 'A month of samples.'
+                  : 'A term of samples, the longest.',
               }))}/>
             <div className="border-t border-rule px-4 py-3">
               <p className="max-w-[62ch] text-fine text-ink-3">
@@ -235,7 +186,7 @@ export function SharingControls({ className }) {
 
         {state.log.length > 0 && (
           <ScrollIn delay={0.15}>
-            <Panel title="Your changes" aside={`${state.log.length} of the last 12`}>
+            <Panel title="Your Changes" aside={`${state.log.length} of the last 12`}>
               <ul className="m-0 list-none p-0">
                 {state.log.map((r, i) => (
                   <li key={r.at + i}
@@ -247,7 +198,7 @@ export function SharingControls({ className }) {
                 ))}
               </ul>
               <div className="border-t border-rule px-4 py-3">
-                <p className="max-w-[62ch] text-fine text-ink-3">This log stays on your phone and is never sent.</p>
+                <p className="max-w-[62ch] text-fine text-ink-3">Kept on your phone. Never sent.</p>
               </div>
             </Panel>
           </ScrollIn>
@@ -257,8 +208,6 @@ export function SharingControls({ className }) {
   )
 }
 
-/* Short and local. Date first because the log is read newest to oldest and
-   the day is what distinguishes two rows. */
 function stamp(iso) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''

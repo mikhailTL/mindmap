@@ -17,63 +17,27 @@ import { useAccount } from '../account/store'
 import { CASELOAD_TITLE, CONSENT_SHORT, SCORE, PRO } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* THE MEDICAL PROFESSIONAL CONSOLE, REBUILT 13 OCTOBER.
+/* THE MEDICAL PROFESSIONAL CONSOLE.
  *
- * The owner, verbatim: "The medical professional dashboard is too complex,
- * like the words it uses, and the jumble of data presented isnt clear and too
- * overwhelming, needs to be simplified and have a spet by step feel, like
- * 'Manage stress across the whole school' instead of a crisis protocol ...
- * Also tooooo much text on this one. Mindmap AI needs to be added to this as
- * well." Design spec 0e, section 16.
+ * 1. PLAIN WORDS. No caseload, cohort, triage, escalation, k-anonymity,
+ *    consent scope, audit log, retention or intervention in the copy. The
+ *    reader is a counsellor between two appointments.
  *
- * What changed, and the rule each change follows.
+ * 2. A SEQUENCE, NOT A WALL. Five steps in working order: the whole school,
+ *    who to check in with, one student, urgent alerts, what each guardian
+ *    agreed. One lead card, one block and one disclosure per step, and a Next
+ *    control at the foot.
  *
- * 1. PLAIN WORDS. Caseload, cohort, triage, escalation, crisis protocol,
- *    k-anonymity, consent scope, audit log, retention, intervention and
- *    suppressed cell are all gone from the copy. The reader is a counsellor
- *    between two appointments. Every one of them now says what it means:
- *    the students you follow, the whole school, who to check in with, steps
- *    taken, urgent alert, a group smaller than five, what a guardian agreed
- *    to share, the written record, how long readings are kept, what has been
- *    tried, hidden.
+ * 3. MINDMAP AI IS AN ACTION, not a panel: one control, routed to `ai`.
+ *    This console never answers anything itself.
  *
- * 2. A SEQUENCE, NOT A WALL. Five steps in the order a professional works:
- *    the whole school, then who to check in with, then one student, then an
- *    urgent alert, then what each guardian agreed. One lead sentence, one
- *    main module and one disclosure per step, and a Next control at the foot
- *    of each. Nothing else is above the fold.
+ * 4. FOUR SAFEGUARDS, in RULES below, behind a "?" beside the heading and
+ *    enforced on every step. Simplify the language, never the safeguard.
  *
- * 3. HALF THE WORDS. A sentence that restated a figure beside it is deleted.
- *    The five-row list of order rules is three lines, the six-tile summary
- *    strip is gone (it was the jumble), and the real-mode explanations of
- *    what each empty tab would hold are one short list.
- *
- * 4. MINDMAP AI IS AN ACTION, not a panel: one control, routed to `ai`, which
- *    src/views/App.jsx owns and another worker builds. This console never
- *    answers anything itself and never says it does.
- *
- * 5. FOUR SAFEGUARDS SURVIVE IN PLAIN WORDS and are on every step, in RULES
- *    below: what a student agreed to, the group of five, the written record,
- *    and that none of this is a diagnosis. Simplify the language, never the
- *    safeguard.
- *
- * COLOUR. Green, white and turquoise only (spec 0d, section 1). Grounds are
- * card, accent-wash and aqua through Monitor's TONES, indexed only by the six
- * live keys. warn means a figure above a student's own normal and crit means
- * an urgent alert; nothing else is coloured, and both are stated in words
- * beside the figure. Measured on accent-wash #d6eeeb, the only tint this file
- * lands text on: ink 11.33, ink-2 6.15, ink-3 4.61, warn 4.74, crit 5.50,
- * accent 4.78. On card: ink 15.20, ink-2 8.25, ink-3 5.61, warn 5.78, crit
- * 6.69, accent 5.80. Nothing here puts warn on aqua-2, which fails at 4.498.
- *
- * SIZE. Monitor's Panel and Stat, so a module is p-3.5 lg:p-4 and a card
- * figure is text-row rather than text-head or text-stat. No literal font-mono
- * anywhere; tabular-nums lines the figures up.
- *
- * WORDS, 14 OCTOBER (design spec 0f). No sentence over ten words, no
- * paragraph, and the four safeguards sit behind a "?" beside the heading
- * rather than as a card of prose above every step. They are still enforced
- * on every step; they are read on request.
+ * COLOUR. Grounds are card, accent-wash and aqua through Monitor's TONES.
+ * warn means a figure above a student's own normal and crit means an urgent
+ * alert; both are stated in words beside the figure. Nothing here puts warn
+ * on aqua-2, which fails AA.
  */
 
 /* Where the professional works, from their account (src/account/store.js
@@ -120,9 +84,8 @@ const nextOf = (steps, id) => {
   return i >= 0 && i < steps.length - 1 ? steps[i + 1] : null
 }
 
-/* The four safeguards, in the plainest words they can be put in. They are on
-   the screen on every step, above the step itself, and nothing on this console
-   can switch any of them off. Do not shorten these four lines away. */
+/* The four safeguards. Nothing on this console can switch any of them off.
+   Do not shorten these four lines away. */
 const RULES = [
   'You see only what a student agreed to share.',
   'A group under five shows nothing.',
@@ -202,11 +165,9 @@ function BarRow({ label, figure, pct, tone, aria }) {
   )
 }
 
-/* src/lib/caseload.js still writes "Crisis alert" into the record, and this
-   console calls the same thing an urgent alert everywhere else. One word, so
-   the screen does not use two names for one thing. A referral's target keeps
-   only its first clause: the rest of the string is the clinical phrase a
-   counsellor should not have to read off a queue. */
+/* src/lib/caseload.js writes "Crisis alert" into the record; this console
+   says urgent alert everywhere, so one name for one thing. A referral's
+   target keeps only its first clause. */
 const plain = t => t.replace(/crisis alert/gi, m => (m[0] === 'C' ? 'Urgent alert' : 'urgent alert'))
 const shortRef = t => t.split(':')[0]
 
@@ -350,7 +311,7 @@ function School({ words }) {
             text-fine tabular-nums text-ink-3">
             {[0, ...TICKS, 100].map(t => <span key={t}>{t}</span>)}
           </div>
-          <Note>The dark line marks the average period, {avg}.</Note>
+          <Note>The dark line marks the average period.</Note>
           {hidden > 0 && (
             <div className="mt-2.5 flex items-center gap-2.5">
               <HatchKey className="w-16 shrink-0"/>
@@ -371,13 +332,11 @@ function School({ words }) {
 
 /* ── Step 2. Who to check in with ───────────────────────────────────────── */
 
-/* Three lines, which is what the seven-line paragraph and the five-row table
-   of order rules came down to. Nobody with forty entries to read reads the
-   long version, and the safeguards in it are in RULES above. */
+/* Three lines. The safeguards are in RULES above. */
 const ORDER_RULES = [
   'A big change comes before a high score.',
   `A band shows where the ${SCORE} sits today.`,
-  'This list holds no raw reading, journal or location.',
+  'No raw reading, journal or location is listed.',
 ]
 
 /* The figure columns, named once on the rule the list hangs from. */
@@ -463,13 +422,9 @@ function SharedWithLess({ onOpen }) {
   )
 }
 
-/* One plain sentence about the week, branched off the records the list is
-   built from.
-
-   WHAT IT MAY NOT SAY. This console reads a body against each student's own
-   normal. A higher Mind Score is a body working harder than that student's
-   own normal. It is not anxiety, not distress and not a diagnosis, and no
-   sentence here may say that it is. */
+/* One plain sentence about the week. A higher Mind Score is a body working
+   harder than that student's own normal: not anxiety, not distress, not a
+   diagnosis, and no sentence here may say so. */
 const weekLine = rising =>
   !rising ? 'Nobody you follow reads higher than last week.'
   : rising === 1 ? 'One student reads above their own normal this week.'
@@ -530,9 +485,8 @@ function CheckIn({ onOpen, onStep }) {
 
 /* ── Step 3. One student ────────────────────────────────────────────────── */
 
-/* The record's own first line, held to the same limit as the console's: it
-   says what this student's body did against their own normal, never what they
-   felt, and never that anything is wrong with them. */
+/* The record's own first line: what this student's body did against their
+   own normal, never what they felt. */
 function recordLead(s, series) {
   if (!s.showScore) return `Only an urgent alert about ${s.name} reaches you.`
   if (!s.showTrend) return `${s.name} reads ${s.current} out of 100 today. No weekly change is shared.`
@@ -550,15 +504,12 @@ function OneStudent({ who, setWho }) {
   const settle = getSharing().pro.settle === true
   const all = roster()
   const s = all.find(x => x.name === who) || all[0]
-  /* Per student, not module constants: as constants every student on the
-     board showed Student 8241's breakdown and 45-day line. */
+  /* Per student, not module constants. */
   const drivers = driversFor(s).slice(0, 3)
   const series = profile45(s)
   const lo = Math.min(...series.map(p => p.v)), hi = Math.max(...series.map(p => p.v))
   const yspan = hi - lo || 1
-  /* Gridlines off this student's own window. Fixed lines at 40, 60 and 80
-     were drawn for every student, so a student whose 45 days ran 81 to 96 had
-     all three ruled below the floor of the chart. */
+  /* Gridlines off this student's own window, never fixed lines. */
   const ticks = [10, 20, 30, 40, 50, 60, 70, 80, 90].filter(v => v > lo && v < hi)
   const refs = REFERRALS.filter(r => r.student === s.name)
   const tried = INTERVENTIONS.filter(i => i.sessions > 0)
@@ -576,9 +527,8 @@ function OneStudent({ who, setWho }) {
           </div>
           <div className="min-w-0">
             <label htmlFor="pick" className="tick block">Open a different student</label>
-            {/* The ring is written out rather than left to the global rule in
-                src/input.css: that one is inside :where(), so it carries no
-                specificity and any utility here would win. */}
+            {/* The focus ring is written out: the global one in src/input.css
+                sits inside :where() and any utility here would win. */}
             <select id="pick" value={s.name} onChange={e => setWho(e.target.value)}
               className="mt-1 min-h-[48px] max-w-full rounded-field border-0 border-b-2 border-ink
                 bg-transparent px-1 font-body text-fine text-ink focus-visible:outline
@@ -588,12 +538,12 @@ function OneStudent({ who, setWho }) {
             </select>
           </div>
         </div>
-        {/* Three figures, each drawn only as far as the agreement reaches, so
-            a gap here is a decision a guardian made and not missing data. */}
+        {/* Three figures, each drawn only as far as the agreement reaches: a
+            gap here is a guardian's decision, not missing data. The tier word
+            is on the line under the name, so it is not under the figure too. */}
         <div className="mt-3.5 grid grid-cols-2 gap-3 border-t border-rule pt-3.5 lg:grid-cols-3 lg:gap-4">
           <Stat label={`${SCORE} today`} value={s.showScore ? s.current : 'not shared'}
-            unit={s.showScore ? 'of 100' : null}
-            sub={s.showScore ? `${TIER_LABEL[s.tier]} today` : null}/>
+            unit={s.showScore ? 'of 100' : null}/>
           <Stat label="Change this week"
             value={s.showTrend ? `${s.velocity > 0 ? '+' : ''}${s.velocity}` : 'not shared'}
             unit={s.showTrend ? 'points' : null}
@@ -662,15 +612,13 @@ function OneStudent({ who, setWho }) {
             <KV k="Lowest and highest in 45 days" v={`${lo} to ${hi}`}/>
             <KV k="Last two weeks" v={`${series[31].v} to ${s.current}`}/>
           </dl>
-          <Note>The coloured part is the last two weeks. The scale fits this student&rsquo;s own readings.</Note>
+          <Note>The coloured part is the last two weeks.</Note>
         </Panel>
       </div>
 
       <div className={ROW}>
-        <SeeDetails label="See more about the student"
-          sub="What changed, what has been tried, referrals and notes">
-          {/* 7fr and 5fr: at 6 and 6 the right column ended 165px above the
-              left one, which is a quarter of a screen of empty card stock. */}
+        <SeeDetails label="See more about the student">
+          {/* 7fr and 5fr: at 6 and 6 the right column ended well short. */}
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
             <div className="flex flex-col gap-3 lg:gap-4">
               <Panel tone="aqua">
@@ -751,17 +699,17 @@ function Urgent({ real }) {
   const [what, setWhat] = React.useState('')
   const [closed, setClosed] = React.useState(false)
   const toggle = i => setDone(d => d.includes(i) ? d.filter(x => x !== i) : [...d, i])
-  /* Derived rather than branched at the top: the steps are the practice's own
-     document and stay on screen either way, unticked and untouchable. */
+  /* The steps are the practice's own document and stay on screen in real
+     mode, unticked and untouchable. */
   const ticked = real ? [] : done
   const referrals = real ? [] : REFERRALS
-  /* Today's lines. The whole record is never worth a screenful here; what the
-     reader has to see is that opening anything writes one. */
+  /* Today's lines only: what the reader has to see is that opening anything
+     writes one. */
   const log = real ? [] : AUDIT_LOG.filter(r => r.rel === 'Today')
   return (
     <>
-      {/* Red, on purpose: the one alarm on the console. The owner: red is
-          allowed in the alert and emergency sections. */}
+      {/* Red, on purpose: the one alarm on the console. The owner allows red
+          in the alert and emergency sections. */}
       <Panel className={cn('border-l-4 border-l-crit', real ? 'border-rule bg-card' : 'border-crit/40 bg-[#fbeae6]')}>
         <PanelHead title="Urgent alerts"
           meta={real ? 'nothing open' : PROTOCOL_TIMES[0]}/>
@@ -789,8 +737,7 @@ function Urgent({ real }) {
             ))}
           </ul>
         </div>
-        {/* Finishing is one field and one control, in place of the dialog that
-            used to open over this screen with four more paragraphs in it. */}
+        {/* Finishing is one field and one control, no dialog. */}
         <div className="mt-3.5 border-t border-rule pt-3">
           <label htmlFor="outcome" className="tick block">What happened</label>
           <textarea id="outcome" rows={2} value={what} onChange={e => setWhat(e.target.value)}
@@ -815,8 +762,7 @@ function Urgent({ real }) {
       </Panel>
 
       <div className={ROW}>
-        <SeeDetails label="See referrals and the log"
-          sub="Every line here is kept">
+        <SeeDetails label="See referrals and the log">
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
             <Panel tone="aqua">
               <PanelHead as="h3" title="Open referrals"/>
@@ -851,7 +797,6 @@ function Urgent({ real }) {
                   </li>
                 ))}
               </ul>
-              <Note>No line can be edited or deleted.</Note>
             </Panel>
           </div>
         </SeeDetails>
@@ -890,20 +835,18 @@ function Agreed({ real }) {
             </li>
           ))}
         </ul>
-        {/* The expiry is the same date on every signature in this set, so it is
-            one line here rather than a column of eight identical cells. */}
+        {/* The expiry is the same date on every signature, so one line. */}
         <Note>{rows.length ? `Every signature runs out ${rows[0].expires}. ` : ''}Urgent alerts
           cannot be switched off.</Note>
       </Panel>
 
       <div className={ROW}>
-        <SeeDetails label="See how long readings are kept"
-          sub="And how to export a copy">
+        <SeeDetails label="See how long readings are kept">
           <div className="grid items-start gap-3 [&>*]:min-w-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
             <Panel tone="aqua">
               <PanelHead as="h3" title="How long readings are kept"/>
-              <p className="mt-3 max-w-[46ch] text-fine text-ink-2">The shortest is the default.
-                Raw readings are then deleted.</p>
+              <p className="mt-3 max-w-[46ch] text-fine text-ink-2">Raw readings are deleted
+                when the time runs out.</p>
               <ul className="m-0 mt-3 list-none border-t border-rule p-0">
                 {RETENTION.map(d => (
                   <BarRow key={d} label={d === RETENTION[0] ? `${d} days, the default` : `${d} days`}
@@ -927,7 +870,6 @@ function Agreed({ real }) {
                 <Button variant="outline" size="sm" disabled>Export the record</Button>
                 <Button variant="outline" size="sm" disabled>Export what was agreed</Button>
               </div>
-              <Note>Every export is logged.</Note>
             </Panel>
           </div>
         </SeeDetails>
@@ -939,8 +881,7 @@ function Agreed({ real }) {
 /* ── Nothing paired, which is every visitor's true state today ──────────── */
 
 /* src/views/App.jsx renders its own start screen for this audience in real
-   mode, so this is reached only if that changes. It is three lines and an
-   action rather than the three screens of explanation it replaced. */
+   mode, so this is reached only if that changes. */
 const WHAT_FILLS = [
   'A student pairs a patch on their own phone.',
   'A guardian signs what may be shared.',
@@ -1015,14 +956,10 @@ export function Pro({ go }) {
       <Tabs value={step} onValueChange={onStep}>
         <div className="wrap !pt-4">
           <p aria-live="polite" className="sr-only text-fine">{said}</p>
-          {/* The outcome, which is what the owner asked this screen to be
-              named after, and not a protocol. */}
           <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
             <h2 className="max-w-[24ch] font-display text-row font-bold tracking-tight text-ink
               sm:text-head">{words.head}</h2>
-            {/* The four safeguards, behind a "?" (design spec 0f rule 2). They
-                hold on every step and nothing on this console switches any of
-                them off. */}
+            {/* The four safeguards, behind a "?". They hold on every step. */}
             <Why label="The four rules on this screen" className="pt-1">
               <ul className="m-0 list-none p-0">
                 {RULES.map(r => <li key={r} className="py-0.5">{r}</li>)}
@@ -1034,11 +971,9 @@ export function Pro({ go }) {
             : <DemoNotice className="mt-2" inline>These figures are generated. No student was measured.</DemoNotice>}
         </div>
 
-        {/* The five steps are this console's whole navigation, so they stay
-            chrome: card ground, and from sm up stuck beneath the app's 48px
-            top bar. At 390 the strip scrolls sideways rather than wrapping to
-            three rows, which cost a third of the viewport.
-            Contrast on card #ffffff: ink 15.20, ink-2 8.25. */}
+        {/* The five steps are the whole navigation, so they stay chrome: card
+            ground, stuck beneath the 48px top bar from sm up, and scrolling
+            sideways at 390 rather than wrapping. */}
         <div className="mt-3 border-b border-ink bg-card sm:sticky sm:top-12 sm:z-30">
           <div className="wrap !py-0">
             <TabsList aria-label="The five steps" scroll className="gap-x-5 border-b-0">
@@ -1050,9 +985,7 @@ export function Pro({ go }) {
         </div>
 
         <div className="wrap !pt-3 pb-12">
-          {/* Where the reader is, and the one action this console hands off:
-              MindMap AI, which src/views/App.jsx routes and another worker
-              builds. Nothing on this screen answers anything. */}
+          {/* Where the reader is, and the two actions this console hands off. */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p className="tick">Step {at + 1} of {STEPS.length}</p>
             <div className="flex flex-wrap gap-2.5">

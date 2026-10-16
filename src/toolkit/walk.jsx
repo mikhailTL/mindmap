@@ -9,27 +9,12 @@ import { askMotion } from '../signals/motion'
 import { countSteps, walkWords } from '../signals/steps'
 import { DidItWork } from './after'
 
-/* Walk it off. Three minutes on foot, the phone counting in the hand or the
- * pocket.
- *
- * WHAT RUNS. Every devicemotion event's acceleration magnitude, less one g so
- * the phone reads zero at any angle when still, goes into a buffer for the
- * whole walk. Every two seconds countSteps (src/signals/steps.js) turns the
- * buffer into a count and a cadence. The sample rate is measured from the
- * event timestamps and assumed to be 50 Hz until there are enough of them.
- *
- * THE SCREEN. It stays on: page JavaScript stops the moment a phone locks,
- * on both platforms, so the Wake Lock holds it while the walk runs and the
- * page says so in one line. A soft tone and a short buzz, where the browser
- * has one, mark the halfway point and the end.
- *
- * WHY THE WALK IS NEVER SCORED. Movement above 0.35 g is a disqualifier in
- * every other reading (src/signals/motion.js): a hard run and a hard day
- * look alike in every other channel. The result sheet says so.
- *
- * WHERE THE SAMPLES GO. One array for the walk, dropped when the screen
- * closes. Only the count and the cadence on the result sheet exist after
- * that, and they are not stored. */
+/* Walk it off: three minutes on foot, the phone counting. Every devicemotion
+ * magnitude less one g goes into a buffer for the walk; every two seconds
+ * countSteps turns it into a count and a cadence. The Wake Lock holds the
+ * screen; a tone and a buzz mark halfway and the end. The walk is never
+ * scored as stress: hard movement disqualifies every other reading. The
+ * buffer is dropped when the screen closes and nothing is stored. */
 
 const SECONDS = 180
 const HALF = 90
@@ -55,7 +40,7 @@ const Again = p => (
   </svg>
 )
 
-/* |a| / 9.81 minus 1: zero at rest at any angle, positive on a heel strike. */
+/* |a| / 9.81 minus 1: zero at rest at any angle. */
 const magOf = e => {
   const a = e.accelerationIncludingGravity || e.acceleration
   if (!a || a.x == null) return null
@@ -64,8 +49,6 @@ const magOf = e => {
 
 const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-/* The three-minute ring: a track and an arc that runs down. Under reduced
-   motion the arc moves once a second instead of once a frame. */
 function Ring({ t, children }) {
   return (
     <div className="relative mx-auto grid aspect-square w-full max-w-[22rem] place-items-center
@@ -88,11 +71,11 @@ export default function Walk() {
   const [motion, setMotion] = React.useState('off')   // off | asking | on | refused | unsupported
   const [sound, setSound] = React.useState(true)
   const [running, setRunning] = React.useState(false)
-  const [elapsed, setElapsed] = React.useState(0)     // seconds, whole under reduced motion
+  const [elapsed, setElapsed] = React.useState(0)
   const [live, setLive] = React.useState({ steps: 0, perMinute: null })
-  const [result, setResult] = React.useState(null)    // { steps, perMinute }
+  const [result, setResult] = React.useState(null)
 
-  const buf = React.useRef([])                         // [{ t, g }] for the whole walk
+  const buf = React.useRef([])
   const listener = React.useRef(null)
   const pacer = React.useRef(null)
   const soundOn = React.useRef(true)
@@ -107,8 +90,7 @@ export default function Walk() {
     buf.current = []
   }, [])
 
-  /* `mounted` gates the awaits in start: a permission prompt that resolves
-     after leaving the screen must not attach a listener nobody removes. */
+  /* `mounted` gates the awaits in start against a prompt resolving late. */
   const mounted = React.useRef(true)
   React.useEffect(() => () => {
     mounted.current = false
@@ -145,8 +127,7 @@ export default function Walk() {
     setResult({ ...last.current })
   }, [detach])
 
-  /* The walk clock: a count every two seconds, a cue at halfway and at the
-     end, and a stop at three minutes. */
+  /* The walk clock: a count every two seconds, cues at halfway and the end. */
   React.useEffect(() => {
     if (!running) return
     const t0 = performance.now()
@@ -211,20 +192,16 @@ export default function Walk() {
       {result ? (
         <>
         <Sheet className="mx-auto w-full max-w-[32rem]">
-          <h3 className="font-display text-row font-bold text-ink">Your walk</h3>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Figure label="Steps" value={noSensor ? null : result.steps} unit=""/>
-            <Figure label="Cadence" value={noSensor ? null : result.perMinute} unit="per minute"/>
-          </div>
-          <p className="mt-4 text-sec text-ink">
-            {noSensor ? `${clock(secs)} walked.` : walkWords(result.steps, result.perMinute)}
+          <h3 className="font-display text-row font-bold text-ink">Your Walk</h3>
+          <p className="mt-3 font-display text-ui font-semibold text-ink-2">{noSensor ? 'Walked' : 'Steps'}</p>
+          <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
+            {noSensor ? clock(secs) : Math.round(result.steps)}
+          </p>
+          <p className="mt-2 text-sec text-ink">
+            {noSensor ? 'Timed by the clock alone.' : walkWords(result.steps, result.perMinute)}
           </p>
           <p className="mt-2 text-fine text-ink-2">The walk is never scored as stress.</p>
-          {sensorLine && <p className="mt-2 text-fine text-ink-3">{sensorLine}</p>}
-          <OnDevice className="mt-3">Motion is measured here and never recorded.</OnDevice>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
-          </div>
+          <Button size="sm" className="mt-4 min-w-[9rem]" onClick={start}><Again/>Again</Button>
         </Sheet>
         <DidItWork tool="walk" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>
         </>
@@ -263,27 +240,14 @@ export default function Walk() {
               className="inline-flex items-center gap-2"><Wave size={18}/>Sound</Choice>
           </div>
           <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
-            {sensorLine ?? 'Three minutes. Keep the screen on.'}
+            {sensorLine ?? (running ? cueWords(sound) : 'Three minutes. Keep the screen on.')}
           </p>
           <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
             Motion is measured here and never recorded.
           </OnDevice>
-          <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">{cueWords(sound)}</p>
           {!running && <DidItWork tool="walk" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
         </>
       )}
     </ActivityScreen>
-  )
-}
-
-function Figure({ label, value, unit }) {
-  return (
-    <div className="rounded-field border-2 border-ink bg-card p-3">
-      <p className="font-display text-ui font-semibold text-ink-2">{label}</p>
-      <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
-        {value == null ? '--' : Math.round(value)}
-        {unit && <span className="ml-1.5 text-fine font-semibold text-ink-2">{unit}</span>}
-      </p>
-    </div>
   )
 }

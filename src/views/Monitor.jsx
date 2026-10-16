@@ -1,39 +1,18 @@
 import React from 'react'
 import * as C from '@radix-ui/react-collapsible'
 import { Chevron, ChevronDown, Grid, Never, PulseMark, Sometimes, Wave } from '../ui/marks'
-import { RealNotice } from '../ui/notice'
 import { SignalTrace } from '../charts/infographics'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { cn } from '../lib/utils'
 import { LOCATION, NOTES, PRO, SCORE, CONSENT_SHORT } from '../lib/terms'
 
-/* The student app's furniture, and the screen the app shows when no patch is
-   paired. The demo Today screen lives in Students.jsx and imports the
-   primitives below, so both states of the same screen are built from one set
-   of parts.
-
-   14 OCTOBER, design spec 0f. Two things changed in this file.
-
-   1. WORDS. An app screen holds 15 to 45 words above the fold, labels
-      included, and no sentence over ten words. Every paragraph that used to
-      sit under a card title is gone. Where a line still has to exist (the
-      consent rule, what the faces are) it is behind `Why`, a small "?"
-      control, the way Dexcom Clarity hides its definitions.
-
-   2. WIDTH. Nothing here caps itself at 34rem or centres itself. The screens
-      that use these parts lay them out in columns at 1280 and in one column
-      at 390. */
+/* The student app's furniture, and the screen shown with no patch paired.
+   Students.jsx imports these primitives for the demo Today screen. */
 
 /* ── Primitives ─────────────────────────────────────────────────────────── */
 
-/* A tone is a ground and an edge, never a state. Only the grounds design spec
-   0d section 1 allows appear here, plus `ink`, the one dark card spec 0f rule
-   7 lets a screen carry. Measured on the near-whites: ink 12.57, ink-2 7.00,
-   ink-3 4.86, warn 4.87 and crit 5.63 at worst. On ink: paper 14.47, mist
-   12.1, accent-lit 7.67.
-
-   The last six entries are the retired hue names, aliased onto allowed
-   grounds because two files index this map by hue. */
+/* A tone is a ground and an edge, never a state. The last six are retired
+   hue names two files still index by. */
 export const TONES = {
   card:  'border-rule bg-card',
   brand: 'border-accent/30 bg-accent-wash',
@@ -60,8 +39,7 @@ export function Panel({ className, tone = 'card', as: As = 'section', children, 
   )
 }
 
-/* The module label. `.mark` is exempt from the app shell's heading step up, so
-   a card title stays a ruled label instead of becoming a headline. */
+/* The module label. */
 export function PanelHead({ title, meta, as: As = 'h2', className }) {
   return (
     <As className={cn('mark flex items-baseline justify-between gap-3', className)}>
@@ -71,7 +49,6 @@ export function PanelHead({ title, meta, as: As = 'h2', className }) {
   )
 }
 
-/* One figure, label above and unit beside it. */
 export function Stat({ label, value, unit, sub, className }) {
   return (
     <div className={cn('min-w-0', className)}>
@@ -86,7 +63,6 @@ export function Stat({ label, value, unit, sub, className }) {
   )
 }
 
-/* Smaller than Stat, for a value that is a word rather than a figure. */
 export function Fact({ label, value, sub, bar, className }) {
   return (
     <div className={cn('min-w-0', className)}>
@@ -100,7 +76,6 @@ export function Fact({ label, value, sub, bar, className }) {
   )
 }
 
-/* A context line: plain type, the items separated by a thin rule. */
 export function MetaLine({ items = [], className }) {
   return (
     <p className={cn('flex flex-wrap items-center gap-x-2.5 gap-y-1 text-fine text-ink-3',
@@ -115,8 +90,6 @@ export function MetaLine({ items = [], className }) {
   )
 }
 
-/* The greeting the reference dashboards open with. Kept as a part; the
-   dashboards no longer spend their word budget on it. */
 const HELLO = h => (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon'
   : h < 22 ? 'Good evening' : 'Hello')
 
@@ -131,18 +104,11 @@ export function Greeting({ items = [], className }) {
 }
 
 /* ── The "?" control ─────────────────────────────────────────────────────
- *
- * Design spec 0f rule 2: anything that needs a paragraph goes behind a
- * disclosure or a "?" control. This is the "?". A 28px round button (a
- * genuinely circular mark, so rounded-chip is allowed) with the explanation
- * under it, hidden until pressed. `label` names what it explains for a screen
- * reader. The explanation is still held to short sentences. */
+   Anything needing a paragraph goes behind this. */
 export function Why({ label = 'What this means', children, className, align = 'left' }) {
   const [open, setOpen] = React.useState(false)
   const id = React.useId()
-  /* `contents`: the button and the text are laid out by the parent, so in a
-     wrapping head row the button sits on the title's line and the text takes
-     a full line under it, and in a centred column both centre. */
+  /* `contents`: the parent lays out the button and the text. */
   return (
     <div className="contents">
       <button type="button" aria-expanded={open} aria-controls={id} aria-label={label}
@@ -166,9 +132,6 @@ export function Why({ label = 'What this means', children, className, align = 'l
 
 /* ── The one disclosure ─────────────────────────────────────────────────── */
 
-/* Design spec 0d section 6 and 0e section 17: the dashboard opens on the
-   sentence and the dial, and everything else is behind one control that says
-   See details. */
 export function SeeDetails({ label = 'See details', sub, children, className, defaultOpen = false }) {
   const [open, setOpen] = React.useState(defaultOpen)
   return (
@@ -193,9 +156,7 @@ export function SeeDetails({ label = 'See details', sub, children, className, de
 
 /* ── The one thing the patch cannot measure ─────────────────────────────── */
 
-/* Three faces: the legend for the six questions, not a rating that is stored
-   and not an inference from the reading. MindMap measures a body, never a
-   feeling. Grounds are ground steps, not hues. */
+/* The legend for the six questions, not a stored rating. */
 const FACES = [
   ['easier',      'bg-aqua',   'M8.5 14.6c1.4 1.7 5.6 1.7 7 0'],
   ['about usual', 'bg-aqua-2', 'M8.5 15h7'],
@@ -222,7 +183,7 @@ export function FeltCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="How Today Felt" meta="six questions" className="min-w-0 flex-1"/>
         <Why label="What the six questions are" className="pt-1.5">
-          The patch cannot read a feeling, so six questions ask. Your answers are scored on
+          The patch cannot read a feeling, so six questions ask. Answers are scored on
           this phone and never stored.
         </Why>
       </div>
@@ -251,9 +212,7 @@ export function FeltCard({ go, className }) {
 
 /* ── The action row ─────────────────────────────────────────────────────── */
 
-/* Four routes the bottom bar already carries, repeated as the end of the
-   screen. Spec 0f rule 4: an action is an icon and two to four words. No
-   sentence under any of them. */
+/* Four routes the bottom bar already carries. */
 const ACTIONS = [
   ['check',    'Take a Reading',  PulseMark],
   ['toolkit',  'Open the Toolkit', Wave],
@@ -288,8 +247,7 @@ export function ActionRow({ go, className, actions = ACTIONS }) {
 
 /* ── What leaves the phone ──────────────────────────────────────────────── */
 
-/* The consent model, in three rows. Mark, label and indent all carry the
-   state. Each line is under ten words. */
+/* The consent model, in three rows. */
 const SCOPE = [
   { mark: Sometimes, who: 'A parent, if you agree',
     what: `One ${SCORE} a day, never a raw reading.` },
@@ -305,7 +263,7 @@ export function SharedCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Who Sees What" meta="off by default" className="min-w-0 flex-1"/>
         <Why label="How sharing works" className="pt-1.5">
-          {CONSENT_SHORT} The student can switch any of it off at any time.
+          {CONSENT_SHORT} The student can switch any of it off.
         </Why>
       </div>
       <ul className="m-0 mt-2.5 list-none p-0">
@@ -334,16 +292,12 @@ export function SharedCard({ go, className }) {
   )
 }
 
-/* The reading screens' own lead line. */
 export function Headline({ children }) {
   return <p className="max-w-[26ch] font-display text-sub font-bold
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
-/* The hero sentence, which design spec section 7c makes the largest thing on
-   an app screen. Plain words, never a feeling, never over ten words. `under`
-   is one short line; anything longer belongs in `why`, which renders as the
-   "?" control. */
+/* The hero sentence: plain words, never a feeling, never over ten words. */
 export function HeroLine({ lead, under, why, whyLabel, figLabel, figure, unit, note, centred, children }) {
   return (
     <div className={cn('min-w-0', centred && 'flex flex-col items-center text-center')}>
@@ -368,7 +322,7 @@ export function HeroLine({ lead, under, why, whyLabel, figLabel, figure, unit, n
   )
 }
 
-/* Kept for the reading screens, which still fold their working away. */
+/* The reading screens' disclosure. */
 export function AllDetail({ label = 'See every reading', children }) {
   const [open, setOpen] = React.useState(false)
   return (
@@ -389,9 +343,7 @@ export function AllDetail({ label = 'See every reading', children }) {
 
 /* ── Student, with nothing paired ───────────────────────────────────────── */
 
-/* Do not substitute a dial at zero: 0 is a valid score on this scale, a calm
-   day, so an empty dial reads as a real measurement. The four lanes stand in
-   its place instead, drawn empty. */
+/* No dial at zero: 0 is a valid score. Four empty lanes stand in. */
 function SilentChannels() {
   return (
     <div className="border-t border-ink">
@@ -410,7 +362,6 @@ function SilentChannels() {
   )
 }
 
-/* The four traces, as drawings, with the caption saying so. */
 function SignalShapes() {
   return (
     <figure className="m-0">
@@ -441,9 +392,7 @@ const PAIRING = [
   ['About two weeks of wear', 'Two weeks of readings build your own normal.'],
 ]
 
-/* Real mode. The same shape as the demo screen: the sentence in one card,
-   the channels beside it at 1280, everything else behind one See details.
-   No invented figure anywhere, and no dial. */
+/* Real mode. No invented figure, and no dial. */
 export function StudentBody({ go, openTab }) {
   const open = route => (openTab ? openTab(route) : go(route))
   return (
@@ -454,9 +403,6 @@ export function StudentBody({ go, openTab }) {
             lead="No reading has been taken today."
             whyLabel="Why there is no score"
             why={`A ${SCORE} compares you with your last two weeks. An empty day is not a calm day.`}/>
-          <div className="mt-3 border-t border-rule pt-2.5">
-            <RealNotice>No patch is paired yet.</RealNotice>
-          </div>
         </Panel>
         <Panel>
           <PanelHead title="Your Four Signals" meta="0 of 4"/>
@@ -472,7 +418,6 @@ export function StudentBody({ go, openTab }) {
               <Fact label="Scale" value="0 to 100"/>
               <Fact label="Compared with" value="Your own normal"/>
               <Fact label="Builds over" value="About 14 days"/>
-              <Fact label="Last reading" value="None yet"/>
             </div>
           </Panel>
           <Panel tone="aqua">

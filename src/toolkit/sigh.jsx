@@ -8,23 +8,10 @@ import { breathsFromEnvelope } from '../signals/breath'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Sigh coach. Cyclic sighing, paced and measured.
- *
- * THE PATTERN (Balban 2023). In through the nose, a second short in on top,
- * then one long out through the mouth. Two seconds, one second, then the
- * exhale lasts as long as the student wants, with a soft target of six.
- * Five minutes, and Stop is always one tap away.
- *
- * THE MEASUREMENT. The microphone level (createMicMeter, 0 to 1, read once a
- * frame and dropped) is the exhale detector: a run of level above a floor is
- * a mouth exhale and its length is the exhale. Each exhale draws as a bar.
- * The same level is sampled at 20 Hz into a 60-second ring buffer, and
- * breathsFromEnvelope over that window is the live breaths-per-minute figure.
- * With the microphone refused the pacer still runs on the counts, and the
- * exhale phase ends on the six-second target.
- *
- * WHERE THE SOUND GOES. Nowhere. One AnalyserNode block, overwritten each
- * frame; the ring buffer holds loudness figures, not audio. */
+/* Sigh coach: cyclic sighing (Balban 2023), paced and measured. The
+ * microphone level (read once a frame and dropped) is the exhale detector; the
+ * same level, sampled into a 60-second ring, gives breaths per minute. With
+ * the microphone refused the pacer runs on counts. No audio is kept. */
 
 const TOTAL = 300                     // five minutes
 const HZ = 20                         // ring buffer rate
@@ -43,7 +30,6 @@ const PHASES = [
   { id:'out',   word:'Out, slowly', secs:null, hz:196 },
 ]
 
-/* A 60-second ring of level samples, read out in order once a second. */
 function makeRing(n) {
   const buf = new Float32Array(n)
   let at = 0, count = 0
@@ -70,9 +56,7 @@ const EyeShut = p => (
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 const one = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1)
 
-/* The ring: a track, an arc for the phase, and a disc that grows on the two
-   in-breaths and empties on the out-breath. Under reduced motion the disc
-   holds still and the count carries the pace. */
+/* Under reduced motion the disc holds still and the count carries the pace. */
 function Ring({ phase, t, count, scale, still, idle, level, micOn }) {
   const dash = (idle ? 0 : t) * 578
   return (
@@ -125,18 +109,6 @@ function Bars({ bars, still }) {
           </li>
         ))}
       </ol>
-    </div>
-  )
-}
-
-function Figure({ label, value, unit, sub }) {
-  return (
-    <div>
-      <p className="font-display text-ui font-semibold text-ink-2">{label}</p>
-      <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
-        {value}<span className="ml-1 text-fine font-semibold text-ink-2">{unit}</span>
-      </p>
-      {sub && <p className="mt-1 text-fine text-ink-3">{sub}</p>}
     </div>
   )
 }
@@ -197,7 +169,6 @@ export default function Sigh() {
       let level = 0
       if (meter.current) {
         level = meter.current.read()
-        /* the detector: a run above the floor, ended by DROP seconds below it */
         if (level > FLOOR) {
           if (!m.above) { m.above = true; m.runAt = now }
           m.lastAbove = now
@@ -252,19 +223,16 @@ export default function Sigh() {
     setRunning(false)
     setEyes(false)
     const ex = all.current
-    const head = ex.slice(0, 3), tail = ex.slice(-3)
     const mean = a => a.length ? a.reduce((s, e) => s + e.seconds, 0) / a.length : null
     setResult({
-      first: mean(head), last: mean(tail), n: ex.length,
+      last: mean(ex.slice(-3)), n: ex.length,
       bpmStart: bpmStart.current ?? bpmNow.current, bpmEnd: bpmNow.current,
     })
     setDone(true)
   }, [])
   endRef.current = end
 
-  /* The microphone and the audio context are let go on leaving the screen.
-     A permission prompt can resolve after that, so `mounted` gates every
-     await below: what arrives late is released, not kept. */
+  /* `mounted` gates every await below against a prompt resolving late. */
   const mounted = React.useRef(true)
   React.useEffect(() => () => {
     mounted.current = false
@@ -300,8 +268,6 @@ export default function Sigh() {
   }
 
   const idle = !running && !done
-  /* The one line under the controls: the sensor's state when it has one,
-     the cue words with the eyes shut, the instruction otherwise. */
   const line = mic === 'refused' ? 'Allow the microphone to see your exhales.'
     : mic === 'unsupported' ? 'No microphone here. The pacer still runs.'
     : mic === 'asking' ? 'Asking for the microphone.'
@@ -350,7 +316,7 @@ export default function Sigh() {
 
           {bars.length > 0 && (
             <div className="mx-auto mt-5 w-full max-w-[32rem]">
-              <h3 className="font-display text-ui font-bold text-ink">Your exhales</h3>
+              <h3 className="font-display text-ui font-bold text-ink">Your Exhales</h3>
               <div className="mt-2"><Bars bars={bars} still={reduced}/></div>
             </div>
           )}
@@ -360,31 +326,16 @@ export default function Sigh() {
 
       {done && result && (
         <Sheet className="mx-auto w-full max-w-[32rem]">
-          <h3 className="font-display text-row font-bold tracking-tight text-ink">Your session</h3>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <Figure label="Exhale at the start" value={one(result.first ?? 0)} unit="s"
-              sub={result.first != null ? 'First three exhales' : 'No exhale heard'}/>
-            <Figure label="Exhale at the end" value={one(result.last ?? 0)} unit="s"
-              sub={result.last != null ? 'Last three exhales' : 'No exhale heard'}/>
-          </div>
-          <div className="mt-4">
-            <p className="font-display text-ui font-semibold text-ink-2">Breaths per minute</p>
-            <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
-              {Math.round(result.bpmStart ?? 0)}
-              <span className="mx-2 text-fine font-semibold text-ink-2">start</span>
-              {Math.round(result.bpmEnd ?? 0)}
-              <span className="ml-2 text-fine font-semibold text-ink-2">end</span>
-            </p>
-            <p className="mt-1 text-fine text-ink-3">
-              {result.bpmStart == null ? 'Needs the microphone.' : `${result.n} exhales heard.`}
-            </p>
-          </div>
-          <p className="mt-4 text-fine text-ink-2">
-            A 108-person trial found better mood and slower breathing.
+          <h3 className="font-display text-row font-bold tracking-tight text-ink">Your Session</h3>
+          <p className="mt-3 font-display text-ui font-semibold text-ink-2">Exhale at the end</p>
+          <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
+            {one(result.last ?? 0)}<span className="ml-1 text-fine font-semibold text-ink-2">s</span>
           </p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="sm" className="min-w-[9rem]" onClick={start}><ArrowRight/>Again</Button>
-          </div>
+          <p className="mt-2 text-fine text-ink-2">
+            {result.bpmStart == null ? 'Needs the microphone.'
+              : `Breathing ${Math.round(result.bpmStart)} to ${Math.round(result.bpmEnd)} a minute, ${result.n} exhales.`}
+          </p>
+          <Button size="sm" className="mt-4 min-w-[9rem]" onClick={start}><ArrowRight/>Again</Button>
         </Sheet>
       )}
       {done && <DidItWork tool="sigh" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}

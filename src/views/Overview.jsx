@@ -19,31 +19,27 @@ import {
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* Grounds are set here rather than in the bands. Between the two dark bands the
- * washes run accent, beam, aqua, then paper. They are tints and not alternating
- * near-whites because paper and card differ by about 2% in luminance, which
- * reads as no change at all.
+/* Nine bands, one idea each: hero, problem, what it does, the two ways in,
+ * the tools, what no other app has, who it is for, privacy, every age.
  *
- * ink 12.7 : 1, ink.2 6.9, ink.3 4.67 and accent 4.84 all clear AA on both
- * washes, so nothing on a tinted band needs a different colour than it has on
- * paper. Hover is the exception: mist/60 on a wash is the same luminance as the
- * wash, so the rows that hover hover to card instead.
+ * Grounds are set here rather than in the bands. They are tints and not
+ * alternating near-whites because paper and card differ by about 2% in
+ * luminance, which reads as no change at all. ink 12.7 : 1, ink.2 6.9,
+ * ink.3 4.67 and accent 4.84 all clear AA on every wash.
  */
 
-/* `lead` is the phone route: the only one a stranger can use in the next
-   minute. */
-const DOORS = [
-  { id:'patch', go:'patch', title:'With the patch', note:'See the patch',
-    line:'A small patch sticks to your upper arm and reads all day.',
-    art:(
-      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
-        <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
-        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
-      </svg>) },
-  { id:'phone', go:'without-patch', title:'Without the patch', note:'See how', lead:true,
-    line:'Your fingertip on the phone camera for 45 seconds.',
+const DOES = [
+  { title: 'Gives you a score', line: 'One stress score a day, against your own usual.' },
+  { title: 'Shows your trend',  line: 'See how a week or a month went.' },
+  { title: 'Helps you act',     line: 'Tools and resources to feel better, in the app.' },
+]
+
+/* The two ways in. Each card is the steps themselves, so the band needs no
+   second block explaining them. `lead` is the phone route: the only one a
+   stranger can use in the next minute. */
+const WAYS = [
+  { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works', lead:true,
+    steps: ['Open the app and tap Take a reading', 'Hold your fingertip over the phone camera', 'After 45 seconds, your score appears'],
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -53,69 +49,17 @@ const DOORS = [
         <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
+  { id:'patch', go:'pairing', title:'With the patch', cta:'Pair the patch',
+    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
+    art:(
+      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
+        <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
+        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
+        <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
+        <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
+      </svg>) },
 ]
 
-const SCREENS = [
-  { id:'student', who:'Student', photo:'student-card',
-    alt:'Five teenagers walking home together through a park',
-    title:'Your score each day',
-    line:'See every reading you take, and what moved it.',
-    cta:'What a student gets' },
-  { id:'parent',  who:'Parent', photo:'parent-card',
-    alt:'A mother and her teenage son looking at something together at home',
-    title:'One sentence a week',
-    line:'How the week went, in plain words. Never a raw reading.',
-    cta:'What a parent gets' },
-  { id:'pro',     who:PRO, photo:'school-card',
-    alt:`A ${PRO_LC} and a student talking on a sofa`,
-    title:'Students to check on',
-    line:'Only the students who chose to share.',
-    cta:`What a ${PRO_LC} gets` },
-]
-
-/* Four decisions, each traceable to a published finding, and a closing line
- * that refuses the claim the section invites: nothing here has been shown to
- * lower anybody's stress. Numbers are quoted as the sources report them.
- *
- * The readability figures are measured, not asserted: tools/readability/ runs
- * the formulas over the prose this site renders, so the fourth card's number
- * moves when the writing does.
- */
-const EVIDENCE = [
-  { title: 'Your usual day is marked on the dial',
-    line: 'A number shown next to a usual day reads calmly.',
-    cite: 'Zikmund-Fisher et al., J Med Internet Res, 2018. 1,618 adults.' },
-  { title: 'You are never compared with anyone',
-    line: 'Being judged by others is the biggest stress driver.',
-    cite: 'Dickerson & Kemeny, Psychological Bulletin, 2004. 208 studies.' },
-  { title: 'You decide what is shared',
-    line: 'Stress you cannot control raises cortisol three times more.',
-    cite: 'Dickerson & Kemeny, 2004. d = 0.52 against 0.16.' },
-  { title: 'Written in plain words',
-    line: 'Every page reads at grade 7 or below.',
-    cite: 'Measured on the prose of all 13 pages. tools/readability.' },
-]
-
-/* What it does, why, how a reading is taken, what is inside the toolkit, and
-   what comes next: the owner's outline for the page, in his words where he
-   gave them. Every link below was checked live before it was written in. */
-const DOES = [
-  { title: 'Gives you a score', line: 'One stress score a day, 0 to 100, against your own usual.' },
-  { title: 'Shows your trend',  line: 'See how a week or a month went, day by day.' },
-  { title: 'Helps you act',     line: 'Tools and resources to feel better, right in the app.' },
-]
-const WHY = [
-  { title: 'See where you stand',   line: 'One place to check your wellbeing status and your trend.' },
-  { title: 'Act on data',           line: 'A number tells you when to take a step, not just a feeling.' },
-  { title: 'Get ahead of it',       line: 'Spot a hard week early and take precautions before it peaks.' },
-  { title: 'Find help in one place', line: 'Exercises, videos, podcasts and help lines, without searching elsewhere.' },
-]
-const READING = [
-  { title: 'Without the patch', go: 'without-patch', cta: 'See how it works',
-    steps: ['Open the app and tap Take a reading', 'Hold your fingertip over the phone camera', 'After 45 seconds, your score appears'] },
-  { title: 'With the patch', go: 'pairing', cta: 'Pair and connect the patch',
-    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'] },
-]
 const RESOURCES = [
   { title: 'Exercise and meditation on YouTube', items: [
     { name: 'Yoga With Adriene', what: 'Yoga and stretching, all levels', href: 'https://www.youtube.com/@yogawithadriene' },
@@ -129,25 +73,36 @@ const RESOURCES = [
     { name: 'NAMI for teens', what: 'Where to find help, by a national nonprofit', href: 'https://www.nami.org/kids-teens-and-young-adults/' },
   ] },
 ]
-const FUTURE = [
-  { title: 'MindMap Teens',   when: 'Now',  now: true,  line: 'For students, with parents and medical professionals in the loop.' },
-  { title: 'MindMap Adults',  when: 'Next', now: false, line: 'The same patch and score, built around work and home.' },
-  { title: 'MindMap Seniors', when: 'Later', now: false, line: 'The same patch and score, with family and carers in the loop.' },
+
+/* What no other wellbeing app for teenagers measures. The Traffic Light leads
+   because it is the one a parent asks about first; the six under it are the
+   sensors the phone or the patch already has (project doc
+   beyond-the-screen-research). */
+const BEYOND = [
+  { title: 'Settle time',     line: 'How fast your body settles after a stress peak.' },
+  { title: 'Run-up',          line: 'How much your body rose before a marked exam.' },
+  { title: 'Sigh coach',      line: 'The microphone measures each exhale as you breathe.' },
+  { title: 'Chest breathing', line: 'Your phone on your chest counts your breaths.' },
+  { title: 'Alertness check', line: 'Sixty seconds of taps show a short night.' },
+  { title: 'Pocket pacer',    line: 'Breathing cues keep going with the phone locked.' },
 ]
 
-/* What no other wellbeing app for teenagers measures. Each row is a sensor
-   the phone or the patch already has, and each claim is the one the research
-   record supports (project doc beyond-the-screen-research). */
-const BEYOND = [
-  { title: 'Settle time',     line: 'Minutes from a stress peak until your body is half way back to usual. From the patch.' },
-  { title: 'Run-up',          line: 'How much your body rose before an exam you marked. From the patch.' },
-  { title: 'Sigh coach',      line: 'The microphone measures each exhale while you breathe it out.' },
-  { title: 'Chest breathing', line: 'Phone on your chest, eyes closed. The accelerometer counts your breaths.' },
-  { title: 'Alertness check', line: 'Sixty seconds of taps show a short night before anything else does.' },
-  { title: 'Reach',           line: 'How far from home your readings happened this week. Never shared, never a map.' },
-  { title: 'Did it work?',    line: 'A twenty-second pulse before and after any tool. The app learns which tool works for you.' },
-  { title: 'Pocket pacer',    line: 'Lock your phone. The breathing cues keep going, played like music.' },
-  { title: 'Walk it off',     line: 'Three minutes of walking, steps counted by the phone, never scored as stress.' },
+const SCREENS = [
+  { id:'student', who:'Student', photo:'student-card',
+    alt:'Five teenagers walking home together through a park',
+    title:'Your score each day',
+    line:'See every reading you take, and what moved it.',
+    cta:'What a student gets' },
+  { id:'parent',  who:'Parent', photo:'parent-card',
+    alt:'A mother and her teenage son looking at something together at home',
+    title:'One light, one sentence',
+    line:'How the week went, in plain words. Never a raw reading.',
+    cta:'What a parent gets' },
+  { id:'pro',     who:PRO, photo:'school-card',
+    alt:`A ${PRO_LC} and a student talking on a sofa`,
+    title:'Students to check on',
+    line:'Only the students who chose to share.',
+    cta:`What a ${PRO_LC} gets` },
 ]
 
 /* One line per audience. The full matrix is on the privacy page. */
@@ -168,20 +123,36 @@ const NEVER = [
   'Diagnose anything. Not a medical device',
 ]
 
+const FUTURE = [
+  { title: 'MindMap Teens',   when: 'Now',   now: true },
+  { title: 'MindMap Adults',  when: 'Next',  now: false },
+  { title: 'MindMap Seniors', when: 'Later', now: false },
+]
+
 const HERO_FACTS = [
   'One stress score a day, from a patch on your arm or from your phone camera.',
   'You decide who else can see it.',
 ]
+
+/* The three lamps of the Traffic Light, drawn once for the landing tile. */
+function Lamps() {
+  return (
+    <svg viewBox="0 0 44 112" className="h-[92px] w-auto shrink-0" aria-hidden focusable="false">
+      <rect x="2" y="2" width="40" height="108" rx="20" className="fill-ink"/>
+      <circle cx="22" cy="24" r="12" className="fill-crit"/>
+      <circle cx="22" cy="56" r="12" className="fill-sun"/>
+      <circle cx="22" cy="88" r="12" className="fill-mint"/>
+    </svg>
+  )
+}
 
 export function Overview({ go }) {
   return (
     <main>
       {/* -- the hero -------------------------------------------------------
           `h-`, not `min-h-`, from lg up: min-h lets tall content push the band
-          past the fold, which brings the next band's heading into view under
-          the title screen. Under lg the two halves stack and are taller than a
-          phone, so there the band takes its own height: a fixed one clipped
-          the phone and the patch caption at 390. */}
+          past the fold. Under lg the two halves stack and are taller than a
+          phone, so there the band takes its own height. */}
       <section id="hero" className="relative isolate flex flex-col overflow-hidden border-t
         border-rule bg-paper lg:h-[calc(100svh-58px)]">
 
@@ -219,9 +190,7 @@ export function Overview({ go }) {
           </div>
 
           {/* `after` on each field is the part that lives past the wrap's right
-              edge: over 1680 the wrap stops short of the viewport, and a tint
-              that stopped with it would leave bare paper beside a full-bleed
-              band. */}
+              edge: over 1680 the wrap stops short of the viewport. */}
           <div className="relative -mx-[22px] flex flex-1 border-t border-rule
             sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
@@ -242,11 +211,8 @@ export function Overview({ go }) {
               </figure>
             </div>
 
-            {/* The one photograph on the hero, under the phone. The owner's
-                words, after a wave that put photographs everywhere: "all i
-                needed integrated was an image there". So: one, here, and the
-                phone stands in front of it. The focal point comes from
-                lib/photos.js and the frame grows to keep the faces whole. */}
+            {/* The one photograph on the hero, under the phone. The focal point
+                comes from lib/photos.js and the frame grows to keep faces whole. */}
             <div className="relative flex flex-1 flex-col items-center justify-center
               overflow-hidden bg-beam-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
@@ -275,13 +241,9 @@ export function Overview({ go }) {
       </section>
 
       {/* -- the problem, on the one dark band -----------------------------
-          Every figure on this band is external and sourced. */}
+          Every figure on this band is external and sourced. The figures sit
+          on a frosted panel: on the band directly they measured under AA. */}
       <Section name="The problem" tone="ink" className="relative isolate overflow-hidden">
-        {/* One photograph under the band, held at 22% under ink so the paper
-            headline still measures above 7:1 on it. The figures sit on a
-            frosted panel: ProblemStats draws itself for a light ground (ink-3
-            small print, accent-ink figures), and on the band directly those
-            measured 2.49:1 and 1.7:1. The panel is where the numbers are read. */}
         <Frame wash photo="student-homework"
           alt="A teenager at a desk late in the evening, head in one hand over an open notebook"
           className="absolute inset-0 -z-10 opacity-[0.22]"/>
@@ -293,12 +255,9 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- what it is, and what it is for ---------------------------------
-          The owner's own outline: What is MindMap, Why MindMap, what it does.
-          Plain words a 14 year old reads once. */}
-      <Section name="What is MindMap?" tone="paper">
-        <SectionHead>An app that tracks your stress</SectionHead>
-        <SectionLede>MindMap helps teenagers track and monitor their stress levels, every day.</SectionLede>
+      {/* -- what it does ---------------------------------------------------- */}
+      <Section name="What MindMap does" tone="paper">
+        <SectionHead>What MindMap does</SectionHead>
         <dl className="mt-5 grid gap-3.5 md:grid-cols-3">
           {DOES.map(d => (
             <div key={d.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
@@ -309,44 +268,34 @@ export function Overview({ go }) {
         </dl>
       </Section>
 
-      <Section name="Why MindMap?" tone="card" className="bg-beam-wash">
-        <SectionHead>Stress you can see is stress you can act on</SectionHead>
-        <SectionLede>Seeing your stress as a number helps you take the right steps, instead of just feeling it.</SectionLede>
-        <dl className="mt-5 grid gap-x-10 sm:grid-cols-2">
-          {WHY.map(w => (
-            <div key={w.title} className="border-t border-rule py-4">
-              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{w.title}</dt>
-              <dd className="m-0 mt-1.5 text-sec leading-[1.5] text-ink-2">{w.line}</dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-
-      {/* -- the two ways, and the demo ------------------------------------ */}
-      {/* The photographs of teenagers used to be a row of six under the problem
-          band. The owner: "placed in different parts of the site, like in a
-          gradation, background overlays, not js a row of images". Three of
-          them sit under three bands, faded into the band's own ground. */}
+      {/* -- the two ways in ------------------------------------------------- */}
       <Section name="Getting started" tone="card" className="relative isolate overflow-hidden bg-accent-wash">
         <Frame wash photo="student-bus"
           alt="Two boys laughing together on a school bus seat, one holding a phone, trees going past the window behind them"
           className="absolute inset-0 -z-20 opacity-[0.28]"/>
         <span aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-accent-wash via-accent-wash/85 to-accent-wash/35"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
-        <SectionLede>With the patch or without it. Both give you the same score and the same app.</SectionLede>
+        <SectionLede>Both give you the same score and the same app.</SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-2">
-          {DOORS.map((d, i) => (
-            <ScrollRow key={d.id} index={i} className="h-full">
-              <Card interactive as="button" type="button" onClick={() => go(d.go)}
-                className={cn('flex h-full flex-col p-5', d.lead && 'border-l-accent')}>
-                <span className="grid h-[60px] place-items-start" aria-hidden>{d.art}</span>
-                <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">
-                  {d.title}
+          {WAYS.map((w, i) => (
+            <ScrollRow key={w.id} index={i} className="h-full">
+              <Card interactive as="button" type="button" onClick={() => go(w.go)}
+                className={cn('flex h-full w-full flex-col p-5 text-left', w.lead && 'border-l-accent')}>
+                <span className="grid h-[52px] place-items-start" aria-hidden>{w.art}</span>
+                <span className="mt-3 block font-display text-head font-bold leading-tight text-ink">
+                  {w.title}
                 </span>
-                <span className="mt-2 block text-sec leading-[1.5] text-ink-2">{d.line}</span>
+                <ol className="m-0 mt-3 list-none space-y-2 p-0">
+                  {w.steps.map((step, n) => (
+                    <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
+                      <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-accent-wash font-display text-xs font-bold text-accent">{n + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
                 <span className="mt-auto flex items-center gap-2 pt-5 font-display text-meta
                   font-bold text-accent">
-                  {d.note}
+                  {w.cta}
                   <ArrowRight className="size-[1.1rem] transition-transform duration-200
                     groupHoverOnly:translate-x-1.5"/>
                 </span>
@@ -354,44 +303,16 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
-        {/* The drawing of the patch and where the number comes from each have
-            a page. The overview links to them rather than carrying them. */}
         <div className="mt-5 flex flex-wrap gap-3">
           <Button size="sm" onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
           <Button variant="outline" size="sm" onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo<span aria-hidden>→</span></Button>
-          <Button variant="outline" size="sm" onClick={() => go('methods')}>How it works<span aria-hidden>→</span></Button>
         </div>
       </Section>
 
-      {/* -- taking a reading ------------------------------------------------ */}
-      <Section name="Take a reading" tone="paper">
-        <SectionHead>How you take a reading</SectionHead>
-        <div className="mt-5 grid gap-3.5 md:grid-cols-2">
-          {READING.map(r => (
-            <button key={r.title} type="button" onClick={() => go(r.go)}
-              className="group flex h-full w-full flex-col rounded-panel border border-rule bg-card p-5
-                text-left shadow-card transition-[border-color,box-shadow] duration-200 hoverOnly:border-accent/50 hoverOnly:shadow-raise">
-              <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{r.title}</span>
-              <ol className="m-0 mt-3 list-none space-y-2 p-0">
-                {r.steps.map((step, i) => (
-                  <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
-                    <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-accent-wash font-display text-xs font-bold text-accent">{i + 1}</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-              <span className="mt-auto flex items-center gap-2 pt-4 font-display text-meta font-bold text-accent">
-                {r.cta}<ArrowRight className="size-[1.1rem] transition-transform duration-200 groupHoverOnly:translate-x-1.5"/>
-              </span>
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      {/* -- the toolkit, and the resources inside it ----------------------- */}
-      <Section name="Toolkit" tone="card" className="bg-aqua-2">
-        <SectionHead>Tools to feel better, inside the app</SectionHead>
-        <SectionLede>Breathing, grounding and movement exercises, plus the best free videos and podcasts, so you never have to search elsewhere.</SectionLede>
+      {/* -- the tools, and the resources inside them ----------------------- */}
+      <Section name="Toolkit" tone="paper">
+        <SectionHead>Tools inside the app</SectionHead>
+        <SectionLede>Exercises, plus the best free videos and podcasts, in one place.</SectionLede>
         <div className="mt-5 grid gap-3.5 md:grid-cols-2">
           {RESOURCES.map(group => (
             <div key={group.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
@@ -418,21 +339,36 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-
-      {/* -- what no other app has ------------------------------------------- */}
-      <Section name="Beyond the screen" tone="paper">
+      {/* -- what no other app has: the Traffic Light first ------------------ */}
+      <Section name="Beyond the screen" tone="card" className="bg-aqua-2">
         <SectionHead>What other apps do not have</SectionHead>
-        <SectionLede>Measurements from sensors your phone and the patch already have. Nothing leaves the device.</SectionLede>
-        <dl className="mt-5 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <SectionLede>Measured by sensors your phone and the patch already have.</SectionLede>
+        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-3">
+          <Card interactive as="button" type="button" onClick={() => go('traffic-light')}
+            className="col-span-2 flex w-full items-center gap-5 border-l-accent p-5 text-left lg:col-span-3">
+            <Lamps/>
+            <span className="min-w-0 flex-1">
+              <span className="block font-body text-ui font-semibold text-accent-ink">For parents</span>
+              <span className="mt-1 block font-display text-[1.75rem] font-bold leading-[1.1] tracking-tight text-ink">
+                The Traffic Light
+              </span>
+              <span className="mt-2 block max-w-[46ch] text-sec leading-[1.5] text-ink-2">
+                Measures how a teen reacts to their phone, never what is on it.
+              </span>
+              <span className="mt-3 flex items-center gap-2 font-display text-meta font-bold text-accent">
+                See the Traffic Light
+                <ArrowRight className="size-[1.1rem] transition-transform duration-200 groupHoverOnly:translate-x-1.5"/>
+              </span>
+            </span>
+          </Card>
           {BEYOND.map(b => (
-            <div key={b.title} className="rounded-panel border border-rule bg-card p-5 shadow-card">
-              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">{b.title}</dt>
-              <dd className="m-0 mt-2 text-sec leading-[1.5] text-ink-2">{b.line}</dd>
+            <div key={b.title} className="rounded-panel border border-rule bg-card p-4 shadow-card sm:p-5">
+              <p className="font-display text-ui sm:text-head font-bold leading-[1.15] tracking-tight text-ink">{b.title}</p>
+              <p className="m-0 mt-1.5 text-meta leading-[1.45] text-ink-2 sm:text-sec">{b.line}</p>
             </div>
           ))}
-        </dl>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" onClick={() => go('toolkit')}>Open the Toolkit<span aria-hidden>→</span></Button>
+        </div>
+        <div className="mt-5">
           <Button variant="outline" size="sm" onClick={() => go('methods')}>How each one is measured<span aria-hidden>→</span></Button>
         </div>
       </Section>
@@ -440,7 +376,7 @@ export function Overview({ go }) {
       {/* -- the three audiences ------------------------------------------- */}
       <Section name="Who it is for" tone="card" id="screens" className="bg-beam-wash">
         <SectionHead>Who MindMap is for</SectionHead>
-        <SectionLede>Three screens, one app. Each person sees only what the student allows.</SectionLede>
+        <SectionLede>Each person sees only what the student allows.</SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 lg:grid-cols-3">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
@@ -449,11 +385,8 @@ export function Overview({ go }) {
                   border border-rule bg-card p-5 text-left touch-manipulation
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
                   motion-safe:active:scale-[0.99] hoverOnly:border-accent">
-                {/* max-w-none is load-bearing: Tailwind's preflight sets
-                    `img { max-width: 100% }`, which clamps this back to the
-                    card's content box and undoes the negative-margin bleed.
-                    Fixed height and object-cover so three different crops still
-                    sit on one line. */}
+                {/* max-w-none is load-bearing: preflight's `img { max-width:
+                    100% }` would undo the negative-margin bleed. */}
                 <img src={PHOTOS[s2.photo]} alt={s2.alt} loading="lazy" decoding="async"
                   width="1200" height="423"
                   className="-mx-5 -mt-5 mb-1 h-[160px] w-[calc(100%_+_2.5rem)] max-w-none
@@ -478,8 +411,8 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* ── privacy ─────────────────────────────────────────────────────── */}
-      <Section name="Privacy" tone="card" className="bg-aqua-2">
+      {/* ── privacy, with the promises that used to be their own band ─────── */}
+      <Section name="Privacy" tone="paper">
         <SectionHead>Your data stays yours</SectionHead>
         <SectionLede>{CONSENT_SHORT}</SectionLede>
         <dl className="mt-5 grid gap-3.5 sm:grid-cols-3">
@@ -492,6 +425,12 @@ export function Overview({ go }) {
             </div>
           ))}
         </dl>
+        <p className="mt-5 font-display text-ui font-semibold text-ink">MindMap will never</p>
+        <ul className="m-0 mt-2.5 flex list-none flex-wrap gap-2 p-0">
+          {NEVER.map(t => (
+            <li key={t} className="rounded-full border border-rule bg-card px-3.5 py-1.5 text-meta text-ink-2">{t}</li>
+          ))}
+        </ul>
         <p className="mt-4 text-meta text-ink-2">
           {NOTES}, {LOCATION} and every raw reading never leave the phone.
           <button type="button" onClick={() => go('privacy')}
@@ -501,65 +440,22 @@ export function Overview({ go }) {
         </p>
       </Section>
 
-      {/* ── the design, and where it comes from ─────────────────────────── */}
-      <Section name="Evidence" tone="paper" className="relative isolate overflow-hidden">
-        <Frame wash photo="student-game"
-          alt="Three teenage boys sitting along a sofa with game controllers, headphones round their necks, one leaning in to argue a point"
-          className="absolute inset-0 -z-20 opacity-[0.2]"/>
-        <span aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-paper via-paper/90 to-paper/40"/>
-        <SectionHead>Why the app is built this way</SectionHead>
-        <SectionLede>Four choices in the design, and the published study behind each.</SectionLede>
-        <dl className="mt-5 grid gap-x-10 sm:grid-cols-2">
-          {EVIDENCE.map(e => (
-            <div key={e.title} className="border-t border-rule py-4">
-              <dt className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                {e.title}
-              </dt>
-              <dd className="m-0 mt-1.5 text-sec leading-[1.5] text-ink-2">{e.line}</dd>
-              <dd className="m-0 mt-1.5 text-fine leading-[1.45] text-ink-3">{e.cite}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 max-w-[60ch] text-meta text-ink-3">
-          These studies support the design choices. They are not a test of MindMap itself.
-        </p>
-      </Section>
-
-      {/* ── what comes next ─────────────────────────────────────────────── */}
+      {/* ── what comes next, and the closing line ───────────────────────── */}
       <Section name="What comes next" tone="card" className="bg-accent-wash">
         <SectionHead>MindMap for every age</SectionHead>
-        <SectionLede>Teens first. The same patch and the same score can serve adults and seniors next.</SectionLede>
-        <dl className="mt-5 grid gap-3.5 md:grid-cols-3">
+        <SectionLede>Teens first. The same patch and score can serve adults and seniors.</SectionLede>
+        <ul className="m-0 mt-5 flex list-none flex-wrap gap-2.5 p-0">
           {FUTURE.map(f => (
-            <div key={f.title} className={cn('rounded-panel border p-5', f.now ? 'border-accent/40 bg-card shadow-card' : 'border-rule bg-card/70')}>
-              <dt className="flex items-center justify-between font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
-                {f.title}
-                <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-3')}>{f.when}</span>
-              </dt>
-              <dd className="m-0 mt-2 text-sec leading-[1.5] text-ink-2">{f.line}</dd>
-            </div>
+            <li key={f.title} className={cn('flex items-center gap-2.5 rounded-full border px-4 py-2',
+              f.now ? 'border-accent/40 bg-card shadow-card' : 'border-rule bg-card/70')}>
+              <span className="font-display text-ui font-bold text-ink">{f.title}</span>
+              <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-3')}>{f.when}</span>
+            </li>
           ))}
-        </dl>
+        </ul>
         <p className="mt-6 max-w-[40ch] font-display text-head font-bold leading-[1.2] tracking-tight text-ink">
           Quantify the stress. Find the resources. Start feeling better.
         </p>
-      </Section>
-
-      {/* ── the limits ──────────────────────────────────────────────────── */}
-      <Section name="Limits" tone="ink" tight className="relative isolate overflow-hidden">
-        <Frame wash photo="friends-steps"
-          alt="Two students sitting on concrete steps outside a building, heads together over an open notebook"
-          className="absolute inset-0 -z-10 opacity-[0.2]"/>
-        <SectionHead tone="ink">What MindMap will never do</SectionHead>
-        {/* marker="none": the filled panel is the marker. */}
-        <List className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {NEVER.map(t => (
-            <Item key={t} marker="none"
-              className="rounded-panel bg-ink-2/45 px-4 py-3.5 text-meta leading-[1.4] text-mist">
-              {t}
-            </Item>
-          ))}
-        </List>
       </Section>
 
     </main>

@@ -7,28 +7,14 @@ import { analysePPG } from '../signals/ppg'
 import { addEffect } from '../app/store'
 import { effectOf } from '../signals/effect'
 
-/* Did it work. A 20-second camera pulse before an exercise and one after.
- *
- * Mounted twice by each activity: `phase="before"` on the idle screen and
- * `phase="after"` on the finished screen. The before reading waits in a
- * module map keyed by tool, so the activity itself carries nothing. When the
- * after reading lands and a before reading is waiting, the pair goes to the
- * `effects` slot and the sheet shows the two figures side by side.
- *
- * ON THE IDLE SCREEN the before phase is one outline button and nothing
- * else: the meter and the honesty line appear only while the camera is on,
- * and the result is one line. The after phase is a small sheet with a
- * heading, because the result is what that screen is for.
- *
- * The pipeline is PhoneCheck's: openCamera, capturePPG, analysePPG. Each frame
- * becomes one number as it arrives and the frames are dropped; the only
- * things that outlive this sheet are two pulse figures. The exercise never
- * waits for it: no camera, a refusal or no pulse is one line, and the
- * activity's own controls stay where they were. */
+/* Did it work: a 20-second camera pulse before an exercise and one after.
+ * `phase="before"` is one outline button on the idle screen; `phase="after"`
+ * is a small sheet. The before reading waits in a module map keyed by tool;
+ * when the after reading lands the pair goes to the `effects` slot. Frames
+ * are dropped as they arrive. No camera, a refusal or no pulse is one line. */
 
 const SECONDS = 20
-/* A before reading older than this is a different afternoon. */
-const STALE_MS = 45 * 60 * 1000
+const STALE_MS = 45 * 60 * 1000       // a before reading older than this is another afternoon
 
 const BEFORE = new Map()
 
@@ -52,8 +38,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
 
   const supported = mediaAvailable()
 
-  /* The camera prompt can resolve after this sheet is gone, so `mounted`
-     gates every await in run: a stream that arrives late is stopped at once. */
+  /* `mounted` gates every await in run: a stream that arrives late is stopped. */
   const mounted = React.useRef(true)
   React.useEffect(() => () => {
     mounted.current = false
@@ -112,8 +97,10 @@ export function DidItWork({ tool, phase = 'after', className }) {
 
   const left = Math.max(0, Math.ceil(SECONDS * (1 - progress)))
   const video = <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
+  const retry = (
+    <Button size="sm" variant="outline" className="mt-2" onClick={run}><Camera/>Try again</Button>
+  )
 
-  /* The idle screen's row. */
   if (phase === 'before') {
     if (!supported) return null
     return (
@@ -122,7 +109,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
         {state === 'idle' && (
           <div className="flex justify-center">
             <Button size="sm" variant="outline" onClick={run}>
-              <Camera/>Check my pulse first, {SECONDS} seconds
+              <Camera/>Check your pulse<span className="text-fine font-normal text-ink-2">{SECONDS} seconds</span>
             </Button>
           </div>
         )}
@@ -143,19 +130,18 @@ export function DidItWork({ tool, phase = 'after', className }) {
         {state === 'error' && (
           <div className="text-center">
             <p className="text-fine text-ink-2">{line}</p>
-            <Button size="sm" variant="outline" className="mt-2" onClick={run}><Camera/>Try again</Button>
+            {retry}
           </div>
         )}
       </div>
     )
   }
 
-  /* The finished screen's sheet. One honesty line, under the result. */
   const drop = before && reading ? effectOf(before, reading).hrDrop : null
   return (
     <Sheet className={className}>
       {video}
-      <h3 className="font-display text-ui font-bold text-ink">Check your pulse</h3>
+      <h3 className="font-display text-ui font-bold text-ink">Check Your Pulse</h3>
 
       {state === 'idle' && (
         supported
@@ -172,11 +158,10 @@ export function DidItWork({ tool, phase = 'after', className }) {
 
       {state === 'done' && reading && (
         <div className="mt-2" aria-live="polite">
-          {before
-            ? <p className="font-display text-row font-bold tabular-nums text-ink">
-                Before {bpm(before.hr)}, after {bpm(reading.hr)} bpm</p>
-            : <p className="font-display text-row font-bold tabular-nums text-ink">
-                {bpm(reading.hr)}<span className="ml-1.5 text-fine font-semibold text-ink-2">bpm</span></p>}
+          <p className="font-display text-row font-bold tabular-nums text-ink">
+            {before ? `Before ${bpm(before.hr)}, after ${bpm(reading.hr)}` : bpm(reading.hr)}
+            <span className="ml-1.5 text-fine font-semibold text-ink-2">bpm</span>
+          </p>
           <p className="mt-1 text-fine text-ink-2">
             {before ? (drop > 0 ? `${Math.round(drop)} lower.` : drop < 0 ? `${Math.round(-drop)} higher.` : 'About the same.')
               : 'No reading from before.'}
@@ -187,7 +172,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
       {state === 'error' && (
         <div className="mt-2">
           <p className="text-fine text-ink-2">{line}</p>
-          <Button size="sm" variant="outline" className="mt-2" onClick={run}><Camera/>Try again</Button>
+          {retry}
         </div>
       )}
 

@@ -17,13 +17,9 @@ import { SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 import { addReachPoint, getReach } from '../app/store'
 
-/* Camera + mic reading, no patch. Features match the patch's (rate,
-   beat-to-beat variation, voice) so both feed one scale.
- *
- * Nothing leaves the device. Each frame is reduced to a single number as it
- * arrives and the audio to six numbers, then dropped; no video or recording is
- * ever written, so a reading cannot be replayed or recovered. Any change that
- * buffers or persists raw media breaks that promise and the copy on screen. */
+/* Camera + mic reading, no patch. Nothing leaves the device: each frame
+   becomes one number and the audio six, then both are dropped. Never buffer
+   or persist raw media. */
 
 const STORE = 'mindmap.phone.baseline'
 
@@ -38,9 +34,7 @@ function loadBaseline() {
 function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
 
-/* Reach: one coarse position when a reading finishes, only while the student
-   has Reach on. Foreground only, asked once, stored rounded by the slot. A
-   refusal or a timeout is one quiet line and nothing else. */
+/* Reach: one coarse position per reading, only while Reach is on. */
 function captureReachPoint(onDone) {
   if (!getReach().on) return
   const geo = typeof navigator !== 'undefined' ? navigator.geolocation : null
@@ -53,9 +47,7 @@ function captureReachPoint(onDone) {
   } catch { onDone(false) }
 }
 
-/* The person's check-in answers, and the calibration fitted from them: one
-   gain per network curve, kept on this device like the baseline. Each answer is
-   the network's view of that reading plus what the person said; no raw signal. */
+/* Check-in answers and their calibration, on this device. No raw signal. */
 const CHECKINS = 'mindmap.phone.checkins'
 function loadCheckins() {
   try {
@@ -66,13 +58,9 @@ function loadCheckins() {
 }
 function saveCheckins(a) { try { localStorage.setItem(CHECKINS, JSON.stringify(a)) } catch {} }
 
-/* Section 2 of the spec: on the app's tint and on this page's paper band
-   alike, nothing stands on the ground. One class, so both halves of this
-   screen are the same object. */
 const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
 
-/* The beating waveform is the only feedback that confirms finger placement
-   before the capture window is spent. Keep it live. */
+/* The waveform confirms finger placement. Keep it live. */
 function Trace({ samples, className }) {
   const d = React.useMemo(() => {
     if (!samples?.length) return ''
@@ -105,9 +93,7 @@ function Step({ title, note, children, on }) {
   )
 }
 
-/* SAY_LINES is defined in charts/camera so the screen and the drawings cannot
-   drift apart. Only two of the three are printed: given three, readers read all
-   three aloud before choosing. */
+/* SAY_LINES lives in charts/camera. Only two of three are printed. */
 
 const PHASES = { idle:1, camera:1, voice:2, working:3, done:4 }
 
@@ -133,12 +119,8 @@ export function PhoneCheck() {
     setCheckins(past)
     setCalibration(fitCalibration(past))
   }, [])
-  /* Leaving mid-reading unmounts this screen, so the cleanup is the only thing
-     that stops the capture. The camera track and the frame loop end here, and
-     so does the accelerometer listener. The microphone is the one exception:
-     captureVoice owns its own stream and exposes no cancel, so a reading
-     abandoned during the voice window releases the mic when that window
-     closes. */
+  /* Unmounting is what stops the camera, frame loop and accelerometer.
+     captureVoice releases the mic itself when its window closes. */
   React.useEffect(() => () => {
     live.current.ppg?.cancel()
     stopStream(live.current.cam?.stream)
@@ -200,14 +182,13 @@ export function PhoneCheck() {
       stopStream(cam?.stream)
       live.current.motion?.stop(); live.current.motion = null
       setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. A reading needs the camera. The questions do not.'
+        ? 'The camera was not allowed. The six questions still work.'
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
   }
 
-  /* One answer becomes one label; the calibration is refitted on all of them.
-     A reading taken while moving is not labelled: the network did not score it. */
+  /* One answer is one label; the calibration is refitted on all of them. */
   const answer = stressed => {
     if (!result?.model || result.held) return
     const next = [...checkins, { contributions: result.model.contributions, temporal: result.model.temporal, label: stressed ? 1 : 0, day: dayKey() }].slice(-200)
@@ -218,18 +199,18 @@ export function PhoneCheck() {
 
   const busy = phase === 'camera' || phase === 'voice' || phase === 'working'
   const s = result ? sentenceFor(result) : null
+  const n = checkins.length
+  const plural = n === 1 ? '' : 's'
 
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
       <div>
         <div className={PANEL}>
-            {/* Each `note` carries only what its StepFigure cannot show: the
-                position, the surface, and that nothing is kept. Do not restate
-                the drawings in prose. */}
+            {/* Each note carries only what its StepFigure cannot show. */}
             <div>
               <Step on={PHASES[phase] >= 1}
                 title={`Fingertip on the camera · ${PPG_SECONDS}s`}
-                note="Rest your index fingertip flat over the lens and flash. Keep the phone and your forearm on a table.">
+                note="Fingertip flat over the lens, forearm on the table.">
                 <div className="mt-2.5 grid gap-2 sm:grid-cols-2 sm:gap-4">
                   <StepFigure kind="grip"/>
                   <StepFigure kind="rest"/>
@@ -237,10 +218,8 @@ export function PhoneCheck() {
               </Step>
               <Step on={PHASES[phase] >= 2}
                 title={`Say one sentence · ${VOICE_SECONDS}s`}
-                note="Find a quiet room. The app keeps none of your words.">
+                note="A quiet room. No words are kept.">
                 <div className="mt-2.5"><StepFigure kind="quiet"/></div>
-                {/* The accent rule is the marker here: these are the lines to
-                    say, not a run of separate points. */}
                 <List className="mt-2.5 gap-1 border-l-2 border-accent pl-3">
                   {SAY_LINES.slice(0, 2).map(l => (
                     <Item key={l} marker="none" className="text-meta leading-[1.45] text-ink">{l}</Item>
@@ -249,12 +228,10 @@ export function PhoneCheck() {
               </Step>
               <Step on={PHASES[phase] >= 3}
                 title="See your Mind Score"
-                note="The score runs 0 to 100, against your own normal."/>
+                note="0 to 100, against your own normal."/>
             </div>
 
-            {/* Frames are read off this element. It must stay in the DOM and
-                playing: `sr-only` hides it without `display:none`, which stops
-                frame delivery. Do not swap it for `hidden`. */}
+            {/* Frames are read off this element. `display:none` would stop them. */}
             <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
             {phase === 'camera' && (
@@ -291,11 +268,9 @@ export function PhoneCheck() {
             )}
 
             <div className="mt-4 flex flex-wrap gap-3">
-              {/* Must not be labelled "Take a reading": that is the enclosing
-                  tab's name, and two identically named controls are one control
-                  to a screen reader. */}
+              {/* Not "Take a reading": that is the enclosing tab's name. */}
               <Button onClick={() => run(true)} disabled={busy || !supported}>
-                {busy ? 'Reading…' : result ? 'Take another reading' : `Start the ${PPG_SECONDS + VOICE_SECONDS}-second reading`}
+                {busy ? 'Reading…' : result ? 'Take another reading' : `Start the ${PPG_SECONDS + VOICE_SECONDS} second reading`}
               </Button>
               <Button variant="outline" onClick={() => run(false)} disabled={busy || !supported}>
                 Skip the voice
@@ -325,37 +300,31 @@ export function PhoneCheck() {
                   <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
                   <p className="mt-3 max-w-[42ch] text-meta text-ink-2">{s.tail}</p>
 
-                  {/* The confidence band ranks with the score, not behind a
-                      disclosure. Do not move it into AllDetail. */}
+                  {/* The band ranks with the score, never behind a disclosure. */}
                   <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
                     <dt className="text-ink-3">Mind Score</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
                     <dt className="text-ink-3">How sure</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">
                       {result.low} to {result.high} <span className="text-ink-3">(±{result.half})</span>
+                      <span className="text-ink-3"> · {result.baselineDays === 0
+                        ? 'no history yet, so a wide band'
+                        : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'} of history`}</span>
                     </dd>
                     <dt className="text-ink-3">Read from</dt>
                     <dd className="m-0 text-ink">{result.channels.join(' and ')}
                       {result.missing.length > 0 && <span className="text-ink-3"> · no {result.missing.join(', ')}</span>}
                     </dd>
-                    <dt className="text-ink-3">Your history</dt>
-                    <dd className="m-0 text-ink">{result.baselineDays === 0
-                      ? 'none yet, so the band is wide for now'
-                      : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'}`}</dd>
                   </dl>
 
-                  {/* The same four claims the two paragraphs here carried,
-                      one to a row. Nothing may be dropped from this block: it
-                      is what stops the figure being read as a diagnosis. */}
+                  {/* These rows stop the figure being read as a diagnosis. */}
                   <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
                     <dt className="text-ink-3">What the score is</dt>
                     <dd className="m-0 text-ink-2">{SCORE_DEF}</dd>
                     <dt className="text-ink-3">A higher score</dt>
                     <dd className="m-0 text-ink-2">Your body is working harder, not doing worse</dd>
                     <dt className="text-ink-3">What to watch</dt>
-                    <dd className="m-0 text-ink-2">Which way the score moved matters more than the number</dd>
-                    <dt className="text-ink-3">The band</dt>
-                    <dd className="m-0 text-ink-2">How sure the app is, based on signal quality</dd>
+                    <dd className="m-0 text-ink-2">Which way the score moved, more than the number</dd>
                   </dl>
 
                   {noPosition && (
@@ -368,31 +337,25 @@ export function PhoneCheck() {
                     </p>
                   )}
 
-                  {/* The check-in. The answer is the label the network learns this
-                      person from: one gain per signal, refitted here, on this
-                      device. Eight answers took a lab-trained network from 0.78 to
-                      0.95 on people it had never seen (see tnam-results.js). */}
-                  {/* border-rule, not border-line: there is no `line` colour
-                      in the config, so that rule never drew. */}
+                  {/* The check-in: the label the network learns this person from. */}
                   {!result.held && (
                     <div className="mt-4 border-t border-rule pt-4">
                       {!answered ? (
                         <>
-                          <p className="max-w-[40ch] text-meta text-ink">Does this match how you feel right now?</p>
+                          <p className="max-w-[40ch] text-meta text-ink">Does this match how you feel?</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Button onClick={() => answer(true)}>Stressed</Button>
                             <Button variant="outline" onClick={() => answer(false)}>Fine</Button>
                           </div>
                           <p className="mt-2.5 max-w-[44ch] text-fine text-ink-3">
-                            {checkins.length === 0
-                              ? 'Your first answer starts your personal calibration.'
-                              : `${checkins.length} answer${checkins.length === 1 ? '' : 's'} so far shape how your readings are weighed.`}
+                            {n === 0
+                              ? 'Your first answer starts your own calibration.'
+                              : `${n} answer${plural} so far shape your readings.`}
                           </p>
                         </>
                       ) : (
                         <p className="max-w-[44ch] text-meta text-ink-2">
-                          Noted. Your <span className="font-mono tabular-nums">{checkins.length}</span> answer{checkins.length === 1 ? '' : 's'} now
-                          shape your next reading.
+                          Noted. <span className="font-mono tabular-nums">{n}</span> answer{plural} now shape your next reading.
                         </p>
                       )}
                     </div>
@@ -416,9 +379,8 @@ export function PhoneCheck() {
   )
 }
 
-/* Raw measured values in their own units. The closing paragraph's claims are
-   load-bearing: the index runs ~20% below a clinical RMSSD and must never be
-   called one, and nothing here has been validated against a person. */
+/* Raw values in their own units. The closing rows are load bearing: the
+   index is not a clinical RMSSD, and nothing is validated on a person. */
 function Readings({ detail, result }) {
   if (!detail) return null
   const { ppg, voice, move, torch } = detail
@@ -428,7 +390,7 @@ function Readings({ detail, result }) {
   rows.push(['Beat-to-beat index',
     !ppg.hrvOk ? `held back. Beat timing was uncertain by ${ppg.jitterMs.toFixed(0)} ms`
     : ppg.hrvResolved ? `${ppg.rmssd.toFixed(0)} ms ± ${ppg.rmssdBand.toFixed(0)}`
-    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms, too steady for the camera to measure`])
+    : `under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)} ms, too steady for the camera`])
   rows.push(['Signal quality', `${Math.round(ppg.quality * 100)}%${torch ? '' : ' · no torch on this phone'}`])
   if (voice?.ok) {
     rows.push(['Pitch', `${voice.f0Mean.toFixed(0)} Hz`])
@@ -447,19 +409,11 @@ function Readings({ detail, result }) {
           </React.Fragment>
         ))}
       </dl>
-      {/* Four rows, the same four claims the paragraph here carried. All four
-          are load-bearing: the index runs about a fifth below a clinical RMSSD
-          and must never be called one, and nothing here has been validated
-          against a person. Do not shorten this block. */}
       <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
-        <dt className="text-ink-3">What the camera gives</dt>
-        <dd className="m-0 text-ink-2">Heart rate, and a beat-to-beat index on its own scale</dd>
         <dt className="text-ink-3">Not a clinical RMSSD</dt>
-        <dd className="m-0 text-ink-2">The filter that steadies beat timing trims some real
-          variation. So the index runs about a fifth below a clinical RMSSD.</dd>
+        <dd className="m-0 text-ink-2">Reads about a fifth below clinical RMSSD.</dd>
         <dt className="text-ink-3">Compared to</dt>
-        <dd className="m-0 text-ink-2">Your own history. That lets phone and patch readings share
-          one scale.</dd>
+        <dd className="m-0 text-ink-2">Your own history, so phone and patch share one scale.</dd>
         <dt className="text-ink-3">Testing so far</dt>
         <dd className="m-0 text-ink-2">No reading has been tested on a person yet</dd>
       </dl>

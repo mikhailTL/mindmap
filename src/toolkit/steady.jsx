@@ -5,25 +5,9 @@ import { askMotion } from '../signals/motion'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Steady Hand. A dot the hand keeps inside a ring.
- *
- * WHAT RUNS. The phone's x and y acceleration (accelerationIncludingGravity,
- * or acceleration where that is all there is) minus a slow moving average,
- * so the tilt of the hand drops out and only the movement is left. That
- * movement, scaled, is where the dot sits. The ring grows and shrinks on a
- * ten-second cycle, four in and six out, and only while the last second's
- * movement RMS is under a threshold; a shaky second pauses it where it is.
- *
- * THE MEASUREMENT. Movement RMS over each ten-second block. At the end the
- * first minute's blocks and the last minute's blocks become two meters. No
- * link to any feeling is claimed: this is a grounding exercise that happens
- * to have a number at the end, and the label on screen says so.
- *
- * REDUCED MOTION. The ring holds one size and the count under it carries the
- * pace. The dot still follows the hand, which is the exercise.
- *
- * WHERE THE SAMPLES GO. One second of magnitudes, a running sum per block,
- * and the block figures, all dropped when the screen closes. */
+/* Steady Hand: a dot the hand keeps inside a ring. Acceleration minus a slow
+ * mean places the dot; the ring breathes only while the hand is still. The
+ * result is movement RMS per block, first minute against last. */
 
 const SECONDS = 180
 const CYCLE = 10
@@ -53,9 +37,10 @@ const Again = p => (
 )
 
 const stillness = rms => (rms == null ? 0 : Math.max(0, Math.min(1, 1 - rms / SCALE_RMS)))
+const pct = rms => `${Math.round(stillness(rms) * 100)}%`
 const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null)
 
-/* The ring breathes with a raised cosine, four seconds up and six down. */
+/* raised cosine, four up and six down */
 function breathe(phase) {
   const t = phase < IN ? phase / IN : 1 - (phase - IN) / (CYCLE - IN)
   return 0.5 - 0.5 * Math.cos(Math.PI * t)
@@ -95,12 +80,12 @@ export default function Steady() {
   const [running, setRunning] = React.useState(false)
   const [elapsed, setElapsed] = React.useState(0)
   const [frame, setFrame] = React.useState({ dx:0, dy:0, still:true, phase:0 })
-  const [result, setResult] = React.useState(null)    // { first, last, blocks }
+  const [result, setResult] = React.useState(null)
 
   const listener = React.useRef(null)
-  const slow = React.useRef(null)                      // { x, y, t } the moving mean
-  const latest = React.useRef({ x:0, y:0 })            // gravity removed
-  const recent = React.useRef([])                      // [{ t, m }] last second
+  const slow = React.useRef(null)
+  const latest = React.useRef({ x:0, y:0 })
+  const recent = React.useRef([])
   const block = React.useRef({ sum:0, n:0 })
   const blocks = React.useRef([])
   const sawSample = React.useRef(false)
@@ -113,8 +98,7 @@ export default function Steady() {
     latest.current = { x:0, y:0 }
   }, [])
 
-  /* `mounted` gates the await in start: a permission prompt that resolves
-     after leaving the screen must not attach a listener nobody removes. */
+  /* `mounted` gates the await in start. */
   const mounted = React.useRef(true)
   React.useEffect(() => () => { mounted.current = false; detach() }, [detach])
 
@@ -181,7 +165,6 @@ export default function Steady() {
       const rms = r.length ? Math.sqrt(r.reduce((a, s) => a + s.m * s.m, 0) / r.length) : 0
       const still = !listener.current || rms < STILL_RMS
       if (still) phase = (phase + dt) % CYCLE
-      /* a light spring on the dot, so a 60 Hz sensor does not jitter the screen */
       sx += (latest.current.x * PX_PER - sx) * Math.min(1, dt * 18)
       sy += (-latest.current.y * PX_PER - sy) * Math.min(1, dt * 18)
       const len = Math.hypot(sx, sy)
@@ -220,23 +203,20 @@ export default function Steady() {
       {result ? (
         <>
           <Sheet className="mx-auto w-full max-w-[32rem]">
-            <h3 className="font-display text-row font-bold text-ink">How still</h3>
+            <h3 className="font-display text-row font-bold text-ink">How Still</h3>
             {result.blocks >= 2 ? (
-              <div className="mt-4 space-y-4">
-                <Meter tall value={stillness(result.first)} label="First minute"
-                  right={`${Math.round(stillness(result.first) * 100)}%`}/>
-                <Meter tall value={stillness(result.last)} label="Last minute"
-                  right={`${Math.round(stillness(result.last) * 100)}%`}/>
-              </div>
+              <>
+                <Meter tall className="mt-4" value={stillness(result.last)} label="Last minute"
+                  right={pct(result.last)}/>
+                <p className="mt-3 text-fine text-ink-2">First minute {pct(result.first)}.</p>
+              </>
             ) : (
               <p className="mt-3 text-sec text-ink-2">
                 {motion === 'on' ? 'Under twenty seconds. Nothing to compare.' : 'No measurement here.'}
               </p>
             )}
             <Note className="mt-4">Experimental. A grounding exercise with a measured result.</Note>
-            <div className="mt-4 flex flex-wrap gap-2.5">
-              <Button size="sm" className="min-w-[9rem]" onClick={start}><Again/>Again</Button>
-            </div>
+            <Button size="sm" className="mt-4 min-w-[9rem]" onClick={start}><Again/>Again</Button>
           </Sheet>
           <DidItWork tool="steady" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>
         </>
@@ -262,11 +242,8 @@ export default function Steady() {
             {sensorLine ?? 'One hand. Keep the dot inside the ring.'}
           </p>
           <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
-            Movement is measured here and never recorded.
+            Movement is measured here and never recorded. Experimental. A grounding exercise with a measured result.
           </OnDevice>
-          <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">
-            Experimental. A grounding exercise with a measured result.
-          </p>
           {!running && <DidItWork tool="steady" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
         </>
       )}

@@ -332,7 +332,7 @@ const FIGURES = [
         <rect x="0" y="19" width="150" height="10" rx="5" fill="#a8321f"/>
         <rect x="0" y="38" width="110" height="10" rx="5" fill="none" stroke="#3c6a74" strokeWidth="0.9"/>
       </svg>) },
-  { big: '30% → 40%', wide: true, line: 'felt sad or hopeless, 2013 against 2023',
+  { big: '30%\u00a0→\u00a040%', wide: true, line: 'felt sad or hopeless, 2013 against 2023',
     exact: 'Same question, same survey, ten years on', src: TRENDS,
     art: (
       <div className="flex flex-col gap-1">
@@ -351,7 +351,7 @@ export function ProblemFigures({ className }) {
         <figure key={f.big} className="m-0" title={`${f.exact}. ${f.src.label}`}
           aria-label={`${f.big} ${f.line}. ${f.exact}. Source: ${f.src.label}.`}>
           <p className={cn('whitespace-nowrap font-display font-bold tabular-nums leading-none text-accent-ink',
-            f.wide ? 'text-sect' : 'text-fig')}>{f.big}</p>
+            f.wide ? 'text-major' : 'text-fig')}>{f.big}</p>
           <div className="mt-3">{f.art}</div>
           <p className="mt-3 max-w-[22ch] font-display text-row font-semibold leading-[1.25] text-ink">{f.line}</p>
         </figure>

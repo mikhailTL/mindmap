@@ -6,26 +6,16 @@ import { PATTERNS, pacerSchedule, phaseAt, renderPacerWav } from './wav'
 import { useReduced } from './useReduced'
 import { DidItWork } from './after'
 
-/* Pocket pacer. The one breathing pacer that keeps going when the phone locks.
- *
- * HOW. The whole session is rendered to a WAV in the page (src/toolkit/wav.js)
- * the moment a pattern or a length is chosen, so Start is a plain, synchronous
- * audio.play() inside the tap, which is what iOS and Chrome's autoplay rules
- * require. An <audio> element the student started keeps playing through the
- * lock screen, and where the Media Session API exists the lock screen gets
- * play, pause and stop with the session's name on it.
- *
- * WHILE UNLOCKED the screen shows the phase, derived from audio.currentTime
- * on a requestAnimationFrame, so the word and the sound cannot drift apart
- * and the screen simply catches up when the phone is unlocked again.
- *
- * NOTHING IS RECORDED. The file is a few synthesised cues with silence
- * between, made from nothing but the pattern, and its URL is revoked on Stop. */
+/* Pocket pacer: the pacer that keeps going when the phone locks. The session
+ * is rendered to a WAV (src/toolkit/wav.js) ahead of the tap, so Start is a
+ * synchronous audio.play() that survives the lock screen. The phase is read
+ * from audio.currentTime, so word and sound never drift. */
 
 const MINUTES = [5, 10]
 const SAY = { 'In':'Breathe in', 'Out':'Breathe out', 'Rest':'Rest', 'In again':'In again', 'Done':'Done' }
 
 const hasSession = () => typeof navigator !== 'undefined' && 'mediaSession' in navigator
+const quiet = fn => { try { fn() } catch { /* unsupported */ } }
 
 const Pause = p => (
   <svg viewBox="0 0 24 24" width={18} height={18} fill="none" aria-hidden stroke="currentColor"
@@ -42,9 +32,7 @@ const Lock = p => (
 
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-/* The ring: a track, an arc for the phase running down, and a disc that
-   grows on an in-breath and shrinks on the out-breath. Under reduced motion
-   the disc holds still and the count carries the pace. */
+/* Under reduced motion the disc holds still and the count carries the pace. */
 function Ring({ phase, t, count, still, idle }) {
   const dash = (idle ? 0 : t) * 578
   const scale = phase === 'In' ? 0.46 + 0.54 * t
@@ -90,7 +78,7 @@ export default function Pocket() {
   const sched = React.useRef(pacerSchedule('box', 5))
   const stopRef = React.useRef(() => {})
 
-  /* The file is made when the choice changes, never inside the Start tap. */
+  /* The file is made when the choice changes. */
   React.useEffect(() => {
     let live = true
     setReady(false)
@@ -111,29 +99,25 @@ export default function Pocket() {
   const session = React.useCallback(on => {
     if (!hasSession()) return
     const ms = navigator.mediaSession
-    try {
-      if (on) {
-        ms.metadata = new window.MediaMetadata({ title:'MindMap pacer', artist:`Breathing, ${minutes} minutes` })
-      } else {
-        ms.metadata = null
-      }
-    } catch { /* an old shape of MediaMetadata */ }
+    quiet(() => {
+      ms.metadata = on ? new window.MediaMetadata({ title:'MindMap pacer', artist:`Breathing, ${minutes} minutes` }) : null
+    })
     for (const [act, fn] of [['play', () => audio.current?.play()],
                              ['pause', () => audio.current?.pause()],
                              ['stop', () => stopRef.current()]]) {
-      try { ms.setActionHandler(act, on ? fn : null) } catch { /* unsupported action */ }
+      quiet(() => ms.setActionHandler(act, on ? fn : null))
     }
-    try { ms.playbackState = on ? 'playing' : 'none' } catch { /* ignored */ }
+    quiet(() => { ms.playbackState = on ? 'playing' : 'none' })
   }, [minutes])
   const sessionRef = React.useRef(session)
   sessionRef.current = session
 
   const stop = React.useCallback(() => {
     const a = audio.current
-    if (a) { try { a.pause() } catch { /* ignored */ } a.removeAttribute('src'); try { a.load() } catch { /* ignored */ } }
+    if (a) { quiet(() => a.pause()); a.removeAttribute('src'); quiet(() => a.load()) }
     session(false)
     setState('idle')
-    setGen(g => g + 1)                       // revokes the URL and makes a fresh one
+    setGen(g => g + 1)                       // a fresh URL
   }, [session])
   stopRef.current = stop
 
@@ -151,12 +135,12 @@ export default function Pocket() {
   const pause = () => audio.current?.pause()
   const resume = () => { setBlocked(false); const p = audio.current?.play(); if (p?.catch) p.catch(() => setBlocked(true)) }
 
-  /* State follows the element, so the lock screen's buttons move the screen. */
-  const onPlay = () => { setState('playing'); try { navigator.mediaSession.playbackState = 'playing' } catch { /* none */ } }
+  /* State follows the element. */
+  const onPlay = () => { setState('playing'); quiet(() => { navigator.mediaSession.playbackState = 'playing' }) }
   const onPause = () => {
     const a = audio.current
     if (!a || a.ended || !a.getAttribute('src')) return   // ended, or Stop emptied it
-    setState('paused'); try { navigator.mediaSession.playbackState = 'paused' } catch { /* none */ }
+    setState('paused'); quiet(() => { navigator.mediaSession.playbackState = 'paused' })
   }
   const onEnded = () => {
     setState('done')
@@ -177,16 +161,14 @@ export default function Pocket() {
     return () => cancelAnimationFrame(id)
   }, [state])
 
-  /* Leaving the screen ends the sound and lets the file go. */
+  /* Leaving the screen ends the sound. */
   React.useEffect(() => () => {
-    const a = audio.current
-    if (a) { try { a.pause() } catch { /* ignored */ } }
+    quiet(() => audio.current?.pause())
     sessionRef.current(false)
   }, [])
 
   const idle = state === 'idle'
   const running = state === 'playing' || state === 'paused'
-  const noSession = !hasSession()
 
   return (
     <ActivityScreen family="leaf" title="Pocket Pacer">
@@ -237,16 +219,11 @@ export default function Pocket() {
 
       <p className="mx-auto mt-3 flex max-w-[32rem] items-center justify-center gap-2 text-center
         text-fine text-ink-2">
-        <Lock/>Lock your phone. The cues keep going.
+        <Lock/>{hasSession() ? 'Lock your phone. The cues keep going.' : 'No lock screen controls here. The sound still plays.'}
       </p>
       <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
         A sound file made on this phone. Nothing is recorded.
       </OnDevice>
-      {noSession && (
-        <p className="mx-auto mt-1 max-w-[32rem] text-center text-fine text-ink-3">
-          No lock screen controls here. The sound still plays.
-        </p>
-      )}
       {idle && <DidItWork tool="pocket" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
       {state === 'done' && <DidItWork tool="pocket" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
     </ActivityScreen>

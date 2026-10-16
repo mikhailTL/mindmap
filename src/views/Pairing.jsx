@@ -9,101 +9,70 @@ import { ITEMS, connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Using the patch. This was a full marketing page for six steps and five
- * failures, which is far more page than the subject deserves: the owner's note
- * was that it should be one button, and that the directions should arrive when
- * pressing it makes them relevant.
+/* Using the patch: one console. Pressing Connect runs lib/engine.js
+ * connectPatch for real, and the step list fills in as the flow moves. One
+ * drawing shows at a time, for the current step; any revealed step can be
+ * pressed to see its drawing again. The failures sit behind one control.
  *
- * So it is one console. Pressing Connect runs lib/engine.js connectPatch for
- * real, and the ordered list under the button fills in as the flow moves. One
- * drawing is shown at a time, for whichever step is current, and the reader can
- * press any revealed step to see its drawing again. The failures are behind a
- * quiet control and nothing else.
- *
- * Cut on 13 October, because the page had grown back into the thing the owner
- * rejected: the "Where it goes" band, which restated the patch page's own
- * dimensions, charging slot, signal list and baseline word for word; and the
- * `why` line on every failure, which explained a message the reader can
- * already read. What is left is a button, the steps it reveals, and what to do
- * when one of them stops.
- *
- * Three rules govern this file.
- *
- * One. Every step is the flow engine.js actually runs and every quoted message
- * is a string from that file, verbatim. The phase the console reports is
- * derived from the same navigator.bluetooth guard the engine uses, so the
- * console cannot claim a step the code did not reach.
- *
- * Two. No unit has been built or worn. The header says so plainly, once.
- * Battery, charge time, adhesive, wear duration, electrode build, part
- * numbers, ingress, weight, cost, range and pairing time are all unsettled: a
- * line that would need one of them is written without it.
- *
- * Three. Containers, density, small headings, no paragraphs. See
- * docs/design-spec.md. */
+ * Rules. Every step is the flow engine.js runs and every quoted message is a
+ * string from that file, verbatim; the phase comes from the same
+ * navigator.bluetooth guard, so the console cannot claim a step the code did
+ * not reach. No unit has been built or worn, and the header says so once:
+ * battery, adhesive, range and pairing time are unsettled and stay unwritten.
+ * Containers, density, small headings, no paragraphs (docs/design-spec.md). */
 
-/* The six steps of the real flow. One line each: the long version of each of
-   these was a paragraph nobody read. Art for each is in charts/pairing-art. */
+/* The six steps of the real flow, one line each. Art is in charts/pairing-art. */
 const STEPS = [
   { k:'wake',    title:'Take the patch off charge',
-    line:'Once off charge, the patch sends out a Bluetooth signal.' },
+    line:'Off charge, the patch sends a Bluetooth signal.' },
   { k:'open',    title:'Open the app in a browser',
-    line:'There is nothing to install. The browser needs to support Bluetooth.' },
+    line:'Nothing to install. The browser must support Bluetooth.' },
   { k:'tap',     title:'Press Connect to the patch',
-    line:'The app asks the browser to look for the patch.' },
+    line:'The browser starts looking for the patch.' },
   { k:'chooser', title:'The browser shows a list',
-    line:'The browser lists the patch and nothing else.' },
+    line:'Only the patch is listed.' },
   { k:'pick',    title:'Choose the patch and tap Pair',
-    line:'The app cannot see any device until you choose one.' },
+    line:'The app sees nothing until you choose.' },
   { k:'stream',  title:'The patch starts sending readings',
-    line:'The patch sends four signals once a second, all day.' },
+    line:'Four signals, once a second, all day.' },
 ]
 
-/* Stated as the five things a reader does not have to find, because the point
-   of the list is the absence. */
+/* Stated as absences, because the absence is the point. */
 const NOTHING = ['A cable', 'A computer', 'A driver', 'A download', 'A developer tool']
 
-/* The three settled facts about the link itself, carried on the console's own
-   status bar so the bar states something true before anything is pressed.
-   Range, pairing time and battery are all open and none of them is here. */
+/* The settled facts about the link, on the status bar before anything is
+   pressed. Range, pairing time and battery are open and not here. */
 const LINK_FACTS = [
-  { k:'Link',     v:'Bluetooth Low Energy' },
-  { k:'Signals',  v:'4, once a second' },
-  { k:'Without the patch', v:`${ITEMS.length} questions` },
+  { k:'Link',    v:'Bluetooth Low Energy' },
+  { k:'Signals', v:'4, once a second' },
 ]
 
-/* Every quoted string is from src/lib/engine.js; the line it comes from is in
-   the comment beside it so a future edit to the connect path finds this copy.
-   `seen` is what a reader actually sees on their own screen, and `code` is the
-   line in this repo that put it there. The two are kept apart on purpose: a
-   service filter is not a message, and labelling it as one would be a small
-   lie in a page whose whole subject is what the code really does. */
+/* `seen` is the engine's own string, quoted verbatim (line noted beside it);
+   `fix` is what to do. */
 const TROUBLE = [
-  { /* engine.js:47, the navigator.bluetooth guard. One guard, two causes: an
-       embedded page and plain http both land on this one message, so they are
-       one card rather than two cards quoting the same string. */
-    title:'The browser has no Bluetooth',
+  { /* engine.js:47, the navigator.bluetooth guard: an embedded page and plain
+       http both land on this one message, so one card. */
+    title:'The Browser Has No Bluetooth',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
       + 'site directly in Chrome on a computer, or use the check-in below.',
-    fix:'Open the site in its own Chrome window, over https.' },
+    fix:'Open the site directly in Chrome, over https.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
-    title:'The list is empty',
+    title:'The List Is Empty',
     seen:'The browser’s list shows no devices.',
-    fix:'Take the patch off charge, keep it near the phone, and press Connect again.' },
+    fix:'Take the patch off charge, near the phone. Press Connect again.' },
   { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
-    title:'You closed the list',
+    title:'You Closed the List',
     seen:'No patch was selected. The check-in below works without one.',
     fix:'Press Connect again and choose the patch.' },
   { /* engine.js:56: anything requestDevice or gatt.connect throws */
-    title:'The connection failed',
+    title:'The Connection Failed',
     seen:'Could not connect: unknown. The check-in below works without a patch.',
-    fix:`Try again, or take a ${SCORE} without the patch.` },
+    fix:`Try again, or take a ${SCORE} instead.` },
 ]
 
 const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Connected', stuck:'Stopped' }
 
-/* done / now / stuck, and nothing else: a step past the cursor is not rendered
-   at all, which is the whole point of the control. */
+/* done / now / stuck; a step past the cursor is not rendered at all. */
 function statusOf(i, cursor, phase) {
   if (i < cursor - 1) return 'done'
   if (phase === 'live') return 'done'
@@ -122,8 +91,8 @@ export function Pairing({ go }) {
   const [trouble, setTrouble] = React.useState(false)
   const [focus, setFocus] = React.useState(null)     // which step's drawing shows
 
-  /* The same guard engine.js runs, read here only to decide which step the
-     flow reached. The message the reader sees is always the engine's own. */
+  /* The same guard engine.js runs, read only to place the cursor. The message
+     shown is always the engine's own. */
   const connect = React.useCallback(async () => {
     if (busy) return
     setBusy(true); setMsg(''); setFocus(null)
@@ -148,20 +117,17 @@ export function Pairing({ go }) {
           <div className="grid items-end gap-5
             lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-8">
             <div className="min-w-0">
-              {/* An eyebrow is a line of type, per spec 0d rule 2. */}
               <p className="font-body text-ui font-semibold text-accent-ink">
                 Using the patch
               </p>
-              {/* The heading is the owner's own, quoted in spec 0d rule 3 as
-                  the replacement for "Nothing is plugged into anything." */}
+              {/* The owner's own heading, spec 0d rule 3. */}
               <RevealLines as="h1"
                 className="mt-2 max-w-[20ch] font-display font-bold text-major leading-[1.05]
                   tracking-tight text-ink"
                 lines={['Fully Wireless,', '2 Minutes of Setup']}/>
               <ScrollIn className="mt-4 grid gap-3 sm:grid-cols-2">
-                {/* Containers on the tinted band, not text on it. */}
                 <Card className="p-3.5">
-                  <p className="font-display text-tick font-bold text-ink">What you do not need</p>
+                  <p className="font-display text-tick font-bold text-ink">What You Do Not Need</p>
                   <ul className="m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0">
                     {NOTHING.map(t => (
                       <li key={t} className="flex items-center gap-1.5 rounded-field border border-rule
@@ -171,11 +137,10 @@ export function Pairing({ go }) {
                     ))}
                   </ul>
                 </Card>
-                {/* Plain, early and once. A reader must not reach the console
-                    below believing a unit has been assembled or worn. */}
+                {/* Plain, early and once: the honesty line. */}
                 <Card className="p-3.5">
                   <p className="font-display text-tick font-bold text-ink">
-                    The patch is still a design
+                    The Patch Is Still a Design
                   </p>
                   <p className="mt-2 max-w-[44ch] text-fine text-ink-2">
                     No unit has been built or worn yet. The connect steps below run the app’s real code.
@@ -184,32 +149,23 @@ export function Pairing({ go }) {
               </ScrollIn>
             </div>
 
-            {/* The figure gets a container too: a drawing sitting straight on
-                the tinted band is the thing the owner called low effort. */}
             <Card className="min-w-0 p-3.5">
               <figure className="m-0 min-w-0">
                 <WirelessLink/>
-                <figcaption className="mt-2 max-w-[42ch] text-fine text-ink-2">
-                  The patch talks to your phone over Bluetooth Low Energy. No cable is needed.
-                </figcaption>
               </figure>
             </Card>
           </div>
         </div>
       </header>
 
-      {/* The console. One button; the directions arrive when pressing it makes
-          them relevant, and the failures stay behind their own control. */}
+      {/* The console: one button, the steps it reveals, the failures behind
+          their own control. */}
       <Section tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">How pairing works</SectionHead>
+        <SectionHead className="mt-1 max-w-[26ch]">How Pairing Works</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
-            {/* The bar states three settled facts even at rest, so a reader who
-                never presses the button still leaves with the link, the rate
-                and the way through without a patch. */}
             <div className="border-b border-rule bg-paper p-3.5 lg:p-4">
-              {/* Column at 390: the button's label is nowrap and the two
-                  together ran 12px past the card. */}
+              {/* Column at 390: the nowrap button label overran the card. */}
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap
                 sm:items-center sm:justify-between sm:gap-x-5">
                 <div className="min-w-0" aria-live="polite">
@@ -224,7 +180,7 @@ export function Pairing({ go }) {
                   <ArrowRight aria-hidden/>
                 </Button>
               </div>
-              <dl className="m-0 mt-3 grid gap-2 border-t border-rule pt-2.5 sm:grid-cols-3">
+              <dl className="m-0 mt-3 grid gap-2 border-t border-rule pt-2.5 sm:grid-cols-2">
                 {LINK_FACTS.map(f => (
                   <div key={f.k} className="min-w-0">
                     <dt className="text-fine font-semibold text-ink-3">{f.k}</dt>
@@ -236,15 +192,11 @@ export function Pairing({ go }) {
               </dl>
             </div>
 
-            {/* The engine's own words, quoted. Ruled rather than coloured:
-                this page carries grounds where warn fails. The live region is
-                here rather than on the status word so a reader using a screen
-                reader hears the whole outcome, not just the phase. */}
+            {/* The engine's own words, ruled rather than coloured. The live
+                region wraps the whole outcome, not just the phase word. */}
             <div aria-live="polite">
               {msg && (
-                /* The tint is on the wrapper, not on the <p>: input.css caps
-                   every paragraph at a 62ch measure, so a filled <p> paints a
-                   box that stops in the middle of its own card. */
+                /* Tint on the wrapper: input.css caps every <p> at 62ch. */
                 <div className="border-b border-rule bg-aqua px-3.5 py-3 lg:px-4">
                   <p className="text-fine text-ink-2">{msg}</p>
                 </div>
@@ -254,10 +206,8 @@ export function Pairing({ go }) {
             {cursor > 0 && (
               <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
                 <div className="min-w-0 p-3.5 lg:p-4">
-                  {/* A real ordered list in the DOM: the order is the
-                      document's, not the grid's. The status rides beside the
-                      title rather than in a third column, which at 390 left
-                      the step's own line four words wide. */}
+                  {/* A real ordered list; the status rides beside the title so
+                      the step's line keeps its width at 390. */}
                   <ol className="m-0 grid list-none gap-2 p-0">
                     {shown.map((s, i) => {
                       const st = statusOf(i, cursor, phase)
@@ -283,9 +233,7 @@ export function Pairing({ go }) {
                                 <span className="font-display text-ui font-bold leading-tight text-ink">
                                   {s.title}
                                 </span>
-                                {/* Plain type beside what it describes, per
-                                    spec 0d rule 2: a status is never a filled
-                                    or outlined capsule. */}
+                                {/* Plain type, never a capsule (spec 0d rule 2). */}
                                 <span className={cn('text-fine font-semibold leading-[1.3]',
                                   st === 'done' ? 'text-accent' : 'text-ink-3')}>
                                   {LABEL[st]}
@@ -301,10 +249,7 @@ export function Pairing({ go }) {
                     })}
                   </ol>
 
-                  {/* Quiet, and only once there is something to be not
-                      working. Pressing it is the only way the five failures
-                      appear, and it is drawn as a control rather than as a
-                      link, because that is what it is. */}
+                  {/* The only way the failures appear; drawn as a control. */}
                   <button type="button" onClick={() => setTrouble(v => !v)}
                     aria-expanded={trouble} aria-controls="trouble"
                     className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-field
@@ -318,8 +263,7 @@ export function Pairing({ go }) {
                   </button>
                 </div>
 
-                {/* One drawing, for the step being read. Six of these stacked
-                    was most of the old page's height. */}
+                {/* One drawing, for the step being read. */}
                 <div className="flex items-center justify-center border-t border-rule bg-aqua
                   p-3 lg:border-l lg:border-t-0">
                   {art && <StepArt kind={art.k} scale={0.4}/>}
@@ -353,20 +297,17 @@ export function Pairing({ go }) {
         )}
       </Section>
 
-      {/* Where the patch sits, its size, its charging slot and its baseline are
-          all on the patch page. This page used to restate every one of them in
-          a band of its own, which is the giant webpage the owner asked for one
-          button instead of. The one thing left is the way through without a
-          patch, because a reader who cannot connect needs it. */}
+      {/* Size, charging slot and baseline live on the patch page. The one thing
+          kept here is the way through without a patch. */}
       <Section tone="paper" tight className="bg-aqua-2">
         <Card className="p-3.5 lg:p-4">
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">
-                Without the patch
+                Without the Patch
               </h2>
               <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">
-                Use the phone camera and microphone, or answer {ITEMS.length} questions.
+                Phone camera and microphone, or {ITEMS.length} questions.
               </p>
             </div>
             <Button onClick={() => go && go('without-patch')}>

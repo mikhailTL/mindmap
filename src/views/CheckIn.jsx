@@ -18,34 +18,14 @@ import { takeReadingIntent } from './reading/intent'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Take a reading, in three states on one screen.
- *
- *   choose    the two ways in, each one a button, and the patch to pair
- *   sensors   the camera and microphone reading
- *   survey    the six questions and the result
- *
- * There is no route to add, so the states are local. Entering a reading
- * replaces the chooser rather than appending to it, which is what stops the
- * screen asking a reader to scroll for the thing a card just described.
- *
- * The step-by-step guide and its drawings belong to PhoneCheck, so they arrive
- * with the sensor reading and are never on the chooser. On the marketing page
- * there is no app around the guide, so it stays inline there; see
- * views/WithoutPatch.jsx.
- *
- * Design spec 0f: the chooser holds 15 to 45 words above the fold, every
- * sentence is ten words or fewer, and every action carries a mark. Each card
- * is a mark, a title, one line, one figure and its action. The four row spec
- * tables and the privacy footnotes are kept, behind one SeeDetails under the
- * grid, so the comparison is still one table read three times.
- */
+/* Take a reading, in three local states on one screen: choose, sensors,
+   survey. Entering a reading replaces the chooser. The step guide and its
+   drawings belong to PhoneCheck, so they never sit on the chooser. */
 
 const PANEL = 'rounded-panel border border-rule bg-card'
 
-/* One line per screen, then the figures it is worth knowing before starting.
-   Every figure here is already true elsewhere in this repo: PPG_SECONDS plus
-   VOICE_SECONDS is 45, ITEMS has six questions, and the scale is the site's
-   one scale. Nothing may be added that is not measured somewhere. */
+/* One line per screen and its figures. Every figure is measured elsewhere:
+   PPG_SECONDS plus VOICE_SECONDS is 45, ITEMS has six questions. */
 const SCREENS = {
   sensors: {
     title: 'Camera and microphone',
@@ -60,10 +40,8 @@ const SCREENS = {
   },
 }
 
-/* The three ways in. On the card: the mark, the title, one line, one figure
-   and the action. In the comparison under the grid: the same four facts in
-   the same order, so a reader comparing them is reading one table three
-   times rather than three different cards. */
+/* The three ways in: on the card a mark, title, one line, one figure and the
+   action; under the grid the same three facts in the same order. */
 const WAYS = [
   { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
     line:'Put a fingertip on the lens, then speak.',
@@ -71,8 +49,7 @@ const WAYS = [
     cta:'Start',
     spec:[
       ['Takes', '45 seconds'],
-      ['Reads', 'Heart rate and beat-to-beat variation'],
-      ['Also', 'Pitch and steadiness of one spoken line'],
+      ['Reads', 'Heart rate, beat variation, pitch and steadiness'],
       ['Needs', 'A camera and a microphone'],
     ],
     foot:'Frames and audio become numbers, then get deleted. Nothing is stored or sent.' },
@@ -83,7 +60,6 @@ const WAYS = [
     spec:[
       ['Takes', 'About 30 seconds'],
       ['Reads', 'Tension, sleep, energy, focus and load'],
-      ['Also', 'Which answer moved the number, and which way'],
       ['Needs', 'Only this phone'],
     ],
     foot:'Answers stay on this phone. Nothing is stored or sent.' },
@@ -92,16 +68,12 @@ const WAYS = [
     cta:'Connect',
     spec:[
       ['Takes', 'One pairing, then no setup'],
-      ['Reads', 'Pulse, sweat, temperature and movement'],
-      ['Rate', 'Once a second over Bluetooth'],
-      ['Needs', 'A MindMap patch'],
+      ['Reads', 'Four signals, once a second'],
+      ['Needs', 'A MindMap patch over Bluetooth'],
     ] },
 ]
 
-/* Figures as a chip row inside the panel rather than as a row of cells.
-   Spec 2 allows a card to hold a row of chips, and at 390 three cells stacked
-   into three rows of their own cost this block about 140px of height for the
-   same three numbers. Label beside the figure, never under it. */
+/* Figures as a chip row: label beside the figure, never under it. */
 function Figures({ items, className }) {
   return (
     <ul className={cn('m-0 flex list-none flex-wrap gap-1.5 p-0', className)}>
@@ -118,9 +90,7 @@ function Figures({ items, className }) {
   )
 }
 
-/* Spans, not a definition list: a button's content model is phrasing, and a
-   `dl` inside one is neither valid nor reliably read out. The label column is
-   fixed so the four values line up down the card and across the three. */
+/* Spans, not a `dl`: a button's content model is phrasing. */
 function Spec({ rows }) {
   return (
     <span className="mt-3 block">
@@ -134,11 +104,7 @@ function Spec({ rows }) {
   )
 }
 
-/* A way in. The card is the control, not a caption above one: Card's
-   `interactive` carries the accent left rule, the press squeeze and the
-   focus-visible rule, the site's one focus outline comes from input.css, and
-   the whole card is the hit area. Title and footnote are spans, for the same
-   reason Spec is. */
+/* A way in. The whole card is the control and the hit area. */
 const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
   const Mark = way.Mark
   return (
@@ -161,8 +127,7 @@ const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
   )
 })
 
-/* The four facts per way, behind one disclosure under the grid. Closed, it is
-   one line; open, it is the comparison the cards used to carry. */
+/* The three facts per way, behind one disclosure under the grid. */
 function Compare() {
   return (
     <SeeDetails label="Compare the three ways" className="mt-3 lg:mt-4">
@@ -186,16 +151,13 @@ function Compare() {
   )
 }
 
-/* The top of a reading: the way out, then what this reading is. Module level,
-   not an inner component; one declared in the body is a new type on every
-   render and would remount the back button out from under a keyboard. */
+/* The top of a reading. Module level: an inner component would remount the
+   back button out from under a keyboard. */
 const ReadingHead = React.forwardRef(function ReadingHead({ id, onBack }, ref) {
   const s = SCREENS[id]
   return (
     <>
       <BackBar onBack={onBack}>Back</BackBar>
-      {/* The lede and its figures sit behind the "?", so the screen opens on
-          the title and the reading itself. */}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
         <h2 ref={ref} tabIndex={-1} className="max-w-[26ch] font-display font-bold text-ink">
           {s.title}
@@ -227,17 +189,15 @@ export function CheckInBody({ go }){
   const head = React.useRef(null)
   const from = React.useRef(null)
   const firstPaint = React.useRef(true)
-  /* True while this screen owns a history entry it pushed on entering a
-     reading, so leaving by the button or by Escape consumes that entry instead
-     of leaving it behind for the next back press. */
+  /* True while this screen owns the history entry it pushed on entering a
+     reading, so leaving consumes that entry. */
   const pushed = React.useRef(false)
 
   const open = React.useCallback(id => {
     from.current = id
     setDir('fwd'); setScreen(id)
     setSaid(`${SCREENS[id].title}, showing now`)
-    /* A pushed entry is what makes browser back mean "out of this reading"
-       rather than "off this screen". */
+    /* The pushed entry makes browser back mean "out of this reading". */
     try {
       history.pushState({ reading: id }, '', location.hash || '#/check')
       pushed.current = true
@@ -250,9 +210,8 @@ export function CheckInBody({ go }){
     if (pushed.current) { pushed.current = false; history.back() }
   }, [])
 
-  /* Escape and browser back both land on the chooser. Neither is listened for
-     from the chooser itself, where Escape belongs to whatever is above it and
-     back belongs to the route. */
+  /* Escape and browser back both land on the chooser. Neither is listened
+     for from the chooser itself. */
   React.useEffect(() => {
     if (screen === 'choose') return
     const onKey = e => {
@@ -269,10 +228,9 @@ export function CheckInBody({ go }){
     }
   }, [screen, leave])
 
-  /* Changing state is a screen change, so it starts at the top and puts focus
-     on the new screen. Returning puts focus back on the card that opened the
-     reading; App's own popstate handler focuses #main on the frame after a
-     back, so this waits two frames to land after it. */
+  /* A screen change starts at the top and focuses the new screen. Returning
+     focuses the card that opened the reading, two frames after App's own
+     popstate handler focuses #main. */
   React.useEffect(() => {
     if (firstPaint.current) { firstPaint.current = false; return }
     window.scrollTo(0, 0)
@@ -317,10 +275,8 @@ export function CheckInBody({ go }){
         <Stage dir={dir}>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
             <h2 className="font-display font-bold text-ink">Take a reading</h2>
-            {/* This screen scores real answers in both modes, so the notice
-                describes the surrounding screens rather than this one. Both
-                variants are required: demo figures elsewhere are generated, and
-                in real mode no patch is paired. */}
+            {/* This screen scores real answers in both modes; the notice
+                describes the surrounding screens. */}
             {mode === 'real'
               ? <RealNotice inline>No patch is needed here.</RealNotice>
               : <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
@@ -338,17 +294,15 @@ export function CheckInBody({ go }){
                   <span className="block font-mono text-fine tabular-nums text-ink-3">
                     {`${answered}/${ITEMS.length}`}
                   </span>
-                  {/* aria-hidden: the line above already says the figure, and a
-                      progressbar inside a button joins its accessible name. */}
+                  {/* aria-hidden: the line above already says the figure. */}
                   <span aria-hidden className="mt-2 block">
                     <Progress value={answered} max={ITEMS.length}/>
                   </span>
                 </span>
               </Way>
             </ScrollRow>
-            {/* Pairing happens here rather than on a screen of its own: it is a
-                device handshake, not a reading to sit through, so this card is
-                a panel with a control in it and not a card-sized button. */}
+            {/* Pairing is a device handshake, not a reading, so this card is
+                a panel with a control in it. */}
             <ScrollRow index={2} className="h-full">
               <section className={cn(PANEL, 'flex h-full flex-col p-4 lg:p-5')}>
                 <h3 className="flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
@@ -374,9 +328,6 @@ export function CheckInBody({ go }){
       {screen === 'sensors' && (
         <Stage dir={dir}>
           <ReadingHead id="sensors" ref={head} onBack={leave}/>
-          {/* PhoneCheck carries the step-by-step guide and its drawings, which
-              is why they are here and not on the chooser: this is the screen
-              somebody is holding the phone on. */}
           <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
         </Stage>
       )}
@@ -386,10 +337,7 @@ export function CheckInBody({ go }){
           <ReadingHead id="survey" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]
             xl:items-start xl:gap-4">
-            {/* Scale sets its own vertical rhythm and no horizontal padding,
-                so the panel supplies the gutter and tightens the row height
-                from 24px of air to 16px. Six rows at the old figure ran the
-                form 96px past the result card beside it. */}
+            {/* The panel supplies the gutter and tightens the row height. */}
             <div className={cn(PANEL, 'px-4 lg:px-5 [&_fieldset]:py-4')}>
               {ITEMS.map((it,i)=>(
                 <ScrollRow key={it.id} index={i}
@@ -400,9 +348,8 @@ export function CheckInBody({ go }){
               ))}
             </div>
 
-            {/* min-h reserves the result's space so completing the form does not
-                shift the page. xl:top-[65px] = the app shell's 48px bar + 1px
-                hairline + 16px air; it is not the 56px marketing header. */}
+            {/* min-h reserves the result's space. xl:top-[65px] is the app
+                shell's 48px bar + 1px hairline + 16px air. */}
             <section ref={resultRef} aria-live="polite" data-anchor
               className={cn(PANEL, 'mt-3 min-h-[10rem] p-4 lg:p-5 xl:mt-0 xl:sticky xl:top-[65px]')}>
               {!done && (
@@ -413,8 +360,7 @@ export function CheckInBody({ go }){
               {done && (
                 <>
                   <div className="flex flex-col items-start gap-4">
-                    {/* RainbowDial takes raw hex, not tokens: #0a6e68 is accent,
-                        #1d8fb0 is beam. Keep them in step with the palette. */}
+                    {/* RainbowDial takes raw hex: #0a6e68 is accent, #1d8fb0 is beam. */}
                     <RainbowDial score={r.score} size={268}
                       rings={[{ id:'self', name:'Your answers', color:'#0a6e68', glow:'#1d8fb0',
                                 value:r.score, reading:'Six questions' }]}/>
@@ -431,17 +377,17 @@ export function CheckInBody({ go }){
                     </div>
                   </div>
                   <AllDetail label={`See what moved your ${SCORE}`}>
-                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">Bars to the right raised
-                      {' '}your {SCORE}. Bars to the left lowered it.</p>
+                    <p className="mt-2 max-w-[52ch] text-meta text-ink-3">
+                      Right bars raised your {SCORE}, left bars lowered it.</p>
                     <Diverge items={r.contrib.map(c=>({ label:c.item.q.replace(/\?$/,''),
                       x: Math.max(-1, Math.min(1, c.raw)) }))}/>
                     <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
                       <dt className="text-ink-3">Each answer</dt>
                       <dd className="m-0 text-ink-2">Measured from its middle option, then weighted</dd>
                       <dt className="text-ink-3">The six together</dt>
-                      <dd className="m-0 text-ink-2">Averaged, then turned into one number out of 100</dd>
+                      <dd className="m-0 text-ink-2">Averaged into one number out of 100</dd>
                       <dt className="text-ink-3">With a patch</dt>
-                      <dd className="m-0 text-ink-2">The same last step, from four signals, on one scale</dd>
+                      <dd className="m-0 text-ink-2">The same last step, from four signals</dd>
                     </dl>
                   </AllDetail>
                 </>

@@ -13,9 +13,10 @@ import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* How it works, in five categories, one at a time. The fifth, "Beyond the
- * screen", lists the measurements no other teen wellbeing app makes, each
- * with the paper behind it; the sources sit where the other bands put a
- * drawing.
+ * screen", lists the measurements no other teen wellbeing app makes, nine
+ * rows at most, one sentence under fourteen words each, the paper in
+ * brackets; the sources sit where the other bands put a drawing, and one
+ * line under the rows says what is not built.
  *
  * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
  * everything is cluttered and still too complex, like nobody needs to know
@@ -105,21 +106,19 @@ const CATEGORIES = [
      author, year, journal, so a judge can check each row against a paper. */
   { id: 'beyond', tab: 'Beyond the screen', tone: 'paper', ground: 'bg-paper',
     title: 'Beyond the screen',
-    line: 'Measurements no other wellbeing app for teenagers makes, each from a sensor the phone or the patch already has.',
+    line: 'Measurements no other teen wellbeing app makes, from sensors you already carry.',
     rows: [
-      ['Settle time', 'Minutes from a stress peak until your body is half way back to your usual. No consumer wearable reports it per event.'],
-      ['Run-up', 'How much your body rose in the two hours before an exam or a presentation you marked. Anticipation is a separate, measurable phase (Pulopulos 2018; Kazdagli 2024).'],
-      ['Carry-over', 'The share of peaks that ran into the next one before settling. Oura reports a monthly cumulative stress; MindMap reports it per event.'],
-      ['Sigh coach', 'The microphone measures each exhale while you do cyclic sighing, shown in a 108-person trial to lift mood and slow breathing (Balban 2023).'],
-      ['Chest breathing', 'A phone on your chest counts breaths from the accelerometer, matched to a breathing band in a 2025 study (Cinotti 2025).'],
-      ['Alertness check', 'A sixty-second reaction test validated for alertness and sleep loss, not for stress (Basner 2011; Benderoth 2021).'],
-      ['Typing rhythm', "The time between keys inside MindMap's own fields, never the keys. Exploratory: an adult signal, weak in teenagers (Zulueta 2018; Braund 2023)."],
-      ['Reach', 'How far from home your readings happened this week. Only where you took readings, never shared, never a map (Saeb 2015).'],
-      ['Pulse check', 'A twenty-second camera pulse before and after any tool. The app learns which tool lowers your own pulse most.'],
-      ['Pocket pacer', 'A breathing pacer rendered as a sound file on your phone, so it keeps going when the phone is locked.'],
-      ['Walk it off', 'Three minutes of walking, steps counted from the accelerometer, never scored as stress.'],
-      ['Not built', "Reading other apps' keyboards, listening to calls and background tracking are not possible on the web and not acceptable here."],
+      ['Settle time, carry-over', 'Minutes from a peak to halfway back, and peaks that ran together.'],
+      ['Run-up', "Your body's rise in the two hours before a marked exam (Pulopulos 2018; Kazdagli 2024)."],
+      ['Sigh coach', 'The microphone measures each exhale during cyclic sighing, shown to lift mood (Balban 2023).'],
+      ['Chest breathing', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
+      ['Alertness check', 'A sixty second reaction test validated for alertness, not stress (Basner 2011; Benderoth 2021).'],
+      ['Typing rhythm', "Key timing in MindMap's own fields, never the keys, weak in teenagers (Zulueta 2018; Braund 2023)."],
+      ['Reach', 'How far from home your readings happened this week, never a map (Saeb 2015).'],
+      ['Pulse check', 'Camera pulse before and after each tool shows which lowers yours most.'],
+      ['Traffic Light', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
     ],
+    note: "Not built: other apps' keyboards, calls, background location.",
     figure: Sources },
 ]
 
@@ -218,6 +217,11 @@ export function Methods({ go }) {
                     <div className="mt-4">
                       {c.rows.map(([k, line]) => <Row key={k} k={k} dark={dark}>{line}</Row>)}
                     </div>
+                    {c.note && (
+                      <p className={cn('mt-3 text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-3')}>
+                        {c.note}
+                      </p>
+                    )}
                   </div>
                   <Figure dark={dark} className="min-w-0 lg:pt-1"/>
                 </div>

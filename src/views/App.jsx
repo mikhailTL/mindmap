@@ -21,6 +21,7 @@ import { Parents } from './Parents'
 import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
+import TrafficLightPage from '../traffic/Light'
 import { ModeToggle } from '../ui/mode-toggle'
 import { useMode, setMode } from '../lib/mode'
 import { MindMapAI } from '../ai'
@@ -54,8 +55,8 @@ import { cn } from '../lib/utils'
 const VIEWS = [
   /* the site */
   'site','patch','pairing','without-patch','methods','privacy','monitor','survey','responses',
-  /* the three audience explainer pages */
-  'students','parents','pro',
+  /* the three audience explainer pages, and the Traffic Light under Parents */
+  'students','parents','pro','traffic-light',
   /* the product */
   'app','app-student','app-parent','app-pro',
   /* inside the product */
@@ -105,6 +106,7 @@ const TITLE = {
   students:'MindMap for students',
   parents:'MindMap for parents',
   pro:'MindMap for Medical Professionals',
+  'traffic-light':'The Traffic Light, by MindMap',
   app:'Open the MindMap app',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
@@ -153,6 +155,7 @@ const PATCH = [
 const AUDIENCE = [
   ['students', 'Students', 'What a student sees each day.'],
   ['parents',  'Parents',  'What a parent can and cannot see.'],
+  ['traffic-light', 'The Traffic Light', 'One light for how your teen reacts to their phone.'],
   ['pro',      'Medical Professionals',  'What a Medical Professional sees across a group.'],
 ]
 
@@ -162,7 +165,7 @@ const AUDIENCE = [
    them at all. */
 const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
-                  students:'who', parents:'who', pro:'who', survey:'survey' }
+                  students:'who', parents:'who', pro:'who', 'traffic-light':'who', survey:'survey' }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -1112,6 +1115,7 @@ export function App() {
               tour:Tour, responses:Responses, survey:SurveyPage,
               methods:Methods, pairing:Pairing,
               students:ForStudents, parents:ForParents, pro:ForSchools,
+              'traffic-light': TrafficLightPage,
               app:Launch,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */
