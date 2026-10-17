@@ -28,6 +28,7 @@ import { daySentence } from './student/sentence'
 import { Welcome } from './student/Welcome'
 import { HeadsUpCard } from './student/HeadsUpCard'
 import { Trends } from './student/Trends'
+import { PartHead, TODAY_LONG, longDate } from './student/PartHead'
 import { TEEN } from './student/demoTeen'
 
 /* The student app's Today screen, and the shell the three student tabs sit in.
@@ -417,6 +418,7 @@ function TodayDemo({ go, openTab }) {
           at 390 the three stack in that order, so Heads Up comes before the
           signals. */}
       <Welcome/>
+      <PartHead id="today-h" kind="today" title="Today" line={`${TODAY_LONG}. Your readings so far today.`}/>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
         {/* The owner, 14 October: "add some gradients or cool effects to the
             cards to make it like a dashboard". The card runs card to aqua, a
@@ -544,7 +546,7 @@ function TodayDemo({ go, openTab }) {
 
       {/* The owner, 17 October: a calendar and date ranges of Mind Scores and
           the body's readings, phone-only ones included, with Heads Up. */}
-      <Trends teen={TEEN} className="mt-3 lg:mt-4"/>
+      <Trends teen={TEEN} className="mt-6 lg:mt-8"/>
     </div>
   )
 }
@@ -612,6 +614,7 @@ function StudentToday({ go, openTab }) {
     return (
       <div className="flex w-full flex-col gap-3 lg:gap-4">
         <Welcome/>
+        <PartHead id="today-h" kind="today" title="Today" line={`${longDate()}.`}/>
         <StudentBody go={go} openTab={openTab}/>
         <SettleCard/>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">

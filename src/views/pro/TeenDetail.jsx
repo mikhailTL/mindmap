@@ -4,7 +4,7 @@ import { Button } from '../../ui/button'
 import { ArrowLeft } from '../../ui/marks'
 import { LampFace } from '../../traffic/Face'
 import { HEADLINE } from '../../signals/light'
-import { statusOf, summary, RANGE_LABEL } from '../../lib/roster'
+import { FACE_LABEL, statusOf, summary, RANGE_LABEL } from '../../lib/roster'
 import { PROTOCOL, PROTOCOL_DONE, PROTOCOL_TIMES } from '../../lib/caseload'
 import { getSharing, getVersion, subscribe } from '../../app/store'
 import { cn } from '../../lib/utils'
@@ -113,7 +113,7 @@ export function ProTeenDetail({ teen, initialRange = 'week', isAlert, openedAt, 
   const [range, setRange] = React.useState(initialRange)
   const [note, setNote] = React.useState('')
   const f = figures(teen, range)
-  const st = statusOf(teen)
+  const st = statusOf(teen, range)
   const trend = trendsShared(teen)
   const raw = readingsShared(teen)
   const today = teen.days[teen.days.length - 1]
@@ -132,7 +132,7 @@ export function ProTeenDetail({ teen, initialRange = 'week', isAlert, openedAt, 
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-head font-bold tracking-tight text-ink">{teen.pseudonym}</h3>
             <p className="mt-0.5 text-fine text-ink-2">Grade {teen.grade} · age {teen.age} · {sourceLine(teen)}</p>
-            <p className="mt-1 text-fine font-medium text-ink">{STATUS_WORD[st]}: {STATUS_LINE[st]}, last three days.</p>
+            <p className="mt-1 text-fine font-medium text-ink">{FACE_LABEL[range]}: {STATUS_WORD[st]}, {STATUS_LINE[st].toLowerCase()}.</p>
           </div>
         </div>
         <p className="mt-3 border-t border-rule pt-2.5 text-fine text-ink-3">

@@ -3,7 +3,7 @@ import { useReducedMotion } from 'framer-motion'
 import { RainbowDial } from '../../charts/rainbow'
 import { LightCard } from '../../traffic/ParentReport'
 import { SENSORS } from '../../lib/sensors'
-import { summary } from '../../lib/roster'
+import { FACE_LABEL, summary } from '../../lib/roster'
 import { ArrowLeft, Chevron, MoveMark, PulseMark, SweatMark, TempMark, Wave } from '../../ui/marks'
 import { SeeDetails } from '../Monitor'
 import { cn } from '../../lib/utils'
@@ -316,8 +316,8 @@ export default function TeenDetail({ teen, onBack, variant = 'parent', range: in
         </div>
         {score && (
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <StatusMark teen={teen} size={36}/>
-            <span className="text-fine text-ink-2">Last three days</span>
+            <StatusMark teen={teen} range={range} size={36}/>
+            <span className="text-fine text-ink-2">{FACE_LABEL[range]}</span>
           </div>
         )}
       </header>

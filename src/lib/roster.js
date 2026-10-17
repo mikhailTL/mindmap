@@ -106,10 +106,16 @@ export function summary(teen, range = 'week') {
     light: worst, signals: [...new Set(cur.flatMap(d => d.signals))].slice(0, 3) }
 }
 
-/* The face on a teen's card: the worst light of the last three days. */
-export function statusOf(teen) {
-  const last = teen.days.slice(-3).map(d => d.light)
-  return last.includes(Light.RED) ? Light.RED : last.includes(Light.YELLOW) ? Light.YELLOW : Light.GREEN
+/* The Heads Up face for a range. Day: today's light. Week and month: the
+   average of the daily lights (green 0, yellow 1, red 2), rounded. With no
+   range it is the week, the cards' default. */
+export const FACE_LABEL = Object.freeze({ day: 'Today', week: 'Week average', month: 'Month average' })
+const FACE_RANK = { [Light.GREEN]: 0, [Light.YELLOW]: 1, [Light.RED]: 2 }
+export function statusOf(teen, range = 'week') {
+  if (range === 'day') return teen.days[teen.days.length - 1].light
+  const days = teen.days.slice(range === 'month' ? -30 : -7)
+  const m = days.reduce((s, d) => s + FACE_RANK[d.light], 0) / days.length
+  return m >= 1.5 ? Light.RED : m >= 0.5 ? Light.YELLOW : Light.GREEN
 }
 
 /* A date range of days, inclusive, for calendar pickers. */
@@ -119,7 +125,7 @@ export function daysBetween(teen, from, to) {
 
 /* A parent's two children. */
 export const FAMILY = Object.freeze([
-  makeTeen({ id: 'maya', first: 'Maya', age: 15, grade: 10, seed: 1501, base: 46, drift: 12, patch: true, avatar: 'fox' }),
+  makeTeen({ id: 'maya', first: 'Maya', age: 15, grade: 10, seed: 1501, base: 46, drift: 20, patch: true, avatar: 'fox' }),
   makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'owl' }),
 ])
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { LampFace } from '../../traffic/Face'
 import { Chevron } from '../../ui/marks'
-import { statusOf, summary } from '../../lib/roster'
+import { FACE_LABEL, statusOf, summary } from '../../lib/roster'
 import { cn } from '../../lib/utils'
 import { Spark } from './parts'
 import { COLUMNS, RANGE_NOUN, STATUS_LINE, STATUS_WORD, figures, signed, sourceLine, trendsShared } from './metrics'
@@ -32,15 +32,15 @@ function Figure({ col, f }) {
 }
 
 function ariaFor(teen, f, range) {
-  const st = statusOf(teen)
-  return `${teen.pseudonym}, grade ${teen.grade}, ${STATUS_WORD[st]}. Mind Score ${f.score} of 100 ${RANGE_NOUN[range]}`
+  const st = statusOf(teen, range)
+  return `${teen.pseudonym}, grade ${teen.grade}, ${FACE_LABEL[range]} ${STATUS_WORD[st]}. Mind Score ${f.score} of 100 ${RANGE_NOUN[range]}`
     + (f.change === null ? ', score only' : `, ${changeWords(f.change)} points`)
     + `. Usual ${teen.usual.lo} to ${teen.usual.hi}. Open record.`
 }
 
 export function ProTeenCard({ teen, range, columns, onOpen }) {
   const f = figures(teen, range)
-  const st = statusOf(teen)
+  const st = statusOf(teen, range)
   const trend = trendsShared(teen)
   const show = k => columns.includes(k)
   const rest = COLUMNS.filter(c => c.key !== 'score' && c.key !== 'change' && show(c.key))
@@ -71,7 +71,7 @@ export function ProTeenCard({ teen, range, columns, onOpen }) {
       </span>
       {/* The teen's own usual band, so the status word above has a reason. */}
       <span aria-hidden className="mt-1 block w-full text-fine text-ink-2">
-        Usual {teen.usual.lo} to {teen.usual.hi}. Last 3 days {STATUS_LINE[st].toLowerCase()}.
+        Usual {teen.usual.lo} to {teen.usual.hi}. {FACE_LABEL[range]}: {STATUS_LINE[st].toLowerCase()}.
       </span>
 
       {trend ? (
@@ -111,7 +111,7 @@ export function ProTeenCard({ teen, range, columns, onOpen }) {
    up and as one wrapped line under the code at phone width. */
 export function ProTeenRow({ teen, range, columns, onOpen }) {
   const f = figures(teen, range)
-  const st = statusOf(teen)
+  const st = statusOf(teen, range)
   const cols = COLUMNS.filter(c => columns.includes(c.key))
   const val = c => (c.key === 'change' ? (f.change === null ? 'Score only' : `${signed(f.change)}`) : f[c.key])
   return (

@@ -89,7 +89,7 @@ const byCode = (a, b) => a.pseudonym.localeCompare(b.pseudonym)
 export function sortTeens(list, sort, range) {
   const f = new Map(list.map(t => [t.id, figures(t, range)]))
   const out = [...list]
-  if (sort === 'stress') out.sort((a, b) => RANK[statusOf(a)] - RANK[statusOf(b)] || f.get(b.id).score - f.get(a.id).score)
+  if (sort === 'stress') out.sort((a, b) => RANK[statusOf(a, range)] - RANK[statusOf(b, range)] || f.get(b.id).score - f.get(a.id).score)
   else if (sort === 'rise') out.sort((a, b) => {
     const ca = f.get(a.id).change, cb = f.get(b.id).change
     if (ca === null && cb === null) return byCode(a, b)
@@ -102,26 +102,26 @@ export function sortTeens(list, sort, range) {
   return out
 }
 
-export function filterTeens(list, { query = '', statuses = [], grade = 'all' } = {}) {
+export function filterTeens(list, { query = '', statuses = [], grade = 'all', range = 'week' } = {}) {
   const q = query.trim().toLowerCase().replace(/^student\s*/, '')
   return list.filter(t =>
     (!q || t.pseudonym.toLowerCase().includes(q)) &&
-    (!statuses.length || statuses.includes(statusOf(t))) &&
+    (!statuses.length || statuses.includes(statusOf(t, range))) &&
     (grade === 'all' || t.grade === Number(grade)))
 }
 
 export const GRADES = Object.freeze([...new Set(CASELOAD.map(t => t.grade))].sort((a, b) => a - b))
 
-export function statusCounts(list) {
+export function statusCounts(list, range = 'week') {
   const c = { green: 0, yellow: 0, red: 0 }
-  for (const t of list) c[statusOf(t)]++
+  for (const t of list) c[statusOf(t, range)]++
   return c
 }
 
 /* The demo's one open urgent alert belongs to the teen reading highest
    today among those on red. */
 export function alertTeen(list = CASELOAD) {
-  const red = list.filter(t => statusOf(t) === Light.RED)
+  const red = list.filter(t => statusOf(t, 'day') === Light.RED)
   const pool = red.length ? red : list
   return [...pool].sort((a, b) => b.days[b.days.length - 1].score - a.days[a.days.length - 1].score)[0] || null
 }

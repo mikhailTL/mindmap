@@ -3,6 +3,8 @@ import { LampFace } from '../../traffic/Face'
 import { Chevron } from '../../ui/marks'
 import { Panel, PanelHead, Why } from '../Monitor'
 import { cn } from '../../lib/utils'
+import { ScrollIn } from '../../ui/motion'
+import { PartHead } from './PartHead'
 import { SCORE } from '../../lib/terms'
 import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal } from './demoTeen'
 
@@ -404,11 +406,13 @@ export function Trends({ teen, className }) {
   }
 
   return (
-    <section aria-labelledby="trends-h" className={cn('flex flex-col gap-3 lg:gap-4', className)}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 id="trends-h" className="font-display text-head font-bold text-ink">Trends</h2>
-        <p className="text-fine text-ink-3">Demo days, generated. Compared only with your own usual.</p>
-      </div>
+    /* Its own tinted band with a part heading, rising in as it arrives, so
+       the move from today's readings to the trends is plain. */
+    <ScrollIn className={className}>
+    <section aria-labelledby="trends-h"
+      className="flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4 lg:gap-4 lg:p-5">
+      <PartHead id="trends-h" kind="trends" title="Trends"
+        line="Days, weeks and months, compared only with your own usual. Demo days."/>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
         <Panel className="flex flex-col gap-4">
           <RangePicker state={state} set={set} first={first}/>
@@ -459,5 +463,6 @@ export function Trends({ teen, className }) {
         </div>
       </div>
     </section>
+    </ScrollIn>
   )
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { RANGE_LABEL, statusOf, summary } from '../../lib/roster'
+import { FACE_LABEL, RANGE_LABEL, statusOf, summary } from '../../lib/roster'
 import { LampFace } from '../../traffic/Face'
 import { AvatarArt } from '../../account/avatars'
 import { Chevron } from '../../ui/marks'
@@ -8,7 +8,8 @@ import { RangeSwitch, Sparkline } from './RangeTrend'
 import { STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, showsScore, showsTrends,
   sourceLine } from './data'
 
-/* One teen as a card: who, the face for their last three days with its word,
+/* One teen as a card: who, the Heads Up face for the range shown (today's,
+ * or the week's or month's average) with its word,
  * the Mind Score for the range with its change and a sparkline, and where the
  * readings come from. The whole card opens the teen's page.
  *
@@ -30,8 +31,8 @@ export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   )
 }
 
-export function StatusMark({ teen, size = 30, className }) {
-  const light = statusOf(teen)
+export function StatusMark({ teen, range = 'week', size = 30, className }) {
+  const light = statusOf(teen, range)
   return (
     <span className={cn('flex shrink-0 items-center gap-2', className)}>
       <LampFace light={light} size={size}/>
@@ -45,7 +46,7 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
   const range = given ?? own
   const ownSwitch = given == null
   const s = summary(teen, range)
-  const light = statusOf(teen)
+  const light = statusOf(teen, range)
   const name = displayName(teen, variant)
   const score = showsScore(teen, variant)
   const trends = showsTrends(teen, variant)
@@ -62,7 +63,7 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="m-0 font-display text-head font-bold leading-tight text-ink">
             <button type="button" onClick={() => onOpen?.(teen)}
-              aria-label={`${name}. ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}. Open ${isPro(variant) ? 'record' : 'their page'}`}
+              aria-label={`${name}. ${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}. Open ${isPro(variant) ? 'record' : 'their page'}`}
               className="text-left after:absolute after:inset-0 after:rounded-panel after:content-['']
                 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2
                 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent">
@@ -73,8 +74,8 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
         </div>
         {score ? (
           <div className="flex shrink-0 flex-col items-end gap-1">
-            <StatusMark teen={teen}/>
-            <span className="text-fine text-ink-3">Last 3 days</span>
+            <StatusMark teen={teen} range={range}/>
+            <span className="text-fine text-ink-3">{FACE_LABEL[range]}</span>
           </div>
         ) : <span className="shrink-0 text-fine text-ink-2">Not shared</span>}
       </div>

@@ -153,8 +153,8 @@ function Empty({ go }) {
 export function Caseload({ go, real, layout, setLayout, onOpen, alert }) {
   const list = real ? [] : CASELOAD
   const [filters, setFilters] = React.useState({ query: '', statuses: [], grade: 'all' })
-  const counts = statusCounts(list)
-  const shown = sortTeens(filterTeens(list, filters), layout.sort, layout.range)
+  const counts = statusCounts(list, layout.range)
+  const shown = sortTeens(filterTeens(list, { ...filters, range: layout.range }), layout.sort, layout.range)
   const filtered = filters.query.trim() || filters.statuses.length || filters.grade !== 'all'
   return (
     <>
