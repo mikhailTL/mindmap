@@ -13,15 +13,18 @@ import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
 import { Different } from './landing/Different'
-import { ToolsBand } from './landing/Tools'
+import { WhatIs } from './landing/WhatIs'
+import rainbowLg from '../photos/rainbow-field.webp'
+import rainbowSm from '../photos/rainbow-field-sm.webp'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC,
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* Eight bands, one idea each: hero, the problem, the two ways in, the
- * tools, what makes it different, who it is for, privacy, every age.
+/* The owner's order: hero, the problem, what MindMap is, what makes it
+ * different, the rainbow picture break, the two ways in, who it is for,
+ * privacy. Nothing else is on the page.
  *
  * Grounds alternate green, white and blue so the page reads as a sequence:
  *   hero paper, problem ink, two ways sky.wash,
@@ -40,10 +43,19 @@ import {
  */
 
 /* The two ways in. Each card is the steps themselves, so the band needs no
-   second block explaining them. `lead` is the phone route: the only one a
-   stranger can use in the next minute. */
+   second block explaining them. The patch comes first, as the owner asked;
+   `lead` gives the first card the green edge. */
 const WAYS = [
-  { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works', lead:true,
+  { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true,
+    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
+    art:(
+      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
+        <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
+        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
+        <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
+        <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
+      </svg>) },
+  { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
     steps: ['Open the app and tap Take a reading', 'Hold your fingertip over the phone camera', 'After 45 seconds, your score appears'],
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
@@ -53,15 +65,6 @@ const WAYS = [
         <circle cx="122" cy="39" r="5" className="fill-beam"/>
         <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
           strokeWidth="2.4" strokeLinecap="round"/>
-      </svg>) },
-  { id:'patch', go:'pairing', title:'With the patch', cta:'Pair the patch',
-    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
-    art:(
-      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
-        <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
-        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
 ]
 
@@ -97,17 +100,6 @@ const NEVER = [
   'Diagnose anything or act as a medical device',
 ]
 
-const FUTURE = [
-  { title: 'MindMap Teens',   when: 'Now',   now: true },
-  { title: 'MindMap Adults',  when: 'Next',  now: false },
-  { title: 'MindMap Seniors', when: 'Later', now: false },
-]
-
-const HERO_FACTS = [
-  `A ${SCORE} from a patch or your phone camera.`,
-  'You decide who else sees it.',
-]
-
 /* A wash photograph drifting against the scroll, 10% oversize so no edge shows. */
 function DriftWash({ photo, className, imgClassName, distance = 48 }) {
   return (
@@ -129,6 +121,26 @@ function toDifferent() {
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - head, behavior: reduced ? 'auto' : 'smooth' })
 }
 
+/* The owner's rainbow photograph as a full bleed break between the product
+   bands and the ways in. Two dimensions of scroll: the picture rises against
+   the page and slides sideways, 24% oversize so no edge ever shows. The
+   wordmark is 42% of the picture's width, so the band is 200px tall at 390:
+   any taller and the crop cuts its first and last letters. */
+function RainbowBreak() {
+  return (
+    <section aria-label="MindMap" className="relative isolate h-[200px] overflow-hidden sm:h-[320px]
+      lg:h-[min(46vw,620px)]">
+      <Parallax2D clip distance={120} x={-90} scale={0.06} narrow={0.5}
+        className="absolute inset-0 [&>div]:absolute [&>div]:inset-[-12%]">
+        <img src={rainbowLg} srcSet={`${rainbowSm} 1086w, ${rainbowLg} 2172w`} sizes="124vw"
+          width={2172} height={724} loading="lazy" decoding="async"
+          alt="MINDMAP written across a blue sky under a rainbow, with children running through a field of flowers"
+          className="block h-full w-full object-cover object-center"/>
+      </Parallax2D>
+    </section>
+  )
+}
+
 export function Overview({ go }) {
   return (
     <main>
@@ -145,7 +157,7 @@ export function Overview({ go }) {
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
           <div className="flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
-            <ScrollIn as="p" className="mb-4 font-body text-ui font-semibold text-accent-ink">
+            <ScrollIn as="p" className="mb-4 font-body text-[1.125rem] font-semibold text-accent-ink sm:text-[1.25rem]">
               A wellness app for teenagers
             </ScrollIn>
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
@@ -156,19 +168,12 @@ export function Overview({ go }) {
               2xl:max-w-[11ch] 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
-            <ScrollIn as="p" className="mt-5 max-w-[30ch] text-lead font-medium leading-[1.3] text-ink">
+            <ScrollIn as="p" className="mt-5 max-w-[34ch] text-[1.125rem] font-medium leading-[1.4] text-ink">
               The world’s only wearable patch and app system designed exclusively for adolescent wellness.
-            </ScrollIn>
-            <ScrollIn className="mt-4">
-              <List>
-                {HERO_FACTS.map(f => (
-                  <Item key={f} className="text-sec text-ink-2">{f}</Item>
-                ))}
-              </List>
             </ScrollIn>
             {/* "Open the app" is in the header, so not repeated here. */}
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
-              <Button onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo<span aria-hidden>→</span></Button>
+              <Button onClick={() => { setMode('demo'); go('app-home?demo') }}>View the demo<span aria-hidden>→</span></Button>
               <Button variant="ghost" className="min-h-[44px] px-0 sm:ml-3" onClick={toDifferent}>
                 More than your typical stress monitoring app
               </Button>
@@ -236,22 +241,31 @@ export function Overview({ go }) {
       <Section name="The problem" tone="ink" className="relative isolate overflow-hidden">
         <DriftWash photo="student-homework" className="-z-10" imgClassName="opacity-[0.22]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
-          Teen stress is common and often unseen
+          Teen stress is a global crisis often invisible until it’s too late
         </SectionHead>
         <ScrollIn className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
           <ProblemFigures/>
         </ScrollIn>
       </Section>
 
+      {/* -- what MindMap is (views/landing/WhatIs.jsx) ---------------------- */}
+      <WhatIs go={go}/>
+
+      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
+      <Different go={go}/>
+
+      {/* -- the picture break: the owner's rainbow, in two dimensions ------ */}
+      <RainbowBreak/>
+
       {/* -- the two ways in, on blue ---------------------------------------
           The photograph sits at 0.14 with no scrim so the ground stays blue.
           Over it accent measured 4.0, so the band's name takes accent.ink. */}
       <Section name="Getting started" tone="card"
         className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
-        <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.14]"/>
+        <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.08]"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
         <SectionLede>Both give you the same {SCORE} in the same app.</SectionLede>
-        <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-2">
+        <div className="mt-5 grid gap-3.5 md:auto-rows-fr md:grid-cols-2">
           {WAYS.map((w, i) => (
             <ScrollRow key={w.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(w.go)}
@@ -280,19 +294,12 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- the tools, on white (views/landing/Tools.jsx) ------------------ */}
-      <ToolsBand go={go}/>
-
-      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
-      <Different go={go}/>
-
       {/* -- the three audiences, on green ----------------------------------
           From lg the cards stack in the left column and the kitchen
           photograph is the band's right edge, faded in from the green, so no
           card or word ever sits over a face. Under lg it is a rounded frame
           between the lede and the cards. */}
-      {/* No band name: "Who it is for" sat right above "Who MindMap is for". */}
-      <Section tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
+      <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
           [mask-image:linear-gradient(to_right,transparent,black_45%)]">
           <DriftWash photo="parent-kitchen" imgClassName="opacity-90"/>
@@ -372,33 +379,6 @@ export function Overview({ go }) {
             </div>
           </Parallax2D>
         </div>
-      </Section>
-
-      {/* ── what comes next, and the closing line, on turquoise ────────────
-          ink.3 measures 4.36 on aqua.2, so nothing here is set in it, and the
-          band's name takes accent.ink rather than accent. */}
-      {/* No band name: "What comes next" said what the lede says. */}
-      <Section tone="card" className="relative isolate overflow-hidden bg-aqua-2">
-        {/* A soft, low-opacity vignette of the photograph in the right half,
-            from lg only: under lg the text runs the full width. */}
-        <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 lg:block
-          [mask-image:radial-gradient(ellipse_62%_75%_at_55%_45%,black_35%,transparent_75%)]">
-          <DriftWash photo="student-basketball" imgClassName="opacity-[0.55] mix-blend-multiply"/>
-        </div>
-        <SectionHead>MindMap for every age</SectionHead>
-        <SectionLede className="text-ink-2">MindMap starts with teens. Adults and seniors come next.</SectionLede>
-        <ol className="m-0 mt-5 grid max-w-[40rem] list-none grid-cols-3 gap-2.5 p-0">
-          {FUTURE.map((f, i) => (
-            <ScrollRow as="li" key={f.title} index={i} className={cn('flex flex-col gap-1 rounded-panel border bg-card p-4',
-              f.now ? 'border-accent shadow-card' : 'border-rule')}>
-              <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-2')}>{f.when}</span>
-              <span className="font-display text-ui font-bold leading-[1.2] text-ink sm:text-row">{f.title}</span>
-            </ScrollRow>
-          ))}
-        </ol>
-        <p className="mt-6 max-w-[40ch] font-display text-head font-bold leading-[1.2] tracking-tight text-ink">
-          Quantify the stress. Find the resources. Start feeling better.
-        </p>
       </Section>
 
     </main>

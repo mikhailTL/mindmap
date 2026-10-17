@@ -4,6 +4,8 @@ import { HomeIcon } from './icons'
 import { LifeScreen, Sections, Heading, Lead, Panel, Checklist, Tick, Field, Figure, CopyButton,
          Chip, Action, Choice, useStored } from './parts'
 import { shoppingList, vehicleStatus, todayISO, niceDate, leaveBy, tripCard, clock12 } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, QuickRound, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
 /* Home Basics: meals, laundry, car upkeep and a bus or train trip, each as a
  * card you work through and keep. Saved under `mindmap.skills.life-home`. */
@@ -44,7 +46,7 @@ export const RECIPES = {
 }
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-function Meals({ data, patch }) {
+function Meals({ data, patch, g, win }) {
   const plan = data.plan || Array(7).fill('')
   const [open, setOpen] = React.useState(null)
   const list = shoppingList(plan, RECIPES)
@@ -79,12 +81,19 @@ function Meals({ data, patch }) {
               <ul className="mt-2 grid gap-0.5">
                 {list.map(i => (
                   <li key={i.name}>
-                    <Tick checked={got[i.name]} onChange={v => patch('bought', { ...got, [i.name]: v })}>
+                    <Tick checked={got[i.name]} onChange={v => { if (v) g.add(5, { x:50, y:40 }); patch('bought', { ...got, [i.name]: v }) }}>
                       {i.name} <span className="text-ink-2">({i.uses.join(' + ')})</span>
                     </Tick>
                   </li>
                 ))}
               </ul>
+              {left === 0 && !g.result && (
+                <div className="mt-3 grid gap-3">
+                  <Win reduced={g.reduced}>Every item ticked. Your week of meals is ready.</Win>
+                  <Action className="sm:w-fit" onClick={() => win('Meals planned',
+                    [['Meals', plan.filter(Boolean).length], ['Items bought', list.length]], ['plan'])}>Finish the shop</Action>
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-3">
                 <CopyButton text={list.map(i => `${i.name} (${i.uses.join(' + ')})`).join('\n')} label="Copy list"/>
                 <Action kind="quiet" onClick={() => { patch('plan', Array(7).fill('')); patch('bought', {}) }}>Start again</Action>
@@ -184,15 +193,34 @@ const LOAD_STEPS = [
   ['lint', 'Clean the dryer lint filter every load. A full filter is a fire risk.'],
 ]
 
-function Laundry({ data, patch }) {
+/* The care label quiz: six symbols, three names each. */
+const QUIZ_SYMBOLS = [['w1', ['Wash hot', 'Hand wash']], ['wh', ['Do not wash', 'Wash cold']], ['bx', ['Bleach OK', 'Do not iron']],
+  ['tx', ['Tumble dry', 'Dry flat']], ['f', ['Tumble dry', 'Do not wash']], ['ix', ['Iron low', 'No bleach']]]
+const LABEL_ROUND = QUIZ_SYMBOLS.map(([id, others]) => {
+  const [, name, desc, art] = SYMBOLS.find(x => x[0] === id)
+  return { id, prompt:'What does this symbol mean?', why:desc,
+    art: <svg viewBox="0 0 36 36" width="88" height="88" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Care label symbol" className="kit-ground rounded-[16px] p-2 text-ink">{art}</svg>,
+    options:[{ id:name, text:name, ok:true }, ...others.map(o => ({ id:o, text:o }))] }
+})
+
+function Laundry({ data, patch, g, win }) {
   const [fab, setFab] = React.useState('cotton')
   const [sym, setSym] = React.useState(null)
+  const [quiz, setQuiz] = React.useState(false)
   const f = FABRICS[fab]
   const ticks = data.load || {}
   const done = LOAD_STEPS.filter(([id]) => ticks[id]).length
   const s = SYMBOLS.find(x => x[0] === sym)
   return (
     <>
+      {quiz && !g.result ? (
+        <QuickRound className="mt-4" game={g} items={LABEL_ROUND} label="Symbol" seed={3} doneLabel="Finish the quiz"
+          onDone={grade => { setQuiz(false); win(grade.clean ? 'Label pro' : 'Label quiz done',
+            [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : []) }}/>
+      ) : !g.result && (
+        <PlayCard title="Care label quiz" line="Six symbols, three choices each." onPlay={() => setQuiz(true)}/>
+      )}
       <Panel>
         <Heading>What are you washing?</Heading>
         <div role="group" aria-label="Fabric" className="mt-3 flex flex-wrap gap-2">
@@ -231,7 +259,11 @@ function Laundry({ data, patch }) {
       <Panel>
         <Heading>Load checklist</Heading>
         <Lead>{done === LOAD_STEPS.length ? 'All done. That load is sorted.' : `${done} of ${LOAD_STEPS.length} done.`}</Lead>
-        <Checklist items={LOAD_STEPS} ticks={ticks} onTick={v => patch('load', v)}/>
+        <Checklist items={LOAD_STEPS} ticks={ticks} onTick={v => {
+          if (Object.values(v).filter(Boolean).length > done) g.add(5, { x:50, y:85 })
+          patch('load', v)
+        }}/>
+        {done === LOAD_STEPS.length && <Win className="mt-2" reduced={g.reduced}>Load sorted. Nothing shrank, nothing turned pink.</Win>}
         <Action kind="quiet" className="mt-2" onClick={() => patch('load', {})}>Start again</Action>
       </Panel>
     </>
@@ -248,13 +280,18 @@ const CAR_ITEMS = [
 ]
 const STATE_WORD = { ok:'OK', soon:'Due soon', due:'Due now', unset:'Not set' }
 
-function Car({ data, patch }) {
+function Car({ data, patch, g, win }) {
   const car = data.car || {}
   const miles = car.miles || ''
   const today = todayISO()
   const item = id => ({ ...(CAR_ITEMS.find(c => c[0] === id)[3]), ...(car[id] || {}) })
   const setItem = (id, k, v) => patch('car', { ...car, [id]: { ...item(id), [k]: v } })
-  const logToday = id => patch('car', { ...car, [id]: { ...item(id), lastDate: today, lastMiles: miles } })
+  const logToday = (id, e) => {
+    patch('car', { ...car, [id]: { ...item(id), lastDate: today, lastMiles: miles } })
+    g.hit(10, e, { sound:'good' })
+    const name = CAR_ITEMS.find(c => c[0] === id)[1]
+    if (!g.result) win('Job logged', [['Logged', name], ['Miles now', miles ? Number(miles).toLocaleString('en-US') : 'Not set']], [])
+  }
   const status = CAR_ITEMS.map(([id, name]) => [id, name, vehicleStatus(item(id), { today, miles })])
   const flagged = status.filter(([, , s]) => s.state === 'due' || s.state === 'soon')
   return (
@@ -291,7 +328,7 @@ function Car({ data, patch }) {
               <Field label="Or every (miles)" inputMode="numeric" value={it.everyMiles} onChange={e => setItem(id, 'everyMiles', e.target.value.replace(/[^\d]/g, ''))}/>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Action onClick={() => logToday(id)}>Done today</Action>
+              <Action onClick={e => logToday(id, e)}>Done today</Action>
               {s.state !== 'unset' && <span className="text-fine text-ink-2">{dueText(s)}</span>}
             </div>
           </Panel>
@@ -322,10 +359,10 @@ const TRIP_STEPS = [
   ['safe', 'Wait in a lit spot. At night, sit near the driver or in a busy train car.'],
 ]
 
-function Transit({ data, patch }) {
+function Transit({ data, patch, g, win }) {
   const t = { buffer:10, ...(data.trip || {}) }
   const set = (k, v) => patch('trip', { ...t, [k]: v })
-  const leave = leaveBy(t.arrive, t.minutes, t.buffer)
+  const leave_ = leaveBy(t.arrive, t.minutes, t.buffer)
   const card = tripCard(t)
   const ticks = data.tripTicks || {}
   return (
@@ -352,8 +389,8 @@ function Transit({ data, patch }) {
       </Panel>
       <Panel>
         <Heading>Your trip card</Heading>
-        {leave
-          ? <Figure className="mt-3" label={`Leave ${t.from || 'home'} by`} value={clock12(leave)}/>
+        {leave_
+          ? <Figure className="mt-3" label={`Leave ${t.from || 'home'} by`} value={clock12(leave_)}/>
           : <Lead>Add an arrive by time and the trip time to see when to leave.</Lead>}
         <pre className="mt-3 whitespace-pre-wrap rounded-[12px] bg-mist/60 p-3 font-body text-ui text-ink">{card}</pre>
         <div className="mt-3 flex flex-wrap gap-3">
@@ -363,7 +400,18 @@ function Transit({ data, patch }) {
       </Panel>
       <Panel>
         <Heading>Before you go</Heading>
-        <Checklist items={TRIP_STEPS} ticks={ticks} onTick={v => patch('tripTicks', v)}/>
+        <Checklist items={TRIP_STEPS} ticks={ticks} onTick={v => {
+          if (Object.values(v).filter(Boolean).length > Object.values(ticks).filter(Boolean).length) g.add(5, { x:50, y:85 })
+          patch('tripTicks', v)
+        }}/>
+        {leave_ && TRIP_STEPS.every(([k]) => ticks[k]) && !g.result && (
+          <div className="mt-3 grid gap-3">
+            <Win reduced={g.reduced}>Trip card made and every check done.</Win>
+            <Action className="sm:w-fit" onClick={() => win('Trip ready', [['Leave by', clock12(leave_)], ['Checks', `${TRIP_STEPS.length} of ${TRIP_STEPS.length}`]], ['plan'])}>
+              I am ready to go
+            </Action>
+          </div>
+        )}
       </Panel>
     </>
   )
@@ -371,18 +419,36 @@ function Transit({ data, patch }) {
 
 const TABS = [['meals', 'Meals'], ['laundry', 'Laundry'], ['car', 'Car'], ['transit', 'Bus and train']]
 
+const GOALS = {
+  meals:   'Plan a few meals and tick off the shopping list.',
+  laundry: 'Ace the care label quiz, then run a load.',
+  car:     'Log one job and set when it comes round again.',
+  transit: 'Make a trip card and tick every check before you go.',
+}
+
 export default function LifeHome({ onExit }) {
+  const g = useSkill(ID)
+  const [end, setEnd] = React.useState(null)
   const [data, patch] = useStored(ID, { tab:'meals' })
   const tab = data.tab || 'meals'
+  const win = (title, stats, marks) => { setEnd({ title, stats }); g.finish({ complete:true, marks }); window.scrollTo(0, 0) }
+  const again = () => { setEnd(null); g.reset() }
+  const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="sun" title="Home Basics" icon={HomeIcon} onExit={onExit}
       problem="Living on your own comes fast, and nobody hands you the manual."
       doing="Pick a job below and work through its card. Your ticks and notes are kept.">
-      <Sections label="Home jobs" items={TABS} value={tab} onChange={v => patch('tab', v)}/>
-      {tab === 'meals' && <Meals data={data} patch={patch}/>}
-      {tab === 'laundry' && <Laundry data={data} patch={patch}/>}
-      {tab === 'car' && <Car data={data} patch={patch}/>}
-      {tab === 'transit' && <Transit data={data} patch={patch}/>}
+      <Sections label="Home jobs" items={TABS} value={tab} onChange={go}/>
+      <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
+        {end && g.result && (
+          <EndCard className="mt-4" game={g} title={end.title} stats={end.stats} againLabel="Keep going"
+            onAgain={again} onDone={leave(onExit)}/>
+        )}
+        {tab === 'meals' && <Meals data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'laundry' && <Laundry data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'car' && <Car data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'transit' && <Transit data={data} patch={patch} g={g} win={win}/>}
+      </Quest>
     </LifeScreen>
   )
 }

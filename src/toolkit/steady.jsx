@@ -109,11 +109,11 @@ export default function Steady() {
     setStage('count')
   }
 
-  const finish = React.useCallback(r => {
+  const finish = React.useCallback((r, complete = true) => {
     detach()
     const b = saveBest('steady', r.longest > 0 ? Math.round(r.longest * 10) / 10 : NaN)
     setSummary({ ...r, best: b })
-    g.finish()
+    g.finish({ complete })
     setStage('end')
   }, [g, detach])
   const finishRef = React.useRef(finish); finishRef.current = finish
@@ -268,7 +268,7 @@ export default function Steady() {
         <p className="mt-2 text-center text-fine text-ink-2">{how}</p>
         <p className="mt-1 text-center text-fine text-ink-2">{measured}</p>
         <div className="mt-3 flex justify-center">
-          <Button size="sm" variant="outline" onClick={() => finishRef.current({ ...runRef.current })}>End round</Button>
+          <Button size="sm" variant="outline" onClick={() => finishRef.current({ ...runRef.current }, false)}>End round</Button>
         </div>
       </div>
     </ActivityScreen>

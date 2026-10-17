@@ -38,7 +38,7 @@ function Grid({ lit = -1, flash = null, onHit, disabled, still }) {
           <button key={i} type="button" tabIndex={-1} aria-label={on ? `Light ${i + 1}, on` : `Light ${i + 1}`}
             disabled={disabled}
             onPointerDown={e => { e.preventDefault(); onHit?.(i) }}
-            className={cn('relative aspect-square w-full rounded-full border-[3px] border-ink touch-manipulation select-none',
+            className={cn('relative aspect-square w-full rounded-full border-2 border-rule touch-manipulation select-none',
               'disabled:cursor-default',
               !on && !f && 'bg-card',
               f === 'early' && 'bg-mist',
@@ -78,7 +78,7 @@ export default function Alertness() {
     const avg = rts.length ? rts.reduce((a, b) => a + b, 0) / rts.length : null
     const b = rts.length >= 5 ? saveBest('alert', Math.round(avg), { lower:true }) : { best: readBest('alert'), isNew:false, before:null }
     setSummary({ avg, fastest: rts.length ? Math.min(...rts) : null, hits: rts.length, early: s.early, best: b })
-    g.finish()
+    g.finish({ complete:true })
     setStage('end')
   }
   const finishRef = React.useRef(finish); finishRef.current = finish

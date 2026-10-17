@@ -316,7 +316,7 @@ const FIGURES = [
   { big: '1 in 5', line: 'Florida teens had a major depressive episode in a year',
     exact: '20.1% of Floridians aged 12 to 17', src: FL,
     art: <People on={1} of={5}/> },
-  { big: '3 in 5', line: 'with depression got no treatment for it',
+  { big: '3 in 5', line: 'with depression received no treatment',
     exact: '59.4%, aged 12 to 17, US', src: SOURCES[1],
     art: <People on={3} of={5}/> },
   { big: '40%', line: 'felt sad or hopeless for two weeks or more',

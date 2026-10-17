@@ -44,3 +44,49 @@
   .g-flip.is-flipped .g-flip-inner { transform: none }
   .g-flip.is-flipped .g-front, .g-flip:not(.is-flipped) .g-back { visibility: hidden }
 }
+
+/* ── Wave 9: life skills rounds and the player card ─────────────────── */
+
+/* A new badge arriving: a small lift and a settle. */
+@keyframes g-badge {
+  0%   { opacity: 0; transform: translateY(8px) scale(.94) }
+  60%  { opacity: 1; transform: translateY(0) scale(1.02) }
+  100% { opacity: 1; transform: none }
+}
+.g-badge { animation: g-badge .5s cubic-bezier(0.23,1,0.32,1) both }
+
+/* A right answer: the tick mark draws and a ring opens out from it. */
+@keyframes g-ring {
+  0%   { opacity: .55; transform: scale(.6) }
+  100% { opacity: 0;   transform: scale(1.9) }
+}
+.g-ring { animation: g-ring .6s cubic-bezier(0.23,1,0.32,1) both }
+@keyframes g-draw { from { stroke-dashoffset: 24 } to { stroke-dashoffset: 0 } }
+.g-draw { stroke-dasharray: 24; animation: g-draw .32s cubic-bezier(0.23,1,0.32,1) .05s both }
+
+/* A not-quite answer: one small sideways nudge, never a shake. */
+@keyframes g-nudge {
+  0%, 100% { transform: none }
+  30% { transform: translateX(-4px) }
+  65% { transform: translateX(3px) }
+}
+.g-nudge { animation: g-nudge .32s cubic-bezier(0.23,1,0.32,1) }
+
+/* A new card sliding in from the right, for one-at-a-time rounds. */
+@keyframes g-card {
+  from { opacity: 0; transform: translateX(18px) }
+  to   { opacity: 1; transform: none }
+}
+.g-card { animation: g-card .3s cubic-bezier(0.23,1,0.32,1) both }
+
+/* A meter that has just filled: one soft glow. */
+@keyframes g-full {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--kit-art, #157446) 45%, transparent) }
+  100% { box-shadow: 0 0 0 10px transparent }
+}
+.g-full { animation: g-full .8s cubic-bezier(0.23,1,0.32,1) }
+
+@media (prefers-reduced-motion: reduce) {
+  .g-badge, .g-ring, .g-draw, .g-nudge, .g-card, .g-full, .g-pop, .g-bump, .g-in, .g-count { animation: none !important }
+  .g-draw { stroke-dasharray: none }
+}

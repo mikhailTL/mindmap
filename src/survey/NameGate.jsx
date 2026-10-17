@@ -53,7 +53,7 @@ export function NameGate({ onDone, inline = false }) {
         <div className="mt-5 border-t border-rule pt-4">
           <p className="font-display text-ui font-semibold text-ink">What is stored</p>
           <ul className="mt-2 flex max-w-[56ch] list-disc flex-col gap-1 pl-5 text-sec text-ink-2">
-            <li>Your answers to the twelve questions.</li>
+            <li>Your answers to the questions.</li>
             <li>An age group, a role and a school level, as bands.</li>
             <li>The date and time, and a random code for this browser.</li>
           </ul>

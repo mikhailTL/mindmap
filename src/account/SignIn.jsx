@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
 import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
 import { PRO } from '../lib/terms'
-import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole } from './store'
+import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole, useAccount } from './store'
 import { AvatarChooser, field, fieldError, outline, solid } from './ui'
 import { Settings } from './Settings'
 
@@ -64,6 +64,9 @@ const labelClass = 'block font-display text-fine font-medium text-ink-2'
 export function SignIn({ go, note, after = null, bare = false }) {
   /* Arriving from the front door's chooser: Create, with that role pressed. */
   const preset = React.useMemo(() => takePreferredRole(), [])
+  /* Signed in, the settings under the form are this account's: its profile
+     and its network. */
+  const me = useAccount()
   const [mode, setMode] = React.useState(preset ? 'create' : 'signin')
   const [role, setRole] = React.useState(preset)
   const [name, setName] = React.useState('')
@@ -242,7 +245,7 @@ export function SignIn({ go, note, after = null, bare = false }) {
           </Panel>
         </form>
       </div>
-      {!bare && <Settings me={null} go={go} className="mt-8 border-t border-rule pt-6"/>}
+      {!bare && <Settings me={me} go={go} className="mt-8 border-t border-rule pt-6"/>}
     </main>
   )
 }

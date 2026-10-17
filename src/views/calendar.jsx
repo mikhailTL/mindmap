@@ -74,6 +74,7 @@ const ACTIONS = {
   ],
   parent: [
     ['Invite your teen', 'Your teen approves it in their app.'],
+    [`Add a ${PRO}`, 'Your teen approves what they see.'],
   ],
   pro: [
     ['Invite a teen or parent', 'A parent approves before you see anything.'],

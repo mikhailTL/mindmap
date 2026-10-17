@@ -131,7 +131,7 @@ export default function Walk() {
     detach()
     const b = r.mode === 'steps' && r.steps > 0 ? saveBest('walk', r.steps) : { best: readBest('walk'), isNew:false, before:null }
     setSummary({ ...r, best: b })
-    g.finish()
+    g.finish({ complete: !!r.done })
     setStage('end')
   }, [g, detach])
   const finishRef = React.useRef(finish); finishRef.current = finish

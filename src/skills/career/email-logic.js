@@ -166,3 +166,21 @@ export const ETIQUETTE = [
     'Ask before you add someone online, and keep it about the work.',
   ]},
 ]
+
+/* A quick round: pick the line that reads as professional. One right
+   answer each; the wrong ones carry the habits the checker flags. */
+const F = (id, prompt, right, wrong, why) => ({ id, prompt, why,
+  options:[{ id:'r', text:right, ok:true }, ...wrong.map((t, i) => ({ id:'w' + i, text:t }))] })
+export const FIX_ROUND = [
+  F('greet', 'Which greeting fits an email to a teacher?', 'Dear Ms. Lee,', ['hey!!', 'yo ms lee'],
+    'A title and their last name. You can match their tone once they reply.'),
+  F('ask', 'Which line asks clearly?', 'Could you look over my essay plan before Friday?', ['can u help w the essay thx', 'I NEED HELP ASAP'],
+    'One clear ask with a time. No shorthand, no capitals for shouting.'),
+  F('subject', 'Which subject line works?', 'Question about the Unit 3 essay', ['(no subject)', 'hiii'],
+    'A subject that says what it is about gets opened and found again.'),
+  F('late', 'You missed a deadline. Which line is best?', 'I am sorry I missed Friday\'s deadline. Could I hand it in by Tuesday?',
+    ['sorry my bad lol', 'I was really busy and it is not my fault.'],
+    'Own it in one line and offer a plan. No long excuses.'),
+  F('sign', 'Which sign off fits?', 'Thank you, Ana Ruiz', ['ttyl', 'sent from my phone'],
+    'Thank them and use your full name, so they know exactly who wrote.'),
+]

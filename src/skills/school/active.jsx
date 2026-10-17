@@ -3,6 +3,8 @@ import { cn } from '../../lib/utils'
 import { Sheet, Action, Choice, Meter, Note } from '../../toolkit/shell'
 import { Screen, H, Field, Seg, Tick, CopyButton, useSaved, uid, ActiveIcon } from './ui'
 import { notesToCards, review, dueCards, dayNumber, buildQuestion, precision } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, GoalMeter, leave } from '../../toolkit/game/skill'
 
 /* Active learning. Turn notes into questions, quiz yourself on a spaced
  * schedule (a card you know waits longer, one you miss comes back today),
@@ -14,8 +16,12 @@ const START = { tab:'make', notes:'', drafts:[], cards:[], ask:EMPTY_ASK, asked:
 const STARTERS = ['Why does', 'How do I know when to', 'What is the difference between', 'Can you check if']
 const inDays = d => d <= 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`
 
-function Make({ s, set }) {
-  const make = () => set({ drafts:notesToCards(s.notes).slice(0, 30).map(c => ({ ...c, id:uid() })) })
+function Make({ s, set, g }) {
+  const make = e => {
+    const drafts = notesToCards(s.notes).slice(0, 30).map(c => ({ ...c, id:uid() }))
+    if (drafts.length) g.hit(10, e, { label:`${drafts.length} ${drafts.length === 1 ? 'card' : 'cards'}`, sound:'good' })
+    set({ drafts })
+  }
   const edit = (id, k, v) => set({ drafts:s.drafts.map(d => d.id === id ? { ...d, [k]:v } : d) })
   const keep = () => {
     const today = dayNumber()
@@ -57,13 +63,14 @@ function Make({ s, set }) {
   )
 }
 
-function Quiz({ s, set }) {
+function Quiz({ s, set, g, onExit }) {
   const today = dayNumber()
   const [run, setRun] = React.useState(null)   // { queue:[ids], i, shown, typed, tally:{got,partly,not}, retried:Set }
   const due = dueCards(s.cards, today)
   const next = s.cards.length ? Math.min(...s.cards.map(c => c.due)) - today : null
 
   const begin = all => {
+    g.reset()
     const list = all ? [...s.cards].sort((a, b) => a.box - b.box) : due
     setRun({ queue:list.map(c => c.id), i:0, shown:false, typed:'', tally:{ got:0, partly:0, not:0 }, retried:[] })
   }
@@ -116,6 +123,13 @@ function Quiz({ s, set }) {
 
   if (run.i >= run.queue.length) {
     const seen = run.tally.got + run.tally.partly + run.tally.not
+    if (g.result) return (
+      <EndCard game={g} title={run.tally.partly + run.tally.not === 0 ? 'Every card from memory' : 'Quiz done'}
+        againLabel="Back to my cards" onAgain={() => { setRun(null); g.reset() }} onDone={leave(onExit)}
+        stats={[['Got it', run.tally.got], ['Partly', run.tally.partly], ['Not yet', run.tally.not], ['Answers from memory', seen]]}>
+        <p className="text-ui text-ink">Cards you got wait longer before they come back. The rest return sooner, which is how they stick.</p>
+      </EndCard>
+    )
     return (
       <Sheet className="kit-ground border-transparent">
         <H>Quiz done</H>
@@ -137,33 +151,37 @@ function Quiz({ s, set }) {
 
   const card = s.cards.find(c => c.id === run.queue[run.i])
   if (!card) return null
-  const grade = g => {
-    set({ cards:s.cards.map(c => c.id === card.id ? review(c, g, today) : c) })
-    const again = g === 'not' && !run.retried.includes(card.id)
-    setRun({ ...run, i:run.i + 1, shown:false, typed:'',
-      queue: again ? [...run.queue, card.id] : run.queue,
-      retried: again ? [...run.retried, card.id] : run.retried,
-      tally:{ ...run.tally, [g]:run.tally[g] + 1 } })
+  const grade = (k, e) => {
+    set({ cards:s.cards.map(c => c.id === card.id ? review(c, k, today) : c) })
+    const again = k === 'not' && !run.retried.includes(card.id)
+    const queue = again ? [...run.queue, card.id] : run.queue
+    const tally = { ...run.tally, [k]:run.tally[k] + 1 }
+    if (k === 'got') g.hit(10, e, { sound:'good' })
+    else if (k === 'partly') g.hit(5, e)
+    else g.cue('turn')
+    setRun({ ...run, i:run.i + 1, shown:false, typed:'', queue,
+      retried: again ? [...run.retried, card.id] : run.retried, tally })
+    if (run.i + 1 >= queue.length) g.finish({ complete:true, marks: tally.partly + tally.not === 0 ? ['clean'] : [] })
   }
   return (
     <Sheet>
-      <Meter value={run.i / run.queue.length} label={`Card ${run.i + 1} of ${run.queue.length}`} right={`Box ${card.box}`}/>
-      <p className="mt-4 font-display text-row font-bold text-ink">{card.q}</p>
+      <GoalMeter reduced={g.reduced} value={run.i / run.queue.length} label={`Card ${run.i + 1} of ${run.queue.length}`} right={`Box ${card.box}`}/>
+      <p key={run.i} className={cn('mt-4 font-display text-row font-bold text-ink', !g.reduced && 'g-card')}>{card.q}</p>
       <Field className="mt-3" label="Your answer, from memory" hint="Optional. Saying it out loud works too."
         value={run.typed} onChange={e => setRun({ ...run, typed:e.target.value })}/>
       {!run.shown ? (
         <Action className="mt-4 w-full" onClick={() => setRun({ ...run, shown:true })}>Show answer</Action>
       ) : (
         <>
-          <div className="kit-ground mt-4 rounded-[12px] p-3" aria-live="polite">
+          <div className={cn('kit-ground mt-4 rounded-[12px] p-3', !g.reduced && 'g-in')} aria-live="polite">
             <p className="text-fine text-ink-2">Answer</p>
             <p className="text-sec font-semibold text-ink">{card.a}</p>
           </div>
           <p className="mt-3 font-display text-ui font-semibold text-ink">How did you do?</p>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <Action className="px-2" onClick={() => grade('got')}>Got it</Action>
-            <Action kind="quiet" className="px-2" onClick={() => grade('partly')}>Partly</Action>
-            <Action kind="quiet" className="px-2" onClick={() => grade('not')}>Not yet</Action>
+            <Action className="px-2" onClick={e => grade('got', e)}>Got it</Action>
+            <Action kind="quiet" className="px-2" onClick={e => grade('partly', e)}>Partly</Action>
+            <Action kind="quiet" className="px-2" onClick={e => grade('not', e)}>Not yet</Action>
           </div>
         </>
       )}
@@ -189,13 +207,21 @@ function Boxes({ cards }) {
   )
 }
 
-function Ask({ s, set }) {
+function Ask({ s, set, g, onExit }) {
+  const [last, setLast] = React.useState(null)
   const f = s.ask
   const p = precision(f)
   const text = buildQuestion(f)
   const up = (k, v) => set({ ask:{ ...f, [k]:v } })
   const tip = id => p.checks.find(c => c.id === id)
   const mark = id => (f[id] || '').trim() && !tip(id).ok ? tip(id).tip : null
+  if (last && g.result) return (
+    <EndCard game={g} title="Question ready" againLabel="Write another" onDone={leave(onExit)}
+      onAgain={() => { setLast(null); g.reset() }} stats={[['Precision', `${last.score} of 5`]]}>
+      <p className="kit-ground rounded-[12px] p-3 text-sec text-ink">{last.text}</p>
+      <CopyButton className="mt-3" text={last.text}/>
+    </EndCard>
+  )
   return (
     <>
       <Sheet className="grid gap-4">
@@ -218,7 +244,7 @@ function Ask({ s, set }) {
         </div>
       </Sheet>
       <Sheet>
-        <Meter value={p.score / 5} label="Precision" right={`${p.score} of 5`}/>
+        <GoalMeter reduced={g.reduced} value={p.score / 5} label="Precision" right={`${p.score} of 5`}/>
         <p className="mt-2 text-ui font-semibold text-ink">{p.line}</p>
         <ul className="mt-3 grid gap-2">
           {p.checks.map(c => (
@@ -234,8 +260,12 @@ function Ask({ s, set }) {
           <p className="kit-ground mt-2 rounded-[12px] p-3 text-sec text-ink">{text}</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <CopyButton text={text}/>
-            <Action onClick={() => { set({ asked:[{ id:uid(), text }, ...s.asked].slice(0, 20), ask:EMPTY_ASK }); window.scrollTo(0, 0) }}>
-              Save
+            <Action onClick={() => {
+              setLast({ text, score:p.score })
+              g.finish({ complete:true })
+              set({ asked:[{ id:uid(), text }, ...s.asked].slice(0, 20), ask:EMPTY_ASK }); window.scrollTo(0, 0)
+            }}>
+              Save and finish
             </Action>
           </div>
           <Action kind="quiet" className="mt-3 w-full" onClick={() => set({ ask:EMPTY_ASK })}>Start again</Action>
@@ -263,18 +293,29 @@ function Ask({ s, set }) {
   )
 }
 
+const GOALS = {
+  make:['Turn your notes into questions.', ['Paste notes', 'Fix the questions', 'Save the cards']],
+  quiz:['Answer every card from memory before you look.', ['Answer the cards']],
+  ask: ['Write a question a teacher can answer in one go.', ['Fill in the parts', 'Save it']],
+}
+
 export default function Active({ onExit }) {
+  const g = useSkill(ID)
   const [s, setS] = useSaved(ID, START)
   const set = patch => setS(v => ({ ...v, ...patch }))
   const TABS = [['make', 'Make questions'], ['quiz', 'Quiz me'], ['ask', 'Ask a teacher']]
+  const step = g.result ? 9 : s.tab === 'make' ? (s.drafts.length ? 1 : 0)
+    : s.tab === 'ask' ? (precision(s.ask).score >= 3 ? 1 : 0) : 0
   return (
     <Screen title="Active Recall" family="mint" icon={ActiveIcon} onExit={onExit}
       problem="Rereading and memorising feels like work but fades fast."
       plan="Turn notes into questions, quiz yourself over days, and ask sharper questions in class.">
-      <Seg small label="Part" value={s.tab} onChange={v => set({ tab:v })} options={TABS}/>
-      {s.tab === 'make' && <Make s={s} set={set}/>}
-      {s.tab === 'quiz' && <Quiz s={s} set={set}/>}
-      {s.tab === 'ask' && <Ask s={s} set={set}/>}
+      <Seg small label="Part" value={s.tab} onChange={v => { set({ tab:v }); g.reset() }} options={TABS}/>
+      <Quest game={g} goal={GOALS[s.tab][0]} steps={GOALS[s.tab][1]} at={step}>
+        {s.tab === 'make' && <Make s={s} set={set} g={g}/>}
+        {s.tab === 'quiz' && <Quiz s={s} set={set} g={g} onExit={onExit}/>}
+        {s.tab === 'ask' && <Ask s={s} set={set} g={g} onExit={onExit}/>}
+      </Quest>
     </Screen>
   )
 }

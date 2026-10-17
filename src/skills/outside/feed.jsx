@@ -7,6 +7,9 @@ import {
   START_APPS, FEELS, TRICKS, FREE_TIMES, NOTIF_CUTS, ADS_PER_MINUTE,
   attention, hoursText, drainers, trickCounts, suggestLimit, minutesSaved, readStore, writeStore,
 } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, Answer, answerState, leave } from '../../toolkit/game/skill'
+import { mixOptions } from '../../toolkit/game/round'
 
 /* Feed Check: a digital wellness audit.
  *
@@ -96,44 +99,75 @@ function Apps({ s, set }) {
   )
 }
 
-function Tricks({ s, set }) {
+/* Three names for a trick card: the right one and two others, mixed. */
+const namesFor = i => mixOptions([TRICKS[i], TRICKS[(i + 1) % TRICKS.length], TRICKS[(i + 3) % TRICKS.length]]
+  .map(x => ({ id:x.id, text:x.name, ok:x.id === TRICKS[i].id })), i + 2)
+
+function Tricks({ s, set, g, named, setNamed }) {
   const card = s.card || 0
   const t = TRICKS[card]
   const used = s.apps.filter(a => Number(a.minutes) > 0)
   const flip = name => set({ apps:s.apps.map(a => a.name === name ? { ...a, tricks:toggle(a.tricks || [], t.id) } : a) })
+  const pick = named[t.id]
+  const name = (o, e) => {
+    if (pick) return
+    setNamed({ ...named, [t.id]:o.id })
+    if (o.ok) g.hit(10, e, { sound:'good' }); else g.cue('turn')
+  }
   return (
     <>
       <StepHead n={2} of={4} title="Spot the tricks"/>
-      <Note>Apps are designed to be hard to put down. Read each card and tap the apps that use it.</Note>
+      <Note>Apps are designed to be hard to put down. Name each trick, then tap the apps that use it.</Note>
       <Sheet className="mt-4">
-        <p className="text-fine font-semibold text-ink-2">Card {card + 1} of {TRICKS.length}</p>
-        <h4 className="kit-ink mt-1 font-display text-head font-bold tracking-tight">{t.name}</h4>
-        <p className="mt-2 text-sec text-ink">{t.how}</p>
-        <p className="mt-2 text-ui text-ink-2"><span className="font-bold text-ink">Counter move: </span>{t.fix}</p>
-        <fieldset className="mt-4">
+        <div key={t.id} className={cn(!g.reduced && 'g-card')}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-fine font-semibold text-ink-2">Card {card + 1} of {TRICKS.length}</p>
+          <ol aria-hidden className="flex gap-1">
+            {TRICKS.map((x, k) => (
+              <li key={x.id} className={cn('size-2.5 rounded-full', named[x.id] == null ? (k === card ? 'kit-fill-art' : 'bg-rule')
+                : named[x.id] === x.id ? 'kit-fill' : 'border-2 border-warn bg-card')}/>
+            ))}
+          </ol>
+        </div>
+        <p className="mt-2 font-display text-row font-bold tracking-tight text-ink">{t.how}</p>
+        <p className="mt-3 text-fine font-semibold text-ink-2">What is this trick called?</p>
+        <div role="group" aria-label="Trick names" className="mt-2 grid gap-2">
+          {namesFor(card).map(o => (
+            <Answer key={o.id} state={answerState(o, pick, t.id)} reduced={g.reduced} onClick={e => name(o, e)}>{o.text}</Answer>
+          ))}
+        </div>
+        {pick && (
+          <div role="status" className={cn('mt-3 rounded-[12px] p-3', pick === t.id ? 'bg-accent-wash' : 'bg-warn-wash')}>
+            <p className="font-display text-ui font-bold text-ink">{pick === t.id ? `Right: ${t.name}.` : `It is ${t.name}.`}</p>
+            <p className="mt-1 text-ui text-ink"><span className="font-bold">Counter move: </span>{t.fix}</p>
+          </div>
+        )}
+        {pick && <fieldset className="mt-4">
           <legend className="text-fine font-semibold text-ink-2">Which of your apps do this?</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {used.map(a => (
               <Choice key={a.name} on={(a.tricks || []).includes(t.id)} onClick={() => flip(a.name)}>{a.name}</Choice>
             ))}
           </div>
-        </fieldset>
+        </fieldset>}
+        </div>
       </Sheet>
       <Row>
         {card > 0
           ? <Action kind="quiet" onClick={() => set({ card:card - 1 })}>Back</Action>
           : <Action kind="quiet" onClick={() => set({ step:1 })}>Back</Action>}
         {card < TRICKS.length - 1
-          ? <Action onClick={() => set({ card:card + 1 })}>Next card</Action>
-          : <Action onClick={() => set({ step:3 })}>See your numbers</Action>}
+          ? <Action disabled={!pick} onClick={() => set({ card:card + 1 })}>Next card</Action>
+          : <Action disabled={!pick} onClick={() => set({ step:3 })}>See your numbers</Action>}
       </Row>
     </>
   )
 }
 
-function Stat({ value, label, wide = false }) {
+function Stat({ value, label, wide = false, delay = 0 }) {
   return (
-    <div className={cn('rounded-[14px] bg-card p-3.5 shadow-card', wide && 'col-span-2')}>
+    <div style={{ animationDelay: delay + 'ms' }}
+      className={cn('g-in rounded-[14px] bg-card p-3.5 shadow-card motion-reduce:animate-none', wide && 'col-span-2')}>
       <p className="kit-ink font-display text-stat font-bold tabular-nums">{value}</p>
       <p className="mt-1.5 text-fine text-ink-2">{label}</p>
     </div>
@@ -153,8 +187,8 @@ function Numbers({ s, set }) {
       <Result className="mt-4">
         <div className="grid grid-cols-2 gap-3">
           <Stat wide value={hoursText(a.weekMinutes)} label="on these apps each week"/>
-          <Stat value={a.adsWeek.toLocaleString()} label="ads seen each week, about"/>
-          <Stat value={a.yearHours.toLocaleString()} label="hours a year at this pace"/>
+          <Stat delay={180} value={a.adsWeek.toLocaleString()} label="ads seen each week, about"/>
+          <Stat delay={360} value={a.yearHours.toLocaleString()} label="hours a year at this pace"/>
         </div>
         <p className="mt-3 text-fine text-ink-2">Estimate. Assumes about {ADS_PER_MINUTE} ads a minute (one every
           {' '}{Math.round(1 / ADS_PER_MINUTE)} minutes) on apps that show ads. Real rates vary by app.</p>
@@ -215,7 +249,7 @@ function Limit({ app, value, onChange }) {
   )
 }
 
-function Bounds({ s, set }) {
+function Bounds({ s, set, g, named }) {
   const used = s.apps.filter(a => Number(a.minutes) > 0)
     .sort((a, b) => (b.feel === 'worse') - (a.feel === 'worse') || Number(b.minutes) - Number(a.minutes))
   const setLimit = (name, v) => {
@@ -227,6 +261,8 @@ function Bounds({ s, set }) {
   const save = () => {
     const plan = { limits:s.limits, free:s.free, notif:s.notif, saved:minutesSaved(s.apps, s.limits) }
     set({ step:5, plan })
+    const clean = TRICKS.every(t => named[t.id] === t.id)
+    g.finish({ complete:true, marks: clean ? ['plan', 'clean'] : ['plan'] })
   }
   return (
     <>
@@ -256,12 +292,19 @@ function Bounds({ s, set }) {
   )
 }
 
-function Plan({ s, set, onExit, again }) {
+function Plan({ s, set, onExit, again, g, named }) {
   const p = s.plan
   const names = Object.keys(p.limits)
+  const right = TRICKS.filter(t => named[t.id] === t.id).length
   return (
     <>
       <StepHead n={0} of={0} title="Your screen plan"/>
+      {g.result && (
+        <EndCard className="mb-4" game={g} title="Screen plan saved" againLabel="Start again" onAgain={again}
+          onDone={leave(onExit)}
+          stats={[['Frees up a week', p.saved > 0 ? hoursText(p.saved) : 'None yet'], ['App limits', names.length],
+                  ['Tricks named', `${right} of ${TRICKS.length}`], ['Phone-free times', p.free.length]]}/>
+      )}
       <Result>
         {p.saved > 0 && (
           <p className="kit-ink font-display text-row font-bold">Frees up about {hoursText(p.saved)} a week</p>
@@ -312,6 +355,8 @@ function Plan({ s, set, onExit, again }) {
 }
 
 export default function Feed({ onExit }) {
+  const g = useSkill(ID)
+  const [named, setNamed] = React.useState({})
   const [s, setS] = React.useState(() => {
     const saved = readStore(ID, null)
     return saved && saved.apps ? { ...fresh(), ...saved, step:saved.plan ? 5 : 1 } : fresh()
@@ -321,16 +366,19 @@ export default function Feed({ onExit }) {
     writeStore(ID, { apps:next.apps, limits:next.limits, free:next.free, notif:next.notif, plan:next.plan })
     return next
   })
-  const again = () => { const f = fresh(); writeStore(ID, { ...f, step:undefined }); setS(f) }
+  const again = () => { const f = fresh(); writeStore(ID, { ...f, step:undefined }); setS(f); setNamed({}); g.reset() }
   return (
     <Screen id={ID} family="sky" title="Feed Check" icon={<FeedIcon/>} onExit={onExit}>
       {s.step === 1 && <Intro problem="Feeds are built to keep you scrolling, and comparing yourself can wear you down."
         doing="Audit your apps, spot the tricks they use, then set limits you choose."/>}
+      <Quest game={g} body="mt-5" goal="Build a screen plan you will actually keep."
+        steps={['Your apps', 'Spot the tricks', 'Your numbers', 'Set limits']} at={s.step - 1}>
       {s.step === 1 && <Apps s={s} set={set}/>}
-      {s.step === 2 && <Tricks s={s} set={set}/>}
+      {s.step === 2 && <Tricks s={s} set={set} g={g} named={named} setNamed={setNamed}/>}
       {s.step === 3 && <Numbers s={s} set={set}/>}
-      {s.step === 4 && <Bounds s={s} set={set}/>}
-      {s.step === 5 && s.plan && <Plan s={s} set={set} onExit={onExit} again={again}/>}
+      {s.step === 4 && <Bounds s={s} set={set} g={g} named={named}/>}
+      {s.step === 5 && s.plan && <Plan s={s} set={set} onExit={onExit} again={again} g={g} named={named}/>}
+      </Quest>
       <Local/>
     </Screen>
   )

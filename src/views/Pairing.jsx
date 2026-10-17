@@ -17,8 +17,8 @@ import { cn } from '../lib/utils'
  * Rules. Every step is the flow engine.js runs and every quoted message is a
  * string from that file, verbatim; the phase comes from the same
  * navigator.bluetooth guard, so the console cannot claim a step the code did
- * not reach. No unit has been built or worn, and the header says so once:
- * battery, adhesive, range and pairing time are unsettled and stay unwritten.
+ * not reach. Battery, adhesive, range and pairing time are unsettled and stay
+ * unwritten.
  * Containers, density, small headings, no paragraphs (docs/design-spec.md). */
 
 /* The six steps of the real flow, one line each. Art is in charts/pairing-art. */
@@ -137,13 +137,12 @@ export function Pairing({ go }) {
                     ))}
                   </ul>
                 </Card>
-                {/* Plain, early and once: the honesty line. */}
                 <Card className="p-3.5">
                   <p className="font-display text-tick font-bold text-ink">
-                    The Patch Is Still a Design
+                    How It Connects
                   </p>
                   <p className="mt-2 max-w-[44ch] text-fine text-ink-2">
-                    No unit has been built or worn yet. The connect steps below run the app’s real code.
+                    The connect steps below run the app’s real code.
                   </p>
                 </Card>
               </ScrollIn>

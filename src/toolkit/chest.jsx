@@ -153,13 +153,13 @@ export default function Chest() {
     setStage('count')
   }
 
-  const finish = React.useCallback(scores => {
+  const finish = React.useCallback((scores, complete = true) => {
     detach()
     const inTime = scores.filter(s => s >= 0.6).length
     const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
     const b = saveBest('chest', scores.length ? Math.round(avg * 100) : NaN)
     setSummary({ inTime, top: scores.length ? Math.max(...scores) : 0, avg, best: b, n: scores.length })
-    g.finish()
+    g.finish({ complete })
     setStage('end')
   }, [g, detach])
   const finishRef = React.useRef(finish); finishRef.current = finish
@@ -284,7 +284,7 @@ export default function Chest() {
         <p className="mt-2 text-center text-fine text-ink-2">{source}</p>
         <p className="mt-1 text-center text-fine text-ink-2">{measured}</p>
         <div className="mt-3 flex justify-center">
-          <Button size="sm" variant="outline" onClick={() => finishRef.current(scoresRef.current)}>End round</Button>
+          <Button size="sm" variant="outline" onClick={() => finishRef.current(scoresRef.current, false)}>End round</Button>
         </div>
       </div>
     </ActivityScreen>

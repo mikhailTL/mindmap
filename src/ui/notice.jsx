@@ -30,7 +30,7 @@ function Notice({ tag, tone, rule, inline, children, className }) {
   )
 }
 
-export function DemoNotice({ children = 'Every figure here is generated. Nobody has worn a patch and nobody was measured.', className, inline = false }) {
+export function DemoNotice({ children = 'Figures shown are sample data.', className, inline = false }) {
   return (
     <Notice tag="Demo" tone="text-warn" rule="border-warn" inline={inline} className={className}>
       {children}
@@ -43,6 +43,16 @@ export function DemoNotice({ children = 'Every figure here is generated. Nobody 
 export function RealNotice({ children = 'No patch is paired, so there is nothing to read yet.', className, inline = false }) {
   return (
     <Notice tag="No patch" tone="text-crit" rule="border-l-[3px] border-crit" inline={inline} className={className}>
+      {children}
+    </Notice>
+  )
+}
+
+/* Neutral, for a note that is neither sample data nor a missing pairing: an
+   ink tag on an accent rule, no alarm colour. */
+export function PatchNotice({ children = 'Patch use is optional but recommended.', className, inline = false }) {
+  return (
+    <Notice tag="Patch" tone="text-ink" rule="border-accent" inline={inline} className={className}>
       {children}
     </Notice>
   )

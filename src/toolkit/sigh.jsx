@@ -155,13 +155,13 @@ export default function Sigh() {
     return () => cancelAnimationFrame(id)
   }, [stage])
 
-  const finish = React.useCallback(() => {
+  const finish = React.useCallback((complete = true) => {
     const secs = runs.current
     const longest = secs.length ? Math.max(...secs) : 0
     const b = saveBest('sigh', longest > 0 ? Math.round(longest * 10) / 10 : NaN)
     setSummary({ longest, n: secs.length, long: secs.filter(s => s >= GOAL_S).length, best: b })
     meter.current?.stop(); meter.current = null
-    g.finish()
+    g.finish({ complete })
     setStage('end')
   }, [g])
   const finishRef = React.useRef(finish); finishRef.current = finish
@@ -299,7 +299,7 @@ export default function Sigh() {
         <p className="mt-2 text-center text-fine text-ink-2">{micLine}</p>
         <p className="mt-1 text-center text-fine text-ink-2">Sound level is measured here and never recorded.</p>
         <div className="mt-3 flex justify-center">
-          <Button size="sm" variant="outline" onClick={() => finishRef.current()}>End round</Button>
+          <Button size="sm" variant="outline" onClick={() => finishRef.current(false)}>End round</Button>
         </div>
       </div>
     </ActivityScreen>

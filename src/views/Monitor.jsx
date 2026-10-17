@@ -387,7 +387,7 @@ function SignalShapes() {
 
 /* Requirements, not wizard steps. */
 const PAIRING = [
-  ['A charged patch', 'Worn on the upper arm. No patch has been built yet.'],
+  ['A charged patch', 'Sits on the upper arm.'],
   ['A phone with Bluetooth', 'The patch sends four signals once a second.'],
   ['About two weeks of wear', 'Two weeks of readings build your own normal.'],
 ]

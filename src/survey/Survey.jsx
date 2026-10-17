@@ -197,10 +197,10 @@ export function ReviewLauncher({ page }) {
             <span className="font-display text-ui font-medium text-ink">
               {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Give feedback'}
             </span>
-            {/* A count of questions, which is checkable, rather than a minute
-                estimate, which is not. */}
+            {/* No fixed count before starting: the question set can grow. Once
+                started, the live tally is read from REQUIRED. */}
             <span className="text-fine font-medium tabular-nums text-ink-3">
-              {started ? `${done}/${total}` : `${total} questions`}
+              {started ? `${done}/${total}` : 'A few questions'}
             </span>
           </button>
           <button
@@ -299,7 +299,7 @@ function ReviewDialog({ onClose }) {
               the consent panel: a reviewer who answered on one visit and came
               back on another may never see that panel again. */}
           <p className="max-w-[56ch] text-sec text-ink-2">
-            {total} questions. Answers save as you give them, so closing this loses nothing,
+            Answers save as you give them, so closing this loses nothing,
             and they go on to the person building MindMap once you are through.
           </p>
           <p className="note mt-2 max-w-[56ch]">

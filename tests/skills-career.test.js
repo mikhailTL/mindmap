@@ -242,3 +242,30 @@ describe('career belong', () => {
     expect(advocacyScript({ kind: 'help' })).toContain('[')
   })
 })
+
+import { FIX_ROUND, SLANG } from '../src/skills/career/email-logic.js'
+import { WARMUP } from '../src/skills/career/feedback-logic.js'
+
+describe('practice rounds', () => {
+  it('gives every email item one professional answer with no texting habits', () => {
+    expect(FIX_ROUND.length).toBeGreaterThanOrEqual(5)
+    for (const it of FIX_ROUND) {
+      const right = it.options.filter(o => o.ok)
+      expect(right).toHaveLength(1)
+      const words = right[0].text.toLowerCase().match(/[a-z']+/g) || []
+      expect(words.some(w => SLANG.has(w))).toBe(false)
+      expect(right[0].text).not.toMatch(/!!|[–—]/)
+    }
+  })
+  it('has a texting habit in at least one wrong answer per item', () => {
+    for (const it of FIX_ROUND) {
+      const wrong = it.options.filter(o => !o.ok).map(o => o.text)
+      expect(wrong.length).toBeGreaterThanOrEqual(2)
+    }
+  })
+  it('sorts the warm up lines into work and judgement', () => {
+    expect(WARMUP).toHaveLength(5)
+    for (const it of WARMUP) expect(it.options.filter(o => o.ok)).toHaveLength(1)
+    expect(WARMUP.filter(it => it.options.find(o => o.ok).id === 'work').length).toBe(3)
+  })
+})

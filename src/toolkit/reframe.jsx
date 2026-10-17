@@ -161,7 +161,7 @@ export default function Reframe() {
     const ok = writeJournal(list)
     setJournal(list); setSaved(ok)
     g.add(20, { x:50, y:60, label:'saved', sound:'good' })
-    setTimeout(() => { setStage('done'); g.finish() }, 450)
+    setTimeout(() => { setStage('done'); g.finish({ complete:true }) }, 450)
   }
 
   const del = id => { const list = journal.filter(e => e.id !== id); writeJournal(list); setJournal(list) }

@@ -123,7 +123,8 @@ export const FAMILY = Object.freeze([
   makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'owl' }),
 ])
 
-/* A Medical Professional's caseload: 24 teens across three grades. Names are
+/* A Medical Professional's caseload: 24 teens across grades 8 to 12, each
+   age fitting the grade (grade plus 5 or plus 6). Names are
    invented; the pseudonym is what the screen shows until a teen's consent
    allows the name. */
 const FIRSTS = ['Ava', 'Noah', 'Mia', 'Ethan', 'Zoe', 'Liam', 'Isla', 'Mateo', 'Nora', 'Kai', 'Lena', 'Omar',
@@ -133,7 +134,7 @@ export const CASELOAD = Object.freeze(FIRSTS.map((first, i) => {
   const seed = 2000 + i * 37
   const r = rng(seed)
   return makeTeen({
-    id: 'c' + (i + 1), first, last: LASTS[i % LASTS.length], age: 13 + (i % 6), grade: 8 + (i % 5),
+    id: 'c' + (i + 1), first, last: LASTS[i % LASTS.length], age: 13 + (i % 5) + (i % 2), grade: 8 + (i % 5),
     seed, base: round(36 + r() * 30), drift: round((r() - 0.35) * 26), swing: round(6 + r() * 8),
     patch: r() > 0.35, pseudonym: `Student ${String(1000 + ((seed * 7919) % 9000)).padStart(4, '0')}`,
     consent: { score: true, trends: r() > 0.15, raw: r() > 0.7 },

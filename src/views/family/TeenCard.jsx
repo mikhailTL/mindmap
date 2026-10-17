@@ -19,6 +19,8 @@ import { STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, showsScore, s
  * The card is a stretched button: the name's button covers the card, and the
  * switch, when there is one, sits above it so both stay reachable. */
 
+const RANGES_ROW = [['day', 'Today'], ['week', 'Week'], ['month', 'Month']]
+
 export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   if (teen.avatar && !isPro(variant)) return <AvatarArt id={teen.avatar} className={size}/>
   const label = isPro(variant) && !teen.consent?.name ? teen.pseudonym.replace(/\D/g, '').slice(-2) : teen.initial
@@ -95,6 +97,17 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
         )}
         {score && (
           <p className="m-0 mt-2 text-fine text-ink-3">Usual {teen.usual.lo} to {teen.usual.hi}</p>
+        )}
+        {/* The three ranges side by side, each a mean of whole days. */}
+        {score && trends && (
+          <dl className="m-0 mt-3 grid grid-cols-3 gap-2 border-t border-rule pt-2.5">
+            {RANGES_ROW.map(([r, label]) => (
+              <div key={r} className="min-w-0">
+                <dt className="text-fine text-ink-3">{label}</dt>
+                <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{summary(teen, r).mean}</dd>
+              </div>
+            ))}
+          </dl>
         )}
       </div>
 

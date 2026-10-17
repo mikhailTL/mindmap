@@ -130,8 +130,9 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
               </Why>
             </div>
             <div className="flex flex-wrap gap-2.5">
+              {/* The bottom tab is Your Network; this opens the linking screen. */}
               <ActionLink onClick={() => go('network')} primary>
-                <People aria-hidden size={16}/> Your Network</ActionLink>
+                <People aria-hidden size={16}/> Connect</ActionLink>
               <ActionLink onClick={() => go('ai')}>
                 Ask MindMap AI <ArrowRight aria-hidden className="size-4 shrink-0 text-accent"/></ActionLink>
             </div>

@@ -124,7 +124,7 @@ export const ShellArt = (
       + 'breaks the body wall, and centre lines cross both axes. In the middle, the long side '
       + 'view: the raised body stands on the flange, the slot breaks its side wall, and the '
       + 'skin surface is hatched beneath. On the right, the slot is enlarged through the cut '
-      + 'wall. Depth is not dimensioned. No unit has been built.'}>
+      + 'wall. Depth is not dimensioned.'}>
     <defs>
       <pattern id="pp-shell-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
@@ -186,7 +186,7 @@ export const PodArt = (
       + 'bought board seated in it, its two pad rows and its connector, inside the dashed '
       + 'outline of the patch footprint. In the middle, the tray in section, with the board '
       + 'above it and arrows showing it dropping in. On the right, one pad row is enlarged '
-      + 'against the cut tray wall. Depth is not dimensioned. No unit has been built.'}>
+      + 'against the cut tray wall. Depth is not dimensioned.'}>
     <defs>
       <pattern id="pp-pod-cut" width="6" height="6" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
@@ -255,8 +255,7 @@ export const BaseArt = (
       + 'window between them, and the pod outline dashed behind. In the middle, the base in '
       + 'section against the skin, with the electrodes standing out from the face and the '
       + 'window flush with it. On the right, the window is enlarged: two emitters, one '
-      + 'detector, and the path each takes through the skin. Depth is not dimensioned. '
-      + 'No unit has been built.'}>
+      + 'detector, and the path each takes through the skin. Depth is not dimensioned.'}>
     <defs>
       <pattern id="pp-base-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">

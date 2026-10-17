@@ -5,6 +5,8 @@ import { StressIcon } from './icons'
 import { LifeScreen, Sections, Heading, Lead, Panel, Tick, Field, Figure, CopyButton,
          Action, Choice, useStored, uid } from './parts'
 import { checkinSuggest, burnoutResult, BURNOUT_ITEMS, todayISO } from './logic'
+import { EndCard, FillRing } from '../../toolkit/game'
+import { useSkill, Quest, Win, leave } from '../../toolkit/game/skill'
 
 /* Overwhelm Reset: a 60 second body check-in, quick body-based exercises
  * (with links to the toolkit's breathing and grounding tools), an early
@@ -39,7 +41,7 @@ export const EXERCISES = {
     'Run cool water over your wrists, or splash your face.', 'Breathe out slowly while you do it.'] },
 }
 
-function Exercise({ id, did, onDid }) {
+function Exercise({ id, did, onDid, g }) {
   const x = EXERCISES[id]
   return (
     <article className="rounded-[14px] border border-rule bg-card p-3.5">
@@ -49,7 +51,7 @@ function Exercise({ id, did, onDid }) {
       </div>
       <ol className="mt-1.5 list-decimal pl-5 text-ui text-ink">{x.steps.map(s => <li key={s} className="mt-0.5">{s}</li>)}</ol>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Tick checked={did} onChange={onDid} className="pr-3">I did it</Tick>
+        <Tick checked={did} onChange={v => { if (v && g) g.add(10, { x:50, y:50, sound:'good' }); onDid(v) }} className="pr-3">I did it</Tick>
         {x.link && (
           <a href={'#/' + x.link[0]} className="kit-quiet inline-flex min-h-[48px] items-center rounded-[12px] px-4
             font-display text-ui font-bold">{x.link[1]}</a>
@@ -65,7 +67,7 @@ const PARTS = [['jaw', 'Jaw'], ['shoulders', 'Shoulders'], ['chest', 'Chest'], [
   ['stomach', 'Stomach'], ['hands', 'Hands'], ['mind', 'Racing thoughts']]
 const ENERGY = [['low', 'Low'], ['ok', 'OK'], ['wired', 'Wired']]
 
-function CheckIn({ data, patch, go }) {
+function CheckIn({ data, patch, go, g, win }) {
   const c = data.checkin || { tight:[], energy:'' }
   const [secs, setSecs] = React.useState(null)
   const [done, setDone] = React.useState(false)
@@ -91,9 +93,11 @@ function CheckIn({ data, patch, go }) {
             {secs == null ? '' : secs > 0 ? `0:${String(secs).padStart(2, '0')}` : 'Time.'}
           </p>
         </div>
-        {secs != null && secs > 0 && !reduced && (
-          <div aria-hidden className="kit-ground mt-3 h-2 overflow-hidden rounded-bar">
-            <div className="kit-fill h-full rounded-bar transition-[width] duration-1000 ease-linear" style={{ width: (60 - secs) / 60 * 100 + '%' }}/>
+        {secs != null && secs > 0 && (
+          <div aria-hidden className="mt-3 flex justify-center" style={{ '--g-main':'var(--kit-art)' }}>
+            <FillRing value={(60 - secs) / 60} className="w-32">
+              <span className="font-display text-num font-bold tabular-nums text-ink">{secs}</span>
+            </FillRing>
           </div>
         )}
         <p className="mt-4 font-display text-ui font-semibold text-ink">Where do you feel it?</p>
@@ -114,8 +118,15 @@ function CheckIn({ data, patch, go }) {
             {c.energy === 'low' && ' Low energy can mean you need rest or food more than an exercise.'}
           </Lead>
           <div className="mt-3 grid gap-3">
-            {picks.map(id => <Exercise key={id} id={id} did={ticks[id]} onDid={v => patch('did', { ...ticks, [id]: v })}/>)}
+            {picks.map(id => <Exercise key={id} id={id} g={g} did={ticks[id]} onDid={v => patch('did', { ...ticks, [id]: v })}/>)}
           </div>
+          {picks.some(id => ticks[id]) && !g.result && (
+            <div className="mt-3 grid gap-3">
+              <Win reduced={g.reduced}>One small thing done. Notice how your body feels now.</Win>
+              <Action className="sm:w-fit" onClick={() => win('Reset done', [['Spots noticed', c.tight.length],
+                ['Resets done', picks.filter(id => ticks[id]).length]])}>Finish my reset</Action>
+            </div>
+          )}
           <div className="mt-3 flex flex-wrap gap-3">
             <Action kind="quiet" onClick={() => go('reset')}>More exercises</Action>
             <Action kind="quiet" onClick={() => { patch('checkin', { tight:[], energy:'' }); patch('did', {}); setDone(false) }}>Start again</Action>
@@ -126,7 +137,7 @@ function CheckIn({ data, patch, go }) {
   )
 }
 
-function Reset({ data, patch }) {
+function Reset({ data, patch, g, win }) {
   const ticks = data.did || {}
   const n = Object.values(ticks).filter(Boolean).length
   return (
@@ -134,9 +145,10 @@ function Reset({ data, patch }) {
       <Heading>Quick body reset</Heading>
       <Lead>Stress lives in the body too. These take under 2 minutes each. Stop any that hurts.</Lead>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {Object.keys(EXERCISES).map(id => <Exercise key={id} id={id} did={ticks[id]} onDid={v => patch('did', { ...ticks, [id]: v })}/>)}
+        {Object.keys(EXERCISES).map(id => <Exercise key={id} id={id} g={g} did={ticks[id]} onDid={v => patch('did', { ...ticks, [id]: v })}/>)}
       </div>
       <p className="mt-3 text-ui text-ink" role="status">{n ? `${n} done. Notice how your body feels now.` : 'Tick each one you try.'}</p>
+      {n > 0 && !g.result && <Action className="mt-3 sm:w-fit" onClick={() => win('Body reset done', [['Resets done', n]])}>Finish my reset</Action>}
       {n > 0 && <Action kind="quiet" className="mt-2" onClick={() => patch('did', {})}>Start again</Action>}
     </Panel>
   )
@@ -217,7 +229,7 @@ const SLOTS = [
   ['night', 'Night', ['Phone away 30 minutes before bed', 'Same bedtime each night', 'Shower or wash up', 'Write down one good thing from today']],
 ]
 
-function Routine({ data, patch }) {
+function Routine({ data, patch, g, win }) {
   const r = data.routine || { morning:[], after:[], night:[] }
   const today = todayISO()
   const ticks = data.rDay === today ? (data.rTicks || {}) : {}
@@ -266,6 +278,8 @@ function Routine({ data, patch }) {
             ))}
             <Figure className="mt-3" label="Today" value={`${done} of ${total}`}/>
             <div className="mt-3 flex flex-wrap gap-3">
+              {!g.result && <Action onClick={() => win('Routine saved', [['Small things', total],
+                ['Parts of the day', SLOTS.filter(([k]) => r[k].length).length]], ['plan'])}>Save my routine</Action>}
               <CopyButton text={text} label="Copy routine"/>
               <Action kind="quiet" onClick={() => { patch('routine', { morning:[], after:[], night:[] }); patch('rTicks', {}) }}>Start again</Action>
             </div>
@@ -278,19 +292,36 @@ function Routine({ data, patch }) {
 
 const TABS = [['check', 'Check-in'], ['reset', 'Body reset'], ['burnout', 'Burnout signs'], ['routine', 'Routine']]
 
+const GOALS = {
+  check:   'Notice where stress sits in your body, then do one small thing.',
+  reset:   'Try one body reset and notice the difference.',
+  routine: 'Build a small routine you can keep. Missing a day is fine.',
+}
+
 export default function LifeStress({ onExit }) {
+  const g = useSkill(ID)
+  const [end, setEnd] = React.useState(null)
   const [data, patch] = useStored(ID, { tab:'check' })
   const tab = data.tab || 'check'
-  const go = v => patch('tab', v)
+  const win = (title, stats, marks = []) => { setEnd({ title, stats }); g.finish({ complete:true, marks }); window.scrollTo(0, 0) }
+  const again = () => { setEnd(null); g.reset() }
+  const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="sky" title="Overwhelm Reset" icon={StressIcon} onExit={onExit}
       problem="Changes in life, your body or what people expect can pile up until you freeze."
       doing="Check in with your body for a minute, then do one small thing that helps.">
       <Sections label="Reset tools" items={TABS} value={tab} onChange={go}/>
-      {tab === 'check' && <CheckIn data={data} patch={patch} go={go}/>}
-      {tab === 'reset' && <Reset data={data} patch={patch}/>}
-      {tab === 'burnout' && <Burnout data={data} patch={patch}/>}
-      {tab === 'routine' && <Routine data={data} patch={patch}/>}
+      {tab === 'burnout' ? <Burnout data={data} patch={patch}/> : (
+        <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
+          {end && g.result && (
+            <EndCard className="mt-4" game={g} title={end.title} stats={end.stats} againLabel="Keep going"
+              onAgain={again} onDone={leave(onExit)}/>
+          )}
+          {tab === 'check' && <CheckIn data={data} patch={patch} go={go} g={g} win={win}/>}
+          {tab === 'reset' && <Reset data={data} patch={patch} g={g} win={win}/>}
+          {tab === 'routine' && <Routine data={data} patch={patch} g={g} win={win}/>}
+        </Quest>
+      )}
     </LifeScreen>
   )
 }

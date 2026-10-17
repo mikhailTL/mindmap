@@ -148,7 +148,7 @@ export default function Pocket() {
 
   const end = React.useCallback(() => {
     session(false)
-    if (paid.current > 0) { g.finish(); setState('done') } else setState('idle')
+    if (paid.current > 0) { g.finish({ complete:true }); setState('done') } else setState('idle')
   }, [session, g])
 
   const stop = React.useCallback(() => {

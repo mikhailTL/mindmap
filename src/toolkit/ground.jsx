@@ -115,7 +115,7 @@ export default function Grounding() {
         if (at + 1 >= SENSES.length) {
           g.add(25, { x:50, y:20, label:'full set', sound:'good' })
           setSecs(Math.round((Date.now() - t0.current) / 1000))
-          setTimeout(() => { setStage('done'); g.finish() }, 500)
+          setTimeout(() => { setStage('done'); g.finish({ complete:true }) }, 500)
         } else {
           setAt(at + 1); setHand(deal(SENSES[at + 1]))
         }
@@ -124,7 +124,7 @@ export default function Grounding() {
   }
 
   const reshuffle = () => { setHand(deal(sense, mine)); setShuffles(n => n + 1) }
-  const end = () => { setSecs(Math.round((Date.now() - t0.current) / 1000)); setStage('done'); g.finish() }
+  const end = () => { setSecs(Math.round((Date.now() - t0.current) / 1000)); setStage('done'); g.finish({ complete:false }) }
 
   const time = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
   const sensesDone = SENSES.filter(s => got[s.id].length >= s.n).length

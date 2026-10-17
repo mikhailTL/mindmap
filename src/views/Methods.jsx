@@ -2,44 +2,31 @@ import React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { Section, SectionHead } from '../ui/section'
 import { Button } from '../ui/button'
-import { ArrowRight } from '../ui/marks'
+import { ArrowRight, Camera, MoveMark } from '../ui/marks'
 import { ConsentRules, FrameworkFan, NetworkPath, PatchLink } from '../charts/architecture'
 import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { K_ANONYMITY } from '../lib/caseload'
-import { STUDENT_GROUPS } from '../toolkit/index'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 
-/* How it works, in five categories, one at a time. The fifth, "Beyond the
- * screen", lists the measurements no other teen wellbeing app makes, nine
- * rows at most, one sentence under fourteen words each, the paper in
- * brackets; the sources sit where the other bands put a drawing, and one
- * line under the rows says what is not built.
+/* How it works, in five categories, one at a time.
  *
  * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
  * everything is cluttered and still too complex, like nobody needs to know
- * AUROC or anything." And earlier: divide it into "Hardware", "AI", "Machine
- * Learning" and "Other Software" so it is not everything all at once.
+ * AUROC or anything." Later: "Remove sources from here, the phone sensor
+ * section is dry and too much text." And: no count that will change (the
+ * Toolkit grows), and no line anywhere saying the patch is unbuilt.
  *
  * So the page is a switcher and one band. A reader picks a category and sees
- * that category's band and nothing else: one heading, one line under it, three
- * to five rows of label and one short line, and one drawing. The previous
- * page was 1,665 rendered words across six bands; this one is under 350
- * across all four categories together (spec 0f rule 6).
+ * that category's band and nothing else: one heading, one line under it, a
+ * few rows of label and one short line, and one drawing. No citations in the
+ * text; the papers live in docs/.
  *
  * NO STATISTIC A JUDGE DOES NOT NEED. No AUROC, no p-value, no interval, no
- * balanced accuracy, no F1 and no decimal figure anywhere on this page. Those
- * live in docs/ and in signals/tnam-results.js, and one row says so. What
- * survives in words: no unit built or worn; every subject an adult; the
- * emotional-distress failure; the three consent rules; MindMap AI never
- * diagnoses and is not an FDA framework.
- *
- * EVERY COUNT IS READ, NOT TYPED. Parameters, the memory length, the subjects,
- * the people beaten, the k floor and the Toolkit count all come out of the
- * modules that enforce them.
+ * balanced accuracy, no F1 and no decimal figure anywhere on this page.
  *
  * VOCABULARY. The neural network is "the Mind Score network". Never "the
  * model". */
@@ -48,7 +35,6 @@ const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
 const SUBJECTS = R.per_subject.length
 const WINS = R.paired.wins
-const TOOLS = STUDENT_GROUPS.reduce((n, g) => n + g.items.length, 0)
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
 /* ── the four categories ─────────────────────────────────────────────────
@@ -61,10 +47,10 @@ const CATEGORIES = [
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
     rows: [
       ['Measures', `${SENSORS[SENSOR_ORDER[0]].name}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
-      ['Worn', 'On your upper arm, inside a small printed shell.'],
+      ['Sits', 'On your upper arm, inside a small printed shell.'],
       ['Connects', 'To your phone over Bluetooth, with no wires.'],
-      ['Status today', 'A design, not a built unit. Patch readings on this site are generated.'],
     ],
+    close: 'MindMap also works without the patch, with readings from the phone camera pulse and the survey.',
     figure: PatchLink },
   { id: 'ai', tab: 'MindMap AI', tone: 'card', ground: 'bg-aqua',
     title: 'Plain answers to your questions',
@@ -88,7 +74,7 @@ const CATEGORIES = [
       ['Against the formula', `Reads stress better than the standard formula for ${WINS} of ${SUBJECTS} people. Ties the other ${SUBJECTS - WINS}.`],
       ['Accuracy', `Tells a stressful minute from a calm one ${Math.round(R.summary.tnam.bacc.mean * 100)} times in 100.`],
       ['Quiet when calm', `Flags ${Math.round(R.summary.tnam.meditation_false_alarm * 100)} in 100 meditation minutes. The formula flags ${Math.round(R.summary.formula.meditation_false_alarm * 100)}.`],
-      ['Built for', 'Stress, not sadness. A sad film does not move the score.'],
+      ['Made for', 'Stress, not sadness. A sad film does not move the score.'],
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkPath },
@@ -96,67 +82,72 @@ const CATEGORIES = [
     title: 'Your data stays on your phone',
     line: 'Use the app with or without the patch. Nothing is stored anywhere else.',
     rows: [
-      ['Built with', 'React, running in the browser.'],
+      ['Made with', 'React, running in the browser.'],
       ['Without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone.'],
       ['Privacy', `Parents see one day at a time. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
-      ['Toolkit', `${TOOLS} activities, each on its own page.`],
+      ['Toolkit', 'Short activities, each on its own page.'],
       ['Offline', 'Your readings and your baseline stay on your phone.'],
     ],
     figure: ConsentRules },
-  /* The fifth category has no drawing. Its right column is the sources list,
-     author, year, journal, so a judge can check each row against a paper. */
   { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
     title: 'What your phone adds',
-    line: 'Measurements no other teen wellbeing app makes, from sensors you already carry.',
+    line: 'Sensors you already carry, used only inside MindMap.',
     rows: [
-      ['Recovery time', 'Minutes from a peak to halfway back, and peaks that ran back to back.'],
-      ['Stress before events', "Your body's rise in the two hours before a marked exam (Pulopulos 2018; Kazdagli 2024)."],
-      ['Long exhale', 'The microphone measures each exhale during cyclic sighing, shown to lift mood (Balban 2023).'],
-      ['Breath counter', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
-      ['Reaction test', 'A sixty second reaction test validated for alertness, not stress (Basner 2011; Benderoth 2021).'],
-      ['Typing rhythm', "Key timing in MindMap's own fields, never the keys, weak in teenagers (Zulueta 2018; Braund 2023)."],
-      ['Distance from home', 'How far from home your readings happened this week, never a map (Saeb 2015).'],
-      ['Pulse check', 'Camera pulse before and after each tool shows which lowers yours most.'],
-      ['Heads Up', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
+      ['Camera', 'Reads your pulse from a fingertip on the lens.', Camera],
+      ['Microphone', 'Times each long breath out in the breathing tools.', MicMark],
+      ['Motion', 'Counts your breaths with the phone resting on your chest.', MoveMark],
+      ['Screen', 'Notes the rhythm of taps and typing in MindMap, never the words.', KeysMark],
+      ['Location', 'How far from home a reading happened. Never a map.', PinMark],
     ],
-    note: "Not built: other apps' keyboards, calls, background location.",
-    figure: Sources, still: true },
+    figure: PhoneParts },
 ]
 
-/* The papers behind the "Phone sensors" rows: author, year, journal.
-   Plain text, no links; the full record is in docs/. */
-const SOURCES = [
-  'Pulopulos et al. 2018, Psychoneuroendocrinology',
-  'Kazdagli et al. 2024, Physiology International',
-  'Balban et al. 2023, Cell Reports Medicine',
-  'Cinotti et al. 2025, Sensors',
-  'Basner, Mollicone and Dinges 2011, Acta Astronautica',
-  'Benderoth et al. 2021, Sleep',
-  'Zulueta et al. 2018, Journal of Medical Internet Research',
-  'Braund et al. 2023, JMIR Mental Health',
-  'Saeb et al. 2015, Journal of Medical Internet Research',
-]
+/* Three marks the shared set lacks, same 24 box and 1.6 stroke. */
+const M = ({ children, size = 20, className }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden focusable="false"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+    className={cn('shrink-0', className)}>{children}</svg>
+)
+function MicMark(p) { return <M {...p}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></M> }
+function KeysMark(p) { return <M {...p}><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></M> }
+function PinMark(p) { return <M {...p}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></M> }
 
-function Sources({ className }) {
+/* The phone tab's drawing: one phone, the five sensors around it. */
+function PhoneParts({ className }) {
+  const parts = CATEGORIES.find(c => c.id === 'beyond').rows
   return (
-    <aside className={cn('border-t border-rule pt-3 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0', className)}>
-      <p className="font-body text-ui font-semibold text-ink">Sources</p>
-      <ul className="mt-2 space-y-1.5">
-        {SOURCES.map(s => (
-          <li key={s} className="text-meta leading-[1.45] text-ink-2">{s}</li>
+    <figure className={cn('m-0 flex items-center justify-center gap-6', className)}>
+      <svg viewBox="0 0 80 150" aria-hidden focusable="false" className="block h-40 w-auto shrink-0"
+        fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="72" height="142" rx="12" className="text-rule" stroke="currentColor" strokeWidth="2"/>
+        <circle cx="40" cy="16" r="4" className="text-accent" stroke="currentColor" strokeWidth="2"/>
+        <path d="M32 136h16" className="text-accent" stroke="currentColor" strokeWidth="2"/>
+        <rect x="14" y="30" width="52" height="94" rx="4" className="text-rule" stroke="currentColor" strokeWidth="1.6"/>
+        <circle cx="40" cy="64" r="14" className="text-accent" stroke="currentColor" strokeWidth="2"
+          strokeDasharray="66 22" transform="rotate(135 40 64)"/>
+        <path d="M22 98h36M22 106h24" className="text-rule" stroke="currentColor" strokeWidth="2"/>
+      </svg>
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {parts.map(([k, , Icon]) => (
+          <li key={k} className="flex items-center gap-2 text-ink">
+            <Icon size={20} className="text-accent"/>
+            <span className="text-ui font-semibold">{k}</span>
+          </li>
         ))}
       </ul>
-    </aside>
+    </figure>
   )
 }
 
 /* A row: label, one line. Ruled, never boxed. */
 /* `first`, not :first-child: each row sits in its own ScrollRow wrapper. */
-function Row({ k, dark, first, children }) {
+function Row({ k, icon: Icon, dark, first, children }) {
   return (
     <div className={cn('grid gap-x-4 gap-y-0.5 border-t py-2', first && 'border-t-0 pt-0',
       'sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)]', dark ? 'border-ink-3' : 'border-rule')}>
-      <p className={cn('font-body text-ui font-semibold', dark ? 'text-paper' : 'text-ink')}>{k}</p>
+      <p className={cn('flex items-center gap-2 font-body text-ui font-semibold', dark ? 'text-paper' : 'text-ink')}>
+        {Icon && <Icon size={18} className="text-accent"/>}{k}
+      </p>
       <p className={cn('text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-2')}>{children}</p>
     </div>
   )
@@ -221,23 +212,20 @@ export function Methods({ go }) {
                       </p>
                     </ScrollIn>
                     <div className="mt-4">
-                      {c.rows.map(([k, line], i) => (
-                        <ScrollRow key={k} index={i}><Row k={k} dark={dark} first={i === 0}>{line}</Row></ScrollRow>
+                      {c.rows.map(([k, line, icon], i) => (
+                        <ScrollRow key={k} index={i}><Row k={k} icon={icon} dark={dark} first={i === 0}>{line}</Row></ScrollRow>
                       ))}
                     </div>
-                    {c.note && (
-                      <p className={cn('mt-3 text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-3')}>
-                        {c.note}
+                    {c.close && (
+                      <p className={cn('mt-4 max-w-[48ch] border-t pt-3 text-sec font-semibold leading-[1.5]',
+                        dark ? 'border-ink-3 text-paper' : 'border-rule text-ink')}>
+                        {c.close}
                       </p>
                     )}
                   </div>
-                  {/* The drawing drifts against the scroll; the sources list is
-                      read, so it holds still. */}
-                  {c.still
-                    ? <Figure dark={dark} className="min-w-0 lg:pt-1"/>
-                    : <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
-                        <Figure dark={dark}/>
-                      </Parallax2D>}
+                  <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
+                    <Figure dark={dark}/>
+                  </Parallax2D>
                 </div>
               </Section>
             </TabsPrimitive.Content>

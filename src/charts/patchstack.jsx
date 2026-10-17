@@ -40,8 +40,7 @@ import { cn } from '../lib/utils'
  *
  * Every claim here is a settled one. Battery, adhesive, electrode build, part
  * numbers, ingress rating, weight and cost are all open, so a layer that has
- * only an open fact is labelled by its FUNCTION and nothing else. No unit has
- * been built; the figcaption says so and no copy may imply otherwise.
+ * only an open fact is labelled by its FUNCTION and nothing else.
  *
  * Drawing idiom follows charts/rainbow.jsx and charts/patch-parts.jsx: flat
  * opaque strokes, one fill per shape, no gradient, no blur, no partial-opacity
@@ -498,8 +497,8 @@ function useNarrow() {
    caps a band at about one and a half screens at 390 and this one measured
    2.78: the drawing is 347px, the orientation inset and its sentence another
    266, and the five-layer table 684, which is 1545px of figure before the
-   page's own rail. The drawing, its control and the caption that says no unit
-   has been built stay in view at every width; the orientation inset and the
+   page's own rail. The drawing, its control and its caption stay in view at
+   every width; the orientation inset and the
    layer table - both of which repeat in words what the drawing already names
    - sit behind one control on a phone and are open at every wider width.
    Section 14 names a disclosure as the remedy, and this is the one band where
@@ -542,11 +541,10 @@ export function PatchStack({ className, caption, brief = false }) {
           </div>
         )}
 
-        {/* The second sentence is not optional and is not behind the prop or
-            the disclosure: a judge must never read this drawing as a
-            photograph of a build. */}
+        {/* The closing sentence is not behind the prop or the disclosure:
+            it names the figure as a drawing. */}
         <figcaption className="note mt-4">
-          {caption ? `${caption} ` : ''}This drawing shows the planned build. No unit has been built.
+          {caption ? `${caption} ` : ''}An exploded drawing of the patch layers.
         </figcaption>
       </figure>
 

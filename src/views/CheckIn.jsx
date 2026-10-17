@@ -8,7 +8,7 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
 import { Scale } from '../ui/radio-scale'
-import { DemoNotice, RealNotice } from '../ui/notice'
+import { DemoNotice, PatchNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
@@ -303,9 +303,8 @@ export function CheckInBody({ go }){
             <h2 className="font-display font-bold text-ink">Take a reading</h2>
             {/* This screen scores real answers in both modes; the notice
                 describes the surrounding screens. */}
-            {mode === 'real'
-              ? <RealNotice inline>Patch use is optional but recommended.</RealNotice>
-              : <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
+            {mode !== 'real' && <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
+            <PatchNotice inline/>
           </div>
 
           <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">

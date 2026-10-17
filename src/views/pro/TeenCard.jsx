@@ -4,7 +4,7 @@ import { Chevron } from '../../ui/marks'
 import { statusOf, summary } from '../../lib/roster'
 import { cn } from '../../lib/utils'
 import { Spark } from './parts'
-import { COLUMNS, RANGE_NOUN, STATUS_WORD, figures, signed, sourceLine, trendsShared } from './metrics'
+import { COLUMNS, RANGE_NOUN, STATUS_LINE, STATUS_WORD, figures, signed, sourceLine, trendsShared } from './metrics'
 
 /* The Medical Professional's teen card, local to this screen.
  *
@@ -34,7 +34,8 @@ function Figure({ col, f }) {
 function ariaFor(teen, f, range) {
   const st = statusOf(teen)
   return `${teen.pseudonym}, grade ${teen.grade}, ${STATUS_WORD[st]}. Mind Score ${f.score} of 100 ${RANGE_NOUN[range]}`
-    + (f.change === null ? ', score only' : `, ${changeWords(f.change)} points`) + '. Open record.'
+    + (f.change === null ? ', score only' : `, ${changeWords(f.change)} points`)
+    + `. Usual ${teen.usual.lo} to ${teen.usual.hi}. Open record.`
 }
 
 export function ProTeenCard({ teen, range, columns, onOpen }) {
@@ -67,6 +68,10 @@ export function ProTeenCard({ teen, range, columns, onOpen }) {
           <span className={cn('font-display text-ui font-bold tabular-nums', changeTone(f.change))}>
             {signed(f.change)} <span className="font-body text-fine font-normal text-ink-3">points</span></span>
         )}
+      </span>
+      {/* The teen's own usual band, so the status word above has a reason. */}
+      <span aria-hidden className="mt-1 block w-full text-fine text-ink-2">
+        Usual {teen.usual.lo} to {teen.usual.hi}. Last 3 days {STATUS_LINE[st].toLowerCase()}.
       </span>
 
       {trend ? (

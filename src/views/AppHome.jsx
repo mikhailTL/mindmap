@@ -8,6 +8,8 @@ import { captureHarness } from './Intro'
 import { getAppearance } from '../account/appearance'
 import { IntroOverlay, END, T, prog } from './apphome/intro'
 import { AuthPanel } from './apphome/AuthPanel'
+import { setMode } from '../lib/mode'
+import { PRO } from '../lib/terms'
 
 /* The owner fills this in. Plain text; a blank line starts a new paragraph. */
 export const ABOUT_TEXT = `Inspiration and function of MindMap. Text coming soon.`
@@ -18,10 +20,43 @@ const SEEN_KEY = 'mindmap.apphome.intro'
 /* The app's front page: the mark, the motto, About, and the way in. Plays its
    opening once per browser session, signed out only; reduced motion and the
    screenshot harness get the last frame. */
+/* `#/app-home?demo` is where the site's "View the demo" lands: the opening
+   always plays (motion settings allowing), and the way in is a choice of
+   the three screens on demo data instead of the sign in form. */
+const isDemo = () => typeof location !== 'undefined' && /[?&]demo\b/.test(location.hash)
+
+const DEMO = [
+  { id:'app-student', label:'Student' },
+  { id:'app-parent',  label:'Parent' },
+  { id:'app-pro',     label:PRO },
+]
+
+function DemoPanel({ go, onSignIn }) {
+  return (
+    <div className="w-full rounded-panel border border-rule bg-card p-4 text-left shadow-card sm:p-5">
+      <h2 className="m-0 font-display text-row font-bold text-ink">View the demo as</h2>
+      <p className="m-0 mt-1 text-fine text-ink-2">Sample data. No account needed.</p>
+      <div className="mt-3.5 grid gap-2.5">
+        {DEMO.map((d, i) => (
+          <button key={d.id} type="button" onClick={() => { setMode('demo'); go(d.id) }}
+            className={cn(i === 0 ? solid : outline, 'w-full')}>{d.label}</button>
+        ))}
+      </div>
+      <button type="button" onClick={onSignIn}
+        className="mt-3 min-h-[44px] w-full font-display text-fine font-medium text-ink-2 underline
+          decoration-rule underline-offset-4 hoverOnly:text-ink">
+        Sign in or create an account instead
+      </button>
+    </div>
+  )
+}
+
 function shouldPlay(signedIn) {
-  if (signedIn || captureHarness()) return false
+  if (captureHarness()) return false
+  if (signedIn && !isDemo()) return false
   try { if (getAppearance().motion === 'reduce') return false } catch {}
   try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false } catch {}
+  if (isDemo()) return true
   try { return sessionStorage.getItem(SEEN_KEY) !== '1' } catch { return true }
 }
 
@@ -79,6 +114,7 @@ export function AppHome({ go }) {
   const [t, skip] = useClock(play)
   const done = t >= END
   const [about, setAbout] = React.useState(false)
+  const [demo, setDemo] = React.useState(isDemo)
 
   /* Where the real mark sits, so the trace lands on it exactly. */
   const markRef = React.useRef(null)
@@ -133,7 +169,9 @@ export function AppHome({ go }) {
         </button>
 
         <div style={rise(3)} className="mt-4 w-full">
-          {me ? (
+          {demo ? (
+            <DemoPanel go={go} onSignIn={() => { setDemo(false); history.replaceState(null, '', '#/app-home') }}/>
+          ) : me ? (
             <div className="w-full rounded-panel border border-rule bg-card p-4 shadow-card sm:p-5">
               <p className="m-0 font-display text-ui font-medium text-ink-2">
                 Signed in as <span className="font-bold text-ink">{me.name}</span>

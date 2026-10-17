@@ -4,7 +4,9 @@ import { Lines } from '../../kit/pro/common'
 import { META } from './meta'
 import { Screen, Sheet, H, Field, CopyBlock, Finish, Action, Choice, Chips, CopyButton, useSaved } from './parts'
 import { PURPOSES, buildEmail, checkEmail, INTERVIEW, ASK_THEM, starAnswer, speakingTime, wordCount,
-         thankYouNote, followUpNote, ETIQUETTE, WORD_LIMIT } from './email-logic'
+         thankYouNote, followUpNote, ETIQUETTE, WORD_LIMIT, FIX_ROUND } from './email-logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, QuickRound, Win, leave } from '../../toolkit/game/skill'
 
 /* Professional Email, in three parts.
  *
@@ -16,8 +18,14 @@ import { PURPOSES, buildEmail, checkEmail, INTERVIEW, ASK_THEM, starAnswer, spea
  * Networking four etiquette cards and a thank-you or follow-up note. */
 
 const TOOL = META.email
-const TABS = [['email', 'Email'], ['interview', 'Interview'], ['network', 'Networking']]
-const BLANK = { tab:'email', purpose:'meeting', f:{}, draft:'', q:0, star:{}, answers:{}, note:'thanks', n:{} }
+const TABS = [['practice', 'Quick round'], ['email', 'Email'], ['interview', 'Interview'], ['network', 'Networking']]
+const GOALS = {
+  practice: 'Pick the professional line, five times.',
+  email: 'Write an email that passes every check.',
+  interview: 'Build one STAR answer you can say in under two minutes.',
+  network: 'Write a thank-you or follow-up note.',
+}
+const BLANK = { tab:'practice', purpose:'meeting', f:{}, draft:'', q:0, star:{}, answers:{}, note:'thanks', n:{} }
 
 function Checker({ text }) {
   const issues = checkEmail(text)
@@ -49,7 +57,7 @@ function Checker({ text }) {
   )
 }
 
-function EmailTab({ s, patch }) {
+function EmailTab({ s, patch, g, win }) {
   const p = PURPOSES.find(x => x.id === s.purpose) || PURPOSES[0]
   const set = k => e => patch(o => ({ f:{ ...o.f, [k]:e.target.value } }))
   const built = buildEmail({ purpose:s.purpose, ...s.f })
@@ -82,6 +90,10 @@ function EmailTab({ s, patch }) {
         <Field className="mt-3" area label="Your email" hint="Edit it, or paste one you wrote. Texting habits are flagged below."
           rows={13} value={s.draft} onChange={e => patch({ draft:e.target.value })}/>
         <div className="mt-3"><Checker text={s.draft}/></div>
+        {s.draft.trim() && checkEmail(s.draft).length === 0 && !g.result && (
+          <Action className="mt-3 w-full sm:w-auto" onClick={() => win('Email ready',
+            [['Words', wordCount(s.draft)], ['Checks passed', 'All']], ['script'])}>It is ready to send</Action>
+        )}
         {s.draft.trim() && (
           <div className="mt-3 flex flex-wrap gap-3">
             <CopyButton text={`Subject: ${built.subject}\n\n${s.draft}`} label="Copy email" kind="primary"/>
@@ -92,7 +104,7 @@ function EmailTab({ s, patch }) {
   )
 }
 
-function InterviewTab({ s, patch }) {
+function InterviewTab({ s, patch, g, win }) {
   const item = INTERVIEW[s.q] || INTERVIEW[0]
   const st = s.star[s.q] || {}
   const set = k => e => patch(o => ({ star:{ ...o.star, [o.q]:{ ...(o.star[o.q] || {}), [k]:e.target.value } } }))
@@ -130,7 +142,11 @@ function InterviewTab({ s, patch }) {
               {secs < 30 ? 'Short. Add one detail to the Action.' : secs > 120 ? 'Long. Cut the Situation to one line.' : 'A good length. Say it out loud twice.'}
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
-              <Action onClick={() => patch(o => ({ answers:{ ...o.answers, [o.q]:answer } }))}>
+              <Action onClick={e => {
+                if (saved !== answer) g.hit(15, e, { sound:'good' })
+                patch(o => ({ answers:{ ...o.answers, [o.q]:answer } }))
+                if (!g.result && secs >= 30 && secs <= 120) win('Answer ready', [['Words', n], ['Out loud', `about ${secs} seconds`]], ['script'])
+              }}>
                 {saved === answer ? 'Saved' : 'Save answer'}
               </Action>
               <CopyButton text={answer}/>
@@ -184,21 +200,35 @@ function NetworkTab({ s, patch }) {
 }
 
 export default function Email({ onExit }) {
+  const g = useSkill(TOOL.id)
+  const [end, setEnd] = React.useState(null)
   const [s, patch, set] = useSaved(TOOL.id, BLANK)
+  const win = (title, stats, marks = []) => { setEnd({ title, stats }); g.finish({ complete:true, marks }); window.scrollTo(0, 0) }
+  const again = () => { setEnd(null); g.reset() }
   return (
     <Screen tool={TOOL} onExit={onExit}
       problem="A work email, an interview or a new contact is not a group chat."
       doing={`Build a short email and check it for texting habits, practise interview answers, and learn the basics of keeping in touch. Aim for under ${WORD_LIMIT} words.`}>
-      <div role="group" aria-label="Part" className="grid grid-cols-3 gap-2">
+      <div role="group" aria-label="Part" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {TABS.map(([id, label]) => (
-          <Choice key={id} on={s.tab === id} onClick={() => patch({ tab:id })}
+          <Choice key={id} on={s.tab === id} onClick={() => { patch({ tab:id }); again() }}
             className={cn('justify-center px-2 text-center text-fine sm:text-ui')}>{label}</Choice>
         ))}
       </div>
-      {s.tab === 'email' && <EmailTab s={s} patch={patch}/>}
-      {s.tab === 'interview' && <InterviewTab s={s} patch={patch}/>}
-      {s.tab === 'network' && <NetworkTab s={s} patch={patch}/>}
-      <Finish onExit={onExit} onAgain={() => set({ ...BLANK, tab:s.tab })}/>
+      <Quest game={g} goal={GOALS[s.tab] || GOALS.email}>
+        {end && g.result && (
+          <EndCard game={g} title={end.title} stats={end.stats} againLabel="Keep going" onAgain={again} onDone={leave(onExit)}/>
+        )}
+        {s.tab === 'practice' && !g.result && (
+          <QuickRound game={g} items={FIX_ROUND} label="Line" seed={2} doneLabel="Finish the round"
+            onDone={grade => win(grade.clean ? 'Inbox pro' : 'Round done', [['Right', `${grade.right} of ${grade.total}`]],
+              grade.clean ? ['script', 'clean'] : ['script'])}/>
+        )}
+        {s.tab === 'email' && <EmailTab s={s} patch={patch} g={g} win={win}/>}
+        {s.tab === 'interview' && <InterviewTab s={s} patch={patch} g={g} win={win}/>}
+        {s.tab === 'network' && <NetworkTab s={s} patch={patch}/>}
+      </Quest>
+      {!g.result && <Finish onExit={onExit} onAgain={() => { set({ ...BLANK, tab:s.tab }); again() }}/>}
     </Screen>
   )
 }

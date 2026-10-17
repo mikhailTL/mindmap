@@ -3,6 +3,8 @@ import { cn } from '../../lib/utils'
 import { META } from './meta'
 import { Screen, Sheet, H, Steps, Field, CopyBlock, Tick, Finish, Nav, Choice, Chips, Action, useSaved, uid } from './parts'
 import { STRENGTHS, WIN_PROMPTS, topStrengths, listOf, KINDS, advocacyScript, INITIATIVES } from './belong-logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, leave } from '../../toolkit/game/skill'
 
 /* You Belong Here.
  *
@@ -20,6 +22,7 @@ const ORDER = STEPS.map(s => s[0])
 const BLANK = { stage:'wins', reached:0, wins:[], at:0, kind:'help', a:{}, init:'', own:'', worst:'', best:'', backup:'', did:false }
 
 export default function Belong({ onExit }) {
+  const g = useSkill(TOOL.id)
   const [s, patch, set] = useSaved(TOOL.id, BLANK)
   const [win, setWin] = React.useState('')
   const go = stage => patch(o => ({ stage, reached: Math.max(o.reached, ORDER.indexOf(stage)) }))
@@ -32,17 +35,23 @@ export default function Belong({ onExit }) {
   const add = e => {
     e.preventDefault()
     if (!win.trim()) return
+    g.hit(10, e.currentTarget.querySelector('button[type=submit]') || e, { label:'win', sound:'good' })
     patch(o => ({ wins: [...o.wins, { id:uid(), text:win.trim(), strengths:[] }].slice(-40) }))
     setWin('')
   }
-  const tag = id => patch(o => ({ wins: o.wins.map((w, i) => i !== at ? w :
+  const tag = (id, e) => {
+    if (e && cur && !cur.strengths.includes(id)) g.hit(3, e)
+    patch(o => ({ wins: o.wins.map((w, i) => i !== at ? w :
     { ...w, strengths: w.strengths.includes(id) ? w.strengths.filter(x => x !== id) : [...w.strengths, id] }) }))
+  }
+  const finish = () => { go('done'); g.finish({ complete:true, marks:['plan'] }) }
   const setA = k => e => patch(o => ({ a:{ ...o.a, [k]:e.target.value } }))
 
   return (
     <Screen tool={TOOL} onExit={onExit}
       problem="A new team, class or job can make you feel like everyone else belongs and you do not."
       doing="Collect your real wins, find the strengths they prove, write one ask, and plan one small step.">
+      <Quest game={g} goal="Collect real wins, find what they prove, and plan one brave step.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
       {s.stage === 'wins' && (
@@ -80,7 +89,7 @@ export default function Belong({ onExit }) {
             <p className="mt-1 font-display text-row font-bold text-ink">{cur.text}</p>
             <p className="mt-3 text-fine text-ink-2">What does this show about you? Pick any that are true.</p>
             <Chips className="mt-2">
-              {STRENGTHS.map(k => <Choice key={k.id} on={cur.strengths.includes(k.id)} onClick={() => tag(k.id)}>{k.name}</Choice>)}
+              {STRENGTHS.map(k => <Choice key={k.id} on={cur.strengths.includes(k.id)} onClick={e => tag(k.id, e)}>{k.name}</Choice>)}
             </Chips>
             <div className="mt-4 flex flex-wrap gap-3">
               {at < s.wins.length - 1
@@ -167,12 +176,17 @@ export default function Belong({ onExit }) {
               <Field label="My back-up if it goes wrong" placeholder="Ask what I could do first instead" value={s.backup} onChange={e => patch({ backup:e.target.value })}/>
             </div>
           </Sheet>
-          <Nav next={() => go('done')} back={() => go('ask')} disabled={!initiative} nextLabel="See my evidence"/>
+          <Nav next={finish} back={() => go('ask')} disabled={!initiative} nextLabel="See my evidence"/>
         </>
       )}
 
       {s.stage === 'done' && (
         <>
+          {g.result && (
+            <EndCard game={g} title="Evidence collected" againLabel="Start again, keep my wins" onDone={leave(onExit)}
+              onAgain={() => { set({ ...BLANK, wins:s.wins.map(w => ({ ...w })) }); g.reset() }}
+              stats={[['Real wins', s.wins.length], ['Top strength', top[0]?.name || 'Tag a win']]}/>
+          )}
           <Sheet>
             <p className="text-fine font-semibold text-ink-2">The evidence says</p>
             <H className="mt-1">{s.wins.length} real {s.wins.length === 1 ? 'win' : 'wins'}.{top.length ? ` They show you are ${listOf(top.slice(0, 3).map(t => t.trait))}.` : ''}</H>
@@ -200,14 +214,15 @@ export default function Belong({ onExit }) {
             {initiative && <Tick className="mt-3" on={s.did} onClick={() => patch(o => ({ did:!o.did }))}>I did it</Tick>}
           </Sheet>
           <CopyBlock title="Your ask" text={script}/>
-          <Finish onExit={onExit}
-            onAgain={() => set({ ...BLANK, wins:s.wins.map(w => ({ ...w })) })} againLabel="Start again, keep my wins"/>
-          <button type="button" onClick={() => set(BLANK)}
+          {!g.result && <Finish onExit={onExit}
+            onAgain={() => { set({ ...BLANK, wins:s.wins.map(w => ({ ...w })) }); g.reset() }} againLabel="Start again, keep my wins"/>}
+          <button type="button" onClick={() => { set(BLANK); g.reset() }}
             className={cn('min-h-[44px] justify-self-start font-display text-fine font-semibold text-ink-2 underline underline-offset-4')}>
             Clear everything
           </button>
         </>
       )}
+      </Quest>
     </Screen>
   )
 }

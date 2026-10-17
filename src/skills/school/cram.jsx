@@ -2,6 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { Sheet, Action, Note } from '../../toolkit/shell'
 import { Screen, H, Field, Pick, Seg, useSaved, uid, CramIcon } from './ui'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, Win, leave } from '../../toolkit/game/skill'
 import { parseTime, fmtTime, nightLabel, learnFactor, factorLine, adjust, splitTask, autoPlan,
          canMove, scheduleNight, minutesPastBed, BREAKS } from './logic'
 
@@ -16,10 +18,22 @@ const START = { tasks:[], start:'16:00', bed:'22:30', mode:'50/10', useAdjust:tr
 const DUE = [1, 2, 3, 4, 5, 6, 7].map(d => [String(d), d === 1 ? 'Tomorrow' : `In ${d} days`])
 const HEAVY = 180
 
+/* Each night's schedule and how far past bedtime it runs. */
+function nightsOf(plan, start, bed, mode) {
+  if (!plan || !plan.length) return []
+  const count = Math.max(...plan.map(p => p.night)) + 1
+  return Array.from({ length:count }, (_, i) => {
+    const items = plan.filter(p => p.night === i)
+    const sched = scheduleNight(items.map(p => ({ key:p.key, label:pieceName(p), mins:p.mins })), start, mode)
+    return { i, items, ...sched, past: minutesPastBed(sched.end, start, bed) }
+  }).filter(n => n.items.length)
+}
+
 const hm = m => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`
 const pieceName = p => p.of > 1 ? `${p.name}, part ${p.part} of ${p.of}` : p.name
 
 export default function Cram({ onExit }) {
+  const g = useSkill(ID)
   const [s, setS] = useSaved(ID, START)
   const set = patch => setS(v => ({ ...v, ...patch }))
   const [draft, setDraft] = React.useState({ name:'', est:'', due:'2' })
@@ -35,36 +49,45 @@ export default function Cram({ onExit }) {
     e.preventDefault()
     const est = Math.round(+draft.est)
     if (!draft.name.trim() || !(est > 0)) return
+    g.hit(10, e.currentTarget.querySelector('button[type=submit]') || e)
     set({ tasks:[...s.tasks, { id:uid(), name:draft.name.trim(), est:Math.min(600, est), due:+draft.due }] })
     setDraft({ name:'', est:'', due:draft.due })
   }
   const makePlan = () => {
     const pieces = s.tasks.flatMap(t => splitTask(t, factor))
     set({ plan:autoPlan(pieces), stage:'plan' })
+    g.add(20, { x:50, y:6, label:'plan made', sound:'good' })
     window.scrollTo(0, 0)
   }
-  const move = (key, dir) => set({ plan:s.plan.map(p => p.key === key ? { ...p, night:p.night + dir } : p) })
-  const again = () => { set({ tasks:[], plan:null, stage:'list', logged:{} }); setActual({}) }
+  /* Moving a part that brings a night back under bedtime scores. */
+  const lateNights = plan => nightsOf(plan, start, bed, s.mode).filter(n => n.past > 0).length
+  const move = (key, dir, e) => {
+    const plan = s.plan.map(p => p.key === key ? { ...p, night:p.night + dir } : p)
+    if (lateNights(plan) < lateNights(s.plan)) g.hit(15, e, { label:'fixed', sound:'good' })
+    set({ plan })
+  }
+  const again = () => { set({ tasks:[], plan:null, stage:'list', logged:{} }); setActual({}); g.reset(); window.scrollTo(0, 0) }
+  const finish = () => {
+    set({ stage:'done' })
+    g.finish({ complete:true, marks:['plan'] })
+  }
   const logReal = t => {
     const a = Math.round(+actual[t.id])
     if (!(a > 0)) return
     set({ history:[...s.history, { est:t.est, actual:a }].slice(-30), logged:{ ...s.logged, [t.id]:a } })
   }
 
-  const nights = React.useMemo(() => {
-    if (!s.plan) return []
-    const count = Math.max(...s.plan.map(p => p.night)) + 1
-    return Array.from({ length:count }, (_, i) => {
-      const items = s.plan.filter(p => p.night === i)
-      const sched = scheduleNight(items.map(p => ({ key:p.key, label:pieceName(p), mins:p.mins })), start, s.mode)
-      return { i, items, ...sched, past: minutesPastBed(sched.end, start, bed) }
-    }).filter(n => n.items.length)
-  }, [s.plan, start, bed, s.mode])
+  const nights = React.useMemo(() => nightsOf(s.plan, start, bed, s.mode), [s.plan, start, bed, s.mode])
+  const late = nights.filter(n => n.past > 0).length
+  const window_ = Math.max(30, minutesPastBed(start, start, bed) * -1)
+  const step = s.stage === 'list' ? 0 : s.stage === 'plan' ? (late ? 1 : 2) : 3
 
   return (
     <Screen title="Time-Block Planner" family="sky" icon={CramIcon} onExit={onExit}
       problem="Leaving it all to one late night ends in a crash the next day."
       plan="List what is due, guess the minutes, and spread the work over the nights before.">
+      <Quest game={g} goal="Spread the work so every night ends before bedtime."
+        steps={['List what is due', 'Fix late nights', 'Lock in the plan']} at={step}>
 
       {s.stage === 'list' && (
         <>
@@ -141,7 +164,14 @@ export default function Cram({ onExit }) {
 
       {s.stage !== 'list' && s.plan && (
         <>
-          {s.stage === 'done' && (
+          {s.stage === 'done' && g.result && (
+            <EndCard game={g} title="Plan locked in" againLabel="Plan another" onAgain={again}
+              onDone={leave(onExit)}
+              stats={[['Nights', nights.length], ['Work', hm(nights.reduce((a, n) => a + n.workMins, 0))],
+                      ['Latest finish', fmtTime(Math.max(...nights.map(n => n.end)))],
+                      ['Before bedtime', late ? `${nights.length - late} of ${nights.length}` : 'Every night']]}/>
+          )}
+          {s.stage === 'done' && !g.result && (
             <Sheet className="kit-ground border-transparent">
               <H>Plan saved</H>
               <p className="mt-1 text-sec text-ink">
@@ -150,6 +180,11 @@ export default function Cram({ onExit }) {
               </p>
             </Sheet>
           )}
+          {s.stage === 'plan' && (late
+            ? <p role="status" className="rounded-[12px] bg-warn-wash p-3 font-display text-ui font-bold text-warn">
+                {late} {late === 1 ? 'night runs' : 'nights run'} past bedtime. Move a part earlier to fix it.
+              </p>
+            : <Win reduced={g.reduced}>Every night ends before bedtime. Lock it in.</Win>)}
           {nights.map(n => (
             <Sheet key={n.i}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -159,6 +194,11 @@ export default function Cram({ onExit }) {
                 </p>
               </div>
               <p className="text-fine text-ink-2">{hm(n.workMins)} of work</p>
+              <div aria-hidden className="kit-ground mt-2 h-2.5 overflow-hidden rounded-bar">
+                <div className={cn('h-full rounded-bar transition-[width] duration-500 motion-reduce:transition-none',
+                  n.past > 0 ? 'bg-warn' : 'kit-fill')}
+                  style={{ width: Math.min(100, Math.round((n.end - start) / window_ * 100)) + '%' }}/>
+              </div>
               {n.past > 0 && (
                 <p role="note" className="mt-2 rounded-[12px] bg-warn-wash p-3 text-ui font-semibold text-warn">
                   Runs {hm(n.past)} past your {fmtTime(bed)} bedtime. Move a part to another night or start earlier.
@@ -187,10 +227,10 @@ export default function Cram({ onExit }) {
                       <span className="min-w-0 flex-1 text-ui text-ink">{pieceName(p)}</span>
                       <Action kind="quiet" className="min-h-[44px] px-3 text-fine"
                         aria-label={`Move ${pieceName(p)} to an earlier night`}
-                        disabled={!canMove(p, -1, s.plan)} onClick={() => move(p.key, -1)}>Earlier</Action>
+                        disabled={!canMove(p, -1, s.plan)} onClick={e => move(p.key, -1, e)}>Earlier</Action>
                       <Action kind="quiet" className="min-h-[44px] px-3 text-fine"
                         aria-label={`Move ${pieceName(p)} to a later night`}
-                        disabled={!canMove(p, 1, s.plan)} onClick={() => move(p.key, 1)}>Later</Action>
+                        disabled={!canMove(p, 1, s.plan)} onClick={e => move(p.key, 1, e)}>Later</Action>
                     </li>
                   ))}
                 </ul>
@@ -202,7 +242,7 @@ export default function Cram({ onExit }) {
               <Note>Parts can only move to nights before they are due.</Note>
               <div className="grid grid-cols-2 gap-3">
                 <Action kind="quiet" onClick={() => set({ stage:'list', plan:null })}>Edit list</Action>
-                <Action onClick={() => { set({ stage:'done' }); window.scrollTo(0, 0) }}>Done</Action>
+                <Action onClick={finish}>{late ? 'Lock it in anyway' : 'Lock it in'}</Action>
               </div>
             </>
           )}
@@ -230,11 +270,12 @@ export default function Cram({ onExit }) {
                 </ul>
                 {learned.n > 0 && <p className="mt-3 text-ui font-semibold text-ink">{factorLine(learned.factor)}</p>}
               </Sheet>
-              <Action kind="quiet" onClick={again}>Start again</Action>
+              {!g.result && <Action kind="quiet" onClick={again}>Start again</Action>}
             </>
           )}
         </>
       )}
+      </Quest>
     </Screen>
   )
 }

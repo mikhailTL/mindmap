@@ -213,3 +213,45 @@ describe('contract', () => {
     }
   })
 })
+
+import { interestQuiz } from '../src/skills/life/logic.js'
+
+describe('interest quiz', () => {
+  const q = interestQuiz()
+  it('has three questions, each with exactly one right answer', () => {
+    expect(q).toHaveLength(3)
+    for (const it of q) expect(it.options.filter(o => o.ok)).toHaveLength(1)
+  })
+  it('uses the monthly compounding formula for the right answers', () => {
+    const right = q.map(it => it.options.find(o => o.ok).value)
+    expect(right[0]).toBeCloseTo(100 * Math.pow(1 + 0.05 / 12, 120), 2)                    // 164.70
+    expect(right[1]).toBeCloseTo(25 * (Math.pow(1 + 0.05 / 12, 120) - 1) / (0.05 / 12), 2)  // 3882.06
+    expect(right[2]).toBeCloseTo(500 * Math.pow(1 + 0.24 / 12, 24), 2)                     // 804.22
+  })
+  it('offers simple interest as the tempting wrong answer', () => {
+    expect(q[0].options.some(o => !o.ok && Math.abs(o.value - 150) < 0.001)).toBe(true)
+    expect(q[2].options.some(o => !o.ok && Math.abs(o.value - 740) < 0.001)).toBe(true)
+  })
+  it('states its assumptions', () => {
+    for (const it of q) expect(it.why).toMatch(/monthly|added/i)
+  })
+})
+
+import { AID_CHECK, FIRST_AID } from '../src/skills/life/health.jsx'
+
+describe('first-aid check', () => {
+  it('asks one question per first-aid card, each with one right answer', () => {
+    expect(AID_CHECK.map(q => q.id).sort()).toEqual(Object.keys(FIRST_AID).sort())
+    for (const q of AID_CHECK) expect(q.options.filter(o => o.ok)).toHaveLength(1)
+  })
+  it('says when to get help in every answer, with no dashes', () => {
+    for (const q of AID_CHECK) {
+      expect(q.why).toMatch(/emergency number|help called|doctor/i)
+      expect(q.prompt + q.why + q.options.map(o => o.text).join(' ')).not.toMatch(/[–—]/)
+    }
+  })
+  it('never teaches the unsafe moves as right', () => {
+    const right = AID_CHECK.map(q => q.options.find(o => o.ok).text.toLowerCase()).join(' ')
+    expect(right).not.toMatch(/ice straight|butter|tilt|wait/)
+  })
+})

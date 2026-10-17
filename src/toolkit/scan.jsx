@@ -116,7 +116,7 @@ export default function BodyScan() {
   }
 
   const nextRegion = React.useCallback((idx) => {
-    if (idx + 1 >= REGIONS.length) { setStage('done'); g.finish(); return }
+    if (idx + 1 >= REGIONS.length) { setStage('done'); g.finish({ complete:true }); return }
     setI(idx + 1); fillRef.current = 0; setFill(0); breaks.current = 0; setBetween(false)
     g.cue('turn')
   }, [g.finish, g.cue])

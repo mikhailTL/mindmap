@@ -89,7 +89,7 @@ export default function MoveBreak() {
       g.add(30, { x:50, y:30, sound:'good' })
     }
     setDone(d => [...d, { id: MOVES[i].id, fill: how === 'skip' ? 0 : how === 'tap' ? 1 : f, skipped: how === 'skip' }])
-    if (i + 1 >= MOVES.length) { setTimeout(() => { setStage('done'); g.finish() }, 500); setStage('wait-end') }
+    if (i + 1 >= MOVES.length) { setTimeout(() => { setStage('done'); g.finish({ complete:true }) }, 500); setStage('wait-end') }
     else { setI(i + 1); setStage('ready') }
   }, [i, g.add, g.finish])
 

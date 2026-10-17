@@ -162,7 +162,7 @@ export default function Breathing() {
       setView({ u: starts[i] + steps[i][2] * ff, phase, secs: Math.max(1, Math.ceil(dur - (into - a))),
                 match, lap, hold: want[i] })
 
-      if (lap >= P.laps) { setTally({ ...t }); setStage('done'); g.finish(); return }
+      if (lap >= P.laps) { setTally({ ...t }); setStage('done'); g.finish({ complete:true }); return }
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
@@ -172,7 +172,7 @@ export default function Breathing() {
 
   const start = () => { g.reset(); setTally({ sides:0, good:0, laps:0, clean:0, inTime:0, time:0 })
     setView({ u:0, phase:'In', secs:4, match:true, lap:0, hold:true }); setNote(''); setStage('ready') }
-  const end = () => { setStage('done'); g.finish() }
+  const end = () => { setStage('done'); g.finish({ complete:false }) }
 
   const steady = tally.time ? Math.round(tally.inTime / tally.time * 100) : 0
   const idle = stage === 'idle' || stage === 'ready'

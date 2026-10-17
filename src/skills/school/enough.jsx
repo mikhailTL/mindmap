@@ -3,6 +3,8 @@ import { cn } from '../../lib/utils'
 import { Sheet, Action, Meter, Note } from '../../toolkit/shell'
 import { Screen, H, Field, Tick, useSaved, uid, EnoughIcon } from './ui'
 import { readiness, gutCheck, mistakeEntry } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, GoalMeter, Win, leave } from '../../toolkit/game/skill'
 
 /* Good enough to submit. Write down what the work actually needs, tick it
  * off, and the meter says when it is ready, however it feels. A mistake log
@@ -19,7 +21,7 @@ function List({ items, onToggle, onRemove, label }) {
     <ul className="mt-3 grid gap-2" aria-label={label}>
       {items.map(m => (
         <li key={m.id} className={cn('flex items-center gap-2 rounded-[12px] border', m.done ? 'kit-ground border-transparent' : 'border-rule bg-card')}>
-          <button type="button" role="checkbox" aria-checked={m.done} onClick={() => onToggle(m.id)}
+          <button type="button" role="checkbox" aria-checked={m.done} onClick={e => onToggle(m.id, e)}
             className="flex min-h-[52px] min-w-0 flex-1 items-center gap-3 px-3 text-left">
             <Tick ok={m.done}/>
             <span className={cn('text-ui text-ink', m.done && 'font-semibold')}>{m.text}</span>
@@ -47,13 +49,18 @@ function AddRow({ label, placeholder, onAdd }) {
 }
 
 export default function Enough({ onExit }) {
+  const g = useSkill(ID)
   const [s, setS] = useSaved(ID, START)
   const set = patch => setS(v => ({ ...v, ...patch }))
   const [m, setM] = React.useState(BLANK)
   const r = readiness(s.must)
   const gut = gutCheck(s.feel, r.pct)
 
-  const toggle = key => id => set({ [key]:s[key].map(x => x.id === id ? { ...x, done:!x.done } : x) })
+  const toggle = key => (id, e) => {
+    const was = s[key].find(x => x.id === id)
+    if (key === 'must' && was && !was.done) g.hit(10, e, { sound:'tick' })
+    set({ [key]:s[key].map(x => x.id === id ? { ...x, done:!x.done } : x) })
+  }
   const remove = key => id => set({ [key]:s[key].filter(x => x.id !== id) })
   const add = key => text => set({ [key]:[...s[key], { id:uid(), text, done:false }].slice(0, 12) })
   const log = e => {
@@ -63,14 +70,23 @@ export default function Enough({ onExit }) {
     set({ mistakes:[{ id:uid(), ...entry }, ...s.mistakes].slice(0, 40) })
     setM(BLANK)
   }
-  const again = () => { set({ goal:'', must:[], nice:[], feel:50, submitted:false }); window.scrollTo(0, 0) }
+  const again = () => { set({ goal:'', must:[], nice:[], feel:50, submitted:false }); g.reset(); window.scrollTo(0, 0) }
+  const submit = () => { set({ submitted:true }); g.finish({ complete:true }); window.scrollTo(0, 0) }
+  const step = s.submitted ? 3 : r.total === 0 ? 0 : r.ready ? 2 : 1
 
   return (
     <Screen title="Good Enough Meter" family="coral" icon={EnoughIcon} onExit={onExit}
       problem="Fear of getting it wrong can stop you finishing at all."
       plan="List what the work must have, tick it off, and let the list say when it is ready.">
+      <Quest game={g} at={step} goal="Tick every must-have, then hand it in. Extras are optional."
+        steps={['List the must-haves', 'Tick them off', 'Hand it in']}>
 
-      {s.submitted ? (
+      {s.submitted && g.result ? (
+        <EndCard game={g} title="Handed in" againLabel="Start the next one" onAgain={again} onDone={leave(onExit)}
+          stats={[['Must-haves met', `${r.done} of ${r.total}`], ['Extras skipped', s.nice.filter(x => !x.done).length]]}>
+          <p className="text-ui text-ink">{s.goal ? `${s.goal}: ` : ''}everything asked for was there. That is what good enough means.</p>
+        </EndCard>
+      ) : s.submitted ? (
         <Sheet className="kit-ground border-transparent">
           <H>Submitted</H>
           <p className="mt-1 text-sec text-ink">
@@ -91,13 +107,13 @@ export default function Enough({ onExit }) {
           </Sheet>
 
           <Sheet>
-            <Meter tall value={r.pct} label="Good enough to submit"
+            <GoalMeter reduced={g.reduced} value={r.pct} label="Good enough to submit"
               right={`${r.done} of ${r.total}`}/>
             {r.ready ? (
               <>
-                <p className="mt-3 text-sec font-semibold text-ink">Ready to submit. Everything required is there.</p>
-                <p className="text-ui text-ink-2">More polishing now is a choice, not a requirement.</p>
-                <Action className="mt-4 w-full" onClick={() => { set({ submitted:true }); window.scrollTo(0, 0) }}>
+                <Win className="mt-3" reduced={g.reduced}>Ready to submit. Everything required is there.</Win>
+                <p className="mt-2 text-ui text-ink-2">More polishing now is a choice, not a requirement.</p>
+                <Action className="mt-4 w-full" onClick={submit}>
                   I submitted it
                 </Action>
               </>
@@ -131,6 +147,8 @@ export default function Enough({ onExit }) {
           </details>
         </>
       )}
+
+      </Quest>
 
       <Sheet>
         <H>Mistake log</H>

@@ -4,7 +4,9 @@ import { MoneyIcon } from './icons'
 import { LifeScreen, Sections, Heading, Lead, Panel, Field, Figure, Chip, RemoveButton,
          Action, Choice, useStored, uid } from './parts'
 import { money, moneyShort, monthlyCost, subsTotals, pauseStatus, budget, compound, todayISO, daysBetween,
-         niceDate, PAUSE_HOURS } from './logic'
+         niceDate, PAUSE_HOURS, interestQuiz } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, QuickRound, GoalMeter, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
 /* Money Check: subscriptions, a 24 hour pause list, a monthly budget, a
  * compound interest calculator and a credit score explainer. Educational
@@ -19,7 +21,7 @@ const CYCLES = [['weekly', 'Weekly'], ['monthly', 'Monthly'], ['yearly', 'Yearly
 const USED = [['week', 'This week'], ['month', 'This month'], ['not-month', 'Not this month'], ['unsure', 'Can\'t remember']]
 const IDEAS = ['Music streaming', 'Video streaming', 'Game pass', 'Cloud storage', 'App or game in-app plan']
 
-function Subs({ data, patch }) {
+function Subs({ data, patch, g, win }) {
   const list = data.subs || []
   const [d, setD] = React.useState({ name:'', price:'', cycle:'monthly', used:'week', trial:'' })
   const t = subsTotals(list)
@@ -28,6 +30,7 @@ function Subs({ data, patch }) {
     e.preventDefault()
     if (!d.name.trim() || !(parseFloat(d.price) >= 0)) return
     patch('subs', [...list, { ...d, id: uid(), name: d.name.trim() }])
+    g.hit(10, e.currentTarget.querySelector('button[type=submit]') || e)
     setD({ name:'', price:'', cycle:'monthly', used:'week', trial:'' })
   }
   const setUsed = (id, used) => patch('subs', list.map(s => s.id === id ? { ...s, used } : s))
@@ -95,6 +98,11 @@ function Subs({ data, patch }) {
             })}
           </ul>
         )}
+        {list.length > 0 && !g.result && (
+          <Action className="mt-3 w-full sm:w-auto" onClick={() => win('Leaks found',
+            [['Every month', money(t.monthly)], ['Every year', money(t.yearly)], ['Not used this month', t.flagged.length],
+             ['Could save a year', money(t.flaggedYearly)]], ['plan'])}>I have checked them all</Action>
+        )}
         {list.length > 0 && <Action kind="quiet" className="mt-2" onClick={() => patch('subs', [])}>Start again</Action>}
       </Panel>
     </>
@@ -109,7 +117,7 @@ function useNow(ms = 30e3) {
   return now
 }
 
-function Pause({ data, patch }) {
+function Pause({ data, patch, g, win }) {
   const list = data.pause || []
   const kept = data.kept || 0
   const now = useNow()
@@ -120,9 +128,14 @@ function Pause({ data, patch }) {
     patch('pause', [{ id: uid(), name: d.name.trim(), price: d.price, at: Date.now() }, ...list])
     setD({ name:'', price:'' })
   }
-  const decide = (item, buy) => {
+  const decide = (item, buy, e) => {
     patch('pause', list.filter(x => x.id !== item.id))
-    if (!buy) patch('kept', k => Math.round(((k || 0) + (parseFloat(item.price) || 0)) * 100) / 100)
+    if (!buy) {
+      const add = parseFloat(item.price) || 0
+      patch('kept', k => Math.round(((k || 0) + add) * 100) / 100)
+      g.hit(10, e, { label:'kept', sound:'good' })
+      if (!g.result) win('Skipped it', [['Kept this time', money(add)], ['Kept so far', money(kept + add)]], [])
+    } else if (!g.result) win('Decided with a clear head', [['Waited', `${PAUSE_HOURS} hours`], ['Kept so far', money(kept)]], [])
   }
   return (
     <>
@@ -151,12 +164,12 @@ function Pause({ data, patch }) {
                     <div className="mt-2">
                       <p className="text-fine text-ink-2">Do you still want it? Do you have the money without touching savings?</p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Action kind="quiet" onClick={() => decide(i, true)}>Still want it</Action>
-                        <Action onClick={() => decide(i, false)}>Skip it</Action>
+                        <Action kind="quiet" onClick={e => decide(i, true, e)}>Still want it</Action>
+                        <Action onClick={e => decide(i, false, e)}>Skip it</Action>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => decide(i, false)}
+                    <button type="button" onClick={e => decide(i, false, e)}
                       className="mt-1 min-h-[44px] text-fine font-semibold text-ink-2 underline underline-offset-4">
                       Changed my mind already, skip it
                     </button>
@@ -179,7 +192,7 @@ const INCOME = [['job', 'Job or gigs'], ['allowance', 'Allowance'], ['gifts', 'G
 const SPEND = [['food', 'Food and snacks'], ['transport', 'Transport'], ['phone', 'Phone'], ['fun', 'Fun and going out'],
   ['clothes', 'Clothes'], ['subs', 'Subscriptions'], ['save', 'Saving'], ['other', 'Other']]
 
-function Budget({ data, patch }) {
+function Budget({ data, patch, g, win }) {
   const b = data.budget || {}
   const set = (k, v) => patch('budget', { ...b, [k]: digits(v) })
   const rows = list => list.map(([k]) => ({ amount: b[k] }))
@@ -206,17 +219,29 @@ function Budget({ data, patch }) {
           <Figure small label="Out" value={moneyShort(r.spending)}/>
           <Figure small label="Left" value={moneyShort(r.left)} tone={r.over ? 'bad' : undefined}/>
         </div>
-        <div className="mt-3" aria-hidden>
-          <div className="kit-ground h-3 overflow-hidden rounded-bar">
-            <div className={cn('h-full rounded-bar', r.over ? 'bg-[#a11b1b]' : 'kit-fill')} style={{ width: share * 100 + '%' }}/>
+        {r.over ? (
+          <div className="mt-3" aria-hidden>
+            <div className="kit-ground h-5 overflow-hidden rounded-bar">
+              <div className="h-full rounded-bar bg-[#a11b1b]" style={{ width: '100%' }}/>
+            </div>
           </div>
-        </div>
+        ) : (
+          <GoalMeter className="mt-3" reduced={g.reduced} value={share} label="Dollars with a job"
+            right={r.income > 0 ? `${Math.round(share * 100)}%` : ''}/>
+        )}
+        {r.income > 0 && r.left === 0 && <Win className="mt-3" reduced={g.reduced}>Every dollar has a job.</Win>}
         <p className="mt-2 text-ui text-ink" role="status">
           {r.income === 0 && r.spending === 0 ? 'Fill in what comes in and goes out.'
             : r.over ? `You plan to spend ${money(-r.left)} more than comes in. Trim one category until Left is zero or more.`
             : r.left === 0 ? `Every dollar has a job. Nice planning.` : `You have planned ${Math.round(share * 100)}% of what comes in. ${money(r.left)} has no job yet: give it one, like saving.`}
         </p>
-        <Action kind="quiet" className="mt-3" onClick={() => patch('budget', {})}>Start again</Action>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {r.income > 0 && !r.over && !g.result && (
+            <Action onClick={() => win('Budget locked in', [['In', money(r.income)], ['Out', money(r.spending)],
+              ['Left with no job', money(r.left)], ['Saving', money(parseFloat(b.save) || 0)]], ['plan'])}>Lock in my budget</Action>
+          )}
+          <Action kind="quiet" onClick={() => patch('budget', {})}>Start again</Action>
+        </div>
       </Panel>
     </>
   )
@@ -282,11 +307,24 @@ function Growth({ rows }) {
   )
 }
 
-function Interest({ data, patch }) {
+const GUESS = interestQuiz()
+
+function Interest({ data, patch, g, win }) {
   const c = { start:'100', monthly:'25', rate:'5', years:'10', ...(data.ci || {}) }
   const set = (k, v) => patch('ci', { ...c, [k]: digits(v) })
   const r = compound(c)
+  const [quiz, setQuiz] = React.useState(false)
   return (
+    <>
+    {quiz && !g.result ? (
+      <QuickRound className="mt-4" game={g} items={GUESS} label="Guess" seed={5} doneLabel="Finish"
+        head={<p className="mb-3 text-fine text-ink-2">Assumes a fixed yearly rate, interest added monthly, no fees and no tax.</p>}
+        onDone={grade => { setQuiz(false); win(grade.clean ? 'Interest pro' : 'Guesses done',
+          [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : []) }}/>
+    ) : !g.result && (
+      <PlayCard title="Guess the total" line="Three quick guesses. Most people guess too low, for savings and for debt."
+        onPlay={() => setQuiz(true)}/>
+    )}
     <Panel>
       <Heading>Watch money grow</Heading>
       <Lead>Interest earns interest. Time does most of the work.</Lead>
@@ -312,6 +350,7 @@ function Interest({ data, patch }) {
       </div>
       <Action kind="quiet" className="mt-3" onClick={() => patch('ci', {})}>Start again</Action>
     </Panel>
+    </>
   )
 }
 
@@ -331,13 +370,28 @@ const QUIZ = [
   ['One payment over 30 days late can drop a score a lot.', true, 'Fact. Payment history is the biggest part of the score.'],
 ]
 
-function Credit({ data, patch }) {
+const MYTHS = QUIZ.map(([q, truth, why], i) => ({ id:String(i), prompt:q, why, fixed:true,
+  options:[{ id:'myth', text:'Myth', ok:!truth }, { id:'fact', text:'Fact', ok:truth }] }))
+
+function Credit({ data, patch, g, win }) {
   const [open, setOpen] = React.useState(0)
+  const [play, setPlay] = React.useState(false)
   const ans = data.quiz || {}
   const answered = Object.keys(ans).length
   const right = QUIZ.filter((q, i) => ans[i] === q[1]).length
   return (
     <>
+      {play && !g.result ? (
+        <QuickRound className="mt-4" game={g} items={MYTHS} label="Statement" doneLabel="Finish"
+          onDone={(grade, picks) => {
+            patch('quiz', Object.fromEntries(Object.entries(picks).map(([k, v]) => [k, v === 'fact'])))
+            setPlay(false)
+            win(grade.clean ? 'Myth buster' : 'Quiz done', [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : [])
+          }}/>
+      ) : !g.result && (
+        <PlayCard title="Myth or fact?" line="Four things people say about credit. Bust the myths."
+          onPlay={() => { patch('quiz', {}); setPlay(true) }}/>
+      )}
       <Panel>
         <Heading>What a credit score is</Heading>
         <Lead>A number from 300 to 850 that tells lenders how likely you are to pay back. A higher score can mean
@@ -369,9 +423,10 @@ function Credit({ data, patch }) {
           you need to show your own income. Get your free credit reports at AnnualCreditReport.com, the official site.
           This is general education, not financial advice.</p>
       </Panel>
+      {answered > 0 && !play && (
       <Panel>
-        <Heading>Myth or fact?</Heading>
-        <ol className="mt-3 grid gap-3">
+        <Heading>Myth or fact? Your answers</Heading>
+        {answered > 0 && <ol className="mt-3 grid gap-3">
           {QUIZ.map(([q, truth, why], i) => (
             <li key={q} className="rounded-[12px] border border-rule p-3">
               <p className="text-ui font-semibold text-ink">{q}</p>
@@ -386,31 +441,51 @@ function Credit({ data, patch }) {
               )}
             </li>
           ))}
-        </ol>
+        </ol>}
         {answered === QUIZ.length && (
           <Figure className="mt-3" label="Your result" value={`${right} of ${QUIZ.length} right`}/>
         )}
         {answered > 0 && <Action kind="quiet" className="mt-3" onClick={() => patch('quiz', {})}>Start again</Action>}
       </Panel>
+      )}
     </>
   )
 }
 
 const TABS = [['subs', 'Subscriptions'], ['pause', '24 hour pause'], ['budget', 'Budget'], ['interest', 'Interest'], ['credit', 'Credit score']]
 
+const GOALS = {
+  subs:     'Add what you pay for and spot one you could cut.',
+  pause:    'Wait a day before you buy, then decide with a clear head.',
+  budget:   'Give every dollar a job, saving first.',
+  interest: 'Guess three totals, then play with the numbers.',
+  credit:   'Bust four credit myths.',
+}
+
 export default function LifeMoney({ onExit }) {
+  const g = useSkill(ID)
+  const [end, setEnd] = React.useState(null)
   const [data, patch] = useStored(ID, { tab:'subs' })
   const tab = data.tab || 'subs'
+  const win = (title, stats, marks) => { setEnd({ title, stats }); g.finish({ complete:true, marks }); window.scrollTo(0, 0) }
+  const again = () => { setEnd(null); g.reset() }
+  const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="mint" title="Money Check" icon={MoneyIcon} onExit={onExit}
       problem="Small charges and quick buys add up without you noticing."
       doing="Find the leaks, plan a month, and see how interest and credit work. Educational only.">
-      <Sections label="Money tools" items={TABS} value={tab} onChange={v => patch('tab', v)}/>
-      {tab === 'subs' && <Subs data={data} patch={patch}/>}
-      {tab === 'pause' && <Pause data={data} patch={patch}/>}
-      {tab === 'budget' && <Budget data={data} patch={patch}/>}
-      {tab === 'interest' && <Interest data={data} patch={patch}/>}
-      {tab === 'credit' && <Credit data={data} patch={patch}/>}
+      <Sections label="Money tools" items={TABS} value={tab} onChange={go}/>
+      <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
+        {end && g.result && (
+          <EndCard className="mt-4" game={g} title={end.title} stats={end.stats} againLabel="Keep going"
+            onAgain={again} onDone={leave(onExit)}/>
+        )}
+        {tab === 'subs' && <Subs data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'pause' && <Pause data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'budget' && <Budget data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'interest' && <Interest data={data} patch={patch} g={g} win={win}/>}
+        {tab === 'credit' && <Credit data={data} patch={patch} g={g} win={win}/>}
+      </Quest>
     </LifeScreen>
   )
 }

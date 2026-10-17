@@ -4,6 +4,8 @@ import { Bin } from '../../ui/marks'
 import { Sheet, Choice, Action, FIELD, Note } from '../../toolkit/shell'
 import { Screen, Intro, StepHead, Local, Row, Result, Done, CopyButton, Safety, I } from './parts'
 import { WHO, NO_STYLES, REPLIES, CONSENT, noLine, pushbackFor, readStore, writeStore } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, Answer, answerState, Win, leave } from '../../toolkit/game/skill'
 
 /* Saying No: a boundary builder.
  *
@@ -139,6 +141,7 @@ function How({ s, set }) {
           <p className="mt-1 font-display text-row font-bold tracking-tight text-ink" aria-live="polite">{line}</p>
         </Result>
       )}
+      {line && <Win className="mt-3">Line ready. Next, hold it against three rounds of pushback.</Win>}
       <fieldset className="mt-5">
         <legend className="font-display text-ui font-bold text-ink">If it gets hard, I can text</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -155,7 +158,7 @@ function How({ s, set }) {
   )
 }
 
-function Practice({ s, set }) {
+function Practice({ s, set, g }) {
   const lines = pushbackFor(s.who)
   const pick = s.picks[s.round]
   const hold = s.who === 'adult'
@@ -165,33 +168,44 @@ function Practice({ s, set }) {
   const order = [[0, 1, 2], [1, 0, 2], [2, 1, 0]][s.round % 3]
   const chosen = pick ? options.find(o => o.kind === pick) : null
   const last = s.round === lines.length - 1
-  const choose = kind => { const picks = [...s.picks]; picks[s.round] = kind; set({ picks }) }
+  const choose = (kind, e) => {
+    if (pick) return
+    const picks = [...s.picks]; picks[s.round] = kind; set({ picks })
+    if (kind === 'hold') g.hit(10, e, { sound:'good' }); else g.cue('turn')
+  }
+  const done = () => {
+    set({ step:5 })
+    const held = s.picks.filter(p => p === 'hold').length
+    g.finish({ complete:true, marks: held === lines.length ? ['script', 'clean'] : ['script'] })
+  }
   return (
     <>
       <StepHead n={4} of={STEPS} title={`Pushback, round ${s.round + 1} of ${lines.length}`}/>
       <Sheet>
+        <div key={s.round} className={cn(!g.reduced && 'g-card')}>
         <p className="text-fine font-semibold text-ink-2">They say</p>
         <p className="mt-1 font-display text-row font-bold tracking-tight text-ink">{lines[s.round]}</p>
         <p className="mt-4 text-fine font-semibold text-ink-2">You say</p>
-        <div className="mt-2 grid gap-2">
+        <div role="group" aria-label="Replies" className="mt-2 grid gap-2">
           {order.map(i => options[i]).map(o => (
-            <Choice key={o.kind} on={pick === o.kind} disabled={!!pick && pick !== o.kind}
-              onClick={() => choose(o.kind)} className="w-full py-3">{o.text}</Choice>
+            <Answer key={o.kind} state={answerState({ id:o.kind }, pick, 'hold')} reduced={g.reduced}
+              onClick={e => choose(o.kind, e)}>{o.text}</Answer>
           ))}
         </div>
         {chosen && (
-          <div className="kit-ground mt-3 rounded-[12px] p-3" role="status">
+          <div className={cn('mt-3 rounded-[12px] p-3', chosen.kind === 'hold' ? 'bg-accent-wash' : 'bg-warn-wash')} role="status">
             <p className="kit-ink font-display text-ui font-bold">
               {chosen.kind === 'hold' ? 'You held your line' : chosen.kind === 'explain' ? 'Over-explaining' : 'Gave in'}
             </p>
             <p className="mt-1 text-ui text-ink">{chosen.why}</p>
           </div>
         )}
+        </div>
       </Sheet>
       {s.who === 'partner' && <Consent compact/>}
       <Row>
         <Action kind="quiet" onClick={() => s.round ? set({ round:s.round - 1 }) : set({ step:3 })}>Back</Action>
-        <Action disabled={!pick} onClick={() => last ? set({ step:5 }) : set({ round:s.round + 1 })}>
+        <Action disabled={!pick} onClick={() => last ? done() : set({ round:s.round + 1 })}>
           {last ? 'Finish' : 'Next round'}
         </Action>
       </Row>
@@ -224,7 +238,7 @@ function Mine({ list, setList, open = false }) {
   )
 }
 
-function Finish({ s, onExit, again, list, setList }) {
+function Finish({ s, onExit, again, list, setList, g }) {
   const line = noLine(s.style, s.ask, s)
   const who = WHO.find(w => w.id === s.who)
   const held = s.picks.filter(p => p === 'hold').length
@@ -233,6 +247,11 @@ function Finish({ s, onExit, again, list, setList }) {
   return (
     <>
       <StepHead n={0} of={0} title="Your boundary"/>
+      {g.result && (
+        <EndCard className="mb-4" game={g} title={held === s.picks.length ? 'Held every round' : 'Boundary built'}
+          againLabel="Start again" onAgain={again} onDone={leave(onExit)}
+          stats={[['Rounds held', `${held} of ${s.picks.length}`], ['Back-up', s.backup || 'None picked']]}/>
+      )}
       <Result>
         <p className="text-fine font-semibold text-ink-2">With {lower(who.label)}</p>
         <p className="mt-1 font-display text-row font-bold tracking-tight text-ink">{line}</p>
@@ -255,6 +274,7 @@ function Finish({ s, onExit, again, list, setList }) {
 }
 
 export default function SayNo({ onExit }) {
+  const g = useSkill(ID)
   const [s, setS] = React.useState(blank)
   const [list, setListState] = React.useState(() => {
     const v = readStore(ID, { list:[] }); return Array.isArray(v?.list) ? v.list : []
@@ -265,11 +285,14 @@ export default function SayNo({ onExit }) {
     <Screen id={ID} family="lilac" title="Saying No" icon={<NoIcon/>} onExit={onExit}>
       {s.step === 1 && <Intro problem="Saying no to friends, dates or adults can feel like risking your place."
         doing="Build a firm, kind no, practice it against pushback, and keep a list."/>}
+      <Quest game={g} body="mt-5" goal="Build a firm, kind no and hold it for three rounds."
+        steps={['Who is asking', 'What to say no to', 'How to say it', 'Pushback']} at={s.step - 1}>
       {s.step === 1 && <Who s={s} set={set}/>}
       {s.step === 2 && <What s={s} set={set}/>}
       {s.step === 3 && <How s={s} set={set}/>}
-      {s.step === 4 && <Practice s={s} set={set}/>}
-      {s.step === 5 && <Finish s={s} onExit={onExit} again={() => setS(blank)} list={list} setList={setList}/>}
+      {s.step === 4 && <Practice s={s} set={set} g={g}/>}
+      {s.step === 5 && <Finish s={s} onExit={onExit} again={() => { setS(blank); g.reset() }} list={list} setList={setList} g={g}/>}
+      </Quest>
       {s.step === 1 && <Mine list={list} setList={setList}/>}
       <Local/>
     </Screen>

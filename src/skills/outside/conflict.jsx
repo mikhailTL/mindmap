@@ -7,6 +7,8 @@ import {
   SITUATIONS, FEELINGS, MOVES, BULLYING_STEPS, scenariosFor, scoreReplies, iStatement, checkWhen,
   readStore, writeStore,
 } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, Answer, answerState, GoalMeter, Win, leave } from '../../toolkit/game/skill'
 
 /* Say It Calmly: an I-statement and de-escalation builder.
  *
@@ -97,10 +99,12 @@ function Field({ id, label, lead, value, onChange, example }) {
   )
 }
 
-function Build({ s, set }) {
+function Build({ s, set, g }) {
   const sit = SITUATIONS.find(x => x.id === s.sit)
   const line = iStatement(s)
   const tips = checkWhen([s.when, s.because, s.need].join(' '))
+  const filled = [s.feel, s.when.trim(), s.because.trim(), s.need.trim()].filter(Boolean).length
+  const strength = Math.max(0, filled - (tips.length ? 1 : 0)) / 4
   return (
     <>
       <StepHead n={2} of={STEPS} title="Build an I-statement"/>
@@ -131,6 +135,9 @@ function Build({ s, set }) {
           <ul className="mt-1 grid gap-1 text-ui text-ink">{tips.map(t => <li key={t}>{t}</li>)}</ul>
         </div>
       )}
+      <GoalMeter className="mt-4" reduced={g.reduced} value={strength} label="Sentence strength"
+        right={`${filled} of 4 parts`}/>
+      {strength >= 1 && <Win className="mt-3" reduced={g.reduced}>Clear and calm. Ready to use.</Win>}
       <Result className="mt-4">
         <p className="text-fine font-semibold text-ink-2">So far</p>
         <p className="mt-1 font-display text-sec font-semibold text-ink" aria-live="polite">
@@ -180,27 +187,38 @@ function Moves({ s, set }) {
 
 const KIND = { calm:'Clear and calm', avoid:'Avoiding', attack:'Attacking' }
 
-function Practice({ s, set }) {
+function Practice({ s, set, g }) {
   const list = scenariosFor(s.sit, 3)
   const sc = list[s.round]
   const pick = s.picks[s.round]
   const chosen = pick != null ? sc.options[pick] : null
-  const choose = i => { const picks = [...s.picks]; picks[s.round] = i; set({ picks }) }
+  const calmAt = sc.options.findIndex(o => o.kind === 'calm')
+  const choose = (i, e) => {
+    if (pick != null) return
+    const picks = [...s.picks]; picks[s.round] = i; set({ picks })
+    if (i === calmAt) g.hit(10, e, { sound:'good' }); else g.cue('turn')
+  }
   const last = s.round === list.length - 1
+  const done = () => {
+    set({ step:5 })
+    const calm = s.picks.filter((p, i) => list[i]?.options[p]?.kind === 'calm').length
+    g.finish({ complete:true, marks: calm === list.length ? ['script', 'clean'] : ['script'] })
+  }
   return (
     <>
       <StepHead n={4} of={STEPS} title={`Practice, ${s.round + 1} of ${list.length}`}/>
       <Sheet>
+        <div key={s.round} className={cn(!g.reduced && 'g-card')}>
         <p className="text-sec text-ink">{sc.text}</p>
         <p className="mt-3 text-fine font-semibold text-ink-2">What do you do?</p>
-        <div className="mt-2 grid gap-2">
+        <div role="group" aria-label="Replies" className="mt-2 grid gap-2">
           {sc.options.map((o, i) => (
-            <Choice key={i} on={pick === i} onClick={() => choose(i)} disabled={pick != null && pick !== i}
-              className="w-full py-3">{o.text}</Choice>
+            <Answer key={i} state={answerState({ id:i }, pick, calmAt)} reduced={g.reduced}
+              onClick={e => choose(i, e)}>{o.text}</Answer>
           ))}
         </div>
         {chosen && (
-          <div className="mt-3 rounded-[12px] kit-ground p-3" role="status">
+          <div className={cn('mt-3 rounded-[12px] p-3', chosen.kind === 'calm' ? 'bg-accent-wash' : 'bg-warn-wash')} role="status">
             <p className="kit-ink font-display text-ui font-bold">{KIND[chosen.kind]}</p>
             <p className="mt-1 text-ui text-ink">{chosen.why}</p>
             {chosen.kind !== 'calm' && (
@@ -210,11 +228,12 @@ function Practice({ s, set }) {
             )}
           </div>
         )}
+        </div>
       </Sheet>
       <Row>
         <Action kind="quiet" onClick={() => s.round ? set({ round:s.round - 1 }) : set({ step:3 })}>Back</Action>
         <Action disabled={pick == null}
-          onClick={() => last ? set({ step:5 }) : set({ round:s.round + 1 })}>
+          onClick={() => last ? done() : set({ round:s.round + 1 })}>
           {last ? 'See my script' : 'Next scenario'}
         </Action>
       </Row>
@@ -222,7 +241,7 @@ function Practice({ s, set }) {
   )
 }
 
-function Script({ s, set, onExit, again, saved, setSaved }) {
+function Script({ s, set, onExit, again, saved, setSaved, g }) {
   const line = iStatement(s)
   const moves = MOVES.filter(m => s.moves.includes(m.id))
   const list = scenariosFor(s.sit, 3)
@@ -237,6 +256,10 @@ function Script({ s, set, onExit, again, saved, setSaved }) {
   return (
     <>
       <StepHead n={0} of={0} title="Your script"/>
+      {g.result && (
+        <EndCard className="mb-4" game={g} title="Script ready" againLabel="Start again" onAgain={again}
+          onDone={leave(onExit)} stats={[['Clear and calm', `${sc.calm} of ${sc.total}`], ['Calm-down moves', moves.length]]}/>
+      )}
       <Result>
         <p className="text-fine font-semibold text-ink-2">{sit?.label}</p>
         <p className="mt-1 font-display text-row font-bold tracking-tight text-ink">{line}</p>
@@ -294,6 +317,7 @@ function Saved({ saved, setSaved }) {
 }
 
 export default function Conflict({ onExit }) {
+  const g = useSkill(ID)
   const [s, setS] = React.useState(blank)
   const [saved, setSavedState] = React.useState(() => {
     const v = readStore(ID, { scripts:[] }); return Array.isArray(v?.scripts) ? v.scripts : []
@@ -304,12 +328,15 @@ export default function Conflict({ onExit }) {
     <Screen id={ID} family="coral" title="Say It Calmly" icon={<ConflictIcon/>} onExit={onExit}>
       {s.step === 1 && <Intro problem="Some fights get dodged and some blow up. Neither fixes much."
         doing="Build an I-statement, pick calm-down moves, then practice."/>}
+      <Quest game={g} body="mt-5" goal="Build one calm sentence, then test it on three scenes."
+        steps={['Pick the situation', 'Build the sentence', 'Calm-down moves', 'Practice']} at={s.step - 1}>
       {s.step === 1 && <Pick s={s} set={set}/>}
-      {s.step === 2 && <Build s={s} set={set}/>}
+      {s.step === 2 && <Build s={s} set={set} g={g}/>}
       {s.step === 3 && <Moves s={s} set={set}/>}
-      {s.step === 4 && <Practice s={s} set={set}/>}
-      {s.step === 5 && <Script s={s} set={set} onExit={onExit} again={() => setS(blank)}
-        saved={saved} setSaved={setSaved}/>}
+      {s.step === 4 && <Practice s={s} set={set} g={g}/>}
+      {s.step === 5 && <Script s={s} set={set} onExit={onExit} again={() => { setS(blank); g.reset() }}
+        saved={saved} setSaved={setSaved} g={g}/>}
+      </Quest>
       {s.step === 1 && <Saved saved={saved} setSaved={setSaved}/>}
       <Local/>
     </Screen>

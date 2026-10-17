@@ -3,7 +3,9 @@ import { cn } from '../../lib/utils'
 import { Meter } from '../../toolkit/shell'
 import { META } from './meta'
 import { Screen, Sheet, H, Steps, Field, CopyBlock, Tick, Finish, Nav, Choice, Chips, Action, useSaved, uid } from './parts'
-import { SKILLS, FEELINGS, FROM, NEXT_STEPS, splitSentences, suggestSkills, groupSkills, clarifyScript } from './feedback-logic'
+import { SKILLS, FEELINGS, FROM, NEXT_STEPS, splitSentences, suggestSkills, groupSkills, clarifyScript, WARMUP } from './feedback-logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, QuickRound, leave } from '../../toolkit/game/skill'
 
 /* Feedback Notes.
  *
@@ -21,6 +23,9 @@ const EMPTY = { text:'', from:'', about:'', facts:[], feelings:[], own:'', skill
 const BLANK = { stage:'write', reached:0, d:EMPTY, notes:[] }
 
 export default function Feedback({ onExit }) {
+  const g = useSkill(TOOL.id)
+  const [warm, setWarm] = React.useState(false)
+  const [lastSkill, setLastSkill] = React.useState('')
   const [s, patch] = useSaved(TOOL.id, BLANK)
   const d = { ...EMPTY, ...s.d }
   const go = stage => patch(o => ({ stage, reached: Math.max(o.reached, ORDER.indexOf(stage)) }))
@@ -32,21 +37,42 @@ export default function Feedback({ onExit }) {
   const feelings = [...d.feelings, ...(d.own.trim() ? [d.own.trim()] : [])]
   const toggle = (list, v) => list.includes(v) ? list.filter(x => x !== v) : [...list, v]
 
-  const saveNote = () => patch(o => ({
+  const saveNote = () => { setLastSkill(d.skill); g.finish({ complete:true }); patch(o => ({
     notes: [{ id:uid(), text:d.text.trim(), from:d.from, about:d.about.trim(), facts:d.facts, feelings,
               skill:d.skill, good:d.good.trim(), step:d.step, by:d.by.trim(), practised:false }, ...o.notes].slice(0, 80),
     d: EMPTY, stage:'notes', reached: 4,
-  }))
+  })) }
   const groups = groupSkills(s.notes)
 
   return (
     <Screen tool={TOOL} onExit={onExit}
       problem="Criticism at school or work can land like a personal attack."
       doing="Split the facts from the feelings, turn the note into one skill, and pick a next step.">
+      <Quest game={g} goal="Turn one piece of feedback into one skill and one next step.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
-      {s.stage === 'write' && (
+      {s.stage === 'write' && warm && !g.result && (
+        <QuickRound game={g} items={WARMUP} label="Line" seed={4} doneLabel="Finish the warm up"
+          head={<p className="mb-3 text-ui text-ink-2">Is each line about the work, or a judgement about the person?</p>}
+          onDone={grade => { setWarm(false); g.finish({ complete:true, marks: grade.clean ? ['clean'] : [] }) }}/>
+      )}
+      {s.stage === 'write' && g.result && !lastSkill && (
+        <EndCard game={g} title="Warm up done" againLabel="Log a real note" onAgain={() => g.reset()} onDone={leave(onExit)}
+          stats={[['Score', g.result.score]]}/>
+      )}
+      {s.stage === 'write' && !warm && (
         <>
+          {!g.result && (
+            <button type="button" onClick={() => setWarm(true)}
+              className="kit-ground flex min-h-[56px] items-center justify-between gap-3 rounded-[14px] px-4 text-left">
+              <span><span className="block font-display text-ui font-bold text-ink">Warm up: work or about me?</span>
+                <span className="block text-fine text-ink-2">Five quick lines. Spot the useful part.</span></span>
+              <span aria-hidden className="kit-fill grid size-9 shrink-0 place-items-center rounded-full text-white">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4"
+                  strokeLinecap="round" strokeLinejoin="round"><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>
+              </span>
+            </button>
+          )}
           <Sheet>
             <Field area label="What did they say?" hint="Write it as close to their words as you can."
               placeholder="Your report had a lot of careless mistakes and it was late. The ideas were good though."
@@ -70,7 +96,7 @@ export default function Feedback({ onExit }) {
             <p className="mt-1 text-fine text-ink-2">Tap each part that is about the work: something you could see, check or change.</p>
             <div className="mt-3 grid gap-2">
               {sentences.map(t => (
-                <Tick key={t} on={d.facts.includes(t)} onClick={() => setD({ facts: toggle(d.facts, t) })}>{t}</Tick>
+                <Tick key={t} on={d.facts.includes(t)} onClick={e => { if (!d.facts.includes(t)) g.hit(5, e); setD({ facts: toggle(d.facts, t) }) }}>{t}</Tick>
               ))}
             </div>
           </Sheet>
@@ -156,6 +182,11 @@ export default function Feedback({ onExit }) {
 
       {s.stage === 'notes' && (
         <>
+          {g.result && lastSkill && (
+            <EndCard game={g} title="Skill note saved" againLabel="Log another" onDone={leave(onExit)}
+              onAgain={() => { patch({ d:EMPTY, stage:'write', reached:0 }); setLastSkill(''); g.reset() }}
+              stats={[['Practising', lastSkill], ['Skill notes', s.notes.length]]}/>
+          )}
           {groups.length === 0 ? (
             <Sheet><p className="text-sec text-ink">No notes yet. Log one piece of feedback to start.</p></Sheet>
           ) : (
@@ -188,9 +219,10 @@ export default function Feedback({ onExit }) {
               </div>
             </Sheet>
           ))}
-          <Finish onExit={onExit} onAgain={() => patch({ d:EMPTY, stage:'write', reached:0 })} againLabel="Log another"/>
+          {!g.result && <Finish onExit={onExit} onAgain={() => { patch({ d:EMPTY, stage:'write', reached:0 }); g.reset() }} againLabel="Log another"/>}
         </>
       )}
+      </Quest>
     </Screen>
   )
 }

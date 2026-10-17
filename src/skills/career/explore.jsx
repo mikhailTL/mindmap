@@ -5,6 +5,8 @@ import { META } from './meta'
 import { Screen, Sheet, H, Steps, Field, CopyBlock, Tick, Finish, Nav, Action, useSaved } from './parts'
 import { CLUSTERS, STATEMENTS, ANSWERS, TEST_KINDS, scoreClusters, pickQuestions, swapQuestion,
          outreachMessage, testPlanText } from './explore-logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, GoalMeter, leave } from '../../toolkit/game/skill'
 
 /* Try a Career.
  *
@@ -23,13 +25,15 @@ const BLANK = { stage:'sort', reached:0, card:0, answers:{}, cluster:null, tried
                 ask:{}, seed:1, questions:null }
 
 export default function Explore({ onExit }) {
+  const g = useSkill(TOOL.id)
   const [s, patch, set] = useSaved(TOOL.id, BLANK)
   const go = stage => patch(o => ({ stage, reached: Math.max(o.reached, ORDER.indexOf(stage)) }))
   const ranked = React.useMemo(() => scoreClusters(s.answers), [s.answers])
   const cluster = CLUSTERS.find(c => c.id === (s.cluster || ranked[0].id))
   const answered = Object.keys(s.answers).length
 
-  const answer = id => {
+  const answer = (id, e) => {
+    if (s.answers[s.card] == null) g.hit(5, e, { sound:'tick' })
     const answers = { ...s.answers, [s.card]: id }
     const next = s.card + 1
     if (next >= STATEMENTS.length) patch(o => ({ answers, card: STATEMENTS.length - 1, stage:'pick', reached: Math.max(o.reached, 1) }))
@@ -38,23 +42,27 @@ export default function Explore({ onExit }) {
   const choose = id => patch(o => ({ cluster:id, questions: pickQuestions(id, 5, o.seed),
     stage:'plan', reached: Math.max(o.reached, 2) }))
   const questions = s.questions || pickQuestions(cluster.id, 5, s.seed)
-  const restart = () => set({ ...BLANK, seed: (s.seed % 97) + 1 })
+  const restart = () => { set({ ...BLANK, seed: (s.seed % 97) + 1 }); g.reset() }
+  const finish = () => { go('done'); g.finish({ complete:true, marks:['plan'] }) }
 
   return (
     <Screen tool={TOOL} onExit={onExit}
       problem="Picking a career or a major now can feel like a forever choice."
       doing="Sort what you like, pick a cluster, and plan three small tests for this month.">
+      <Quest game={g} goal="Find a career cluster to test, and plan three small tests for this month.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
       {s.stage === 'sort' && (
         <Sheet>
-          <Meter value={answered / STATEMENTS.length} label="Quick sort" right={`${answered} of ${STATEMENTS.length}`}/>
+          <GoalMeter reduced={g.reduced} value={answered / STATEMENTS.length} label="Quick sort" right={`${answered} of ${STATEMENTS.length}`}/>
+          <div key={s.card} className={cn(!g.reduced && 'g-card')}>
           <p className="mt-5 text-fine font-semibold text-ink-2">Card {s.card + 1} of {STATEMENTS.length}</p>
-          <p className="mt-1 font-display text-row font-bold text-ink" aria-live="polite">{STATEMENTS[s.card].text}</p>
+          <p className="mt-1 font-display text-head font-bold tracking-tight text-ink" aria-live="polite">{STATEMENTS[s.card].text}</p>
+          </div>
           <div className="mt-4 grid grid-cols-3 gap-2" role="group" aria-label="Is this you?">
             {ANSWERS.map(a => (
-              <button key={a.id} type="button" onClick={() => answer(a.id)} aria-pressed={s.answers[s.card] === a.id}
-                className={cn('min-h-[56px] rounded-[12px] border px-2 font-display text-ui font-bold transition-colors',
+              <button key={a.id} type="button" onClick={e => answer(a.id, e)} aria-pressed={s.answers[s.card] === a.id}
+                className={cn('min-h-[64px] rounded-[14px] border px-2 font-display text-ui font-bold transition-[background-color,transform] motion-safe:active:scale-95',
                   s.answers[s.card] === a.id ? 'kit-fill border-transparent text-white' : 'kit-hoverable border-rule bg-card text-ink')}>
                 {a.label}
               </button>
@@ -174,12 +182,17 @@ export default function Explore({ onExit }) {
             <CopyBlock className="mt-4" title="Your message"
               text={outreachMessage({ ...s.ask, role: s.ask.role || cluster.name.toLowerCase() })}/>
           </Sheet>
-          <Nav next={() => go('done')} nextLabel="See my plan" back={() => go('plan')}/>
+          <Nav next={finish} nextLabel="See my plan" back={() => go('plan')}/>
         </>
       )}
 
       {s.stage === 'done' && (
         <>
+          {g.result && (
+            <EndCard game={g} title={`Testing ${cluster.name}`} againLabel="Start again" onAgain={restart} onDone={leave(onExit)}
+              stats={[['Match', `${Math.round((ranked.find(r => r.id === cluster.id)?.pct || 0) * 100)}%`],
+                      ['Tests done', `${cluster.tests.filter((t, i) => s.tried[cluster.id + i]).length} of 3`]]}/>
+          )}
           <Sheet>
             <p className="text-fine font-semibold text-ink-2">This month I am testing</p>
             <H as="h3" className="mt-1">{cluster.name}</H>
@@ -198,9 +211,10 @@ export default function Explore({ onExit }) {
           <CopyBlock title="Test plan" text={testPlanText({ idea: cluster.tests[2].text, ...s.plan })}/>
           <CopyBlock title="Interview questions" label="Copy questions"
             text={questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}/>
-          <Finish onExit={onExit} onAgain={restart}/>
+          {!g.result && <Finish onExit={onExit} onAgain={restart}/>}
         </>
       )}
+      </Quest>
     </Screen>
   )
 }

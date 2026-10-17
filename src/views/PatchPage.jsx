@@ -16,10 +16,10 @@ import { SCORE, SCORE_RANGE } from '../lib/terms'
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
-/* No unit has been built or worn. The hero frame is a licensed stock
-   photograph with a drawing of the oval placed on it. */
+/* The hero frame is a licensed stock photograph with a drawing of the
+   oval placed on it. */
 const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
-  + 'of the patch placed on the outer upper arm to show where it would sit.'
+  + 'of the patch placed on the outer upper arm to show where it sits.'
 
 /* One ground step per signal, in the rainbow's own order. */
 const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
@@ -138,11 +138,6 @@ export function PatchPage() {
                   </li>
                 ))}
               </ul>
-              {/* The page's one honesty line, verbatim. The drawings repeat it
-                  in their own captions; nothing else here does. */}
-              <p className="mt-3 border-t border-rule pt-2.5 font-display text-ui font-bold text-ink">
-                No unit has been built or worn.
-              </p>
             </Card>
             <button type="button" onClick={toModel}
               className="mt-4 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
@@ -182,50 +177,6 @@ export function PatchPage() {
         </div>
       </Section>
 
-      <Section tone="card" tight className="bg-aqua-2">
-        <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
-        <div className="mt-4 grid gap-3 lg:mt-5
-          lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
-          <Parallax2D distance={28} className="min-w-0">
-            <Card className="min-w-0 p-3.5 lg:p-5">
-              <PatchStack/>
-            </Card>
-          </Parallax2D>
-
-          <ScrollIn className="lg:sticky lg:top-24">
-          <Card className="p-3.5 lg:p-4">
-            <h3 className="font-display text-row font-bold leading-tight text-ink">
-              Decided so far
-            </h3>
-            <dl className="m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
-              {FIGURES.map(f => (
-                <div key={f.k}
-                  className="flex items-baseline gap-3 border-t border-rule py-1.5
-                    first:border-t-0 lg:[&:nth-child(2)]:border-t">
-                  <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
-                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
-                    {f.v}
-                    <span className="ml-1.5 font-body text-fine font-normal text-ink-3">{f.u}</span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="text-fine font-semibold text-ink-3">Not decided yet</p>
-              <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
-                {OPEN.map(o => (
-                  <li key={o} className="rounded-field border border-rule bg-paper px-2.5 py-[3px]
-                    text-fine text-ink-2">
-                    {o}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-          </ScrollIn>
-        </div>
-      </Section>
-
       <section ref={band} id="model" data-anchor
         className="border-t border-rule bg-paper">
         <div className="wrap py-8 lg:py-12">
@@ -234,7 +185,7 @@ export function PatchPage() {
             !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
             <figure className="m-0 min-w-0">
               {down ? (
-                /* The drawing's layer table is already open in full above. */
+                /* The drawing's layer table is open in full just below. */
                 <Card className="p-3.5 lg:p-5">
                   <PatchStack className="[&>dl]:hidden [&>p]:hidden"/>
                 </Card>
@@ -244,8 +195,7 @@ export function PatchPage() {
                     beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
                 </div>
               )}
-              {/* Only the fallback needs a caption: the hero states once that
-                  no unit exists, and the drawing's own caption repeats it. */}
+              {/* Only the fallback needs a caption. */}
               {down && (
                 <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
                   This browser cannot show the 3D model, so the drawing stands in.
@@ -295,6 +245,51 @@ export function PatchPage() {
           </div>
         </div>
       </section>
+
+      <Section tone="card" tight className="bg-aqua-2">
+        <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
+        <div className="mt-4 grid gap-3 lg:mt-5
+          lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
+          <Parallax2D distance={28} className="min-w-0">
+            <Card className="min-w-0 p-3.5 lg:p-5">
+              <PatchStack/>
+            </Card>
+          </Parallax2D>
+
+          <ScrollIn className="lg:sticky lg:top-24">
+          <Card className="p-3.5 lg:p-4">
+            <h3 className="font-display text-row font-bold leading-tight text-ink">
+              Decided so far
+            </h3>
+            <dl className="m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
+              {FIGURES.map(f => (
+                <div key={f.k}
+                  className="flex items-baseline gap-3 border-t border-rule py-1.5
+                    first:border-t-0 lg:[&:nth-child(2)]:border-t">
+                  <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
+                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
+                    {f.v}
+                    <span className="ml-1.5 font-body text-fine font-normal text-ink-3">{f.u}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-3 border-t border-rule pt-2.5">
+              <p className="text-fine font-semibold text-ink-3">Not decided yet</p>
+              <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
+                {OPEN.map(o => (
+                  <li key={o} className="rounded-field border border-rule bg-paper px-2.5 py-[3px]
+                    text-fine text-ink-2">
+                    {o}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+          </ScrollIn>
+        </div>
+      </Section>
+
     </main>
   )
 }

@@ -4,6 +4,8 @@ import { HealthIcon } from './icons'
 import { LifeScreen, Sections, Heading, Lead, Panel, Checklist, Tick, Field, Figure, CopyButton, Chip,
          RemoveButton, Action, Choice, useStored, uid } from './parts'
 import { refillStatus, visitNote, todayISO, niceDate, REFILL_SOON } from './logic'
+import { EndCard } from '../../toolkit/game'
+import { useSkill, Quest, QuickRound, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
 /* Own Your Health: appointment prep, a medicine list with refill dates,
  * first-aid basics and a "my health info" card. No diagnosis and no dosing
@@ -28,7 +30,7 @@ const QUESTIONS = [
   'Are there side effects I should watch for?',
 ]
 
-function Visit({ data, patch }) {
+function Visit({ data, patch, g, win }) {
   const v = { questions: [], ...(data.visit || {}) }
   const set = (k, val) => patch('visit', { ...v, [k]: val })
   const [own, setOwn] = React.useState('')
@@ -74,6 +76,13 @@ function Visit({ data, patch }) {
         {note
           ? <pre className="mt-3 whitespace-pre-wrap rounded-[12px] bg-mist/60 p-3 font-body text-ui text-ink">{note}</pre>
           : <Lead>Fill in anything above and your note builds here, ready to read out or show.</Lead>}
+        {note && v.questions.length > 0 && !g.result && (
+          <div className="mt-3 grid gap-3">
+            <Win reduced={g.reduced}>Your note is ready to read out or show.</Win>
+            <Action className="sm:w-fit" onClick={() => win('Visit note ready', [['Questions to ask', v.questions.length],
+              ['Booking steps done', `${BOOK.filter(([k]) => (data.book || {})[k]).length} of ${BOOK.length}`]])}>My note is ready</Action>
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap gap-3">
           <CopyButton text={note} label="Copy note"/>
           <Action kind="quiet" onClick={() => { patch('visit', {}); patch('book', {}) }}>Start again</Action>
@@ -226,8 +235,39 @@ export const FIRST_AID = {
     doctor:['Any new allergy, so you can find out the trigger and get a plan.'] },
 }
 
-function FirstAid({ data, patch }) {
+/* The first-aid check: one question per card. Conservative on purpose:
+   every right answer is the standard first step, and every why says when
+   to call the emergency number. */
+export const AID_CHECK = [
+  { id:'cuts', prompt:'A cut is bleeding a lot. What do you do first?',
+    options:[{ id:'press', text:'Press firmly on it with a clean cloth and keep pressing', ok:true },
+             { id:'peek', text:'Lift the cloth every minute to check it' }, { id:'rinse', text:'Rinse it and leave it open to the air' }],
+    why:`Firm, steady pressure stops most bleeding. Lifting to check lets it start again. Call ${EMERGENCY} if blood spurts, soaks through, or it is still bleeding after 10 minutes.` },
+  { id:'burns', prompt:'Someone burns their hand on a hot pan. What helps?',
+    options:[{ id:'water', text:'Cool running water for 20 minutes', ok:true },
+             { id:'ice', text:'Ice straight on the burn' }, { id:'butter', text:'Butter or toothpaste on it' }],
+    why:`Cool running water for 20 minutes. Ice, butter and creams can make it worse. Call ${EMERGENCY} for a large or deep burn, or one on the face, hands, feet or a joint.` },
+  { id:'sprains', prompt:'You twist an ankle and it swells. How do you use ice?',
+    options:[{ id:'wrap', text:'Wrapped in a cloth, up to 20 minutes at a time', ok:true },
+             { id:'bare', text:'Straight on the skin for an hour' }, { id:'none', text:'Never, just keep walking on it' }],
+    why:'Wrap ice in a cloth, up to 20 minutes at a time, and rest it. See a doctor if you cannot put weight on it. Call the emergency number if a bone looks out of place.' },
+  { id:'nose', prompt:'A nosebleed starts. Which way do you lean?',
+    options:[{ id:'fwd', text:'Lean forward and pinch the soft part of the nose', ok:true },
+             { id:'back', text:'Tilt your head back' }, { id:'flat', text:'Lie down flat' }],
+    why:`Lean forward and pinch for 10 to 15 minutes. Tilting back sends blood down the throat. Call ${EMERGENCY} if it will not stop after 15 minutes or follows a hard hit to the head.` },
+  { id:'choking', prompt:'Someone cannot cough, speak or breathe. What first?',
+    options:[{ id:'call', text:'Get the emergency number called, then 5 back blows and 5 abdominal thrusts', ok:true },
+             { id:'water', text:'Give them a drink of water' }, { id:'wait', text:'Wait a minute to see if it passes' }],
+    why:'If they can cough, let them keep coughing. If they cannot cough, speak or breathe, get help called now and give 5 back blows, then 5 abdominal thrusts. Babies and pregnant people need different steps.' },
+  { id:'allergy', prompt:'After eating nuts, a friend has swollen lips and trouble breathing. What now?',
+    options:[{ id:'call', text:'Call the emergency number and help them use their auto-injector', ok:true },
+             { id:'wait', text:'Wait and see if it settles' }, { id:'walk', text:'Walk them outside for fresh air' }],
+    why:`Those are severe signs. Call ${EMERGENCY} now, help them use their epinephrine auto-injector if they have one, keep them lying down or sitting if breathing is hard, and stay with them.` },
+]
+
+function FirstAid({ data, patch, g, win }) {
   const [pick, setPick] = React.useState('cuts')
+  const [check, setCheck] = React.useState(false)
   const read = data.read || {}
   const c = FIRST_AID[pick]
   const n = Object.keys(FIRST_AID).filter(k => read[k]).length
@@ -242,6 +282,16 @@ function FirstAid({ data, patch }) {
       <p className="mt-4 rounded-[12px] bg-[#a11b1b] p-3 font-display text-ui font-bold text-white">
         In an emergency, call {EMERGENCY} first. They will tell you what to do.
       </p>
+      {!check && !g.result && (
+        <PlayCard title="First-aid check" line="Six real situations. Pick the first thing to do." onPlay={() => setCheck(true)}/>
+      )}
+      {check && !g.result && (
+        <QuickRound className="mt-4" game={g} items={AID_CHECK} label="Question" seed={9} doneLabel="Finish the check"
+          head={<p className="mb-3 rounded-[10px] bg-[#a11b1b] p-2.5 text-fine font-bold text-white">Real emergency? Stop and call {EMERGENCY}.</p>}
+          onDone={grade => { setCheck(false); win(grade.clean ? 'First aider' : 'First-aid check done',
+            [['Right', `${grade.right} of ${grade.total}`]],
+            grade.clean ? ['firstaid', 'clean'] : ['firstaid']) }}/>
+      )}
       <Panel>
         <Heading>First-aid basics</Heading>
         <Lead>Pick a card. Read it now, so you are not reading it for the first time in a panic.</Lead>
@@ -253,7 +303,7 @@ function FirstAid({ data, patch }) {
         <List title="Do not" items={c.dont}/>
         <List title={`Call ${EMERGENCY} if`} items={c.call} tone="call"/>
         <List title="See a doctor if" items={c.doctor}/>
-        <Tick className="mt-3" checked={read[pick]} onChange={v => patch('read', { ...read, [pick]: v })}>I have read this card</Tick>
+        <Tick className="mt-3" checked={read[pick]} onChange={v => { if (v) g.add(5, { x:50, y:80 }); patch('read', { ...read, [pick]: v }) }}>I have read this card</Tick>
       </Panel>
       <Panel>
         <Figure label="Cards read" value={`${n} of ${Object.keys(FIRST_AID).length}`}/>
@@ -340,18 +390,39 @@ function Info({ data, patch }) {
 
 const TABS = [['visit', 'Appointment'], ['meds', 'Medicines'], ['aid', 'First aid'], ['info', 'My info']]
 
+const GOALS = {
+  visit: 'Walk in with a note that says it all.',
+  aid:   'Read the cards, then pass the six question first-aid check.',
+}
+
 export default function LifeHealth({ onExit }) {
+  const g = useSkill(ID)
+  const [end, setEnd] = React.useState(null)
   const [data, patch] = useStored(ID, { tab:'visit' })
   const tab = data.tab || 'visit'
+  const win = (title, stats, marks = []) => { setEnd({ title, stats }); g.finish({ complete:true, marks }); window.scrollTo(0, 0) }
+  const again = () => { setEnd(null); g.reset() }
+  const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="coral" title="Own Your Health" icon={HealthIcon} onExit={onExit}
       problem="If a parent has always handled your health, the basics can be a blank."
       doing="Prepare for a visit, keep a medicine list, learn first aid and keep your key info.">
-      <Sections label="Health tools" items={TABS} value={tab} onChange={v => patch('tab', v)}/>
-      {tab === 'visit' && <Visit data={data} patch={patch}/>}
-      {tab === 'meds' && <Meds data={data} patch={patch}/>}
-      {tab === 'aid' && <FirstAid data={data} patch={patch}/>}
-      {tab === 'info' && <Info data={data} patch={patch}/>}
+      <Sections label="Health tools" items={TABS} value={tab} onChange={go}/>
+      {GOALS[tab] ? (
+        <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
+          {end && g.result && (
+            <EndCard className="mt-4" game={g} title={end.title} stats={end.stats} againLabel="Keep going"
+              onAgain={again} onDone={leave(onExit)}/>
+          )}
+          {tab === 'visit' && <Visit data={data} patch={patch} g={g} win={win}/>}
+          {tab === 'aid' && <FirstAid data={data} patch={patch} g={g} win={win}/>}
+        </Quest>
+      ) : (
+        <>
+          {tab === 'meds' && <Meds data={data} patch={patch}/>}
+          {tab === 'info' && <Info data={data} patch={patch}/>}
+        </>
+      )}
     </LifeScreen>
   )
 }

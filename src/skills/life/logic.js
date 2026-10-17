@@ -69,6 +69,29 @@ export function compound({ start = 0, monthly = 0, rate = 0, years = 10 } = {}) 
   return { total: value, contributed, interest: value - contributed, byYear }
 }
 
+/* A three question "guess the total" round. The right answers come from
+   compound() above, so the quiz and the calculator can never disagree. The
+   tempting wrong answer is simple interest (interest only on the first
+   amount), which is what most people guess. Assumes a fixed yearly rate,
+   interest added monthly, no fees, no tax and, for the card, no payments. */
+export function interestQuiz() {
+  const opt = (id, value, ok = false) => ({ id, value, text: money(value), ok })
+  const a = compound({ start:100, monthly:0, rate:5, years:10 })
+  const b = compound({ start:0, monthly:25, rate:5, years:10 })
+  const c = compound({ start:500, monthly:0, rate:24, years:2 })
+  return [
+    { id:'save', prompt:'You leave $100 in savings at 5% a year for 10 years. About how much is there?',
+      options:[opt('simple', 150), opt('right', a.total, true), opt('far', 500)],
+      why:`${money(a.total)}. Interest is added monthly and then earns interest too. Simple interest, only on the first $100, would give $150.` },
+    { id:'monthly', prompt:'You add $25 a month for 10 years at 5% a year. About how much is there?',
+      options:[opt('put', b.contributed), opt('right', b.total, true), opt('double', b.contributed * 2)],
+      why:`${money(b.total)}. You put in ${money(b.contributed)}; interest added monthly made the rest.` },
+    { id:'card', prompt:'A $500 credit card balance at 24% a year, with no payments for 2 years. About how much is owed?',
+      options:[opt('start', 500), opt('simple', 740), opt('right', c.total, true)],
+      why:`${money(c.total)}. Card interest is added monthly too, so the debt grows faster than 24% of $500 a year. Real cards also need a minimum payment and charge late fees.` },
+  ]
+}
+
 /* ── Dates (YYYY-MM-DD, read as calendar days, never as a time zone) ───── */
 
 const parse = s => { const [y, m, d] = String(s).split('-').map(Number); return [y, m, d] }

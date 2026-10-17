@@ -3,10 +3,12 @@ import { Button } from '../../ui/button'
 import { cn } from '../../lib/utils'
 import { useReduced } from '../useReduced'
 import { OnDevice } from '../shell'
-import { readProgress, subscribe, setPick, recordSession, levelFor,
+import { readProgress, subscribe, setPick, recordFinish, levelFor, levelName,
          themeById, THEMES, RINGS } from './progress'
+import { BadgeIcon } from './badges'
 import { wakeSound, playSound, soundSupported } from './sound'
 import './game.css'
+
 
 /* ── progress as React state ─────────────────────────────────────────── */
 
@@ -53,12 +55,20 @@ export function useGame(tool) {
     playSound(o.sound || 'tick', soundOn.current)
   }, [])
 
-  const finish = React.useCallback(() => {
+  /* An early end is said outright: finish({ complete:false }). Every tool's
+     "End round" button passes it; a natural end passes complete:true. */
+
+  /* finish({ complete, marks }): store the session once. Points come only
+     from a finish (flat, see progress.js); the round score is kept beside
+     it as `score` so the end card can show both without mixing them. */
+  const finish = React.useCallback((o = {}) => {
     if (done.current) return done.current
-    const r = recordSession(tool, ref.current)
+    const opts = o && typeof o === 'object' && !o.nativeEvent ? o : {}
+    const complete = opts.complete !== false
+    const r = { ...recordFinish(tool, { complete, marks: opts.marks || [] }), score: ref.current }
     done.current = r
     setResult(r)
-    playSound(r.levelUp ? 'level' : 'good', soundOn.current)
+    playSound(r.levelUp ? 'level' : r.complete ? 'good' : 'turn', soundOn.current)
     return r
   }, [tool])
 
@@ -75,12 +85,15 @@ export function useGame(tool) {
 
 /* ── small pieces ────────────────────────────────────────────────────── */
 
+/* A white halo so a pop stays readable over any fill it drifts across. */
+const POP_HALO = '0 0 2px #fff, 0 0 6px #fff, 0 0 10px #fff'
+
 /* The floating "+10"s. Put inside a `relative` box. */
 export function Pops({ game }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-10 overflow-visible">
       {game.pops.map(p => (
-        <span key={p.k} style={{ left:p.x + '%', top:p.y + '%', color:'var(--g-ink)',
+        <span key={p.k} style={{ left:p.x + '%', top:p.y + '%', color:'var(--g-ink)', textShadow:POP_HALO,
                                  transform: game.reduced ? 'translate(-50%,0)' : undefined }}
           className={cn('absolute whitespace-nowrap font-display text-num font-bold tabular-nums',
             !game.reduced && 'g-pop')}>
@@ -129,13 +142,14 @@ export function FillRing({ value = 0, ring = 'solid', className, children, thin 
   )
 }
 
-/* Points so far this session, with a bump on each add. */
+/* This round's score, with a bump on each add. It is called score, not
+   points: points are what a finish adds to the level, and only a finish. */
 export function Score({ game, className }) {
   return (
     <p className={cn('font-display text-ui font-semibold text-ink-2', className)}>
+      <span className="mr-1.5">Score</span>
       <span key={game.bump} className={cn('font-display text-num font-bold tabular-nums text-ink',
         !game.reduced && game.bump > 0 && 'g-bump')}>{game.points}</span>
-      <span className="ml-1.5">points</span>
     </p>
   )
 }
@@ -178,7 +192,7 @@ export function LevelMeter({ className, total }) {
   return (
     <div className={className} style={gameVars(p.theme)}>
       <div className="flex items-baseline justify-between gap-4">
-        <span className="font-display text-ui font-bold text-ink">Level {L.level}</span>
+        <span className="font-display text-ui font-bold text-ink">Level {L.level}, {levelName(L.level)}</span>
         <span className="text-fine text-ink-2 tabular-nums">{L.need - L.into} points to level {L.level + 1}</span>
       </div>
       <div className="mt-1.5 h-3 overflow-hidden rounded-bar border-2 border-ink bg-card">
@@ -269,10 +283,22 @@ export function Countdown({ from = 3, onDone, className }) {
   return <span key={n} className={cn('g-count inline-block font-display text-fig font-bold tabular-nums text-ink', className)}>{n}</span>
 }
 
-/* The end of a session: points, a few plain stats, the level ring, anything
-   that opened, and one button. `stats` is [[label, value], ...]. Children go
-   under the button (the pulse check, a saved thought). */
-export function EndCard({ game, title = 'Round done', stats = [], onAgain, children, className }) {
+/* "20 for finishing, 10 for a new tool and 5 for all right." */
+const PART_WORDS = { 'Finished':'for finishing', 'New tool':'for a new tool', 'All right':'for getting every answer right' }
+function partsLine(parts = []) {
+  const bits = parts.map(([k, n]) => `${n} ${PART_WORDS[k] || k.toLowerCase()}`)
+  if (bits.length < 2) return bits.length ? bits[0][0].toUpperCase() + bits[0].slice(1) + '.' : ''
+  const s = bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1]
+  return s[0].toUpperCase() + s.slice(1) + '.'
+}
+
+/* The end of a session: the points a finish earned (an early end earns
+   none, and says so plainly), a few stats, the level ring, any new badge or
+   colour, and the buttons. `stats` is [[label, value], ...]; the round score
+   is added when the tool kept one and did not list it. Children go under the
+   buttons (the pulse check, a saved thought, a copied script). */
+export function EndCard({ game, title = 'Round done', stats = [], onAgain, againLabel = 'Play again',
+                          onDone, doneLabel = 'Done', children, className }) {
   const r = game.result
   const reduced = useReduced()
   const [stage, setStage] = React.useState(0)
@@ -289,28 +315,44 @@ export function EndCard({ game, title = 'Round done', stats = [], onAgain, child
     return () => { clearTimeout(a); clearTimeout(b) }
   }, [r, reduced])
   if (!r) return null
+  const done = r.complete !== false
   const shownLevel = stage >= 2 ? r.after : r.before
   const ringValue = stage === 0 ? r.before.pct
     : stage === 1 ? (r.levelUp ? 1 : r.after.pct) : r.after.pct
+  const hasScore = (r.score || 0) > 0 && !stats.some(([k]) => /score/i.test(k))
+  const allStats = hasScore ? [['Round score', r.score], ...stats] : stats
+  const badges = (r.badges || []).filter(Boolean)
   return (
     <section ref={el} style={game.vars}
-      className={cn('g-in scroll-mt-24 rounded-panel border-2 border-ink bg-card p-4 sm:p-6', className)}>
-      <p role="status" className="sr-only">{title}. {r.points} points.</p>
+      className={cn('g-in scroll-mt-24 rounded-[18px] border border-rule bg-card p-4 shadow-card sm:p-6', className)}>
+      <p role="status" className="sr-only">
+        {title}. {done ? `${r.points} points.` : 'Ended early, no points this time.'}
+        {badges.map(b => ` New badge: ${b.name}.`).join('')}
+      </p>
       <div className="grid items-center gap-5 sm:grid-cols-[auto_minmax(0,1fr)]">
         <FillRing value={ringValue} ring={game.ring} still={stage === 2 && r.levelUp}
-          className="mx-auto w-44 sm:w-52">
+          className="mx-auto w-40 sm:w-48">
           <p className="font-display text-fine font-semibold text-ink-2">Level {shownLevel.level}</p>
-          <p className="font-display text-gap font-bold tabular-nums" style={{ color:'var(--g-ink)' }}>
-            +<CountUp to={r.points}/>
-          </p>
-          <p className="font-display text-fine font-semibold text-ink-2">points</p>
+          {done ? (
+            <>
+              <p className="font-display text-gap font-bold tabular-nums" style={{ color:'var(--g-ink)' }}>
+                +<CountUp to={r.points}/>
+              </p>
+              <p className="font-display text-fine font-semibold text-ink-2">points</p>
+            </>
+          ) : (
+            <p className="mt-0.5 font-display text-row font-bold" style={{ color:'var(--g-ink)' }}>{levelName(shownLevel.level)}</p>
+          )}
         </FillRing>
         <div className="min-w-0">
           <h3 className="font-display text-head font-bold tracking-tight text-ink">{title}</h3>
-          {stats.length > 0 && (
+          <p className="mt-1 text-ui text-ink-2">
+            {done ? partsLine(r.parts) : 'Ended early. Points come when you finish a round.'}
+          </p>
+          {allStats.length > 0 && (
             <dl className="mt-3 grid grid-cols-2 gap-2">
-              {stats.map(([k, v]) => (
-                <div key={k} className="rounded-field p-2.5" style={{ background:'var(--g-wash)' }}>
+              {allStats.map(([k, v]) => (
+                <div key={k} className="rounded-[12px] p-2.5" style={{ background:'var(--g-wash)' }}>
                   <dt className="text-fine text-ink-2">{k}</dt>
                   <dd className="font-display text-row font-bold tabular-nums text-ink">{v}</dd>
                 </div>
@@ -318,15 +360,33 @@ export function EndCard({ game, title = 'Round done', stats = [], onAgain, child
             </dl>
           )}
           <p className="mt-3 text-sec text-ink">
-            {r.levelUp ? `Level ${r.after.level} reached.` : `${r.after.need - r.after.into} points to level ${r.after.level + 1}.`}
+            {r.levelUp ? `Level ${r.after.level} reached: ${levelName(r.after.level)}.`
+              : `${r.after.need - r.after.into} points to level ${r.after.level + 1}.`}
           </p>
           {r.opened.length > 0 && (
             <p className="mt-1 text-sec font-semibold" style={{ color:'var(--g-ink)' }}>
               New {r.opened.map(o => `${o.kind === 'theme' ? 'colour' : 'ring'}: ${o.name}`).join('. New ')}.
             </p>
           )}
-          <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={onAgain}>Play again</Button>
         </div>
+      </div>
+      {badges.length > 0 && (
+        <ul className="mt-4 grid gap-2">
+          {badges.map((b, i) => (
+            <li key={b.id} className={cn('flex items-center gap-3 rounded-[14px] p-3', !reduced && 'g-badge')}
+              style={{ background:'var(--g-wash)', animationDelay: reduced ? undefined : `${300 + i * 160}ms` }}>
+              <BadgeIcon id={b.id} size={44}/>
+              <span className="min-w-0">
+                <span className="block font-display text-ui font-bold text-ink">New badge: {b.name}</span>
+                <span className="block text-fine text-ink-2">{b.line}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-4 flex flex-wrap gap-3">
+        {onAgain && <Button className="min-w-[10rem] flex-1 sm:flex-none" onClick={onAgain}>{againLabel}</Button>}
+        {onDone && <Button variant="outline" className="min-w-[8rem] flex-1 sm:flex-none" onClick={onDone}>{doneLabel}</Button>}
       </div>
       {children && <div className="mt-4">{children}</div>}
       <details className="mt-4 border-t border-rule pt-3" open={r.opened.length > 0}>

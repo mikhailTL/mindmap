@@ -19,6 +19,7 @@ import {
 import Toolkit from './Toolkit'
 import { SKILL_TOOLS, SKILL_ROUTES } from '../skills/index.js'
 import { Students } from './Students'
+import { Welcome } from './student/Welcome'
 import { Parents } from './Parents'
 import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
@@ -1085,7 +1086,10 @@ function StartAction({ action, run, className }) {
       className={cn('group flex h-full w-full flex-col items-start overflow-hidden',
         'rounded-panel border border-rule bg-card text-left transition-colors',
         'duration-150 hoverOnly:border-accent active:bg-accent-wash', className)}>
-      <span aria-hidden className="relative block h-[96px] w-full overflow-hidden bg-accent-wash sm:h-[140px] lg:h-[148px]">
+      {/* One shape at every width, 16:9, narrower than any tile photograph's
+          widest safe crop (parent-kitchen, 1.9), so the frame never grows a
+          box and every tile's words sit on one line across the row. */}
+      <span aria-hidden className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden bg-accent-wash">
         {action.art === 'patch'
           ? <span className="flex h-full w-full items-center justify-center"><PatchFront className="h-[84%] w-auto"/></span>
           : <Photo photo={action.photo} alt={action.alt} className="absolute inset-0"/>}
@@ -1114,8 +1118,35 @@ function AudienceStart({ go, who }) {
     else go(id)
   }, [go])
 
+  /* The setup card. On the pro screen it comes before the tiles, so the
+     sample caseload stays the last control. */
+  const setup = s.setup && (
+    <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border',
+      'border-ink bg-ink p-3.5 lg:p-4', who === 'pro' ? 'mt-3.5 lg:mt-4' : 'mt-2.5 lg:mt-4')}>
+      {/* The patch drawing for the pairing card; the pro card is about
+          people, so it keeps its mark. */}
+      <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10 text-accent-lit">
+        {s.setup.id === 'pairing' ? <PatchFront className="h-10 w-auto"/> : <s.setup.Mark size={22}/>}
+      </span>
+      <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
+        {s.setup.title}</span>
+      <button type="button" onClick={() => run(s.setup.id)}
+        className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2
+          rounded-field bg-accent px-4 font-display text-ui font-medium text-paper
+          transition-colors duration-150 hoverOnly:bg-accent-lit hoverOnly:text-ink
+          active:bg-accent-lit active:text-ink sm:w-auto">
+        {s.setup.cta}
+        <ArrowRight aria-hidden className="size-4 shrink-0"/>
+      </button>
+    </div>
+  )
+
   return (
     <main className="wrap">
+      {/* The owner: "based on the user's account name, it greets them with a
+          welcome ____ (name) on this page". Only here, live mode, so with
+          nobody signed in Welcome has no name and draws nothing. */}
+      {me && <Welcome className="mb-3"/>}
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="font-display font-bold text-ink">{s.head}</h2>
       {/* The pro start screen has no patch to pair, so it says nothing about one. */}
@@ -1123,7 +1154,10 @@ function AudienceStart({ go, who }) {
         ? settingLine && <p className="mt-2 text-fine text-ink-3">{settingLine}</p>
         : <RealNotice className="mt-2" inline>No patch is paired yet.</RealNotice>}
 
-      <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
+      {who === 'pro' && setup}
+
+      <ul className={cn('m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-4',
+        who === 'pro' ? 'mt-2.5 lg:mt-4' : 'mt-3.5 lg:mt-4')}>
         {s.actions.map(a => (
           <li key={a.id} className="min-w-0">
             <StartAction action={a} run={run}/>
@@ -1147,26 +1181,7 @@ function AudienceStart({ go, who }) {
       {/* Spec 0d section 5: connecting a patch is one of the offered actions.
           The one dark card on the screen (spec 0f rule 7): paper on ink is
           14.47 : 1, and the control is the solid accent fill. */}
-      {s.setup && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border
-          border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
-          {/* The patch drawing for the pairing card; the pro card is about
-              people, so it keeps its mark. */}
-          <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10 text-accent-lit">
-            {s.setup.id === 'pairing' ? <PatchFront className="h-10 w-auto"/> : <s.setup.Mark size={22}/>}
-          </span>
-          <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
-            {s.setup.title}</span>
-          <button type="button" onClick={() => run(s.setup.id)}
-            className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2
-              rounded-field bg-accent px-4 font-display text-ui font-medium text-paper
-              transition-colors duration-150 hoverOnly:bg-accent-lit hoverOnly:text-ink
-              active:bg-accent-lit active:text-ink sm:w-auto">
-            {s.setup.cta}
-            <ArrowRight aria-hidden className="size-4 shrink-0"/>
-          </button>
-        </div>
-      )}
+      {who !== 'pro' && setup}
     </main>
   )
 }

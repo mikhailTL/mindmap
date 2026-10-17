@@ -271,7 +271,7 @@ export function ForStudents({ go }) {
         label="Open the student screen" title="Try the student screen"
         line="The demo uses sample readings."
         rows={[
-          ['Four tabs', 'The screen has Today, Reading, Toolkit and Sharing.'],
+          ['One screen', 'Today, Reading, Toolkit and Sharing, each a tab.'],
           ['No account needed', 'Nothing leaves your phone.'],
           ['No patch needed', 'The demo opens on a sample day already filled in.'],
         ]}/>

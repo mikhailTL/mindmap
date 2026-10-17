@@ -2,6 +2,8 @@ import React from 'react'
 import { ToolkitIndex, Grid, Head } from '../toolkit/index.jsx'
 import { SKILL_GROUPS, SKILL_BY_ID } from '../skills/index.js'
 import { cn } from '../lib/utils'
+import { ResourceList } from '../toolkit/resources.jsx'
+import { PlayerCard } from '../toolkit/game/PlayerCard.jsx'
 import Breathing from '../toolkit/breathing'
 import Grounding from '../toolkit/ground'
 import Reframe from '../toolkit/reframe'
@@ -95,12 +97,13 @@ const SKILL_LINE = {
 
 const tabFromHash = () => {
   const m = /[?&]tab=([a-z]+)/.exec(typeof location !== 'undefined' ? location.hash : '')
-  return m && SKILL_GROUPS.some(g => g.id === m[1]) ? m[1] : 'mine'
+  return m && (m[1] === 'resources' || SKILL_GROUPS.some(g => g.id === m[1])) ? m[1] : 'mine'
 }
 
 function Tabs({ who, tab, onTab }) {
   const tabs = [{ id:'mine', label:FIRST_TAB[who] || FIRST_TAB.student },
-                ...SKILL_GROUPS.map(g => ({ id:g.id, label:g.title }))]
+                ...SKILL_GROUPS.map(g => ({ id:g.id, label:g.title })),
+                { id:'resources', label:'Resources' }]
   const onKey = e => {
     const i = tabs.findIndex(t => t.id === tab)
     const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
@@ -133,9 +136,16 @@ function Tabs({ who, tab, onTab }) {
   )
 }
 
+/* The teen's level, badges and a tool to try next, over every teen tab. */
+function Player({ who, tab }) {
+  if (who !== 'student') return null
+  return <PlayerCard tab={tab === 'mine' ? 'exercise' : tab} className="mb-6"/>
+}
+
 function SkillPanel({ group, who }) {
   return (
     <div className="wrap">
+      <Player who={who} tab={group.id}/>
       <Head first title={group.sub} line={SKILL_LINE[who] || SKILL_LINE.student}/>
       <Grid items={group.tools.map(t => ({ ...t, route:'toolkit-' + t.id }))}/>
     </div>
@@ -166,11 +176,22 @@ export default function Toolkit({ who = 'student', open = null }) {
   if (Local) return <Local onBack={() => { setHere(null); window.scrollTo(0, 0) }}/>
 
   const group = SKILL_GROUPS.find(g => g.id === tab)
+  const panel = tab === 'resources' ? (
+    <div className="wrap">
+      <Head first title="Videos and podcasts" line="Free, from outside MindMap. Each opens in a new tab."/>
+      <div className="mt-4"><ResourceList/></div>
+    </div>
+  ) : group ? <SkillPanel group={group} who={who}/> : (
+    <>
+      {who === 'student' && <div className="wrap !pb-0"><Player who={who} tab="mine"/></div>}
+      <ToolkitIndex who={who} onOpen={setHere}/>
+    </>
+  )
   return (
     <>
       <Tabs who={who} tab={tab} onTab={onTab}/>
       <div id="kit-panel" role="tabpanel" aria-labelledby={'kit-tab-' + tab} className="[&>.wrap]:!pt-5">
-        {group ? <SkillPanel group={group} who={who}/> : <ToolkitIndex who={who} onOpen={setHere}/>}
+        {panel}
       </div>
     </>
   )

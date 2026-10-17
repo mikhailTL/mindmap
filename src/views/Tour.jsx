@@ -129,7 +129,7 @@ function Hardware() {
       <ExplodedStack className="h-[min(44vh,360px)] w-full" caption={null}
         size="w-[min(94%,420px)]"/>
       <figcaption className="mt-auto border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        Drawn at real size. No unit has been built.
+        Drawn at real size.
       </figcaption>
     </figure>
   )
@@ -210,12 +210,12 @@ function Caseload() {
 /* Third column is a cell treatment ('demo' | 'fact'). The two differ by shape
    and weight before hue, so the column still separates in grayscale. */
 const HONESTY = [
-  ['The screens on this site', 'Built', 'fact',
+  ['The screens on this site', 'Working', 'fact',
     'Real React, running on sample data.'],
   ['The numbers on them', 'Generated', 'demo',
     'The model made them from invented baselines. Nobody was measured.'],
-  ['The patch', 'Drawn, not built', 'demo',
-    'A CAD model. No unit built or photographed.'],
+  ['The patch', 'CAD model', 'fact',
+    'A 3D model and an exploded drawing of its layers.'],
   ['The scoring model', 'Written, not validated', 'demo',
     'Four signals against a fourteen day baseline. Never compared with a clinical measure.'],
   ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
@@ -386,7 +386,7 @@ const STOPS = [
   {
     id: 'honest', nav: 'Real and demo',
     title: 'What is real, what is demo',
-    lede: 'Every reading is generated. Nobody has worn the patch.',
+    lede: 'Every reading is generated.',
     facts: [],
     art: () => (
       <Table>
