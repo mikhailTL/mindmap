@@ -15,7 +15,7 @@ import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
 import { BackBar, Stage, StageStyles } from './reading/stage'
 import { takeReadingIntent } from './reading/intent'
-import { ReadingLog } from './reading/Log'
+import { SeeTrends } from './student/charts'
 import { addReading, updateReading } from '../lib/readingLog'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
@@ -38,7 +38,7 @@ const SCREENS = {
     title: 'Check-in questions',
     lede: 'Your answers become one number.',
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
-      ['0', 'answers that leave this phone']],
+      ['1', 'score saved to your account']],
   },
 }
 
@@ -54,7 +54,7 @@ const WAYS = [
       ['Reads', 'Heart rate, beat variation, pitch and steadiness'],
       ['Needs', 'A camera and a microphone'],
     ],
-    foot:'Frames and audio become numbers, then get deleted. Nothing is stored or sent.' },
+    foot:'Frames and audio become numbers, then get deleted. The score syncs to your account.' },
   { id:'survey', title:'Check-in questions', opens:true, Mark:Stack,
     line:'You need no camera or patch. Take it as often as you like.',
     fact:['60', 'seconds'],
@@ -64,7 +64,7 @@ const WAYS = [
       ['Reads', 'Tension, worry, mood, sleep, energy, focus, body and support'],
       ['Needs', 'Only this phone'],
     ],
-    foot:'Answers stay on this phone. Nothing is stored or sent.' },
+    foot:'Your answers become one score. The score syncs to your account.' },
   { id:'patch', title:'Connect a patch', opens:false, Mark:Link,
     line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
@@ -198,8 +198,6 @@ export function CheckInBody({ go }){
      in step if an answer changes. Each new start of the survey is a new
      reading: the answers clear and a new entry is made. */
   const logged = React.useRef(null)
-  const toLog = React.useRef(false)
-  const logHead = React.useRef(null)
 
   /* A fresh survey: no answers, and the next result is a new reading. */
   const restart = React.useCallback(() => { setAns({}); logged.current = null }, [])
@@ -249,15 +247,6 @@ export function CheckInBody({ go }){
     if (screen !== 'choose') { head.current?.focus({ preventScroll:true }); return }
     const id = from.current
     from.current = null
-    if (toLog.current) {
-      toLog.current = false
-      /* After App's own popstate focus of #main, which would scroll back up. */
-      const t = setTimeout(() => {
-        logHead.current?.focus({ preventScroll:true })
-        document.getElementById('reading-log')?.scrollIntoView({ block:'start' })
-      }, 240)
-      return () => clearTimeout(t)
-    }
     if (!id) return
     let b = 0
     const a = requestAnimationFrame(() => {
@@ -352,14 +341,19 @@ export function CheckInBody({ go }){
             </ScrollRow>
           </div>
           <Compare/>
-          <ReadingLog headRef={logHead}/>
+          {/* The owner, 17 October: the log, trends and Mind Score data moved
+              to their own app tab, Trends. This page links to it. */}
+          <p className="mt-6 flex flex-wrap items-center gap-x-3 text-meta text-ink-2 lg:mt-8">
+            Your {SCORE} Log and trends are on the Trends tab.
+            <SeeTrends go={go}/>
+          </p>
         </Stage>
       )}
 
       {screen === 'sensors' && (
         <Stage dir={dir}>
           <ReadingHead id="sensors" ref={head} onBack={leave}/>
-          <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
+          <div className="mt-3 lg:mt-4"><PhoneCheck go={go}/></div>
         </Stage>
       )}
 
@@ -407,11 +401,7 @@ export function CheckInBody({ go }){
                       </dl>
                       <p className="mt-3 flex flex-wrap items-center gap-x-3 text-meta text-ink-2">
                         Added to your {SCORE} Log.
-                        <button type="button" onClick={() => { toLog.current = true; leave() }}
-                          className="inline-flex min-h-[44px] items-center gap-1.5 font-display font-bold
-                            text-accent underline-offset-4 hoverOnly:underline">
-                          See your {SCORE} Log<ArrowRight aria-hidden className="size-4"/>
-                        </button>
+                        <SeeTrends go={go}/>
                         <button type="button"
                           onClick={() => { restart(); requestAnimationFrame(() => head.current?.focus({ preventScroll:false })) }}
                           className="inline-flex min-h-[44px] items-center font-display font-bold text-ink-2

@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { ActivityScreen } from './shell'
 import { audioSupported } from './audio'
 import { useWakeLock, buzz, useMounted, useHold, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
-import { useGame, GameBar, Pops, EndCard } from './game'
+import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
 /* Long Exhale, as a candle game.
@@ -69,21 +69,38 @@ function Candle({ lean = 0, flicker = false, out = false, secs = 0, word, sub, s
   const goalA = (-225 + 270 * goal) * Math.PI / 180
   const bend = still ? lean * 0.6 : lean
   const w = flicker && !still ? Math.sin(performance.now() / 40) * 0.12 : 0
+  const id = useSvgId('cd')
   return (
     <div className={small ? 'relative mx-auto aspect-square w-full max-w-[15rem]'
       : 'relative mx-auto aspect-square w-full max-w-[20rem] sm:max-w-[24rem]'}>
       <svg viewBox="0 0 240 240" aria-hidden focusable="false" className="absolute inset-0 size-full">
+        <defs>
+          <linearGradient id={id + 'g'} x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" style={{ stopColor:'var(--g-ink)' }}/><stop offset="1" style={{ stopColor:'var(--g-main)' }}/>
+          </linearGradient>
+          <radialGradient id={id + 'h'}>
+            <stop offset="0" stopColor="#ffd76a" stopOpacity="0.75"/><stop offset="1" stopColor="#ffd76a" stopOpacity="0"/>
+          </radialGradient>
+          <linearGradient id={id + 'f'} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="#e2541c"/><stop offset="0.6" stopColor="#f59a2a"/><stop offset="1" stopColor="#ffd76a"/>
+          </linearGradient>
+          <linearGradient id={id + 'w'} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#ffffff"/><stop offset="0.5" stopColor="#f4f8f6"/><stop offset="1" stopColor="#dfe9e3"/>
+          </linearGradient>
+        </defs>
+        <circle cx="120" cy="120" r={R - 12} style={{ fill:'var(--g-wash)' }} opacity="0.6"/>
         <g transform="rotate(135 120 120)">
-          <circle cx="120" cy="120" r={R} fill="none" stroke="#c2d7ca" strokeWidth="10"
+          <circle cx="120" cy="120" r={R} fill="none" stroke="#e1ebe5" strokeWidth="12"
             strokeLinecap="round" strokeDasharray={`${C * arc} ${C}`}/>
-          {v > 0 && <circle cx="120" cy="120" r={R} fill="none" strokeWidth="10" strokeLinecap="round"
-            strokeDasharray={`${C * arc * v} ${C}`} style={{ stroke:'var(--g-main)' }}/>}
+          {v > 0 && <circle cx="120" cy="120" r={R} fill="none" strokeWidth="12" strokeLinecap="round"
+            strokeDasharray={`${C * arc * v} ${C}`} stroke={`url(#${id}g)`}/>}
         </g>
         <circle cx={120 + R * Math.cos(goalA)} cy={120 + R * Math.sin(goalA)} r="9"
           className="fill-card stroke-ink" strokeWidth="3"/>
         <g transform="translate(0 -14)">
         {/* the candle */}
-        <rect x="104" y="128" width="32" height="64" rx="5" className="fill-card stroke-ink" strokeWidth="3"/>
+        {!out && <circle cx={120 + bend * 26} cy="100" r={44 - bend * 10} fill={`url(#${id}h)`}/>}
+        <rect x="104" y="128" width="32" height="64" rx="5" fill={`url(#${id}w)`} className="stroke-ink" strokeWidth="3"/>
         <path d="M104 140h32" className="stroke-rule" strokeWidth="3"/>
         <path d="M120 128v-8" className="stroke-ink" strokeWidth="3" strokeLinecap="round"/>
         {/* the flame: leans right with the breath, shorter as it leans */}
@@ -91,8 +108,8 @@ function Candle({ lean = 0, flicker = false, out = false, secs = 0, word, sub, s
           <g style={{ transformBox:'view-box', transformOrigin:'120px 122px',
                       transform:`rotate(${(bend + w) * 62}deg) scale(${1 - bend * 0.25}, ${1 + bend * 0.15})` }}>
             <path d="M120 122c-11 0-16-9-15-19 1-11 9-17 15-31 6 14 14 20 15 31 1 10-4 19-15 19z"
-              style={{ fill:'var(--g-main)' }} opacity="0.9"/>
-            <path d="M120 120c-5 0-7-4-7-9 0-5 4-9 7-15 3 6 7 10 7 15 0 5-2 9-7 9z" fill="#ffffff" opacity="0.85"/>
+              fill={`url(#${id}f)`}/>
+            <path d="M120 120c-5 0-7-4-7-9 0-5 4-9 7-15 3 6 7 10 7 15 0 5-2 9-7 9z" fill="#fff6d6" opacity="0.95"/>
           </g>
         )}
         {out && <path d="M120 116c4-8-4-12 0-20M126 112c3-6-3-9 0-15" className="stroke-ink-3" strokeWidth="2.5"
@@ -204,12 +221,13 @@ export default function Sigh() {
               const s = m.secs
               runs.current.push(s)
               const pts = Math.round(s * 8) + (s >= GOAL_S ? 15 : 0)
+              if (s < GOAL_S * 0.5) g.miss()
               g.add(pts, { x:50, y:30, sound: s >= GOAL_S ? 'good' : 'tick', label: `${one(s)} s` })
               m.result = s
               go('rest', now)
             } else m.secs = 0
           }
-        } else if (into >= WAIT_S) { m.result = 0; go('rest', now) }
+        } else if (into >= WAIT_S) { m.result = 0; g.miss(); go('rest', now) }
       } else if (m.step === 'rest' && into >= REST_S) {
         m.round += 1
         if (m.round >= ROUNDS) { finishRef.current(); return }
@@ -264,7 +282,7 @@ export default function Sigh() {
     return (
       <ActivityScreen family="tide" title="Long Exhale">
         <EndCard game={g} title={summary.best.isNew && summary.best.before != null ? 'New personal best' : 'Candle done'}
-          onAgain={again}
+          onAgain={again} stars={summary.long >= 4 ? 3 : summary.long >= 2 ? 2 : 1}
           stats={[
             ['Longest breath out', `${one(summary.longest)} s`],
             ['Over six seconds', `${summary.long} of ${ROUNDS}`],

@@ -545,7 +545,7 @@ export function Tour({ go }) {
             Open the app yourself
           </h2>
           <p className="mt-2 max-w-[40ch] text-sec font-medium leading-[1.35] text-ink">
-            No patch or account needed. Nothing you type leaves your device.
+            No patch or account needed. Sign in and your readings sync.
           </p>
           <div className="mt-3 flex flex-wrap gap-2.5">
             <Button size="sm" onClick={() => go('app')}>

@@ -4,7 +4,7 @@ import { ArrowRight, Cross } from '../ui/marks'
 import { ActivityScreen, OnDevice, Choice } from './shell'
 import { PATTERNS, pacerSchedule, phaseAt, renderPacerWav } from './wav'
 import { useWakeLock, useTopOn } from './dark'
-import { useGame, Score, Pops, EndCard, LevelMeter } from './game'
+import { useGame, Score, Pops, EndCard, LevelMeter, useSvgId } from './game'
 import { DidItWork } from './after'
 
 /* Breathing by Sound: the pacer that keeps going when the phone locks, and
@@ -48,9 +48,22 @@ function Sky({ phase, t, count, still, idle, stars, lit }) {
     : phase === 'Rest' ? (count > 0 ? 1 : 0.5) : 0.5
   const R = 90
   const r = Math.max(2.4, Math.min(6, (Math.PI * R / Math.max(1, stars)) * 0.55))
+  const id = useSvgId('sky')
   return (
     <div className="relative mx-auto grid aspect-square w-full max-w-[20rem] place-items-center sm:max-w-[24rem]">
-      <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
+      <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full overflow-visible">
+        <defs>
+          <radialGradient id={id + 'o'} cx="0.4" cy="0.35" r="0.7">
+            <stop offset="0" stopColor="#ffffff"/><stop offset="0.55" style={{ stopColor:'var(--g-wash)' }}/>
+            <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.55"/>
+          </radialGradient>
+          <radialGradient id={id + 'h'}>
+            <stop offset="0.55" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.3"/>
+            <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="96" fill={`url(#${id}h)`} style={{ transformBox:'fill-box', transformOrigin:'center',
+          transform:`scale(${still || idle ? 0.85 : 0.7 + scale * 0.35})` }}/>
         {Array.from({ length: stars }, (_, i) => {
           const a = (i / stars) * Math.PI * 2 - Math.PI / 2
           const on = i < lit
@@ -60,8 +73,8 @@ function Sky({ phase, t, count, still, idle, stars, lit }) {
                      stroke: next ? 'var(--g-main)' : 'none', strokeWidth: 1.5,
                      transition: still ? 'none' : 'r .3s, fill .3s' }}/>
         })}
-        <circle cx="100" cy="100" r="66" strokeWidth="3"
-          style={{ fill:'var(--g-wash)', stroke:'var(--g-main)', transformBox:'fill-box', transformOrigin:'center',
+        <circle cx="100" cy="100" r="66" strokeWidth="2.5" fill={`url(#${id}o)`}
+          style={{ stroke:'var(--g-main)', transformBox:'fill-box', transformOrigin:'center',
                    transform:`scale(${still || idle ? 0.8 : scale})` }}/>
       </svg>
       <div className="relative text-center">
@@ -223,6 +236,7 @@ export default function Pocket() {
 
       {state === 'done' ? (
         <EndCard game={g} title={lit >= stars ? 'Every star lit' : 'Breathing done'} onAgain={again}
+          stars={lit >= stars ? 3 : lit * 2 >= stars ? 2 : 1}
           className="mx-auto w-full max-w-[40rem]"
           stats={[
             ['Breaths', `${lit} of ${stars}`],

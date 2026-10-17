@@ -10,6 +10,8 @@ import { Caseload, useLayout } from './pro/Caseload'
 import { GroupTrends } from './pro/GroupTrends'
 import { ProTeenDetail } from './pro/TeenDetail'
 import { alertTeen } from './pro/metrics'
+import TeenDetail from './family/TeenDetail'
+import { useLiveTeens } from './family/useLive'
 
 /* THE MEDICAL PROFESSIONAL DASHBOARD.
  *
@@ -21,8 +23,10 @@ import { alertTeen } from './pro/metrics'
  * school, the class periods and the network as a whole, plus the rules every
  * figure obeys and the log. Nothing on it names one teen's figures.
  *
- * Demo shows the 24-teen sample caseload from src/lib/roster.js. Live (and
- * `empty`) shows the same dashboard with nobody in it yet. No line here
+ * Demo shows the 24-teen sample caseload from src/lib/roster.js. Live shows
+ * the teens linked to this account whose link a parent approved, from the
+ * account snapshot (day figures only, and only what each teen shares),
+ * refreshed every 20 seconds by useLiveSync. `empty` shows nobody. No line here
  * mentions a patch being missing: the owner, "dont say 'No Patch' under the
  * medical professional dashboard".
  *
@@ -92,6 +96,8 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
   const [mode] = useMode()
   const real = empty || mode === 'real'
   const words = wordsFor(useAccount())
+  const live = useLiveTeens('pro')
+  const liveTeens = real && !empty ? live.teens : []
   const [tab, setTab] = React.useState(view === 'trends' ? 'trends' : 'caseload')
   const [layout, setLayout] = useLayout()
   const [open, setOpen] = React.useState(null)          // { teen, at }
@@ -139,7 +145,9 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
           </div>
           <div className="mt-2">
             {real
-              ? <LiveNote>Nobody shares with you yet.</LiveNote>
+              ? <LiveNote>{liveTeens.length
+                  ? `${liveTeens.length === 1 ? 'One teen shares' : `${liveTeens.length} teens share`} with you. Updated as readings arrive.`
+                  : 'Nobody shares with you yet.'}</LiveNote>
               : <DemoNotice inline>A sample caseload of 24 teens. No teen was measured.</DemoNotice>}
           </div>
         </div>
@@ -155,12 +163,16 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
 
         <div className="wrap !pt-3 pb-12">
           <TabsContent value="caseload" className="mt-0">
-            {open && !real ? (
+            {open && open.teen.live ? (
+              <TeenDetail key={open.teen.id} teen={liveTeens.find(t => t.id === open.teen.id) || open.teen}
+                variant="pro" range={layout.range} onBack={closeTeen}/>
+            ) : open && !real ? (
               <ProTeenDetail key={open.teen.id} teen={open.teen} initialRange={layout.range} openedAt={open.at}
                 isAlert={alert && alert.id === open.teen.id} onBack={closeTeen}
                 notes={notes[open.teen.id] || []} onNote={saveNote}/>
             ) : (
-              <Caseload go={go} real={real} layout={layout} setLayout={setLayout} onOpen={openTeen} alert={alert}/>
+              <Caseload go={go} real={real} layout={layout} setLayout={setLayout} onOpen={openTeen} alert={alert}
+                liveTeens={liveTeens}/>
             )}
           </TabsContent>
           <TabsContent value="trends" className="mt-0">

@@ -1,128 +1,151 @@
 import React from 'react'
 import { LampFace } from '../../traffic/Face'
+import { RainbowDial } from '../../charts/rainbow'
 import { Chevron } from '../../ui/marks'
-import { FACE_LABEL, statusOf, summary } from '../../lib/roster'
 import { cn } from '../../lib/utils'
-import { Spark } from './parts'
-import { COLUMNS, RANGE_NOUN, STATUS_LINE, STATUS_WORD, figures, signed, sourceLine, trendsShared } from './metrics'
+import { PartHead, TODAY_LONG } from '../student/PartHead'
+import { DailyChart, FaceCounts, ringsFor } from './charts'
+import { SourceCounts, SourceIcon, SourceLine, SOURCE_NAME, countBySource, mainSources, sourcesOf } from './sources'
+import { COLUMNS, STATUS_LINE, STATUS_WORD, TREND_PREV, TREND_TITLE, figures, signed, trendDays, trendRange,
+  trendsShared } from './metrics'
 
-/* The Medical Professional's teen card, local to this screen.
+/* The Medical Professional's teen card. Every teen's card has the same
+ * three parts in the same order:
  *
- * src/views/family/TeenCard.jsx (the parent's card, with a 'pro' variant in
- * the shared contract) did not exist when this was written, so this is the
- * same idea built here: face and status word, the code, the Mind Score for
- * the chosen range with its change, a line against the teen's own usual band,
- * the three ranges side by side, then the figures the reader chose. Every
- * number carries its unit. A teen who does not share trends shows "Score
- * only": no change, no line, no range comparison. */
+ *   who        code, grade, age, and where the readings come from, with icons
+ *   Today      today's Mind Score on the rainbow (clouds on), today's Heads Up
+ *              face, and today's readings counted by source
+ *   Trends     the chosen range: a bar per day against the teen's usual band,
+ *              the Heads Up face per day, the average and its change, the
+ *              readings by source, then the figures the reader chose
+ *
+ * The owner: "you need to clearly section between 'Today' data and 'Trend'
+ * data on all pages that report it." A teen who does not share trends shows
+ * Today in full and "Score only" under Trends: no change, no bars. */
 
 const changeTone = v => (v > 0 ? 'text-warn' : v < 0 ? 'text-accent' : 'text-ink-3')
 const changeWords = v => (v > 0 ? `up ${v}` : v < 0 ? `down ${Math.abs(v)}` : 'level')
 
 function Figure({ col, f }) {
-  const v = f[col.key]
   return (
     <div className="min-w-0 border-t border-rule pt-1.5">
       <dt className="truncate text-fine text-ink-3">{col.label}</dt>
       <dd className="m-0 flex items-baseline gap-1 font-display text-ui font-bold tabular-nums text-ink">
-        {v}<span className="font-body text-fine font-normal text-ink-3">{col.unit}</span>
+        {f[col.key]}<span className="font-body text-fine font-normal text-ink-3">{col.unit}</span>
       </dd>
     </div>
   )
 }
 
-function ariaFor(teen, f, range) {
-  const st = statusOf(teen, range)
-  return `${teen.pseudonym}, grade ${teen.grade}, ${FACE_LABEL[range]} ${STATUS_WORD[st]}. Mind Score ${f.score} of 100 ${RANGE_NOUN[range]}`
-    + (f.change === null ? ', score only' : `, ${changeWords(f.change)} points`)
-    + `. Usual ${teen.usual.lo} to ${teen.usual.hi}. Open record.`
+const sourceWords = teen => mainSources(teen).map(k => SOURCE_NAME[k].toLowerCase()).join(' and ')
+
+function ariaFor(teen, range) {
+  const today = teen.days[teen.days.length - 1]
+  const f = figures(teen, range)
+  return `Open the record for ${teen.pseudonym}, grade ${teen.grade}. Readings from ${sourceWords(teen)}. `
+    + `Today: Mind Score ${today.score} of 100, Heads Up ${STATUS_WORD[today.light]}. `
+    + (trendsShared(teen) ? `${TREND_TITLE[range]}: average ${f.score}, ${changeWords(f.change)} points.` : 'Trends: score only.')
 }
 
-export function ProTeenCard({ teen, range, columns, onOpen }) {
+export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
+  const range = trendRange(chosen)
   const f = figures(teen, range)
-  const st = statusOf(teen, range)
   const trend = trendsShared(teen)
-  const show = k => columns.includes(k)
-  const rest = COLUMNS.filter(c => c.key !== 'score' && c.key !== 'change' && show(c.key))
+  const today = teen.days[teen.days.length - 1]
+  const days = trendDays(teen, range)
+  const rest = COLUMNS.filter(c => c.key !== 'score' && c.key !== 'change' && columns.includes(c.key))
+  const totals = countBySource(days, sourcesOf(teen))
   return (
-    <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, f, range)}
-      className="group flex h-full w-full flex-col rounded-panel border border-rule bg-card p-3.5 text-left
-        shadow-card transition-colors duration-150 hoverOnly:border-accent active:bg-aqua lg:p-4">
-      <span aria-hidden className="flex w-full items-start gap-2.5">
-        <LampFace light={st} size={30}/>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-ui font-bold text-ink">{teen.pseudonym}</span>
-          <span className="block text-fine text-ink-3">Grade {teen.grade} · age {teen.age}</span>
-        </span>
-        <span className="shrink-0 pt-0.5 text-fine font-medium text-ink-2">{STATUS_WORD[st]}</span>
-      </span>
+    <article aria-label={teen.pseudonym}
+      className="group relative flex h-full w-full flex-col rounded-panel border border-rule bg-card p-3.5 text-left
+        shadow-card transition-colors duration-150 hoverOnly:border-accent lg:p-4">
+      <div className="flex items-start gap-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="m-0 truncate font-display text-ui font-bold text-ink">{teen.pseudonym}</p>
+          <p className="m-0 text-fine text-ink-3">Grade {teen.grade}, age {teen.age}</p>
+        </div>
+      </div>
+      <SourceLine teen={teen} className="mt-1.5"/>
 
-      <span aria-hidden className="mt-3 flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        {show('score') && (
-          <span className="flex items-baseline gap-1.5">
-            <span className="font-display text-head font-bold tabular-nums leading-none text-ink">{f.score}</span>
-            <span className="text-fine text-ink-3">of 100 {RANGE_NOUN[range]}</span>
-          </span>
-        )}
-        {show('change') && trend && (
-          <span className={cn('font-display text-ui font-bold tabular-nums', changeTone(f.change))}>
-            {signed(f.change)} <span className="font-body text-fine font-normal text-ink-3">points</span></span>
-        )}
-      </span>
-      {/* The teen's own usual band, so the status word above has a reason. */}
-      <span aria-hidden className="mt-1 block w-full text-fine text-ink-2">
-        Usual {teen.usual.lo} to {teen.usual.hi}. {FACE_LABEL[range]}: {STATUS_LINE[st].toLowerCase()}.
-      </span>
+      <PartHead kind="today" title="Today" line={TODAY_LONG} className="mt-3.5 [&_h2]:text-ui"/>
+      <div className="mt-2 flex justify-center">
+        <RainbowDial score={today.score} usual={teen.usual.base} rings={ringsFor(teen, today)} size={260}/>
+      </div>
+      <div className="mt-2 grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-start gap-3">
+        <div className="min-w-0">
+          <p className="m-0 text-fine text-ink-3">Heads Up</p>
+          <p className="m-0 mt-1 flex items-center gap-1.5 font-display text-ui font-bold text-ink">
+            <LampFace light={today.light} size={24}/>{STATUS_WORD[today.light]}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="m-0 text-fine text-ink-3">Readings today</p>
+          <SourceCounts counts={countBySource([today], sourcesOf(teen))} unit={false} className="mt-1 !gap-1"/>
+        </div>
+      </div>
+      <p className="m-0 mt-1.5 text-fine text-ink-2">
+        Usual {teen.usual.lo} to {teen.usual.hi}. {STATUS_LINE[today.light]} today.</p>
 
+      <PartHead kind="trends" title="Trends" line={TREND_TITLE[range]} className="mt-4 [&_h2]:text-ui"/>
       {trend ? (
-        <span aria-hidden className="mt-2 block w-full">
-          <Spark points={f.points} usual={teen.usual}/>
-          <span className="mt-2 grid grid-cols-3 gap-2">
-            {['day', 'week', 'month'].map(r => (
-              <span key={r} className="min-w-0">
-                <span className="block text-fine text-ink-3">{r === 'day' ? 'Today' : r === 'week' ? 'Week' : 'Month'}</span>
-                <span className="block font-display text-ui font-bold tabular-nums text-ink">{summary(teen, r).mean}</span>
-              </span>
-            ))}
-          </span>
-        </span>
+        <div className="mt-2">
+          <DailyChart days={days} usual={teen.usual} compact/>
+          <FaceCounts days={days} className="mt-2"/>
+          <p className="m-0 mt-1.5 text-fine text-ink-2">
+            Average <span className="font-display font-bold tabular-nums text-ink">{f.score}</span> of 100,{' '}
+            <span className={cn('font-display font-bold tabular-nums', changeTone(f.change))}>{signed(f.change)}</span>
+            {' '}points from {TREND_PREV[range]}.</p>
+        </div>
       ) : (
-        <span aria-hidden className="mt-2 block w-full border-t border-dashed border-ruling pt-2 text-fine text-ink-3">
-          <span className="font-medium text-ink-2">Score only.</span> No trend is shared.
-        </span>
+        <p className="m-0 mt-2 border-t border-dashed border-ruling pt-2 text-fine text-ink-3">
+          <span className="font-medium text-ink-2">Score only.</span> This teen shares today, not a trend.
+          {' '}Average {f.score} of 100.</p>
       )}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-fine text-ink-2">
+        <span className="text-ink-3">Readings</span>
+        {Object.entries(totals).map(([k, n]) => (
+          <span key={k} className="inline-flex items-center gap-1">
+            <SourceIcon source={k} size={16}/><span className="sr-only">{SOURCE_NAME[k]}</span>
+            <span className="font-display font-bold tabular-nums text-ink">{n}</span></span>
+        ))}
+      </div>
 
       {rest.length > 0 && (
-        <dl aria-hidden className="m-0 mt-3 grid w-full grid-cols-2 gap-x-3 gap-y-2">
+        <dl className="m-0 mt-3 grid w-full grid-cols-2 gap-x-3 gap-y-2">
           {rest.map(c => <Figure key={c.key} col={c} f={f}/>)}
         </dl>
       )}
 
-      <span aria-hidden className="mt-auto flex w-full items-center justify-between gap-2 pt-3 text-fine text-ink-3">
-        <span className="truncate">{sourceLine(teen)}</span>
-        <span className="inline-flex shrink-0 items-center gap-1 font-display font-bold text-accent">
-          Open<Chevron className="size-4"/></span>
-      </span>
-    </button>
+      <div className="mt-auto pt-3">
+        <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range)}
+          className="inline-flex min-h-[44px] items-center gap-1 font-display text-ui font-bold text-accent
+            after:absolute after:inset-0 after:rounded-panel after:content-[''] hoverOnly:text-accent-ink">
+          Open record<Chevron aria-hidden className="size-4"/></button>
+      </div>
+    </article>
   )
 }
 
 /* The compact list: one row per teen, the chosen figures as columns from sm
-   up and as one wrapped line under the code at phone width. */
-export function ProTeenRow({ teen, range, columns, onOpen }) {
+   up and as one wrapped line under the code at phone width. Today's face and
+   the source icons sit beside the code. */
+export function ProTeenRow({ teen, range: chosen, columns, onOpen }) {
+  const range = trendRange(chosen)
   const f = figures(teen, range)
-  const st = statusOf(teen, range)
+  const today = teen.days[teen.days.length - 1]
   const cols = COLUMNS.filter(c => columns.includes(c.key))
   const val = c => (c.key === 'change' ? (f.change === null ? 'Score only' : `${signed(f.change)}`) : f[c.key])
   return (
     <li className="border-b border-rule last:border-b-0">
-      <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, f, range)}
+      <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range)}
         className="flex min-h-[56px] w-full items-center gap-3 px-1 py-2 text-left transition-colors duration-150
           hoverOnly:bg-aqua active:bg-aqua">
-        <LampFace light={st} size={22}/>
-        <span aria-hidden className="w-[8.5rem] min-w-0 shrink-0">
+        <LampFace light={today.light} size={22}/>
+        <span aria-hidden className="w-[9.5rem] min-w-0 shrink-0">
           <span className="block truncate text-fine font-bold text-ink">{teen.pseudonym}</span>
-          <span className="block text-fine text-ink-3">Grade {teen.grade} · {STATUS_WORD[st]}</span>
+          <span className="flex items-center gap-1 text-fine text-ink-3">
+            {mainSources(teen).map(k => <SourceIcon key={k} source={k} size={16}/>)}
+            <span className="truncate">{teen.patch ? 'Patch' : 'Phone'}, grade {teen.grade}</span>
+          </span>
         </span>
         <span aria-hidden className="grid min-w-0 flex-1 grid-cols-2 gap-x-3 gap-y-0.5 sm:flex sm:items-baseline sm:gap-0">
           {cols.map(c => (
@@ -145,7 +168,7 @@ export function ProRowHead({ columns }) {
   return (
     <div aria-hidden className="hidden items-end gap-3 border-b border-ink px-1 pb-1.5 sm:flex">
       <span className="w-[22px] shrink-0"/>
-      <span className="tick w-[8.5rem] shrink-0">teen</span>
+      <span className="tick w-[9.5rem] shrink-0">teen and source</span>
       <span className="flex min-w-0 flex-1">
         {cols.map(c => (
           <span key={c.key} className="min-w-0 flex-1 text-right">
@@ -158,3 +181,4 @@ export function ProRowHead({ columns }) {
     </div>
   )
 }
+

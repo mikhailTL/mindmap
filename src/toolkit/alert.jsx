@@ -2,7 +2,8 @@ import React from 'react'
 import { ActivityScreen } from './shell'
 import { cn } from '../lib/utils'
 import { useMounted, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
-import { useGame, GameBar, Pops, EndCard } from './game'
+import { motion } from 'framer-motion'
+import { useGame, GameBar, Pops, EndCard, Burst, SPRING } from './game'
 import { DidItWork } from './after'
 
 /* Reaction Test, as whack the light.
@@ -35,19 +36,25 @@ function Grid({ lit = -1, flash = null, onHit, disabled, still }) {
         const on = i === lit
         const f = flash && flash.i === i ? flash.kind : null
         return (
-          <button key={i} type="button" tabIndex={-1} aria-label={on ? `Light ${i + 1}, on` : `Light ${i + 1}`}
+          <motion.button key={i} type="button" tabIndex={-1} aria-label={on ? `Light ${i + 1}, on` : `Light ${i + 1}`}
             disabled={disabled}
             onPointerDown={e => { e.preventDefault(); onHit?.(i) }}
-            className={cn('relative aspect-square w-full rounded-full border-2 border-rule touch-manipulation select-none',
-              'disabled:cursor-default',
-              !on && !f && 'bg-card',
-              f === 'early' && 'bg-mist',
-              f === 'miss' && 'bg-mist',
-              !still && f === 'hit' && 'scale-90 transition-transform duration-150')}
-            style={on ? { background:'var(--g-main)', boxShadow:'0 0 0 6px var(--g-wash)' }
-              : f === 'hit' ? { background:'var(--g-wash)' } : undefined}>
-            {on && <span aria-hidden className="absolute inset-[22%] rounded-full bg-card/80"/>}
-          </button>
+            animate={still ? undefined : on ? { scale:[0.7, 1.08, 1] } : f === 'hit' ? { scale:[0.86, 1] }
+              : f === 'early' ? { x:[0, -5, 4, 0] } : { scale:1, x:0 }}
+            transition={on ? { duration:0.22 } : SPRING}
+            className="relative aspect-square w-full rounded-full touch-manipulation select-none disabled:cursor-default"
+            style={{
+              background: on ? 'radial-gradient(circle at 35% 30%, #ffffff 0%, var(--g-main) 38%, var(--g-ink) 100%)'
+                : f === 'hit' ? 'radial-gradient(circle at 35% 30%, #ffffff 0%, var(--g-wash) 70%)'
+                : f === 'early' || f === 'miss' ? 'radial-gradient(circle at 35% 30%, #ffffff 0%, #ffe8e0 80%)'
+                : 'radial-gradient(circle at 35% 30%, #ffffff 0%, #eef4f0 70%, #dfe9e3 100%)',
+              boxShadow: on ? '0 0 0 5px var(--g-wash), 0 0 26px 6px color-mix(in srgb, var(--g-main) 55%, transparent)'
+                : 'inset 0 -3px 6px rgba(13,43,30,0.10), 0 1px 2px rgba(13,43,30,0.08)',
+              border: '1px solid #d6e3db',
+            }}>
+            {on && <span aria-hidden className="absolute left-[24%] top-[20%] size-[22%] rounded-full bg-white/80"/>}
+            {f === 'hit' && <Burst fire={1} count={10} spread={46} size={7}/>}
+          </motion.button>
         )
       })}
     </div>
@@ -100,7 +107,7 @@ export default function Alertness() {
         if (s.phase !== 'go' || s.lit !== i) return
         s.missed += 1; s.trial += 1; s.phase = 'show'
         setN(s.trial); setLit(-1); setFlash({ i, kind:'miss' }); setWord('Missed that one')
-        g.cue('low')
+        g.cue('low'); g.miss()
         timer.current = setTimeout(() => { setFlash(null); arm() }, SHOW_MS)
       }, MISS_MS)
     }, rand(WAIT_MIN, WAIT_MAX))
@@ -119,7 +126,7 @@ export default function Alertness() {
       timer.current = setTimeout(() => { setFlash(null); arm() }, SHOW_MS)
     } else if (s.phase === 'wait') {
       clearTimeout(timer.current)
-      s.early += 1; s.phase = 'show'
+      s.early += 1; s.phase = 'show'; g.miss()
       setFlash({ i, kind:'early' }); setWord('Too early. Wait for it.')
       timer.current = setTimeout(() => { setFlash(null); arm() }, SHOW_MS + 300)
     }
@@ -176,6 +183,7 @@ export default function Alertness() {
       <ActivityScreen family="night" title="Reaction Test">
         <EndCard game={g} title={summary.best.isNew && summary.best.before != null ? 'New personal best' : 'Lights done'}
           onAgain={begin}
+          stars={summary.hits >= 12 && summary.avg != null && summary.avg <= 400 ? 3 : summary.hits >= 8 && summary.avg != null && summary.avg <= 560 ? 2 : 1}
           stats={[
             ['Average', ms(summary.avg)],
             ['Fastest', ms(summary.fastest)],

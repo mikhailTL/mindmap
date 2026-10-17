@@ -26,6 +26,6 @@ export const CASELOAD_TITLE = 'Students to check in with'
 export const CASELOAD_DEF = 'Whose Mind Score moved most since last week.'
 
 /* Consent, in this order: a guardian opens the account, then the student
-   chooses per audience. Nothing is shared by default. */
+   chooses per audience. Every switch starts on; the student can turn any off. */
 export const CONSENT_SHORT = 'A guardian opens the account. The student chooses what is shared.'
 export const CONSENT_OFF = 'The student can switch any of it off, any time.'

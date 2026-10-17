@@ -22,7 +22,7 @@ const PANEL = 'rounded-panel border border-rule bg-card'
 const HERO_FACTS = [
   ['45', 'seconds, with camera and voice'],
   [SCORE_RANGE, SCORE],
-  ['0', 'readings leave your phone'],
+  ['0', 'camera frames kept'],
 ]
 
 const ROUTES = [

@@ -4,7 +4,8 @@ import { Check } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { ActivityScreen, OnDevice } from './shell'
 import { DidItWork } from './after'
-import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, FillRing } from './game'
+import { motion } from 'framer-motion'
+import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, FillRing, SPRING } from './game'
 
 /* Movement Break, as a five move challenge.
  *
@@ -88,10 +89,11 @@ export default function MoveBreak() {
     } else if (how === 'tap') {
       g.add(30, { x:50, y:30, sound:'good' })
     }
+    if (how === 'skip') g.miss()
     setDone(d => [...d, { id: MOVES[i].id, fill: how === 'skip' ? 0 : how === 'tap' ? 1 : f, skipped: how === 'skip' }])
     if (i + 1 >= MOVES.length) { setTimeout(() => { setStage('done'); g.finish({ complete:true }) }, 500); setStage('wait-end') }
     else { setI(i + 1); setStage('ready') }
-  }, [i, g.add, g.finish])
+  }, [i, g.add, g.finish, g.miss])
 
   React.useEffect(() => {
     if (stage !== 'move') return
@@ -147,13 +149,20 @@ export default function MoveBreak() {
           <ol className="mb-4 grid grid-cols-5 gap-1.5" aria-label="Moves">
             {MOVES.map((m, k) => {
               const d = done.find(x => x.id === m.id)
+              const now = k === i && stage !== 'idle'
               return (
-                <li key={m.id} className={cn('grid h-10 place-items-center rounded-field border-2 font-display text-ui tabular-nums',
-                  k === i && stage !== 'idle' ? 'border-ink font-bold text-ink' : 'border-rule text-ink-2')}
-                  style={d && !d.skipped ? { background:'var(--g-main)', borderColor:'#0d2b1e' } : undefined}>
-                  {d && !d.skipped ? <Check aria-hidden className="size-4 text-paper"/> : <span aria-hidden>{k + 1}</span>}
+                <motion.li key={m.id} className={cn('relative grid h-11 place-items-center overflow-hidden rounded-[12px] border font-display text-ui tabular-nums',
+                  now ? 'border-ink font-bold text-ink shadow-card' : 'border-rule text-ink-2')}
+                  animate={g.reduced ? undefined : { scale: now ? 1.06 : 1, y: now ? -2 : 0 }} transition={SPRING}
+                  style={{ background: d && !d.skipped ? 'linear-gradient(135deg, var(--g-main), var(--g-ink))' : now ? 'var(--g-wash)' : '#ffffff',
+                           borderColor: d && !d.skipped ? 'transparent' : undefined }}>
+                  {d && !d.skipped
+                    ? <motion.span initial={g.reduced ? false : { scale:0, rotate:-60 }} animate={{ scale:1, rotate:0 }} transition={SPRING}>
+                        <Check aria-hidden className="size-5 text-paper"/>
+                      </motion.span>
+                    : <span aria-hidden>{k + 1}</span>}
                   <span className="sr-only">{m.name}{d ? (d.skipped ? ', skipped' : ', done') : ''}</span>
-                </li>
+                </motion.li>
               )
             })}
           </ol>
@@ -190,15 +199,19 @@ export default function MoveBreak() {
               </FillRing>
               <div className="text-center sm:text-left">
                 <p key={move.id} className={cn('font-display text-head font-bold text-ink', !g.reduced && 'g-in')}>{move.name}</p>
-                <p className="mt-1 text-sec text-ink-2">{move.say}</p>
+                <p className="mt-1 font-display text-ui font-bold" style={{ color:'var(--g-ink)' }}>Do this now</p>
+                <p className="text-sec text-ink">{move.say}</p>
                 {!tapMode && (
                   <div className="mt-3">
                     <div className="flex items-baseline justify-between">
                       <span className="font-display text-ui font-semibold text-ink-2">Meter</span>
                       <span className="font-display text-ui font-bold tabular-nums text-ink">{Math.round(fill * 100)}%</span>
                     </div>
-                    <div className="mt-1.5 h-4 overflow-hidden rounded-bar border border-rule bg-card">
-                      <div className="h-full rounded-bar" style={{ width:`${Math.round(fill * 100)}%`, background:'var(--g-main)' }}/>
+                    <div className="relative mt-1.5 h-5 overflow-hidden rounded-full bg-white shadow-[inset_0_1px_3px_rgba(13,43,30,0.18)]">
+                      <div className="absolute inset-0 rounded-full" style={{ transform:`translateX(${(fill - 1) * 100}%)`,
+                        background:'linear-gradient(90deg, var(--g-ink), var(--g-main))' }}>
+                        {!g.reduced && <span className="g-sheen absolute inset-y-0 w-1/3"/>}
+                      </div>
                     </div>
                     <p className="mt-1.5 text-fine text-ink-2">{live > 0.08 ? 'Moving. Keep going.' : 'Move to fill it.'}</p>
                   </div>
@@ -221,6 +234,7 @@ export default function MoveBreak() {
 
         {stage === 'done' && (
           <EndCard game={g} title={moved === MOVES.length ? 'All five moves done' : 'Break done'}
+            stars={moved >= MOVES.length ? 3 : moved >= 3 ? 2 : 1}
             stats={[['Moves done', `${moved} of ${MOVES.length}`],
                     tapMode ? ['Mode', 'Tap'] : ['Meter average', `${avg}%`]]}
             onAgain={start}>

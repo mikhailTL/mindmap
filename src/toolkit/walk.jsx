@@ -4,7 +4,7 @@ import { ActivityScreen, Choice } from './shell'
 import { useWakeLock, buzz, useMounted, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
 import { askMotion } from '../signals/motion'
 import { countSteps } from '../signals/steps'
-import { useGame, GameBar, Pops, EndCard } from './game'
+import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
 /* Short Walk, as a trail that fills.
@@ -51,13 +51,28 @@ function Trail({ p = 0 }) {
   }, [])
   const v = Math.max(0, Math.min(1, p))
   const me = pts ? pts.at(v) : { x:30, y:214 }
+  const id = useSvgId('tr')
   return (
     <svg viewBox="0 0 320 240" aria-hidden focusable="false" className="block w-full">
-      <rect width="320" height="240" rx="14" className="fill-card"/>
-      <path d={TRAIL} fill="none" stroke="#c2d7ca" strokeWidth="16" strokeLinecap="round"/>
+      <defs>
+        <linearGradient id={id + 'b'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff"/><stop offset="1" style={{ stopColor:'var(--g-wash)' }}/>
+        </linearGradient>
+        <linearGradient id={id + 'p'} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" style={{ stopColor:'var(--g-ink)' }}/><stop offset="1" style={{ stopColor:'var(--g-main)' }}/>
+        </linearGradient>
+        <radialGradient id={id + 'g'}>
+          <stop offset="0" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.55"/>
+          <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="240" rx="14" fill={`url(#${id}b)`}/>
+      <circle cx="260" cy="200" r="46" fill="#ffffff" opacity="0.5"/>
+      <circle cx="60" cy="120" r="30" fill="#ffffff" opacity="0.5"/>
+      <path d={TRAIL} fill="none" stroke="#e1ebe5" strokeWidth="18" strokeLinecap="round"/>
       <path d={TRAIL} fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 9"/>
       <path ref={ref} d={TRAIL} fill="none" strokeWidth="16" strokeLinecap="round" pathLength="100"
-        strokeDasharray={`${v * 100} 100`} style={{ stroke:'var(--g-main)' }}/>
+        strokeDasharray={`${v * 100} 100`} stroke={`url(#${id}p)`}/>
       {pts && pts.flags.map((f, i) => {
         const got = v >= FLAGS[i]
         return (
@@ -75,6 +90,7 @@ function Trail({ p = 0 }) {
             strokeLinecap="round" strokeLinejoin="round"/>
         </g>
       )}
+      <circle cx={me.x} cy={me.y} r="26" fill={`url(#${id}g)`}/>
       <circle cx={me.x} cy={me.y} r="10" className="fill-card stroke-ink" strokeWidth="4"/>
     </svg>
   )
@@ -207,6 +223,7 @@ export default function Walk() {
     return (
       <ActivityScreen family="night" title="Short Walk">
         <EndCard game={g} title={summary.done ? 'Finish reached' : 'Walk done'} onAgain={begin}
+          stars={summary.done ? 3 : (summary.flags ?? 0) >= 2 ? 2 : 1}
           stats={[
             ['Steps', summary.mode === 'steps' ? `${summary.steps}` : 'On the clock'],
             ['Time', clock(summary.secs)],

@@ -7,8 +7,13 @@ import { K_ANONYMITY, SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY, AUDIT_LOG, PROTOC
 import { RETENTION } from '../../app/store'
 import { CONSENT_SHORT } from '../../lib/terms'
 import { cn } from '../../lib/utils'
-import { BarRow, Hatch, KV, Note, useWidth } from './parts'
-import { gradeGroups, logSubjects, networkSeries, readingsShared, signed, trendsShared } from './metrics'
+import { LampFace } from '../../traffic/Face'
+import { RainbowDial } from '../../charts/rainbow'
+import { PartHead, TODAY_LONG } from '../student/PartHead'
+import { BarRow, Hatch, KV, Note } from './parts'
+import { DailyChart, groupRings } from './charts'
+import { SourceCounts } from './sources'
+import { STATUS_WORD, gradeGroups, logSubjects, networkSeries, readingsShared, signed, trendsShared } from './metrics'
 
 /* Group trends: the school, the class periods, the network as a whole, and
  * the rules every figure obeys. Nothing on this tab is about one teen; a teen
@@ -71,7 +76,8 @@ function Weekdays() {
   return (
     <Panel>
       <PanelHead as="h3" title="Mind Score by weekday" meta="out of 100"/>
-      <div className="mt-3 flex gap-2.5" role="img"
+      <p className="m-0 mt-3 text-fine text-ink-3">Average Mind Score, 0 calm to 100 peak</p>
+      <div className="mt-2 flex gap-2.5" role="img"
         aria-label={'Mean Mind Score by weekday: ' + COHORT_WEEKDAY.map(d => `${d.full} ${d.mean}`).join(', ') + '.'}>
         <div aria-hidden className="flex w-7 shrink-0 flex-col justify-between text-right text-fine tabular-nums text-ink-3"
           style={{ height: H }}><span>100</span><span>50</span><span>0</span></div>
@@ -96,6 +102,8 @@ function Weekdays() {
           </span>
         ))}
       </div>
+      <p aria-hidden className="m-0 mt-1 pl-9 text-center text-fine text-ink-3">Day of the week. The dark line is the
+        average day, {wAvg}.</p>
       <dl className="m-0 mt-2 p-0">
         <KV k="Hardest day" v={`${hardest.full}, ${hardest.mean}`}/>
         <KV k="Lightest day" v={`${lightest.full}, ${lightest.mean}`}/>
@@ -104,45 +112,75 @@ function Weekdays() {
   )
 }
 
-/* The whole network over 30 days: the mean and the middle half. */
+/* The whole network over 30 days: a bar per day of the average Mind Score,
+   the group's usual range as the soft band behind. No middle-half band. */
 function Network({ list }) {
   const s = networkSeries(list, 30)
-  const [box, W] = useWidth()
   if (!s) return null
-  const Hh = 190, L = 30, R = 8, T = 8, B = 162
   const pts = s.points
-  const x = i => L + (i / (pts.length - 1)) * (W - L - R)
-  const y = v => B - (v / 100) * (B - T)
-  const band = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.hi).toFixed(1)}`).join(' ')
-    + ' ' + [...pts].reverse().map((p, j) => `L${x(pts.length - 1 - j).toFixed(1)} ${y(p.lo).toFixed(1)}`).join(' ') + ' Z'
-  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.mean).toFixed(1)}`).join(' ')
-  const first = pts[0], last = pts[pts.length - 1]
+  const shared = list.filter(trendsShared)
+  const usual = { lo: Math.round(shared.reduce((t, x) => t + x.usual.lo, 0) / shared.length),
+    hi: Math.round(shared.reduce((t, x) => t + x.usual.hi, 0) / shared.length) }
   const wk = a => Math.round(a.reduce((t, p) => t + p.mean, 0) / a.length)
   const change = wk(pts.slice(-7)) - wk(pts.slice(-14, -7))
   return (
     <Panel>
-      <PanelHead as="h3" title="Your network, last 30 days" meta={`${s.n} teens who share trends`}/>
-      <div ref={box} className="mt-3 w-full">
-      <svg viewBox={`0 0 ${W} ${Hh}`} width={W} height={Hh} className="block w-full overflow-visible" role="img"
-        aria-label={`Average Mind Score across ${s.n} teens, from ${first.mean} thirty days ago to ${last.mean} today.`}>
-        {[0, 25, 50, 75, 100].map(v => (
-          <g key={v}>
-            <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className="stroke-rule" strokeWidth="1"/>
-            <text x={L - 6} y={y(v) + 4} textAnchor="end" className="fill-ink-3 text-[13px]">{v}</text>
-          </g>
-        ))}
-        <path d={band} className="fill-accent-wash"/>
-        <path d={line} fill="none" strokeWidth="2.25" className="stroke-ink" vectorEffect="non-scaling-stroke"/>
-        <text x={L} y={Hh - 4} className="fill-ink-3 text-[13px]">30 days ago</text>
-        <text x={W - R} y={Hh - 4} textAnchor="end" className="fill-ink-3 text-[13px]">today</text>
-      </svg>
-      </div>
+      <PanelHead as="h3" title="Your network, each day" meta={`${s.n} teens who share trends`}/>
+      <DailyChart className="mt-3" days={pts.map(p => ({ date: p.date, score: p.mean }))} usual={usual}
+        faces={false} who="the group"/>
       <dl className="m-0 mt-2 grid gap-x-6 p-0 sm:grid-cols-2">
-        <KV k="Average today" v={`${last.mean} of 100`}/>
-        <KV k="This week against last" v={`${signed(change)} points`} tone={change > 0 ? 'text-warn' : 'text-ink'}/>
+        <KV k="Average, last 7 days" v={`${wk(pts.slice(-7))} of 100`}/>
+        <KV k="Against the 7 days before" v={`${signed(change)} points`} tone={change > 0 ? 'text-warn' : 'text-ink'}/>
       </dl>
-      <Note>The line is the average. The shaded band holds the middle half of teens.</Note>
+      <Note>Each bar is the average across {s.n} teens that day.</Note>
     </Panel>
+  )
+}
+
+/* Today across the group: the average Mind Score on the rainbow (clouds on),
+   today's Heads Up faces counted, and today's readings counted by source.
+   Under K_ANONYMITY teens, nothing. */
+function GroupToday({ list, words }) {
+  if (list.length < K_ANONYMITY) return null
+  const today = list.map(t => t.days[t.days.length - 1])
+  const avg = Math.round(today.reduce((t, d) => t + d.score, 0) / today.length)
+  const base = Math.round(list.reduce((t, x) => t + x.usual.base, 0) / list.length)
+  const faces = { green: 0, yellow: 0, red: 0 }
+  for (const d of today) faces[d.light]++
+  const counts = { patch: 0, camera: 0, survey: 0 }
+  for (const d of today) for (const r of d.readings) counts[r.source]++
+  const onPatch = list.filter(t => t.patch).length
+  return (
+    <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
+      <Panel>
+        <PanelHead as="h3" title="Mind Score today, average" meta={`${list.length} teens`}/>
+        <div className="mt-2 flex justify-center">
+          <RainbowDial score={avg} usual={base} rings={groupRings(list, K_ANONYMITY)} size={320}/>
+        </div>
+        <p className="mt-2 text-fine text-ink-2">The average of every teen {words.across} today. The mark on the
+          scale is the group&rsquo;s usual day, {base}.</p>
+      </Panel>
+      <div className="flex flex-col gap-3 lg:gap-4">
+        <Panel>
+          <PanelHead as="h3" title="Heads Up today" meta="teens"/>
+          <ul className="m-0 mt-2 list-none p-0">
+            {['green', 'yellow', 'red'].map(k => (
+              <li key={k} className="flex items-center gap-2.5 border-b border-rule py-2 last:border-b-0">
+                <LampFace light={k} size={24}/>
+                <span className="min-w-0 flex-1 text-fine text-ink-2">{STATUS_WORD[k]}</span>
+                <span className="font-display text-ui font-bold tabular-nums text-ink">{faces[k]}
+                  <span className="ml-1 font-body text-fine font-normal text-ink-3">{faces[k] === 1 ? 'teen' : 'teens'}</span></span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel>
+          <PanelHead as="h3" title="Readings today, by source"/>
+          <SourceCounts counts={counts} className="mt-3"/>
+          <Note>{onPatch} teens wear the patch. {list.length - onPatch} read from the phone camera and check-in questions.</Note>
+        </Panel>
+      </div>
+    </div>
   )
 }
 
@@ -197,17 +235,29 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [] }) {
               {top.label.replace(' · ', ', ')} reads highest {words.across}.</p>
             <p className="mt-1.5 text-fine text-ink-2">Mind Score {top.mean} of 100. Nothing here names a teen.</p>
           </Panel>
-          <div className={cn(ROW, 'lg:grid-cols-2')}>
-            <Periods/>
-            <Weekdays/>
-          </div>
-          <div className={cn(ROW, 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]')}>
-            <Network list={list}/>
-            <Grades list={list}/>
-          </div>
+          <section aria-labelledby="grp-today-h" className="mt-6">
+            <PartHead id="grp-today-h" kind="today" title="Today" line={`${TODAY_LONG}. Readings so far today.`}
+              className="[&_h2]:text-row"/>
+            <GroupToday list={list} words={words}/>
+          </section>
+          <section aria-labelledby="grp-trends-h" className="mt-8">
+            <PartHead id="grp-trends-h" kind="trends" title="Trends" line="The last 30 days, and this term by weekday, period and grade."
+              className="[&_h2]:text-row"/>
+            <div className={ROW}>
+              <Network list={list}/>
+            </div>
+            <div className={cn(ROW, 'lg:grid-cols-2')}>
+              <Weekdays/>
+              <Grades list={list}/>
+            </div>
+            <div className={ROW}>
+              <Periods/>
+            </div>
+          </section>
         </>
       )}
 
+      <h2 className="mark mt-8">Rules and the log</h2>
       <div className={cn(ROW, 'lg:grid-cols-2')}>
         <Panel>
           <PanelHead as="h3" title="When an urgent alert is raised"/>

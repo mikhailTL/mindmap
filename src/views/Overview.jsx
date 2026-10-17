@@ -363,7 +363,7 @@ export function Overview({ go }) {
               </List>
             </ScrollIn>
             <p className="mt-5 text-meta text-ink-2">
-              {NOTES}, {LOCATION} and every raw reading never leave the phone.
+              Readings sync to your account and the people you share with. {NOTES} and {LOCATION} are never shared.
               <button type="button" onClick={() => go('privacy')}
                 className="ml-3 border-b-2 border-accent/35 font-display font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
                 Who sees what

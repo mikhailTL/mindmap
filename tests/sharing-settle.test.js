@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { AUDIENCES, SHARING, getSharing, revokeAll, setShared } from '../src/app/store.js'
 
 /* "Days slow to settle" is a shared field, so it has to obey the consent
-   model like the rows before it: day level, off by default, switchable off
+   model like the rows before it: day level, on by default, switchable off
    by the student, and listed under each audience that may see it. These
    tests run with no window, so the slot is the in-memory copy throughout. */
 
@@ -18,9 +18,11 @@ describe('settle sharing', () => {
     }
   })
 
-  it('is off by default', () => {
+  it('is on by default, like every switch', () => {
     const s = getSharing()
-    for (const audience of AUDIENCES) expect(s[audience].settle, audience).toBe(false)
+    for (const audience of AUDIENCES) {
+      for (const f of SHARING[audience].fields) expect(s[audience][f.key], `${audience} ${f.key}`).toBe(true)
+    }
   })
 
   it('can be switched on and then off by the student', () => {

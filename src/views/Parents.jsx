@@ -1,27 +1,32 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { ParentDash } from './parent-dash'
+import { ParentHome as HomeBody, ParentTrends as TrendsBody } from './parent-dash'
 import { PrivacyBody } from './Privacy'
+import { useMode } from '../lib/mode'
 
-/* One screen per route. The strip here offered This week and Who sees what,
-   both of which are tabs on the bar at the bottom of the app. */
-const PANES = { week: ParentDash, shared: PrivacyBody }
+/* The parent app's screens, each in the section shell with its honesty line.
+ *   ParentHome    Home: the children's cards; a card opens that child's page
+ *   ParentTrends  Trends: a child picker, Day / Week / Month and the calendar
+ *   Parents       the older entry by tab: 'week' is Home, 'shared' Privacy */
 
-/* The shell carries the honesty line, a few words each (design spec 0f). */
-const COPY = {
-  week: {
-    note: 'These children and figures are made up.',
-    realNote: 'No patch is paired yet.',
-  },
-  shared: {},
+const NOTE = 'These children and figures are made up.'
+
+function Shell({ go, children, demoNote = true }) {
+  const [mode] = useMode()
+  /* Live, the screen carries its own line about where the cards come from. */
+  const note = mode === 'real' || !demoNote ? undefined : NOTE
+  return <SectionShell go={go} note={note}>{children}</SectionShell>
+}
+
+export function ParentHome({ go }) {
+  return <Shell go={go}><HomeBody go={go}/></Shell>
+}
+
+export function ParentTrends({ go }) {
+  return <Shell go={go}><TrendsBody go={go}/></Shell>
 }
 
 export function Parents({ go, openTab, tab = 'week' }) {
-  const Pane = PANES[tab] || ParentDash
-  const copy = COPY[tab] || {}
-  return (
-    <SectionShell go={go} sub={copy.sub} note={copy.note} realNote={copy.realNote}>
-      <Pane go={go} openTab={openTab}/>
-    </SectionShell>
-  )
+  if (tab === 'shared') return <SectionShell go={go}><PrivacyBody go={go} openTab={openTab}/></SectionShell>
+  return <ParentHome go={go}/>
 }

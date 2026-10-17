@@ -22,7 +22,8 @@ import Toolkit from './Toolkit'
 import { SKILL_TOOLS, SKILL_ROUTES } from '../skills/index.js'
 import { Students } from './Students'
 import { Welcome } from './student/Welcome'
-import { Parents } from './Parents'
+import { Parents, ParentHome, ParentTrends } from './Parents'
+import { StudentTrends } from './student/TrendsTab'
 import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
 import { AppHome } from './AppHome'
@@ -41,6 +42,7 @@ import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Gri
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
 import { Network, useAutoJoin } from '../account/Network'
+import { useLiveSync } from '../account/sync'
 import { AccountButton } from '../account/ui'
 import { useAccount } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
@@ -66,7 +68,7 @@ const VIEWS = [
   /* the three audience explainer pages, and Heads Up */
   'students','parents','pro','heads-up',
   /* the product */
-  'app','app-home','app-start','app-student','app-parent','app-pro','app-pro-trends',
+  'app','app-home','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends',
   /* inside the product */
   'reading','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
@@ -93,7 +95,7 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-start','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
+const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
@@ -132,6 +134,8 @@ const hashParts = () => {
 const rawHash = () => hashParts()[0]
 
 const TITLE = {
+  'student-trends':'Your trends in MindMap',
+  'parent-trends':'Trends and calendar in MindMap',
   site:'MindMap, a wellbeing app for teenagers',
   patch:'The MindMap patch',
   'without-patch':'MindMap without the patch',
@@ -511,13 +515,14 @@ const APP_NAV = {
     /* Spoken apart from the top bar's Home, which goes to the app home. */
     ['app-student', 'Home',     PulseMark, 'Student home'],
     ['reading',     'Reading',  DialMark],
+    ['student-trends', 'Trends', CalendarMark, 'Your trends'],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['shared',      'Privacy',  Grid],
   ],
   parent: [
-    ['app-parent',  'Trends',   PulseMark],
-    ['calendar',    'Calendar', CalendarMark],
+    ['app-parent',  'Home',     PulseMark, 'Parent home'],
+    ['parent-trends', 'Trends', CalendarMark, 'Trends and calendar'],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['privacy',     'Privacy',  Grid],
@@ -537,7 +542,8 @@ const APP_NAV = {
    you walked in from, which App remembers below, and the bar under them is the
    bar you had. */
 const APP_OF = {
-  'app-student': 'student', reading: 'student', shared: 'student',
+  'app-student': 'student', reading: 'student', shared: 'student', 'student-trends': 'student',
+  'parent-trends': 'parent',
   notes: 'student', 'app-notify': 'student', monitor: 'student',
   'app-parent': 'parent', privacy: 'parent',
   'toolkit-openers': 'parent', 'toolkit-phrasing': 'parent', 'toolkit-score': 'parent',
@@ -552,7 +558,7 @@ const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
                               ...SKILL_ROUTES])
 
-const APP_TAB = { app:null, 'app-start':null,
+const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends', 'parent-trends':'parent-trends',
                   'app-student':'app-student', monitor:'app-student', reading:'reading',
                   toolkit:'toolkit', ai:'ai', notes:'ai', shared:'shared',
                   'app-notify':'shared', help:null,
@@ -581,6 +587,8 @@ const APP_TAB = { app:null, 'app-start':null,
 const APP_TITLE = {
   app:            ['Welcome',          'Welcome'],
   'app-start':    ['Welcome',          'Welcome'],
+  'student-trends': ['Trends',         'Your trends'],
+  'parent-trends':  ['Trends',         'Trends and calendar'],
   'app-student':  ['Student',          'Student'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
@@ -1195,13 +1203,12 @@ function AudienceStart({ go, who }) {
 /* The three app routes: the start screen with nothing measured, the dashboard
    with the worked set behind it. Students, Parents and Pro belong to other
    workers; nothing here reaches inside them. */
+/* Live and Demo render the same homes; each draws its own Live state. */
 function StudentApp(p) {
-  const [mode] = useMode()
-  return mode === 'real' ? <AudienceStart go={p.go} who="student"/> : <Students {...p} tab="today"/>
+  return <Students {...p} tab="today"/>
 }
 function ParentApp(p) {
-  const [mode] = useMode()
-  return mode === 'real' ? <AudienceStart go={p.go} who="parent"/> : <Parents {...p} tab="week"/>
+  return <ParentHome {...p}/>
 }
 function ProApp(p) {
   const [mode] = useMode()
@@ -1270,6 +1277,9 @@ export function App() {
   /* Somebody who opened an invite link joins that network as soon as they
      are signed in, whichever way they signed in. */
   useAutoJoin(go)
+  /* Live mode: the snapshot (linked teens, their shared days, the teen's own
+     readings) is refreshed while the tab is open, so dashboards stay current. */
+  useLiveSync()
 
   /* The site onboarding: on every load of the landing page and every time
      the visitor comes back to it. Only the screenshot harness holds it down. */
@@ -1325,6 +1335,8 @@ export function App() {
               /* Signed out, the app home; signed in, the three doors. */
               app: me ? Launch : AppHome,
               'app-home': AppHome,
+              'student-trends': p => <StudentTrends {...p}/>,
+              'parent-trends': p => <ParentTrends {...p}/>,
               'app-start': Launch,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */

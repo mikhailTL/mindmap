@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { memoryKV } from '../src/server/kv.js'
-import { makeHandler } from '../src/server/account.js'
+import { makeHandler, SHARE_KEYS, READING_SOURCES, READING_CAP } from '../src/server/account.js'
+import { SHARING } from '../src/app/store.js'
+import { SOURCES, CAP } from '../src/lib/readingLog.js'
 
 /* The account API, driven through its handler with a memory store: the same
    code path production runs on Vercel KV, minus the network. */
@@ -247,5 +249,170 @@ describe('invitations and links', () => {
     expect((await call('me', {}, parent.token)).statusCode).toBe(401)
     expect((await call('me', {}, student.token)).body.snapshot.links).toHaveLength(0)
     expect((await call('signin', { who: 'Dana', passcode: '1234' })).body.reason).toBe('wrong')
+  })
+})
+
+describe('readings and sharing: what follows a teen and what the people they link see', () => {
+  const NOW = Date.now()
+  const H = 3600e3
+  const entry = (id, over = {}) => ({ id, at: NOW - H, score: 50, source: 'survey', ...over })
+  async function family() {
+    const parent = (await create()).body
+    const student = (await create({ role: 'student', name: 'Sam', email: '' })).body
+    const pro = (await create({ role: 'pro', name: 'Lee', email: 'lee@example.com', setting: 'school' })).body
+    const pcode = (await call('invite', {}, parent.token)).body.snapshot.invite.code
+    await call('redeem', { code: pcode }, student.token)
+    return { parent, student, pro }
+  }
+  async function linkPro({ parent, student, pro }, approve = true) {
+    const code = (await call('invite', {}, pro.token)).body.snapshot.invite.code
+    await call('redeem', { code }, student.token)
+    if (approve) {
+      const waiting = (await call('me', {}, parent.token)).body.snapshot.approvals
+      await call('approve', { linkId: waiting[0].id }, parent.token)
+    }
+  }
+
+  it('a student pushes readings, merged by id, and a second sign in gets them back', async () => {
+    const { student } = await family()
+    const r = await call('readings', { tz: 240, entries: [entry('a', { note: 'Test day' }), entry('b', { at: NOW - 2 * H, score: 40 })] }, student.token)
+    expect(r.body.ok).toBe(true)
+    expect(r.body.accepted).toBe(2)
+    /* The same id again replaces; nothing is duplicated. */
+    await call('readings', { entries: [entry('a', { score: 61, note: 'Test day' })] }, student.token)
+    const again = (await call('signin', { who: 'Sam', passcode: '1234' })).body.snapshot
+    expect(again.readings.map(e => e.id).sort()).toEqual(['a', 'b'])
+    expect(again.readings.find(e => e.id === 'a')).toMatchObject({ score: 61, source: 'survey', note: 'Test day' })
+  })
+  it('refuses bad entries: score outside 0 to 100, unknown source, bad id or time', async () => {
+    const { student } = await family()
+    const r = await call('readings', { entries: [
+      entry('ok'), entry('hi', { score: 101 }), entry('lo', { score: -1 }), entry('str', { score: '50' }),
+      entry('src', { source: 'mic' }), entry('', {}), entry('t', { at: 'yesterday' }), entry('fut', { at: NOW + 3 * 86400e3 }),
+      { ...entry('x'.repeat(80)) },
+    ] }, student.token)
+    expect(r.body).toMatchObject({ ok: true, accepted: 1, rejected: 8 })
+    expect(r.body.snapshot.readings.map(e => e.id)).toEqual(['ok'])
+    expect((await call('readings', { entries: 'nope' }, student.token)).body.reason).toBe('invalid')
+  })
+  it('keeps the most recent 500, removes by id, and clears', async () => {
+    const { student } = await family()
+    const many = Array.from({ length: 520 }, (_, i) => entry('r' + i, { at: NOW - (520 - i) * 60000 }))
+    for (let i = 0; i < many.length; i += 130) await call('readings', { entries: many.slice(i, i + 130) }, student.token)
+    let snap = (await call('me', {}, student.token)).body.snapshot
+    expect(snap.readings).toHaveLength(500)
+    expect(snap.readings.some(e => e.id === 'r0')).toBe(false)
+    expect(snap.readings.some(e => e.id === 'r519')).toBe(true)
+    snap = (await call('readings', { remove: ['r519'] }, student.token)).body.snapshot
+    expect(snap.readings.some(e => e.id === 'r519')).toBe(false)
+    snap = (await call('readings', { clear: true }, student.token)).body.snapshot
+    expect(snap.readings).toEqual([])
+  })
+  it('only a student pushes readings or sharing', async () => {
+    const { parent, pro } = await family()
+    expect((await call('readings', { entries: [entry('a')] }, parent.token)).body.reason).toBe('role')
+    expect((await call('sharing', { parent: { score: true } }, pro.token)).body.reason).toBe('role')
+  })
+  it('sharing starts with every switch on, is stored, and keeps a trend under its score', async () => {
+    const { student } = await family()
+    const first = (await call('me', {}, student.token)).body.snapshot.sharing
+    expect(first.parent).toEqual({ score: true, week: true, sleep: true, worn: true, settle: true })
+    expect(first.pro).toEqual({ score: true, trends: true, raw: true, settle: true })
+    expect(first.set).toBe(false)
+    const r = await call('sharing', { parent: { score: false, week: true, sleep: 'yes' }, pro: { raw: false } }, student.token)
+    expect(r.body.snapshot.sharing.parent).toMatchObject({ score: false, week: false, sleep: false, worn: true })
+    expect(r.body.snapshot.sharing.pro).toMatchObject({ score: true, trends: true, raw: false })
+    expect(r.body.snapshot.sharing.set).toBe(true)
+  })
+  it('a linked parent sees day figures only: no notes, no single readings, no times', async () => {
+    const { parent, student } = await family()
+    await call('readings', { tz: 0, entries: [
+      entry('a', { score: 40, note: 'Secret' }), entry('b', { score: 60, source: 'patch' }),
+    ] }, student.token)
+    const snap = (await call('me', {}, parent.token)).body.snapshot
+    expect(snap.teens).toHaveLength(1)
+    const t = snap.teens[0]
+    expect(t).toMatchObject({ id: student.snapshot.me.id, name: 'Sam' })
+    expect(t.sharing).toMatchObject({ score: true })
+    const today = new Date(NOW - H).toISOString().slice(0, 10)
+    expect(t.days).toEqual([{ date: today, mean: 50, min: 40, max: 60, count: 2, sources: { camera: 0, survey: 1, patch: 1 } }])
+    const raw = JSON.stringify(t)
+    expect(raw).not.toContain('Secret')
+    expect(raw).not.toMatch(/"at"|latestAt|"note"|"id":"a"/)
+    expect(snap.readings).toBeUndefined()
+  })
+  it('a switch the teen turned off is not sent', async () => {
+    const { parent, student } = await family()
+    await call('readings', { tz: 0, entries: [entry('a')] }, student.token)
+    await call('sharing', { parent: { worn: false, week: false } }, student.token)
+    let t = (await call('me', {}, parent.token)).body.snapshot.teens[0]
+    expect(t.days[0].sources).toBeUndefined()
+    expect(t.usual).toBeUndefined()
+    await call('sharing', { parent: { score: false } }, student.token)
+    t = (await call('me', {}, parent.token)).body.snapshot.teens[0]
+    expect(t.days).toEqual([])
+    expect(t.sharing.score).toBe(false)
+  })
+  it('a pro sees nothing while the link waits, and days once a parent approves', async () => {
+    const f = await family()
+    await call('readings', { tz: 0, entries: [entry('a', { score: 70 })] }, f.student.token)
+    await linkPro(f, false)
+    expect((await call('me', {}, f.pro.token)).body.snapshot.teens).toEqual([])
+    const waiting = (await call('me', {}, f.parent.token)).body.snapshot.approvals
+    await call('approve', { linkId: waiting[0].id }, f.parent.token)
+    const t = (await call('me', {}, f.pro.token)).body.snapshot.teens[0]
+    expect(t.days[0]).toMatchObject({ mean: 70, count: 1 })
+    expect(t.latestAt).toBe(NOW - H)
+    expect(JSON.stringify(t)).not.toContain('"note"')
+  })
+  it('a declined pro link gets nothing; a pro without raw gets no reading time; without trends one day only', async () => {
+    const f = await family()
+    await call('readings', { tz: 0, entries: [entry('a', { score: 30, at: NOW - 3 * 86400e3 }), entry('b', { score: 70 })] }, f.student.token)
+    await linkPro(f)
+    await call('sharing', { pro: { raw: false, trends: false } }, f.student.token)
+    const t = (await call('me', {}, f.pro.token)).body.snapshot.teens[0]
+    expect(t.latestAt).toBeUndefined()
+    expect(t.days).toHaveLength(1)
+    expect(t.days[0].mean).toBe(70)
+    expect(t.usual).toBeUndefined()
+
+    const g = { ...f, pro: (await create({ role: 'pro', name: 'Ira', email: 'ira@example.com', setting: 'practice' })).body }
+    await linkPro(g, false)
+    const waiting = (await call('me', {}, f.parent.token)).body.snapshot.approvals
+    await call('decline', { linkId: waiting[0].id }, f.parent.token)
+    expect((await call('me', {}, g.pro.token)).body.snapshot.teens).toEqual([])
+  })
+  it('a usual range comes from the teen’s own days once there are three', async () => {
+    const { parent, student } = await family()
+    await call('readings', { tz: 0, entries: [entry('a', { score: 40 })] }, student.token)
+    let t = (await call('me', {}, parent.token)).body.snapshot.teens[0]
+    expect(t.usual).toMatchObject({ general: true, lo: 35, hi: 57 })
+    await call('readings', { entries: [
+      entry('b', { score: 44, at: NOW - 2 * 86400e3 }), entry('c', { score: 48, at: NOW - 3 * 86400e3 }),
+    ] }, student.token)
+    t = (await call('me', {}, parent.token)).body.snapshot.teens[0]
+    expect(t.usual.general).toBeUndefined()
+    expect(t.usual.base).toBe(44)
+    expect(t.usual.lo).toBeLessThan(44)
+    expect(t.usual.hi).toBeGreaterThan(44)
+  })
+  it('deleting a student removes their readings and sharing', async () => {
+    const { student } = await family()
+    const id = student.snapshot.me.id
+    await call('readings', { entries: [entry('a')] }, student.token)
+    await call('sharing', { parent: { score: false } }, student.token)
+    await call('delete', {}, student.token)
+    expect(await kv.get('reads:' + id)).toBeNull()
+    expect(await kv.get('share:' + id)).toBeNull()
+  })
+})
+
+describe('the server and the app agree', () => {
+  it('on the sharing keys and their nesting, the reading sources and the cap', () => {
+    for (const aud of Object.keys(SHARING)) {
+      expect(SHARE_KEYS[aud]).toEqual(SHARING[aud].fields.map(f => f.key))
+    }
+    expect(READING_SOURCES).toEqual([...SOURCES])
+    expect(READING_CAP).toBe(CAP)
   })
 })

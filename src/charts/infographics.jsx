@@ -83,14 +83,14 @@ export function SignalTrace({ kind, muted = false, className }) {
 /* Five things, three audiences, and the rule that fixes each row. 2 always,
    1 only with consent, 0 never. Raw readings, Notes and Location are 0 for
    both the parent and the medical professional at every consent level: those
-   three never leave the phone. Rows 1 and 2 are 1, because nothing is shared
-   by default. Level 2 is the student's own column. */
+   three are never shared. Rows 1 and 2 are 1, because the student can switch
+   them off. Level 2 is the student's own column. */
 const WHAT = [
-  { label: `${SCORE} for the day`,        rule: 'Shared only when the student turns it on' },
-  { label: 'Whether the week ran high',   rule: 'Shared only when the student turns it on' },
-  { label: 'Every reading, second by second', rule: 'Never leaves the phone' },
-  { label: NOTES,                         rule: 'Never leaves the phone' },
-  { label: LOCATION,                      rule: 'Never leaves the phone' },
+  { label: `${SCORE} for the day`,        rule: 'Shared unless the student turns it off' },
+  { label: 'Whether the week ran high',   rule: 'Shared unless the student turns it off' },
+  { label: 'Every reading, second by second', rule: 'Never shared' },
+  { label: NOTES,                         rule: 'Never shared' },
+  { label: LOCATION,                      rule: 'Never shared' },
 ]
 const SEES = [
   { who: 'Student', sees: [2, 2, 2, 2, 2] },

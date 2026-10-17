@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { ActivityScreen } from './shell'
 import { useWakeLock, buzz, useMounted, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
-import { useGame, GameBar, Pops, EndCard } from './game'
+import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
 /* Hold Still, as a balance game.
@@ -36,21 +36,41 @@ async function askOrientation() {
 
 function Board({ x = 0, y = 0, zone = 30, fill = 0, inside = false, still, cleared = false }) {
   const R = zone + 7, L = 2 * Math.PI * R
+  const id = useSvgId('mb')
   return (
-    <svg viewBox="0 0 240 240" aria-hidden focusable="false" className="block size-full">
-      <circle cx={C} cy={C} r={BOWL + MARBLE} className="fill-card stroke-ink" strokeWidth="3"/>
+    <svg viewBox="0 0 240 240" aria-hidden focusable="false" className="block size-full overflow-visible">
+      <defs>
+        <radialGradient id={id + 'bowl'} cx="0.5" cy="0.42" r="0.6">
+          <stop offset="0" stopColor="#ffffff"/><stop offset="0.8" style={{ stopColor:'var(--g-wash)' }}/>
+          <stop offset="1" stopColor="#cfe0d6"/>
+        </radialGradient>
+        <radialGradient id={id + 'm'} cx="0.35" cy="0.3" r="0.75">
+          <stop offset="0" stopColor="#ffffff"/>
+          <stop offset="0.35" style={{ stopColor: inside ? 'var(--g-main)' : '#cfdcd5' }}/>
+          <stop offset="1" style={{ stopColor: inside ? 'var(--g-ink)' : '#6f8b7d' }}/>
+        </radialGradient>
+        <radialGradient id={id + 'z'}>
+          <stop offset="0.6" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.35"/>
+          <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={id + 'r'} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={{ stopColor:'var(--g-main)' }}/><stop offset="1" style={{ stopColor:'var(--g-ink)' }}/>
+        </linearGradient>
+      </defs>
+      <circle cx={C} cy={C} r={BOWL + MARBLE} fill={`url(#${id}bowl)`} className="stroke-ink" strokeWidth="2.5"/>
       <circle cx={C} cy={C} r={BOWL * 0.72} fill="none" className="stroke-rule" strokeWidth="2"/>
       <circle cx={C} cy={C} r={BOWL * 0.45} fill="none" className="stroke-rule" strokeWidth="2"/>
-      <circle cx={C} cy={C} r={zone} style={{ fill:'var(--g-wash)', stroke:'var(--g-main)' }} strokeWidth="3"/>
-      <circle cx={C} cy={C} r={R} fill="none" stroke="#c2d7ca" strokeWidth="6"/>
-      <circle cx={C} cy={C} r={R} fill="none" strokeWidth="6" strokeLinecap="round"
+      {inside && <circle cx={C} cy={C} r={zone + 22} fill={`url(#${id}z)`} className={still ? undefined : 'g-breathe'}
+        style={{ animationDuration:'1.6s' }}/>}
+      <circle cx={C} cy={C} r={zone} style={{ fill:'#ffffff', stroke:'var(--g-main)' }} strokeWidth="3" strokeDasharray="5 4"/>
+      <circle cx={C} cy={C} r={R} fill="none" stroke="#e1ebe5" strokeWidth="7"/>
+      <circle cx={C} cy={C} r={R} fill="none" strokeWidth="7" strokeLinecap="round"
         transform={`rotate(-90 ${C} ${C})`} strokeDasharray={`${L * Math.min(1, fill)} ${L}`}
-        style={{ stroke:'var(--g-main)' }}/>
+        stroke={`url(#${id}r)`}/>
       <ellipse cx={C + x + 3} cy={C + y + 5} rx={MARBLE} ry={MARBLE * 0.8} className="fill-ink" opacity="0.18"/>
       <circle data-marble cx={C + x} cy={C + y} r={MARBLE + (cleared && !still ? 3 : 0)}
-        className="stroke-ink" strokeWidth="3"
-        style={{ fill: inside ? 'var(--g-main)' : '#ffffff' }}/>
-      <circle cx={C + x - 3.5} cy={C + y - 3.5} r="3" fill="#ffffff" opacity={inside ? 0.8 : 0}/>
+        stroke="#0d2b1e" strokeWidth="2" fill={`url(#${id}m)`}/>
+      <circle cx={C + x - 3.8} cy={C + y - 4} r="2.8" fill="#ffffff" opacity="0.9"/>
     </svg>
   )
 }
@@ -161,6 +181,7 @@ export default function Steady() {
           if (vn > 0) { vx -= 1.4 * vn * nx; vy -= 1.4 * vn * ny }
         }
         const inside = Math.hypot(x, y) < zone
+        if (!inside && held > 0.5) g.miss()
         if (inside) {
           held += dt
           runRef.current.longest = Math.max(runRef.current.longest, held)
@@ -225,7 +246,7 @@ export default function Steady() {
     return (
       <ActivityScreen family="stone" title="Hold Still">
         <EndCard game={g} title={summary.best.isNew && summary.best.before != null ? 'New personal best' : 'Balance done'}
-          onAgain={begin}
+          onAgain={begin} stars={summary.cleared >= TARGETS.length ? 3 : summary.cleared >= 3 ? 2 : 1}
           stats={[
             ['Stages cleared', `${summary.cleared} of ${TARGETS.length}`],
             ['Longest hold', `${one(summary.longest)} s`],

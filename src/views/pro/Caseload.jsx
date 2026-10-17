@@ -6,7 +6,9 @@ import { CASELOAD } from '../../lib/roster'
 import { cn } from '../../lib/utils'
 import { Seg, fieldCls } from './parts'
 import { ProTeenCard, ProTeenRow, ProRowHead } from './TeenCard'
-import { COLUMNS, DEFAULT_COLUMNS, GRADES, RANGE_SHORT, SORTS, STATUS_WORD, filterTeens, sortTeens,
+import TeenCard from '../family/TeenCard'
+import { RangeSwitch } from '../family/RangeTrend'
+import { COLUMNS, DEFAULT_COLUMNS, GRADES, SORTS, TREND_RANGES, trendRange, STATUS_WORD, filterTeens, sortTeens,
   statusCounts } from './metrics'
 
 /* The Caseload tab: one toolbar, then a card per teen. A card opens that
@@ -28,7 +30,7 @@ export function useLayout() {
   const [p, setP] = React.useState(() => {
     const s = readPrefs()
     return {
-      range: RANGE_SHORT[s.range] ? s.range : 'week',
+      range: trendRange(s.range),
       density: s.density === 'list' ? 'list' : 'cards',
       sort: SORTS.some(([k]) => k === s.sort) ? s.sort : 'stress',
       columns: Array.isArray(s.columns) ? s.columns.filter(k => COLUMNS.some(c => c.key === k)) : [...DEFAULT_COLUMNS],
@@ -79,8 +81,8 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-3 border-t border-rule pt-3">
-        <div role="group" aria-label="Status" className="min-w-0">
-          <p aria-hidden className="tick mb-1">Status</p>
+        <div role="group" aria-label="Heads Up today" className="min-w-0">
+          <p aria-hidden className="tick mb-1">Heads Up today</p>
           <div className="flex flex-wrap gap-1.5">
             {['red', 'yellow', 'green'].map(s => {
               const on = filters.statuses.includes(s)
@@ -98,8 +100,8 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
           </div>
         </div>
         <div className="min-w-0">
-          <p aria-hidden className="tick mb-1">Range</p>
-          <Seg label="Range" value={layout.range} onChange={v => setLayout({ range: v })} options={Object.entries(RANGE_SHORT)}/>
+          <p aria-hidden className="tick mb-1">Trends over</p>
+          <Seg label="Trends over" value={trendRange(layout.range)} onChange={v => setLayout({ range: v })} options={TREND_RANGES}/>
         </div>
         <div className="min-w-0">
           <p aria-hidden className="tick mb-1">View</p>
@@ -150,12 +152,46 @@ function Empty({ go }) {
   )
 }
 
-export function Caseload({ go, real, layout, setLayout, onOpen, alert }) {
+/* Live: the teens who share with this account, as the shared card. The
+   toolbar's figures need body signals the account does not send, so it is
+   not drawn; one range switch sets every card. */
+function LiveCaseload({ teens, layout, setLayout, onOpen, go }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <p className="text-fine text-ink-2">{teens.length === 1 ? 'One teen' : `${teens.length} teens`}, day figures only.</p>
+        <RangeSwitch value={layout.range} onChange={v => setLayout({ range: v })} label="Range for every card"/>
+      </div>
+      <ul className="m-0 mt-3 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+        {teens.map(t => (
+          <li key={t.id} className="flex min-w-0">
+            <TeenCard teen={t} range={layout.range} variant="pro" onOpen={onOpen} className="w-full"/>
+          </li>
+        ))}
+        <li className="flex min-w-0">
+          <button type="button" onClick={() => go('network')}
+            className="flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-panel border-2
+              border-dashed border-ruling bg-paper p-5 text-center transition-colors duration-200 hoverOnly:border-accent
+              hoverOnly:bg-accent-wash">
+            <span aria-hidden className="grid size-12 place-items-center rounded-chip border-2 border-accent text-accent-ink">
+              <Plus className="size-6"/></span>
+            <span className="font-display text-head font-bold text-ink">Add to your network</span>
+            <span className="max-w-[28ch] text-fine text-ink-2">A parent approves each link before you see anything.</span>
+          </button>
+        </li>
+      </ul>
+    </>
+  )
+}
+
+export function Caseload({ go, real, layout, setLayout, onOpen, alert, liveTeens = [] }) {
   const list = real ? [] : CASELOAD
   const [filters, setFilters] = React.useState({ query: '', statuses: [], grade: 'all' })
-  const counts = statusCounts(list, layout.range)
-  const shown = sortTeens(filterTeens(list, { ...filters, range: layout.range }), layout.sort, layout.range)
+  const counts = statusCounts(list, 'day')
+  const shown = sortTeens(filterTeens(list, { ...filters, range: 'day' }), layout.sort,
+    layout.sort === 'stress' ? 'day' : trendRange(layout.range))
   const filtered = filters.query.trim() || filters.statuses.length || filters.grade !== 'all'
+  if (real && liveTeens.length) return <LiveCaseload teens={liveTeens} layout={layout} setLayout={setLayout} onOpen={onOpen} go={go}/>
   return (
     <>
       {alert && (

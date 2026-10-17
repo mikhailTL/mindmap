@@ -1,12 +1,12 @@
 import React from 'react'
-import { FACE_LABEL, RANGE_LABEL, statusOf, summary } from '../../lib/roster'
+import { FACE_LABEL, RANGE_LABEL } from '../../lib/roster'
 import { LampFace } from '../../traffic/Face'
 import { AvatarArt } from '../../account/avatars'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 import { RangeSwitch, Sparkline } from './RangeTrend'
-import { STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, showsScore, showsTrends,
-  sourceLine } from './data'
+import { STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, metaLine, showsScore, showsTrends,
+  sourceLine, statusOfTeen, summaryOf } from './data'
 
 /* One teen as a card: who, the Heads Up face for the range shown (today's,
  * or the week's or month's average) with its word,
@@ -32,7 +32,8 @@ export function TeenAvatar({ teen, variant, size = 'size-12' }) {
 }
 
 export function StatusMark({ teen, range = 'week', size = 30, className }) {
-  const light = statusOf(teen, range)
+  const light = statusOfTeen(teen, range)
+  if (!light) return null
   return (
     <span className={cn('flex shrink-0 items-center gap-2', className)}>
       <LampFace light={light} size={size}/>
@@ -45,13 +46,17 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
   const [own, setOwn] = React.useState('week')
   const range = given ?? own
   const ownSwitch = given == null
-  const s = summary(teen, range)
-  const light = statusOf(teen, range)
+  const s = summaryOf(teen, range)
+  const light = statusOfTeen(teen, range)
   const name = displayName(teen, variant)
   const score = showsScore(teen, variant)
   const trends = showsTrends(teen, variant)
-  const meta = isPro(variant) ? `Grade ${teen.grade}` : `${teen.age}, grade ${teen.grade}`
+  const meta = metaLine(teen, variant)
   const titleId = React.useId()
+  /* A linked teen with nothing in this range yet: say so, never a number. */
+  const empty = s.mean == null
+  const status = light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}`
+    : !score ? 'Mind Score not shared' : empty ? 'No readings yet' : `Mind Score ${s.mean}`
 
   return (
     <article aria-labelledby={titleId}
@@ -63,7 +68,7 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="m-0 font-display text-head font-bold leading-tight text-ink">
             <button type="button" onClick={() => onOpen?.(teen)}
-              aria-label={`${name}. ${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}. Open ${isPro(variant) ? 'record' : 'their page'}`}
+              aria-label={`${name}. ${status}. Open ${isPro(variant) ? 'record' : 'their page'}`}
               className="text-left after:absolute after:inset-0 after:rounded-panel after:content-['']
                 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2
                 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent">
@@ -72,7 +77,7 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
           </h3>
           <p className="m-0 mt-0.5 text-fine text-ink-2">{meta}</p>
         </div>
-        {score ? (
+        {score ? light && (
           <div className="flex shrink-0 flex-col items-end gap-1">
             <StatusMark teen={teen} range={range}/>
             <span className="text-fine text-ink-3">{FACE_LABEL[range]}</span>
@@ -85,29 +90,37 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
           <p className="m-0 text-fine font-semibold text-ink-2">Mind Score, {RANGE_LABEL[range].toLowerCase()}</p>
           {ownSwitch && <RangeSwitch compact value={range} onChange={onRange ?? setOwn} label={`${name} range`}/>}
         </div>
-        {score ? (
+        {score && empty ? (
+          <p className="m-0 mt-2 font-display text-ui font-bold text-ink">No readings yet</p>
+        ) : score ? (
           <div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4">
             <div>
               <p className="m-0 font-display text-stat font-bold tabular-nums leading-none text-ink">{s.mean}</p>
-              <p className="m-0 mt-1.5 text-fine text-ink-2">{trends ? changeWords(s.change, range, variant) : 'Trend not shared'}</p>
+              <p className="m-0 mt-1.5 text-fine text-ink-2">{!trends ? 'Trend not shared'
+                : s.change == null ? 'Nothing earlier to compare' : changeWords(s.change, range, variant)}</p>
             </div>
             {trends && <Sparkline teen={teen} range={range} variant={variant} className="self-center"/>}
           </div>
         ) : (
-          <p className="m-0 mt-2 text-ui text-ink-2">Crisis alerts only.</p>
+          <p className="m-0 mt-2 text-ui text-ink-2">{teen.live ? 'Their Mind Score is not shared.' : 'Crisis alerts only.'}</p>
         )}
-        {score && (
-          <p className="m-0 mt-2 text-fine text-ink-3">Usual {teen.usual.lo} to {teen.usual.hi}</p>
+        {score && teen.usual && (
+          <p className="m-0 mt-2 text-fine text-ink-3">Usual {teen.usual.lo} to {teen.usual.hi}
+            {teen.usual.general ? ', the general range until three days of readings' : ''}</p>
         )}
         {/* The three ranges side by side, each a mean of whole days. */}
-        {score && trends && (
+        {score && trends && !empty && (
           <dl className="m-0 mt-3 grid grid-cols-3 gap-2 border-t border-rule pt-2.5">
-            {RANGES_ROW.map(([r, label]) => (
-              <div key={r} className="min-w-0">
-                <dt className="text-fine text-ink-3">{label}</dt>
-                <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{summary(teen, r).mean}</dd>
-              </div>
-            ))}
+            {RANGES_ROW.map(([r, label]) => {
+              const m = summaryOf(teen, r).mean
+              return (
+                <div key={r} className="min-w-0">
+                  <dt className="text-fine text-ink-3">{label}</dt>
+                  <dd className={cn('m-0 font-display text-ui tabular-nums', m == null ? 'font-medium text-ink-2' : 'font-bold text-ink')}>
+                    {m == null ? 'None' : m}</dd>
+                </div>
+              )
+            })}
           </dl>
         )}
       </div>

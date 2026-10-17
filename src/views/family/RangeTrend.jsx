@@ -1,8 +1,8 @@
 import React from 'react'
-import { RANGES, RANGE_LABEL, summary } from '../../lib/roster'
+import { RANGES, RANGE_LABEL } from '../../lib/roster'
 import { cn } from '../../lib/utils'
-import { RANGE_WORD, STATUS_SUB, TIER_FILL, PREV, changeWords, lightOf, shortDate,
-  showsHours, showsTrends } from './data'
+import { RANGE_WORD, PREV, changeWords, fillOf, shortDate, showsHours, showsTrends, subOf,
+  summaryOf } from './data'
 
 /* The Day / Week / Month trend of one teen's Mind Score, their own usual band
  * shaded behind it. Higher means more stress, 0 calm to 100 peak. A bar's
@@ -77,13 +77,13 @@ export function DayGauge({ teen, value, prev, large = false, className }) {
   const pad = large ? 14 : 7
   const x = v => pad + ((W - pad * 2) * Math.max(0, Math.min(100, v))) / 100
   const cy = large ? 34 : 22
-  const fill = TIER_FILL[lightOf(teen, value)]
+  const fill = fillOf(teen, value)
   return (
     <div ref={ref} className={cn('w-full min-w-0 overflow-hidden', className)}>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden className="block">
         <rect x={pad} y={cy - 4} width={W - pad * 2} height={8} rx={4} fill={GRID}/>
-        <rect x={x(teen.usual.lo)} y={cy - (large ? 12 : 8)} width={x(teen.usual.hi) - x(teen.usual.lo)}
-          height={large ? 24 : 16} rx={4} fill={BAND}/>
+        {teen.usual && <rect x={x(teen.usual.lo)} y={cy - (large ? 12 : 8)} width={x(teen.usual.hi) - x(teen.usual.lo)}
+          height={large ? 24 : 16} rx={4} fill={BAND}/>}
         {prev != null && (
           <line x1={x(prev)} x2={x(prev)} y1={cy - (large ? 12 : 8)} y2={cy + (large ? 12 : 8)}
             stroke={INK3} strokeWidth="2" strokeDasharray="3 2"/>
@@ -93,8 +93,8 @@ export function DayGauge({ teen, value, prev, large = false, className }) {
           <g fontSize="12" fill={INK3}>
             <text x={pad} y={H - 8}>0 calm</text>
             <text x={W - pad} y={H - 8} textAnchor="end">100 peak</text>
-            <text x={(x(teen.usual.lo) + x(teen.usual.hi)) / 2} y={cy - 17} textAnchor="middle" fill={BAND_INK}
-              fontWeight="600">Usual {teen.usual.lo} to {teen.usual.hi}</text>
+            {teen.usual && <text x={(x(teen.usual.lo) + x(teen.usual.hi)) / 2} y={cy - 17} textAnchor="middle" fill={BAND_INK}
+              fontWeight="600">Usual {teen.usual.lo} to {teen.usual.hi}</text>}
           </g>
         )}
       </svg>
@@ -105,11 +105,13 @@ export function DayGauge({ teen, value, prev, large = false, className }) {
 /* ── The card's sparkline ───────────────────────────────────────────────── */
 
 export function Sparkline({ teen, range = 'week', variant = 'parent', className }) {
-  const s = summary(teen, range)
+  const s = summaryOf(teen, range)
   if (range === 'day' && !showsHours(teen, variant)) {
     const days = teen.days
+    if (s.mean == null) return null
     return <DayGauge teen={teen} value={s.mean} prev={days[days.length - 2].score} className={className}/>
   }
+  if (s.points.length < 2) return null
   return <Spark teen={teen} points={s.points} className={className}/>
 }
 
@@ -118,17 +120,18 @@ function Spark({ teen, points, className }) {
   const H = 40, pad = 4
   const x = i => pad + ((W - pad * 2) * i) / Math.max(1, points.length - 1)
   /* Scaled to this teen's own spread, not 0 to 100, so a week's shape shows. */
-  const lo = Math.min(teen.usual.lo, ...points.map(p => p.score)) - 4
-  const hi = Math.max(teen.usual.hi, ...points.map(p => p.score)) + 4
+  const band = teen.usual || { lo: Math.min(...points.map(p => p.score)), hi: Math.max(...points.map(p => p.score)) }
+  const lo = Math.min(band.lo, ...points.map(p => p.score)) - 4
+  const hi = Math.max(band.hi, ...points.map(p => p.score)) + 4
   const y = v => pad + ((H - pad * 2) * (hi - v)) / (hi - lo)
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.score).toFixed(1)}`).join('')
   const last = points[points.length - 1]
   return (
     <div ref={ref} className={cn('w-full min-w-0 overflow-hidden', className)}>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden className="block">
-        <rect x={pad} y={y(teen.usual.hi)} width={W - pad * 2} height={y(teen.usual.lo) - y(teen.usual.hi)} fill={BAND} rx="3"/>
+        {teen.usual && <rect x={pad} y={y(teen.usual.hi)} width={W - pad * 2} height={y(teen.usual.lo) - y(teen.usual.hi)} fill={BAND} rx="3"/>}
         <path d={d} fill="none" stroke={LINE} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
-        <circle cx={x(points.length - 1)} cy={y(last.score)} r="4" fill={TIER_FILL[lightOf(teen, last.score)]}
+        <circle cx={x(points.length - 1)} cy={y(last.score)} r="4" fill={fillOf(teen, last.score)}
           stroke="#ffffff" strokeWidth="2"/>
       </svg>
     </div>
@@ -156,14 +159,14 @@ function Chart({ teen, range, s, day, onDay }) {
     <div ref={ref} className="relative w-full" onMouseLeave={() => setHover(null)}>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" className="block"
         aria-label={`Mind Score, ${RANGE_LABEL[range].toLowerCase()}: ${s.points.map(p =>
-          `${what(p)} ${p.score}`).join(', ')}. Usual is ${teen.usual.lo} to ${teen.usual.hi}.`}>
+          `${what(p)} ${p.score}`).join(', ')}.${teen.usual ? ` Usual is ${teen.usual.lo} to ${teen.usual.hi}.` : ''}`}>
         {[0, 50, 100].map(v => (
           <g key={v}>
             <line x1={left} x2={W - right} y1={y(v)} y2={y(v)} stroke={GRID}/>
             <text x={left - 6} y={y(v) + 4} textAnchor="end" fontSize="11" fill={INK3}>{v}</text>
           </g>
         ))}
-        <rect x={left} y={y(teen.usual.hi)} width={plotW} height={y(teen.usual.lo) - y(teen.usual.hi)} fill={BAND}/>
+        {teen.usual && <rect x={left} y={y(teen.usual.hi)} width={plotW} height={y(teen.usual.lo) - y(teen.usual.hi)} fill={BAND}/>}
 
         {line ? (
           <>
@@ -171,7 +174,7 @@ function Chart({ teen, range, s, day, onDay }) {
               fill="none" stroke={LINE} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
             {s.points.map((p, i) => (
               <circle key={i} cx={cx(i)} cy={y(p.score)} r={hover === i ? 6 : 4}
-                fill={TIER_FILL[lightOf(teen, p.score)]} stroke="#ffffff" strokeWidth="2"/>
+                fill={fillOf(teen, p.score)} stroke="#ffffff" strokeWidth="2"/>
             ))}
           </>
         ) : s.points.map((p, i) => {
@@ -182,7 +185,7 @@ function Chart({ teen, range, s, day, onDay }) {
               {picked && <rect x={cx(i) - slot / 2 + 1} y={top - 22} width={slot - 2} height={plotH + 22}
                 rx="6" fill="none" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3"/>}
               <path d={`M${cx(i) - bw / 2} ${y(0)}V${y(0) - h + 4}q0 -4 4 -4h${bw - 8}q4 0 4 4V${y(0)}Z`}
-                fill={TIER_FILL[lightOf(teen, p.score)]} opacity={hover != null && hover !== i ? 0.55 : 1}/>
+                fill={fillOf(teen, p.score)} opacity={hover != null && hover !== i ? 0.55 : 1}/>
               {range === 'week' && (
                 <text x={cx(i)} y={y(p.score) - 6} textAnchor="middle" fontSize="12" fontWeight="700" fill={INK}
                   style={{ fontVariantNumeric: 'tabular-nums' }}>{p.score}</text>
@@ -208,7 +211,7 @@ function Chart({ teen, range, s, day, onDay }) {
           border border-rule bg-card px-2.5 py-1.5 text-fine text-ink shadow-raise"
           style={{ left: Math.max(70, Math.min(W - 70, cx(hover))), top: Math.max(0, y(hp.score) - 62) }}>
           <span className="block font-display font-bold">{what(hp)}: {hp.score}</span>
-          <span className="block text-ink-2">{STATUS_SUB[lightOf(teen, hp.score)]}</span>
+          {subOf(teen, hp.score) && <span className="block text-ink-2">{subOf(teen, hp.score)}</span>}
         </div>
       )}
     </div>
@@ -233,11 +236,13 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
   const [own, setOwn] = React.useState('week')
   const range = given ?? own
   const setRange = onRange ?? setOwn
-  const s = summary(teen, range)
+  const s = summaryOf(teen, range)
   const trends = showsTrends(teen, variant)
   const hours = showsHours(teen, variant)
-  const above = s.points.filter(p => p.score > teen.usual.hi).length
+  const above = teen.usual ? s.points.filter(p => p.score > teen.usual.hi).length : null
   const prev = teen.days[teen.days.length - 2].score
+  /* A linked teen with nothing in this range: the words, no chart. */
+  const empty = s.mean == null || (range !== 'day' && !s.points.length)
 
   return (
     <section className={cn('rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6', className)}
@@ -251,43 +256,54 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
       </div>
 
       <div className="mt-5">
-        {!trends ? (
+        {empty ? (
+          <p className="m-0 max-w-[52ch] text-ui text-ink-2">No readings {range === 'day' ? 'today' : `in ${RANGE_LABEL[range].toLowerCase()}`} yet.
+            {' '}{teen.first}’s Mind Score shows here after their next reading.</p>
+        ) : !trends ? (
           <p className="m-0 max-w-[52ch] text-ui text-ink-2">This student has not shared trends. Only the score
             for the range is shown.</p>
         ) : range === 'day' && !hours ? (
           <>
             <DayGauge teen={teen} value={s.mean} prev={prev} large/>
-            <p className="m-0 mt-2 max-w-[56ch] text-fine text-ink-2">The dot is today as a whole day. The dashed
-              line is yesterday. Hour by hour stays with {teen.first} unless they share it.</p>
+            <p className="m-0 mt-2 max-w-[56ch] text-fine text-ink-2">The dot is today as a whole day.
+              {prev != null ? ' The dashed line is yesterday.' : ''} {teen.live
+                ? `${teen.first}’s single readings are not shared, only the day.`
+                : `Hour by hour stays with ${teen.first} unless they share it.`}</p>
           </>
         ) : (
           <>
             <Chart teen={teen} range={range} s={s} day={day} onDay={onDay}/>
             <p className="m-0 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-fine text-ink-2">
-              <span className="inline-flex items-center gap-2">
+              {teen.usual && <span className="inline-flex items-center gap-2">
                 <span aria-hidden className="h-3 w-5 rounded-xs" style={{ background: BAND }}/>
-                Usual range, {teen.usual.lo} to {teen.usual.hi}</span>
+                Usual range, {teen.usual.lo} to {teen.usual.hi}</span>}
               {onDay && range !== 'day' && <span className="text-ink-3">Pick a bar to see that day below.</span>}
             </p>
           </>
         )}
       </div>
 
+      {!empty && (
       <dl className="m-0 mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-rule pt-4 sm:grid-cols-4">
-        <Fig k={range === 'day' ? 'Today' : 'Average'} v={s.mean} sub={STATUS_SUB[lightOf(teen, s.mean)]}/>
-        <Fig k={`Change vs ${PREV[range]}`} v={`${s.change > 0 ? '+' : s.change < 0 ? '−' : ''}${Math.abs(s.change)}`}
-          sub={changeWords(s.change, range, 'parent')}/>
+        <Fig k={range === 'day' ? 'Today' : 'Average'} v={s.mean} sub={subOf(teen, s.mean)}/>
+        {s.change == null
+          ? <Fig k={`Change vs ${PREV[range]}`} v="None" sub="Nothing earlier to compare"/>
+          : <Fig k={`Change vs ${PREV[range]}`} v={`${s.change > 0 ? '+' : s.change < 0 ? '−' : ''}${Math.abs(s.change)}`}
+              sub={changeWords(s.change, range, 'parent')}/>}
         {range === 'day' && !hours ? (
-          <Fig k="Yesterday" v={prev} sub={STATUS_SUB[lightOf(teen, prev)]}/>
+          <Fig k="Yesterday" v={prev ?? 'None'} sub={prev == null ? 'No readings' : subOf(teen, prev)}/>
         ) : (
           <Fig k="Lowest to highest" v={`${s.min} to ${s.max}`}/>
         )}
         {range === 'day' ? (
-          <Fig k="Usual range" v={`${teen.usual.lo} to ${teen.usual.hi}`}/>
+          <Fig k="Usual range" v={teen.usual ? `${teen.usual.lo} to ${teen.usual.hi}` : 'Not shared'}/>
+        ) : above == null ? (
+          <Fig k="Days with readings" v={`${s.points.length} of ${range === 'week' ? 7 : 30}`}/>
         ) : (
           <Fig k="Days above usual" v={`${above} of ${s.points.length}`}/>
         )}
       </dl>
+      )}
     </section>
   )
 }

@@ -12,7 +12,7 @@ import {
 } from './store'
 
 /* The student's sharing controls. The model is store.js's SHARING table:
- * nothing starts on, a dependent row needs its parent row, a parent never
+ * every switch starts on, a dependent row needs its parent row, a parent never
  * sees finer than a day and never Notes, Location, raw readings or anything
  * said. Those are drawn as Never rows. Crisis alerts have no switch.
  * Known disagreement: infographics.jsx marks raw readings Never for the
@@ -160,7 +160,7 @@ export function SharingControls({ className, go }) {
               <Cross aria-hidden className="size-4"/>Turn everything off
             </ArmedButton>
             <Why label="How sharing works" className="ml-auto">
-              Every switch starts off. You can turn any off again, any time.
+              Every switch starts on. You can turn any off, any time.
             </Why>
           </div>
         </Panel>
@@ -217,7 +217,7 @@ export function SharingControls({ className, go }) {
                 ))}
               </ul>
               <div className="border-t border-rule px-4 py-3">
-                <p className="max-w-[62ch] text-fine text-ink-3">Kept on your phone. Never sent.</p>
+                <p className="max-w-[62ch] text-fine text-ink-3">This list stays on your phone. Your switches sync to your account.</p>
               </div>
             </Panel>
           </ScrollIn>

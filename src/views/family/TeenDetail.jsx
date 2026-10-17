@@ -3,7 +3,8 @@ import { useReducedMotion } from 'framer-motion'
 import { RainbowDial } from '../../charts/rainbow'
 import { LightCard } from '../../traffic/ParentReport'
 import { SENSORS } from '../../lib/sensors'
-import { FACE_LABEL, summary } from '../../lib/roster'
+import { FACE_LABEL } from '../../lib/roster'
+import { SHARING } from '../../app/store'
 import { ArrowLeft, Chevron, MoveMark, PulseMark, SweatMark, TempMark, Wave } from '../../ui/marks'
 import { SeeDetails } from '../Monitor'
 import { cn } from '../../lib/utils'
@@ -11,8 +12,8 @@ import RangeTrend from './RangeTrend'
 import FamilyPrivacy, { Box } from './Privacy'
 import { StatusMark, TeenAvatar } from './TeenCard'
 import { LampFace } from '../../traffic/Face'
-import { STATUS_SUB, STATUS_WORD, dayLabel, dayOf, displayName, isPro, lightOf, showsReadings, showsScore,
-  sourceLine, usualOf } from './data'
+import { STATUS_SUB, STATUS_WORD, dayLabel, dayOf, displayName, isPro, lightOf, metaLine, showsReadings, showsScore,
+  sourceLine, subOf, summaryOf, usualOf } from './data'
 
 /* One teen's page, opened from their card.
  *
@@ -30,7 +31,7 @@ const fmt = n => n.toLocaleString('en-US')
 
 /* Each of the four dial bands, 0 to 100, as the day against this teen's own
    last thirty days: 50 is their usual, each standard deviation 18 points. */
-function ringsFor(teen, d) {
+export function ringsFor(teen, d) {
   const z = k => (d[k] - usualOf(teen, k, d.date).mean) / usualOf(teen, k, d.date).sd
   const val = v => Math.round(clamp(50 + v * 18, 2, 98))
   const all = [
@@ -56,7 +57,7 @@ const SHORT = { green: 'usual', yellow: 'above usual', red: 'well above' }
 const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Check-in questions' }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
-function BackButton({ onBack, label }) {
+export function BackButton({ onBack, label }) {
   return (
     <button type="button" onClick={onBack}
       className="group -ml-1 inline-flex min-h-[44px] items-center gap-2 rounded-field px-1 font-display text-ui font-bold
@@ -96,12 +97,20 @@ function WeekLamps({ teen, date, setDate }) {
           return (
             <li key={x.date}>
               <button type="button" aria-pressed={on} onClick={() => setDate(x.date)}
-                aria-label={`${dayLabel(teen, x.date)}: ${STATUS_WORD[x.light]}`}
+                aria-label={`${dayLabel(teen, x.date)}: ${x.light ? STATUS_WORD[x.light]
+                  : x.score != null ? `Mind Score ${x.score}` : 'no readings'}`}
                 className={cn('flex min-h-[64px] w-full flex-col items-center justify-center gap-1.5 rounded-field border',
                   'transition-colors duration-150 motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
                   on ? 'border-ink bg-mist' : 'border-transparent hoverOnly:bg-mist')}>
-                <span className="grid size-7 place-items-center rounded-[8px] bg-[#1c1c1e]">
-                  <LampFace light={x.light} size={20}/></span>
+                {x.light ? (
+                  <span className="grid size-7 place-items-center rounded-[8px] bg-[#1c1c1e]">
+                    <LampFace light={x.light} size={20}/></span>
+                ) : x.score != null ? (
+                  <span className="grid size-7 place-items-center font-display text-fine font-bold tabular-nums text-ink">{x.score}</span>
+                ) : (
+                  <span aria-hidden className="grid size-7 place-items-center">
+                    <span className="size-3 rounded-full border-2 border-ink-3"/></span>
+                )}
                 <span className={cn('text-fine', on ? 'font-bold text-ink' : 'text-ink-2')}>{x.weekday.slice(0, 2)}</span>
               </button>
             </li>
@@ -245,9 +254,9 @@ function Consent({ teen }) {
 }
 
 /* For a parent: the week's hardest day and a few ways to start. */
-function AskAbout({ teen }) {
-  const w = summary(teen, 'week')
-  const over = w.points.filter(p => p.score > teen.usual.hi)
+export function AskAbout({ teen }) {
+  const w = summaryOf(teen, 'week')
+  const over = teen.usual ? w.points.filter(p => p.score > teen.usual.hi) : []
   const peak = over.length ? over.reduce((a, b) => (b.score > a.score ? b : a)) : null
   const name = peak && new Date(peak.date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' })
   return (
@@ -261,7 +270,7 @@ function AskAbout({ teen }) {
             <p className="m-0 mt-1 font-display text-stat font-bold tabular-nums leading-none text-ink">{peak.score}
               <span className="ml-1.5 font-body text-fine font-normal text-ink-3">out of 100</span></p>
             <p className="m-0 mt-2 text-fine text-ink-2">The app cannot say why.</p>
-            <p className="m-0 mt-3 max-w-[50ch] text-fine text-ink-2">Try not to say &ldquo;Your patch says you were
+            <p className="m-0 mt-3 max-w-[50ch] text-fine text-ink-2">Try not to say &ldquo;Your {teen.live ? 'readings say' : 'patch says'} you were
               stressed.&rdquo; {teen.first} can see this page too.</p>
             <p className="m-0 mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call their medical
               professional or a crisis line.</p>
@@ -279,7 +288,172 @@ function AskAbout({ teen }) {
   )
 }
 
-export default function TeenDetail({ teen, onBack, variant = 'parent', range: initial = 'week' }) {
+/* ── A linked teen, from their account ──────────────────────────────────
+ *
+ * The same page with what the account sends: day figures, the usual band if
+ * shared, where readings came from if shared. No body signals, no hours, no
+ * single readings, so those boxes are not drawn. */
+
+const SHARE_WORD = {
+  parent: { score: 'Mind Score for each day', week: 'Days above their usual', sleep: 'Hours slept',
+            worn: 'Whether the patch was worn', settle: 'Days slow to settle' },
+  pro: { score: 'Mind Score', trends: 'Week over week change', raw: 'Time of the latest reading', settle: 'Days slow to settle' },
+}
+
+export function LiveShares({ teen, variant }) {
+  const audience = isPro(variant) ? 'pro' : 'parent'
+  const rows = SHARING[audience].fields.map(f => [SHARE_WORD[audience][f.key] || f.label, teen.sharing?.[f.key] === true])
+  return (
+    <Box title={`What ${teen.first} shares with you`} meta="their choice">
+      <dl className="m-0 mt-2 p-0">
+        {rows.map(([k, on]) => (
+          <div key={k} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
+            <dt className="text-fine text-ink-2">{k}</dt>
+            <dd className={cn('m-0 font-display text-ui font-medium', on ? 'text-ink' : 'text-ink-2')}>{on ? 'Shared' : 'Not shared'}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">{teen.first} can switch any of these off in their app.
+        {audience === 'parent' ? ' Notes, location and single readings are never shared with a parent.' : ' Notes and location are never shared.'}</p>
+    </Box>
+  )
+}
+
+const SOURCE_PLURAL = { patch: 'Patch', camera: 'Phone camera checks', survey: 'Check-in questions' }
+const timeOf = t => new Date(t).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+
+function LiveDay({ teen, d, variant }) {
+  const pro = isPro(variant)
+  const rows = d.score == null ? [] : [
+    ['Mind Score', d.score, subOf(teen, d.score)],
+    ['Lowest to highest', `${d.min} to ${d.max}`],
+    ['Readings', d.count],
+    ...(d.sources ? Object.entries(d.sources).filter(([, n]) => n > 0).map(([k, n]) => [SOURCE_PLURAL[k], n]) : []),
+  ]
+  return (
+    <Box title="Readings" meta={d.score == null ? 'none' : plural(d.count, 'reading', 'readings')}>
+      {d.score == null ? (
+        <p className="m-0 mt-3 text-ui text-ink-2">No readings on this day.</p>
+      ) : (
+        <dl className="m-0 mt-2 p-0">
+          {rows.map(([k, v, sub]) => (
+            <div key={k} className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
+              <dt className="text-fine text-ink-2">{k}</dt>
+              <dd className="m-0 text-right font-display text-ui font-medium tabular-nums text-ink">{v}
+                {sub && <span className="ml-2 font-body text-fine font-normal text-ink-2">{sub}</span>}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {pro && teen.latestAt && (
+        <p className="m-0 mt-3 text-fine text-ink-2">Latest reading: {timeOf(teen.latestAt)}.</p>
+      )}
+      <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">
+        {pro ? 'Day figures only. Single readings and notes are not sent.'
+             : `You see the day as a whole. Times and single readings stay with ${teen.first}.`}</p>
+    </Box>
+  )
+}
+
+function LiveDetail({ teen, onBack, variant, range: initial }) {
+  const pro = isPro(variant)
+  const reduced = useReducedMotion()
+  const today = teen.days[teen.days.length - 1]
+  const [range, setRange] = React.useState(initial)
+  const [date, setDate] = React.useState(today.date)
+  const d = dayOf(teen, date)
+  const first = teen.days.length - 30
+  const name = displayName(teen, variant)
+  const head = React.useRef(null)
+  const dayRef = React.useRef(null)
+  React.useEffect(() => { head.current?.focus({ preventScroll: true }) }, [teen.id])
+  const score = showsScore(teen, variant)
+  const last = [...teen.days].reverse().find(x => x.score != null)
+  const pickDay = iso => {
+    if (teen.days.findIndex(x => x.date === iso) < first) return
+    setDate(iso)
+    dayRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-4 lg:gap-5">
+      <div><BackButton onBack={onBack} label={pro ? 'All students' : 'All children'}/></div>
+
+      <header className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
+        <TeenAvatar teen={teen} variant={variant} size="size-16"/>
+        <div className="min-w-0 flex-1">
+          <h2 ref={head} tabIndex={-1} className="m-0 font-display text-sub font-bold leading-none text-ink outline-none">{name}</h2>
+          <p className="m-0 mt-1.5 text-fine text-ink-2">{metaLine(teen, variant)} · {sourceLine(teen)}</p>
+        </div>
+        {score && (
+          <div className="flex flex-col items-start gap-1 sm:items-end">
+            <StatusMark teen={teen} range={range} size={36}/>
+            <span className="text-fine text-ink-2">{FACE_LABEL[range]}</span>
+          </div>
+        )}
+      </header>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-5">
+        <section aria-labelledby="dial-title"
+          className="relative flex flex-col items-center overflow-hidden rounded-panel border border-rule bg-gradient-to-b
+            from-card via-card to-aqua p-5 text-center shadow-card sm:p-6">
+          <h3 id="dial-title" className="m-0 self-start font-display text-head font-bold leading-tight text-ink">Mind Score today</h3>
+          {!score ? (
+            <p className="m-0 mt-4 text-ui text-ink-2">{teen.first} does not share their Mind Score with you.</p>
+          ) : today.score == null ? (
+            <div className="my-auto py-8">
+              <p className="m-0 font-display text-row font-bold text-ink">No readings yet today</p>
+              <p className="m-0 mt-2 text-fine text-ink-2">{last ? `Last reading day: ${dayLabel(teen, last.date)}, Mind Score ${last.score}.`
+                : `${teen.first}’s Mind Score shows here after their first reading.`}</p>
+            </div>
+          ) : (
+            <>
+              <RainbowDial className="mt-3" score={today.score} usual={teen.usual?.base} rings={[]} size={340}/>
+              {subOf(teen, today.score) && <p className="m-0 mt-2 font-display text-ui font-bold text-ink">{subOf(teen, today.score)}</p>}
+              <p className="m-0 mt-2 text-fine text-ink-2">The day so far, from {plural(today.count, 'reading', 'readings')}.</p>
+            </>
+          )}
+        </section>
+
+        <section aria-labelledby="week-title" className="flex flex-col rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 id="week-title" className="m-0 font-display text-head font-bold leading-tight text-ink">This week</h3>
+            <DayStepper teen={teen} date={date} setDate={setDate} first={first}/>
+          </div>
+          {score ? <WeekLamps teen={teen} date={date} setDate={setDate}/>
+            : <p className="m-0 mt-4 text-ui text-ink-2">Not shared.</p>}
+          <p className="m-0 mt-auto pt-5 text-fine text-ink-3">
+            {teen.usual?.general ? 'Faces use the general range until three days of readings.'
+              : teen.usual ? `Faces compare each day with ${teen.first}’s own usual.`
+              : `${teen.first} does not share how a day compares with their usual.`}</p>
+        </section>
+      </div>
+
+      {score && <RangeTrend teen={teen} range={range} onRange={setRange} variant={variant}
+        day={range === 'day' ? undefined : date} onDay={pickDay}/>}
+
+      <div ref={dayRef} className="scroll-mt-20">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="m-0 font-display text-head font-bold text-ink">The day in detail</h3>
+          <DayStepper teen={teen} date={date} setDate={setDate} first={first} live/>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+          {score ? <LiveDay teen={teen} d={d} variant={variant}/> : null}
+          <LiveShares teen={teen} variant={variant}/>
+        </div>
+      </div>
+
+      {!pro && score && <AskAbout teen={teen}/>}
+    </div>
+  )
+}
+
+export default function TeenDetail({ teen, onBack, variant = 'parent', range = 'week' }) {
+  if (teen.live) return <LiveDetail teen={teen} onBack={onBack} variant={variant} range={range}/>
+  return <DemoDetail teen={teen} onBack={onBack} variant={variant} range={range}/>
+}
+
+function DemoDetail({ teen, onBack, variant = 'parent', range: initial = 'week' }) {
   const pro = isPro(variant)
   const reduced = useReducedMotion()
   const today = teen.days[teen.days.length - 1]
@@ -329,7 +503,7 @@ export default function TeenDetail({ teen, onBack, variant = 'parent', range: in
           <h3 id="dial-title" className="m-0 self-start font-display text-head font-bold leading-tight text-ink">Mind Score today</h3>
           {score ? (
             <>
-              <RainbowDial className="mt-3" weather={false} score={today.score} usual={teen.usual.base} rings={rings} size={340}/>
+              <RainbowDial className="mt-3" score={today.score} usual={teen.usual.base} rings={rings} size={340}/>
               <p className="m-0 mt-2 font-display text-ui font-bold text-ink">{STATUS_SUB[lightOf(teen, today.score)]}</p>
               <ul className="m-0 mt-4 grid w-full list-none grid-cols-1 gap-x-6 sm:grid-cols-2 gap-y-2 border-t border-rule p-0 pt-3 text-left">
                 {rings.map(r => (

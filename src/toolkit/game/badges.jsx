@@ -32,16 +32,23 @@ const ART = {
   'whole-kit':   <><path d="M4.5 17.5L3.5 8l5 3.5L12 5l3.5 6.5 5-3.5-1 9.5z"/><path d="M4.5 17.5h15"/></>,
 }
 
-export function BadgeIcon({ id, earned = true, size = 40, className }) {
+export function BadgeIcon({ id, earned = true, size = 40, className, shine = false }) {
   const c = COLOUR[id] || '#0f5836'
   return (
-    <span aria-hidden className={cn('grid shrink-0 place-items-center rounded-full', className)}
+    <span aria-hidden className={cn('relative grid shrink-0 place-items-center overflow-hidden rounded-full', className)}
       style={{ width:size, height:size,
-               background: earned ? c : '#ffffff',
+               background: earned
+                 ? `radial-gradient(circle at 32% 26%, color-mix(in srgb, ${c} 45%, #ffffff) 0%, ${c} 46%, color-mix(in srgb, ${c} 78%, #000000) 100%)`
+                 : 'repeating-linear-gradient(135deg, #f4f8f6 0 5px, #ffffff 5px 10px)',
                border: earned ? 'none' : '2px dashed #9fbcae',
+               boxShadow: earned
+                 ? `inset 0 0 0 ${Math.max(2, size * 0.07)}px color-mix(in srgb, ${c} 55%, #ffffff), inset 0 -${size * 0.08}px ${size * 0.14}px rgba(0,0,0,.22), 0 ${size * 0.06}px ${size * 0.16}px color-mix(in srgb, ${c} 45%, transparent)`
+                 : 'none',
                color: earned ? '#ffffff' : '#426a58' }}>
       <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor"
-        strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" focusable="false">{ART[id]}</svg>
+        strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" focusable="false"
+        className="relative">{ART[id]}</svg>
+      {earned && shine && <span className="g-glint"/>}
     </span>
   )
 }

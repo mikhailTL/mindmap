@@ -14,6 +14,9 @@
  *                                      inside the nearest <Pops/> box;
  *                                      sound: 'tick' | 'good' | 'turn' | 'low'
  *     g.cue(kind)                      play a sound only (if sound is on)
+ *     g.combo / g.miss()               hits in a row inside this round; every
+ *                                      add grows it (unless combo:false), miss()
+ *                                      sets it to zero. Never stored.
  *     g.finish({ complete, marks })    store the session once, returns result.
  *                                      Points come ONLY from a finish: 20, +10
  *                                      the first time a tool is finished, +5
@@ -38,8 +41,9 @@
  *   <FillRing value={0..1} ring={g.ring}>{centre}</FillRing>
  *   <LevelMeter/>                      Level N and a bar; for the idle screen
  *   <Countdown from={3} onDone={fn}/>  3, 2, 1 then onDone
- *   <EndCard game={g} title stats={[[label, value]]} onAgain={fn} againLabel onDone doneLabel>
- *                                      result, level ring, unlocks, new badges
+ *   <EndCard game={g} title stats={[[label, value]]} stars={1..3} onAgain={fn} againLabel onDone doneLabel>
+ *                                      stars, score count up, points into the
+ *                                      level bar, level up, badge reveal
  *   Life skills pieces live in ./skill.jsx (Quest, QuickRound, Answer,
  *   GoalMeter, Win, useSkill). The Toolkit header is ./PlayerCard.jsx.
  *   <SoundToggle/>  <ThemePicker/>
@@ -53,8 +57,10 @@
  * Colours: draw graphics with var(--g-main); words in var(--g-ink) only;
  * grounds in var(--g-wash). */
 
-export { useGame, useProgress, gameVars, Pops, FillRing, Score, SoundToggle, GameBar,
+export { useGame, useProgress, gameVars, Pops, FillRing, Score, Combo, SoundToggle, GameBar,
          LevelMeter, ThemePicker, Countdown, EndCard } from './parts'
+export { Burst, Confetti, LevelEmblem, XPBar, ToNext, LevelUpBanner, Stars, CountUp, TIER, PARTY,
+         SPRING, SOFT, useTotalTween, useSvgId, emblemColours } from './fx'
 export { recordSession, readProgress, levelFor, setPick, THEMES, RINGS, PROGRESS_KEY,
          unlocksAt, themeById, recordFinish, awardFor, levelName, levelStart, LEVEL_NAMES,
          BADGES, badgeById, badgesFor, suggestNext, FINISH_POINTS, NEW_TOOL_BONUS, CLEAN_BONUS } from './progress'

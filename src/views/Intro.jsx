@@ -28,7 +28,7 @@ const BEATS = [
   { ms: 5200, bg: '#e3f2ed', head: 'The app learns your usual day.',
     sub: 'An ordinary day for you shows as ordinary.' },
   { ms: 6300, bg: '#eef7f3', head: 'You choose who sees your score.',
-    sub: 'Nothing leaves your phone unless you say so.' },
+    sub: 'Your readings sync to the people you share with.' },
   { ms: 5000, bg: '#eaf6f2', head: 'MindMap',
     sub: 'Wear the patch, or answer a short check-in. Either way you get one score a day.' },
 ]
@@ -685,7 +685,7 @@ const STOPS = [
   { view: 'app-student', name: 'The student screen', inApp: true,
     line: 'Today’s score, its four signals, and the week so far.' },
   { view: 'shared', name: 'Sharing', inApp: true,
-    line: 'The student picks what leaves the phone and can switch sharing off.' },
+    line: 'The student picks what is shared and can switch any of it off.' },
   { view: 'app-parent', name: 'The parent screen', inApp: true,
     line: 'One score a day. Never a raw reading, Notes or Location.' },
   { view: 'app-pro', name: 'The Medical Professional console', inApp: true,

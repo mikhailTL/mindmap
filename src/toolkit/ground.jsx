@@ -4,7 +4,8 @@ import { Check } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { ActivityScreen, OnDevice } from './shell'
 import { DidItWork } from './after'
-import { useGame, GameBar, Pops, LevelMeter, EndCard } from './game'
+import { motion } from 'framer-motion'
+import { useGame, GameBar, Pops, LevelMeter, EndCard, Burst, SPRING } from './game'
 
 /* 5-4-3-2-1 Grounding, as a scavenger hunt.
  *
@@ -63,10 +64,14 @@ function Collection({ got, at }) {
               const item = got[s.id][k]
               return (
                 <span key={k} title={item || ''}
-                  className={cn('grid h-8 place-items-center rounded-field border-2 transition-colors duration-200',
-                    item ? 'border-ink' : r === at ? 'border-ink bg-card' : 'border-rule bg-card')}
-                  style={item ? { background:'var(--g-main)' } : undefined}>
-                  {item ? <Check aria-hidden className="size-4 text-paper"/> : null}
+                  className={cn('relative grid h-9 place-items-center rounded-[10px] border transition-colors duration-200',
+                    item ? 'border-transparent' : r === at ? 'border-ink bg-white' : 'border-rule bg-white/70')}
+                  style={item ? { background:'linear-gradient(135deg, var(--g-main), var(--g-ink))' } : undefined}>
+                  {item ? (
+                    <motion.span initial={{ scale:0, rotate:-90 }} animate={{ scale:1, rotate:0 }} transition={SPRING}>
+                      <Check aria-hidden className="size-4 text-paper"/>
+                    </motion.span>
+                  ) : null}
                   <span className="sr-only">{item ? `${s.name}: ${item}` : `${s.name}: empty`}</span>
                 </span>
               )
@@ -156,26 +161,32 @@ export default function Grounding() {
                 {mine.length} of {sense.n}
               </span>
             </div>
+            <p className="mt-0.5 text-sec text-ink-2">Spot it around you, then tap its card.</p>
             <div data-hunt className="relative mt-3">
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 {hand.map((c, k) => {
                   const on = mine.includes(c)
                   return (
-                    <button key={sense.id + c} type="button" aria-pressed={on}
+                    <motion.button key={sense.id + c} type="button" aria-pressed={on}
                       onClick={e => collect(c, e.currentTarget)}
                       disabled={!on && (cleared || mine.length >= sense.n)}
-                      style={{ animationDelay: `${k * 35}ms`, ...(on ? { background:'var(--g-wash)' } : {}) }}
-                      className={cn('flex min-h-[76px] items-center gap-2 rounded-panel border-2 p-3 text-left',
-                        'font-display text-ui transition-[background-color,border-color,transform] duration-150',
-                        'motion-safe:active:scale-[0.97] disabled:opacity-50',
-                        !g.reduced && 'g-in',
-                        on ? 'border-ink font-bold text-ink' : 'border-ink bg-card font-semibold text-ink')}>
-                      <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full border-[1.5px] border-ink-3"
-                        style={on ? { background:'var(--g-main)' } : undefined}>
-                        {on && <Check className="size-4 text-paper"/>}
+                      initial={g.reduced ? false : { opacity:0, y:14, scale:0.92 }}
+                      animate={{ opacity:1, y:0, scale: on && !g.reduced ? [1, 1.07, 1] : 1 }}
+                      whileTap={g.reduced ? undefined : { scale:0.94 }}
+                      transition={{ ...SPRING, delay: on ? 0 : k * 0.035 }}
+                      style={on ? { background:'linear-gradient(135deg, var(--g-wash), #ffffff)' } : undefined}
+                      className={cn('relative flex min-h-[76px] items-center gap-2.5 rounded-[16px] border p-3 text-left',
+                        'font-display text-ui shadow-card disabled:opacity-50',
+                        on ? 'border-ink font-bold text-ink' : 'border-rule bg-white font-semibold text-ink')}>
+                      <span aria-hidden className="relative grid size-8 shrink-0 place-items-center rounded-full border-[1.5px]"
+                        style={on ? { background:'linear-gradient(135deg, var(--g-main), var(--g-ink))', borderColor:'transparent' }
+                          : { borderColor:'#9fbcae' }}>
+                        {on && <motion.span initial={g.reduced ? false : { scale:0 }} animate={{ scale:1 }} transition={SPRING}>
+                          <Check className="size-4 text-paper"/></motion.span>}
+                        {on && <Burst fire={1} count={8} spread={30} size={5}/>}
                       </span>
                       <span className="min-w-0">{c}</span>
-                    </button>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -194,6 +205,7 @@ export default function Grounding() {
 
         {stage === 'done' && (
           <EndCard game={g} title={found >= ALL ? 'Full set found' : 'Hunt done'}
+            stars={found >= ALL ? 3 : found >= 10 ? 2 : 1}
             stats={[['Found', `${found} of ${ALL}`], ['Senses', `${sensesDone} of 5`],
                     ['Time', time], ['New cards used', String(shuffles)]]}
             onAgain={start}>

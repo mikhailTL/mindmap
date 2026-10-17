@@ -3,17 +3,17 @@ import { DemoNotice } from '../../ui/notice'
 import { Button } from '../../ui/button'
 import { Plus } from '../../ui/marks'
 import { cn } from '../../lib/utils'
-import { RANGES, USUAL, bandOf, clearReadings, groupByDay, stats, trend, windowFor } from '../../lib/readingLog'
-import { BAND, SOURCE, Shape, ShapePath, clock, dayName, when } from './marks'
-import { useReadingLog } from './useReadingLog'
+import { bandOf, clearReadings, groupByDay, stats, trend } from '../../lib/readingLog'
+import { BAND, SOURCE, Shape, clock, dayName, ringsFor, when } from './marks'
 import { SCORE } from '../../lib/terms'
+import { NoData } from '../student/charts'
 import { RainbowDial } from '../../charts/rainbow'
-import { studentRings } from '../../lib/readings'
 
-/* The reading log, under the three ways in. Read like a glucose log: the
- * latest number large, the trend over a chosen range against the reader's
- * usual band, the share of readings inside that band, then every entry by
- * day. Higher means more stress: 0 calm to 100 peak. */
+/* The Mind Score Log, on the student's Trends tab (src/views/student/
+ * TrendsTab.jsx). Read like a glucose log: the latest number large on the
+ * rainbow, the share of readings inside the usual band, then every entry by
+ * day. The trend line itself is the tab's ScoreChart. Higher means more
+ * stress: 0 calm to 100 peak. */
 
 const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
 
@@ -42,7 +42,7 @@ function Latest({ entries, now }) {
           screen, with the way it moved beside it. */}
       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
         <RainbowDial score={last.score} size={208} className="shrink-0"
-          rings={studentRings().map(r => ({ ...r, value: last.score }))}/>
+          rings={ringsFor(last)}/>
         <div className="min-w-0">
           {t && <Arrow dir={t.dir} className={cn('size-9 shrink-0', b.ink)}/>}
           <p className={cn('mt-1 font-display text-ui font-bold', b.ink)}>{b.word}</p>
@@ -63,182 +63,6 @@ function Latest({ entries, now }) {
         </p>
       )}
     </section>
-  )
-}
-
-/* ── Range switch ─────────────────────────────────────────────────────── */
-
-function RangeSwitch({ value, onChange }) {
-  return (
-    <div role="group" aria-label="Range" className="flex gap-1 border-b border-rule">
-      {RANGES.map(r => {
-        const on = r.id === value
-        return (
-          <button key={r.id} type="button" aria-pressed={on} onClick={() => onChange(r.id)}
-            className={cn('-mb-px min-h-[44px] border-b-2 px-2.5 font-display text-ui font-bold',
-              'transition-colors duration-150',
-              on ? 'border-accent text-ink' : 'border-transparent text-ink-3 hoverOnly:text-ink')}>
-            {r.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ── The trend chart ──────────────────────────────────────────────────── */
-
-const HOUR = 3600e3
-function xTicks(range, from, to, narrow) {
-  const out = []
-  if (range === 'day') {
-    const d = new Date(from); d.setMinutes(0, 0, 0)
-    while (d.getTime() <= to) {
-      if (d.getTime() >= from && d.getHours() % 6 === 0) {
-        const h = d.getHours()
-        out.push({ t: d.getTime(), label: h === 0 ? '12 am' : h === 12 ? '12 pm' : `${h % 12} ${h < 12 ? 'am' : 'pm'}`, major: h === 0 })
-      }
-      d.setHours(d.getHours() + 1)
-    }
-    return out
-  }
-  const step = range === 'week' ? 1 : range === 'fortnight' ? (narrow ? 3 : 2) : (narrow ? 7 : 5)
-  const d = new Date(to); d.setHours(0, 0, 0, 0)
-  let k = 0
-  while (d.getTime() >= from) {
-    out.unshift({
-      t: d.getTime(), major: true, show: k % step === 0,
-      label: range === 'week'
-        ? d.toLocaleDateString('en-US', { weekday: 'short' })
-        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    })
-    d.setDate(d.getDate() - 1); k++
-  }
-  return out.map(x => (x.show ? x : { ...x, label: '' }))
-}
-
-function TrendChart({ list, from, to, range, now }) {
-  const wrap = React.useRef(null)
-  const [w, setW] = React.useState(640)
-  const [sel, setSel] = React.useState(null)
-
-  React.useLayoutEffect(() => {
-    const el = wrap.current
-    if (!el) return
-    setW(Math.round(el.getBoundingClientRect().width) || 640)
-    if (typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width) || 640))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  React.useEffect(() => { setSel(null) }, [range, list.length])
-
-  const H = w < 520 ? 220 : 270
-  const P = { l: 30, r: 12, t: 12, b: 28 }
-  const iw = Math.max(10, w - P.l - P.r), ih = H - P.t - P.b
-  const x = t => P.l + ((t - from) / (to - from)) * iw
-  const y = v => P.t + (1 - v / 100) * ih
-  const ticks = xTicks(range, from, to, w < 520)
-  const r = list.length > 40 ? 4.5 : 5.5
-  const i = sel == null ? list.length - 1 : sel
-  const pick = list[i]
-
-  const nearest = clientX => {
-    if (!list.length) return
-    const box = wrap.current.getBoundingClientRect()
-    const px = clientX - box.left
-    let best = 0
-    for (let k = 1; k < list.length; k++) if (Math.abs(x(list[k].at) - px) < Math.abs(x(list[best].at) - px)) best = k
-    setSel(best)
-  }
-  const onKey = e => {
-    if (!list.length) return
-    if (e.key === 'ArrowLeft') { e.preventDefault(); setSel(Math.max(0, i - 1)) }
-    if (e.key === 'ArrowRight') { e.preventDefault(); setSel(Math.min(list.length - 1, i + 1)) }
-    if (e.key === 'Home') { e.preventDefault(); setSel(0) }
-    if (e.key === 'End') { e.preventDefault(); setSel(list.length - 1) }
-  }
-
-  const s = stats(list)
-  const label = list.length
-    ? `Trend chart, ${list.length} readings. Average ${s.mean}, lowest ${s.min}, highest ${s.max}. Your usual range is ${USUAL.lo} to ${USUAL.hi}. Arrow keys step through readings.`
-    : 'Trend chart. No readings in this range.'
-
-  return (
-    <div>
-      {/* The reading under the pointer or the arrow keys; the latest by default. */}
-      <p aria-live="polite" className="flex min-h-[28px] flex-wrap items-center gap-x-2 text-meta text-ink-2">
-        {pick ? (
-          <>
-            <Shape source={pick.source} fill={BAND[bandOf(pick.score)].fill}/>
-            <b className="font-display text-ui font-bold tabular-nums text-ink">{pick.score}</b>
-            <span className="font-mono tabular-nums">{when(pick.at, now)}</span>
-            <span className="text-ink-3">{SOURCE[pick.source].word}</span>
-          </>
-        ) : <span className="text-ink-3">No readings in this range.</span>}
-      </p>
-      <div ref={wrap} tabIndex={0} role="group" aria-label={label} onKeyDown={onKey}
-        onPointerMove={e => nearest(e.clientX)} onPointerDown={e => nearest(e.clientX)}
-        className="relative mt-1 touch-pan-y select-none rounded-field outline-offset-2">
-        <svg aria-hidden width={w} height={H} className="block">
-          {/* Usual band */}
-          <rect x={P.l} width={iw} y={y(USUAL.hi)} height={y(USUAL.lo) - y(USUAL.hi)} fill="#dcefe4"/>
-          {[USUAL.lo, USUAL.hi].map(v => (
-            <line key={v} x1={P.l} x2={P.l + iw} y1={y(v)} y2={y(v)} stroke="#93b2a1" strokeWidth="1"/>
-          ))}
-          {[0, 100].map(v => (
-            <line key={v} x1={P.l} x2={P.l + iw} y1={y(v)} y2={y(v)} stroke="#c2d7ca" strokeWidth="1"/>
-          ))}
-          {[0, USUAL.lo, USUAL.hi, 100].map(v => (
-            <text key={v} x={P.l - 6} y={y(v) + 4} textAnchor="end" fontSize="11"
-              fill={v === USUAL.lo || v === USUAL.hi ? '#157446' : '#426a58'}
-              style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</text>
-          ))}
-          {ticks.map(tk => (
-            <g key={tk.t}>
-              {tk.major && <line x1={x(tk.t)} x2={x(tk.t)} y1={P.t} y2={P.t + ih} stroke="#e3ede7" strokeWidth="1"/>}
-              {tk.label && (
-                <text x={x(tk.t)} y={H - 8} textAnchor="middle" fontSize="11" fill="#426a58">{tk.label}</text>
-              )}
-            </g>
-          ))}
-          {pick && (
-            <line x1={x(pick.at)} x2={x(pick.at)} y1={P.t} y2={P.t + ih} stroke="#0d2b1e"
-              strokeOpacity=".28" strokeDasharray="3 3"/>
-          )}
-          {list.map((p, k) => (
-            <ShapePath key={p.id} source={p.source} cx={x(p.at)} cy={y(p.score)} r={r}
-              fill={BAND[bandOf(p.score)].fill} stroke="#ffffff" strokeWidth="1.5"/>
-          ))}
-          {pick && (
-            <ShapePath source={pick.source} cx={x(pick.at)} cy={y(pick.score)} r={r + 4}
-              fill="none" stroke="#0d2b1e" strokeWidth="1.5"/>
-          )}
-        </svg>
-      </div>
-    </div>
-  )
-}
-
-function Legend() {
-  return (
-    <div className="mt-3 flex flex-col gap-2 text-fine text-ink-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
-      <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0">
-        {Object.entries(SOURCE).map(([k, s]) => (
-          <li key={k} className="inline-flex items-center gap-1.5">
-            <Shape source={k} fill="#2a5744"/>{s.word}
-          </li>
-        ))}
-      </ul>
-      <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0">
-        {['low', 'usual', 'up', 'high'].map(k => (
-          <li key={k} className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="size-3 rounded-[2px]" style={{ background: BAND[k].fill }}/>
-            {BAND[k].short}
-          </li>
-        ))}
-      </ul>
-    </div>
   )
 }
 
@@ -390,7 +214,7 @@ function ClearLog({ n }) {
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <p className="m-0 text-fine text-ink-2">Delete all {n} readings from this phone?</p>
+      <p className="m-0 text-fine text-ink-2">Delete all {n} readings?</p>
       <Button size="sm" variant="outline" onClick={() => { clearReadings(); setAsk(false) }}>Delete</Button>
       <Button size="sm" onClick={() => setAsk(false)}>Keep</Button>
     </div>
@@ -399,52 +223,36 @@ function ClearLog({ n }) {
 
 /* ── The log ──────────────────────────────────────────────────────────── */
 
-export function ReadingLog({ headRef }) {
-  const { entries, now, demo, setNote } = useReadingLog()
-  const [range, setRange] = React.useState('fortnight')
-  const { from, to } = windowFor(range, now)
-  const inRange = React.useMemo(() => entries.filter(r => r.at >= from && r.at <= to), [entries, from, to])
-  const s = stats(inRange)
-  const rangeLabel = { day: 'last 24 hours', week: 'last 7 days', fortnight: 'last 14 days', month: 'last 30 days' }[range]
-
+/* The log as the Trends tab shows it: the share of readings inside the
+   usual range, then every entry by day. The range is chosen by the tab's own
+   Day / Week / Month switch, so the chart above and this list always cover
+   the same days. `latest` puts the latest reading on the rainbow first. */
+export function MindScoreLog({ entries, list, now, demo, setNote, rangeLabel, latest = false, headRef,
+  className, go }) {
+  const s = stats(list)
   return (
-    <section id="reading-log" aria-labelledby="reading-log-h" className="mt-8 scroll-mt-20 lg:mt-10">
+    <section id="reading-log" aria-labelledby="reading-log-h" className={cn('scroll-mt-20', className)}>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <h3 id="reading-log-h" ref={headRef} tabIndex={-1} className="font-display text-head font-bold text-ink">
           {SCORE} Log
         </h3>
         {demo && <DemoNotice inline>Generated readings. Any you take are added.</DemoNotice>}
       </div>
-
       {entries.length === 0 ? (
         <div className={cn(PANEL, 'mt-3')}>
-          <p className="text-meta text-ink-2">Take a reading to start your {SCORE} Log.</p>
+          <NoData go={go} className="items-start text-left"/>
         </div>
       ) : (
         <>
-          <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start lg:gap-4">
-            <Latest entries={entries} now={now}/>
+          <div className={cn('mt-3 grid gap-3 lg:items-start lg:gap-4',
+            latest && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+            {latest && <Latest entries={entries} now={now}/>}
             <InRange s={s} rangeLabel={rangeLabel}/>
           </div>
-
-          <section aria-labelledby="log-trend" className={cn(PANEL, 'mt-3 lg:mt-4')}>
-            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-              <h4 id="log-trend" className="font-display text-ui font-bold text-ink">Trend</h4>
-              <RangeSwitch value={range} onChange={setRange}/>
-            </div>
-            <div className="mt-3">
-              <TrendChart list={inRange} from={from} to={to} range={range} now={now}/>
-            </div>
-            <Legend/>
-            <p className="mt-2 text-fine text-ink-3">
-              Shaded: your usual range, {USUAL.lo} to {USUAL.hi}. Higher means more stress.
-            </p>
-          </section>
-
           <section aria-labelledby="log-list" className={cn(PANEL, 'mt-3 lg:mt-4')}>
-            <h4 id="log-list" className="font-display text-ui font-bold text-ink">Every reading</h4>
+            <h4 id="log-list" className="font-display text-ui font-bold text-ink">Every reading, {rangeLabel}</h4>
             <div className="mt-2">
-              <DayList list={inRange} now={now} setNote={setNote}/>
+              <DayList list={list} now={now} setNote={setNote}/>
             </div>
             {!demo && <div className="mt-3 border-t border-rule pt-2"><ClearLog n={entries.length}/></div>}
           </section>
@@ -454,3 +262,4 @@ export function ReadingLog({ headRef }) {
   )
 }
 
+export { Latest, InRange, DayList, ClearLog }

@@ -64,3 +64,19 @@ export function when(at, now) {
   return `${clock(at)} ${day === 'Today' || day === 'Yesterday' ? day.toLowerCase()
     : new Date(at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
 }
+
+/* The rings a logged reading draws on the rainbow. A camera reading reads the
+   heart, so it fills the heart band; the check-in questions fill one band of
+   their own. A patch reading fills all four. Only the score is kept in the
+   log, so a band carries the score and never a figure that was not measured. */
+const HEART = { id: 'heart', name: 'Heart', glow: '#e11919' }
+const SELF = { id: 'self', name: 'Your answers', color: '#157446', glow: '#1d8fb0' }
+const PATCH = [['heart', 'Heart', '#e11919'], ['sweat', 'Sweat', '#e86a05'],
+  ['temp', 'Temperature', '#199e19'], ['move', 'Movement', '#1560e0']]
+export function ringsFor(entry) {
+  if (!entry) return []
+  const v = entry.score
+  if (entry.source === 'camera') return [{ ...HEART, value: v, reading: 'Camera' }]
+  if (entry.source === 'patch') return PATCH.map(([id, name, glow]) => ({ id, name, glow, value: v }))
+  return [{ ...SELF, value: v, reading: 'Check-in questions' }]
+}

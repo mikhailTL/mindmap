@@ -247,10 +247,29 @@ export function signedInHere() {
 let backendState = 'unknown'
 export const backend = () => backendState
 const remote = () => backendState === 'remote'
+export const isRemote = remote
+
+/* The live part of a snapshot: a student's own readings and sharing, and,
+   for a parent or a Medical Professional, the linked teens they may see.
+   Held in memory only; src/account/sync.js turns the student's half into the
+   reading log and the sharing switches, and the dashboards read `teens`. */
+let liveState = { readings: null, sharing: null, teens: [], at: 0 }
+const snapListeners = new Set()
+export const liveData = () => liveState
+export function onSnapshot(fn) {
+  snapListeners.add(fn)
+  return () => snapListeners.delete(fn)
+}
 
 /* The server's view of this account becomes the mirror, wholesale. */
-function applySnapshot(snap) {
+export function applySnapshot(snap) {
   if (!snap || !snap.me) return
+  liveState = {
+    readings: Array.isArray(snap.readings) ? snap.readings : null,
+    sharing: snap.sharing && typeof snap.sharing === 'object' ? snap.sharing : null,
+    teens: Array.isArray(snap.teens) ? snap.teens : [],
+    at: Date.now(),
+  }
   const mine = { ...snap.me, passcodeHash: null }
   const people = (snap.people || []).map(p => ({ ...p, passcodeHash: null, createdAt: now() }))
   accounts.replace({ items: [mine, ...people] })
@@ -259,9 +278,21 @@ function applySnapshot(snap) {
     ? [{ code: snap.invite.code, fromId: mine.id, role: mine.role, createdAt: now(), expiresAt: snap.invite.expiresAt }]
     : [] })
   session.replace({ accountId: mine.id })
+  snapListeners.forEach(fn => { try { fn(snap) } catch {} })
 }
 function clearMirror() {
+  liveState = { readings: null, sharing: null, teens: [], at: 0 }
   session.replace({}); links.replace({}); invites.replace({}); accounts.replace({})
+}
+
+/* Asks the server for this account's snapshot again, for the dashboards'
+   live refresh. Resolves to true when a fresh one arrived. */
+export async function refresh() {
+  if (!remote() || !readToken()) return false
+  const r = await call('me')
+  if (r.ok) { applySnapshot(r.snapshot); return true }
+  if (r.reason === 'signedout') { writeToken(null); clearMirror() }
+  return false
 }
 
 /* Decided once per page: ask the deploy, and if it has a store and this
@@ -284,6 +315,10 @@ export function ready() {
       }
     }
     commit()
+    /* The reading and sharing sync starts once the backend is known. Loaded
+       here, after the fact, so the two modules never import each other at
+       load time. */
+    if (has) import('./sync.js').then(m => m.startSync()).catch(() => {})
     return backendState
   })()
   return probed

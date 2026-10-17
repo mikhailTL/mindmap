@@ -90,3 +90,46 @@
   .g-badge, .g-ring, .g-draw, .g-nudge, .g-card, .g-full, .g-pop, .g-bump, .g-in, .g-count { animation: none !important }
   .g-draw { stroke-dasharray: none }
 }
+
+/* ── 17 October: the reward layer ───────────────────────────────────── */
+
+/* A soft highlight that sweeps across a fill now and then. */
+@keyframes g-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg) }
+  55%, 100% { transform: translateX(420%) skewX(-18deg) }
+}
+.g-sheen {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%);
+  animation: g-sheen 2.8s cubic-bezier(0.45,0,0.25,1) infinite;
+  pointer-events: none;
+}
+
+/* A badge coin catching the light. */
+@keyframes g-glint {
+  0%, 70% { transform: translateX(-160%) rotate(25deg) }
+  100%    { transform: translateX(260%) rotate(25deg) }
+}
+.g-glint {
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 38%;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.7), rgba(255,255,255,0));
+  animation: g-glint 4.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* The ring around a body part that is on now. */
+@keyframes g-breathe {
+  0%, 100% { opacity: .35; transform: scale(.96) }
+  50%      { opacity: .9;  transform: scale(1.04) }
+}
+.g-breathe { transform-box: fill-box; transform-origin: center; animation: g-breathe 4s ease-in-out infinite }
+
+@media (prefers-reduced-motion: reduce) {
+  .g-sheen, .g-glint { animation: none !important; opacity: 0 }
+  .g-breathe { animation: none !important; opacity: .7 }
+}
+
+/* A soft light passing over the part that is on now. */
+@keyframes g-throb { 0%, 100% { opacity: 0 } 50% { opacity: .32 } }
+.g-throb { animation: g-throb 3.2s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .g-throb { animation: none !important; opacity: 0 } }

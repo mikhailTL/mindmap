@@ -1,10 +1,8 @@
 import React from 'react'
 import { SectionShell } from './shell'
-import { FeltCard, Panel, PanelHead, SeeDetails, SharedCard, Stat, StudentBody,
-  Why } from './Monitor'
+import { FeltCard, Panel, PanelHead, SeeDetails, SharedCard, Stat, Why } from './Monitor'
 import { CheckInBody } from './CheckIn'
 import { SharingControls } from '../app'
-import { Chevron } from '../ui/marks'
 import { DayChart } from '../charts/day'
 import { Diverge } from '../charts/diverge'
 import { Bars, RainbowDial } from '../charts/rainbow'
@@ -20,14 +18,19 @@ import { WhatWorksCard } from '../toolkit/works'
 /* The demo reading and everything derived from it live in one module, so this
    screen and the calendar cannot print two different numbers for the same
    Thursday. */
-import { BAND, CROSSED, PEAK, READ, TAKEN_AT, TODAY, TODAY_SHORT, USUAL,
-  WBAND, WEEK, WEEK_COUNT, clock12 } from './reading/demo'
+import { BAND, CROSSED, PEAK, READ, TAKEN_AT, TODAY, USUAL, clock12 } from './reading/demo'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 import { daySentence } from './student/sentence'
 import { Welcome } from './student/Welcome'
 import { HeadsUpCard } from './student/HeadsUpCard'
-import { Trends } from './student/Trends'
+import { TrendsBox, WeekFaces } from './student/TrendsBox'
+import { SeeTrends, TakeReading } from './student/charts'
+import { useReadingLog } from './reading/useReadingLog'
+import { BAND as LOG_BAND, SOURCE, clock, ringsFor, when } from './reading/marks'
+import { bandOf as logBand } from '../lib/readingLog'
+import { dayKey } from './student/liveSeries'
+import { Button } from '../ui/button'
 import { PartHead, TODAY_LONG, longDate } from './student/PartHead'
 import { TEEN } from './student/demoTeen'
 
@@ -254,110 +257,6 @@ function LiveSignals({ className }) {
   )
 }
 
-/* ── The week ───────────────────────────────────────────────────────────── */
-
-/* Inside the range, above it, below it. Height on a printed scale is what says
-   which, the figure is printed over every column and the range is a ruled zone
-   behind all seven, so the fill is the third thing carrying it, never the
-   first. Three fills from the green system: the brand green inside, warn above
-   it, the turquoise below it. */
-const dayFill = v => (v > WBAND.hi ? 'bg-warn' : v < WBAND.lo ? 'bg-beam' : 'bg-accent')
-
-/* A column chart on a printed scale. The scale is the data's own extent
-   widened to the nearest ten so a reader can read a height off the axis beside
-   it, and it is not 0 to 100: on the full scale the whole week lands in a
-   twenty-point sliver and every column is the same height again. The usual
-   range is one continuous zone across all seven columns, ruled top and bottom
-   in ink-3, which is 5.98 : 1 on card. */
-const WSCALE = (() => {
-  const vs = WEEK.map(d => d.v).concat([WBAND.lo, WBAND.hi])
-  if (!vs.length) return { lo: 0, hi: 100 }
-  return { lo: Math.max(0, Math.floor((Math.min(...vs) - 5) / 10) * 10),
-           hi: Math.min(100, Math.ceil((Math.max(...vs) + 5) / 10) * 10) }
-})()
-const wy = v => {
-  const span = WSCALE.hi - WSCALE.lo || 1
-  return ((Math.max(WSCALE.lo, Math.min(WSCALE.hi, v)) - WSCALE.lo) / span) * 100
-}
-/* One cell. The three rows of the figure use the same cell geometry and the
-   same gap, so the value above a column, the column and the day under it line
-   up without a grid. */
-const CELL = 'min-w-0 flex-1 max-w-[2.75rem]'
-const TICKS = [WSCALE.hi, WBAND.hi, WBAND.lo, WSCALE.lo]
-
-function WeekStrip() {
-  const read = WEEK.map(d => `${d.d} ${Math.round(d.v)}`).join(', ')
-  return (
-    <figure className="m-0">
-      {/* Three rows, one geometry. The axis gutter is w-8 with a gap-2 beside
-          it, so the value row and the day row carry a 2.5rem left pad and
-          every cell in all three rows is the same width. */}
-      <div>
-        <div aria-hidden className="flex items-end justify-between gap-1.5 pl-[2.5rem]">
-          {WEEK.map(d => (
-            <span key={d.d} className={cn(CELL, 'text-center text-fine tabular-nums text-ink')}>
-              {Math.round(d.v)}</span>
-          ))}
-        </div>
-        <div className="mt-1 flex gap-2">
-          <div aria-hidden className="relative h-28 w-8 shrink-0 border-r border-ruling sm:h-32">
-            {TICKS.map(v => (
-              <span key={v} className="absolute right-1 translate-y-1/2 text-fine tabular-nums
-                text-ink-3" style={{ bottom: `${wy(v)}%` }}>{v}</span>
-            ))}
-          </div>
-          <div role="img" className="relative h-28 min-w-0 flex-1 border-b border-ruling sm:h-32"
-            aria-label={`Seven days on a scale of ${WSCALE.lo} to ${WSCALE.hi}: ${read}. Your usual
-              range for a week runs ${WBAND.lo} to ${WBAND.hi}, and ${WEEK_COUNT.above} of the seven
-              days sat above it.`}>
-            <span aria-hidden className="absolute inset-x-0 border-y border-ink-3 bg-aqua-2"
-              style={{ bottom: `${wy(WBAND.lo)}%`, height: `${wy(WBAND.hi) - wy(WBAND.lo)}%` }}/>
-            <div aria-hidden className="absolute inset-0 flex items-end justify-between gap-1.5">
-              {WEEK.map(d => (
-                <span key={d.d} className={cn(CELL, 'flex h-full items-end')}>
-                  <span className={cn('w-full rounded-t-xs border', dayFill(d.v),
-                    d.d === TODAY_SHORT ? 'border-ink' : 'border-ink-3')}
-                    style={{ height: `${Math.max(2, wy(d.v))}%` }}/>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div aria-hidden className="mt-1 flex items-start justify-between gap-1.5 pl-[2.5rem]">
-          {WEEK.map(d => {
-            const today = d.d === TODAY_SHORT
-            return (
-              <span key={d.d} className={cn(CELL, 'text-center text-fine',
-                today ? 'font-medium text-ink' : 'text-ink-2')}>{d.d}</span>
-            )
-          })}
-        </div>
-      </div>
-      <figcaption className="note mt-2.5">
-        The shaded zone is your usual range, {WBAND.lo} to {WBAND.hi}.
-      </figcaption>
-    </figure>
-  )
-}
-
-/* A range on the 0 to 100 scale. Same grammar as RangeBar on the marketing
-   pages: mist track, a darker block for the range, a solid mark for the figure
-   and a hairline for the usual day. */
-function BandBar({ low, high, score, usual, color }) {
-  return (
-    <div aria-hidden className="relative mt-2 h-5">
-      <div className="absolute inset-x-0 top-1.5 h-2 rounded-xs bg-mist"/>
-      <div className="absolute top-1.5 h-2 rounded-xs bg-ink-3/35"
-        style={{ left: `${low}%`, width: `${high - low}%` }}/>
-      {usual != null && <div className="absolute top-0 h-[20px] w-[2px] -translate-x-1/2 bg-ink"
-        style={{ left: `${usual}%` }}/>}
-      <div className={cn('absolute top-0 h-[20px] w-[4px] -translate-x-1/2 rounded-bar',
-        !color && 'bg-accent')}
-        style={{ left: `${score}%`, background: color || undefined }}/>
-    </div>
-  )
-}
-
 /* The working behind one ring of the dial, opened by tapping the ring. */
 function SignalDetail({ ring }) {
   const s = SENSORS[ring.id] || ring
@@ -378,12 +277,9 @@ function SignalDetail({ ring }) {
         ))}
       </dl>
       {band && (
-        <div className="mt-3" role="img"
-          aria-label={`${s.name} is ${ring.value} out of 100. Your own normal band runs
-            ${band.lo} to ${band.hi}.`}>
-          <p className="tick">Your normal band, {band.lo} to {band.hi}</p>
-          <BandBar low={band.lo} high={band.hi} score={ring.value} color={tone}/>
-        </div>
+        <p className="mt-3 text-fine text-ink-2">
+          {s.name} is <b className="font-bold tabular-nums text-ink">{ring.value}</b> out of 100. Your own
+          normal runs {band.lo} to {band.hi}.</p>
       )}
       <Bars className="mt-3" data={ring.bars} color={tone} unit={ring.barUnit}/>
       <p className="mt-2.5 max-w-[48ch] text-fine text-ink-2">{ring.note || s.about}</p>
@@ -464,12 +360,8 @@ function TodayDemo({ go, openTab }) {
           <Panel className="lg:col-span-2">
             <PanelHead title="What Moved Your Score" meta={`${moved.length} inputs`}/>
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <div className="col-span-2 sm:col-span-3" role="img"
-                aria-label={`Today is ${TODAY.score}. The band runs ${READ.low} to ${READ.high} out
-                  of 100. A usual day is ${USUAL}.`}>
-                <Stat label="Likely range" value={`${READ.low} to ${READ.high}`} unit="out of 100"/>
-                <BandBar low={READ.low} high={READ.high} score={TODAY.score} usual={USUAL}/>
-              </div>
+              <Stat className="col-span-2 sm:col-span-3" label="Likely range"
+                value={`${READ.low} to ${READ.high}`} unit={`out of 100, a usual day is ${USUAL}`}/>
               <Stat label="Moved most" value={nameOf(top)} sub={`${over(top)} above its normal band`}/>
               <Stat label="Signal quality" value={pct(READ.quality)} sub={MOVED_SUB.quality}/>
               <Stat label="Scored by" value={READ.model.scored ? 'The model' : 'The formula'}
@@ -503,36 +395,8 @@ function TodayDemo({ go, openTab }) {
             </dl>
           </Panel>
 
-          {/* The week and, under it, how far this week's readings reached
-              from the reader's own usual point: one column, so the two
-              week-shaped cards sit together. */}
+          {/* The week moved to the Trends part below and the Trends tab. */}
           <div className="flex flex-col gap-3 lg:gap-4">
-          <Panel tone="aqua">
-            <PanelHead title="Last Seven Days" meta="out of 100"/>
-            <div className="mt-3">
-              <WeekStrip/>
-              <dl className="m-0 mt-3 grid grid-cols-3 gap-x-4 border-t border-rule pt-2.5">
-                {[['Above', WEEK_COUNT.above], ['Inside', WEEK_COUNT.inside],
-                  ['Below', WEEK_COUNT.below]].map(([label, n]) => (
-                  <div key={label} className="min-w-0">
-                    <dt className="tick">{label}</dt>
-                    <dd className="m-0 mt-0.5 flex items-baseline gap-1.5 font-display
-                      text-row font-medium tabular-nums leading-none text-ink">
-                      {n}<span className="font-body text-fine font-normal text-ink-3">
-                        {n === 1 ? 'day' : 'days'}</span></dd>
-                  </div>
-                ))}
-              </dl>
-              <button type="button" onClick={() => open('calendar')}
-                className="group mt-2.5 flex min-h-[44px] w-full items-center gap-3 border-t
-                  border-rule pt-2.5 text-left">
-                <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
-                  transition-colors duration-150 groupHoverOnly:text-accent-ink">
-                  Open the calendar</span>
-                <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
-              </button>
-            </div>
-          </Panel>
           <ReachCard/>
           <WhatWorksCard/>
           </div>
@@ -544,9 +408,9 @@ function TodayDemo({ go, openTab }) {
         </div>
       </SeeDetails>
 
-      {/* The owner, 17 October: a calendar and date ranges of Mind Scores and
-          the body's readings, phone-only ones included, with Heads Up. */}
-      <Trends teen={TEEN} className="mt-6 lg:mt-8"/>
+      {/* The owner, 17 October: "there should be a new box called Trends on
+          the main student homepage". The full trends are the Trends tab. */}
+      <TrendsPart go={go}/>
     </div>
   )
 }
@@ -566,7 +430,7 @@ const GIVES = [
 const KEPT_HERE = [
   ['Camera frames', 'The phone turns them into numbers, then deletes them.'],
   ['Microphone audio', 'The phone turns it into pitch figures, then deletes it.'],
-  ['Your check-in answers', 'Scored on this phone. Nothing you type leaves it.'],
+  ['Your check-in answers', 'Turned into one score. Only the score syncs to your account.'],
 ]
 
 function Rows({ items }) {
@@ -595,7 +459,7 @@ function CheckBody({ go }) {
             <div className="mt-1.5"><Rows items={GIVES}/></div>
           </Panel>
           <Panel className="h-full">
-            <PanelHead title="What Stays on the Phone" meta="every way"/>
+            <PanelHead title="What Is Not Kept" meta="every way"/>
             <div className="mt-1.5"><Rows items={KEPT_HERE}/></div>
           </Panel>
         </div>
@@ -604,23 +468,114 @@ function CheckBody({ go }) {
   )
 }
 
-/* Real mode has no honest zero for a score, a dial or a signal, so the
-   unpaired screen in Monitor.jsx answers for the whole tab. */
+/* ── The Trends part of the home ────────────────────────────────────── */
+
+/* Its own tinted band under its own head, so Today and Trends never run
+   together: the Trends box (a small line of recent Mind Scores and "See your
+   trends") and the week's Heads Up faces. Both modes. */
+function TrendsPart({ go }) {
+  return (
+    <section aria-labelledby="home-trends-h"
+      className="mt-4 flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4
+        lg:mt-6 lg:gap-4 lg:p-5">
+      <PartHead id="home-trends-h" kind="trends" title="Trends"
+        line="Your last two weeks, compared only with your own usual."/>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+        <TrendsBox go={go} className="h-full"/>
+        <WeekFaces go={go} className="h-full"/>
+      </div>
+    </section>
+  )
+}
+
+/* ── Today, in Live ─────────────────────────────────────────────────────── */
+
+/* The student's latest real Mind Score on the rainbow, from the reading log
+   (src/lib/readingLog.js, synced to their account). With no reading there is
+   no dial: an empty day is not a calm one, so the card asks for a reading. */
+function LiveToday({ go }) {
+  const { entries, now } = useReadingLog()
+  const last = entries[entries.length - 1]
+  const todays = entries.filter(r => dayKey(r.at) === dayKey(now))
+
+  if (!last) {
+    return (
+      <Panel className="flex flex-col items-center gap-2 py-8 text-center
+        bg-gradient-to-b from-card via-card to-aqua">
+        <p className="m-0 font-display text-row font-bold text-ink sm:text-head">No readings yet</p>
+        <p className="m-0 max-w-[36ch] text-meta text-ink-2">
+          Take a reading to see your {SCORE} here. It takes about a minute.</p>
+        <Button className="mt-2" onClick={() => go('reading')}>Take a reading</Button>
+      </Panel>
+    )
+  }
+
+  const b = LOG_BAND[logBand(last.score)]
+  const fresh = dayKey(last.at) === dayKey(now)
+  const mean = todays.length ? Math.round(todays.reduce((a, r) => a + r.score, 0) / todays.length) : null
+  return (
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+      <Panel className="relative flex flex-col items-center overflow-hidden text-center
+        bg-gradient-to-b from-card via-card to-aqua shadow-[0_24px_48px_-32px_rgba(10,110,104,0.55)]">
+        <span aria-hidden className="pointer-events-none absolute left-1/2 top-[40%] h-[70%] w-[82%]
+          -translate-x-1/2 -translate-y-1/2 rounded-[50%]
+          bg-[radial-gradient(closest-side,rgba(10,110,104,0.14),rgba(10,110,104,0))]"/>
+        <div className="relative flex w-full flex-col items-center">
+          <p className="tick">{fresh ? 'Latest today' : 'Latest reading'}</p>
+          <RainbowDial score={last.score} rings={ringsFor(last)} size={352} className="mt-1"/>
+          <p className={cn('mt-3 font-display text-row font-bold sm:text-head', b.ink)}>{b.word}</p>
+          <p className="mt-1 text-meta text-ink-2">
+            {SOURCE[last.source].word} reading, {when(last.at, now)}.</p>
+          {!fresh && <p className="mt-1 text-meta text-ink-2">No reading yet today.</p>}
+          <TakeReading go={go}>{fresh ? 'Take another reading' : 'Take a reading'}</TakeReading>
+        </div>
+      </Panel>
+      <Panel>
+        <PanelHead title="Today's Readings" meta={todays.length ? `${todays.length} so far` : 'none yet'}/>
+        {todays.length ? (
+          <>
+            <p className="mt-2 flex items-baseline gap-2">
+              <span className="font-display text-gap font-bold tabular-nums text-ink">{mean}</span>
+              <span className="text-fine text-ink-2">average today</span>
+            </p>
+            <ul className="m-0 mt-2 list-none p-0">
+              {[...todays].reverse().map(r => (
+                <li key={r.id} className="flex items-baseline justify-between gap-3 border-t border-rule py-2">
+                  <span className="text-fine text-ink-2">
+                    <span className="font-mono tabular-nums">{clock(r.at)}</span> · {SOURCE[r.source].word}
+                    {r.pulse != null && <span className="tabular-nums text-ink-3"> · {r.pulse} bpm</span>}</span>
+                  <span className="font-display text-ui font-bold tabular-nums text-ink">{r.score}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="mt-2 text-meta text-ink-2">Your readings from today show here.</p>
+        )}
+        <SeeTrends go={go} className="mt-1"/>
+      </Panel>
+    </div>
+  )
+}
+
+/* Live: the student's own readings, Today then Trends. Demo: the worked day. */
 function StudentToday({ go, openTab }) {
   const [mode] = useMode()
   if (mode === 'real') {
-    /* The three device-only cards still have something true to say with no
-       patch: no readings, today's marked events, and reach. */
+    const open = route => (openTab ? openTab(route) : go(route))
     return (
       <div className="flex w-full flex-col gap-3 lg:gap-4">
         <Welcome/>
-        <PartHead id="today-h" kind="today" title="Today" line={`${longDate()}.`}/>
-        <StudentBody go={go} openTab={openTab}/>
+        <PartHead id="today-h" kind="today" title="Today" line={`${longDate()}. Your readings so far today.`}/>
+        <LiveToday go={go}/>
         <SettleCard/>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           <ReachCard className="h-full"/>
           <WhatWorksCard className="h-full"/>
+          <FeltCard go={open} className="h-full"/>
+          <SharedCard go={go} className="h-full"/>
         </div>
+        <TrendsPart go={go}/>
       </div>
     )
   }

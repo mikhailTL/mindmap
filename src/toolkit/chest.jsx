@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { ActivityScreen } from './shell'
 import { askMotion } from '../signals/motion'
 import { useWakeLock, buzz, useMounted, useHold, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
-import { useGame, GameBar, Pops, EndCard } from './game'
+import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
 /* Breath Counter, as a rhythm game.
@@ -65,6 +65,7 @@ function Wave({ t = -1, trail = [], py = 0, matching = false, still }) {
   const from = t - NOW_X / PX_S
   const to = t + (W - NOW_X) / PX_S
   const tg = target(t)
+  const id = useSvgId('wv')
   let trailD = ''
   for (const s of trail) {
     const x = NOW_X - (t - s.t) * PX_S
@@ -73,16 +74,31 @@ function Wave({ t = -1, trail = [], py = 0, matching = false, still }) {
   }
   return (
     <svg viewBox={`0 0 ${W} ${H}`} aria-hidden focusable="false" className="block w-full">
-      <rect x="0" y="0" width={W} height={H} rx="14" className="fill-card"/>
+      <defs>
+        <linearGradient id={id + 'b'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff"/><stop offset="1" style={{ stopColor:'var(--g-wash)' }}/>
+        </linearGradient>
+        <linearGradient id={id + 's'} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" style={{ stopColor:'var(--g-ink)' }} stopOpacity="0.25"/>
+          <stop offset="0.3" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.75"/>
+          <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.35"/>
+        </linearGradient>
+        <radialGradient id={id + 'g'}>
+          <stop offset="0" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.6"/>
+          <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect x="0" y="0" width={W} height={H} rx="14" fill={`url(#${id}b)`}/>
       <path d={`M0 ${Y(0)}H${W}M0 ${Y(1)}H${W}`} className="stroke-rule" strokeWidth="2" strokeDasharray="4 6"/>
       <text x="10" y={Y(1) - 8} className="fill-ink-2 font-display text-[13px] font-semibold">In</text>
       <text x="10" y={Y(0) + 20} className="fill-ink-2 font-display text-[13px] font-semibold">Out</text>
-      <path d={wavePath(from, to)} fill="none" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"
-        style={{ stroke:'var(--g-main)', opacity:0.35 }}/>
+      <path d={wavePath(from, to)} fill="none" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"
+        stroke={`url(#${id}s)`}/>
       {trailD && <path d={trailD} fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"
         className="stroke-ink"/>}
       <path d={`M${NOW_X} 8V${H - 8}`} className="stroke-ink-3" strokeWidth="2"/>
-      <circle cx={NOW_X} cy={Y(tg.y)} r={matching && !still ? 17 : 14}
+      <circle cx={NOW_X} cy={Y(tg.y)} r={matching ? 34 : 24} fill={`url(#${id}g)`}/>
+      <circle cx={NOW_X} cy={Y(tg.y)} r={matching && !still ? 17 : 14} stroke="#ffffff" strokeWidth="3"
         style={{ fill:'var(--g-main)', transition: still ? 'none' : 'r .15s' }}/>
       <circle cx={NOW_X} cy={Y(py)} r="8" className="fill-card stroke-ink" strokeWidth="4"/>
     </svg>
@@ -200,6 +216,7 @@ export default function Chest() {
         const score = total > 0 ? good[p] / total : 0
         scoresRef.current.push(score)
         const pts = Math.round(score * 20)
+        if (score < 0.6) g.miss()
         if (pts > 0) g.add(pts, { x:30, y:18, sound: score >= 0.85 ? 'good' : 'tick',
                                   label: score >= 0.85 ? 'Great' : score >= 0.6 ? 'Good' : '' })
         good = [0, 0]; bad = [0, 0]; k = tg.k
@@ -244,7 +261,7 @@ export default function Chest() {
     return (
       <ActivityScreen family="pool" title="Breath Counter">
         <EndCard game={g} title={summary.best.isNew && summary.best.before != null ? 'New personal best' : 'Wave done'}
-          onAgain={begin}
+          onAgain={begin} stars={summary.inTime >= 6 ? 3 : summary.inTime >= 3 ? 2 : 1}
           stats={[
             ['Breaths in time', `${summary.inTime} of ${BREATHS}`],
             ['Best breath', `${Math.round(summary.top * 100)}%`],

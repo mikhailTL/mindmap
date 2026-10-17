@@ -3,7 +3,8 @@ import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
 import { ActivityScreen, Choice, OnDevice } from './shell'
 import { DidItWork } from './after'
-import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard } from './game'
+import { motion } from 'framer-motion'
+import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, useSvgId } from './game'
 
 /* Box Breathing, as "follow the light".
  *
@@ -44,7 +45,8 @@ function at(u) {
   return [A + S - f * S, A + S]
 }
 
-function Board({ pattern, u, match, lag, idle, children, held, onHold }) {
+function Board({ pattern, u, match, lag, idle, children, held, onHold, reduced }) {
+  const id = useSvgId('bx')
   const steps = PATTERNS[pattern].steps
   const [lx, ly] = at(u)
   const [cx, cy] = [100, 100]
@@ -62,7 +64,7 @@ function Board({ pattern, u, match, lag, idle, children, held, onHold }) {
   const done = u % 1
   const per = S * 4
   return (
-    <div role="button" tabIndex={0} aria-pressed={held}
+    <motion.div role="button" tabIndex={0} aria-pressed={held}
       aria-label={held ? 'Holding. Let go to breathe out.' : 'Press and hold to breathe in.'}
       onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); onHold(true) }}
       onPointerUp={() => onHold(false)} onPointerCancel={() => onHold(false)}
@@ -70,24 +72,40 @@ function Board({ pattern, u, match, lag, idle, children, held, onHold }) {
       onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); onHold(true) } }}
       onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onHold(false) } }}
       onContextMenu={e => e.preventDefault()}
-      className={cn('relative mx-auto aspect-square w-full max-w-[24rem] select-none rounded-panel border-2',
-        'touch-none transition-colors duration-150 sm:max-w-[28rem]',
-        held ? 'border-ink' : 'border-rule')}
-      style={{ background: held ? 'var(--g-wash)' : '#ffffff', WebkitTouchCallout:'none' }}>
+      animate={reduced ? undefined : { scale: held ? 0.975 : 1 }}
+      transition={{ type:'spring', stiffness:500, damping:30 }}
+      className={cn('relative mx-auto aspect-square w-full max-w-[24rem] select-none overflow-hidden rounded-[24px] border',
+        'touch-none shadow-raise sm:max-w-[28rem]', held ? 'border-ink' : 'border-rule')}
+      style={{ background:'radial-gradient(100% 100% at 50% 30%, #ffffff 0%, var(--g-wash) 100%)', WebkitTouchCallout:'none' }}>
+      <span aria-hidden className="absolute inset-0 transition-opacity duration-300"
+        style={{ opacity: held ? 1 : 0, background:'radial-gradient(70% 70% at 50% 50%, var(--g-wash) 0%, color-mix(in srgb, var(--g-main) 22%, var(--g-wash)) 100%)' }}/>
       <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
-        <rect x={A} y={A} width={S} height={S} rx="6" fill="none" stroke="#c2d7ca" strokeWidth="6"/>
+        <defs>
+          <radialGradient id={id + 'g'}>
+            <stop offset="0" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.6"/>
+            <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+          </radialGradient>
+          <linearGradient id={id + 't'} x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" style={{ stopColor:'var(--g-ink)' }}/><stop offset="1" style={{ stopColor:'var(--g-main)' }}/>
+          </linearGradient>
+        </defs>
+        <rect x={A} y={A} width={S} height={S} rx="10" fill="#ffffff" fillOpacity="0.55" stroke="#dbe7e0" strokeWidth="7"/>
         {!idle && (
-          <path d={`M${A} ${A + S} V${A} H${A + S} V${A + S} H${A}`} fill="none" strokeWidth="6"
-            strokeLinecap="round" strokeDasharray={`${done * per} ${per}`}
-            style={{ stroke:'var(--g-main)', opacity:.35 }}/>
+          <path d={`M${A} ${A + S} V${A} H${A + S} V${A + S} H${A}`} fill="none" strokeWidth="7"
+            strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${done * per} ${per}`}
+            stroke={`url(#${id}t)`} opacity="0.6"/>
         )}
         {labels.map(l => (
           <text key={l.name + l.x + l.y} x={l.x} y={l.y} textAnchor="middle"
             transform={l.vertical ? `rotate(${l.x < 100 ? -90 : 90} ${l.x} ${l.y - 4})` : undefined}
             className="fill-ink-2 font-display" style={{ fontSize:11, fontWeight:700 }}>{l.name}</text>
         ))}
-        <circle cx={lx} cy={ly} r="13" style={{ fill:'var(--g-main)', opacity: idle ? .5 : .28 }}/>
-        <circle cx={lx} cy={ly} r="8" style={{ fill:'var(--g-main)' }}/>
+        {!idle && !reduced && [0.045, 0.03, 0.015].map((k, i) => {
+          const [tx, ty] = at(u - k)
+          return <circle key={k} cx={tx} cy={ty} r={4 + i * 1.5} style={{ fill:'var(--g-main)', opacity:0.15 + i * 0.12 }}/>
+        })}
+        <circle cx={lx} cy={ly} r="24" fill={`url(#${id}g)`}/>
+        <circle cx={lx} cy={ly} r="9.5" style={{ fill:'var(--g-main)' }} stroke="#ffffff" strokeWidth="2.5"/>
         {!idle && (
           <circle cx={dx} cy={dy} r="6" strokeWidth="3"
             style={{ fill: match ? '#ffffff' : 'none', stroke: match ? '#0d2b1e' : '#426a58' }}/>
@@ -96,7 +114,7 @@ function Board({ pattern, u, match, lag, idle, children, held, onHold }) {
       <div className="pointer-events-none absolute inset-[22%] grid place-items-center text-center">
         {children}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -143,7 +161,7 @@ export default function Breathing() {
         t.sides++
         const [x, y] = at(starts[side.i] + steps[side.i][2] * 0.9)
         if (ratio >= PASS) { t.good++; g.add(10, { x: x / 2, y: y / 2 - 4 }) }
-        else { lapClean = false; noteRef.current = now; setNote('Catch the next side.') }
+        else { lapClean = false; g.miss(); noteRef.current = now; setNote('Catch the next side.') }
         if (lap !== lastLap) {
           t.laps++
           if (lapClean) { t.clean++; g.add(10, { x:50, y:44, label:'clean lap', sound:'good' }) }
@@ -191,7 +209,7 @@ export default function Breathing() {
             </GameBar>
             <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-[28rem]">
               <Board pattern={pattern} u={view.u} match={view.match} lag={lag}
-                idle={idle} held={held} onHold={setHeld}>
+                idle={idle} held={held} onHold={setHeld} reduced={g.reduced}>
                 {stage === 'idle' && (
                   <>
                     <p className="font-display text-row font-bold text-ink">Follow the light</p>
@@ -208,8 +226,8 @@ export default function Breathing() {
                   <>
                     <p className="font-display text-row font-bold text-ink">{SAY[view.phase]}</p>
                     <p className="font-display text-dial font-bold tabular-nums text-ink">{view.secs}</p>
-                    <p className="text-fine font-semibold" style={{ color:'var(--g-ink)' }}>
-                      {view.hold ? 'Hold' : 'Let go'}
+                    <p className="mt-1 font-display text-ui font-bold" style={{ color:'var(--g-ink)' }}>
+                      {view.hold ? 'Hold the box' : 'Let go'}
                     </p>
                   </>
                 )}
@@ -246,6 +264,7 @@ export default function Breathing() {
 
         {stage === 'done' && (
           <EndCard game={g} title={steady >= 80 ? 'Right with the light' : 'Round done'}
+            stars={steady >= 85 ? 3 : steady >= 60 ? 2 : 1}
             stats={[['Sides in time', `${tally.good} of ${tally.sides}`],
                     ['Clean laps', `${tally.clean} of ${tally.laps}`],
                     ['Steadiness', `${steady}%`],

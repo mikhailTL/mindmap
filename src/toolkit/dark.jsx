@@ -163,12 +163,16 @@ export function HowTo({ art, steps = [], onStart, startLabel = 'Start', disabled
                         measured, pick, children }) {
   return (
     <div className="mx-auto w-full max-w-[34rem]">
-      {art}
-      <ol className="mt-4 space-y-2.5">
+      <div className="relative overflow-hidden rounded-[22px] border border-rule p-3 shadow-card"
+        style={{ background:'radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--g-wash, #dcefe4) 100%)' }}>
+        {art}
+      </div>
+      <p className="mt-4 font-display text-fine font-bold uppercase tracking-[0.1em] text-ink-2">How to play</p>
+      <ol className="mt-2 space-y-2.5">
         {steps.map((s, i) => (
           <li key={i} className="flex items-start gap-3">
-            <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full border-2 border-ink
-              bg-card font-display text-fine font-bold text-ink">{i + 1}</span>
+            <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full font-display text-fine
+              font-bold text-white" style={{ background:'var(--g-ink, #0d2b1e)' }}>{i + 1}</span>
             <span className="pt-0.5 text-sec text-ink">{s}</span>
           </li>
         ))}
@@ -191,7 +195,7 @@ export function useTopOn(on) {
 export function CountOver({ on, onDone }) {
   if (!on) return null
   return (
-    <div className="absolute inset-0 z-20 grid place-items-center rounded-panel bg-paper/70">
+    <div className="absolute inset-0 z-20 grid place-items-center rounded-panel bg-white/60">
       <Countdown from={3} onDone={onDone}/>
     </div>
   )

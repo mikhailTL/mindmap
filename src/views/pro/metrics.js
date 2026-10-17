@@ -17,6 +17,14 @@ export const RANGE_SHORT = Object.freeze({ day: 'Day', week: 'Week', month: 'Mon
 export const RANGE_NOUN = Object.freeze({ day: 'today', week: 'this week', month: 'this month' })
 const SPAN = { day: 1, week: 7, month: 30 }
 
+/* Today is always its own part now, so the Trends part reads a week or a
+   month. A stored 'day' reads as the week. */
+export const TREND_RANGES = Object.freeze([['week', 'Week'], ['month', 'Month']])
+export const trendRange = r => (r === 'month' ? 'month' : 'week')
+export const TREND_TITLE = Object.freeze({ week: 'Last 7 days', month: 'Last 30 days' })
+export const TREND_PREV = Object.freeze({ week: 'the 7 days before', month: 'the 30 days before' })
+export const trendDays = (teen, r) => teen.days.slice(r === 'month' ? -30 : -7)
+
 const avg = (a, k) => a.reduce((s, d) => s + d[k], 0) / Math.max(1, a.length)
 const one = v => Math.round(v * 10) / 10
 const sum = (a, k) => a.reduce((s, d) => s + d[k], 0)

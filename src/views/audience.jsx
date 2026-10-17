@@ -203,7 +203,7 @@ export function ForStudents({ go }) {
         lede="One Mind Score a day, so you can act on your stress."
         facts={[
           ['One number a day', `Your ${SCORE} runs from ${SCORE_RANGE}, measured against your own usual.`],
-          ['Nothing shared by default', 'Nothing is shared until you choose to share it.'],
+          ['You choose what is shared', 'Sharing starts on. Switch any of it off, any time.'],
           STOCK,
         ]}/>
 
@@ -261,7 +261,7 @@ export function ForStudents({ go }) {
               ]}/>
           </ScrollIn>
           <ScrollIn>
-            <Chips head="What never leaves your phone"
+            <Chips head="What is never shared"
               rows={[NOTES, LOCATION, 'Any raw reading', 'Anything you type in the app']}/>
           </ScrollIn>
         </Pair>
@@ -272,7 +272,7 @@ export function ForStudents({ go }) {
         line="The demo uses sample readings."
         rows={[
           ['One screen', 'Today, Reading, Toolkit and Sharing, each a tab.'],
-          ['No account needed', 'Nothing leaves your phone.'],
+          ['No account needed', 'Sign in later and your readings sync.'],
           ['No patch needed', 'The demo opens on a sample day already filled in.'],
         ]}/>
     </main>

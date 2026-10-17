@@ -17,10 +17,12 @@ import { SCORE, SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 import { addReachPoint, getReach } from '../app/store'
 import { addReading } from '../lib/readingLog'
+import { FS } from '../signals/ppg'
+import { PulseChart, SeeTrends } from './student/charts'
 
-/* Camera + mic reading, no patch. Nothing leaves the device: each frame
-   becomes one number and the audio six, then both are dropped. Never buffer
-   or persist raw media. */
+/* Camera + mic reading, no patch. Each frame becomes one number and the
+   audio six, then both are dropped. Only the resulting Mind Score is saved,
+   and it syncs to the student's account. Never buffer or persist raw media. */
 
 const STORE = 'mindmap.phone.baseline'
 
@@ -98,7 +100,7 @@ function Step({ title, note, children, on }) {
 
 const PHASES = { idle:1, camera:1, voice:2, working:3, done:4 }
 
-export function PhoneCheck() {
+export function PhoneCheck({ go }) {
   const [phase, setPhase] = React.useState('idle')
   const [progress, setProgress] = React.useState(0)
   const [samples, setSamples] = React.useState([])
@@ -298,12 +300,17 @@ export function PhoneCheck() {
           {result && (
             <>
               <div className="flex flex-col items-start gap-4">
-                <RainbowDial score={result.score} size={248}
-                  rings={[{ id:'phone', name:'Phone sensors', color:'#157446', glow:'#1d8fb0',
+                {/* The owner, 17 October: a camera reading reads like patch data,
+                    the Mind Score on the rainbow, then the pulse it was read
+                    from. The heart band carries it, as on the patch dial. */}
+                <RainbowDial score={result.score} size={300}
+                  rings={[{ id:'heart', name:'Heart', glow:'#e11919',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
                 <div className="w-full">
                   <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
                   <p className="mt-3 max-w-[42ch] text-meta text-ink-2">{s.tail}</p>
+
+                  {detail?.ppg && <PulseResult ppg={detail.ppg}/>}
 
                   {/* The band ranks with the score, never behind a disclosure. */}
                   <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
@@ -333,7 +340,10 @@ export function PhoneCheck() {
                   </dl>
 
                   {logged && (
-                    <p className="mt-3 text-meta text-ink-2">Added to your {SCORE} Log. Go back to see it.</p>
+                    <p className="mt-3 flex flex-wrap items-center gap-x-3 text-meta text-ink-2">
+                      Added to your {SCORE} Log.
+                      <SeeTrends go={go}/>
+                    </p>
                   )}
 
                   {noPosition && (
@@ -427,5 +437,50 @@ function Readings({ detail, result }) {
         <dd className="m-0 text-ink-2">No reading has been tested on a person yet</dd>
       </dl>
     </>
+  )
+}
+
+/* ── The pulse, the way the Trends dashboard draws a signal ──────────── */
+
+/* The capture's own pulse wave, smoothed, as a line chart, then the two
+   figures the score was read from. Same card as the Trends dashboard: a
+   panel head, the chart, then tiles. Only after a camera reading. */
+function Tile({ label, value, unit, sub, glow }) {
+  return (
+    <div className="flex min-w-0 flex-col rounded-panel border p-2.5"
+      style={{ borderColor: glow + '55', background: `linear-gradient(160deg, #ffffff 0%, ${glow}14 100%)` }}>
+      <p className="flex items-center gap-2">
+        <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-bar" style={{ background: glow }}/>
+        <span className="min-w-0 font-display text-ui font-medium text-ink">{label}</span>
+      </p>
+      <p className="mt-1 flex items-baseline gap-1.5">
+        <span className={cn('font-display font-bold tabular-nums leading-none text-ink',
+          /\d/.test(value) ? 'text-head' : 'text-row')}>{value}</span>
+        {unit && <span className="text-fine text-ink-3">{unit}</span>}
+      </p>
+      {sub && <p className="mt-1 text-fine text-ink-2">{sub}</p>}
+    </div>
+  )
+}
+
+function PulseResult({ ppg }) {
+  const hrv = !ppg.hrvOk ? { value: 'Held back', unit: '', sub: 'Beat timing was not clear enough' }
+    : ppg.hrvResolved ? { value: ppg.rmssd.toFixed(0), unit: 'ms', sub: 'Compared only with your own' }
+    : { value: `Under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)}`, unit: 'ms', sub: 'Too steady for the camera' }
+  return (
+    <section aria-label="Your pulse from this reading"
+      className="mt-4 rounded-panel border border-rule bg-card p-3 shadow-card">
+      <h3 className="mark flex items-baseline justify-between gap-3">
+        <span>Your Pulse</span><span className="tick">from the camera</span>
+      </h3>
+      <PulseChart className="mt-2" wave={ppg.wave} fs={FS} seconds={6}/>
+      <p className="mt-1 text-fine text-ink-3">The last six seconds of the pulse the camera read. Each
+        rise is one heartbeat.</p>
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <Tile label="Heart rate" value={ppg.hr.toFixed(0)} unit="bpm" glow="#e11919"
+          sub={`${ppg.beats} beats read`}/>
+        <Tile label="Variability" value={hrv.value} unit={hrv.unit} glow="#1d8fb0" sub={hrv.sub}/>
+      </div>
+    </section>
   )
 }

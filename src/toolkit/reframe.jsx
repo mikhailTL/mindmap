@@ -4,7 +4,8 @@ import { Bin } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { ActivityScreen, FIELD, OnDevice } from './shell'
 import { DidItWork } from './after'
-import { useGame, GameBar, Pops, LevelMeter, EndCard } from './game'
+import { motion } from 'framer-motion'
+import { useGame, GameBar, Pops, LevelMeter, EndCard, SPRING } from './game'
 
 /* Thought Reframe, as a card game.
  *
@@ -85,22 +86,28 @@ function FlipCard({ n, prompt, open, answer, onFlip, onAnswer, reduced }) {
     <div className={cn('g-flip', open && 'is-flipped')}>
       <div className="g-flip-inner">
         <button type="button" onClick={onFlip} tabIndex={open ? -1 : 0} aria-hidden={open}
-          className="g-front flex min-h-[15rem] flex-col items-center justify-center gap-2 rounded-panel border-2
-            border-ink p-4 text-center" style={{ background:'var(--g-main)' }}>
-          <span className="grid size-12 place-items-center rounded-full border-2 border-paper font-display
-            text-row font-bold text-paper">{n}</span>
-          <span className="font-display text-ui font-bold text-paper">Tap to flip</span>
+          className="g-front relative flex min-h-[15rem] flex-col items-center justify-center gap-2 overflow-hidden rounded-[18px]
+            p-4 text-center shadow-raise transition-transform duration-150 motion-safe:active:scale-[0.97]"
+          style={{ background:'linear-gradient(150deg, var(--g-main) 0%, var(--g-ink) 85%)' }}>
+          <span aria-hidden className="absolute inset-2 rounded-[14px] border-2 border-white/35"/>
+          <span aria-hidden className="absolute -right-8 -top-8 size-28 rounded-full bg-white/15"/>
+          <span aria-hidden className="absolute -bottom-10 -left-6 size-24 rounded-full bg-white/10"/>
+          <span className="relative grid size-14 place-items-center rounded-full bg-white/20 font-display
+            text-head font-bold text-paper ring-2 ring-white/70">{n}</span>
+          <span className="relative font-display text-ui font-bold text-paper">Tap to turn over</span>
         </button>
         <div className={cn('g-back rounded-panel border border-rule bg-card p-3', reduced && '')}
           aria-hidden={!open}>
           <p className="font-display text-ui font-bold text-ink">{prompt.q}</p>
           <div className="mt-2 grid gap-1.5">
             {prompt.a.map(a => (
-              <button key={a} type="button" tabIndex={open ? 0 : -1} aria-pressed={answer === a}
+              <motion.button key={a} type="button" tabIndex={open ? 0 : -1} aria-pressed={answer === a}
                 onClick={() => onAnswer(a)}
-                className={cn('min-h-[44px] rounded-field border-2 px-2.5 py-1.5 text-left text-fine transition-colors',
+                animate={answer === a && !reduced ? { scale:[1, 1.04, 1] } : { scale:1 }}
+                transition={{ duration:0.3 }}
+                className={cn('min-h-[44px] rounded-[12px] border px-2.5 py-1.5 text-left text-fine transition-colors',
                   answer === a ? 'border-ink font-bold text-ink' : 'border-rule bg-card text-ink')}
-                style={answer === a ? { background:'var(--g-wash)' } : undefined}>{a}</button>
+                style={answer === a ? { background:'var(--g-wash)' } : undefined}>{a}</motion.button>
             ))}
           </div>
           <form className="mt-2 flex gap-1.5" onSubmit={e => { e.preventDefault(); if (own.trim()) onAnswer(own.trim()) }}>
@@ -222,7 +229,7 @@ export default function Reframe() {
               <p className="rounded-field p-3 font-display text-ui font-semibold text-ink"
                 style={{ background:'var(--g-wash)' }}>{thought}</p>
               <h3 className="mt-3 font-display text-row font-bold tracking-tight text-ink">Flip three cards</h3>
-              <p className="mt-1 text-sec text-ink-2">Pick the answer that fits best.</p>
+              <p className="mt-1 text-sec text-ink-2">Tap a card to turn it over. Pick the answer that fits.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {cards.map((c, i) => (
                   <FlipCard key={c.q} n={i + 1} prompt={c} open={open[i]} answer={answers[i]}
@@ -262,7 +269,7 @@ export default function Reframe() {
         </div>
 
         {stage === 'done' && (
-          <EndCard game={g} title="Thought reframed"
+          <EndCard game={g} title="Thought reframed" stars={order.length >= 3 ? 3 : order.length >= 2 ? 2 : 1}
             stats={[['Cards flipped', '3 of 3'], ['Pieces used', `${order.length} of 3`]]}
             onAgain={again}>
             <figure className="rounded-field p-3" style={{ background:'var(--g-wash)' }}>

@@ -16,8 +16,11 @@ import { AVATAR_ALL_IDS } from '../account/avatar-catalog.js'
  *   - an account sees itself, the people it is linked to (name, role,
  *     picture, nothing else), its links, its one live code, and, for a
  *     parent, the professional links waiting on them.
- *   - no reading, score or trend ever passes through here. This API knows
- *     nothing about measurements.
+ *   - a student's readings and sharing choices live here too, so they
+ *     follow the student to any device they sign in on. A parent or a
+ *     Medical Professional gets day figures only, and only what the student's
+ *     sharing switches allow: never a note, never a single reading, never a
+ *     position. A pending or declined link gets nothing. See teenFor().
  *
  * Links follow the product's consent rule exactly as the device-only store
  * did: parent-student and parent-pro are active on redeem; pro-student waits
@@ -62,9 +65,92 @@ const SESSION_S = 30 * 86400
 const INVITE_S = 7 * 86400
 const LOCK_AFTER = 5
 const LOCK_MS = 15 * 60000
-const MAX_BYTES = 8 * 1024
+/* A push of readings is up to 500 short rows, so the cap is well above the
+   8 KB an account op needs. */
+const MAX_BYTES = 96 * 1024
 const RATE_WINDOW_MS = 60000
 const RATE_MAX = 40
+
+/* Readings. Kept to the fields the student's own log has, nothing else. */
+export const READING_CAP = 500
+export const READING_SOURCES = ['camera', 'survey', 'patch']
+const NOTE_MAX = 280
+const READING_ID = /^[A-Za-z0-9_.:-]{1,64}$/
+const EARLIEST = Date.UTC(2020, 0, 1)
+const DAY_MS = 86400e3
+/* Days a linked parent or professional can look back over. */
+const TEEN_DAYS = 90
+
+/* What a student can share with each audience, the same keys and nesting as
+   SHARING in src/app/store.js (a test holds the two together). Every switch
+   starts on: the owner wants a parent and a professional to see a linked
+   teen's days from the start, and the teen can switch any of them off. */
+export const SHARE_KEYS = {
+  parent: ['score', 'week', 'sleep', 'worn', 'settle'],
+  pro: ['score', 'trends', 'raw', 'settle'],
+}
+const SHARE_NEEDS = { parent: { week: 'score' }, pro: { trends: 'score', raw: 'score' } }
+/* The band every score screen uses (src/lib/readingLog.js USUAL), until a
+   teen has three days of their own. */
+const GENERAL_USUAL = { lo: 35, hi: 57, base: 46 }
+
+function cleanReading(e, t = Date.now()) {
+  if (!e || typeof e !== 'object') return null
+  if (typeof e.id !== 'string' || !READING_ID.test(e.id)) return null
+  if (typeof e.at !== 'number' || !Number.isFinite(e.at) || e.at < EARLIEST || e.at > t + DAY_MS) return null
+  if (typeof e.score !== 'number' || !Number.isFinite(e.score) || e.score < 0 || e.score > 100) return null
+  if (!READING_SOURCES.includes(e.source)) return null
+  const out = { id: e.id, at: Math.round(e.at), score: Math.round(e.score), source: e.source }
+  const note = typeof e.note === 'string' ? e.note.trim().slice(0, NOTE_MAX) : ''
+  if (note) out.note = note
+  return out
+}
+
+function cleanSharing(given = {}, base = null) {
+  const out = {}
+  for (const aud of Object.keys(SHARE_KEYS)) {
+    const from = given && typeof given[aud] === 'object' && given[aud] ? given[aud] : {}
+    const prev = base ? base[aud] : null
+    const next = {}
+    for (const k of SHARE_KEYS[aud]) next[k] = k in from ? from[k] === true : (prev ? prev[k] === true : true)
+    for (const [k, needs] of Object.entries(SHARE_NEEDS[aud])) if (!next[needs]) next[k] = false
+    out[aud] = next
+  }
+  return out
+}
+
+/* The teen's local calendar day for a time, from the offset their phone sent
+   (minutes, as Date#getTimezoneOffset gives it). */
+const dayOf = (at, tz) => new Date(at - tz * 60000).toISOString().slice(0, 10)
+
+function dayFigures(items, tz) {
+  const days = new Map()
+  for (const r of items) {
+    const k = dayOf(r.at, tz)
+    if (!days.has(k)) days.set(k, [])
+    days.get(k).push(r)
+  }
+  return [...days].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([date, rs]) => {
+    const sources = { camera: 0, survey: 0, patch: 0 }
+    rs.forEach(r => { sources[r.source] += 1 })
+    const scores = rs.map(r => r.score)
+    return { date, mean: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+             min: Math.min(...scores), max: Math.max(...scores), count: rs.length, sources }
+  })
+}
+
+/* The teen's own usual band: the mean of their last 30 day figures, give or
+   take their own spread, never narrower than 5. The general band until
+   there are three days. */
+function usualOf(days) {
+  const recent = days.slice(-30)
+  if (recent.length < 3) return { ...GENERAL_USUAL, general: true }
+  const m = recent.reduce((a, d) => a + d.mean, 0) / recent.length
+  const sd = Math.sqrt(recent.reduce((a, d) => a + (d.mean - m) ** 2, 0) / recent.length)
+  const spread = Math.max(5, Math.round(sd))
+  const base = Math.round(m)
+  return { lo: Math.max(0, base - spread), hi: Math.min(100, base + spread), base }
+}
 
 const now = () => new Date().toISOString()
 const lower = v => String(v ?? '').trim().toLowerCase()
@@ -106,6 +192,8 @@ export function makeHandler({ kv }) {
     invby: id => 'invby:' + id,
     link: id => 'link:' + id,
     links: id => 'links:' + id,
+    reads: id => 'reads:' + id,
+    share: id => 'share:' + id,
   }
 
   const getAccount = async id => (id ? kv.get(K.acct(id)) : null)
@@ -129,6 +217,40 @@ export function makeHandler({ kv }) {
     return inv
   }
 
+  async function readsOf(id) {
+    const r = await kv.get(K.reads(id))
+    return r && Array.isArray(r.items) ? r : { tz: 0, items: [] }
+  }
+  async function sharingOf(id) {
+    const s = await kv.get(K.share(id))
+    return s ? { ...cleanSharing(s), set: true } : { ...cleanSharing({}), set: false }
+  }
+
+  /* One linked teen as a parent or a professional may see them. Day figures
+     only, each item only if the teen's switch for this audience is on:
+       score off           no days at all
+       parent week off     no usual band (whether a day ran above it)
+       parent worn off     no sources (whether the patch was on)
+       pro trends off      the latest day only, and no usual band
+       pro raw             the time of the latest reading
+     Never a note, a single reading, a reading's time for a parent, or a
+     position: none of them is in the shape below. */
+  async function teenFor(student, audience) {
+    const share = (await sharingOf(student.id))[audience]
+    const out = { id: student.id, name: student.name, avatar: student.avatar, sharing: share, days: [] }
+    if (!share.score) return out
+    const { tz, items } = await readsOf(student.id)
+    const from = Date.now() - TEEN_DAYS * DAY_MS
+    let days = dayFigures(items.filter(r => r.at >= from), tz)
+    const trend = audience === 'parent' ? share.week : share.trends
+    if (trend && days.length) out.usual = usualOf(days)
+    if (audience === 'pro' && !share.trends) days = days.slice(-1)
+    const withSources = audience === 'pro' || share.worn
+    out.days = days.map(d => (withSources ? d : { date: d.date, mean: d.mean, min: d.min, max: d.max, count: d.count }))
+    if (audience === 'pro' && share.raw && items.length) out.latestAt = items[items.length - 1].at
+    return out
+  }
+
   /* Everything the signed-in account may see. Built fresh for every reply. */
   async function snapshot(a) {
     const links = await linksOf(a.id)
@@ -146,7 +268,21 @@ export function makeHandler({ kv }) {
     const people = []
     for (const id of peopleIds) { const p = await getAccount(id); people.push(p ? pub(p) : { id, name: 'Removed', role: null, avatar: null }) }
     const invite = await liveInvite(a.id)
-    return { me: me(a), people, links, approvals, invite: invite ? { code: invite.code, expiresAt: invite.expiresAt } : null }
+    const snap = { me: me(a), people, links, approvals, invite: invite ? { code: invite.code, expiresAt: invite.expiresAt } : null }
+    if (a.role === 'student') {
+      snap.readings = (await readsOf(a.id)).items
+      snap.sharing = await sharingOf(a.id)
+    }
+    if (a.role === 'parent' || a.role === 'pro') {
+      const kind = a.role === 'parent' ? 'parent-student' : 'pro-student'
+      snap.teens = []
+      for (const l of links) {
+        if (l.kind !== kind || l.status !== 'active') continue
+        const s = await getAccount(l.student)
+        if (s) snap.teens.push(await teenFor(s, a.role))
+      }
+    }
+    return snap
   }
 
   async function auth(req) {
@@ -284,6 +420,8 @@ export function makeHandler({ kv }) {
         await kv.del(K.link(l.id))
       }
       await kv.del(K.links(a.id))
+      await kv.del(K.reads(a.id))
+      await kv.del(K.share(a.id))
       const inv = await liveInvite(a.id)
       if (inv) await kv.del(K.inv(inv.code))
       await kv.del(K.invby(a.id))
@@ -340,6 +478,42 @@ export function makeHandler({ kv }) {
       await kv.sadd(K.links(from.id), link.id)
       /* The code stays live until it expires, for every other teen it was sent to. */
       return { ok: true, link, snapshot: await snapshot(a) }
+    },
+
+    /* A student's own readings, merged by id: a row with an id already held
+       replaces it. `remove` drops ids, `clear` empties the log first. Only
+       the most recent READING_CAP are kept. A row that fails a check is
+       counted and dropped; the rest are kept. `tz` is the phone's offset,
+       used to put a reading on the teen's own calendar day. */
+    async readings(s, b) {
+      const a = s.a
+      if (a.role !== 'student') return { ok: false, reason: 'role' }
+      const entries = b.entries ?? []
+      const remove = b.remove ?? []
+      if (!Array.isArray(entries) || !Array.isArray(remove) || entries.length > READING_CAP) return { ok: false, reason: 'invalid' }
+      const held = b.clear === true ? { tz: 0, items: [] } : await readsOf(a.id)
+      const tz = Number.isInteger(b.tz) && Math.abs(b.tz) <= 840 ? b.tz : held.tz || 0
+      const byId = new Map(held.items.map(r => [r.id, r]))
+      for (const id of remove) byId.delete(String(id))
+      let accepted = 0, rejected = 0
+      const t = Date.now()
+      for (const e of entries) {
+        const c = cleanReading(e, t)
+        if (c) { byId.set(c.id, c); accepted += 1 } else rejected += 1
+      }
+      const items = [...byId.values()].sort((x, y) => x.at - y.at).slice(-READING_CAP)
+      await kv.set(K.reads(a.id), { tz, items })
+      return { ok: true, accepted, rejected, snapshot: await snapshot(a) }
+    },
+
+    /* A student's sharing switches, per audience. A key left out keeps its
+       stored value; a trend or raw switch never stays on without its score. */
+    async sharing(s, b) {
+      const a = s.a
+      if (a.role !== 'student') return { ok: false, reason: 'role' }
+      const held = await sharingOf(a.id)
+      await kv.set(K.share(a.id), cleanSharing(b, held))
+      return { ok: true, snapshot: await snapshot(a) }
     },
 
     approve: (s, b) => decide(s, b, 'active'),

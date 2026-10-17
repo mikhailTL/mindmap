@@ -1,30 +1,44 @@
 import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
-import { ActivityScreen, OnDevice } from './shell'
+import { ActivityScreen, Choice, OnDevice } from './shell'
 import { DidItWork } from './after'
-import { useGame, GameBar, Pops, LevelMeter, EndCard } from './game'
+import { useGame, GameBar, Pops, LevelMeter, EndCard, FillRing, SPRING, SOFT, useSvgId } from './game'
 
-/* Body Scan, as "light up the body".
+/* Body Scan, rebuilt so it is obvious what to do at every moment.
  *
- * The guide moves feet to face. The part to notice glows on the figure; press
- * and hold it (or the pad under it) while you notice that part, and it fills
- * with light. About six seconds of holding lights it. Letting go only pauses
- * the fill; nothing drains. Lit is 15 points, and a part lit in one hold is 5
- * more. Skip is always there and costs nothing.
+ *   Start      pick a pace, then Start.
+ *   Each part  the part glows and pulses on a large body figure; one line
+ *              says what to do ("Notice your shoulders. Breathe out and let
+ *              them drop."); a ring counts down the seconds for that part.
+ *              When the ring fills the scan moves on by itself, so it works
+ *              with eyes half closed. Next region moves on early.
+ *   Finish     on the last part the button says Finish.
+ *   Check in   which part felt most tense? The answer goes on the end card
+ *              with one thing to try next time.
  *
- * SAFETY. Every prompt is noticing, never tensing or squeezing. */
+ * Points: 10 for a part held for its whole ring, 5 for a part moved on
+ * early. The combo grows with each part in a row.
+ *
+ * SAFETY. Every line is noticing and letting go, never tensing or squeezing.
+ * Any part can be skipped. Nothing is stored but the points. */
 
 const REGIONS = [
-  { id:'feet',      name:'Feet',      say:'Notice the floor under them.' },
-  { id:'legs',      name:'Legs',      say:'Let them feel heavy.' },
-  { id:'belly',     name:'Belly',     say:'Breathe slowly into it.' },
-  { id:'chest',     name:'Chest',     say:'Feel it rise and fall.' },
-  { id:'hands',     name:'Hands',     say:'Let your fingers open.' },
-  { id:'shoulders', name:'Shoulders', say:'Let them drop a little.' },
-  { id:'face',      name:'Face',      say:'Soften your jaw and eyes.' },
+  { id:'feet',      name:'Feet',      say:'Notice your feet on the floor. Let them rest.',   tip:'Press your feet softly into the floor next time. It helps you feel settled.' },
+  { id:'legs',      name:'Legs',      say:'Notice your legs. Let them feel heavy.',           tip:'Next time, let your legs feel heavy on the chair for a few breaths.' },
+  { id:'belly',     name:'Belly',     say:'Notice your belly. Let it rise as you breathe in.', tip:'Next time, put a hand on your belly and let it rise and fall.' },
+  { id:'chest',     name:'Chest',     say:'Notice your chest. Feel it rise and fall.',        tip:'Next time, try a slow breath out, longer than the breath in.' },
+  { id:'hands',     name:'Hands',     say:'Notice your hands. Let your fingers open.',        tip:'Next time, open your hands and rest them on your legs.' },
+  { id:'shoulders', name:'Shoulders', say:'Notice your shoulders. Breathe out and let them drop.', tip:'Next time, start with your shoulders. A long breath out helps them drop.' },
+  { id:'face',      name:'Face',      say:'Notice your face. Soften your jaw and eyes.',      tip:'Next time, let your teeth part a little. It softens the jaw.' },
 ]
-const HOLD = 6
+const PACES = [
+  { id:'quick',  name:'Quick',  secs:10 },
+  { id:'steady', name:'Steady', secs:15 },
+  { id:'slow',   name:'Slow',   secs:25 },
+]
+const NEXT_PAUSE = 1100
 
 /* Front view, one path, drawn clockwise from the top of the head. */
 const BODY = [
@@ -48,198 +62,326 @@ const SHAPES = {
   shoulders: [[0, 40, 120, 26]],
   face:      [[0, 0, 120, 40]],
 }
-const centre = id => { const [x, y, w, h] = SHAPES[id][0]; return id === 'hands' ? [17, 100] : [x + w / 2, y + h / 2] }
+/* Where the "here" marker sits for each part, in figure units. */
+const MARK = { feet:[60, 222], legs:[60, 170], belly:[60, 116], chest:[60, 83], hands:[20, 120], shoulders:[60, 52], face:[60, 22] }
 
-function Figure({ cur, fill, lit, skipped, onDown, onUp }) {
+/* The body. `cur` glows and pulses; `done` parts are filled; `tense` is
+   ringed on the end card. Decorative: the words beside it say the same. */
+function Figure({ cur = null, done = [], tense = null, className, reduced }) {
+  const id = useSvgId('scan')
+  const parts = Object.entries(SHAPES)
   return (
-    <svg viewBox="0 0 120 240" role="img"
-      aria-label={cur ? `Body outline. ${cur} is glowing.` : 'Body outline'}
-      onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp}
-      onContextMenu={e => e.preventDefault()}
-      className="mx-auto block h-[40vh] max-h-[30rem] w-auto touch-none select-none lg:h-[58vh]">
-      <defs><clipPath id="scan-body"><path d={BODY}/></clipPath></defs>
-      <path d={BODY} className="fill-aqua-2"/>
-      <g clipPath="url(#scan-body)">
-        {Object.entries(SHAPES).map(([id, rects]) => rects.map(([x, y, w, h], k) => {
-          const isCur = id === cur
-          const on = lit.includes(id)
-          const p = isCur ? fill : on ? 1 : 0
+    <svg viewBox="-6 -6 132 252" aria-hidden focusable="false" className={cn('block select-none overflow-visible', className)}>
+      <defs>
+        <clipPath id={id + 'c'}><path d={BODY}/></clipPath>
+        <linearGradient id={id + 'b'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f3faf6"/><stop offset="1" stopColor="#dcefe6"/>
+        </linearGradient>
+        <linearGradient id={id + 'on'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={{ stopColor:'var(--g-main)' }}/><stop offset="1" style={{ stopColor:'var(--g-ink)' }}/>
+        </linearGradient>
+        <radialGradient id={id + 'g'}>
+          <stop offset="0" style={{ stopColor:'var(--g-main)' }} stopOpacity="0.55"/>
+          <stop offset="1" style={{ stopColor:'var(--g-main)' }} stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      {cur && (
+        <circle cx={MARK[cur][0]} cy={MARK[cur][1]} r={cur === 'legs' ? 58 : 44} fill={`url(#${id}g)`}
+          className={reduced ? undefined : 'g-breathe'}/>
+      )}
+      <path d={BODY} fill={`url(#${id}b)`}/>
+      <g clipPath={`url(#${id}c)`}>
+        {parts.map(([pid, rects]) => rects.map(([x, y, w, h], k) => {
+          const isCur = pid === cur
+          const isDone = done.includes(pid)
+          if (!isCur && !isDone && pid !== tense) return null
           return (
-            <g key={id + k} data-region={id}>
-              <rect data-region={id} x={x} y={y} width={w} height={h}
-                style={{ fill: isCur ? '#ffffff' : 'transparent' }}/>
-              {p > 0 && (
-                <rect data-region={id} x={x} y={y + h * (1 - p)} width={w} height={h * p}
-                  stroke={on ? '#ffffff' : 'none'} strokeWidth="1.2"
-                  style={{ fill:'var(--g-main)', opacity: on ? 1 : 0.85 }}/>
-              )}
-              {skipped.includes(id) && (
-                <rect data-region={id} x={x} y={y} width={w} height={h} fill="none"
-                  stroke="#426a58" strokeWidth="1.5" strokeDasharray="3 3"/>
-              )}
+            <g key={pid + k}>
+              {isDone && !isCur && <rect x={x} y={y} width={w} height={h} style={{ fill:'var(--g-main)', opacity:0.32 }}/>}
+              {pid === tense && <rect x={x} y={y} width={w} height={h} fill="#f2702a" opacity="0.55"/>}
+              {isCur && <rect x={x} y={y} width={w} height={h} fill={`url(#${id}on)`}/>}
+              {isCur && !reduced && <rect x={x} y={y} width={w} height={h} fill="#ffffff" className="g-throb"/>}
             </g>
           )
         }))}
+        {/* soft horizontal lines between the parts, so the body reads as zones */}
+        {[40, 66, 100, 132, 208].map(y => (
+          <path key={y} d={`M0 ${y}H120`} stroke="#ffffff" strokeWidth="1.6" strokeDasharray="3 4" opacity="0.9"/>
+        ))}
       </g>
-      <path d={BODY} fill="none" className="stroke-ink" strokeWidth="2.5" strokeLinejoin="round"
-        pointerEvents="none"/>
-      {cur && SHAPES[cur].map(([x, y, w, h], k) => (
-        <rect key={k} x={x + 2} y={y + 2} width={w - 4} height={h - 4} rx="6" fill="none" strokeWidth="2.5"
-          strokeDasharray="5 4" pointerEvents="none" clipPath="url(#scan-body)"
-          style={{ stroke:'var(--g-ink)' }}/>
+      <path d={BODY} fill="none" stroke="#0d2b1e" strokeWidth="2.4" strokeLinejoin="round"/>
+      {cur && (
+        <g transform={`translate(${MARK[cur][0]} ${MARK[cur][1]})`}>
+          <circle r="7.5" fill="#ffffff" stroke="#0d2b1e" strokeWidth="2.2"/>
+          <circle r="3.2" style={{ fill:'var(--g-ink)' }}/>
+        </g>
+      )}
+      {done.filter(d => d !== cur).map(d => (
+        <g key={d} transform={`translate(${MARK[d][0]} ${MARK[d][1]})`}>
+          <circle r="6.5" style={{ fill:'var(--g-ink)' }} stroke="#ffffff" strokeWidth="1.6"/>
+          <path d="M-3 0l2 2.2L3.2-2.4" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </g>
       ))}
     </svg>
   )
 }
 
+/* Seven short bars, one per part: done, now, still to come. */
+function Steps({ i, done }) {
+  return (
+    <ol className="flex gap-1" aria-label="Parts of the body">
+      {REGIONS.map((r, k) => {
+        const on = k === i, got = done.includes(r.id)
+        return (
+          <li key={r.id} className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-white shadow-[inset_0_0_0_1px_#d6e3db]">
+            <motion.span className="absolute inset-0 origin-left rounded-full"
+              style={{ background: got ? 'var(--g-ink)' : 'var(--g-main)' }}
+              initial={false} animate={{ scaleX: got || on ? 1 : 0, opacity: got ? 1 : on ? 0.55 : 0 }} transition={SOFT}/>
+            <span className="sr-only">{r.name}{got ? ', done' : on ? ', now' : ''}</span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
+
 export default function BodyScan() {
   const g = useGame('scan')
-  const [stage, setStage] = React.useState('idle')     // idle | play | done
+  const [stage, setStage] = React.useState('idle')     // idle | play | check | done
+  const [pace, setPace] = React.useState('steady')
   const [i, setI] = React.useState(0)
-  const [fill, setFill] = React.useState(0)
-  const [lit, setLit] = React.useState([])
-  const [skipped, setSkipped] = React.useState([])
-  const [held, setHeld] = React.useState(false)
-  const [between, setBetween] = React.useState(false)
-  const [hint, setHint] = React.useState('')
-  const [steady, setSteady] = React.useState(0)
-
-  const heldRef = React.useRef(false)
-  const breaks = React.useRef(0)
-  const fillRef = React.useRef(0)
+  const [t, setT] = React.useState(0)                   // seconds into this part
+  const [paused, setPaused] = React.useState(false)
+  const [between, setBetween] = React.useState(false)   // a part just finished
+  const [done, setDone] = React.useState([])
+  const [full, setFull] = React.useState(0)              // parts held for the whole ring
+  const [tense, setTense] = React.useState(null)
+  const [secs, setSecs] = React.useState(0)
+  const tRef = React.useRef(0)
+  const total = React.useRef(0)
   const box = React.useRef(null)
+  const timer = React.useRef(0)
+  React.useEffect(() => () => clearTimeout(timer.current), [])
 
+  const P = PACES.find(p => p.id === pace) || PACES[1]
   const region = REGIONS[Math.min(i, REGIONS.length - 1)]
-  const hold = on => {
-    if (heldRef.current && !on && fillRef.current > 0 && fillRef.current < 1) breaks.current++
-    heldRef.current = on; setHeld(on)
+  const last = i >= REGIONS.length - 1
+
+  const popAt = () => {
+    const [x, y] = MARK[region.id]
+    const b = box.current?.getBoundingClientRect(), sv = box.current?.querySelector('svg')?.getBoundingClientRect()
+    return b && sv ? { x:(sv.left - b.left + (x + 6) / 132 * sv.width) / b.width * 100,
+                       y:(sv.top - b.top + (y + 6) / 252 * sv.height) / b.height * 100 - 4 } : {}
   }
 
-  const nextRegion = React.useCallback((idx) => {
-    if (idx + 1 >= REGIONS.length) { setStage('done'); g.finish({ complete:true }); return }
-    setI(idx + 1); fillRef.current = 0; setFill(0); breaks.current = 0; setBetween(false)
-    g.cue('turn')
-  }, [g.finish, g.cue])
+  const go = React.useCallback(k => {
+    clearTimeout(timer.current)
+    if (k >= REGIONS.length) { setStage('check'); return }
+    setI(k); tRef.current = 0; setT(0); setBetween(false); g.cue('turn')
+  }, [g.cue]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* The part is done: by the ring (whole) or by Next region (early). */
+  const complete = React.useCallback(whole => {
+    if (between) return
+    setDone(d => d.includes(region.id) ? d : [...d, region.id])
+    if (whole) { setFull(n => n + 1); g.add(10, { ...popAt(), sound:'good', label:`${region.name}` }) }
+    else g.add(5, popAt())
+    if (last) { setBetween(true); return }
+    if (whole) { setBetween(true); timer.current = setTimeout(() => go(i + 1), NEXT_PAUSE) }
+    else go(i + 1)
+  }, [between, region, last, i, go, g.add]) // eslint-disable-line react-hooks/exhaustive-deps
+  const completeRef = React.useRef(complete); completeRef.current = complete
 
   React.useEffect(() => {
-    if (stage !== 'play' || between) return
-    let id = 0, last = performance.now()
+    if (stage !== 'play' || paused || between) return
+    let id = 0, prev = performance.now()
     const tick = now => {
-      const dt = Math.min(0.1, (now - last) / 1000); last = now
-      if (heldRef.current) {
-        fillRef.current = Math.min(1, fillRef.current + dt / HOLD)
-        setFill(fillRef.current)
-        if (fillRef.current >= 1) {
-          const [x, y] = centre(region.id)
-          const b = box.current?.getBoundingClientRect(), sv = box.current?.querySelector('svg')?.getBoundingClientRect()
-          const pos = b && sv ? { x: (sv.left - b.left + x / 120 * sv.width) / b.width * 100,
-                                  y: (sv.top - b.top + y / 240 * sv.height) / b.height * 100 - 6 } : {}
-          setLit(l => [...l, region.id])
-          g.add(15, { ...pos, sound:'good' })
-          if (breaks.current === 0) { setSteady(s => s + 1); setTimeout(() => g.add(5, { ...pos, y: pos.y + 8, label:'steady' }), 220) }
-          heldRef.current = false; setHeld(false); setBetween(true)
-          setTimeout(() => nextRegion(i), 900)
-          return
-        }
-      }
+      const dt = Math.min(0.1, (now - prev) / 1000); prev = now
+      tRef.current += dt; total.current += dt
+      setT(g.reduced ? Math.floor(tRef.current) : tRef.current)
+      if (tRef.current >= P.secs) { setT(P.secs); completeRef.current(true); return }
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(id)
-  }, [stage, between, i, region.id, g.add, nextRegion])
-
-  const onDown = e => {
-    if (stage !== 'play' || between) return
-    /* Hit test in figure units against the region's boxes, not the clipped
-       shapes, so the gap between the legs still counts as feet or legs. */
-    const svg = e.currentTarget
-    let inside = false
-    try {
-      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY
-      const q = pt.matrixTransform(svg.getScreenCTM().inverse())
-      inside = SHAPES[region.id].some(([x, y, w, h]) => q.x >= x - 4 && q.x <= x + w + 4 && q.y >= y - 4 && q.y <= y + h + 4)
-    } catch { inside = (e.target?.dataset?.region === region.id) }
-    if (inside) { e.currentTarget.setPointerCapture?.(e.pointerId); setHint(''); hold(true) }
-    else setHint(`Hold the glowing part: ${region.name.toLowerCase()}.`)
-  }
+  }, [stage, paused, between, i, P.secs, g.reduced])
 
   const start = () => {
-    g.reset(); setI(0); fillRef.current = 0; setFill(0); setLit([]); setSkipped([]); setSteady(0)
-    breaks.current = 0; setBetween(false); setHint(''); setStage('play'); g.cue('turn')
+    clearTimeout(timer.current)
+    g.reset(); setI(0); tRef.current = 0; total.current = 0; setT(0); setDone([]); setFull(0)
+    setTense(null); setPaused(false); setBetween(false); setStage('play'); g.cue('turn')
   }
-  const skip = () => { setSkipped(s => [...s, region.id]); hold(false); nextRegion(i) }
+  const next = () => {
+    if (between) { if (last) { setStage('check') } else go(i + 1); return }
+    complete(false)
+    if (last) setStage('check')
+  }
+  const endEarly = () => { clearTimeout(timer.current); setSecs(total.current); setStage('done'); g.finish({ complete:false }) }
+  const answer = id => {
+    setTense(id); setSecs(total.current)
+    setStage('done')
+    g.finish({ complete:true })
+  }
+
+  const left = Math.max(0, Math.ceil(P.secs - t))
+  const stars = full >= REGIONS.length ? 3 : full >= 4 ? 2 : 1
+  const tenseRegion = REGIONS.find(r => r.id === tense)
 
   return (
     <ActivityScreen family="pool" title="Body Scan">
-      <div style={g.vars} className="mx-auto w-full max-w-[60rem]">
-        {stage !== 'done' && <GameBar game={g} className="mb-3">
-          <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
-            {lit.length} of {REGIONS.length} lit
-          </span>
-        </GameBar>}
+      <div style={g.vars} className="mx-auto w-full max-w-[56rem]">
 
-        {stage !== 'done' && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
-            <div ref={box} className="relative">
-              <Figure cur={stage === 'play' && !between ? region.id : null} fill={fill} lit={lit}
-                skipped={skipped} onDown={onDown} onUp={() => hold(false)}/>
-              <Pops game={g}/>
+        {stage === 'idle' && (
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] lg:items-center">
+            <div className="relative rounded-[22px] border border-rule p-4 shadow-card"
+              style={{ background:'radial-gradient(120% 80% at 50% 10%, #ffffff 0%, var(--g-wash) 100%)' }}>
+              <Figure cur="feet" className="mx-auto h-[300px] w-auto lg:h-[420px]" reduced={g.reduced}/>
+              <p className="absolute left-4 top-4 font-display text-fine font-bold text-ink-2">Starts here</p>
             </div>
-            <div className="text-center lg:text-left">
-              {stage === 'idle' && (
-                <>
-                  <p className="font-display text-row font-bold text-ink">Light up the body</p>
-                  <p className="mt-1 text-sec text-ink-2">Hold each glowing part while you notice it.</p>
-                  <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={start}>Start</Button>
-                  <LevelMeter className="mt-5 text-left"/>
-                </>
-              )}
-              {stage === 'play' && (
-                <>
-                  <p className="font-display text-fine font-semibold text-ink-2">
-                    {Math.min(i + 1, REGIONS.length)} of {REGIONS.length}
-                  </p>
-                  <p key={region.id} className={cn('font-display text-head font-bold tracking-tight text-ink',
-                    !g.reduced && 'g-in')}>{between ? `${region.name} lit` : region.name}</p>
-                  <p className="mt-1 text-sec text-ink-2">{between ? 'Moving on.' : region.say}</p>
-                  <button type="button" aria-pressed={held} disabled={between}
-                    onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); setHint(''); hold(true) }}
-                    onPointerUp={() => hold(false)} onPointerCancel={() => hold(false)}
-                    onLostPointerCapture={() => hold(false)}
-                    onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); hold(true) } }}
-                    onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); hold(false) } }}
-                    onContextMenu={e => e.preventDefault()}
-                    className={cn('relative mt-3 h-16 w-full touch-none select-none overflow-hidden rounded-panel border-2',
-                      'border-ink font-display text-ui font-bold text-ink transition-colors duration-150',
-                      held ? 'bg-mist' : 'bg-card')}>
-                    <span aria-hidden className="absolute inset-y-0 left-0"
-                      style={{ width: `${Math.round(fill * 100)}%`, background:'var(--g-wash)' }}/>
-                    <span className="relative">{held ? 'Holding' : 'Press and hold'}</span>
-                  </button>
-                  <p className="mt-2 min-h-[1.5rem] text-fine text-ink-2" aria-live="polite">{hint}</p>
-                  <div className="mt-1 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                    <Button size="sm" variant="outline" onClick={skip} disabled={between}>Skip</Button>
-                    <span className="text-fine text-ink-2">Skip any part that hurts.</span>
-                  </div>
-                </>
-              )}
+            <div>
+              <p className="font-display text-row font-bold tracking-tight text-ink">Seven parts, feet to face</p>
+              <ol className="mt-3 space-y-2.5">
+                {['The glowing part is the one to notice.',
+                  'Read the line and breathe slowly while the ring fills.',
+                  'The scan moves on by itself. Next region moves on early.'].map((s, k) => (
+                  <li key={k} className="flex items-start gap-3">
+                    <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full font-display text-fine font-bold text-white"
+                      style={{ background:'var(--g-ink)' }}>{k + 1}</span>
+                    <span className="pt-0.5 text-sec text-ink">{s}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-4 font-display text-ui font-bold text-ink">Time for each part</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {PACES.map(o => (
+                  <Choice key={o.id} on={pace === o.id} onClick={() => setPace(o.id)}
+                    className="flex-col justify-center gap-0 px-2 py-1.5 text-center">
+                    <span className="block">{o.name}</span>
+                    <span className="block text-fine font-normal">{o.secs} seconds</span>
+                  </Choice>
+                ))}
+              </div>
+              <Button className="mt-4 w-full" onClick={start}>Start the scan</Button>
+              <p className="mt-2 text-fine text-ink-2">Skip any part you like. Noticing only, no squeezing.</p>
+              <LevelMeter className="mt-5"/>
+              <DidItWork tool="scan" phase="before" className="mt-4"/>
             </div>
           </div>
         )}
-        {stage === 'idle' && <DidItWork tool="scan" phase="before" className="mt-4"/>}
+
+        {stage === 'play' && (
+          <>
+            <GameBar game={g} className="mb-2">
+              <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
+                Part {i + 1} of {REGIONS.length}
+              </span>
+            </GameBar>
+            <Steps i={i} done={done}/>
+            <div ref={box} className="relative mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3
+              rounded-[22px] border border-rule p-3 shadow-card sm:gap-6 sm:p-5"
+              style={{ background:'radial-gradient(120% 80% at 30% 10%, #ffffff 0%, var(--g-wash) 100%)' }}>
+              <Figure cur={region.id} done={done} reduced={g.reduced}
+                className="mx-auto h-[290px] w-auto sm:h-[380px] lg:h-[440px]"/>
+              <div className="text-center">
+                <FillRing value={t / P.secs} ring={g.ring} still={g.reduced} className="mx-auto w-full max-w-[11rem]">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {between ? (
+                      <motion.svg key="tick" viewBox="0 0 24 24" className="mx-auto size-14" aria-hidden
+                        initial={g.reduced ? false : { scale:0, rotate:-45 }} animate={{ scale:1, rotate:0 }} transition={SPRING}>
+                        <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" strokeWidth="3.2" strokeLinecap="round"
+                          strokeLinejoin="round" style={{ stroke:'var(--g-ink)' }}/>
+                      </motion.svg>
+                    ) : (
+                      <motion.p key="secs" className="font-display text-dial font-bold tabular-nums text-ink"
+                        initial={g.reduced ? false : { opacity:0, scale:0.8 }} animate={{ opacity:1, scale:1 }}>
+                        {left}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                  <p className="font-display text-fine font-semibold text-ink-2">{between ? 'done' : paused ? 'paused' : 'seconds'}</p>
+                </FillRing>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p key={region.id} className="mt-3 font-display text-head font-bold tracking-tight text-ink"
+                    initial={g.reduced ? false : { opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
+                    exit={g.reduced ? undefined : { opacity:0, y:-10 }} transition={{ duration:0.22 }}>
+                    {region.name}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+              <Pops game={g}/>
+            </div>
+
+            <div className="mt-3 rounded-[18px] p-4" style={{ background:'var(--g-wash)' }}>
+              <p className="font-display text-fine font-bold uppercase tracking-[0.1em]" style={{ color:'var(--g-ink)' }}>
+                {between ? (last ? 'Last part done' : 'Moving on') : 'Do this now'}
+              </p>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p key={region.id + between} aria-live="polite" className="mt-1 font-display text-row font-bold leading-snug text-ink"
+                  initial={g.reduced ? false : { opacity:0, x:14 }} animate={{ opacity:1, x:0 }}
+                  exit={g.reduced ? undefined : { opacity:0, x:-14 }} transition={{ duration:0.22 }}>
+                  {between ? (last ? 'Well noticed. Tap Finish.' : `Next: ${REGIONS[i + 1].name.toLowerCase()}.`) : region.say}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+
+            <motion.div className="mt-3" animate={between && last && !g.reduced ? { scale:[1, 1.04, 1] } : { scale:1 }}
+              transition={between && last ? { duration:1.2, repeat:Infinity } : { duration:0.2 }}>
+              <Button className="w-full" onClick={next}>
+                {last ? 'Finish' : 'Next region'}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"
+                  strokeLinejoin="round" aria-hidden><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>
+              </Button>
+            </motion.div>
+            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+              <Button variant="outline" size="sm" disabled={between} onClick={() => setPaused(v => !v)}>
+                {paused ? 'Resume' : 'Pause'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={endEarly}>End scan</Button>
+            </div>
+          </>
+        )}
+
+        {stage === 'check' && (
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] lg:items-center">
+            <div className="rounded-[22px] border border-rule p-4 shadow-card"
+              style={{ background:'radial-gradient(120% 80% at 50% 10%, #ffffff 0%, var(--g-wash) 100%)' }}>
+              <Figure done={done} tense={tense} className="mx-auto h-[220px] w-auto lg:h-[380px]" reduced={g.reduced}/>
+            </div>
+            <div>
+              <p className="font-display text-fine font-bold uppercase tracking-[0.1em]" style={{ color:'var(--g-ink)' }}>Quick check in</p>
+              <h3 className="mt-1 font-display text-head font-bold tracking-tight text-ink">Which part felt most tense?</h3>
+              <p className="mt-1 text-sec text-ink-2">Tap one. It goes on your results, nowhere else.</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {REGIONS.map((r, k) => (
+                  <motion.div key={r.id} initial={g.reduced ? false : { opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
+                    transition={{ ...SOFT, delay:k * 0.04 }}>
+                    <Choice className="w-full justify-center" onClick={() => answer(r.id)}>{r.name}</Choice>
+                  </motion.div>
+                ))}
+                <Choice className="w-full justify-center" onClick={() => answer('none')}>None of them</Choice>
+              </div>
+            </div>
+          </div>
+        )}
 
         {stage === 'done' && (
-          <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
-            <div className="hidden lg:block">
-              <Figure cur={null} fill={0} lit={lit} skipped={skipped} onDown={() => {}} onUp={() => {}}/>
-            </div>
-            <EndCard game={g} title={lit.length === REGIONS.length ? 'Whole body lit' : 'Scan done'}
-              stats={[['Parts lit', `${lit.length} of ${REGIONS.length}`],
-                      ['Lit in one hold', String(steady)]]}
-              onAgain={start}>
-              <DidItWork tool="scan" phase="after"/>
-            </EndCard>
-          </div>
+          <EndCard game={g} stars={g.result?.complete === false ? 0 : stars}
+            title={full >= REGIONS.length ? 'Whole body scanned' : g.result?.complete === false ? 'Scan paused here' : 'Scan done'}
+            stats={[['Parts done', `${done.length} of ${REGIONS.length}`],
+                    ['Full rings', `${full} of ${REGIONS.length}`],
+                    ['Most tense', tenseRegion ? tenseRegion.name : tense === 'none' ? 'None' : 'Not said'],
+                    ['Time', mmss(secs)]]}
+            onAgain={start}>
+            {tenseRegion && (
+              <div className="flex items-center gap-3 rounded-[16px] border border-rule p-3" style={{ background:'#fff4ec' }}>
+                <Figure tense={tenseRegion.id} className="h-24 w-auto shrink-0" reduced={g.reduced}/>
+                <p className="text-sec text-ink"><b className="font-display">{tenseRegion.name}.</b> {tenseRegion.tip}</p>
+              </div>
+            )}
+            <DidItWork tool="scan" phase="after" className="mt-3"/>
+          </EndCard>
         )}
         <OnDevice className="mt-4">Nothing leaves this device.</OnDevice>
       </div>

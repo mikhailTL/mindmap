@@ -10,31 +10,27 @@ import {
 } from '../account/store'
 import { Avatar } from '../account/ui'
 import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
-import { WBAND, clock12, monthScores } from './reading/demo'
+import { WBAND, clock12 } from './reading/demo'
+import { LampFace } from '../traffic/Face'
+import { TEEN } from './student/demoTeen'
+import { localDay } from './family/live.js'
 import { cn } from '../lib/utils'
 
 /* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
  * 18. A week and a month on one switch, each day read against the usual
- * range, beside the network the readings travel through.
- * Every figure comes from src/views/reading/demo.js, seeded; in real mode
- * there are no readings and every square shows the no reading dot. Colour
- * never carries a state alone: every square prints its figure. */
+ * range, beside the network the readings travel through. Each day carries
+ * its Heads Up face and Mind Score, a key says what they mean, and picking a
+ * day shows it under the grid. The month grid is exported (MonthCalendar)
+ * and the parent's Trends draws the same one.
+ * Demo figures are the student demo teen's (src/views/student/demoTeen.js),
+ * generated; in real mode there are no readings and every square shows the
+ * no reading dot. Colour never carries a state alone. */
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 
 /* The usual range is the reader's own usual week, so the tolerance is
    theirs and nobody sets it. */
-const LO = WBAND.lo, HI = WBAND.hi
-
-const stateOf = (v, lo, hi) => (v == null ? 'none' : v > hi ? 'above' : v < lo ? 'below' : 'inside')
-/* `ground` is a pale square ground; `mark` the same state as a filled graphic
-   that clears 3 : 1 on card and on mist. */
-const STATE = {
-  inside: { word: 'inside', ground: 'bg-accent-wash border-accent/30', mark: 'bg-accent border-accent' },
-  above:  { word: 'above',  ground: 'bg-warn-wash border-warn/40',    mark: 'bg-warn border-warn' },
-  below:  { word: 'below',  ground: 'bg-beam-wash border-beam/30',    mark: 'bg-beam border-beam' },
-  none:   { word: 'no reading', ground: 'bg-paper border-rule',       mark: 'bg-mist border-rule' },
-}
+const LO = WBAND.lo, HI = WBAND.hi  // live, before a usual exists
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
                 'August', 'September', 'October', 'November', 'December']
@@ -198,92 +194,247 @@ function NetworkCard({ go, reader, real, className }) {
 
 /* ── The month ──────────────────────────────────────────────────────────── */
 
-function MonthGrid({ year, month, values, today, lo, hi }) {
-  const pad = mondayIndex(new Date(year, month, 1))
-  const cells = [...Array(pad).fill(null), ...values.map((v, i) => ({ v, day: i + 1 }))]
+/* MonthCalendar: a month grid with each day's Heads Up face, its Mind Score,
+ * and a legend. Every day with a record is a button; picking one hands its
+ * date to `onSelect`, and the screen shows that day under the grid. Used here
+ * and on the parent's Trends (src/views/parent-dash.jsx).
+ *
+ *   days      [{ date: 'YYYY-MM-DD', score, light }], oldest first
+ *   today     'YYYY-MM-DD', the last day that can be picked
+ *   selected  the picked date, drawn with an ink ring
+ *
+ * Colour never carries a day alone: the face's mouth, the word in the
+ * legend and the figure in the square all say the same thing. */
+
+export const FACE_WORD = Object.freeze({ green: 'Green', yellow: 'Yellow', red: 'Red' })
+export const FACE_MEANS = Object.freeze({
+  green: 'In the usual range',
+  yellow: 'A little above usual',
+  red: 'Well above usual',
+})
+const FACE_GROUND = {
+  green: 'bg-accent-wash border-accent/40',
+  yellow: 'bg-sun-wash border-sun/60',
+  red: 'bg-coral-wash border-coral/60',
+  none: 'bg-paper border-rule',
+}
+
+const utc = iso => new Date(iso + 'T12:00:00Z')
+const isoOf = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`
+const monthIndexUTC = iso => (utc(iso).getUTCDay() + 6) % 7
+const shiftMonth = (key, n) => {
+  const [y, m] = key.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + n, 1, 12))
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`
+}
+export const longDay = iso => {
+  const d = utc(iso)
+  return `${DOW_LONG[(d.getUTCDay() + 6) % 7]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
+}
+
+export function MonthCalendar({ days = [], today, selected, onSelect, legend = true, className }) {
+  const byDate = React.useMemo(() => new Map(days.map(d => [d.date, d])), [days])
+  const first = days.length ? days[0].date : today
+  const [month, setMonth] = React.useState(() => (selected || today).slice(0, 7))
+  React.useEffect(() => { if (selected) setMonth(selected.slice(0, 7)) }, [selected])
+  const cellRefs = React.useRef({})
+
+  const [y, m] = month.split('-').map(Number)
+  const count = new Date(Date.UTC(y, m, 0, 12)).getUTCDate()
+  const lead = monthIndexUTC(isoOf(y, m - 1, 1))
+  const canPrev = month > first.slice(0, 7)
+  const canNext = month < today.slice(0, 7)
+  const dates = Array.from({ length: count }, (_, i) => isoOf(y, m - 1, i + 1))
+  const pickable = iso => iso <= today && byDate.has(iso)
+  /* One tab stop for the grid: the picked day, else today, else the first. */
+  const stop = [selected, today].find(d => d && d.slice(0, 7) === month && pickable(d)) || dates.find(pickable)
+
+  const move = (iso, n) => {
+    const t = new Date(utc(iso).getTime() + n * 86400000).toISOString().slice(0, 10)
+    if (!pickable(t)) return
+    if (t.slice(0, 7) !== month) setMonth(t.slice(0, 7))
+    onSelect?.(t)
+    requestAnimationFrame(() => cellRefs.current[t]?.focus())
+  }
+  const key = (e, iso) => {
+    const n = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
+    if (n) { e.preventDefault(); move(iso, n) }
+  }
+  const navBtn = 'grid size-11 place-items-center rounded-field border border-rule bg-card text-ink transition-colors ' +
+    'duration-150 hoverOnly:bg-aqua disabled:cursor-not-allowed disabled:text-ink-3 disabled:opacity-60 ' +
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+
   return (
-    <figure className="m-0">
-      <div aria-hidden className="grid grid-cols-7 gap-1 sm:gap-1.5">
-        {DOW_2.map(d => (
-          <span key={d} className="py-1 text-center text-fine text-ink-3">{d}</span>
-        ))}
+    <div className={className}>
+      <div className="flex items-center justify-between gap-2">
+        <button type="button" className={navBtn} aria-label="Previous month" disabled={!canPrev}
+          onClick={() => setMonth(k => shiftMonth(k, -1))}><ArrowLeft aria-hidden className="size-4"/></button>
+        <p aria-live="polite" className="m-0 font-display text-ui font-bold text-ink">{MONTHS[m - 1]} {y}</p>
+        <button type="button" className={navBtn} aria-label="Next month" disabled={!canNext}
+          onClick={() => setMonth(k => shiftMonth(k, 1))}><ArrowRight aria-hidden className="size-4"/></button>
       </div>
-      <ul className="m-0 mt-0.5 grid list-none grid-cols-7 gap-1 p-0 sm:gap-1.5">
-        {cells.map((c, i) => {
-          if (!c) return <li key={`pad${i}`} aria-hidden/>
-          const st = STATE[stateOf(c.v, lo, hi)]
-          const isToday = c.day === today
-          const dow = DOW_LONG[mondayIndex(new Date(year, month, c.day))]
+      <div aria-hidden className="mt-3 grid grid-cols-7 gap-1 sm:gap-1.5">
+        {DOW_2.map(d => <span key={d} className="py-1 text-center text-fine text-ink-2">{d}</span>)}
+      </div>
+      <ul className="m-0 mt-0.5 grid list-none grid-cols-7 gap-1 p-0 sm:gap-1.5" aria-label={`${MONTHS[m - 1]} ${y}`}>
+        {Array.from({ length: lead }, (_, i) => <li key={'p' + i} aria-hidden/>)}
+        {dates.map(iso => {
+          const rec = byDate.get(iso)
+          const ok = pickable(iso)
+          const on = iso === selected
+          const isToday = iso === today
+          const light = rec?.light || null
+          const score = rec?.score ?? null
+          const n = Number(iso.slice(8))
+          const label = `${longDay(iso)}${isToday ? ', today' : ''}: ` + (!ok ? 'no record'
+            : score == null ? 'no reading' : `${light ? FACE_WORD[light] + ', ' : ''}Mind Score ${score}`)
           return (
-            <li key={c.day} className="min-w-0">
-              <div role="img" aria-label={c.v == null
-                ? `${dow} ${c.day} ${MONTHS[month]}, no reading yet`
-                : `${dow} ${c.day} ${MONTHS[month]}, ${c.v} out of 100, ${st.word} the usual range`}
-                className={cn('flex aspect-square flex-col items-center justify-center rounded-field',
-                  'border px-0.5', st.ground, isToday && 'ring-1 ring-ink ring-offset-0')}>
-                <span aria-hidden className="text-fine leading-none text-ink-3">{c.day}</span>
-                <span aria-hidden className={cn('mt-0.5 text-ui font-medium tabular-nums leading-none',
-                  c.v == null ? 'text-ink-3' : 'text-ink')}>
-                  {c.v == null ? '·' : c.v}</span>
-              </div>
+            <li key={iso} className="min-w-0">
+              <button type="button" ref={el => (cellRefs.current[iso] = el)} disabled={!ok} aria-pressed={on}
+                aria-label={label} tabIndex={iso === stop ? 0 : -1}
+                onClick={() => onSelect?.(iso)} onKeyDown={e => key(e, iso)}
+                className={cn('flex h-[72px] w-full flex-col items-center justify-center gap-1 rounded-field border px-0.5',
+                  'transition-[box-shadow,transform] duration-150 motion-reduce:transition-none sm:h-[84px]',
+                  ok ? FACE_GROUND[score == null ? 'none' : light || 'none'] : 'border-transparent bg-transparent',
+                  ok && 'hoverOnly:-translate-y-px hoverOnly:shadow-card',
+                  on && 'ring-2 ring-ink ring-offset-2 ring-offset-card',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                  'disabled:cursor-default')}>
+                <span aria-hidden className={cn('relative text-[13px] leading-none tabular-nums',
+                  isToday ? 'font-bold text-ink' : ok ? 'text-ink-2' : 'text-ink-3')}>
+                  {n}
+                  {isToday && <span className="absolute -bottom-[4px] left-1/2 h-[3px] w-4 -translate-x-1/2 rounded-bar bg-ink"/>}
+                </span>
+                {ok && light && score != null ? (
+                  <LampFace light={light} size={28} className="h-[22px] w-[22px] sm:h-7 sm:w-7"/>
+                ) : (
+                  <span aria-hidden className="grid h-[22px] place-items-center sm:h-7">
+                    {ok && <span className="size-2.5 rounded-full border-2 border-ink-3"/>}</span>
+                )}
+                <span aria-hidden className="text-fine font-bold leading-none tabular-nums text-ink">
+                  {ok && score != null ? score : ' '}</span>
+              </button>
             </li>
           )
         })}
       </ul>
-      <figcaption className="note mt-2.5">A dot means no reading. The ring marks today.</figcaption>
-    </figure>
+      {legend && <CalendarLegend className="mt-4"/>}
+    </div>
   )
 }
 
-function StateKey() {
-  const rows = [
-    ['Inside', STATE.inside.ground],
-    ['Above', STATE.above.ground],
-    ['Below', STATE.below.ground],
-  ]
+/* What the faces, the grounds and the marks in the grid mean. */
+export function CalendarLegend({ className }) {
   return (
-    <ul className="m-0 mt-3 flex list-none flex-wrap gap-x-5 gap-y-1.5 border-t border-rule
-      pt-2.5 p-0">
-      {rows.map(([label, ground]) => (
-        <li key={label} className="flex min-w-0 items-center gap-2">
-          <span aria-hidden className={cn('size-4 shrink-0 rounded-xs border', ground)}/>
-          <span className="min-w-0 text-fine text-ink-2">{label}</span>
+    <div className={cn('border-t border-rule pt-3', className)}>
+      <p className="m-0 text-fine font-semibold text-ink-2">Key</p>
+      <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-5 gap-y-2 p-0 sm:grid-cols-2">
+        {['green', 'yellow', 'red'].map(l => (
+          <li key={l} className="flex items-center gap-2.5">
+            <span aria-hidden className={cn('grid size-8 shrink-0 place-items-center rounded-field border', FACE_GROUND[l])}>
+              <LampFace light={l} size={20}/></span>
+            <span className="text-fine text-ink-2"><b className="font-display font-bold text-ink">{FACE_WORD[l]}</b>
+              {' '}{FACE_MEANS[l]}</span>
+          </li>
+        ))}
+        <li className="flex items-center gap-2.5">
+          <span aria-hidden className={cn('grid size-8 shrink-0 place-items-center rounded-field border', FACE_GROUND.none)}>
+            <span className="size-2.5 rounded-full border-2 border-ink-3"/></span>
+          <span className="text-fine text-ink-2">No reading that day</span>
         </li>
-      ))}
-    </ul>
+        <li className="flex items-center gap-2.5">
+          <span aria-hidden className="relative grid size-8 shrink-0 place-items-center text-[13px] font-bold text-ink">
+            16<span className="absolute bottom-[5px] left-1/2 h-[3px] w-4 -translate-x-1/2 rounded-bar bg-ink"/></span>
+          <span className="text-fine text-ink-2">Today</span>
+        </li>
+        <li className="flex items-center gap-2.5">
+          <span aria-hidden className="size-8 shrink-0 rounded-field border border-rule bg-card ring-2 ring-ink ring-offset-2 ring-offset-card"/>
+          <span className="text-fine text-ink-2">The day you picked, shown below</span>
+        </li>
+      </ul>
+      <p className="m-0 mt-2.5 text-fine text-ink-3">The figure in each square is that day’s Mind Score, 0 calm to 100 peak.</p>
+    </div>
   )
 }
 
 /* ── The week ───────────────────────────────────────────────────────────── */
 
-/* Seven rows: a 45px column cannot carry day, figure, word and position. */
-function WeekRows({ days, lo, hi }) {
+/* Seven rows, each with the day's face, figure and where it sits against the
+   usual range. */
+function WeekRows({ days, lo, hi, selected, onSelect }) {
   return (
     <ul className="m-0 list-none border-t border-ink p-0">
       {days.map(d => {
-        const st = STATE[stateOf(d.v, lo, hi)]
+        const on = d.date === selected
         return (
-          <li key={d.label} className="border-b border-rule py-2">
-            <div className="flex items-center gap-3">
-              <span className={cn('w-[4ch] shrink-0 font-display text-ui text-ink',
-                d.today ? 'font-semibold' : 'font-medium')}>{d.label}</span>
-              <span className="w-[3ch] shrink-0 text-ui tabular-nums text-ink">
-                {d.v == null ? '·' : d.v}</span>
+          <li key={d.date} className="border-b border-rule">
+            <button type="button" aria-pressed={on} onClick={() => onSelect(d.date)}
+              aria-label={`${longDay(d.date)}: ${d.score == null ? 'no reading'
+                : `${d.light ? FACE_WORD[d.light] + ', ' : ''}Mind Score ${d.score}`}`}
+              className={cn('flex min-h-[52px] w-full items-center gap-3 rounded-field px-1.5 text-left transition-colors',
+                'duration-150 hoverOnly:bg-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+                on && 'bg-mist')}>
+              <span className={cn('w-[4ch] shrink-0 font-display text-ui text-ink', on ? 'font-bold' : 'font-medium')}>
+                {DOW[monthIndexUTC(d.date)]}</span>
+              {d.light && d.score != null ? <LampFace light={d.light} size={24}/>
+                : <span aria-hidden className="grid size-6 place-items-center">
+                    <span className="size-2.5 rounded-full border-2 border-ink-3"/></span>}
+              <span className="w-[3ch] shrink-0 text-ui font-bold tabular-nums text-ink">{d.score ?? '·'}</span>
               <span aria-hidden className="relative h-2 min-w-0 flex-1 rounded-xs bg-mist">
-                <span className="absolute inset-y-0 rounded-xs bg-ink-3/30"
+                <span className="absolute inset-y-0 rounded-xs bg-accent/25"
                   style={{ left: `${lo}%`, width: `${Math.max(1, hi - lo)}%` }}/>
-                {d.v != null && (
-                  <span className={cn('absolute -top-1 h-4 w-[4px] -translate-x-1/2 rounded-bar border',
-                    st.mark)} style={{ left: `${Math.max(1, Math.min(99, d.v))}%` }}/>
+                {d.score != null && (
+                  <span className={cn('absolute -top-1 h-4 w-[4px] -translate-x-1/2 rounded-bar',
+                    d.light === 'red' ? 'bg-crit' : d.light === 'yellow' ? 'bg-sun' : 'bg-accent')}
+                    style={{ left: `${Math.max(1, Math.min(99, d.score))}%` }}/>
                 )}
               </span>
-              <span className="w-[5ch] shrink-0 text-right text-fine text-ink-2">
-                {d.v == null ? 'none' : st.word}</span>
-            </div>
+            </button>
           </li>
         )
       })}
     </ul>
+  )
+}
+
+/* One picked day on the calendar route: its face, figure and readings. */
+const READ_SOURCE = { patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions' }
+function CalendarDay({ d, usual }) {
+  if (!d) return null
+  const counts = (d.readings || []).reduce((a, r) => ({ ...a, [r.source]: (a[r.source] || 0) + 1 }), {})
+  return (
+    <section aria-live="polite" className="mt-4 rounded-panel border border-rule bg-paper p-4">
+      <h3 className="m-0 font-display text-ui font-bold text-ink">{longDay(d.date)}</h3>
+      {d.score == null ? (
+        <p className="m-0 mt-2 text-ui text-ink-2">No reading on this day.</p>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center gap-3">
+            {d.light && <LampFace light={d.light} size={40}/>}
+            <div>
+              <p className="m-0 font-display text-row font-bold leading-tight text-ink">
+                {d.light ? FACE_WORD[d.light] : `Mind Score ${d.score}`}</p>
+              <p className="m-0 text-fine text-ink-2">{d.light ? FACE_MEANS[d.light] : ''}</p>
+            </div>
+            <p className="m-0 ml-auto text-right">
+              <span className="block font-display text-stat font-bold tabular-nums leading-none text-ink">{d.score}</span>
+              <span className="block text-fine text-ink-2">Mind Score</span></p>
+          </div>
+          {usual && <p className="m-0 mt-2 text-fine text-ink-2">Usual range {usual.lo} to {usual.hi}.</p>}
+          {Object.keys(counts).length > 0 && (
+            <dl className="m-0 mt-3 border-t border-rule p-0">
+              {Object.entries(counts).map(([k, n]) => (
+                <div key={k} className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
+                  <dt className="text-fine text-ink-2">{READ_SOURCE[k]}</dt>
+                  <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">
+                    {n} {n === 1 ? 'reading' : 'readings'}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </>
+      )}
+    </section>
   )
 }
 
@@ -404,6 +555,19 @@ function MarkEvent({ className }) {
 
 /* ── The screen ─────────────────────────────────────────────────────────── */
 
+/* Demo: the student demo teen's ninety days (src/views/student/demoTeen.js),
+   so the faces here are the ones on the Heads Up card. Live: this month to
+   today with nothing in it. */
+function useCalendarDays(real) {
+  return React.useMemo(() => {
+    if (!real) return { days: TEEN.days, today: TEEN.days[TEEN.days.length - 1].date, usual: TEEN.usual }
+    const today = localDay(Date.now())
+    const n = Number(today.slice(8))
+    const days = Array.from({ length: n }, (_, i) => ({ date: `${today.slice(0, 8)}${pad2(i + 1)}`, score: null, light: null }))
+    return { days, today, usual: null }
+  }, [real])
+}
+
 export function CalendarBody({ go, who }) {
   const [mode] = useMode()
   /* Marks are the student's own (spec 0g), so only a student, or a reader
@@ -412,43 +576,19 @@ export function CalendarBody({ go, who }) {
   const reader = who || (me && me.role) || null
   const canMark = !reader || reader === 'student'
   const [view, setView] = React.useState('month')
-  const now = React.useMemo(() => new Date(), [])
-  const [offset, setOffset] = React.useState(0)
-  const lo = LO, hi = HI
-
-  const shown = new Date(now.getFullYear(), now.getMonth() + offset, 1)
-  const year = shown.getFullYear(), month = shown.getMonth()
-  const thisMonth = offset === 0
-  const today = thisMonth ? now.getDate() : null
   const real = mode === 'real'
-
-  /* Real mode has no readings: the month is all dots up to today. */
-  const monthVals = React.useMemo(() => {
-    if (!real) return monthScores(year, month, thisMonth ? now.getDate() : null)
-    const n = thisMonth ? now.getDate() : new Date(year, month + 1, 0).getDate()
-    return Array(n).fill(null)
-  }, [real, year, month, thisMonth, now])
-
-  /* The week is the seven days ending on the newest scored day in the month
-     shown, so the week and the month cannot disagree. With no scored day it
-     ends on the last day shown. */
-  const weekDays = React.useMemo(() => {
-    const scored = monthVals.reduce((a, v, i) => (v != null ? i : a), -1)
-    const end = scored >= 0 ? scored : monthVals.length - 1
-    if (end < 0) return []
-    const out = []
-    for (let i = Math.max(0, end - 6); i <= end; i += 1) {
-      const d = new Date(year, month, i + 1)
-      out.push({ label: DOW[mondayIndex(d)], v: monthVals[i],
-                 today: today != null && i + 1 === today })
-    }
-    return out
-  }, [monthVals, year, month, today])
+  const { days, today, usual } = useCalendarDays(real)
+  const [picked, setPicked] = React.useState(today)
+  React.useEffect(() => setPicked(today), [today])
+  const pickedDay = days.find(d => d.date === picked)
+  const week = days.slice(-7)
+  const lo = usual ? usual.lo : LO, hi = usual ? usual.hi : HI
 
   return (
     <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
       <Panel className="lg:self-start">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <PanelHead title="Calendar" className="min-w-0"/>
           <div role="group" aria-label="Week or month"
             className="inline-flex overflow-hidden rounded-field border border-rule">
             {[['week', 'Week'], ['month', 'Month']].map(([v, label]) => (
@@ -461,37 +601,21 @@ export function CalendarBody({ go, who }) {
               </button>
             ))}
           </div>
-          {view === 'month' && (
-            <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => setOffset(o => o - 1)}
-                aria-label="Previous month"
-                className="flex size-11 items-center justify-center rounded-field border
-                  border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua">
-                <ArrowLeft aria-hidden className="size-4"/>
-              </button>
-              <p className="min-w-[9ch] text-center font-display text-ui font-medium text-ink">
-                {MONTHS[month]} {year}</p>
-              <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))}
-                disabled={thisMonth} aria-label="Next month"
-                className="flex size-11 items-center justify-center rounded-field border
-                  border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua
-                  disabled:border-rule disabled:text-ink-3">
-                <ArrowRight aria-hidden className="size-4"/>
-              </button>
-            </div>
-          )}
         </div>
+        <p className="m-0 mt-1.5 text-fine text-ink-2">
+          {real ? 'Your readings show here as they arrive. Pick a day to see it.'
+            : 'Each day shows its Heads Up face and Mind Score. Pick a day to see it.'}</p>
 
         <div className="mt-3">
           {view === 'month'
-            ? <MonthGrid year={year} month={month} values={monthVals} today={today}
-                lo={lo} hi={hi}/>
+            ? <MonthCalendar days={days} today={today} selected={picked} onSelect={setPicked}/>
             : <>
-                <WeekRows days={weekDays} lo={lo} hi={hi}/>
+                <WeekRows days={week} lo={lo} hi={hi} selected={picked} onSelect={setPicked}/>
                 <p className="note mt-2.5">The shaded stretch is the usual range.</p>
+                <CalendarLegend className="mt-3"/>
               </>}
         </div>
-        <StateKey/>
+        <CalendarDay d={pickedDay} usual={usual}/>
       </Panel>
 
       <NetworkCard go={go} reader={reader} real={real}

@@ -1,11 +1,12 @@
 import { SCORE, NOTES, NOTES_DEF, LOCATION, PRO } from '../lib/terms'
 
-/* Device-only state for the four app features: reminders, what the student
- * shares, and their Notes. Three localStorage slots behind one listener list.
+/* State for the four app features: reminders, what the student shares, and
+ * their Notes. Three localStorage slots behind one listener list.
  *
- * There is no endpoint, no account and no fetch anywhere in this file, and
- * that is the point rather than an omission: everything a student types or
- * chooses here stays in this browser.
+ * There is no fetch in this file. The sharing switches are sent to the
+ * student's account by src/account/sync.js, which reads them from here and
+ * hands back the account's copy through applySharing(), so a parent and a
+ * Medical Professional see what the student chose, on any device.
  *
  * Conventions taken from src/survey/store.js on purpose, because a second set
  * of storage habits in one codebase is how a guarded read becomes an
@@ -151,7 +152,7 @@ export function lockLine(settings = getNotify(), score = null) {
     : `MindMap · Today’s ${SCORE} is ${score}.`
 }
 
-/* ── What leaves the phone ──────────────────────────────────────────────── */
+/* ── What is shared ─────────────────────────────────────────────────────── */
 
 /* The consent model, expressed once.
  *
@@ -204,7 +205,7 @@ export const SHARING = {
         hint: 'How much it moved since last week.' },
       { key: 'raw',    label: 'My raw readings, second by second', needs: 'score',
         short: 'my raw readings',
-        hint: 'The samples behind the score. Off unless I turn it on.' },
+        hint: 'The samples behind the score. I can turn this off.' },
       { key: 'settle', label: 'Days slow to settle', short: 'days slow to settle',
         hint: 'A count of days each week. Never the time of day.' },
     ],
@@ -222,12 +223,22 @@ export const AUDIENCES = ['parent', 'pro']
  * default nobody chose. */
 export const RETENTION = [7, 30, 90]
 
-const blankSharing = () => ({
-  v: VERSION,
-  /* Nothing is shared by default. terms.js states that as the product's own
-   * rule, and a switch that starts on is not a choice the student made. */
+/* Every switch starts on. The owner: "Have all the privacy features
+ * defaulted to ON so that parents and med profs can see student data". The
+ * student can switch any of them off, any time, and Turn everything off
+ * still does what it says. */
+const allOn = () => ({
+  parent: { score: true, week: true, sleep: true, worn: true, settle: true },
+  pro: { score: true, trends: true, raw: true, settle: true },
+})
+const allOff = () => ({
   parent: { score: false, week: false, sleep: false, worn: false, settle: false },
   pro: { score: false, trends: false, raw: false, settle: false },
+})
+
+const blankSharing = () => ({
+  v: VERSION,
+  ...allOn(),
   retention: 7,
   log: [],
 })
@@ -259,11 +270,19 @@ const sharing = makeSlot('mindmap.app.sharing', blankSharing, normaliseSharing)
 export const getSharing = () => sharing.get()
 
 /* Every change writes one line the student can read back. The real product
- * keeps an audit log; this is the part of it that belongs to them, and it is
- * on the phone like everything else here. */
+ * keeps an audit log; this is the part of it that belongs to them. */
 function note(state, text) {
   const log = [{ at: new Date().toISOString(), text }, ...(state.log || [])].slice(0, 12)
   return { ...state, log }
+}
+
+/* The account's copy of the switches, from src/account/sync.js. Replaces
+ * the two audiences and writes no log line: the student did not just change
+ * anything here, they changed it on another device or before. */
+export function applySharing(next) {
+  if (!next || typeof next !== 'object') return getSharing()
+  const state = getSharing()
+  return sharing.merge({ ...state, parent: { ...state.parent, ...(next.parent || {}) }, pro: { ...state.pro, ...(next.pro || {}) } })
 }
 
 export function setShared(audience, key, on) {
@@ -291,11 +310,10 @@ export function setRetention(days) {
  * per-field screen otherwise makes into eleven taps. */
 export function revokeAll() {
   const state = getSharing()
-  const blank = blankSharing()
   /* Retention and the log survive: neither is a thing being shared, and
    * wiping the log would delete the record of the revoke itself. */
   return sharing.replace(note(
-    { ...blank, retention: state.retention, log: state.log },
+    { v: VERSION, ...allOff(), retention: state.retention, log: state.log },
     'Stopped sharing everything'))
 }
 

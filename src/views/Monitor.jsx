@@ -183,8 +183,8 @@ export function FeltCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="How Today Felt" meta="check-in" className="min-w-0 flex-1"/>
         <Why label="What the check-in questions are" className="pt-1.5">
-          The patch cannot read a feeling, so a short check-in asks. Answers are scored on
-          this phone and never stored.
+          The patch cannot read a feeling, so a short check-in asks. Answers become one
+          score, which syncs to your account. The answers are not kept.
         </Why>
       </div>
       <button type="button" onClick={() => go('check')}
@@ -245,7 +245,7 @@ export function ActionRow({ go, className, actions = ACTIONS }) {
   )
 }
 
-/* ── What leaves the phone ──────────────────────────────────────────────── */
+/* ── What is shared ─────────────────────────────────────────────────────── */
 
 /* The consent model, in three rows. */
 const SCOPE = [
@@ -261,7 +261,7 @@ export function SharedCard({ go, className }) {
   return (
     <Panel tone="brand" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="Who Sees What" meta="off by default" className="min-w-0 flex-1"/>
+        <PanelHead title="Who Sees What" meta="on by default" className="min-w-0 flex-1"/>
         <Why label="How sharing works" className="pt-1.5">
           {CONSENT_SHORT} The student can switch any of it off.
         </Why>

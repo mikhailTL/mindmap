@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../lib/utils'
 import { useReduced } from '../useReduced'
 import { vars } from '../theme'
@@ -7,16 +8,21 @@ import { SKILL_TOOLS } from '../../skills/index.js'
 import { useProgress, gameVars } from './parts'
 import { levelFor, levelName, BADGES, badgeById, suggestNext, FINISH_POINTS, NEW_TOOL_BONUS } from './progress'
 import { BadgeIcon } from './badges'
+import { LevelEmblem, XPBar, LevelUpBanner, Confetti, useTotalTween, SPRING, SOFT } from './fx'
 
-/* The header card for the top of the student Toolkit: level and its name,
- * a bar to the next level, the badges earned (tap one to see what it was
- * for), and one tool to try next. Everything is read from this device's
- * progress store. There are no streaks, no days and nobody else's numbers
- * anywhere on it: a teen only ever sees their own collection grow.
+/* The header card for the top of the student Toolkit: the level emblem
+ * (its own shape and colour at every level), a bar to the next level that
+ * fills with a shine, a big count of points to go, the badges as shiny
+ * coins (tap one to see what it was for), and today's quest: one tool to
+ * try next. Points earned since the card was last on screen fill the bar in
+ * front of the reader, and a level reached drops a banner and confetti.
+ *
+ * There are no streaks, no days missed and nobody else's numbers anywhere
+ * on it. "Today's quest" is only a suggestion: it changes with what has
+ * been tried, and skipping it costs nothing.
  *
  * Mounted by the Toolkit for students only, at the top of each tab. The
- * optional `tab` ('exercise' | 'school' | 'outside' | 'life' | 'career')
- * makes "Try next" prefer a tool from the tab on screen. */
+ * optional `tab` makes the quest prefer a tool from the tab on screen. */
 
 const TOOLS = Object.fromEntries([
   ...STUDENT_ITEMS.map(i => [i.id, { id:i.id, title:i.title, line:i.line, family:i.family, icon:i.icon, href:'#/' + i.route }]),
@@ -27,49 +33,75 @@ const TOOLS = Object.fromEntries([
    4.5 : 1 on every stop. */
 const CARD_BG = 'linear-gradient(120deg, #def0fc 0%, #f6e8ff 55%, #ffe8e0 100%)'
 
-function LevelBadge({ level, pct, reduced }) {
-  const R = 30, C = 2 * Math.PI * R
-  return (
-    <div className="relative grid size-[76px] shrink-0 place-items-center">
-      <svg viewBox="0 0 76 76" aria-hidden focusable="false" className="absolute inset-0 size-full">
-        <circle cx="38" cy="38" r={R} fill="none" stroke="#ffffff" strokeWidth="7"/>
-        <circle cx="38" cy="38" r={R} fill="none" strokeWidth="7" strokeLinecap="round"
-          transform="rotate(-90 38 38)" strokeDasharray={C}
-          style={{ stroke:'var(--g-main)', strokeDashoffset: C * (1 - Math.max(0.02, pct)),
-                   transition: reduced ? 'none' : 'stroke-dashoffset .7s cubic-bezier(0.23,1,0.32,1)' }}/>
-      </svg>
-      <span className="grid size-[50px] place-items-center rounded-full font-display text-num font-bold tabular-nums text-white"
-        style={{ background:'var(--g-ink)' }}>{level}</span>
-    </div>
-  )
-}
+/* The total this card last showed, so a gain since then can play out. A
+   plain number: no date is kept, so nothing here can become a streak. */
+const SEEN_KEY = 'mindmap.toolkit.seen'
+const readSeen = () => { try { const v = Number(localStorage.getItem(SEEN_KEY)); return Number.isFinite(v) && localStorage.getItem(SEEN_KEY) != null ? v : null } catch { return null } }
+const writeSeen = v => { try { localStorage.setItem(SEEN_KEY, String(v)) } catch { /* blocked: replays next time */ } }
 
-function TryNext({ pick }) {
+function Quest({ pick, reduced }) {
   const t = TOOLS[pick?.id]
   if (!t) return null
   const Icon = t.icon
+  const pts = pick.fresh ? FINISH_POINTS + NEW_TOOL_BONUS : FINISH_POINTS
   return (
-    <a href={t.href} style={vars(t.family)}
-      className="kit-card group flex min-h-[72px] items-center gap-3 rounded-[16px] border border-rule bg-card p-3 shadow-card
-        transition-transform duration-150 motion-safe:active:scale-[0.98]">
-      <span aria-hidden className="kit-ground kit-ink grid size-12 shrink-0 place-items-center rounded-[14px]"><Icon/></span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-fine font-semibold text-ink-2">{pick.fresh ? 'Try next' : 'Go again'}</span>
-        <span className="block font-display text-ui font-bold text-ink">{t.title}</span>
-        <span className="block truncate text-fine text-ink-2">{t.line}</span>
+    <motion.a href={t.href} style={vars(t.family)}
+      whileTap={reduced ? undefined : { scale:0.97 }} transition={SPRING}
+      className="kit-card group relative flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[18px] border border-white/80
+        bg-white/90 p-3 shadow-card">
+      <span aria-hidden className="kit-ground kit-ink relative grid size-12 shrink-0 place-items-center rounded-[14px]">
+        <Icon/>
+        <svg viewBox="0 0 20 20" className="absolute -right-1.5 -top-1.5 size-5" aria-hidden focusable="false">
+          <circle cx="10" cy="10" r="9" fill="#ffffff"/>
+          <circle cx="10" cy="10" r="7" fill="none" stroke="#f2702a" strokeWidth="2"/>
+          <circle cx="10" cy="10" r="3" fill="#f2702a"/>
+        </svg>
       </span>
-      <span aria-hidden className="kit-fill grid size-10 shrink-0 place-items-center rounded-full text-white">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4"
+      <span className="min-w-0 flex-1">
+        <span className="block text-fine font-bold text-ink-2">Today's quest</span>
+        <span className="block font-display text-ui font-bold leading-snug text-ink">
+          {pick.fresh ? 'Try ' : 'Play '}{t.title}
+        </span>
+        <span className="block text-fine text-ink-2">
+          Finish it for <b className="font-display font-bold text-ink">+{pts}</b> points
+        </span>
+      </span>
+      <span aria-hidden className="kit-fill grid size-11 shrink-0 place-items-center rounded-full text-white shadow-card
+        transition-transform duration-150 group-hover:translate-x-0.5">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.6"
           strokeLinecap="round" strokeLinejoin="round"><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>
       </span>
-    </a>
+      {!reduced && <span aria-hidden className="g-sheen absolute inset-y-0 w-1/5 opacity-60"/>}
+    </motion.a>
+  )
+}
+
+/* A rolling count of points to the next level. */
+function ToGo({ total }) {
+  const L = levelFor(total)
+  const left = Math.max(0, Math.ceil(L.need - L.into))
+  return (
+    <p className="mt-1.5 flex items-baseline gap-1.5">
+      <span className="font-display text-stat font-bold tabular-nums leading-none text-ink">{left}</span>
+      <span className="text-fine font-semibold text-ink-2">points to Level {L.level + 1}, {levelName(L.level + 1)}</span>
+    </p>
   )
 }
 
 export function PlayerCard({ className, tab = null }) {
   const p = useProgress()
   const reduced = useReduced()
-  const L = levelFor(p.total)
+  const [seen] = React.useState(() => readSeen())
+  const from = seen == null || seen > p.total ? p.total : seen
+  const [lvUp, setLvUp] = React.useState(null)
+  const [boom, setBoom] = React.useState(0)
+  const total = useTotalTween(from, p.total, { delay:500,
+    onLevel: l => { setLvUp(l); setBoom(b => b + 1); setTimeout(() => setLvUp(null), 3600) } })
+  const gaining = total < p.total
+  /* Stored once the bar has caught up, so a card that is swapped out mid
+     fill plays the gain again next time rather than losing it. */
+  React.useEffect(() => { if (!gaining) writeSeen(p.total) }, [gaining, p.total])
+  const L = levelFor(total)
   const earned = p.badges.map(badgeById).filter(Boolean)
   const [open, setOpen] = React.useState(null)       // a badge id, for its line
   const [all, setAll] = React.useState(false)
@@ -77,25 +109,40 @@ export function PlayerCard({ className, tab = null }) {
   const fresh = p.total === 0 && earned.length === 0
   const shown = open && badgeById(open)
   const has = id => p.badges.includes(id)
+  const locked = BADGES.filter(b => !has(b.id)).slice(0, earned.length ? 2 : 3)
 
   return (
     <section aria-label="Your progress" style={{ ...gameVars(p.theme), background:CARD_BG }}
-      className={cn('rounded-[20px] border border-rule p-4 shadow-card sm:p-5', className)}>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-6">
-        <div className="flex items-center gap-3.5">
-          <LevelBadge level={L.level} pct={L.pct} reduced={reduced}/>
-          <div className="min-w-0 flex-1">
-            <p className="text-fine font-semibold text-ink-2">Level {L.level}</p>
-            <h2 className="font-display text-row font-bold tracking-tight text-ink">{levelName(L.level)}</h2>
-            <div className="mt-1.5 h-3 overflow-hidden rounded-bar bg-card" role="progressbar"
-              aria-label={`Level ${L.level + 1}`} aria-valuemin={0} aria-valuemax={L.need} aria-valuenow={L.into}>
-              <div className="h-full rounded-bar" style={{ width: Math.max(2, Math.round(L.pct * 100)) + '%',
-                background:'var(--g-main)', transition: reduced ? 'none' : 'width .7s cubic-bezier(0.23,1,0.32,1)' }}/>
+      className={cn('relative overflow-hidden rounded-[22px] border border-rule p-4 shadow-card sm:p-5', className)}>
+      {/* soft light shapes behind the card's content */}
+      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 size-44 rounded-full bg-white/40"/>
+      <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-10 size-40 rounded-full bg-white/30"/>
+      <Confetti fire={boom} x={30} y={12}/>
+
+      <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-6">
+        <div>
+          <div className="flex items-center gap-3.5">
+            <motion.div key={L.level} initial={reduced || !lvUp ? false : { scale:0.2, rotate:-90 }}
+              animate={{ scale:1, rotate:0 }} transition={{ type:'spring', stiffness:300, damping:14 }}>
+              <LevelEmblem level={L.level} size={88}/>
+            </motion.div>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-fine font-bold uppercase tracking-[0.1em] text-ink-2">Level {L.level}</p>
+              <h2 className="font-display text-head font-bold leading-tight tracking-tight text-ink">{levelName(L.level)}</h2>
+              <ToGo total={total}/>
             </div>
-            <p className="mt-1 text-fine text-ink-2 tabular-nums">
-              {L.need - L.into} points to {levelName(L.level + 1)}
-            </p>
           </div>
+          <XPBar total={total} gain={gaining ? Math.floor(total / 4) : 0} tall className="mt-3"
+            label={`Level ${L.level + 1}`}/>
+          <AnimatePresence>
+            {gaining && (
+              <motion.p key="gain" className="mt-1.5 font-display text-fine font-bold" style={{ color:'var(--g-ink)' }}
+                initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
+                +{p.total - from} points added
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <LevelUpBanner level={lvUp || L.level} show={!!lvUp} className="mt-3"/>
         </div>
 
         <div className="min-w-0">
@@ -111,19 +158,22 @@ export function PlayerCard({ className, tab = null }) {
               Badges <span className="font-semibold text-ink-2">{earned.length} of {BADGES.length}</span>
             </p>
           )}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {earned.map(b => (
-              <button key={b.id} type="button" aria-label={b.name} aria-expanded={open === b.id}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {earned.map((b, i) => (
+              <motion.button key={b.id} type="button" aria-label={b.name} aria-expanded={open === b.id}
                 onClick={() => setOpen(open === b.id ? null : b.id)}
-                className={cn('grid size-11 place-items-center rounded-full transition-transform duration-150',
-                  'motion-safe:active:scale-90', open === b.id && 'ring-2 ring-ink ring-offset-2 ring-offset-transparent')}>
-                <BadgeIcon id={b.id} size={38}/>
-              </button>
+                initial={reduced ? false : { scale:0, rotate:-60 }} animate={{ scale:1, rotate:0 }}
+                whileTap={reduced ? undefined : { scale:0.88 }}
+                transition={{ ...SPRING, delay: reduced ? 0 : 0.15 + i * 0.06 }}
+                className={cn('grid size-12 place-items-center rounded-full',
+                  open === b.id && 'ring-2 ring-ink ring-offset-2 ring-offset-transparent')}>
+                <BadgeIcon id={b.id} size={44} shine/>
+              </motion.button>
             ))}
-            {earned.length === 0 && [BADGES[0], BADGES[5], BADGES[7]].map(b => (
+            {locked.map(b => (
               <button key={b.id} type="button" aria-label={`${b.name}, not earned yet`} aria-expanded={open === b.id}
-                onClick={() => setOpen(open === b.id ? null : b.id)} className="grid size-11 place-items-center rounded-full">
-                <BadgeIcon id={b.id} size={38} earned={false}/>
+                onClick={() => setOpen(open === b.id ? null : b.id)} className="grid size-12 place-items-center rounded-full">
+                <BadgeIcon id={b.id} size={42} earned={false}/>
               </button>
             ))}
             <button type="button" aria-expanded={all} onClick={() => setAll(!all)}
@@ -132,34 +182,41 @@ export function PlayerCard({ className, tab = null }) {
               {all ? 'Hide' : 'All badges'}
             </button>
           </div>
-          {shown && (
-            <p role="status" className={cn('mt-2 rounded-[12px] bg-card p-2.5 text-fine text-ink', !reduced && 'g-in')}>
-              <b className="font-display">{shown.name}.</b> {has(shown.id) ? 'Earned for: ' : 'Not yet. '}{shown.line}
-            </p>
-          )}
+          <AnimatePresence>
+            {shown && (
+              <motion.p key={shown.id} role="status" className="mt-2 rounded-[12px] bg-white/90 p-2.5 text-fine text-ink"
+                initial={reduced ? false : { opacity:0, y:-6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
+                transition={SOFT}>
+                <b className="font-display">{shown.name}.</b> {has(shown.id) ? 'Earned for: ' : 'Not yet. '}{shown.line}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="min-w-0">
-          <TryNext pick={pick}/>
+          <Quest pick={pick} reduced={reduced}/>
         </div>
       </div>
 
-      {all && (
-        <ul className={cn('mt-4 grid gap-2 border-t border-ink/10 pt-4 sm:grid-cols-2 lg:grid-cols-3', !reduced && 'g-in')}>
-          {BADGES.map(b => (
-            <li key={b.id} className="flex items-center gap-3 rounded-[12px] bg-card/80 p-2.5">
-              <BadgeIcon id={b.id} size={36} earned={has(b.id)}/>
-              <span className="min-w-0">
-                <span className="block font-display text-fine font-bold text-ink">
-                  {b.name}<span className="sr-only">{has(b.id) ? ', earned' : ', not earned yet'}</span>
+      <AnimatePresence>
+        {all && (
+          <motion.ul key="all" className="relative mt-4 grid gap-2 border-t border-ink/10 pt-4 sm:grid-cols-2 lg:grid-cols-3"
+            initial={reduced ? false : { opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={SOFT}>
+            {BADGES.map(b => (
+              <li key={b.id} className="flex items-center gap-3 rounded-[12px] bg-white/80 p-2.5">
+                <BadgeIcon id={b.id} size={40} earned={has(b.id)} shine={has(b.id)}/>
+                <span className="min-w-0">
+                  <span className="block font-display text-fine font-bold text-ink">
+                    {b.name}<span className="sr-only">{has(b.id) ? ', earned' : ', not earned yet'}</span>
+                  </span>
+                  <span className="block text-fine text-ink-2">{b.line}</span>
                 </span>
-                <span className="block text-fine text-ink-2">{b.line}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="mt-3 text-fine text-ink-2">Points come from finishing a tool. Only you see them, on this device.</p>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+      <p className="relative mt-3 text-fine text-ink-2">Points come from finishing a tool. Only you see them, on this device.</p>
     </section>
   )
 }

@@ -7,6 +7,8 @@ import { ScrollIn } from '../../ui/motion'
 import { PartHead } from './PartHead'
 import { SCORE } from '../../lib/terms'
 import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal } from './demoTeen'
+import { Shape } from '../reading/marks'
+import { ScoreChart } from './charts'
 
 /* The student's Trends: a month calendar and a date range, over the demo
  * teen's ninety generated days (src/lib/roster.js).
@@ -30,14 +32,16 @@ import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal 
 /* ── Bands: the teen against their own usual ───────────────────────────── */
 
 const BANDS = {
-  calm: { word: 'Calmer than usual', wash: 'bg-beam-wash', bar: 'bg-beam' },
-  usual: { word: 'About usual', wash: 'bg-accent-wash', bar: 'bg-accent' },
-  up: { word: 'More stressed', wash: 'bg-warn-wash', bar: 'bg-warn' },
-  high: { word: 'Much more stressed', wash: 'bg-coral-wash', bar: 'bg-crit' },
+  calm: { word: 'Calmer than usual', wash: 'bg-beam-wash', bar: 'bg-beam', fill: '#2294e6', ink: 'text-sky-ink' },
+  usual: { word: 'About usual', wash: 'bg-accent-wash', bar: 'bg-accent', fill: '#157446', ink: 'text-accent' },
+  up: { word: 'More stressed', wash: 'bg-warn-wash', bar: 'bg-warn', fill: '#b5871b', ink: 'text-sun-ink' },
+  high: { word: 'Much more stressed', wash: 'bg-coral-wash', bar: 'bg-crit', fill: '#a8321f', ink: 'text-crit' },
 }
 const BAND_ORDER = ['calm', 'usual', 'up', 'high']
 export const bandKey = (v, usual) =>
   v < usual.lo ? 'calm' : v <= usual.hi ? 'usual' : v <= usual.hi + 8 ? 'up' : 'high'
+/* The band a demo day sits in, for a chart dot and the words beside it. */
+export const demoBand = usual => v => BANDS[bandKey(v, usual)]
 
 /* ── Sources ────────────────────────────────────────────────────────────── */
 
@@ -46,18 +50,10 @@ const SOURCES = {
   camera: { word: 'Camera' },
   survey: { word: 'Check-in questions' },
 }
-/* A drawn mark per source, so the source never rests on colour: a filled
-   disc for the patch, an open square for the camera, a diamond for the six
-   questions. */
+/* A drawn mark per source, the same shapes the Mind Score Log draws
+   (src/views/reading/marks.jsx), so the source never rests on colour. */
 export function SourceMark({ source, className }) {
-  return (
-    <svg aria-hidden viewBox="0 0 12 12" className={cn('size-3 shrink-0', className)}>
-      {source === 'patch' && <circle cx="6" cy="6" r="5" className="fill-accent"/>}
-      {source === 'camera' && <rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="none"
-        strokeWidth="2" className="stroke-beam-ink"/>}
-      {source === 'survey' && <path d="M6 0.8 L11.2 6 L6 11.2 L0.8 6 Z" className="fill-lilac-ink"/>}
-    </svg>
-  )
+  return <Shape source={source} fill="#2a5744" size={12} className={cn('shrink-0', className)}/>
 }
 
 /* ── The range ──────────────────────────────────────────────────────────── */
@@ -217,63 +213,30 @@ function chartItems(teen, span, byDate) {
   if (span[0] === span[1]) {
     if (span[0] === TODAY) {
       return teen.hours.map(h => ({ key: 'h' + h.hour, label: clockOf(h.hour), v: h.score,
-        read: `${clockOf(h.hour)} ${h.score}` }))
+        read: `${h.hour % 12 || 12} ${h.hour < 12 ? 'am' : 'pm'} hour` }))
     }
     const d = byDate.get(span[0])
     return (d?.readings || []).slice().sort((a, b) => (a.time < b.time ? -1 : 1)).map((r, i) => ({
       key: r.time + i, label: clock12(r.time).replace(':00', '').replace(' ', ''), v: r.score, source: r.source,
-      read: `${clock12(r.time)} ${r.score} from ${SOURCES[r.source].word.toLowerCase()}`,
+      read: `${clock12(r.time)}, ${SOURCES[r.source].word.toLowerCase()}`,
     }))
   }
   return teen.days.filter(d => d.date >= span[0] && d.date <= span[1]).map(d => ({
     key: d.date, label: span[1] > addDays(span[0], 8) ? String(Number(d.date.slice(8))) : d.weekday,
-    v: d.score, read: `${shortDate(d.date)} ${d.score}`,
+    v: d.score, read: shortDate(d.date),
   }))
 }
 
+/* The range as one line over the usual band (src/views/student/charts.jsx):
+   evenly spaced, a label under every few points. */
 function RangeChart({ items, usual }) {
-  const vs = items.map(i => i.v).concat([usual.lo, usual.hi])
-  const lo = Math.max(0, Math.floor((Math.min(...vs) - 5) / 10) * 10)
-  const hi = Math.min(100, Math.ceil((Math.max(...vs) + 5) / 10) * 10)
-  const y = v => ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo || 1)) * 100
-  const every = Math.ceil(items.length / 10)
-  const tickVals = [usual.hi, usual.lo]
-  for (const v of [hi, lo]) if (tickVals.every(t => Math.abs(y(t) - y(v)) > 18)) tickVals.push(v)
-  return (
-    <figure className="m-0">
-      <div className="flex gap-2">
-        <div aria-hidden className="relative h-32 w-8 shrink-0 border-r border-ruling">
-          {tickVals.map(v => (
-            <span key={v} className="absolute right-1 translate-y-1/2 text-fine tabular-nums text-ink-3"
-              style={{ bottom: `${y(v)}%` }}>{v}</span>
-          ))}
-        </div>
-        <div role="img" className="relative h-32 min-w-0 flex-1 border-b border-ruling"
-          aria-label={`${SCORE} on a scale of ${lo} to ${hi}: ${items.map(i => i.read).join(', ')}.
-            Your usual range runs ${usual.lo} to ${usual.hi}.`}>
-          <span aria-hidden className="absolute inset-x-0 border-y border-ink-3 bg-aqua-2"
-            style={{ bottom: `${y(usual.lo)}%`, height: `${y(usual.hi) - y(usual.lo)}%` }}/>
-          <div aria-hidden className="absolute inset-0 flex items-end gap-[2px] sm:gap-1">
-            {items.map(it => (
-              <span key={it.key} className="flex h-full min-w-0 flex-1 items-end justify-center">
-                <span className={cn('w-full max-w-[2.5rem] rounded-t-xs border border-ink-3/60',
-                  BANDS[bandKey(it.v, usual)].bar)} style={{ height: `${Math.max(2, y(it.v))}%` }}/>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div aria-hidden className="mt-1 flex gap-[2px] pl-10 sm:gap-1">
-        {items.map((it, i) => (
-          <span key={it.key} className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
-            {it.source && <SourceMark source={it.source}/>}
-            <span className="truncate text-fine text-ink-2">{i % every === 0 ? it.label : ''}</span>
-          </span>
-        ))}
-      </div>
-      <figcaption className="note mt-2">The shaded zone is your usual range, {usual.lo} to {usual.hi}.</figcaption>
-    </figure>
-  )
+  const n = items.length
+  const every = Math.ceil(n / 8)
+  const at = k => (n > 1 ? k / (n - 1) : 0.5)
+  const points = items.map((it, k) => ({ key: it.key, x: at(k), v: it.v, read: it.read }))
+  const ticks = items.map((it, k) => ({ x: at(k), label: k % every === 0 || k === n - 1 ? it.label : '' }))
+  return <ScoreChart points={points} ticks={ticks} usual={usual} band={v => BANDS[bandKey(v, usual)]}
+    label={`${SCORE} over the range`}/>
 }
 
 /* ── The body, over the range ───────────────────────────────────────────── */
@@ -387,7 +350,7 @@ function RangeHeadsUp({ days }) {
 
 const RANGE_WORD = { day: 'Day', week: 'Last 7 days', month: 'Last 30 days', custom: 'Custom range' }
 
-export function Trends({ teen, className }) {
+export function Trends({ teen, className, bare = false }) {
   const first = teen.days[0].date
   const [state, set] = React.useState({ kind: 'week', anchor: TODAY, from: addDays(TODAY, -13), to: TODAY })
   const [month, setMonth] = React.useState(ym(TODAY))
@@ -409,10 +372,11 @@ export function Trends({ teen, className }) {
     /* Its own tinted band with a part heading, rising in as it arrives, so
        the move from today's readings to the trends is plain. */
     <ScrollIn className={className}>
-    <section aria-labelledby="trends-h"
-      className="flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4 lg:gap-4 lg:p-5">
-      <PartHead id="trends-h" kind="trends" title="Trends"
-        line="Days, weeks and months, compared only with your own usual. Demo days."/>
+    <section aria-labelledby={bare ? undefined : 'trends-h'} aria-label={bare ? 'Your days' : undefined}
+      className={bare ? 'flex flex-col gap-3 lg:gap-4'
+        : 'flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4 lg:gap-4 lg:p-5'}>
+      {!bare && <PartHead id="trends-h" kind="trends" title="Trends"
+        line="Days, weeks and months, compared only with your own usual. Demo days."/>}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
         <Panel className="flex flex-col gap-4">
           <RangePicker state={state} set={set} first={first}/>

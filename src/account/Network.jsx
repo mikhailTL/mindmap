@@ -285,7 +285,7 @@ function JoinedPanel({ result, teen, onDone }) {
       <p role={result.ok ? 'status' : 'alert'} className="mt-1 text-ui text-ink">
         {result.ok
           ? (pending ? 'A parent approves it next. Nothing is shared until then.'
-            : teen ? 'Choose what they can see below. Everything starts off.' : 'The teen chooses what you see.')
+            : teen ? 'They see what is switched on below. Switch any of it off.' : 'The teen chooses what you see.')
           : (REDEEM_ERROR[result.reason] || REDEEM_ERROR.unknown)}
       </p>
       <button type="button" onClick={onDone} className={cn(outline, 'mt-3')}>OK</button>
@@ -403,7 +403,7 @@ function TeenNetwork({ me, go }) {
             <Panel key={l.id} title="Waiting for you" className="border-2 border-accent">
               <PersonRow person={l.person} hint={l.status === 'pending' ? 'you joined, a parent approves this one too' : 'you joined their network'} comma/>
               <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-2">
-                Choose what every {audience === 'parent' ? 'parent' : PRO} you approve can see. All start off.
+                Choose what every {audience === 'parent' ? 'parent' : PRO} you approve can see. All start on.
               </p>
               <ShareSwitches audience={audience}/>
               <div className="flex flex-wrap gap-2 border-t border-rule p-4">
@@ -530,7 +530,7 @@ function DemoNetwork() {
           ) : (
             <>
               <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-2">
-                You joined {l.person.name}’s network. Choose what they can see. All start off.
+                You joined {l.person.name}’s network. Choose what they can see. All start on.
               </p>
               <ShareSwitches audience="pro" keys={l.shares} onToggle={toggle(l.id)}/>
               <div className="flex flex-wrap gap-2 border-t border-rule p-4">

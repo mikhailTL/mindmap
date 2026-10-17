@@ -1,8 +1,14 @@
-/* The reading log: every Mind Score this phone has produced, on this phone.
+/* The reading log: every Mind Score the student has taken.
  *
  * One entry is { id, at, score, source, pulse?, note? }. `at` is epoch ms,
  * `score` 0 calm to 100 peak, `source` the way it was taken. Nothing else is
  * kept: no answers, no frames, no audio, no position.
+ *
+ * The log is kept here and synced to the student's account by
+ * src/account/sync.js, so it follows them to another device and a linked
+ * parent or Medical Professional sees the days it adds up to. A change from
+ * the account arrives through setReadings() with `remote` set, which the
+ * sync reads so it does not send the same rows straight back.
  *
  * Own key, own module. Every storage touch is guarded, because Safari private
  * mode throws on getItem and an embedded webview can have storage disabled; a
@@ -71,10 +77,25 @@ function readAll() {
   } catch { return [] }
 }
 
-function writeAll(list) {
+function announce(remote) {
+  try {
+    const ev = typeof CustomEvent === 'function' ? new CustomEvent(EVENT, { detail: { remote } }) : new Event(EVENT)
+    globalThis.dispatchEvent?.(ev)
+  } catch { /* no window */ }
+}
+
+function writeAll(list, remote = false) {
   const s = storage()
   try { s?.setItem(KEY, JSON.stringify(list)) } catch { /* shown, not saved */ }
-  try { globalThis.dispatchEvent?.(new Event(EVENT)) } catch { /* no window */ }
+  announce(remote)
+}
+
+/** Replaces the whole log, for the account sync. Rows are cleaned, sorted
+ *  and capped like any other write. */
+export function setReadings(list = [], { remote = true } = {}) {
+  const clean_ = (Array.isArray(list) ? list : []).map(clean).filter(r => r && r.id && !r.demo)
+  writeAll(clean_.sort(byTime).slice(-CAP), remote)
+  return clean_
 }
 
 const byTime = (a, b) => a.at - b.at
@@ -113,7 +134,7 @@ export function updateReading(id, patch = {}) {
 export function clearReadings() {
   const s = storage()
   try { s?.removeItem ? s.removeItem(KEY) : s?.setItem(KEY, '[]') } catch { /* nothing to clear */ }
-  try { globalThis.dispatchEvent?.(new Event(EVENT)) } catch { /* no window */ }
+  announce(false)
 }
 
 /* ── Derived figures ──────────────────────────────────────────────────── */
