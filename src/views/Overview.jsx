@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ScrollIn, ScrollRow } from '../ui/motion'
+import { ScrollIn, ScrollRow, Parallax2D } from '../ui/motion'
 import { ArrowRight } from '../ui/marks'
 import { IPhone } from '../ui/iphone'
 import { PhoneApp } from '../ui/phone-app'
@@ -113,8 +113,8 @@ const WAYS = [
 
 const SCREENS = [
   { id:'student', who:'Student',
-    title:'Your score each day',
-    line:'See every reading you take, and what moved it.',
+    title:`Your ${SCORE} each day`,
+    line:'Every reading you take, and what moved it.',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent',
     title:'A weekly summary',
@@ -150,11 +150,21 @@ const FUTURE = [
 ]
 
 const HERO_FACTS = [
-  'One stress score a day, from a patch or your phone camera.',
-  'You decide who else can see it.',
+  `A ${SCORE} from a patch or your phone camera.`,
+  'You decide who else sees it.',
 ]
 
-/* The hero's third button. The site routes by hash, so a plain #different
+/* A wash photograph drifting against the scroll, 10% oversize so no edge shows. */
+function DriftWash({ photo, className, imgClassName, distance = 48 }) {
+  return (
+    <Parallax2D clip distance={distance} scale={0.03}
+      className={cn('absolute inset-0 [&>div]:absolute [&>div]:inset-0', className)}>
+      <Frame wash photo={photo} className={cn('absolute inset-0 scale-[1.1]', imgClassName)}/>
+    </Parallax2D>
+  )
+}
+
+/* The hero's second button. The site routes by hash, so a plain #different
    link would change the route; this scrolls instead, under the sticky header,
    and jumps without animating when the reader asks for reduced motion. */
 function toDifferent() {
@@ -181,19 +191,19 @@ export function Overview({ go }) {
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
           <div className="flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
-            <ScrollIn as="p" className="font-body text-ui font-semibold text-accent-ink">
+            <ScrollIn as="p" className="mb-4 font-body text-ui font-semibold text-accent-ink">
               A wellbeing app for teenagers
             </ScrollIn>
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
                 1.06, not 1.02, where the descenders of "Making your stress"
                 landed in the cap height of "readable". */}
-            <h1 className="mt-4 max-w-[13ch] font-display text-view font-bold leading-[1.06]
+            <h1 className="max-w-[13ch] font-display text-view font-bold leading-[1.06]
               tracking-tight text-ink [text-wrap:balance] lg:text-sect
               2xl:max-w-[11ch] 2xl:text-fig">
               Making your stress <span className="text-accent">readable</span>.
             </h1>
             <ScrollIn as="p" className="mt-5 max-w-[30ch] text-lead font-medium leading-[1.3] text-ink">
-              MindMap is an app that helps teenagers track and monitor their stress levels.
+              MindMap is an app that helps teenagers track their stress.
             </ScrollIn>
             <ScrollIn className="mt-4">
               <List>
@@ -202,9 +212,9 @@ export function Overview({ go }) {
                 ))}
               </List>
             </ScrollIn>
+            {/* "Open the app" is in the header, so not repeated here. */}
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
-              <Button onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-              <Button variant="outline" onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo</Button>
+              <Button onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo<span aria-hidden>→</span></Button>
               <Button variant="ghost" className="min-h-[44px] px-0 sm:ml-3" onClick={toDifferent}>
                 What makes MindMap different
               </Button>
@@ -239,9 +249,13 @@ export function Overview({ go }) {
               overflow-hidden bg-beam-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
               after:bg-beam-wash after:content-[''] lg:after:block">
-              <Frame photo="students-hallway" eager
-                alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
-                className="absolute inset-0"/>
+              {/* Drawn 10% oversize so the drift shows no edge. */}
+              <Parallax2D clip distance={24} scale={0.02}
+                className="absolute inset-0 [&>div]:absolute [&>div]:inset-0">
+                <Frame photo="students-hallway" eager
+                  alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
+                  className="absolute inset-0 scale-[1.1]"/>
+              </Parallax2D>
               <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"
                 label={`The MindMap app, cycling through a reading, the ${SCORE} it returns and the week it lands in`}
                 className="shrink-0 lg:hidden">
@@ -265,28 +279,34 @@ export function Overview({ go }) {
       {/* -- what MindMap is, in the owner's own words, on green -------------
           The lead and a tall photograph on the left; the four paragraphs as a
           two by two set on the right from lg. */}
-      <Section name="What MindMap is" tone="card" id="what" className="bg-accent-wash">
-        <h2 className="sr-only">What MindMap is</h2>
+      {/* The band's name is its h2, not a label plus an sr-only twin. */}
+      <Section tone="card" id="what" className="bg-accent-wash">
+        <h2 className="m-0 font-body text-ui font-semibold text-accent">What MindMap is</h2>
         <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-10
           xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
           <div className="flex flex-col gap-5">
-            <p className="m-0 max-w-[60ch] font-display text-lead font-bold leading-[1.4] tracking-tight
+            <ScrollIn as="p" className="m-0 max-w-[60ch] font-display text-lead font-bold leading-[1.4] tracking-tight
               text-ink sm:text-row lg:text-head lg:leading-[1.28]">
               {IS_LEAD}
-            </p>
-            <div className="relative h-[260px] overflow-hidden rounded-panel border border-rule
-              shadow-card sm:h-[320px] lg:h-auto lg:min-h-[300px] lg:flex-1">
-              <Frame photo="friends-steps"
-                alt="Two teenagers sitting on outdoor steps, smiling at an open notebook, a backpack at their feet"
-                className="absolute inset-0"/>
-            </div>
+            </ScrollIn>
+            {/* clip={false} keeps the shadow; html and body clip x already. */}
+            <Parallax2D clip={false} distance={40} scale={0.03}
+              className="lg:flex lg:flex-1 lg:flex-col lg:[&>div]:flex lg:[&>div]:flex-1 lg:[&>div]:flex-col">
+              <div className="relative h-[260px] overflow-hidden rounded-panel border border-rule
+                shadow-card sm:h-[320px] lg:h-auto lg:min-h-[300px] lg:flex-1">
+                <Frame photo="friends-steps"
+                  alt="Two teenagers sitting on outdoor steps, smiling at an open notebook, a backpack at their feet"
+                  className="absolute inset-0"/>
+              </div>
+            </Parallax2D>
           </div>
           <ul className="m-0 grid list-none content-start gap-3.5 p-0 sm:grid-cols-2">
-            {IS.map(item => (
-              <li key={item.id} className="flex gap-4 rounded-panel border border-rule bg-card p-5">
+            {IS.map((item, i) => (
+              <ScrollRow as="li" key={item.id} index={i}
+                className="flex gap-4 rounded-panel border border-rule bg-card p-5">
                 <span className="shrink-0 pt-0.5">{IS_ICON[item.id]}</span>
                 <p className="m-0 text-sec leading-[1.55] text-ink-2">{item.text}</p>
-              </li>
+              </ScrollRow>
             ))}
           </ul>
         </div>
@@ -296,15 +316,13 @@ export function Overview({ go }) {
           Every figure on this band is external and sourced. The figures sit
           on a frosted panel: on the band directly they measured under AA. */}
       <Section name="The problem" tone="ink" className="relative isolate overflow-hidden">
-        <Frame wash photo="student-homework"
-          alt="A teenager at a desk late in the evening, head in one hand over an open notebook"
-          className="absolute inset-0 -z-10 opacity-[0.22]"/>
+        <DriftWash photo="student-homework" className="-z-10" imgClassName="opacity-[0.22]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
-          Teen stress is common, and most of it goes unseen
+          Teen stress is common and often unseen
         </SectionHead>
-        <div className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
+        <ScrollIn className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
           <ProblemFigures/>
-        </div>
+        </ScrollIn>
       </Section>
 
       {/* -- the two ways in, on blue ---------------------------------------
@@ -312,11 +330,9 @@ export function Overview({ go }) {
           Over it accent measured 4.0, so the band's name takes accent.ink. */}
       <Section name="Getting started" tone="card"
         className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
-        <Frame wash photo="student-bus"
-          alt="Two boys laughing together on a school bus seat, one holding a phone, trees going past the window behind them"
-          className="absolute inset-0 -z-10 opacity-[0.14]"/>
+        <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.14]"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
-        <SectionLede>Both give you the same score and the same app.</SectionLede>
+        <SectionLede>Both give you the same {SCORE} in the same app.</SectionLede>
         <div className="mt-5 grid auto-rows-fr gap-3.5 md:grid-cols-2">
           {WAYS.map((w, i) => (
             <ScrollRow key={w.id} index={i} className="h-full">
@@ -344,10 +360,6 @@ export function Overview({ go }) {
             </ScrollRow>
           ))}
         </div>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button size="sm" onClick={() => go('app')}>Open the app<span aria-hidden>→</span></Button>
-          <Button variant="outline" size="sm" onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo<span aria-hidden>→</span></Button>
-        </div>
       </Section>
 
       {/* -- the tools, on white (views/landing/Tools.jsx) ------------------ */}
@@ -361,17 +373,20 @@ export function Overview({ go }) {
           photograph is the band's right edge, faded in from the green, so no
           card or word ever sits over a face. Under lg it is a rounded frame
           between the lede and the cards. */}
-      <Section name="Who it is for" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
+      {/* No band name: "Who it is for" sat right above "Who MindMap is for". */}
+      <Section tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
           [mask-image:linear-gradient(to_right,transparent,black_45%)]">
-          <Frame wash photo="parent-kitchen" className="absolute inset-0 opacity-90"/>
+          <DriftWash photo="parent-kitchen" imgClassName="opacity-90"/>
         </div>
         <SectionHead>Who MindMap is for</SectionHead>
-        <div className="relative mt-5 h-[220px] overflow-hidden rounded-panel border border-rule sm:h-[280px] lg:hidden">
-          <Frame photo="parent-kitchen"
-            alt="A mother and her teenage son cooking together in a bright kitchen, chopping vegetables"
-            className="absolute inset-0"/>
-        </div>
+        <Parallax2D clip={false} distance={32} scale={0.03} className="mt-5 lg:hidden">
+          <div className="relative h-[220px] overflow-hidden rounded-panel border border-rule sm:h-[280px]">
+            <Frame photo="parent-kitchen"
+              alt="A mother and her teenage son cooking together in a bright kitchen, chopping vegetables"
+              className="absolute inset-0"/>
+          </div>
+        </Parallax2D>
         <div className="mt-5 grid auto-rows-fr gap-3.5 lg:max-w-[34rem] xl:max-w-[40rem]">
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
@@ -405,21 +420,23 @@ export function Overview({ go }) {
             <SectionHead>Your data stays yours</SectionHead>
             <SectionLede>{CONSENT_SHORT}</SectionLede>
             <dl className="mt-5 grid gap-3.5 sm:grid-cols-2">
-              {SEES.map(r => (
-                <div key={r.who} className="rounded-panel border border-rule bg-card p-5">
+              {SEES.map((r, i) => (
+                <ScrollRow key={r.who} index={i} className="rounded-panel border border-rule bg-card p-5">
                   <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
                   <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                     {r.sees}
                   </dd>
-                </div>
+                </ScrollRow>
               ))}
             </dl>
-            <p className="mt-6 font-display text-ui font-semibold text-ink">MindMap will never</p>
-            <List className="mt-2.5 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-              {NEVER.map(t => (
-                <Item key={t} className="text-meta text-ink-2">{t}</Item>
-              ))}
-            </List>
+            <ScrollIn>
+              <p className="mt-6 font-display text-ui font-semibold text-ink">MindMap will never</p>
+              <List className="mt-2.5 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {NEVER.map(t => (
+                  <Item key={t} className="text-meta text-ink-2">{t}</Item>
+                ))}
+              </List>
+            </ScrollIn>
             <p className="mt-5 text-meta text-ink-2">
               {NOTES}, {LOCATION} and every raw reading never leave the phone.
               <button type="button" onClick={() => go('privacy')}
@@ -428,35 +445,37 @@ export function Overview({ go }) {
               </button>
             </p>
           </div>
-          <div className="relative h-[220px] overflow-hidden rounded-[28px] border border-rule shadow-card
-            sm:h-[280px] lg:h-auto lg:min-h-[340px]">
-            <Frame photo="parent-laptop"
-              alt="A mother and her teenage daughter sitting close together at a laptop on a living room table, both smiling"
-              className="absolute inset-0"/>
-          </div>
+          <Parallax2D clip={false} distance={40} scale={0.03} className="lg:[&>div]:h-full">
+            <div className="relative h-[220px] overflow-hidden rounded-[28px] border border-rule shadow-card
+              sm:h-[280px] lg:h-full lg:min-h-[340px]">
+              <Frame photo="parent-laptop"
+                alt="A mother and her teenage daughter sitting close together at a laptop on a living room table, both smiling"
+                className="absolute inset-0"/>
+            </div>
+          </Parallax2D>
         </div>
       </Section>
 
       {/* ── what comes next, and the closing line, on turquoise ────────────
           ink.3 measures 4.36 on aqua.2, so nothing here is set in it, and the
           band's name takes accent.ink rather than accent. */}
-      <Section name="What comes next" tone="card"
-        className="relative isolate overflow-hidden bg-aqua-2 [&>div>p:first-child]:text-accent-ink">
+      {/* No band name: "What comes next" said what the lede says. */}
+      <Section tone="card" className="relative isolate overflow-hidden bg-aqua-2">
         {/* A soft, low-opacity vignette of the photograph in the right half,
             from lg only: under lg the text runs the full width. */}
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 lg:block
           [mask-image:radial-gradient(ellipse_62%_75%_at_55%_45%,black_35%,transparent_75%)]">
-          <Frame wash photo="student-basketball" className="absolute inset-0 opacity-[0.55] mix-blend-multiply"/>
+          <DriftWash photo="student-basketball" imgClassName="opacity-[0.55] mix-blend-multiply"/>
         </div>
         <SectionHead>MindMap for every age</SectionHead>
         <SectionLede className="text-ink-2">MindMap starts with teens. Adults and seniors come next.</SectionLede>
         <ol className="m-0 mt-5 grid max-w-[40rem] list-none grid-cols-3 gap-2.5 p-0">
-          {FUTURE.map(f => (
-            <li key={f.title} className={cn('flex flex-col gap-1 rounded-panel border bg-card p-4',
+          {FUTURE.map((f, i) => (
+            <ScrollRow as="li" key={f.title} index={i} className={cn('flex flex-col gap-1 rounded-panel border bg-card p-4',
               f.now ? 'border-accent shadow-card' : 'border-rule')}>
               <span className={cn('font-body text-fine font-semibold', f.now ? 'text-accent-ink' : 'text-ink-2')}>{f.when}</span>
               <span className="font-display text-ui font-bold leading-[1.2] text-ink sm:text-row">{f.title}</span>
-            </li>
+            </ScrollRow>
           ))}
         </ol>
         <p className="mt-6 max-w-[40ch] font-display text-head font-bold leading-[1.2] tracking-tight text-ink">

@@ -7,7 +7,7 @@ import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
 import { SeeDetails } from './Monitor'
-import { ScrollIn, ScrollRow } from '../ui/motion'
+import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { PHOTOS, dims, focal } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
 import { SignalTrace, WeekStrip } from '../charts/infographics'
@@ -47,15 +47,19 @@ const num = n => n.toLocaleString('en-US')
  * MindMap or wears the patch, and no alt text may imply otherwise.
  * Eager: Radix mounts only the open tab, so at most one is ever in the tree.
  * max-w-none is load-bearing against preflight's img { max-width: 100% }. */
-function PhotoCard({ photo, alt, className }) {
+function PhotoCard({ photo, alt, drift = false, className }) {
   const src = PHOTOS[photo]
   if (!src || !alt) return null
   const [w, h] = dims(photo)
   return (
     <div className={cn(PANEL, 'h-[152px] lg:h-[172px]', className)}>
-      <img src={src} alt={alt} width={w} height={h} loading="eager" decoding="async"
-        style={{ objectPosition: focal(photo) }}
-        className="block h-full w-full max-w-none object-cover"/>
+      {/* The photograph drifts inside its frame: 28px taller than the panel,
+          so the ±14px travel never shows an edge. */}
+      <Parallax2D className="h-full [&>div]:h-full" distance={drift ? 28 : 0} clip={false}>
+        <img src={src} alt={alt} width={w} height={h} loading="eager" decoding="async"
+          style={{ objectPosition: focal(photo) }}
+          className="-mt-3.5 block h-[calc(100%+28px)] w-full max-w-none object-cover"/>
+      </Parallax2D>
     </div>
   )
 }
@@ -265,7 +269,7 @@ function ScaleFigure() {
    `facts` may also be a function, where the rows are read off a fixture. */
 const STOPS = [
   {
-    id: 'problem', nav: 'The problem',
+    id: 'problem', drift: true, nav: 'The problem',
     title: 'Why stress is hard to track',
     lede: 'An adult hears only what a student says.',
     photo: 'students-hallway',
@@ -278,13 +282,13 @@ const STOPS = [
   },
   {
     id: 'hardware', nav: 'The patch',
-    title: 'The patch',
+    title: 'What goes on the upper arm',
     lede: 'Three printed parts around a ready made board.',
     facts: LAYERS.map(l => [l.title, l.body]),
     art: Hardware,
   },
   {
-    id: 'signals', nav: 'The four signals',
+    id: 'signals', drift: true, nav: 'The four signals',
     title: 'What the patch records',
     lede: 'Four signals from the upper arm, once a second.',
     facts: [
@@ -294,9 +298,9 @@ const STOPS = [
     art: Signals,
   },
   {
-    id: 'student', nav: 'Student screen',
+    id: 'student', drift: true, nav: 'Student screen',
     title: 'What the student sees',
-    lede: `One ${SCORE}, ${SCORE_RANGE}, and a plain sentence.`,
+    lede: `One ${SCORE}, ${SCORE_RANGE}, read against their own normal.`,
     photo: 'student-homework',
     alt: 'A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them',
     facts: [
@@ -319,7 +323,7 @@ const STOPS = [
     go: ['student', 'Open the student screen'],
   },
   {
-    id: 'parent', nav: 'Parent screen',
+    id: 'parent', drift: true, nav: 'Parent screen',
     title: 'What the parent sees',
     lede: `A day's ${SCORE} and one sentence a week.`,
     photo: 'parent-laptop',
@@ -361,7 +365,7 @@ const STOPS = [
   {
     id: 'pro', nav: `${PRO} screen`,
     title: `What the ${PRO} sees`,
-    lede: `A short list, ordered by biggest ${SCORE} change.`,
+    lede: `A short list, biggest ${SCORE} change first.`,
     photo: 'clinic-talk',
     alt: `A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`,
     /* Read off the roster the list draws, so a consent change cannot go stale. */
@@ -381,7 +385,7 @@ const STOPS = [
   },
   {
     id: 'honest', nav: 'Real and demo',
-    title: 'What is real and what is demo',
+    title: 'What is real, what is demo',
     lede: 'Every reading is generated. Nobody has worn the patch.',
     facts: [],
     art: () => (
@@ -444,19 +448,13 @@ export function Tour({ go }) {
       <section className="border-t border-rule bg-mist">
         <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]
           lg:gap-4 lg:py-7">
-          <div className="min-w-0">
-            <p className="font-mono text-ui font-bold tracking-[0.005em] text-accent">
-              Guided tour
-            </p>
-            <h1 className="mt-2 max-w-[18ch] font-display text-major font-bold leading-[1.06]
-              tracking-tight text-ink">
-              How MindMap works
-            </h1>
-          </div>
-          <Facts className="self-end" rows={[
-            ['Stops', `${STOPS.length} stops, about five minutes.`],
-            ['Figures', 'Every figure is the live screen, not a recording.'],
-          ]}/>
+          <h1 className="min-w-0 max-w-[18ch] font-display text-major font-bold leading-[1.06]
+            tracking-tight text-ink">
+            A guided tour of MindMap
+          </h1>
+          <p className="self-end text-sec leading-[1.45] text-ink-2">
+            {STOPS.length} stops, about five minutes. Every figure is the live screen, not a recording.
+          </p>
         </div>
       </section>
 
@@ -490,7 +488,15 @@ export function Tour({ go }) {
                       from lg, with the figure taking the wider track. */}
                   <div className={cn('mt-3 grid gap-3 lg:gap-4',
                     more && 'lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]')}>
-                    <ScrollIn className="min-w-0 lg:col-start-2"><Fig><A/></Fig></ScrollIn>
+                    {/* One mover per stop: a drawing drifts; a stop whose figure
+                        is read (a list, the table) or moves itself holds still. */}
+                    <ScrollIn className="min-w-0 lg:col-start-2">
+                      {s.drift
+                        ? <Parallax2D className="h-full [&>div]:h-full" distance={28} scale={0.02}>
+                            <Fig><A/></Fig>
+                          </Parallax2D>
+                        : <Fig><A/></Fig>}
+                    </ScrollIn>
                     <div className="flex flex-col gap-3 lg:col-start-1 lg:row-start-1 lg:gap-4">
                       {s.go && (
                         <Button variant="outline" size="sm" className="w-fit"
@@ -502,7 +508,7 @@ export function Tour({ go }) {
                         <SeeDetails label="See details">
                           <div className="flex flex-col gap-3 lg:gap-4">
                             {rows.length > 0 && <Facts rows={rows}/>}
-                            {s.photo && <PhotoCard photo={s.photo} alt={s.alt}/>}
+                            {s.photo && <PhotoCard photo={s.photo} alt={s.alt} drift={!s.drift}/>}
                           </div>
                         </SeeDetails>
                       )}
@@ -534,7 +540,7 @@ export function Tour({ go }) {
       </section>
 
       <section className="border-t border-rule bg-aqua-2">
-        <div className="wrap py-5 lg:py-7">
+        <ScrollIn className="wrap py-5 lg:py-7">
           <h2 className="font-display text-sub font-bold leading-[1.12] tracking-tight text-ink">
             Open the app yourself
           </h2>
@@ -549,7 +555,7 @@ export function Tour({ go }) {
               Get a {SCORE} in six questions
             </Button>
           </div>
-        </div>
+        </ScrollIn>
       </section>
     </main>
   )

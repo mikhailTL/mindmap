@@ -2,7 +2,8 @@ import React from 'react'
 import { Section, SectionHead } from '../../ui/section'
 import { ArrowRight, ChevronDown } from '../../ui/marks'
 import { useReduced } from '../../toolkit/useReduced'
-import { PRO } from '../../lib/terms'
+import { PRO, SCORE } from '../../lib/terms'
+import { ScrollRow, Parallax2D } from '../../ui/motion'
 import { cn } from '../../lib/utils'
 
 /* What makes MindMap different: ten features, one hue each.
@@ -210,17 +211,17 @@ const DRAWINGS = {
 
 export const DIFFERENT = [
   { id: 'network', hue: 'accent', go: 'methods',
-    title: 'A neural network built for stress',
-    line: 'Our own network turns body signals into one score.' },
+    title: SCORE,
+    line: 'One daily number from our own neural network.' },
   { id: 'patch', hue: 'beam', go: 'patch',
-    title: 'A wearable patch',
+    title: 'Wearable patch',
     line: 'Designed to read pulse, sweat, temperature and movement.' },
   { id: 'heads', hue: 'sky', go: 'heads-up',
-    title: 'Heads Up for parents',
-    line: 'Flags stressful phone use without showing what teens see.' },
+    title: 'Heads Up',
+    line: 'Tells parents about stressful phone use, never the content.' },
   { id: 'camera', hue: 'coral', go: 'without-patch',
-    title: 'Works without the patch',
-    line: 'A 45 second reading with camera and microphone.' },
+    title: 'No patch needed',
+    line: 'A 45 second reading with your camera and microphone.' },
   { id: 'settle', hue: 'lilac', go: 'methods',
     title: 'Recovery time',
     line: 'How fast your body settles after a peak, from the patch.' },
@@ -228,13 +229,13 @@ export const DIFFERENT = [
     title: 'Stress before events',
     line: 'How stress builds before a test you marked, from the patch.' },
   { id: 'breath', hue: 'mint', go: 'toolkit',
-    title: 'Exercises that measure you',
-    line: 'Phone sensors measure your breath, stillness and reaction time.' },
+    title: 'Measured exercises',
+    line: 'Your phone measures breath, stillness and reaction time.' },
   { id: 'helped', hue: 'blush', go: 'toolkit',
-    title: 'Did it help?',
+    title: 'Before and after',
     line: 'A pulse check before and after shows what works.' },
   { id: 'sharing', hue: 'sky', go: 'privacy',
-    title: 'Teens control sharing',
+    title: 'Sharing controls',
     line: `Teens choose what parents and ${PRO}s see.` },
   { id: 'ai', hue: 'coral', go: 'ai',
     title: 'MindMap AI',
@@ -285,13 +286,13 @@ function Panel({ f, go, id, labelledBy }) {
     <div role="tabpanel" id={id} aria-labelledby={labelledBy}
       className={cn('flex h-full flex-col rounded-panel px-10 pb-10 pt-8', h.wash)}>
       <div key={f.id} className="mm-diff-in flex flex-1 flex-col">
-        <div className={cn('flex flex-1 items-center justify-center py-4', h.draw)}>
-          <Drawing/>
-        </div>
-        <h3 className={cn('mt-4 font-display text-major font-bold leading-[1.08] tracking-tight', h.ink)}>
-          {f.title}
-        </h3>
-        <p className="mt-3 max-w-[40ch] text-lead text-ink">{f.line}</p>
+        <Parallax2D distance={28} scale={0.04}
+          className={cn('flex flex-1 flex-col justify-center py-4', h.draw)}>
+          <div className="flex justify-center"><Drawing/></div>
+        </Parallax2D>
+        <p className={cn('mt-4 max-w-[24ch] font-display text-major font-bold leading-[1.12] tracking-tight', h.ink)}>
+          {f.line}
+        </p>
         <div className="mt-6">
           <GoButton hue={f.hue} onClick={() => go(f.go)}/>
         </div>
@@ -378,11 +379,13 @@ export function Different({ go }) {
                     on ? h.wash : 'hoverOnly:bg-mist/60')}>
                   <span aria-hidden className={cn('absolute inset-y-2 left-0 w-1 rounded-bar',
                     on ? h.bar : 'bg-transparent')}/>
-                  <Tile hue={d.hue} mark={d.id}/>
-                  <span className={cn('min-w-0 font-display text-row font-bold leading-[1.2]',
-                    on ? h.ink : 'text-ink')}>
-                    {d.title}
-                  </span>
+                  <ScrollRow as="span" index={i} className="flex min-w-0 items-center gap-4">
+                    <Tile hue={d.hue} mark={d.id}/>
+                    <span className={cn('min-w-0 font-display text-row font-bold leading-[1.2]',
+                      on ? h.ink : 'text-ink')}>
+                      {d.title}
+                    </span>
+                  </ScrollRow>
                   {on && running && (
                     <span aria-hidden key={`run-${sel}`}
                       className={cn('mm-diff-run absolute bottom-0 left-4 right-3 h-[3px] rounded-bar opacity-60', h.bar)}/>
@@ -402,7 +405,7 @@ export function Different({ go }) {
             const Drawing = DRAWINGS[d.id]
             const bodyId = `${uid}-acc-${d.id}`
             return (
-              <li key={d.id} className={cn('relative overflow-hidden rounded-[16px] transition-colors duration-150',
+              <ScrollRow as="li" index={i} key={d.id} className={cn('relative overflow-hidden rounded-[16px] transition-colors duration-150',
                 on ? h.wash : 'bg-card')}>
                 <span aria-hidden className={cn('absolute inset-y-3 left-0 w-1 rounded-bar',
                   on ? h.bar : 'bg-transparent')}/>
@@ -428,7 +431,7 @@ export function Different({ go }) {
                     <GoButton hue={d.hue} onClick={() => go(d.go)}/>
                   </div>
                 </div>
-              </li>
+              </ScrollRow>
             )
           })}
         </ul>

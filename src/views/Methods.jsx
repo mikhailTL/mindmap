@@ -11,6 +11,7 @@ import { K_ANONYMITY } from '../lib/caseload'
 import { STUDENT_GROUPS } from '../toolkit/index'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
+import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 
 /* How it works, in five categories, one at a time. The fifth, "Beyond the
  * screen", lists the measurements no other teen wellbeing app makes, nine
@@ -56,30 +57,30 @@ const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
    drawing with real data on it sits on the one ground that sets it apart. */
 const CATEGORIES = [
   { id: 'hardware', tab: 'The patch', tone: 'paper', ground: 'bg-paper',
-    title: 'A patch on your upper arm',
-    line: 'The patch reads four body signals and sends them to your phone.',
+    title: 'Your body, once a second',
+    line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
     rows: [
-      ['What the patch measures', `The patch measures ${SIGNAL_NAMES[0]}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
-      ['Where the patch goes', 'The patch sticks to your upper arm, inside a small printed shell.'],
-      ['How the patch connects', 'The patch pairs with your phone over Bluetooth, with no wires.'],
-      ['Status today', 'The patch is a design, not a built unit. Patch readings on this site are generated.'],
+      ['Measures', `${SENSORS[SENSOR_ORDER[0]].name}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
+      ['Worn', 'On your upper arm, inside a small printed shell.'],
+      ['Connects', 'To your phone over Bluetooth, with no wires.'],
+      ['Status today', 'A design, not a built unit. Patch readings on this site are generated.'],
     ],
     figure: PatchLink },
   { id: 'ai', tab: 'MindMap AI', tone: 'card', ground: 'bg-aqua',
-    title: 'MindMap AI',
-    line: 'MindMap AI answers questions in plain words and never diagnoses.',
+    title: 'Plain answers to your questions',
+    line: 'Ask when a reading or a hard week needs explaining.',
     rows: [
-      ['Answers', `MindMap AI answers questions about stress, sleep, school and the ${SCORE}.`],
-      ['Follows', 'The answers follow guidance from SAMHSA, NIMH, AAP and CDC.'],
-      ['Speaks to', 'Teens, parents and Medical Professionals each get a different voice.'],
-      ['Never', 'MindMap AI never diagnoses, scores severity or names a medication.'],
-      ['In a crisis', 'In a crisis, MindMap AI gives a crisis line before anything else.'],
-      ['Status today', 'MindMap AI is not connected yet, so nothing on this site answers a question.'],
+      ['Answers', `Stress, sleep, school and the ${SCORE}.`],
+      ['Follows', 'Guidance from SAMHSA, NIMH, AAP and CDC.'],
+      ['Speaks to', 'Teens, parents and Medical Professionals, each in their own voice.'],
+      ['Never', 'Diagnoses, scores severity or names a medication.'],
+      ['In a crisis', 'A crisis line comes before anything else.'],
+      ['Status today', 'Not connected yet, so nothing on this site answers a question.'],
     ],
     figure: FrameworkFan },
   { id: 'ml', tab: 'Machine Learning', tone: 'ink', ground: 'bg-ink',
     title: 'A novel neural network',
-    line: `A novel and never before seen approach to turning four body signals into one ${SCORE}.`,
+    line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
     rows: [
       ['Learns', `Its own curve for each signal, with the last ${MEMORY_MIN} minutes in memory.`],
       ['Size', `${PARAM_COUNT.toLocaleString('en-US')} parameters, small enough to run on the phone. Nothing is uploaded.`],
@@ -91,24 +92,24 @@ const CATEGORIES = [
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkPath },
-  { id: 'software', tab: 'The app and the site', tone: 'card', ground: 'bg-beam-wash',
-    title: 'The app and the site',
-    line: 'Everything runs on your phone, and nothing is stored anywhere else.',
+  { id: 'software', tab: 'App and site', tone: 'card', ground: 'bg-beam-wash',
+    title: 'Your data stays on your phone',
+    line: 'Use the app with or without the patch. Nothing is stored anywhere else.',
     rows: [
-      ['Built with', 'The app is built with React and runs in the browser.'],
-      ['Reading without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone. No patch is needed.'],
+      ['Built with', 'React, running in the browser.'],
+      ['Without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone.'],
       ['Privacy', `Parents see one day at a time. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
-      ['Toolkit', `The toolkit has ${TOOLS} activities, each on its own page.`],
+      ['Toolkit', `${TOOLS} activities, each on its own page.`],
       ['Offline', 'Your readings and your baseline stay on your phone.'],
     ],
     figure: ConsentRules },
   /* The fifth category has no drawing. Its right column is the sources list,
      author, year, journal, so a judge can check each row against a paper. */
   { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
-    title: 'Phone sensors',
+    title: 'What your phone adds',
     line: 'Measurements no other teen wellbeing app makes, from sensors you already carry.',
     rows: [
-      ['Recovery time, back-to-back stress', 'Minutes from a peak to halfway back, and peaks that ran together.'],
+      ['Recovery time', 'Minutes from a peak to halfway back, and peaks that ran back to back.'],
       ['Stress before events', "Your body's rise in the two hours before a marked exam (Pulopulos 2018; Kazdagli 2024)."],
       ['Long exhale', 'The microphone measures each exhale during cyclic sighing, shown to lift mood (Balban 2023).'],
       ['Breath counter', 'A phone on your chest counts breaths from the accelerometer (Cinotti 2025).'],
@@ -119,7 +120,7 @@ const CATEGORIES = [
       ['Heads Up', 'Scrolling, typing and movement versus your usual, as one light, only inside MindMap (Zulueta 2018; Braund 2023).'],
     ],
     note: "Not built: other apps' keyboards, calls, background location.",
-    figure: Sources },
+    figure: Sources, still: true },
 ]
 
 /* The papers behind the "Phone sensors" rows: author, year, journal.
@@ -150,9 +151,10 @@ function Sources({ className }) {
 }
 
 /* A row: label, one line. Ruled, never boxed. */
-function Row({ k, dark, children }) {
+/* `first`, not :first-child: each row sits in its own ScrollRow wrapper. */
+function Row({ k, dark, first, children }) {
   return (
-    <div className={cn('grid gap-x-4 gap-y-0.5 border-t py-2 first:border-t-0 first:pt-0',
+    <div className={cn('grid gap-x-4 gap-y-0.5 border-t py-2', first && 'border-t-0 pt-0',
       'sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)]', dark ? 'border-ink-3' : 'border-rule')}>
       <p className={cn('font-body text-ui font-semibold', dark ? 'text-paper' : 'text-ink')}>{k}</p>
       <p className={cn('text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-2')}>{children}</p>
@@ -180,10 +182,12 @@ export function Methods({ go }) {
           <div className="wrap pb-5 pt-7 lg:pb-6 lg:pt-10">
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
               <div className="min-w-0">
-                <p className="font-body text-ui font-semibold text-accent-ink">How it works</p>
-                <h1 className="mt-2 font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-                  The five parts of MindMap
+                <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
+                  How MindMap works
                 </h1>
+                <p className="mt-2 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
+                  Every number is read against your own last two weeks, never anyone else's.
+                </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => go('check')}>
                 Take a reading<ArrowRight aria-hidden/>
@@ -209,13 +213,17 @@ export function Methods({ go }) {
               <Section tone={c.tone} className={c.ground}>
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-10">
                   <div className="min-w-0">
-                    <SectionHead tone={c.tone} className="mt-0 max-w-[24ch]">{c.title}</SectionHead>
-                    <p className={cn('mt-2 max-w-[48ch] text-sec leading-[1.5]',
-                      dark ? 'text-mist' : 'text-ink-2')}>
-                      {c.line}
-                    </p>
+                    <ScrollIn>
+                      <SectionHead tone={c.tone} className="mt-0 max-w-[24ch]">{c.title}</SectionHead>
+                      <p className={cn('mt-2 max-w-[48ch] text-sec leading-[1.5]',
+                        dark ? 'text-mist' : 'text-ink-2')}>
+                        {c.line}
+                      </p>
+                    </ScrollIn>
                     <div className="mt-4">
-                      {c.rows.map(([k, line]) => <Row key={k} k={k} dark={dark}>{line}</Row>)}
+                      {c.rows.map(([k, line], i) => (
+                        <ScrollRow key={k} index={i}><Row k={k} dark={dark} first={i === 0}>{line}</Row></ScrollRow>
+                      ))}
                     </div>
                     {c.note && (
                       <p className={cn('mt-3 text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-3')}>
@@ -223,7 +231,13 @@ export function Methods({ go }) {
                       </p>
                     )}
                   </div>
-                  <Figure dark={dark} className="min-w-0 lg:pt-1"/>
+                  {/* The drawing drifts against the scroll; the sources list is
+                      read, so it holds still. */}
+                  {c.still
+                    ? <Figure dark={dark} className="min-w-0 lg:pt-1"/>
+                    : <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
+                        <Figure dark={dark}/>
+                      </Parallax2D>}
                 </div>
               </Section>
             </TabsPrimitive.Content>

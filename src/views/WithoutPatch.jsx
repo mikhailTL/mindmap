@@ -111,7 +111,7 @@ export function WithoutPatch({ go }) {
                 </div>
                 <div className="p-3.5">
                   <p className="text-meta leading-[1.4] text-ink-2">
-                    Take a reading with the phone you already have.
+                    Use the phone you already have.
                   </p>
                   <Figures items={HERO_FACTS} className="mt-2.5"/>
                 </div>
@@ -132,7 +132,7 @@ export function WithoutPatch({ go }) {
       </header>
 
       <Section tone="card" tight id="camera">
-        <SectionHead>How the camera reads your pulse</SectionHead>
+        <SectionHead>Your pulse, from the phone camera</SectionHead>
         <ScrollIn className="mt-3 lg:mt-4">
           <div className={cn(PANEL, 'overflow-hidden border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
             <Parallax2D distance={30}>
@@ -153,9 +153,7 @@ export function WithoutPatch({ go }) {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                   <div className={cn('w-fit rounded-panel px-3 py-2',
                     i ? 'bg-aqua' : 'bg-accent-wash')}>
-                    <Parallax2D distance={16}>
-                      <RouteArt kind={r.art}/>
-                    </Parallax2D>
+                    <RouteArt kind={r.art}/>
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
@@ -181,7 +179,7 @@ export function WithoutPatch({ go }) {
                         Start the questions<span aria-hidden>→</span>
                       </Button>
                     : <Button variant="outline" size="sm" onClick={toCheck}>
-                        Go to the camera reading<span aria-hidden>→</span>
+                        Use the camera<span aria-hidden>→</span>
                       </Button>}
                 </div>
               </div>
@@ -196,7 +194,7 @@ export function WithoutPatch({ go }) {
       </Section>
 
       <Section tone="paper" tight className="bg-accent-wash">
-        <SectionHead>What has been tested so far</SectionHead>
+        <SectionHead>What has been tested</SectionHead>
         <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
           {LIMITS.map(([k, v], i) => (
             <ScrollRow key={k} index={i} className="h-full">

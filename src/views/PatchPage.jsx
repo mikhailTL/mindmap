@@ -28,10 +28,10 @@ const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
    build, part numbers, ingress, weight and cost are open: no figure for any
    of them may be added anywhere on this page. */
 const CHAIN = [
-  'The patch sticks to your upper arm, under a sleeve.',
-  'The patch records four signals, once a second.',
-  'Readings go to your phone over Bluetooth.',
-  `You get one ${SCORE} a day, ${SCORE_RANGE}.`,
+  'Sits on your upper arm, under a sleeve.',
+  'Records four signals, once a second.',
+  'Sends readings to your phone over Bluetooth.',
+  `Gives you one ${SCORE} a day, ${SCORE_RANGE}.`,
 ]
 
 const FIGURES = [
@@ -138,9 +138,10 @@ export function PatchPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 border-t border-rule pt-2.5 text-fine text-ink-2">
-                <b className="font-display font-bold text-ink">No unit has been built or worn.</b>{' '}
-                Everything on this page is a drawing or a model.
+              {/* The page's one honesty line, verbatim. The drawings repeat it
+                  in their own captions; nothing else here does. */}
+              <p className="mt-3 border-t border-rule pt-2.5 font-display text-ui font-bold text-ink">
+                No unit has been built or worn.
               </p>
             </Card>
             <button type="button" onClick={toModel}
@@ -182,14 +183,17 @@ export function PatchPage() {
       </Section>
 
       <Section tone="card" tight className="bg-aqua-2">
-        <SectionHead className="mt-0 max-w-[26ch]">What is inside the patch</SectionHead>
+        <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
-          <Card className="min-w-0 p-3.5 lg:p-5">
-            <PatchStack/>
-          </Card>
+          <Parallax2D distance={28} className="min-w-0">
+            <Card className="min-w-0 p-3.5 lg:p-5">
+              <PatchStack/>
+            </Card>
+          </Parallax2D>
 
-          <Card className="p-3.5 lg:sticky lg:top-24 lg:p-4">
+          <ScrollIn className="lg:sticky lg:top-24">
+          <Card className="p-3.5 lg:p-4">
             <h3 className="font-display text-row font-bold leading-tight text-ink">
               Decided so far
             </h3>
@@ -218,13 +222,14 @@ export function PatchPage() {
               </ul>
             </div>
           </Card>
+          </ScrollIn>
         </div>
       </Section>
 
       <section ref={band} id="model" data-anchor
         className="border-t border-rule bg-paper">
         <div className="wrap py-8 lg:py-12">
-          <SectionHead className="mt-0 max-w-[26ch]">The three parts of the patch</SectionHead>
+          <SectionHead className="mt-0 max-w-[26ch]">Take the patch apart</SectionHead>
           <div className={cn('mt-4 grid gap-4 lg:mt-6 lg:gap-6',
             !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
             <figure className="m-0 min-w-0">
@@ -239,17 +244,19 @@ export function PatchPage() {
                     beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
                 </div>
               )}
-              <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
-                {down
-                  ? 'This browser cannot show the 3D model, so the drawing stands in.'
-                  : 'This is a 3D model and a drawing, not a photograph.'}
-              </figcaption>
+              {/* Only the fallback needs a caption: the hero states once that
+                  no unit exists, and the drawing's own caption repeats it. */}
+              {down && (
+                <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
+                  This browser cannot show the 3D model, so the drawing stands in.
+                </figcaption>
+              )}
             </figure>
 
             <ol className={cn('m-0 grid list-none gap-3 p-0 lg:gap-2.5',
               down ? 'sm:grid-cols-3 lg:gap-4'
                    : 'lg:h-full lg:grid-rows-[repeat(3,minmax(min-content,1fr))]')}>
-              {LAYERS.map(l => {
+              {LAYERS.map((l, idx) => {
                 const on = !down && picked === l.part
                 /* bg-ink panel: the part strokes are drawn for a dark plate.
                    `[&_svg]:h-full` outranks the svg's own height at lg. */
@@ -271,7 +278,7 @@ export function PatchPage() {
                   </>
                 )
                 return (
-                  <li key={l.i}>
+                  <ScrollRow as="li" key={l.i} index={idx} className="lg:h-full">
                     {down ? (
                       <Card>{body}</Card>
                     ) : (
@@ -281,7 +288,7 @@ export function PatchPage() {
                         {body}
                       </Card>
                     )}
-                  </li>
+                  </ScrollRow>
                 )
               })}
             </ol>

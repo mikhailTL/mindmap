@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
 import { ArrowRight, Check, Always, Never, Minus, ChevronDown } from '../ui/marks'
-import { RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
+import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
 import { WirelessLink, StepArt } from '../charts/pairing-art'
 import { ITEMS, connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
@@ -24,21 +24,21 @@ import { cn } from '../lib/utils'
 /* The six steps of the real flow, one line each. Art is in charts/pairing-art. */
 const STEPS = [
   { k:'wake',    title:'Take the patch off charge',
-    line:'Off charge, the patch sends a Bluetooth signal.' },
+    line:'It starts sending a Bluetooth signal.' },
   { k:'open',    title:'Open the app in a browser',
     line:'Nothing to install. The browser must support Bluetooth.' },
   { k:'tap',     title:'Press Connect to the patch',
-    line:'The browser starts looking for the patch.' },
+    line:'The browser looks for it.' },
   { k:'chooser', title:'The browser shows a list',
     line:'Only the patch is listed.' },
   { k:'pick',    title:'Choose the patch and tap Pair',
     line:'The app sees nothing until you choose.' },
   { k:'stream',  title:'The patch starts sending readings',
-    line:'Four signals, once a second, all day.' },
+    line:'Four signals, once a second.' },
 ]
 
 /* Stated as absences, because the absence is the point. */
-const NOTHING = ['A cable', 'A computer', 'A driver', 'A download', 'A developer tool']
+const NOTHING = ['A cable', 'A driver', 'A download', 'A developer tool']
 
 /* The settled facts about the link, on the status bar before anything is
    pressed. Range, pairing time and battery are open and not here. */
@@ -149,11 +149,13 @@ export function Pairing({ go }) {
               </ScrollIn>
             </div>
 
-            <Card className="min-w-0 p-3.5">
-              <figure className="m-0 min-w-0">
-                <WirelessLink/>
-              </figure>
-            </Card>
+            <Parallax2D distance={40} className="min-w-0">
+              <Card className="min-w-0 p-3.5">
+                <figure className="m-0 min-w-0">
+                  <WirelessLink/>
+                </figure>
+              </Card>
+            </Parallax2D>
           </div>
         </div>
       </header>
@@ -161,7 +163,7 @@ export function Pairing({ go }) {
       {/* The console: one button, the steps it reveals, the failures behind
           their own control. */}
       <Section tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">How Pairing Works</SectionHead>
+        <SectionHead className="mt-1 max-w-[26ch]">Connect the Patch</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
             <div className="border-b border-rule bg-paper p-3.5 lg:p-4">
@@ -300,6 +302,7 @@ export function Pairing({ go }) {
       {/* Size, charging slot and baseline live on the patch page. The one thing
           kept here is the way through without a patch. */}
       <Section tone="paper" tight className="bg-aqua-2">
+        <ScrollIn>
         <Card className="p-3.5 lg:p-4">
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
@@ -311,10 +314,11 @@ export function Pairing({ go }) {
               </p>
             </div>
             <Button onClick={() => go && go('without-patch')}>
-              Take a reading without the patch<ArrowRight aria-hidden/>
+              Take a reading<ArrowRight aria-hidden/>
             </Button>
           </div>
         </Card>
+        </ScrollIn>
       </Section>
     </main>
   )
