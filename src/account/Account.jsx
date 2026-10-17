@@ -1,6 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
+import { cardClass } from '../ui/card'
 import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People, Person } from '../ui/marks'
 import { CONSENT_SHORT } from '../lib/terms'
 import { useMode } from '../lib/mode'
@@ -320,9 +321,9 @@ function Data({ me, go }) {
   function erase() { deleteAccount(); go(homeFor(me.role)) }
   return (
     <Section id="data" go={go}>
-      <section aria-labelledby="data-dl-h" className="self-start rounded-panel border border-rule bg-card p-4 lg:p-5">
+      <section aria-labelledby="data-dl-h" className={cn(cardClass('tint', 'mint'), 'self-start p-4 lg:p-5')}>
         <div className="flex items-start gap-3">
-          <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-field bg-mint-wash text-mint-ink">
+          <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-field bg-card text-mint-ink">
             <Download size={20}/>
           </span>
           <div className="min-w-0">

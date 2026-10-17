@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { PatchFront } from '../../../charts/patch-front'
 import { SENSORS, SENSOR_ORDER } from '../../../lib/sensors'
 import { FAMILY } from '../../../lib/roster'
@@ -8,15 +9,21 @@ import { demoDay, settleTimes } from '../../../signals/recovery'
 import { AvatarArt } from '../../../account/avatars'
 import { DEMO_LINKS, DEMO_TEEN } from '../../../account/demo-network'
 import { AUDIENCES } from '../../../ai/framework'
+import { FINISH_POINTS, LEVEL_NAMES, unlocksAt } from '../../../toolkit/game/progress'
 import { NOTES, PRO, SCORE } from '../../../lib/terms'
 import { cn } from '../../../lib/utils'
 
-/* One small, plain picture per point in "What makes MindMap different".
- * Each is a single idea at a glance: one dial, one line, one notification,
- * two numbers. Figures are the app's own demo data (lib/roster.js,
- * signals/recovery.js, account/demo-network.js), so a change there shows
- * here. Every picture is one role="img" with a label that says what it
- * shows; the drawing inside is hidden from screen readers. Nothing moves. */
+/* One purpose-built picture per point in "What makes MindMap different".
+ * Each shows its point in a different form: a network diagram, a choice of
+ * two sensors, a phone notification, a linked trio, a shaded curve, a bar
+ * run-up, a chat, a level badge. Figures are the app's own demo data
+ * (lib/roster.js, signals/recovery.js, account/demo-network.js,
+ * toolkit/game/progress.js), so a change there shows here.
+ *
+ * Every picture fills the pane Different.jsx gives it, is one role="img" with
+ * a label that says what it shows, and hides its drawing from screen readers.
+ * Motion is small, loops slowly, uses transform and opacity only, and is
+ * dropped for prefers-reduced-motion, leaving the finished frame. */
 
 const MAYA = FAMILY.find(t => t.id === 'maya') || FAMILY[0]
 const TODAY = MAYA.days[MAYA.days.length - 1]
@@ -27,280 +34,368 @@ const DAY = demoDay()
 const SETTLE = settleTimes(DAY.index, DAY.band).find(t => t.settled && t.peak > DAY.band.hi + 10)
 const TEST = DAY.events.find(e => e.kind === 'test') || DAY.events[0]
 
-/* The ground every picture sits on: a flat wash, fixed height, so a row of
-   cards lines up without any of them needing a frame of its own. */
-function Pic({ label, wash, children, className }) {
+const clock = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+
+function Pic({ label, className, children }) {
   return (
-    <div role="img" aria-label={label}
-      className={cn('relative h-[140px] overflow-hidden rounded-[12px]', wash, className)}>
-      <div aria-hidden className="absolute inset-0">{children}</div>
+    <div role="img" aria-label={label} className="absolute inset-0">
+      <div aria-hidden className={cn('absolute inset-0', className)}>{children}</div>
     </div>
   )
 }
 
-/* A stretch of the demo day's per-minute index as one line. The line is
-   drawn in a stretched box (non-scaling stroke keeps it 2px), and labels sit
-   on top in HTML so text is never squashed. */
-function Line({ from, to, lo = 30, hi = 76, band, dashed, stroke, children }) {
-  const W = 100, H = 100
-  const x = m => ((m - from) / (to - from)) * W
-  const y = v => H - ((v - lo) / (hi - lo)) * H
-  const path = series => {
-    let d = ''
-    for (let m = from; m <= to; m += 2) d += `${m === from ? 'M' : 'L'}${x(m).toFixed(2)} ${y(series[m]).toFixed(2)}`
-    return d
-  }
-  return (
-    <>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-x-3 bottom-3 top-9 h-[calc(100%-48px)] w-[calc(100%-24px)] overflow-visible">
-        {band && <rect x="0" y={y(band.hi)} width={W} height={y(band.lo) - y(band.hi)} className="fill-card" opacity="0.75"/>}
-        {dashed && <path d={path(dashed)} fill="none" stroke="#426a58" strokeWidth="1.5" strokeDasharray="3 4"
-          vectorEffect="non-scaling-stroke"/>}
-        <path d={path(DAY.index)} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round"
-          strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
-      </svg>
-      {children?.({ x: m => `calc(12px + (100% - 24px) * ${x(m) / W})` })}
-    </>
-  )
+/* A slow loop that rests on its last frame when motion is reduced. */
+function useLoop() {
+  return !useReducedMotion()
 }
 
-/* ── Mind Score: one dial ─────────────────────────────────────────────── */
+/* ── Mind Score: four signals through our own network into one dial ───── */
+
+const IN_Y = [28, 62, 96, 130]
+const H1 = [20, 50, 80, 110, 140]
+const H2 = [50, 80, 110]
+const X_IN = 82, X_H1 = 148, X_H2 = 212
+const DIAL = { cx: 302, cy: 104, r: 42 }
+const OUT = { x: DIAL.cx - DIAL.r - 8, y: DIAL.cy - 6 }
+
+/* A short trace per signal, drawn in its own colour: a beat, a slow rise, a
+   gentle drift, a jitter. */
+const WAVE = {
+  heart: 'M6 0h12l4-9 5 17 4-8h9l4-9 5 17 4-8h9',
+  sweat: 'M6 4c8 0 10-6 18-6s10 4 18 0 10-6 20-6',
+  temp:  'M6 0c10-6 16-6 24 0s14 6 22 0 10-4 10-4',
+  move:  'M6 0l5-6 4 9 5-11 5 12 4-7 5 5 5-8 5 9 5-5 5 2',
+}
 
 function ScorePic() {
+  const loop = useLoop()
   const v = TODAY.score
-  const R = 54, C = Math.PI * R
+  const C = Math.PI * DIAL.r
+  const arc = `M${DIAL.cx - DIAL.r} ${DIAL.cy}a${DIAL.r} ${DIAL.r} 0 0 1 ${DIAL.r * 2} 0`
+  const rows = SENSOR_ORDER.map(id => SENSORS[id])
   return (
-    <Pic wash="bg-accent-wash"
-      label={`Demo: a dial showing a ${SCORE} of ${v} out of 100, today.`}>
-      <svg viewBox="0 0 140 84" className="absolute left-1/2 top-3 h-[80px] w-auto -translate-x-1/2">
-        <path d="M16 72a54 54 0 0 1 108 0" fill="none" stroke="#ffffff" strokeWidth="12" strokeLinecap="round"/>
-        <path d="M16 72a54 54 0 0 1 108 0" fill="none" stroke="#157446" strokeWidth="12" strokeLinecap="round"
+    <Pic label={`Demo: the four patch signals, ${rows.map(r => r.name.toLowerCase()).join(', ')}, run through MindMap's own neural network into one dial: a ${SCORE} of ${v} out of 100 today.`}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-2">
+      <svg viewBox="0 0 360 160" preserveAspectRatio="xMidYMid meet" className="block min-h-0 w-full max-w-[620px] shrink"
+        style={{ aspectRatio: '360 / 160' }}>
+        <g stroke="#0d2b1e" strokeOpacity="0.16" strokeWidth="1">
+          {IN_Y.map(a => H1.map(b => <line key={`a${a}${b}`} x1={X_IN} y1={a} x2={X_H1} y2={b}/>))}
+          {H1.map(a => H2.map(b => <line key={`b${a}${b}`} x1={X_H1} y1={a} x2={X_H2} y2={b}/>))}
+          {H2.map(a => <line key={`c${a}`} x1={X_H2} y1={a} x2={OUT.x} y2={OUT.y}/>)}
+        </g>
+        {rows.map((r, i) => (
+          <g key={r.id}>
+            <path d={WAVE[r.id]} transform={`translate(4 ${IN_Y[i]})`} fill="none" stroke={r.glow}
+              strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx={X_IN} cy={IN_Y[i]} r="6" fill={r.glow}/>
+          </g>
+        ))}
+        {H1.map((y, i) => (
+          <motion.circle key={y} cx={X_H1} cy={y} r="7" fill="#ffffff" stroke="#157446" strokeWidth="2"
+            animate={loop ? { opacity: [1, 0.45, 1] } : undefined}
+            transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.3, ease: 'easeInOut' }}/>
+        ))}
+        {H2.map((y, i) => (
+          <motion.circle key={y} cx={X_H2} cy={y} r="7" fill="#157446"
+            animate={loop ? { opacity: [1, 0.55, 1] } : undefined}
+            transition={{ duration: 2.4, repeat: Infinity, delay: 0.8 + i * 0.3, ease: 'easeInOut' }}/>
+        ))}
+        {loop && rows.map((r, i) => (
+          <motion.circle key={`p${r.id}`} cx={X_IN} cy={IN_Y[i]} r="3.5" fill={r.glow}
+            initial={{ opacity: 0 }}
+            animate={{ x: [0, X_H1 - X_IN], y: [0, H1[i + 1] - IN_Y[i]], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 1.6, delay: i * 0.25, ease: 'easeInOut' }}/>
+        ))}
+        {loop && H2.map((y, i) => (
+          <motion.circle key={`q${y}`} cx={X_H2} cy={y} r="3.5" fill="#157446"
+            initial={{ opacity: 0 }}
+            animate={{ x: [0, OUT.x - X_H2], y: [0, OUT.y - y], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 1, repeat: Infinity, repeatDelay: 1.9, delay: 1.6 + i * 0.15, ease: 'easeInOut' }}/>
+        ))}
+        <path d={arc} fill="none" stroke="#ffffff" strokeWidth="11" strokeLinecap="round"/>
+        <path d={arc} fill="none" stroke="#157446" strokeWidth="11" strokeLinecap="round"
           strokeDasharray={`${(C * v) / 100} ${C}`}/>
+        <text x={DIAL.cx} y={DIAL.cy - 4} textAnchor="middle" className="font-display" fontWeight="700"
+          fontSize="30" fill="#0d2b1e">{v}</text>
       </svg>
-      <p className="absolute inset-x-0 top-[48px] m-0 text-center font-display text-stat font-bold tabular-nums text-ink">{v}</p>
-      <p className="absolute inset-x-0 bottom-2 m-0 text-center text-fine text-ink-2">{SCORE} today</p>
+      <ul className="m-0 hidden list-none flex-wrap justify-center gap-x-4 gap-y-1 p-0 xl:flex">
+        {rows.map(r => (
+          <li key={r.id} className="flex items-center gap-1.5 text-fine leading-tight text-ink-2">
+            <span className="size-2 rounded-full" style={{ background: r.glow }}/>{r.name}
+          </li>
+        ))}
+      </ul>
+      </div>
     </Pic>
   )
 }
 
-/* ── Network: three people, linked ───────────────────────────────────── */
+/* ── Network: teen in the middle, a switch on each link ──────────────── */
 
-function Who({ avatar, name, role, big }) {
+function Toggle({ animate }) {
+  const loop = useLoop() && animate
+  const t = { duration: 4, repeat: Infinity, times: [0, 0.4, 0.5, 0.9, 1], ease: 'easeInOut' }
+  return (
+    <span className="relative block h-4 w-7 overflow-hidden rounded-chip bg-ruling ring-2 ring-coral-wash sm:h-5 sm:w-9">
+      <motion.span className="absolute inset-0 bg-accent"
+        animate={loop ? { opacity: [1, 1, 0, 0, 1] } : undefined} transition={t}/>
+      <motion.span className="absolute left-[3px] top-[3px] size-[10px] rounded-full bg-card sm:size-[14px]"
+        style={{ x: '115%' }}
+        animate={loop ? { x: ['115%', '115%', '0%', '0%', '115%'] } : undefined} transition={t}/>
+    </span>
+  )
+}
+
+function Person({ avatar, name, role, big }) {
   return (
     <div className="flex min-w-0 flex-col items-center text-center">
-      <AvatarArt id={avatar} className={big ? 'size-12' : 'size-10'}/>
-      <p className="m-0 mt-1.5 whitespace-nowrap font-display text-fine font-bold leading-tight text-ink">{name}</p>
-      <p className="m-0 whitespace-nowrap text-fine leading-tight text-ink-2">{role}</p>
+      <span className="flex h-12 items-center sm:h-14">
+        <AvatarArt id={avatar} className={big ? 'size-12 sm:size-14' : 'size-9 sm:size-11'}/>
+      </span>
+      <p className="m-0 mt-1 font-display text-fine font-bold leading-tight text-ink">{name}</p>
+      <p className="m-0 text-fine leading-tight text-ink-2">{role}</p>
     </div>
   )
 }
 
 function NetworkPic() {
   return (
-    <Pic wash="bg-coral-wash"
-      label={`Demo: ${DEMO_TEEN.name}, a teen, linked to her parent ${PARENT.name} and to ${DOC.name}, a ${PRO}.`}>
-      {/* The third column is a little wider: "Medical Professional" is the longest role. */}
-      <div className="absolute inset-x-1 top-1/2 grid -translate-y-1/2 grid-cols-[1fr_0.85fr_1.2fr] items-start">
-        <span className="absolute left-[16%] right-[18%] top-6 border-t-2 border-dashed border-coral"/>
-        <Who avatar={PARENT.avatar} name={PARENT.name} role="Parent"/>
-        <Who avatar={DEMO_TEEN.avatar} name={DEMO_TEEN.name} role="Teen" big/>
-        <Who avatar={DOC.avatar} name={DOC.name} role={PRO}/>
+    <Pic label={`Demo: ${DEMO_TEEN.name}, a teen, linked to her parent ${PARENT.name} and to ${DOC.name}, a ${PRO}. A switch on each link is ${DEMO_TEEN.name}'s, and her ${NOTES} are never shared.`}>
+      <div className="absolute inset-x-2 top-1/2 mx-auto max-w-[340px] -translate-y-1/2">
+        <div className="relative grid grid-cols-3 items-start">
+          <span className="absolute left-[16.7%] right-[16.7%] top-6 border-t-2 border-coral sm:top-7"/>
+          <span className="absolute left-[33.3%] top-6 sm:top-7 -translate-x-1/2 -translate-y-1/2"><Toggle/></span>
+          <span className="absolute left-[66.7%] top-6 sm:top-7 -translate-x-1/2 -translate-y-1/2"><Toggle animate/></span>
+          <Person avatar={PARENT.avatar} name={PARENT.name} role="Parent"/>
+          <Person avatar={DEMO_TEEN.avatar} name={DEMO_TEEN.name} role="Teen" big/>
+          <Person avatar={DOC.avatar} name={DOC.name} role={PRO}/>
+        </div>
+        <p className="m-0 mt-2 flex items-center justify-center gap-1.5 text-fine leading-tight text-coral-ink">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" strokeLinejoin="round">
+            <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>
+          </svg>
+          {NOTES} are never shared
+        </p>
       </div>
     </Pic>
   )
 }
 
-/* ── Patch: the patch and its four readings ──────────────────────────── */
+/* ── Patch, or the phone camera ──────────────────────────────────────── */
 
 function PatchPic() {
-  const rows = SENSOR_ORDER.map(id => SENSORS[id])
+  const loop = useLoop()
+  const heart = SENSORS.heart.glow
   return (
-    <Pic wash="bg-beam-wash"
-      label={`Demo: the MindMap patch, designed to read ${rows.map(r => r.name.toLowerCase()).join(', ')}.`}>
-      <div className="absolute inset-0 flex items-center justify-center gap-3 px-3">
-        <PatchFront className="w-[54px] shrink-0"/>
-        <ul className="m-0 list-none space-y-1 p-0">
-          {rows.map(r => {
-            const Icon = r.icon
-            return (
-              <li key={r.id} className="flex items-center gap-2 text-fine leading-tight text-ink">
-                <Icon aria-hidden size={16} style={{ color: r.glow }} className="shrink-0"/>{r.name}
-              </li>
-            )
-          })}
-        </ul>
+    <Pic label="Demo: the MindMap patch, or a phone whose camera reads pulse when there is no patch.">
+      <div className="absolute inset-0 grid grid-cols-[1fr_auto_1fr] items-center px-3">
+        <figure className="m-0 flex flex-col items-center">
+          <PatchFront className="w-[54px]"/>
+          <figcaption className="mt-1.5 text-fine font-semibold leading-tight text-ink">Patch</figcaption>
+        </figure>
+        <span className="font-display text-ui font-bold text-beam-ink">or</span>
+        <figure className="m-0 flex flex-col items-center">
+          <span className="relative block h-[84px] w-[46px] rounded-[11px] border-[3px] border-ink bg-card">
+            <span className="absolute left-1/2 top-1.5 size-[7px] -translate-x-1/2 rounded-full bg-ink"/>
+            {loop && (
+              <motion.span className="absolute left-1/2 top-1.5 -ml-[3.5px] size-[7px] rounded-full"
+                style={{ boxShadow: `0 0 0 2px ${heart}` }}
+                animate={{ scale: [1, 2.6], opacity: [0.9, 0] }}
+                transition={{ duration: 1.1, repeat: Infinity, repeatDelay: 0.3, ease: 'easeOut' }}/>
+            )}
+            <svg viewBox="0 0 40 24" className="absolute inset-x-1 top-[34px] w-[calc(100%-8px)]">
+              <path d="M1 14h9l3-8 4 14 3-9 3 3h16" fill="none" stroke={heart} strokeWidth="2.4"
+                strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <figcaption className="mt-1.5 text-fine font-semibold leading-tight text-ink">Phone camera</figcaption>
+        </figure>
       </div>
     </Pic>
   )
 }
 
-/* ── Heads Up: the one line a parent gets ────────────────────────────── */
+/* ── Heads Up: the notification lands on a parent's phone ────────────── */
 
 function HeadsUpPic() {
+  const loop = useLoop()
   return (
-    <Pic wash="bg-sky-wash" label={`Demo: a Heads Up notification on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
-      <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 rounded-[12px] bg-card px-3 py-2.5 shadow-card">
-        <p className="m-0 flex items-center justify-between text-fine leading-none text-ink-2">
-          <span className="font-semibold">Heads Up</span><span>now</span>
-        </p>
-        <div className="mt-2 flex items-center gap-2.5">
-          <LampFace light="yellow" size={28}/>
-          <p className="m-0 font-display text-ui font-bold leading-tight text-ink">{HEADLINE.yellow}</p>
-        </div>
+    <Pic label={`Demo: a Heads Up notification lands on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
+      <div className="absolute bottom-0 left-1/2 h-[118px] w-[min(210px,84%)] -translate-x-1/2 rounded-t-[26px] border-[3px] border-b-0 border-ink-3 bg-ink-2">
+        <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-bar bg-ink"/>
+        <motion.div className="absolute inset-x-2 top-6 rounded-[12px] bg-card px-2.5 py-2"
+          animate={loop ? { y: [-18, 0, 0, -18], opacity: [0, 1, 1, 0] } : undefined}
+          transition={{ duration: 6, repeat: Infinity, times: [0, 0.08, 0.88, 1], ease: 'easeOut' }}>
+          <p className="m-0 flex items-center justify-between text-fine leading-none text-ink-2">
+            <span className="font-semibold">Heads Up</span><span>now</span>
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <LampFace light="yellow" size={24}/>
+            <p className="m-0 font-display text-fine font-bold leading-tight text-ink">{HEADLINE.yellow}</p>
+          </div>
+        </motion.div>
       </div>
     </Pic>
   )
 }
 
-/* ── Recovery time: one peak, one line, how long it took ─────────────── */
+/* ── Recovery: a peak, and the drop back shaded ──────────────────────── */
 
 function RecoveryPic() {
-  const from = SETTLE.peakAt - 40, to = SETTLE.peakAt + 50
+  const from = SETTLE.peakAt - 30, to = SETTLE.peakAt + DAY.usualSettle + 16
+  const lo = DAY.band.lo - 2, hi = SETTLE.peak + 3, W = 100, H = 100
+  const x = m => ((m - from) / (to - from)) * W
+  const y = v => H - ((v - lo) / (hi - lo)) * H
+  let line = ''
+  for (let m = from; m <= to; m += 2) line += `${m === from ? 'M' : 'L'}${x(m).toFixed(2)} ${y(DAY.index[m]).toFixed(2)}`
+  const end = SETTLE.peakAt + SETTLE.minutes
+  let drop = `M${x(SETTLE.peakAt).toFixed(2)} ${y(DAY.band.hi).toFixed(2)}`
+  for (let m = SETTLE.peakAt; m <= end; m++) drop += `L${x(m).toFixed(2)} ${y(Math.max(DAY.band.hi, DAY.index[m])).toFixed(2)}`
+  drop += `L${x(end).toFixed(2)} ${y(DAY.band.hi).toFixed(2)}Z`
+  const at = m => `calc(12px + (100% - 24px) * ${x(m) / W})`
+  const span = n => `calc((100% - 24px) * ${n / (to - from)})`
   return (
-    <Pic wash="bg-lilac-wash"
-      label={`Demo: a line that rises to a peak at ${Math.round(SETTLE.peak)} and settles back toward the usual range. Settled in ${SETTLE.minutes} minutes; the usual is ${DAY.usualSettle}.`}>
-      <p className="absolute left-3 top-2.5 m-0 text-fine leading-tight text-ink">
-        <span className="font-display font-bold">Settled in {SETTLE.minutes} min</span>
-        <span className="text-ink-2"> · usual {DAY.usualSettle}</span>
-      </p>
-      <Line from={from} to={to} band={DAY.band} stroke="#a024f2">
-        {({ x }) => (
-          <span className="absolute top-9 h-[calc(100%-48px)] border-x-2 border-lilac-ink/60 bg-lilac/10"
-            style={{ left: x(SETTLE.peakAt), width: `calc((100% - 24px) * ${SETTLE.minutes / (to - from)})` }}/>
-        )}
-      </Line>
+    <Pic label={`Demo: a line rises to a peak and drops back into the usual range. The drop is shaded: settled in ${SETTLE.minutes} minutes, against a usual ${DAY.usualSettle}.`}>
+      <div className="absolute top-2.5 h-5" style={{ left: at(SETTLE.peakAt), width: span(SETTLE.minutes) }}>
+        <span className="absolute inset-x-0 bottom-0 h-2 rounded-t-[3px] border-x-2 border-t-2 border-lilac-ink"/>
+        <span className="absolute bottom-2.5 left-0 whitespace-nowrap font-display text-fine font-bold leading-none text-lilac-ink">{SETTLE.minutes} min</span>
+      </div>
+      <div className="absolute bottom-2.5 h-5" style={{ left: at(SETTLE.peakAt), width: span(DAY.usualSettle) }}>
+        <span className="absolute inset-x-0 top-0 h-2 rounded-b-[3px] border-x-2 border-b-2 border-dashed border-ink-3"/>
+        <span className="absolute left-full top-1 ml-1.5 whitespace-nowrap text-fine leading-none text-ink-2">usual {DAY.usualSettle}</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        className="absolute inset-x-3 bottom-8 top-9 h-[calc(100%-68px)] w-[calc(100%-24px)] overflow-visible">
+        <rect x="0" y={y(DAY.band.hi)} width={W} height={y(DAY.band.lo) - y(DAY.band.hi)} fill="#ffffff"/>
+        <path d={drop} fill="#a024f2" opacity="0.28"/>
+        <path d={line} fill="none" stroke="#6f09b2" strokeWidth="2.5" strokeLinecap="round"
+          strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
+      </svg>
     </Pic>
   )
 }
 
-/* ── Stress before events: the climb before a marked test ────────────── */
+/* ── Stress before events: the climb, in 20-minute steps, to a marked test ─ */
+
+const STEP = 15
+const RUN = Array.from({ length: 6 }, (_, i) => {
+  const a = TEST.minute - 6 * STEP + i * STEP
+  let s = 0
+  for (let m = a; m < a + STEP; m++) s += DAY.index[m] - DAY.usual[m]
+  return s / STEP
+})
+const RUN_MAX = Math.max(1, ...RUN)
 
 function EventsPic() {
-  const from = TEST.minute - 120, to = TEST.minute + 12
+  const loop = useLoop()
   return (
-    <Pic wash="bg-sun-wash"
-      label={`Demo: a line that climbs above the dashed usual line in the two hours before a ${TEST.label.toLowerCase()} marked in the calendar.`}>
-      <Line from={from} to={to} dashed={DAY.usual} stroke="#825d07">
-        {({ x }) => (
-          <>
-            <span className="absolute bottom-3 top-2.5 border-l-2 border-sun-ink" style={{ left: x(TEST.minute) }}/>
-            <span className="absolute top-2.5 -translate-x-full whitespace-nowrap rounded-[6px] bg-sun-ink px-1.5 py-0.5
-              text-fine font-semibold leading-tight text-card" style={{ left: x(TEST.minute) }}>{TEST.label}</span>
-          </>
-        )}
-      </Line>
-    </Pic>
-  )
-}
-
-/* ── Measured exercises: the phone as the sensor ─────────────────────── */
-
-const EXHALE = 6.8, GOAL = 6, GAUGE = 12
-
-function ExercisesPic() {
-  return (
-    <Pic wash="bg-mint-wash"
-      label={`Demo: a Long Exhale on the phone. The microphone measured a ${EXHALE} second exhale against a ${GOAL} second goal. Sound is never recorded.`}>
-      <div className="absolute inset-0 flex items-center justify-center gap-4 px-3">
-        <div className="relative h-[100px] w-[54px] shrink-0 rounded-[12px] border-[3px] border-ink bg-card">
-          <span className="absolute left-1/2 top-1.5 h-1 w-4 -translate-x-1/2 rounded-bar bg-ink"/>
-          <svg viewBox="0 0 24 40" className="absolute left-1/2 top-[26px] h-[48px] -translate-x-1/2">
-            <path d="M12 3c4 5 6 9 6 13a6 6 0 0 1-12 0c0-4 2-8 6-13z" fill="#f25424"/>
-            <path d="M12 11c2 2.5 3 4.5 3 6.5a3 3 0 0 1-6 0c0-2 1-4 3-6.5z" fill="#ffe8e0"/>
-            <rect x="8" y="24" width="8" height="14" rx="2" fill="#d5f2e8" stroke="#067049" strokeWidth="1.2"/>
-          </svg>
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="m-0 text-fine leading-tight text-ink-2">Long exhale</p>
-          <p className="m-0 mt-0.5 font-display text-head font-bold tabular-nums leading-none text-ink">{EXHALE} s</p>
-          <div className="relative mt-2.5 h-2 rounded-bar bg-card">
-            <span className="absolute inset-y-0 left-0 rounded-bar bg-mint" style={{ width: `${(EXHALE / GAUGE) * 100}%` }}/>
-            <span className="absolute -top-1 h-4 w-0.5 bg-ink" style={{ left: `${(GOAL / GAUGE) * 100}%` }}/>
-          </div>
-          <p className="m-0 mt-1.5 text-fine leading-tight text-ink-2">Goal {GOAL} s</p>
-        </div>
+    <Pic label={`Demo: six bars, one for each 15 minutes in the hour and a half before a ${TEST.label.toLowerCase()} at ${clock(TEST.minute)} marked in the calendar, climbing higher above the usual line as the test gets closer.`}>
+      <div className="absolute right-3 top-2.5 flex items-center gap-2 rounded-[8px] bg-sun-wash py-1 pl-1 pr-2">
+        <span className="overflow-hidden rounded-[5px] bg-card leading-none">
+          <span className="block h-1.5 bg-sun"/>
+          <span className="block px-1.5 pb-1 pt-0.5 font-display text-fine font-bold text-ink">{clock(TEST.minute)}</span>
+        </span>
+        <span className="font-display text-fine font-bold leading-tight text-ink">{TEST.label}</span>
       </div>
-    </Pic>
-  )
-}
-
-/* ── Before and after: two pulse checks ──────────────────────────────── */
-
-const BEFORE = 84, AFTER = 78
-
-function BeforeAfterPic() {
-  return (
-    <Pic wash="bg-blush-wash"
-      label={`Demo: a pulse check of ${BEFORE} beats a minute before a breathing exercise and ${AFTER} after it.`}>
-      <div className="absolute inset-0 flex items-center justify-center gap-3 px-3">
-        <div className="text-center">
-          <p className="m-0 text-fine text-ink-2">Before</p>
-          <p className="m-0 mt-1 font-display text-stat font-bold tabular-nums leading-none text-ink-2">{BEFORE}</p>
-          <p className="m-0 mt-1 text-fine text-ink-2">bpm</p>
-        </div>
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#b2095e" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-          <path d="M3.5 12h16M13.5 6l6 6-6 6"/>
-        </svg>
-        <div className="text-center">
-          <p className="m-0 text-fine text-ink-2">After</p>
-          <p className="m-0 mt-1 font-display text-stat font-bold tabular-nums leading-none text-blush-ink">{AFTER}</p>
-          <p className="m-0 mt-1 text-fine text-ink-2">bpm</p>
-        </div>
+      <div className="absolute inset-x-3 bottom-7 top-[58px] flex items-end gap-1.5">
+        {RUN.map((v, i) => (
+          <motion.span key={i} className="block flex-1 origin-bottom rounded-t-[5px] bg-sun"
+            style={{ height: `${Math.max(5, (v / RUN_MAX) * 100)}%` }}
+            initial={loop ? { scaleY: 0.15 } : false}
+            animate={loop ? { scaleY: [0.15, 1, 1, 0.15] } : undefined}
+            transition={{ duration: 5, times: [0, 0.2, 0.9, 1], repeat: Infinity, delay: i * 0.08, ease: 'easeOut' }}/>
+        ))}
       </div>
+      <span className="absolute inset-x-3 bottom-7 border-t-2 border-dashed border-ink-3"/>
+      <p className="absolute inset-x-3 bottom-1.5 m-0 flex justify-between text-fine leading-tight text-ink-2">
+        <span>Usual</span><span>Test</span>
+      </p>
     </Pic>
   )
 }
 
-/* ── MindMap AI: one question, one answer ────────────────────────────── */
+/* ── MindMap AI: a question, a pause, a reply ────────────────────────── */
 
 const ASK = AUDIENCES.student.starters[0]
 
 function AiPic() {
+  const loop = useLoop()
+  const [replied, setReplied] = React.useState(true)
+  React.useEffect(() => {
+    if (!loop) { setReplied(true); return }
+    let t
+    const cycle = on => { setReplied(on); t = setTimeout(() => cycle(!on), on ? 5200 : 1500) }
+    cycle(false)
+    return () => clearTimeout(t)
+  }, [loop])
   return (
-    <Pic wash="bg-accent-wash" label={`Demo: a teen asks MindMap AI "${ASK}" and gets a short, practical reply.`}>
-      <div className="absolute inset-x-3 top-3 flex flex-col gap-1.5">
-        <p className="m-0 ml-auto max-w-[88%] rounded-[12px] rounded-br-[4px] bg-accent px-2.5 py-1.5 text-fine leading-snug text-card">
+    <Pic label={`Demo: a teen asks MindMap AI "${ASK}" and gets a short, practical reply.`}>
+      <div className="absolute inset-x-3 top-3 flex flex-col gap-2">
+        <p className="m-0 ml-auto max-w-[86%] rounded-[14px] rounded-br-[4px] bg-accent-lit px-3 py-1.5 text-fine leading-snug text-ink">
           {ASK}</p>
-        <p className="m-0 max-w-[92%] rounded-[12px] rounded-bl-[4px] bg-card px-2.5 py-1.5 text-fine leading-snug text-ink">
-          That sounds tiring. When does your phone go away?</p>
+        <div className="relative">
+          <motion.p className="m-0 max-w-[92%] rounded-[14px] rounded-bl-[4px] bg-card px-3 py-1.5 text-fine leading-snug text-ink"
+            animate={{ opacity: replied ? 1 : 0, y: replied ? 0 : 6 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}>
+            That sounds tiring. When does your phone go away at night?</motion.p>
+          <motion.span className="absolute left-0 top-0 flex gap-1 rounded-[14px] rounded-bl-[4px] bg-ink-2 px-3 py-2.5"
+            animate={{ opacity: replied ? 0 : 1 }} transition={{ duration: 0.2 }}>
+            {[0, 1, 2].map(i => (
+              <motion.span key={i} className="size-1.5 rounded-full bg-mist"
+                animate={loop && !replied ? { opacity: [0.3, 1, 0.3] } : undefined}
+                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}/>
+            ))}
+          </motion.span>
+        </div>
       </div>
     </Pic>
   )
 }
 
-/* ── Privacy: the teen's own switches ────────────────────────────────── */
+/* ── Toolkit: points fill a level, and the next level opens new things ─ */
 
-function Switch({ on }) {
-  return (
-    <span className={cn('relative h-6 w-10 shrink-0 rounded-chip', on ? 'bg-accent' : 'bg-ruling')}>
-      <span className={cn('absolute top-[3px] size-[18px] rounded-full bg-card', on ? 'right-[3px]' : 'left-[3px]')}/>
-    </span>
-  )
-}
+const LEVEL = 3
+const OPENS = unlocksAt(LEVEL)
 
-function PrivacyPic() {
+function ToolkitPic() {
+  const loop = useLoop()
   return (
-    <Pic wash="bg-sky-wash"
-      label={`Demo: ${DEMO_TEEN.name}'s sharing switches for her parent ${PARENT.name}. ${SCORE} for each day is on. ${NOTES} are never shared.`}>
-      <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 rounded-[12px] bg-card px-3 py-2">
-        <p className="m-0 flex items-center gap-2 text-fine leading-tight text-ink-2">
-          <AvatarArt id={DEMO_TEEN.avatar} className="size-6"/>
-          <span>Shared with <span className="font-semibold text-ink">{PARENT.name}</span></span>
-        </p>
-        <p className="m-0 mt-2 flex items-center justify-between gap-2 text-fine leading-tight text-ink">
-          {SCORE} each day<Switch on/>
-        </p>
-        <p className="m-0 mt-1.5 flex items-center justify-between gap-2 text-fine leading-tight text-ink">
-          {NOTES}
-          <span className="inline-flex items-center gap-1 text-ink-2">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round">
-              <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>
-            </svg>
-            Never
-          </span>
-        </p>
+    <Pic label={`Demo: a level ${LEVEL} badge, ${LEVEL_NAMES[LEVEL - 1]}. Finishing an exercise adds ${FINISH_POINTS} points to the bar, and the level opens ${OPENS.map(o => `the ${o.name} ${o.kind === 'theme' ? 'colour' : 'ring'}`).join(' and ')}.`}>
+      <div className="absolute inset-0 flex items-center gap-3.5 px-3">
+        <div className="relative shrink-0">
+          <svg viewBox="0 0 64 72" width="66" height="74">
+            <path d="M32 2l28 16v36L32 70 4 54V18z" fill="#18a370"/>
+            <path d="M32 12l20 11.5v25L32 60 12 48.5v-25z" fill="#ffffff"/>
+            <text x="32" y="45" textAnchor="middle" className="font-display" fontWeight="700" fontSize="24" fill="#067049">{LEVEL}</text>
+          </svg>
+          {loop && (
+            <motion.span className="absolute -right-2 -top-1 font-display text-fine font-bold text-mint-ink"
+              animate={{ y: [6, -10], opacity: [0, 1, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 1.4, ease: 'easeOut' }}>
+              +{FINISH_POINTS}
+            </motion.span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-fine leading-tight text-ink-2">Level {LEVEL}</p>
+          <p className="m-0 font-display text-ui font-bold leading-tight text-ink">{LEVEL_NAMES[LEVEL - 1]}</p>
+          <div className="relative mt-2 h-2.5 overflow-hidden rounded-bar bg-card">
+            <motion.span className="absolute inset-0 origin-left rounded-bar bg-mint"
+              style={{ scaleX: 0.62 }}
+              animate={loop ? { scaleX: [0.38, 0.38, 0.62, 0.62] } : undefined}
+              transition={{ duration: 3.2, repeat: Infinity, times: [0, 0.35, 0.55, 1], ease: 'easeOut' }}/>
+          </div>
+          <ul className="m-0 mt-2 flex list-none flex-wrap gap-x-3 gap-y-1 p-0">
+            {OPENS.map(o => (
+              <li key={o.id} className="flex items-center gap-1.5 text-fine leading-tight text-ink-2">
+                {o.kind === 'theme'
+                  ? <span className="size-3 rounded-full" style={{ background: o.main }}/>
+                  : <span className="size-3 rounded-full border-2 border-dotted border-mint-ink"/>}
+                {o.name}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </Pic>
   )
@@ -314,8 +409,6 @@ export const PICTURES = {
   heads: HeadsUpPic,
   settle: RecoveryPic,
   event: EventsPic,
-  breath: ExercisesPic,
-  helped: BeforeAfterPic,
   ai: AiPic,
-  sharing: PrivacyPic,
+  toolkit: ToolkitPic,
 }

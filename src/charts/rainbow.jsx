@@ -238,7 +238,9 @@ function Band({ r, glow, pct, dim }) {
  * Two strokes: one dark hairline alone disappears into the darkest band. */
 function UsualMark({ at }) {
   const deg = 180 + 1.8 * Math.max(0, Math.min(100, at))
-  const [x1, y1] = pol(RADII[3] - BAND / 2 - 5, deg)
+  /* Starts at the inner band's edge, not inside it: any further in and the
+     needle reached the score figure. */
+  const [x1, y1] = pol(RADII[3] - BAND / 2, deg)
   const [x2, y2] = pol(RADII[0] + BAND / 2 + 6, deg)
   const line = w => <line x1={x1.toFixed(2)} y1={y1.toFixed(2)}
     x2={x2.toFixed(2)} y2={y2.toFixed(2)} strokeWidth={w} strokeLinecap="round"/>
@@ -294,7 +296,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
   return (
     <div className={cn('w-full shrink-0', className)} style={{ maxWidth: size }}>
       <div ref={boxRef} role="img" onClick={hit} className="relative"
-        style={{ aspectRatio: `${VW} / ${VH}`, cursor: onPick ? 'pointer' : undefined }}
+        style={{ aspectRatio: `${VW} / ${VH}`, cursor: onPick ? 'pointer' : undefined, containerType: 'inline-size' }}
         aria-label={`${score} out of 100${usual != null ? `, marked against a usual day of ${usual}` : ''}. 0 is calm, 100 is peak.
           The scale outside the bands is ticked every 5 points and numbered every 25.
           Each signal out of 100: ${read}.`}>
@@ -318,8 +320,13 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
         </svg>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[28.5%]
           flex flex-col items-center">
-          <span className="font-display text-dial font-medium leading-none tracking-tight text-ink">{shown}</span>
-          <span className="mt-1 text-tick text-ink-3">out of 100</span>
+          {/* Sized to the dial, not the page: the inner band's inside edge is
+              77 of 320 viewBox units from the centre, so at 14.5% of the
+              dial's width the figure and its label always sit inside it. A
+              fixed 50px figure ran into the blue band on any dial under ~300px. */}
+          <span className="font-display text-dial font-medium leading-none tracking-tight text-ink"
+            style={{ fontSize: 'clamp(18px, 14.5cqw, 50px)' }}>{shown}</span>
+          <span className="mt-[0.2em] text-tick leading-none text-ink-3" style={{ fontSize: 'clamp(10px, 4.4cqw, 14px)' }}>out of 100</span>
         </div>
         {/* 15% and 85% are the feet's own centres in the viewBox, so the
             labels track the ends they name at any size. Both ends carry their

@@ -20,6 +20,7 @@ import { CalendarLegend, FACE_MEANS, FACE_WORD, MonthCalendar, longDay } from '.
 import { TEEN } from './student/demoTeen'
 import { LampFace } from '../traffic/Face'
 import { cn } from '../lib/utils'
+import { cardClass, cardInk } from '../ui/card'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
@@ -37,20 +38,29 @@ const HEAD = 'max-w-none border-b border-rule bg-aqua px-3.5 py-2 font-display t
 const PHOTO_H = 'h-[184px] sm:h-[240px] md:h-[320px] lg:h-[268px]'
 
 /* A card of labelled rows: a label and its value, never a label over a
-   paragraph. `photo` makes the card's top edge a banner. */
-function Facts({ rows, head, photo, photoAlt, className }) {
+   paragraph. `photo` makes the card's top edge a banner. `variant` and `hue`
+   pick the surface (src/ui/card.jsx): reading notes beside a figure are a
+   `rule`, a box on a coloured band an `outline`, the one rule a page must not
+   miss `ink`. */
+function Facts({ rows, head, photo, photoAlt, className, variant = 'plain', hue = 'accent' }) {
+  const t = cardInk(variant, hue)
+  const flat = variant === 'rule'
   return (
-    <div className={cn(PANEL, className)}>
+    <div className={cn(cardClass(variant, hue), 'overflow-hidden', className)}>
       {photo && (
         <div className={cn('border-b border-rule', PHOTO_H)}>
           <Frame photo={photo} alt={photoAlt} eager/>
         </div>
       )}
-      {head && <p className={HEAD}>{head}</p>}
+      {head && (
+        <p className={cn(variant === 'plain' ? HEAD
+          : cn('max-w-none border-b py-2 font-display text-fine font-bold leading-tight', t.line, t.head,
+            flat ? 'px-0 pt-2.5' : 'px-3.5'))}>{head}</p>
+      )}
       {rows.map(([label, value], i) => (
-        <div key={label} className={cn('px-3.5 py-2', i && 'border-t border-rule')}>
-          <p className="font-display text-fine font-bold leading-tight text-ink">{label}</p>
-          <p className="mt-0.5 text-meta leading-[1.35] text-ink-2">{value}</p>
+        <div key={label} className={cn(flat ? 'py-2' : 'px-3.5 py-2', i && cn('border-t', t.line))}>
+          <p className={cn('font-display text-fine font-bold leading-tight', t.head)}>{label}</p>
+          <p className={cn('mt-0.5 text-meta leading-[1.35]', t.body)}>{value}</p>
         </div>
       ))}
     </div>
@@ -58,15 +68,17 @@ function Facts({ rows, head, photo, photoAlt, className }) {
 }
 
 /* A card of chips, one per thing the audience is never given. */
-function Chips({ head, rows, className }) {
+function Chips({ head, rows, className, variant = 'plain', hue = 'accent' }) {
+  const t = cardInk(variant, hue)
   return (
-    <div className={cn(PANEL, 'flex h-full flex-col', className)}>
-      <p className={HEAD}>{head}</p>
+    <div className={cn(cardClass(variant, hue), 'flex h-full flex-col overflow-hidden', className)}>
+      <p className={variant === 'plain' ? HEAD
+        : cn('max-w-none border-b px-3.5 py-2 font-display text-fine font-bold leading-tight', t.line, t.head)}>{head}</p>
       <ul className="m-0 grid list-none gap-1.5 p-3.5">
-        {rows.map(t => (
-          <li key={t} className="flex items-start gap-2 rounded-field border border-rule
-            px-2.5 py-1.5 text-meta leading-[1.3] text-ink-2">
-            <Never aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3"/>{t}
+        {rows.map(t2 => (
+          <li key={t2} className={cn('flex items-start gap-2 rounded-field border px-2.5 py-1.5 text-meta leading-[1.3] text-ink-2',
+            variant === 'plain' ? 'border-rule' : cn(t.line, 'bg-card/70'))}>
+            <Never aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3"/>{t2}
           </li>
         ))}
       </ul>
@@ -151,7 +163,7 @@ function Closer({ title, line, label, view, go, rows, ground }) {
             {label} <ArrowRight aria-hidden/>
           </Button>
         </div>
-        <Facts rows={rows} className="self-end"/>
+        <Facts rows={rows} variant="outline" className="self-end"/>
       </div>
     </Section>
   )
@@ -172,7 +184,7 @@ function ScoreExplain({ rings, rows, aside, asideAlt }) {
         </Fig>
       </ScrollIn>
       <ScrollIn>
-        <Facts head="How to read the dial" rows={rows}/>
+        <Facts head="How to read the dial" rows={rows} variant="rule" hue="accent"/>
       </ScrollIn>
     </Pair>
   )
@@ -302,7 +314,7 @@ export function ForStudents({ go }) {
             </Fig>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read the dial" rows={[
+            <Facts head="How to read the dial" variant="rule" hue="accent" rows={[
               ['Each ring', 'Each ring shows one body signal against your own last fourteen days.'],
               ['The mark on the arc', 'The mark shows where a usual day sits for you.'],
               ['Movement', 'Movement tells the app a hard run apart from a hard day.'],
@@ -318,7 +330,7 @@ export function ForStudents({ go }) {
             <TrendsFig ranges={['day', 'week', 'month']} aside={HALLWAY[0]} asideAlt={HALLWAY[1]}/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read your trends" rows={[
+            <Facts head="How to read your trends" variant="rule" hue="beam" rows={[
               ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
               ['The calendar', `Each day shows its Heads Up face and ${SCORE}. Pick a day to see it.`],
               ['The shaded band', 'The band is your usual range, built from your last fourteen days.'],
@@ -342,7 +354,7 @@ export function ForStudents({ go }) {
               ]}/>
           </ScrollIn>
           <ScrollIn>
-            <Chips head="What is never shared"
+            <Chips head="What is never shared" variant="tint" hue="lilac"
               rows={[NOTES, LOCATION, 'Any raw reading', 'Anything you type in the app']}/>
           </ScrollIn>
         </Pair>
@@ -370,15 +382,16 @@ const UNSEEN = ['Any raw reading', NOTES, LOCATION, 'Anything in real time']
 function SeenUnseen() {
   return (
     <>
-      {[['Shared with you', SEEN, true], ['Never shared with you', UNSEEN, false]]
-        .map(([head, rows, yes], ci) => (
+      {[['Shared with you', SEEN, true, 'tint'], ['Never shared with you', UNSEEN, false, 'outline']]
+        .map(([head, rows, yes, variant], ci) => (
           <ScrollRow key={head} index={ci} className="h-full">
-            <div className={cn(PANEL, 'flex h-full flex-col')}>
-              <h3 className={HEAD}>{head}</h3>
+            <div className={cn(cardClass(variant, 'mint'), 'flex h-full flex-col overflow-hidden')}>
+              <h3 className={cn('max-w-none border-b px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink',
+                cardInk(variant, 'mint').line)}>{head}</h3>
               <ul className="m-0 grid list-none gap-1.5 p-3.5">
                 {rows.map(r => (
-                  <li key={r} className="flex items-start gap-2 rounded-field border border-rule
-                    px-2.5 py-1.5 text-meta leading-[1.3] text-ink-2">
+                  <li key={r} className={cn('flex items-start gap-2 rounded-field border px-2.5 py-1.5',
+                    'text-meta leading-[1.3] text-ink-2', yes ? 'border-mint/25 bg-card/70' : 'border-rule')}>
                     {yes ? <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-accent"/>
                          : <Never aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3"/>}
                     <span className="min-w-0">{r}</span>
@@ -433,7 +446,7 @@ export function ForParents({ go }) {
               asideAlt="A mother and her teenage son chopping vegetables side by side at a kitchen counter"/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read Trends" rows={[
+            <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
               ['Days, weeks, months', `One ${SCORE} a day with its Heads Up face, by week or by month.`],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['A day at most', `Nothing finer than a day. Never ${NOTES}, ${LOCATION} or raw readings.`],
@@ -447,7 +460,7 @@ export function ForParents({ go }) {
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           <SeenUnseen/>
           <ScrollIn className="sm:col-span-2 lg:col-span-1">
-            <Facts head="Who decides what is shared" rows={[
+            <Facts head="Who decides what is shared" variant="ink" rows={[
               ['Who decides', CONSENT_SHORT],
               ['Shared per person', `What your child shares with you does not go to a ${PRO_LC}.`],
               ['Switching off', 'The student can switch sharing off at any time.'],
@@ -583,7 +596,7 @@ export function ForSchools({ go }) {
             <TrendsFig ranges={['week', 'month']}/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read Trends" rows={[
+            <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
               ['Days, weeks, months', `Each student's ${SCORE} and Heads Up face, by week or by month.`],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['Consented students only', 'You see a student only if they chose to share with you.'],
@@ -603,7 +616,7 @@ export function ForSchools({ go }) {
             </Fig>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read the chart" rows={[
+            <Facts head="How to read the chart" variant="rule" hue="sky" rows={[
               ['Students in the chart', `${SCHOOL_N} students, all of whom chose to share with a ${PRO_LC}.`],
               ['Highest day', `${peak.full} ran highest, with an average of ${peak.mean}.`],
               ['Not a ranking', 'No single student can be picked out of this chart.'],
@@ -622,7 +635,7 @@ export function ForSchools({ go }) {
             </Fig>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="Who is on the list" rows={[
+            <Facts head="Who is on the list" variant="outline" rows={[
               ['On the list', `${BOARD.length} students, all of whom agreed to share trends.`],
               ['Off the list', 'Students who share only a score, or only alerts, are not listed.'],
               ['Why change, not score', 'A student steady at 86 for a month is not a change.'],
@@ -643,14 +656,14 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <div className="flex flex-col gap-3 lg:gap-4">
             <ScrollIn>
-              <Facts head="Why small groups show nothing" rows={[
+              <Facts head="Why small groups show nothing" variant="ink" rows={[
                 ['The rule', `A group needs at least ${K_ANONYMITY} students. Below that, no average is computed or shown.`],
                 ['Hidden here', `${suppressed} of ${COHORT_PERIOD.length} periods are under the limit.`],
                 ['Cannot be turned off', 'No setting anywhere in MindMap turns this rule off.'],
               ]}/>
             </ScrollIn>
             <ScrollIn>
-              <Facts head="How the audit log works" rows={[
+              <Facts head="How the audit log works" variant="tint" hue="sky" rows={[
                 ['Every record opened', 'Every record you open is logged, with who opened it and when.'],
                 ['No setting turns it off', 'Nobody can switch the log off, including us.'],
                 ['Consent is per student', 'You see only what each student agreed to share.'],

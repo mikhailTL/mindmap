@@ -11,6 +11,7 @@ import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
+import { cardClass } from '../ui/card'
 
 /* Taking a reading with nothing on your arm. Capture instructions live in
    PhoneCheck, at the point of use; do not duplicate them here. Every figure
@@ -97,11 +98,14 @@ function useArriveAtTop() {
 function Route({ r, i, go, toCheck }) {
   return (
     <ScrollRow index={i} className="h-full">
-      <div className={cn(PANEL, 'flex h-full flex-col border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
+      {/* The camera way is the white card; the questions take the turquoise
+          wash (src/ui/card.jsx), so the pair reads as two choices. */}
+      <div className={cn(i ? cardClass('tint', 'beam') : PANEL, 'flex h-full flex-col border-l-[3px] p-3.5 lg:p-4',
+        i ? 'border-l-beam' : 'border-l-accent')}>
         {/* Art beside the title on a phone, above it once the cards pair up. */}
         <div className="flex items-center gap-3 sm:block">
           <div className={cn('w-fit shrink-0 rounded-panel px-2 py-1.5 sm:px-3 sm:py-2',
-            i ? 'bg-aqua' : 'bg-accent-wash')}>
+            i ? 'bg-card' : 'bg-accent-wash')}>
             <RouteArt kind={r.art}/>
           </div>
           <div className="min-w-0 sm:mt-3">
@@ -109,7 +113,8 @@ function Route({ r, i, go, toCheck }) {
             <p className="mt-0.5 text-fine font-semibold tabular-nums text-ink-3">{r.when}</p>
           </div>
         </div>
-        <ul className="m-0 mt-2.5 flex list-none flex-wrap gap-1.5 border-t border-rule p-0 pt-2.5">
+        <ul className={cn('m-0 mt-2.5 flex list-none flex-wrap gap-1.5 border-t p-0 pt-2.5',
+          i ? 'border-beam/25' : 'border-rule')}>
           {r.gives.map(g => (
             <li key={g}
               className="rounded-field border border-rule bg-paper px-2.5 py-1 text-fine

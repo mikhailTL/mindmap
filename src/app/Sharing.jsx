@@ -143,10 +143,10 @@ export function SharingControls({ className, go }) {
   return (
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
-        <Panel title="Privacy" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
+        <Panel title="Privacy" aside={on === 0 ? undefined : `${on}/${TOTAL} on`} variant="tint" hue="sky">
           {go && (
             <button type="button" onClick={() => go('network')}
-              className="flex min-h-[56px] w-full items-center gap-3 border-b border-rule px-4 py-3 text-left
+              className="flex min-h-[56px] w-full items-center gap-3 border-b border-sky/25 px-4 py-3 text-left
                 transition-colors duration-150 hoverOnly:bg-mist/50">
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-ui font-medium text-ink">Who is linked to you</span>
@@ -184,7 +184,7 @@ export function SharingControls({ className, go }) {
 
       <div className="mt-3 grid gap-3 lg:grid-cols-2 lg:gap-4">
         <ScrollIn delay={0.1}>
-          <Panel title="Keep Raw Readings For" aside={`${state.retention} days`}>
+          <Panel title="Keep Raw Readings For" aside={`${state.retention} days`} variant="outline">
             <ChoiceRows label="How long raw readings are kept on this phone"
               value={state.retention}
               onChange={setRetention}

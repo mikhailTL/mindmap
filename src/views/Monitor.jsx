@@ -4,6 +4,7 @@ import { Chevron, ChevronDown, Grid, Never, PulseMark, Sometimes, Wave } from '.
 import { SignalTrace } from '../charts/infographics'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { cn } from '../lib/utils'
+import { cardClass } from '../ui/card'
 import { LOCATION, NOTES, PRO, SCORE, CONSENT_SHORT } from '../lib/terms'
 
 /* The student app's furniture, and the screen shown with no patch paired.
@@ -30,9 +31,14 @@ export const TONES = {
   blush: 'border-rule bg-aqua',
 }
 
-export function Panel({ className, tone = 'card', as: As = 'section', children, ...rest }) {
+/* `variant` (src/ui/card.jsx) replaces the tone when given: tint, ink, rule or
+   outline. Without it a panel is exactly what it was. */
+export function Panel({ className, tone = 'card', variant, hue = 'accent', as: As = 'section', children, ...rest }) {
+  const surface = variant
+    ? cn(cardClass(variant, hue), 'p-3.5 lg:p-4', variant === 'rule' && 'px-0 pb-0 pt-3 lg:px-0 lg:pb-0')
+    : cn('rounded-panel border p-3.5 shadow-card lg:p-4', TONES[tone] || TONES.card)
   return (
-    <As className={cn('rounded-panel border p-3.5 shadow-card lg:p-4', TONES[tone] || TONES.card, className)}
+    <As className={cn(surface, className)}
       {...rest}>
       {children}
     </As>

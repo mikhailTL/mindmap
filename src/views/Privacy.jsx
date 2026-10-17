@@ -1,6 +1,7 @@
 import React from 'react'
 import { ScrollIn, ScrollRow } from '../ui/motion'
 import { cn } from '../lib/utils'
+import { cardClass, cardInk } from '../ui/card'
 import { WhoSeesWhat } from '../charts/infographics'
 import { SCORE, NOTES, NOTES_DEF, LOCATION, CONSENT_SHORT } from '../lib/terms'
 
@@ -105,18 +106,20 @@ function No() {
   )
 }
 
-function Scope({ title, meta, items, Mark, ink, index }) {
+/* The pair takes two surfaces (src/ui/card.jsx): what is shared on the mint
+   wash, what never is as an outline, so the open side reads as the open one. */
+function Scope({ title, meta, items, Mark, ink, index, variant = 'plain', hue = 'accent' }) {
   return (
     <ScrollRow index={index} className="h-full">
-      <section className={`${PANEL} flex h-full flex-col p-4 lg:p-5`}>
+      <section className={cn(cardClass(variant, hue), 'flex h-full flex-col p-4 lg:p-5')}>
         <h3 className="mark flex items-baseline justify-between gap-3">
           <span className="min-w-0">{title}</span>
           <span className="tick hidden shrink-0 sm:inline">{meta}</span>
         </h3>
         <ul className="m-0 mt-1 list-none p-0">
           {items.map(t => (
-            <li key={t} className={`flex items-start gap-2.5 border-b border-rule py-2
-              text-meta leading-[1.4] last:border-b-0 last:pb-0 ${ink}`}>
+            <li key={t} className={cn('flex items-start gap-2.5 border-b py-2',
+              'text-meta leading-[1.4] last:border-b-0 last:pb-0', cardInk(variant, hue).line, ink)}>
               <Mark/>
               <span className="min-w-0">{t}</span>
             </li>
@@ -140,9 +143,9 @@ export function PrivacyBody({ go }) {
 
       <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
         <Scope index={0} title="What a Parent Can See" meta="with the student's consent"
-          items={YOU_SEE} Mark={Yes} ink="text-ink"/>
+          items={YOU_SEE} Mark={Yes} ink="text-ink" variant="tint" hue="mint"/>
         <Scope index={1} title="What a Parent Never Sees" meta="closed to everyone"
-          items={YOU_NEVER} Mark={No} ink="text-ink-2"/>
+          items={YOU_NEVER} Mark={No} ink="text-ink-2" variant="outline"/>
       </div>
 
       <ScrollIn className="mt-3 lg:mt-4">

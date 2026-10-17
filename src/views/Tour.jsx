@@ -17,6 +17,7 @@ import { roster, triage, scoreOnly, alertsOnly, tierOf, TIER_LABEL, K_ANONYMITY 
   from '../lib/caseload'
 import { DATA } from '../lib/assets'
 import { cn } from '../lib/utils'
+import { cardClass } from '../ui/card'
 import {
   SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE,
   PRO, PRO_LC, CONSENT_SHORT,
@@ -64,12 +65,13 @@ function PhotoCard({ photo, alt, drift = false, className }) {
   )
 }
 
-/* A card of labelled rows: a label and its value, one line each. */
+/* Labelled rows: a label and its value, one line each. Reading notes beside
+   the figure, so a rule rather than a second white box (src/ui/card.jsx). */
 function Facts({ rows, className }) {
   return (
-    <div className={cn(PANEL, className)}>
+    <div className={cn(cardClass('rule', 'accent'), className)}>
       {rows.map(([label, value], i) => (
-        <div key={label} className={cn('px-3.5 py-2', i && 'border-t border-rule')}>
+        <div key={label} className={cn('py-2', i && 'border-t border-rule')}>
           <p className="font-display text-fine font-bold leading-tight text-ink">{label}</p>
           <p className="mt-0.5 text-meta leading-[1.35] text-ink-2">{value}</p>
         </div>
@@ -136,7 +138,10 @@ function Hardware() {
 }
 
 /* ── 03 ─────────────────────────────────────────────────────────────────── */
-/* Copy comes from lib/sensors.js; do not retype it here. */
+/* Copy comes from lib/sensors.js; do not retype it here. Each signal takes
+   its own trace's hue as a wash, heart to movement. */
+const SIGNAL_HUE = { heart: 'coral', sweat: 'sun', temp: 'mint', move: 'sky' }
+
 function Signals() {
   return (
     <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:gap-4">
@@ -144,7 +149,7 @@ function Signals() {
         const s = SENSORS[id]
         return (
           <ScrollRow key={id} as="li" index={i} className="h-full">
-            <div className={cn(PANEL, 'flex h-full flex-col p-3.5')}>
+            <div className={cn(cardClass('tint', SIGNAL_HUE[id]), 'flex h-full flex-col overflow-hidden p-3.5')}>
               <div className="flex items-center gap-2.5">
                 <s.icon aria-hidden className="size-5 shrink-0" style={{ color: s.glow }}/>
                 <h3 className="font-display text-row font-bold leading-tight text-ink">{s.name}</h3>
@@ -517,8 +522,7 @@ export function Tour({ go }) {
           </Tabs>
 
           {/* aria-live on the position: the tab strip scrolls on a phone. */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel border
-            border-rule bg-card px-3.5 py-3">
+          <div className={cn(cardClass('outline'), 'mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 px-3.5 py-3')}>
             <p aria-live="polite" className="font-mono text-fine tabular-nums text-ink-2">
               Stop {i + 1} of {STOPS.length}
             </p>

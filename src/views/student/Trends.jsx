@@ -414,11 +414,11 @@ export function Trends({ teen, className, bare = false }) {
               <div className="mt-1"><Body days={days} all={teen.days}/></div>
             </Panel>
             <div className="flex flex-col gap-3 lg:gap-4">
-              <Panel>
+              <Panel variant="outline">
                 <PanelHead title="Readings by Source" meta={`${days.reduce((a, d) => a + d.readings.length, 0)} in all`}/>
                 <div className="mt-3"><Readings days={days} single={single}/></div>
               </Panel>
-              <Panel>
+              <Panel variant="tint" hue="sun">
                 <PanelHead title="Heads Up" meta={RANGE_WORD[state.kind].toLowerCase()}/>
                 <div className="mt-3"><RangeHeadsUp days={days}/></div>
               </Panel>

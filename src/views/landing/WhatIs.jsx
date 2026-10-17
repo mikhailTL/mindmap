@@ -4,6 +4,7 @@ import { ScrollRow } from '../../ui/motion'
 import { ArrowRight } from '../../ui/marks'
 import { PRO_PLURAL } from '../../lib/terms'
 import { cn } from '../../lib/utils'
+import { cardClass } from '../../ui/card'
 import { AppPicture, NetworkPicture, PatchPicture, ToolkitPicture, PICTURE_CSS } from './whatis/pictures'
 
 /* What is MindMap? The owner's own three-point description, each point beside
@@ -48,22 +49,27 @@ function Part({ part }) {
   )
 }
 
+/* Three neighbours, three surfaces (src/ui/card.jsx): the patch is the white
+   card, the network takes the turquoise wash, the app an outline on the band. */
+const LOOK = [['plain'], ['tint', 'beam'], ['outline']]
+
 function Feature({ f, n, go }) {
+  const [variant, hue] = LOOK[(n - 1) % LOOK.length]
   const titleId = React.useId()
   const { Picture } = f
   return (
     <article aria-labelledby={titleId}
-      className="flex h-full flex-col rounded-panel border border-rule bg-card p-2.5 shadow-card
+      className={cn(cardClass(variant, hue), `flex h-full flex-col p-2.5
         md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:gap-5
-        lg:row-span-2 lg:grid-cols-1 lg:grid-rows-subgrid lg:gap-0">
+        lg:row-span-2 lg:grid-cols-1 lg:grid-rows-subgrid lg:gap-0`)}>
       <div className="flex flex-col gap-2.5 md:order-2 lg:order-none lg:h-full">
         <div className="grid flex-1"><Picture/></div>
         {f.part && <Part part={f.part}/>}
       </div>
       <div className="flex flex-1 flex-col px-2.5 pb-1.5 pt-4 md:order-1 md:py-4 lg:order-none lg:pt-4">
         <h3 id={titleId} className="m-0 flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
-          <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-accent-wash
-            font-display text-xs font-bold text-accent-ink">{n}</span>
+          <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-full',
+            'font-display text-xs font-bold text-accent-ink', variant === 'plain' ? 'bg-accent-wash' : 'bg-card')}>{n}</span>
           {f.title}
         </h3>
         <p className="m-0 mt-2.5 text-ui leading-[1.55] text-ink-2">{f.text}</p>

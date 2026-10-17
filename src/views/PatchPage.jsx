@@ -4,7 +4,7 @@ import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { PatchStack } from '../charts/patchstack'
 import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
-import { Card } from '@/ui/card'
+import { Card, cardInk } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
 import { ChevronDown } from '../ui/marks'
@@ -21,8 +21,9 @@ const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
   + 'of the patch placed on the outer upper arm to show where it sits.'
 
-/* One ground step per signal, in the rainbow's own order. */
-const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
+/* Each signal's card takes its own trace's hue as a wash (src/ui/card.jsx),
+   in the rainbow's order: heart, sweat, temperature, movement. */
+const SIGNAL_HUE = ['coral', 'sun', 'mint', 'sky']
 
 /* Only settled facts. Battery, charge time, adhesive, wear time, electrode
    build, part numbers, ingress, weight and cost are open: no figure for any
@@ -144,7 +145,7 @@ export function PatchPage() {
             className="mt-2 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
             lines={['A patch that sticks to your arm']}/>
           <ScrollIn className="mt-4">
-            <Card className="max-w-[46ch] p-3.5">
+            <Card variant="rule" side="left" className="max-w-[46ch] py-1 pl-3.5">
               <ul className="m-0 grid list-none gap-1.5 p-0">
                 {CHAIN.map(t => (
                   <li key={t} className="flex gap-2.5 text-meta leading-[1.4] text-ink-2">
@@ -179,8 +180,8 @@ export function PatchPage() {
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
-              <Card className="flex h-full flex-col">
-                <div className={cn('px-3 py-3 lg:px-4', SIGNAL_GROUND[i] || 'bg-aqua')}>
+              <Card variant="tint" hue={SIGNAL_HUE[i]} className="flex h-full flex-col">
+                <div className={cn('border-b px-3 py-3 lg:px-4', cardInk('tint', SIGNAL_HUE[i]).line)}>
                   <SignalTrace kind={s2.id} className="h-12"/>
                 </div>
                 <dl className="m-0 px-3 pb-3 pt-2 lg:px-4 lg:pb-3.5">
@@ -273,29 +274,29 @@ export function PatchPage() {
           </Parallax2D>
 
           <ScrollIn className="lg:sticky lg:top-24">
-          <Card className="p-3.5 lg:p-4">
-            <h3 className="font-display text-row font-bold leading-tight text-ink">
+          <Card variant="ink" className="p-3.5 lg:p-4">
+            <h3 className="font-display text-row font-bold leading-tight text-paper">
               Decided so far
             </h3>
             <dl className="m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
               {FIGURES.map(f => (
                 <div key={f.k}
-                  className="flex items-baseline gap-3 border-t border-rule py-1.5
+                  className="flex items-baseline gap-3 border-t border-paper/20 py-1.5
                     first:border-t-0 lg:[&:nth-child(2)]:border-t">
-                  <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
-                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
+                  <dt className="min-w-0 flex-1 text-fine text-mist">{f.k}</dt>
+                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-paper">
                     {f.v}
-                    <span className="ml-1.5 font-body text-fine font-normal text-ink-3">{f.u}</span>
+                    <span className="ml-1.5 font-body text-fine font-normal text-mist">{f.u}</span>
                   </dd>
                 </div>
               ))}
             </dl>
-            <div className="mt-3 border-t border-rule pt-2.5">
-              <p className="text-fine font-semibold text-ink-3">Not decided yet</p>
+            <div className="mt-3 border-t border-paper/20 pt-2.5">
+              <p className="text-fine font-semibold text-mist">Not decided yet</p>
               <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
                 {OPEN.map(o => (
-                  <li key={o} className="rounded-field border border-rule bg-paper px-2.5 py-[3px]
-                    text-fine text-ink-2">
+                  <li key={o} className="rounded-field border border-paper/25 px-2.5 py-[3px]
+                    text-fine text-mist">
                     {o}
                   </li>
                 ))}

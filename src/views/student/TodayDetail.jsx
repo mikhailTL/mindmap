@@ -133,7 +133,7 @@ function LiveSignals({ className }) {
   const reduced = useReducedMotion()
   const i = useStream(!reduced)
   return (
-    <Panel className={cn('flex flex-col', className)}>
+    <Panel variant="tint" hue="beam" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Live Signals" meta={reduced ? 'motion off' : 'demo stream'}
           className="min-w-0 flex-1"/>

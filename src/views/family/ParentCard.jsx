@@ -9,8 +9,7 @@ import { STATUS_SUB, STATUS_WORD, metaLine, statusOfTeen, subOf } from './data'
 
 /* One child on the parent's home: who, their Heads Up face for the range
  * picked at the top, today's Mind Score with what it means, where the
- * readings come from, and one solid Open button for their page (Today,
- * then their Trends and calendar).
+ * readings come from, and one clear Open button for their page.
  *
  * Today's figure only. The range on the face is named under it, so a week
  * face is never read as today's. */
@@ -62,16 +61,14 @@ export default function ParentCard({ teen, range = 'day', onOpen, className }) {
       <SourceLine teen={teen} className="mt-4 border-t border-rule pt-4"/>
 
       <button type="button" onClick={() => onOpen?.(teen)}
-        aria-label={`Open ${teen.first}’s trends. ${light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}.` : ''}`}
-        className="group mt-5 flex min-h-[56px] w-full items-center justify-between gap-3 rounded-field bg-accent py-2 pl-5 pr-2
-          font-display text-meta font-bold text-paper shadow-card transition-colors duration-150 hoverOnly:bg-accent-ink
-          active:bg-accent-ink motion-reduce:transition-none focus-visible:outline focus-visible:outline-[3px]
-          focus-visible:outline-offset-2 focus-visible:outline-ink">
-        <span className="min-w-0 text-left">Open {teen.first}’s trends</span>
-        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[8px] bg-paper text-accent-ink">
-          <ArrowRight className="size-5 transition-transform duration-150 groupHoverOnly:translate-x-0.5
-            motion-reduce:transition-none"/>
-        </span>
+        aria-label={`Open ${teen.first}’s page. ${light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}.` : ''}`}
+        className="group mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-field bg-accent px-5
+          font-display text-ui font-bold text-paper shadow-card transition-colors duration-150 hoverOnly:bg-accent-ink
+          active:bg-accent-ink motion-reduce:transition-none focus-visible:outline focus-visible:outline-2
+          focus-visible:outline-offset-2 focus-visible:outline-accent">
+        Open {teen.first}’s page
+        <ArrowRight aria-hidden className="size-5 transition-transform duration-150 groupHoverOnly:translate-x-0.5
+          motion-reduce:transition-none"/>
       </button>
     </article>
   )

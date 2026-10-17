@@ -165,7 +165,7 @@ function GroupToday({ list, words }) {
           scale is the group&rsquo;s usual day, {base}.</p>
       </Panel>
       <div className="flex flex-col gap-3 lg:gap-4">
-        <Panel>
+        <Panel variant="tint" hue="beam">
           <PanelHead as="h3" title="Readings today, by source"/>
           <SourceCounts counts={counts} className="mt-3"/>
           <Note>{onPatch} teens wear the patch. {list.length - onPatch} read from the phone camera and check-in questions.</Note>
@@ -178,7 +178,7 @@ function GroupToday({ list, words }) {
 function Grades({ list }) {
   const g = gradeGroups(list)
   return (
-    <Panel>
+    <Panel variant="outline">
       <PanelHead as="h3" title="By grade, this week" meta="out of 100"/>
       <ul className="m-0 mt-3 list-none space-y-3 p-0">
         {g.map(r => (
@@ -257,17 +257,19 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [], go 
 
       <ProPart kind="rules" title="Rules and the log" className="mt-8"/>
       <div className={cn(ROW, 'lg:grid-cols-2')}>
-        <Panel>
-          <PanelHead as="h3" title="When an urgent alert is raised"/>
+        {/* The one dark panel on this screen (src/ui/card.jsx): the rule that
+            cannot be switched off. Paper and mist on ink, never accent. */}
+        <Panel variant="ink">
+          <PanelHead as="h3" title="When an urgent alert is raised" className="border-paper/40 text-mist"/>
           <ol className="m-0 mt-2 list-none p-0">
             {PROTOCOL.map((p, i) => (
-              <li key={p} className="flex items-baseline gap-3 border-b border-rule py-2 last:border-b-0">
-                <span className="w-4 shrink-0 text-fine tabular-nums text-ink-3">{i + 1}</span>
-                <span className="text-fine text-ink">{p}</span>
+              <li key={p} className="flex items-baseline gap-3 border-b border-paper/20 py-2 last:border-b-0">
+                <span className="w-4 shrink-0 text-fine tabular-nums text-mist">{i + 1}</span>
+                <span className="text-fine text-paper">{p}</span>
               </li>
             ))}
           </ol>
-          <Note>Urgent alerts reach you for every teen. They cannot be switched off.</Note>
+          <Note className="border-paper/20 text-mist">Urgent alerts reach you for every teen. They cannot be switched off.</Note>
         </Panel>
 
         <Panel tone="aqua">

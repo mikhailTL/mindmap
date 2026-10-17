@@ -71,7 +71,7 @@ function TodayPart({ entries, now, go, listOnly = false }) {
   const last = entries[entries.length - 1]
   if (!todays.length) {
     return (
-      <Panel className="flex flex-col items-start gap-1">
+      <Panel variant="tint" hue="accent" className="flex flex-col items-start gap-1">
         <p className="m-0 font-display text-row font-bold text-ink">No reading yet today.</p>
         <p className="m-0 text-meta text-ink-2">
           {last ? `Your last one was ${last.score}, at ${clockOf(last.at)} on ${longDay(last.at)}.`
@@ -85,7 +85,7 @@ function TodayPart({ entries, now, go, listOnly = false }) {
     <div className={cn('grid grid-cols-1 gap-3 lg:items-start lg:gap-4',
       !listOnly && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
       {!listOnly && <Latest entries={todays} now={now}/>}
-      <Panel>
+      <Panel variant="tint" hue="accent">
         <PanelHead title="Today's Readings" meta={`${todays.length} so far`}/>
         <p className="mt-2 flex items-baseline gap-2">
           <span className="font-display text-gap font-bold tabular-nums text-ink">{mean}</span>
@@ -263,7 +263,7 @@ function LiveTrendsPart({ entries, now, go, range, setRange, anchor, setAnchor }
         <ScoreChart className="mt-3" points={view.points} ticks={view.ticks} go={go} tall
           label={`${SCORE}, ${RANGE_LABEL[range]}`}/>
       </Panel>
-      <Panel>
+      <Panel variant="outline">
         <PanelHead title="Readings by Source" meta={`${view.list.length} in this range`}/>
         <div className="mt-3"><BySource list={view.list} go={go}/></div>
       </Panel>

@@ -47,7 +47,7 @@ export function HeadsUpCard({ teen, go, className }) {
   const now = today.signals.map(teenSignal)
   const lines = weekLines(week)
   return (
-    <Panel className={cn('flex flex-col', className)} aria-label="Heads Up">
+    <Panel variant="tint" hue="sun" className={cn('flex flex-col', className)} aria-label="Heads Up">
       <PanelHead title="Heads Up" meta="how you used your phone"/>
       <div className="mt-3 flex items-center gap-3">
         <LampFace light={today.light} size={44} glow/>

@@ -2,7 +2,6 @@ import React from 'react'
 import { RainbowDial } from '../../charts/rainbow'
 import { studentRings } from '../../lib/readings'
 import { AvatarArt } from '../../account/avatars'
-import { LampFace } from '../../traffic/Face'
 import { cn } from '../../lib/utils'
 
 /* The pictures on the Medical Professional home. All of it is art: nothing
@@ -25,16 +24,6 @@ export function RainbowArt({ size = 240, className }) {
 
 /* A week of lamp faces in a row, the way a Trends chart sets them under its
    bars. A fixed pattern, not a teen's week. */
-const WEEK = ['green', 'green', 'yellow', 'green', 'red', 'yellow', 'green']
-export function FaceRow({ size = 22, className }) {
-  return (
-    <span aria-hidden className={cn('flex items-center gap-1.5', className)}>
-      {WEEK.map((k, i) => <LampFace key={i} light={k} size={size}/>)}
-    </span>
-  )
-}
-
-/* Three people, linked: a parent, a teen and you. */
 export function LinkArt({ className }) {
   return (
     <span aria-hidden className={cn('relative block h-[76px] w-[168px]', className)}>

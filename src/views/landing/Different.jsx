@@ -3,75 +3,124 @@ import { Section, SectionHead } from '../../ui/section'
 import { ArrowLeft, ArrowRight } from '../../ui/marks'
 import { useReduced } from '../../toolkit/useReduced'
 import { ScrollRow } from '../../ui/motion'
-import { PRO, SCORE } from '../../lib/terms'
+import { PRO } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 /* The folder path in full: on a case-insensitive disk './different' is this file. */
 import { PICTURES } from './different/index.js'
 
-/* What makes MindMap different: ten points, each a short card with one plain
- * picture (./different/pictures.jsx), a title, one line, and a link to the
- * page that explains it.
+/* What makes MindMap different: eight points, each a card with one
+ * purpose-built picture (./different/pictures.jsx), a title, one line, and a
+ * link to the page that explains it.
  *
- * At xl and up the ten sit in a 5 by 2 grid. Below that they are one row that
- * swipes sideways with the next card peeking in, so on a phone the whole band
- * is about one card tall. From sm, arrow buttons beside the heading move the
- * row one card at a time for a mouse; a phone swipes, and a keyboard reaches
- * every card's link, which scrolls it into view.
+ * Cards are not all the same box. Four looks, shared by the site's radius
+ * and type: `tint` (the point's own wash as the ground), `outline` (the
+ * site's white card), `rule` (no box, a coloured rule over the picture) and
+ * `ink` (the dark band's ground). Neighbours never share a look.
  *
- * Order is the owner's: the score first, the network second, privacy last. */
+ * At xl the eight sit in a four-column bento: the Mind Score is the 2 by 2
+ * feature, the network a wide card across the bottom. Below that they are one
+ * row that swipes sideways with the next card peeking in. From sm, arrow
+ * buttons beside the heading move the row a card at a time for a mouse; a
+ * phone swipes, and a keyboard reaches every card's link.
+ *
+ * Order is the owner's: the score first, the network second. */
+
+const LOOK = {
+  tint: {
+    card: '', pane: '',
+    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+  },
+  outline: {
+    card: 'border border-rule bg-card', pane: '',
+    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+  },
+  rule: {
+    card: 'bg-card', pane: '',
+    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+  },
+  ink: {
+    card: 'bg-ink', pane: 'bg-white/[0.06]',
+    title: 'text-paper', body: 'text-mist', link: 'text-accent-lit',
+  },
+}
 
 export const DIFFERENT = [
-  { id: 'score', go: 'methods',
-    title: SCORE,
-    line: 'One daily number from our own neural network.' },
-  { id: 'network', go: 'network',
-    title: 'Network',
-    line: `Teens link a parent and a ${PRO}. Each sees only what the teen shares.` },
-  { id: 'patch', go: 'patch',
-    title: 'Wearable patch',
-    line: 'Designed to read pulse, sweat, temperature and movement.' },
-  { id: 'heads', go: 'heads-up',
+  { id: 'score', go: 'methods', look: 'tint',
+    ground: 'bg-accent-wash', pane: 'bg-card/60',
+    place: 'xl:col-span-2 xl:row-span-2 xl:col-start-1 xl:row-start-1',
+    title: 'Mind Score',
+    line: 'One daily number from our own neural network, built from your body’s signals.' },
+  { id: 'network', go: 'network', look: 'outline',
+    pane: 'bg-coral-wash',
+    place: 'xl:col-span-2 xl:col-start-1 xl:row-start-3', wide: true,
+    title: 'Support network',
+    line: `Link a parent and a ${PRO}. The teen decides what each one sees.`,
+    more: { go: 'privacy', label: 'Privacy' } },
+  { id: 'patch', go: 'patch', look: 'rule',
+    rule: 'bg-beam', pane: 'bg-beam-wash',
+    place: 'xl:col-start-3 xl:row-start-1',
+    title: 'Patch or phone',
+    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera.' },
+  { id: 'heads', go: 'heads-up', look: 'ink',
+    place: 'xl:col-start-4 xl:row-start-1',
     title: 'Heads Up',
     line: 'Tells parents when phone use shows signs of stress.' },
-  { id: 'settle', go: 'methods',
+  { id: 'settle', go: 'methods', look: 'rule',
+    rule: 'bg-lilac', pane: 'bg-lilac-wash',
+    place: 'xl:col-start-4 xl:row-start-2',
     title: 'Recovery time',
-    line: 'How fast your body settles after a peak.' },
-  { id: 'event', go: 'calendar',
+    line: 'The patch shows how fast your body settles after a peak, and what helps.' },
+  { id: 'event', go: 'calendar', look: 'tint',
+    ground: 'bg-sun-wash', pane: 'bg-card/70',
+    place: 'xl:col-start-3 xl:row-start-2',
     title: 'Stress before events',
-    line: 'How stress builds before a test you marked.' },
-  { id: 'breath', go: 'toolkit',
-    title: 'Measured exercises',
-    line: 'Your phone measures breath, stillness and reaction time.' },
-  { id: 'helped', go: 'toolkit',
-    title: 'Before and after',
-    line: 'A pulse check before and after shows what works.' },
-  { id: 'ai', go: 'ai',
+    line: 'Mark a test and see how stress builds in the hours before it.' },
+  { id: 'ai', go: 'ai', look: 'ink',
+    place: 'xl:col-start-3 xl:row-start-3',
     title: 'MindMap AI',
-    line: 'Ask questions about stress, sleep and school.' },
-  { id: 'sharing', go: 'privacy',
-    title: 'Privacy',
-    line: `Teens choose what parents and ${PRO}s see.` },
+    line: 'Ask about stress, sleep and school. Get a plain, practical answer.' },
+  { id: 'toolkit', go: 'toolkit', look: 'tint',
+    ground: 'bg-mint-wash', pane: 'bg-card/55',
+    place: 'xl:col-start-4 xl:row-start-3',
+    title: 'Toolkit with levels',
+    line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.' },
 ]
+
+function Go({ onClick, label, title, look, children }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={`${label}: ${title}`}
+      className={cn('group -ml-1 inline-flex min-h-[44px] items-center gap-1.5 rounded-field px-1 font-display text-ui font-bold', look.link)}>
+      {children}
+      <ArrowRight aria-hidden size={18} className="transition-transform duration-200 ease-out
+        motion-safe:groupHoverOnly:translate-x-1"/>
+    </button>
+  )
+}
 
 function Point({ d, go }) {
   const titleId = React.useId()
   const Picture = PICTURES[d.id]
+  const look = LOOK[d.look]
+  const big = d.id === 'score'
   return (
     <article aria-labelledby={titleId}
-      className="flex h-full flex-col rounded-[16px] border border-rule bg-card p-2">
-      <Picture/>
-      <div className="flex flex-1 flex-col px-1.5 pt-3">
-        <h3 id={titleId} className="m-0 font-display text-sec font-bold leading-tight text-ink">{d.title}</h3>
-        <p className="m-0 mt-1 text-fine leading-[1.5] text-ink-2">{d.line}</p>
-        <div className="mt-auto pt-1">
-          <button type="button" onClick={() => go?.(d.go)}
-            aria-label={`See how it works: ${d.title}`}
-            className="group -ml-1 inline-flex min-h-[44px] items-center gap-1.5 rounded-field px-1
-              font-display text-ui font-bold text-accent-ink">
-            See how it works
-            <ArrowRight aria-hidden size={18} className="transition-transform duration-200 ease-out
-              motion-safe:groupHoverOnly:translate-x-1"/>
-          </button>
+      className={cn('relative flex h-full flex-col overflow-hidden rounded-[16px] p-2',
+        look.card, d.ground, d.wide && 'xl:flex-row xl:items-stretch')}>
+      {d.rule && <span aria-hidden className={cn('mx-1.5 mb-2 mt-0.5 block h-1 rounded-bar', d.rule)}/>}
+      <div className={cn('relative shrink-0 overflow-hidden rounded-[12px]', look.pane, d.pane,
+        'h-[148px]', big && 'xl:h-auto xl:min-h-[280px] xl:flex-1',
+        d.wide && 'xl:h-auto xl:min-h-[168px] xl:w-[54%]')}>
+        <Picture/>
+      </div>
+      <div className={cn('flex flex-1 flex-col px-1.5 pt-3', big && 'xl:flex-none', d.wide && 'xl:justify-center xl:pl-5 xl:pt-1')}>
+        <h3 id={titleId} className={cn('m-0 font-display font-bold leading-tight',
+          big ? 'text-sec xl:text-head' : 'text-sec', look.title)}>{d.title}</h3>
+        <p className={cn('m-0 mt-1 text-fine leading-[1.5]', big && 'xl:max-w-[46ch] xl:text-ui', look.body)}>{d.line}</p>
+        <div className={cn('flex flex-wrap items-center gap-x-3 pt-1', !d.wide && 'mt-auto', d.wide && 'mt-auto xl:mt-1')}>
+          <Go onClick={() => go?.(d.go)} label="See how it works" title={d.title} look={look}>See how it works</Go>
+          {d.more && (
+            <Go onClick={() => go?.(d.more.go)} label="See how it works" title={d.more.label} look={look}>{d.more.label}</Go>
+          )}
         </div>
       </div>
     </article>
@@ -109,7 +158,7 @@ export function Different({ go }) {
 
   const step = dir => {
     const el = row.current
-    const card = el?.querySelector('li')
+    const card = el?.querySelector(':scope > li')
     if (!el || !card) return
     el.scrollBy({ left: dir * (card.getBoundingClientRect().width + 12), behavior: reduced ? 'auto' : 'smooth' })
   }
@@ -129,9 +178,9 @@ export function Different({ go }) {
           className="m-0 mt-5 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto p-0 pb-1
             [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
             -mx-[22px] scroll-px-[22px] px-[22px] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-14 lg:scroll-px-14 lg:px-14
-            xl:mx-0 xl:grid xl:grid-cols-5 xl:gap-4 xl:overflow-visible xl:px-0">
+            xl:mx-0 xl:grid xl:grid-cols-4 xl:gap-4 xl:overflow-visible xl:px-0">
           {DIFFERENT.map(d => (
-            <li key={d.id} className="w-[78%] max-w-[300px] shrink-0 snap-start xl:w-auto xl:max-w-none">
+            <li key={d.id} className={cn('w-[80%] max-w-[310px] shrink-0 snap-start xl:w-auto xl:max-w-none', d.place)}>
               <Point d={d} go={go}/>
             </li>
           ))}

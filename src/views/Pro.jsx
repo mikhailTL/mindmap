@@ -3,7 +3,6 @@ import { Why } from './Monitor'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { DemoNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
-import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight } from '../ui/marks'
 import { useAccount } from '../account/store'
 import { cn } from '../lib/utils'
@@ -14,7 +13,8 @@ import { alertTeen, statusCounts } from './pro/metrics'
 import { CASELOAD } from '../lib/roster'
 import { K_ANONYMITY } from '../lib/caseload'
 import { LightTiles, TrafficLight } from './pro/look'
-import { ChatArt, FaceRow, LinkArt, RainbowArt, ToolArt } from './pro/HomeArt'
+import { ChatArt, LinkArt, RainbowArt, ToolArt } from './pro/HomeArt'
+import { StartGrid, StartTile } from './home/StartGrid'
 import TeenDetail from './family/TeenDetail'
 import { useLiveTeens } from './family/useLive'
 
@@ -214,98 +214,48 @@ const RainbowMark = () => (
 
 const DEMO_NAME = 'Dr. Shah'
 
-const CARD = `group relative flex h-full w-full flex-col overflow-hidden rounded-panel border-2 text-left
-  transition-transform duration-200 ease-out hoverOnly:-translate-y-0.5 active:translate-y-px
-  focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink`
-
-function Go({ children, tone }) {
-  return (
-    <span className={cn('mt-auto inline-flex items-center gap-1.5 self-start whitespace-nowrap pt-3 font-display text-ui font-bold', tone)}>
-      {children}
-      <ArrowRight aria-hidden className="size-4 shrink-0 transition-transform duration-200 groupHoverOnly:translate-x-1"/>
-    </span>
-  )
-}
-
 export function ProHome({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
   const live = useLiveTeens('pro')
-  const reduce = useReducedMotion()
   const name = real ? String(me?.name || '').trim() : DEMO_NAME
   const setting = real ? settingLineFor(me) : SETTING_WORDS.school.head + '.'
   const n = real ? live.teens.length : CASELOAD.length
   const shares = n === 0 ? 'No teens connected yet' : n === 1 ? 'One teen shares with you' : `${n} teens share with you`
 
-  const item = i => (reduce ? {} : {
-    initial: { opacity: 0, y: 14 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.42, delay: 0.06 + i * 0.07, ease: [0.22, 1, 0.36, 1] },
-  })
-
+  /* Cards first, as on the earlier start screen, then who shares with you. */
   return (
     <main className="wrap !pt-4 pb-12">
-      <motion.section {...item(0)} aria-labelledby="pro-home-h"
-        className="relative flex items-center gap-4 overflow-hidden rounded-panel bg-ink p-4 text-paper sm:p-5 lg:p-6">
-        <div className="min-w-0 flex-1">
-          <h2 id="pro-home-h" className="m-0 font-display text-head font-bold tracking-tight text-paper sm:text-sub">
-            {name ? `Welcome, ${name}` : 'Welcome'}</h2>
-          {setting && <p className="m-0 mt-1.5 text-sec text-paper/85">{setting}</p>}
-          <p className="m-0 mt-3 inline-flex items-center gap-2 rounded-field bg-white/10 px-2.5 py-1.5 font-display text-ui font-bold text-paper">
-            <span aria-hidden className={cn('size-2.5 rounded-full', n ? 'bg-accent-lit' : 'bg-paper/50')}/>{shares}</p>
-        </div>
-        <TrafficLight size={30} className="mr-1"/>
-      </motion.section>
-      {!real && <DemoNotice inline className="mt-2.5">A sample caseload.</DemoNotice>}
+      <header>
+        <h2 className="m-0 font-display !text-head font-bold tracking-tight text-ink">{name ? `Welcome, ${name}` : 'Welcome'}</h2>
+        {setting && <p className="m-0 mt-0.5 text-fine text-ink-2">{setting}</p>}
+      </header>
+      {!real && <DemoNotice inline className="mt-2">A sample caseload.</DemoNotice>}
 
-      <ul className="m-0 mt-4 grid list-none gap-3 p-0 sm:grid-cols-2 lg:mt-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-4">
-        <motion.li {...item(1)} className="min-w-0 sm:col-span-2 lg:col-span-1 lg:row-span-2">
-          <button type="button" onClick={() => go('app-pro-trends')}
-            className={cn(CARD, 'border-sky/40 bg-sky-wash p-4 lg:p-5')}>
-            <span className="block font-display text-head font-bold leading-tight text-ink">Trends across your teens</span>
-            <span className="mt-1 block text-fine text-ink-2">
-              {real && n === 0 ? 'Mind Score and Heads Up, once a teen connects.' : `Mind Score and Heads Up for ${n === 1 ? 'one teen' : `${n} teens`}.`}</span>
-            <span className="mt-3 flex w-full flex-col items-center rounded-[12px] bg-white/80 px-2 pb-3 pt-2">
-              <RainbowArt size={250} className="w-full max-w-[250px]"/>
-              <FaceRow size={22} className="mt-1"/>
-            </span>
-            <Go tone="text-sky-ink">Open trends</Go>
-          </button>
-        </motion.li>
+      <StartGrid label="Medical Professional app" className="mt-3 lg:mt-4">
+        <StartTile title="Trends across your teens" tone="bg-sky-wash" chevron="text-sky-ink"
+          onClick={() => go('app-pro-trends')} art={<RainbowArt size={150} className="w-[74%] max-w-[190px] pt-2"/>}/>
+        <StartTile title="Connect with families" tone="bg-mint-wash" chevron="text-mint-ink"
+          onClick={() => go('network')} art={<LinkArt className="origin-center scale-[0.72] sm:scale-90 lg:scale-100"/>}/>
+        <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
+          onClick={() => go('ai')} art={<ChatArt className="h-[56%] w-auto"/>}/>
+        <StartTile title="Toolkit" tone="bg-sun-wash" chevron="text-sun-ink"
+          onClick={() => go('toolkit')} art={<ToolArt className="origin-center scale-[0.7] sm:scale-90 lg:scale-100"/>}/>
+      </StartGrid>
 
-        <motion.li {...item(2)} className="min-w-0">
-          <button type="button" onClick={() => go('network')}
-            className={cn(CARD, 'border-mint/40 bg-mint-wash p-4')}>
-            <LinkArt/>
-            <span className="mt-3 block font-display text-row font-bold leading-tight text-ink">Connect with families</span>
-            <span className="mt-1 block text-fine text-ink-2">A parent approves each link first.</span>
-            <Go tone="text-mint-ink">Connect</Go>
-          </button>
-        </motion.li>
-
-        <motion.li {...item(3)} className="min-w-0">
-          <button type="button" onClick={() => go('ai')}
-            className={cn(CARD, 'border-lilac/35 bg-lilac-wash p-4')}>
-            <ChatArt/>
-            <span className="mt-3 block font-display text-row font-bold leading-tight text-ink">Ask MindMap AI</span>
-            <span className="mt-1 block text-fine text-ink-2">Questions about teen stress, any time.</span>
-            <Go tone="text-lilac-ink">Ask a question</Go>
-          </button>
-        </motion.li>
-
-        <motion.li {...item(4)} className="min-w-0 sm:col-span-2">
-          <button type="button" onClick={() => go('toolkit')}
-            className={cn(CARD, 'flex-row items-center gap-3 border-sun/45 bg-sun-wash p-4 sm:gap-4')}>
-            <span className="flex min-w-0 flex-1 flex-col self-stretch">
-              <span className="block font-display text-row font-bold leading-tight text-ink">Toolkit</span>
-              <span className="mt-1 block text-fine text-ink-2">Openers, grounding and referral notes for a session.</span>
-              <Go tone="text-sun-ink">Open tools</Go>
-            </span>
-            <ToolArt className="shrink-0 origin-right scale-90 sm:scale-100"/>
-          </button>
-        </motion.li>
-      </ul>
+      <section aria-label="Who shares with you"
+        className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
+        <TrafficLight size={16} horizontal className="shrink-0"/>
+        <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">{shares}</span>
+        <button type="button" onClick={() => go(n ? 'app-pro-trends' : 'network')}
+          className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-field
+            bg-accent px-4 font-display text-ui font-medium text-paper transition-colors duration-150
+            hoverOnly:bg-accent-lit hoverOnly:text-ink active:bg-accent-lit active:text-ink sm:w-auto">
+          {n ? 'Open trends' : 'Connect with families'}
+          <ArrowRight aria-hidden className="size-4 shrink-0"/>
+        </button>
+      </section>
     </main>
   )
 }

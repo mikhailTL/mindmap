@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
+import { cardClass, cardInk } from '../ui/card'
 import { Check, Cross, Never } from '../ui/marks'
 
 /* The controls the four app features are built from.
@@ -24,12 +25,16 @@ import { Check, Cross, Never } from '../ui/marks'
 /* ── A module ───────────────────────────────────────────────────────────── */
 
 /* Each feature is a stack of these: its own card, its own edge, a heading on
-   a rule rather than floating on the canvas. */
-export function Panel({ title, lede, aside, children, className, id }) {
+   a rule rather than floating on the canvas. `variant` and `hue` pick the
+   surface (src/ui/card.jsx); a panel whose rows show a picked state on the
+   accent wash stays plain or outline, so the pick still shows. */
+export function Panel({ title, lede, aside, children, className, id, variant, hue = 'accent' }) {
   return (
     <section id={id}
-      className={cn('overflow-hidden rounded-panel border border-rule bg-card', className)}>
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-rule px-4 py-3">
+      className={cn(variant ? cardClass(variant, hue) : 'rounded-panel border border-rule bg-card',
+        'overflow-hidden', className)}>
+      <div className={cn('flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b px-4 py-3',
+        variant ? cardInk(variant, hue).line : 'border-rule')}>
         <h3 className="font-display text-meta font-bold text-ink">{title}</h3>
         {aside && <span className="ml-auto font-mono text-fine tabular-nums text-ink-3">{aside}</span>}
         {lede && <p className="w-full max-w-[62ch] text-fine text-ink-3">{lede}</p>}

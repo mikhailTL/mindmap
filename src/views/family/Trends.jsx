@@ -4,6 +4,7 @@ import { FACE_LABEL, RANGE_LABEL } from '../../lib/roster'
 import { LampFace } from '../../traffic/Face'
 import { MonthCalendar } from '../calendar'
 import { cn } from '../../lib/utils'
+import { cardClass } from '../../ui/card'
 import { RangeSwitch } from './RangeTrend'
 import { ScoreChart, ScoreLegend } from './charts'
 import DayFacts, { SourceRows } from './DayFacts'
@@ -21,10 +22,13 @@ import { PREV, STATUS_SUB, STATUS_WORD, bodyFor, bodySource, bodyWord, fullDate,
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const wd = iso => WD[new Date(iso + 'T12:00:00Z').getUTCDay()]
 
-function Card({ title, line, right, children, className, labelId }) {
+/* `variant` and `hue` pick the surface (src/ui/card.jsx). The four boxes sit
+   two by two, so Heads Up takes the sun wash and the record an outline, and
+   no two neighbours share one. */
+function Card({ title, line, right, children, className, labelId, variant = 'plain', hue = 'accent' }) {
   return (
     <section aria-labelledby={labelId}
-      className={cn('flex min-w-0 flex-col rounded-panel border border-rule bg-card p-4 shadow-card sm:p-5', className)}>
+      className={cn(cardClass(variant, hue), 'flex min-w-0 flex-col p-4 sm:p-5', className)}>
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <h3 id={labelId} className="m-0 font-display text-head font-bold leading-tight text-ink">{title}</h3>
@@ -111,7 +115,7 @@ export default function ChildTrends({ teen, className }) {
         )}
       </Card>
 
-      <Card labelId={ids + 'hu'} title="Heads Up" line={`${RANGE_LABEL[range]}. From how ${teen.first} uses their phone, never what is on it.`}>
+      <Card labelId={ids + 'hu'} variant="tint" hue="sun" title="Heads Up" line={`${RANGE_LABEL[range]}. From how ${teen.first} uses their phone, never what is on it.`}>
         {face ? (
           <div className="mt-4 flex items-center gap-3.5">
             <LampFace light={face} size={52}/>
@@ -168,7 +172,7 @@ export default function ChildTrends({ teen, className }) {
         </div>
       </Card>
 
-      <Card labelId={ids + 'rec'} title="Everything recorded" line={`${RANGE_LABEL[range]}. Whole days only.`}>
+      <Card labelId={ids + 'rec'} variant="outline" title="Everything recorded" line={`${RANGE_LABEL[range]}. Whole days only.`}>
         <dl className="m-0 mt-3 p-0">
           <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
             <dt className="text-fine text-ink-2">Days with readings</dt>

@@ -8,7 +8,7 @@ import { PhoneApp } from '../ui/phone-app'
 import { PatchFront } from '../charts/patch-front'
 import { ProblemFigures } from '../charts/problem'
 import { Frame } from '../ui/frame'
-import { Card } from '../ui/card'
+import { Card, cardClass } from '../ui/card'
 import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
@@ -68,6 +68,10 @@ const WAYS = [
           strokeWidth="2.4" strokeLinecap="round"/>
       </svg>) },
 ]
+
+/* Three stacked doors on the green band, three surfaces (src/ui/card.jsx), so
+   the stack reads as three places rather than one card printed three times. */
+const SCREEN_LOOK = [['plain'], ['tint', 'beam'], ['outline']]
 
 const SCREENS = [
   { id:'student', who:'Student',
@@ -279,6 +283,7 @@ export function Overview({ go }) {
           {WAYS.map((w, i) => (
             <ScrollRow key={w.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(w.go)}
+                variant={w.lead ? 'plain' : 'tint'} hue="mint"
                 className={cn('flex h-full w-full flex-col p-5 text-left', w.lead && 'border-l-accent')}>
                 <span className="grid h-[52px] place-items-start" aria-hidden>{w.art}</span>
                 <span className="mt-3 block font-display text-head font-bold leading-tight text-ink">
@@ -326,10 +331,10 @@ export function Overview({ go }) {
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
-                className="group flex h-full w-full flex-col gap-3 rounded-panel
-                  border border-rule bg-card p-5 text-left shadow-card touch-manipulation
+                className={cn(cardClass(...SCREEN_LOOK[i % SCREEN_LOOK.length]),
+                  `group flex h-full w-full flex-col gap-3 p-5 text-left touch-manipulation
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
-                  motion-safe:active:scale-[0.99] hoverOnly:border-accent">
+                  motion-safe:active:scale-[0.99] hoverOnly:border-accent`)}>
                 <span className="font-body text-ui font-semibold text-accent-ink">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
@@ -356,9 +361,10 @@ export function Overview({ go }) {
             <SectionLede>{CONSENT_SHORT}</SectionLede>
             <dl className="mt-5 grid gap-3.5 sm:grid-cols-2">
               {SEES.map((r, i) => (
-                <ScrollRow key={r.who} index={i} className="rounded-panel border border-rule bg-card p-5">
-                  <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
-                  <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
+                <ScrollRow key={r.who} index={i} className={cn(cardClass(i ? 'plain' : 'ink'), 'p-5')}>
+                  <dt className={cn('font-body text-ui font-semibold', i ? 'text-accent-ink' : 'text-accent-lit')}>{r.who}</dt>
+                  <dd className={cn('m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight',
+                    i ? 'text-ink' : 'text-paper')}>
                     {r.sees}
                   </dd>
                 </ScrollRow>
