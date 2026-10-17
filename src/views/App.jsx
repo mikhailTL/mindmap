@@ -17,6 +17,7 @@ import {
   isQueued, recordAnswer, submitResponse, subscribe, syncPending, wasSent,
 } from '../survey/store'
 import Toolkit from './Toolkit'
+import { SKILL_TOOLS, SKILL_ROUTES } from '../skills/index.js'
 import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro, settingLineFor } from './Pro'
@@ -72,6 +73,8 @@ const VIEWS = [
   'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules','toolkit-reach',
   /* the five Medical Professional activities */
   'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground','toolkit-pro-parents','toolkit-pro-referral',
+  /* the fifteen life skills, for every audience */
+  ...SKILL_ROUTES,
   /* kept, not in section 18 */
   'tour','notes',
   /* accounts: sign in, the portal, its sections, and who is linked to whom */
@@ -96,7 +99,7 @@ const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','app-pro-t
                            'toolkit-reach',
                            'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground',
                            'toolkit-pro-parents','toolkit-pro-referral',
-                           'signin','account','account-section','network'])
+                           'signin','account','account-section','network', ...SKILL_ROUTES])
 
 /* The three account routes belong to whichever app the signed in account is
    for, and otherwise to the app the reader walked in from. */
@@ -164,6 +167,7 @@ const TITLE = {
   'toolkit-pro-ground':'Grounding Timer, in the MindMap Toolkit',
   'toolkit-pro-parents':'Talking With Parents, in the MindMap Toolkit',
   'toolkit-pro-referral':'Referral Note, in the MindMap Toolkit',
+  ...Object.fromEntries(SKILL_TOOLS.map(t => [t.route, `${t.title}, in the MindMap Toolkit`])),
   ai:'MindMap AI',
   shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
@@ -333,15 +337,33 @@ function Drawer({ view, go, onClose }) {
     }
   }, [onClose])
 
-  /* Flat on a phone. A dropdown inside a drawer is two taps for nothing. */
+  /* The three patch pages fold into one row, as on the desktop menu. It
+     opens by itself when one of them is the page you are on. */
+  const onPatch = PATCH.some(([id]) => id === view)
+  const [patchOpen, setPatchOpen] = React.useState(onPatch)
   const rows = [
     ['site', 'Overview'],
-    ...PATCH.map(([id, label]) => [id, label]),
+    'patch-group',
     ['methods', 'How it works'],
     ...AUDIENCE.map(([id, label]) => [id, label]),
     [HEADS_UP[0], HEADS_UP[1]],
     ['survey', 'Give feedback'],
   ]
+
+  const row = (id, label, inner = false) => {
+    const here = view === id
+    return (
+      <button key={id} type="button" onClick={() => { onClose(); go(id) }}
+        aria-current={here ? 'page' : undefined}
+        className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
+          'font-display text-sec font-medium transition-colors duration-150',
+          inner && 'pl-5',
+          here ? 'text-ink' : 'text-ink-2 hoverOnly:text-ink')}>
+        <span className={cn('mr-3 h-5 w-[3px] rounded-bar', here ? 'bg-accent' : 'bg-transparent')}/>
+        {label}
+      </button>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[60] xl:hidden">
@@ -356,19 +378,25 @@ function Drawer({ view, go, onClose }) {
           </button>
         </div>
         <nav aria-label="Sections" className="wrap pb-5">
-          {rows.map(([id, label]) => {
-            const here = view === id
-            return (
-              <button key={id} type="button" onClick={() => { onClose(); go(id) }}
-                aria-current={here ? 'page' : undefined}
+          {rows.map(r => r === 'patch-group' ? (
+            <div key="patch-group">
+              <button type="button" onClick={() => setPatchOpen(o => !o)}
+                aria-expanded={patchOpen} aria-controls="drawer-patch"
                 className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
                   'font-display text-sec font-medium transition-colors duration-150',
-                  here ? 'text-ink' : 'text-ink-2 hoverOnly:text-ink')}>
-                <span className={cn('mr-3 h-5 w-[3px] rounded-bar', here ? 'bg-accent' : 'bg-transparent')}/>
-                {label}
+                  onPatch ? 'text-ink' : 'text-ink-2 hoverOnly:text-ink')}>
+                <span className={cn('mr-3 h-5 w-[3px] rounded-bar', onPatch ? 'bg-accent' : 'bg-transparent')}/>
+                The patch
+                <ChevronDown aria-hidden className={cn('ml-auto size-4 shrink-0 transition-transform duration-150',
+                  patchOpen && 'rotate-180')}/>
               </button>
-            )
-          })}
+              {patchOpen && (
+                <div id="drawer-patch">
+                  {PATCH.map(([id, label]) => row(id, id === 'patch' ? 'About the patch' : label, true))}
+                </div>
+              )}
+            </div>
+          ) : row(r[0], r[1]))}
         </nav>
       </div>
     </div>
@@ -517,7 +545,8 @@ const APP_OF = {
 const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-breathing','toolkit-ground','toolkit-reframe',
                               'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
-                              'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk'])
+                              'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
+                              ...SKILL_ROUTES])
 
 const APP_TAB = { app:null,
                   'app-student':'app-student', monitor:'app-student', reading:'reading',
@@ -535,6 +564,7 @@ const APP_TAB = { app:null,
                   'toolkit-pro-opener':'toolkit', 'toolkit-pro-triage':'toolkit',
                   'toolkit-pro-ground':'toolkit', 'toolkit-pro-parents':'toolkit',
                   'toolkit-pro-referral':'toolkit',
+                  ...Object.fromEntries(SKILL_ROUTES.map(r => [r, 'toolkit'])),
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
                   'app-pro':'app-pro', 'app-pro-trends':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
@@ -572,6 +602,7 @@ const APP_TITLE = {
   'toolkit-pro-ground':   ['Grounding','Grounding Timer'],
   'toolkit-pro-parents':  ['Parents',  'Talking With Parents'],
   'toolkit-pro-referral': ['Referral', 'Referral Note'],
+  ...Object.fromEntries(SKILL_TOOLS.map(t => [t.route, ['Toolkit', t.title]])),
   /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
      spelling is the tab's word and the full name is the heading on the
      screen and this element's accessible name. */
@@ -1302,6 +1333,8 @@ export function App() {
               'toolkit-pro-ground':   () => <Toolkit who="pro" open="pro-ground"/>,
               'toolkit-pro-parents':  () => <Toolkit who="pro" open="pro-parents"/>,
               'toolkit-pro-referral': () => <Toolkit who="pro" open="pro-referral"/>,
+              /* The life skills, audience independent like the exercises. */
+              ...Object.fromEntries(SKILL_TOOLS.map(t => [t.route, () => <Toolkit who={audience} open={t.id}/>])),
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: p => <Calendar {...p} who={audience}/>,
               /* Accounts, kept on this device. */

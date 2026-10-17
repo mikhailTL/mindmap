@@ -133,7 +133,7 @@ function Tile({ item, index, onOpen }) {
   )
 }
 
-function Grid({ items, start, onOpen }) {
+export function Grid({ items, start = 0, onOpen = () => {} }) {
   return (
     <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((it, i) => <Tile key={it.id} item={it} index={start + i} onOpen={onOpen}/>)}
@@ -141,7 +141,7 @@ function Grid({ items, start, onOpen }) {
   )
 }
 
-function Head({ title, line, first }) {
+export function Head({ title, line, first }) {
   return (
     <div className={first ? 'mt-2' : 'mt-10'}>
       {/* h2: the app caps in-app h2 at text-row and h3 at text-meta. */}

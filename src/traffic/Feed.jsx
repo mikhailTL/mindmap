@@ -22,6 +22,19 @@ const More = () => <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden f
 const Camera = () => <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden {...STROKE}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.7l1.4-2h6.8l1.4 2h1.7A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-9Z"/><circle cx="12" cy="12.8" r="3.8"/></svg>
 const Note = () => <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden fill="currentColor"><path d="M9 17.5V5.2l11-2.2v12.3a3 3 0 1 1-2-2.8V7.3l-7 1.4v8.8a3 3 0 1 1-2-2.8Z"/></svg>
 
+/* The avatar's fill, darkened just enough that its white initial clears
+   4.5 : 1. */
+const lum = h => {
+  const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+}
+export function avatarFill(hex) {
+  let f = 1, out = hex
+  const at = k => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('')
+  while (1.05 / (lum(out) + 0.05) < 4.6 && f > 0.3) { f -= 0.02; out = at(f) }
+  return out
+}
+
 function Clip({ clip, near, current, frozen }) {
   const ref = React.useRef(null)
   React.useEffect(() => {
@@ -51,7 +64,7 @@ function Clip({ clip, near, current, frozen }) {
       <div className="absolute bottom-[34px] left-3.5 right-[78px] text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.35)' }}>
         <div className="flex items-center gap-2.5">
           <span aria-hidden className="grid size-[34px] shrink-0 place-items-center rounded-full border border-white/70 text-[15px] font-semibold"
-            style={{ background: clip.c }}>{clip.handle.charAt(1).toUpperCase()}</span>
+            style={{ background: avatarFill(clip.c) }}>{clip.handle.charAt(1).toUpperCase()}</span>
           <span className="truncate text-[15px] font-semibold">{clip.handle}</span>
           <span className="shrink-0 rounded-[8px] border border-white/80 px-2.5 py-[3px] text-[13px] font-semibold leading-[18px]">Follow</span>
         </div>

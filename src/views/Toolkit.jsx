@@ -1,5 +1,7 @@
 import React from 'react'
-import { ToolkitIndex } from '../toolkit/index.jsx'
+import { ToolkitIndex, Grid, Head } from '../toolkit/index.jsx'
+import { SKILL_GROUPS, SKILL_BY_ID } from '../skills/index.js'
+import { cn } from '../lib/utils'
 import Breathing from '../toolkit/breathing'
 import Grounding from '../toolkit/ground'
 import Reframe from '../toolkit/reframe'
@@ -47,6 +49,9 @@ import { SessionOpeners, NextStepGuide, GroundingTimer, TalkingWithParents, Refe
  *   'toolkit-pro-parents'  -> <Toolkit who="pro" open="pro-parents"/>
  *   'toolkit-pro-referral' -> <Toolkit who="pro" open="pro-referral"/>
  *
+ * The life skills (src/skills) open at `toolkit-<tool id>`, e.g.
+ * toolkit-school-cram -> open="school-cram", for every audience.
+ *
  * Nothing in this screen calls a server. The camera and microphone, where an
  * activity turns one on, are measured in the page and never recorded, and
  * nobody is told which activities a reader opened. */
@@ -78,8 +83,72 @@ const IN_PLACE = {
   'pro-referral': ReferralNote,
 }
 
+/* The index opens on one of five tabs: the audience's own set, then the four
+   life skills categories. The tab is kept in the address as
+   `#/toolkit?tab=<id>`, so the way back from a skill lands on its tab. */
+const FIRST_TAB = { student:'Exercises', parent:'Your tools', pro:'Your tools' }
+const SKILL_LINE = {
+  student: 'Saved on this phone only.',
+  parent:  'The same tools your teen has. Try one together.',
+  pro:     'The same tools your teens have, to use in a session.',
+}
+
+const tabFromHash = () => {
+  const m = /[?&]tab=([a-z]+)/.exec(typeof location !== 'undefined' ? location.hash : '')
+  return m && SKILL_GROUPS.some(g => g.id === m[1]) ? m[1] : 'mine'
+}
+
+function Tabs({ who, tab, onTab }) {
+  const tabs = [{ id:'mine', label:FIRST_TAB[who] || FIRST_TAB.student },
+                ...SKILL_GROUPS.map(g => ({ id:g.id, label:g.title }))]
+  const onKey = e => {
+    const i = tabs.findIndex(t => t.id === tab)
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+    if (!d) return
+    e.preventDefault()
+    const next = tabs[(i + d + tabs.length) % tabs.length].id
+    onTab(next)
+    requestAnimationFrame(() => document.getElementById('kit-tab-' + next)?.focus())
+  }
+  return (
+    <div className="wrap !pb-0">
+      {/* Wraps to two rows at 390 rather than scrolling a tab out of sight. */}
+      <div role="tablist" aria-label="Toolkit sections" onKeyDown={onKey}
+        className="flex flex-wrap gap-1.5">
+        {tabs.map(t => {
+          const on = t.id === tab
+          return (
+            <button key={t.id} id={'kit-tab-' + t.id} type="button" role="tab"
+              aria-selected={on} aria-controls="kit-panel" tabIndex={on ? 0 : -1}
+              onClick={() => onTab(t.id)}
+              className={cn('min-h-[44px] shrink-0 rounded-full border border-rule px-4 font-display text-ui font-semibold',
+                'transition-colors duration-150',
+                on ? 'border-ink bg-ink text-paper' : 'bg-card text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink')}>
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SkillPanel({ group, who }) {
+  return (
+    <div className="wrap">
+      <Head first title={group.sub} line={SKILL_LINE[who] || SKILL_LINE.student}/>
+      <Grid items={group.tools.map(t => ({ ...t, route:'toolkit-' + t.id }))}/>
+    </div>
+  )
+}
+
 export default function Toolkit({ who = 'student', open = null }) {
   const [here, setHere] = React.useState(null)
+  const [tab, setTab] = React.useState(tabFromHash)
+  const onTab = id => {
+    setTab(id)
+    history.replaceState(null, '', id === 'mine' ? '#/toolkit' : '#/toolkit?tab=' + id)
+  }
 
   const Routed = open && ROUTED[open]
   if (Routed) return <Routed/>
@@ -87,8 +156,22 @@ export default function Toolkit({ who = 'student', open = null }) {
   const Direct = open && IN_PLACE[open]
   if (Direct) return <Direct/>
 
+  const skill = open && SKILL_BY_ID[open]
+  if (skill) {
+    const Tool = skill.Component
+    return <Tool onExit={() => { location.hash = '#/toolkit?tab=' + skill.category }}/>
+  }
+
   const Local = here && IN_PLACE[here]
   if (Local) return <Local onBack={() => { setHere(null); window.scrollTo(0, 0) }}/>
 
-  return <ToolkitIndex who={who} onOpen={setHere}/>
+  const group = SKILL_GROUPS.find(g => g.id === tab)
+  return (
+    <>
+      <Tabs who={who} tab={tab} onTab={onTab}/>
+      <div id="kit-panel" role="tabpanel" aria-labelledby={'kit-tab-' + tab} className="[&>.wrap]:!pt-5">
+        {group ? <SkillPanel group={group} who={who}/> : <ToolkitIndex who={who} onOpen={setHere}/>}
+      </div>
+    </>
+  )
 }

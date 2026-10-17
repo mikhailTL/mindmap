@@ -14,8 +14,8 @@ import { cn } from '../lib/utils'
  * of usual use, then the stressed use until the light is red, a hold on that
  * moment, then the other phone. The phone in its turn gets a ring once the
  * stressed use starts, with the signals called out under it; the other teen
- * phone dims. Every light is the real engine's, from real key and scroll
- * events, on a faster session clock.
+ * phone loses its colour. Every light is the real engine's, from real key and
+ * scroll events, on a faster session clock.
  *
  * Every layout is symmetric about the column's centre line: equal tracks,
  * equal gaps, captions under the phones and never beside them, so the phones
@@ -74,12 +74,14 @@ function TeenFigure({ kind, s, hu, label }) {
   const lit = phase === 'stress' || phase === 'detected'
   const dim = hu.focus != null && hu.focus !== kind
   const fade = hu.reduced ? undefined : 'opacity 400ms ease, filter 400ms ease'
+  /* the phone out of its turn steps back by losing its colour, not its
+     contrast: every word on it still clears 4.5 : 1 */
   return (
     <figure className="m-0" style={{ width: P }} data-phone={kind}>
       <div className="relative" style={{ width: P, height: PHONE_H * s }}>
         <span aria-hidden className="pointer-events-none absolute"
           style={{ inset: -RING_GAP, borderRadius: PHONE_R * s + RING_GAP, boxShadow: RING, opacity: lit ? 1 : 0, transition: fade }}/>
-        <div style={{ opacity: dim ? 0.6 : 1, filter: dim ? 'saturate(0.6)' : 'none', transition: fade }}>
+        <div style={{ filter: dim ? 'saturate(0.2)' : 'none', transition: fade }}>
           <TeenPhone kind={kind} scale={s} viewRef={hu.views[kind]} sessionRef={hu.sessions[kind]} clock={hu.clock}
             reduced={hu.reduced} label={label}/>
         </div>

@@ -20,11 +20,11 @@ import {
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* Nine bands, one idea each: hero, what MindMap is, the problem, the two ways
- * in, the tools, what makes it different, who it is for, privacy, every age.
+/* Eight bands, one idea each: hero, the problem, the two ways in, the
+ * tools, what makes it different, who it is for, privacy, every age.
  *
  * Grounds alternate green, white and blue so the page reads as a sequence:
- *   hero paper, what it is accent.wash, problem ink, two ways sky.wash,
+ *   hero paper, problem ink, two ways sky.wash,
  *   tools paper, different (its own), who for accent.wash, privacy
  *   beam.wash, every age aqua.2.
  * Measured on each wash (ink : ink.2 : ink.3 : accent : accent.ink):
@@ -38,52 +38,6 @@ import {
  * One photograph per band at most, each in a different treatment, so they
  * read as part of the page rather than as a strip.
  */
-
-/* The owner's description, condensed by cutting and never by rewording.
-   Do not edit these sentences. */
-const IS_LEAD = 'MindMap is an adolescent wellness and mental health regulation app and wearable designed for teens, parents, and medical professionals and schools. Its goal is to provide comprehensive and causal data to all three audiences in an understandable way, addressing adolescent mental needs from their root cause while reducing stigma.'
-
-const IS = [
-  { id: 'patch', text: "Vital signs from a small, comfortable patch, worn on the upper arm or back, feed MindMap's neural network, which produces a simple and readable Mind Score and shows when stress rose or shifted." },
-  { id: 'phone', text: 'MindMap also works without the patch, with phone based pulse readings, survey scoring, and a parental extension that links teen phone activity to stress.' },
-  { id: 'kit',   text: 'Teens and parents get strategy and activity based toolkits, MindMap AI for guidance, and resources such as videos.' },
-  { id: 'lock',  text: "Teens decide what is shared with parents and medical professionals and schools, and data stays private within a teen's network." },
-]
-
-/* Small drawn marks for the four paragraphs. Ink outlines, one brand colour
-   each, so the four read as a set without being one repeated shape. */
-const IS_ICON = {
-  patch: (
-    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
-      <rect x="3" y="14" width="42" height="20" rx="10" className="fill-card stroke-ink" strokeWidth="2"/>
-      <rect x="13" y="18" width="22" height="12" rx="6" className="fill-accent-wash stroke-ink" strokeWidth="1.6"/>
-      <circle cx="24" cy="24" r="2.8" className="fill-accent"/>
-    </svg>
-  ),
-  phone: (
-    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
-      <rect x="13" y="3" width="22" height="42" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
-      <path d="M17 26 h4 l2 -6 l3 11 l2 -5 h3" fill="none" className="stroke-sky" strokeWidth="2.2"
-        strokeLinecap="round" strokeLinejoin="round"/>
-      <rect x="20" y="8" width="8" height="2" rx="1" className="fill-ink"/>
-    </svg>
-  ),
-  kit: (
-    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
-      <path d="M18 14 v-4 a2 2 0 0 1 2 -2 h8 a2 2 0 0 1 2 2 v4" fill="none" className="stroke-ink" strokeWidth="2"/>
-      <rect x="5" y="14" width="38" height="27" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
-      <path d="M24 21 v13 M17.5 27.5 h13" className="stroke-coral" strokeWidth="3" strokeLinecap="round"/>
-    </svg>
-  ),
-  lock: (
-    <svg viewBox="0 0 48 48" className="size-11" aria-hidden focusable="false">
-      <path d="M15 21 v-5 a9 9 0 0 1 18 0 v5" fill="none" className="stroke-ink" strokeWidth="2"/>
-      <rect x="9" y="21" width="30" height="22" rx="5" className="fill-card stroke-ink" strokeWidth="2"/>
-      <circle cx="24" cy="30" r="3" className="fill-lilac"/>
-      <path d="M24 32 v5" className="stroke-lilac" strokeWidth="2.4" strokeLinecap="round"/>
-    </svg>
-  ),
-}
 
 /* The two ways in. Each card is the steps themselves, so the band needs no
    second block explaining them. `lead` is the phone route: the only one a
@@ -275,42 +229,6 @@ export function Overview({ go }) {
           </div>
         </div>
       </section>
-
-      {/* -- what MindMap is, in the owner's own words, on green -------------
-          The lead and a tall photograph on the left; the four paragraphs as a
-          two by two set on the right from lg. */}
-      {/* The band's name is its h2, not a label plus an sr-only twin. */}
-      <Section tone="card" id="what" className="bg-accent-wash">
-        <h2 className="m-0 font-body text-ui font-semibold text-accent">What MindMap is</h2>
-        <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-10
-          xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-5">
-            <ScrollIn as="p" className="m-0 max-w-[60ch] font-display text-lead font-bold leading-[1.4] tracking-tight
-              text-ink sm:text-row lg:text-head lg:leading-[1.28]">
-              {IS_LEAD}
-            </ScrollIn>
-            {/* clip={false} keeps the shadow; html and body clip x already. */}
-            <Parallax2D clip={false} distance={40} scale={0.03}
-              className="lg:flex lg:flex-1 lg:flex-col lg:[&>div]:flex lg:[&>div]:flex-1 lg:[&>div]:flex-col">
-              <div className="relative h-[260px] overflow-hidden rounded-panel border border-rule
-                shadow-card sm:h-[320px] lg:h-auto lg:min-h-[300px] lg:flex-1">
-                <Frame photo="friends-steps"
-                  alt="Two teenagers sitting on outdoor steps, smiling at an open notebook, a backpack at their feet"
-                  className="absolute inset-0"/>
-              </div>
-            </Parallax2D>
-          </div>
-          <ul className="m-0 grid list-none content-start gap-3.5 p-0 sm:grid-cols-2">
-            {IS.map((item, i) => (
-              <ScrollRow as="li" key={item.id} index={i}
-                className="flex gap-4 rounded-panel border border-rule bg-card p-5">
-                <span className="shrink-0 pt-0.5">{IS_ICON[item.id]}</span>
-                <p className="m-0 text-sec leading-[1.55] text-ink-2">{item.text}</p>
-              </ScrollRow>
-            ))}
-          </ul>
-        </div>
-      </Section>
 
       {/* -- the problem, on the one dark band -----------------------------
           Every figure on this band is external and sourced. The figures sit
