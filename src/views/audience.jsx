@@ -330,7 +330,7 @@ export function ForParents({ go }) {
 
       <Section tone="card" tight>
         <SectionHead>Heads Up</SectionHead>
-        <SectionLede>Heads Up shows a green, yellow or red light for your teen's phone use.</SectionLede>
+        <SectionLede>Heads Up tells you when phone activity is causing your teen stress.</SectionLede>
         <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
           See Heads Up <ArrowRight aria-hidden/>
         </Button>
@@ -476,7 +476,7 @@ export function ForSchools({ go }) {
         lede="You see which students moved most since last week, and how groups are trending."
         facts={[
           ['What you see', `Each student's ${SCORE} and the direction it moved.`],
-          ['What you never see', `A raw reading, ${NOTES}, ${LOCATION}, or any group under ${K_ANONYMITY} students.`],
+          ['Never shown to you', `A raw reading, ${NOTES}, ${LOCATION}, or any group under ${K_ANONYMITY} students.`],
           STOCK,
         ]}/>
 

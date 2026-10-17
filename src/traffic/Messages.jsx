@@ -14,7 +14,9 @@ import { cn } from '../lib/utils'
  *   active     false pauses the dots and the caret
  *   onKey      (del) for every key press, from every source
  *   handleRef  ref; set to { key(del, ch), send(), receive(text, ms),
- *              focus(), reset() }
+ *              typing(on), bubble(text, me), focus(), reset() }
+ *   seed       the bubbles a fresh thread starts with
+ *   day        the time under "Today" at the top of the thread
  *   reduced    bubbles and keys change in place, nothing slides or pops
  *   autoReply  when true, the contact answers a visitor's own message */
 
@@ -273,10 +275,10 @@ const HEADER_H = 47 + 80
 /* ── the scene ──────────────────────────────────────────────────────────── */
 
 let uid = 0
-const seedBubbles = () => SEED.map(b => ({ ...b, id: ++uid, fresh: false }))
+const seedBubbles = (seed = SEED) => seed.map(b => ({ ...b, id: ++uid, fresh: false }))
 
-export default function MessagesScene({ active = true, onKey, handleRef, reduced = false, autoReply = true }) {
-  const [bubbles, setBubbles] = React.useState(seedBubbles)
+export default function MessagesScene({ active = true, onKey, handleRef, reduced = false, autoReply = true, seed = SEED, day = '9:38 PM' }) {
+  const [bubbles, setBubbles] = React.useState(() => seedBubbles(seed))
   const [typing, setTyping] = React.useState(false)
   const [draft, setDraft] = React.useState('')
   const [pressed, setPressed] = React.useState(null)
@@ -291,7 +293,7 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
   const pressTimer = React.useRef(0)
   const timers = React.useRef(new Set())
   const replyN = React.useRef(0)
-  const props = React.useRef({}); props.current = { onKey, autoReply }
+  const props = React.useRef({}); props.current = { onKey, autoReply, seed }
 
   const later = (fn, ms) => {
     const id = setTimeout(() => { timers.current.delete(id); fn() }, ms)
@@ -368,7 +370,7 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
     putDraft('')
     putShift(false)
     setPressed(null)
-    setBubbles(seedBubbles())
+    setBubbles(seedBubbles(props.current.seed))
     inputRef.current?.blur()
   }
 
@@ -382,6 +384,9 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
       },
       send() { press('send'); send() },
       receive,
+      /* the dots and the bubble as two steps, so a script can pause between */
+      typing(on) { setTyping(!!on) },
+      bubble(text, me = false) { add({ me, text }) },
       focus() { /* the field already shows its caret whenever the scene is up */ },
       reset,
     }
@@ -409,7 +414,7 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         style={{ padding: `${HEADER_H + 8}px 16px 10px`, scrollbarWidth: 'none' }}>
         <p className="m-0 mb-1.5 text-center text-[11px] leading-4" style={{ color: SECONDARY }}>
-          <span className="font-semibold">Today</span> 9:38 PM
+          <span className="font-semibold">Today</span> {day}
         </p>
         {bubbles.map((b, i) => {
           const prev = bubbles[i - 1], next = bubbles[i + 1]

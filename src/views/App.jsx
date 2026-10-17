@@ -22,7 +22,7 @@ import { Parents } from './Parents'
 import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
 import { ForStudents, ForParents, ForSchools } from './audience'
-import TrafficLightPage from '../traffic/Light'
+import { HeadsUpPage } from '../traffic/Page'
 import { ModeToggle } from '../ui/mode-toggle'
 import { useMode, setMode } from '../lib/mode'
 import { MindMapAI } from '../ai'
@@ -56,7 +56,7 @@ import { cn } from '../lib/utils'
 const VIEWS = [
   /* the site */
   'site','patch','pairing','without-patch','methods','privacy','monitor','survey','responses',
-  /* the three audience explainer pages, and Heads Up under Parents */
+  /* the three audience explainer pages, and Heads Up */
   'students','parents','pro','heads-up',
   /* the product */
   'app','app-student','app-parent','app-pro',
@@ -171,9 +171,11 @@ const PATCH = [
 const AUDIENCE = [
   ['students', 'Students', 'What a student sees each day.'],
   ['parents',  'Parents',  'What a parent can and cannot see.'],
-  ['heads-up', 'Heads Up', 'A light for when your teen\'s phone use looks stressful.'],
   ['pro',      'Medical Professionals',  'What a Medical Professional sees across a group.'],
 ]
+
+/* Heads Up is its own tab, beside the audience menu rather than inside it. */
+const HEADS_UP = ['heads-up', 'Heads Up', 'Tells you when phone activity is causing your teen stress.']
 
 /* Which nav entry lights per view. The three patch pages share `kit`, the
    three audience pages `who`, and every route not named here lights nothing.
@@ -181,7 +183,7 @@ const AUDIENCE = [
    them at all. */
 const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
-                  students:'who', parents:'who', pro:'who', 'heads-up':'who', survey:'survey' }
+                  students:'who', parents:'who', pro:'who', 'heads-up':'heads-up', survey:'survey' }
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
@@ -315,6 +317,7 @@ function Drawer({ view, go, onClose }) {
     ...PATCH.map(([id, label]) => [id, label]),
     ['methods', 'How it works'],
     ...AUDIENCE.map(([id, label]) => [id, label]),
+    [HEADS_UP[0], HEADS_UP[1]],
     ['survey', 'Give feedback'],
   ]
 
@@ -376,6 +379,9 @@ function Header({ view, go }) {
             aria-current={SECTION[view] === 'methods' ? 'page' : undefined}
             className={linkClass(SECTION[view] === 'methods')}>How it works</button>
           <NavMenu view={view} go={go} label="Who uses it" items={AUDIENCE} section="who"/>
+          <button onClick={() => go(HEADS_UP[0])} title={HEADS_UP[2]}
+            aria-current={view === HEADS_UP[0] ? 'page' : undefined}
+            className={linkClass(view === HEADS_UP[0])}>{HEADS_UP[1]}</button>
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
             className={linkClass(view === 'survey')}>Give feedback</button>
@@ -941,6 +947,9 @@ const START = {
       { id:'demo',     title:'See an example week', Mark:Wave,
         photo:'parent-card', alt:'A mother and her teenage child sitting close together on a sofa at home' },
     ],
+    /* Static: no light here, since nothing has been measured. */
+    feature: { id:'heads-up', title:'Heads Up',
+      line:'Tells you when phone activity is causing your teen stress.', cta:'See how Heads Up works' },
     setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
   },
   pro: {
@@ -1013,6 +1022,19 @@ function AudienceStart({ go, who }) {
           </li>
         ))}
       </ul>
+
+      {s.feature && (
+        <section aria-labelledby="start-feature" className="mt-2.5 rounded-panel border border-rule
+          bg-card p-3.5 lg:mt-4 lg:p-4">
+          <h3 id="start-feature" className="m-0 font-display text-ui font-bold text-ink">{s.feature.title}</h3>
+          <p className="mt-1 max-w-[52ch] text-sec text-ink-2">{s.feature.line}</p>
+          <button type="button" onClick={() => run(s.feature.id)}
+            className="mt-1.5 inline-flex min-h-[44px] items-center gap-2 font-display text-ui
+              font-bold text-accent underline decoration-accent/40 underline-offset-4
+              hoverOnly:text-accent-ink">
+            {s.feature.cta}</button>
+        </section>
+      )}
 
       {/* Spec 0d section 5: connecting a patch is one of the offered actions.
           The one dark card on the screen (spec 0f rule 7): paper on ink is
@@ -1146,7 +1168,7 @@ export function App() {
               tour:Tour, responses:Responses, survey:SurveyPage,
               methods:Methods, pairing:Pairing,
               students:ForStudents, parents:ForParents, pro:ForSchools,
-              'heads-up': TrafficLightPage,
+              'heads-up': HeadsUpPage,
               app:Launch,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */
@@ -1220,10 +1242,11 @@ export function App() {
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
         {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
-        {!admin && !inApp && view !== 'survey' && <ReviewLauncher page={view}/>}
+        {!admin && !inApp && view !== 'survey' && id !== 'heads-up' && <ReviewLauncher page={view}/>}
         {/* The extra foot room under sm is load-bearing: the feedback pill is
             fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
-        {inApp ? <AppFoot/> : (
+        {/* Heads Up draws its own one-line footer, so the site footer stays off it. */}
+        {inApp ? <AppFoot/> : id === 'heads-up' ? null : (
           <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
               <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures body signals and shows patterns. It is not a

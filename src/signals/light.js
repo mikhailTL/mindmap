@@ -1,6 +1,6 @@
 /* Heads Up: how a teenager reacts to their phone, not what is on it.
  *
- * Parental control apps (Qustodio, Apple Screen Time, Bark) watch content and
+ * Other monitoring apps watch content and
  * time: which apps, which contacts, how many hours. MindMap's Heads Up
  * watches none of that. It measures HOW the teen is using the phone, from
  * signals the phone already has: how fast they scroll and how often they
@@ -37,7 +37,7 @@ const SIGN = { pxPerSec: 1, reversals: 1, medianGap: -1, deletions: 1, minutes: 
 const WEIGHT = { pxPerSec: 1.0, reversals: 0.9, medianGap: 0.8, deletions: 0.8, minutes: 1.1, motion: 0.5 }
 
 /* Words for the parent and the teen: the kind of signal, never the content. */
-export const KIND = {
+const KIND = {
   pxPerSec:  'fast scrolling',
   reversals: 'back-and-forth scrolling',
   medianGap: 'fast typing',
@@ -204,15 +204,6 @@ export function nudgeFor({ light, lastNudgeAt, now }) {
   return { show: true, text: NUDGE_TEXT }
 }
 
-export const NEVER_SHOWN = [
-  'Who your teen talks to',
-  'What they watch or read',
-  'Which apps they use',
-  'What they type',
-  'Where they are',
-  'How many hours, unless the light is red',
-]
-
 const clock = ms => {
   const d = new Date(ms)
   let h = d.getHours(), m = d.getMinutes()
@@ -221,14 +212,53 @@ const clock = ms => {
   return `${h}:${String(m).padStart(2, '0')} ${ap}`
 }
 
-/* What the parent's phone shows. Green and yellow carry the colour only. */
-export function parentSummary({ light, at, minutes, top }) {
-  if (light === Light.GREEN) return { light, line: 'Their phone use looks usual.', detail: null }
-  if (light === Light.YELLOW) return { light, line: 'Their phone use is above their usual today.', detail: null }
-  const kind = KIND[top] || 'a long run'
-  return {
-    light,
-    line: 'It may be worth checking in tonight.',
-    detail: `Red at ${clock(at)}, ${Math.round(minutes)} minutes of ${kind}.`,
-  }
+/* ── Heads Up v4: what the parent sees ──────────────────────────────────── */
+
+/* The only words a parent ever sees about activity: one label per feature. */
+export const SIGNAL = Object.freeze({
+  pxPerSec:  'Nervous scrolling',
+  reversals: 'Scrolling back and forth',
+  medianGap: 'Frantic typing',
+  deletions: 'Constant backspacing',
+  minutes:   "Can't put it down",
+  motion:    'Restless hand',
+})
+
+export const SIGNAL_Z = 0.75
+
+/* Labels of the parts whose z is above 0.75, strongest (z times weight)
+   first. Takes the object strainIndex returns, or its `parts` array. */
+export function signalsFrom(strain) {
+  const parts = Array.isArray(strain) ? strain : (strain && Array.isArray(strain.parts) ? strain.parts : [])
+  return parts
+    .filter(p => p && SIGNAL[p.f] && typeof p.z === 'number' && p.z > SIGNAL_Z)
+    .sort((a, b) => b.z * (b.w ?? WEIGHT[b.f]) - a.z * (a.w ?? WEIGHT[a.f]))
+    .map(p => SIGNAL[p.f])
+}
+
+/* The face drawn on each lit lamp. */
+export const LIGHT_FACE = Object.freeze({ green: 'smile', yellow: 'neutral', red: 'frown' })
+
+export const HEADLINE = Object.freeze({
+  green:  'No signs of stress today.',
+  yellow: 'Some signs of stress today.',
+  red:    'Strong signs of stress. It may be worth checking in tonight.',
+})
+
+const ALLOWED = new Set(Object.values(SIGNAL))
+
+/* What the parent's phone shows: a headline, the time on red, and the
+   signal labels on yellow and red. Never a minute count, an app or content.
+   The older call shape { light, at, minutes, top } still works: `top` becomes
+   the one signal, `minutes` is ignored, and `line` / `detail` are returned
+   alongside for screens that have not moved over yet. */
+export function parentSummary(arg = {}) {
+  const { light: raw, at, signals, top } = arg
+  const light = raw === Light.RED || raw === Light.YELLOW ? raw : Light.GREEN
+  const legacy = !('signals' in arg) && ('minutes' in arg || 'top' in arg)
+  const given = legacy ? (SIGNAL[top] ? [SIGNAL[top]] : []) : (Array.isArray(signals) ? signals : [])
+  const list = light === Light.GREEN ? [] : [...new Set(given.filter(l => ALLOWED.has(l)))]
+  const time = light === Light.RED && typeof at === 'number' && Number.isFinite(at) ? `Red at ${clock(at)}` : null
+  const out = { light, headline: HEADLINE[light], time, signals: list }
+  return legacy ? { ...out, line: out.headline, detail: time } : out
 }

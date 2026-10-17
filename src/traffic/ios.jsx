@@ -11,51 +11,91 @@ export const IOS = {
   green: '#34c759', yellow: '#ffcc00', red: '#ff3b30',
 }
 
-/* The MindMap app icon: the mark in white on the brand green squircle. */
-export function AppIcon({ size = 38, className }) {
+/* MindMap's own colours for its notification. */
+export const MM = {
+  paper: '#f7faf8', rule: '#c2d7ca', ink: '#0d2b1e', ink2: '#2a5744', ink3: '#426a58',
+  accent: '#157446', accentInk: '#0f5836', lit: '#3ecf9a', crit: '#a8321f',
+  display: 'Quicksand, -apple-system, system-ui, sans-serif',
+  body: 'Chivo, -apple-system, system-ui, sans-serif',
+}
+
+/* The MindMap app icon: the mark in white on the brand green, 7 px corners
+   at 30 px. */
+export function AppIcon({ size = 30, className }) {
   return (
-    <span aria-hidden className={cn('grid shrink-0 place-items-center bg-accent text-white', className)}
-      style={{ width: size, height: size, borderRadius: size * 0.2237 }}>
-      <LogoMark className="w-[70%]" />
+    <span aria-hidden className={cn('grid shrink-0 place-items-center text-white', className)}
+      style={{ width: size, height: size, borderRadius: size * (7 / 30), background: MM.accent, ['--logo-peak']: MM.lit }}>
+      <LogoMark className="w-[74%]"/>
     </span>
   )
 }
 
-/* A banner notification as iOS draws it: frosted, 22 px corners, the app icon
- * on the left, the title in semibold with the time beside it, the body under.
- * `show` slides it down from the top with transform and opacity only; under
- * reduced motion it fades. Children render under the body (action buttons).
+/* MindMap's notification. A solid paper card, a 1 px rule, 18 px corners, a
+ * soft shadow and a 4 px strip down the left edge: accent green, or red on
+ * the parent's red alert. The icon, then "Mind" and "Map" in the brand's two
+ * inks with the time on the right, the body under, and optional actions under
+ * a rule. `show` slides it down once; under reduced motion it fades.
  *
  * Where it sits: on a phone with a Dynamic Island the banner hangs just under
- * the island and never covers the status bar. The island (src/ui/iphone.jsx)
- * is 36 pt tall at 12 pt from the top of the screen, so its bottom edge is at
- * 48 and the banner's top edge goes 8 under it. Measured in screen points,
- * so the parent must be positioned against the screen's top. `top` is a
- * style, not a class, so it wins over any top class a caller still passes;
- * a caller that needs another place passes the `top` prop. */
+ * the island. The island (src/ui/iphone.jsx) is 36 pt tall at 12 pt from the
+ * top of the screen, so its bottom edge is at 48 and the banner's top edge
+ * goes 8 under it, in screen points. */
 export const ISLAND_BOTTOM = 12 + 36
 export const BANNER_TOP = ISLAND_BOTTOM + 8
 
-export function IosNotification({ show, title = 'MindMap', body, time = 'now', reduced, onClick, children, className, top = BANNER_TOP }) {
+export function IosNotification({
+  show, body, time = 'now', reduced, tone = 'accent', lead, actions, pressed,
+  className, top = BANNER_TOP, onAction,
+}) {
+  const strip = tone === 'crit' ? MM.crit : MM.accent
   return (
     <div role="status" aria-live="polite"
       className={cn('pointer-events-none absolute inset-x-2 z-30', className)} style={{ top }}>
-      <div onClick={onClick}
-        className={cn('pointer-events-auto flex gap-2.5 rounded-[22px] px-3 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.18)]',
-          'transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
-          show ? 'translate-y-0 opacity-100' : (reduced ? 'opacity-0' : '-translate-y-[130%] opacity-0'))}
-        style={{ fontFamily: IOS.font, background: 'rgba(246,246,248,0.84)',
-          backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)' }}
-        aria-hidden={!show}>
-        <AppIcon size={38} className="mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="m-0 truncate text-[15px] font-semibold leading-5" style={{ color: IOS.label }}>{title}</p>
-            <span className="shrink-0 text-[13px] leading-5" style={{ color: IOS.secondary }}>{time}</span>
+      <div aria-hidden={!show}
+        className={cn('relative overflow-hidden',
+          reduced ? 'transition-opacity duration-300' : 'transition-[transform,opacity] duration-[360ms] ease-[cubic-bezier(0.23,1,0.32,1)]',
+          show ? 'translate-y-0 opacity-100' : (reduced ? 'opacity-0' : '-translate-y-[125%] opacity-0'))}
+        style={{ background: MM.paper, border: `1px solid ${MM.rule}`, borderRadius: 18,
+          boxShadow: '0 8px 24px rgba(13,43,30,0.18)', fontFamily: MM.body, color: MM.ink }}>
+        <span aria-hidden className="absolute inset-y-0 left-0 w-[4px]" style={{ background: strip }}/>
+        <div className="flex gap-2.5 py-2.5 pl-[15px] pr-3">
+          <AppIcon size={30} className="mt-0.5"/>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="m-0 text-[15px] font-bold leading-5" style={{ fontFamily: MM.display, color: MM.ink }}>
+                Mind<span style={{ color: MM.accent }}>Map</span>
+              </p>
+              <span className="shrink-0 text-[12px] leading-5" style={{ color: MM.ink3 }}>{time}</span>
+            </div>
+            {body && (
+              <p className="m-0 mt-0.5 flex items-start gap-1.5 text-[15px] leading-5" style={{ color: MM.ink }}>
+                {lead && <span className="mt-[2px] shrink-0">{lead}</span>}
+                <span>{body}</span>
+              </p>
+            )}
           </div>
-          {body && <p className="m-0 text-[15px] leading-5" style={{ color: IOS.label }}>{body}</p>}
-          {children}
         </div>
+        {actions?.length > 0 && (
+          <div className="flex items-center gap-2 px-3 pb-2.5 pt-2.5" style={{ borderTop: `1px solid ${MM.rule}` }}>
+            {actions.map((a, i) => {
+              const down = pressed === i
+              return a.primary ? (
+                <button key={a.label} type="button" tabIndex={-1} onClick={() => onAction?.(i)}
+                  className="pointer-events-auto h-[36px] flex-1 rounded-[8px] px-3 text-[15px] font-semibold text-white outline-none"
+                  style={{ background: down ? MM.accentInk : MM.accent, fontFamily: MM.body,
+                    transform: down && !reduced ? 'scale(0.97)' : 'none', transition: 'background-color 120ms, transform 120ms' }}>
+                  {a.label}
+                </button>
+              ) : (
+                <button key={a.label} type="button" tabIndex={-1} onClick={() => onAction?.(i)}
+                  className="pointer-events-auto h-[36px] px-3 text-[15px] font-semibold outline-none"
+                  style={{ color: MM.ink2, fontFamily: MM.body, background: 'transparent' }}>
+                  {a.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -218,7 +218,7 @@ export const DIFFERENT = [
     line: 'Designed to read pulse, sweat, temperature and movement.' },
   { id: 'heads', hue: 'sky', go: 'heads-up',
     title: 'Heads Up',
-    line: 'Tells parents about stressful phone use, never the content.' },
+    line: 'Tells parents when phone activity is causing stress.' },
   { id: 'camera', hue: 'coral', go: 'without-patch',
     title: 'No patch needed',
     line: 'A 45 second reading with your camera and microphone.' },

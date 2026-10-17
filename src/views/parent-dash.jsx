@@ -13,8 +13,7 @@ import { bandOf } from '../signals/score'
 import { cn } from '../lib/utils'
 import { SCORE, NOTES, LOCATION, PRO_LC, CONSENT_SHORT, CONSENT_OFF } from '../lib/terms'
 import { getSharing, getVersion, subscribe } from '../app/store'
-import { LightPill } from '../traffic/Parent'
-import { parentSummary } from '../signals/light'
+import { HeadsUpParentPanel } from '../traffic/ParentPanel'
 
 /* Demo figure for the settle row: days the body took longer than usual to
    settle. A count of days and nothing finer. */
@@ -32,8 +31,7 @@ const SETTLE_DAYS = 2
  * NO NAME: the child is never named. Where a code is needed it is the
  * pseudonym the console uses. Pronouns are "they", true in both modes.
  *
- * SHAPE. One hero card and the Heads Up beside it at 1280, under it at
- * 390. Everything else, the seven days first, behind one `See details`. */
+ * SHAPE. One hero card and the Heads Up under it. Everything else, the seven days first, behind one `See details`. */
 
 const CHILD_POSS = 'your child’s'
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -226,16 +224,6 @@ function AskAbout({ w }) {
     </>
   )
 }
-
-/* ── 4. What a parent is never shown ────────────────────────────────────── */
-/* Third person, so the same list is true in both modes. */
-const NEVER = [
-  [NOTES, 'Their journal stays on their phone.'],
-  [LOCATION, 'MindMap never collects it.'],
-  ['Second-by-second readings', 'You see whole days, never a moment.'],
-  ['Anything they say', 'The microphone is never recorded.'],
-  ['The four signals', 'You see the one number they make.'],
-]
 
 /* ── 5. What the school may see ─────────────────────────────────────────── */
 /* Read from the same CONSENT record the medical professional's console reads.
@@ -456,57 +444,6 @@ function PatchStatus() {
   )
 }
 
-/* ── The Heads Up, the one block under the hero ────────────────────── */
-/* The demo's one red day: the pill, one line, the link. The time and minutes
-   live on the Heads Up screen itself. The clock in parentSummary reads
-   UTC. */
-const LIGHT_DAY = parentSummary({ light: 'red', at: Date.UTC(2026, 9, 13, 21, 40), minutes: 23, top: 'pxPerSec' })
-
-function TrafficLightCard({ go }) {
-  return (
-    <Panel className="flex h-full flex-col justify-center">
-      <PanelHead title="Heads Up" meta="phone only"/>
-      <div className="mt-2.5 flex items-center gap-3">
-        <LightPill light={LIGHT_DAY.light} className="shrink-0"/>
-        <p className="min-w-0 font-display text-ui font-medium text-ink">{LIGHT_DAY.line}</p>
-      </div>
-      <button type="button" onClick={() => go('heads-up')}
-        className="group mt-2.5 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
-          pt-2.5 text-left">
-        <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
-          transition-colors duration-150 groupHoverOnly:text-accent-ink">
-          Open Heads Up</span>
-        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button>
-    </Panel>
-  )
-}
-
-/* ── The never-shown module ─────────────────────────────────────────────── */
-function NeverShown({ go, openTab }) {
-  return (
-    <Panel tone="beam">
-      <PanelHead title="What you never see" meta="no export"/>
-      <List className="mt-2.5 gap-0">
-        {NEVER.map(([t, s]) => (
-          <Item key={t} marker="none" className="border-b border-rule py-2">
-            <span className="block font-display text-ui font-medium text-ink">{t}</span>
-            <span className="block text-fine text-ink-2">{s}</span>
-          </Item>
-        ))}
-      </List>
-      <button type="button" onClick={() => (openTab ? openTab('shared') : go('privacy'))}
-        className="group mt-2.5 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
-          pt-2.5 text-left">
-        <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
-          transition-colors duration-150 groupHoverOnly:text-accent-ink">
-          Compare what each audience sees</span>
-        <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
-      </button>
-    </Panel>
-  )
-}
-
 /* ── The screen ─────────────────────────────────────────────────────────── */
 
 export function ParentDash({ go, openTab }) {
@@ -570,7 +507,6 @@ export function ParentDash({ go, openTab }) {
               <PanelHead title="Steps after a crisis alert" meta="five steps"/>
               <CrisisPath real={real}/>
             </Panel>
-            <div className="lg:col-span-2"><NeverShown go={go} openTab={openTab}/></div>
           </div>
         </SeeDetails>
       </div>
@@ -581,8 +517,8 @@ export function ParentDash({ go, openTab }) {
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       {/* THE FOLD. The week's sentence, the dial, the tier word, and beside
-          them at 1280 the Heads Up. Nothing else. */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+          under them the Heads Up at full width. Nothing else. */}
+      <div className="grid grid-cols-1 gap-3 lg:gap-4">
         <Panel className="flex flex-col justify-center">
           <div className="flex flex-col items-center text-center">
             <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
@@ -598,8 +534,8 @@ export function ParentDash({ go, openTab }) {
             </Why>
           </div>
         </Panel>
-        <TrafficLightCard go={go}/>
       </div>
+      <HeadsUpParentPanel onOpen={() => go('heads-up')}/>
 
       {/* ONE DISCLOSURE. Everything else is in here, collapsed, two abreast
           at 1280. The days above their usual are already in the hero line and
@@ -657,8 +593,6 @@ export function ParentDash({ go, openTab }) {
             <PanelHead title="Steps after a crisis alert" meta={`${PROTOCOL.length} steps`}/>
             <CrisisPath real={real}/>
           </Panel>
-
-          <div className="lg:col-span-2"><NeverShown go={go} openTab={openTab}/></div>
         </div>
       </SeeDetails>
     </div>

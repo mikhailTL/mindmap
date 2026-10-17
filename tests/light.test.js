@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   scrollFeatures, typingFeatures, sessionFeatures, emptyBaseline, updateBaseline,
-  strainIndex, lightFor, Light, decideLight, nudgeFor, parentSummary, NEVER_SHOWN,
+  strainIndex, lightFor, Light, decideLight, nudgeFor, parentSummary,
+  SIGNAL, signalsFrom, LIGHT_FACE,
 } from '../src/signals/light.js'
 
 /* ── features ───────────────────────────────────────────────────────────── */
@@ -134,23 +135,96 @@ describe('nudgeFor', () => {
   })
 })
 
+describe('SIGNAL labels', () => {
+  it('names every engine feature with the parent-facing label', () => {
+    expect(SIGNAL).toEqual({
+      pxPerSec: 'Nervous scrolling', reversals: 'Scrolling back and forth', medianGap: 'Frantic typing',
+      deletions: 'Constant backspacing', minutes: "Can't put it down", motion: 'Restless hand',
+    })
+    expect(Object.isFrozen(SIGNAL)).toBe(true)
+  })
+})
+
+describe('signalsFrom', () => {
+  it('keeps parts above z 0.75, strongest z times weight first', () => {
+    const parts = [
+      { f: 'pxPerSec', z: 1.0, w: 1.0 },
+      { f: 'reversals', z: 2.0, w: 0.9 },
+      { f: 'medianGap', z: 0.75, w: 0.8 },
+      { f: 'deletions', z: 1.5, w: 0.8 },
+      { f: 'minutes', z: 0.76, w: 1.1 },
+      { f: 'motion', z: -2, w: 0.5 },
+    ]
+    expect(signalsFrom({ parts })).toEqual(['Scrolling back and forth', 'Constant backspacing', 'Nervous scrolling', "Can't put it down"])
+    expect(signalsFrom(parts)).toEqual(signalsFrom({ parts }))
+  })
+  it('orders by z times weight, not z alone', () => {
+    expect(signalsFrom({ parts: [{ f: 'motion', z: 1.2, w: 0.5 }, { f: 'minutes', z: 1.0, w: 1.1 }] }))
+      .toEqual(["Can't put it down", 'Restless hand'])
+  })
+  it('is empty on a usual session and on nothing', () => {
+    expect(signalsFrom(strainIndex(calm, learned()))).toEqual([])
+    expect(signalsFrom(null)).toEqual([])
+  })
+  it('reads the real engine parts on a typing burst', () => {
+    const hot = { ...calm, medianGap: 80, deletions: 0.35 }
+    const got = signalsFrom(strainIndex(hot, learned()))
+    expect(got).toContain('Frantic typing')
+    expect(got).toContain('Constant backspacing')
+    expect(got).not.toContain('Nervous scrolling')
+  })
+})
+
+describe('LIGHT_FACE', () => {
+  it('smiles on green, neutral on yellow, frowns on red', () => {
+    expect(LIGHT_FACE).toEqual({ green: 'smile', yellow: 'neutral', red: 'frown' })
+    expect(Object.isFrozen(LIGHT_FACE)).toBe(true)
+  })
+})
+
 describe('parentSummary', () => {
-  it('shows the parent only the light on green and yellow', () => {
-    const s = parentSummary({ light: Light.GREEN, at: 0, minutes: 40, top: 'pxPerSec' })
-    expect(s.light).toBe(Light.GREEN)
-    expect(s.line).toBe('Their phone use looks usual.')
-    expect(s.detail).toBeNull()
+  const local = (h, m) => new Date(2026, 9, 16, h, m).getTime()
+  it('green: no signals, no time', () => {
+    expect(parentSummary({ light: Light.GREEN, at: local(9, 41), signals: ['Frantic typing'] }))
+      .toEqual({ light: 'green', headline: 'No signs of stress today.', time: null, signals: [] })
   })
-  it('on red gives the time and the kind of signal, never an app, a person or content', () => {
-    const s = parentSummary({ light: Light.RED, at: Date.UTC(2026, 9, 16, 21, 40), minutes: 25, top: 'pxPerSec' })
-    expect(s.detail).toContain('25 minutes')
-    expect(s.detail).toContain('fast scrolling')
-    expect(s.detail).not.toMatch(/instagram|tiktok|message|friend|video/i)
+  it('yellow: the signals, no time', () => {
+    expect(parentSummary({ light: Light.YELLOW, at: local(21, 41), signals: ['Nervous scrolling', 'Scrolling back and forth'] }))
+      .toEqual({ light: 'yellow', headline: 'Some signs of stress today.', time: null, signals: ['Nervous scrolling', 'Scrolling back and forth'] })
   })
-  it('lists what the parent never sees', () => {
-    expect(NEVER_SHOWN).toContain('Who your teen talks to')
-    expect(NEVER_SHOWN).toContain('What they watch or read')
-    expect(NEVER_SHOWN).toContain('Which apps they use')
+  it('red: the headline, the local time and the signals', () => {
+    expect(parentSummary({ light: Light.RED, at: local(21, 41), signals: ['Frantic typing', 'Constant backspacing'] }))
+      .toEqual({ light: 'red', headline: 'Strong signs of stress. It may be worth checking in tonight.', time: 'Red at 9:41 pm', signals: ['Frantic typing', 'Constant backspacing'] })
+  })
+  it('uses a 12-hour clock with lowercase am and pm', () => {
+    expect(parentSummary({ light: Light.RED, at: local(0, 5), signals: [] }).time).toBe('Red at 12:05 am')
+    expect(parentSummary({ light: Light.RED, at: local(12, 30), signals: [] }).time).toBe('Red at 12:30 pm')
+    expect(parentSummary({ light: Light.RED, at: local(21, 41), signals: [] }).time).toBe('Red at 9:41 pm')
+  })
+  it('drops anything that is not a signal label', () => {
+    const s = parentSummary({ light: Light.RED, at: local(21, 41), signals: ['Frantic typing', 'Instagram', '25 minutes'] })
+    expect(s.signals).toEqual(['Frantic typing'])
+  })
+  it('keeps the older call shape working, without minutes or phone use', () => {
+    const g = parentSummary({ light: Light.GREEN, at: 0, minutes: 40, top: 'pxPerSec' })
+    expect(g.line).toBe('No signs of stress today.')
+    expect(g.detail).toBeNull()
+    expect(g.signals).toEqual([])
+    const r = parentSummary({ light: Light.RED, at: local(21, 40), minutes: 25, top: 'pxPerSec' })
+    expect(r.line).toBe('Strong signs of stress. It may be worth checking in tonight.')
+    expect(r.detail).toBe('Red at 9:40 pm')
+    expect(r.signals).toEqual(['Nervous scrolling'])
+  })
+  it('never says phone use, a minute count, an app or content', () => {
+    for (const light of [Light.GREEN, Light.YELLOW, Light.RED]) {
+      for (const arg of [
+        { light, at: local(21, 41), signals: Object.values(SIGNAL) },
+        { light, at: local(21, 41), minutes: 25, top: 'minutes' },
+      ]) {
+        const text = JSON.stringify(parentSummary(arg))
+        expect(text).not.toMatch(/phone use|minute|\d+ min|instagram|tiktok|snapchat|youtube|message|friend|video|app\b/i)
+      }
+    }
   })
 })
 
