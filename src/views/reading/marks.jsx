@@ -1,5 +1,5 @@
 import React from 'react'
-import { Camera, Link, Stack } from '../../ui/marks'
+import { Camera, Link, Person, Stack } from '../../ui/marks'
 
 /* What a reading looks like everywhere in the log. Colour says the band,
  * shape says the source, and both always sit beside words, so neither carries
@@ -18,14 +18,20 @@ export const SOURCE = {
   camera: { word: 'Camera',        Icon: Camera },
   survey: { word: 'Survey',        Icon: Stack },
   patch:  { word: 'Patch',         Icon: Link },
+  mirror: { word: 'Mirror',        Icon: Person },
 }
 
-/* Circle for the camera, square for the check-in questions, diamond for the patch.
+/* Circle for the camera, square for the check-in questions, diamond for the patch,
+   triangle for the mirror.
    Drawn about a centre so the chart and the list share one geometry. */
 export function ShapePath({ source, cx, cy, r, ...rest }) {
   if (source === 'survey') {
     const s = r * 0.9
     return <rect x={cx - s} y={cy - s} width={s * 2} height={s * 2} rx={1} {...rest}/>
+  }
+  if (source === 'mirror') {
+    const s = r * 1.15
+    return <path d={`M${cx} ${cy - s}L${cx + s} ${cy + s * 0.85}L${cx - s} ${cy + s * 0.85}Z`} {...rest}/>
   }
   if (source === 'patch') {
     const s = r * 1.25

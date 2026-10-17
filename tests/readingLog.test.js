@@ -93,14 +93,14 @@ describe('bands and stats', () => {
     expect(s.min).toBe(20)
     expect(s.max).toBe(80)
     expect(s.timeInUsual).toBe(50)
-    expect(s.bySource).toEqual({ camera: 1, survey: 2, patch: 1 })
+    expect(s.bySource).toEqual({ camera: 1, survey: 2, patch: 1, mirror: 0 })
     expect(s.byBand).toEqual({ low: 25, usual: 50, up: 0, high: 25 })
   })
 
   it('returns nulls, not zeros, for an empty list', () => {
     const s = stats([])
     expect(s).toMatchObject({ n: 0, mean: null, min: null, max: null, timeInUsual: null })
-    expect(s.bySource).toEqual({ camera: 0, survey: 0, patch: 0 })
+    expect(s.bySource).toEqual({ camera: 0, survey: 0, patch: 0, mirror: 0 })
   })
 
   it('band percentages always add to 100', () => {

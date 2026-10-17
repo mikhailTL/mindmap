@@ -208,12 +208,12 @@ function LiveCalendar({ days, now, picked, onPick }) {
 }
 
 function BySource({ list, go }) {
-  const keys = ['camera', 'survey', 'patch']
+  const keys = ['camera', 'survey', 'patch', 'mirror']
   const count = k => list.filter(r => r.source === k).length
   const latestOf = k => [...list].reverse().find(r => r.source === k)
   return (
     <div>
-      <ul className="m-0 grid list-none grid-cols-3 gap-x-3 p-0">
+      <ul className="m-0 grid list-none grid-cols-4 gap-x-3 p-0">
         {keys.map(k => (
           <li key={k} className="min-w-0">
             <p className="tick flex items-center gap-1.5"><Shape source={k} fill="#2a5744" size={12}/>{SOURCE[k].word}</p>

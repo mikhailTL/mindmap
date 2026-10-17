@@ -49,6 +49,7 @@ const SOURCES = {
   patch: { word: 'Patch' },
   camera: { word: 'Camera' },
   survey: { word: 'Check-in questions' },
+  mirror: { word: 'Mirror' },
 }
 /* A drawn mark per source, the same shapes the Mind Score Log draws
    (src/views/reading/marks.jsx), so the source never rests on colour. */

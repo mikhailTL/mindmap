@@ -73,7 +73,7 @@ const RATE_MAX = 40
 
 /* Readings. Kept to the fields the student's own log has, nothing else. */
 export const READING_CAP = 500
-export const READING_SOURCES = ['camera', 'survey', 'patch']
+export const READING_SOURCES = ['camera', 'survey', 'patch', 'mirror']
 const NOTE_MAX = 280
 const READING_ID = /^[A-Za-z0-9_.:-]{1,64}$/
 const EARLIEST = Date.UTC(2020, 0, 1)

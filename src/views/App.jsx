@@ -21,6 +21,7 @@ import {
 import Toolkit from './Toolkit'
 import { SKILL_TOOLS, SKILL_ROUTES } from '../skills/index.js'
 import { Students } from './Students'
+import { MentalMirror } from './MentalMirror'
 import { Parents, ParentHome, ParentTrends } from './Parents'
 import { StudentTrends } from './student/TrendsTab'
 import { Pro, ProHome } from './Pro'
@@ -37,7 +38,7 @@ import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame, Grid,
-         People, PulseMark } from '../ui/marks'
+         People, PulseMark, Person } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
 import { Network, useAutoJoin } from '../account/Network'
@@ -67,7 +68,7 @@ const VIEWS = [
   /* the product */
   'app','app-home','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends',
   /* inside the product */
-  'reading','calendar','toolkit','ai','help','shared','app-notify',
+  'reading','mirror','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
   'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
@@ -92,7 +93,7 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
+const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','reading','mirror','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
@@ -149,6 +150,7 @@ const TITLE = {
   'app-pro':'The Medical Professional screen in MindMap',
   monitor:'Every reading in MindMap',
   reading:'Take a reading in MindMap',
+  mirror:'Your Mental Mirror in MindMap',
   calendar:'Your calendar in MindMap',
   toolkit:'The MindMap Toolkit',
   'toolkit-breathing':'Breathing, in the MindMap Toolkit',
@@ -512,6 +514,7 @@ const APP_NAV = {
     /* Spoken apart from the top bar's Home, which goes to the app home. */
     ['app-student', 'Home',     PulseMark, 'Student home'],
     ['reading',     'Reading',  DialMark],
+    ['mirror',      'Mirror',   Person, 'Mental Mirror'],
     ['student-trends', 'Trends', CalendarMark, 'Your trends'],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
@@ -540,7 +543,7 @@ const APP_NAV = {
    you walked in from, which App remembers below, and the bar under them is the
    bar you had. */
 const APP_OF = {
-  'app-student': 'student', reading: 'student', shared: 'student', 'student-trends': 'student',
+  'app-student': 'student', reading: 'student', mirror: 'student', shared: 'student', 'student-trends': 'student',
   'parent-trends': 'parent',
   notes: 'student', 'app-notify': 'student', monitor: 'student',
   'app-parent': 'parent', privacy: 'parent',
@@ -557,7 +560,7 @@ const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               ...SKILL_ROUTES])
 
 const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends', 'parent-trends':'parent-trends',
-                  'app-student':'app-student', monitor:'app-student', reading:'reading',
+                  'app-student':'app-student', monitor:'app-student', reading:'reading', mirror:'mirror',
                   toolkit:'toolkit', ai:'ai', notes:'ai', shared:'shared',
                   'app-notify':'shared', help:null,
                   'toolkit-breathing':'toolkit', 'toolkit-ground':'toolkit',
@@ -590,6 +593,7 @@ const APP_TITLE = {
   'app-student':  ['Student',          'Student'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
+  mirror:         ['Mirror',           'Mental Mirror'],
   calendar:       ['Calendar',         'Calendar'],
   toolkit:        ['Toolkit',          'Toolkit'],
   'toolkit-breathing': ['Breathing',   'Breathing'],
@@ -1224,6 +1228,9 @@ export function App() {
               /* Both bodies arrive without the app's gutters, so they get the
                  wrap here. */
               'app-notify': () => <main className="wrap"><NotificationSettings/></main>,
+              /* The Mental Mirror on its own tab; the same screen sits on the
+                 reading chooser as the fourth way. */
+              mirror: p => <main className="wrap"><MentalMirror go={p.go}/></main>,
               help: () => <main className="wrap"><HelpBody/></main>,
               /* Owned by other workers. `toolkit` is the list; the eleven
                  activity routes pass the activity down as `open`. */

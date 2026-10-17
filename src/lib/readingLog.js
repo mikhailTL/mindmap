@@ -17,7 +17,7 @@
 
 export const KEY = 'mindmap.readings.log'
 export const CAP = 500
-export const SOURCES = Object.freeze(['camera', 'survey', 'patch'])
+export const SOURCES = Object.freeze(['camera', 'survey', 'patch', 'mirror'])
 export const EVENT = 'mindmap:readings'
 
 /* The band edges every score route already uses (engine.band, score.bandOf).
@@ -151,7 +151,7 @@ function shares(counts, total) {
 }
 
 export function stats(list = []) {
-  const bySource = { camera: 0, survey: 0, patch: 0 }
+  const bySource = { camera: 0, survey: 0, patch: 0, mirror: 0 }
   const counts = { low: 0, usual: 0, up: 0, high: 0 }
   if (!list.length) {
     return { n: 0, mean: null, min: null, max: null, timeInUsual: null, bySource,
