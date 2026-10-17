@@ -300,7 +300,10 @@ export function startEditor() {
     editing = el
     el.dataset.mmxBefore = textOf(el)
     if (!el.dataset.mmxOriginal) el.dataset.mmxOriginal = textOf(el)
-    el.setAttribute('contenteditable', 'true')
+    /* plaintext-only stops the browser pasting in its own fonts and inline
+       styles, so typed words keep the element's font. */
+    el.setAttribute('contenteditable', 'plaintext-only')
+    if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true')
     el.setAttribute('data-mmx-editing', '1')
     el.spellcheck = true
     el.focus()
@@ -323,6 +326,12 @@ export function startEditor() {
     el.removeAttribute('contenteditable')
     el.removeAttribute('data-mmx-editing')
     el.removeEventListener('keydown', keyInText)
+    /* Anything the browser wrapped the new words in (font tags, inline
+       font-family or colour) is unwrapped, so the site's own type shows. */
+    el.querySelectorAll('font, [style]').forEach(n => {
+      if (n.tagName === 'FONT') n.replaceWith(...n.childNodes)
+      else { n.style.removeProperty('font-family'); n.style.removeProperty('font-size'); n.style.removeProperty('color'); n.style.removeProperty('background-color'); if (!n.getAttribute('style')) n.removeAttribute('style') }
+    })
     const to = textOf(el)
     setEdit(el, 'text', el.dataset.mmxOriginal || el.dataset.mmxBefore, to)
     renderPanel()
@@ -635,6 +644,7 @@ export function startEditor() {
       'Apply these edits I made in the browser editor to the MindMap website (repo ~/Desktop/mindmap-patient-react).',
       'Each item names the page and section, then "Find" quotes the element\'s text as it is now in the site, so you can grep for it in src. Under it are the changes I made by hand.',
       'Sizes and spacing are CSS px measured at the screen width noted; map them to the nearest Tailwind tokens and keep the layout responsive at 390px too. Keep the site\'s copy rules (plain words, no dashes). If a change cannot be made exactly, make the closest change and tell me.',
+      'Text changes are words only: keep each element\'s existing font, weight, colour and any highlighted word styling (for example the green word in a heading) unless a size or weight change is listed for it.',
       'Lines under "Feature requests" are my instructions about functionality to add, change or remove there. Build them; never put their words on the site as text.',
       '',
     ]
