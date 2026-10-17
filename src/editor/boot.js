@@ -1,7 +1,7 @@
 /* The owner's temporary in-browser editor. Off for everyone by default.
  *
- * Turn on:  open the site with ?edit=1 in the address (before the #), e.g.
- *           https://mindmappaitent.vercel.app/?edit=1#/site
+ * Turn on:  add ?edit=1 to the address, before or after the #, e.g.
+ *           https://mindmappaitent.vercel.app/?edit=1#/site  or  …/#/site?edit=1
  *           or press Alt+Shift+E on any page.
  * Turn off: the Exit button in the editor bar, or ?edit=off.
  *
@@ -12,9 +12,12 @@ const KEY = 'mindmap.editor'
 
 function wanted() {
   try {
+    /* ?edit=1 may sit before the # or after it (#/site?edit=1); read both
+       before the router tidies the hash away. */
     const q = new URLSearchParams(location.search)
-    if (q.has('edit')) {
-      const v = q.get('edit')
+    const h = new URLSearchParams((location.hash.split('?')[1]) || '')
+    const v = q.has('edit') ? q.get('edit') : h.has('edit') ? h.get('edit') : null
+    if (v !== null) {
       if (v === 'off' || v === '0' || v === 'false') localStorage.removeItem(KEY)
       else localStorage.setItem(KEY, '1')
     }
