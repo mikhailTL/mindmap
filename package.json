@@ -10,9 +10,13 @@
     "preview:api": "node tools/serve-with-api.mjs 4174",
     "readability": "node tools/readability/dump.mjs && python3 tools/readability/grade.py text.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "mediapipe": "node tools/mediapipe-wasm.mjs",
+    "predev": "node tools/mediapipe-wasm.mjs",
+    "prebuild": "node tools/mediapipe-wasm.mjs"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1",
     "@radix-ui/react-collapsible": "1.1.2",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-progress": "^1.1.16",

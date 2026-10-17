@@ -3,7 +3,7 @@ import { ScrollRow } from '../ui/motion'
 
 import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
-import { ArrowRight, Camera, Link, Stack } from '../ui/marks'
+import { ArrowRight, Camera, Link, Person, Stack } from '../ui/marks'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
@@ -13,6 +13,8 @@ import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
+import { MentalMirror } from './MentalMirror'
+import { FACE_SECONDS } from '../signals/face'
 import { BackBar, Stage, StageStyles } from './reading/stage'
 import { takeReadingIntent } from './reading/intent'
 import { SeeTrends } from './student/charts'
@@ -40,9 +42,14 @@ const SCREENS = {
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
       ['1', 'score saved to your account']],
   },
+  mirror: {
+    title: 'Mental Mirror',
+    lede: `The front camera reads your face and your pulse from skin colour; the ${SCORE} model scores it.`,
+    facts: [[String(FACE_SECONDS), 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames kept']],
+  },
 }
 
-/* The three ways in: on the card a mark, title, one line, one figure and the
+/* The four ways in: on the card a mark, title, one line, one figure and the
    action; under the grid the same three facts in the same order. */
 const WAYS = [
   { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
@@ -65,6 +72,16 @@ const WAYS = [
       ['Needs', 'Only this phone'],
     ],
     foot:'Your answers become one score. The score syncs to your account.' },
+  { id:'mirror', title:'Mental Mirror', opens:true, Mark:Person,
+    line:'Face the phone. Lines trace your face as it is read.',
+    fact:[String(FACE_SECONDS), 'seconds'],
+    cta:'Open',
+    spec:[
+      ['Takes', `${FACE_SECONDS} seconds`],
+      ['Reads', 'Blinks, brow, lips, eyes, small movements, and pulse from skin colour'],
+      ['Needs', 'A front camera and good light'],
+    ],
+    foot:'Frames become numbers, then get deleted. Students only. The score syncs to your account.' },
   { id:'patch', title:'Connect a patch', opens:false, Mark:Link,
     line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
@@ -134,8 +151,8 @@ const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
 /* The three facts per way, behind one disclosure under the grid. */
 function Compare() {
   return (
-    <SeeDetails label="Compare the three ways" className="mt-3 lg:mt-4">
-      <div className="grid gap-3 lg:grid-cols-3 lg:gap-4">
+    <SeeDetails label="Compare the four ways" className="mt-3 lg:mt-4">
+      <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-4">
         {WAYS.map(way => {
           const Mark = way.Mark
           return (
@@ -218,7 +235,7 @@ export function CheckInBody({ go }){
 
   const leave = React.useCallback(() => {
     setDir('back'); setScreen('choose')
-    setSaid('Three ways to take a reading, showing now')
+    setSaid('Four ways to take a reading, showing now')
     if (pushed.current) { pushed.current = false; history.back() }
   }, [])
 
@@ -260,7 +277,7 @@ export function CheckInBody({ go }){
   /* A link that has to land on a reading rather than on the chooser. */
   React.useEffect(() => {
     const want = takeReadingIntent()
-    if (want === 'sensors' || want === 'survey') open(want)
+    if (want === 'sensors' || want === 'survey' || want === 'mirror') open(want)
   }, [open])
 
   React.useEffect(() => {
@@ -286,7 +303,7 @@ export function CheckInBody({ go }){
     setPair(await connectPatch()); setBusy(false)
   }
 
-  const [sensors, survey, patch] = WAYS
+  const [sensors, survey, mirror, patch] = WAYS
 
   return (
     <>
@@ -303,7 +320,7 @@ export function CheckInBody({ go }){
             <PatchNotice inline/>
           </div>
 
-          <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
+          <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4 xl:grid-cols-4">
             <ScrollRow index={0} className="h-full">
               <Way ref={el => { cards.current.sensors = el }} way={sensors}
                 onOpen={() => open('sensors')}/>
@@ -322,9 +339,13 @@ export function CheckInBody({ go }){
                 </span>
               </Way>
             </ScrollRow>
+            <ScrollRow index={2} className="h-full">
+              <Way ref={el => { cards.current.mirror = el }} way={mirror}
+                onOpen={() => open('mirror')}/>
+            </ScrollRow>
             {/* Pairing is a device handshake, not a reading, so this card is
                 a panel with a control in it. */}
-            <ScrollRow index={2} className="h-full">
+            <ScrollRow index={3} className="h-full">
               <section className={cn(PANEL, 'flex h-full flex-col p-4 lg:p-5')}>
                 <h3 className="flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
                   <Link aria-hidden className="size-6 shrink-0 text-accent"/>{patch.title}
@@ -353,6 +374,13 @@ export function CheckInBody({ go }){
         <Stage dir={dir}>
           <ReadingHead id="sensors" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4"><PhoneCheck go={go}/></div>
+        </Stage>
+      )}
+
+      {screen === 'mirror' && (
+        <Stage dir={dir}>
+          <ReadingHead id="mirror" ref={head} onBack={leave}/>
+          <div className="mt-3 lg:mt-4"><MentalMirror go={go}/></div>
         </Stage>
       )}
 
