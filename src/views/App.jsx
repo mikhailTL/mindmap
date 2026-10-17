@@ -8,6 +8,8 @@ import { Methods } from './Methods'
 import { Pairing } from './Pairing'
 import { Responses } from './Responses'
 import { Entry } from './Entry'
+import { SiteIntro } from './SiteIntro'
+import { captureHarness } from './Intro'
 import { GetHelp, HelpBody, NotificationSettings, NotesJournal } from '../app'
 import { NameGate } from '../survey/NameGate'
 import { ReviewLauncher } from '../survey/Survey'
@@ -1244,7 +1246,6 @@ export function App() {
   /* Three gates in order: title sequence, name, per-page questions. The
      responses route is excluded from all three. */
   const admin = view === 'responses'
-  /* Plays on every load. Only Skip suppresses it, and it does so permanently. */
   /* Navigation resets scroll, title and focus itself: focus otherwise falls to
      <body> and the scroll position carries over from the previous screen. */
   const land = React.useCallback(raw => {
@@ -1269,6 +1270,19 @@ export function App() {
   /* Somebody who opened an invite link joins that network as soon as they
      are signed in, whichever way they signed in. */
   useAutoJoin(go)
+
+  /* The site onboarding: on every load of the landing page and every time
+     the visitor comes back to it. Only the screenshot harness holds it down. */
+  const [siteIntro, setSiteIntro] = React.useState(false)
+  const lastView = React.useRef(null)
+  React.useEffect(() => {
+    if (view === 'site' && lastView.current !== 'site' && !captureHarness()) setSiteIntro(true)
+    lastView.current = view
+  }, [view])
+  const closeIntro = React.useCallback(() => {
+    setSiteIntro(false)
+    requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
+  }, [])
   React.useEffect(() => {
     /* An old id in the url is rewritten once to the id spec 0e section 18
        fixes, so a bookmark of `#/check` keeps working and the address bar then
@@ -1377,6 +1391,7 @@ export function App() {
       {/* The chooser, and the guided tour behind its fourth option. It owns its
           own fixed layers and its own session flag. */}
       <Entry go={go} enabled={!admin && !bare}/>
+      {siteIntro && view === 'site' && <SiteIntro onDone={closeIntro}/>}
       {/* The name is only ever used to label a survey answer, so it is asked
           inside the survey now rather than across the whole site before anyone
           has seen anything. A full-screen panel between a first-time reader and

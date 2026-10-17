@@ -6,7 +6,7 @@ import React from 'react'
  * are the same thing: jump to END.
  *
  * The geometry of the mark is copied from src/ui/logo.jsx LogoMark (viewBox
- * 40 x 28). If that drawing changes, change LOGO_PTS, RECT and DOT here. */
+ * 40 x 28). If that drawing changes, change MARK, RECT and DOT_R here. */
 
 export const LINES = [
   { word: 'Map',     rest: ' your Mind.',    tone: 'text-accent' },
@@ -32,31 +32,54 @@ const outCubic = x => 1 - Math.pow(1 - x, 3)
 const inOutQuart = x => (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2)
 const lerp = (a, b, k) => a + (b - a) * k
 
-/* LogoMark's five points, with the midpoint of each segment added, so the
-   trace and the mark both have nine. The midpoints are where the trace's
-   jitter sits; folding them onto straight segments is what smooths it. */
+/* LogoMark's five points (viewBox 40 x 28). */
 const MARK = [[10.5, 18.2], [15, 10.2], [20, 15.8], [25.4, 11], [29.5, 17.6]]
-const LOGO_PTS = MARK.flatMap((p, i) => (i === MARK.length - 1 ? [p]
-  : [p, [(p[0] + MARK[i + 1][0]) / 2, (p[1] + MARK[i + 1][1]) / 2]]))
 const RECT = { x: 2, y: 4, w: 36, h: 20, rx: 10, sw: 2.2 }
 const PATH_SW = 2.3
 const DOT_R = 2.4
 
-/* The trace, as fractions of the width and multiples of the amplitude
-   (negative is up). Even points follow the mark's shape; odd ones wander. */
-const TRACE = [
-  [0.05, 0.45], [0.16, -0.3], [0.27, -0.8], [0.39, 0.6], [0.5, 0.2],
-  [0.6, -0.2], [0.72, -0.95], [0.84, 0.65], [0.95, 0.35],
+/* The trace is a heart signal, the shape a pulse sensor draws: a flat
+   baseline, a small P wave, the sharp QRS spike, a rounded T wave, three
+   beats across the screen. Both it and the mark are resampled to the same
+   number of points spaced evenly along their length, so the fold from one
+   to the other is point for point and smooth. */
+const N = 96
+const BEAT = [
+  [0, 0], [0.08, 0], [0.12, -0.1], [0.16, -0.14], [0.2, -0.1], [0.24, 0], [0.3, 0],
+  [0.33, 0.14], [0.37, -1], [0.41, 0.38], [0.45, 0], [0.55, 0],
+  [0.6, -0.16], [0.66, -0.3], [0.72, -0.16], [0.78, 0], [1, 0],
 ]
+const BEATS = 3
+
+function resample(pts, n) {
+  const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]))
+  const total = seg.reduce((a, c) => a + c, 0)
+  const out = []
+  for (let k = 0; k < n; k++) {
+    let left = (total * k) / (n - 1), i = 0
+    while (i < seg.length - 1 && left > seg[i]) { left -= seg[i]; i++ }
+    const f = seg[i] ? Math.min(1, left / seg[i]) : 0
+    out.push([lerp(pts[i][0], pts[i + 1][0], f), lerp(pts[i][1], pts[i + 1][1], f)])
+  }
+  return out
+}
 
 const tracePts = (w, h) => {
-  const amp = Math.min(h * 0.14, 110)
-  return TRACE.map(([fx, fy]) => [w * fx, h / 2 + fy * amp])
+  const amp = Math.min(h * 0.16, 120)
+  const x0 = w * 0.04, span = w * 0.92
+  const knots = []
+  for (let b = 0; b < BEATS; b++) {
+    BEAT.forEach(([fx, fy], i) => {
+      if (b > 0 && i === 0) return
+      knots.push([x0 + span * ((b + fx) / BEATS), h / 2 + fy * amp])
+    })
+  }
+  return resample(knots, N)
 }
 
 const logoPts = box => {
   const s = box.width / 40
-  return LOGO_PTS.map(([x, y]) => [box.left + x * s, box.top + y * s])
+  return resample(MARK.map(([x, y]) => [box.left + x * s, box.top + y * s]), N)
 }
 
 const toD = pts => 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')
@@ -140,9 +163,9 @@ export function IntroOverlay({ t, box, size, onSkip }) {
       </div>
       {svg}
       <button type="button" onClick={onSkip}
-        className="absolute right-3 top-3 min-h-[44px] rounded-field px-4 font-display text-ui
-          font-semibold text-ink-2 transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink
-          sm:right-6 sm:top-5">
+        className="absolute bottom-6 left-1/2 min-h-[44px] -translate-x-1/2 rounded-field px-5 font-display
+          text-ui font-semibold text-ink-2 underline decoration-rule underline-offset-4 transition-colors
+          duration-150 hoverOnly:text-ink sm:bottom-10">
         Skip
       </button>
     </div>

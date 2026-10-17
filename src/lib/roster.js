@@ -39,7 +39,7 @@ const SIGNAL_KEYS = Object.keys(SIGNAL)
 /* One teen's record. `base` is their usual Mind Score, `drift` how far the
    last two weeks have moved from it (positive means more stress), `swing` how
    much a day varies, `patch` whether they wear the patch (otherwise their
-   readings come from the phone camera and the six questions). */
+   readings come from the phone camera and the check-in questions). */
 export function makeTeen({ id, first, last = '', pseudonym, age, grade, seed, base = 48, drift = 0, swing = 9,
   patch = true, avatar = null, consent = { score: true, trends: true, raw: false } }) {
   const r = rng(seed)

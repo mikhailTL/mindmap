@@ -566,7 +566,7 @@ const GIVES = [
 const KEPT_HERE = [
   ['Camera frames', 'The phone turns them into numbers, then deletes them.'],
   ['Microphone audio', 'The phone turns it into pitch figures, then deletes it.'],
-  ['Your six answers', 'Scored on this phone. Nothing you type leaves it.'],
+  ['Your check-in answers', 'Scored on this phone. Nothing you type leaves it.'],
 ]
 
 function Rows({ items }) {

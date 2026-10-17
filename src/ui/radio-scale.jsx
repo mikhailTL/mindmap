@@ -8,7 +8,7 @@ export function Scale({ name, legend, low, high, value, onChange }){
   return (
     <fieldset className="py-6 border-b border-rule">
       <legend className="font-display font-bold text-row text-ink p-0">{legend}</legend>
-      <R.Root value={value==null?undefined:String(value)}
+      <R.Root value={value==null?'':String(value)}
         onValueChange={v=>onChange(Number(v))}
         aria-label={legend}
         className="mt-4 grid grid-cols-5 gap-1.5">

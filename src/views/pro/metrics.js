@@ -169,6 +169,6 @@ export function logSubjects(list = CASELOAD) {
   return t => t.replace(/\b(8241|5512)\b/g, m => map[m])
 }
 
-export const SOURCE_WORD = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Six questions' })
+export const SOURCE_WORD = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions' })
 export const sourceLine = teen => (teen.patch ? 'Patch and phone readings' : 'Phone camera and questions')
 export { TODAY }

@@ -15,11 +15,10 @@ import { PRO } from '../lib/terms'
 export const ABOUT_TEXT = `Inspiration and function of MindMap. Text coming soon.`
 
 const MOTTO = 'Making your stress readable'
-const SEEN_KEY = 'mindmap.apphome.intro'
-
 /* The app's front page: the mark, the motto, About, and the way in. Plays its
-   opening once per browser session, signed out only; reduced motion and the
-   screenshot harness get the last frame. */
+   opening every time the page is opened or refreshed, signed in or out (the
+   owner, 17 October), with Skip under it; reduced motion and the screenshot
+   harness get the last frame. */
 /* `#/app-home?demo` is where the site's "View the demo" lands: the opening
    always plays (motion settings allowing), and the way in is a choice of
    the three screens on demo data instead of the sign in form. */
@@ -51,13 +50,11 @@ function DemoPanel({ go, onSignIn }) {
   )
 }
 
-function shouldPlay(signedIn) {
+function shouldPlay() {
   if (captureHarness()) return false
-  if (signedIn && !isDemo()) return false
   try { if (getAppearance().motion === 'reduce') return false } catch {}
   try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false } catch {}
-  if (isDemo()) return true
-  try { return sessionStorage.getItem(SEEN_KEY) !== '1' } catch { return true }
+  return true
 }
 
 function useClock(play) {
@@ -65,7 +62,6 @@ function useClock(play) {
   const raf = React.useRef(0)
   React.useEffect(() => {
     if (!play) return
-    try { sessionStorage.setItem(SEEN_KEY, '1') } catch {}
     const start = performance.now()
     const tick = now => {
       const e = now - start
@@ -110,7 +106,7 @@ function AboutDialog({ open, onClose }) {
 
 export function AppHome({ go }) {
   const me = useAccount()
-  const [play] = React.useState(() => shouldPlay(!!me))
+  const [play] = React.useState(shouldPlay)
   const [t, skip] = useClock(play)
   const done = t >= END
   const [about, setAbout] = React.useState(false)

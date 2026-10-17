@@ -27,7 +27,7 @@ import { cn } from '../lib/utils'
 const PANEL = 'rounded-panel border border-rule bg-card'
 
 /* One line per screen and its figures. Every figure is measured elsewhere:
-   PPG_SECONDS plus VOICE_SECONDS is 45, ITEMS has six questions. */
+   PPG_SECONDS plus VOICE_SECONDS is 45; ITEMS (lib/engine.js) holds the check-in questions. */
 const SCREENS = {
   sensors: {
     title: 'Camera and microphone',
@@ -35,8 +35,8 @@ const SCREENS = {
     facts: [['45', 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames or audio kept']],
   },
   survey: {
-    title: 'Six questions',
-    lede: 'Six answers become one number.',
+    title: 'Check-in questions',
+    lede: 'Your answers become one number.',
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
       ['0', 'answers that leave this phone']],
   },
@@ -55,13 +55,13 @@ const WAYS = [
       ['Needs', 'A camera and a microphone'],
     ],
     foot:'Frames and audio become numbers, then get deleted. Nothing is stored or sent.' },
-  { id:'survey', title:'Six questions', opens:true, Mark:Stack,
-    line:'You need no camera or patch.',
-    fact:['30', 'seconds'],
+  { id:'survey', title:'Check-in questions', opens:true, Mark:Stack,
+    line:'You need no camera or patch. Take it as often as you like.',
+    fact:['60', 'seconds'],
     cta:'Answer',
     spec:[
-      ['Takes', 'About 30 seconds'],
-      ['Reads', 'Tension, sleep, energy, focus and load'],
+      ['Takes', 'About a minute'],
+      ['Reads', 'Tension, worry, mood, sleep, energy, focus, body and support'],
       ['Needs', 'Only this phone'],
     ],
     foot:'Answers stay on this phone. Nothing is stored or sent.' },
@@ -194,13 +194,18 @@ export function CheckInBody({ go }){
   /* True while this screen owns the history entry it pushed on entering a
      reading, so leaving consumes that entry. */
   const pushed = React.useRef(false)
-  /* The survey's log entry: added once when the sixth answer lands, then kept
-     in step if an answer changes. */
+  /* The survey's log entry: added once when the last answer lands, then kept
+     in step if an answer changes. Each new start of the survey is a new
+     reading: the answers clear and a new entry is made. */
   const logged = React.useRef(null)
   const toLog = React.useRef(false)
   const logHead = React.useRef(null)
 
+  /* A fresh survey: no answers, and the next result is a new reading. */
+  const restart = React.useCallback(() => { setAns({}); logged.current = null }, [])
+
   const open = React.useCallback(id => {
+    if (id === 'survey') restart()
     from.current = id
     setDir('fwd'); setScreen(id)
     setSaid(`${SCREENS[id].title}, showing now`)
@@ -209,7 +214,7 @@ export function CheckInBody({ go }){
       history.pushState({ reading: id }, '', location.hash || '#/check')
       pushed.current = true
     } catch { pushed.current = false }
-  }, [])
+  }, [restart])
 
   const leave = React.useCallback(() => {
     setDir('back'); setScreen('choose')
@@ -380,7 +385,7 @@ export function CheckInBody({ go }){
               className={cn(PANEL, 'mt-3 min-h-[10rem] p-4 lg:p-5 xl:mt-0 xl:sticky xl:top-[65px]')}>
               {!done && (
                 <p className="max-w-[40ch] text-meta text-ink-3">
-                  Your {SCORE} appears here after six answers.
+                  Your {SCORE} appears here when every question is answered.
                 </p>
               )}
               {done && (
@@ -389,7 +394,7 @@ export function CheckInBody({ go }){
                     {/* RainbowDial takes raw hex: #157446 is accent, #1d8fb0 is beam. */}
                     <RainbowDial score={r.score} size={268}
                       rings={[{ id:'self', name:'Your answers', color:'#157446', glow:'#1d8fb0',
-                                value:r.score, reading:'Six questions' }]}/>
+                                value:r.score, reading:'Check-in questions' }]}/>
                     <div className="w-full">
                       <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
                       <dl className="m-0 mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
@@ -401,11 +406,17 @@ export function CheckInBody({ go }){
                         <dd className="m-0 text-ink">A patch fills heart, sweat, temperature and movement</dd>
                       </dl>
                       <p className="mt-3 flex flex-wrap items-center gap-x-3 text-meta text-ink-2">
-                        Added to your log.
+                        Added to your {SCORE} Log.
                         <button type="button" onClick={() => { toLog.current = true; leave() }}
                           className="inline-flex min-h-[44px] items-center gap-1.5 font-display font-bold
                             text-accent underline-offset-4 hoverOnly:underline">
-                          See your log<ArrowRight aria-hidden className="size-4"/>
+                          See your {SCORE} Log<ArrowRight aria-hidden className="size-4"/>
+                        </button>
+                        <button type="button"
+                          onClick={() => { restart(); requestAnimationFrame(() => head.current?.focus({ preventScroll:false })) }}
+                          className="inline-flex min-h-[44px] items-center font-display font-bold text-ink-2
+                            underline-offset-4 hoverOnly:text-ink hoverOnly:underline">
+                          Answer again
                         </button>
                       </p>
                     </div>
@@ -418,7 +429,7 @@ export function CheckInBody({ go }){
                     <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-fine">
                       <dt className="text-ink-3">Each answer</dt>
                       <dd className="m-0 text-ink-2">Measured from its middle option, then weighted</dd>
-                      <dt className="text-ink-3">The six together</dt>
+                      <dt className="text-ink-3">All of them together</dt>
                       <dd className="m-0 text-ink-2">Averaged into one number out of 100</dd>
                       <dt className="text-ink-3">With a patch</dt>
                       <dd className="m-0 text-ink-2">The same last step, from four signals</dd>

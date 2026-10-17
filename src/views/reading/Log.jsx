@@ -7,6 +7,8 @@ import { RANGES, USUAL, bandOf, clearReadings, groupByDay, stats, trend, windowF
 import { BAND, SOURCE, Shape, ShapePath, clock, dayName, when } from './marks'
 import { useReadingLog } from './useReadingLog'
 import { SCORE } from '../../lib/terms'
+import { RainbowDial } from '../../charts/rainbow'
+import { studentRings } from '../../lib/readings'
 
 /* The reading log, under the three ways in. Read like a glucose log: the
  * latest number large, the trend over a chosen range against the reader's
@@ -36,11 +38,16 @@ function Latest({ entries, now }) {
   return (
     <section aria-labelledby="log-latest" className={PANEL}>
       <h4 id="log-latest" className="tick">Latest {SCORE}</h4>
-      <div className="mt-2 flex items-end gap-3">
-        <span className="font-display text-fig font-bold tabular-nums text-ink">{last.score}</span>
-        {t && <Arrow dir={t.dir} className={cn('mb-2 size-9 shrink-0', b.ink)}/>}
+      {/* The latest reading on the rainbow, the same dial as the student
+          screen, with the way it moved beside it. */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <RainbowDial score={last.score} size={208} className="shrink-0"
+          rings={studentRings().map(r => ({ ...r, value: last.score }))}/>
+        <div className="min-w-0">
+          {t && <Arrow dir={t.dir} className={cn('size-9 shrink-0', b.ink)}/>}
+          <p className={cn('mt-1 font-display text-ui font-bold', b.ink)}>{b.word}</p>
+        </div>
       </div>
-      <p className={cn('mt-2 font-display text-ui font-bold', b.ink)}>{b.word}</p>
       <p className="mt-1 flex flex-wrap items-center gap-x-2 text-meta text-ink-2">
         <span className="font-mono tabular-nums">{when(last.at, now)}</span>
         <span aria-hidden className="text-ink-3">·</span>
@@ -377,7 +384,7 @@ function ClearLog({ n }) {
     return (
       <button type="button" onClick={() => setAsk(true)}
         className="min-h-[44px] font-display text-fine font-bold text-ink-3 underline-offset-4 hoverOnly:underline">
-        Clear the log
+        Clear all readings
       </button>
     )
   }
@@ -404,14 +411,14 @@ export function ReadingLog({ headRef }) {
     <section id="reading-log" aria-labelledby="reading-log-h" className="mt-8 scroll-mt-20 lg:mt-10">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <h3 id="reading-log-h" ref={headRef} tabIndex={-1} className="font-display text-head font-bold text-ink">
-          Your log
+          {SCORE} Log
         </h3>
         {demo && <DemoNotice inline>Generated readings. Any you take are added.</DemoNotice>}
       </div>
 
       {entries.length === 0 ? (
         <div className={cn(PANEL, 'mt-3')}>
-          <p className="text-meta text-ink-2">Take a reading to start your log.</p>
+          <p className="text-meta text-ink-2">Take a reading to start your {SCORE} Log.</p>
         </div>
       ) : (
         <>

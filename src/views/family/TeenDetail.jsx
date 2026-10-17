@@ -53,7 +53,7 @@ const METRICS = [
 ]
 
 const SHORT = { green: 'usual', yellow: 'above usual', red: 'well above' }
-const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Six questions' }
+const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Check-in questions' }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 function BackButton({ onBack, label }) {

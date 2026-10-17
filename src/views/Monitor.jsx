@@ -156,7 +156,7 @@ export function SeeDetails({ label = 'See details', sub, children, className, de
 
 /* ── The one thing the patch cannot measure ─────────────────────────────── */
 
-/* The legend for the six questions, not a stored rating. */
+/* The legend for the check-in questions, not a stored rating. */
 const FACES = [
   ['easier',      'bg-aqua',   'M8.5 14.6c1.4 1.7 5.6 1.7 7 0'],
   ['about usual', 'bg-aqua-2', 'M8.5 15h7'],
@@ -181,9 +181,9 @@ export function FeltCard({ go, className }) {
   return (
     <Panel tone="aqua" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="How Today Felt" meta="six questions" className="min-w-0 flex-1"/>
-        <Why label="What the six questions are" className="pt-1.5">
-          The patch cannot read a feeling, so six questions ask. Answers are scored on
+        <PanelHead title="How Today Felt" meta="check-in" className="min-w-0 flex-1"/>
+        <Why label="What the check-in questions are" className="pt-1.5">
+          The patch cannot read a feeling, so a short check-in asks. Answers are scored on
           this phone and never stored.
         </Why>
       </div>
@@ -202,7 +202,7 @@ export function FeltCard({ go, className }) {
         <span className="flex w-full items-center gap-3 border-t border-rule pt-2.5">
           <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
             transition-colors duration-150 groupHoverOnly:text-accent-ink">
-            Answer six questions</span>
+            Answer the check-in</span>
           <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
         </span>
       </button>

@@ -28,7 +28,7 @@ const HERO_FACTS = [
 const ROUTES = [
   { id:'sensors', title:'Read with the camera', when:'45 seconds', art:'sensors',
     gives:['Heart rate', 'Beat-to-beat', 'Voice'] },
-  { id:'ask', title:`Answer ${ITEMS.length} questions`, when:'30 seconds', art:'ask',
+  { id:'ask', title:`Answer ${ITEMS.length} questions`, when:'About a minute', art:'ask',
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 

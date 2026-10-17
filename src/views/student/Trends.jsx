@@ -20,7 +20,7 @@ import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal 
  *   chart      the range as columns over the usual band
  *   body       pulse, variability, sweat response, temperature and steps for
  *              the range, each naming where it comes from
- *   readings   every reading by source: patch, camera, six questions; the
+ *   readings   every reading by source: patch, camera, check-in questions; the
  *              phone-only ones listed
  *   Heads Up   the range's lights and what was noticed, in the teen's words
  *
@@ -44,7 +44,7 @@ export const bandKey = (v, usual) =>
 const SOURCES = {
   patch: { word: 'Patch' },
   camera: { word: 'Camera' },
-  survey: { word: 'Six questions' },
+  survey: { word: 'Check-in questions' },
 }
 /* A drawn mark per source, so the source never rests on colour: a filled
    disc for the patch, an open square for the camera, a diamond for the six

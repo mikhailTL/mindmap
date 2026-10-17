@@ -95,7 +95,7 @@ export default function ExercisesDemo() {
           figure={TAP[step].toFixed(2)} unit="s to tap" sub="Fifteen lights a round." keep="Only your own best is stored."/>
       </div>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4">
-        <p className="m-0 text-fine text-ink-2">Six tools in the toolkit measure. Three shown.</p>
+        <p className="m-0 text-fine text-ink-2">Three of the tools that measure, shown here.</p>
         <DemoTag/>
       </div>
     </Demo>

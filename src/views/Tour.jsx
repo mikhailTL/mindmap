@@ -552,7 +552,7 @@ export function Tour({ go }) {
               Open the app<ArrowRight aria-hidden/>
             </Button>
             <Button variant="outline" size="sm" onClick={() => go('check')}>
-              Get a {SCORE} in six questions
+              Get a {SCORE} from a short check-in
             </Button>
           </div>
         </ScrollIn>

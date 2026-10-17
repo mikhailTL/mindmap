@@ -30,7 +30,7 @@ export const showsHours = (teen, v) => (isPro(v) ? teen.consent?.trends !== fals
 export const showsReadings = (teen, v) => isPro(v) && teen.consent?.raw === true
 
 export const displayName = (teen, v) => (isPro(v) && !teen.consent?.name ? teen.pseudonym : teen.name)
-export const sourceLine = teen => (teen.patch ? 'Patch, with phone checks' : 'Phone camera and six questions')
+export const sourceLine = teen => (teen.patch ? 'Patch, with phone checks' : 'Phone camera and check-in questions')
 
 /* A value against the teen's own band, the same cut the roster uses for a
    day's light. */

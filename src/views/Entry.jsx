@@ -3,8 +3,8 @@ import { cn } from '../lib/utils'
 import { Logo } from '../ui/logo'
 import { ArrowRight } from '../ui/marks'
 import { PRO } from '../lib/terms'
-import { GuidedTour, captureHarness, replayIntro } from './Intro'
-import { setPreferredRole, signedInHere } from '../account/store'
+import { GuidedTour, replayIntro } from './Intro'
+import { setPreferredRole } from '../account/store'
 
 /* The front door, in the owner's words: "What best describes you", Student,
  * Parent, Medical Professional or Other; the first three route, Other starts
@@ -39,6 +39,12 @@ const move = s => { at = s; watchers.forEach(f => f()) }
  *  replayIntro() is the published name for "play it again" and stays in the
  *  call. Off the site navigation (spec 0e, section 15); the export stays for
  *  any caller that wants a control of its own. */
+/** Starts the guided tour directly: the site onboarding's "Other". */
+export function startTour() {
+  asked = true
+  move('tour')
+}
+
 export function replayTour() {
   replayIntro()
   asked = true
@@ -116,7 +122,7 @@ function Chooser({ onPick, onSkip }) {
             What best describes you?
           </p>
           <p className="mt-1.5 max-w-[46ch] text-meta text-ink-2">
-            Pick one to sign in. Every page stays in the menu.
+            Pick one to see what MindMap does for you. Every page stays in the menu.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -167,11 +173,9 @@ export function Entry({ go, enabled = true }) {
      per document; only the screenshot harness can hold it down. A device
      with an account signed in is not asked again (the owner: "NOT repeatedly
      do this on the same device where theyre signed in"). */
-  React.useEffect(() => {
-    if (!enabled || asked || read() !== null || captureHarness() || signedInHere()) return
-    asked = true
-    move('ask')
-  }, [enabled])
+  /* 17 October: the site onboarding (SiteIntro.jsx) asks this question as
+     its last frame, on every visit to the landing page, so nothing opens
+     the chooser on load any more. replayTour() still can. */
 
   /* One exit for every choice and both ways out. App.jsx gives its main
      region an id and a tabindex for the keyboard to land on. */
@@ -181,13 +185,14 @@ export function Entry({ go, enabled = true }) {
     requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
   }, [])
 
-  /* Student, Parent and Medical Professional go to sign-in with that role
-     pressed; signing in lands in that role's app. The fourth choice is the tour. */
+  /* Student, Parent and Medical Professional open that audience's page; the
+     role is kept and pressed later when they sign up in the app, the only
+     place sign up happens. The fourth choice is the tour. */
   const pick = React.useCallback(id => {
     if (id === 'tour') { move('tour'); return }
     leave()
     const role = ['student', 'parent', 'pro'].includes(id) ? id : null
-    const to = role ? 'signin' : id
+    const to = role ? { student: 'students', parent: 'parents', pro: 'pro' }[role] : id
     if (role) setPreferredRole(role)
     if (go) go(to)
     else location.hash = '#/' + to

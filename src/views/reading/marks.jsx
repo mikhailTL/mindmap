@@ -20,7 +20,7 @@ export const SOURCE = {
   patch:  { word: 'Patch',         Icon: Link },
 }
 
-/* Circle for the camera, square for the six questions, diamond for the patch.
+/* Circle for the camera, square for the check-in questions, diamond for the patch.
    Drawn about a centre so the chart and the list share one geometry. */
 export function ShapePath({ source, cx, cy, r, ...rest }) {
   if (source === 'survey') {

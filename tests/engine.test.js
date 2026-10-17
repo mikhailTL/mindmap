@@ -10,9 +10,10 @@ import { bandOf } from '../src/signals/score.js'
 const answerAll = v => Object.fromEntries(ITEMS.map(i => [i.id, v]))
 
 describe('self-report items', () => {
-  it('asks the six questions the check-in screen lays out', () => {
-    expect(ITEMS).toHaveLength(6)
-    expect(ITEMS.map(i => i.id)).toEqual(['tension', 'edge', 'sleep', 'energy', 'focus', 'demand'])
+  it('asks the ten check-in questions the screen lays out', () => {
+    expect(ITEMS).toHaveLength(10)
+    expect(ITEMS.map(i => i.id)).toEqual(['tension', 'edge', 'sleep', 'energy', 'focus', 'demand',
+      'worry', 'snap', 'body', 'support'])
   })
 
   /* Every item carries both directions of its own phrasing, because the
@@ -26,7 +27,7 @@ describe('self-report items', () => {
       expect(item.lo.length).toBeGreaterThan(0)
       expect(item.hi.length).toBeGreaterThan(0)
     }
-    expect(ITEMS.reduce((a, b) => a + b.w, 0)).toBeCloseTo(5.6, 10)
+    expect(ITEMS.reduce((a, b) => a + b.w, 0)).toBeCloseTo(8.8, 10)
   })
 })
 
@@ -63,7 +64,7 @@ describe('self-report scoring', () => {
      The weight has to be visible in it, or the sentence credits the wrong
      answer. */
   it('reports each contribution as its own weighted distance from neutral', () => {
-    const answers = { tension: 4, edge: 0, sleep: 3, energy: 2, focus: 1, demand: 4 }
+    const answers = { tension: 4, edge: 0, sleep: 3, energy: 2, focus: 1, demand: 4, worry: 3, snap: 1, body: 0, support: 2 }
     const r = score(answers)
     for (const c of r.contrib) {
       expect(c.raw).toBeCloseTo(c.item.w * ((answers[c.item.id] - 2) / 2), 12)

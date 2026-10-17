@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { PRO } from '../../lib/terms'
 import { Check } from '../../ui/marks'
-import { PASSWORD_MIN, SETTINGS, createAccount, signIn, validSecret } from '../../account/store'
+import { PASSWORD_MIN, SETTINGS, createAccount, signIn, takePreferredRole, validSecret } from '../../account/store'
 import { field, fieldError, solid } from '../../account/ui'
 
 /* Sign up or sign in, on the app home. Calls the account store; the full
@@ -57,7 +57,9 @@ function Tabs({ mode, onMode }) {
 
 export function AuthPanel({ go, className }) {
   const [mode, setMode] = React.useState('signup')
-  const [role, setRole] = React.useState(null)
+  /* The role the visitor picked in the site's onboarding, if any, is
+     pressed already; they still sign up only here, in the app. */
+  const [role, setRole] = React.useState(takePreferredRole)
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [pass, setPass] = React.useState('')

@@ -13,6 +13,14 @@ export const ITEMS = [
     lo:'Easy',        hi:'Very hard',    up:'how hard focusing is',            dn:'how easily you are focusing' },
   { id:'demand',  w:1.0, q:'How much has today asked of you so far?',
     lo:'Very little', hi:'A great deal', up:'how much today has asked of you', dn:'how light today has been' },
+  { id:'worry',   w:1.0, q:'How much are worries running through your head?',
+    lo:'Quiet',       hi:'Nonstop',      up:'how much you are worrying',       dn:'how quiet your head is' },
+  { id:'snap',    w:0.8, q:'How easily could small things annoy you right now?',
+    lo:'Not at all',  hi:'Very easily',  up:'how easily things annoy you',     dn:'how patient you feel' },
+  { id:'body',    w:0.7, q:'Any headache, stomach ache or racing heart right now?',
+    lo:'None',        hi:'A lot',        up:'how your body feels',             dn:'how calm your body feels' },
+  { id:'support', w:0.7, q:'How alone do you feel with what is going on?',
+    lo:'Well backed', hi:'Very alone',   up:'how alone you feel',              dn:'how supported you feel' },
 ]
 const SUMW = ITEMS.reduce((a,b)=>a+b.w,0)
 const K = 2.4

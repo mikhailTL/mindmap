@@ -13,7 +13,7 @@ import { analyseVoice } from '../signals/voice'
 import { askMotion, startMotion, MOVE_LIMIT_G } from '../signals/motion'
 import { bandOf, emptyBaseline, featuresFrom, scoreCapture, sentenceFor, updateBaseline } from '../signals/score'
 import { fitCalibration, identityCalibration } from '../signals/tnam'
-import { SCORE_DEF } from '../lib/terms'
+import { SCORE, SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 import { addReachPoint, getReach } from '../app/store'
 import { addReading } from '../lib/readingLog'
@@ -187,7 +187,7 @@ export function PhoneCheck() {
       stopStream(cam?.stream)
       live.current.motion?.stop(); live.current.motion = null
       setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. The six questions still work.'
+        ? 'The camera was not allowed. The check-in questions still work.'
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
@@ -333,7 +333,7 @@ export function PhoneCheck() {
                   </dl>
 
                   {logged && (
-                    <p className="mt-3 text-meta text-ink-2">Added to your log. Go back to see it.</p>
+                    <p className="mt-3 text-meta text-ink-2">Added to your {SCORE} Log. Go back to see it.</p>
                   )}
 
                   {noPosition && (
