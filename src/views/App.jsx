@@ -38,7 +38,7 @@ import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Gri
          People, PulseMark, Rule, Search, Wave } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
-import { Network } from '../account/Network'
+import { Network, useAutoJoin } from '../account/Network'
 import { AccountButton } from '../account/ui'
 import { useAccount } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
@@ -64,7 +64,7 @@ const VIEWS = [
   /* the three audience explainer pages, and Heads Up */
   'students','parents','pro','heads-up',
   /* the product */
-  'app','app-home','app-student','app-parent','app-pro','app-pro-trends',
+  'app','app-home','app-start','app-student','app-parent','app-pro','app-pro-trends',
   /* inside the product */
   'reading','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
@@ -91,7 +91,7 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
+const APP_VIEWS = new Set(['app','app-start','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
@@ -139,6 +139,7 @@ const TITLE = {
   'heads-up':'Heads Up, by MindMap',
   app:'Open the MindMap app',
   'app-home':'The MindMap app',
+  'app-start':'Choose a screen in MindMap',
   'app-pro-trends':'Caseload trends in MindMap',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
@@ -549,7 +550,7 @@ const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
                               ...SKILL_ROUTES])
 
-const APP_TAB = { app:null,
+const APP_TAB = { app:null, 'app-start':null,
                   'app-student':'app-student', monitor:'app-student', reading:'reading',
                   toolkit:'toolkit', ai:'ai', notes:'ai', shared:'shared',
                   'app-notify':'shared', help:null,
@@ -577,6 +578,7 @@ const APP_TAB = { app:null,
    that gets truncated. */
 const APP_TITLE = {
   app:            ['Welcome',          'Welcome'],
+  'app-start':    ['Welcome',          'Welcome'],
   'app-student':  ['Student',          'Student'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
@@ -726,11 +728,13 @@ const HomeMark = p => (
   </svg>
 )
 
-/* The way back to the app home (#/app-home), on every app screen. First in
-   the row, where a home control is looked for. */
+/* The way back to the three doors (Student, Parent, Medical Professional),
+   the screen that follows sign in, on every app screen. #/app-start shows it
+   signed in or out; #/app shows the sign in page until somebody signs in.
+   First in the row, where a home control is looked for. */
 function HomeButton({ go }) {
   return (
-    <button type="button" onClick={() => go('app-home')} aria-label="Home" title="Home"
+    <button type="button" onClick={() => go('app-start')} aria-label="Home" title="Home"
       className="-ml-2 grid size-11 shrink-0 place-items-center rounded-field text-ink-2
         transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink sm:-ml-3">
       <HomeMark size={21}/>
@@ -1262,6 +1266,9 @@ export function App() {
     if (location.hash !== '#/' + v + q) history.pushState(null, '', '#/' + v + q)
     setView(v); land(v)
   }, [land])
+  /* Somebody who opened an invite link joins that network as soon as they
+     are signed in, whichever way they signed in. */
+  useAutoJoin(go)
   React.useEffect(() => {
     /* An old id in the url is rewritten once to the id spec 0e section 18
        fixes, so a bookmark of `#/check` keeps working and the address bar then
@@ -1304,6 +1311,7 @@ export function App() {
               /* Signed out, the app home; signed in, the three doors. */
               app: me ? Launch : AppHome,
               'app-home': AppHome,
+              'app-start': Launch,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */
               'app-student': StudentApp,

@@ -9,7 +9,7 @@ import { SHARING, getSharing, getVersion as sharingVersion, setShared, subscribe
 import { shareLabel } from '../app/Sharing'
 import {
   approveLink, createInvite, declineLink, getVersion, listNetwork, listPendingApprovals,
-  myInvite, redeemInvite, removeLink, subscribe, useAccount,
+  myInvite, ready, redeemInvite, removeLink, subscribe, useAccount,
 } from './store'
 import { DEMO_LINKS, DEMO_TEEN } from './demo-network'
 import { Empty, IconButton, LinkMark, PersonRow, field, fieldError, outline, solid } from './ui'
@@ -18,11 +18,16 @@ import { SignIn } from './SignIn'
 /* The network: teens, parents and Medical Professionals linked to each other.
  *
  * The flow, the same on every shape of the screen:
- *   1. Somebody makes an invite link (a six character code inside a URL).
- *   2. The other person opens it, signs in, and asks to connect.
- *   3. The teen approves and chooses what that person can see. Nothing is
- *      shared until then. A Medical Professional link also needs a parent's
- *      OK, which is the store's rule (src/account/store.js) and the server's.
+ *   1. A parent or a Medical Professional makes an invite link (a six
+ *      character code inside a URL). Teens never make one. The link keeps
+ *      working for every teen it is sent to, so one link gathers a family or
+ *      a caseload.
+ *   2. The teen opens it. Signed out, they sign in or make an account, and
+ *      they join the network as soon as they are in: useAutoJoin below, run
+ *      once by the app shell, redeems the code with no further press.
+ *   3. The teen chooses what that person can see. Nothing is shared until
+ *      then. A Medical Professional link also needs a parent's OK, which is
+ *      the store's rule (src/account/store.js) and the server's.
  *   4. Both of them see the connection.
  *
  * Demo mode shows Maya's network from ./demo-network.js, from any of the
@@ -66,8 +71,14 @@ const linkFor = code => {
    before the app reads the hash: the code is kept here and the address
    becomes plain #/network, so the router lands on the network screen. */
 const CODE_RE = /^[A-Za-z0-9]{6}$/
-let pendingCode = null
+/* Kept in sessionStorage too, so a code survives the trip through sign up,
+   a reload, or the app home, until it is used. */
+const PENDING_KEY = 'mindmap.invite.pending'
+let pendingCode = (() => {
+  try { const v = window.sessionStorage.getItem(PENDING_KEY); return v && CODE_RE.test(v) ? v : null } catch { return null }
+})()
 const codeListeners = new Set()
+const keepCode = c => { try { c ? window.sessionStorage.setItem(PENDING_KEY, c) : window.sessionStorage.removeItem(PENDING_KEY) } catch {} }
 function takeCodeFromUrl() {
   try {
     const hash = window.location.hash
@@ -75,7 +86,7 @@ function takeCodeFromUrl() {
     const fromHash = q >= 0 && /^#\/?network\?/.test(hash) ? new URLSearchParams(hash.slice(q + 1)).get('code') : null
     const fromSearch = new URLSearchParams(window.location.search).get('invite')
     const c = [fromHash, fromSearch].find(v => v && CODE_RE.test(v))
-    if (c) { pendingCode = c.toUpperCase(); codeListeners.forEach(fn => fn(pendingCode)) }
+    if (c) { pendingCode = c.toUpperCase(); keepCode(pendingCode); codeListeners.forEach(fn => fn(pendingCode)) }
     if (fromHash !== null || fromSearch !== null) {
       window.history.replaceState(null, '', window.location.pathname + '#/network')
     }
@@ -88,7 +99,50 @@ if (typeof window !== 'undefined') {
   try { window.addEventListener('hashchange', takeCodeFromUrl) } catch {}
 }
 const inviteFromUrl = () => pendingCode
-function clearInviteFromUrl() { pendingCode = null }
+function clearInviteFromUrl() { pendingCode = null; keepCode(null); codeListeners.forEach(fn => fn(null)) }
+
+/* ── Joining by link, automatically ─────────────────────────────────────── */
+
+/* The result of the last automatic join, for the network screen to show:
+   { state: 'joining' } while it runs, then { ok, link, name, reason }. */
+let joined = null
+const joinListeners = new Set()
+const setJoined = v => { joined = v; joinListeners.forEach(fn => fn(v)) }
+function useJoined() {
+  const [v, set] = React.useState(joined)
+  React.useEffect(() => { joinListeners.add(set); return () => { joinListeners.delete(set) } }, [])
+  return v
+}
+
+/* Run once in the app shell. When somebody holding an invite code is signed
+   in, by signing in, by making an account, or because they already were,
+   the code is redeemed at once and the network screen opens on the result.
+   A code that fails for a reason that will not change (wrong role, own,
+   expired, unknown, already linked) is dropped; offline keeps it to retry. */
+export function useAutoJoin(go) {
+  const me = useAccount()
+  const [code, setCode] = React.useState(inviteFromUrl)
+  React.useEffect(() => { codeListeners.add(setCode); return () => { codeListeners.delete(setCode) } }, [])
+  const busy = React.useRef(false)
+  React.useEffect(() => {
+    if (!me || !code || busy.current) return
+    busy.current = true
+    setJoined({ state: 'joining', code })
+    ;(async () => {
+      await ready()
+      const r = await redeemInvite(code)
+      busy.current = false
+      /* After the redeem, not before: the sign in form sends its reader on
+         to the app when it finishes, and this has to land last. */
+      go?.('network')
+      if (!r.ok && (r.reason === 'offline' || r.reason === 'signedout')) { setJoined({ ok: false, reason: r.reason, code }); return }
+      clearInviteFromUrl()
+      const person = r.ok ? listNetwork().find(l => l.id === r.link.id)?.person : null
+      setJoined(r.ok ? { ok: true, link: r.link, name: person?.name || null, role: person?.role || null, code }
+        : { ok: false, reason: r.reason, code })
+    })()
+  }, [me?.id, code, go])
+}
 
 function useCopied() {
   const [copied, setCopied] = React.useState(null)
@@ -154,6 +208,22 @@ function InviteLink({ accountId, line, demo = null, children }) {
   )
 }
 
+/* A teen joins networks and never makes one: the link comes from a parent
+   or a Medical Professional. The code field is for a code read out loud. */
+function JoinByLink({ demo = false }) {
+  return (
+    <Panel title="Join a network">
+      <p className="max-w-none px-4 pt-4 text-ui text-ink">
+        Your parent or {PRO} sends you a link. Open it and you join their network.
+      </p>
+      <p className="max-w-none px-4 pt-1.5 text-fine text-ink-2">
+        {demo ? 'In the demo, Maya joined Elena’s and Dr. Shah’s networks this way.' : 'Teens do not make networks.'}
+      </p>
+      {demo ? <div className="h-4"/> : <CodeField/>}
+    </Panel>
+  )
+}
+
 /* For someone who has a code but not the link. */
 function CodeField({ onDone }) {
   const [code, setCode] = React.useState('')
@@ -193,40 +263,32 @@ function CodeField({ onDone }) {
   )
 }
 
-/* Step 2, for whoever opened an invite link. */
-function AnswerInvite({ code, onDone, teen = false }) {
-  const [state, setState] = React.useState(null)
-  async function ask() {
-    const r = await redeemInvite(code)
-    if (r.ok) { clearInviteFromUrl(); setState({ ok: true, pending: r.link.status === 'pending' }) }
-    else setState({ ok: false, reason: r.reason })
+/* Step 2, after the automatic join: what happened, in one panel. */
+function JoinedPanel({ result, teen, onDone }) {
+  if (!result) return null
+  if (result.state === 'joining') {
+    return (
+      <section role="status" className="rounded-panel border-2 border-accent bg-accent-wash p-4">
+        <h3 className="font-display text-meta font-bold text-ink">Joining the network…</h3>
+        <p className="mt-1 text-ui text-ink-2">
+          Code <span className="font-mono font-bold tracking-[0.12em] text-ink">{result.code}</span>.</p>
+      </section>
+    )
   }
+  const who = result.name || 'them'
+  const pending = result.ok && result.link?.status === 'pending'
   return (
-    <section className="rounded-panel border-2 border-accent bg-accent-wash p-4">
-      <h3 className="font-display text-meta font-bold text-ink">You opened an invite link</h3>
-      {state?.ok ? (
-        <>
-          <p role="status" className="mt-1 text-ui text-ink">
-            {teen ? 'You are connected. Choose what they can see below.' : state.pending ? 'Request sent. The teen and a parent approve it next.' : 'You are connected. The teen chooses what you see.'}
-          </p>
-          <button type="button" onClick={onDone} className={cn(outline, 'mt-3')}>See your network</button>
-        </>
-      ) : (
-        <>
-          <p className="mt-1 text-ui text-ink-2">
-            Code <span className="font-mono font-bold tracking-[0.12em] text-ink">{code}</span>. Ask to connect, and they are told.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={ask} className={solid}><Plus aria-hidden className="size-4"/>Ask to connect</button>
-            <button type="button" onClick={() => { clearInviteFromUrl(); onDone() }} className={outline}>Not now</button>
-          </div>
-          {state && !state.ok && (
-            <p role="alert" className="mt-2 font-display text-fine font-medium text-crit">
-              {REDEEM_ERROR[state.reason] || REDEEM_ERROR.unknown}
-            </p>
-          )}
-        </>
-      )}
+    <section className={cn('rounded-panel border-2 p-4', result.ok ? 'border-accent bg-accent-wash' : 'border-crit bg-card')}>
+      <h3 className="font-display text-meta font-bold text-ink">
+        {result.ok ? (pending ? `Request sent to join ${who}’s network` : `You joined ${who}’s network`) : 'The invite link did not work'}
+      </h3>
+      <p role={result.ok ? 'status' : 'alert'} className="mt-1 text-ui text-ink">
+        {result.ok
+          ? (pending ? 'A parent approves it next. Nothing is shared until then.'
+            : teen ? 'Choose what they can see below. Everything starts off.' : 'The teen chooses what you see.')
+          : (REDEEM_ERROR[result.reason] || REDEEM_ERROR.unknown)}
+      </p>
+      <button type="button" onClick={onDone} className={cn(outline, 'mt-3')}>OK</button>
     </section>
   )
 }
@@ -234,10 +296,10 @@ function AnswerInvite({ code, onDone, teen = false }) {
 /* ── How it works ───────────────────────────────────────────────────────── */
 
 const STEPS = [
-  'Make an invite link and send it.',
-  'They open it and ask to connect.',
-  'The teen approves and picks what is shared.',
-  'You both see the connection.',
+  `A parent or ${PRO} makes one invite link.`,
+  'They send it to each of their teens.',
+  'The teen opens it, signs in, and joins.',
+  'The teen picks what is shared.',
 ]
 
 function Steps() {
@@ -339,7 +401,7 @@ function TeenNetwork({ me, go }) {
           const audience = audienceOf(l.person.role)
           return (
             <Panel key={l.id} title="Waiting for you" className="border-2 border-accent">
-              <PersonRow person={l.person} hint={l.status === 'pending' ? 'A parent approves this link too' : 'Asks to see your data'} comma/>
+              <PersonRow person={l.person} hint={l.status === 'pending' ? 'you joined, a parent approves this one too' : 'you joined their network'} comma/>
               <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-2">
                 Choose what every {audience === 'parent' ? 'parent' : PRO} you approve can see. All start off.
               </p>
@@ -351,14 +413,14 @@ function TeenNetwork({ me, go }) {
             </Panel>
           )
         })}
-        <Groups me={me} empty="Nobody is linked yet. Send an invite link to a parent."
+        <Groups me={me} empty="Nobody is linked yet. Open the link your parent or Medical Professional sends you."
           sees={l => seesLine(audienceOf(l.person.role), on(audienceOf(l.person.role) || 'parent'))}/>
         <button type="button" onClick={() => go('shared')} className={cn(outline, 'justify-self-start')}>
           Change what each person sees
         </button>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <InviteLink accountId={me.id} line="A parent or Medical Professional opens it to connect with you."><CodeField/></InviteLink>
+        <JoinByLink/>
         <Steps/>
       </div>
     </div>
@@ -379,11 +441,11 @@ function ParentNetwork({ me }) {
             </PersonRow>
           )) : <Empty>No requests. A {PRO} asking to link to your teen shows here.</Empty>}
         </Panel>
-        <Groups me={me} empty="Nobody is linked yet. Send your teen an invite link."
+        <Groups me={me} empty="Nobody is linked yet. Send your invite link to each of your teens."
           sees={l => (l.person.role === 'student' ? 'Chooses what you see' : undefined)}/>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <InviteLink accountId={me.id} line="Your teen or their Medical Professional opens it to connect."><CodeField/></InviteLink>
+        <InviteLink accountId={me.id} line="Send it to each of your teens, and to their Medical Professional. One link works for all of them."><CodeField/></InviteLink>
         <Steps/>
       </div>
     </div>
@@ -409,11 +471,11 @@ function ProNetwork({ me }) {
   return (
     <div className="mt-3.5 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <Groups me={me} empty="Nobody is linked yet. Send a teen or parent an invite link."
+        <Groups me={me} empty="Nobody is linked yet. Send your invite link to your students and their parents."
           sees={l => (l.person.role === 'student' ? 'Chooses what you see' : undefined)}/>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <InviteLink accountId={me.id} line="A teen or parent opens it. The teen and a parent approve."><CodeField/></InviteLink>
+        <InviteLink accountId={me.id} line="Send it to each of your students and their parents. One link works for all of them. A parent approves each student."><CodeField/></InviteLink>
         <Steps/>
       </div>
     </div>
@@ -468,7 +530,7 @@ function DemoNetwork() {
           ) : (
             <>
               <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-2">
-                {l.person.name} asks to connect. Choose what she can see. All start off.
+                You joined {l.person.name}’s network. Choose what they can see. All start off.
               </p>
               <ShareSwitches audience="pro" keys={l.shares} onToggle={toggle(l.id)}/>
               <div className="flex flex-wrap gap-2 border-t border-rule p-4">
@@ -558,8 +620,11 @@ function DemoNetwork() {
           {view === 'student' ? teen : view === 'parent' ? parent : proView}
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-          <InviteLink demo={DEMO_INVITE}
-            line={view === 'pro' ? 'A teen or parent opens it.' : 'A parent or Medical Professional opens it.'}/>
+          {view === 'student' ? <JoinByLink demo/> : (
+            <InviteLink demo={DEMO_INVITE}
+              line={view === 'pro' ? 'Send it to each of your students and their parents. One link works for all of them.'
+                : 'Send it to each of your teens. One link works for all of them.'}/>
+          )}
           <Steps/>
         </div>
       </div>
@@ -574,22 +639,23 @@ export function Network({ go }) {
   const [mode] = useMode()
   const [invite, setInvite] = React.useState(inviteFromUrl)
   React.useEffect(() => { codeListeners.add(setInvite); return () => { codeListeners.delete(setInvite) } }, [])
-  const demo = mode === 'demo' && !invite
+  const result = useJoined()
+  const demo = mode === 'demo' && !invite && !result
   if (!demo && !me) {
     return <SignIn go={go} after="network" bare
-      note={invite ? 'Sign in or create an account to answer the invite.' : 'Sign in to see your network.'}/>
+      note={invite ? 'Sign in or make an account. You join the network as soon as you are in.' : 'Sign in to see your network.'}/>
   }
   const Body = { student: TeenNetwork, parent: ParentNetwork, pro: ProNetwork }[me?.role] || OtherNetwork
   return (
     <main className="wrap">
       <h2 className="sr-only">Network</h2>
       <p className="max-w-[62ch] text-ui text-ink-2">
-        Teens, parents and {PRO_PLURAL} connect by link. Nothing is shared until the teen says yes.
+        Parents and {PRO_PLURAL} make a network and send its link. Teens join by opening it. Nothing is shared until the teen says yes.
         {demo && <span className="block text-fine text-ink-3">Demo. These people are examples.</span>}
       </p>
       {demo ? <DemoNetwork/> : (
         <>
-          {invite && <div className="mt-3.5"><AnswerInvite code={invite} teen={me.role === 'student'} onDone={() => setInvite(null)}/></div>}
+          {result && <div className="mt-3.5"><JoinedPanel result={result} teen={me.role === 'student'} onDone={() => setJoined(null)}/></div>}
           <Body me={me} go={go}/>
         </>
       )}

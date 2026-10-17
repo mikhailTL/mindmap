@@ -7,8 +7,9 @@ import { Check, Cross } from '../../../ui/marks'
 import { cn } from '../../../lib/utils'
 import { Demo, DemoTag, useSteps, useWidth } from './kit'
 
-/* Network: the teen in the middle, a parent and a Medical Professional linked
- * to her by an invite link she approves. Names, avatars and what each person
+/* Network: the teen in the middle. Her parent and a Medical Professional
+ * each make a network and send her its link; she joins and chooses what
+ * each of them sees. Teens never make a network. Names, avatars and what each person
  * may see come from account/demo-network.js and the SHARING table in
  * app/store.js, so this cannot say a parent sees more than the app lets them. */
 
@@ -28,8 +29,9 @@ const PARENT_SEES = sees('parent', PARENT.shares)
 const PARENT_NEVER = ['Notes', 'Location', 'Readings finer than a day']
 const DOC_SEES = sees('pro', DOC.shares)
 
-/* Steps: 0 invite out, 1 parent asks, 2 Maya approves parent, 3 pro asks,
-   4 Maya and a parent approve, 5 all linked. */
+/* Steps: 0 Elena sends her link, 1 Maya joins, 2 Maya picks what Elena
+   sees, 3 Dr. Shah sends his link and Maya joins, 4 a parent approves,
+   5 all linked. */
 const HOLDS = [1500, 1300, 1500, 1300, 1700, 4200]
 
 function Person({ p, role, children, on }) {
@@ -91,14 +93,15 @@ export default function NetworkDemo() {
   const wide = w >= 640
   const { step } = useSteps(ref, HOLDS)
 
-  const parentLink = step === 0 ? ['moving', 'Invite link sent'] : step === 1 ? ['moving', 'Asks to connect']
-    : ['done', `${DEMO_TEEN.name} approved`]
-  const docLink = step < 3 ? ['idle', 'Not linked'] : step === 3 ? ['moving', 'Asks to connect']
-    : ['done', step === 4 ? 'Teen and parent OK' : `${DEMO_TEEN.name} approved`]
+  const parentLink = step === 0 ? ['moving', `${PARENT.person.name} sends her link`]
+    : step === 1 ? ['moving', `${DEMO_TEEN.name} joins`] : ['done', `${DEMO_TEEN.name} chose what she sees`]
+  const docLink = step < 3 ? ['idle', 'Not linked'] : step === 3 ? ['moving', `Link sent, ${DEMO_TEEN.name} joins`]
+    : ['done', step === 4 ? 'A parent gives the OK' : 'Linked']
 
-  const label = `The network, with demo people. ${DEMO_TEEN.name}, a teen, is in the middle. She sends an invite link.
-    ${PARENT.person.name}, her parent, asks to connect and ${DEMO_TEEN.name} approves. ${DOC.person.name}, a ${PRO},
-    asks to connect; ${DEMO_TEEN.name} approves and a parent gives an OK. Each person sees only what
+  const label = `The network, with demo people. ${DEMO_TEEN.name}, a teen, is in the middle. ${PARENT.person.name}, her
+    parent, makes a network and sends her its link; ${DEMO_TEEN.name} opens it, joins, and chooses what her parent sees.
+    ${DOC.person.name}, a ${PRO}, sends a link the same way; ${DEMO_TEEN.name} joins and a parent gives an OK.
+    Teens never make a network. Each person sees only what
     ${DEMO_TEEN.name} shares. ${PARENT.person.name} sees: ${PARENT_SEES.join(', ')}; never ${PARENT_NEVER.join(', ')}.
     ${DOC.person.name} sees: ${DOC_SEES.join(', ')}, and only for teens who said yes. ${WAITING.person.name} is
     still waiting for ${DEMO_TEEN.name} to approve.`
@@ -115,10 +118,10 @@ export default function NetworkDemo() {
   const teen = (
     <Person p={DEMO_TEEN} role="Teen" on>
       <div className="rounded-[8px] bg-mist/70 px-2.5 py-2">
-        <p className="m-0 text-fine font-semibold text-ink">Invite link</p>
-        <p className="m-0 text-fine text-ink-2">Six character code: <span className="font-code text-ink">K7Q2MX</span></p>
+        <p className="m-0 text-fine font-semibold text-ink">Joined by link</p>
+        <p className="m-0 text-fine text-ink-2">Opened {PARENT.person.name}’s, code <span className="font-code text-ink">K7Q2MX</span></p>
       </div>
-      <p className="m-0 mt-2 text-fine leading-snug text-ink">Approves every link.</p>
+      <p className="m-0 mt-2 text-fine leading-snug text-ink">Joins networks, never makes one.</p>
       <p className="m-0 text-fine leading-snug text-ink">Chooses what each person sees.</p>
       <p className="m-0 text-fine leading-snug text-ink">Can switch any of it off.</p>
     </Person>

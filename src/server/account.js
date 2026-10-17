@@ -295,9 +295,11 @@ export function makeHandler({ kv }) {
       return { ok: true }
     },
 
-    /* One live code per issuer: a new one replaces the old. */
+    /* One live code per issuer: a new one replaces the old. Only a parent
+       or a professional issues one; a teen joins, never invites. */
     async invite(s) {
       const a = s.a
+      if (a.role !== 'parent' && a.role !== 'pro') return { ok: false, reason: 'role' }
       const old = await liveInvite(a.id)
       if (old) await kv.del(K.inv(old.code))
       let code = randomCode()
@@ -336,8 +338,7 @@ export function makeHandler({ kv }) {
       await kv.set(K.link(link.id), link)
       await kv.sadd(K.links(a.id), link.id)
       await kv.sadd(K.links(from.id), link.id)
-      await kv.del(K.inv(code))
-      await kv.del(K.invby(from.id))
+      /* The code stays live until it expires, for every other teen it was sent to. */
       return { ok: true, link, snapshot: await snapshot(a) }
     },
 

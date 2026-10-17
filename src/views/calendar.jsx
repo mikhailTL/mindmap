@@ -69,23 +69,23 @@ const GETS = {
 /* The ways in, by who is reading. Every one opens the network screen. */
 const ACTIONS = {
   student: [
-    ['Invite a parent', 'They enter your code in their app.'],
-    [`Add a ${PRO}`, 'A parent approves the link first.'],
+    ['Join a network', `Open the link your parent or ${PRO} sends you.`],
   ],
   parent: [
     ['Invite your teen', 'Your teen approves it in their app.'],
     [`Add a ${PRO}`, 'Your teen approves what they see.'],
   ],
   pro: [
-    ['Invite a teen or parent', 'A parent approves before you see anything.'],
+    ['Invite your students and their parents', 'One link works for all of them. A parent approves each student.'],
   ],
 }
 
-/* The link a parent sends: the network screen, where the teen enters the
-   code. The code travels in the message, so the link works today. */
+/* The link a parent sends carries the code, so opening it is all a teen
+   does: they sign in or make an account and join at once. The code is in
+   the message as well, for reading out loud. */
 const inviteText = code => {
-  const at = typeof location === 'undefined' ? '' : `${location.origin}${location.pathname}#/network`
-  return `Join my MindMap network: ${at} Code: ${code}`
+  const at = typeof location === 'undefined' ? '' : `${location.origin}${location.pathname}#/network?code=${code}`
+  return `Join my MindMap network: ${at} (code ${code})`
 }
 
 function InviteLink({ me, go }) {

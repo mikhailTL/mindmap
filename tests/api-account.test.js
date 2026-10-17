@@ -171,9 +171,9 @@ describe('passwords, the Other role and every picture', () => {
     await call('invite', {}, parent.token)
     const code = (await call('me', {}, parent.token)).body.snapshot.invite.code
     expect((await call('redeem', { code }, other.token)).body.reason).toBe('role')
-    await call('invite', {}, other.token)
+    expect((await call('invite', {}, other.token)).body.reason).toBe('role')
     const mine = (await call('me', {}, other.token)).body.snapshot
-    expect((await call('redeem', { code: mine.invite.code }, parent.token)).body.reason).toBe('role')
+    expect(mine.invite).toBeNull()
     expect(mine.people).toEqual([])
     expect(mine.links).toEqual([])
     expect(mine.approvals).toEqual([])
@@ -202,7 +202,17 @@ describe('invitations and links', () => {
     expect(r.body.ok).toBe(true)
     expect(r.body.snapshot.links[0]).toMatchObject({ kind: 'parent-student', status: 'active' })
     expect(r.body.snapshot.people.find(p => p.role === 'parent').name).toBe('Dana')
-    expect((await call('redeem', { code: inv.snapshot.invite.code }, student.token)).body.reason).toBe('unknown')
+    /* The same teen again is already linked; a second teen joins too. */
+    expect((await call('redeem', { code: inv.snapshot.invite.code }, student.token)).body.reason).toBe('exists')
+    const alex = (await create({ role: 'student', name: 'Alex', email: '' })).body
+    expect((await call('redeem', { code: inv.snapshot.invite.code }, alex.token)).body.ok).toBe(true)
+    const theirs = (await call('me', {}, parent.token)).body.snapshot
+    expect(theirs.links.filter(l => l.kind === 'parent-student')).toHaveLength(2)
+    expect(theirs.invite.code).toBe(inv.snapshot.invite.code)
+  })
+  it('a teen cannot make an invite', async () => {
+    const { student } = await trio()
+    expect((await call('invite', {}, student.token)).body.reason).toBe('role')
   })
   it('a pro code waits for the parent, who approves it', async () => {
     const { parent, student, pro } = await trio()

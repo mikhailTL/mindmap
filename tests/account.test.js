@@ -198,10 +198,8 @@ describe('passwords, the Other role and every picture', () => {
     const other = await make('other', 'Robin', 'a fine password', { email: 'robin@example.com' })
     expect(other.role).toBe('other')
     expect(redeemInvite(inv.code).reason).toBe('role')
-    const mine = createInvite()
-    signOut()
-    await signIn('Dana', '1234')
-    expect(redeemInvite(mine.code).reason).toBe('role')
+    /* Only a parent or a professional makes a network. */
+    expect(createInvite()).toBeNull()
     expect(listNetwork(other.id)).toHaveLength(0)
     expect(listNetwork(parent.id)).toHaveLength(0)
   })
@@ -241,19 +239,36 @@ describe('invites and links', () => {
     expect(theirs[0].person.role).toBe('student')
   })
 
-  it('links a parent when the parent enters the student code', async () => {
-    const student = await make('student', 'Sam')
-    const inv = createInvite()
-    expect(inv.role).toBe('student')
-    signOut()
+  it('never lets a teen make an invite: only parents and professionals make networks', async () => {
+    await make('student', 'Sam')
+    expect(createInvite()).toBeNull()
+  })
+
+  it('keeps one parent code working for every teen it is sent to', async () => {
     const parent = await make('parent', 'Dana')
+    const inv = createInvite()
+    signOut()
+    const sam = await make('student', 'Sam', '2468')
+    expect(redeemInvite(inv.code).link.status).toBe('active')
+    /* The same teen twice is already linked. */
+    expect(redeemInvite(inv.code).reason).toBe('exists')
+    signOut()
+    const alex = await make('student', 'Alex', '1357')
     const r = redeemInvite(inv.code)
     expect(r.ok).toBe(true)
-    expect(r.link.status).toBe('active')
-    expect(r.link.kind).toBe('parent-student')
-    expect(r.link.student).toBe(student.id)
-    expect(r.link.parent).toBe(parent.id)
-    expect(r.link.pro).toBeNull()
+    expect(r.link).toMatchObject({ kind: 'parent-student', parent: parent.id, student: alex.id, status: 'active' })
+    expect(listNetwork(parent.id).map(l => l.person.id).sort()).toEqual([sam.id, alex.id].sort())
+  })
+
+  it('keeps one professional code working for many students, each waiting on their own parent', async () => {
+    await make('pro', 'Dr Lee', '975310')
+    const inv = createInvite()
+    signOut()
+    await make('student', 'Sam', '2468')
+    expect(redeemInvite(inv.code).link.status).toBe('pending')
+    signOut()
+    await make('student', 'Alex', '1357')
+    expect(redeemInvite(inv.code).link.status).toBe('pending')
   })
 
   it('leaves a pro link pending until a parent approves it', async () => {
@@ -269,8 +284,8 @@ describe('invites and links', () => {
     expect(r.link.kind).toBe('pro-student')
     expect(r.link.needsApprovalFrom).toBe('parent')
     expect(r.link.invitedBy).toBe(pro.id)
-    /* A used code is a used code. */
-    expect(redeemInvite(inv.code).ok).toBe(false)
+    /* The same student again is already linked. */
+    expect(redeemInvite(inv.code).reason).toBe('exists')
     signOut()
     await signIn('Dana', '1234')
     const pending = listPendingApprovals(parent.id)
@@ -358,16 +373,7 @@ describe('invites and links', () => {
     expect(listPendingApprovals(parent.id)).toHaveLength(0)
   })
 
-  it('refuses a link between two students, or two of any role', async () => {
-    await make('student', 'Sam')
-    const inv = createInvite()
-    signOut()
-    await make('student', 'Alex', '1111')
-    const r = redeemInvite(inv.code)
-    expect(r.ok).toBe(false)
-    expect(r.reason).toBe('role')
-    expect(listNetwork()).toHaveLength(0)
-    signOut()
+  it('refuses a link between two of any role', async () => {
     await make('parent', 'Dana')
     const pinv = createInvite()
     signOut()
@@ -395,7 +401,6 @@ describe('your data', () => {
   it('deletes an account with its links and invites', async () => {
     const { student, parent } = await family()
     await signIn('Sam', '2468')
-    createInvite()
     expect(listNetwork(parent.id)).toHaveLength(1)
     deleteAccount()
     expect(current()).toBeNull()
@@ -412,7 +417,6 @@ describe('your data', () => {
   it('exports everything for the signed in account and nothing secret', async () => {
     const { student, parent } = await family()
     await signIn('Sam', '2468')
-    const inv = createInvite()
     const out = JSON.parse(exportAll())
     expect(out.v).toBe(1)
     expect(out.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
@@ -423,8 +427,8 @@ describe('your data', () => {
     expect(out.links).toHaveLength(1)
     expect(out.links[0]).toMatchObject({ kind: 'parent-student', student: student.id, parent: parent.id, pro: null, status: 'active' })
     expect(out.links[0].person).toEqual({ id: parent.id, name: 'Dana', role: 'parent', avatar: null })
-    expect(out.invites).toHaveLength(1)
-    expect(out.invites[0].code).toBe(inv.code)
+    /* A teen makes no invites, so there are none to export. */
+    expect(out.invites).toHaveLength(0)
     expect(JSON.stringify(out)).not.toMatch(/passcode/i)
   })
 

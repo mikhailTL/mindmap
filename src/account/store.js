@@ -479,11 +479,15 @@ function randomCode() {
 
 const live = (i, at = new Date()) => Date.parse(i.expiresAt) > at.getTime()
 
-/* The signed in account issues a code. Whoever enters it is the other end
-   of the link, so the code names nobody but its issuer. */
+/* Only a parent or a Medical Professional makes a network: they issue the
+   code, and it keeps working for every teen (or parent, or professional) it
+   is sent to until it expires, so one link gathers a whole family or
+   caseload. A teen joins networks; a teen never issues a code. */
+export const INVITE_ROLES = ['parent', 'pro']
+export const canInvite = role => INVITE_ROLES.includes(role)
 export function createInvite() {
   const me = current()
-  if (!me) return null
+  if (!me || !canInvite(me.role)) return null
   if (remote()) {
     call('invite').then(r => r.ok && applySnapshot(r.snapshot))
     return null
@@ -560,8 +564,8 @@ export function redeemInvite(rawCode, at = new Date()) {
     createdAt: now(),
     decidedAt: pending ? null : now(),
   }
+  /* The code stays live: the next teen it is sent to joins the same way. */
   links.merge({ items: [...links.get().items.filter(l => l.id !== existing?.id), link] })
-  invites.merge({ items: invites.get().items.filter(i => i.code !== code) })
   return { ok: true, link }
 }
 
