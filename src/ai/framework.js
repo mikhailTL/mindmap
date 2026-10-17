@@ -46,7 +46,7 @@
  */
 
 import { EMERGENCY, RESOURCES } from '../app/resources.js'
-import { PRO, PRO_LC, SCORE } from '../lib/terms.js'
+import { PRO, PRO_LC, PRO_PLURAL, SCORE } from '../lib/terms.js'
 
 /* Overridable in the Vercel project so the owner can move model without a
    deploy of this file. Printed on the screen, so the page never names a model
@@ -162,7 +162,7 @@ export const AUDIENCES = {
   pro: {
     id: 'pro',
     label: PRO,
-    heading: 'MindMap AI For ' + PRO + 's',
+    heading: 'MindMap AI For ' + PRO_PLURAL,
     opener: 'Ask what a signal is, where it comes from, and which published guidance a reply rests on.',
     starters: [
       'What exactly does MindMap measure, and how?',

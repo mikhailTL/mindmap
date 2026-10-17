@@ -48,7 +48,7 @@ const mondayIndex = d => (d.getDay() + 6) % 7
    network screen (src/account/Network.jsx); this card shows who is on them
    and starts the invite. */
 
-/* The demo network: the student, a parent and a Medical Professional. */
+/* The demo network: the student, a parent and a Counselor/Professional. */
 const DEMO_PEOPLE = [
   { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'fox' },
   { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: null },
@@ -548,7 +548,7 @@ function MarkEvent({ className }) {
           ))}
         </ul>
       )}
-      <p className="note mt-2.5">Events stay on this phone and are never shared.</p>
+      <p className="note mt-2.5">Only you see your events.</p>
     </Panel>
   )
 }

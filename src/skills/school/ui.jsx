@@ -41,7 +41,7 @@ export function Screen({ title, family, icon, onExit, problem, plan, children })
         <p className="text-sec text-ink">{problem}</p>
         <p className="mt-1 text-ui text-ink-2">{plan}</p>
         <div className="mt-5 grid gap-4">{children}</div>
-        <OnDevice className="mt-5">Saved on this device only. Nothing is sent anywhere.</OnDevice>
+        <OnDevice className="mt-5">Only you see this.</OnDevice>
       </div>
     </ActivityScreen>
   )

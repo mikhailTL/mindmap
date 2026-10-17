@@ -290,14 +290,9 @@ export function MindMapAI({ who = 'student', go, className }) {
       {(state === 'unconfigured' || state === 'unreachable') && (
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
           <section className="rounded-panel border border-ink-3 bg-card p-4">
-            <Heading>Not Connected Yet</Heading>
+            <Heading>Unavailable</Heading>
             <p className="mt-1.5 max-w-[58ch] text-meta text-ink-2">
-              {state === 'unconfigured'
-                ? 'No model key is set, so nothing here answers.'
-                : 'The server did not answer, so nothing here answers.'}
-            </p>
-            <p className="mt-2 max-w-[58ch] text-fine text-ink-3">
-              No field is offered until the key is in place.
+              MindMap AI is unavailable right now. Try again shortly.
             </p>
             {typeof go === 'function' && (
               <button type="button" onClick={() => go('methods')}

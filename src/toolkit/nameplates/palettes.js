@@ -32,7 +32,7 @@ export const PALETTES = {
   rules:     { fade:'#ffe6a8', ink:'#3d2a00', sub:'#5a4006', glow:'#ffc76a' },
   reach:     { fade:'#0d4a52', ink:'#ffffff', sub:'#d3f2f2', glow:'#4fb3b0' },
 
-  /* medical professional tools */
+  /* counselor/professional tools */
   'pro-opener':   { fade:'#1a3f73', ink:'#ffffff', sub:'#dce8ff', glow:'#ffd98a' },
   'pro-triage':   { fade:'#ffdf8f', ink:'#3a2600', sub:'#573b00', glow:'#ffb85a' },
   'pro-ground':   { fade:'#2d5a1e', ink:'#ffffff', sub:'#e2f5d6', glow:'#8cc65a' },

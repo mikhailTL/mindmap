@@ -1,5 +1,5 @@
 import React from 'react'
-import { SCORE } from '../lib/terms'
+import { SCORE, PRO, PRO_PLURAL } from '../lib/terms'
 import { Overview } from './Overview'
 import { PatchHub } from './PatchHub'
 import { Tour } from './Tour'
@@ -36,7 +36,7 @@ import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
 import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame, Grid,
-         People, PulseMark, Person } from '../ui/marks'
+         People, PulseMark } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
 import { Network, useAutoJoin } from '../account/Network'
@@ -72,7 +72,7 @@ const VIEWS = [
   'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
   /* the five parent activities, which belong to the parent app */
   'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules','toolkit-reach',
-  /* the five Medical Professional activities */
+  /* the five Counselor/Professional activities */
   'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground','toolkit-pro-parents','toolkit-pro-referral',
   /* the fifteen life skills, for every audience */
   ...SKILL_ROUTES,
@@ -130,22 +130,22 @@ const hashParts = () => {
 const rawHash = () => hashParts()[0]
 
 const TITLE = {
-  'student-trends':'Your trends in MindMap',
-  'parent-trends':'Trends and calendar in MindMap',
+  'student-trends':'Trends in MindMap',
+  'parent-trends':'Trends in MindMap',
   site:'MindMap, a wellbeing app for teenagers',
   patch:'The MindMap patch',
   'without-patch':'MindMap without the patch',
   students:'MindMap for students',
   parents:'MindMap for parents',
-  pro:'MindMap for Medical Professionals',
+  pro:`MindMap for ${PRO_PLURAL}`,
   'heads-up':'Heads Up, by MindMap',
   app:'Open the MindMap app',
   'app-home':'The MindMap app',
   'app-start':'Choose a screen in MindMap',
-  'app-pro-trends':'Caseload trends in MindMap',
+  'app-pro-trends':'Trends in MindMap',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
-  'app-pro':'The Medical Professional screen in MindMap',
+  'app-pro':`The ${PRO} screen in MindMap`,
   monitor:'Every reading in MindMap',
   reading:'Take a reading in MindMap',
   mirror:'Your Mental Mirror in MindMap',
@@ -202,7 +202,7 @@ const PATCH = [
 const AUDIENCE = [
   ['students', 'Students', 'What a student sees each day.'],
   ['parents',  'Parents',  'What a parent can and cannot see.'],
-  ['pro',      'Medical Professionals',  'What a Medical Professional sees across a group.'],
+  ['pro',      PRO_PLURAL,  `What a ${PRO} sees across a group.`],
 ]
 
 /* Heads Up is its own tab, beside the audience menu rather than inside it. */
@@ -512,15 +512,14 @@ const APP_NAV = {
     /* Spoken apart from the top bar's Home, which goes to the app home. */
     ['app-student', 'Home',     PulseMark, 'Student home'],
     ['reading',     'Reading',  DialMark],
-    ['mirror',      'Mirror',   Person, 'Mental Mirror'],
-    ['student-trends', 'Trends', CalendarMark, 'Your trends'],
+    ['student-trends', 'Trends', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['shared',      'Privacy',  Grid],
   ],
   parent: [
     ['app-parent',  'Home',     PulseMark, 'Parent home'],
-    ['parent-trends', 'Trends', CalendarMark, 'Trends and calendar'],
+    ['parent-trends', 'Trends', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['privacy',     'Privacy',  Grid],
@@ -528,8 +527,8 @@ const APP_NAV = {
   pro: [
     /* Short at 390, the full words past sm. The linking screen is the
        Connect tab, so two tabs never both say Network. */
-    ['app-pro',     'Home',     PulseMark, 'Medical Professional home'],
-    ['app-pro-trends', 'Trends', CalendarMark, 'Trends across your teens'],
+    ['app-pro',     'Home',     PulseMark, `${PRO} home`],
+    ['app-pro-trends', 'Trends', CalendarMark],
     ['network',     'Connect',  People, 'Connect with parents and teens'],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['toolkit',     'Toolkit',  Bracket],
@@ -558,7 +557,7 @@ const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               ...SKILL_ROUTES])
 
 const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends', 'parent-trends':'parent-trends',
-                  'app-student':'app-student', monitor:'app-student', reading:'reading', mirror:'mirror',
+                  'app-student':'app-student', monitor:'app-student', reading:'reading', mirror:'reading',
                   toolkit:'toolkit', ai:'ai', notes:'ai', shared:'shared',
                   'app-notify':'shared', help:null,
                   'toolkit-breathing':'toolkit', 'toolkit-ground':'toolkit',
@@ -586,8 +585,8 @@ const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends',
 const APP_TITLE = {
   app:            ['Welcome',          'Welcome'],
   'app-start':    ['Welcome',          'Welcome'],
-  'student-trends': ['Trends',         'Your trends'],
-  'parent-trends':  ['Trends',         'Trends and calendar'],
+  'student-trends': ['Trends',         'Trends'],
+  'parent-trends':  ['Trends',         'Trends'],
   'app-student':  ['Student',          'Student'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
@@ -626,8 +625,8 @@ const APP_TITLE = {
   help:           ['Help',             'Getting help'],
   'app-parent':   ['Parent',           'Parent'],
   privacy:        ['Privacy',          'Privacy'],
-  'app-pro':      ['Home',             'Medical Professional home'],
-  'app-pro-trends': ['Trends',         'Trends across your teens'],
+  'app-pro':      ['Home',             'Home'],
+  'app-pro-trends': ['Trends',         'Trends'],
   signin:         ['Sign in',          'Sign in'],
   account:        ['Account',          'Account'],
   'account-section': ['Account',       'Account'],
@@ -719,7 +718,7 @@ function AppTabBar({ app, view, go }) {
 /* Each app's own home. The Home button goes here, never to the chooser:
    somebody in the parent app has no business landing on the student side. */
 const HOME_OF = { student: 'app-student', parent: 'app-parent', pro: 'app-pro' }
-const ROLE_WORD = { student: 'Student', parent: 'Parent', pro: 'Medical Professional' }
+const ROLE_WORD = { student: 'Student', parent: 'Parent', pro: PRO }
 
 const HomeMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
@@ -763,7 +762,7 @@ function SwitchRole({ go, className }) {
   }
   return (
     <button type="button" onClick={run}
-      title={live ? 'Sign out and sign in with another role' : 'Choose Student, Parent or Medical Professional'}
+      title={live ? 'Sign out and sign in with another role' : `Choose Student, Parent or ${PRO}`}
       className={cn('flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-field px-2 font-display',
         'text-fine font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash',
         'sm:text-ui', className)}>
@@ -1256,7 +1255,7 @@ export function App() {
               'toolkit-score':     () => <Toolkit who="parent" open="score"/>,
               'toolkit-rules':     () => <Toolkit who="parent" open="rules"/>,
               'toolkit-reach':     () => <Toolkit who="parent" open="reach"/>,
-              /* The Medical Professional set: always the pro shell. */
+              /* The Counselor/Professional set: always the pro shell. */
               'toolkit-pro-opener':   () => <Toolkit who="pro" open="pro-opener"/>,
               'toolkit-pro-triage':   () => <Toolkit who="pro" open="pro-triage"/>,
               'toolkit-pro-ground':   () => <Toolkit who="pro" open="pro-ground"/>,

@@ -1,11 +1,11 @@
 import React from 'react'
-import { useMode } from '../../lib/mode'
+import { useGuest, useMode } from '../../lib/mode'
 import { useAccount } from '../../account/store'
 import { TODAY_LONG, longDate } from '../student/PartHead'
 import NetworkBox from './NetworkBox'
 import { StartGrid, StartTile } from '../home/StartGrid'
 
-/* The parent's home: a greeting, four tiles (children's trends, Toolkit,
+/* The parent's home: a greeting, four tiles (Trends, Toolkit,
  * Ask MindMap AI, Privacy and sharing), then the network box with Add a teen
  * and Add a PRO. No figures here at all: every Mind Score, Heads Up face and
  * chart is on Trends. */
@@ -21,7 +21,9 @@ export default function ParentHomeBoard({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
-  const name = real ? (me?.name ? me.name.split(' ')[0] : null) : 'Elena'
+  /* A guest is a spectator, not a role: no demo name for them. */
+  const guest = useGuest() && !real && !me
+  const name = guest ? 'Guest' : real ? (me?.name ? me.name.split(' ')[0] : null) : 'Elena'
 
   /* Cards first, as on the earlier start screen, then the network. */
   return (
@@ -32,14 +34,18 @@ export default function ParentHomeBoard({ go }) {
       </header>
 
       <StartGrid label="Parent app">
-        <StartTile title="Your children’s trends" tone={HUE.sky.ground} chevron={HUE.sky.ink}
-          onClick={() => go('parent-trends')} art={<CalendarArt className="h-[66%] w-auto"/>}/>
+        <StartTile title="Trends" tone={HUE.sky.ground} chevron={HUE.sky.ink}
+          photo="parent-hero" photoAlt="A parent and teen smiling at a laptop"
+          onClick={() => go('parent-trends')} art={<CalendarArt className="h-auto w-[74%]"/>}/>
         <StartTile title="Toolkit" tone={HUE.sun.ground} chevron={HUE.sun.ink}
-          onClick={() => go('toolkit')} art={<TalkArt className="h-[58%] w-auto"/>}/>
+          photo="parent-kitchen" photoAlt="A parent and teen cooking and talking in a kitchen"
+          onClick={() => go('toolkit')} art={<TalkArt className="h-auto w-[80%]"/>}/>
         <StartTile title="Ask MindMap AI" tone={HUE.lilac.ground} chevron={HUE.lilac.ink}
-          onClick={() => go('ai')} art={<AskArt className="h-[58%] w-auto"/>}/>
+          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
+          onClick={() => go('ai')} art={<AskArt className="h-auto w-[80%]"/>}/>
         <StartTile title="Privacy and sharing" tone={HUE.mint.ground} chevron={HUE.mint.ink}
-          onClick={() => go('privacy')} art={<ShieldArt className="h-[66%] w-auto"/>}/>
+          photo="parent-laptop" photoAlt="A parent and teen looking at a laptop together"
+          onClick={() => go('privacy')} art={<ShieldArt className="h-auto w-[62%]"/>}/>
       </StartGrid>
 
       <NetworkBox go={go} real={real} me={me} className="w-full"/>

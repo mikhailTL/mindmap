@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils'
 import { Action } from '../../toolkit/shell'
 import { RESOURCES } from '../../app/resources'
 
-/* Pieces the Medical Professional tools share. Nothing here stores or sends
+/* Pieces the Counselor/Professional tools share. Nothing here stores or sends
    anything: every tool keeps its state in the page and forgets it on leave. */
 
 export async function copyText(text) {

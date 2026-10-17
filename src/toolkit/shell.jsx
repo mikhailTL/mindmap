@@ -14,7 +14,7 @@ import '../kit/kit.css'
  *
  * The way back is an anchor to `#/toolkit`: App.jsx resolves the hash, so it
  * is a real navigation with a real browser Back. Tools opened in place (the
- * parent and Medical Professional sets) are handed `onBack` and get a button
+ * parent and Counselor/Professional sets) are handed `onBack` and get a button
  * that looks the same. */
 
 /* The colour comes from the tool's tile when the tool is known, by `id` or by

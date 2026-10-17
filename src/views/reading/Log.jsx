@@ -149,7 +149,7 @@ function Entry({ r, editing, onEdit, onSave, onCancel }) {
       </span>
       <span className="min-w-0">
         <span className="flex items-center gap-1.5 text-fine text-ink-2">
-          <src.Icon aria-hidden className="size-4 shrink-0 text-ink-3"/>
+          <src.Icon aria-hidden className="hidden size-4 shrink-0 text-ink-3 sm:block"/>
           <span className="truncate">{src.word}</span>
         </span>
         {r.pulse != null && <span className="block text-fine tabular-nums text-ink-3">{r.pulse} bpm</span>}
@@ -178,7 +178,7 @@ function DayList({ list, now, setNote }) {
   if (!groups.length) return <p className="text-meta text-ink-3">No readings in this range.</p>
   return (
     <div role="region" aria-label="Readings by day" tabIndex={0}
-      className="max-h-[30rem] overflow-y-auto overscroll-contain rounded-field">
+      className="relative max-h-[30rem] overflow-y-auto overscroll-contain rounded-field">
       {groups.map(g => (
         <section key={g.key} aria-label={dayName(g.at, now)}>
           <h5 className="sticky top-0 z-[1] flex items-baseline justify-between gap-3 border-b border-rule
@@ -226,8 +226,10 @@ function ClearLog({ n }) {
 /* The log as the Trends tab shows it: the share of readings inside the
    usual range, then every entry by day. The range is chosen by the tab's own
    Day / Week / Month switch, so the chart above and this list always cover
-   the same days. `latest` puts the latest reading on the rainbow first. */
-export function MindScoreLog({ entries, list, now, demo, setNote, rangeLabel, latest = false, headRef,
+   the same days. The latest reading always leads, on its rainbow. The
+   scroller is `relative` so the sr-only spans inside it are clipped by it
+   rather than stretching the page below the footer. */
+export function MindScoreLog({ entries, list, now, demo, setNote, rangeLabel, latest = true, headRef,
   className, go }) {
   const s = stats(list)
   return (

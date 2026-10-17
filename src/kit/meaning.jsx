@@ -38,13 +38,13 @@ const CARRIES_NOT = [
 ]
 
 const CLAIMS = [
-  { q: 'A high week means something is wrong at school.',
+  { q: 'A high stretch means something is wrong at school.',
     verdict: 'It cannot say',
     a: 'The score moves with whatever the body treats as load: a test, a fallout, a cold, three short nights, a hard training week. It has no way of telling you which of those it was.' },
-  { q: 'A high week means she is not coping.',
+  { q: 'A high stretch means she is not coping.',
     verdict: 'No',
-    a: 'A rise above her own baseline is a measurement of load, not of whether she is handling it. Plenty of weeks are heavy and handled.' },
-  { q: 'A calm week means everything is fine.',
+    a: 'A rise above her own baseline is a measurement of load, not of whether she is handling it. Plenty of heavy stretches are handled.' },
+  { q: 'A calm stretch means everything is fine.',
     verdict: 'Not on its own',
     a: 'A quiet fortnight with one bad Tuesday averages out to a quiet fortnight. The number does not know what was said to her on Tuesday.' },
   { q: 'The number tells me whether to worry.',
@@ -53,9 +53,9 @@ const CLAIMS = [
   { q: 'If I can see their trends, I do not need to ask.',
     verdict: 'No',
     a: 'Four signals and a baseline. Nothing about what happened, nothing about what was said, nobody named. Asking is the only route to any of that.' },
-  { q: 'A high week means I should check the app more often.',
+  { q: 'A run of high days means I should check the app more often.',
     verdict: 'No',
-    a: 'Checking more often changes nothing in the week and changes what the app is for. It was built for one look, and for the conversation that follows it.' },
+    a: 'Checking more often changes nothing about those days and changes what the app is for. It was built for one look, and for the conversation that follows it.' },
 ]
 
 function Column({ title, rows, lit }) {

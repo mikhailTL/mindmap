@@ -39,7 +39,7 @@ export function LifeScreen({ id, family, title, icon: Icon, onExit, problem, doi
         <p className="mt-1 text-sec text-ink-2">{doing}</p>
         {children}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4">
-          <OnDevice>Saved on this device only. Nothing is sent anywhere.</OnDevice>
+          <OnDevice>Only you see this.</OnDevice>
           <Action kind="quiet" onClick={() => onExit ? onExit() : (location.hash = '#/toolkit')}>Done</Action>
         </div>
       </div>

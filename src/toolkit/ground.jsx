@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { Check } from '../ui/marks'
 import { cn } from '../lib/utils'
-import { ActivityScreen, OnDevice } from './shell'
+import { ActivityScreen } from './shell'
 import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, EndCard, Burst, SPRING } from './game'
@@ -213,7 +213,6 @@ export default function Grounding() {
             <DidItWork tool="ground" phase="after" className="mt-3"/>
           </EndCard>
         )}
-        <OnDevice className="mt-4">No camera. Nothing leaves this device.</OnDevice>
       </div>
     </ActivityScreen>
   )

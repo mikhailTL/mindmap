@@ -373,16 +373,75 @@ function StepTable({ p }) {
   )
 }
 
+/* The sensor's brightness over three and a half seconds of a 70 bpm pulse,
+   drawn from a model wave rather than typed as points: a fast dip as the
+   beat arrives, a slower climb back, and the small second notch a pulse wave
+   carries. Demo shape, not a recording. */
+const TR_W = 300, TR_H = 150, TR_SECONDS = 3.5, TR_BPM = 70
+const TR_X0 = 8, TR_X1 = TR_W - 8, TR_TOP = 22, TR_BOT = 108
+function trBright(t) {
+  const period = 60 / TR_BPM
+  const ph = ((t - 0.25) % period + period) % period / period
+  const g = (c, w) => Math.exp(-((ph - c) ** 2) / (2 * w * w))
+  return 1 - (0.92 * g(0.16, 0.07) + 0.3 * g(0.42, 0.06))
+}
+const TR_PATH = (() => {
+  let d = ''
+  for (let i = 0; i <= 140; i++) {
+    const t = (i / 140) * TR_SECONDS
+    const x = TR_X0 + (i / 140) * (TR_X1 - TR_X0)
+    const y = TR_TOP + (1 - trBright(t)) * (TR_BOT - TR_TOP)
+    d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`
+  }
+  return d
+})()
+/* Where each dip bottoms out, for its marker. */
+const TR_DIPS = Array.from({ length: 5 }, (_, k) => 0.25 + 0.16 * (60 / TR_BPM) + k * (60 / TR_BPM))
+  .filter(t => t < TR_SECONDS)
+  .map(t => ({ x: TR_X0 + (t / TR_SECONDS) * (TR_X1 - TR_X0), y: TR_TOP + (1 - trBright(t)) * (TR_BOT - TR_TOP) }))
+const TR_SEC = (TR_X1 - TR_X0) / TR_SECONDS
+
+function SensorTrace({ p }) {
+  return (
+    <svg viewBox={`0 0 ${TR_W} ${TR_H}`} aria-hidden className="block h-auto w-full rounded-panel bg-mist">
+      <style>{`
+        @keyframes ${p}-scan { from { transform: translateX(0) } to { transform: translateX(${TR_X1 - TR_X0}px) } }
+        .${p}-head { animation: ${p}-scan 3.5s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .${p}-head { animation: none; opacity: 0 } }
+      `}</style>
+      <text x={TR_X0} y="14" fill={INK2} fontFamily="Chivo, sans-serif" fontSize="13">brightness</text>
+      <line x1={TR_X0} y1={TR_TOP - 4} x2={TR_X1} y2={TR_TOP - 4} stroke={RULE} strokeDasharray="3 4"/>
+      <path d={TR_PATH} fill="none" stroke={BEAM} strokeWidth="2.6" strokeLinecap="round"
+        strokeLinejoin="round"/>
+      {/* A read head sweeping across at the speed of the trace: transform only. */}
+      <line x1={TR_X0} y1={TR_TOP - 8} x2={TR_X0} y2={TR_BOT + 6} stroke={ACCENT} strokeWidth="1.5"
+        strokeOpacity="0.55" className={`${p}-head`}/>
+      {TR_DIPS.map((d, i) => (
+        <g key={i}>
+          <circle cx={d.x} cy={d.y} r="4" fill={CARD} stroke={BLOOD} strokeWidth="2"/>
+          <text x={d.x} y={d.y + 17} textAnchor="middle" fill={INK2}
+            fontFamily="Chivo, sans-serif" fontSize="13">{i + 1}</text>
+        </g>
+      ))}
+      <g stroke={INK3} strokeWidth="1.2">
+        <line x1={TR_X0} y1={TR_H - 16} x2={TR_X0 + TR_SEC} y2={TR_H - 16}/>
+        <line x1={TR_X0} y1={TR_H - 20} x2={TR_X0} y2={TR_H - 12}/>
+        <line x1={TR_X0 + TR_SEC} y1={TR_H - 20} x2={TR_X0 + TR_SEC} y2={TR_H - 12}/>
+      </g>
+      <text x={TR_X0 + TR_SEC + 8} y={TR_H - 12} fill={INK2} fontFamily="Chivo, sans-serif" fontSize="13">1 second</text>
+    </svg>
+  )
+}
+
 export function CameraModule({ className }) {
   const raw = React.useId()
   const p = `mmc${raw.replace(/[^a-zA-Z0-9]/g, '')}`   // useId returns colons; CSS will not take them
   const narrow = useNarrow()
   return (
     <figure className={cn('m-0', className)}>
-      {/* On xl the caption is a rail in the dead space beside the figure. One
-          trace and its label only: the sensor rate and the absorption are
-          already in rows 05 and 02 of the table beside it. */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-center xl:gap-9">
+      {/* On xl the caption is a rail beside the figure: the sensor's trace at
+          a size that reads, and one sentence. */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-center xl:gap-8">
         <div>
           <svg
             /* Narrow crops to the drawing rather than redrawing it, so phone
@@ -442,21 +501,23 @@ export function CameraModule({ className }) {
           )}
         </div>
 
-        {/* NOT DRAWN ON A PHONE. This rail exists because xl leaves dead space
-            beside the drawing; at 390 there is none, and the sparkline says
-            again what step 06 of the list already says in words, for 73px of
-            a band that spec 0e section 14 wants under a screen and a half. */}
+        {/* NOT DRAWN ON A PHONE: at 390 step 06 of the list already says it.
+            From md it is the drawing's last step at a size that reads: what
+            the sensor's number does over a few seconds. On xl it is a rail
+            beside the drawing, sized to fill it rather than leave a column of
+            blank card with one line of type in it. */}
         {!narrow && (
-        <figcaption className="m-0 flex flex-col gap-2 border-t border-rule pt-3
-          sm:flex-row sm:items-center sm:gap-6
-          xl:flex-col xl:items-start xl:gap-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
-          <svg viewBox="0 0 220 44" aria-hidden className="h-11 w-full shrink-0 sm:w-[220px] xl:w-full">
-            <path d="M0 14 L22 14 L30 30 L38 14 L60 14 L82 14 L90 30 L98 14 L120 14
-                     L142 14 L150 30 L158 14 L180 14 L202 14 L210 30 L218 14"
-              fill="none" stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            <text x="0" y="42" fill={INK3} fontFamily="Chivo, sans-serif" fontSize="13">Each dip is one heartbeat.</text>
-          </svg>
-        </figcaption>
+          <figcaption className="m-0 grid gap-3 border-t border-rule pt-4
+            md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] md:items-center md:gap-6
+            xl:grid-cols-1 xl:content-center xl:self-stretch xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0">
+            <SensorTrace p={p}/>
+            <div>
+              <p className="m-0 font-display text-ui font-bold leading-tight text-ink">What the sensor sees</p>
+              <p className="m-0 mt-1 text-meta leading-[1.45] text-ink-2">
+                The image gets a little darker each time blood pushes into the fingertip.
+                Each dip is one heartbeat.</p>
+            </div>
+          </figcaption>
         )}
       </div>
     </figure>

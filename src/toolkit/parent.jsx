@@ -54,7 +54,6 @@ export function ParentPhrasing(p) {
   return (
     <ActivityScreen {...p} id="phrasing" family="tide" title="Opening Line Check">
       <Sheet><PhraseCheck/></Sheet>
-      <p className="mt-2 text-fine text-ink-3">Your line stays on this device.</p>
     </ActivityScreen>
   )
 }

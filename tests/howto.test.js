@@ -3,9 +3,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { HowTo, GUIDES, guideFor, storageKey } from '../src/views/howto'
 import { ART } from '../src/views/howto/art'
+import { PRO } from '../src/lib/terms'
 
 const PAIRS = {
-  student: ['app-student', 'reading', 'mirror', 'student-trends', 'toolkit', 'ai', 'shared'],
+  student: ['app-student', 'reading', 'student-trends', 'toolkit', 'ai', 'shared'],
   parent: ['app-parent', 'parent-trends', 'toolkit', 'ai', 'privacy'],
   pro: ['app-pro', 'app-pro-trends', 'network', 'ai', 'toolkit'],
 }
@@ -104,5 +105,30 @@ describe('How to use guides', () => {
   it('never offers a parent Notes, Location or raw readings', () => {
     const p = guideFor('parent', 'parent-trends').steps.map(s => s.cap).join(' ')
     expect(p).toMatch(/Never Notes, Location or raw readings/)
+  })
+
+  it('has no Mental Mirror guide: the Mirror is a way on the Reading tab', () => {
+    expect(guideFor('student', 'mirror')).toBeNull()
+    const reading = guideFor('student', 'reading').steps.map(s => s.cap).join(' ')
+    expect(reading).toMatch(/Mental Mirror/)
+  })
+
+  it('titles every trends guide "How to use Trends"', () => {
+    for (const [app, tab] of [['student', 'student-trends'], ['parent', 'parent-trends'], ['pro', 'app-pro-trends']]) {
+      expect(guideFor(app, tab).title).toBe('How to use Trends')
+    }
+  })
+
+  it('walks the toolkit through its tabs, activities and levels', () => {
+    const caps = guideFor('student', 'toolkit').steps.map(s => s.cap).join(' ')
+    for (const t of ['Exercises', 'School', 'Outside', 'Life', 'Career', 'Resources']) expect(caps).toContain(t)
+    expect(caps).toMatch(/levels/)
+    expect(caps).toMatch(/badges/)
+  })
+
+  it('names the Professional only through the shared term', () => {
+    const caps = Object.values(GUIDES).flatMap(g => Object.values(g))
+      .flatMap(g => g.steps.map(s => s.cap)).join(' ')
+    expect(caps).toContain(PRO)
   })
 })

@@ -1,6 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
-import { PRO } from '../../lib/terms'
+import { PRO_WRAP } from '../../lib/terms'
 import { Check } from '../../ui/marks'
 import { PASSWORD_MIN, SETTINGS, createAccount, signIn, takePreferredRole, validSecret } from '../../account/store'
 import { field, fieldError, solid } from '../../account/ui'
@@ -17,7 +17,7 @@ const PASS_HINT = LONG ? `At least ${PASSWORD_MIN} characters, or 4 to 6 digits.
 const ROLE_TILES = [
   { id: 'student', label: 'Student' },
   { id: 'parent',  label: 'Parent' },
-  { id: 'pro',     label: PRO },
+  { id: 'pro',     label: PRO_WRAP },
   { id: 'other',   label: 'Other' },
 ]
 

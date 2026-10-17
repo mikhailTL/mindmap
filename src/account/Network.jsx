@@ -1,37 +1,39 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { Panel, SwitchRow } from '../app/controls'
-import { Check, Copy, Cross, Plus } from '../ui/marks'
+import { Check, ChevronDown, Copy, Cross, Plus } from '../ui/marks'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { useMode } from '../lib/mode'
-import { PRO, PRO_PLURAL } from '../lib/terms'
+import { PRO, PRO_LC, PRO_PLURAL } from '../lib/terms'
 import { SHARING, getSharing, getVersion as sharingVersion, setShared, subscribe as onSharing } from '../app/store'
 import { shareLabel } from '../app/Sharing'
 import {
   approveLink, createInvite, declineLink, getVersion, listNetwork, listPendingApprovals,
-  myInvite, ready, redeemInvite, removeLink, subscribe, useAccount,
+  current, myInvite, ready, redeemInvite, removeLink, subscribe, useAccount,
 } from './store'
-import { DEMO_LINKS, DEMO_TEEN } from './demo-network'
+import { DEMO_CASELOAD, DEMO_LINKS, DEMO_PRO_PARENTS, DEMO_TEEN } from './demo-network'
 import { Empty, IconButton, LinkMark, PersonRow, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
 
-/* The network: teens, parents and Medical Professionals linked to each other.
+/* The network: teens, parents and Counselors/Professionals linked to each other.
  *
  * The flow, the same on every shape of the screen:
- *   1. A parent or a Medical Professional makes an invite link (a six
+ *   1. A parent or a Counselor/Professional makes an invite link (a six
  *      character code inside a URL). Teens never make one. The link keeps
  *      working for every teen it is sent to, so one link gathers a family or
  *      a caseload.
  *   2. The teen opens it. Signed out, they sign in or make an account, and
  *      they join the network as soon as they are in: useAutoJoin below, run
  *      once by the app shell, redeems the code with no further press.
- *   3. The teen chooses what that person can see. Nothing is shared until
- *      then. A Medical Professional link also needs a parent's OK, which is
- *      the store's rule (src/account/store.js) and the server's.
+ *   3. The teen chooses what that person can see. Every switch starts on
+ *      and the teen can turn any of it off. A Counselor/Professional link also
+ *      needs a parent's OK, which is the store's rule (src/account/store.js)
+ *      and the server's.
  *   4. Both of them see the connection.
  *
  * Demo mode shows Maya's network from ./demo-network.js, from any of the
- * three sides, and every button works on that copy only. Live mode is the
+ * three sides (Dr. Shah's side is the whole demo caseload, Maya among them),
+ * and every button works on that copy only. Live mode is the
  * real store. No reading, score or trend is shown here: only names, link
  * status and the names of what is shared.
  */
@@ -104,14 +106,25 @@ function clearInviteFromUrl() { pendingCode = null; keepCode(null); codeListener
 /* ── Joining by link, automatically ─────────────────────────────────────── */
 
 /* The result of the last automatic join, for the network screen to show:
-   { state: 'joining' } while it runs, then { ok, link, name, reason }. */
+   { state: 'joining' } while it runs, then { ok, link, name, reason }. Each
+   result carries `by`, the account that joined, and belongs to that account
+   only: signing out, or any other account signing in, clears it. */
 let joined = null
 const joinListeners = new Set()
 const setJoined = v => { joined = v; joinListeners.forEach(fn => fn(v)) }
-function useJoined() {
-  const [v, set] = React.useState(joined)
+const joinedFor = id => (joined && id && joined.by === id ? joined : null)
+try {
+  subscribe(() => {
+    if (!joined) return
+    let id = null
+    try { id = current()?.id || null } catch {}
+    if (joined.by !== id) setJoined(null)
+  })
+} catch {}
+function useJoined(accountId) {
+  const [, set] = React.useState(joined)
   React.useEffect(() => { joinListeners.add(set); return () => { joinListeners.delete(set) } }, [])
-  return v
+  return joinedFor(accountId)
 }
 
 /* Run once in the app shell. When somebody holding an invite code is signed
@@ -127,7 +140,8 @@ export function useAutoJoin(go) {
   React.useEffect(() => {
     if (!me || !code || busy.current) return
     busy.current = true
-    setJoined({ state: 'joining', code })
+    const by = me.id
+    setJoined({ state: 'joining', code, by })
     ;(async () => {
       await ready()
       const r = await redeemInvite(code)
@@ -135,11 +149,13 @@ export function useAutoJoin(go) {
       /* After the redeem, not before: the sign in form sends its reader on
          to the app when it finishes, and this has to land last. */
       go?.('network')
-      if (!r.ok && (r.reason === 'offline' || r.reason === 'signedout')) { setJoined({ ok: false, reason: r.reason, code }); return }
+      /* Somebody else signed in while it ran: the result is not theirs. */
+      if ((current()?.id || null) !== by) { setJoined(null); return }
+      if (!r.ok && (r.reason === 'offline' || r.reason === 'signedout')) { setJoined({ ok: false, reason: r.reason, code, by }); return }
       clearInviteFromUrl()
-      const person = r.ok ? listNetwork().find(l => l.id === r.link.id)?.person : null
-      setJoined(r.ok ? { ok: true, link: r.link, name: person?.name || null, role: person?.role || null, code }
-        : { ok: false, reason: r.reason, code })
+      const person = r.ok ? listNetwork(by).find(l => l.id === r.link.id)?.person : null
+      setJoined(r.ok ? { ok: true, link: r.link, name: person?.name || null, role: person?.role || null, code, by }
+        : { ok: false, reason: r.reason, code, by })
     })()
   }, [me?.id, code, go])
 }
@@ -209,7 +225,7 @@ function InviteLink({ accountId, line, demo = null, children }) {
 }
 
 /* A teen joins networks and never makes one: the link comes from a parent
-   or a Medical Professional. The code field is for a code read out loud. */
+   or a Counselor/Professional. The code field is for a code read out loud. */
 function JoinByLink({ demo = false }) {
   return (
     <Panel title="Join a network">
@@ -299,7 +315,7 @@ const STEPS = [
   `A parent or ${PRO} makes one invite link.`,
   'They send it to each of their teens.',
   'The teen opens it, signs in, and joins.',
-  'The teen picks what is shared.',
+  'Everything starts shared. The teen can switch any of it off.',
 ]
 
 function Steps() {
@@ -399,21 +415,27 @@ function TeenNetwork({ me, go }) {
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
         {fresh.map(l => {
           const audience = audienceOf(l.person.role)
+          if (!audience) return null
+          const pending = l.status === 'pending'
+          /* Linked already, on both sides: nothing waits on the teen, so this
+             is a chance to change what they see, not a request. */
           return (
-            <Panel key={l.id} title="Waiting for you" className="border-2 border-accent">
-              <PersonRow person={l.person} hint={l.status === 'pending' ? 'you joined, a parent approves this one too' : 'you joined their network'} comma/>
+            <Panel key={l.id} title={pending ? 'Waiting for a parent’s OK' : 'Change what they see'}
+              className="border-2 border-accent">
+              <PersonRow person={l.person} status={STATUS.student[l.status]}
+                hint={pending ? 'you joined, a parent approves this one too' : 'you joined their network'} comma/>
               <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-2">
-                Choose what every {audience === 'parent' ? 'parent' : PRO} you approve can see. All start on.
+                Every {audience === 'parent' ? 'parent' : PRO_LC} you link with sees what is on. All start on. Switch any of it off.
               </p>
               <ShareSwitches audience={audience}/>
               <div className="flex flex-wrap gap-2 border-t border-rule p-4">
-                <button type="button" onClick={() => review(l.id)} className={solid}><Check aria-hidden className="size-4"/>Approve</button>
-                <button type="button" onClick={() => removeLink(l.id)} className={outline}>Decline</button>
+                <button type="button" onClick={() => review(l.id)} className={solid}><Check aria-hidden className="size-4"/>Done</button>
+                <button type="button" onClick={() => removeLink(l.id)} className={outline}>Remove {l.person.name}</button>
               </div>
             </Panel>
           )
         })}
-        <Groups me={me} empty="Nobody is linked yet. Open the link your parent or Medical Professional sends you."
+        <Groups me={me} empty={`Nobody is linked yet. Open the link your parent or ${PRO_LC} sends you.`}
           sees={l => seesLine(audienceOf(l.person.role), on(audienceOf(l.person.role) || 'parent'))}/>
         <button type="button" onClick={() => go('shared')} className={cn(outline, 'justify-self-start')}>
           Change what each person sees
@@ -445,7 +467,7 @@ function ParentNetwork({ me }) {
           sees={l => (l.person.role === 'student' ? 'Chooses what you see' : undefined)}/>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <InviteLink accountId={me.id} line="Send it to each of your teens, and to their Medical Professional. One link works for all of them."><CodeField/></InviteLink>
+        <InviteLink accountId={me.id} line={`Send it to each of your teens, and to their ${PRO_LC}. One link works for all of them.`}><CodeField/></InviteLink>
         <Steps/>
       </div>
     </div>
@@ -491,13 +513,83 @@ const VIEWS = [
   { value: 'pro',     label: `Dr. Shah, ${PRO}` },
 ]
 
+/* Dr. Shah's side: every teen on the caseload, by grade. A grade opens to
+   its teens, each with their student code (the name the dashboards use) and
+   what that teen has chosen to share. Only the teen changes that. */
+const proSharesLine = keys => (keys.length
+  ? 'Shares ' + keys.map(k => shareLabel('pro', k)).join(', ')
+  : 'Shares nothing right now')
+
+function GradeGroup({ grade, rows, open, onToggle, onRemove }) {
+  const id = `net-grade-${grade}`
+  return (
+    <div className="border-t border-rule first:border-t-0">
+      <button type="button" aria-expanded={open} aria-controls={id} onClick={onToggle}
+        className="flex min-h-[56px] w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-150
+          hoverOnly:bg-mist/60">
+        <span aria-hidden className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-field border-2 border-beam
+          font-display text-ui font-bold tabular-nums text-beam-ink">{grade}</span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-3">
+            <span className="font-display text-ui font-bold text-ink">Grade {grade}</span>
+            <span className="shrink-0 font-mono text-fine tabular-nums text-ink-2">
+              {rows.length === 1 ? '1 teen' : `${rows.length} teens`}</span>
+          </span>
+          <span className="mt-0.5 block text-fine text-ink-2">{rows.map(r => r.person.name).join(', ')}</span>
+        </span>
+        <ChevronDown aria-hidden className={cn('mt-2 size-4 shrink-0 text-ink-3 transition-transform duration-150',
+          open && 'rotate-180')}/>
+      </button>
+      {open && (
+        <div id={id} className="border-t border-rule bg-mist/30">
+          {rows.map(r => (
+            <PersonRow key={r.id} person={r.person} role={false}
+              hint={`${r.code}. ${proSharesLine(r.shares)}`}>
+              <IconButton label={`Remove ${r.person.name}`} Mark={Cross} tone="crit" onClick={() => onRemove(r)}/>
+            </PersonRow>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProCaseload({ rows, parents, onRemove, onRemoveParent }) {
+  const grades = [...new Set(rows.map(r => r.grade))].sort((a, b) => a - b)
+  const [openGrades, setOpenGrades] = React.useState(() => new Set())
+  const flip = g => setOpenGrades(s => { const n = new Set(s); n.has(g) ? n.delete(g) : n.add(g); return n })
+  const n = rows.length
+  return (
+    <>
+      <Panel title="Teens sharing with you" aside={String(n)}
+        lede={n ? `${n === 1 ? 'One teen shares' : `${n} teens share`} with you. Each teen chooses what you see. Open a grade to see who.`
+          : undefined}>
+        {n ? grades.map(g => (
+          <GradeGroup key={g} grade={g} rows={rows.filter(r => r.grade === g)}
+            open={openGrades.has(g)} onToggle={() => flip(g)} onRemove={onRemove}/>
+        )) : <Empty>No teens linked. You see nothing now.</Empty>}
+      </Panel>
+      <Panel title="Linked parents" aside={parents.length ? String(parents.length) : undefined}
+        lede="A parent approved each teen’s link. These parents also joined your network.">
+        {parents.length ? parents.map(p => (
+          <PersonRow key={p.id} person={p.person} role={false} hint={`${p.ofName}’s parent`}>
+            <IconButton label={`Remove ${p.person.name}`} Mark={Cross} tone="crit" onClick={() => onRemoveParent(p)}/>
+          </PersonRow>
+        )) : <Empty>No parent linked.</Empty>}
+      </Panel>
+    </>
+  )
+}
+
 function DemoNetwork({ who }) {
   /* Opened from one of the three apps, the demo stays on that side: a
-     Medical Professional pressing Connect sees Dr. Shah's network, never the
+     Counselor/Professional pressing Connect sees Dr. Shah's network, never the
      teen's or the parent's. Only a visit with no app behind it can switch. */
   const fixed = who === 'student' || who === 'parent' || who === 'pro'
   const [view, setView] = React.useState(fixed ? who : 'student')
   const [links, setLinks] = React.useState(DEMO_LINKS)
+  const [caseload, setCaseload] = React.useState(DEMO_CASELOAD)
+  const [dropped, setDropped] = React.useState([])
   const [note, setNote] = React.useState(null)
   const [editing, setEditing] = React.useState(null)
 
@@ -591,18 +683,15 @@ function DemoNetwork({ who }) {
   )
 
   const proView = (
-    <>
-      <Panel title="Your Network">
-        {pro && pro.status === 'active'
-          ? <Who l={{ person: DEMO_TEEN }} hint={`Shares with you: ${pro.shares.map(k => shareLabel('pro', k)).join(', ') || 'nothing yet'}`}/>
-          : <Empty>Maya removed this link. You see nothing now.</Empty>}
-      </Panel>
-      <Panel title="Linked parents">
-        {links.find(l => l.id === 'demo-parent')
-          ? <Who l={links.find(l => l.id === 'demo-parent')} hint="Maya’s parent"/>
-          : <Empty>No parent linked.</Empty>}
-      </Panel>
-    </>
+    <ProCaseload
+      rows={caseload.filter(r => (r.maya ? pro && pro.status === 'active' : true))
+        .map(r => (r.maya ? { ...r, shares: pro.shares } : r))}
+      parents={DEMO_PRO_PARENTS.filter(p => !dropped.includes(p.id))}
+      onRemove={r => {
+        if (r.maya) { remove(r.id, r.person.name); return }
+        setCaseload(c => c.filter(x => x.id !== r.id)); setNote(`${r.person.name} was removed. You see nothing from them now.`)
+      }}
+      onRemoveParent={p => { setDropped(d => [...d, p.id]); setNote(`${p.person.name} was removed.`) }}/>
   )
 
   return (
@@ -617,7 +706,7 @@ function DemoNetwork({ who }) {
             </TabsList>
           </Tabs>
         )}
-        <button type="button" onClick={() => { setLinks(DEMO_LINKS); setNote(null); setEditing(null) }}
+        <button type="button" onClick={() => { setLinks(DEMO_LINKS); setCaseload(DEMO_CASELOAD); setDropped([]); setNote(null); setEditing(null) }}
           className="inline-flex min-h-[44px] items-center font-display text-fine font-medium text-ink-2 hoverOnly:text-ink">
           Reset the demo
         </button>
@@ -647,7 +736,7 @@ export function Network({ go, who }) {
   const [mode] = useMode()
   const [invite, setInvite] = React.useState(inviteFromUrl)
   React.useEffect(() => { codeListeners.add(setInvite); return () => { codeListeners.delete(setInvite) } }, [])
-  const result = useJoined()
+  const result = useJoined(me?.id)
   const demo = mode === 'demo' && !invite && !result
   if (!demo && !me) {
     return <SignIn go={go} after="network" bare
@@ -658,7 +747,7 @@ export function Network({ go, who }) {
     <main className="wrap">
       <h2 className="sr-only">Network</h2>
       <p className="max-w-[62ch] text-ui text-ink-2">
-        Parents and {PRO_PLURAL} make a network and send its link. Teens join by opening it. Nothing is shared until the teen says yes.
+        Parents and {PRO_PLURAL} make a network and send its link. Teens join by opening it. Teens choose what each person sees, and everything starts on.
         {demo && <span className="block text-fine text-ink-3">Demo. These people are examples.</span>}
       </p>
       {demo ? <DemoNetwork who={who}/> : (

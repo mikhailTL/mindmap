@@ -7,7 +7,7 @@ import { cn } from '../../lib/utils'
 /* A child's privacy, from the parent's side: what is shared, what was signed,
  * who opened the record, and the steps after a crisis alert. Moved here from
  * the old parent dashboard, facts unchanged. Read from the same CONSENT record
- * and audit log the Medical Professional console reads; never a second copy.
+ * and audit log the Counselor/Professional console reads; never a second copy.
  *
  * Every box is one shape: the same padding, a heading, then rows on a rule
  * with their text on one left edge, so no box sits out of line with the next. */

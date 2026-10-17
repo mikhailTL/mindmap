@@ -1,5 +1,5 @@
 /* A linked teen from the account snapshot, shaped like a roster teen
- * (src/lib/roster.js makeTeen) so the parent and Medical Professional cards
+ * (src/lib/roster.js makeTeen) so the parent and Counselor/Professional cards
  * and pages draw them with the same components.
  *
  * Only what the server sent is here. A snapshot teen carries day figures

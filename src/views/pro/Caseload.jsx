@@ -8,7 +8,7 @@ import { LIGHT_TONE, TrafficLight } from './look'
 import { ProTeenCard, ProTeenRow, ProRowHead } from './TeenCard'
 import TeenCard from '../family/TeenCard'
 import { RangeSwitch } from '../family/RangeTrend'
-import { COLUMNS, DEFAULT_COLUMNS, GRADES, SORTS, TREND_RANGES, trendRange, STATUS_WORD, filterTeens, sortTeens,
+import { COLUMNS, DEFAULT_COLUMNS, GRADES, SORTS, CARD_RANGES, cardRange, trendRange, STATUS_WORD, filterTeens, sortTeens,
   statusCounts } from './metrics'
 
 /* The Caseload tab: one toolbar, then a card per teen. A card opens that
@@ -30,7 +30,7 @@ export function useLayout() {
   const [p, setP] = React.useState(() => {
     const s = readPrefs()
     return {
-      range: trendRange(s.range),
+      range: cardRange(s.range),
       density: s.density === 'list' ? 'list' : 'cards',
       sort: SORTS.some(([k]) => k === s.sort) ? s.sort : 'stress',
       columns: Array.isArray(s.columns) ? s.columns.filter(k => COLUMNS.some(c => c.key === k)) : [...DEFAULT_COLUMNS],
@@ -100,8 +100,8 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
           </div>
         </div>
         <div className="min-w-0">
-          <p aria-hidden className="tick mb-1">Trends over</p>
-          <Seg label="Trends over" value={trendRange(layout.range)} onChange={v => setLayout({ range: v })} options={TREND_RANGES}/>
+          <p aria-hidden className="tick mb-1">Range</p>
+          <Seg label="Range for every card" value={cardRange(layout.range)} onChange={v => setLayout({ range: v })} options={CARD_RANGES}/>
         </div>
         <div className="min-w-0">
           <p aria-hidden className="tick mb-1">View</p>

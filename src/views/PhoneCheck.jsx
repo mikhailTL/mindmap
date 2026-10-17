@@ -96,6 +96,51 @@ function Step({ title, note, children, on }) {
   )
 }
 
+/* Before a reading. On a phone this card sits under the steps, so it stays
+   one line. On xl it sits beside a long column of steps, so it shows the
+   empty rainbow the score will land on and what the result will hold: every
+   row below is a part of the result panel further down this file. */
+const AFTER = [
+  `Your ${SCORE} on the rainbow`,
+  'The pulse it was read from',
+  'How sure the score is',
+  'Does this match how you feel?',
+]
+const WAIT_R = [118, 98, 78, 58]
+
+function Waiting() {
+  return (
+    <div>
+      <div aria-hidden className="mx-auto hidden w-full max-w-[300px] xl:block">
+        <svg viewBox="0 0 300 172" className="block w-full">
+          {WAIT_R.map(r => (
+            <path key={r} d={`M${150 - r} 150a${r} ${r} 0 0 1 ${2 * r} 0`} fill="none"
+              stroke="#e3ede7" strokeWidth="14" strokeLinecap="round"/>
+          ))}
+          <text x="150" y="140" textAnchor="middle" fill="#426a58" fontFamily="Chivo, sans-serif"
+            fontSize="34" fontWeight="700">--</text>
+          <text x="32" y="166" textAnchor="middle" fill="#426a58" fontFamily="Chivo, sans-serif" fontSize="13">0 calm</text>
+          <text x="268" y="166" textAnchor="middle" fill="#426a58" fontFamily="Chivo, sans-serif" fontSize="13">100 peak</text>
+        </svg>
+      </div>
+      <p className="max-w-[36ch] text-meta text-ink-3 xl:mt-4 xl:text-center xl:font-display xl:font-bold xl:text-ink xl:mx-auto">
+        Your Mind Score appears here.
+      </p>
+      <div className="mt-4 hidden border-t border-rule pt-4 xl:block">
+        <p className="text-fine font-semibold text-ink-3">After the reading</p>
+        <ol className="m-0 mt-2 grid list-none gap-2 p-0">
+          {AFTER.map((t, i) => (
+            <li key={t} className="grid grid-cols-[1.5rem_1fr] items-baseline gap-2 text-meta text-ink-2">
+              <span className="text-right font-display text-ui font-bold tabular-nums text-accent">{i + 1}</span>
+              {t}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  )
+}
+
 /* SAY_LINES lives in charts/camera. Only two of three are printed. */
 
 const PHASES = { idle:1, camera:1, voice:2, working:3, done:4 }
@@ -292,11 +337,7 @@ export function PhoneCheck({ go }) {
       </div>
 
       <section aria-live="polite" className={cn(PANEL, 'min-h-[7rem] xl:sticky xl:top-[92px]')}>
-          {!result && (
-            <p className="max-w-[36ch] text-meta text-ink-3">
-              Your Mind Score appears here.
-            </p>
-          )}
+          {!result && <Waiting/>}
           {result && (
             <>
               <div className="flex flex-col items-start gap-4">

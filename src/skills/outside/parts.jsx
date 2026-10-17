@@ -49,7 +49,7 @@ export function StepHead({ n, of, title, first = false }) {
 }
 
 export function Local({ className }) {
-  return <OnDevice className={cn('mt-6', className)}>Saved only on this phone. Nothing is sent anywhere.</OnDevice>
+  return <OnDevice className={cn('mt-6', className)}>Only you see this.</OnDevice>
 }
 
 export function Row({ className, children }) {

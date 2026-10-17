@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
-import { ActivityScreen, Choice, OnDevice } from './shell'
+import { ActivityScreen, Choice } from './shell'
 import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, useSvgId } from './game'
@@ -273,7 +273,6 @@ export default function Breathing() {
             <DidItWork tool="breathing" phase="after"/>
           </EndCard>
         )}
-        <OnDevice className="mt-4">Nothing leaves this device.</OnDevice>
       </div>
     </ActivityScreen>
   )

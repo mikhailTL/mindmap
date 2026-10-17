@@ -14,7 +14,7 @@ import { AVATAR_ALL_IDS } from './avatar-catalog'
  *
  * The device-only path: an account is a name, a role and a hashed passcode
  * in localStorage; a link is a row joining a student to a parent or a
- * Medical Professional; an invitation is a six character code that another
+ * Counselor/Professional; an invitation is a six character code that another
  * account on the same device redeems.
  *
  * The slot pattern is src/app/store.js's, copied rather than imported so
@@ -42,7 +42,7 @@ export const ROLE_LABEL = { student: 'Student', parent: 'Parent', pro: PRO, othe
 /* Where an account lands after signing in or signing out. */
 export const homeFor = role => (role === 'student' || role === 'parent' || role === 'pro' ? 'app-' + role : 'app')
 
-/* Where a Medical Professional works. The console reads the words off this;
+/* Where a Counselor/Professional works. The console reads the words off this;
    the k-floor and the consent rules are the same for all three. */
 export const SETTINGS = [
   { value: 'school',   label: 'School' },
@@ -250,7 +250,7 @@ const remote = () => backendState === 'remote'
 export const isRemote = remote
 
 /* The live part of a snapshot: a student's own readings and sharing, and,
-   for a parent or a Medical Professional, the linked teens they may see.
+   for a parent or a Counselor/Professional, the linked teens they may see.
    Held in memory only; src/account/sync.js turns the student's half into the
    reading log and the sharing switches, and the dashboards read `teens`. */
 let liveState = { readings: null, sharing: null, teens: [], at: 0 }
@@ -514,7 +514,7 @@ function randomCode() {
 
 const live = (i, at = new Date()) => Date.parse(i.expiresAt) > at.getTime()
 
-/* Only a parent or a Medical Professional makes a network: they issue the
+/* Only a parent or a Counselor/Professional makes a network: they issue the
    code, and it keeps working for every teen (or parent, or professional) it
    is sent to until it expires, so one link gathers a whole family or
    caseload. A teen joins networks; a teen never issues a code. */

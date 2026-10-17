@@ -1,6 +1,6 @@
-import { PRO } from './terms.js'
+import { PRO, PRO_LC } from './terms.js'
 
-/* Medical Professional demo data. Two rules:
+/* Counselor/Professional demo data. Two rules:
    1. CONSENT is the single source of truth. It feeds both the Consent-tab
       ledger and the triage board's flags, so the board cannot show a trend for
       a student consented only to crisis alerts. Keep no second copy.
@@ -10,13 +10,13 @@ import { PRO } from './terms.js'
 
 export const K_ANONYMITY = 5
 
-/* Consented students across the whole building. The medical professional's own eight are
+/* Consented students across the whole building. The counselor/professional's own eight are
    below; year-group screens aggregate everyone. */
 export const SCHOOL_N = 96
 
 /* score:  may the school see a Mind Score at all
    trends: may the school see week-over-week movement
-   Crisis alerts reach the medical professional either way: the one thing a guardian
+   Crisis alerts reach the counselor/professional either way: the one thing a guardian
    cannot consent away, and it is stated wherever it applies. */
 export const CONSENT = {
   'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Aug 22, 2025' },
@@ -110,7 +110,7 @@ export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
   { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the student in person',                 subject:'Student 8241' },
   { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Student 8241' },
-  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:'Crisis alert raised, medical professional notified',         subject:'Student 8241' },
+  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:`Crisis alert raised, ${PRO_LC} notified`,subject:'Student 8241' },
   { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Student 5512' },
   { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:PRO,                action:'Exported year-group report (no group under five)', subject:'Grade 11' },
   { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed trends',                                    subject:'Student 8241' },
@@ -129,9 +129,9 @@ export const PROTOCOL_DONE = [0,1,2,3]   // step five is the one still open
 
 export const REFERRALS = [
   { student:'Student 8241', to:'Outside referral: body working harder than usual', opened:'Today',  status:'Waiting for intake' },
-  { student:'Student 5512', to:'Medical Professional',                             opened:'Monday', status:'Scheduled' },
-  { student:'Student 3907', to:'Outside counselling service',                      opened:'Mar 04', status:'In progress' },
-  { student:'Student 1184', to:'Medical Professional',                          opened:'Feb 18', status:'Closed' },
+  { student:'Student 5512', to:PRO,opened:'Monday', status:'Scheduled' },
+  { student:'Student 3907', to:'Outside counseling service',                      opened:'Mar 04', status:'In progress' },
+  { student:'Student 1184', to:PRO,opened:'Feb 18', status:'Closed' },
 ]
 
 /* Which signals account for a student's change this week. Generated per

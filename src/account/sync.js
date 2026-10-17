@@ -15,8 +15,8 @@ import { applySharing, getSharing, subscribe as onAppStore } from '../app/store'
  *   sharing   a switch changed in src/app/store.js is sent; the account's
  *             copy comes back on every snapshot and replaces the local one.
  *   refresh   useLiveSync() asks for a fresh snapshot every 20 seconds while
- *             the tab is visible, and on focus, so a parent's or a Medical
- *             Professional's dashboard shows a teen's new reading without a
+ *             the tab is visible, and on focus, so a parent's or a
+ *             Counselor/Professional's dashboard shows a teen's new reading without a
  *             reload.
  *
  * Only on the account backend and only for a signed in student does anything

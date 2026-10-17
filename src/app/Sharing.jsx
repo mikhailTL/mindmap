@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Chevron, Cross } from '../ui/marks'
 import { Why } from '../views/Monitor'
 import { cn } from '../lib/utils'
-import { PRO_LC, SCORE } from '../lib/terms'
+import { PRO, PRO_LC, SCORE } from '../lib/terms'
 import { ArmedButton, ChoiceRows, FixedRow, NeverRow, Panel, SwitchRow } from './controls'
 import {
   AUDIENCES, RETENTION, SHARING,
@@ -16,8 +16,11 @@ import {
  * sees finer than a day and never Notes, Location, raw readings or anything
  * said. Those are drawn as Never rows. Crisis alerts have no switch.
  * Known disagreement: infographics.jsx marks raw readings Never for the
- * Medical Professional while caseload.js carries a `raw` key.
+ * Counselor/Professional while caseload.js carries a `raw` key.
  */
+
+/* The tab's word. At text-ui both tabs fit across at 390; text-row from sm. */
+const TAB_WORD = { parent: 'Parent', pro: PRO }
 
 /* Short row labels, keyed by the store's field key. */
 const SHORT = {
@@ -73,7 +76,7 @@ function RowMeanings({ audience }) {
   return (
     <>
       <p className="font-display font-bold text-ink">
-        {audience === 'parent' ? 'A parent sees one figure a day at most.' : 'A Medical Professional sees only what you share.'}
+        {audience === 'parent' ? 'A parent sees one figure a day at most.' : `A ${PRO_LC} sees only what you share.`}
       </p>
       <dl className="m-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         {spec.fields.map(f => (
@@ -171,7 +174,7 @@ export function SharingControls({ className, go }) {
           className="mt-3 overflow-hidden rounded-panel border border-rule bg-card lg:mt-4">
           <TabsList scroll aria-label="Who" className="border-rule px-4">
             {AUDIENCES.map(a => (
-              <TabsTrigger key={a} value={a}>{SHARING[a].who}</TabsTrigger>
+              <TabsTrigger key={a} value={a} className="text-ui sm:text-row">{TAB_WORD[a] || SHARING[a].who}</TabsTrigger>
             ))}
           </TabsList>
           {AUDIENCES.map(a => (
@@ -217,7 +220,7 @@ export function SharingControls({ className, go }) {
                 ))}
               </ul>
               <div className="border-t border-rule px-4 py-3">
-                <p className="max-w-[62ch] text-fine text-ink-3">This list stays on your phone. Your switches sync to your account.</p>
+                <p className="max-w-[62ch] text-fine text-ink-3">Only you see this list. Your switches sync to your account.</p>
               </div>
             </Panel>
           </ScrollIn>

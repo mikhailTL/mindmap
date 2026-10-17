@@ -1,23 +1,26 @@
 import React from 'react'
 import { FACE_LABEL } from '../../lib/roster'
-import { LampFace } from '../../traffic/Face'
+import { FaceTrend, LampFace, trendLabel } from '../../traffic/Face'
 import { ArrowRight } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 import { TeenAvatar } from './TeenCard'
 import { SourceLine } from './Source'
-import { STATUS_SUB, STATUS_WORD, metaLine, statusOfTeen, subOf } from './data'
+import { PREV, STATUS_SUB, STATUS_WORD, metaLine, statusOfTeen, subOf, summaryOf } from './data'
 
 /* One child on the parent's home: who, their Heads Up face for the range
  * picked at the top, today's Mind Score with what it means, where the
  * readings come from, and one clear Open button for their page.
  *
  * Today's figure only. The range on the face is named under it, so a week
- * face is never read as today's. */
+ * face is never read as today's. Beside the face, an arrow: the Mind Score
+ * for that range up, down or level against the range before it. */
 
 export default function ParentCard({ teen, range = 'day', onOpen, className }) {
   const today = teen.days[teen.days.length - 1]
   const light = statusOfTeen(teen, range)
   const shared = teen.consent?.score !== false
+  const change = light ? summaryOf(teen, range)?.change : null
+  const since = PREV[range]
   const titleId = React.useId()
   return (
     <article aria-labelledby={titleId}
@@ -30,8 +33,11 @@ export default function ParentCard({ teen, range = 'day', onOpen, className }) {
         </div>
         {shared && (
           <div className="flex shrink-0 flex-col items-center gap-1 text-center">
-            {light ? <LampFace light={light} size={40}/>
-              : <span aria-hidden className="grid size-10 place-items-center rounded-full border-2 border-dashed border-ink-3"/>}
+            <span className="flex items-center gap-1.5">
+              {light ? <LampFace light={light} size={40}/>
+                : <span aria-hidden className="grid size-10 place-items-center rounded-full border-2 border-dashed border-ink-3"/>}
+              <FaceTrend change={change} since={since}/>
+            </span>
             <span className="font-display text-fine font-bold leading-none text-ink">{light ? STATUS_WORD[light] : 'None yet'}</span>
             <span className="text-fine leading-tight text-ink-2">Heads Up<br/>{FACE_LABEL[range].toLowerCase()}</span>
           </div>
@@ -61,7 +67,8 @@ export default function ParentCard({ teen, range = 'day', onOpen, className }) {
       <SourceLine teen={teen} className="mt-4 border-t border-rule pt-4"/>
 
       <button type="button" onClick={() => onOpen?.(teen)}
-        aria-label={`Open ${teen.first}’s page. ${light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}.` : ''}`}
+        aria-label={`Open ${teen.first}’s page. ${light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}.` : ''}${
+          trendLabel(change, since) ? ` ${trendLabel(change, since)}.` : ''}`}
         className="group mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-field bg-accent px-5
           font-display text-ui font-bold text-paper shadow-card transition-colors duration-150 hoverOnly:bg-accent-ink
           active:bg-accent-ink motion-reduce:transition-none focus-visible:outline focus-visible:outline-2

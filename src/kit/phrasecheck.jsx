@@ -174,7 +174,7 @@ export function PhraseCheck() {
       <List className="mt-3">
         {SHAPE.map(s => <Item key={s}><span className="text-sec text-ink-2">{s}</span></Item>)}
       </List>
-      <Hint className="mt-4">Nothing you type here is saved or sent anywhere.</Hint>
+      <Hint className="mt-4">Nothing you type here is saved.</Hint>
     </div>
   )
 }

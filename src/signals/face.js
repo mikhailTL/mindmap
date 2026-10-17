@@ -2,7 +2,7 @@ import { bandpass, mean, median, percentile, resample, sd, spectrum } from './ds
 
 /* The Mental Mirror: what a face gives away, as numbers.
  *
- * In: one record per camera frame from face-capture.js — the 52 blendshape
+ * In: one record per camera frame from face-capture.js: the 52 blendshape
  * scores MediaPipe's Face Landmarker returns, the eye aperture and nose
  * position read off its 478 landmarks, and the mean green level of a patch of
  * forehead skin. Out: a handful of per-capture features, each one a thing a
@@ -15,8 +15,7 @@ import { bandpass, mean, median, percentile, resample, sd, spectrum } from './ds
  * are fitted: no public dataset pairs face video with stress labels on the
  * sensors this app already reads. UBFC-Phys (56 people, face video + the same
  * wrist device WESAD used) is the validation set; access is by request. Until
- * that is run, the face channel is a starting allocation and the copy on
- * screen says so. */
+ * that is run, the face channel is a starting allocation. */
 
 export const FACE_SECONDS = 30
 export const FS = 30
@@ -33,19 +32,23 @@ const BLINK_ON = 0.5          /* blendshape score at which a blink has started *
 const BLINK_OFF = 0.3
 const MIN_S = 12
 /* A slow phone (CPU face model, older GPU) may manage only a few frames a
-   second. The face cues still read at that rate; the pulse needs at least
-   8 a second to see a 3 Hz beat, so below that it is withheld, not guessed. */
+   second: headless Chromium on a software GPU gave 61 to 91 frames in 30 s,
+   right on the old 60-frame floor, so the same phone passed one reading and
+   failed the next. The face cues need about one frame a second over the
+   capture; the pulse needs at least 8 a second to see a 3 Hz beat, so below
+   that it is withheld, not guessed. */
+export const MIN_FACE_FRAMES = 30
 const MIN_FRAMES = 60
 const MIN_PULSE_FPS = 8
 
 const avg = (bs, keys) => mean(keys.map(k => bs[k] ?? 0))
 
 export function analyseFace(frames) {
-  if (frames.length < MIN_FRAMES) return fail('too-short', 'The capture stopped early.')
+  if (frames.length < MIN_FACE_FRAMES) return fail('too-few', 'Too few frames came through. Try again.')
   const durS = (frames[frames.length - 1].t - frames[0].t) / 1000
-  if (durS < MIN_S) return fail('too-short', 'The capture stopped early.')
+  if (durS < MIN_S) return fail('too-short', 'The reading stopped early. Try again.')
   const seen = frames.filter(f => f.ok)
-  if (seen.length / frames.length < 0.6) return fail('no-face', 'The camera could not keep your face in view. Face the phone in good light.')
+  if (seen.length / frames.length < 0.6) return fail('no-face', 'Your face was out of view. Try again in good light.')
 
   /* Blink rate: rising edges on the mean of the two eye-blink scores, with a
      hysteresis so a flicker on the threshold is not two blinks. */
@@ -86,7 +89,7 @@ export function analyseFace(frames) {
   const headMotion = steps.length ? median(steps) : 0   /* face-widths per second */
   const headTurns = steps.length ? percentile(steps, 0.95) : 0
 
-  const rppg = analyseRPPG(seen.map(f => ({ t: f.t, v: f.green })))
+  const rppg = analyseRPPG(seen.filter(f => Number.isFinite(f.green)).map(f => ({ t: f.t, v: f.green })))
 
   return {
     ok: true, reason: null, durS, framesSeen: seen.length, frames: frames.length,

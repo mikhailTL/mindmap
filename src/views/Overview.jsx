@@ -79,7 +79,7 @@ const SCREENS = [
     line:'Every reading you take, and what moved it.',
     cta:'What a student gets' },
   { id:'parent',  who:'Parent',
-    title:'Their trends',
+    title:'Trends',
     line:'Day by day, week by week, month by month, in plain words, with no raw readings.',
     cta:'What a parent gets' },
   { id:'pro',     who:PRO,

@@ -284,12 +284,16 @@ export function StudentTrendsBody({ go }) {
   const { entries, now, demo, setNote } = useReadingLog()
   const [range, setRange] = React.useState('week')
   const [anchor, setAnchor] = React.useState(null)
-  const hasToday = entries.some(r => dayKey(r.at) === dayKey(now))
+  /* The demo range, as the demo Trends above the log reports it. */
+  const [demoSpan, setDemoSpan] = React.useState(null)
 
-  /* The log covers the same days as the trend above it. In the demo the
-     generated fortnight is the whole log. */
+  /* The log covers the same days as the trend above it, in both modes, so
+     "Readings by Source" and the log count the same readings. */
   let list = entries, rangeLabel = 'last 14 days'
-  if (!demo) {
+  if (demo && demoSpan) {
+    list = entries.filter(r => { const k = dayKey(r.at); return k >= demoSpan.from && k <= demoSpan.to })
+    rangeLabel = demoSpan.label
+  } else if (!demo) {
     const v = rangeView(entries, byDay(entries), now, range, anchor)
     list = v.list
     rangeLabel = range === 'day' ? (dayKey(v.from) === dayKey(now) ? 'today' : longDay(v.from)) : RANGE_LABEL[range]
@@ -298,7 +302,7 @@ export function StudentTrendsBody({ go }) {
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="m-0 font-display text-head font-bold tracking-tight text-ink sm:text-sub">Your {SCORE}</h1>
+        <h1 className="m-0 font-display text-head font-bold tracking-tight text-ink sm:text-sub">Trends</h1>
         <TakeReading go={go}/>
       </div>
 
@@ -315,11 +319,11 @@ export function StudentTrendsBody({ go }) {
         <PartHead id="st-trends-h" kind="trends" title="Trends"
           line={`Days, weeks and months, compared only with your own usual.${demo ? ' Demo days.' : ''}`}/>
         {demo
-          ? <Trends teen={TEEN} bare/>
+          ? <Trends teen={TEEN} bare log={entries} onSpan={setDemoSpan}/>
           : <LiveTrendsPart entries={entries} now={now} go={go} range={range} setRange={setRange}
               anchor={anchor} setAnchor={setAnchor}/>}
         <MindScoreLog className="mt-2" entries={entries} list={list} now={now} demo={demo} setNote={setNote}
-          rangeLabel={rangeLabel} latest={!hasToday && entries.length > 0} go={go}/>
+          rangeLabel={rangeLabel} latest go={go}/>
       </section>
     </div>
   )

@@ -455,7 +455,7 @@ export const SCENES = {
     </>
   ),
 
-  /* ── medical professional tools ────────────────────────────────────── */
+  /* ── counselor/professional tools ────────────────────────────────────── */
 
   /* Session Openers: a door stands open and warm light spills out. */
   'pro-opener': ({ u }) => (

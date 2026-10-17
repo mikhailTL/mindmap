@@ -7,7 +7,7 @@ import { ScrollIn } from '../../ui/motion'
 import { PartHead } from './PartHead'
 import { SCORE } from '../../lib/terms'
 import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal } from './demoTeen'
-import { Shape } from '../reading/marks'
+import { SOURCE, Shape } from '../reading/marks'
 import { ScoreChart } from './charts'
 
 /* The student's Trends: a month calendar and a date range, over the demo
@@ -45,11 +45,22 @@ export const demoBand = usual => v => BANDS[bandKey(v, usual)]
 
 /* ── Sources ────────────────────────────────────────────────────────────── */
 
-const SOURCES = {
-  patch: { word: 'Patch' },
-  camera: { word: 'Camera' },
-  survey: { word: 'Check-in questions' },
-  mirror: { word: 'Mirror' },
+/* The Mind Score Log's own words (src/views/reading/marks.jsx), so the two
+   panels name a source the same way. */
+const SOURCES = SOURCE
+
+/* A logged entry as a day reading: local date, 24-hour clock. */
+const pad = n => String(n).padStart(2, '0')
+const isoOf = at => { const d = new Date(at); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
+const hhmm = at => { const d = new Date(at); return `${pad(d.getHours())}:${pad(d.getMinutes())}` }
+function logByDate(log) {
+  const out = new Map()
+  for (const r of log) {
+    const k = isoOf(r.at)
+    if (!out.has(k)) out.set(k, [])
+    out.get(k).push({ time: hhmm(r.at), score: r.score, source: r.source })
+  }
+  return out
 }
 /* A drawn mark per source, the same shapes the Mind Score Log draws
    (src/views/reading/marks.jsx), so the source never rests on colour. */
@@ -217,6 +228,9 @@ function chartItems(teen, span, byDate) {
         read: `${h.hour % 12 || 12} ${h.hour < 12 ? 'am' : 'pm'} hour` }))
     }
     const d = byDate.get(span[0])
+    if (d && !d.readings.length) {
+      return [{ key: d.date, label: d.weekday, v: d.score, read: `${shortDate(d.date)}, day score` }]
+    }
     return (d?.readings || []).slice().sort((a, b) => (a.time < b.time ? -1 : 1)).map((r, i) => ({
       key: r.time + i, label: clock12(r.time).replace(':00', '').replace(' ', ''), v: r.score, source: r.source,
       read: `${clock12(r.time)}, ${SOURCES[r.source].word.toLowerCase()}`,
@@ -289,7 +303,7 @@ function Readings({ days, single }) {
   const shown = single ? all.slice().sort((a, b) => (a.time < b.time ? -1 : 1)) : phone.slice(0, 6)
   return (
     <div>
-      <ul className="m-0 grid list-none grid-cols-3 gap-x-3 p-0">
+      <ul className="m-0 grid list-none grid-cols-4 gap-x-3 gap-y-2 p-0 lg:grid-cols-2">
         {Object.keys(SOURCES).map(s => (
           <li key={s} className="min-w-0">
             <p className="tick flex items-center gap-1.5"><SourceMark source={s}/>{SOURCES[s].word}</p>
@@ -299,7 +313,7 @@ function Readings({ days, single }) {
         ))}
       </ul>
       <p className="mt-3 text-fine text-ink-2">
-        {single ? 'Every reading that day.' : phone.length
+        {single ? (shown.length ? 'Every reading that day.' : 'No readings logged that day.') : phone.length
           ? 'Latest readings taken on the phone, without the patch.'
           : 'No phone-only readings in this range.'}</p>
       {shown.length > 0 && (
@@ -351,19 +365,35 @@ function RangeHeadsUp({ days }) {
 
 const RANGE_WORD = { day: 'Day', week: 'Last 7 days', month: 'Last 30 days', custom: 'Custom range' }
 
-export function Trends({ teen, className, bare = false }) {
+/* `log`: the Mind Score Log's entries. When given, every per-reading figure
+   here (the source counts, the readings listed, a single day's line) comes
+   from the log, so this section and the log under it count the same
+   readings. `onSpan` hears the range in use, so the log can show the same
+   days. */
+export function Trends({ teen, className, bare = false, log, onSpan }) {
   const first = teen.days[0].date
   const [state, set] = React.useState({ kind: 'week', anchor: TODAY, from: addDays(TODAY, -13), to: TODAY })
   const [month, setMonth] = React.useState(ym(TODAY))
-  const byDate = React.useMemo(() => new Map(teen.days.map(d => [d.date, d])), [teen])
+  const byDate = React.useMemo(() => {
+    const logged = log && logByDate(log)
+    return new Map(teen.days.map(d => [d.date, logged ? { ...d, readings: logged.get(d.date) || [] } : d]))
+  }, [teen, log])
   const span = spanOf(state)
   const clampSpan = [span[0] < first ? first : span[0], span[1]]
   const days = teen.days.filter(d => d.date >= clampSpan[0] && d.date <= clampSpan[1])
+    .map(d => byDate.get(d.date))
   const items = chartItems(teen, clampSpan, byDate)
   const single = clampSpan[0] === clampSpan[1]
   const counts = BAND_ORDER.map(k => [k, days.filter(d => bandKey(d.score, teen.usual) === k).length])
   const label = single ? `${dayName(clampSpan[0])}, ${shortDate(clampSpan[0]).slice(4)}`
     : `${shortDate(clampSpan[0])} to ${shortDate(clampSpan[1])}`
+
+  React.useEffect(() => {
+    onSpan?.({ from: clampSpan[0], to: clampSpan[1],
+      label: single ? (clampSpan[0] === TODAY ? 'today' : shortDate(clampSpan[0]))
+        : state.kind === 'custom' ? `${shortDate(clampSpan[0])} to ${shortDate(clampSpan[1])}`
+          : RANGE_WORD[state.kind].toLowerCase() })
+  }, [clampSpan[0], clampSpan[1], state.kind])
 
   const pick = iso => {
     set(s => (s.kind === 'custom' ? { ...s, kind: 'day', anchor: iso } : { ...s, anchor: iso }))

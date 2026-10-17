@@ -560,7 +560,7 @@ export function EndCard({ game, title = 'Round done', stats = [], onAgain, again
           </summary>
           <ThemePicker className="mt-1"/>
         </details>
-        <OnDevice className="mt-3">Points stay on this phone. Nobody else sees them.</OnDevice>
+        <OnDevice className="mt-3">Only you see your points.</OnDevice>
       </div>
     </section>
   )

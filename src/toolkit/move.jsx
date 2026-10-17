@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { Check } from '../ui/marks'
 import { cn } from '../lib/utils'
-import { ActivityScreen, OnDevice } from './shell'
+import { ActivityScreen } from './shell'
 import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, FillRing, SPRING } from './game'
@@ -241,9 +241,6 @@ export default function MoveBreak() {
             <DidItWork tool="move" phase="after"/>
           </EndCard>
         )}
-        <OnDevice className="mt-4">
-          {mode === 'motion' ? 'Motion readings stay on this device.' : 'Nothing leaves this device.'}
-        </OnDevice>
       </div>
     </ActivityScreen>
   )

@@ -4,7 +4,7 @@ import { LampFace } from '../../traffic/Face'
 import { cn } from '../../lib/utils'
 import { STATUS_WORD } from './metrics'
 
-/* The colour the Medical Professional screens are drawn in. Heads Up is the
+/* The colour the Counselor/Professional screens are drawn in. Heads Up is the
  * one thing every teen has today, so its three lamps set the palette: a
  * teen's card, a day's bar and a count tile all take their hue from the lamp.
  * The colour never carries the state alone: the face is drawn and the word is

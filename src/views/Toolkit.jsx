@@ -42,7 +42,7 @@ import { SessionOpeners, NextStepGuide, GroundingTimer, TalkingWithParents, Refe
  * The parent set has routes (toolkit-openers and the rest) and also opens in
  * place from the index when it is handed `onBack`.
  *
- * THE MEDICAL PROFESSIONAL SET HAS NO ROUTES YET. It opens in place by state.
+ * THE COUNSELOR/PROFESSIONAL SET HAS NO ROUTES YET. It opens in place by state.
  * Adding routes is five lines in App.jsx:
  *
  *   'toolkit-pro-opener'   -> <Toolkit who="pro" open="pro-opener"/>
@@ -90,7 +90,7 @@ const IN_PLACE = {
    `#/toolkit?tab=<id>`, so the way back from a skill lands on its tab. */
 const FIRST_TAB = { student:'Exercises', parent:'Your tools', pro:'Your tools' }
 const SKILL_LINE = {
-  student: 'Saved on this phone only.',
+  student: 'Only you see what you save.',
   parent:  'The same tools your teen has. Try one together.',
   pro:     'The same tools your teens have, to use in a session.',
 }

@@ -51,7 +51,7 @@ describe('SETTING_WORDS, the one source for the console and the start screen', (
 })
 
 describe('settingLineFor, the setting line under Start here', () => {
-  it('names the practice for a Medical Professional in a practice', () => {
+  it('names the practice for a Counselor/Professional in a practice', () => {
     const line = settingLineFor({ role: 'pro', setting: 'practice' })
     expect(line).toBeTruthy()
     expect(line.toLowerCase()).toContain('practice')

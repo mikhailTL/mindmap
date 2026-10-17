@@ -336,7 +336,7 @@ function Info({ data, patch }) {
       {!view ? (
         <Panel>
           <Heading>My health info</Heading>
-          <Lead>Only write what you choose to. This stays in this browser on this device.</Lead>
+          <Lead>Only write what you choose to. Only you see this.</Lead>
           <div className="mt-3 grid gap-3">
             <Field label="Name" value={i.name || ''} onChange={e => set('name', e.target.value)}/>
             <Field label="Allergies" hint="Medicines, foods, insects, latex." value={i.allergies || ''} onChange={e => set('allergies', e.target.value)}/>

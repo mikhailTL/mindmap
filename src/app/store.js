@@ -6,7 +6,7 @@ import { SCORE, NOTES, NOTES_DEF, LOCATION, PRO } from '../lib/terms'
  * There is no fetch in this file. The sharing switches are sent to the
  * student's account by src/account/sync.js, which reads them from here and
  * hands back the account's copy through applySharing(), so a parent and a
- * Medical Professional see what the student chose, on any device.
+ * Counselor/Professional see what the student chose, on any device.
  *
  * Conventions taken from src/survey/store.js on purpose, because a second set
  * of storage habits in one codebase is how a guarded read becomes an
@@ -157,7 +157,7 @@ export function lockLine(settings = getNotify(), score = null) {
 /* The consent model, expressed once.
  *
  * It is not invented here. The parent column is src/views/Privacy.jsx's
- * YOU_SEE and YOU_NEVER; the Medical Professional column is the three keys on
+ * YOU_SEE and YOU_NEVER; the Counselor/Professional column is the three keys on
  * every record in src/lib/caseload.js (`score`, `trends`, `raw`). Moving a
  * row between `fields` and `never`, or adding one, is a consent change and
  * belongs in those files first.
@@ -379,7 +379,7 @@ export function removeNote(id) {
 /* Every row below is a measurement the phone made in the page: a reaction
  * time, a typing rhythm, a position at the moment of a reading, a mark on
  * the calendar. None of it is sent anywhere, none of it is shared with a
- * parent or a Medical Professional, and each list is capped so the slot can
+ * parent or a Counselor/Professional, and each list is capped so the slot can
  * never grow past a phone's patience. */
 
 const num = (v, fallback = null) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)

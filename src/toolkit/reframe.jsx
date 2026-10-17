@@ -74,7 +74,7 @@ function Journal({ list, onDelete, className }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-fine text-ink-3">Only on this phone.</p>
+      <p className="mt-2 text-fine text-ink-3">Only you see these.</p>
     </details>
   )
 }
@@ -277,7 +277,7 @@ export default function Reframe() {
               <p className="mt-1 text-sec font-semibold text-ink">{text}</p>
             </figure>
             <p className="mt-2 text-fine text-ink-2">
-              {saved ? 'Saved to your journal on this phone.' : 'Storage is blocked here, so this was not saved.'}
+              {saved ? 'Saved to your journal.' : 'Storage is blocked here, so this was not saved.'}
             </p>
             <DidItWork tool="reframe" phase="after" className="mt-3"/>
           </EndCard>
@@ -290,7 +290,7 @@ export default function Reframe() {
           </>
         )}
         {(stage === 'pick' || stage === 'done') && <Journal list={journal} onDelete={del} className="mt-4"/>}
-        <OnDevice className="mt-4">Your words stay on this device.</OnDevice>
+        <OnDevice className="mt-4">Only you see your words.</OnDevice>
       </div>
     </ActivityScreen>
   )

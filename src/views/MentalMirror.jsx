@@ -5,32 +5,32 @@ import { Headline, AllDetail } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { Diverge } from '../charts/diverge'
 import { cn } from '../lib/utils'
-import { SCORE, SCORE_DEF } from '../lib/terms'
+import { SCORE } from '../lib/terms'
 import { addReading } from '../lib/readingLog'
 
 import { FACE_SECONDS, analyseFace } from '../signals/face'
-import { captureFace, drawMesh, faceAvailable, loadLandmarker, loadVision, openFrontCamera } from '../signals/face-capture'
+import { captureFace, drawOverlay, faceAvailable, loadLandmarker, loadVision, openFrontCamera } from '../signals/face-capture'
 import { FACE_TERMS, emptyFaceBaseline, faceFeatures, faceSentence, scoreFace, updateFaceBaseline } from '../signals/face-score'
 import { fitCalibration, identityCalibration } from '../signals/tnam'
 
-/* The Mental Mirror. The front camera, a mesh drawn over the face as it is
- * read, thirty seconds, one Mind Score. Students only: the route is inside
- * the student app and the screen asks once before the camera opens.
+/* The Mental Mirror. The front camera, the face model's landmarks drawn over
+ * the face as it is read, thirty seconds, one Mind Score. Students only: it
+ * lives under the Reading tab and asks once before the camera opens.
  *
  * No picture leaves the phone. Each frame becomes 52 expression scores, one
  * eye figure, one nose position and one skin-colour level, then is dropped.
- * The Mind Score that comes out is saved like any other reading (and shared
- * the way the student has chosen); the frames never are. Any change that
- * buffers or persists frames breaks what the screen says.
+ * The Mind Score that comes out is saved like any other reading; the frames
+ * never are. Any change that buffers or persists frames breaks what the
+ * screen says.
  *
- * The heart rate read off the skin goes through the Mind Score model with
- * this person's calibration. The expression cues are weighed against this
- * person's own earlier mirror readings (face-score.js). */
+ * Every reading owns a run id. Stop, a new Start and leaving the screen all
+ * move the id on, so a run still waiting on the model or the camera finds out
+ * when it wakes, stops its own camera and touches nothing else. Before this,
+ * a run stopped while the model loaded carried on, and its failure stopped
+ * the next run's camera (docs/mental-mirror.md). */
 
 /* The four bands of the dial, one per group of cues, each 0 to 100 where 50
-   is this person's usual: pulse, brow, eyes (blinks, squint, movement) and
-   mouth and head. Same colours as every other dial, so it reads as a Mind
-   Score, but the names are the mirror's own. */
+   is this person's usual. */
 const BANDS = [
   { id: 'mirror-pulse', name: 'Pulse', glow: '#e11919', of: ['hr'] },
   { id: 'mirror-brow',  name: 'Brow',  glow: '#e86a05', of: ['browFurrow'] },
@@ -57,25 +57,66 @@ function load(key, fallback) {
 function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
 
-/* What is read, in the words a student would use. Shown live, so the
-   reading is never a black box while it runs. */
-const LIVE = [
-  ['blinkRate', 'Blinks', v => `${Math.round(v)}/min`],
-  ['browFurrow', 'Brow', v => `${Math.round(v * 100)}%`],
-  ['lipPress', 'Lips', v => `${Math.round(v * 100)}%`],
-  ['eyeSquint', 'Eyes', v => `${Math.round(v * 100)}%`],
+/* Why a capture ended without a result, in a few words. */
+const ENDED = {
+  'camera-ended': 'The camera stopped. Try again.',
+  stalled: 'The camera froze. Try again.',
+  hidden: 'The reading stopped when you left. Try again.',
+  model: 'Something went wrong. Try again.',
+}
+function cameraMessage(e) {
+  const n = e?.name
+  if (n === 'NotAllowedError' || n === 'SecurityError') return 'The camera is not allowed. The other readings still work.'
+  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'No front camera was found.'
+  if (n === 'NotReadableError') return 'Another app is using the camera.'
+  return 'Something went wrong. Try again.'
+}
+
+const KEEP = [
+  ['bg-accent', 'Students only.'],
+  ['bg-beam', 'No picture is kept.'],
+  ['bg-sky', 'Not a diagnosis.'],
+  ['bg-coral', 'It reads your pulse from skin colour and your face against your own usual.'],
 ]
 
-export function MentalMirror({ go }) {
+/* Any render failure inside the mirror shows a short note and a retry, not a
+   blank tab. Unmounting the broken mirror runs its cleanup, so the camera is
+   off before the note shows. */
+class MirrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { failed: false, n: 0 } }
+  static getDerivedStateFromError() { return { failed: true } }
+  componentDidCatch(error, info) { console.error('Mental Mirror', error, info?.componentStack) }
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className={cn(PANEL, 'max-w-[44ch]')} role="alert">
+          <p className="text-sec text-ink">Something went wrong. Try again.</p>
+          <Button className="mt-3" onClick={() => this.setState(s => ({ failed: false, n: s.n + 1 }))}>Try again</Button>
+        </div>
+      )
+    }
+    return <React.Fragment key={this.state.n}>{this.props.children}</React.Fragment>
+  }
+}
+
+export function MentalMirror(props) {
+  return <MirrorBoundary><Mirror {...props}/></MirrorBoundary>
+}
+
+function Mirror() {
   const videoRef = React.useRef(null)
   const canvasRef = React.useRef(null)
-  const live = React.useRef({ stream: null, capture: null, vision: null })
+  const boxRef = React.useRef(null)
+  const live = React.useRef({ stream: null, capture: null })
+  const runId = React.useRef(0)
+  const mounted = React.useRef(false)
+  const dprRef = React.useRef(1)
+  const pulseRef = React.useRef(null)
 
   const [consented, setConsented] = React.useState(() => load(CONSENT, false) === true)
   const [phase, setPhase] = React.useState('idle')   /* idle · loading · capture · working · done */
   const [progress, setProgress] = React.useState(0)
   const [seen, setSeen] = React.useState(false)
-  const [peek, setPeek] = React.useState(null)       /* running feature readout during capture */
   const [error, setError] = React.useState(null)
   const [result, setResult] = React.useState(null)
   const [face, setFace] = React.useState(null)
@@ -85,77 +126,126 @@ export function MentalMirror({ go }) {
   const [answered, setAnswered] = React.useState(false)
   const supported = faceAvailable()
 
-  React.useEffect(() => {
-    const b = load(STORE, null)
-    setBaseline(b && b.stats ? b : emptyFaceBaseline())
-    const past = load(CHECKINS, []).filter(e => Array.isArray(e?.contributions))
-    setCheckins(past)
-    setCalibration(fitCalibration(past))
-    return () => stopAll()
-  }, [])
-
-  const stopAll = () => {
+  const stopAll = React.useCallback(() => {
     live.current.capture?.cancel(); live.current.capture = null
     live.current.stream?.getTracks().forEach(t => t.stop()); live.current.stream = null
-  }
+    if (videoRef.current) videoRef.current.srcObject = null
+    const c = canvasRef.current
+    c?.getContext('2d')?.clearRect(0, 0, c.width, c.height)
+  }, [])
+
+  React.useEffect(() => {
+    mounted.current = true
+    const b = load(STORE, null)
+    setBaseline(b && b.stats ? b : emptyFaceBaseline())
+    const past = load(CHECKINS, [])
+    const usable = Array.isArray(past) ? past.filter(e => Array.isArray(e?.contributions)) : []
+    setCheckins(usable)
+    setCalibration(fitCalibration(usable))
+    return () => { mounted.current = false; runId.current++; stopAll() }
+  }, [stopAll])
+
+  /* The overlay canvas matches the box in device pixels, so the tags are
+     sharp and the landmarks land where the cropped video shows them. */
+  React.useEffect(() => {
+    const box = boxRef.current, canvas = canvasRef.current
+    if (!box || !canvas) return
+    const fit = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1)
+      const w = Math.max(1, Math.round(box.clientWidth * dpr)), h = Math.max(1, Math.round(box.clientHeight * dpr))
+      if (canvas.width !== w) canvas.width = w
+      if (canvas.height !== h) canvas.height = h
+      dprRef.current = dpr
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', fit)
+      return () => window.removeEventListener('resize', fit)
+    }
+    const ro = new ResizeObserver(fit)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [consented])
 
   const agree = () => { save(CONSENT, true); setConsented(true) }
 
   const run = async () => {
-    setError(null); setResult(null); setFace(null); setPeek(null); setSeen(false); setAnswered(false)
+    const id = ++runId.current
+    const alive = () => mounted.current && runId.current === id
+    const fail = msg => { if (alive()) { setError(msg); setPhase('idle') } }
+    stopAll()
+    setError(null); setResult(null); setFace(null); setSeen(false); setAnswered(false); setProgress(0)
+    pulseRef.current = null
     setPhase('loading')
+
+    /* All three settle before anything is decided, so a camera that opened
+       while the model failed is still closed. */
+    const [lmR, visR, camR] = await Promise.allSettled([loadLandmarker(), loadVision(), openFrontCamera()])
+    const stream = camR.status === 'fulfilled' ? camR.value.stream : null
+    const quit = () => stream?.getTracks().forEach(t => t.stop())
+    if (!alive()) return quit()
+    if (camR.status === 'rejected') return fail(cameraMessage(camR.reason))
+    if (lmR.status === 'rejected' || visR.status === 'rejected') { quit(); return fail('The face model did not load. Try again.') }
+
+    live.current.stream = stream
+    const video = videoRef.current
     try {
-      const [landmarker, vision, cam] = await Promise.all([loadLandmarker(), loadVision(), openFrontCamera()])
-      live.current.stream = cam.stream
-      live.current.vision = vision
-      const video = videoRef.current
-      video.srcObject = cam.stream
+      video.srcObject = stream
       await video.play()
-      const canvas = canvasRef.current
-      canvas.width = video.videoWidth || 640
-      canvas.height = video.videoHeight || 480
-      const ctx = canvas.getContext('2d')
-
-      setPhase('capture')
-      let tick = 0
-      const capture = captureFace(video, landmarker, {
-        seconds: FACE_SECONDS,
-        onFrame: (res, rec, frac) => {
-          drawMesh(ctx, res, vision, { width: canvas.width, height: canvas.height })
-          setProgress(frac)
-          if (rec) setSeen(true)
-          /* A running readout every half second, from the frames so far. */
-          if (++tick % 15 === 0) {
-            const partial = analyseFace(capture.frames)
-            if (partial?.ok) setPeek(partial)
-          }
-        },
-      })
-      live.current.capture = capture
-      const frames = await capture.done
-      if (!frames) return                     /* stopped by the student */
-      stopAll()
-      setPhase('working')
-
-      const analysed = analyseFace(frames)
-      if (!analysed.ok) { setError(analysed.message); setPhase('idle'); return }
-      const scored = scoreFace({ face: analysed, baseline, calibration })
-      if (!scored.ok) { setError('Nothing came through to score. Try again in better light.'); setPhase('idle'); return }
-
-      const next = updateFaceBaseline(baseline, faceFeatures(analysed), dayKey())
-      setBaseline(next); save(STORE, next)
-      setFace(analysed)
-      setResult(scored)
-      addReading?.({ at: Date.now(), score: scored.score, source: 'mirror', pulse: analysed.hr ?? undefined })
-      setPhase('done')
     } catch (e) {
+      if (!alive()) return quit()
       stopAll()
-      setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. The other ways to take a reading still work.'
-        : (e?.message || 'Something stopped the capture.'))
-      setPhase('idle')
+      return fail(cameraMessage(e))
     }
+    if (!alive()) return quit()
+
+    const vision = visR.value
+    setPhase('capture')
+    let lastPct = -1, lastPeek = 0, found = false
+    const capture = captureFace(video, lmR.value, {
+      seconds: FACE_SECONDS,
+      onFrame: (res, rec, frac) => {
+        const c = canvasRef.current
+        if (c) {
+          drawOverlay(c.getContext('2d'), res, vision, {
+            vw: video.videoWidth, vh: video.videoHeight, cw: c.width, ch: c.height,
+            dpr: dprRef.current, pulse: pulseRef.current,
+          })
+        }
+        const pct = Math.round(frac * 100)
+        if (pct !== lastPct) { lastPct = pct; setProgress(pct) }
+        if (rec && !found) { found = true; setSeen(true) }
+        /* The running pulse for the forehead tag, once a second. */
+        const now = performance.now()
+        if (now - lastPeek > 1000) {
+          lastPeek = now
+          const partial = analyseFace(capture.frames)
+          pulseRef.current = partial?.ok ? partial.hr : null
+        }
+      },
+    })
+    live.current.capture = capture
+    const out = await capture.done
+    if (!alive()) return
+    live.current.capture = null
+    stopAll()
+    if (!out.ok) return out.reason === 'stopped' ? setPhase('idle') : fail(ENDED[out.reason] || ENDED.model)
+
+    setPhase('working')
+    const analysed = analyseFace(out.frames)
+    if (!analysed.ok) return fail(analysed.message)
+    const scored = scoreFace({ face: analysed, baseline, calibration })
+    if (!scored.ok) return fail('Nothing came through. Try again in better light.')
+
+    const next = updateFaceBaseline(baseline, faceFeatures(analysed), dayKey())
+    setBaseline(next); save(STORE, next)
+    setFace(analysed)
+    setResult(scored)
+    addReading?.({ at: Date.now(), score: scored.score, source: 'mirror', pulse: analysed.hr ?? undefined })
+    setPhase('done')
   }
+
+  const stop = () => { runId.current++; stopAll(); setPhase('idle') }
 
   /* One answer is one label; the calibration is refitted on everything this
      person has said, from the mirror and the fingertip reading alike. */
@@ -169,29 +259,20 @@ export function MentalMirror({ go }) {
 
   const busy = phase === 'loading' || phase === 'capture' || phase === 'working'
   const s = result ? faceSentence(result) : null
-  const n = checkins.length
 
   if (!consented) {
     return (
-      <div className={cn(PANEL, 'max-w-[60ch]')}>
-        <h3 className="font-display text-row font-bold text-ink">Before the mirror opens</h3>
-        <dl className="m-0 mt-3 list-none p-0">
-          {[
-            ['For students', 'The mirror is part of the student app and is read against your own earlier readings, never against anyone else.'],
-            ['No picture is kept', 'Each frame becomes a few numbers (how far your brow moved, how often you blinked, the colour of a patch of forehead) and is dropped. Only the score is saved, like your other readings.'],
-            ['Not a diagnosis', `It gives a ${SCORE}, the same 0 to 100 the other readings give, and a range for how sure it is.`],
-            ['How it reads you', 'Your pulse comes from tiny colour changes in your skin, a published camera method. Blinks, brow, eyes and mouth are compared with your own usual.'],
-          ].map(([k, v]) => (
-            <div key={k} className="border-b border-rule py-2.5 last:border-b-0">
-              <dt className="font-display text-ui font-medium text-ink">{k}</dt>
-              <dd className="m-0 mt-0.5 text-fine text-ink-2">{v}</dd>
-            </div>
+      <div className={cn(PANEL, 'max-w-[44ch]')}>
+        <h3 className="font-display text-row font-bold text-ink">Before you start</h3>
+        <ul className="m-0 mt-3 list-none space-y-2.5 p-0">
+          {KEEP.map(([dot, line]) => (
+            <li key={line} className="flex items-baseline gap-3 text-ui text-ink">
+              <span aria-hidden className={cn('size-2.5 shrink-0 translate-y-[-1px] rounded-[3px]', dot)}/>
+              {line}
+            </li>
           ))}
-        </dl>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={agree} disabled={!supported}>I understand, open the mirror</Button>
-          {go && <Button variant="outline" onClick={() => go('reading')}>Not now</Button>}
-        </div>
+        </ul>
+        <Button className="mt-5" onClick={agree} disabled={!supported}>Open the mirror</Button>
         {!supported && <p className="mt-3 text-fine text-ink-3">This browser cannot open a camera here.</p>}
       </div>
     )
@@ -201,18 +282,18 @@ export function MentalMirror({ go }) {
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
       {/* ── the mirror ─────────────────────────────────────────────── */}
       <div className={PANEL}>
-        <div className="relative overflow-hidden rounded-field bg-ink/90" style={{ aspectRatio: '4 / 3' }}>
+        <div ref={boxRef} className="relative overflow-hidden rounded-field bg-ink/90" style={{ aspectRatio: '4 / 3' }}>
           <video ref={videoRef} muted playsInline autoPlay
             className={cn('absolute inset-0 h-full w-full object-cover', phase === 'capture' ? 'opacity-100' : 'opacity-0')}
             style={{ transform: 'scaleX(-1)' }} aria-hidden/>
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden/>
           {phase !== 'capture' && (
             <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-              <p className="max-w-[32ch] text-sec text-paper/90">
+              <p className="max-w-[28ch] text-sec text-paper/90">
                 {phase === 'loading' ? 'Loading the face model…'
                   : phase === 'working' ? 'Reading…'
                   : phase === 'done' ? 'Done. The camera is off.'
-                  : 'Face the phone in good light. Thirty seconds, no talking needed.'}
+                  : 'Face the phone in good light.'}
               </p>
             </div>
           )}
@@ -223,17 +304,10 @@ export function MentalMirror({ go }) {
 
         {phase === 'capture' && (
           <div className="mt-3">
-            <Progress value={Math.round(progress * 100)} max={100}/>
-            <dl className="m-0 mt-3 grid grid-cols-4 gap-2 text-center">
-              {LIVE.map(([k, label, fmt]) => (
-                <div key={k}>
-                  <dt className="text-fine text-ink-3">{label}</dt>
-                  <dd className="m-0 font-mono text-ui tabular-nums text-ink">{peek?.[k] != null ? fmt(peek[k]) : '...'}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-2 text-fine text-ink-3">
-              Pulse {peek?.hr ? `${Math.round(peek.hr)} bpm from skin colour` : 'locking…'}
+            <Progress value={progress} max={100} label="Reading progress"/>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-fine text-ink-2">
+              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full bg-accent-lit"/>Face model</span>
+              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-[2px] border-2 border-coral"/>Pulse patch</span>
             </p>
           </div>
         )}
@@ -242,18 +316,15 @@ export function MentalMirror({ go }) {
           <Button onClick={run} disabled={busy || !supported}>
             {phase === 'done' ? 'Read again' : busy ? 'Reading…' : `Start · ${FACE_SECONDS}s`}
           </Button>
-          {busy && <Button variant="outline" onClick={() => { stopAll(); setPhase('idle') }}>Stop</Button>}
+          {busy && <Button variant="outline" onClick={stop}>Stop</Button>}
         </div>
-        {error && <p className="mt-3 max-w-[48ch] text-sec text-warn" role="alert">{error}</p>}
-        <p className="mt-3 max-w-[52ch] text-fine text-ink-3">
-          The lines are the model reading your face as it happens. Frames become numbers on the phone and are dropped. No picture is kept or sent.
-        </p>
+        {error && <p className="mt-3 max-w-[40ch] text-sec text-warn" role="alert">{error}</p>}
       </div>
 
       {/* ── the result ─────────────────────────────────────────────── */}
       <div className={PANEL} aria-live="polite">
         {!result && (
-          <p className="max-w-[36ch] text-sec text-ink-3">Your {SCORE} appears here.</p>
+          <p className="max-w-[36ch] text-sec text-ink-3">Your {SCORE} shows here.</p>
         )}
         {result && (
           <>
@@ -261,57 +332,37 @@ export function MentalMirror({ go }) {
               <RainbowDial score={result.score} size={300} rings={bandsOf(result)}/>
               <div className="w-full">
                 <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
-                <p className="mt-3 max-w-[42ch] text-meta text-ink-2">{s.tail}</p>
+                <p className="mt-2 max-w-[40ch] text-meta text-ink-2">{s.tail}</p>
 
                 <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
                   <dt className="text-ink-3">{SCORE}</dt>
-                  <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
-                  <dt className="text-ink-3">How sure</dt>
-                  <dd className="m-0 font-mono tabular-nums text-ink">
-                    {result.low} to {result.high} <span className="text-ink-3">(±{result.half})</span>
-                    <span className="text-ink-3"> · {result.baselineDays === 0
-                      ? 'no history yet, so a wide band'
-                      : `${result.baselineDays} day${result.baselineDays === 1 ? '' : 's'} of history`}</span>
-                  </dd>
+                  <dd className="m-0 font-mono tabular-nums text-ink">{result.score} of 100</dd>
+                  <dt className="text-ink-3">Range</dt>
+                  <dd className="m-0 font-mono tabular-nums text-ink">{result.low} to {result.high}</dd>
                   <dt className="text-ink-3">Pulse</dt>
                   <dd className="m-0 text-ink">{face?.hr
-                    ? <><span className="font-mono tabular-nums">{Math.round(face.hr)} bpm</span> from skin colour, quality {Math.round(face.hrQuality * 100)}%</>
-                    : <span className="text-ink-3">not read this time; the face alone was scored</span>}</dd>
-                  <dt className="text-ink-3">Face in view</dt>
-                  <dd className="m-0 font-mono tabular-nums text-ink">{Math.round((face.framesSeen / face.frames) * 100)}% of frames</dd>
+                    ? <span className="font-mono tabular-nums">{Math.round(face.hr)} bpm</span>
+                    : <span className="text-ink-3">Not read</span>}</dd>
                 </dl>
-
-                <p className="mt-4 max-w-[48ch] text-meta text-ink-3">{SCORE_DEF}</p>
 
                 {/* The check-in: the label this person teaches the model with. */}
                 <div className="mt-5 border-t border-rule pt-4">
                   {!answered ? (
                     <>
-                      <p className="max-w-[40ch] text-sec text-ink">Does this match how you feel right now?</p>
+                      <p className="text-sec text-ink">Does this match how you feel?</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button onClick={() => answer(true)}>Stressed</Button>
                         <Button variant="outline" onClick={() => answer(false)}>Fine</Button>
                       </div>
-                      <p className="mt-3 max-w-[44ch] text-fine text-ink-3">
-                        {n === 0 ? 'Your first answer starts your own calibration.'
-                          : `${n} answer${n === 1 ? '' : 's'} so far shape how your readings are weighed.`}
-                      </p>
                     </>
                   ) : (
-                    <p className="max-w-[44ch] text-sec text-ink-2">
-                      Noted. <span className="font-mono tabular-nums">{n}</span> answer{n === 1 ? '' : 's'} now shape how
-                      your readings are weighed, here and in the fingertip reading.
-                    </p>
+                    <p className="text-sec text-ink-2">Noted. Thanks.</p>
                   )}
                 </div>
               </div>
             </div>
 
-            <AllDetail label={`See what moved your ${SCORE}`}>
-              <p className="mt-2 max-w-[52ch] text-sec text-ink-3">
-                Right of the line raised the {SCORE}, left of it lowered it. Each bar is that feature against your
-                own earlier mirror readings.
-              </p>
+            <AllDetail label="What moved it">
               <Diverge items={result.contrib.map(c => ({ label: c.label, x: Math.max(-1, Math.min(1, c.raw)) }))}/>
               <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-fine">
                 {FACE_TERMS.map(t => (
@@ -327,11 +378,6 @@ export function MentalMirror({ go }) {
                   </React.Fragment>
                 ))}
               </dl>
-              <p className="mt-4 max-w-[52ch] text-fine text-ink-3">
-                The pulse is read by a published method (skin-colour photoplethysmography) and goes through the same
-                learned model as the fingertip reading. Each face cue is measured against your own earlier mirror
-                readings, so the more you use it, the narrower the range gets.
-              </p>
             </AllDetail>
           </>
         )}

@@ -216,17 +216,15 @@ function Caseload() {
    and weight before hue, so the column still separates in grayscale. */
 const HONESTY = [
   ['The screens on this site', 'Working', 'fact',
-    'Real React, running on sample data.'],
-  ['The numbers on them', 'Generated', 'demo',
-    'The model made them from sample baselines.'],
-  ['The patch', 'CAD model', 'fact',
-    'A 3D model and an exploded drawing of its layers.'],
+    'Real React, running in your browser.'],
+  ['The numbers on them', 'Sample data', 'demo',
+    'Drawn from sample baselines.'],
   ['The scoring model', 'Four signals', 'fact',
     'Four signals against a fourteen day baseline.'],
   ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
     'Two public lab datasets, see Machine Learning.'],
-  ['The eight students', 'Invented', 'demo',
-    'Made up, and so are their consent records.'],
+  ['The eight students', 'Sample profiles', 'demo',
+    'Sample students with sample consent settings.'],
   ['Regulatory status', 'Not a medical device', 'fact',
     'No diagnosis, treatment or screening for any condition.'],
 ]
@@ -234,10 +232,10 @@ const HONESTY = [
 /* ── 08 ─────────────────────────────────────────────────────────────────── */
 /* `from` is the provenance of the row and is never blank. */
 const SCALE_ROWS = [
-  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'An assumption. No ratio has been surveyed.'],
+  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'The list size used on this page.'],
   ['Readings per second', '1', 'Hz', `The design target, over a ${SCHOOL_HOURS} hour school day.`],
   ['Per student, per day', num(PER_DAY), 'readings', 'The two rows above, multiplied.'],
-  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Arithmetic, not a measurement.'],
+  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Per student, times the list.'],
   ['Smallest group reported', String(K_ANONYMITY), 'students', 'A smaller group shows nothing.'],
 ]
 
@@ -278,7 +276,7 @@ const STOPS = [
     alt: 'Four high school students walking along a bright corridor with folders and backpacks, talking as they go',
     facts: [
       ['Compared with', `The student's own last two weeks, nobody else.`],
-      ['The photographs', 'Stock photographs of models. Nobody shown uses MindMap.'],
+      ['The photographs', 'These are licensed stock photos of models.'],
     ],
     art: EvidenceGap,
   },
@@ -344,7 +342,7 @@ const STOPS = [
       return (
         <div className="flex h-full flex-col">
           <p className="font-display text-row font-bold leading-tight text-ink">
-            Your child's trends</p>
+            Trends</p>
           <div className="mt-3"><WeekStrip days={DATA.week} band={DATA.weekBand}/></div>
           <p className="mt-2 font-mono text-fine tabular-nums text-ink-3">
             {over} of {days.length} days above their usual range
@@ -388,7 +386,7 @@ const STOPS = [
   {
     id: 'honest', nav: 'Real and demo',
     title: 'What is real, what is demo',
-    lede: 'Every reading is generated.',
+    lede: 'The screens run on sample data.',
     facts: [],
     art: () => (
       <Table>
@@ -418,7 +416,7 @@ const STOPS = [
   {
     id: 'scale', nav: 'At scale',
     title: 'How the numbers add up',
-    lede: 'A projection, not a finding.',
+    lede: 'One list, one school day.',
     photo: 'school-card',
     alt: 'A woman and a teenage boy talking in a room lined with shelves',
     facts: [

@@ -13,7 +13,7 @@ import { SCORE } from '../../lib/terms'
  *   Sparkline   the same line, small, for the Trends box on the home screen
  *   PulseChart  the pulse wave from a camera reading
  *   TextLink    the underlined link the owner asked for ("Take a reading",
- *               "See your trends") */
+ *               "See Trends") */
 
 const INK = '#0d2b1e', INK3 = '#426a58', GRID = '#e3ede7', BAND_FILL = '#dcefe4',
   BAND_EDGE = '#93b2a1', LINE = '#157446'
@@ -35,7 +35,7 @@ export const TakeReading = ({ go, className, children = 'Take a reading' }) => (
   <TextLink className={className} onClick={() => go?.('reading')}>{children}</TextLink>
 )
 
-export const SeeTrends = ({ go, className, children = 'See your trends' }) => (
+export const SeeTrends = ({ go, className, children = 'See Trends' }) => (
   <TextLink className={className} arrow onClick={() => go?.('student-trends')}>{children}</TextLink>
 )
 

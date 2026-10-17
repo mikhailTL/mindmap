@@ -2,7 +2,7 @@ import React from 'react'
 import { backend, liveData, useAccount } from '../../account/store'
 import { toTeen } from './live.js'
 
-/* The teens linked to the signed in parent or Medical Professional, from the
+/* The teens linked to the signed in parent or Counselor/Professional, from the
  * account snapshot, shaped for the cards. Re-renders on every snapshot, so
  * the 20 second refresh in src/account/sync.js (useLiveSync) moves the cards.
  *

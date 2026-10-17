@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
-import { ArrowRight, Check, Always, Never, Minus, ChevronDown } from '../ui/marks'
+import { ArrowRight, Check, Always, Cross, Minus, ChevronDown } from '../ui/marks'
 import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
 import { WirelessLink, StepArt } from '../charts/pairing-art'
 import { ITEMS, connectPatch } from '../lib/engine'
@@ -129,19 +129,24 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
                 className="max-w-[20ch] font-display font-bold text-major leading-[1.05]
                   tracking-tight text-ink"
                 lines={['Fully Wireless,', '2 Minutes of Setup']}/>
-              <ScrollIn className="mt-4 grid gap-3 sm:grid-cols-2">
-                <Card className="p-3.5">
+              {/* Two different surfaces (src/ui/card.jsx): the absences sit
+                  beside a coral rule with no box, the note in an outline on
+                  the band. The figure beside them keeps the white card. */}
+              <ScrollIn className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-5">
+                <Card variant="rule" hue="coral" side="left" className="pl-3.5">
                   <p className="font-display text-tick font-bold text-ink">What You Do Not Need</p>
-                  <ul className="m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0">
+                  {/* A struck-through list, two columns, no capsules. */}
+                  <ul className="m-0 mt-1.5 grid list-none grid-cols-2 gap-x-4 p-0">
                     {NOTHING.map(t => (
-                      <li key={t} className="flex items-center gap-1.5 rounded-field border border-rule
-                        bg-paper px-2.5 py-1 text-fine text-ink">
-                        <Never aria-hidden className="size-3.5 shrink-0 text-ink-3"/>{t}
+                      <li key={t} className="flex min-h-[2rem] items-center gap-2 border-b border-coral/25
+                        text-fine text-ink">
+                        <Cross aria-hidden className="size-3.5 shrink-0 text-coral-ink"/>
+                        <span className="line-through decoration-coral-ink/60 decoration-[1.5px]">{t}</span>
                       </li>
                     ))}
                   </ul>
                 </Card>
-                <Card className="p-3.5">
+                <Card variant="outline" className="p-3.5">
                   <p className="font-display text-tick font-bold text-ink">
                     How It Connects
                   </p>
@@ -283,11 +288,13 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
             {TROUBLE.map((t, i) => (
               <li key={t.title}>
                 <ScrollRow index={i} className="h-full">
-                  <Card className="flex h-full flex-col p-3.5 lg:p-4">
+                  {/* The fixes take the sun wash: they are the one set of
+                      cards on this page about something going wrong. */}
+                  <Card variant="tint" hue="sun" className="flex h-full flex-col p-3.5 lg:p-4">
                     <h3 className="font-display text-ui font-bold leading-tight text-ink">
                       {t.title}
                     </h3>
-                    <p className="mt-2 border-l-2 border-ruling pl-2.5 text-fine text-ink-2">
+                    <p className="mt-2 border-l-2 border-sun-ink/40 pl-2.5 text-fine text-ink-2">
                       {t.seen}
                     </p>
                     <dl className="m-0 mt-2.5 flex gap-2">
@@ -306,7 +313,7 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
           kept here is the way through without a patch. */}
       {tail && <Section tone="paper" tight className="bg-aqua-2">
         <ScrollIn>
-        <Card className="p-3.5 lg:p-4">
+        <Card variant="tint" hue="beam" className="p-3.5 lg:p-4">
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">

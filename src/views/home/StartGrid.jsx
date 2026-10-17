@@ -1,6 +1,7 @@
 import React from 'react'
 import { ArrowRight, Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
+import { Frame } from '../../ui/frame'
 
 /* The cards every role home opens with. The owner, 17 October, after the
  * big-card homes: "i liked how it was before with the cards at the top, was
@@ -23,8 +24,20 @@ export function StartGrid({ label, children, className }) {
 }
 
 /* tone: the picture panel's ground, e.g. 'bg-sky-wash'. art: the drawing,
-   sized by the panel (give it h-[..] or w-[..] classes). */
-export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }) {
+   sized by the panel (give it h-[..] or w-[..] classes).
+
+   photo: a key from src/lib/photos.js. The owner, 17 October: "half the
+   graphic you have and half a stock image, have it diagonal split between the
+   two". With a photo the drawing keeps the left half on its colour wash and
+   the photograph takes the right, cut on a diagonal with a thin white seam.
+   The photo box stays near square (about 1:1 at every width), well under the
+   widest crop any file survives (minAspect 1.8 and up), so Frame never has to
+   grow the panel and its focal point keeps faces inside the visible part.
+   photoFocal overrides that point for a file whose subjects sit wide apart. */
+const SEAM = 'polygon(26% 0, 100% 0, 100% 100%, 0 100%)'
+const CUT = 'polygon(calc(26% + 4px) 0, 100% 0, 100% 100%, 4px 100%)'
+
+export function StartTile({ title, art, tone, onClick, chevron = 'text-accent', photo, photoAlt, photoFocal }) {
   return (
     <button type="button" onClick={onClick}
       className="group flex h-full w-full flex-col items-stretch overflow-hidden rounded-panel border
@@ -32,7 +45,16 @@ export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }
         hoverOnly:border-accent active:scale-[0.985] motion-reduce:active:scale-100
         focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink">
       <span aria-hidden className={cn('relative flex aspect-[16/9] w-full shrink-0 items-center justify-center overflow-hidden', tone)}>
-        {art}
+        {photo ? (
+          <>
+            <span className="absolute inset-y-0 left-0 flex w-[50%] items-center justify-center pl-[3%]">{art}</span>
+            <span className="absolute inset-y-0 right-0 w-[58%] bg-card" style={{ clipPath: SEAM }}/>
+            <span className="absolute inset-y-0 right-0 w-[58%] overflow-hidden" style={{ clipPath: CUT }}>
+              <Frame photo={photo} alt={photoAlt || title} focal={photoFocal} eager
+                className="transition-transform duration-300 ease-out groupHoverOnly:scale-[1.04] motion-reduce:transition-none motion-reduce:groupHoverOnly:scale-100"/>
+            </span>
+          </>
+        ) : art}
       </span>
       <span className="flex w-full flex-1 items-center justify-between gap-2 p-3 sm:p-3.5 lg:px-4 lg:py-3.5">
         <span className="min-w-0 font-display text-ui font-bold leading-[1.22] text-ink">{title}</span>

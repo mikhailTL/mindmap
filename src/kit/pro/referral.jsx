@@ -6,7 +6,7 @@ import { CopyButton, Crisis, Label, TODAY_LONG } from './common'
    paste into a letter or a record. Initials or an ID, never a full name by
    default. Nothing typed here is saved or sent. */
 
-const TO = ['School counsellor', 'Primary care doctor', 'Psychologist or therapist', 'Psychiatry', 'Other service']
+const TO = ['School counselor', 'Primary care doctor', 'Psychologist or therapist', 'Psychiatry', 'Other service']
 const WHEN = [
   ['routine', 'Routine'],
   ['soon', 'Soon, within two weeks'],

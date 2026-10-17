@@ -6,7 +6,7 @@
  *
  * The log is kept here and synced to the student's account by
  * src/account/sync.js, so it follows them to another device and a linked
- * parent or Medical Professional sees the days it adds up to. A change from
+ * parent or Counselor/Professional sees the days it adds up to. A change from
  * the account arrives through setReadings() with `remote` set, which the
  * sync reads so it does not send the same rows straight back.
  *

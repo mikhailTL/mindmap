@@ -10,7 +10,7 @@ import { AvatarArt } from '../../../account/avatars'
 import { DEMO_LINKS, DEMO_TEEN } from '../../../account/demo-network'
 import { AUDIENCES } from '../../../ai/framework'
 import { FINISH_POINTS, LEVEL_NAMES, unlocksAt } from '../../../toolkit/game/progress'
-import { NOTES, PRO, SCORE } from '../../../lib/terms'
+import { NOTES, PRO, PRO_WRAP, SCORE } from '../../../lib/terms'
 import { cn } from '../../../lib/utils'
 
 /* One purpose-built picture per point in "What makes MindMap different".
@@ -168,7 +168,7 @@ function NetworkPic() {
           <span className="absolute left-[66.7%] top-6 sm:top-7 -translate-x-1/2 -translate-y-1/2"><Toggle animate/></span>
           <Person avatar={PARENT.avatar} name={PARENT.name} role="Parent"/>
           <Person avatar={DEMO_TEEN.avatar} name={DEMO_TEEN.name} role="Teen" big/>
-          <Person avatar={DOC.avatar} name={DOC.name} role={PRO}/>
+          <Person avatar={DOC.avatar} name={DOC.name} role={PRO_WRAP}/>
         </div>
         <p className="m-0 mt-2 flex items-center justify-center gap-1.5 text-fine leading-tight text-coral-ink">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2"
@@ -224,9 +224,13 @@ function HeadsUpPic() {
     <Pic label={`Demo: a Heads Up notification lands on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
       <div className="absolute bottom-0 left-1/2 h-[118px] w-[min(210px,84%)] -translate-x-1/2 rounded-t-[26px] border-[3px] border-b-0 border-ink-3 bg-ink-2">
         <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-bar bg-ink"/>
+        {/* The card is on screen for 95% of the loop: it drops in fast, rests,
+            and leaves fast. The first frame is the resting card, so a page
+            that paints mid-loop never shows an empty phone. */}
         <motion.div className="absolute inset-x-2 top-6 rounded-[12px] bg-card px-2.5 py-2"
-          animate={loop ? { y: [-18, 0, 0, -18], opacity: [0, 1, 1, 0] } : undefined}
-          transition={{ duration: 6, repeat: Infinity, times: [0, 0.08, 0.88, 1], ease: 'easeOut' }}>
+          initial={false}
+          animate={loop ? { y: [0, 0, -10, 0], opacity: [1, 1, 0, 1] } : undefined}
+          transition={{ duration: 8, repeat: Infinity, times: [0, 0.94, 0.97, 1], ease: 'easeOut' }}>
           <p className="m-0 flex items-center justify-between text-fine leading-none text-ink-2">
             <span className="font-semibold">Heads Up</span><span>now</span>
           </p>

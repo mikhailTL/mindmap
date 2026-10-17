@@ -293,7 +293,9 @@ function StageShare({ still }) {
 
           <g className={off} style={still ? undefined : { '--d': '.7s', '--t': '7.4s' }}>
             <Card x={388} y={102} w={150} h={88} t={2.0} still={still}/>
-            <Chip x="463" y="152" t={2.4} still={still} size={19}>Medical Professional</Chip>
+            <Chip x="463" y="152" t={2.4} still={still} size={19}>
+              <tspan x="463" y="141">Counselor/</tspan><tspan x="463" y="165">Professional</tspan>
+            </Chip>
           </g>
 
           <Arrow still={still} t={3.2} dur={0.7} d="M224 138 L 186 140" len={50}
@@ -688,7 +690,7 @@ const STOPS = [
     line: 'The student picks what is shared and can switch any of it off.' },
   { view: 'app-parent', name: 'The parent screen', inApp: true,
     line: 'One score a day. Never a raw reading, Notes or Location.' },
-  { view: 'app-pro', name: 'The Medical Professional console', inApp: true,
+  { view: 'app-pro', name: 'The Counselor/Professional console', inApp: true,
     line: 'Which students to check in with this week. Only students who agreed to share appear.' },
 ]
 

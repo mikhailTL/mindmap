@@ -1,11 +1,11 @@
 import React from 'react'
 import { FACE_LABEL, RANGE_LABEL } from '../../lib/roster'
-import { LampFace } from '../../traffic/Face'
+import { FaceTrend, LampFace, trendLabel } from '../../traffic/Face'
 import { AvatarArt } from '../../account/avatars'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 import { RangeSwitch, Sparkline } from './RangeTrend'
-import { STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, metaLine, showsScore, showsTrends,
+import { PREV, STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, metaLine, showsScore, showsTrends,
   sourceLine, statusOfTeen, summaryOf } from './data'
 
 /* One teen as a card: who, the Heads Up face for the range shown (today's,
@@ -31,13 +31,15 @@ export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   )
 }
 
-export function StatusMark({ teen, range = 'week', size = 30, className }) {
+/* `change`, when given, puts the up / down / level arrow beside the face. */
+export function StatusMark({ teen, range = 'week', size = 30, change = null, className }) {
   const light = statusOfTeen(teen, range)
   if (!light) return null
   return (
     <span className={cn('flex shrink-0 items-center gap-2', className)}>
       <LampFace light={light} size={size}/>
       <span className="font-display text-ui font-bold leading-none text-ink">{STATUS_WORD[light]}</span>
+      <FaceTrend change={change} since={PREV[range]} small/>
     </span>
   )
 }
@@ -55,8 +57,10 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
   const titleId = React.useId()
   /* A linked teen with nothing in this range yet: say so, never a number. */
   const empty = s.mean == null
-  const status = light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}`
-    : !score ? 'Mind Score not shared' : empty ? 'No readings yet' : `Mind Score ${s.mean}`
+  const change = trends && !empty ? s.change : null
+  const status = (light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}`
+    : !score ? 'Mind Score not shared' : empty ? 'No readings yet' : `Mind Score ${s.mean}`)
+    + (score && trendLabel(change, PREV[range]) ? `. ${trendLabel(change, PREV[range])}` : '')
 
   return (
     <article aria-labelledby={titleId}
@@ -79,7 +83,7 @@ export default function TeenCard({ teen, onOpen, variant = 'parent', range: give
         </div>
         {score ? light && (
           <div className="flex shrink-0 flex-col items-end gap-1">
-            <StatusMark teen={teen} range={range}/>
+            <StatusMark teen={teen} range={range} change={change}/>
             <span className="text-fine text-ink-3">{FACE_LABEL[range]}</span>
           </div>
         ) : <span className="shrink-0 text-fine text-ink-2">Not shared</span>}

@@ -1,4 +1,4 @@
-/* The Medical Professional caseload, as figures. Pure functions over
+/* The Counselor/Professional caseload, as figures. Pure functions over
  * src/lib/roster.js, so the cards, the compact list, the teen detail and the
  * group charts read one set of numbers.
  *
@@ -24,6 +24,12 @@ export const trendRange = r => (r === 'month' ? 'month' : 'week')
 export const TREND_TITLE = Object.freeze({ week: 'Last 7 days', month: 'Last 30 days' })
 export const TREND_PREV = Object.freeze({ week: 'the 7 days before', month: 'the 30 days before' })
 export const trendDays = (teen, r) => teen.days.slice(r === 'month' ? -30 : -7)
+
+/* The caseload's one range switch, as on the parent cards: it sets each
+   card's Heads Up band to Today, the week average or the month average.
+   The Trends part under it still reads a week when Today is picked. */
+export const CARD_RANGES = Object.freeze([['day', 'Today'], ['week', 'Week'], ['month', 'Month']])
+export const cardRange = r => (r === 'day' || r === 'month' ? r : 'week')
 
 const avg = (a, k) => a.reduce((s, d) => s + d[k], 0) / Math.max(1, a.length)
 const one = v => Math.round(v * 10) / 10

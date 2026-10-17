@@ -6,7 +6,7 @@ import { useWidth } from './parts'
 import { STATUS_WORD } from './metrics'
 import { LIGHT_TONE } from './look'
 
-/* The charts the Medical Professional reads, one kind per job, the same on
+/* The charts the Counselor/Professional reads, one kind per job, the same on
  * every teen. The owner: "graphs ... should be easy to read, not like the box
  * whisker looking one u use". So: a bar per day, the teen's usual range as a
  * soft band behind the bars, both axes named, and the Heads Up face under each
@@ -87,6 +87,11 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
             <line x1={L} x2={W - R} y1={y(usual.hi)} y2={y(usual.hi)} strokeWidth="1" strokeDasharray="3 3" className="stroke-accent"/>
             <line x1={L} x2={W - R} y1={y(usual.lo)} y2={y(usual.lo)} strokeWidth="1" strokeDasharray="3 3" className="stroke-accent"/>
           </>}
+          {/* every face's glow first, then the faces, so a glow never covers
+              the face beside it */}
+          {showFaces && days.map((d, i) => d.light && (
+            <LampFaceG key={d.date} light={d.light} cx={cx(i)} cy={base + 4 + face / 2} size={face} px={face} layer="glow"/>
+          ))}
           {days.map((d, i) => {
             const top = y(d.score), last = i === n - 1
             return (
@@ -100,7 +105,7 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
                   stroke={last ? '#0d2b1e' : 'none'} strokeWidth={last ? 1.5 : 0}/>
                 {values && <text x={cx(i)} y={top - 4} textAnchor="middle"
                   className={cn('text-[12px] tabular-nums', last ? 'fill-ink font-bold' : 'fill-ink-2')}>{d.score}</text>}
-                {showFaces && d.light && <LampFaceG light={d.light} cx={cx(i)} cy={base + 4 + face / 2} size={face} px={face}/>}
+                {showFaces && d.light && <LampFaceG light={d.light} cx={cx(i)} cy={base + 4 + face / 2} size={face} px={face} layer="lamp"/>}
                 {labelAt(i) && <text x={cx(i)} y={base + FH + 14} textAnchor="middle"
                   className={cn('text-[12px]', last ? 'fill-ink font-bold' : 'fill-ink-3')}>
                   {last ? 'Today' : week ? d.weekday : dayNum(d.date)}</text>}

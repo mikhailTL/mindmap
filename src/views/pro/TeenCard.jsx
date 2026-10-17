@@ -1,5 +1,6 @@
 import React from 'react'
-import { LampFace } from '../../traffic/Face'
+import { FaceTrend, LampFace, trendLabel } from '../../traffic/Face'
+import { FACE_LABEL, statusOf, summary } from '../../lib/roster'
 import { RainbowDial } from '../../charts/rainbow'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
@@ -10,7 +11,7 @@ import { SourceCounts, SourceIcon, SourceLine, SOURCE_NAME, countBySource, mainS
 import { COLUMNS, STATUS_LINE, STATUS_WORD, TREND_PREV, TREND_TITLE, figures, signed, trendDays, trendRange,
   trendsShared } from './metrics'
 
-/* The Medical Professional's teen card. Every teen's card has the same
+/* The Counselor/Professional's teen card. Every teen's card has the same
  * three parts in the same order:
  *
  *   who        code, grade, age, and where the readings come from, with icons
@@ -22,7 +23,16 @@ import { COLUMNS, STATUS_LINE, STATUS_WORD, TREND_PREV, TREND_TITLE, figures, si
  *
  * The owner: "you need to clearly section between 'Today' data and 'Trend'
  * data on all pages that report it." A teen who does not share trends shows
- * Today in full and "Score only" under Trends: no change, no bars. */
+ * Today in full and "Score only" under Trends: no change, no bars.
+ *
+ * The coloured band at the top follows the range picked for every card, as
+ * the parent's card does: today's face, or the week's or month's average,
+ * named under the word, with an arrow for the Mind Score against the range
+ * before it. The band takes its colour from that face. */
+
+const FACE_RANGES = ['day', 'week', 'month']
+const faceRange = r => (FACE_RANGES.includes(r) ? r : 'week')
+const SINCE = { day: 'yesterday', ...TREND_PREV }
 
 const changeTone = v => (v > 0 ? 'text-warn' : v < 0 ? 'text-accent' : 'text-ink-3')
 const changeWords = v => (v > 0 ? `up ${v}` : v < 0 ? `down ${Math.abs(v)}` : 'level')
@@ -40,10 +50,21 @@ function Figure({ col, f }) {
 
 const sourceWords = teen => mainSources(teen).map(k => SOURCE_NAME[k].toLowerCase()).join(' and ')
 
-function ariaFor(teen, range) {
+/* The face for the band and its arrow. No arrow without trend consent. */
+function headsUp(teen, chosen) {
+  const r = faceRange(chosen)
+  const light = statusOf(teen, r)
+  const change = trendsShared(teen) ? summary(teen, r).change : null
+  return { r, light, change, since: SINCE[r] }
+}
+
+function ariaFor(teen, range, chosen) {
   const today = teen.days[teen.days.length - 1]
   const f = figures(teen, range)
+  const h = headsUp(teen, chosen)
+  const move = trendLabel(h.change, h.since)
   return `Open the record for ${teen.pseudonym}, grade ${teen.grade}. Readings from ${sourceWords(teen)}. `
+    + `Heads Up, ${FACE_LABEL[h.r].toLowerCase()}: ${STATUS_WORD[h.light]}.${move ? ` ${move}.` : ''} `
     + `Today: Mind Score ${today.score} of 100, Heads Up ${STATUS_WORD[today.light]}. `
     + (trendsShared(teen) ? `${TREND_TITLE[range]}: average ${f.score}, ${changeWords(f.change)} points.` : 'Trends: score only.')
 }
@@ -56,20 +77,22 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
   const days = trendDays(teen, range)
   const rest = COLUMNS.filter(c => c.key !== 'score' && c.key !== 'change' && columns.includes(c.key))
   const totals = countBySource(days, sourcesOf(teen))
-  const tone = toneOf(today.light) || { band: 'bg-aqua', edge: 'border-rule', ink: 'text-ink-2' }
+  const h = headsUp(teen, chosen)
+  const tone = toneOf(h.light) || { band: 'bg-aqua', edge: 'border-rule', ink: 'text-ink-2' }
+  const todayTone = toneOf(today.light) || tone
   return (
     <article aria-label={teen.pseudonym}
       className={cn('group relative flex h-full w-full flex-col overflow-hidden rounded-panel border-2 bg-card text-left',
         'transition-colors duration-150 hoverOnly:border-ink/50', tone.edge)}>
       <div className={cn('flex items-center gap-3 border-b-2 px-3.5 py-3 lg:px-4', tone.band, tone.edge)}>
-        {today.light && <LampFace light={today.light} size={44}/>}
+        {h.light && <LampFace light={h.light} size={44}/>}
         <div className="min-w-0 flex-1">
           <p className="m-0 truncate font-display text-ui font-bold text-ink">{teen.pseudonym}</p>
           <p className="m-0 text-fine text-ink-2">Grade {teen.grade}, age {teen.age}</p>
+          {h.light && <p className="m-0 text-fine text-ink-2">{FACE_LABEL[h.r]}:{' '}
+            <span className={cn('font-display font-bold', tone.ink)}>{STATUS_WORD[h.light]}</span></p>}
         </div>
-        {today.light && <p className="m-0 shrink-0 text-right">
-          <span className="block text-fine text-ink-2">Heads Up</span>
-          <span className={cn('block font-display text-ui font-bold', tone.ink)}>{STATUS_WORD[today.light]}</span></p>}
+        <FaceTrend change={h.change} since={h.since}/>
       </div>
       <div className="flex flex-1 flex-col p-3.5 lg:p-4">
       <SourceLine teen={teen}/>
@@ -88,7 +111,7 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
           <SourceCounts counts={countBySource([today], sourcesOf(teen))} unit={false} className="mt-1 !gap-1"/>
         </div>
       </div>
-      <p className={cn('m-0 mt-2 flex items-center gap-1.5 rounded-field px-2 py-1.5 text-fine font-medium text-ink', tone.band)}>
+      <p className={cn('m-0 mt-2 flex items-center gap-1.5 rounded-field px-2 py-1.5 text-fine font-medium text-ink', todayTone.band)}>
         {today.light && <LampFace light={today.light} size={18}/>}{STATUS_LINE[today.light]} today.</p>
 
       <ProPart kind="trends" title="Trends" line={TREND_TITLE[range]} as="h3" small className="mt-4"/>
@@ -122,7 +145,7 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
       )}
 
       <div className="mt-auto pt-3">
-        <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range)}
+        <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range, chosen)}
           className="inline-flex min-h-[44px] items-center gap-1 font-display text-ui font-bold text-accent
             after:absolute after:inset-0 after:rounded-panel after:content-[''] hoverOnly:text-accent-ink">
           Open record<Chevron aria-hidden className="size-4"/></button>
@@ -133,8 +156,8 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
 }
 
 /* The compact list: one row per teen, the chosen figures as columns from sm
-   up and as one wrapped line under the code at phone width. Today's face and
-   the source icons sit beside the code. */
+   up and as one wrapped line under the code at phone width. The face for the
+   picked range and the source icons sit beside the code. */
 export function ProTeenRow({ teen, range: chosen, columns, onOpen }) {
   const range = trendRange(chosen)
   const f = figures(teen, range)
@@ -143,10 +166,10 @@ export function ProTeenRow({ teen, range: chosen, columns, onOpen }) {
   const val = c => (c.key === 'change' ? (f.change === null ? 'Score only' : `${signed(f.change)}`) : f[c.key])
   return (
     <li className="border-b border-rule last:border-b-0">
-      <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range)}
+      <button type="button" onClick={() => onOpen(teen)} aria-label={ariaFor(teen, range, chosen)}
         className="flex min-h-[56px] w-full items-center gap-3 px-1 py-2 text-left transition-colors duration-150
           hoverOnly:bg-aqua active:bg-aqua">
-        <LampFace light={today.light} size={22}/>
+        <LampFace light={headsUp(teen, chosen).light || today.light} size={22}/>
         <span aria-hidden className="w-[9.5rem] min-w-0 shrink-0">
           <span className="block truncate text-fine font-bold text-ink">{teen.pseudonym}</span>
           <span className="flex items-center gap-1 text-fine text-ink-3">

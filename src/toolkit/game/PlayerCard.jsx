@@ -216,7 +216,7 @@ export function PlayerCard({ className, tab = null }) {
           </motion.ul>
         )}
       </AnimatePresence>
-      <p className="relative mt-3 text-fine text-ink-2">Points come from finishing a tool. Only you see them, on this device.</p>
+      <p className="relative mt-3 text-fine text-ink-2">Points come from finishing a tool. Only you see them.</p>
     </section>
   )
 }

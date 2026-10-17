@@ -8,7 +8,7 @@ import { captureHarness } from './Intro'
 import { getAppearance } from '../account/appearance'
 import { IntroOverlay, END, T, prog } from './apphome/intro'
 import { AuthPanel } from './apphome/AuthPanel'
-import { setMode } from '../lib/mode'
+import { setMode, setGuest } from '../lib/mode'
 import { PRO } from '../lib/terms'
 
 /* The owner fills this in. Plain text; a blank line starts a new paragraph. */
@@ -37,7 +37,7 @@ function DemoPanel({ go, onSignIn }) {
       <p className="m-0 mt-1 text-fine text-ink-2">The demo only, on sample data. No account needed. Pick a view:</p>
       <div className="mt-3.5 grid gap-2.5">
         {DEMO.map((d, i) => (
-          <button key={d.id} type="button" onClick={() => { setMode('demo'); go(d.id) }}
+          <button key={d.id} type="button" onClick={() => { setMode('demo'); setGuest(true); go(d.id) }}
             className={cn(i === 0 ? solid : outline, 'w-full')}>{d.label}</button>
         ))}
       </div>
@@ -183,7 +183,7 @@ export function AppHome({ go }) {
               {/* Guest Mode: the demo and nothing else. Live screens still
                   ask for an account, so a guest cannot reach real data. */}
               <button type="button"
-                onClick={() => { setMode('demo'); setDemo(true); history.replaceState(null, '', '#/app-home?demo') }}
+                onClick={() => { setMode('demo'); setGuest(true); setDemo(true); history.replaceState(null, '', '#/app-home?demo') }}
                 className="mt-3 flex min-h-[52px] w-full items-center justify-between gap-3 rounded-panel border-[1.5px]
                   border-dashed border-accent/60 bg-accent-wash/60 px-4 text-left transition-colors duration-150
                   hoverOnly:border-accent hoverOnly:bg-accent-wash">

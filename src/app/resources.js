@@ -66,7 +66,7 @@ export const RESOURCES = [
     name: '988 Suicide and Crisis Lifeline',
     what: 'Helps with any crisis, including thoughts of suicide.',
     hours: 'Every hour of every day',
-    who: 'Trained crisis counsellors across a network of local centres',
+    who: 'Trained crisis counselors across a network of local centers',
     actions: [
       { kind: 'call', label: 'Call 988', href: 'tel:988' },
       { kind: 'text', label: 'Text 988', href: 'sms:988' },
@@ -81,7 +81,7 @@ export const RESOURCES = [
     name: 'Crisis Text Line',
     what: 'Helps with anything, by text message instead of voice.',
     hours: 'Every hour of every day',
-    who: 'Trained volunteer crisis counsellors',
+    who: 'Trained volunteer crisis counselors',
     actions: [
       { kind: 'text', label: 'Text HOME to 741741', href: 'sms:741741?&body=HOME' },
       { kind: 'chat', label: 'Chat online', href: 'https://connect.crisistextline.org/chat' },
@@ -108,7 +108,7 @@ export const RESOURCES = [
     name: 'The Trevor Project',
     what: 'Supports LGBTQ young people with anything.',
     hours: 'Every hour of every day',
-    who: 'Trained crisis counsellors',
+    who: 'Trained crisis counselors',
     actions: [
       { kind: 'text', label: 'Text START to 678678', href: 'sms:678678?&body=START' },
       { kind: 'call', label: 'Call 1 866 488 7386', href: 'tel:18664887386' },

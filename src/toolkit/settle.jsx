@@ -116,7 +116,7 @@ function EventRows({ events, index, usual }) {
           </li>
         )
       })}
-      <li className="note mt-1.5">Marked events never leave this phone.</li>
+      <li className="note mt-1.5">Only you see marked events.</li>
     </ul>
   )
 }

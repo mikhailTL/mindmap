@@ -13,13 +13,15 @@ export const NOTES = 'Notes'
 export const NOTES_DEF = 'What a student writes in their own journal.'
 export const LOCATION = 'Location'
 
-/* The third audience. One name for them, everywhere: never "medical professional",
-   "school", "clinician" or "staff" in copy a visitor reads. */
-export const PRO = 'Medical Professional'
-export const PRO_LC = 'medical professional'
-export const PRO_PLURAL = 'Medical Professionals'
-export const PRO_PLURAL_LC = 'medical professionals'
-export const PRO_FOR = 'For Medical Professionals'
+/* The third audience. One name for them, everywhere: never "school",
+   "clinician" or "staff" in copy a visitor reads. */
+export const PRO = 'Counselor/Professional'
+export const PRO_LC = 'counselor/professional'
+export const PRO_PLURAL = 'Counselors/Professionals'
+export const PRO_PLURAL_LC = 'counselors/professionals'
+export const PRO_FOR = 'For Counselors/Professionals'
+/* For a narrow chip or tile: may break after the slash. */
+export const PRO_WRAP = 'Counselor/\u200BProfessional'
 
 /* Their view. Never "ranked", never "instability", never a leaderboard. */
 export const CASELOAD_TITLE = 'Students to check in with'

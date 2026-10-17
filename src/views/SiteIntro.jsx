@@ -6,7 +6,7 @@ import { PatchFront } from '../charts/patch-front'
 import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { AvatarArt } from '../account/avatars'
-import { PRO } from '../lib/terms'
+import { PRO_WRAP } from '../lib/terms'
 
 /* The site's onboarding. Three short beats, then the name. The owner: "it
  * needs to start with the rainbow and reduce text as much as possible". So
@@ -71,7 +71,7 @@ function ScorePicture({ still }) {
 const PEOPLE = [
   { name: 'Elena', role: 'Parent', avatar: 'sym-flower' },
   { name: 'Maya',  role: 'Teen',   avatar: 'fox', centre: true },
-  { name: 'Dr. Shah', role: PRO,   avatar: 'sym-leaf' },
+  { name: 'Dr. Shah', role: PRO_WRAP, avatar: 'sym-leaf' },
 ]
 
 function NetworkPicture({ still }) {

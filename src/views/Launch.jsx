@@ -3,7 +3,7 @@ import { Card, CardContent } from '../ui/card'
 import { Logo } from '../ui/logo'
 import { ArrowRight } from '../ui/marks'
 import { Frame } from '../ui/frame'
-import { PRO } from '../lib/terms'
+import { PRO, PRO_LC } from '../lib/terms'
 
 /* The app's front door: three doors, one photograph each.
  *
@@ -22,7 +22,7 @@ const ROLES = [
     alt:'A mother and her teenage child sitting close together on a sofa at home, both smiling' },
   { id:'app-pro', who:PRO, title:'Students to check on', cta:`Open the ${PRO} screen`,
     photo:'school-card',
-    alt:'A medical professional and a student talking on a sofa' },
+    alt:`A ${PRO_LC} and a student talking on a sofa` },
 ]
 
 function Door({ role, go }) {

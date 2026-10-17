@@ -2,7 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
-import { ActivityScreen, Choice, OnDevice } from './shell'
+import { ActivityScreen, Choice } from './shell'
 import { DidItWork } from './after'
 import { useGame, GameBar, Pops, LevelMeter, EndCard, FillRing, SPRING, SOFT, useSvgId } from './game'
 
@@ -383,7 +383,6 @@ export default function BodyScan() {
             <DidItWork tool="scan" phase="after" className="mt-3"/>
           </EndCard>
         )}
-        <OnDevice className="mt-4">Nothing leaves this device.</OnDevice>
       </div>
     </ActivityScreen>
   )

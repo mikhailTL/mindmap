@@ -75,3 +75,25 @@ export function useMode() {
 export function isReal() {
   return current === 'real'
 }
+
+/* Guest Mode: a visitor who chose to look at the demo without an account.
+   A guest is a spectator, not a student, parent or professional, so the
+   homes greet "Guest" rather than a demo person's name. Kept for this visit
+   (sessionStorage), and only meaningful in demo mode with nobody signed in. */
+const GUEST_KEY = 'mindmap.guest'
+let guest = (() => { try { return sessionStorage.getItem(GUEST_KEY) === '1' } catch { return false } })()
+const guestListeners = new Set()
+
+export function isGuest() { return guest }
+
+export function setGuest(on) {
+  guest = !!on
+  try { on ? sessionStorage.setItem(GUEST_KEY, '1') : sessionStorage.removeItem(GUEST_KEY) } catch {}
+  for (const fn of guestListeners) fn(guest)
+}
+
+export function useGuest() {
+  return useSyncExternalStore(
+    fn => { guestListeners.add(fn); return () => guestListeners.delete(fn) },
+    () => guest, () => false)
+}

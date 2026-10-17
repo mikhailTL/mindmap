@@ -1,5 +1,5 @@
 /* What a card or a child's page may show, and the words for it. One place, so
- * the parent and the Medical Professional dashboards draw the same rules.
+ * the parent and the Counselor/Professional dashboards draw the same rules.
  *
  * CONSENT, never widened here:
  *   parent  whole days only. The hour-by-hour curve needs the teen's raw

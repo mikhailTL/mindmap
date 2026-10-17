@@ -26,7 +26,7 @@ import {
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
 } from '../lib/terms'
 
-/* The three audience routes: students, parents, medical professionals. Each
+/* The three audience routes: students, parents, counselors/professionals. Each
    page is a hero, at most three sections and a closer. The consent model and
    the wording in lib/terms.js are the facts; the layout is held to
    docs/design-spec.md. Every frame is a licensed stock photograph of models:
@@ -171,7 +171,7 @@ function Closer({ title, line, label, view, go, rows, ground }) {
 
 /* ═══════════════ the Mind Score and Trends, shared by all three ═════════════ */
 
-/* The sample dial, read for a parent or a medical professional. The dial
+/* The sample dial, read for a parent or a counselor/professional. The dial
    draws its own calm and peak ends and their clouds. */
 function ScoreExplain({ rings, rows, aside, asideAlt }) {
   return (
@@ -250,7 +250,7 @@ function TrendsFig({ ranges, aside, asideAlt }) {
   )
 }
 
-const STOCK = ['The photographs', 'These are licensed stock photos of models. Nobody shown uses MindMap.']
+const STOCK = ['The photographs', 'These are licensed stock photos of models.']
 const HALLWAY = ['students-hallway',
   'Four high school students walking along a bright corridor with folders and backpacks']
 
@@ -324,13 +324,13 @@ export function ForStudents({ go }) {
       </Section>
 
       <Section tone="paper" className="bg-aqua-2" tight>
-        <SectionHead>Your trends</SectionHead>
+        <SectionHead>Trends</SectionHead>
         <Pair>
           <ScrollIn>
             <TrendsFig ranges={['day', 'week', 'month']} aside={HALLWAY[0]} asideAlt={HALLWAY[1]}/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read your trends" variant="rule" hue="beam" rows={[
+            <Facts head="How to read the Trends" variant="rule" hue="beam" rows={[
               ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
               ['The calendar', `Each day shows its Heads Up face and ${SCORE}. Pick a day to see it.`],
               ['The shaded band', 'The band is your usual range, built from your last fourteen days.'],
@@ -482,7 +482,7 @@ export function ForParents({ go }) {
   )
 }
 
-/* ═══════════════════════════ for medical professionals ══════════════════ */
+/* ═══════════════════════════ for counselors/professionals ══════════════════ */
 
 /* `Bars` takes a paint, not a class; #157446 is the accent token. */
 const ACCENT = '#157446'
@@ -644,7 +644,7 @@ export function ForSchools({ go }) {
         </Pair>
       </Section>
 
-      {/* Consent scope for a medical professional: the k-anonymity floor and
+      {/* Consent scope for a counselor/professional: the k-anonymity floor and
           the audit log, both product-critical, in one section. */}
       <Section tone="card" tight>
         <SectionHead>Who can open a record</SectionHead>

@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
 import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
-import { PRO } from '../lib/terms'
+import { PRO_WRAP } from '../lib/terms'
 import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole, useAccount } from './store'
 import { AvatarChooser, field, fieldError, outline, solid } from './ui'
 import { Settings } from './Settings'
@@ -40,7 +40,7 @@ const OtherMark = p => (
 const TILES = [
   { role: 'student', label: 'Student', Mark: Person },
   { role: 'parent',  label: 'Parent',  Mark: People },
-  { role: 'pro',     label: PRO,       Mark: ClipMark },
+  { role: 'pro',     label: PRO_WRAP,  Mark: ClipMark },
   { role: 'other',   label: 'Other',   Mark: OtherMark },
 ]
 

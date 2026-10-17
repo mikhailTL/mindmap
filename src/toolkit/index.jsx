@@ -8,7 +8,7 @@ import '../kit/kit.css'
  *   student  the student exercises in three groups: Body, Mind, Phone sensors.
  *   parent   "For you" (the parent tools), then "Do it with your teen" (every
  *            student exercise).
- *   pro      "For your sessions" (the Medical Professional tools), then
+ *   pro      "For your sessions" (the Counselor/Professional tools), then
  *            "Use in a session" (every student exercise).
  *
  * 17 October (later): each activity is a nameplate (nameplates/), a wide
@@ -37,7 +37,7 @@ const SteadyIcon  = () => <I><circle cx="12" cy="12" r="8"/><circle cx="12" cy="
 const AlertIcon   = () => <I><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M10 3h4M12 3v3"/></I>
 const PocketIcon  = () => <I><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M9.5 12c1 0 1-2.5 2.5-2.5s1.5 5 2.5 5 1-2.5 2.5-2.5"/></I>
 const WalkIcon    = () => <I><circle cx="13" cy="4.5" r="1.8"/><path d="M9.5 21l2.5-7M12 9l-2 5 3.5 2 1 5M12 9l3 3h3M12 9l-3.5 1-1.5 3"/></I>
-/* Medical Professional set */
+/* Counselor/Professional set */
 const ScriptIcon  = () => <I><path d="M5 4h14v12H9l-4 4z"/><path d="M8.5 8.5h7M8.5 12h4.5"/></I>
 const SignIcon    = () => <I><path d="M12 3v18M12 6h7l2 2.5-2 2.5h-7M12 13H5l-2 2.5L5 18h7"/></I>
 const TimerIcon   = () => <I><circle cx="12" cy="13.5" r="7"/><path d="M12 9.5v4h3M9.5 3h5"/></I>

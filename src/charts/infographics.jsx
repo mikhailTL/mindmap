@@ -82,7 +82,7 @@ export function SignalTrace({ kind, muted = false, className }) {
 
 /* Five things, three audiences, and the rule that fixes each row. 2 always,
    1 only with consent, 0 never. Raw readings, Notes and Location are 0 for
-   both the parent and the medical professional at every consent level: those
+   both the parent and the counselor/professional at every consent level: those
    three are never shared. Rows 1 and 2 are 1, because the student can switch
    them off. Level 2 is the student's own column. */
 const WHAT = [

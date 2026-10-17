@@ -23,7 +23,7 @@ import { STATUS_SUB, STATUS_WORD, dayLabel, dayOf, displayName, isPro, lightOf, 
  * dial beside that day's Heads Up, the Day / Week / Month trend, then one day
  * in detail (picked from the trend or stepped through): its readings and the
  * body signals behind the score. A parent sees whole days and plain words; a
- * Medical Professional sees figures with units, and single readings only when
+ * Counselor/Professional sees figures with units, and single readings only when
  * the teen shares them. A parent's privacy boxes close the page. */
 
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
@@ -209,7 +209,7 @@ function BodyTiles({ teen, d, variant }) {
   )
 }
 
-/* The Medical Professional's extra figures for one day. */
+/* The Counselor/Professional's extra figures for one day. */
 function Measures({ teen, d }) {
   const u = usualOf(teen, 'score', d.date)
   const rows = [
@@ -234,7 +234,7 @@ function Measures({ teen, d }) {
   )
 }
 
-/* The consent a Medical Professional holds for this teen. */
+/* The consent a Counselor/Professional holds for this teen. */
 function Consent({ teen }) {
   const c = teen.consent || {}
   const rows = [['Mind Score', c.score], ['Trends', c.trends], ['Single readings', c.raw], ['Name', c.name]]
@@ -272,8 +272,8 @@ export function AskAbout({ teen }) {
             <p className="m-0 mt-2 text-fine text-ink-2">The app cannot say why.</p>
             <p className="m-0 mt-3 max-w-[50ch] text-fine text-ink-2">Try not to say &ldquo;Your {teen.live ? 'readings say' : 'patch says'} you were
               stressed.&rdquo; {teen.first} can see this page too.</p>
-            <p className="m-0 mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call their medical
-              professional or a crisis line.</p>
+            <p className="m-0 mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call their counselor/professional
+              or a crisis line.</p>
           </div>
           <div>
             <p className="m-0 text-fine font-semibold text-ink-2">Ways to start</p>

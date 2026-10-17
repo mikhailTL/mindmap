@@ -6,7 +6,7 @@ import {
 } from '../src/lib/caseload.js'
 import { LOCATION, NOTES } from '../src/lib/terms.js'
 
-/* The console a medical professional sees is the one screen in MindMap where
+/* The console a counselor/professional sees is the one screen in MindMap where
    showing the wrong row is a disclosure rather than a glitch. The module's own
    rule is that CONSENT is the single source of truth and that every derived
    view has to read it, so these tests check the derived views against CONSENT

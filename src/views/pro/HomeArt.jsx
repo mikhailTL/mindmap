@@ -4,7 +4,7 @@ import { studentRings } from '../../lib/readings'
 import { AvatarArt } from '../../account/avatars'
 import { cn } from '../../lib/utils'
 
-/* The pictures on the Medical Professional home. All of it is art: nothing
+/* The pictures on the Counselor/Professional home. All of it is art: nothing
  * here is a reading, a count of a light or anyone's score. Each picture is
  * aria-hidden, since the card's own words say where it goes. */
 
@@ -22,20 +22,20 @@ export function RainbowArt({ size = 240, className }) {
   )
 }
 
-/* A week of lamp faces in a row, the way a Trends chart sets them under its
-   bars. A fixed pattern, not a teen's week. */
+/* Three avatars joined by a dotted thread: a family linking up. Sized in
+   percent of its own box, so it scales with the half-tile it sits in. */
 export function LinkArt({ className }) {
   return (
-    <span aria-hidden className={cn('relative block h-[76px] w-[168px]', className)}>
+    <span aria-hidden className={cn('relative block aspect-[168/76] w-[168px]', className)}>
       <svg viewBox="0 0 168 76" className="absolute inset-0 size-full" fill="none">
         <path d="M30 40 C 56 8, 92 8, 84 38 S 120 70, 138 40" stroke="#067049" strokeWidth="2.5"
           strokeDasharray="5 6" strokeLinecap="round"/>
       </svg>
-      <span className="absolute left-0 top-[14px] size-[52px] rounded-full ring-[3px] ring-white">
+      <span className="absolute left-0 top-[18%] aspect-square w-[31%] rounded-full ring-2 ring-white">
         <AvatarArt id="sym-flower" className="size-full"/></span>
-      <span className="absolute left-[58px] top-[10px] size-[56px] rounded-full ring-[3px] ring-white">
+      <span className="absolute left-[34.5%] top-[13%] aspect-square w-[33.3%] rounded-full ring-2 ring-white">
         <AvatarArt id="fox" className="size-full"/></span>
-      <span className="absolute left-[116px] top-[14px] size-[52px] rounded-full ring-[3px] ring-white">
+      <span className="absolute left-[69%] top-[18%] aspect-square w-[31%] rounded-full ring-2 ring-white">
         <AvatarArt id="sym-leaf" className="size-full"/></span>
     </span>
   )
@@ -56,20 +56,29 @@ export function ChatArt({ className }) {
   )
 }
 
-/* Three of the professional tools, as tilted cards. These names are the
-   Toolkit's own. */
-const TOOLS = [
-  ['Session Openers', 'bg-white text-sun-ink border-sun/60', '-rotate-6'],
-  ['Grounding Timer', 'bg-sky-wash text-sky-ink border-sky/50', 'rotate-3'],
-  ['Referral Note', 'bg-blush-wash text-blush-ink border-blush/50', '-rotate-2'],
-]
+/* Three of the professional tools as tilted cards, drawn rather than
+   written so they still read at half a tile: a conversation opener, a
+   grounding timer and a referral note. */
 export function ToolArt({ className }) {
   return (
-    <span aria-hidden className={cn('flex flex-col items-end gap-1', className)}>
-      {TOOLS.map(([name, tone, tilt], i) => (
-        <span key={name} className={cn('block whitespace-nowrap rounded-[9px] border-2 px-2.5 py-1 font-display text-fine font-bold',
-          tone, tilt, i === 1 && 'mr-4')}>{name}</span>
-      ))}
-    </span>
+    <svg aria-hidden viewBox="0 0 120 92" className={cn('block h-[92px] w-[120px] overflow-visible', className)}
+      fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-8 34 46)">
+        <rect x="6" y="18" width="52" height="62" rx="9" fill="#ffffff" stroke="#b5871b" strokeWidth="2.4"/>
+        <path d="M16 34h24a5 5 0 0 1 5 5v6a5 5 0 0 1-5 5h-14l-6 5v-5h-4a5 5 0 0 1-5-5v-6a5 5 0 0 1 5-5z"
+          fill="#f0cf7a"/>
+        <path d="M16 64h32M16 71h20" stroke="#b5871b" strokeWidth="2.4"/>
+      </g>
+      <g transform="rotate(5 86 44)">
+        <rect x="60" y="10" width="52" height="62" rx="9" fill="#def0fc" stroke="#2294e6" strokeWidth="2.4"/>
+        <circle cx="86" cy="38" r="15" fill="#ffffff" stroke="#2294e6" strokeWidth="2.4"/>
+        <path d="M86 29v9l6 4" stroke="#2294e6" strokeWidth="2.6"/>
+        <path d="M72 62h28" stroke="#2294e6" strokeWidth="2.4"/>
+      </g>
+      <g transform="rotate(-3 62 70)">
+        <rect x="36" y="50" width="52" height="38" rx="8" fill="#fce6f1" stroke="#f2248b" strokeWidth="2.4"/>
+        <path d="M46 62h22M46 70h32M46 78h14" stroke="#f2248b" strokeWidth="2.4"/>
+      </g>
+    </svg>
   )
 }

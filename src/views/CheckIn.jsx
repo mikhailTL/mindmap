@@ -5,7 +5,7 @@ import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { ArrowRight, Camera, Link, Person, Stack } from '../ui/marks'
 import { Button } from '../ui/button'
-import { Card } from '../ui/card'
+import { Card, cardClass } from '../ui/card'
 import { Progress } from '../ui/progress'
 import { Scale } from '../ui/radio-scale'
 import { DemoNotice, PatchNotice } from '../ui/notice'
@@ -49,21 +49,13 @@ const SCREENS = {
   },
 }
 
-/* The four ways in: on the card a mark, title, one line, one figure and the
-   action; under the grid the same three facts in the same order. */
+/* The four ways in. Each card has its own hue and surface so the four read
+   apart at a glance: the check-in questions on the dark ground as the start
+   here pick, the Mental Mirror on a sky wash, the camera with a turquoise band
+   and the patch with a sun edge. `fact` is the one figure shown large. */
 const WAYS = [
-  { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
-    line:'Put a fingertip on the lens, then speak.',
-    fact:['45', 'seconds'],
-    cta:'Start',
-    spec:[
-      ['Takes', '45 seconds'],
-      ['Reads', 'Heart rate, beat variation, pitch and steadiness'],
-      ['Needs', 'A camera and a microphone'],
-    ],
-    foot:'Frames and audio become numbers, then get deleted. The score syncs to your account.' },
-  { id:'survey', title:'Check-in questions', opens:true, Mark:Stack,
-    line:'You need no camera or patch. Take it as often as you like.',
+  { id:'survey', title:'Check-in questions', opens:true, Mark:Stack, tag:'Start here',
+    line:'Only needs this phone. Take it as often as you like.',
     fact:['60', 'seconds'],
     cta:'Answer',
     spec:[
@@ -75,13 +67,23 @@ const WAYS = [
   { id:'mirror', title:'Mental Mirror', opens:true, Mark:Person,
     line:'Face the phone. Lines trace your face as it is read.',
     fact:[String(FACE_SECONDS), 'seconds'],
-    cta:'Open',
+    cta:'Open the Mirror',
     spec:[
       ['Takes', `${FACE_SECONDS} seconds`],
       ['Reads', 'Blinks, brow, lips, eyes, small movements, and pulse from skin colour'],
       ['Needs', 'A front camera and good light'],
     ],
     foot:'Frames become numbers, then get deleted. Students only. The score syncs to your account.' },
+  { id:'sensors', title:'Camera and microphone', opens:true, Mark:Camera,
+    line:'Put a fingertip on the lens, then speak.',
+    fact:['45', 'seconds'],
+    cta:'Start',
+    spec:[
+      ['Takes', '45 seconds'],
+      ['Reads', 'Heart rate, beat variation, pitch and steadiness'],
+      ['Needs', 'A camera and a microphone'],
+    ],
+    foot:'Frames and audio become numbers, then get deleted. The score syncs to your account.' },
   { id:'patch', title:'Connect a patch', opens:false, Mark:Link,
     line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
@@ -91,6 +93,34 @@ const WAYS = [
       ['Needs', 'A MindMap patch over Bluetooth'],
     ] },
 ]
+
+/* Per way: the surface (cardClass via Card), the icon tile, the big figure,
+   the action and any extra edge. Text on ink is paper, mist or accent-lit;
+   each action clears 4.5 : 1 (paper on sky-ink, beam-ink and sun-ink, ink
+   on accent-lit). */
+const LOOK = {
+  survey: {
+    variant:'ink', tile:'bg-paper/10 text-accent-lit', num:'text-accent-lit', unit:'text-mist',
+    head:'text-paper', body:'text-mist', tag:'text-accent-lit',
+    cta:'bg-accent-lit text-ink groupHoverOnly:bg-paper',
+  },
+  mirror: {
+    variant:'tint', hue:'sky', tile:'bg-card text-sky-ink', num:'text-sky-ink', unit:'text-ink-2',
+    head:'text-ink', body:'text-ink-2',
+    cta:'bg-sky-ink text-paper groupHoverOnly:bg-ink',
+  },
+  sensors: {
+    variant:'plain', tile:'bg-beam-wash text-beam-ink', num:'text-beam-ink', unit:'text-ink-2',
+    head:'text-ink', body:'text-ink-2', band:'bg-beam',
+    cta:'bg-beam-ink text-paper groupHoverOnly:bg-ink',
+  },
+  patch: { tile:'bg-sun-wash text-sun-ink' },
+}
+/* The same hues on the white panels under "Compare the four ways". */
+const COMPARE_TILE = {
+  survey:'bg-ink text-accent-lit', mirror:'bg-sky-wash text-sky-ink',
+  sensors:'bg-beam-wash text-beam-ink', patch:'bg-sun-wash text-sun-ink',
+}
 
 /* Figures as a ruled row: each a big number over a short label, left
    aligned, with a hairline between them. Spans, so it can sit inside a
@@ -125,24 +155,48 @@ function Spec({ rows }) {
   )
 }
 
-/* A way in. The whole card is the control and the hit area. */
+/* The icon in its tile. */
+function Tile({ Mark, className }) {
+  return (
+    <span aria-hidden className={cn('grid size-11 shrink-0 place-items-center rounded-[12px]', className)}>
+      <Mark className="size-6"/>
+    </span>
+  )
+}
+
+/* A way in. The whole card is the control and the hit area; the action
+   inside it is drawn as a button so the next step is plain. */
 const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
-  const Mark = way.Mark
+  const look = LOOK[way.id]
   return (
     <Card interactive as="button" type="button" ref={ref} onClick={onOpen}
-      className="group flex h-full flex-col p-4 lg:p-5">
-      <span className="flex items-center gap-2.5">
-        <Mark aria-hidden className="size-6 shrink-0 text-accent"/>
-        <span className="block font-display text-row font-bold leading-tight text-ink">{way.title}</span>
+      variant={look.variant} hue={look.hue}
+      className="group relative flex h-full flex-col p-4 lg:p-5">
+      {look.band && <span aria-hidden className={cn('absolute inset-x-0 top-0 h-[5px]', look.band)}/>}
+      <span className="flex items-start justify-between gap-3">
+        <Tile Mark={way.Mark} className={look.tile}/>
+        {way.fact && (
+          <span className="flex items-baseline gap-1.5">
+            <span className={cn('font-display text-[2.5rem] font-bold leading-none tabular-nums', look.num)}>
+              {way.fact[0]}</span>
+            <span className={cn('text-fine', look.unit)}>{way.fact[1]}</span>
+          </span>
+        )}
       </span>
-      <span className="mt-1.5 block max-w-[38ch] text-meta leading-[1.4] text-ink-2">{way.line}</span>
-      {way.fact && <Figures items={[way.fact]} className="mt-3"/>}
+      {way.tag && (
+        <span className={cn('mt-3 block font-display text-fine font-bold', look.tag)}>{way.tag}</span>
+      )}
+      <span className={cn('block font-display text-head font-bold leading-tight', way.tag ? 'mt-0.5' : 'mt-3',
+        look.head)}>{way.title}</span>
+      <span className={cn('mt-1 block max-w-[38ch] text-meta leading-[1.4]', look.body)}>{way.line}</span>
       {children}
-      <span className="mt-auto flex items-center gap-2 pt-3 font-display text-meta
-        font-bold text-accent">
-        {way.cta}
-        <ArrowRight aria-hidden className="size-[1.05rem] transition-transform
-          duration-200 groupHoverOnly:translate-x-1.5"/>
+      <span className="mt-auto pt-4">
+        <span className={cn('inline-flex min-h-[46px] items-center gap-2 rounded-field px-5 font-display',
+          'text-ui font-bold transition-colors duration-150', look.cta)}>
+          {way.cta}
+          <ArrowRight aria-hidden className="size-[1.05rem] transition-transform duration-200
+            motion-safe:groupHoverOnly:translate-x-1"/>
+        </span>
       </span>
     </Card>
   )
@@ -157,8 +211,9 @@ function Compare() {
           const Mark = way.Mark
           return (
             <section key={way.id} className={cn(PANEL, 'p-4')}>
-              <h3 className="flex items-center gap-2 font-display text-meta font-bold text-ink">
-                <Mark aria-hidden className="size-5 text-accent"/>{way.title}
+              <h3 className="flex items-center gap-2.5 font-display text-meta font-bold text-ink">
+                <Tile Mark={Mark} className={cn('size-9 [&_svg]:size-5', COMPARE_TILE[way.id])}/>
+                {way.title}
               </h3>
               <Spec rows={way.spec}/>
               {way.foot && (
@@ -303,7 +358,7 @@ export function CheckInBody({ go }){
     setPair(await connectPatch()); setBusy(false)
   }
 
-  const [sensors, survey, mirror, patch] = WAYS
+  const [survey, mirror, sensors, patch] = WAYS
 
   return (
     <>
@@ -320,53 +375,53 @@ export function CheckInBody({ go }){
             <PatchNotice inline/>
           </div>
 
-          <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4 xl:grid-cols-4">
+          <div className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
             <ScrollRow index={0} className="h-full">
-              <Way ref={el => { cards.current.sensors = el }} way={sensors}
-                onOpen={() => open('sensors')}/>
-            </ScrollRow>
-            <ScrollRow index={1} className="h-full">
               <Way ref={el => { cards.current.survey = el }} way={survey}
                 onOpen={() => open('survey')}>
-                <span className="mt-3 block border-t border-rule pt-2.5">
-                  <span className="block font-mono text-fine tabular-nums text-ink-3">
-                    {`${answered}/${ITEMS.length}`}
+                <span className="mt-3 flex items-center gap-3">
+                  {/* aria-hidden: the figure beside it says the same. */}
+                  <span aria-hidden className="block flex-1">
+                    <Progress value={answered} max={ITEMS.length} className="bg-paper/15"/>
                   </span>
-                  {/* aria-hidden: the line above already says the figure. */}
-                  <span aria-hidden className="mt-2 block">
-                    <Progress value={answered} max={ITEMS.length}/>
+                  <span className="shrink-0 text-fine tabular-nums text-mist">
+                    {`${answered} of ${ITEMS.length} answered`}
                   </span>
                 </span>
               </Way>
             </ScrollRow>
-            <ScrollRow index={2} className="h-full">
+            <ScrollRow index={1} className="h-full">
               <Way ref={el => { cards.current.mirror = el }} way={mirror}
                 onOpen={() => open('mirror')}/>
+            </ScrollRow>
+            <ScrollRow index={2} className="h-full">
+              <Way ref={el => { cards.current.sensors = el }} way={sensors}
+                onOpen={() => open('sensors')}/>
             </ScrollRow>
             {/* Pairing is a device handshake, not a reading, so this card is
                 a panel with a control in it. */}
             <ScrollRow index={3} className="h-full">
-              <section className={cn(PANEL, 'flex h-full flex-col p-4 lg:p-5')}>
-                <h3 className="flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
-                  <Link aria-hidden className="size-6 shrink-0 text-accent"/>{patch.title}
+              <section className={cn(cardClass('plain'), 'flex h-full flex-col border-l-[5px] border-l-sun p-4 lg:p-5')}>
+                <h3 className="flex items-center gap-3 font-display !text-head font-bold !leading-tight text-ink">
+                  <Tile Mark={Link} className={LOOK.patch.tile}/>{patch.title}
                 </h3>
-                <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.4] text-ink-2">{patch.line}</p>
-                <div className="mt-auto pt-3">
-                  <Button variant="outline" size="sm" onClick={pairUp} disabled={busy}>
+                <p className="mt-2 max-w-[38ch] text-meta leading-[1.4] text-ink-2">{patch.line}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
+                  <Button size="sm" onClick={pairUp} disabled={busy}
+                    className="bg-sun-ink px-5 font-bold text-paper hoverOnly:bg-ink active:bg-ink">
                     <Link aria-hidden/>{busy ? 'Connecting…' : patch.cta}
                   </Button>
+                  <p aria-live="polite" className="m-0 max-w-[44ch] text-fine leading-[1.4] text-ink-2">
+                    {pair?.msg || (mode === 'real' ? 'No patch is paired.' : 'The demo patch is paired.')}
+                  </p>
                 </div>
-                <p aria-live="polite"
-                  className="mt-1.5 min-h-[2.8em] max-w-[44ch] text-fine leading-[1.4] text-ink-3">
-                  {pair?.msg || (mode === 'real' ? 'No patch is paired.' : 'The demo patch is paired.')}
-                </p>
               </section>
             </ScrollRow>
           </div>
           <Compare/>
           {/* The owner, 17 October: no log or trends on this tab. They are
               on the Trends tab, and this link goes there. */}
-          <SeeTrends go={go} className="mt-5 lg:mt-6">See Your Trends</SeeTrends>
+          <SeeTrends go={go} className="mt-5 lg:mt-6"/>
         </Stage>
       )}
 

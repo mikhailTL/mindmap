@@ -7,7 +7,7 @@ import { GuidedTour, replayIntro } from './Intro'
 import { setPreferredRole } from '../account/store'
 
 /* The front door, in the owner's words: "What best describes you", Student,
- * Parent, Medical Professional or Other; the first three route, Other starts
+ * Parent, Counselor/Professional or Other; the first three route, Other starts
  * the tour in Intro.jsx. A question, not a gate: the page behind it stays,
  * the answer is dropped once acted on, and Skip leaves the visitor where they
  * were with the whole navigation in reach. */
@@ -150,7 +150,7 @@ function Chooser({ onPick, onSkip }) {
             Skip and look around
           </button>
           <p className="max-w-[34ch] text-fine text-ink-3">
-            Your choice stays on this device.
+            You can switch any time.
           </p>
         </div>
       </div>
@@ -185,7 +185,7 @@ export function Entry({ go, enabled = true }) {
     requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
   }, [])
 
-  /* Student, Parent and Medical Professional open that audience's page; the
+  /* Student, Parent and Counselor/Professional open that audience's page; the
      role is kept and pressed later when they sign up in the app, the only
      place sign up happens. The fourth choice is the tour. */
   const pick = React.useCallback(id => {

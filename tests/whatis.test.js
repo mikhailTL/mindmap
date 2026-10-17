@@ -18,7 +18,7 @@ describe('What is MindMap? band', () => {
   })
 
   it('leads with the owner sentence', () => {
-    expect(WHAT_IS_LEAD).toBe('MindMap is an adolescent wearable patch and app system designed for teens, parents, and Medical Professionals/schools to address the teen mental health crisis at its root, providing 3 main features:')
+    expect(WHAT_IS_LEAD).toBe('MindMap is an adolescent wearable patch and app system designed for teens, parents, and Counselors/Professionals to address the teen mental health crisis at its root, providing 3 main features:')
   })
 
   it('shows the Toolkit as a part of the app feature, with its own picture', () => {
@@ -34,7 +34,7 @@ describe('What is MindMap? band', () => {
     const copy = [WHAT_IS_LEAD, ...WHAT_IS.map(f => f.text), TOOLKIT_PART.text].join(' ')
     expect(copy).not.toMatch(/[–—]/)
     expect(copy).not.toMatch(/Mindmap|trained on clinical/)
-    expect(copy).toContain('Medical Professionals')
+    expect(copy).toContain('Counselors/Professionals')
     expect(copy).not.toMatch(/diagnos|prevent|treat/i)
   })
 

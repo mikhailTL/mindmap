@@ -8,7 +8,7 @@ import {
  * The face gives two kinds of input. The contactless heart rate goes into the
  * Mind Score model (tnam.js) through the same learned curve the fingertip
  * reading and the patch use, with this person's calibration gains on top. The
- * face features themselves — blink rate, brow, lips, eyes, head — enter as
+ * face features themselves (blink rate, brow, lips, eyes, head) enter as
  * additive terms with a hand allocation, in the same display units, because
  * no dataset exists yet to fit them against (see face.js). Each one is a
  * z-score against this person's own earlier mirror readings, so "your brow is
@@ -111,7 +111,7 @@ export function scoreFace({ face, baseline = emptyFaceBaseline(), calibration = 
   const score = Math.round(100 / (1 + Math.exp(-D)))
 
   const contrib = []
-  if (z.hr != null) contrib.push({ id: 'hr', ch: 'heart', label: 'Heart rate (from skin colour)', value: features.hr, z: z.hr, raw: cc.hr / SCORE_TEMPERATURE })
+  if (z.hr != null) contrib.push({ id: 'hr', ch: 'heart', label: 'Pulse', value: features.hr, z: z.hr, raw: cc.hr / SCORE_TEMPERATURE })
   for (const t of used) contrib.push({ ...t, ch: 'face', value: features[t.id], z: z[t.id], raw: (K * t.w * z[t.id]) / wTotal / 2 })
 
   /* Band: the face channel is unfitted (a fixed widening), the pulse may be
@@ -141,18 +141,21 @@ export function faceBandOf(n) {
   return { key: 'high', word: 'high' }
 }
 
+/* The words for each driver in the one-line result. */
+const SAY = {
+  hr: 'Pulse', blinkRate: 'Blinking', browFurrow: 'Brow tension', lipPress: 'Lip pressing',
+  eyeSquint: 'Eye tightening', headMotion: 'Restlessness', earVar: 'Eye movement',
+}
+
+/* One short line: the band, then the single biggest driver if one stands out. */
 export function faceSentence(r) {
   const b = faceBandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]
   const verb = b.key === 'usual' ? 'sitting' : 'running'
   const tail = !top || Math.abs(top.raw) < 0.3
-    ? 'Nothing in your face stands out on its own.'
-    : `${top.label} is the biggest single part of that: ${fmtZ(top.z)} ${r.baselineDays ? 'your own usual' : 'the typical range, until you have a few readings of your own'}.`
+    ? 'Nothing stands out.'
+    : `${SAY[top.id] ?? top.label} is ${top.z > 0 ? 'above' : 'below'} ${r.baselineDays ? 'your usual' : 'the typical range'}.`
   return { lead: `Right now you are ${verb} `, word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
 }
 
-const fmtZ = z => {
-  const n = Math.abs(z).toFixed(1)
-  return `${n} standard deviation${n === '1.0' ? '' : 's'} ${z > 0 ? 'above' : 'below'}`
-}
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x))

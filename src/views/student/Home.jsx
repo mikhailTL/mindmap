@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useAccount } from '../../account/store'
-import { useMode } from '../../lib/mode'
+import { useGuest, useMode } from '../../lib/mode'
 import { cn } from '../../lib/utils'
 import { PatchFront } from '../../charts/patch-front'
 import { Button } from '../../ui/button'
@@ -170,7 +170,7 @@ function PatchStatus({ paired, go }) {
             {paired ? 'Patch paired' : 'No patch paired'}
           </h2>
           <p className="m-0 mt-0.5 text-fine text-ink-2">
-            {paired ? 'The demo patch is connected. Its readings go to your trends.'
+            {paired ? 'The demo patch is connected. Its readings go to Trends.'
               : 'You can still take a reading with your phone camera.'}</p>
         </div>
       </div>
@@ -189,14 +189,18 @@ function PatchStatus({ paired, go }) {
 /* Cards first, as on the earlier start screen: the one dark card for the
    thing a student does most, then four even tiles, then the patch. */
 const TILES = [
-  { id: 'student-trends', title: 'Your trends', tone: 'bg-sky-wash', chevron: 'text-sky-ink',
-    Motif: RainbowMotif, motif: 'h-[58%] w-auto' },
+  { id: 'student-trends', title: 'Trends', tone: 'bg-sky-wash', chevron: 'text-sky-ink',
+    Motif: RainbowMotif, motif: 'h-auto w-[86%]',
+    photo: 'student-homework', alt: 'A student working through notes at a desk' },
   { id: 'toolkit', title: 'Toolkit', tone: 'bg-sun-wash', chevron: 'text-sun-ink',
-    Motif: BreatheMotif, motif: 'h-[62%] w-auto' },
+    Motif: BreatheMotif, motif: 'h-auto w-[62%]',
+    photo: 'student-basketball', alt: 'A teenager playing basketball outside' },
   { id: 'ai', title: 'Ask MindMap AI', tone: 'bg-lilac-wash', chevron: 'text-lilac-ink',
-    Motif: ChatMotif, motif: 'h-[58%] w-auto' },
+    Motif: ChatMotif, motif: 'h-auto w-[84%]',
+    photo: 'student-hero', alt: 'A teenager with headphones, smiling on a sofa' },
   { id: 'network', title: 'Your network', tone: 'bg-coral-wash', chevron: 'text-coral-ink',
-    Motif: NetworkMotif, motif: 'h-[58%] w-auto' },
+    Motif: NetworkMotif, motif: 'h-auto w-[86%]',
+    photo: 'friends-steps', alt: 'Two friends talking on school steps' },
 ]
 
 export function StudentHome({ go }) {
@@ -204,7 +208,9 @@ export function StudentHome({ go }) {
   const me = useAccount()
   const calm = !!useReducedMotion()
   const demo = mode !== 'real'
-  const name = demo ? DEMO_FIRST : firstName(me?.name)
+  /* A guest is a spectator, not a role: no demo name for them. */
+  const guest = useGuest() && demo && !me
+  const name = guest ? 'Guest' : demo ? DEMO_FIRST : firstName(me?.name)
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       <header>
@@ -220,6 +226,7 @@ export function StudentHome({ go }) {
       <StartGrid label="Your MindMap">
         {TILES.map(t => (
           <StartTile key={t.id} title={t.title} tone={t.tone} chevron={t.chevron}
+            photo={t.photo} photoAlt={t.alt}
             onClick={() => go(t.id)} art={<t.Motif calm={calm} className={t.motif}/>}/>
         ))}
       </StartGrid>

@@ -8,7 +8,7 @@ import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { K_ANONYMITY } from '../lib/caseload'
-import { SCORE } from '../lib/terms'
+import { SCORE, PRO_PLURAL_LC } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { ToolkitBand } from './methods/ToolkitBand'
@@ -59,10 +59,9 @@ const CATEGORIES = [
     rows: [
       ['Answers', `Stress, sleep, school and the ${SCORE}.`],
       ['Follows', 'Guidance from SAMHSA, NIMH, AAP and CDC.'],
-      ['Speaks to', 'Teens, parents and Medical Professionals, each in their own voice.'],
+      ['Speaks to', `Teens, parents and ${PRO_PLURAL_LC}, each in their own voice.`],
       ['Never', 'Diagnoses, scores severity or names a medication.'],
       ['In a crisis', 'A crisis line comes before anything else.'],
-      ['Status today', 'Not connected yet, so nothing on this site answers a question.'],
     ],
     figure: FrameworkFan },
   { id: 'ml', tab: 'Machine Learning', tone: 'ink', ground: 'bg-ink',
@@ -85,7 +84,7 @@ const CATEGORIES = [
     rows: [
       ['Made with', 'React, running in the browser.'],
       ['Without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone.'],
-      ['Privacy', `Parents see one day at a time. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
+      ['Privacy', `Parents see trends by day, week and month, never anything finer than a day. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
       ['Toolkit', 'Short activities, each on its own page.'],
       ['Sync', 'Readings sync to your account and to the people you share with.'],
     ],

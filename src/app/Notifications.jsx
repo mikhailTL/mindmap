@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollIn } from '../ui/motion'
 import { cn } from '../lib/utils'
 import { SeeDetails, Why } from '../views/Monitor'
-import { SCORE } from '../lib/terms'
+import { SCORE, PRO_LC } from '../lib/terms'
 import { Chips, ChoiceRows, Panel, SwitchRow, TimeField } from './controls'
 import {
   DAYS, LOCK_COPY, LOCK_LEVELS, getNotify, getVersion, lockLine, setNotify, subscribe,
@@ -108,7 +108,7 @@ export function NotificationSettings({ score = null, className }) {
             <ul className="m-0 list-disc pl-4">
               <li>One reminder, at the time you pick.</li>
               <li>Hold overnight waits until morning.</li>
-              <li>No reminder reaches a parent or a Medical Professional.</li>
+              <li>No reminder reaches a parent or a {PRO_LC}.</li>
               <li>This build saves your choice. Nothing is scheduled yet.</li>
             </ul>
           }>

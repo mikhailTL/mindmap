@@ -35,10 +35,11 @@ export function ParentHome({ go }) {
 /* The earlier name, kept for anything still importing it. */
 export const ParentDash = ParentHome
 
-/* ParentTrends({ go }): the Trends tab. First every child's card (Heads Up
- * for the range picked above them, today's Mind Score, an Open button for
- * their page), then one tab per child over that child's Trends, the same
- * layout for every child (./family/Trends.jsx), the calendar inside it. */
+/* ParentTrends({ go }): the Trends tab, in two parts with the same heads as
+ * every other screen. Today: every child's card (Heads Up for the range
+ * picked above them with its arrow, today's Mind Score, an Open button for
+ * their page). Trends: one tab per child over that child's week, month and
+ * calendar, the same layout for every child (./family/Trends.jsx). */
 export function ParentTrends({ go }) {
   const [mode] = useMode()
   const live = useLiveTeens('parent')
@@ -74,8 +75,6 @@ export function ParentTrends({ go }) {
 
   return (
     <div className="flex w-full flex-col gap-5">
-      <PartHead id="parent-trends" kind="trends" title="Trends"
-        line={`${real ? longDate() : TODAY_LONG}. Whole days only.`}/>
       {real && (
         <span className="inline-flex items-baseline gap-x-2.5 self-start border-l-2 border-accent py-0.5 pl-3">
           <span className="shrink-0 font-display text-fine font-bold text-accent-ink">Live</span>
@@ -83,9 +82,11 @@ export function ParentTrends({ go }) {
         </span>
       )}
 
-      <section aria-labelledby="parent-kids" className="flex flex-col gap-4">
+      <section aria-labelledby="parent-today" className="flex flex-col gap-4">
+        <PartHead id="parent-today" kind="today" title="Today"
+          line={`${real ? longDate() : TODAY_LONG}. Whole days only.`}/>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <h3 id="parent-kids" className="m-0 font-display text-head font-bold leading-tight text-ink">Your children</h3>
+          <h3 className="m-0 font-display text-head font-bold leading-tight text-ink">Your children</h3>
           <div className="flex items-center gap-3">
             <span className="text-fine font-semibold text-ink-2">Heads Up for</span>
             <RangeSwitch compact value={range} onChange={setRange} label="Heads Up range on every card"/>
@@ -100,11 +101,9 @@ export function ParentTrends({ go }) {
         </ul>
       </section>
 
-      <section aria-labelledby="parent-each" className="mt-4 flex flex-col gap-4">
-        <div>
-          <h3 id="parent-each" className="m-0 font-display text-head font-bold leading-tight text-ink">Week, month and calendar</h3>
-          <p className="m-0 mt-1 text-fine text-ink-2">Pick a child, then a range or a day.</p>
-        </div>
+      <section aria-labelledby="parent-trends" className="mt-4 flex flex-col gap-4">
+        <PartHead id="parent-trends" kind="trends" title="Trends"
+          line="Week, month and the calendar. Pick a child, then a range or a day."/>
         <div role="tablist" aria-label="Child" className="flex flex-wrap gap-2">
           {list.map((t, n) => {
             const on = t === teen
@@ -160,7 +159,7 @@ function Invite({ go, live }) {
 function liveLine({ state, teens }) {
   if (state === 'signedout') return 'Sign in as a parent to see your teen’s readings.'
   if (state === 'role') return 'This account is not a parent account.'
-  if (state === 'device') return 'Accounts on this site are not connected to a server.'
+  if (state === 'device') return 'Readings show here once your account syncs.'
   return teens.length
     ? `Readings from ${teens.length === 1 ? 'your linked teen' : `your ${teens.length} linked teens`}, shared by them.`
     : 'No teen is linked to you yet.'

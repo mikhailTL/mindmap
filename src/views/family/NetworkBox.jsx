@@ -1,6 +1,6 @@
 import React from 'react'
 import { FAMILY } from '../../lib/roster'
-import { PRO } from '../../lib/terms'
+import { PRO, PRO_PLURAL, PRO_WRAP } from '../../lib/terms'
 import { Avatar } from '../../account/ui'
 import { DEMO_LINKS } from '../../account/demo-network'
 import {
@@ -11,14 +11,14 @@ import { cn } from '../../lib/utils'
 
 /* NetworkBox({ go, real, me, className }): the parent home's network box.
  *
- * Who is in this parent's network (teens and Medical Professionals: picture,
+ * Who is in this parent's network (teens and Counselors/Professionals: picture,
  * name, role, nothing else) and the two ways to add someone. Both make the
  * same invite link: one multi-use link per parent, of the form
  * #/network?code=CODE (src/account/Network.jsx reads it). The reader copies
  * or shares it; the teen opens it and joins.
  *
- * Demo shows Elena's people (the two demo children and the Medical
- * Professionals from src/account/demo-network.js) and an example link that
+ * Demo shows Elena's people (the two demo children and the
+ * Counselors/Professionals from src/account/demo-network.js) and an example link that
  * never reaches the server. Live uses the account store. No reading, score
  * or trend is ever shown here. */
 
@@ -32,7 +32,7 @@ const shareText = (code, who) => (who === 'pro'
   ? `Join my MindMap network as my teen’s ${PRO}: ${linkFor(code)} (code ${code})`
   : `Join my MindMap network: ${linkFor(code)} (code ${code})`)
 
-const ROLE = { student: 'Teen', parent: 'Parent', pro: PRO }
+const ROLE = { student: 'Teen', parent: 'Parent', pro: PRO_WRAP }
 
 function daysLeft(iso) {
   const t = Date.parse(iso)
@@ -86,7 +86,7 @@ export default function NetworkBox({ go, real, me, className }) {
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="m-0 font-display !text-row font-bold leading-tight text-ink">Your network</h3>
           <p className="m-0 mt-1 text-fine text-ink-2">
-            Your teens and their {PRO}s. Your teen chooses what each person sees.</p>
+            Your teens and their {PRO_PLURAL}. Your teen chooses what each person sees.</p>
         </div>
       </div>
 

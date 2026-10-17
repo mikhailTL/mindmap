@@ -5,7 +5,7 @@ import { useMode } from '../lib/mode'
 import { PRO_PLURAL } from '../lib/terms'
 import { MOTION, TEXT_SIZES, setAppearance, useAppearance } from './appearance'
 import { DEMO_LINKS, demoCounts } from './demo-network'
-import { backend, homeFor, listNetwork, listPendingApprovals, signOut } from './store'
+import { backend, canInvite, homeFor, listNetwork, listPendingApprovals, signOut } from './store'
 import { Avatar, HelpMark, LinkMark, outline, solid } from './ui'
 
 /* Every setting the app has, under the profile card on the account page.
@@ -32,7 +32,7 @@ const GroupHead = ({ id, children, aside }) => (
 
 /* ── Your people ────────────────────────────────────────────────────────── */
 
-function People({ me, go, demo }) {
+function People({ me, go, demo, role }) {
   let people, linked, waiting
   if (demo) {
     const c = demoCounts()
@@ -75,11 +75,14 @@ function People({ me, go, demo }) {
             </p>
           </div>
           <p className="mt-2.5 max-w-[52ch] text-fine text-ink-2">
-            Teens, parents and {PRO_PLURAL} connect by link. The teen approves what is shared.
+            Teens, parents and {PRO_PLURAL} connect by link. Teens choose what each person sees, and everything starts on.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <button type="button" onClick={open} className={solid}><LinkMark size={16}/>Invite by link</button>
+          {/* Only parents and pros make invite links; a teen joins one. */}
+          {canInvite(role)
+            ? <button type="button" onClick={open} className={solid}><LinkMark size={16}/>Invite by link</button>
+            : role === 'student' && <button type="button" onClick={open} className={solid}><LinkMark size={16}/>Join a network</button>}
           <button type="button" onClick={open} className={cn(outline, 'border-sky-ink')}>Open network</button>
         </div>
       </div>
@@ -255,7 +258,7 @@ export function Settings({ me, go, className }) {
     <section aria-labelledby="settings-h" className={cn('min-w-0', className)}>
       <h2 id="settings-h" className="sr-only">Settings</h2>
       <div className="grid gap-7 lg:gap-8">
-        <People me={me} go={go} demo={mode === 'demo'}/>
+        <People me={me} go={go} demo={mode === 'demo'} role={role}/>
         <AccountTiles me={me} go={go} role={role}/>
         <Appearance/>
         <AboutLine me={me} go={go}/>

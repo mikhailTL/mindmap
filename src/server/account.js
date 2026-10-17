@@ -18,7 +18,7 @@ import { AVATAR_ALL_IDS } from '../account/avatar-catalog.js'
  *     parent, the professional links waiting on them.
  *   - a student's readings and sharing choices live here too, so they
  *     follow the student to any device they sign in on. A parent or a
- *     Medical Professional gets day figures only, and only what the student's
+ *     Counselor/Professional gets day figures only, and only what the student's
  *     sharing switches allow: never a note, never a single reading, never a
  *     position. A pending or declined link gets nothing. See teenFor().
  *

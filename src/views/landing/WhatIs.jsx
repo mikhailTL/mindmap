@@ -19,7 +19,7 @@ import { AppPicture, NetworkPicture, PatchPicture, ToolkitPicture, PICTURE_CSS }
  * line says "grounded in published clinical guidance". */
 
 export const WHAT_IS_LEAD =
-  `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL}/schools to address the teen mental health crisis at its root, providing 3 main features:`
+  `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL} to address the teen mental health crisis at its root, providing 3 main features:`
 
 /* The Toolkit sits inside feature 3, the app, as a part with its own small
    picture, so the band still shows three features. */
@@ -32,7 +32,7 @@ export const WHAT_IS = [
   { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch', Picture: PatchPicture,
     text: 'A wearable patch that turns detailed, numerical data into readable and friendly updates using an original Neural Network, unlike most wellness apps which use no hardware.' },
   { id: 'network', title: 'A support network', go: 'privacy', cta: 'Who sees what', Picture: NetworkPicture,
-    text: `A network support system between teens, parents, and ${PRO_PLURAL}/schools to share data, manage different teens’ stress, and address issues at their root, as opposed to common, individualized monitoring apps. Teens have the freedom of privacy controls to decide who sees what.` },
+    text: `A network support system between teens, parents, and ${PRO_PLURAL} to share data, manage different teens’ stress, and address issues at their root, as opposed to common, individualized monitoring apps. Teens have the freedom of privacy controls to decide who sees what.` },
   { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit', Picture: AppPicture, part: TOOLKIT_PART,
     text: 'A ‘one-stop’ application, providing tools like MindMap AI, grounded in published clinical guidance, and Heads Up, a parental tool to identify screen-related stress as it occurs. MindMap also offers many other utilities for academic success, social dynamics, wellness, and career skills.' },
 ]
@@ -94,9 +94,11 @@ export function WhatIs({ go }) {
       <SectionHead>What is MindMap?</SectionHead>
       <SectionLede className="max-w-[70ch]">{WHAT_IS_LEAD}</SectionLede>
       {/* Under md the three cards swipe sideways, the next one peeking in,
-          so the band is one card tall on a phone rather than three. */}
+          so the band is one card tall on a phone rather than three. Cards
+          keep their own height there (items-start): stretched to the tallest,
+          the patch card carried a block of empty space. */}
       <ol className="m-0 mt-6 grid list-none gap-4 p-0 lg:grid-cols-3 lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-0
-        max-md:-mx-[22px] max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto
+        max-md:-mx-[22px] max-md:flex max-md:items-start max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto
         max-md:scroll-px-[22px] max-md:px-[22px] max-md:pb-2 max-md:[scrollbar-width:none]">
         {WHAT_IS.map((f, i) => (
           <ScrollRow as="li" key={f.id} index={i}

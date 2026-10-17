@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 
-/* Small pieces the Medical Professional screen shares between the caseload,
+/* Small pieces the Counselor/Professional screen shares between the caseload,
    the teen detail and the group charts. */
 
 /* A key and a figure on one rule. */
@@ -56,7 +56,7 @@ export function Seg({ label, value, options, onChange, className }) {
       className={cn('inline-flex shrink-0 overflow-hidden rounded-field border border-ruling bg-card', className)}>
       {options.map(([v, text], i) => (
         <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)}
-          className={cn('min-h-[40px] px-3 font-display text-fine font-bold transition-colors duration-100',
+          className={cn('min-h-[44px] px-3 font-display text-fine font-bold transition-colors duration-100',
             i > 0 && 'border-l border-ruling',
             value === v ? 'bg-ink text-paper' : 'text-ink-2 hoverOnly:bg-aqua hoverOnly:text-ink')}>
           {text}

@@ -173,7 +173,7 @@ describe('the demographics block', () => {
     expect(role).toContain('student')
     expect(role).toContain('parent')
     expect(role).toContain('teacher')
-    expect(role).toContain('counsellor')
+    expect(role).toContain('counselor')
     expect(role).toContain('something else')
   })
 
@@ -241,7 +241,7 @@ describe('the rated items', () => {
     const all = prompts(SCALE_ITEMS).join(' · ').toLowerCase()
     expect(all).toContain('would use mindmap regularly')
     expect(all).toContain('parent or guardian')
-    expect(all).toContain('doctor or counsellor')
+    expect(all).toContain('doctor or counselor')
     expect(all).toContain('sentence above the score')
     expect(BLOCKER_ITEM.prompt.toLowerCase()).toContain('stop you from using')
   })

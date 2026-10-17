@@ -1,31 +1,38 @@
+import { PRO, PRO_PLURAL } from '../../lib/terms'
+
 /* What each "How to use" guide says, per audience and per tab id.
  *
- * Every guide is three steps. A step is a picture (`art`, a key into ART in
- * ./art.jsx) and one caption of ten words or fewer. `use` is the one line on
- * what the section is for. `go` is an optional button to a related route.
- * `tones` colour the three steps, in order; the hues come from the site
- * tokens and are mapped to literal class names in ./index.jsx.
+ * Every guide is three steps that together cover the whole page at a glance:
+ * each step is one part of the page and how to use it. A step is a picture
+ * (`art`, a key into ART in ./art.jsx) and one caption of ten words or fewer.
+ * `use` is the one line on what the section is for. `go` is an optional
+ * button to a related route. `tones` colour the three steps, in order; the
+ * hues come from the site tokens and are mapped to literal class names in
+ * ./index.jsx.
  *
  * House rules for this copy: no em dashes, no diagnostic words, nothing
  * called AI except the MindMap AI chat, no streaks, no comparison between
- * teens. tests/howto.test.js checks the mechanical ones. */
+ * teens, and the Professional's name only ever from src/lib/terms.js.
+ * tests/howto.test.js checks the mechanical ones. */
 
 const AI_STEPS = [
-  { art: 'chat',   cap: 'Ask anything in your own words.' },
-  { art: 'source', cap: 'Answers draw on published clinical guidance.' },
-  { art: 'help',   cap: 'Not a doctor. Get help is always up top.' },
+  { art: 'chat',   cap: 'Tap a starter or ask in your own words.' },
+  { art: 'source', cap: 'Framework and Sources shows where answers come from.' },
+  { art: 'help',   cap: 'Want a person? Help lines sit beside the chat.' },
 ]
+
+const TRENDS = 'How to use Trends'
 
 export const GUIDES = {
   student: {
     'app-student': {
       section: 'Home',
       title: 'How to use Home',
-      tones: ['mint', 'beam', 'sky'],
+      tones: ['accent', 'sky', 'mint'],
       steps: [
-        { art: 'patch',  cap: 'See if your patch is connected.' },
-        { art: 'cards',  cap: 'Tap a card to jump to any section.' },
-        { art: 'tabbar', cap: 'Or use the bar at the bottom.' },
+        { art: 'startBar', cap: 'Start a reading from the bar at the top.' },
+        { art: 'cards',    cap: 'Cards open Trends, Toolkit, MindMap AI and your network.' },
+        { art: 'patch',    cap: 'The patch box shows if your patch is connected.' },
       ],
       use: 'Your starting point. One tap to anywhere in MindMap.',
       go: { label: 'Take a reading', route: 'reading' },
@@ -35,31 +42,20 @@ export const GUIDES = {
       title: 'How to take a reading',
       tones: ['accent', 'coral', 'beam'],
       steps: [
-        { art: 'threeWays', cap: 'Pick one: the patch, phone camera or check-in.' },
-        { art: 'fingerCam', cap: 'Camera: fingertip flat over the lens, hold still.' },
-        { art: 'dial',      cap: 'A Mind Score, 0 to 100, against your usual day.' },
+        { art: 'fourWays', cap: 'Pick a way: patch, camera, questions or Mental Mirror.' },
+        { art: 'howWays',  cap: 'Follow the screen. Each way takes a minute or less.' },
+        { art: 'dial',     cap: 'Get a Mind Score, 0 to 100, against your usual.' },
       ],
       use: 'Check in before a test, after practice, or any time.',
     },
-    mirror: {
-      section: 'Mental Mirror',
-      title: 'How to use the Mental Mirror',
-      tones: ['beam', 'accent', 'lilac'],
-      steps: [
-        { art: 'faceMesh', cap: 'Face the front camera in good light, 30 seconds.' },
-        { art: 'dial',     cap: 'Your face and pulse become one Mind Score.' },
-        { art: 'calendar', cap: 'It lands in your Trends with your other readings.' },
-      ],
-      use: 'A quick reading with no patch and no fingertip.',
-    },
     'student-trends': {
       section: 'Trends',
-      title: 'How to use Trends',
+      title: TRENDS,
       tones: ['beam', 'mint', 'lilac'],
       steps: [
-        { art: 'range',    cap: 'Switch between Day, Week and Month.' },
-        { art: 'faces',    cap: 'Heads Up faces: green, yellow or red.' },
-        { art: 'calendar', cap: 'Tap a calendar day to see its log.' },
+        { art: 'todayDial', cap: 'Today: your Mind Score and Heads Up face.' },
+        { art: 'rangeCal',  cap: 'Switch Day, Week or Month. Tap a day for detail.' },
+        { art: 'log',       cap: 'Scroll your log and add a note to any reading.' },
       ],
       use: 'Notice patterns, like which days of the week feel heavier.',
     },
@@ -68,11 +64,11 @@ export const GUIDES = {
       title: 'How to use Toolkit',
       tones: ['mint', 'sky', 'sun'],
       steps: [
-        { art: 'toolPick', cap: 'Pick a calming activity or a life skill.' },
-        { art: 'breathe',  cap: 'Follow along on screen at your own pace.' },
-        { art: 'levels',   cap: 'Earn levels and badges as you try things.' },
+        { art: 'toolTabs', cap: 'Pick a tab: Exercises, School, Outside, Life, Career, Resources.' },
+        { art: 'toolPick', cap: 'Tap an activity and follow along at your pace.' },
+        { art: 'levels',   cap: 'Finish tools for points, levels and badges. Try today’s quest.' },
       ],
-      use: 'Something to do when the day feels like a lot.',
+      use: 'Calm your body, clear your head, or build a life skill.',
     },
     ai: {
       section: 'MindMap AI',
@@ -86,9 +82,9 @@ export const GUIDES = {
       title: 'How to use Privacy',
       tones: ['accent', 'sky', 'lilac'],
       steps: [
-        { art: 'togglesOn',    cap: 'Every kind of sharing starts on.' },
-        { art: 'toggleOff',    cap: 'Flip a switch off and they stop seeing it.' },
-        { art: 'twoAudiences', cap: 'Choose separately for parents and Medical Professionals.' },
+        { art: 'twoAudiences', cap: `Choose a parent or ${PRO}, then flip each switch.` },
+        { art: 'dayView',      cap: 'The preview shows exactly what a parent would see.' },
+        { art: 'keepDays',     cap: 'Notes and Location stay yours. Pick how long readings keep.' },
       ],
       use: 'You decide what the people in your network see.',
     },
@@ -98,35 +94,35 @@ export const GUIDES = {
     'app-parent': {
       section: 'Home',
       title: 'How to use Home',
-      tones: ['mint', 'beam', 'sky'],
+      tones: ['sky', 'mint', 'beam'],
       steps: [
-        { art: 'cards',     cap: 'Tap a card to open a section.' },
-        { art: 'invite',    cap: 'Send your teen a link from the Network box.' },
-        { art: 'inviteMed', cap: 'Add their Medical Professional the same way.' },
+        { art: 'cards',      cap: 'Cards open Trends, Toolkit, MindMap AI and Privacy.' },
+        { art: 'familyNet',  cap: `Your network lists your teens and their ${PRO_PLURAL}.` },
+        { art: 'inviteBoth', cap: `Add a teen or ${PRO} by sending a link.` },
       ],
-      use: 'Set up your family network in a few taps.',
+      use: 'Your starting point, and where your family network lives.',
     },
     'parent-trends': {
       section: 'Trends',
-      title: 'How to use Trends',
-      tones: ['lilac', 'mint', 'beam'],
+      title: TRENDS,
+      tones: ['lilac', 'beam', 'mint'],
       steps: [
-        { art: 'childPick', cap: 'Pick a child to see their Mind Score.' },
-        { art: 'calendar',  cap: 'Tap a calendar day for its Heads Up.' },
-        { art: 'dayOnly',   cap: 'Days only. Never Notes, Location or raw readings.' },
+        { art: 'childPick', cap: 'Each child: today’s Heads Up and Mind Score.' },
+        { art: 'range',     cap: 'Switch Day, Week or Month to see their pattern.' },
+        { art: 'calendar',  cap: 'Tap a calendar day. Never Notes, Location or raw readings.' },
       ],
       use: 'Spot a rough stretch and start a conversation.',
     },
     toolkit: {
       section: 'Toolkit',
       title: 'How to use Toolkit',
-      tones: ['sky', 'mint', 'coral'],
+      tones: ['sky', 'mint', 'sun'],
       steps: [
-        { art: 'opener',    cap: 'Pick a conversation opener to start talking.' },
-        { art: 'lineCheck', cap: 'Check your first line before you say it.' },
-        { art: 'getHelp',   cap: 'Know when and where to get help.' },
+        { art: 'opener',   cap: 'Your tools: talk openers, line checks, when to get help.' },
+        { art: 'together', cap: 'Do your teen’s exercises together, like Box Breathing.' },
+        { art: 'toolTabs', cap: 'More tabs: School, Outside, Life, Career, Resources.' },
       ],
-      use: 'Calmer talks with your teen about stress.',
+      use: 'Calmer talks with your teen, and skills to share.',
     },
     ai: {
       section: 'MindMap AI',
@@ -140,9 +136,9 @@ export const GUIDES = {
       title: 'How to use Privacy',
       tones: ['accent', 'lilac', 'sky'],
       steps: [
-        { art: 'dayView',   cap: 'You see a daily Mind Score and Heads Up.' },
-        { art: 'locked',    cap: 'Notes, Location and raw readings stay private.' },
-        { art: 'toggleOff', cap: 'Your teen can turn any sharing off.' },
+        { art: 'dayView', cap: 'You see each day’s Mind Score, sleep and patch wear.' },
+        { art: 'locked',  cap: 'Notes, Location and raw readings stay private.' },
+        { art: 'table',   cap: 'One table shows who sees what. Your teen decides.' },
       ],
       use: 'Know exactly what you can and cannot see.',
     },
@@ -152,34 +148,34 @@ export const GUIDES = {
     'app-pro': {
       section: 'Home',
       title: 'How to use Home',
-      tones: ['mint', 'beam', 'sky'],
+      tones: ['mint', 'sky', 'beam'],
       steps: [
-        { art: 'cards',  cap: 'Tap a card to open a section.' },
-        { art: 'roster', cap: 'See the teens who chose to join you.' },
-        { art: 'tabbar', cap: 'Trends, Connect, Ask and Toolkit sit below.' },
+        { art: 'cards',      cap: 'Cards open Trends, Connect, MindMap AI and Toolkit.' },
+        { art: 'quickTools', cap: 'Shortcuts open Session Openers, Grounding Timer and Referral Note.' },
+        { art: 'roster',     cap: 'See how many teens share with you, then open Trends.' },
       ],
       use: 'One place to start your day with families.',
       go: { label: 'Open Connect', route: 'network' },
     },
     'app-pro-trends': {
       section: 'Trends',
-      title: 'How to use Trends',
-      tones: ['mint', 'lilac', 'beam'],
+      title: TRENDS,
+      tones: ['sky', 'lilac', 'mint'],
       steps: [
-        { art: 'lights', cap: 'A Heads Up light for each consented teen.' },
-        { art: 'group5', cap: 'Groups under 5 show nothing.' },
-        { art: 'audit',  cap: 'Every record you open is logged.' },
+        { art: 'headsCount', cap: 'Heads Up today, and any urgent alert, sit up top.' },
+        { art: 'eachGroup',  cap: 'Switch Each teen or Whole group. Groups under 5 hide.' },
+        { art: 'filterOpen', cap: 'Filter and sort, then open a record. Opens are logged.' },
       ],
-      use: 'See who may want a check-in.',
+      use: 'See who may want a check-in today.',
     },
     network: {
       section: 'Connect',
       title: 'How to use Connect',
       tones: ['beam', 'accent', 'mint'],
       steps: [
-        { art: 'invite',     cap: 'Send a family a link.' },
-        { art: 'teenChoose', cap: 'The teen chooses whether to join.' },
-        { art: 'joined',     cap: 'They join your network once they say yes.' },
+        { art: 'invite',     cap: 'Copy your invite link or code and send it.' },
+        { art: 'teenChoose', cap: 'The teen opens it, joins and picks what is shared.' },
+        { art: 'joined',     cap: 'They appear in Your Network with what they share.' },
       ],
       use: 'Add families with nothing shared until the teen agrees.',
     },
@@ -193,11 +189,11 @@ export const GUIDES = {
     toolkit: {
       section: 'Toolkit',
       title: 'How to use Toolkit',
-      tones: ['sky', 'lilac', 'mint'],
+      tones: ['sky', 'mint', 'sun'],
       steps: [
-        { art: 'opener',   cap: 'Session openers to start the conversation.' },
-        { art: 'nextStep', cap: 'The next step guide helps you pick what follows.' },
-        { art: 'referral', cap: 'Draft a clear referral note.' },
+        { art: 'proTools', cap: 'Your tools: openers, next steps, parent talks, referral notes.' },
+        { art: 'together', cap: 'Run the student exercises with a teen in the room.' },
+        { art: 'toolTabs', cap: 'More tabs: School, Outside, Life, Career, Resources.' },
       ],
       use: 'Quick tools for before, during and after a session.',
     },

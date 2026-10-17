@@ -2,7 +2,8 @@ import React from 'react'
 import { Why } from './Monitor'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { DemoNotice } from '../ui/notice'
-import { useMode } from '../lib/mode'
+import { useGuest, useMode } from '../lib/mode'
+import { PRO } from '../lib/terms'
 import { ArrowRight } from '../ui/marks'
 import { useAccount } from '../account/store'
 import { cn } from '../lib/utils'
@@ -18,7 +19,7 @@ import { StartGrid, StartTile } from './home/StartGrid'
 import TeenDetail from './family/TeenDetail'
 import { useLiveTeens } from './family/useLive'
 
-/* THE MEDICAL PROFESSIONAL APP: its home and its Trends screen.
+/* THE COUNSELOR/PROFESSIONAL APP: its home and its Trends screen.
  *
  * ProHome ('app-pro') is a way in: a greeting and four big cards, Trends,
  * Connect, Ask and Toolkit. No teen's figures are on it.
@@ -37,7 +38,7 @@ import { useLiveTeens } from './family/useLive'
  * account snapshot (day figures only, and only what each teen shares),
  * refreshed every 20 seconds by useLiveSync. `empty` shows nobody, and the
  * empty state points to Connect. No line here mentions a patch being missing:
- * the owner, "dont say 'No Patch' under the medical professional dashboard".
+ * the owner, "dont say 'No Patch' under the counselor/professional dashboard".
  *
  * The four safeguards, in RULES, sit behind the "?" beside the heading and
  * hold on both tabs. Any count across teens needs five or more. */
@@ -66,7 +67,7 @@ export const SETTING_WORDS = {
   },
 }
 const wordsFor = me => SETTING_WORDS[(me && me.role === 'pro' && me.setting) || 'school']
-/* The line under "Start here" for a Medical Professional names the setting
+/* The line under "Start here" for a Counselor/Professional names the setting
    they chose at sign-up: the dashboard's own `head` words, one source. A
    student or a parent gets null. */
 export const settingLineFor = me =>
@@ -205,7 +206,7 @@ const RainbowMark = () => (
   </svg>
 )
 
-/* ── THE MEDICAL PROFESSIONAL HOME ───────────────────────────────────────
+/* ── THE COUNSELOR/PROFESSIONAL HOME ───────────────────────────────────────
  *
  * A way in, not a dashboard: a greeting, then four big cards, one per part
  * of the app. No teen's figures are on it. The rainbow and the lamps are
@@ -219,7 +220,9 @@ export function ProHome({ go }) {
   const real = mode === 'real'
   const me = useAccount()
   const live = useLiveTeens('pro')
-  const name = real ? String(me?.name || '').trim() : DEMO_NAME
+  /* A guest is a spectator, not a role: no demo name for them. */
+  const guest = useGuest() && !real && !me
+  const name = guest ? 'Guest' : real ? String(me?.name || '').trim() : DEMO_NAME
   const setting = real ? settingLineFor(me) : SETTING_WORDS.school.head + '.'
   const n = real ? live.teens.length : CASELOAD.length
   const shares = n === 0 ? 'No teens connected yet' : n === 1 ? 'One teen shares with you' : `${n} teens share with you`
@@ -233,15 +236,19 @@ export function ProHome({ go }) {
       </header>
       {!real && <DemoNotice inline className="mt-2">A sample caseload.</DemoNotice>}
 
-      <StartGrid label="Medical Professional app" className="mt-3 lg:mt-4">
-        <StartTile title="Trends across your teens" tone="bg-sky-wash" chevron="text-sky-ink"
-          onClick={() => go('app-pro-trends')} art={<RainbowArt size={150} className="w-[74%] max-w-[190px] pt-2"/>}/>
+      <StartGrid label={`${PRO} app`} className="mt-3 lg:mt-4">
+        <StartTile title="Trends" tone="bg-sky-wash" chevron="text-sky-ink"
+          photo="friends-steps" photoAlt="Two students talking on school steps"
+          onClick={() => go('app-pro-trends')} art={<RainbowArt size={150} className="w-[86%] pt-1"/>}/>
         <StartTile title="Connect with families" tone="bg-mint-wash" chevron="text-mint-ink"
-          onClick={() => go('network')} art={<LinkArt className="origin-center scale-[0.72] sm:scale-90 lg:scale-100"/>}/>
+          photo="parent-hero" photoAlt="A parent and teen smiling together"
+          onClick={() => go('network')} art={<LinkArt className="w-[88%]"/>}/>
         <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
-          onClick={() => go('ai')} art={<ChatArt className="h-[56%] w-auto"/>}/>
+          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
+          onClick={() => go('ai')} art={<ChatArt className="h-auto w-[88%]"/>}/>
         <StartTile title="Toolkit" tone="bg-sun-wash" chevron="text-sun-ink"
-          onClick={() => go('toolkit')} art={<ToolArt className="origin-center scale-[0.7] sm:scale-90 lg:scale-100"/>}/>
+          photo="pro-hero" photoAlt="A teen talking with a counselor" photoFocal="74% 24%"
+          onClick={() => go('toolkit')} art={<ToolArt className="h-auto w-[76%]"/>}/>
       </StartGrid>
 
       <section aria-label="Who shares with you"
@@ -252,7 +259,7 @@ export function ProHome({ go }) {
           className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-field
             bg-accent px-4 font-display text-ui font-medium text-paper transition-colors duration-150
             hoverOnly:bg-accent-lit hoverOnly:text-ink active:bg-accent-lit active:text-ink sm:w-auto">
-          {n ? 'Open trends' : 'Connect with families'}
+          {n ? 'Open Trends' : 'Connect with families'}
           <ArrowRight aria-hidden className="size-4 shrink-0"/>
         </button>
       </section>

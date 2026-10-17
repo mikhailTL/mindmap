@@ -1,4 +1,4 @@
-import { PRO_FOR } from '../lib/terms'
+import { PRO, PRO_FOR } from '../lib/terms'
 
 /* One survey, twelve questions, numbered continuously.
  *
@@ -56,7 +56,7 @@ export const DEMOGRAPHIC_ITEMS = [
     '19 or younger', '20 to 29', '30 to 44', '45 to 59', '60 or older', 'Rather not say'),
   choice('who-role', 'Which of these describes you best?',
     'Student', 'Parent or guardian', 'Teacher or school staff',
-    'Doctor, nurse or counsellor', 'Something else', 'Rather not say'),
+    'Doctor, nurse or counselor', 'Something else', 'Rather not say'),
   /* Education, in steps that a fourteen-year-old and a consultant can both
      answer without naming a school. */
   choice('who-school', 'How far have you got in school?',
@@ -80,7 +80,7 @@ const USE_ITEMS = [
    because a parent and a clinician are not the same decision. */
 const TRUST_ITEMS = [
   rated('trust-parent', 'I would be comfortable showing a reading to a parent or guardian.', AGREE),
-  rated('trust-clinician', 'I would be comfortable showing a reading to a doctor or counsellor.', AGREE),
+  rated('trust-clinician', 'I would be comfortable showing a reading to a doctor or counselor.', AGREE),
   rated('would-recommend', 'I would recommend MindMap to someone who needs it.', AGREE),
 ]
 
@@ -239,7 +239,7 @@ const RETIRED = {
   pro: `${PRO_FOR} (no longer asked)`, app: 'Launch (no longer asked)',
   'app-student': 'Student screen (no longer asked)',
   'app-parent': 'Parent screen (no longer asked)',
-  'app-pro': 'Medical Professional console (no longer asked)',
+  'app-pro': `${PRO} console (no longer asked)`,
   check: 'Take a reading (no longer asked)',
   privacy: 'Who can see what (no longer asked)', tour: 'The tour (no longer asked)',
   hub: 'Open the app (no longer asked)', final: 'Last questions (no longer asked)',

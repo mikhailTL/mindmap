@@ -4,7 +4,7 @@ import { SIGNAL } from '../../signals/light.js'
 
 /* The demo teen behind the student dashboard: Maya, the first child on the
  * parent's demo (roster FAMILY[0]), so the student, the parent and the
- * Medical Professional read the same girl.
+ * Counselor/Professional read the same girl.
  *
  * One change to her record: today. The dial and its sentence are drawn from
  * the demo day series (src/lib/assets DATA.day), so today's calendar cell and

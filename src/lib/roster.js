@@ -1,5 +1,5 @@
-/* Demo teens for the card dashboards: a parent's children and a Medical
- * Professional's caseload. One generator so both dashboards, the child detail
+/* Demo teens for the card dashboards: a parent's children and a
+ * Counselor/Professional's caseload. One generator so both dashboards, the child detail
  * view and the student's own demo read the same kind of record.
  *
  * Nothing here is a measurement. Every number is generated, deterministically,
@@ -129,7 +129,7 @@ export const FAMILY = Object.freeze([
   makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'owl' }),
 ])
 
-/* A Medical Professional's caseload: 24 teens across grades 8 to 12, each
+/* A Counselor/Professional's caseload: 24 teens across grades 8 to 12, each
    age fitting the grade (grade plus 5 or plus 6). Names are
    invented; the pseudonym is what the screen shows until a teen's consent
    allows the name. */

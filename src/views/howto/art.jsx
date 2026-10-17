@@ -78,6 +78,22 @@ export const MOTION_CSS = `
 .ht-swing{transform:rotate(30deg);animation-name:ht-swing;animation-duration:5s}
 @keyframes ht-path{0%,8%{transform:translate(0,0);opacity:0}14%{opacity:1}40%{transform:translate(44px,0)}70%,86%{transform:translate(92px,-22px);opacity:1}100%{transform:translate(92px,-22px);opacity:0}}
 .ht-path{transform:translate(92px,-22px);animation-name:ht-path;animation-duration:4.4s}
+@keyframes ht-q1{0%,22%{opacity:1}25%,97%{opacity:0}100%{opacity:1}}
+@keyframes ht-q2{0%,22%{opacity:0}25%,47%{opacity:1}50%,100%{opacity:0}}
+@keyframes ht-q3{0%,47%{opacity:0}50%,72%{opacity:1}75%,100%{opacity:0}}
+@keyframes ht-q4{0%,72%{opacity:0}75%,97%{opacity:1}100%{opacity:0}}
+.ht-q1{animation-name:ht-q1;animation-duration:8s}
+.ht-q2{opacity:0;animation-name:ht-q2;animation-duration:8s}
+.ht-q3{opacity:0;animation-name:ht-q3;animation-duration:8s}
+.ht-q4{opacity:0;animation-name:ht-q4;animation-duration:8s}
+@keyframes ht-tabs6{0%,13%{transform:translateX(0)}16%,29%{transform:translateX(24px)}32%,45%{transform:translateX(48px)}48%,61%{transform:translateX(72px)}64%,77%{transform:translateX(96px)}80%,95%{transform:translateX(120px)}100%{transform:translateX(0)}}
+.ht-tabs6{animation-name:ht-tabs6;animation-duration:9s}
+@keyframes ht-sw2{0%,40%{transform:translateX(0)}50%,90%{transform:translateX(72px)}100%{transform:translateX(0)}}
+.ht-sw2{animation-name:ht-sw2;animation-duration:6s}
+@keyframes ht-g1{0%,42%{opacity:1}48%,92%{opacity:0}100%{opacity:1}}
+@keyframes ht-g2{0%,42%{opacity:0}48%,92%{opacity:1}100%{opacity:0}}
+.ht-g1{animation-name:ht-g1;animation-duration:6s}
+.ht-g2{opacity:0;animation-name:ht-g2;animation-duration:6s}
 .ht-still .ht-a{animation:none!important}
 @media (prefers-reduced-motion: reduce){.ht-svg .ht-a{animation:none!important}}
 `
@@ -109,7 +125,7 @@ function Person({ x, y, s = 1, fill, ring }) {
   )
 }
 
-/* The person with a small cross badge: a Medical Professional. */
+/* The person with a small cross badge: the Professional. */
 function Medic({ x, y, s = 1 }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
@@ -226,14 +242,6 @@ const WaveGlyph = ({ x, y, c }) => (
     strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
 )
 
-/* A repeating pulse trace, period 40, from x0 to x1 on baseline y. */
-function pulsePath(x0, x1, y) {
-  let d = `M${x0} ${y}`
-  for (let x = x0; x < x1; x += 40) {
-    d += `h12l3-6 3 6h3l3-22 4 34 3-14h3l3-4 3 4h3`
-  }
-  return d
-}
 
 /* ── the pictures ───────────────────────────────────────────────────────── */
 
@@ -278,88 +286,549 @@ function Cards() {
   )
 }
 
-function TabBar() {
+
+/* A small face with the landmark mesh over it, centred on (x, y). */
+function MiniFace({ x, y, s = 1 }) {
   return (
-    <Svg>
-      <rect x="18" y="10" width="124" height="42" rx="8" fill={C.card} stroke={C.rule}/>
-      <Lines x={28} y={22} w={[60, 80, 44]} gap={8}/>
-      <rect x="14" y="60" width="132" height="30" rx="10" fill={C.ink}/>
-      <g {...a('ht-tabs')}>
-        <rect x="19" y="66" width="18" height="18" rx="6" fill={C.lit}/>
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      <ellipse rx="11" ry="14" fill={C.skin}/>
+      <g fill="none" stroke={C.beam} strokeWidth="1" opacity=".9">
+        <ellipse rx="11" ry="14"/>
+        <path d="M-11 0h22M0 -14v28M-8 -7l8 7 8-7M-8 7l8-7 8 7"/>
       </g>
-      {[28, 54, 80, 106, 132].map((x, i) => (
-        <g key={x} transform={`translate(${x} 75)`} fill="none" stroke={C.mist} strokeWidth="1.7"
-          strokeLinecap="round" strokeLinejoin="round">
-          {i === 0 && <path d="M-6 1h3l2-5 3 9 2-4h3"/>}
-          {i === 1 && <path d="M-6 3a6 6 0 0 1 12 0M0 3l3-4"/>}
-          {i === 2 && <><rect x="-5.5" y="-5" width="11" height="10" rx="1.5"/><path d="M-5.5 -1.5h11"/></>}
-          {i === 3 && <path d="M-2 -6h-4v12h4M2 -6h4v12h-4"/>}
-          {i === 4 && <><path d="M-6 -4h12v7h-7l-3 3v-3h-2z"/></>}
-        </g>
-      ))}
-    </Svg>
+      <path d="M-6 -3h3M3 -3h3M-3.5 7q3.5 2 7 0" fill="none" stroke={C.accent} strokeWidth="1.6"
+        strokeLinecap="round"/>
+    </g>
   )
 }
 
-function ThreeWays() {
-  const xs = [8, 58, 108]
+/* The four ways to take a reading, one lit at a time: patch, fingertip on
+   the camera, check-in questions, Mental Mirror. */
+function FourWays() {
+  const xs = [5, 44, 83, 122]
   return (
     <Svg>
-      {xs.map((x, i) => (
-        <rect key={x} x={x} y="16" width="44" height="64" rx="9" fill={C.card} stroke={C.rule}/>
+      {xs.map(x => (
+        <rect key={x} x={x} y="18" width="33" height="64" rx="8" fill={C.card} stroke={C.rule}/>
       ))}
-      {['ht-f1', 'ht-f2', 'ht-f3'].map((f, i) => (
-        <rect key={f} x={xs[i] - 2} y="14" width="48" height="68" rx="11" fill="none"
-          stroke={C.accent} strokeWidth="2.6" {...a(f)}/>
+      {['ht-q1', 'ht-q2', 'ht-q3', 'ht-q4'].map((q, i) => (
+        <rect key={q} x={xs[i] - 2} y="16" width="37" height="68" rx="10" fill="none"
+          stroke={C.accent} strokeWidth="2.6" {...a(q)}/>
       ))}
-      <PatchShape x={30} y={50} s={0.6}/>
+      <PatchShape x={21.5} y={52} s={0.5}/>
       <g>
-        <rect x="68" y="26" width="24" height="44" rx="6" fill={C.ink2}/>
-        <circle cx="75" cy="34" r="4.5" fill={C.ink} stroke={C.mist} strokeWidth="1.2"/>
-        <circle cx="85" cy="33" r="2" fill={C.gold}/>
+        <rect x="50" y="28" width="21" height="44" rx="5" fill={C.ink2}/>
+        <circle cx="57" cy="36" r="4.5" fill={C.coral}/>
+        <path d="M51 28h12v6a6 6 0 0 1-12 0z" fill={C.skin} stroke={C.skinEdge} strokeWidth=".8"/>
+        <circle cx="66" cy="35" r="1.8" fill={C.gold}/>
       </g>
       <g>
-        {[30, 42, 54, 66].map((y, i) => (
+        {[32, 44, 56, 68].map((y, i) => (
           <g key={y}>
-            <rect x="116" y={y - 3.5} width="7" height="7" rx="2" fill={i < 3 ? C.mint : C.mist}/>
-            <path d={`M127 ${y}h16`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+            <rect x="89" y={y - 3.5} width="7" height="7" rx="2" fill={i < 3 ? C.mint : C.mist}/>
+            <path d={`M100 ${y}h10`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
           </g>
         ))}
       </g>
+      <MiniFace x={138.5} y={50} s={0.95}/>
     </Svg>
   )
 }
 
-function FingerCam() {
+/* Each way, on the phone: fingertip on the lens, a check-in question, the
+   face in front of the camera. A bar fills as it reads. */
+function HowWays() {
   return (
     <Svg>
-      <defs>
-        <clipPath id="ht-wave-clip"><rect x="76" y="26" width="76" height="48" rx="8"/></clipPath>
-      </defs>
-      <rect x="12" y="10" width="46" height="82" rx="10" fill={C.ink2}/>
-      <circle cx="28" cy="27" r="8" fill={C.ink} stroke={C.mist} strokeWidth="1.4"/>
-      <circle cx="44" cy="24" r="3" fill={C.gold}/>
-      <circle cx="28" cy="27" r="13" fill={C.coral} {...a('ht-pulse')}/>
-      <g {...a('ht-press')}>
-        <path d="M18 -2h20v22a10 10 0 0 1-20 0z" fill={C.skin} stroke={C.skinEdge} strokeWidth="1"/>
-        <path d="M22 18a6 6 0 0 0 12 0" fill="none" stroke="#fff" strokeWidth="2" opacity=".55"/>
+      <rect x="50" y="4" width="60" height="92" rx="11" fill={C.ink}/>
+      <rect x="56" y="12" width="48" height="68" rx="6" fill={C.ink2}/>
+      <g {...a('ht-f1')}>
+        <circle cx="80" cy="44" r="13" fill={C.coral} opacity=".55"/>
+        <circle cx="80" cy="44" r="8" fill={C.ink} stroke={C.mist} strokeWidth="1.2"/>
+        <path d="M70 18h20v20a10 10 0 0 1-20 0z" fill={C.skin} stroke={C.skinEdge} strokeWidth="1"/>
       </g>
-      <rect x="76" y="26" width="76" height="48" rx="8" fill={C.card} stroke={C.rule}/>
-      <g clipPath="url(#ht-wave-clip)">
-        <g {...a('ht-scroll')}>
-          <path d={pulsePath(76, 200, 54)} fill="none" stroke={C.coral} strokeWidth="2.2"
-            strokeLinecap="round" strokeLinejoin="round"/>
-        </g>
+      <g {...a('ht-f2')}>
+        <rect x="60" y="20" width="40" height="12" rx="3" fill={C.card}/>
+        <path d="M64 26h28" stroke={C.ink3} strokeWidth="2" strokeLinecap="round" opacity=".6"/>
+        {[0, 1, 2, 3].map(i => (
+          <circle key={i} cx={66 + i * 9.3} cy="48" r="3.6" fill={i === 2 ? C.lit : 'none'}
+            stroke={C.mist} strokeWidth="1.3"/>
+        ))}
+        <rect x="60" y="60" width="40" height="10" rx="3" fill={C.accent}/>
       </g>
-      <path d="M62 50h9m-4-4 4 4-4 4" fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <g {...a('ht-f3')}>
+        <MiniFace x={80} y={46} s={1.3}/>
+      </g>
+      <rect x="58" y="86" width="44" height="4" rx="2" fill={C.ink3}/>
+      <rect x="58" y="86" width="44" height="4" rx="2" fill={C.lit} {...a('ht-fill')}/>
+      <g transform="translate(132 50)">
+        <circle r="13" fill={C.card} stroke={C.rule} strokeWidth="1.4"/>
+        <path d="M0 -13a13 13 0 0 1 13 13" fill="none" stroke={C.accent} strokeWidth="2.6" strokeLinecap="round"/>
+        <path d="M0 0v-7M0 0l5 3" stroke={C.ink2} strokeWidth="1.8" strokeLinecap="round"/>
+      </g>
+      <g transform="translate(28 50)">
+        <path d="M-12 0h5l3-8 5 16 3-8h8" fill="none" stroke={C.coral} strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round" {...a('ht-pulse')}/>
+      </g>
     </Svg>
   )
 }
+
+/* Home's first band: the dark Take a reading bar with its button. */
+function StartBar() {
+  return (
+    <Svg>
+      <rect x="8" y="16" width="144" height="40" rx="9" fill={C.ink}/>
+      <rect x="14" y="23" width="28" height="26" rx="5" fill={C.ink2}/>
+      <path d="M16 36h6l2-6 3 12 2-6h11" fill="none" stroke={C.lit} strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round" {...a('ht-pulse')}/>
+      <path d="M48 31h34M48 40h24" stroke={C.mist} strokeWidth="2.4" strokeLinecap="round" opacity=".8"/>
+      <rect x="98" y="27" width="46" height="18" rx="6" fill={C.accent}/>
+      <path d="M108 36h20m-5-5 5 5-5 5" fill="none" stroke="#fff" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round"/>
+      {[8, 46, 84, 122].map((x, i) => (
+        <rect key={x} x={x} y="64" width="30" height="30" rx="6"
+          fill={[C.skyWash, C.sunWash, C.lilacWash, C.coralWash][i]} opacity=".9"/>
+      ))}
+      <Ripple x={121} y={36} r={8} color={C.lit}/>
+      <Finger x={123} y={39} rot={-28}/>
+    </Svg>
+  )
+}
+
+/* Today on Trends: a small dial with its clouds, and the Heads Up face. */
+function TodayDial() {
+  const cx = 54, cy = 72
+  return (
+    <Svg>
+      {RAINBOW.map((c, i) => {
+        const r = 46 - i * 6.5
+        return <path key={c} d={`M${cx - r} ${cy}a${r} ${r} 0 0 1 ${r * 2} 0`} fill="none"
+          stroke={c} strokeWidth="5" strokeLinecap="round" opacity=".9"/>
+      })}
+      <Weather cx={cx} cy={cy} rIn={20} rOut={46} s={0.44}/>
+      <g {...a('ht-needle')}>
+        <circle cx={cx} cy={cy} r="54" fill="none"/>
+        <path d={`M${cx} ${cy - 52}l-4.5-8h9z`} fill={C.ink}/>
+      </g>
+      <text x={cx} y={cy - 6} textAnchor="middle" fontFamily="Quicksand, system-ui, sans-serif"
+        fontWeight="700" fontSize="17" fill={C.ink}>51</text>
+      <rect x="116" y="18" width="40" height="64" rx="9" fill={C.card} stroke={C.rule}/>
+      <g {...a('ht-bob')}>
+        <LampFaceG light="yellow" cx={136} cy={44} size={28} px={34}/>
+      </g>
+      <path d="M124 70h24" stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+    </Svg>
+  )
+}
+
+/* Day, Week, Month above a calendar of Heads Up faces; a day gets picked. */
+function RangeCal() {
+  const x0 = 8, y0 = 34, w = 24
+  const faces = ['green', 'green', 'yellow', 'green', 'red', 'green',
+    'green', 'yellow', 'green', 'green', 'green', 'yellow']
+  return (
+    <Svg>
+      <rect x="20" y="4" width="120" height="18" rx="9" fill={C.mist}/>
+      <g {...a('ht-seg')}>
+        <rect x="21.5" y="5.5" width="37" height="15" rx="7.5" fill={C.card} stroke={C.beam} strokeWidth="1.4"/>
+      </g>
+      {['Day', 'Week', 'Month'].map((t, i) => (
+        <text key={t} x={40 + i * 40} y="16.4" textAnchor="middle" fontFamily={FONT} fontSize="8"
+          fontWeight="700" fill={C.ink2}>{t}</text>
+      ))}
+      <rect x="4" y="30" width="152" height="56" rx="8" fill={C.card} stroke={C.rule}/>
+      {faces.map((l, i) => (
+        <LampFaceG key={i} light={l} cx={x0 + 4 + (i % 6) * w + w / 2} cy={y0 + Math.floor(i / 6) * w + w / 2}
+          size={14} px={18}/>
+      ))}
+      <g {...a('ht-hop')}>
+        <rect x={x0 + 6} y={y0 + 1} width={w - 4} height={w - 2} rx="6" fill="none" stroke={C.ink} strokeWidth="2"/>
+      </g>
+    </Svg>
+  )
+}
+
+/* The Mind Score Log: a reading a row, and a note added to one. */
+function Log() {
+  const rows = [[14, 'green', '51'], [36, 'yellow', '69'], [58, 'green', '35']]
+  return (
+    <Svg>
+      {rows.map(([y, l, n], i) => (
+        <g key={y}>
+          <rect x="8" y={y - 9} width="144" height="18" rx="6" fill={C.card} stroke={C.rule}/>
+          <LampFaceG light={l} cx={19} cy={y} size={11} px={14}/>
+          <text x="34" y={y + 3.4} fontFamily={FONT} fontSize="9.5" fontWeight="700" fill={C.ink}>{n}</text>
+          <path d={`M54 ${y}h${34 - i * 6}`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+          <rect x="116" y={y - 6} width="30" height="12" rx="5" fill={i === 1 ? C.lilacWash : C.mist}/>
+          <text x="131" y={y + 2.8} textAnchor="middle" fontFamily={FONT} fontSize="7" fontWeight="700"
+            fill={i === 1 ? C.lilac : C.ink2}>Note</text>
+        </g>
+      ))}
+      <g {...a('ht-show')}>
+        <rect x="8" y="72" width="144" height="22" rx="6" fill={C.lilacWash} stroke={C.lilac} strokeWidth="1.2"/>
+        <path d="M17 87l2-6 8-8 4 4-8 8z" fill="none" stroke={C.lilac} strokeWidth="1.6" strokeLinejoin="round"/>
+        <path d="M38 80h56M38 87h36" stroke={C.lilac} strokeWidth="2.2" strokeLinecap="round" opacity=".75"/>
+      </g>
+      <Ripple x={131} y={36} r={7} color={C.lilac}/>
+      <Finger x={133} y={39} rot={-26}/>
+    </Svg>
+  )
+}
+
+/* Six tabs along the top, the lit one moving; its activities below. */
+function TabGlyph({ i, x, y, c }) {
+  return (
+    <g transform={`translate(${x} ${y})`} fill="none" stroke={c} strokeWidth="1.5"
+      strokeLinecap="round" strokeLinejoin="round">
+      {i === 0 && <><circle r="4.2"/><circle r="1.6" fill={c}/></>}
+      {i === 1 && <path d="M-5 -3.5h4a1 1 0 0 1 1 1V4a1 1 0 0 0-1-1h-4zM5 -3.5H1a1 1 0 0 0-1 1V4a1 1 0 0 1 1-1h4z"/>}
+      {i === 2 && <><path d="M0 4.5v-3"/><path d="M0 1.5l-4.5 0 4.5-6 4.5 6z"/></>}
+      {i === 3 && <path d="M-4.5 4.5v-5L0 -4.5l4.5 4v5z"/>}
+      {i === 4 && <><rect x="-5" y="-2.5" width="10" height="7" rx="1.3"/><path d="M-2 -2.5v-2h4v2"/></>}
+      {i === 5 && <path d="M-3 -4.5l7.5 4.5-7.5 4.5z" fill={c}/>}
+    </g>
+  )
+}
+
+function ToolTabs() {
+  const hue = [C.mint, C.sky, C.accent, C.coral, C.lilac, C.sun]
+  const sets = [
+    [[C.mintWash, C.mint], [C.skyWash, C.sky], [C.sunWash, C.gold]],
+    [[C.lilacWash, C.lilac], [C.coralWash, C.coral], [C.mintWash, C.mint]],
+    [[C.skyWash, C.sky], [C.sunWash, C.gold], [C.lilacWash, C.lilac]],
+  ]
+  return (
+    <Svg>
+      <rect x="6" y="6" width="148" height="22" rx="8" fill={C.card} stroke={C.rule}/>
+      <g {...a('ht-tabs6')}>
+        <rect x="9" y="9" width="22" height="16" rx="5" fill={C.accentWash} stroke={C.accent} strokeWidth="1.4"/>
+      </g>
+      {hue.map((c, i) => <TabGlyph key={i} i={i} x={20 + i * 24} y={17} c={c}/>)}
+      {sets.map((set, k) => (
+        <g key={k} {...a(['ht-f1', 'ht-f2', 'ht-f3'][k])}>
+          {set.map(([wash, c], i) => (
+            <g key={i}>
+              <rect x={6 + i * 50} y="38" width="46" height="54" rx="8" fill={wash}/>
+              <circle cx={29 + i * 50} cy="58" r="9" fill="none" stroke={c} strokeWidth="2.4"/>
+              <path d={`M${17 + i * 50} 81h24`} stroke={c} strokeWidth="2.4" strokeLinecap="round"/>
+            </g>
+          ))}
+        </g>
+      ))}
+    </Svg>
+  )
+}
+
+/* An adult and a teen doing an exercise together. */
+function Together() {
+  return (
+    <Svg>
+      <circle cx="80" cy="34" r="24" fill={C.skyWash}/>
+      <circle cx="80" cy="34" r="22" fill="none" stroke={C.sky} strokeWidth="1.2" strokeDasharray="3 4"/>
+      <circle cx="80" cy="34" r="16" fill={C.sky} opacity=".85" {...a('ht-breathe')}/>
+      <Person x={44} y={76} s={1.5} fill={C.beam}/>
+      <Person x={116} y={80} s={1.25} fill={C.mint}/>
+    </Svg>
+  )
+}
+
+/* Raw readings kept 7, 30 or 90 days; Notes and Location stay locked. */
+function KeepDays() {
+  const opts = [[10, '7'], [58, '30'], [106, '90']]
+  return (
+    <Svg>
+      {opts.map(([x, n], i) => (
+        <g key={n}>
+          <rect x={x} y="8" width="44" height="40" rx="8" fill={i === 0 ? C.accentWash : C.card}
+            stroke={i === 0 ? C.accent : C.rule} strokeWidth={i === 0 ? 2 : 1}/>
+          <text x={x + 22} y="31" textAnchor="middle" fontFamily="Quicksand, system-ui, sans-serif"
+            fontWeight="700" fontSize="17" fill={i === 0 ? C.accent : C.ink2}>{n}</text>
+          <path d={`M${x + 13} 40h18`} stroke={C.ink3} strokeWidth="2" strokeLinecap="round" opacity=".45"/>
+        </g>
+      ))}
+      <g {...a('ht-pop')}><Check x={50} y={10} r={7}/></g>
+      <rect x="10" y="58" width="140" height="34" rx="9" fill={C.lilacWash}/>
+      <NoteGlyph x={34} y={75} c={C.lilac}/>
+      <PinGlyph x={64} y={75} c={C.lilac}/>
+      <path d="M84 75h30" stroke={C.lilac} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+      <Lock x={134} y={74} s={1.05} color={C.lilac}/>
+    </Svg>
+  )
+}
+
+/* The parent's network box: two teens, their Professional, one waiting. */
+function FamilyNet() {
+  const tiles = [[10, 12, 'teen', C.mint], [82, 12, 'teen', C.lilac], [10, 54, 'pro'], [82, 54, 'wait']]
+  return (
+    <Svg>
+      {tiles.map(([x, y, kind, c]) => (
+        <g key={x + '.' + y}>
+          <rect x={x} y={y} width="68" height="34" rx="8" fill={kind === 'wait' ? 'none' : C.card}
+            stroke={kind === 'wait' ? C.ruling : C.rule} strokeWidth={kind === 'wait' ? 1.4 : 1}
+            strokeDasharray={kind === 'wait' ? '4 3' : undefined}/>
+          {kind === 'teen' && <Person x={x + 17} y={y + 18} s={0.85} fill={c}/>}
+          {kind !== 'teen' && <Medic x={x + 17} y={y + 18} s={0.8}/>}
+          <path d={`M${x + 33} ${y + 14}h24M${x + 33} ${y + 22}h16`} stroke={C.ink3} strokeWidth="2"
+            strokeLinecap="round" opacity=".5"/>
+          {kind === 'wait' && (
+            <g transform={`translate(${x + 56} ${y + 25})`} {...a('ht-pulse')}>
+              <circle r="5" fill={C.sunWash} stroke={C.sun} strokeWidth="1.2"/>
+              <path d="M0 -2.6v2.6l1.8 1.2" fill="none" stroke={C.sun} strokeWidth="1.2" strokeLinecap="round"/>
+            </g>
+          )}
+        </g>
+      ))}
+    </Svg>
+  )
+}
+
+/* A link sent from your phone to a teen and to their Professional. */
+function InviteBoth() {
+  return (
+    <Svg>
+      <Phone x={10} y={14} w={40} h={72}>
+        <rect x="16" y="40" width="28" height="18" rx="6" fill={C.accent}/>
+        <LinkGlyph x={30} y={49}/>
+      </Phone>
+      <path d="M56 50h40M96 50c8 0 10-22 22-22M96 50c8 0 10 22 22 22" fill="none" stroke={C.ruling}
+        strokeWidth="1.6" strokeDasharray="3 4"/>
+      <g {...a('ht-travel')}>
+        <rect x="50" y="41" width="20" height="18" rx="6" fill={C.accent}/>
+        <LinkGlyph x={60} y={50}/>
+      </g>
+      <circle cx="136" cy="28" r="17" fill={C.mintWash}/>
+      <Person x={136} y={29} s={0.9} fill={C.mint}/>
+      <circle cx="136" cy="72" r="17" fill={C.beamWash}/>
+      <Medic x={136} y={73} s={0.9}/>
+    </Svg>
+  )
+}
+
+/* Who sees what: student, parent, Professional across the top; always,
+   if the student agrees, never down the rows. */
+function Table() {
+  const rows = [
+    ['ok', 'opt', 'opt'],
+    ['ok', 'opt', 'opt'],
+    ['ok', 'no', 'no'],
+    ['ok', 'no', 'no'],
+  ]
+  const xs = [76, 106, 136]
+  return (
+    <Svg>
+      <rect x="6" y="6" width="148" height="88" rx="9" fill={C.card} stroke={C.rule}/>
+      <Person x={76} y={20} s={0.7} fill={C.mint}/>
+      <Person x={106} y={20} s={0.7} fill={C.sky}/>
+      <Medic x={136} y={20} s={0.7}/>
+      {rows.map((r, j) => {
+        const y = 40 + j * 15
+        return (
+          <g key={j} {...a('ht-in', j * 0.3)}>
+            <path d={`M14 ${y}h${36 - j * 5}`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+            {r.map((k, i) => (
+              <g key={i}>
+                {k === 'ok' && <Check x={xs[i]} y={y} r={5}/>}
+                {k === 'opt' && (
+                  <g transform={`translate(${xs[i] - 8.4} ${y - 4.5}) scale(.7)`}><Toggle x={0} y={0}/></g>
+                )}
+                {k === 'no' && <Lock x={xs[i]} y={y - 1.5} s={0.75} color={C.ink3}/>}
+              </g>
+            ))}
+          </g>
+        )
+      })}
+    </Svg>
+  )
+}
+
+/* The three tool shortcuts on the Professional's home. */
+function QuickTools() {
+  return (
+    <Svg>
+      <rect x="6" y="18" width="46" height="64" rx="9" fill={C.skyWash}/>
+      <Bubble x={13} y={30} w={32} h={20} fill={C.sky} tail="left">
+        <path d="M20 40h18" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
+      </Bubble>
+      <path d="M16 70h26" stroke={C.sky} strokeWidth="2.4" strokeLinecap="round"/>
+      <rect x="57" y="18" width="46" height="64" rx="9" fill={C.mintWash}/>
+      <circle cx="80" cy="44" r="13" fill="none" stroke={C.mint} strokeWidth="2.4"/>
+      <path d="M80 44v-8M80 44l6 4" stroke={C.mint} strokeWidth="2.2" strokeLinecap="round"/>
+      <path d="M67 70h26" stroke={C.mint} strokeWidth="2.4" strokeLinecap="round"/>
+      <rect x="108" y="18" width="46" height="64" rx="9" fill={C.lilacWash}/>
+      <path d="M121 28h16l6 6v22h-22z" fill={C.card} stroke={C.lilac} strokeWidth="1.6" strokeLinejoin="round"/>
+      <path d="M125 40h12M125 46h14M125 52h8" stroke={C.lilac} strokeWidth="1.8" strokeLinecap="round" opacity=".8"/>
+      <path d="M118 70h26" stroke={C.lilac} strokeWidth="2.4" strokeLinecap="round"/>
+      <Ripple x={80} y={44} r={9} color={C.mint}/>
+      <Finger x={83} y={48} rot={-30}/>
+    </Svg>
+  )
+}
+
+/* Heads Up today: three tiles, green, yellow, red, and an urgent alert row. */
+function HeadsCount() {
+  const tiles = [[8, 'green', C.mint, 0.9], [57, 'yellow', C.gold, 0.55], [106, 'red', C.coral, 0.15]]
+  return (
+    <Svg>
+      {tiles.map(([x, l, rim, f], i) => (
+        <g key={l}>
+          <rect x={x} y="6" width="46" height="58" rx="9" fill={C.card} stroke={rim} strokeWidth="1.6"/>
+          <g {...a('ht-bob', i * 0.3)}>
+            <LampFaceG light={l} cx={x + 23} cy={28} size={24} px={30}/>
+          </g>
+          <rect x={x + 8} y="50" width="30" height="6" rx="3" fill={C.mist}/>
+          <rect x={x + 8} y="50" width={30 * f} height="6" rx="3" fill={C.ink2} opacity=".7"/>
+        </g>
+      ))}
+      <rect x="8" y="72" width="144" height="20" rx="6" fill={C.card} stroke={C.coral} strokeWidth="1.2"/>
+      <rect x="8" y="72" width="4" height="20" rx="2" fill={C.crit}/>
+      <path d="M20 82h80" stroke={C.crit} strokeWidth="2.4" strokeLinecap="round" opacity=".8"/>
+      <path d="M136 82h8m-3.5-3.5 3.5 3.5-3.5 3.5" fill="none" stroke={C.crit} strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round" {...a('ht-pulse')}/>
+    </Svg>
+  )
+}
+
+/* Each teen or Whole group: the switch slides, the view below changes. */
+function EachGroup() {
+  return (
+    <Svg>
+      <rect x="8" y="4" width="144" height="20" rx="8" fill={C.mist}/>
+      <g {...a('ht-sw2')}>
+        <rect x="10" y="6" width="68" height="16" rx="6" fill={C.card} stroke={C.accent} strokeWidth="1.4"/>
+      </g>
+      <text x="44" y="17" textAnchor="middle" fontFamily={FONT} fontSize="7.5" fontWeight="700" fill={C.ink2}>Each teen</text>
+      <text x="116" y="17" textAnchor="middle" fontFamily={FONT} fontSize="7.5" fontWeight="700" fill={C.ink2}>Whole group</text>
+      <g {...a('ht-g1')}>
+        {[0, 1, 2].map(i => (
+          <g key={i}>
+            <rect x={8 + i * 49} y="32" width="46" height="62" rx="8" fill={C.card} stroke={C.rule}/>
+            <LampFaceG light={['red', 'yellow', 'green'][i]} cx={31 + i * 49} cy={50} size={20} px={26}/>
+            <path d={`M${18 + i * 49} 70h26M${18 + i * 49} 80h18`} stroke={C.ink3} strokeWidth="2"
+              strokeLinecap="round" opacity=".5"/>
+          </g>
+        ))}
+      </g>
+      <g {...a('ht-g2')}>
+        <rect x="8" y="32" width="144" height="62" rx="8" fill={C.card} stroke={C.rule}/>
+        {[34, 26, 40, 46, 22].map((h, i) => (
+          <rect key={i} x={22 + i * 25} y={86 - h} width="14" height={h} rx="3"
+            fill={i === 3 ? C.gold : C.beamWash} stroke={i === 3 ? C.sun : C.beam} strokeWidth="1"/>
+        ))}
+        <rect x="134" y="62" width="12" height="24" rx="3" fill="none" stroke={C.ruling}
+          strokeWidth="1.2" strokeDasharray="2.5 2.5"/>
+      </g>
+    </Svg>
+  )
+}
+
+/* Search and sort, a teen's card, Open record, and the line it writes in
+   the log. */
+function FilterOpen() {
+  return (
+    <Svg>
+      <rect x="6" y="4" width="92" height="18" rx="6" fill={C.card} stroke={C.rule}/>
+      <g fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round">
+        <circle cx="16" cy="12.5" r="3.6"/><path d="M18.8 15.3l2.6 2.6"/>
+      </g>
+      <path d="M28 13h44" stroke={C.ink3} strokeWidth="2" strokeLinecap="round" opacity=".4"/>
+      <rect x="104" y="4" width="50" height="18" rx="6" fill={C.accentWash}/>
+      <path d="M112 9.5h20M112 13h14M112 16.5h8" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round"/>
+      <rect x="6" y="30" width="148" height="44" rx="8" fill={C.card} stroke={C.rule}/>
+      <LampFaceG light="yellow" cx={24} cy={52} size={22} px={28}/>
+      {[18, 24, 20, 30, 26].map((h, i) => (
+        <rect key={i} x={44 + i * 9} y={64 - h} width="6" height={h} rx="2" fill={C.beamWash}
+          stroke={C.beam} strokeWidth=".8"/>
+      ))}
+      <rect x="98" y="44" width="50" height="17" rx="6" fill={C.accent}/>
+      <text x="123" y="55.4" textAnchor="middle" fontFamily={FONT} fontSize="7.5" fontWeight="700" fill="#fff">Open record</text>
+      <g {...a('ht-in')}>
+        <rect x="6" y="80" width="148" height="15" rx="6" fill={C.paper} stroke={C.rule}/>
+        <g transform="translate(18 87.5)" fill="none" stroke={C.beam} strokeWidth="1.4">
+          <path d="M-6 0c3-4 9-4 12 0-3 4-9 4-12 0z"/><circle r="1.6" fill={C.beam}/>
+        </g>
+        <path d="M30 87.5h64" stroke={C.beam} strokeWidth="2.2" strokeLinecap="round" opacity=".7"/>
+      </g>
+      <Ripple x={123} y={52} r={8} color={C.accent}/>
+      <Finger x={126} y={56} rot={-28}/>
+    </Svg>
+  )
+}
+
+/* The Professional's own tools, a row each. */
+function ProTools() {
+  const rows = [[16, C.sky, 'quote'], [38, C.lilac, 'branch'], [60, C.mint, 'timer'], [82, C.coral, 'doc']]
+  return (
+    <Svg>
+      {rows.map(([y, c, k], i) => (
+        <g key={y} {...a('ht-in', i * 0.3)}>
+          <rect x="12" y={y - 9} width="136" height="18" rx="6" fill={C.card} stroke={C.rule}/>
+          <g transform={`translate(26 ${y})`} fill="none" stroke={c} strokeWidth="1.7"
+            strokeLinecap="round" strokeLinejoin="round">
+            {k === 'quote' && <path d="M-5 -4h10v6h-6l-3 3v-3h-1z"/>}
+            {k === 'branch' && <path d="M-5 0h4M-1 0c2 0 2-4 5-4h1M-1 0c2 0 2 4 5 4h1"/>}
+            {k === 'timer' && <><circle r="4.6"/><path d="M0 0v-3"/></>}
+            {k === 'doc' && <path d="M-4 -5h5l3 3v7h-8z"/>}
+          </g>
+          <path d={`M40 ${y}h${70 - i * 9}`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+          <path d={`M136 ${y - 3}l3 3-3 3`} fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round"/>
+        </g>
+      ))}
+    </Svg>
+  )
+}
+
 
 const RAINBOW = [C.coral, C.gold, C.mint, C.sky, C.lilac]
 
+/* The two clouds at the rainbow's feet, as the app's dials draw them
+   (src/charts/rainbow.jsx): a white calm cloud under the left foot, a dark
+   rain cloud with turquoise rain under the right. Same puffs and slab in the
+   same 96 x 34 box, flat fills, rim drawn first so the seams never show. */
+const CLOUD = {
+  calm: [[10, 26, 8], [24, 21, 13], [42, 15, 15], [64, 20, 14], [84, 26, 8], [52, 27, 7]],
+  peak: [[12, 25, 9], [30, 20, 14], [52, 15, 15], [74, 21, 13], [88, 27, 7], [42, 28, 6]],
+}
+const CLOUD_TONE = {
+  calm: { fill: '#ffffff', rim: C.ruling },
+  peak: { fill: C.ink3, rim: C.ink2 },
+}
+
+function Cloud({ cx, base, kind, s }) {
+  const t = CLOUD_TONE[kind]
+  const shapes = (
+    <>
+      <rect x="4" y="22" width="88" height="12" rx="6"/>
+      {CLOUD[kind].map(([x, y, r], i) => <circle key={i} cx={x} cy={y} r={r}/>)}
+    </>
+  )
+  return (
+    <g transform={`translate(${cx - 48 * s} ${base - 34 * s}) scale(${s})`}>
+      <g fill={t.rim} stroke={t.rim} strokeWidth={(kind === 'calm' ? 1.4 : 1.1) / s}>{shapes}</g>
+      <g fill={t.fill}>{shapes}</g>
+      {kind === 'peak' && (
+        <g stroke={C.beam} strokeLinecap="round" strokeWidth={2 / s}>
+          <path d="M30 38l-3 9M50 40l-3 10M70 38l-3 8"/>
+        </g>
+      )}
+    </g>
+  )
+}
+
+/* Both clouds for a rainbow centred on (cx, cy) whose bands run from radius
+   rIn to rOut: each cloud sits under a foot, base a little below it. */
+function Weather({ cx, cy, rIn, rOut, s }) {
+  const foot = (rIn + rOut) / 2
+  return (
+    <g>
+      <Cloud cx={cx - foot} base={cy + 8 * s} kind="calm" s={s}/>
+      <Cloud cx={cx + foot} base={cy + 8 * s} kind="peak" s={s}/>
+    </g>
+  )
+}
+
 function Dial() {
-  const cx = 80, cy = 86
+  const cx = 80, cy = 84
   return (
     <Svg>
       {RAINBOW.map((c, i) => {
@@ -367,6 +836,7 @@ function Dial() {
         return <path key={c} d={`M${cx - r} ${cy}a${r} ${r} 0 0 1 ${r * 2} 0`} fill="none"
           stroke={c} strokeWidth="6.5" strokeLinecap="round" opacity=".9"/>
       })}
+      <Weather cx={cx} cy={cy} rIn={30} rOut={66} s={0.58}/>
       {/* your usual: a dashed tick on the outside of the arc */}
       <g transform={`rotate(18 ${cx} ${cy})`}>
         <path d={`M${cx} ${cy - 72}v-9`} stroke={C.ink3} strokeWidth="2" strokeDasharray="2 2"/>
@@ -410,21 +880,6 @@ function Range() {
   )
 }
 
-function Faces() {
-  const row = [['green', 38], ['yellow', 80], ['red', 122]]
-  return (
-    <Svg>
-      {row.map(([l, x], i) => (
-        <g key={l}>
-          <ellipse cx={x} cy="84" rx="13" ry="3" fill={C.ink} opacity=".08"/>
-          <g {...a('ht-bob', i * 0.35)}>
-            <LampFaceG light={l} cx={x} cy={52} size={32} px={40}/>
-          </g>
-        </g>
-      ))}
-    </Svg>
-  )
-}
 
 const CAL = [
   'green', 'green', 'yellow', 'green', 'green',
@@ -473,16 +928,6 @@ function ToolPick() {
   )
 }
 
-function Breathe() {
-  return (
-    <Svg>
-      <circle cx="80" cy="50" r="42" fill={C.skyWash}/>
-      <circle cx="80" cy="50" r="40" fill="none" stroke={C.sky} strokeWidth="1.4" strokeDasharray="3 4"/>
-      <circle cx="80" cy="50" r="32" fill={C.sky} opacity=".9" {...a('ht-breathe')}/>
-      <circle cx="80" cy="50" r="5" fill={C.card}/>
-    </Svg>
-  )
-}
 
 function Levels() {
   const rows = [[28, 0.9, C.mint], [50, 0.6, C.sky], [72, 0.35, C.gold]]
@@ -505,14 +950,23 @@ function Levels() {
 function Chat() {
   return (
     <Svg>
-      <Bubble x={64} y={10} w={84} h={24} fill={C.beam} tail="right" anim={a('ht-in')}>
-        <Lines x={73} y={19} w={[58, 38]} color="#fff" op={0.9}/>
+      {/* starters to tap, then your question goes out and an answer comes */}
+      {[10, 30].map((y, i) => (
+        <g key={y}>
+          <rect x="8" y={y} width="84" height="16" rx="6" fill={C.paper} stroke={C.rule}/>
+          <path d={`M16 ${y + 8}h${56 - i * 14}`} stroke={C.ink2} strokeWidth="2.2" strokeLinecap="round" opacity=".6"/>
+        </g>
+      ))}
+      <Ripple x={60} y={18} r={7} color={C.beam}/>
+      <Finger x={62} y={21} rot={-30}/>
+      <Bubble x={92} y={8} w={60} h={22} fill={C.beam} tail="right" anim={a('ht-in', 0.4)}>
+        <Lines x={100} y={16} w={[42, 26]} color="#fff" op={0.9}/>
       </Bubble>
-      <Bubble x={12} y={48} w={96} h={32} fill={C.card} stroke={C.rule} tail="left" anim={a('ht-in', 0.8)}>
-        <Lines x={21} y={57} w={[72, 64, 40]} gap={6.5}/>
+      <Bubble x={8} y={56} w={104} h={30} fill={C.card} stroke={C.rule} tail="left" anim={a('ht-in', 1.1)}>
+        <Lines x={17} y={65} w={[80, 70, 44]} gap={6.5}/>
       </Bubble>
       <g {...a('ht-pulse')}>
-        {[118, 127, 136].map(x => <circle key={x} cx={x} cy="70" r="2.6" fill={C.ink3}/>)}
+        {[124, 133, 142].map(x => <circle key={x} cx={x} cy="76" r="2.6" fill={C.ink3}/>)}
       </g>
     </Svg>
   )
@@ -553,39 +1007,7 @@ function Help() {
   )
 }
 
-function TogglesOn() {
-  const rows = [[24, C.sky], [50, C.mint], [76, C.lilac]]
-  return (
-    <Svg>
-      {rows.map(([y, c], i) => (
-        <g key={y} {...a('ht-in', i * 0.35)}>
-          <rect x="14" y={y - 10} width="132" height="20" rx="7" fill={C.card} stroke={C.rule}/>
-          <rect x="21" y={y - 4} width="8" height="8" rx="2.5" fill={c}/>
-          <path d={`M36 ${y}h${46 - i * 8}`} stroke={C.ink3} strokeWidth="2.4" strokeLinecap="round" opacity=".55"/>
-          <Toggle x={114} y={y - 6.5}/>
-        </g>
-      ))}
-    </Svg>
-  )
-}
 
-/* The parent stops seeing it: the switch goes off and the parent dims. */
-function ToggleOff() {
-  return (
-    <Svg>
-      <rect x="10" y="20" width="140" height="60" rx="10" fill={C.card} stroke={C.rule}/>
-      <g {...a('ht-dim')}>
-        <Person x={40} y={50} s={1.25} fill={C.sky}/>
-        <g transform="translate(66 50)" fill="none" stroke={C.ink2} strokeWidth="1.8">
-          <path d="M-9 0c4-6 14-6 18 0-4 6-14 6-18 0z"/><circle r="2.6" fill={C.ink2}/>
-        </g>
-      </g>
-      <g transform="translate(100 43.5) scale(1.6)">
-        <Toggle x={0} y={0} anim/>
-      </g>
-    </Svg>
-  )
-}
 
 function TwoAudiences() {
   return (
@@ -628,19 +1050,21 @@ function Invite({ medic = false }) {
 }
 
 function ChildPick() {
-  const cx = 80, cy = 96
+  const cx = 80, cy = 90
   return (
     <Svg>
-      <Person x={50} y={28} fill={C.mint}/>
-      <Person x={110} y={28} fill={C.lilac}/>
+      <Person x={50} y={25} fill={C.mint}/>
+      <Person x={110} y={25} fill={C.lilac}/>
       <g {...a('ht-swap')}>
-        <circle cx="50" cy="28" r="17" fill="none" stroke={C.ink} strokeWidth="2.2"/>
+        <circle cx="50" cy="25" r="17" fill="none" stroke={C.ink} strokeWidth="2.2"/>
       </g>
       {RAINBOW.map((c, i) => {
         const r = 42 - i * 6
         return <path key={c} d={`M${cx - r} ${cy}a${r} ${r} 0 0 1 ${r * 2} 0`} fill="none"
           stroke={c} strokeWidth="4.5" strokeLinecap="round" opacity=".9"/>
       })}
+      <Weather cx={cx} cy={cy} rIn={18} rOut={42} s={0.36}/>
+      <LampFaceG light="yellow" cx={cx} cy={cy - 7} size={17} px={22}/>
       <g {...a('ht-swing')}>
         <circle cx={cx} cy={cy} r="50" fill="none"/>
         <path d={`M${cx} ${cy - 48}l-4.5-7h9z`} fill={C.ink}/>
@@ -661,23 +1085,6 @@ function DayCard({ x, y, light = 'green' }) {
   )
 }
 
-function DayOnly() {
-  const rows = [[30, NoteGlyph], [50, PinGlyph], [70, WaveGlyph]]
-  return (
-    <Svg>
-      <DayCard x={10} y={18}/>
-      {rows.map(([y, G], i) => (
-        <g key={y} opacity=".85">
-          <rect x="74" y={y - 8} width="76" height="16" rx="6" fill={C.mist}/>
-          <G x={86} y={y} c={C.ink3}/>
-          <path d={`M98 ${y}h28`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".45"/>
-          <path d={`M78 ${y + 5}l68 -10`} stroke={C.ink2} strokeWidth="1.6" strokeLinecap="round"/>
-          <Lock x={140} y={y - 1} s={0.8}/>
-        </g>
-      ))}
-    </Svg>
-  )
-}
 
 function DayView() {
   return (
@@ -726,34 +1133,7 @@ function Opener() {
   )
 }
 
-function LineCheck() {
-  return (
-    <Svg>
-      <Bubble x={12} y={18} w={104} h={46} fill={C.card} stroke={C.rule} tail="left">
-        <Lines x={22} y={30} w={[82, 70, 48]} gap={9} color={C.ink2} op={0.6}/>
-      </Bubble>
-      <g {...a('ht-pop')}><Check x={128} y={60} r={13} fill={C.mint}/></g>
-    </Svg>
-  )
-}
 
-function GetHelpArt() {
-  const rows = [[44, C.coral], [62, C.sky], [80, C.mint]]
-  return (
-    <Svg>
-      <rect x="30" y="8" width="100" height="22" rx="7" fill={C.crit}/>
-      <rect x="30" y="8" width="100" height="22" rx="7" fill="none" stroke={C.crit} strokeWidth="2" {...a('ht-ripple')}/>
-      <text x="80" y="22.6" textAnchor="middle" fontFamily={FONT} fontSize="9" fontWeight="700" fill="#fff">Get help</text>
-      {rows.map(([y, c], i) => (
-        <g key={y} {...a('ht-in', 0.3 + i * 0.3)}>
-          <rect x="30" y={y - 7} width="100" height="14" rx="5" fill={C.card} stroke={C.rule}/>
-          <rect x="36" y={y - 3.5} width="7" height="7" rx="2" fill={c}/>
-          <path d={`M49 ${y}h${50 - i * 10}`} stroke={C.ink3} strokeWidth="2" strokeLinecap="round" opacity=".55"/>
-        </g>
-      ))}
-    </Svg>
-  )
-}
 
 function Roster() {
   const people = [[30, 34, C.mint], [80, 34, C.sky], [130, 34, C.lilac], [30, 74, C.coral], [80, 74, C.gold]]
@@ -773,70 +1153,8 @@ function Roster() {
   )
 }
 
-function Lights() {
-  const rows = [[20, C.mint, 'green'], [42, C.sky, 'green'], [64, C.lilac, 'yellow'], [86, C.coral, 'green']]
-  return (
-    <Svg>
-      {rows.map(([y, c, l], i) => (
-        <g key={y}>
-          <rect x="12" y={y - 9} width="136" height="18" rx="7" fill={C.card} stroke={C.rule}/>
-          <circle cx="24" cy={y} r="5" fill={c}/>
-          <path d={`M36 ${y}h${54 - i * 6}`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
-          <g {...a('ht-bob', i * 0.3)}>
-            <LampFaceG light={l} cx={134} cy={y} size={13} px={18}/>
-          </g>
-        </g>
-      ))}
-    </Svg>
-  )
-}
 
-function Group5() {
-  return (
-    <Svg>
-      <rect x="8" y="22" width="60" height="56" rx="10" fill="none" stroke={C.ruling} strokeWidth="1.6" strokeDasharray="4 3"/>
-      <Person x={24} y={44} s={0.75} fill={C.ink3}/>
-      <Person x={52} y={44} s={0.75} fill={C.ink3}/>
-      <Person x={38} y={64} s={0.75} fill={C.ink3}/>
-      <rect x="80" y="18" width="72" height="64" rx="10" fill={C.card} stroke={C.rule}/>
-      <g stroke={C.rule} strokeWidth="1.4" strokeDasharray="3 3">
-        <path d="M88 40h56M88 56h56M88 72h56"/>
-      </g>
-      <g {...a('ht-pulse')}>
-        <circle cx="116" cy="50" r="13" fill={C.lilacWash} stroke={C.lilac} strokeWidth="1.6"/>
-        <path d="M107 50c3-5 15-5 18 0" fill="none" stroke={C.lilac} strokeWidth="1.8" strokeLinecap="round"/>
-        <path d="M108 44l16 12" stroke={C.lilac} strokeWidth="1.8" strokeLinecap="round"/>
-      </g>
-    </Svg>
-  )
-}
 
-function Audit() {
-  return (
-    <Svg>
-      <rect x="10" y="16" width="56" height="68" rx="9" fill={C.card} stroke={C.rule}/>
-      <Person x={38} y={38} s={0.85} fill={C.mint}/>
-      <Lines x={20} y={62} w={[36, 26]} gap={7}/>
-      <g transform="translate(38 16)" {...a('ht-pulse')}>
-        <circle r="10" fill={C.beamWash} stroke={C.beam} strokeWidth="1.6"/>
-        <path d="M-6 0c3-4 9-4 12 0-3 4-9 4-12 0z" fill="none" stroke={C.beam} strokeWidth="1.5"/>
-        <circle r="1.8" fill={C.beam}/>
-      </g>
-      <path d="M72 50h10m-4-4 4 4-4 4" fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <rect x="88" y="16" width="62" height="68" rx="9" fill={C.paper} stroke={C.rule}/>
-      {[30, 44, 58].map(y => (
-        <g key={y}>
-          <circle cx="98" cy={y} r="3" fill={C.ruling}/>
-          <path d={`M106 ${y}h34`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".4"/>
-        </g>
-      ))}
-      <g {...a('ht-in')}>
-        <circle cx="98" cy="72" r="3.4" fill={C.beam}/>
-        <path d="M106 72h34" stroke={C.beam} strokeWidth="2.6" strokeLinecap="round"/>
-      </g>
-    </Svg>
-  )
-}
 
 function TeenChoose() {
   return (
@@ -877,103 +1195,44 @@ function Joined() {
   )
 }
 
-function NextStep() {
-  return (
-    <Svg>
-      <path d="M38 64h40M78 64c10 0 10-22 22-22h18M78 64c10 0 10 18 22 18h18" fill="none"
-        stroke={C.ruling} strokeWidth="2" strokeLinecap="round"/>
-      <rect x="10" y="52" width="30" height="24" rx="7" fill={C.skyWash} stroke={C.sky} strokeWidth="1.6"/>
-      <rect x="118" y="30" width="32" height="24" rx="7" fill={C.lilacWash} stroke={C.lilac} strokeWidth="1.8"/>
-      <rect x="118" y="70" width="32" height="24" rx="7" fill={C.card} stroke={C.rule}/>
-      <path d="M126 42h16" stroke={C.lilac} strokeWidth="2.4" strokeLinecap="round"/>
-      <path d="M126 82h16" stroke={C.ink3} strokeWidth="2.4" strokeLinecap="round" opacity=".4"/>
-      <path d="M18 64h14" stroke={C.sky} strokeWidth="2.4" strokeLinecap="round"/>
-      <g {...a('ht-path')}>
-        <circle cx="34" cy="64" r="5" fill={C.lilac}/>
-      </g>
-      <rect x="14" y="10" width="62" height="20" rx="7" fill={C.card} stroke={C.rule}/>
-      <path d="M22 20h22" stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
-      <circle cx="64" cy="20" r="4" fill={C.gold}/>
-    </Svg>
-  )
-}
 
-function Referral() {
-  return (
-    <Svg>
-      <path d="M40 8h56l14 14v70H40z" fill={C.card} stroke={C.ink2} strokeWidth="1.6" strokeLinejoin="round"/>
-      <path d="M96 8v14h14" fill="none" stroke={C.ink2} strokeWidth="1.6" strokeLinejoin="round"/>
-      <rect x="50" y="18" width="30" height="6" rx="3" fill={C.mint}/>
-      {[36, 46, 56, 66].map((y, i) => (
-        <rect key={y} x="50" y={y} width={[48, 42, 50, 30][i]} height="4" rx="2" fill={C.ink3}
-          opacity=".45" {...a('ht-fill', i * 0.3)}/>
-      ))}
-      <g {...a('ht-pop')}>
-        <circle cx="122" cy="76" r="14" fill={C.mint}/>
-        <path d="M115 76h12m-4.5-5 4.5 5-4.5 5" fill="none" stroke="#fff" strokeWidth="2.2"
-          strokeLinecap="round" strokeLinejoin="round"/>
-      </g>
-    </Svg>
-  )
-}
 
-/* The Mental Mirror: a phone's front camera on a face, the landmark mesh
-   over it and a pulse read off the forehead. */
-function FaceMesh() {
-  return (
-    <Svg>
-      <rect x="44" y="4" width="72" height="92" rx="12" fill={C.ink}/>
-      <circle cx="80" cy="12" r="2.4" fill={C.mist}/>
-      <ellipse cx="80" cy="54" rx="22" ry="29" fill={C.skin} opacity=".9"/>
-      <g fill="none" stroke={C.beam} strokeWidth=".8" opacity=".85">
-        <ellipse cx="80" cy="54" rx="22" ry="29"/>
-        <path d="M58 54h44M80 25v58M62 38l18 16 18-16M62 70l18-16 18 16M66 30l14 24 14-24"/>
-      </g>
-      <g fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round">
-        <path d="M68 45q5-3 9 0M83 45q5-3 9 0"/>
-        <path d="M69 51h7M84 51h7"/>
-        <path d="M73 68q7 4 14 0"/>
-      </g>
-      <circle cx="80" cy="35" r="5" fill={C.coral} {...a('ht-pulse')}/>
-    </Svg>
-  )
-}
 
 export const ART = {
-  patch: Patch,
+  startBar: StartBar,
   cards: Cards,
-  tabbar: TabBar,
-  threeWays: ThreeWays,
-  fingerCam: FingerCam,
-  faceMesh: FaceMesh,
+  patch: Patch,
+  fourWays: FourWays,
+  howWays: HowWays,
   dial: Dial,
+  todayDial: TodayDial,
+  rangeCal: RangeCal,
+  log: Log,
   range: Range,
-  faces: Faces,
   calendar: Calendar,
+  childPick: ChildPick,
+  toolTabs: ToolTabs,
   toolPick: ToolPick,
-  breathe: Breathe,
   levels: Levels,
+  together: Together,
+  opener: Opener,
+  proTools: ProTools,
   chat: Chat,
   source: Source,
   help: Help,
-  togglesOn: TogglesOn,
-  toggleOff: ToggleOff,
   twoAudiences: TwoAudiences,
-  invite: () => <Invite/>,
-  inviteMed: () => <Invite medic/>,
-  childPick: ChildPick,
-  dayOnly: DayOnly,
   dayView: DayView,
+  keepDays: KeepDays,
   locked: Locked,
-  opener: Opener,
-  lineCheck: LineCheck,
-  getHelp: GetHelpArt,
-  roster: Roster,
-  lights: Lights,
-  group5: Group5,
-  audit: Audit,
+  table: Table,
+  familyNet: FamilyNet,
+  inviteBoth: InviteBoth,
+  invite: Invite,
   teenChoose: TeenChoose,
   joined: Joined,
-  nextStep: NextStep,
-  referral: Referral,
+  quickTools: QuickTools,
+  roster: Roster,
+  headsCount: HeadsCount,
+  eachGroup: EachGroup,
+  filterOpen: FilterOpen,
 }
