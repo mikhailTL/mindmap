@@ -6,6 +6,7 @@ import { Section, SectionHead, SectionLede } from '../ui/section'
 import { DemoNotice } from '../ui/notice'
 import { Progress } from '../ui/progress'
 import { WeekChart } from '../charts/week'
+import { DayChart } from '../charts/day'
 import { Bars, RainbowDial } from '../charts/rainbow'
 import { Spark } from '../charts/primitives'
 import { studentRings } from '../lib/readings'
@@ -15,6 +16,9 @@ import { CHART_DATA } from '../lib/chartdata'
 import { COHORT_PERIOD, COHORT_WEEKDAY, K_ANONYMITY, SCHOOL_N, TIER_LABEL, roster }
   from '../lib/caseload'
 import { ScrollIn, ScrollRow } from '../ui/motion'
+import { CalendarLegend, FACE_MEANS, FACE_WORD, MonthCalendar, longDay } from './calendar'
+import { TEEN } from './student/demoTeen'
+import { LampFace } from '../traffic/Face'
 import { cn } from '../lib/utils'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
@@ -153,6 +157,87 @@ function Closer({ title, line, label, view, go, rows, ground }) {
   )
 }
 
+/* ═══════════════ the Mind Score and Trends, shared by all three ═════════════ */
+
+/* The sample dial, read for a parent or a medical professional. The dial
+   draws its own calm and peak ends and their clouds. */
+function ScoreExplain({ rings, rows, aside, asideAlt }) {
+  return (
+    <Pair>
+      <ScrollIn>
+        <Fig title="One number, 0 to 100" aside={aside} asideAlt={asideAlt}>
+          <div className="flex justify-center">
+            <RainbowDial score={62} usual={51} rings={rings} size={320}/>
+          </div>
+        </Fig>
+      </ScrollIn>
+      <ScrollIn>
+        <Facts head="How to read the dial" rows={rows}/>
+      </ScrollIn>
+    </Pair>
+  )
+}
+
+const RANGE_LABEL = { day: 'Day', week: 'Week', month: 'Month' }
+const TEEN_TODAY = TEEN.days.length ? TEEN.days[TEEN.days.length - 1].date : null
+
+function RangeSwitch({ ranges, value, onChange }) {
+  return (
+    <div role="group" aria-label="Choose a time range"
+      className="inline-flex overflow-hidden rounded-field border border-rule">
+      {ranges.map(r => (
+        <button key={r} type="button" aria-pressed={value === r} onClick={() => onChange(r)}
+          className={cn('min-h-[44px] min-w-[4.5rem] px-4 font-display text-ui font-medium',
+            'transition-colors duration-150 focus-visible:outline focus-visible:outline-2',
+            'focus-visible:-outline-offset-2 focus-visible:outline-accent',
+            value === r ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+          {RANGE_LABEL[r]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* The picked calendar day, said in words beside its face. */
+function PickedDay({ d }) {
+  if (!d || d.score == null) return null
+  return (
+    <p aria-live="polite" className="m-0 mt-3 flex items-center gap-3 rounded-field border border-rule
+      bg-aqua px-3 py-2.5">
+      {d.light && <LampFace light={d.light} size={32}/>}
+      <span className="min-w-0 text-meta leading-[1.35] text-ink-2">
+        <b className="block font-display font-bold text-ink">{longDay(d.date)}</b>
+        {SCORE} {d.score}{d.light ? `. ${FACE_WORD[d.light]}: ${FACE_MEANS[d.light].toLowerCase()}.` : '.'}
+      </span>
+    </p>
+  )
+}
+
+/* Trends over a sample teen: a day's curve (students only), a week of bars,
+   or a month calendar of Heads Up faces where any day can be picked. */
+function TrendsFig({ ranges, aside, asideAlt }) {
+  const shown = ranges.filter(r => r !== 'day' || (DATA.day && DATA.day.length))
+  const [range, setRange] = React.useState(shown.includes('month') ? 'month' : shown[0])
+  const [picked, setPicked] = React.useState(TEEN_TODAY)
+  return (
+    <Fig title="Pick a range, then a day" aside={aside} asideAlt={asideAlt}>
+      <RangeSwitch ranges={shown} value={range} onChange={setRange}/>
+      <div className="mt-3">
+        {range === 'day' && <DayChart data={DATA.day} band={DATA.band}/>}
+        {range === 'week' && <WeekChart data={DATA.week} band={DATA.weekBand}/>}
+        {range === 'month' && TEEN_TODAY && (
+          <>
+            <MonthCalendar days={TEEN.days} today={TEEN_TODAY} selected={picked}
+              onSelect={setPicked} legend={false}/>
+            <PickedDay d={TEEN.days.find(x => x.date === picked)}/>
+            <CalendarLegend className="mt-4"/>
+          </>
+        )}
+      </div>
+    </Fig>
+  )
+}
+
 const STOCK = ['The photographs', 'These are licensed stock photos of models. Nobody shown uses MindMap.']
 const HALLWAY = ['students-hallway',
   'Four high school students walking along a bright corridor with folders and backpacks']
@@ -191,9 +276,6 @@ function Signals({ rings }) {
 
 export function ForStudents({ go }) {
   const rings = React.useMemo(() => studentRings(), [])
-  const band = DATA.weekBand || { hi: 1 }
-  const days = DATA.week || []
-  const over = days.filter(d => d.v > band.hi).length
 
   return (
     <main>
@@ -230,16 +312,15 @@ export function ForStudents({ go }) {
       </Section>
 
       <Section tone="paper" className="bg-aqua-2" tight>
-        <SectionHead>Your week at a glance</SectionHead>
+        <SectionHead>Your trends</SectionHead>
         <Pair>
           <ScrollIn>
-            <Fig title="The last seven days" aside={HALLWAY[0]} asideAlt={HALLWAY[1]}>
-              <WeekChart data={DATA.week} band={DATA.weekBand}/>
-            </Fig>
+            <TrendsFig ranges={['day', 'week', 'month']} aside={HALLWAY[0]} asideAlt={HALLWAY[1]}/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read the chart" rows={[
-              ['Days above your range', `${over} of ${days.length} days this week ran above your usual range.`],
+            <Facts head="How to read your trends" rows={[
+              ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
+              ['The calendar', `Each day shows its Heads Up face and ${SCORE}. Pick a day to see it.`],
               ['The shaded band', 'The band is your usual range, built from your last fourteen days.'],
             ]}/>
           </ScrollIn>
@@ -312,16 +393,14 @@ function SeenUnseen() {
 }
 
 export function ForParents({ go }) {
-  const band = DATA.weekBand || { hi: 1 }
-  const days = DATA.week || []
-  const over = days.filter(d => d.v > band.hi).length
+  const rings = React.useMemo(() => studentRings(), [])
 
   return (
     <main>
       <Hero go={go} label="For parents" ground="bg-beam-wash" photo="parent-hero"
         photoAlt="A mother and her teenage child smiling at an open laptop together at home"
-        title="See how your teen's week went"
-        lede="One Mind Score a day for your child, and which days ran high."
+        title="See how your teen is doing"
+        lede="One Mind Score a day for your child, over days, weeks and months."
         facts={[
           ['One score a day', 'A day is the finest detail you see. You never see an hour or a moment.'],
           ['Never shown to you', `You never see a raw reading, ${NOTES} or ${LOCATION}.`],
@@ -336,21 +415,28 @@ export function ForParents({ go }) {
         </Button>
       </Section>
 
+      <Section tone="paper" tight>
+        <SectionHead>The {SCORE}</SectionHead>
+        <ScoreExplain rings={rings} rows={[
+          ['0 to 100', 'One number a day, from the body signals the patch reads.'],
+          ['Against their own usual', 'Compared with your teen\'s own usual day. Never with another teen.'],
+          ['Calm to peak', 'The white cloud is calm. The rain cloud is peak.'],
+        ]}/>
+      </Section>
+
       <Section tone="paper" className="bg-aqua-2" tight>
-        <SectionHead>Your child's week</SectionHead>
+        <SectionHead>Trends</SectionHead>
         <SectionLede>A high day is a good reason to be around that evening.</SectionLede>
         <Pair>
           <ScrollIn>
-            <Fig title="The last seven days" aside="parent-kitchen"
-              asideAlt="A mother and her teenage son chopping vegetables side by side at a kitchen counter">
-              <WeekChart data={DATA.week} band={DATA.weekBand}/>
-            </Fig>
+            <TrendsFig ranges={['week', 'month']} aside="parent-kitchen"
+              asideAlt="A mother and her teenage son chopping vegetables side by side at a kitchen counter"/>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read the chart" rows={[
-              ['Days above their range', `${over} of ${days.length} days this week ran above your child's usual range.`],
-              ['The shaded band', `The band is your child's usual range, built from their last fourteen days.`],
-              ['What the chart leaves out', 'The chart never says what happened in the day. MindMap does not record that.'],
+            <Facts head="How to read Trends" rows={[
+              ['Days, weeks, months', `One ${SCORE} a day with its Heads Up face, by week or by month.`],
+              ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
+              ['A day at most', `Nothing finer than a day. Never ${NOTES}, ${LOCATION} or raw readings.`],
             ]}/>
           </ScrollIn>
         </Pair>
@@ -376,7 +462,7 @@ export function ForParents({ go }) {
         label="Open the parent screen" title="Try the parent screen"
         line="The demo uses sample readings."
         rows={[
-          ['Opens on the week', `You see one ${SCORE} a day.`],
+          ['Opens on Trends', `One ${SCORE} a day, by week or by month.`],
           ['Crisis alerts', 'A crisis alert always reaches a guardian. Nobody can switch that off.'],
         ]}/>
     </main>
@@ -465,6 +551,7 @@ function SmallGroups() {
 }
 
 export function ForSchools({ go }) {
+  const rings = React.useMemo(() => studentRings(), [])
   const suppressed = COHORT_PERIOD.filter(c => c.suppressed).length
   const peak = COHORT_WEEKDAY.reduce((a, b) => (b.mean > a.mean ? b : a))
 
@@ -473,12 +560,38 @@ export function ForSchools({ go }) {
       <Hero go={go} label={PRO_FOR} ground="bg-aqua-2" photo="clinic-talk"
         photoAlt="A teenager and an adult sitting and talking on a sofa by a sunlit window"
         title="See trends across your students"
-        lede="You see which students moved most since last week, and how groups are trending."
+        lede="You see how each student who shares with you is trending, and how groups are doing."
         facts={[
           ['What you see', `Each student's ${SCORE} and the direction it moved.`],
           ['Never shown to you', `A raw reading, ${NOTES}, ${LOCATION}, or any group under ${K_ANONYMITY} students.`],
           STOCK,
         ]}/>
+
+      <Section tone="paper" tight>
+        <SectionHead>The {SCORE}</SectionHead>
+        <ScoreExplain rings={rings} rows={[
+          ['0 to 100', 'One number a day, from the body signals the patch reads.'],
+          ['Against their own usual', 'Each student is compared with their own usual day, never with another student.'],
+          ['Calm to peak', 'The white cloud is calm. The rain cloud is peak.'],
+        ]}/>
+      </Section>
+
+      <Section tone="paper" className="bg-aqua-2" tight>
+        <SectionHead>Trends</SectionHead>
+        <Pair>
+          <ScrollIn>
+            <TrendsFig ranges={['week', 'month']}/>
+          </ScrollIn>
+          <ScrollIn>
+            <Facts head="How to read Trends" rows={[
+              ['Days, weeks, months', `Each student's ${SCORE} and Heads Up face, by week or by month.`],
+              ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
+              ['Consented students only', 'You see a student only if they chose to share with you.'],
+              ['Small groups', `A group under ${K_ANONYMITY} students shows nothing.`],
+            ]}/>
+          </ScrollIn>
+        </Pair>
+      </Section>
 
       <Section tone="card" tight>
         <SectionHead>Stress across all your students</SectionHead>

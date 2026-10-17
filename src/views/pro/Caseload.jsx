@@ -1,10 +1,10 @@
 import React from 'react'
-import { Panel } from '../Monitor'
 import { LampFace } from '../../traffic/Face'
 import { ArrowRight, Plus, Search } from '../../ui/marks'
 import { CASELOAD } from '../../lib/roster'
 import { cn } from '../../lib/utils'
 import { Seg, fieldCls } from './parts'
+import { LIGHT_TONE, TrafficLight } from './look'
 import { ProTeenCard, ProTeenRow, ProRowHead } from './TeenCard'
 import TeenCard from '../family/TeenCard'
 import { RangeSwitch } from '../family/RangeTrend'
@@ -89,11 +89,11 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
               return (
                 <button key={s} type="button" aria-pressed={on} onClick={() => toggleStatus(s)}
                   aria-label={`${STATUS_WORD[s]}, ${counts[s]} teens`}
-                  className={cn('inline-flex min-h-[40px] items-center gap-1.5 rounded-field border px-2.5 transition-colors duration-100',
-                    on ? 'border-ink bg-ink text-paper' : 'border-ruling bg-card text-ink hoverOnly:bg-aqua')}>
-                  <LampFace light={s} size={18}/>
+                  className={cn('inline-flex min-h-[44px] items-center gap-1.5 rounded-field border-2 px-2.5 transition-colors duration-100',
+                    on ? 'border-ink bg-ink text-paper' : cn(LIGHT_TONE[s].band, LIGHT_TONE[s].edge, 'text-ink hoverOnly:border-ink/40'))}>
+                  <LampFace light={s} size={22}/>
                   <span className="font-display text-fine font-bold">{STATUS_WORD[s]}</span>
-                  <span className={cn('text-fine tabular-nums', on ? 'text-paper' : 'text-ink-3')}>{counts[s]}</span>
+                  <span className={cn('text-fine tabular-nums', on ? 'text-paper' : 'text-ink-2')}>{counts[s]}</span>
                 </button>
               )
             })}
@@ -135,20 +135,25 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
   )
 }
 
-/* Real mode, and any network with nobody in it yet. */
+/* Live, with nobody connected yet: the lamps are dark until a teen shares,
+   and the one thing to do is connect. */
 function Empty({ go }) {
   return (
-    <Panel tone="brand" className="mt-3 lg:mt-4">
-      <p className="max-w-[28ch] font-display text-row font-bold leading-[1.16] text-ink sm:text-head">
-        No teens in your network yet</p>
-      <p className="mt-2 max-w-[52ch] text-fine text-ink-2">When a teen or a parent connects with you, their card
-        appears here.</p>
+    <section aria-labelledby="pro-empty-h"
+      className="mt-1 flex flex-col items-start gap-4 rounded-panel border-2 border-mint/40 bg-mint-wash p-4 sm:flex-row
+        sm:items-center sm:p-5 lg:mt-2">
+      <TrafficLight size={28} horizontal cycle={false} className="opacity-60"/>
+      <div className="min-w-0 flex-1">
+        <h3 id="pro-empty-h" className="m-0 font-display text-row font-bold leading-tight text-ink">No teens connected yet</h3>
+        <p className="m-0 mt-1.5 max-w-[52ch] text-fine text-ink-2">Connect with a family. Once a parent approves the
+          link, that teen&rsquo;s Mind Score and Heads Up show up here.</p>
+      </div>
       <button type="button" onClick={() => go('network')}
-        className="mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field border border-accent-ink bg-accent px-4
-          font-display text-ui font-medium text-paper transition-colors duration-150 hoverOnly:bg-accent-ink">
-        <Plus aria-hidden className="size-4 shrink-0"/> Add to your network
+        className="inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 rounded-field bg-mint-ink px-5
+          font-display text-ui font-bold text-white transition-colors duration-150 hoverOnly:bg-ink sm:w-auto">
+        <Plus aria-hidden className="size-4 shrink-0"/> Connect with families
       </button>
-    </Panel>
+    </section>
   )
 }
 
@@ -206,11 +211,9 @@ export function Caseload({ go, real, layout, setLayout, onOpen, alert, liveTeens
         </button>
       )}
 
-      <Toolbar layout={layout} setLayout={setLayout} filters={filters} setFilters={setFilters} counts={counts}
-        disabled={real}/>
-
       {real ? <Empty go={go}/> : (
         <>
+          <Toolbar layout={layout} setLayout={setLayout} filters={filters} setFilters={setFilters} counts={counts}/>
           <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 lg:mt-4">
             <p aria-live="polite" className="text-fine text-ink-2">
               Showing {shown.length} of {list.length} teens, sorted by {SORTS.find(([k]) => k === layout.sort)[1].toLowerCase()}</p>

@@ -1,7 +1,5 @@
 import React from 'react'
-import { Chevron } from '../ui/marks'
-import { cn } from '../lib/utils'
-import { vars } from './theme'
+import { Nameplate } from './nameplates/Nameplate.jsx'
 import { SCORE } from '../lib/terms'
 import '../kit/kit.css'
 
@@ -13,10 +11,10 @@ import '../kit/kit.css'
  *   pro      "For your sessions" (the Medical Professional tools), then
  *            "Use in a session" (every student exercise).
  *
- * 17 October: the neo-brutalist tiles are gone. Each tile is a soft rounded
- * white card with its tool's icon on that tool's own colour wash (theme.js),
- * a name, one short line, and a round arrow in the same colour. The whole
- * tile is the target, never shorter than 88px. */
+ * 17 October (later): each activity is a nameplate (nameplates/), a wide
+ * banner with its own illustrated scene, palette and one gentle loop, so no
+ * two activities look alike. The whole banner is the target. The `icon` on
+ * each item stays: the player card's quest and other screens still use it. */
 
 const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
@@ -49,7 +47,7 @@ const NoteIcon    = () => <I><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12
 /* `items` is read by src/views/Methods.jsx for a count and by the landing's
    Toolkit band, so the shape stays: id, route, family, icon, title, line. */
 export const STUDENT_GROUPS = [
-  { label:'Body', items:[
+  { label:'Calm your body', items:[
     { id:'breathing', route:'toolkit-breathing', family:'sky',    icon:BreathIcon,
       title:'Box Breathing',       line:'Follow the light round a square' },
     { id:'scan',      route:'toolkit-scan',      family:'mint',   icon:ScanIcon,
@@ -57,13 +55,13 @@ export const STUDENT_GROUPS = [
     { id:'move',      route:'toolkit-move',      family:'coral',  icon:MoveIcon,
       title:'Movement Break',      line:'Five 20-second moves' },
   ]},
-  { label:'Mind', items:[
+  { label:'Clear your head', items:[
     { id:'ground',    route:'toolkit-ground',    family:'sun',    icon:GroundIcon,
       title:'5-4-3-2-1 Grounding', line:'A tap-card scavenger hunt' },
     { id:'reframe',   route:'toolkit-reframe',   family:'lilac',  icon:ReframeIcon,
       title:'Thought Reframe',     line:'Flip cards, build a balanced thought' },
   ]},
-  { label:'Phone sensors', items:[
+  { label:'Try it with your phone', items:[
     { id:'sigh',      route:'toolkit-sigh',      family:'aqua',   icon:SighIcon,
       title:'Long Exhale',         line:'Keep the candle flame steady' },
     { id:'chest',     route:'toolkit-chest',     family:'blush',  icon:ChestIcon,
@@ -80,11 +78,11 @@ export const STUDENT_GROUPS = [
 ]
 
 export const PARENT_GROUPS = [
-  { label:'Talking', items:[
+  { label:'Start the talk', items:[
     { id:'openers',  route:'toolkit-openers',  family:'coral', icon:TalkIcon,  title:'Conversation Openers',    line:'One intention, said two ways' },
     { id:'phrasing', route:'toolkit-phrasing', family:'lilac', icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked here' },
   ]},
-  { label:'Reading', items:[
+  { label:'Know the next step', items:[
     { id:'score',    route:'toolkit-score',    family:'sky',   icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What a high fortnight carries' },
     { id:'rules',    route:'toolkit-rules',    family:'sun',   icon:RulesIcon, title:'Conversation Ground Rules', line:'Six rules before anybody speaks' },
     { id:'reach',    route:'toolkit-reach',    family:'mint',  icon:ReachIcon, title:'When to Get Help',        line:'Who to tell, and when' },
@@ -110,33 +108,10 @@ export const ALL_ITEMS = [...STUDENT_ITEMS, ...PARENT_GROUPS.flatMap(g => g.item
    always match. Read by shell.jsx. */
 export const FAMILY_OF = Object.fromEntries(ALL_ITEMS.map(i => [i.id, i.family]))
 
-function Tile({ item, index, onOpen }) {
-  const As = item.route ? 'a' : 'button'
-  const props = item.route ? { href:'#/' + item.route } : { type:'button', onClick:() => onOpen(item.id) }
-  const Icon = item.icon
-  return (
-    <As {...props} style={{ ...vars(item.family), animationDelay:`${Math.min(index, 8) * 35}ms` }}
-      className={cn('kit-card kit-settle group flex min-h-[80px] w-full items-center gap-3 sm:min-h-[88px] sm:gap-4',
-        'rounded-[18px] border border-rule bg-card p-3.5 text-left sm:p-4')}>
-      <span aria-hidden className="kit-ground kit-ink grid size-12 shrink-0 sm:size-14 place-items-center rounded-[14px]">
-        <Icon/>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display text-meta font-bold tracking-tight text-ink">{item.title}</span>
-        <span className="mt-0.5 block text-fine text-ink-2">{item.line}</span>
-      </span>
-      <span aria-hidden className="kit-ground kit-ink grid size-9 shrink-0 place-items-center rounded-full sm:size-10
-        transition-transform duration-150 motion-safe:groupHoverOnly:translate-x-0.5">
-        <Chevron className="size-4"/>
-      </span>
-    </As>
-  )
-}
-
 export function Grid({ items, start = 0, onOpen = () => {} }) {
   return (
-    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((it, i) => <Tile key={it.id} item={it} index={start + i} onOpen={onOpen}/>)}
+    <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+      {items.map((it, i) => <Nameplate key={it.id} item={it} index={start + i} onOpen={onOpen}/>)}
     </div>
   )
 }
@@ -152,20 +127,35 @@ export function Head({ title, line, first }) {
 }
 
 function SubHead({ children }) {
-  return <h3 className="mt-6 font-display font-bold text-ink-2">{children}</h3>
+  return <h3 className="mt-7 font-display font-bold text-ink">{children}</h3>
 }
 
-const PARENT_ITEMS = PARENT_GROUPS.flatMap(g => g.items)
-const PRO_ITEMS = PRO_GROUPS.flatMap(g => g.items)
+/* Groups under one heading, each with its own small heading. `start` keeps
+   the arrival stagger running on across groups. */
+function Groups({ groups, start = 0, onOpen }) {
+  let n = start
+  return groups.map(g => {
+    const at = n; n += g.items.length
+    return (
+      <section key={g.label} aria-label={g.label}>
+        <SubHead>{g.label}</SubHead>
+        <Grid items={g.items} start={at} onOpen={onOpen}/>
+      </section>
+    )
+  })
+}
+
+const PARENT_COUNT = PARENT_GROUPS.reduce((n, g) => n + g.items.length, 0)
+const PRO_COUNT = PRO_GROUPS.reduce((n, g) => n + g.items.length, 0)
 
 export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
   if (who === 'parent') {
     return (
       <div className="wrap">
         <Head first title="For you" line="Nothing here is shown to your teenager."/>
-        <Grid items={PARENT_ITEMS} start={0} onOpen={onOpen}/>
+        <Groups groups={PARENT_GROUPS} onOpen={onOpen}/>
         <Head title="Do it with your teen" line="The same exercises your teen has. Try one together."/>
-        <Grid items={STUDENT_ITEMS} start={PARENT_ITEMS.length} onOpen={onOpen}/>
+        <Groups groups={STUDENT_GROUPS} start={PARENT_COUNT} onOpen={onOpen}/>
       </div>
     )
   }
@@ -173,25 +163,16 @@ export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
     return (
       <div className="wrap">
         <Head first title="For your sessions" line="No teen data is held in these tools."/>
-        <Grid items={PRO_ITEMS} start={0} onOpen={onOpen}/>
+        <Grid items={PRO_GROUPS.flatMap(g => g.items)} start={0} onOpen={onOpen}/>
         <Head title="Use in a session" line="The student exercises, to run with a teen in the room."/>
-        <Grid items={STUDENT_ITEMS} start={PRO_ITEMS.length} onOpen={onOpen}/>
+        <Groups groups={STUDENT_GROUPS} start={PRO_COUNT} onOpen={onOpen}/>
       </div>
     )
   }
-  let n = 0
   return (
     <div className="wrap">
       <Head first title="Your exercises" line="Nobody is told which you opened."/>
-      {STUDENT_GROUPS.map(g => {
-        const start = n; n += g.items.length
-        return (
-          <section key={g.label}>
-            <SubHead>{g.label}</SubHead>
-            <Grid items={g.items} start={start} onOpen={onOpen}/>
-          </section>
-        )
-      })}
+      <Groups groups={STUDENT_GROUPS} onOpen={onOpen}/>
     </div>
   )
 }

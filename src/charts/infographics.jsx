@@ -87,7 +87,7 @@ export function SignalTrace({ kind, muted = false, className }) {
    them off. Level 2 is the student's own column. */
 const WHAT = [
   { label: `${SCORE} for the day`,        rule: 'Shared unless the student turns it off' },
-  { label: 'Whether the week ran high',   rule: 'Shared unless the student turns it off' },
+  { label: 'Which days ran high',         rule: 'Shared unless the student turns it off' },
   { label: 'Every reading, second by second', rule: 'Never shared' },
   { label: NOTES,                         rule: 'Never shared' },
   { label: LOCATION,                      rule: 'Never shared' },

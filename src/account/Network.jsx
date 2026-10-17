@@ -491,8 +491,12 @@ const VIEWS = [
   { value: 'pro',     label: `Dr. Shah, ${PRO}` },
 ]
 
-function DemoNetwork() {
-  const [view, setView] = React.useState('student')
+function DemoNetwork({ who }) {
+  /* Opened from one of the three apps, the demo stays on that side: a
+     Medical Professional pressing Connect sees Dr. Shah's network, never the
+     teen's or the parent's. Only a visit with no app behind it can switch. */
+  const fixed = who === 'student' || who === 'parent' || who === 'pro'
+  const [view, setView] = React.useState(fixed ? who : 'student')
   const [links, setLinks] = React.useState(DEMO_LINKS)
   const [note, setNote] = React.useState(null)
   const [editing, setEditing] = React.useState(null)
@@ -604,11 +608,15 @@ function DemoNetwork() {
   return (
     <>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <Tabs value={view} onValueChange={v => { setView(v); setEditing(null) }} className="min-w-0 max-w-full">
-          <TabsList scroll aria-label="Whose side to show" className="gap-x-5 border-rule">
-            {VIEWS.map(v => <TabsTrigger key={v.value} value={v.value} className="min-h-[44px] text-ui">{v.label}</TabsTrigger>)}
-          </TabsList>
-        </Tabs>
+        {fixed ? (
+          <p className="m-0 font-display text-ui font-semibold text-ink">{VIEWS.find(v => v.value === view)?.label}</p>
+        ) : (
+          <Tabs value={view} onValueChange={v => { setView(v); setEditing(null) }} className="min-w-0 max-w-full">
+            <TabsList scroll aria-label="Whose side to show" className="gap-x-5 border-rule">
+              {VIEWS.map(v => <TabsTrigger key={v.value} value={v.value} className="min-h-[44px] text-ui">{v.label}</TabsTrigger>)}
+            </TabsList>
+          </Tabs>
+        )}
         <button type="button" onClick={() => { setLinks(DEMO_LINKS); setNote(null); setEditing(null) }}
           className="inline-flex min-h-[44px] items-center font-display text-fine font-medium text-ink-2 hoverOnly:text-ink">
           Reset the demo
@@ -634,7 +642,7 @@ function DemoNetwork() {
 
 /* ── The screen ─────────────────────────────────────────────────────────── */
 
-export function Network({ go }) {
+export function Network({ go, who }) {
   const me = useAccount()
   const [mode] = useMode()
   const [invite, setInvite] = React.useState(inviteFromUrl)
@@ -653,7 +661,7 @@ export function Network({ go }) {
         Parents and {PRO_PLURAL} make a network and send its link. Teens join by opening it. Nothing is shared until the teen says yes.
         {demo && <span className="block text-fine text-ink-3">Demo. These people are examples.</span>}
       </p>
-      {demo ? <DemoNetwork/> : (
+      {demo ? <DemoNetwork who={who}/> : (
         <>
           {result && <div className="mt-3.5"><JoinedPanel result={result} teen={me.role === 'student'} onDone={() => setJoined(null)}/></div>}
           <Body me={me} go={go}/>

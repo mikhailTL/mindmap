@@ -68,7 +68,23 @@ function noWebgl2() {
   } catch { return true }
 }
 
+/* The site sets scroll-behavior: smooth on <html>, so the route change's
+   window.scrollTo(0, 0) animates up from the overview's depth, and this page,
+   being shorter, first clamps that to its own bottom. A phone can stop the
+   animation there. Arriving jumps to the top at once instead. */
+function useArriveAtTop() {
+  React.useLayoutEffect(() => {
+    const html = document.documentElement
+    const was = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) } catch { window.scrollTo(0, 0) }
+    const id = requestAnimationFrame(() => { html.style.scrollBehavior = was })
+    return () => { cancelAnimationFrame(id); html.style.scrollBehavior = was }
+  }, [])
+}
+
 export function PatchPage() {
+  useArriveAtTop()
   const [picked, setPicked] = React.useState(null)
   const [down, setDown] = React.useState(false)
   const model = React.useRef(null)

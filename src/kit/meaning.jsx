@@ -50,7 +50,7 @@ const CLAIMS = [
   { q: 'The number tells me whether to worry.',
     verdict: 'Yours to decide',
     a: 'It tells you what her body did against her own normal. Whether that is worth worrying about is a judgement about your teenager, and you have information the patch does not.' },
-  { q: 'If I can see the week, I do not need to ask.',
+  { q: 'If I can see their trends, I do not need to ask.',
     verdict: 'No',
     a: 'Four signals and a baseline. Nothing about what happened, nothing about what was said, nobody named. Asking is the only route to any of that.' },
   { q: 'A high week means I should check the app more often.',

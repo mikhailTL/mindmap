@@ -13,6 +13,7 @@ import { Latest, MindScoreLog } from '../reading/Log'
 import { Trends } from './Trends'
 import { TEEN } from './demoTeen'
 import { PartHead, TODAY_LONG, longDate } from './PartHead'
+import { DemoTodayDetail } from './TodayDetail'
 import { NoData, ScoreChart, TakeReading } from './charts'
 import { RANGE_LABEL, SOURCE_WORD, byDay, clockOf, dayKey, longDay, midnight, rangeView }
   from './liveSeries'
@@ -64,7 +65,7 @@ function TodayList({ items, now }) {
   )
 }
 
-function TodayPart({ entries, now, go }) {
+function TodayPart({ entries, now, go, listOnly = false }) {
   const today = dayKey(now)
   const todays = entries.filter(r => dayKey(r.at) === today)
   const last = entries[entries.length - 1]
@@ -81,8 +82,9 @@ function TodayPart({ entries, now, go }) {
   }
   const mean = Math.round(todays.reduce((a, r) => a + r.score, 0) / todays.length)
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start lg:gap-4">
-      <Latest entries={todays} now={now}/>
+    <div className={cn('grid grid-cols-1 gap-3 lg:items-start lg:gap-4',
+      !listOnly && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
+      {!listOnly && <Latest entries={todays} now={now}/>}
       <Panel>
         <PanelHead title="Today's Readings" meta={`${todays.length} so far`}/>
         <p className="mt-2 flex items-baseline gap-2">
@@ -302,7 +304,10 @@ export function StudentTrendsBody({ go }) {
 
       <PartHead id="st-today-h" kind="today" title="Today"
         line={`${demo ? TODAY_LONG : longDate()}. Your readings so far today.`}/>
-      <TodayPart entries={entries} now={now} go={go}/>
+      {/* The demo day in full moved here from the home on 17 October: the
+          home is navigation only, and all data lives on this tab. */}
+      {demo && <DemoTodayDetail go={go}/>}
+      <TodayPart entries={entries} now={now} go={go} listOnly={demo}/>
 
       <section aria-labelledby="st-trends-h"
         className="mt-4 flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4
@@ -325,7 +330,7 @@ export function StudentTrendsBody({ go }) {
 export function StudentTrends({ go }) {
   const [mode] = useMode()
   return (
-    <SectionShell go={go} note={mode === 'demo' ? 'These are demo figures. Nobody has been measured.' : undefined}>
+    <SectionShell go={go} note={mode === 'demo' ? 'These are demo figures.' : undefined}>
       <StudentTrendsBody go={go}/>
     </SectionShell>
   )

@@ -17,7 +17,7 @@ const ROLES = [
   { id:'app-student', who:'Student', title:'Your Mind Score each day', cta:'Open the student screen',
     photo:'student-card',
     alt:'Five teenagers walking together through a park, talking as they go' },
-  { id:'app-parent', who:'Parent', title:'A summary each week', cta:'Open the parent screen',
+  { id:'app-parent', who:'Parent', title:'Trends by day, week and month', cta:'Open the parent screen',
     photo:'parent-card',
     alt:'A mother and her teenage child sitting close together on a sofa at home, both smiling' },
   { id:'app-pro', who:PRO, title:'Students to check on', cta:`Open the ${PRO} screen`,

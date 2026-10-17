@@ -21,36 +21,33 @@ import {
 import Toolkit from './Toolkit'
 import { SKILL_TOOLS, SKILL_ROUTES } from '../skills/index.js'
 import { Students } from './Students'
-import { Welcome } from './student/Welcome'
 import { Parents, ParentHome, ParentTrends } from './Parents'
 import { StudentTrends } from './student/TrendsTab'
-import { Pro, settingLineFor } from './Pro'
+import { Pro, ProHome } from './Pro'
 import { Launch } from './Launch'
 import { AppHome } from './AppHome'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { HeadsUpPage } from '../traffic/Page'
 import { ModeToggle } from '../ui/mode-toggle'
-import { useMode, setMode } from '../lib/mode'
+import { useMode } from '../lib/mode'
 import { MindMapAI } from '../ai'
 import { Calendar } from './calendar'
-import { Logo } from '../ui/logo'
+import { Logo, LogoMark } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowLeft, ArrowRight, Bracket, Chevron, ChevronDown, Cross, Frame, Grid,
-         People, PulseMark, Rule, Search, Wave } from '../ui/marks'
+import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame, Grid,
+         People, PulseMark } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
 import { Network, useAutoJoin } from '../account/Network'
 import { useLiveSync } from '../account/sync'
-import { AccountButton } from '../account/ui'
-import { useAccount } from '../account/store'
+import { AccountMenu } from '../account/ui'
+import { HowTo } from './howto'
+import { useAccount, signOut, setPreferredRole } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
 import { MotionConfig } from 'framer-motion'
 import { motionPreference, useAppearance } from '../account/appearance'
-import { RealNotice } from '../ui/notice'
-import { Frame as Photo } from '../ui/frame'
-import { PatchFront } from '../charts/patch-front'
 import { cn } from '../lib/utils'
 
 /* The route ids, fixed by spec 0e section 18 so no two workers invent
@@ -530,7 +527,8 @@ const APP_NAV = {
   pro: [
     /* Short at 390, the full words past sm. The linking screen is the
        Connect tab, so two tabs never both say Network. */
-    ['app-pro',     ['Network', 'Your Network'], Grid, 'Your Network'],
+    ['app-pro',     'Home',     PulseMark, 'Medical Professional home'],
+    ['app-pro-trends', 'Trends', CalendarMark, 'Trends across your teens'],
     ['network',     'Connect',  People, 'Connect with parents and teens'],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['toolkit',     'Toolkit',  Bracket],
@@ -576,7 +574,7 @@ const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends',
                   'toolkit-pro-referral':'toolkit',
                   ...Object.fromEntries(SKILL_ROUTES.map(r => [r, 'toolkit'])),
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
-                  'app-pro':'app-pro', 'app-pro-trends':'app-pro',
+                  'app-pro':'app-pro', 'app-pro-trends':'app-pro-trends',
                   /* Network is a tab only on the pro bar; on the other two it
                      lights nothing and is reached from the account portal. */
                   signin:null, account:null, 'account-section':null, network:'network' }
@@ -626,8 +624,8 @@ const APP_TITLE = {
   help:           ['Help',             'Getting help'],
   'app-parent':   ['Parent',           'Parent'],
   privacy:        ['Privacy',          'Privacy'],
-  'app-pro':      ['Medical',          'Medical Professionals'],
-  'app-pro-trends': ['Trends',         'Trends'],
+  'app-pro':      ['Home',             'Medical Professional home'],
+  'app-pro-trends': ['Trends',         'Trends across your teens'],
   signin:         ['Sign in',          'Sign in'],
   account:        ['Account',          'Account'],
   'account-section': ['Account',       'Account'],
@@ -714,20 +712,10 @@ function AppTabBar({ app, view, go }) {
   )
 }
 
-function ExitToSite({ go, className, short = false }) {
-  return (
-    <button type="button" onClick={() => go('site')}
-      aria-label={short ? 'Back to the site' : undefined}
-      className={cn('flex min-h-[44px] shrink-0 items-center gap-2 rounded-field font-display',
-        'text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink',
-        /* Below sm the word goes and the arrow sits in a 44 square: the row
-           at 390 also carries the account button now. */
-        short ? 'min-w-[44px] justify-center sm:min-w-0 sm:justify-start sm:pr-2' : 'pr-2', className)}>
-      <ArrowLeft aria-hidden className="size-4 shrink-0"/>
-      {short ? <span aria-hidden className="hidden sm:inline">Site</span> : 'Back to the site'}
-    </button>
-  )
-}
+/* Each app's own home. The Home button goes here, never to the chooser:
+   somebody in the parent app has no business landing on the student side. */
+const HOME_OF = { student: 'app-student', parent: 'app-parent', pro: 'app-pro' }
+const ROLE_WORD = { student: 'Student', parent: 'Parent', pro: 'Medical Professional' }
 
 const HomeMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
@@ -738,58 +726,117 @@ const HomeMark = p => (
   </svg>
 )
 
-/* The way back to the three doors (Student, Parent, Medical Professional),
-   the screen that follows sign in, on every app screen. #/app-start shows it
-   signed in or out; #/app shows the sign in page until somebody signs in.
-   First in the row, where a home control is looked for. */
-function HomeButton({ go }) {
+const SwitchMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 18} height={p.size || 18} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    className="shrink-0">
+    <path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/>
+  </svg>
+)
+
+function HomeButton({ go, app }) {
+  const to = HOME_OF[app] || 'app-start'
   return (
-    <button type="button" onClick={() => go('app-start')} aria-label="Home" title="Home"
+    <button type="button" onClick={() => go(to)}
+      aria-label={app ? `Home, ${ROLE_WORD[app]} app` : 'Home'} title="Home"
       className="-ml-2 grid size-11 shrink-0 place-items-center rounded-field text-ink-2
-        transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink sm:-ml-3">
+        transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink sm:ml-0">
       <HomeMark size={21}/>
     </button>
   )
 }
 
-function AppTopBar({ view, go }) {
+/* "Switch role": the way to the start of the app as somebody else. In the
+   demo nobody signs in, so it opens the three doors; live, a different role
+   means a different account, so it signs out and opens sign in. */
+function SwitchRole({ go, className }) {
+  const [mode] = useMode()
+  const me = useAccount()
+  const live = mode === 'real'
+  const run = () => {
+    if (live && me) signOut()
+    go(live ? 'app-home' : 'app-start')
+  }
+  return (
+    <button type="button" onClick={run}
+      title={live ? 'Sign out and sign in with another role' : 'Choose Student, Parent or Medical Professional'}
+      className={cn('flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-field px-2 font-display',
+        'text-fine font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash',
+        'sm:text-ui', className)}>
+      <SwitchMark/>Switch role
+    </button>
+  )
+}
+
+/* Two rows on a phone, one from sm. Row one is the brand and the account
+   controls; row two is where you are. From sm both rows fold into one with
+   `contents` and the order classes put them back in reading order. */
+function AppTopBar({ view, go, app }) {
   const [short, long] = APP_TITLE[view] || ['App', 'App']
   return (
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
-      {/* px-4 at 390, not the wrap's 22: this row carries the screen name, the
-          help button, the demo switch and the way back, and the 12px bought
-          here is 12px the name keeps. */}
-      <div className="flex h-12 items-center gap-1 px-4 sm:gap-3 sm:px-10 lg:px-14">
-        <HomeButton go={go}/>
-        {/* The accent rule is ornament, so it is the first thing to go on a
-            handset where the row is full. */}
-        <span aria-hidden className="hidden h-4 w-[3px] shrink-0 rounded-bar bg-accent sm:block"/>
-        {/* The screens dropped their own header bands, so this is each app
-            route's only heading and has to be the h1. */}
-        {/* Both spellings are in the DOM and CSS picks one, so the heading
-            carries its name on the element: the text nodes would otherwise be
-            read out one after the other. */}
-        <h1 aria-label={long}
-          className="min-w-0 truncate font-display text-tick font-bold text-ink">
-          <span aria-hidden className="sm:hidden">{short}</span>
-          <span aria-hidden className="hidden sm:inline">{long}</span>
-        </h1>
-        {/* Five controls at 390: help 44, the toggle 101, the way back 44 and
-            the account 40, at 4px gaps, which leaves the heading the 121px it
-            had before the account button arrived. */}
-        <div className="ml-auto flex items-center gap-1 sm:gap-3">
-          {/* First in the group, so the one control somebody might need in a
-              hurry is the one nearest their thumb. */}
-          <GetHelp compact/>
-          <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-2 sm:[&_button]:px-3"/>
-          {/* Off below sm, where the Home button took its room: the app home
-              carries the link to the site. */}
-          <ExitToSite go={go} short className="hidden sm:flex"/>
-          {/* Last, at the right: the way to sign in, or to the account. */}
-          <AccountButton go={go} className="-mr-2 w-10 sm:w-11"/>
+      <div className="flex flex-col px-4 sm:h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-10 lg:px-14">
+        <div className="flex h-12 items-center gap-1 sm:contents">
+          {/* The corner: MindMap's mark and name, back to the site's home. */}
+          <button type="button" onClick={() => go('site')} aria-label="MindMap, back to the site"
+            className="order-1 -ml-1.5 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
+              text-[1.15rem] text-ink transition-colors duration-150 hoverOnly:bg-mist sm:text-[1.3rem]">
+            <Logo/>
+          </button>
+          <div className="order-4 ml-auto flex items-center gap-1 sm:gap-2">
+            <GetHelp compact/>
+            <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-2 sm:[&_button]:px-3"/>
+          </div>
+          <AccountMenu go={go} className="order-7 -mr-2 ml-1 w-11"/>
+        </div>
+        <div className="flex h-11 items-center gap-1 border-t border-rule sm:contents">
+          <span aria-hidden className="order-2 hidden h-6 w-px shrink-0 bg-rule sm:block"/>
+          <div className="order-2 flex min-w-0 items-center gap-1">
+            <HomeButton go={go} app={app}/>
+            {/* Each app route's only heading. Both spellings are in the DOM and
+                CSS picks one, so the name rides on the element. */}
+            <h1 aria-label={long}
+              className="min-w-0 truncate font-display text-tick font-bold text-ink">
+              <span aria-hidden className="sm:hidden">{short}</span>
+              <span aria-hidden className="hidden sm:inline">{long}</span>
+            </h1>
+          </div>
+          <SwitchRole go={go} className="order-5 ml-auto -mr-2 sm:ml-0 sm:mr-0"/>
         </div>
       </div>
     </div>
+  )
+}
+
+/* Live, each app opens only for an account of that role. The demo stays
+   open so anybody, judges included, can walk all three. */
+function RoleGate({ role, go }) {
+  const me = useAccount()
+  const word = ROLE_WORD[role]
+  return (
+    <main className="wrap">
+      <section className="mx-auto max-w-[34rem] rounded-panel border border-rule bg-card p-5 text-center sm:p-7">
+        <span aria-hidden className="mx-auto grid size-14 place-items-center rounded-full bg-accent-wash text-accent">
+          <LogoMark className="h-auto w-9"/>
+        </span>
+        <h2 className="mt-4 font-display text-row font-bold text-ink">The {word} app</h2>
+        <p className="mx-auto mt-2 max-w-[38ch] text-ui text-ink-2">
+          {me
+            ? `You are signed in as a ${ROLE_WORD[me.role] || 'member'}. Sign in with a ${word} account to open this app.`
+            : `Sign in with a ${word} account to open this app.`}
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          {me && HOME_OF[me.role] && (
+            <Button onClick={() => go(HOME_OF[me.role])}>Go to your home</Button>
+          )}
+          <Button variant={me ? 'outline' : undefined}
+            onClick={() => { if (me) signOut(); setPreferredRole(role); go('app-home') }}>
+            {`Sign in as a ${word}`}
+          </Button>
+        </div>
+        <p className="mt-4 text-fine text-ink-3">Just looking? Switch to Demo at the top to try every app without an account.</p>
+      </section>
+    </main>
   )
 }
 
@@ -1016,190 +1063,6 @@ function SurveyPage() {
 }
 
 
-/* ── The start screen each audience lands on ─────────────────────────────────
- *
- * Spec 0d, section 5: "Opening any audience lands on a short start screen:
- * what the audience can do right now, as three or four actions ... With no
- * readings yet, the screen offers the actions. It never just says there is
- * nothing to show."
- *
- * Nothing is paired and nothing has been measured in real mode, which is now
- * the default, so this is what the three app routes render there. Demo mode
- * has a worked day behind it, so there it renders the dashboard instead and
- * section 6 gets its centred sentence and dial with nothing above them. The
- * fourth action on every audience is what switches the two over.
- *
- * Grounds and inks: card and aqua, ink, ink-2, ink-3, accent and accent-ink.
- * Worst text pair on the screen is ink-3 on aqua at 5.14 : 1.
- */
-/* Twelve tiles, one drawing (the reading tile is about the patch) and eleven
-   photographs. The owner: "3 of the stock images under parent dashboard are
-   the same, needs to be a variety for all 4 across all 3 audiences." No two
-   tiles here show the same people: parent-card, parent-hero and parent-laptop
-   are one shoot, as are pro-hero and school-card, so each set appears once. */
-const START = {
-  student: {
-    head: 'Start here',
-    actions: [
-      { id:'reading', title:'Take a reading',    Mark:DialMark, art:'patch' },
-      { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket,
-        photo:'student-basketball', alt:'A teenager dribbling a basketball on an outdoor court' },
-      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
-        photo:'student-homework', alt:'A teenager in headphones writing in a notebook at a desk' },
-      { id:'demo',    title:'View Demo',         Mark:Wave,
-        photo:'student-bus', alt:'Two boys laughing together on a school bus seat, one holding a phone' },
-    ],
-    setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
-  },
-  parent: {
-    head: 'Start here',
-    actions: [
-      { id:'calendar', title:'Analyze trends',   Mark:CalendarMark,
-        photo:'parent-laptop', alt:'A mother and her teenage son at a dining table, looking at an open laptop' },
-      { id:'privacy',  title:'What is shared',   Mark:Grid,
-        photo:'parent-kitchen', alt:'A mother and her teenage son chopping vegetables side by side at a kitchen counter' },
-      { id:'ai',       title:'Ask MindMap AI',   Mark:AskMark,
-        photo:'student-controller', alt:'A teenager in headphones holding a game controller on a sofa at home' },
-      { id:'demo',     title:'View Demo',        Mark:Wave,
-        photo:'friends-steps', alt:'Two students on concrete steps outside, heads together over a notebook' },
-    ],
-    /* Static: no light here, since nothing has been measured. */
-    feature: { id:'heads-up', title:'Heads Up',
-      line:'Tells you when phone activity is causing your teen stress.', cta:'See how Heads Up works' },
-    setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
-  },
-  pro: {
-    head: 'Start here',
-    /* The worked example goes last: the owner wants every feature first. */
-    actions: [
-      { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
-        photo:'pro-hero', alt:'A woman with a notepad listening to a teenager on a sofa' },
-      /* The caseload dashboard with nobody added yet, in live mode. */
-      { id:'app-pro-trends', title:'View Trends', Mark:PulseMark,
-        photo:'students-hallway', alt:'Four students walking and talking down a school corridor' },
-      { id:'help',    title:'Get help',          Mark:Search,
-        photo:'clinic-talk', alt:'A man and a teenage boy talking on a sofa by a sunlit window' },
-      { id:'demo',    title:'View sample caseload', Mark:Wave,
-        photo:'student-card', alt:'Five teenagers walking together through a park' },
-    ],
-    /* The setup slot the other two audiences use for the patch: here it is
-       the network, parents and teens alike. */
-    setup: { id:'network', title:'Your Network', Mark:People, cta:'Connect with parents and teens' },
-  },
-}
-
-/* An action is a picture, an icon and two to four words (design spec 0f rule
-   4). No sentence under it at any width. The owner on the icon-only tiles:
-   "needs to add images of hardware or examples of stuff ... needs to be
-   visual regardless of if its real or demo". A photograph, or the patch
-   drawing where the action is about the patch. */
-function StartAction({ action, run, className }) {
-  const { Mark } = action
-  return (
-    <button type="button" onClick={() => run(action.id)}
-      className={cn('group flex h-full w-full flex-col items-start overflow-hidden',
-        'rounded-panel border border-rule bg-card text-left transition-colors',
-        'duration-150 hoverOnly:border-accent active:bg-accent-wash', className)}>
-      {/* One shape at every width, 16:9, narrower than any tile photograph's
-          widest safe crop (parent-kitchen, 1.9), so the frame never grows a
-          box and every tile's words sit on one line across the row. */}
-      <span aria-hidden className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden bg-accent-wash">
-        {action.art === 'patch'
-          ? <span className="flex h-full w-full items-center justify-center"><PatchFront className="h-[84%] w-auto"/></span>
-          : <Photo photo={action.photo} alt={action.alt} className="absolute inset-0"/>}
-        <span className="absolute left-2.5 top-2.5 flex size-8 items-center justify-center rounded-field
-          bg-card/90 text-accent-ink shadow-[0_1px_4px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-          <Mark size={16}/>
-        </span>
-      </span>
-      <span className="flex w-full items-center justify-between gap-2 p-3 sm:p-3.5 lg:px-4 lg:py-3.5">
-        <span className="font-display text-ui font-bold leading-[1.22] text-ink">{action.title}</span>
-        <Chevron aria-hidden className="mb-0.5 size-4 shrink-0 text-accent"/>
-      </span>
-    </button>
-  )
-}
-
-function AudienceStart({ go, who }) {
-  const s = START[who]
-  const me = useAccount()
-  const settingLine = who === 'pro' ? settingLineFor(me) : null
-  /* One handler for both kinds of action: a route, or the switch to the worked
-     example, which is the demo fixture set and says so on the toggle above. */
-  const run = React.useCallback(id => {
-    if (id === 'demo') setMode('demo')
-    else if (id === 'app-pro-trends') { setMode('real'); go(id) }
-    else go(id)
-  }, [go])
-
-  /* The setup card. On the pro screen it comes before the tiles, so the
-     sample caseload stays the last control. */
-  const setup = s.setup && (
-    <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border',
-      'border-ink bg-ink p-3.5 lg:p-4', who === 'pro' ? 'mt-3.5 lg:mt-4' : 'mt-2.5 lg:mt-4')}>
-      {/* The patch drawing for the pairing card; the pro card is about
-          people, so it keeps its mark. */}
-      <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center rounded-field bg-paper/10 text-accent-lit">
-        {s.setup.id === 'pairing' ? <PatchFront className="h-10 w-auto"/> : <s.setup.Mark size={22}/>}
-      </span>
-      <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">
-        {s.setup.title}</span>
-      <button type="button" onClick={() => run(s.setup.id)}
-        className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2
-          rounded-field bg-accent px-4 font-display text-ui font-medium text-paper
-          transition-colors duration-150 hoverOnly:bg-accent-lit hoverOnly:text-ink
-          active:bg-accent-lit active:text-ink sm:w-auto">
-        {s.setup.cta}
-        <ArrowRight aria-hidden className="size-4 shrink-0"/>
-      </button>
-    </div>
-  )
-
-  return (
-    <main className="wrap">
-      {/* The owner: "based on the user's account name, it greets them with a
-          welcome ____ (name) on this page". Only here, live mode, so with
-          nobody signed in Welcome has no name and draws nothing. */}
-      {me && <Welcome className="mb-3"/>}
-      {/* An h2: the app's top bar already carries this screen's h1. */}
-      <h2 className="font-display font-bold text-ink">{s.head}</h2>
-      {/* The pro start screen has no patch to pair, so it says nothing about one. */}
-      {who === 'pro'
-        ? settingLine && <p className="mt-2 text-fine text-ink-3">{settingLine}</p>
-        : <RealNotice className="mt-2" inline>No patch is paired yet.</RealNotice>}
-
-      {who === 'pro' && setup}
-
-      <ul className={cn('m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-4',
-        who === 'pro' ? 'mt-2.5 lg:mt-4' : 'mt-3.5 lg:mt-4')}>
-        {s.actions.map(a => (
-          <li key={a.id} className="min-w-0">
-            <StartAction action={a} run={run}/>
-          </li>
-        ))}
-      </ul>
-
-      {s.feature && (
-        <section aria-labelledby="start-feature" className="mt-2.5 rounded-panel border border-rule
-          bg-card p-3.5 lg:mt-4 lg:p-4">
-          <h3 id="start-feature" className="m-0 font-display text-ui font-bold text-ink">{s.feature.title}</h3>
-          <p className="mt-1 max-w-[52ch] text-sec text-ink-2">{s.feature.line}</p>
-          <button type="button" onClick={() => run(s.feature.id)}
-            className="mt-1.5 inline-flex min-h-[44px] items-center gap-2 font-display text-ui
-              font-bold text-accent underline decoration-accent/40 underline-offset-4
-              hoverOnly:text-accent-ink">
-            {s.feature.cta}</button>
-        </section>
-      )}
-
-      {/* Spec 0d section 5: connecting a patch is one of the offered actions.
-          The one dark card on the screen (spec 0f rule 7): paper on ink is
-          14.47 : 1, and the control is the solid accent fill. */}
-      {who !== 'pro' && setup}
-    </main>
-  )
-}
-
 /* The three app routes: the start screen with nothing measured, the dashboard
    with the worked set behind it. Students, Parents and Pro belong to other
    workers; nothing here reaches inside them. */
@@ -1211,8 +1074,7 @@ function ParentApp(p) {
   return <ParentHome {...p}/>
 }
 function ProApp(p) {
-  const [mode] = useMode()
-  return mode === 'real' ? <AudienceStart go={p.go} who="pro"/> : <Pro {...p}/>
+  return <ProHome go={p.go}/>
 }
 
 /* ── Two routes whose screens belong to other workers ───────────────────────
@@ -1249,6 +1111,7 @@ export function App() {
   /* The signed in account, if any. Signing in moves the shared screens to
      that account's app; nothing is gated on it. */
   const me = useAccount()
+  const [mode] = useMode()
   React.useEffect(() => { if (me) setAudience(me.role) }, [me?.id, me?.role])
   /* Three gates in order: title sequence, name, per-page questions. The
      responses route is excluded from all three. */
@@ -1258,7 +1121,7 @@ export function App() {
   const land = React.useCallback(raw => {
     const v = idOf(raw)
     if (APP_OF[v]) setAudience(APP_OF[v])
-    window.scrollTo(0, 0)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     document.title = TITLE[v] || 'MindMap'
     setSaid(TITLE[v] || 'MindMap')
     requestAnimationFrame(() => {
@@ -1325,6 +1188,12 @@ export function App() {
     || (ACCOUNT_VIEWS.has(id) && me ? me.role : null)
     || (SHARED_VIEWS.has(id) || ACCOUNT_VIEWS.has(id) ? audience : null)
 
+  /* Live, an app's screens need an account of that app's role. The launcher,
+     sign in and the account screens are not behind it; the demo never is. */
+  const roleOf = APP_OF[id] || (SHARED_VIEWS.has(id) ? appOf : null)
+  const gate = inApp && mode === 'real' && roleOf && HOME_OF[roleOf] && (!me || me.role !== roleOf)
+    ? roleOf : null
+
   /* The route table. Every id in spec 0e section 18 is here and resolves.
      Several routes are a tab inside a section and keep their own url. */
   const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
@@ -1390,7 +1259,7 @@ export function App() {
               signin:   SignIn,
               account:  Account,
               'account-section': p => <Account {...p} section={sectionOf(view)}/>,
-              network:  Network }[id]
+              network:  p => <Network {...p} who={appOf}/> }[id]
   return (
     <MotionConfig reducedMotion={motionPreference()}>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
@@ -1416,9 +1285,10 @@ export function App() {
           screen, MindMap AI unconnected) keeps its foot at the bottom of the
           viewport rather than a third of the way down a blank page. */}
       <div className={cn(inApp && APP_SHELL, inApp && 'flex flex-col')}>
-        {inApp && <AppTopBar view={id} go={go}/>}
+        {inApp && <AppTopBar view={id} go={go} app={appOf}/>}
+        {inApp && !gate && <HowTo app={appOf} tab={APP_TAB[id]} go={go}/>}
         <div id="main" ref={mainRef} tabIndex={-1} className={cn('outline-none', inApp && 'flex-1')}>
-          <V go={go} key={view}/>
+          {gate ? <RoleGate role={gate} go={go}/> : <V go={go} key={view}/>}
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
         {/* Marketing routes only: on a phone this pill lands on the tab bar. */}

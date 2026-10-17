@@ -4,7 +4,7 @@ import { ScrollRow } from '../../ui/motion'
 import { ArrowRight } from '../../ui/marks'
 import { PRO_PLURAL } from '../../lib/terms'
 import { cn } from '../../lib/utils'
-import { AppPicture, NetworkPicture, PatchPicture, PICTURE_CSS } from './whatis/pictures'
+import { AppPicture, NetworkPicture, PatchPicture, ToolkitPicture, PICTURE_CSS } from './whatis/pictures'
 
 /* What is MindMap? The owner's own three-point description, each point beside
  * a demo picture of it. Sits between the dark problem band and the white
@@ -18,16 +18,35 @@ import { AppPicture, NetworkPicture, PatchPicture, PICTURE_CSS } from './whatis/
  * line says "grounded in published clinical guidance". */
 
 export const WHAT_IS_LEAD =
-  `MindMap is an adolescent wellness app and wearable patch designed for teens, parents, and ${PRO_PLURAL}/schools, providing 3 main features:`
+  `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL}/schools to address the teen mental health crisis at its root, providing 3 main features:`
+
+/* The Toolkit sits inside feature 3, the app, as a part with its own small
+   picture, so the band still shows three features. */
+export const TOOLKIT_PART = {
+  title: 'Toolkit',
+  text: `Calming activities like breathing, grounding and body scan, plus life skills for school, friends, wellness and careers. Practice earns points that unlock new levels.`,
+}
 
 export const WHAT_IS = [
   { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch', Picture: PatchPicture,
     text: 'A wearable patch that turns detailed, numerical data into readable and friendly updates using an original Neural Network, unlike most wellness apps which use no hardware.' },
   { id: 'network', title: 'A support network', go: 'privacy', cta: 'Who sees what', Picture: NetworkPicture,
     text: `A network support system between teens, parents, and ${PRO_PLURAL}/schools to share data, manage different teens’ stress, and address issues at their root, as opposed to common, individualized monitoring apps. Teens have the freedom of privacy controls to decide who sees what.` },
-  { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit', Picture: AppPicture,
+  { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit', Picture: AppPicture, part: TOOLKIT_PART,
     text: 'A ‘one-stop’ application, providing tools like MindMap AI, grounded in published clinical guidance, and Heads Up, a parental tool to identify screen-related stress as it occurs. MindMap also offers many other utilities for academic success, social dynamics, wellness, and career skills.' },
 ]
+
+/* A named part of a feature: a heading, one line and its own picture. It sits
+   under the feature's picture, so the three cards stay level. */
+function Part({ part }) {
+  return (
+    <section aria-label={part.title} className="rounded-[12px] bg-mint-wash p-3.5 sm:p-4">
+      <h4 className="m-0 font-display text-ui font-bold leading-tight text-ink">{part.title}</h4>
+      <p className="m-0 mt-1 text-fine leading-[1.5] text-ink-2">{part.text}</p>
+      <div className="mt-2.5"><ToolkitPicture/></div>
+    </section>
+  )
+}
 
 function Feature({ f, n, go }) {
   const titleId = React.useId()
@@ -37,8 +56,9 @@ function Feature({ f, n, go }) {
       className="flex h-full flex-col rounded-panel border border-rule bg-card p-2.5 shadow-card
         md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:gap-5
         lg:row-span-2 lg:grid-cols-1 lg:grid-rows-subgrid lg:gap-0">
-      <div className="md:order-2 lg:order-none lg:h-full">
-        <Picture/>
+      <div className="flex flex-col gap-2.5 md:order-2 lg:order-none lg:h-full">
+        <div className="grid flex-1"><Picture/></div>
+        {f.part && <Part part={f.part}/>}
       </div>
       <div className="flex flex-1 flex-col px-2.5 pb-1.5 pt-4 md:order-1 md:py-4 lg:order-none lg:pt-4">
         <h3 id={titleId} className="m-0 flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">

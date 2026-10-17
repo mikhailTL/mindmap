@@ -294,6 +294,11 @@ export function Empty({ children }) {
   return <p className="px-4 py-4 text-fine text-ink-3">{children}</p>
 }
 
+/* The top bar's account menu (./menu/AccountMenu.jsx): the avatar opens a
+   dropdown of places with Sign out last. AccountButton below is the plain
+   one-press version and stays for anything that still mounts it. */
+export { AccountMenu } from './menu/AccountMenu'
+
 /* The top bar's account button. Owned here so App.jsx mounts one element.
    Signed in: a circle with the initial; signed out: the outline mark. */
 export function AccountButton({ go, className }) {

@@ -1,24 +1,26 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
-import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People } from '../ui/marks'
+import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People, Person } from '../ui/marks'
 import { CONSENT_SHORT } from '../lib/terms'
+import { useMode } from '../lib/mode'
+import { demoCounts } from './demo-network'
 import {
   ROLE_LABEL, SECRET_MAX, SETTINGS, backend, homeFor, changePasscode, deleteAccount, exportAll, listNetwork,
   signOutOthers, updateProfile, useAccount,
 } from './store'
 import { Avatar, AvatarPicker, Row, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
-import { APP_VERSION, SHARING_ROUTE, Settings } from './Settings'
+import { APP_VERSION, SHARING_ROUTE, Segmented, Settings } from './Settings'
 
 /* The account portal: the profile card, then every setting in one menu
    (./Settings.jsx). Its rows lead to sections at #/account/<section>. */
 
 const SECTIONS = {
-  profile:  { title: 'Your Profile' },
-  passcode: { title: 'Password and Sign-in' },
-  sharing:  { title: 'Sharing and Privacy' },
-  data:     { title: 'Your Data' },
+  profile:  { title: 'Your profile' },
+  passcode: { title: 'Password and sign-in' },
+  sharing:  { title: 'Privacy and sharing' },
+  data:     { title: 'Your data' },
   about:    { title: 'About MindMap' },
 }
 
@@ -48,27 +50,101 @@ const when = iso => {
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
 
+/* A band of small shapes in the six hues, behind the top of the profile
+   card. Decoration only. */
+function Confetti() {
+  return (
+    <svg aria-hidden viewBox="0 0 640 96" preserveAspectRatio="xMidYMid slice"
+      className="block h-20 w-full bg-accent-wash sm:h-24">
+      <g fill="none" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M24 70q14-22 28 0t28 0" className="stroke-sky"/>
+        <path d="M300 26q12-16 24 0t24 0" className="stroke-coral"/>
+        <path d="M520 74q12-16 24 0t24 0" className="stroke-mint"/>
+        <path d="M206 58l12 12M218 58l-12 12" className="stroke-lilac"/>
+        <path d="M612 24l12 12M624 24l-12 12" className="stroke-sun"/>
+        <path d="M444 30v18M435 39h18" className="stroke-blush"/>
+      </g>
+      <circle cx="140" cy="28" r="9" className="fill-sun"/>
+      <circle cx="392" cy="72" r="7" className="fill-sky"/>
+      <circle cx="590" cy="60" r="5" className="fill-coral"/>
+      <rect x="250" y="66" width="16" height="16" rx="3" transform="rotate(18 258 74)" className="fill-mint"/>
+      <rect x="96" y="58" width="12" height="12" rx="2" transform="rotate(-14 102 64)" className="fill-blush"/>
+      <path d="M480 14l10 17h-20z" className="fill-lilac"/>
+      <path d="M356 10l8 14h-16z" className="fill-beam"/>
+    </svg>
+  )
+}
+
+function ProfileHeader({ me, go }) {
+  const setting = me.role === 'pro' ? SETTINGS.find(s => s.value === me.setting)?.label : null
+  const [mode] = useMode()
+  const linked = mode === 'demo' ? demoCounts().linked : listNetwork(me.id).filter(l => l.status === 'active').length
+  const facts = [
+    ['Linked', linked === 0 ? 'Nobody yet' : String(linked)],
+    ['Last sign-in', when(me.lastSignInAt)],
+    ['Your data', WHERE()],
+  ]
+  return (
+    <section aria-labelledby="acct-name-h" className="overflow-hidden rounded-panel border border-rule bg-card">
+      <Confetti/>
+      <div className="px-4 pb-4 sm:px-6 sm:pb-5">
+        <div className="-mt-10 flex flex-wrap items-end gap-x-4 gap-y-3 sm:-mt-12">
+          <span className="rounded-chip bg-card p-1">
+            <Avatar name={me.name} avatar={me.avatar} size="lg" className="size-20 text-head sm:size-24"/>
+          </span>
+          <div className="min-w-0 flex-1 basis-[12rem] pb-1">
+            <h2 id="acct-name-h" className="truncate font-display text-head font-bold text-ink">{me.name}</h2>
+            <p className="truncate text-fine text-ink-3">
+              <span className="font-display font-bold text-accent-ink">{ROLE_LABEL[me.role]}</span>
+              {setting ? `, ${setting}` : ''}{me.email ? ` · ${me.email}` : ''}
+            </p>
+          </div>
+          <button type="button" onClick={() => go('account/profile')} className={cn(solid, 'mb-1')}>
+            <Pencil/>Edit profile
+          </button>
+        </div>
+        <dl className="mt-4 grid grid-cols-3 border-t border-rule pt-3">
+          {facts.map(([k, v], i) => (
+            <div key={k} className={cn('min-w-0 pr-2', i > 0 && 'border-l border-rule pl-3')}>
+              <dt className="text-fine text-ink-3">{k}</dt>
+              <dd className="m-0 font-display text-fine font-bold leading-snug text-ink">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+const Pencil = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5zM13.5 7l3 3"/>
+  </svg>
+)
+
 function Index({ me, go }) {
-  const role = me.role
   return (
     <main className="wrap">
-      <button type="button" onClick={() => go('account/profile')}
-        className="flex w-full items-center gap-3.5 rounded-panel border border-rule bg-card p-3.5
-          text-left transition-colors duration-150 hoverOnly:bg-mist/50 active:bg-mist/50">
-        <Avatar name={me.name} avatar={me.avatar} size="lg"/>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-row font-bold text-ink">{me.name}</span>
-          <span className="block truncate text-fine text-ink-3">{ROLE_LABEL[role]}{me.email ? ` · ${me.email}` : ''}</span>
-        </span>
-        <span className="shrink-0 font-display text-fine font-medium text-accent-ink">Edit</span>
-      </button>
-      <Settings me={me} go={go} className="mt-5"/>
+      <ProfileHeader me={me} go={go}/>
+      <Settings me={me} go={go} className="mt-7"/>
     </main>
   )
 }
 
 
-function Section({ title, go, children }) {
+/* Each section page carries the hue of the tile that opened it. */
+const SECTION_HUE = {
+  profile:  'bg-accent-wash text-accent-ink',
+  passcode: 'bg-sun-wash text-sun-ink',
+  sharing:  'bg-lilac-wash text-lilac-ink',
+  data:     'bg-mint-wash text-mint-ink',
+  about:    'bg-beam-wash text-beam-ink',
+}
+const SECTION_MARK = { profile: Person, passcode: Key, sharing: Grid, data: Download, about: Info }
+
+function Section({ id, go, children }) {
+  const Mark = SECTION_MARK[id]
   return (
     <main className="wrap">
       <button type="button" onClick={() => go('account')}
@@ -76,8 +152,13 @@ function Section({ title, go, children }) {
           text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink">
         <ArrowLeft aria-hidden className="size-4"/>Account
       </button>
-      <h2 className="mt-1 font-display font-bold text-ink">{title}</h2>
-      <div className="mt-3.5 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">{children}</div>
+      <div className="mt-1 flex items-center gap-3">
+        <span aria-hidden className={cn('grid size-10 shrink-0 place-items-center rounded-field', SECTION_HUE[id])}>
+          <Mark size={20}/>
+        </span>
+        <h2 className="font-display font-bold text-ink">{SECTIONS[id].title}</h2>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">{children}</div>
     </main>
   )
 }
@@ -100,14 +181,11 @@ function Profile({ me, go }) {
     setErr(null); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
   return (
-    <Section title={SECTIONS.profile.title} go={go}>
-      <Panel title="Your Picture" className="self-start">
-        <div className="p-4">
-          <AvatarPicker value={me.avatar} onChange={a => updateProfile({ avatar: a })} name={me.name}/>
-        </div>
-      </Panel>
-      <Panel title="Your Details" className="self-start">
-        <form onSubmit={save} noValidate className="p-4">
+    <Section id="profile" go={go}>
+      <section aria-labelledby="acct-details-h"
+        className="self-start rounded-panel border border-rule bg-card p-4 lg:p-5">
+        <h3 id="acct-details-h" className="font-display text-row font-bold text-ink">Your details</h3>
+        <form onSubmit={save} noValidate className="mt-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="acct-name" className={labelClass}>Name</label>
@@ -123,27 +201,28 @@ function Profile({ me, go }) {
             </div>
           </div>
           {err && <p id="acct-email-err" role="alert" className="mt-2 font-display text-fine font-medium text-crit">{err}</p>}
-          <button type="submit" className={cn(outline, 'mt-3')} disabled={!dirty || !name.trim()}>
-            {saved ? <><Check aria-hidden className="size-4"/>Saved</> : 'Save'}
+          <button type="submit" className={cn(solid, 'mt-3 disabled:opacity-50')} disabled={!dirty || !name.trim()}>
+            {saved ? <><Check aria-hidden className="size-4"/>Saved</> : 'Save changes'}
           </button>
         </form>
         {me.role === 'pro' && (
-          <div role="radiogroup" aria-label="Where you work" className="grid grid-cols-3 gap-2 border-t border-rule p-4">
-            {SETTINGS.map(s => {
-              const on = me.setting === s.value
-              return (
-                <button key={s.value} type="button" role="radio" aria-checked={on}
-                  onClick={() => updateProfile({ setting: s.value })}
-                  className={cn('min-h-[44px] rounded-field border px-2 font-display text-fine transition-colors duration-150',
-                    on ? 'border-accent-ink bg-accent font-bold text-paper'
-                       : 'border-rule bg-card font-medium text-ink-2 hoverOnly:bg-mist')}>
-                  {s.label}
-                </button>
-              )
-            })}
+          <div className="mt-5 border-t border-rule pt-4">
+            <p id="acct-where" className={labelClass}>Where you work</p>
+            <Segmented label="Where you work" value={me.setting}
+              onChange={v => updateProfile({ setting: v })}
+              options={SETTINGS.map(s => ({ value: s.value, label: s.label }))} className="mt-1.5"/>
           </div>
         )}
-      </Panel>
+      </section>
+      <section aria-labelledby="acct-pic-h"
+        className="self-start overflow-hidden rounded-panel border border-rule bg-card">
+        <h3 id="acct-pic-h" className="border-b border-rule bg-sky-wash px-4 py-3 font-display text-row font-bold text-ink lg:px-5">
+          Your picture
+        </h3>
+        <div className="p-4 lg:p-5">
+          <AvatarPicker value={me.avatar} onChange={a => updateProfile({ avatar: a })} name={me.name}/>
+        </div>
+      </section>
     </Section>
   )
 }
@@ -170,8 +249,8 @@ function Passcode({ me, go }) {
   }
   const wrong = state === 'wrong', invalid = state === 'invalid'
   return (
-    <Section title={SECTIONS.passcode.title} go={go}>
-      <Panel title="Change Password" className="self-start">
+    <Section id="passcode" go={go}>
+      <Panel title="Change your password" className="self-start">
         <form onSubmit={save} noValidate className="p-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -201,7 +280,7 @@ function Passcode({ me, go }) {
           </button>
         </form>
       </Panel>
-      <Panel title="Signed-in Devices" className="self-start">
+      <Panel title="Signed-in devices" className="self-start">
         <div className="flex min-h-[48px] items-center justify-between gap-3 px-4 py-2.5">
           <span className="font-display text-ui font-medium text-ink">Last sign-in</span>
           <span className="font-display text-fine font-bold text-ink-2">{when(me.lastSignInAt)}</span>
@@ -226,8 +305,8 @@ function Passcode({ me, go }) {
 
 function Sharing({ me, go }) {
   return (
-    <Section title={SECTIONS.sharing.title} go={go}>
-      <Panel title="What You Share" className="self-start">
+    <Section id="sharing" go={go}>
+      <Panel title="What you share" className="self-start">
         <Row label={SHARING_LABEL[me.role]} hint={CONSENT_SHORT} Mark={Grid} onClick={() => go(SHARING_ROUTE[me.role])}/>
         <Row label="Network" Mark={People} aside={String(listNetwork(me.id).filter(l => l.status === 'active').length)}
           onClick={() => go('network')}/>
@@ -240,24 +319,31 @@ function Sharing({ me, go }) {
 function Data({ me, go }) {
   function erase() { deleteAccount(); go(homeFor(me.role)) }
   return (
-    <Section title={SECTIONS.data.title} go={go}>
-      <Panel title="Download a Copy" className="self-start">
-        <div className="p-4">
-          <button type="button" className={solid}
-            onClick={() => download(`mindmap-${me.name.replace(/\s+/g, '-').toLowerCase()}.json`, exportAll())}>
-            <Download aria-hidden className="size-4"/>Download
-          </button>
-          <p className="mt-2 text-fine text-ink-3">The file holds your account, links and code.</p>
+    <Section id="data" go={go}>
+      <section aria-labelledby="data-dl-h" className="self-start rounded-panel border border-rule bg-card p-4 lg:p-5">
+        <div className="flex items-start gap-3">
+          <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-field bg-mint-wash text-mint-ink">
+            <Download size={20}/>
+          </span>
+          <div className="min-w-0">
+            <h3 id="data-dl-h" className="font-display text-row font-bold text-ink">Download a copy</h3>
+            <p className="mt-0.5 text-fine text-ink-3">The file holds your account, links and code.</p>
+          </div>
         </div>
-      </Panel>
-      <Panel title="Delete Account" className="self-start">
-        <div className="p-4">
+        <button type="button" className={cn(solid, 'mt-4')}
+          onClick={() => download(`mindmap-${me.name.replace(/\s+/g, '-').toLowerCase()}.json`, exportAll())}>
+          <Download aria-hidden className="size-4"/>Download
+        </button>
+      </section>
+      <section aria-labelledby="data-del-h" className="self-start rounded-panel border border-dashed border-crit bg-paper p-4 lg:p-5">
+        <h3 id="data-del-h" className="font-display text-row font-bold text-crit">Delete your account</h3>
+        <p className="mt-0.5 text-fine text-ink-3">Every link and code goes too.</p>
+        <div className="mt-4">
           <ArmedButton armedLabel="Delete for good" onConfirm={erase}>
             <Bin aria-hidden className="size-4"/>Delete my account
           </ArmedButton>
-          <p className="mt-2 text-fine text-ink-3">Every link and code goes too.</p>
         </div>
-      </Panel>
+      </section>
     </Section>
   )
 }
@@ -270,8 +356,8 @@ function About({ go }) {
     ['Made by', 'Solace Innovation'],
   ]
   return (
-    <Section title={SECTIONS.about.title} go={go}>
-      <Panel title="MindMap App" className="self-start">
+    <Section id="about" go={go}>
+      <Panel title="The MindMap app" className="self-start">
         {rows.map(([k, v]) => (
           <div key={k} className="flex min-h-[48px] items-center justify-between gap-3 border-t border-rule px-4 py-2.5 first:border-t-0">
             <span className="font-display text-ui font-medium text-ink">{k}</span>

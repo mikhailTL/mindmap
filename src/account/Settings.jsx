@@ -1,22 +1,21 @@
 import React from 'react'
 import { cn } from '../lib/utils'
-import { ChoiceRows, Panel, SwitchRow } from '../app/controls'
-import { Bell, Bin, Download, Grid, Info, Key, People } from '../ui/marks'
+import { Bell, Chevron, Download, Exit, Grid, Info, Key } from '../ui/marks'
 import { useMode } from '../lib/mode'
-import { CONSENT_SHORT, PRO_PLURAL } from '../lib/terms'
+import { PRO_PLURAL } from '../lib/terms'
 import { MOTION, TEXT_SIZES, setAppearance, useAppearance } from './appearance'
 import { DEMO_LINKS, demoCounts } from './demo-network'
 import { backend, homeFor, listNetwork, listPendingApprovals, signOut } from './store'
-import { Avatar, HelpMark, LinkMark, Row, ShieldMark, outline, solid } from './ui'
+import { Avatar, HelpMark, LinkMark, outline, solid } from './ui'
 
-/* Every setting the app has, in one menu. The account page shows it under
- * the profile card; the sign-in page shows it under the form, so a visitor
- * who has not made an account can still reach all of it.
+/* Every setting the app has, under the profile card on the account page.
  *
- * Network is first and the largest. The rest are grouped: Profile, Privacy
- * and sharing, Notifications, Appearance, Data, About. Each row opens the
- * screen that already owns the setting; Appearance is the only one set here,
- * because it has no other home.
+ * Four groups, each drawn its own way so the page does not read as one
+ * stack of identical panels:
+ *   Your people   one wide band, the faces and two actions
+ *   Account       a grid of tiles, one hue each, each opening its screen
+ *   Appearance    set right here: a segmented text size and a switch
+ *   About         a plain line on the canvas, with Sign out at its end
  */
 
 export const SHARING_ROUTE = { student: 'shared', parent: 'privacy', pro: 'app-pro', other: 'privacy' }
@@ -24,9 +23,16 @@ const SHARING_LABEL = { student: 'What you share', parent: 'What a parent can se
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
 
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+const GroupHead = ({ id, children, aside }) => (
+  <div className="flex items-baseline justify-between gap-3">
+    <h3 id={id} className="font-display text-row font-bold text-ink">{children}</h3>
+    {aside}
+  </div>
+)
 
-function NetworkPanel({ me, go, demo }) {
+/* ── Your people ────────────────────────────────────────────────────────── */
+
+function People({ me, go, demo }) {
   let people, linked, waiting
   if (demo) {
     const c = demoCounts()
@@ -41,130 +47,218 @@ function NetworkPanel({ me, go, demo }) {
   }
   const open = () => go('network')
   return (
-    <section aria-labelledby="set-network"
-      className="overflow-hidden rounded-panel border-2 border-accent bg-card">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="bg-accent-wash p-4 lg:p-5">
+    <section aria-labelledby="set-network">
+      <GroupHead id="set-network">Your people</GroupHead>
+      <div className="mt-2.5 flex flex-col gap-4 rounded-panel border-2 border-sky bg-sky-wash p-4
+        sm:flex-row sm:items-center lg:p-5">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-field bg-accent text-paper">
-              <People size={22}/>
-            </span>
-            <div className="min-w-0">
-              <h3 id="set-network" className="font-display text-row font-bold text-ink">Network</h3>
-              <p className="text-fine text-ink-2">{demo ? 'Demo: Maya’s network' : me ? 'Your people' : 'Sign in to link people'}</p>
-            </div>
-          </div>
-          <p className="mt-3 max-w-[48ch] text-ui text-ink">
-            Teens, parents and {PRO_PLURAL} connect by link. The teen approves what is shared.
-          </p>
-          {people.length > 0 && (
-            <div className="mt-3 flex items-center gap-3">
-              <span className="flex -space-x-2">
+            {people.length > 0 ? (
+              <span className="flex shrink-0 -space-x-3">
                 {people.slice(0, 4).map(p => (
-                  <Avatar key={p.id || p.name} name={p.name} avatar={p.avatar} size="md" className="ring-2 ring-accent-wash"/>
+                  <Avatar key={p.id || p.name} name={p.name} avatar={p.avatar} size="md"
+                    className="size-11 ring-[3px] ring-sky-wash"/>
                 ))}
               </span>
-              <span className="font-display text-fine font-medium text-ink-2">
-                {plural(linked, 'linked', 'linked')}{waiting ? `, ${waiting} waiting` : ''}
+            ) : (
+              <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-chip border-2
+                border-dashed border-sky-ink text-sky-ink">
+                <LinkMark size={20}/>
               </span>
-            </div>
-          )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" onClick={open} className={solid}><LinkMark size={16}/>Invite by link</button>
-            <button type="button" onClick={open} className={outline}>Open network</button>
+            )}
+            <p className="min-w-0 font-display text-ui font-bold leading-tight text-ink">
+              {demo ? 'Maya’s network' : linked === 0 ? 'Nobody linked yet' : `${linked} linked`}
+              {demo && <span className="block font-medium text-ink-2">
+                Demo, {linked} linked{waiting > 0 ? `, ${waiting} waiting` : ''}
+              </span>}
+              {!demo && waiting > 0 && <span className="block font-medium text-sky-ink">{waiting} waiting</span>}
+            </p>
           </div>
+          <p className="mt-2.5 max-w-[52ch] text-fine text-ink-2">
+            Teens, parents and {PRO_PLURAL} connect by link. The teen approves what is shared.
+          </p>
         </div>
-        <div className="border-t border-rule lg:border-l lg:border-t-0">
-          <Row label="Your people" Mark={People} aside={String(linked)} onClick={open}
-            hint="Parents, teens and Medical Professionals"/>
-          <Row label="Invite by link" Mark={LinkMark} onClick={open} hint="Copy a link and send it"/>
-          <Row label="Waiting for approval" Mark={ShieldMark} aside={String(waiting)} onClick={open}
-            hint="Approve or decline a request"/>
-          <Row label="What each person can see" Mark={Grid} onClick={open} hint="Change or remove access"/>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button type="button" onClick={open} className={solid}><LinkMark size={16}/>Invite by link</button>
+          <button type="button" onClick={open} className={cn(outline, 'border-sky-ink')}>Open network</button>
         </div>
       </div>
     </section>
   )
 }
 
+/* ── Account tiles ──────────────────────────────────────────────────────── */
+
+const TILE = {
+  sun:   { edge: 'hoverOnly:border-sun',   mark: 'bg-sun-wash text-sun-ink',     bar: 'bg-sun' },
+  lilac: { edge: 'hoverOnly:border-lilac', mark: 'bg-lilac-wash text-lilac-ink', bar: 'bg-lilac' },
+  coral: { edge: 'hoverOnly:border-coral', mark: 'bg-coral-wash text-coral-ink', bar: 'bg-coral' },
+  mint:  { edge: 'hoverOnly:border-mint',  mark: 'bg-mint-wash text-mint-ink',   bar: 'bg-mint' },
+}
+
+function Tile({ label, hint, Mark, hue, onClick }) {
+  const t = TILE[hue]
+  return (
+    <button type="button" onClick={onClick}
+      className={cn('group relative flex min-h-[112px] min-w-0 flex-col items-start overflow-hidden rounded-panel',
+        'border border-rule bg-card p-3.5 pt-4 text-left transition-colors duration-150 active:bg-mist/50', t.edge)}>
+      <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1', t.bar)}/>
+      <span className="flex w-full items-start justify-between gap-2">
+        <span aria-hidden className={cn('grid size-10 place-items-center rounded-field', t.mark)}>
+          <Mark size={20}/>
+        </span>
+        <Chevron aria-hidden className="mt-1 size-4 shrink-0 text-ink-3 transition-transform duration-150
+          groupHoverOnly:translate-x-0.5"/>
+      </span>
+      <span className="mt-auto pt-3 font-display text-ui font-bold leading-tight text-ink">{label}</span>
+      {hint && <span className="mt-0.5 text-fine leading-snug text-ink-3">{hint}</span>}
+    </button>
+  )
+}
+
+function AccountTiles({ me, go, role }) {
+  return (
+    <section aria-labelledby="set-account">
+      <GroupHead id="set-account">Account and privacy</GroupHead>
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+        {me && <Tile label="Password and sign-in" hint="Change it, sign out elsewhere" Mark={Key} hue="sun"
+          onClick={() => go('account/passcode')}/>}
+        <Tile label="Privacy and sharing" hint={SHARING_LABEL[role]} Mark={Grid} hue="lilac"
+          onClick={() => go(SHARING_ROUTE[role])}/>
+        <Tile label="Reminders" hint="When and how MindMap reminds you" Mark={Bell} hue="coral"
+          onClick={() => go('app-notify')}/>
+        {me && <Tile label="Your data" hint="Download a copy or delete" Mark={Download} hue="mint"
+          onClick={() => go('account/data')}/>}
+      </div>
+    </section>
+  )
+}
+
+/* ── Appearance ─────────────────────────────────────────────────────────── */
+
+/* A segmented control: a radiogroup with one tab stop and arrow keys. */
+export function Segmented({ label, value, options, onChange, className }) {
+  const refs = React.useRef([])
+  const index = Math.max(0, options.findIndex(o => o.value === value))
+  function onKey(e) {
+    const last = options.length - 1
+    let to = null
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = index === last ? 0 : index + 1
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') to = index === 0 ? last : index - 1
+    else if (e.key === 'Home') to = 0
+    else if (e.key === 'End') to = last
+    if (to == null) return
+    e.preventDefault()
+    onChange(options[to].value)
+    refs.current[to]?.focus()
+  }
+  return (
+    <div role="radiogroup" aria-label={label} onKeyDown={onKey}
+      className={cn('flex rounded-field border border-ink-3 bg-mist p-1', className)}>
+      {options.map((o, i) => {
+        const on = i === index
+        return (
+          <button key={o.value} type="button" role="radio" aria-checked={on}
+            ref={el => { refs.current[i] = el }} tabIndex={on ? 0 : -1}
+            onClick={() => onChange(o.value)}
+            className={cn('min-h-[44px] min-w-0 flex-1 rounded-sm px-2 font-display text-fine transition-colors duration-150',
+              on ? 'bg-card font-bold text-ink shadow-card ring-1 ring-ink-3'
+                 : 'font-medium text-ink-2 hoverOnly:text-ink')}>
+            {o.render || o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+const SIZE_LOOK = { default: 'text-[15px]', large: 'text-[18px]', larger: 'text-[21px]' }
+
 function Appearance() {
   const a = useAppearance()
+  const reduce = a.motion === 'reduce'
   return (
-    <Panel title="Appearance">
-      <p className="px-4 pt-3 font-display text-fine font-medium text-ink-2">Text size</p>
-      <ChoiceRows label="Text size" value={a.text} onChange={text => setAppearance({ text })}
-        className="mt-1 border-b border-rule"
-        options={TEXT_SIZES.map(t => ({ value: t.value, label: t.label }))}/>
-      <SwitchRow label="Reduce motion" hint="Stills fades and slides on this device."
-        checked={a.motion === 'reduce'}
-        onChange={on => setAppearance({ motion: on ? 'reduce' : MOTION[0].value })}/>
-    </Panel>
+    <section aria-labelledby="set-appearance-h" id="set-appearance" className="scroll-mt-20">
+      <GroupHead id="set-appearance-h">Appearance</GroupHead>
+      <div className="mt-2.5 grid overflow-hidden rounded-panel border border-rule bg-card lg:grid-cols-2">
+        <div className="p-4 lg:p-5">
+          <p id="set-text-l" className="font-display text-ui font-bold text-ink">Text size</p>
+          <Segmented label="Text size" value={a.text} onChange={text => setAppearance({ text })}
+            className="mt-2.5"
+            options={TEXT_SIZES.map(t => ({
+              value: t.value, label: t.label,
+              render: <span className="flex items-baseline justify-center gap-1.5">
+                <span aria-hidden className={cn('font-bold leading-none', SIZE_LOOK[t.value])}>A</span>{t.label}
+              </span>,
+            }))}/>
+          <p className="mt-2.5 text-fine text-ink-3">Changes every screen on this device.</p>
+        </div>
+        <div className="border-t border-rule p-4 lg:border-l lg:border-t-0 lg:p-5">
+          <button type="button" role="switch" aria-checked={reduce}
+            aria-describedby="set-motion-h"
+            onClick={() => setAppearance({ motion: reduce ? MOTION[0].value : 'reduce' })}
+            className="flex min-h-[56px] w-full items-center gap-3 rounded-field text-left">
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-ui font-bold text-ink">Reduce motion</span>
+              <span id="set-motion-h" className="mt-0.5 block text-fine text-ink-3">Stills fades and slides on this device.</span>
+            </span>
+            <span aria-hidden className={cn('w-8 text-right font-display text-fine font-bold',
+              reduce ? 'text-accent' : 'text-ink-3')}>{reduce ? 'On' : 'Off'}</span>
+            <span aria-hidden className={cn('relative block h-7 w-[3.25rem] shrink-0 rounded-bar border transition-colors duration-150',
+              reduce ? 'border-accent-ink bg-accent' : 'border-ruling bg-mist')}>
+              <span className={cn('absolute left-[3px] top-[3px] block size-5 rounded-chip border bg-card transition-transform duration-150',
+                reduce ? 'translate-x-[1.5rem] border-accent-ink' : 'translate-x-0 border-ink-3')}/>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── About, and the way out ─────────────────────────────────────────────── */
+
+function AboutLine({ me, go }) {
+  const where = backend() === 'remote' ? 'Saved to your MindMap account' : 'Kept on this device'
+  const link = 'inline-flex min-h-[44px] items-center gap-1.5 font-display text-ui font-medium text-accent-ink ' +
+    'underline decoration-rule underline-offset-4 transition-colors duration-150 hoverOnly:decoration-accent'
+  return (
+    <section aria-label="About" className="flex flex-col gap-3 border-t border-rule pt-4
+      sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-fine text-ink-3">
+          MindMap <span className="font-mono tabular-nums">{APP_VERSION}</span>. {where}.
+        </p>
+        <div className="flex flex-wrap gap-x-5">
+          <button type="button" onClick={() => go('account/about')} className={link}>
+            <Info aria-hidden className="size-4"/>About MindMap
+          </button>
+          <button type="button" onClick={() => go('help')} className={link}>
+            <HelpMark size={16}/>Get help
+          </button>
+        </div>
+      </div>
+      {me && (
+        <button type="button" onClick={() => { signOut(); go(homeFor(me.role)) }}
+          className={cn(outline, 'self-start sm:self-auto')}>
+          <Exit aria-hidden className="size-4"/>Sign out
+        </button>
+      )}
+    </section>
   )
 }
 
 export function Settings({ me, go, className }) {
   const [mode] = useMode()
   const role = me?.role || 'student'
-  const where = backend() === 'remote' ? 'Saved to your MindMap account.' : 'Kept on this device.'
   return (
     <section aria-labelledby="settings-h" className={cn('min-w-0', className)}>
-      <h2 id="settings-h" className="font-display font-bold text-ink">Settings</h2>
-      <div className="mt-3 grid gap-3 lg:gap-4">
-        <NetworkPanel me={me} go={go} demo={mode === 'demo'}/>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
-          <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-            <Panel title="Profile">
-              {me ? (
-                <>
-                  <button type="button" onClick={() => go('account/profile')}
-                    className="flex min-h-[56px] w-full items-center gap-3 px-4 py-3 text-left transition-colors
-                      duration-150 hoverOnly:bg-mist/50">
-                    <Avatar name={me.name} avatar={me.avatar} size="md"/>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-display text-ui font-medium text-ink">Name and picture</span>
-                      <span className="block truncate text-fine text-ink-3">{me.name}</span>
-                    </span>
-                    <span className="shrink-0 font-display text-fine font-medium text-accent-ink">Edit</span>
-                  </button>
-                  <Row label="Password and sign-in" Mark={Key} onClick={() => go('account/passcode')}/>
-                </>
-              ) : (
-                <p className="px-4 py-3 text-fine text-ink-2">Make an account above to choose a name and picture.</p>
-              )}
-            </Panel>
-            <Panel title="Privacy and Sharing">
-              <Row label={SHARING_LABEL[role]} hint={CONSENT_SHORT} Mark={Grid} onClick={() => go(SHARING_ROUTE[role])}/>
-            </Panel>
-          </div>
-          <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-            <Panel title="Notifications">
-              <Row label="Reminders" hint="When and how MindMap reminds you" Mark={Bell} onClick={() => go('app-notify')}/>
-            </Panel>
-            <Appearance/>
-          </div>
-          <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-            <Panel title="Data">
-              {me ? (
-                <>
-                  <Row label="Download a copy" Mark={Download} onClick={() => go('account/data')}/>
-                  <Row label="Delete account" Mark={Bin} onClick={() => go('account/data')}/>
-                </>
-              ) : (
-                <p className="px-4 py-3 text-fine text-ink-2">Sign in to download or delete your account.</p>
-              )}
-              <p className="max-w-none border-t border-rule px-4 py-3 text-fine text-ink-3">{where}</p>
-            </Panel>
-            <Panel title="About">
-              <Row label="About MindMap" Mark={Info} aside={APP_VERSION} onClick={() => go('account/about')}/>
-              <Row label="Help" Mark={HelpMark} onClick={() => go('help')}/>
-            </Panel>
-            {me && (
-              <button type="button" onClick={() => { signOut(); go(homeFor(me.role)) }} className={cn(outline, 'justify-self-start')}>
-                Sign out
-              </button>
-            )}
-          </div>
-        </div>
+      <h2 id="settings-h" className="sr-only">Settings</h2>
+      <div className="grid gap-7 lg:gap-8">
+        <People me={me} go={go} demo={mode === 'demo'}/>
+        <AccountTiles me={me} go={go} role={role}/>
+        <Appearance/>
+        <AboutLine me={me} go={go}/>
       </div>
     </section>
   )

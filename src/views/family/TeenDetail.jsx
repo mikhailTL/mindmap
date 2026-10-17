@@ -417,7 +417,7 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
 
         <section aria-labelledby="week-title" className="flex flex-col rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 id="week-title" className="m-0 font-display text-head font-bold leading-tight text-ink">This week</h3>
+            <h3 id="week-title" className="m-0 font-display text-head font-bold leading-tight text-ink">Day by day</h3>
             <DayStepper teen={teen} date={date} setDate={setDate} first={first}/>
           </div>
           {score ? <WeekLamps teen={teen} date={date} setDate={setDate}/>

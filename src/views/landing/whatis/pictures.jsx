@@ -7,9 +7,9 @@ import { FAMILY } from '../../../lib/roster'
 import { LampFace } from '../../../traffic/Face'
 import { HEADLINE } from '../../../signals/light.js'
 import { AvatarArt } from '../../../account/avatars'
-import { SKILL_GROUPS } from '../../../skills/index.js'
 import { AUDIENCES } from '../../../ai/framework.js'
 import { Check, Never } from '../../../ui/marks'
+import { THEMES, levelFor, levelName } from '../../../toolkit/game/progress.js'
 import { NOTES, LOCATION, PRO, SCORE } from '../../../lib/terms'
 import { cn } from '../../../lib/utils'
 
@@ -20,8 +20,10 @@ import { cn } from '../../../lib/utils'
  *            the student's RainbowDial with the sentence the phone mock uses
  *   network  Maya, Elena and Dr. Shah from account/demo-network.js; what each
  *            sees is the SHARING table's wording in app/store.js
- *   app      a MindMap AI starter from ai/framework.js, the Heads Up yellow
- *            headline from signals/light.js, the four SKILL_GROUPS
+ *   app      a MindMap AI starter from ai/framework.js and the Heads Up yellow
+ *            headline from signals/light.js
+ *   toolkit  three calming activities and a level bar, by the Toolkit's own
+ *            level rules (toolkit/game/progress.js)
  *
  * Every picture is one role="img" with a label that says what it shows; the
  * drawing inside is hidden from screen readers. The only motion is a slow
@@ -106,7 +108,7 @@ const TODAY = MAYA.days[MAYA.days.length - 1]
 
 function Person({ avatar, name, role }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2">
       <AvatarArt id={avatar} className="size-9"/>
       <div className="min-w-0">
         <p className="m-0 font-display text-ui font-bold leading-tight text-ink">{name}</p>
@@ -159,7 +161,7 @@ export function NetworkPicture() {
       <div className="grid flex-1 grid-cols-2 gap-2.5">
         <Panel className="flex flex-col p-2.5 sm:p-3">
           <Person avatar="sym-flower" name="Elena" role="Parent"/>
-          <div className="mt-2.5 flex items-center gap-2 rounded-[8px] bg-paper px-2 py-1.5">
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-[8px] bg-paper px-2 py-1.5">
             <LampFace light={TODAY.light} size={26}/>
             <span className="font-display text-head font-bold leading-none tabular-nums text-ink">{TODAY.score}</span>
             <span className="text-fine leading-tight text-ink-2">Today</span>
@@ -179,14 +181,8 @@ export function NetworkPicture() {
   )
 }
 
-/* ── 3. one app: MindMap AI, Heads Up and the four life skills groups ───── */
+/* ── 3. one app: MindMap AI and Heads Up ────────────────────────────────── */
 
-const GROUP_TILE = {
-  sky: 'bg-sky-wash text-sky-ink',
-  blush: 'bg-blush-wash text-blush-ink',
-  mint: 'bg-mint-wash text-mint-ink',
-  sun: 'bg-sun-wash text-sun-ink',
-}
 const ASK = AUDIENCES.student.starters[0]
 
 function Head({ children }) {
@@ -194,11 +190,10 @@ function Head({ children }) {
 }
 
 export function AppPicture() {
-  const groups = SKILL_GROUPS.map(g => ({ id: g.id, title: g.title, sub: g.sub, family: g.family, Icon: g.tools[0]?.icon }))
   return (
     <Picture wash="bg-lilac-wash"
-      label={`Demo: three parts of one app. MindMap AI answering a teen who wrote "${ASK}". A Heads Up message for a parent with a yellow light: ${HEADLINE.yellow} And the Toolkit's four groups: ${groups.map(g => `${g.title}, ${g.sub}`).join('; ')}.`}>
-      <div className="mt-5 flex flex-1 flex-col justify-between gap-2.5">
+      label={`Demo: two parts of one app. MindMap AI answering a teen who wrote "${ASK}". And a Heads Up message for a parent with a yellow light: ${HEADLINE.yellow}`}>
+      <div className="mt-5 flex flex-1 flex-col justify-center gap-3">
         <Panel className="px-3 py-2.5">
           <Head>MindMap AI</Head>
           <p className="m-0 ml-auto mt-2 w-fit max-w-[85%] rounded-[12px] rounded-br-[4px] bg-accent px-2.5 py-1.5
@@ -214,25 +209,65 @@ export function AppPicture() {
             <p className="m-0 mt-0.5 font-display text-ui font-bold leading-tight text-ink">{HEADLINE.yellow}</p>
           </div>
         </Panel>
-
-        <Panel className="px-3 py-2.5">
-          <Head>Toolkit</Head>
-          <ul className="m-0 mt-2 grid list-none grid-cols-2 gap-x-2 gap-y-3 p-0">
-            {groups.map(({ id, title, sub, family, Icon }) => (
-              <li key={id} className="flex min-w-0 items-center gap-2">
-                <span className={cn('grid size-9 shrink-0 place-items-center rounded-[8px] [&_svg]:size-5',
-                  GROUP_TILE[family] || GROUP_TILE.sky)}>
-                  {Icon ? <Icon/> : null}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-display text-fine font-bold leading-tight text-ink">{title}</span>
-                  <span className="block text-fine leading-tight text-ink-2">{sub}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
       </div>
     </Picture>
+  )
+}
+
+/* ── the Toolkit, a part of feature 3 with its own small picture ─────────── */
+
+/* Three of the calming activities, drawn with the same strokes the Toolkit's
+   own index uses (toolkit/index.jsx), so the marks match the app. */
+const G = ({ children }) => (
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden focusable="false"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+)
+const CALM = [
+  { id: 'breathing', name: 'Breathing', tone: 'text-sky-ink',
+    mark: <G><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3"/></G> },
+  { id: 'ground', name: 'Grounding', tone: 'text-sun-ink',
+    mark: <G><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/></G> },
+  { id: 'scan', name: 'Body scan', tone: 'text-mint-ink',
+    mark: <G><circle cx="12" cy="5" r="2.5"/><path d="M8 10h8l-1 6h-6zM10 16v5M14 16v5"/></G> },
+]
+
+/* Demo points. The level, its name, the bar and the next unlock are the
+   Toolkit's own rules in toolkit/game/progress.js. */
+const DEMO_POINTS = 160
+const LV = levelFor(DEMO_POINTS)
+const NEXT = THEMES.find(t => t.level === LV.level + 1)
+
+export function ToolkitPicture() {
+  return (
+    <div role="img"
+      aria-label={`Toolkit demo: three calming activities, breathing, grounding and body scan, and a level bar at level ${LV.level}, ${levelName(LV.level)}, with ${LV.into} of ${LV.need} points toward level ${LV.level + 1}${NEXT ? `, which unlocks the ${NEXT.name} colour` : ''}.`}
+      className="rounded-[10px] border border-rule bg-card p-2.5">
+      <div aria-hidden>
+        <ul className="m-0 grid list-none grid-cols-3 gap-1.5 p-0">
+          {CALM.map(c => (
+            <li key={c.id} className="flex flex-col items-center gap-1 rounded-[8px] bg-paper px-1 py-2">
+              <span className={c.tone}>{c.mark}</span>
+              <span className="text-center text-fine font-semibold leading-tight text-ink">{c.name}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2.5 flex items-center gap-2">
+          <span className="font-display text-fine font-bold text-ink">Level {LV.level}</span>
+          <span className="relative h-2 flex-1 overflow-hidden rounded-bar bg-mist">
+            <span className="absolute inset-y-0 left-0 rounded-bar bg-accent" style={{ width: `${Math.round(LV.pct * 100)}%` }}/>
+          </span>
+          <span className="text-fine tabular-nums text-ink-2">{LV.into}/{LV.need}</span>
+        </div>
+        {NEXT && (
+          <p className="m-0 mt-1 flex items-center gap-1.5 text-fine leading-snug text-ink-2">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>
+            </svg>
+            Level {LV.level + 1} unlocks the {NEXT.name} colour
+          </p>
+        )}
+      </div>
+    </div>
   )
 }

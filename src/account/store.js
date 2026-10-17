@@ -45,7 +45,7 @@ export const homeFor = role => (role === 'student' || role === 'parent' || role 
 /* Where a Medical Professional works. The console reads the words off this;
    the k-floor and the consent rules are the same for all three. */
 export const SETTINGS = [
-  { value: 'school',   label: 'School counselor' },
+  { value: 'school',   label: 'School' },
   { value: 'practice', label: 'Private practice' },
   { value: 'other',    label: 'Other professional' },
 ]

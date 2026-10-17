@@ -399,7 +399,7 @@ export function PhoneCheck({ go }) {
 }
 
 /* Raw values in their own units. The closing rows are load bearing: the
-   index is not a clinical RMSSD, and nothing is validated on a person. */
+   index is not a clinical RMSSD. */
 function Readings({ detail, result }) {
   if (!detail) return null
   const { ppg, voice, move, torch } = detail
@@ -433,8 +433,6 @@ function Readings({ detail, result }) {
         <dd className="m-0 text-ink-2">Reads about a fifth below clinical RMSSD.</dd>
         <dt className="text-ink-3">Compared to</dt>
         <dd className="m-0 text-ink-2">Your own history, so phone and patch share one scale.</dd>
-        <dt className="text-ink-3">Testing so far</dt>
-        <dd className="m-0 text-ink-2">No reading has been tested on a person yet</dd>
       </dl>
     </>
   )

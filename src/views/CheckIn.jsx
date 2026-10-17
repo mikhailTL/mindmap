@@ -75,20 +75,22 @@ const WAYS = [
     ] },
 ]
 
-/* Figures as a chip row: label beside the figure, never under it. */
+/* Figures as a ruled row: each a big number over a short label, left
+   aligned, with a hairline between them. Spans, so it can sit inside a
+   button. */
 function Figures({ items, className }) {
   return (
-    <ul className={cn('m-0 flex list-none flex-wrap gap-1.5 p-0', className)}>
+    <span className={cn('flex border-t border-rule pt-2.5', className)}>
       {items.map(([value, label]) => (
-        <li key={label} className="inline-flex items-baseline gap-1.5 rounded-chip border
-          border-rule bg-paper px-2.5 py-1">
-          <span className="font-mono text-ui font-bold tabular-nums leading-none text-accent">
+        <span key={label} className="flex min-w-0 flex-col border-l border-rule px-3
+          first:border-l-0 first:pl-0">
+          <span className="font-display text-head font-bold tabular-nums leading-none text-accent-ink">
             {value}
           </span>
-          <span className="text-fine leading-none text-ink-2">{label}</span>
-        </li>
+          <span className="mt-1 text-fine leading-tight text-ink-2">{label}</span>
+        </span>
       ))}
-    </ul>
+    </span>
   )
 }
 
@@ -335,18 +337,15 @@ export function CheckInBody({ go }){
                 </div>
                 <p aria-live="polite"
                   className="mt-1.5 min-h-[2.8em] max-w-[44ch] text-fine leading-[1.4] text-ink-3">
-                  {pair?.msg || 'No patch is paired.'}
+                  {pair?.msg || (mode === 'real' ? 'No patch is paired.' : 'The demo patch is paired.')}
                 </p>
               </section>
             </ScrollRow>
           </div>
           <Compare/>
-          {/* The owner, 17 October: the log, trends and Mind Score data moved
-              to their own app tab, Trends. This page links to it. */}
-          <p className="mt-6 flex flex-wrap items-center gap-x-3 text-meta text-ink-2 lg:mt-8">
-            Your {SCORE} Log and trends are on the Trends tab.
-            <SeeTrends go={go}/>
-          </p>
+          {/* The owner, 17 October: no log or trends on this tab. They are
+              on the Trends tab, and this link goes there. */}
+          <SeeTrends go={go} className="mt-5 lg:mt-6">See Your Trends</SeeTrends>
         </Stage>
       )}
 

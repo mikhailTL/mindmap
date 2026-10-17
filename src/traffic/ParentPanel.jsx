@@ -15,7 +15,7 @@ export function HeadsUpParentPanel({ onOpen }) {
       <div className="mt-4 grid gap-6 md:grid-cols-2 md:gap-8">
         <LightCard light={p.light} at={p.at} signals={p.signals} reduced={hu.reduced} ios={false} lamp={34}/>
         <div>
-          <p className="m-0 font-display text-ui font-bold text-ink">This week</p>
+          <p className="m-0 font-display text-ui font-bold text-ink">Trends</p>
           <div className="mt-2 max-w-[420px]"><WeekGraph today={p.today} ios={false}/></div>
         </div>
       </div>

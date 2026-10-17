@@ -3,7 +3,8 @@ import { LampFace } from '../../traffic/Face'
 import { RainbowDial } from '../../charts/rainbow'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
-import { PartHead, TODAY_LONG } from '../student/PartHead'
+import { TODAY_LONG } from '../student/PartHead'
+import { ProPart, toneOf } from './look'
 import { DailyChart, FaceCounts, ringsFor } from './charts'
 import { SourceCounts, SourceIcon, SourceLine, SOURCE_NAME, countBySource, mainSources, sourcesOf } from './sources'
 import { COLUMNS, STATUS_LINE, STATUS_WORD, TREND_PREV, TREND_TITLE, figures, signed, trendDays, trendRange,
@@ -55,37 +56,42 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
   const days = trendDays(teen, range)
   const rest = COLUMNS.filter(c => c.key !== 'score' && c.key !== 'change' && columns.includes(c.key))
   const totals = countBySource(days, sourcesOf(teen))
+  const tone = toneOf(today.light) || { band: 'bg-aqua', edge: 'border-rule', ink: 'text-ink-2' }
   return (
     <article aria-label={teen.pseudonym}
-      className="group relative flex h-full w-full flex-col rounded-panel border border-rule bg-card p-3.5 text-left
-        shadow-card transition-colors duration-150 hoverOnly:border-accent lg:p-4">
-      <div className="flex items-start gap-2.5">
+      className={cn('group relative flex h-full w-full flex-col overflow-hidden rounded-panel border-2 bg-card text-left',
+        'transition-colors duration-150 hoverOnly:border-ink/50', tone.edge)}>
+      <div className={cn('flex items-center gap-3 border-b-2 px-3.5 py-3 lg:px-4', tone.band, tone.edge)}>
+        {today.light && <LampFace light={today.light} size={44}/>}
         <div className="min-w-0 flex-1">
           <p className="m-0 truncate font-display text-ui font-bold text-ink">{teen.pseudonym}</p>
-          <p className="m-0 text-fine text-ink-3">Grade {teen.grade}, age {teen.age}</p>
+          <p className="m-0 text-fine text-ink-2">Grade {teen.grade}, age {teen.age}</p>
         </div>
+        {today.light && <p className="m-0 shrink-0 text-right">
+          <span className="block text-fine text-ink-2">Heads Up</span>
+          <span className={cn('block font-display text-ui font-bold', tone.ink)}>{STATUS_WORD[today.light]}</span></p>}
       </div>
-      <SourceLine teen={teen} className="mt-1.5"/>
+      <div className="flex flex-1 flex-col p-3.5 lg:p-4">
+      <SourceLine teen={teen}/>
 
-      <PartHead kind="today" title="Today" line={TODAY_LONG} className="mt-3.5 [&_h2]:text-ui"/>
+      <ProPart kind="today" title="Today" line={TODAY_LONG} as="h3" small className="mt-3.5"/>
       <div className="mt-2 flex justify-center">
         <RainbowDial score={today.score} usual={teen.usual.base} rings={ringsFor(teen, today)} size={260}/>
       </div>
       <div className="mt-2 grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-start gap-3">
         <div className="min-w-0">
-          <p className="m-0 text-fine text-ink-3">Heads Up</p>
-          <p className="m-0 mt-1 flex items-center gap-1.5 font-display text-ui font-bold text-ink">
-            <LampFace light={today.light} size={24}/>{STATUS_WORD[today.light]}</p>
+          <p className="m-0 text-fine text-ink-3">Usual range</p>
+          <p className="m-0 mt-1 font-display text-ui font-bold tabular-nums text-ink">{teen.usual.lo} to {teen.usual.hi}</p>
         </div>
         <div className="min-w-0">
           <p className="m-0 text-fine text-ink-3">Readings today</p>
           <SourceCounts counts={countBySource([today], sourcesOf(teen))} unit={false} className="mt-1 !gap-1"/>
         </div>
       </div>
-      <p className="m-0 mt-1.5 text-fine text-ink-2">
-        Usual {teen.usual.lo} to {teen.usual.hi}. {STATUS_LINE[today.light]} today.</p>
+      <p className={cn('m-0 mt-2 flex items-center gap-1.5 rounded-field px-2 py-1.5 text-fine font-medium text-ink', tone.band)}>
+        {today.light && <LampFace light={today.light} size={18}/>}{STATUS_LINE[today.light]} today.</p>
 
-      <PartHead kind="trends" title="Trends" line={TREND_TITLE[range]} className="mt-4 [&_h2]:text-ui"/>
+      <ProPart kind="trends" title="Trends" line={TREND_TITLE[range]} as="h3" small className="mt-4"/>
       {trend ? (
         <div className="mt-2">
           <DailyChart days={days} usual={teen.usual} compact/>
@@ -120,6 +126,7 @@ export function ProTeenCard({ teen, range: chosen, columns, onOpen }) {
           className="inline-flex min-h-[44px] items-center gap-1 font-display text-ui font-bold text-accent
             after:absolute after:inset-0 after:rounded-panel after:content-[''] hoverOnly:text-accent-ink">
           Open record<Chevron aria-hidden className="size-4"/></button>
+      </div>
       </div>
     </article>
   )

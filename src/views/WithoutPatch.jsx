@@ -32,17 +32,9 @@ const ROUTES = [
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
 ]
 
-/* Approved claim language; all three stay verbatim. */
-const LIMITS = [
-  ['Heart rate', 'The heart rate comes within half a beat per minute of a known signal.'],
-  ['Beat-to-beat index',
-   'The beat-to-beat figure is our own index, not a clinical RMSSD. The app holds it back when the signal is noisy.'],
-  ['Testing so far', 'No reading has been tested on a person yet. Every figure on this page is generated.'],
-]
-
 function RouteArt({ kind }) {
   if (kind === 'sensors') return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-14 w-[12rem]">
+    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-14 sm:w-[12rem]">
       <rect x="14" y="4" width="52" height="66" rx="13" className="fill-aqua-2 stroke-ink" strokeWidth="1.6"/>
       <rect x="24" y="12" width="30" height="30" rx="9" className="fill-card stroke-ink-3" strokeWidth="1.3"/>
       <circle cx="33" cy="21" r="5" className="fill-none stroke-ink-3" strokeWidth="1.3"/>
@@ -56,7 +48,7 @@ function RouteArt({ kind }) {
     </svg>
   )
   return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-14 w-[12rem]">
+    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-14 sm:w-[12rem]">
       {[0, 1, 2].map(i => (
         <rect key={i} x={16 + i * 9} y={2 + i * 7} width="116" height="52" rx="8"
           className={i === 2 ? 'fill-card stroke-ink' : 'fill-aqua-2 stroke-ruling'} strokeWidth="1.5"/>
@@ -86,47 +78,103 @@ function Figures({ items, className }) {
   )
 }
 
+/* The site sets scroll-behavior: smooth on <html>, so the route change's
+   window.scrollTo(0, 0) animates up from the overview's depth, and this page,
+   being shorter, first clamps that to its own bottom. A phone can stop the
+   animation there. Arriving jumps to the top at once instead. */
+function useArriveAtTop() {
+  React.useLayoutEffect(() => {
+    const html = document.documentElement
+    const was = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) } catch { window.scrollTo(0, 0) }
+    const id = requestAnimationFrame(() => { html.style.scrollBehavior = was })
+    return () => { cancelAnimationFrame(id); html.style.scrollBehavior = was }
+  }, [])
+}
+
+/* One of the two ways, sized for the hero. */
+function Route({ r, i, go, toCheck }) {
+  return (
+    <ScrollRow index={i} className="h-full">
+      <div className={cn(PANEL, 'flex h-full flex-col border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
+        {/* Art beside the title on a phone, above it once the cards pair up. */}
+        <div className="flex items-center gap-3 sm:block">
+          <div className={cn('w-fit shrink-0 rounded-panel px-2 py-1.5 sm:px-3 sm:py-2',
+            i ? 'bg-aqua' : 'bg-accent-wash')}>
+            <RouteArt kind={r.art}/>
+          </div>
+          <div className="min-w-0 sm:mt-3">
+            <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
+            <p className="mt-0.5 text-fine font-semibold tabular-nums text-ink-3">{r.when}</p>
+          </div>
+        </div>
+        <ul className="m-0 mt-2.5 flex list-none flex-wrap gap-1.5 border-t border-rule p-0 pt-2.5">
+          {r.gives.map(g => (
+            <li key={g}
+              className="rounded-field border border-rule bg-paper px-2.5 py-1 text-fine
+                leading-none text-ink-2">
+              {g}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-auto pt-3">
+          {r.id === 'ask'
+            ? <Button variant="outline" size="sm"
+                onClick={() => { setReadingIntent('survey'); go('check') }}>
+                Start the questions<span aria-hidden>→</span>
+              </Button>
+            : <Button variant="outline" size="sm" onClick={toCheck}>
+                Use the camera<span aria-hidden>→</span>
+              </Button>}
+        </div>
+      </div>
+    </ScrollRow>
+  )
+}
+
 export function WithoutPatch({ go }) {
+  useArriveAtTop()
   const toCheck = () => document.getElementById('take')?.scrollIntoView({ behavior:'smooth', block:'start' })
 
   return (
     <main>
       <header className="border-t border-rule bg-accent-wash">
-        <div className="wrap py-7 lg:py-10">
-          <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-4">
-            <div>
-              <p className="font-body text-ui font-semibold text-accent-ink">
-                Without the patch
-              </p>
-              <h1 className="mt-2 max-w-[16ch] font-display font-bold text-major
-                leading-[1.04] tracking-tight text-ink">
-                A {SCORE} from your phone
-              </h1>
+        <div className="wrap grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-center
+          lg:gap-8 lg:py-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,31rem)]">
+          <div className="min-w-0">
+            <p className="font-body text-ui font-semibold text-accent-ink">
+              Without the patch
+            </p>
+            <h1 className="mt-2 max-w-[18ch] font-display font-bold text-major
+              leading-[1.04] tracking-tight text-ink">
+              A {SCORE} from your phone
+            </h1>
+            <p className="mt-2.5 text-meta leading-[1.4] text-ink-2">
+              Use the phone you already have.
+            </p>
+            <Figures items={HERO_FACTS} className="mt-2.5"/>
 
-              <div className={cn(PANEL, 'mt-3 max-w-[34rem] overflow-hidden border-l-[3px] border-l-accent')}>
-                {/* A licensed stock frame of models: nobody shown uses MindMap. */}
-                <div className="h-[184px] border-b border-rule sm:h-[240px]">
-                  <Frame photo="student-bus" eager
-                    alt="Two boys laughing together on a school bus seat, one holding a phone"/>
-                </div>
-                <div className="p-3.5">
-                  <p className="text-meta leading-[1.4] text-ink-2">
-                    Use the phone you already have.
-                  </p>
-                  <Figures items={HERO_FACTS} className="mt-2.5"/>
-                </div>
-              </div>
-              <div className="mt-3">
-                <Button onClick={toCheck}>Take a reading<span aria-hidden>→</span></Button>
-              </div>
+            <h2 className="mt-5 font-display text-head font-bold leading-tight text-ink lg:mt-6">
+              Two ways to take a reading
+            </h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:auto-rows-fr">
+              {ROUTES.map((r, i) => <Route key={r.id} r={r} i={i} go={go} toCheck={toCheck}/>)}
             </div>
-            <div className="flex justify-center lg:justify-end">
-              <Parallax2D distance={64} className="shrink-0">
-                <IPhone scale={0.44} label="The MindMap app running on a phone">
-                  <PhoneApp/>
-                </IPhone>
-              </Parallax2D>
-            </div>
+          </div>
+
+          {/* The phone on a faded photograph, so the space beside it is
+              picture rather than blank. A licensed stock frame of models:
+              nobody shown uses MindMap. */}
+          <div className="relative isolate flex justify-center overflow-hidden rounded-panel border
+            border-rule bg-accent-wash px-4 py-5 lg:py-7">
+            <Frame wash photo="student-bus" className="absolute inset-0 -z-10 opacity-60"/>
+            <IPhone scale={0.54} label="The MindMap app running on a phone" className="shrink-0 lg:hidden">
+              <PhoneApp/>
+            </IPhone>
+            <IPhone scale={0.62} label="The MindMap app running on a phone" className="hidden shrink-0 lg:block">
+              <PhoneApp/>
+            </IPhone>
           </div>
         </div>
       </header>
@@ -143,68 +191,9 @@ export function WithoutPatch({ go }) {
         </ScrollIn>
       </Section>
 
-      <Section tone="paper" tight className="bg-aqua-2">
-        <SectionHead>Two ways to take a reading</SectionHead>
-        <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
-          {ROUTES.map((r, i) => (
-            <ScrollRow key={r.id} index={i} className="h-full">
-              <div className={cn(PANEL, 'flex h-full flex-col border-l-[3px] border-l-accent',
-                'p-4 lg:p-5')}>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                  <div className={cn('w-fit rounded-panel px-3 py-2',
-                    i ? 'bg-aqua' : 'bg-accent-wash')}>
-                    <RouteArt kind={r.art}/>
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
-                    <p className="mt-0.5 text-fine font-semibold tabular-nums text-ink-3">
-                      {r.when}</p>
-                  </div>
-                </div>
-                <ul className="m-0 mt-3 flex list-none flex-wrap gap-1.5 border-t border-rule p-0 pt-3">
-                  {r.gives.map(g => (
-                    <li key={g}
-                      className="rounded-field border border-rule bg-paper px-2.5 py-1 text-fine
-                        leading-none text-ink-2">
-                      {g}
-                    </li>
-                  ))}
-                </ul>
-                {/* Labels differ from the hero's "Take a reading": duplicate
-                    names are one control to a screen reader. */}
-                <div className="mt-auto pt-3">
-                  {r.id === 'ask'
-                    ? <Button variant="outline" size="sm"
-                        onClick={() => { setReadingIntent('survey'); go('check') }}>
-                        Start the questions<span aria-hidden>→</span>
-                      </Button>
-                    : <Button variant="outline" size="sm" onClick={toCheck}>
-                        Use the camera<span aria-hidden>→</span>
-                      </Button>}
-                </div>
-              </div>
-            </ScrollRow>
-          ))}
-        </div>
-      </Section>
-
       <Section tone="paper" tight id="take">
         <SectionHead>Take a reading now</SectionHead>
         <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
-      </Section>
-
-      <Section tone="paper" tight className="bg-accent-wash">
-        <SectionHead>What has been tested</SectionHead>
-        <div className="mt-3 grid gap-3 lg:auto-rows-fr lg:grid-cols-3 lg:gap-4">
-          {LIMITS.map(([k, v], i) => (
-            <ScrollRow key={k} index={i} className="h-full">
-              <div className={cn(PANEL, 'h-full p-3.5')}>
-                <p className="font-display text-ui font-bold text-accent-ink">{k}</p>
-                <p className="mt-1.5 max-w-[40ch] text-meta leading-[1.4] text-ink-2">{v}</p>
-              </div>
-            </ScrollRow>
-          ))}
-        </div>
       </Section>
     </main>
   )

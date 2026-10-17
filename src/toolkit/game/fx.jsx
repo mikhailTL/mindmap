@@ -202,8 +202,14 @@ export function LevelEmblem({ level = 1, size = 84, pct = null, glow = true, cla
           <path d="M5 0C5.6 3.6 6.4 4.4 10 5 6.4 5.6 5.6 6.4 5 10 4.4 6.4 3.6 5.6 0 5 3.6 4.4 4.4 3.6 5 0z" fill={c.top}/>
         </motion.svg>
       ))}
-      <span className="absolute inset-0 grid place-items-center pb-[6%] font-display font-bold tabular-nums text-white"
-        style={{ fontSize:size * 0.36, textShadow:`0 1px 0 ${c.deep}, 0 2px 6px ${c.deep}` }}>{level}</span>
+      {/* The number sits on its own solid disc in the level's deep colour, so
+          white clears 4.5 : 1 on a real background rather than relying on a
+          text shadow over the light top of the gradient. */}
+      <span className="absolute inset-0 grid place-items-center pb-[4%]">
+        <span className="grid place-items-center rounded-full font-display font-bold tabular-nums leading-none text-white"
+          style={{ width:size * 0.46, height:size * 0.46, fontSize:size * 0.28, backgroundColor:c.deep,
+                   boxShadow:`0 0 0 ${Math.max(1.5, size * 0.03)}px rgba(255,255,255,.7)` }}>{level}</span>
+      </span>
     </div>
   )
 }

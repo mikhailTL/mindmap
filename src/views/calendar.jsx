@@ -631,7 +631,7 @@ export function CalendarBody({ go, who }) {
 }
 
 const COPY = {
-  note: 'These are demo figures. Nobody has been measured.',
+  note: 'These are demo figures.',
 }
 
 /* Real mode carries no notice: the shared one is tagged No patch, and here

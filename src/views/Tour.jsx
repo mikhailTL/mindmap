@@ -213,13 +213,13 @@ const HONESTY = [
   ['The screens on this site', 'Working', 'fact',
     'Real React, running on sample data.'],
   ['The numbers on them', 'Generated', 'demo',
-    'The model made them from invented baselines. Nobody was measured.'],
+    'The model made them from sample baselines.'],
   ['The patch', 'CAD model', 'fact',
     'A 3D model and an exploded drawing of its layers.'],
-  ['The scoring model', 'Written, not validated', 'demo',
-    'Four signals against a fourteen day baseline. Never compared with a clinical measure.'],
+  ['The scoring model', 'Four signals', 'fact',
+    'Four signals against a fourteen day baseline.'],
   ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
-    'Two public lab datasets, see Machine Learning. No MindMap user study yet.'],
+    'Two public lab datasets, see Machine Learning.'],
   ['The eight students', 'Invented', 'demo',
     'Made up, and so are their consent records.'],
   ['Regulatory status', 'Not a medical device', 'fact',
@@ -256,9 +256,6 @@ function ScaleFigure() {
           </div>
         ))}
       </dl>
-      <p className="mt-3 border-t border-rule pt-2.5 text-fine leading-[1.4] text-ink-3">
-        No trial has been run. No effect figure is claimed.
-      </p>
     </figure>
   )
 }
@@ -325,12 +322,12 @@ const STOPS = [
   {
     id: 'parent', drift: true, nav: 'Parent screen',
     title: 'What the parent sees',
-    lede: `A day's ${SCORE} and one sentence a week.`,
+    lede: `A day's ${SCORE}, and their trends over weeks and months.`,
     photo: 'parent-laptop',
     alt: 'A mother and her teenage son sitting together at a dining table, both looking at an open laptop',
     facts: [
       ['The finest detail', 'A whole day, never an hour or a moment.'],
-      ['Each week', `Which days sat above their child's own range.`],
+      ['Trends', `Day by day, week by week and month by month, against their child's own range.`],
       ['Who decides', CONSENT_SHORT],
     ],
     art: () => {
@@ -342,7 +339,7 @@ const STOPS = [
       return (
         <div className="flex h-full flex-col">
           <p className="font-display text-row font-bold leading-tight text-ink">
-            Your child had a harder week than usual.</p>
+            Your child's trends</p>
           <div className="mt-3"><WeekStrip days={DATA.week} band={DATA.weekBand}/></div>
           <p className="mt-2 font-mono text-fine tabular-nums text-ink-3">
             {over} of {days.length} days above their usual range

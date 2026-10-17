@@ -123,7 +123,7 @@ export function ParentPhone({ light, at, signals, today, scale, reduced, banner 
           <div className="mt-3 rounded-[12px] bg-white px-4 pb-3 pt-4" style={{ minHeight: 238 }}>
             <LightCard light={light} at={at} signals={signals} reduced={reduced}/>
           </div>
-          <h3 className="m-0 mt-5 px-1 text-[20px] font-bold leading-[25px]" style={{ fontFamily: IOS.font }}>This week</h3>
+          <h3 className="m-0 mt-5 px-1 text-[20px] font-bold leading-[25px]" style={{ fontFamily: IOS.font }}>Trends</h3>
           <div className="mt-2 rounded-[12px] bg-white px-3 pb-2 pt-3">
             <WeekGraph today={today} height={232}/>
           </div>

@@ -7,13 +7,14 @@ import { K_ANONYMITY, SCHOOL_N, COHORT_PERIOD, COHORT_WEEKDAY, AUDIT_LOG, PROTOC
 import { RETENTION } from '../../app/store'
 import { CONSENT_SHORT } from '../../lib/terms'
 import { cn } from '../../lib/utils'
-import { LampFace } from '../../traffic/Face'
 import { RainbowDial } from '../../charts/rainbow'
-import { PartHead, TODAY_LONG } from '../student/PartHead'
+import { TODAY_LONG } from '../student/PartHead'
+import { ProPart, TrafficLight } from './look'
+import { Plus } from '../../ui/marks'
 import { BarRow, Hatch, KV, Note } from './parts'
 import { DailyChart, groupRings } from './charts'
 import { SourceCounts } from './sources'
-import { STATUS_WORD, gradeGroups, logSubjects, networkSeries, readingsShared, signed, trendsShared } from './metrics'
+import { gradeGroups, logSubjects, networkSeries, readingsShared, signed, trendsShared } from './metrics'
 
 /* Group trends: the school, the class periods, the network as a whole, and
  * the rules every figure obeys. Nothing on this tab is about one teen; a teen
@@ -22,6 +23,10 @@ import { STATUS_WORD, gradeGroups, logSubjects, networkSeries, readingsShared, s
 
 const ROW = 'mt-3 grid items-start gap-3 [&>*]:min-w-0 lg:mt-4 lg:gap-4'
 const TICKS = [25, 50, 75]
+/* Bar fills: the higher-reading groups in the yellow lamp's hue, the rest in
+   mint. Every bar prints its figure, so the colour is never the only cue. */
+const HIGH = 'bg-[#e3a400]'
+const LOW = 'bg-mint'
 
 const FACTS = [
   ['Raw readings a parent can see', 'Never'],
@@ -52,9 +57,9 @@ function Periods() {
               <span className="shrink-0 text-fine tabular-nums text-ink-3">
                 {p.suppressed ? 'hidden' : `${p.mean}, ${p.n} teens`}</span>
             </div>
-            <div className="relative mt-1.5 h-2.5 w-full overflow-hidden rounded-xs bg-aqua-2">
+            <div className="relative mt-1.5 h-2.5 w-full overflow-hidden rounded-bar bg-aqua-2">
               {p.suppressed ? <Hatch id={'hatch-' + p.key} className="h-full"/> : (
-                <div className={cn('h-full rounded-xs', p.mean >= 65 ? 'bg-warn' : 'bg-accent')}
+                <div className={cn('h-full rounded-xs', p.mean >= 65 ? HIGH : LOW)}
                   style={{ width: p.mean + '%' }}/>
               )}
               {TICKS.map(t => <span key={t} aria-hidden className="absolute inset-y-0 w-px bg-card/70" style={{ left: t + '%' }}/>)}
@@ -63,7 +68,7 @@ function Periods() {
           </li>
         ))}
       </ul>
-      <Note>The dark line marks the average period, {avg}. A hatched bar has fewer than {K_ANONYMITY} teens.</Note>
+      <Note>The dark line marks the average period, {avg}. Yellow bars read 65 or more. A hatched bar has fewer than {K_ANONYMITY} teens.</Note>
     </Panel>
   )
 }
@@ -87,7 +92,7 @@ function Weekdays() {
           <div className="absolute inset-0 flex items-end justify-between gap-2.5">
             {COHORT_WEEKDAY.map(d => (
               <span key={d.key} className="flex h-full flex-1 items-end">
-                <span className={cn('w-full rounded-t-xs', d.mean >= 60 ? 'bg-warn' : 'bg-accent')}
+                <span className={cn('w-full rounded-t-[5px]', d.mean >= 60 ? HIGH : 'bg-sky')}
                   style={{ height: (d.mean / 100) * H }}/>
               </span>
             ))}
@@ -103,7 +108,7 @@ function Weekdays() {
         ))}
       </div>
       <p aria-hidden className="m-0 mt-1 pl-9 text-center text-fine text-ink-3">Day of the week. The dark line is the
-        average day, {wAvg}.</p>
+        average day, {wAvg}. Yellow bars read 60 or more.</p>
       <dl className="m-0 mt-2 p-0">
         <KV k="Hardest day" v={`${hardest.full}, ${hardest.mean}`}/>
         <KV k="Lightest day" v={`${lightest.full}, ${lightest.mean}`}/>
@@ -138,15 +143,14 @@ function Network({ list }) {
 }
 
 /* Today across the group: the average Mind Score on the rainbow (clouds on),
-   today's Heads Up faces counted, and today's readings counted by source.
+   and today's readings counted by source. Today's Heads Up faces are counted
+   above the tabs, in Pro.jsx.
    Under K_ANONYMITY teens, nothing. */
 function GroupToday({ list, words }) {
   if (list.length < K_ANONYMITY) return null
   const today = list.map(t => t.days[t.days.length - 1])
   const avg = Math.round(today.reduce((t, d) => t + d.score, 0) / today.length)
   const base = Math.round(list.reduce((t, x) => t + x.usual.base, 0) / list.length)
-  const faces = { green: 0, yellow: 0, red: 0 }
-  for (const d of today) faces[d.light]++
   const counts = { patch: 0, camera: 0, survey: 0 }
   for (const d of today) for (const r of d.readings) counts[r.source]++
   const onPatch = list.filter(t => t.patch).length
@@ -161,19 +165,6 @@ function GroupToday({ list, words }) {
           scale is the group&rsquo;s usual day, {base}.</p>
       </Panel>
       <div className="flex flex-col gap-3 lg:gap-4">
-        <Panel>
-          <PanelHead as="h3" title="Heads Up today" meta="teens"/>
-          <ul className="m-0 mt-2 list-none p-0">
-            {['green', 'yellow', 'red'].map(k => (
-              <li key={k} className="flex items-center gap-2.5 border-b border-rule py-2 last:border-b-0">
-                <LampFace light={k} size={24}/>
-                <span className="min-w-0 flex-1 text-fine text-ink-2">{STATUS_WORD[k]}</span>
-                <span className="font-display text-ui font-bold tabular-nums text-ink">{faces[k]}
-                  <span className="ml-1 font-body text-fine font-normal text-ink-3">{faces[k] === 1 ? 'teen' : 'teens'}</span></span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
         <Panel>
           <PanelHead as="h3" title="Readings today, by source"/>
           <SourceCounts counts={counts} className="mt-3"/>
@@ -197,19 +188,19 @@ function Grades({ list }) {
               <span className="shrink-0 text-fine tabular-nums text-ink-3">
                 {r.hidden ? 'hidden' : `${r.mean}${r.change === null ? '' : `, ${signed(r.change)} points`}, ${r.n} teens`}</span>
             </div>
-            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-xs bg-aqua-2">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-bar bg-aqua-2">
               {r.hidden ? <Hatch id={'hatch-g' + r.grade} className="h-full"/>
-                : <div className={cn('h-full rounded-xs', r.mean >= 65 ? 'bg-warn' : 'bg-accent')} style={{ width: r.mean + '%' }}/>}
+                : <div className={cn('h-full rounded-xs', r.mean >= 65 ? HIGH : LOW)} style={{ width: r.mean + '%' }}/>}
             </div>
           </li>
         ))}
       </ul>
-      <Note>A grade with fewer than {K_ANONYMITY} teens shows nothing. Change shows where {K_ANONYMITY} or more share trends.</Note>
+      <Note>Yellow bars read 65 or more. A grade with fewer than {K_ANONYMITY} teens shows nothing. Change shows where {K_ANONYMITY} or more share trends.</Note>
     </Panel>
   )
 }
 
-export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [] }) {
+export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [], go }) {
   const relabel = logSubjects(list)
   const log = real ? [] : [...sessionLog, ...AUDIT_LOG.filter(r => r.rel === 'Today').map(r => ({
     at: 'Today, ' + r.at.split(', ')[1], action: r.action.replace(/crisis alert/gi, m => (m[0] === 'C' ? 'Urgent alert' : 'urgent alert')),
@@ -226,6 +217,15 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [] }) {
           <p className="mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.16] text-ink sm:text-head">
             Group trends appear once five teens share.</p>
           <p className="mt-2 max-w-[52ch] text-fine text-ink-2">A smaller group shows nothing, so no one teen can be picked out.</p>
+          {go && (
+            <div className="mt-3.5 flex flex-wrap items-center gap-4">
+              <TrafficLight size={22} horizontal cycle={false} className="opacity-60"/>
+              <button type="button" onClick={() => go('network')}
+                className="inline-flex min-h-[48px] items-center gap-2 rounded-field bg-mint-ink px-5 font-display text-ui
+                  font-bold text-white transition-colors duration-150 hoverOnly:bg-ink">
+                <Plus aria-hidden className="size-4 shrink-0"/> Connect with families</button>
+            </div>
+          )}
         </Panel>
       ) : (
         <>
@@ -236,13 +236,11 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [] }) {
             <p className="mt-1.5 text-fine text-ink-2">Mind Score {top.mean} of 100. Nothing here names a teen.</p>
           </Panel>
           <section aria-labelledby="grp-today-h" className="mt-6">
-            <PartHead id="grp-today-h" kind="today" title="Today" line={`${TODAY_LONG}. Readings so far today.`}
-              className="[&_h2]:text-row"/>
+            <ProPart id="grp-today-h" kind="today" title="Today" line={`${TODAY_LONG}. Readings so far today.`}/>
             <GroupToday list={list} words={words}/>
           </section>
           <section aria-labelledby="grp-trends-h" className="mt-8">
-            <PartHead id="grp-trends-h" kind="trends" title="Trends" line="The last 30 days, and this term by weekday, period and grade."
-              className="[&_h2]:text-row"/>
+            <ProPart id="grp-trends-h" kind="trends" title="Trends" line="The last 30 days, and this term by weekday, period and grade."/>
             <div className={ROW}>
               <Network list={list}/>
             </div>
@@ -257,7 +255,7 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [] }) {
         </>
       )}
 
-      <h2 className="mark mt-8">Rules and the log</h2>
+      <ProPart kind="rules" title="Rules and the log" className="mt-8"/>
       <div className={cn(ROW, 'lg:grid-cols-2')}>
         <Panel>
           <PanelHead as="h3" title="When an urgent alert is raised"/>

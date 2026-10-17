@@ -42,7 +42,7 @@ export function SourceRows({ teen, totals }) {
         <li className="flex items-center gap-2.5 border-b border-rule py-2">
           <SOURCE_ICON.patch className="size-5 shrink-0 text-ink-3"/>
           <span className="min-w-0 flex-1 text-fine text-ink-2">Patch</span>
-          <span className="text-fine text-ink-2">Not worn</span>
+          <span className="text-fine text-ink-2">No readings</span>
         </li>
       )}
     </ul>

@@ -4,6 +4,7 @@ import { SENSORS } from '../../lib/sensors'
 import { cn } from '../../lib/utils'
 import { useWidth } from './parts'
 import { STATUS_WORD } from './metrics'
+import { LIGHT_TONE } from './look'
 
 /* The charts the Medical Professional reads, one kind per job, the same on
  * every teen. The owner: "graphs ... should be easy to read, not like the box
@@ -90,8 +91,13 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
             const top = y(d.score), last = i === n - 1
             return (
               <g key={d.date}>
-                <rect x={cx(i) - bw / 2} y={top} width={bw} height={Math.max(1, base - top)} rx={Math.min(3, bw / 3)}
-                  className={last ? 'fill-beam-ink' : 'fill-beam'}/>
+                {/* A day with a light takes the lamp's hue; the face under the
+                    bar and the printed figure carry the meaning. Today is
+                    outlined in ink. */}
+                <rect x={cx(i) - bw / 2} y={top} width={bw} height={Math.max(1, base - top)} rx={Math.min(4, bw / 3)}
+                  className={d.light ? undefined : last ? 'fill-sky-ink' : 'fill-sky'}
+                  style={d.light ? { fill: LIGHT_TONE[d.light].bar } : undefined}
+                  stroke={last ? '#0d2b1e' : 'none'} strokeWidth={last ? 1.5 : 0}/>
                 {values && <text x={cx(i)} y={top - 4} textAnchor="middle"
                   className={cn('text-[12px] tabular-nums', last ? 'fill-ink font-bold' : 'fill-ink-2')}>{d.score}</text>}
                 {showFaces && d.light && <LampFaceG light={d.light} cx={cx(i)} cy={base + 4 + face / 2} size={face} px={face}/>}

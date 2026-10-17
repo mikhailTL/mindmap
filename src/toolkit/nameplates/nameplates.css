@@ -1,0 +1,147 @@
+/* Toolkit nameplates: a wide illustrated banner per activity.
+ *
+ * Each banner is a small layered scene (far, mid, near) with one gentle loop.
+ * Everything that moves animates transform or opacity only. Under a fine
+ * pointer the layers shift a little with the pointer (parallax, driven by
+ * --px and --py set in Nameplate.jsx), the sparkles light up and the card
+ * lifts. A press settles the card. A banner off screen pauses its loop, and
+ * reduced motion stops every loop on its resting frame. */
+
+.np {
+  --px: 0; --py: 0;
+  isolation: isolate;
+  box-shadow: 0 1px 2px rgb(11 43 51 / 0.06), 0 10px 24px -16px rgb(11 43 51 / 0.28);
+  transition: transform .2s var(--ease-out, cubic-bezier(0.23,1,0.32,1)),
+              box-shadow .2s var(--ease-out, cubic-bezier(0.23,1,0.32,1));
+  -webkit-tap-highlight-color: transparent;
+}
+/* arriving: fill-mode backwards, so once it has played the hover and press
+   transforms below are free to apply */
+@keyframes np-in { from { opacity: 0; transform: translateY(6px) } }
+.np-in { animation: np-in .42s cubic-bezier(0.23,1,0.32,1) backwards }
+
+.np:focus-visible { outline: 3px solid #0d2b1e; outline-offset: 3px }
+.np:active { transform: scale(0.985) }
+@media (hover: hover) and (pointer: fine) {
+  .np:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 4px rgb(11 43 51 / 0.06), 0 18px 34px -16px var(--np-glow, #157446);
+  }
+  .np:hover:active { transform: translateY(-1px) scale(0.985) }
+}
+
+/* the drawing: sized by the card's height, pinned to its right edge */
+.np-art { width: auto; aspect-ratio: 5 / 2; pointer-events: none }
+.np-art * { pointer-events: none }
+
+/* parallax layers */
+.np-far, .np-mid, .np-near {
+  transition: transform .45s cubic-bezier(0.23,1,0.32,1);
+}
+.np-far  { transform: translate(calc(var(--px) * 3px),  calc(var(--py) * 1.5px)) }
+.np-mid  { transform: translate(calc(var(--px) * 6px),  calc(var(--py) * 3px)) }
+.np-near { transform: translate(calc(var(--px) * 10px), calc(var(--py) * 4px)) }
+
+/* sparkles wake up under the pointer */
+.np-spark { transform-box: fill-box; transform-origin: center; opacity: .55;
+  transition: transform .35s cubic-bezier(0.23,1,0.32,1), opacity .35s ease }
+@media (hover: hover) and (pointer: fine) {
+  .np:hover .np-spark { opacity: 1; transform: scale(1.35) rotate(20deg) }
+}
+
+/* ── the loops ─────────────────────────────────────────────────────── */
+.np-a { transform-box: fill-box; transform-origin: center;
+  animation-duration: var(--d, 6s); animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; animation-delay: var(--w, 0s); }
+
+@keyframes np-bob    { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes np-float  { 0%,100% { transform: translate(0,0) rotate(0) } 50% { transform: translate(2px,-7px) rotate(-3deg) } }
+@keyframes np-sway   { 0%,100% { transform: rotate(-5deg) } 50% { transform: rotate(5deg) } }
+@keyframes np-wobble { 0%,100% { transform: rotate(-3deg) } 50% { transform: rotate(3deg) } }
+@keyframes np-glow   { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+@keyframes np-beat   { 0%,100% { transform: scale(1) } 14% { transform: scale(1.08) } 28% { transform: scale(1) } 42% { transform: scale(1.05) } 60% { transform: scale(1) } }
+@keyframes np-blink  { 0%,30%,100% { opacity: .12 } 42%,58% { opacity: 1 } 70% { opacity: .12 } }
+@keyframes np-ripple { 0% { transform: scale(.3); opacity: 0 } 15% { opacity: .9 } 100% { transform: scale(1.45); opacity: 0 } }
+@keyframes np-rise   { 0% { transform: translateY(6px) scale(.7); opacity: 0 } 25% { opacity: .9 } 100% { transform: translateY(-30px) scale(1.25); opacity: 0 } }
+@keyframes np-drift  { from { transform: translateX(0) } to { transform: translateX(-40px) } }
+@keyframes np-rock   { 0%,100% { transform: translateY(0) rotate(-4deg) } 50% { transform: translateY(-4px) rotate(4deg) } }
+@keyframes np-hop    { 0%,100% { transform: translateY(0) scale(1.06,.9) } 12% { transform: translateY(0) scale(1) }
+                       45% { transform: translateY(-22px) scale(.96,1.05) } 80% { transform: translateY(0) scale(1) } }
+@keyframes np-shadow { 0%,100% { transform: scaleX(1); opacity: .45 } 45% { transform: scaleX(.6); opacity: .2 } 80% { transform: scaleX(1); opacity: .45 } }
+@keyframes np-box    { 0%,100% { transform: translate(0,0) } 25% { transform: translate(52px,0) } 50% { transform: translate(52px,52px) } 75% { transform: translate(0,52px) } }
+@keyframes np-scan   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(70px) } }
+@keyframes np-deflate{ 0%,100% { transform: scale(.7) translateY(4px) } 28% { transform: scale(1) translateY(0) } }
+@keyframes np-swap-a { 0%,38%,100% { opacity: 1 } 50%,88% { opacity: 0 } }
+@keyframes np-swap-b { 0%,38%,100% { opacity: 0 } 50%,88% { opacity: 1 } }
+@keyframes np-step   { 0%,6% { opacity: 0; transform: scale(.6) } 14%,70% { opacity: 1; transform: scale(1) } 84%,100% { opacity: 0; transform: scale(1) } }
+@keyframes np-firefly{ 0%,100% { transform: translate(0,0) } 25% { transform: translate(-12px,-6px) } 50% { transform: translate(-4px,-14px) } 75% { transform: translate(10px,-5px) } }
+@keyframes np-needle { 0%,100% { transform: rotate(-28deg) } 50% { transform: rotate(22deg) } }
+@keyframes np-sweep  { 0%,100% { transform: rotate(-16deg) } 50% { transform: rotate(16deg) } }
+@keyframes np-pop    { 0%,20% { transform: scale(0); opacity: 0 } 32% { transform: scale(1.18); opacity: 1 } 40%,82% { transform: scale(1); opacity: 1 } 92%,100% { transform: scale(0); opacity: 0 } }
+@keyframes np-sandtop{ 0% { transform: scaleY(1) } 90%,100% { transform: scaleY(.12) } }
+@keyframes np-sandbot{ 0% { transform: scaleY(.12) } 90%,100% { transform: scaleY(1) } }
+@keyframes np-stream { 0%,88% { opacity: .9 } 94%,100% { opacity: 0 } }
+@keyframes np-plane  { 0%,100% { transform: translate(-18px,8px) rotate(6deg) } 50% { transform: translate(16px,-8px) rotate(-6deg) } }
+@keyframes np-dropin { 0% { transform: translateY(-46px); opacity: 0 } 10% { opacity: 1 } 30% { transform: translateY(0) } 36% { transform: translateY(-4px) } 42%,82% { transform: translateY(0); opacity: 1 } 94%,100% { transform: translateY(0); opacity: 0 } }
+@keyframes np-slide  { 0%,100% { transform: translate(0,0) } 50% { transform: translate(-44px,6px) } }
+@keyframes np-fill   { 0% { transform: scaleY(.2) } 60%,85% { transform: scaleY(1) } 100% { transform: scaleY(.2) } }
+@keyframes np-scroll { 0%,18% { transform: translateY(0) } 30%,48% { transform: translateY(-26px) } 60%,78% { transform: translateY(-52px) } 92%,100% { transform: translateY(-78px) } }
+@keyframes np-lap    { 0%,100% { transform: translateX(0) } 50% { transform: translateX(-16px) } }
+@keyframes np-coin   { 0% { transform: translateY(-30px); opacity: 0 } 15% { opacity: 1 } 55% { transform: translateY(0); opacity: 1 } 65%,100% { transform: translateY(6px); opacity: 0 } }
+@keyframes np-part-l { 0%,100% { transform: translateX(0) } 50% { transform: translateX(-22px) } }
+@keyframes np-part-r { 0%,100% { transform: translateX(0) } 50% { transform: translateX(22px) } }
+@keyframes np-flag   { 0%,30% { transform: rotate(0) } 45%,85% { transform: rotate(-80deg) } 100% { transform: rotate(0) } }
+@keyframes np-mail   { 0% { transform: translate(-40px,-18px) rotate(-12deg); opacity: 0 } 10% { opacity: 1 } 38% { transform: translate(0,0) rotate(0); opacity: 1 } 46%,100% { transform: translate(6px,0); opacity: 0 } }
+@keyframes np-piece  { 0%,8% { transform: translate(22px,-18px) rotate(14deg) } 38%,80% { transform: translate(0,0) rotate(0) } 100% { transform: translate(22px,-18px) rotate(14deg) } }
+@keyframes np-burst  { 0%,36% { transform: scale(.2); opacity: 0 } 44% { opacity: 1 } 60%,100% { transform: scale(1.4); opacity: 0 } }
+
+.np-bob    { animation-name: np-bob }
+.np-float  { animation-name: np-float }
+.np-sway   { animation-name: np-sway }
+.np-wobble { animation-name: np-wobble }
+.np-glow   { animation-name: np-glow }
+.np-beat   { animation-name: np-beat }
+.np-blink  { animation-name: np-blink }
+.np-ripple { animation-name: np-ripple; animation-timing-function: cubic-bezier(0.2,0.6,0.3,1) }
+.np-rise   { animation-name: np-rise; animation-timing-function: ease-out }
+.np-drift  { animation-name: np-drift; animation-timing-function: linear }
+.np-rock   { animation-name: np-rock }
+.np-hop    { animation-name: np-hop }
+.np-shadow { animation-name: np-shadow }
+.np-box    { animation-name: np-box }
+.np-scan   { animation-name: np-scan }
+.np-deflate{ animation-name: np-deflate }
+.np-swap-a { animation-name: np-swap-a }
+.np-swap-b { animation-name: np-swap-b }
+.np-step   { animation-name: np-step }
+.np-firefly{ animation-name: np-firefly }
+.np-needle { animation-name: np-needle }
+.np-sweep  { animation-name: np-sweep }
+.np-pop    { animation-name: np-pop }
+.np-sandtop{ animation-name: np-sandtop; animation-timing-function: linear }
+.np-sandbot{ animation-name: np-sandbot; animation-timing-function: linear }
+.np-stream { animation-name: np-stream; animation-timing-function: linear }
+.np-plane  { animation-name: np-plane }
+.np-dropin { animation-name: np-dropin }
+.np-slide  { animation-name: np-slide }
+.np-fill   { animation-name: np-fill }
+.np-scroll { animation-name: np-scroll }
+.np-lap    { animation-name: np-lap }
+.np-coin   { animation-name: np-coin; animation-timing-function: ease-in }
+.np-part-l { animation-name: np-part-l }
+.np-part-r { animation-name: np-part-r }
+.np-flag   { animation-name: np-flag }
+.np-mail   { animation-name: np-mail }
+.np-piece  { animation-name: np-piece }
+.np-burst  { animation-name: np-burst; animation-timing-function: ease-out }
+
+/* off screen: hold still and cost nothing */
+.np[data-off] .np-a { animation-play-state: paused }
+
+/* reduced motion: every loop stops on its resting frame, no parallax */
+@media (prefers-reduced-motion: reduce) {
+  .np .np-a { animation: none !important }
+  .np-far, .np-mid, .np-near { transform: none !important }
+  .np, .np:hover, .np:active { transform: none !important }
+  .np:hover .np-spark { transform: none }
+}
