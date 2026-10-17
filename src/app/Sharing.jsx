@@ -1,7 +1,7 @@
 import React from 'react'
 import { ScrollIn } from '../ui/motion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
-import { Cross } from '../ui/marks'
+import { Chevron, Cross } from '../ui/marks'
 import { Why } from '../views/Monitor'
 import { cn } from '../lib/utils'
 import { PRO_LC, SCORE } from '../lib/terms'
@@ -31,6 +31,12 @@ const SHORT_NEVER = {
 }
 const label = (audience, f) => SHORT[audience]?.[f.key] || f.label
 
+/* The short row label for a field key, for screens that list what a person
+   can see (src/account/Network.jsx). */
+export function shareLabel(audience, key) {
+  const f = SHARING[audience]?.fields.find(x => x.key === key)
+  return f ? label(audience, f) : key
+}
 function count(state) {
   return AUDIENCES.reduce((n, a) =>
     n + SHARING[a].fields.filter(f => state[a][f.key]).length, 0)
@@ -126,8 +132,10 @@ function Audience({ audience, state }) {
   )
 }
 
-/* The student's sharing screen, at route `shared`. */
-export function SharingControls({ className }) {
+/* The student's privacy screen, at route `shared`. The nav calls it
+   Privacy, so its first heading does too. `go`, when the shell passes it,
+   opens the network from the row under the heading. */
+export function SharingControls({ className, go }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const state = getSharing()
   const on = count(state)
@@ -135,7 +143,18 @@ export function SharingControls({ className }) {
   return (
     <div className={cn('min-w-0', className)}>
       <ScrollIn>
-        <Panel title="What Is Shared" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
+        <Panel title="Privacy" aside={on === 0 ? undefined : `${on}/${TOTAL} on`}>
+          {go && (
+            <button type="button" onClick={() => go('network')}
+              className="flex min-h-[56px] w-full items-center gap-3 border-b border-rule px-4 py-3 text-left
+                transition-colors duration-150 hoverOnly:bg-mist/50">
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-ui font-medium text-ink">Who is linked to you</span>
+                <span className="mt-0.5 block text-fine text-ink-3">Open your network to invite or remove someone.</span>
+              </span>
+              <ChevronMark/>
+            </button>
+          )}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4">
             <ArmedButton armedLabel="Yes, stop sharing everything" onConfirm={revokeAll}>
               <Cross aria-hidden className="size-4"/>Turn everything off
@@ -207,6 +226,8 @@ export function SharingControls({ className }) {
     </div>
   )
 }
+
+const ChevronMark = () => <Chevron aria-hidden className="size-4 shrink-0 text-ink-3"/>
 
 function stamp(iso) {
   const d = new Date(iso)

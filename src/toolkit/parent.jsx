@@ -33,8 +33,8 @@ function Rows({ rows }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0">
       {rows.map(r => (
-        <li key={r} className="flex items-start gap-3 border-t-2 border-ink py-3 first:border-t-0 first:pt-0">
-          <span aria-hidden className="mt-[0.55em] size-2.5 shrink-0 rounded-bar bg-accent"/>
+        <li key={r} className="flex items-start gap-3 border-t border-rule py-3 first:border-t-0 first:pt-0">
+          <span aria-hidden className="kit-fill mt-[0.55em] size-2.5 shrink-0 rounded-bar"/>
           <span className="min-w-0 flex-1 text-sec text-ink-2">{r}</span>
         </li>
       ))}
@@ -44,7 +44,7 @@ function Rows({ rows }) {
 
 export function ParentOpeners(p) {
   return (
-    <ActivityScreen {...p} family="leaf" title="Conversation Openers">
+    <ActivityScreen {...p} id="openers" family="leaf" title="Conversation Openers">
       <Sheet><Openers/></Sheet>
     </ActivityScreen>
   )
@@ -52,7 +52,7 @@ export function ParentOpeners(p) {
 
 export function ParentPhrasing(p) {
   return (
-    <ActivityScreen {...p} family="tide" title="Opening Line Check">
+    <ActivityScreen {...p} id="phrasing" family="tide" title="Opening Line Check">
       <Sheet><PhraseCheck/></Sheet>
       <p className="mt-2 text-fine text-ink-3">Your line stays on this device.</p>
     </ActivityScreen>
@@ -61,7 +61,7 @@ export function ParentPhrasing(p) {
 
 export function ParentScore(p) {
   return (
-    <ActivityScreen {...p} family="stone" title={`Reading the ${SCORE}`}>
+    <ActivityScreen {...p} id="score" family="stone" title={`Reading the ${SCORE}`}>
       <Sheet><Meaning/></Sheet>
     </ActivityScreen>
   )
@@ -69,7 +69,7 @@ export function ParentScore(p) {
 
 export function ParentRules(p) {
   return (
-    <ActivityScreen {...p} family="night" title="Conversation Ground Rules">
+    <ActivityScreen {...p} id="rules" family="night" title="Conversation Ground Rules">
       <Sheet><Rows rows={RULES}/></Sheet>
     </ActivityScreen>
   )
@@ -77,7 +77,7 @@ export function ParentRules(p) {
 
 export function ParentReach(p) {
   return (
-    <ActivityScreen {...p} family="pool" title="When to Get Help">
+    <ActivityScreen {...p} id="reach" family="pool" title="When to Get Help">
       <Sheet><Rows rows={REACH}/></Sheet>
     </ActivityScreen>
   )

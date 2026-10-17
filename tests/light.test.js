@@ -188,9 +188,9 @@ describe('parentSummary', () => {
     expect(parentSummary({ light: Light.GREEN, at: local(9, 41), signals: ['Frantic typing'] }))
       .toEqual({ light: 'green', headline: 'No signs of stress today.', time: null, signals: [] })
   })
-  it('yellow: the signals, no time', () => {
+  it('yellow: the headline only, no signals and no time (detail reaches a parent only on red)', () => {
     expect(parentSummary({ light: Light.YELLOW, at: local(21, 41), signals: ['Nervous scrolling', 'Scrolling back and forth'] }))
-      .toEqual({ light: 'yellow', headline: 'Some signs of stress today.', time: null, signals: ['Nervous scrolling', 'Scrolling back and forth'] })
+      .toEqual({ light: 'yellow', headline: 'Some signs of stress today.', time: null, signals: [] })
   })
   it('red: the headline, the local time and the signals', () => {
     expect(parentSummary({ light: Light.RED, at: local(21, 41), signals: ['Frantic typing', 'Constant backspacing'] }))

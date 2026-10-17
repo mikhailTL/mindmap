@@ -1,216 +1,208 @@
 import React from 'react'
 import { Button } from '../ui/button'
+import { Check } from '../ui/marks'
 import { cn } from '../lib/utils'
-import { ActivityScreen, OnDevice, Choice, FIELD, Video } from './shell'
-import { openCamera, stopStream, loadDetector, phraseFor, cameraSupported } from './vision'
+import { ActivityScreen, OnDevice } from './shell'
 import { DidItWork } from './after'
+import { useGame, GameBar, Pops, LevelMeter, EndCard } from './game'
 
-/* 5-4-3-2-1 Grounding. The camera view is the screen.
+/* 5-4-3-2-1 Grounding, as a scavenger hunt.
  *
- * WHAT RUNS. On the first rung a single-shot object detector (SSDLite
- * MobileNet V2, COCO, through TensorFlow.js from a CDN, see vision.js) reads
- * the <video> element about three times a second. Every class it finds
- * becomes a chip; tapping a chip puts it on the rung and the strip counts
- * down. The later rungs offer tappable suggestions and a typed field, because
- * a camera cannot hear, feel, smell or taste.
+ * Five rounds, one per sense: find five things you see, four you hear, three
+ * you feel, two you smell, one you taste. Each round deals up to eight cards
+ * from that sense's deck. Find the thing in the room, tap the card, and it is
+ * collected into the grid at the top. New cards swaps the ones you have not
+ * found for fresh ones, so a card that does not fit the room never stalls the
+ * hunt. 10 points a find, 15 for a finished sense, 25 for the whole set.
  *
- * WHERE THE FRAMES GO. Nowhere. The detector reads the element directly; no
- * frame is captured, encoded, stored or sent, and the stream stops when the
- * rung moves on or the screen closes.
- *
- * IF IT CANNOT RUN. Refused, unsupported or offline all land on the typed
- * field, which is how the exercise has always worked. */
+ * No camera: a detector would need a model from a CDN, and the tap is the
+ * point anyway. Nothing is saved but the points. */
 
-const RUNGS = [
-  { id:'see',   n:5, name:'See',   ask:'Tap five things you see',
-    chips:[] },
-  { id:'hear',  n:4, name:'Hear',  ask:'Tap four sounds',
-    chips:['a fan', 'traffic', 'voices', 'music', 'my breathing', 'a clock', 'birds', 'a screen hum'] },
-  { id:'feel',  n:3, name:'Feel',  ask:'Tap three things touching you',
-    chips:['the chair', 'the floor', 'a sleeve', 'my phone', 'the air', 'my hair', 'a desk', 'socks'] },
-  { id:'smell', n:2, name:'Smell', ask:'Tap two smells',
-    chips:['nothing', 'food', 'soap', 'fresh air', 'coffee', 'laundry', 'rain', 'paper'] },
-  { id:'taste', n:1, name:'Taste', ask:'Tap one taste',
-    chips:['water', 'nothing', 'toothpaste', 'gum', 'the last meal', 'tea'] },
+const SENSES = [
+  { id:'see', n:5, name:'See', ask:'things you can see', deck:[
+    'Something blue', 'Something round', 'A light', 'Something soft', 'A plant or tree',
+    'Your own hand', 'Something with words', 'Something shiny', 'Something green',
+    'A shadow', 'Something square', 'Something tiny', 'A number', 'Something striped'] },
+  { id:'hear', n:4, name:'Hear', ask:'sounds you can hear', deck:[
+    'A far sound', 'A near sound', 'Your own breath', 'A hum or buzz', 'A voice',
+    'A tap or click', 'Wind or air', 'A car or bus', 'Music', 'A bird', 'Footsteps'] },
+  { id:'feel', n:3, name:'Feel', ask:'things you can feel', deck:[
+    'Feet on the floor', 'Your back on the seat', 'Something smooth', 'Something soft',
+    'Air on your skin', 'Your hands resting', 'Sleeves on your arms', 'Something cool',
+    'Something warm', 'Your phone in your hand'] },
+  { id:'smell', n:2, name:'Smell', ask:'things you can smell', deck:[
+    'The air around you', 'Your sleeve', 'Your hands', 'Something nearby', 'Food',
+    'Soap', 'Outside air', 'Nothing at all', 'Paper or a book'] },
+  { id:'taste', n:1, name:'Taste', ask:'thing you can taste', deck:[
+    'Water', 'Nothing at all', 'Your last snack', 'Toothpaste', 'Gum or a mint', 'A drink nearby'] },
 ]
+const ALL = SENSES.reduce((a, s) => a + s.n, 0)
+const NUM = ['', 'one', 'two', 'three', 'four', 'five']
 
-const empty = () => Object.fromEntries(RUNGS.map(r => [r.id, []]))
+const shuffle = list => {
+  const a = [...list]
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] }
+  return a
+}
+const deal = (sense, keep = []) => {
+  const rest = shuffle(sense.deck.filter(c => !keep.includes(c)))
+  return [...keep, ...rest].slice(0, Math.max(keep.length, Math.min(8, sense.deck.length)))
+}
+const fresh = () => Object.fromEntries(SENSES.map(s => [s.id, []]))
 
-/* The strip: five cells, each the sense and how many are still to find. The
-   live cell is filled; a finished cell shows a check mark. */
-function Strip({ got, at }) {
+/* The collection: a row per sense, a slot per thing to find. */
+function Collection({ got, at }) {
   return (
-    <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-      {RUNGS.map((r, i) => {
-        const left = r.n - got[r.id].length
-        const live = i === at
-        return (
-          <div key={r.id} className={cn('rounded-field border-2 border-ink px-1 py-2 text-center',
-            'transition-colors duration-200',
-            live ? 'bg-ink text-paper' : left === 0 ? 'bg-accent-wash text-ink' : 'bg-card text-ink')}>
-            <p className="font-display text-fine font-semibold sm:text-ui">{r.name}</p>
-            <p className="font-display text-stat font-bold tabular-nums">{left}</p>
+    <div className="grid gap-1.5" aria-label="Collection">
+      {SENSES.map((s, r) => (
+        <div key={s.id} className="flex items-center gap-2">
+          <span className={cn('w-12 shrink-0 font-display text-fine font-bold',
+            r === at ? 'text-ink' : 'text-ink-2')}>{s.name}</span>
+          <div className="grid flex-1 grid-cols-5 gap-1.5">
+            {Array.from({ length: s.n }, (_, k) => {
+              const item = got[s.id][k]
+              return (
+                <span key={k} title={item || ''}
+                  className={cn('grid h-8 place-items-center rounded-field border-2 transition-colors duration-200',
+                    item ? 'border-ink' : r === at ? 'border-ink bg-card' : 'border-rule bg-card')}
+                  style={item ? { background:'var(--g-main)' } : undefined}>
+                  {item ? <Check aria-hidden className="size-4 text-paper"/> : null}
+                  <span className="sr-only">{item ? `${s.name}: ${item}` : `${s.name}: empty`}</span>
+                </span>
+              )
+            })}
           </div>
-        )
-      })}
+        </div>
+      ))}
     </div>
   )
 }
 
 export default function Grounding() {
+  const g = useGame('ground')
+  const [stage, setStage] = React.useState('idle')     // idle | hunt | done
   const [at, setAt] = React.useState(0)
-  const [got, setGot] = React.useState(empty)
-  const [text, setText] = React.useState('')
-  const [cam, setCam] = React.useState('off')     // off | asking | loading | on | refused | unsupported | offline
-  const [seen, setSeen] = React.useState([])
-  const videoRef = React.useRef(null)
-  const streamRef = React.useRef(null)
-  const liveRef = React.useRef(false)
+  const [got, setGot] = React.useState(fresh)
+  const [hand, setHand] = React.useState(() => deal(SENSES[0]))
+  const [shuffles, setShuffles] = React.useState(0)
+  const [cleared, setCleared] = React.useState(false)
+  const t0 = React.useRef(0)
+  const [secs, setSecs] = React.useState(0)
 
-  const finished = at >= RUNGS.length
-  const rung = RUNGS[Math.min(at, RUNGS.length - 1)]
-  const list = got[rung.id]
-  const full = list.length >= rung.n
+  const sense = SENSES[Math.min(at, SENSES.length - 1)]
+  const mine = got[sense.id]
+  const found = Object.values(got).reduce((a, l) => a + l.length, 0)
 
-  const add = v => {
-    const s = String(v).trim()
-    if (!s) return
-    setGot(g => g[rung.id].length >= rung.n || g[rung.id].includes(s)
-      ? g : { ...g, [rung.id]: [...g[rung.id], s] })
-    setText('')
+  const start = () => {
+    g.reset(); setGot(fresh()); setAt(0); setHand(deal(SENSES[0])); setShuffles(0)
+    setCleared(false); t0.current = Date.now(); setStage('hunt')
   }
-  const drop = v => setGot(g => ({ ...g, [rung.id]: g[rung.id].filter(x => x !== v) }))
-  const toggle = v => list.includes(v) ? drop(v) : add(v)
 
-  const closeCam = React.useCallback(() => {
-    liveRef.current = false
-    stopStream(streamRef.current)
-    streamRef.current = null
-    if (videoRef.current) videoRef.current.srcObject = null
-    setSeen([])
-  }, [])
-
-  React.useEffect(() => () => closeCam(), [closeCam])
-  React.useEffect(() => { if (at !== 0 && streamRef.current) { closeCam(); setCam('off') } }, [at, closeCam])
-
-  const askCam = async () => {
-    if (cam === 'on') { closeCam(); setCam('off'); return }
-    if (!cameraSupported()) { setCam('unsupported'); return }
-    setCam('asking')
-    let stream
-    try { stream = await openCamera() }
-    catch { setCam('refused'); return }
-    streamRef.current = stream
-    setCam('loading')
-    let model
-    try { model = await loadDetector() }
-    catch { closeCam(); setCam('offline'); return }
-    const v = videoRef.current
-    if (!v) { closeCam(); setCam('off'); return }
-    v.srcObject = stream
-    try { await v.play() } catch { /* a blocked autoplay still renders frames */ }
-    setCam('on')
-    liveRef.current = true
-    const loop = async () => {
-      while (liveRef.current && videoRef.current) {
-        try {
-          const found = await model.detect(videoRef.current, 8, 0.45)
-          const names = []
-          for (const f of found) {
-            const phrase = phraseFor(f.class)
-            if (phrase && !names.includes(phrase)) names.push(phrase)
-          }
-          if (liveRef.current) setSeen(names.slice(0, 8))
-        } catch { /* a dropped frame is not worth reporting */ }
-        await new Promise(r => setTimeout(r, 320))
-      }
+  const collect = (card, el) => {
+    if (cleared || mine.includes(card) || mine.length >= sense.n) return
+    const box = el?.closest('[data-hunt]')?.getBoundingClientRect()
+    const r = el?.getBoundingClientRect()
+    const pos = box && r ? { x: (r.left + r.width / 2 - box.left) / box.width * 100,
+                             y: (r.top - box.top) / box.height * 100 } : {}
+    const next = [...mine, card]
+    setGot(s => ({ ...s, [sense.id]: next }))
+    g.add(10, pos)
+    if (next.length >= sense.n) {
+      setCleared(true)
+      setTimeout(() => g.add(15, { x:50, y:8, label:`${sense.name} done`, sound:'good' }), 260)
+      setTimeout(() => {
+        setCleared(false)
+        if (at + 1 >= SENSES.length) {
+          g.add(25, { x:50, y:20, label:'full set', sound:'good' })
+          setSecs(Math.round((Date.now() - t0.current) / 1000))
+          setTimeout(() => { setStage('done'); g.finish() }, 500)
+        } else {
+          setAt(at + 1); setHand(deal(SENSES[at + 1]))
+        }
+      }, 1100)
     }
-    loop()
   }
 
-  /* Chips the reader can tap: on the first rung, what the detector found plus
-     anything already on the rung; on the rest, the written suggestions. */
-  const chips = at === 0
-    ? [...new Set([...list, ...seen])]
-    : [...new Set([...list, ...rung.chips])]
+  const reshuffle = () => { setHand(deal(sense, mine)); setShuffles(n => n + 1) }
+  const end = () => { setSecs(Math.round((Date.now() - t0.current) / 1000)); setStage('done'); g.finish() }
 
-  const camLabel = cam === 'asking' ? 'Asking' : cam === 'loading' ? 'Loading detector' : 'Start camera'
+  const time = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
+  const sensesDone = SENSES.filter(s => got[s.id].length >= s.n).length
 
   return (
     <ActivityScreen family="stone" title="5-4-3-2-1 Grounding">
-      <Strip got={got} at={finished ? -1 : at}/>
+      <div style={g.vars} className="mx-auto w-full max-w-[56rem]">
+        {stage !== 'done' && <GameBar game={g} className="mb-3"/>}
+        {stage !== 'done' && <Collection got={got} at={stage === 'hunt' ? at : -1}/>}
 
-      {!finished && at === 0 && (
-        <div className="mt-3">
-          {cam !== 'on' && (
-            <div className="mx-auto grid w-full max-w-[64rem] place-items-center gap-3 rounded-panel
-              border-2 border-ink bg-ink px-4 py-10 sm:py-14">
-              <Button size="md" onClick={askCam} disabled={cam === 'asking' || cam === 'loading'}
-                className="bg-accent text-paper hoverOnly:bg-accent-ink">{camLabel}</Button>
-              <p className="text-center text-fine text-paper">
-                {cam === 'refused' ? 'Camera off. Type instead.'
-                  : cam === 'unsupported' ? 'No camera here. Type instead.'
-                  : cam === 'offline' ? 'Detector offline. Type instead.'
-                  : 'Frames stay on this device.'}
-              </p>
+        {stage === 'idle' && (
+          <div className="mt-4">
+            <p className="font-display text-row font-bold text-ink">Scavenger hunt</p>
+            <p className="mt-1 text-sec text-ink-2">Find it in the room, then tap its card.</p>
+            <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={start}>Start</Button>
+            <LevelMeter className="mt-5 max-w-[34rem]"/>
+            <DidItWork tool="ground" phase="before" className="mt-4"/>
+          </div>
+        )}
+
+        {stage === 'hunt' && (
+          <div className="mt-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 key={sense.id} className={cn('font-display text-row font-bold tracking-tight text-ink',
+                !g.reduced && 'g-in')}>
+                Find {NUM[sense.n]} {sense.ask}
+              </h3>
+              <span className="font-display text-ui font-bold tabular-nums text-ink-2">
+                {mine.length} of {sense.n}
+              </span>
             </div>
-          )}
-          <Video ref={videoRef} on={cam === 'on'}>
-            <p className="absolute left-3 top-3 rounded-field bg-ink/80 px-2 py-1 text-fine text-paper">
-              {seen.length ? rung.ask : 'Looking'}
-            </p>
-          </Video>
-          {cam === 'on' && <OnDevice className="mt-2">Frames stay on this device.</OnDevice>}
-        </div>
-      )}
-
-      {!finished && (
-        <div className="mt-3">
-          {at > 0 && <p className="font-display text-ui font-semibold text-ink">{rung.ask}</p>}
-          <div className="mt-2 flex min-h-[3rem] flex-wrap gap-2">
-            {chips.map(c => (
-              <Choice key={c} on={list.includes(c)} disabled={full && !list.includes(c)}
-                onClick={() => toggle(c)}>{c}</Choice>
-            ))}
-          </div>
-
-          <form className="mt-3 flex gap-2" onSubmit={e => { e.preventDefault(); add(text) }}>
-            <label className="min-w-0 flex-1">
-              <span className="sr-only">{rung.ask}</span>
-              <input className={FIELD} value={text} disabled={full}
-                onChange={e => setText(e.target.value)}
-                placeholder={full ? 'Rung full' : 'Or type one'}/>
-            </label>
-            <Button size="sm" type="submit" disabled={full || !text.trim()}>Add</Button>
-          </form>
-
-          <div className="mt-3 flex flex-wrap gap-2.5">
-            <Button size="sm" variant={full ? 'solid' : 'outline'} onClick={() => setAt(a => a + 1)}>
-              {at === RUNGS.length - 1 ? 'Finish' : full ? 'Next' : 'Skip'}
-            </Button>
-            {at > 0 && <Button size="sm" variant="outline" onClick={() => setAt(a => a - 1)}>Back</Button>}
-          </div>
-        </div>
-      )}
-
-      {finished && (
-        <div className="mt-3">
-          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {RUNGS.map(r => (
-              <div key={r.id} className="rounded-panel border-2 border-ink bg-card p-3">
-                <dt className="font-display text-ui font-bold text-ink">{r.name}</dt>
-                <dd className="mt-1 text-sec text-ink-2">{got[r.id].length ? got[r.id].join(', ') : 'Skipped'}</dd>
+            <div data-hunt className="relative mt-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {hand.map((c, k) => {
+                  const on = mine.includes(c)
+                  return (
+                    <button key={sense.id + c} type="button" aria-pressed={on}
+                      onClick={e => collect(c, e.currentTarget)}
+                      disabled={!on && (cleared || mine.length >= sense.n)}
+                      style={{ animationDelay: `${k * 35}ms`, ...(on ? { background:'var(--g-wash)' } : {}) }}
+                      className={cn('flex min-h-[76px] items-center gap-2 rounded-panel border-2 p-3 text-left',
+                        'font-display text-ui transition-[background-color,border-color,transform] duration-150',
+                        'motion-safe:active:scale-[0.97] disabled:opacity-50',
+                        !g.reduced && 'g-in',
+                        on ? 'border-ink font-bold text-ink' : 'border-ink bg-card font-semibold text-ink')}>
+                      <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full border-[1.5px] border-ink-3"
+                        style={on ? { background:'var(--g-main)' } : undefined}>
+                        {on && <Check className="size-4 text-paper"/>}
+                      </span>
+                      <span className="min-w-0">{c}</span>
+                    </button>
+                  )
+                })}
               </div>
-            ))}
-          </dl>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button size="sm" variant="outline" onClick={() => { setGot(empty()); setAt(0) }}>Start again</Button>
-            <span className="text-fine text-ink-3">Nothing was saved.</span>
+              <Pops game={g}/>
+            </div>
+            <p className="mt-3 min-h-[1.5rem] text-fine font-semibold" aria-live="polite"
+              style={{ color:'var(--g-ink)' }}>
+              {cleared ? (at + 1 >= SENSES.length ? 'Full set found.' : `${sense.name} done. Next: ${SENSES[at + 1].name}.`) : ''}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2.5">
+              <Button size="sm" variant="outline" onClick={reshuffle} disabled={cleared}>New cards</Button>
+              <Button size="sm" variant="outline" onClick={end}>End hunt</Button>
+            </div>
           </div>
-        </div>
-      )}
-      {!finished && at === 0 && !list.length && <DidItWork tool="ground" phase="before" className="mt-3"/>}
-      {finished && <DidItWork tool="ground" phase="after" className="mt-3"/>}
+        )}
+
+        {stage === 'done' && (
+          <EndCard game={g} title={found >= ALL ? 'Full set found' : 'Hunt done'}
+            stats={[['Found', `${found} of ${ALL}`], ['Senses', `${sensesDone} of 5`],
+                    ['Time', time], ['New cards used', String(shuffles)]]}
+            onAgain={start}>
+            <Collection got={got} at={-1}/>
+            <DidItWork tool="ground" phase="after" className="mt-3"/>
+          </EndCard>
+        )}
+        <OnDevice className="mt-4">No camera. Nothing leaves this device.</OnDevice>
+      </div>
     </ActivityScreen>
   )
 }

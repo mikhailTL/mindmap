@@ -345,7 +345,7 @@ export const FiveMark = () => (
 export function Art({ draw: Draw, className }) {
   return (
     <span className={cn('block w-full max-w-[560px] overflow-hidden rounded-panel',
-      'aspect-[44/15] border-2 border-ink bg-card', className)}>
+      'aspect-[44/15] border border-rule bg-card', className)}>
       <Draw/>
     </span>
   )

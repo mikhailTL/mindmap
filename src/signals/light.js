@@ -247,8 +247,8 @@ export const HEADLINE = Object.freeze({
 
 const ALLOWED = new Set(Object.values(SIGNAL))
 
-/* What the parent's phone shows: a headline, the time on red, and the
-   signal labels on yellow and red. Never a minute count, an app or content.
+/* What the parent's phone shows: a headline, and on red only the time and
+   the signal labels. Never a minute count, an app or content.
    The older call shape { light, at, minutes, top } still works: `top` becomes
    the one signal, `minutes` is ignored, and `line` / `detail` are returned
    alongside for screens that have not moved over yet. */
@@ -257,7 +257,9 @@ export function parentSummary(arg = {}) {
   const light = raw === Light.RED || raw === Light.YELLOW ? raw : Light.GREEN
   const legacy = !('signals' in arg) && ('minutes' in arg || 'top' in arg)
   const given = legacy ? (SIGNAL[top] ? [SIGNAL[top]] : []) : (Array.isArray(signals) ? signals : [])
-  const list = light === Light.GREEN ? [] : [...new Set(given.filter(l => ALLOWED.has(l)))]
+  /* The owner's rule: no specific phone-use detail reaches a parent unless
+     the light is red, so yellow carries the colour and the headline only. */
+  const list = light !== Light.RED ? [] : [...new Set(given.filter(l => ALLOWED.has(l)))]
   const time = light === Light.RED && typeof at === 'number' && Number.isFinite(at) ? `Red at ${clock(at)}` : null
   const out = { light, headline: HEADLINE[light], time, signals: list }
   return legacy ? { ...out, line: out.headline, detail: time } : out

@@ -30,7 +30,7 @@ function Split({ today, later, total }) {
   const t = total ? today / total : 0
   const l = total ? later / total : 0
   return (
-    <div className="mt-4 rounded-panel border-2 border-ink bg-card p-3.5">
+    <div className="mt-4 rounded-[18px] border border-rule bg-card p-3.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
         {[['Today', today], ['Not today', later], ['To sort', total - today - later]].map(([k, n]) => (
           <span key={k} className="inline-flex items-baseline gap-1.5">

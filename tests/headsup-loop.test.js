@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import {
-  startTeen, headlessView, makeClock, pickParent, LOOP_MS, STAGGER_MS, CLIPS, known,
+  startTeen, headlessView, makeClock, pickParent, LOOP_MS, STAGGER_MS, CLIPS, known, RATE, CALM_MS,
 } from '../src/traffic/core.js'
 import { seededBaseline } from '../src/traffic/baseline.js'
-import { Light, SIGNAL } from '../src/signals/light.js'
+import { Light, SIGNAL, RED_AFTER_MS } from '../src/signals/light.js'
 
 /* Both teen phones, headless, under fake timers, for four loops: the same
    scripts, the same engine and the same callout rule the page runs. */
@@ -117,6 +117,46 @@ describe('Heads Up loop on the real engine', () => {
   it('turns the parent red at least once per loop and back to green', () => {
     const reds = rec.parent.filter(p => p[1] === Light.RED).length
     expect(reds).toBeGreaterThanOrEqual(2 * 3)
+  })
+
+  it('loops both scenes in well under a minute', () => {
+    expect(LOOP_MS).toBeLessThanOrEqual(50 * 1000)
+    for (const k of ['texting', 'scrolling']) {
+      const L = done(k)
+      for (let i = 1; i < L.length; i++) expect(L[i].start - L[i - 1].start).toBeCloseTo(LOOP_MS / 1000, 0)
+    }
+  })
+
+  it('each scene is about three seconds of usual use, then mostly the stressed use, in under 25 seconds', () => {
+    for (const k of ['texting', 'scrolling']) for (const L of done(k)) {
+      const calm = L.phases.stress - L.phases.calm
+      const scene = L.phases.done - L.phases.calm
+      expect(calm).toBeGreaterThanOrEqual(CALM_MS / 1000 - 0.1)
+      expect(calm).toBeLessThanOrEqual(CALM_MS / 1000 + 1)
+      expect(scene).toBeLessThan(25)
+      expect((L.phases.done - L.phases.stress) / scene).toBeGreaterThan(0.75)
+    }
+  })
+
+  it('holds on the moment of detection, with the notification up, before starting over', () => {
+    for (const k of ['texting', 'scrolling']) for (const L of done(k)) {
+      expect(L.phases.detected).toBeGreaterThanOrEqual(L.nudge - 0.01)
+      expect(L.phases.done - L.phases.detected).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it('red still needs the engine minute: no sooner than a minute of session clock after the index first reads red', () => {
+    for (const k of ['texting', 'scrolling']) for (const L of done(k)) {
+      const hot = L.ticks.find(x => x.phase === 'stress' && x.index >= 70)?.t
+      const r = L.ticks.find(x => x.light === Light.RED)?.t
+      expect(r - hot).toBeGreaterThanOrEqual(RED_AFTER_MS / RATE / 1000 - 0.01)
+    }
+  })
+
+  it('the two phones take turns: one scene never overlaps the other', () => {
+    const spans = ['texting', 'scrolling'].flatMap(k => done(k).map(L => [L.phases.calm, L.phases.done]))
+      .sort((a, b) => a[0] - b[0])
+    for (let i = 1; i < spans.length; i++) expect(spans[i][0]).toBeGreaterThanOrEqual(spans[i - 1][1])
   })
 
   it('uses 4537 and never the retired 46876', () => {

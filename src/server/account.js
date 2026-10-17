@@ -1,4 +1,5 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { AVATAR_ALL_IDS } from '../account/avatar-catalog.js'
 
 /* The account API. One POST endpoint, one `op` per request, and a snapshot
  * of everything the signed-in account may see in every mutating reply, so
@@ -24,14 +25,16 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
  * role never link.
  */
 
-export const ROLES = ['student', 'parent', 'pro']
+/* `other` is anyone who is not one of the three audiences. It has the least
+   access there is: no link kind names it, so it can never link to anybody and
+   sees nothing but itself, like a parent linked to nobody. */
+export const ROLES = ['student', 'parent', 'pro', 'other']
 export const SETTINGS = ['school', 'practice', 'other']
-/* The same list as AVATAR_IDS in src/account/store.js. An id not on it is
-   stored as null, and the client draws the initial instead. */
-export const AVATARS = [
-  'fox', 'owl', 'panda', 'frog', 'cat', 'bear',
-  'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth',
-]
+/* Every picture the client offers, read from the one list both sides use
+   (src/account/avatar-catalog.js): the twelve animals and the shapes, faces
+   and patterns. An id not on it is stored as null, and the client draws the
+   initial instead. */
+export const AVATARS = AVATAR_ALL_IDS
 export const LINK_KINDS = {
   'parent-student': ['parent', 'student'],
   'pro-student':    ['pro', 'student'],
@@ -44,6 +47,14 @@ const members = l => LINK_KINDS[l.kind].map(r => l[r])
 const NAME_MAX = 40
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSCODE = /^\d{4,6}$/
+/* A secret is a password of 8 to 128 characters of any kind, or the 4 to 6
+   digit passcode every account had before passwords. Both are hashed the same
+   way. The ceiling keeps one request from buying a very long scrypt. */
+const SECRET_MAX = 128
+const validSecret = raw => {
+  const v = String(raw ?? '')
+  return PASSCODE.test(v) || (v.length >= 8 && v.length <= SECRET_MAX)
+}
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 6
 const CODE_RE = new RegExp('^[' + ALPHABET + ']{' + CODE_LENGTH + '}$')
@@ -183,7 +194,7 @@ export function makeHandler({ kv }) {
       if (email && !EMAIL.test(email)) return { ok: false, reason: 'email' }
       if (!email && role !== 'student') return { ok: false, reason: 'email' }
       if (role === 'pro' && !SETTINGS.includes(b.setting)) return { ok: false, reason: 'setting' }
-      if (!PASSCODE.test(String(b.passcode ?? ''))) return { ok: false, reason: 'passcode' }
+      if (!validSecret(b.passcode)) return { ok: false, reason: 'passcode' }
       const id = newId()
       /* The name and email indexes are claimed first, with nx, so two
          requests cannot both win the same name. */
@@ -209,7 +220,7 @@ export function makeHandler({ kv }) {
       const a = await getAccount(id)
       if (!a) return { ok: false, reason: 'wrong' }
       if (a.lockedUntil && a.lockedUntil > Date.now()) return { ok: false, reason: 'locked' }
-      if (!passcodeMatches(a, b.passcode ?? '')) {
+      if (String(b.passcode ?? '').length > SECRET_MAX || !passcodeMatches(a, b.passcode ?? '')) {
         a.failed = (a.failed || 0) + 1
         if (a.failed >= LOCK_AFTER) { a.failed = 0; a.lockedUntil = Date.now() + LOCK_MS }
         await putAccount(a)
@@ -258,7 +269,7 @@ export function makeHandler({ kv }) {
     },
 
     async passcode(s, b) {
-      if (!PASSCODE.test(String(b.next ?? ''))) return { ok: false, reason: 'invalid' }
+      if (!validSecret(b.next)) return { ok: false, reason: 'invalid' }
       if (!passcodeMatches(s.a, b.old ?? '')) return { ok: false, reason: 'wrong' }
       s.a.salt = randomBytes(16).toString('hex')
       s.a.passHash = hashPasscode(b.next, s.a.salt)

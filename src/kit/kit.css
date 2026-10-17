@@ -73,35 +73,54 @@
 .kit-f-tint  { fill: var(--kit-tint, #dcefe4) }
 
 /* ── THE CARD ────────────────────────────────────────────────────────────
- * The one structural idea this page runs on, and the reason it stops reading
- * as a settings screen: a flat block of the activity's own colour, a heavy
- * ink edge, and a hard offset shadow in that same colour rather than in grey.
- * No blur and no light source, which is the shadow the site's config already
- * defines for every other card; this one only takes the activity's hue
- * instead of a grey, which is the single change that makes ten cards read as
- * ten things.
- *
- * The press is the whole hover: the card travels along its own shadow and the
- * shadow shortens by the same amount, so the block looks pushed rather than
- * lit. Nothing about the layout moves, because a shadow has no size on the
- * page and the translate is composited. */
+ * 17 October: the hard offset shadow and the heavy ink edge are gone (the
+ * owner asked for the neo-brutalist look to be taken away). A card is now a
+ * soft rounded white surface with one light source from above, the same
+ * shadow the site's own `card` and `raise` tokens use. A card that is itself
+ * a control lifts a little under a fine pointer and settles on press.
+ * The activity's colour lives in its icon wash and its controls, not in the
+ * shadow. */
 .kit-block, .kit-card {
-  box-shadow: 4px 4px 0 0 var(--kit-art, #157446);
-  transition: box-shadow .16s var(--ease-out), transform .16s var(--ease-out);
+  box-shadow: 0 1px 2px rgb(11 43 51 / 0.04), 0 10px 28px -16px rgb(11 43 51 / 0.14);
+  transition: box-shadow .18s var(--ease-out), transform .18s var(--ease-out), border-color .18s var(--ease-out);
 }
-/* .kit-block is the look without the press. A card that travels under the
-   pointer is promising something, so only the ones that are themselves a
-   control get .kit-card: the ten activity panels and the chooser's two
-   buttons. The page's own intro, the chooser's frame and the closing line are
-   blocks, and they hold still. */
 @media (hover: hover) and (pointer: fine) {
-  .kit-card:hover { transform: translate(1px, 1px); box-shadow: 3px 3px 0 0 var(--kit-deep, #0f5836) }
+  .kit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgb(11 43 51 / 0.05), 0 18px 40px -20px rgb(11 43 51 / 0.24);
+    border-color: var(--kit-art, #157446);
+  }
 }
-.kit-card:has(:focus-visible) { box-shadow: 3px 3px 0 0 var(--kit-deep, #0f5836) }
-.kit-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--kit-deep, #0f5836) }
+.kit-card:focus-visible { outline: 3px solid var(--kit-deep, #0f5836); outline-offset: 3px }
+.kit-card:active { transform: scale(0.985) }
 @media (prefers-reduced-motion: reduce) {
-  .kit-card, .kit-card:hover, .kit-card:active { transform: none; transition: box-shadow .16s }
+  .kit-card, .kit-card:hover, .kit-card:active { transform: none; transition: box-shadow .18s }
 }
+
+/* A primary button in the activity's own colour. White on deep clears 4.5 : 1
+   in every family. */
+.kit-btn {
+  background-color: var(--kit-deep, #0f5836);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(11 43 51 / 0.08), 0 8px 18px -10px var(--kit-art, #157446);
+  transition: filter .15s var(--ease-out), transform .15s var(--ease-out), box-shadow .15s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .kit-btn:hover { filter: brightness(1.08) } }
+.kit-btn:active { transform: scale(0.97) }
+.kit-btn:disabled { opacity: .45; pointer-events: none }
+.kit-btn:focus-visible, .kit-quiet:focus-visible, .kit-choice:focus-visible {
+  outline: 3px solid var(--kit-deep, #0f5836); outline-offset: 2px
+}
+/* The quieter button beside it: white, a hairline, the family's ink. */
+.kit-quiet {
+  background-color: #fff;
+  color: var(--kit-deep, #0f5836);
+  border: 1px solid #c2d7ca;
+  transition: background-color .15s var(--ease-out), transform .15s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .kit-quiet:hover { background-color: var(--kit-tint, #dcefe4) } }
+.kit-quiet:active { transform: scale(0.97) }
+.kit-quiet:disabled { opacity: .45; pointer-events: none }
 
 /* ── THE SCENES ──────────────────────────────────────────────────────────
  * Each closed card opens with a drawing of what the activity actually is,

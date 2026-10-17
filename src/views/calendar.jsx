@@ -1,47 +1,30 @@
 import React from 'react'
 import { SectionShell } from './shell'
 import { Panel, PanelHead, SeeDetails, Why } from './Monitor'
-import { ArrowLeft, ArrowRight, Check, Chevron, Cross, Minus, Plus } from '../ui/marks'
-import { RealNotice } from '../ui/notice'
+import { ArrowLeft, ArrowRight, Check, Chevron, Copy, Cross, Link, Plus } from '../ui/marks'
 import { useMode } from '../lib/mode'
-import { useAccount } from '../account/store'
+import { PRO } from '../lib/terms'
+import {
+  ROLE_LABEL, createInvite, getVersion as accountVersion, listNetwork, myInvite,
+  subscribe as onAccount, useAccount,
+} from '../account/store'
+import { Avatar } from '../account/ui'
 import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
-import { BAND, USUAL, WBAND, clock12, monthScores } from './reading/demo'
+import { WBAND, clock12, monthScores } from './reading/demo'
 import { cn } from '../lib/utils'
 
 /* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
- * 18. A target the reader sets, a week and a month on one switch, three
- * counts (inside, above, below).
+ * 18. A week and a month on one switch, each day read against the usual
+ * range, beside the network the readings travel through.
  * Every figure comes from src/views/reading/demo.js, seeded; in real mode
- * there are no readings and the grid is honestly empty. Colour never carries
- * a state alone: every square prints its figure. */
+ * there are no readings and every square shows the no reading dot. Colour
+ * never carries a state alone: every square prints its figure. */
 
-const KEY = 'mindmap.target'
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
-const MIN_T = 20, MAX_T = 80
 
-/* The range is the target plus and minus half this reader's own usual week
-   range, so the tolerance is their own. */
-const HALF = Math.max(4, Math.round(((WBAND.hi - WBAND.lo) || 18) / 2))
-
-const clampT = n => Math.max(MIN_T, Math.min(MAX_T, Math.round(n)))
-
-function readTarget() {
-  try {
-    const v = Number(localStorage.getItem(KEY))
-    return Number.isFinite(v) && v >= MIN_T && v <= MAX_T ? v : USUAL
-  } catch { return USUAL }
-}
-
-function useTarget() {
-  const [t, setT] = React.useState(readTarget)
-  const set = n => {
-    const v = clampT(n)
-    setT(v)
-    try { localStorage.setItem(KEY, String(v)) } catch { /* session only is fine */ }
-  }
-  return [t, set]
-}
+/* The usual range is the reader's own usual week, so the tolerance is
+   theirs and nobody sets it. */
+const LO = WBAND.lo, HI = WBAND.hi
 
 const stateOf = (v, lo, hi) => (v == null ? 'none' : v > hi ? 'above' : v < lo ? 'below' : 'inside')
 /* `ground` is a pale square ground; `mark` the same state as a filled graphic
@@ -62,56 +45,152 @@ const DOW_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 /* Monday first, as the week series in src/lib/chartdata.js is keyed. */
 const mondayIndex = d => (d.getDay() + 6) % 7
 
-function counts(values, lo, hi) {
-  const scored = values.filter(v => v != null)
-  const n = scored.length || 1
-  const inside = scored.filter(v => v >= lo && v <= hi).length
-  const above = scored.filter(v => v > hi).length
-  const below = scored.filter(v => v < lo).length
-  return { n: scored.length, inside, above, below,
-           pInside: Math.round((inside / n) * 100),
-           pAbove: Math.round((above / n) * 100),
-           pBelow: Math.round((below / n) * 100) }
+/* ── The network ────────────────────────────────────────────────────────── */
+
+/* Readings move between the three apps only along these links, and only what
+   the teen has switched on. The links themselves are made and approved on the
+   network screen (src/account/Network.jsx); this card shows who is on them
+   and starts the invite. */
+
+/* The demo network: the student, a parent and a Medical Professional. */
+const DEMO_PEOPLE = [
+  { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'fox' },
+  { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: null },
+  { id: 'demo-pro',     name: 'Dr. Shah', role: 'pro',   avatar: null },
+]
+
+/* What each person on the network receives. */
+const GETS = {
+  student: 'Chooses what is shared',
+  parent: 'Sees one figure a day',
+  pro: 'Sees what the teen approves',
 }
 
-/* ── The target ─────────────────────────────────────────────────────────── */
+/* The ways in, by who is reading. Every one opens the network screen. */
+const ACTIONS = {
+  student: [
+    ['Invite a parent', 'They enter your code in their app.'],
+    [`Add a ${PRO}`, 'A parent approves the link first.'],
+  ],
+  parent: [
+    ['Invite your teen', 'Your teen approves it in their app.'],
+  ],
+  pro: [
+    ['Invite a teen or parent', 'A parent approves before you see anything.'],
+  ],
+}
 
-function TargetCard({ target, setTarget, lo, hi, c, className }) {
-  const facts = [
-    ['In range', c.n ? `${c.inside} of ${c.n} days` : 'No days yet'],
-  ]
+/* The link a parent sends: the network screen, where the teen enters the
+   code. The code travels in the message, so the link works today. */
+const inviteText = code => {
+  const at = typeof location === 'undefined' ? '' : `${location.origin}${location.pathname}#/network`
+  return `Join my MindMap network: ${at} Code: ${code}`
+}
+
+function InviteLink({ me, go }) {
+  React.useSyncExternalStore(onAccount, accountVersion, () => 0)
+  const [copied, setCopied] = React.useState(false)
+  const inv = me ? myInvite(me.id) : null
+  if (!me || me.role !== 'parent') {
+    return (
+      <button type="button" onClick={() => go('network')}
+        className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-field border border-ink-2
+          bg-card px-4 font-display text-ui font-medium text-ink transition-colors duration-150
+          hoverOnly:bg-mist active:bg-mist">
+        <Link aria-hidden className="size-4"/>Sign in to make a link
+      </button>
+    )
+  }
+  async function copy() {
+    const code = (inv || createInvite() || {}).code
+    if (!code) return
+    try { await navigator.clipboard.writeText(inviteText(code)) } catch { /* shown below anyway */ }
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <div className="mt-2">
+      <button type="button" onClick={copy}
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-field bg-accent px-4
+          font-display text-ui font-medium text-paper transition-colors duration-150
+          hoverOnly:bg-accent-ink active:bg-accent-ink">
+        {copied ? <Check aria-hidden className="size-4"/> : <Copy aria-hidden className="size-4"/>}
+        {copied ? 'Copied' : 'Copy invite link'}
+      </button>
+      {inv && (
+        <p className="mt-1.5 text-fine text-ink-2">
+          Your code is <span className="font-display font-bold tracking-[0.14em] text-ink">{inv.code}</span>
+        </p>
+      )}
+    </div>
+  )
+}
+
+function NetworkCard({ go, reader, real, className }) {
+  const me = useAccount()
+  React.useSyncExternalStore(onAccount, accountVersion, () => 0)
+  const role = reader || 'student'
+  /* Demo: the worked network. Real: you, then whoever you have linked. */
+  const people = real
+    ? (me ? [{ ...me, you: true },
+            ...listNetwork(me.id).filter(l => l.status === 'active').map(l => l.person)] : [])
+    : DEMO_PEOPLE.map(p => ({ ...p, you: p.role === role }))
+  const others = people.filter(p => !p.you)
   return (
     <Panel className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="Your Target" meta="0 to 100" className="min-w-0 flex-1"/>
-        <Why label="What the target is" className="pt-1.5">
-          Lower is calmer. Your usual day is {USUAL}. Nobody else sees it.
+        <PanelHead title="Your Network" className="min-w-0 flex-1"/>
+        <Why label="How readings are shared" className="pt-1.5">
+          A parent never sees Notes, Location or single readings. A {PRO} sees
+          only teens who said yes.
         </Why>
       </div>
-      <div className="mt-3 flex items-center justify-center gap-4">
-        <button type="button" onClick={() => setTarget(target - 1)}
-          aria-label="Lower the target by one"
-          className="flex size-11 shrink-0 items-center justify-center rounded-field border
-            border-ink text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist">
-          <Minus aria-hidden className="size-4"/>
-        </button>
-        <p className="min-w-[3ch] text-center font-display text-stat font-medium tabular-nums leading-none text-ink">
-          {target}</p>
-        <button type="button" onClick={() => setTarget(target + 1)}
-          aria-label="Raise the target by one"
-          className="flex size-11 shrink-0 items-center justify-center rounded-field border
-            border-ink font-display text-ui font-medium text-ink transition-colors duration-150
-            hoverOnly:bg-mist active:bg-mist">+</button>
-      </div>
-      <p className="mt-2 text-center text-fine text-ink-2">In range means {lo} to {hi}</p>
-      <dl className="m-0 mt-3 border-t border-rule pt-3">
-        {facts.map(([k, v]) => (
-          <div key={k} className="min-w-0">
-            <dt className="tick">{k}</dt>
-            <dd className="m-0 mt-0.5 font-display text-ui font-bold tabular-nums leading-tight text-ink">{v}</dd>
-          </div>
+      <p className="mt-1.5 text-fine text-ink-2">
+        Readings go only to people in this network, and only what the teen approves.
+      </p>
+
+      {others.length ? (
+        <ul className="m-0 mt-3 list-none border-t border-ink p-0">
+          {people.map(p => (
+            <li key={p.id} className="flex min-h-[52px] items-center gap-3 border-b border-rule py-2">
+              <Avatar name={p.name} avatar={p.avatar} size="sm"/>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-display text-ui font-medium text-ink">
+                  {p.name}{p.you ? ' (you)' : ''}</span>
+                <span className="block text-fine text-ink-2">
+                  {p.role ? ROLE_LABEL[p.role] : 'Removed'}{GETS[p.role] ? `. ${GETS[p.role]}` : ''}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 border-t border-ink pt-2.5 text-ui text-ink-2">
+          Nobody is in your network yet.</p>
+      )}
+
+      <ul className="m-0 mt-3 list-none p-0">
+        {ACTIONS[role].map(([label, hint], i) => (
+          <li key={label} className="border-t border-rule py-1 first:border-t-0">
+            <button type="button" onClick={() => go('network')}
+              className="group flex min-h-[48px] w-full items-center gap-3 text-left">
+              <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-field
+                bg-accent-wash text-accent-ink">
+                <Plus className="size-4"/>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-ui font-medium text-ink transition-colors
+                  duration-150 groupHoverOnly:text-accent-ink">{label}</span>
+                <span className="block text-fine text-ink-2">{hint}</span>
+              </span>
+              <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
+            </button>
+            {role === 'parent' && i === 0 && (
+              <div className="pb-2 pl-12">
+                <InviteLink me={me} go={go}/>
+              </div>
+            )}
+          </li>
         ))}
-      </dl>
+      </ul>
     </Panel>
   )
 }
@@ -138,7 +217,7 @@ function MonthGrid({ year, month, values, today, lo, hi }) {
             <li key={c.day} className="min-w-0">
               <div role="img" aria-label={c.v == null
                 ? `${dow} ${c.day} ${MONTHS[month]}, no reading yet`
-                : `${dow} ${c.day} ${MONTHS[month]}, ${c.v} out of 100, ${st.word} your target range`}
+                : `${dow} ${c.day} ${MONTHS[month]}, ${c.v} out of 100, ${st.word} the usual range`}
                 className={cn('flex aspect-square flex-col items-center justify-center rounded-field',
                   'border px-0.5', st.ground, isToday && 'ring-1 ring-ink ring-offset-0')}>
                 <span aria-hidden className="text-fine leading-none text-ink-3">{c.day}</span>
@@ -331,11 +410,10 @@ export function CalendarBody({ go, who }) {
   const me = useAccount()
   const reader = who || (me && me.role) || null
   const canMark = !reader || reader === 'student'
-  const [target, setTarget] = useTarget()
   const [view, setView] = React.useState('month')
   const now = React.useMemo(() => new Date(), [])
   const [offset, setOffset] = React.useState(0)
-  const lo = clampT(target - HALF), hi = clampT(target + HALF)
+  const lo = LO, hi = HI
 
   const shown = new Date(now.getFullYear(), now.getMonth() + offset, 1)
   const year = shown.getFullYear(), month = shown.getMonth()
@@ -343,15 +421,19 @@ export function CalendarBody({ go, who }) {
   const today = thisMonth ? now.getDate() : null
   const real = mode === 'real'
 
-  const monthVals = React.useMemo(
-    () => (real ? [] : monthScores(year, month, thisMonth ? now.getDate() : null)),
-    [real, year, month, thisMonth, now])
+  /* Real mode has no readings: the month is all dots up to today. */
+  const monthVals = React.useMemo(() => {
+    if (!real) return monthScores(year, month, thisMonth ? now.getDate() : null)
+    const n = thisMonth ? now.getDate() : new Date(year, month + 1, 0).getDate()
+    return Array(n).fill(null)
+  }, [real, year, month, thisMonth, now])
 
   /* The week is the seven days ending on the newest scored day in the month
-     shown, so the week and the month cannot disagree. */
+     shown, so the week and the month cannot disagree. With no scored day it
+     ends on the last day shown. */
   const weekDays = React.useMemo(() => {
-    if (real) return []
-    const end = monthVals.reduce((a, v, i) => (v != null ? i : a), -1)
+    const scored = monthVals.reduce((a, v, i) => (v != null ? i : a), -1)
+    const end = scored >= 0 ? scored : monthVals.length - 1
     if (end < 0) return []
     const out = []
     for (let i = Math.max(0, end - 6); i <= end; i += 1) {
@@ -360,82 +442,62 @@ export function CalendarBody({ go, who }) {
                  today: today != null && i + 1 === today })
     }
     return out
-  }, [real, monthVals, year, month, today])
-
-  const vals = view === 'month' ? monthVals : weekDays.map(d => d.v)
-  const c = counts(vals, lo, hi)
+  }, [monthVals, year, month, today])
 
   return (
-    <div className={cn('grid w-full grid-cols-1 gap-3 lg:gap-4',
-      !real && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
-      <TargetCard target={target} setTarget={setTarget} lo={lo} hi={hi} c={c}
-        className="lg:col-start-1 lg:row-start-1"/>
-
-      {real ? (
-        <Panel>
-          <PanelHead title="No Readings Yet"/>
-          <div className="mt-2.5">
-            <RealNotice>No patch is paired yet. Your target is saved.</RealNotice>
+    <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
+      <Panel className="lg:self-start">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div role="group" aria-label="Week or month"
+            className="inline-flex overflow-hidden rounded-field border border-rule">
+            {[['week', 'Week'], ['month', 'Month']].map(([v, label]) => (
+              <button key={v} type="button" onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={cn('min-h-[44px] px-4 font-display text-ui font-medium',
+                  'transition-colors duration-150',
+                  view === v ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+                {label}
+              </button>
+            ))}
           </div>
-          <button type="button" onClick={() => go('reading')}
-            className="group mt-3 flex min-h-[44px] w-full items-center gap-3 border-t border-rule
-              pt-2.5 text-left">
-            <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
-              transition-colors duration-150 groupHoverOnly:text-accent-ink">Take a reading</span>
-            <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
-          </button>
-        </Panel>
-      ) : (
-        <Panel className="lg:col-start-2 lg:row-start-1 lg:self-start">
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <div role="group" aria-label="Week or month"
-              className="inline-flex overflow-hidden rounded-field border border-rule">
-              {[['week', 'Week'], ['month', 'Month']].map(([v, label]) => (
-                <button key={v} type="button" onClick={() => setView(v)}
-                  aria-pressed={view === v}
-                  className={cn('min-h-[44px] px-4 font-display text-ui font-medium',
-                    'transition-colors duration-150',
-                    view === v ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
-                  {label}
-                </button>
-              ))}
+          {view === 'month' && (
+            <div className="flex items-center gap-1.5">
+              <button type="button" onClick={() => setOffset(o => o - 1)}
+                aria-label="Previous month"
+                className="flex size-11 items-center justify-center rounded-field border
+                  border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua">
+                <ArrowLeft aria-hidden className="size-4"/>
+              </button>
+              <p className="min-w-[9ch] text-center font-display text-ui font-medium text-ink">
+                {MONTHS[month]} {year}</p>
+              <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))}
+                disabled={thisMonth} aria-label="Next month"
+                className="flex size-11 items-center justify-center rounded-field border
+                  border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua
+                  disabled:border-rule disabled:text-ink-3">
+                <ArrowRight aria-hidden className="size-4"/>
+              </button>
             </div>
-            {view === 'month' && (
-              <div className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setOffset(o => o - 1)}
-                  aria-label="Previous month"
-                  className="flex size-11 items-center justify-center rounded-field border
-                    border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua">
-                  <ArrowLeft aria-hidden className="size-4"/>
-                </button>
-                <p className="min-w-[9ch] text-center font-display text-ui font-medium text-ink">
-                  {MONTHS[month]} {year}</p>
-                <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))}
-                  disabled={thisMonth} aria-label="Next month"
-                  className="flex size-11 items-center justify-center rounded-field border
-                    border-rule text-ink transition-colors duration-150 hoverOnly:bg-aqua
-                    disabled:border-rule disabled:text-ink-3">
-                  <ArrowRight aria-hidden className="size-4"/>
-                </button>
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
-          <div className="mt-3">
-            {view === 'month'
-              ? <MonthGrid year={year} month={month} values={monthVals} today={today}
-                  lo={lo} hi={hi}/>
-              : <>
-                  <WeekRows days={weekDays} lo={lo} hi={hi}/>
-                  <p className="note mt-2.5">The shaded stretch is your target range.</p>
-                </>}
-          </div>
-          <StateKey/>
-        </Panel>
-      )}
+        <div className="mt-3">
+          {view === 'month'
+            ? <MonthGrid year={year} month={month} values={monthVals} today={today}
+                lo={lo} hi={hi}/>
+            : <>
+                <WeekRows days={weekDays} lo={lo} hi={hi}/>
+                <p className="note mt-2.5">The shaded stretch is the usual range.</p>
+              </>}
+        </div>
+        <StateKey/>
+      </Panel>
+
+      <NetworkCard go={go} reader={reader} real={real}
+        className="lg:self-start"/>
 
       {canMark && (
-        <SeeDetails label="See details" className={cn(!real && 'lg:col-span-2')}>
+        <SeeDetails label="See details" className="lg:col-span-2">
           <MarkEvent/>
         </SeeDetails>
       )}
@@ -445,12 +507,14 @@ export function CalendarBody({ go, who }) {
 
 const COPY = {
   note: 'These are demo figures. Nobody has been measured.',
-  realNote: 'No patch is paired yet.',
 }
 
+/* Real mode carries no notice: the shared one is tagged No patch, and here
+   the empty grid and the network card already say where readings come from. */
 export function Calendar({ go, who }) {
+  const [mode] = useMode()
   return (
-    <SectionShell go={go} sub={COPY.sub} note={COPY.note} realNote={COPY.realNote}>
+    <SectionShell go={go} note={mode === 'real' ? null : COPY.note}>
       <CalendarBody go={go} who={who}/>
     </SectionShell>
   )

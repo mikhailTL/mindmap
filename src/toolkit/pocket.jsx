@@ -3,19 +3,26 @@ import { Button } from '../ui/button'
 import { ArrowRight, Cross } from '../ui/marks'
 import { ActivityScreen, OnDevice, Choice } from './shell'
 import { PATTERNS, pacerSchedule, phaseAt, renderPacerWav } from './wav'
-import { useReduced } from './useReduced'
+import { useWakeLock, useTopOn } from './dark'
+import { useGame, Score, Pops, EndCard, LevelMeter } from './game'
 import { DidItWork } from './after'
 
-/* Breathing by sound: the pacer that keeps going when the phone locks. The session
- * is rendered to a WAV (src/toolkit/wav.js) ahead of the tap, so Start is a
- * synchronous audio.play() that survives the lock screen. The phase is read
- * from audio.currentTime, so word and sound never drift. */
+/* Breathing by Sound: the pacer that keeps going when the phone locks, and
+ * a sky that fills one star per full breath.
+ *
+ * The session is rendered to a WAV (src/toolkit/wav.js) ahead of the tap, so
+ * Start is a synchronous audio.play() that survives the lock screen. The
+ * phase is read from audio.currentTime, so word, sound and stars never drift,
+ * and a phone that was locked catches up on every breath it missed the
+ * moment it is opened again. */
 
-const MINUTES = [5, 10]
-const SAY = { 'In':'Breathe in', 'Out':'Breathe out', 'Rest':'Rest', 'In again':'In again', 'Done':'Done' }
+const MINUTES = [2, 5, 10]
+const SAY = { 'In':'Breathe in', 'Out':'Breathe out', 'Rest':'Hold', 'In again':'In again', 'Done':'Done' }
+const STAR_POINTS = 10
 
 const hasSession = () => typeof navigator !== 'undefined' && 'mediaSession' in navigator
 const quiet = fn => { try { fn() } catch { /* unsupported */ } }
+const cycleOf = id => (PATTERNS[id] || PATTERNS.box).steps.reduce((a, s) => a + s[1], 0)
 
 const Pause = p => (
   <svg viewBox="0 0 24 24" width={18} height={18} fill="none" aria-hidden stroke="currentColor"
@@ -32,31 +39,37 @@ const Lock = p => (
 
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-/* Under reduced motion the disc holds still and the count carries the pace. */
-function Ring({ phase, t, count, still, idle }) {
-  const dash = (idle ? 0 : t) * 578
-  const scale = phase === 'In' ? 0.46 + 0.54 * t
-    : phase === 'Out' ? 1 - 0.54 * t
-    : phase === 'In again' ? 0.86 + 0.14 * t
-    : phase === 'Rest' ? 1 : 0.46
+/* The orb breathes; the stars around it are the breaths, lit as each one
+   ends. Under reduced motion the orb holds still and the count carries it. */
+function Sky({ phase, t, count, still, idle, stars, lit }) {
+  const scale = phase === 'In' ? 0.5 + 0.5 * t
+    : phase === 'Out' ? 1 - 0.5 * t
+    : phase === 'In again' ? 0.88 + 0.12 * t
+    : phase === 'Rest' ? (count > 0 ? 1 : 0.5) : 0.5
+  const R = 90
+  const r = Math.max(2.4, Math.min(6, (Math.PI * R / Math.max(1, stars)) * 0.55))
   return (
-    <div className="relative mx-auto grid aspect-square w-full max-w-[22rem] place-items-center
-      sm:max-w-[26rem]">
+    <div className="relative mx-auto grid aspect-square w-full max-w-[20rem] place-items-center sm:max-w-[24rem]">
       <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
-        <circle cx="100" cy="100" r="92" fill="none" className="stroke-rule" strokeWidth="4"/>
-        <circle cx="100" cy="100" r="92" fill="none" className="kit-s" strokeWidth="7"
-          strokeLinecap="round" transform="rotate(-90 100 100)"
-          strokeDasharray={`${dash} 578`}/>
-        <circle cx="100" cy="100" r="68" className="kit-f-tint kit-s-art" strokeWidth="3"
-          style={{ transformBox:'fill-box', transformOrigin:'center',
-                   transform:`scale(${still || idle ? 0.78 : scale})` }}/>
+        {Array.from({ length: stars }, (_, i) => {
+          const a = (i / stars) * Math.PI * 2 - Math.PI / 2
+          const on = i < lit
+          const next = i === lit && !idle
+          return <circle key={i} cx={100 + R * Math.cos(a)} cy={100 + R * Math.sin(a)} r={on ? r : r * 0.75}
+            style={{ fill: on ? 'var(--g-main)' : next ? '#ffffff' : '#c2d7ca',
+                     stroke: next ? 'var(--g-main)' : 'none', strokeWidth: 1.5,
+                     transition: still ? 'none' : 'r .3s, fill .3s' }}/>
+        })}
+        <circle cx="100" cy="100" r="66" strokeWidth="3"
+          style={{ fill:'var(--g-wash)', stroke:'var(--g-main)', transformBox:'fill-box', transformOrigin:'center',
+                   transform:`scale(${still || idle ? 0.8 : scale})` }}/>
       </svg>
       <div className="relative text-center">
         <p className="font-display text-row font-bold tracking-tight text-ink" aria-live="polite">
-          {idle ? 'Ready' : SAY[phase]}
+          {idle ? `${stars} breaths` : SAY[phase]}
         </p>
         <p className="mt-1 font-display text-dial font-bold tabular-nums text-ink">
-          {idle || phase === 'Done' ? '' : count}
+          {idle ? '' : phase === 'Done' ? lit : count}
         </p>
       </div>
     </div>
@@ -64,19 +77,27 @@ function Ring({ phase, t, count, still, idle }) {
 }
 
 export default function Pocket() {
-  const reduced = useReduced()
-  const [pattern, setPattern] = React.useState('box')
-  const [minutes, setMinutes] = React.useState(5)
+  const g = useGame('pocket')
+  const [pattern, setPattern] = React.useState('long')
+  const [minutes, setMinutes] = React.useState(2)
   const [state, setState] = React.useState('idle')     // idle | playing | paused | done
   const [ready, setReady] = React.useState(false)
   const [blocked, setBlocked] = React.useState(false)
   const [gen, setGen] = React.useState(0)
   const [frame, setFrame] = React.useState({ phase:'In', t:0, count:4, left:0 })
+  const [lit, setLit] = React.useState(0)
 
   const audio = React.useRef(null)
   const url = React.useRef(null)
-  const sched = React.useRef(pacerSchedule('box', 5))
+  const sched = React.useRef(pacerSchedule('long', 2))
   const stopRef = React.useRef(() => {})
+  const paid = React.useRef(0)
+
+  const cycle = cycleOf(pattern)
+  const stars = Math.max(1, Math.floor(Math.round(minutes * 60) / cycle))
+
+  useWakeLock(state === 'playing')
+  useTopOn(state === 'done')
 
   /* The file is made when the choice changes. */
   React.useEffect(() => {
@@ -100,7 +121,7 @@ export default function Pocket() {
     if (!hasSession()) return
     const ms = navigator.mediaSession
     quiet(() => {
-      ms.metadata = on ? new window.MediaMetadata({ title:'MindMap pacer', artist:`Breathing, ${minutes} minutes` }) : null
+      ms.metadata = on ? new window.MediaMetadata({ title:'MindMap breathing', artist:`${minutes} minutes` }) : null
     })
     for (const [act, fn] of [['play', () => audio.current?.play()],
                              ['pause', () => audio.current?.pause()],
@@ -112,13 +133,30 @@ export default function Pocket() {
   const sessionRef = React.useRef(session)
   sessionRef.current = session
 
+  /* Stars for every breath finished by second `t`. */
+  const award = React.useCallback(t => {
+    const done = Math.min(stars, Math.floor(t / cycle))
+    if (done > paid.current) {
+      const n = done - paid.current
+      paid.current = done
+      setLit(done)
+      const a = (done - 1) / stars * Math.PI * 2 - Math.PI / 2
+      g.add(n * STAR_POINTS, { x: 50 + 42 * Math.cos(a), y: 46 + 42 * Math.sin(a), sound:'tick' })
+    }
+  }, [stars, cycle, g])
+  const awardRef = React.useRef(award); awardRef.current = award
+
+  const end = React.useCallback(() => {
+    session(false)
+    if (paid.current > 0) { g.finish(); setState('done') } else setState('idle')
+  }, [session, g])
+
   const stop = React.useCallback(() => {
     const a = audio.current
-    if (a) { quiet(() => a.pause()); a.removeAttribute('src'); quiet(() => a.load()) }
-    session(false)
-    setState('idle')
-    setGen(g => g + 1)                       // a fresh URL
-  }, [session])
+    if (a) { awardRef.current(a.currentTime || 0); quiet(() => a.pause()); a.removeAttribute('src'); quiet(() => a.load()) }
+    end()
+    setGen(x => x + 1)                       // a fresh URL
+  }, [end])
   stopRef.current = stop
 
   /* Start is synchronous: src is set and play() called inside the tap. */
@@ -126,6 +164,7 @@ export default function Pocket() {
     const a = audio.current
     if (!a || !url.current) return
     setBlocked(false)
+    g.reset(); paid.current = 0; setLit(0)
     if (a.getAttribute('src') !== url.current) a.src = url.current
     session(true)
     const p = a.play()
@@ -143,9 +182,12 @@ export default function Pocket() {
     setState('paused'); quiet(() => { navigator.mediaSession.playbackState = 'paused' })
   }
   const onEnded = () => {
-    setState('done')
+    awardRef.current(sched.current.seconds)
     setFrame(f => ({ ...f, phase:'Done', t:1, count:0, left:0 }))
-    session(false)
+    const a = audio.current
+    if (a) { a.removeAttribute('src'); quiet(() => a.load()) }
+    end()
+    setGen(x => x + 1)
   }
 
   /* The phase from audio.currentTime, once a frame while playing. */
@@ -154,7 +196,7 @@ export default function Pocket() {
     let id = 0
     const tick = () => {
       const a = audio.current
-      if (a) setFrame(phaseAt(sched.current, a.currentTime))
+      if (a) { setFrame(phaseAt(sched.current, a.currentTime)); awardRef.current(a.currentTime) }
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
@@ -167,65 +209,87 @@ export default function Pocket() {
     sessionRef.current(false)
   }, [])
 
+  const again = () => { g.reset(); paid.current = 0; setLit(0); setState('idle') }
+
   const idle = state === 'idle'
   const running = state === 'playing' || state === 'paused'
+  const pat = PATTERNS[pattern]
 
   return (
     <ActivityScreen family="leaf" title="Breathing by Sound">
       <audio ref={audio} controls playsInline muted={false} preload="auto"
-        className="sr-only" aria-label="Pacer sound"
+        className="sr-only" aria-label="Breathing sound"
         onPlay={onPlay} onPause={onPause} onEnded={onEnded}/>
 
-      <Ring phase={frame.phase} t={frame.t} count={frame.count} still={reduced} idle={idle}/>
+      {state === 'done' ? (
+        <EndCard game={g} title={lit >= stars ? 'Every star lit' : 'Breathing done'} onAgain={again}
+          className="mx-auto w-full max-w-[40rem]"
+          stats={[
+            ['Breaths', `${lit} of ${stars}`],
+            ['Pattern', pat.label],
+            ['Time', mmss(Math.min(sched.current.seconds, lit * cycle))],
+            ['Each breath', `${cycle} s`],
+          ]}>
+          <DidItWork tool="pocket" phase="after" className="border border-rule"/>
+        </EndCard>
+      ) : (
+        <div style={g.vars} className="mx-auto w-full max-w-[34rem]">
+          {!idle && <Score game={g}/>}
+          <div className="relative mt-1">
+            <Sky phase={frame.phase} t={frame.t} count={frame.count} still={g.reduced} idle={idle}
+              stars={stars} lit={lit}/>
+            <Pops game={g}/>
+          </div>
 
-      <p className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui font-semibold
-        tabular-nums text-ink-2" aria-live="polite">
-        {blocked ? 'Tap Start again'
-          : running ? `${mmss(frame.left)} left`
-          : state === 'done' ? `${minutes} minutes done`
-          : ready ? `${mmss(sched.current.seconds)} left` : 'Preparing'}
-      </p>
+          <p className="mt-2 text-center font-display text-ui font-semibold tabular-nums text-ink-2" aria-live="polite">
+            {blocked ? 'Tap Start again'
+              : running ? `${mmss(frame.left)} left. ${lit} of ${stars} stars.`
+              : ready ? `${mmss(sched.current.seconds)}. One star for each full breath.` : 'Making the sound'}
+          </p>
 
-      <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
-        {state === 'playing' && (
-          <Button size="sm" className="min-w-[9rem]" onClick={pause}><Pause/>Pause</Button>
-        )}
-        {state === 'paused' && (
-          <Button size="sm" className="min-w-[9rem]" onClick={resume}><ArrowRight/>Resume</Button>
-        )}
-        {!running && (
-          <Button size="sm" className="min-w-[9rem]" disabled={!ready} onClick={start}>
-            <ArrowRight/>{state === 'done' ? 'Again' : 'Start'}
-          </Button>
-        )}
-        {running && (
-          <Button size="sm" variant="outline" className="min-w-[9rem]" onClick={stop}><Cross/>Stop</Button>
-        )}
-      </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+            {state === 'playing' && (
+              <Button size="sm" className="min-w-[9rem]" onClick={pause}><Pause/>Pause</Button>
+            )}
+            {state === 'paused' && (
+              <Button size="sm" className="min-w-[9rem]" onClick={resume}><ArrowRight/>Resume</Button>
+            )}
+            {!running && (
+              <Button className="w-full" disabled={!ready} onClick={start}>
+                <ArrowRight/>{ready ? 'Start' : 'Making the sound'}
+              </Button>
+            )}
+            {running && (
+              <Button size="sm" variant="outline" className="min-w-[9rem]" onClick={stop}><Cross/>Stop</Button>
+            )}
+          </div>
 
-      <div className="mx-auto mt-5 grid w-full max-w-[32rem] grid-cols-2 gap-2 sm:grid-cols-4">
-        {Object.values(PATTERNS).map(o => (
-          <Choice key={o.id} on={pattern === o.id} disabled={running}
-            className="px-2 text-center text-fine sm:text-ui"
-            onClick={() => setPattern(o.id)}>{o.label}</Choice>
-        ))}
-      </div>
-      <div className="mx-auto mt-2 grid w-full max-w-[32rem] grid-cols-2 gap-2">
-        {MINUTES.map(m => (
-          <Choice key={m} on={minutes === m} disabled={running} className="text-center"
-            onClick={() => setMinutes(m)}>{m} min</Choice>
-        ))}
-      </div>
+          {idle && (
+            <>
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {Object.values(PATTERNS).map(o => (
+                  <Choice key={o.id} on={pattern === o.id}
+                    className="px-2 text-center text-fine sm:text-ui"
+                    onClick={() => setPattern(o.id)}>{o.label}</Choice>
+                ))}
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {MINUTES.map(m => (
+                  <Choice key={m} on={minutes === m} className="text-center"
+                    onClick={() => setMinutes(m)}>{m} min</Choice>
+                ))}
+              </div>
+              <LevelMeter className="mt-5"/>
+            </>
+          )}
 
-      <p className="mx-auto mt-3 flex max-w-[32rem] items-center justify-center gap-2 text-center
-        text-fine text-ink-2">
-        <Lock/>{hasSession() ? 'Lock your phone. The cues keep going.' : 'No lock screen controls here. The sound still plays.'}
-      </p>
-      <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
-        A sound file made on this phone. Nothing is recorded.
-      </OnDevice>
-      {idle && <DidItWork tool="pocket" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
-      {state === 'done' && <DidItWork tool="pocket" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
+          <p className="mt-3 flex items-center justify-center gap-2 text-center text-fine text-ink-2">
+            <Lock/>{hasSession() ? 'Lock your phone. The sound keeps going.' : 'No lock screen controls here. The sound still plays.'}
+          </p>
+          <OnDevice className="mt-2 justify-center">A sound file made on this phone. Nothing is recorded.</OnDevice>
+          {idle && <DidItWork tool="pocket" phase="before" className="mt-4"/>}
+        </div>
+      )}
     </ActivityScreen>
   )
 }

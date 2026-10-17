@@ -1,162 +1,261 @@
 import React from 'react'
 import { Button } from '../ui/button'
-import { ActivityScreen, OnDevice, Choice, Meter } from './shell'
-import { createPacer, createMicMeter, audioSupported } from './audio'
-import { useReduced } from './useReduced'
+import { cn } from '../lib/utils'
+import { ActivityScreen, Choice, OnDevice } from './shell'
 import { DidItWork } from './after'
+import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard } from './game'
 
-/* Box Breathing. The pacer ring is the screen.
+/* Box Breathing, as "follow the light".
  *
- * WHAT RUNS. One requestAnimationFrame clock derives phase, count and disc
- * scale from elapsed time, so the ring, the word, the count and the sound
- * agree. The cue is two sine oscillators built in src/toolkit/audio.js; the
- * optional breath level is an AnalyserNode RMS read once a frame and dropped.
+ * A light travels round a square at breathing pace. Hold the box while it
+ * climbs and rests at the top (breathe in, rest), let go while it comes down
+ * and along the bottom (breathe out, rest). While what you are doing matches
+ * the light, your dot rides on it; when it does not, your dot slips inside
+ * the track. Each side in time is 10 points and a clean lap is 10 more.
  *
- * SAFETY. The rests are four seconds and named as rests. Even, 4-4 has no
- * hold at all, and the one line under the pattern says to shorten any rest
- * that feels uncomfortable. Nothing is counted past this screen. */
+ * One requestAnimationFrame clock drives the light, the count and the score,
+ * so they always agree. The first half second of each side is free, because
+ * nobody's thumb is that exact. Nothing is counted past this screen.
+ *
+ * SAFETY. The rests are named as rests, Even has none, and the line under
+ * the patterns says to shorten any that feels uncomfortable. */
 
 const PATTERNS = {
-  box:  { id:'box',  label:'Box 4-4-4-4',  steps:[['In', 4], ['Rest', 4], ['Out', 4], ['Rest', 4]] },
-  even: { id:'even', label:'Even 4-4',     steps:[['In', 4], ['Out', 4]] },
-  long: { id:'long', label:'Longer out 4-6', steps:[['In', 4], ['Out', 6]] },
+  box:  { id:'box',  label:'Box', say:'In 4, rest 4, out 4, rest 4.', laps:4,
+          steps:[['In', 4, .25], ['Rest', 4, .25], ['Out', 4, .25], ['Rest', 4, .25]] },
+  even: { id:'even', label:'Even', say:'In 4, out 4. No rests.', laps:6, steps:[['In', 4, .5], ['Out', 4, .5]] },
+  long: { id:'long', label:'Long out', say:'In 4, out 6. No rests.', laps:5, steps:[['In', 4, .5], ['Out', 6, .5]] },
+}
+const SAY = { In:'Breathe in', Out:'Breathe out', Rest:'Rest' }
+const GRACE = 0.5
+const PASS = 0.7
+
+/* Which steps want the box held: an in-breath and the rest after it. */
+const wants = steps => steps.map((s, i) => s[0] === 'In' ||
+  (s[0] === 'Rest' && steps[(i - 1 + steps.length) % steps.length][0] === 'In'))
+
+/* The square: (30,30) to (170,170), walked from the bottom left, up first. */
+const A = 30, S = 140
+function at(u) {
+  const k = ((u % 1) + 1) % 1 * 4, side = Math.floor(k), f = k - side
+  if (side === 0) return [A, A + S - f * S]
+  if (side === 1) return [A + f * S, A]
+  if (side === 2) return [A + S, A + f * S]
+  return [A + S - f * S, A + S]
 }
 
-const SAY = { In:'Breathe in', Out:'Breathe out', Rest:'Rest' }
-
-/* The ring: a track, an arc for the phase running down, and a disc that grows
-   on the in-breath and shrinks on the out-breath. Under reduced motion the
-   disc holds still and the count carries the pace. */
-function Ring({ phase, t, secs, scale, still, idle }) {
-  const dash = (idle ? 0 : t) * 578
+function Board({ pattern, u, match, lag, idle, children, held, onHold }) {
+  const steps = PATTERNS[pattern].steps
+  const [lx, ly] = at(u)
+  const [cx, cy] = [100, 100]
+  const dx = lx + (cx - lx) * 0.2 * lag, dy = ly + (cy - ly) * 0.2 * lag
+  let u0 = 0
+  const labels = steps.map(([name, , span]) => {
+    const mid = u0 + span / 2
+    u0 += span
+    const [x, y] = at(mid)
+    const out = 16
+    const ox = x === A ? -out : x === A + S ? out : 0
+    const oy = y === A ? -out + 4 : y === A + S ? out + 4 : 4
+    return { name, x: x + ox, y: y + oy, vertical: x === A || x === A + S }
+  })
+  const done = u % 1
+  const per = S * 4
   return (
-    <div className="relative mx-auto grid aspect-square w-full max-w-[22rem] place-items-center
-      sm:max-w-[26rem]">
+    <div role="button" tabIndex={0} aria-pressed={held}
+      aria-label={held ? 'Holding. Let go to breathe out.' : 'Press and hold to breathe in.'}
+      onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); onHold(true) }}
+      onPointerUp={() => onHold(false)} onPointerCancel={() => onHold(false)}
+      onLostPointerCapture={() => onHold(false)}
+      onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); onHold(true) } }}
+      onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onHold(false) } }}
+      onContextMenu={e => e.preventDefault()}
+      className={cn('relative mx-auto aspect-square w-full max-w-[24rem] select-none rounded-panel border-2',
+        'touch-none transition-colors duration-150 sm:max-w-[28rem]',
+        held ? 'border-ink' : 'border-rule')}
+      style={{ background: held ? 'var(--g-wash)' : '#ffffff', WebkitTouchCallout:'none' }}>
       <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
-        <circle cx="100" cy="100" r="92" fill="none" className="stroke-rule" strokeWidth="4"/>
-        <circle cx="100" cy="100" r="92" fill="none" className="stroke-accent" strokeWidth="7"
-          strokeLinecap="round" transform="rotate(-90 100 100)"
-          strokeDasharray={`${dash} 578`}/>
-        <circle cx="100" cy="100" r="68" className="fill-accent-wash stroke-accent" strokeWidth="3"
-          style={{ transformBox:'fill-box', transformOrigin:'center',
-                   transform:`scale(${still ? 0.78 : scale})` }}/>
+        <rect x={A} y={A} width={S} height={S} rx="6" fill="none" stroke="#c2d7ca" strokeWidth="6"/>
+        {!idle && (
+          <path d={`M${A} ${A + S} V${A} H${A + S} V${A + S} H${A}`} fill="none" strokeWidth="6"
+            strokeLinecap="round" strokeDasharray={`${done * per} ${per}`}
+            style={{ stroke:'var(--g-main)', opacity:.35 }}/>
+        )}
+        {labels.map(l => (
+          <text key={l.name + l.x + l.y} x={l.x} y={l.y} textAnchor="middle"
+            transform={l.vertical ? `rotate(${l.x < 100 ? -90 : 90} ${l.x} ${l.y - 4})` : undefined}
+            className="fill-ink-2 font-display" style={{ fontSize:11, fontWeight:700 }}>{l.name}</text>
+        ))}
+        <circle cx={lx} cy={ly} r="13" style={{ fill:'var(--g-main)', opacity: idle ? .5 : .28 }}/>
+        <circle cx={lx} cy={ly} r="8" style={{ fill:'var(--g-main)' }}/>
+        {!idle && (
+          <circle cx={dx} cy={dy} r="6" strokeWidth="3"
+            style={{ fill: match ? '#ffffff' : 'none', stroke: match ? '#0d2b1e' : '#426a58' }}/>
+        )}
       </svg>
-      <div className="relative text-center">
-        <p className="font-display text-row font-bold tracking-tight text-ink">
-          {idle ? 'Ready' : SAY[phase]}
-        </p>
-        <p className="mt-1 font-display text-dial font-bold tabular-nums text-ink">
-          {idle ? '' : secs}
-        </p>
+      <div className="pointer-events-none absolute inset-[22%] grid place-items-center text-center">
+        {children}
       </div>
     </div>
   )
 }
 
 export default function Breathing() {
-  const reduced = useReduced()
+  const g = useGame('breathing')
   const [pattern, setPattern] = React.useState('box')
-  const [running, setRunning] = React.useState(false)
-  const [sound, setSound] = React.useState(false)
-  const [mic, setMic] = React.useState('off')          // off | asking | on | refused | unsupported
-  const [level, setLevel] = React.useState(0)
-  const [started, setStarted] = React.useState(false)
-  const [frame, setFrame] = React.useState({ phase:'In', t:0, secs:4, scale:0.46 })
+  const [stage, setStage] = React.useState('idle')      // idle | ready | play | done
+  const [held, setHeld] = React.useState(false)
+  const [view, setView] = React.useState({ u:0, phase:'In', secs:4, match:true, lap:0, hold:true })
+  const [lag, setLag] = React.useState(0)
+  const [note, setNote] = React.useState('')
+  const [tally, setTally] = React.useState({ sides:0, good:0, laps:0, clean:0, inTime:0, time:0 })
 
-  const steps = PATTERNS[pattern].steps
-  const cycle = steps.reduce((a, s) => a + s[1], 0)
-
-  const pacer = React.useRef(null)
-  const meter = React.useRef(null)
-  const t0 = React.useRef(0)
-  const lastPhase = React.useRef(-1)
-  const soundOn = React.useRef(false)
-  soundOn.current = sound
+  const P = PATTERNS[pattern]
+  const heldRef = React.useRef(false)
+  const noteRef = React.useRef(0)
+  heldRef.current = held
 
   React.useEffect(() => {
-    if (!running) return
-    let id = 0
-    t0.current = performance.now()
-    lastPhase.current = -1
+    if (stage !== 'play') return
+    const steps = P.steps, want = wants(steps)
+    const cycle = steps.reduce((a, s) => a + s[1], 0)
+    const starts = []; let acc = 0
+    for (const s of steps) { starts.push(acc); acc += s[2] }
+    const t = { sides:0, good:0, laps:0, clean:0, inTime:0, time:0 }
+    let side = { i:0, ok:0, all:0 }, lapClean = true, lastLap = 0
+    let lagV = 0, id = 0, last = performance.now()
+    const t0 = performance.now()
     const tick = now => {
-      const el = Math.max(0, (now - t0.current) / 1000)
-      const into = el % cycle
-      let at = 0, i = 0
-      for (; i < steps.length; i++) { if (into < at + steps[i][1]) break; at += steps[i][1] }
-      const [phase, dur] = steps[Math.min(i, steps.length - 1)]
-      const t = Math.min(1, (into - at) / dur)
-      const scale = phase === 'In' ? 0.46 + 0.54 * t
-        : phase === 'Out' ? 1 - 0.54 * t
-        : (steps[(i - 1 + steps.length) % steps.length]?.[0] === 'In' ? 1 : 0.46)
-      setFrame({ phase, t, secs: Math.max(1, Math.ceil(dur - (into - at))), scale })
-      if (i !== lastPhase.current) {
-        lastPhase.current = i
-        if (soundOn.current) {
-          pacer.current ||= createPacer()
-          pacer.current.cue(phase === 'In' ? 294 : phase === 'Out' ? 196 : 247, 0.42)
+      const dt = Math.min(0.1, (now - last) / 1000); last = now
+      const el = Math.max(0, (now - t0) / 1000)
+      const lap = Math.floor(el / cycle)
+      const into = el - lap * cycle
+      let i = 0, a = 0
+      for (; i < steps.length - 1; i++) { if (into < a + steps[i][1]) break; a += steps[i][1] }
+      const [phase, dur] = steps[i]
+      const f = Math.min(1, (into - a) / dur)
+      const ff = g.reduced ? Math.floor(f * dur) / dur : f
+      const match = heldRef.current === want[i] || (into - a) < GRACE
+
+      /* Close the side that just ended, then the lap. */
+      if (i !== side.i || lap !== lastLap) {
+        const ratio = side.all ? side.ok / side.all : 0
+        t.sides++
+        const [x, y] = at(starts[side.i] + steps[side.i][2] * 0.9)
+        if (ratio >= PASS) { t.good++; g.add(10, { x: x / 2, y: y / 2 - 4 }) }
+        else { lapClean = false; noteRef.current = now; setNote('Catch the next side.') }
+        if (lap !== lastLap) {
+          t.laps++
+          if (lapClean) { t.clean++; g.add(10, { x:50, y:44, label:'clean lap', sound:'good' }) }
+          lapClean = true; lastLap = lap
         }
+        g.cue('turn')
+        side = { i, ok:0, all:0 }
+        setTally({ ...t })
       }
-      if (meter.current) setLevel(meter.current.read())
+      side.all += dt; t.time += dt
+      if (match) { side.ok += dt; t.inTime += dt }
+      if (noteRef.current && now - noteRef.current > 1800) { noteRef.current = 0; setNote('') }
+
+      lagV = g.reduced ? (match ? 0 : 1) : lagV + ((match ? 0 : 1) - lagV) * Math.min(1, dt * 10)
+      setLag(lagV)
+      setView({ u: starts[i] + steps[i][2] * ff, phase, secs: Math.max(1, Math.ceil(dur - (into - a))),
+                match, lap, hold: want[i] })
+
+      if (lap >= P.laps) { setTally({ ...t }); setStage('done'); g.finish(); return }
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(id)
-  }, [running, pattern, cycle, steps])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, pattern])
 
-  /* The microphone and the audio context are let go on leaving the screen. */
-  React.useEffect(() => () => {
-    meter.current?.stop(); meter.current = null
-    pacer.current?.close(); pacer.current = null
-  }, [])
+  const start = () => { g.reset(); setTally({ sides:0, good:0, laps:0, clean:0, inTime:0, time:0 })
+    setView({ u:0, phase:'In', secs:4, match:true, lap:0, hold:true }); setNote(''); setStage('ready') }
+  const end = () => { setStage('done'); g.finish() }
 
-  const toggleSound = async () => {
-    const next = !sound
-    setSound(next)
-    if (next) { pacer.current ||= createPacer(); await pacer.current.start() }
-  }
-
-  const askMic = async () => {
-    if (mic === 'on') { meter.current?.stop(); meter.current = null; setMic('off'); setLevel(0); return }
-    setMic('asking')
-    try { meter.current = await createMicMeter(); setMic('on') }
-    catch (e) { setMic(e?.message === 'unsupported' ? 'unsupported' : 'refused') }
-  }
+  const steady = tally.time ? Math.round(tally.inTime / tally.time * 100) : 0
+  const idle = stage === 'idle' || stage === 'ready'
 
   return (
     <ActivityScreen family="tide" title="Box Breathing">
-      <Ring {...frame} still={reduced} idle={!started}/>
+      <div style={g.vars} className="mx-auto w-full max-w-[34rem]">
+        {stage !== 'done' && (
+          <>
+            <GameBar game={g} className="mb-3">
+              {stage === 'play' && (
+                <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
+                  Lap {Math.min(P.laps, view.lap + 1)} of {P.laps}
+                </span>
+              )}
+            </GameBar>
+            <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-[28rem]">
+              <Board pattern={pattern} u={view.u} match={view.match} lag={lag}
+                idle={idle} held={held} onHold={setHeld}>
+                {stage === 'idle' && (
+                  <>
+                    <p className="font-display text-row font-bold text-ink">Follow the light</p>
+                    <p className="mt-1 text-fine text-ink-2">Hold while it climbs. Let go while it falls.</p>
+                  </>
+                )}
+                {stage === 'ready' && (
+                  <>
+                    <Countdown from={3} onDone={() => setStage('play')}/>
+                    <p className="mt-1 text-fine text-ink-2">Hold when the light climbs.</p>
+                  </>
+                )}
+                {stage === 'play' && (
+                  <>
+                    <p className="font-display text-row font-bold text-ink">{SAY[view.phase]}</p>
+                    <p className="font-display text-dial font-bold tabular-nums text-ink">{view.secs}</p>
+                    <p className="text-fine font-semibold" style={{ color:'var(--g-ink)' }}>
+                      {view.hold ? 'Hold' : 'Let go'}
+                    </p>
+                  </>
+                )}
+              </Board>
+              <Pops game={g}/>
+            </div>
+            <p className="mt-2 min-h-[1.5rem] text-center text-fine text-ink-2" aria-live="polite">
+              {stage === 'play' ? (note || (view.match ? 'In time.' : 'Your dot slipped. Match the light.')) : ''}
+            </p>
+          </>
+        )}
 
-      <div className="mx-auto mt-5 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
-        <Button size="sm" className="min-w-[9rem]"
-          onClick={() => { setStarted(true); setRunning(r => !r) }}>
-          {running ? 'Pause' : started ? 'Resume' : 'Start'}
-        </Button>
-        <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}>Sound</Choice>
-        <Choice on={mic === 'on'} onClick={askMic}>
-          {mic === 'asking' ? 'Asking' : 'Breath level'}
-        </Choice>
+        {stage === 'idle' && (
+          <>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {Object.values(PATTERNS).map(o => (
+                <Choice key={o.id} on={pattern === o.id} className="px-2 text-center text-fine sm:text-ui"
+                  onClick={() => setPattern(o.id)}>{o.label}</Choice>
+              ))}
+            </div>
+            <p className="mt-2 text-center text-sec text-ink">{P.say}</p>
+            <p className="mt-1 text-center text-fine text-ink-2">Shorten any rest that feels uncomfortable.</p>
+            <Button className="mt-4 w-full" onClick={start}>Start</Button>
+            <LevelMeter className="mt-5"/>
+            <DidItWork tool="breathing" phase="before" className="mt-4"/>
+          </>
+        )}
+
+        {stage === 'play' && (
+          <div className="flex justify-center">
+            <Button size="sm" variant="outline" onClick={end}>End round</Button>
+          </div>
+        )}
+
+        {stage === 'done' && (
+          <EndCard game={g} title={steady >= 80 ? 'Right with the light' : 'Round done'}
+            stats={[['Sides in time', `${tally.good} of ${tally.sides}`],
+                    ['Clean laps', `${tally.clean} of ${tally.laps}`],
+                    ['Steadiness', `${steady}%`],
+                    ['Pattern', P.label]]}
+            onAgain={start}>
+            <DidItWork tool="breathing" phase="after"/>
+          </EndCard>
+        )}
+        <OnDevice className="mt-4">Nothing leaves this device.</OnDevice>
       </div>
-
-      <div className="mx-auto mt-5 grid w-full max-w-[32rem] grid-cols-3 gap-2">
-        {Object.values(PATTERNS).map(o => (
-          <Choice key={o.id} on={pattern === o.id} className="px-2 text-center text-fine sm:text-ui"
-            onClick={() => setPattern(o.id)}>{o.label}</Choice>
-        ))}
-      </div>
-      <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">
-        Shorten any rest that feels uncomfortable.
-      </p>
-
-      {mic === 'on' && (
-        <div className="mx-auto mt-4 w-full max-w-[32rem]">
-          <Meter value={level} label="Breath level" right={`${Math.round(level * 100)}%`}/>
-          <OnDevice className="mt-2">Audio is measured here and never recorded.</OnDevice>
-        </div>
-      )}
-      {mic === 'refused' && <p className="mt-3 text-center text-fine text-ink-3">Microphone off. The pacer still runs.</p>}
-      {mic === 'unsupported' && <p className="mt-3 text-center text-fine text-ink-3">No microphone here. The pacer still runs.</p>}
-      {!started && <DidItWork tool="breathing" phase="before" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
-      {started && !running && <DidItWork tool="breathing" phase="after" className="mx-auto mt-5 w-full max-w-[32rem]"/>}
     </ActivityScreen>
   )
 }

@@ -5,24 +5,22 @@ import { vars } from './theme'
 import { SCORE } from '../lib/terms'
 import '../kit/kit.css'
 
-/* The Toolkit index: a grid of rows, each an icon, a name and one line.
+/* The Toolkit index, per audience.
  *
- * The drawn tiles that used to lead each row (src/toolkit/marks.jsx) are gone.
- * The owner read them as self-designed diagrams standing in for tools, and
- * he was right: a picture of a breathing square is not a pacer. Each row now
- * carries a 24px line mark, the activity's name and at most five words, and
- * the tool itself is on the activity's own route.
+ *   student  the student exercises in three groups: Body, Mind, Phone sensors.
+ *   parent   "For you" (the parent tools), then "Do it with your teen" (every
+ *            student exercise).
+ *   pro      "For your sessions" (the Medical Professional tools), then
+ *            "Use in a session" (every student exercise).
  *
- * Text budget (spec 0f): every row's line is under six words (simplicity run,
- * 16 October 2026). The reassurance line and the group labels stay.
- *
- * At 1280 the rows sit three across; at 390 one under another, broken into
- * two groups so no run of similar rows passes three (spec 0e section 14). */
+ * 17 October: the neo-brutalist tiles are gone. Each tile is a soft rounded
+ * white card with its tool's icon on that tool's own colour wash (theme.js),
+ * a name, one short line, and a round arrow in the same colour. The whole
+ * tile is the target, never shorter than 88px. */
 
-/* 24px line marks, stroke 1.6, the same vocabulary as src/ui/marks.jsx. */
 const I = ({ children }) => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden focusable="false"
-    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
+    stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
     className="shrink-0">{children}</svg>
 )
 const BreathIcon  = () => <I><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3"/></I>
@@ -41,88 +39,159 @@ const SteadyIcon  = () => <I><circle cx="12" cy="12" r="8"/><circle cx="12" cy="
 const AlertIcon   = () => <I><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M10 3h4M12 3v3"/></I>
 const PocketIcon  = () => <I><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M9.5 12c1 0 1-2.5 2.5-2.5s1.5 5 2.5 5 1-2.5 2.5-2.5"/></I>
 const WalkIcon    = () => <I><circle cx="13" cy="4.5" r="1.8"/><path d="M9.5 21l2.5-7M12 9l-2 5 3.5 2 1 5M12 9l3 3h3M12 9l-3.5 1-1.5 3"/></I>
+/* Medical Professional set */
+const ScriptIcon  = () => <I><path d="M5 4h14v12H9l-4 4z"/><path d="M8.5 8.5h7M8.5 12h4.5"/></I>
+const SignIcon    = () => <I><path d="M12 3v18M12 6h7l2 2.5-2 2.5h-7M12 13H5l-2 2.5L5 18h7"/></I>
+const TimerIcon   = () => <I><circle cx="12" cy="13.5" r="7"/><path d="M12 9.5v4h3M9.5 3h5"/></I>
+const FamilyIcon  = () => <I><circle cx="8" cy="7" r="2.6"/><circle cx="16.5" cy="9" r="2"/><path d="M3.5 19a4.5 4.5 0 0 1 9 0M13 19a3.5 3.5 0 0 1 7 0"/></I>
+const NoteIcon    = () => <I><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></I>
 
-/* `items` is read by src/views/Methods.jsx for a count, so the shape stays. */
+/* `items` is read by src/views/Methods.jsx for a count and by the landing's
+   Toolkit band, so the shape stays: id, route, family, icon, title, line. */
 export const STUDENT_GROUPS = [
   { label:'Body', items:[
-    { id:'breathing', route:'toolkit-breathing', family:'tide',  icon:BreathIcon,
-      title:'Box Breathing',       line:'Four counts, ring keeps pace' },
-    { id:'scan',      route:'toolkit-scan',      family:'pool',  icon:ScanIcon,
-      title:'Body Scan',           line:'Seven regions on a timer' },
-    { id:'move',      route:'toolkit-move',      family:'night', icon:MoveIcon,
-      title:'Movement Break',      line:'Move until the meter fills' },
+    { id:'breathing', route:'toolkit-breathing', family:'sky',    icon:BreathIcon,
+      title:'Box Breathing',       line:'Follow the light round a square' },
+    { id:'scan',      route:'toolkit-scan',      family:'mint',   icon:ScanIcon,
+      title:'Body Scan',           line:'Hold each glowing part' },
+    { id:'move',      route:'toolkit-move',      family:'coral',  icon:MoveIcon,
+      title:'Movement Break',      line:'Five 20-second moves' },
   ]},
   { label:'Mind', items:[
-    { id:'ground',    route:'toolkit-ground',    family:'stone', icon:GroundIcon,
-      title:'5-4-3-2-1 Grounding', line:'Tap what the camera finds' },
-    { id:'reframe',   route:'toolkit-reframe',   family:'leaf',  icon:ReframeIcon,
-      title:'Thought Reframe',     line:'Three fields, your own words' },
+    { id:'ground',    route:'toolkit-ground',    family:'sun',    icon:GroundIcon,
+      title:'5-4-3-2-1 Grounding', line:'A tap-card scavenger hunt' },
+    { id:'reframe',   route:'toolkit-reframe',   family:'lilac',  icon:ReframeIcon,
+      title:'Thought Reframe',     line:'Flip cards, build a balanced thought' },
   ]},
   { label:'Phone sensors', items:[
-    { id:'sigh',      route:'toolkit-sigh',      family:'tide',  icon:SighIcon,
-      title:'Long Exhale',          line:'The mic measures your exhale' },
-    { id:'chest',     route:'toolkit-chest',     family:'pool',  icon:ChestIcon,
-      title:'Breath Counter',     line:'Phone on chest, eyes closed' },
-    { id:'steady',    route:'toolkit-steady',    family:'stone', icon:SteadyIcon,
-      title:'Hold Still',         line:'Keep the dot still' },
-    { id:'alert',     route:'toolkit-alert',     family:'night', icon:AlertIcon,
-      title:'Reaction Test',     line:'Sixty seconds of taps' },
-    { id:'pocket',    route:'toolkit-pocket',    family:'leaf',  icon:PocketIcon,
-      title:'Breathing by Sound',        line:'Keeps pacing, phone locked' },
-    { id:'walk',      route:'toolkit-walk',      family:'night', icon:WalkIcon,
-      title:'Short Walk',         line:'Three minutes, steps counted' },
+    { id:'sigh',      route:'toolkit-sigh',      family:'aqua',   icon:SighIcon,
+      title:'Long Exhale',         line:'Keep the candle flame steady' },
+    { id:'chest',     route:'toolkit-chest',     family:'blush',  icon:ChestIcon,
+      title:'Breath Counter',      line:'Match the wave with your breath' },
+    { id:'steady',    route:'toolkit-steady',    family:'accent', icon:SteadyIcon,
+      title:'Hold Still',          line:'Keep the marble centred' },
+    { id:'alert',     route:'toolkit-alert',     family:'sun',    icon:AlertIcon,
+      title:'Reaction Test',       line:'Whack the light, 30 seconds' },
+    { id:'pocket',    route:'toolkit-pocket',    family:'lilac',  icon:PocketIcon,
+      title:'Breathing by Sound',  line:'Follow the sound, collect stars' },
+    { id:'walk',      route:'toolkit-walk',      family:'coral',  icon:WalkIcon,
+      title:'Short Walk',          line:'Fill the trail, 150 to 600 steps' },
   ]},
 ]
 
 export const PARENT_GROUPS = [
   { label:'Talking', items:[
-    { id:'openers',  family:'leaf',  icon:TalkIcon,  title:'Conversation Openers',    line:'One intention, said two ways' },
-    { id:'phrasing', family:'tide',  icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked here' },
+    { id:'openers',  route:'toolkit-openers',  family:'coral', icon:TalkIcon,  title:'Conversation Openers',    line:'One intention, said two ways' },
+    { id:'phrasing', route:'toolkit-phrasing', family:'lilac', icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked here' },
   ]},
   { label:'Reading', items:[
-    { id:'score',    family:'stone', icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What a high fortnight carries' },
-    { id:'rules',    family:'night', icon:RulesIcon, title:'Conversation Ground Rules', line:'Six rules before anybody speaks' },
-    { id:'reach',    family:'pool',  icon:ReachIcon, title:'When to Get Help',        line:'Who to tell, and when' },
+    { id:'score',    route:'toolkit-score',    family:'sky',   icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What a high fortnight carries' },
+    { id:'rules',    route:'toolkit-rules',    family:'sun',   icon:RulesIcon, title:'Conversation Ground Rules', line:'Six rules before anybody speaks' },
+    { id:'reach',    route:'toolkit-reach',    family:'mint',  icon:ReachIcon, title:'When to Get Help',        line:'Who to tell, and when' },
   ]},
 ]
 
-function Row({ item, index, onOpen }) {
+/* No routes yet: these open in place inside Toolkit.jsx. */
+export const PRO_GROUPS = [
+  { label:'For your sessions', items:[
+    { id:'pro-opener',   family:'sky',   icon:ScriptIcon, title:'Session Openers',      line:'First lines for a check-in' },
+    { id:'pro-triage',   family:'sun',   icon:SignIcon,   title:'Next Step Guide',      line:'Light and trend to a next step' },
+    { id:'pro-ground',   family:'mint',  icon:TimerIcon,  title:'Grounding Timer',      line:'Run 5-4-3-2-1 together' },
+    { id:'pro-parents',  family:'lilac', icon:FamilyIcon, title:'Talking With Parents', line:'Five steps, consent first' },
+    { id:'pro-referral', family:'coral', icon:NoteIcon,   title:'Referral Note',        line:'Fill in, copy, paste' },
+  ]},
+]
+
+export const STUDENT_ITEMS = STUDENT_GROUPS.flatMap(g => g.items)
+export const ALL_ITEMS = [...STUDENT_ITEMS, ...PARENT_GROUPS.flatMap(g => g.items),
+                          ...PRO_GROUPS.flatMap(g => g.items)]
+
+/* The colour a tool's own screen takes, so a tile and the screen it opens
+   always match. Read by shell.jsx. */
+export const FAMILY_OF = Object.fromEntries(ALL_ITEMS.map(i => [i.id, i.family]))
+
+function Tile({ item, index, onOpen }) {
   const As = item.route ? 'a' : 'button'
   const props = item.route ? { href:'#/' + item.route } : { type:'button', onClick:() => onOpen(item.id) }
   const Icon = item.icon
   return (
-    <As {...props} style={{ ...vars(item.family), animationDelay:`${Math.min(index, 6) * 45}ms` }}
-      className={cn('kit-card kit-settle kit-ground flex w-full items-center gap-3',
-        'rounded-panel border-2 border-ink p-3 text-left')}>
-      <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-panel
-        border-2 border-ink bg-card text-ink">
+    <As {...props} style={{ ...vars(item.family), animationDelay:`${Math.min(index, 8) * 35}ms` }}
+      className={cn('kit-card kit-settle group flex min-h-[80px] w-full items-center gap-3 sm:min-h-[88px] sm:gap-4',
+        'rounded-[18px] border border-rule bg-card p-3.5 text-left sm:p-4')}>
+      <span aria-hidden className="kit-ground kit-ink grid size-12 shrink-0 sm:size-14 place-items-center rounded-[14px]">
         <Icon/>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-display text-ui font-bold tracking-tight text-ink">{item.title}</span>
+        <span className="block font-display text-meta font-bold tracking-tight text-ink">{item.title}</span>
         <span className="mt-0.5 block text-fine text-ink-2">{item.line}</span>
       </span>
-      <Chevron aria-hidden className="size-4 shrink-0 text-ink"/>
+      <span aria-hidden className="kit-ground kit-ink grid size-9 shrink-0 place-items-center rounded-full sm:size-10
+        transition-transform duration-150 motion-safe:groupHoverOnly:translate-x-0.5">
+        <Chevron className="size-4"/>
+      </span>
     </As>
   )
 }
 
+function Grid({ items, start, onOpen }) {
+  return (
+    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((it, i) => <Tile key={it.id} item={it} index={start + i} onOpen={onOpen}/>)}
+    </div>
+  )
+}
+
+function Head({ title, line, first }) {
+  return (
+    <div className={first ? 'mt-2' : 'mt-10'}>
+      {/* h2: the app caps in-app h2 at text-row and h3 at text-meta. */}
+      <h2 className="font-display font-bold tracking-tight text-ink">{title}</h2>
+      {line && <p className="mt-1 max-w-[60ch] text-ui text-ink-2">{line}</p>}
+    </div>
+  )
+}
+
+function SubHead({ children }) {
+  return <h3 className="mt-6 font-display font-bold text-ink-2">{children}</h3>
+}
+
+const PARENT_ITEMS = PARENT_GROUPS.flatMap(g => g.items)
+const PRO_ITEMS = PRO_GROUPS.flatMap(g => g.items)
+
 export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
-  const groups = who === 'parent' ? PARENT_GROUPS : STUDENT_GROUPS
-  let n = -1
+  if (who === 'parent') {
+    return (
+      <div className="wrap">
+        <Head first title="For you" line="Nothing here is shown to your teenager."/>
+        <Grid items={PARENT_ITEMS} start={0} onOpen={onOpen}/>
+        <Head title="Do it with your teen" line="The same exercises your teen has. Try one together."/>
+        <Grid items={STUDENT_ITEMS} start={PARENT_ITEMS.length} onOpen={onOpen}/>
+      </div>
+    )
+  }
+  if (who === 'pro') {
+    return (
+      <div className="wrap">
+        <Head first title="For your sessions" line="No teen data is held in these tools."/>
+        <Grid items={PRO_ITEMS} start={0} onOpen={onOpen}/>
+        <Head title="Use in a session" line="The student exercises, to run with a teen in the room."/>
+        <Grid items={STUDENT_ITEMS} start={PRO_ITEMS.length} onOpen={onOpen}/>
+      </div>
+    )
+  }
+  let n = 0
   return (
     <div className="wrap">
-      <p className="text-fine text-ink-3">
-        {who === 'parent' ? 'Nothing here is shown to your teenager.' : 'Nobody is told which you opened.'}
-      </p>
-      {groups.map(g => (
-        <section key={g.label} className="mt-4">
-          <h3 className="mark">{g.label}</h3>
-          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {g.items.map(it => <Row key={it.id} item={it} index={++n} onOpen={onOpen}/>)}
-          </div>
-        </section>
-      ))}
+      <Head first title="Your exercises" line="Nobody is told which you opened."/>
+      {STUDENT_GROUPS.map(g => {
+        const start = n; n += g.items.length
+        return (
+          <section key={g.label}>
+            <SubHead>{g.label}</SubHead>
+            <Grid items={g.items} start={start} onOpen={onOpen}/>
+          </section>
+        )
+      })}
     </div>
   )
 }

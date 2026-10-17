@@ -163,8 +163,8 @@ export function Openers() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {[['check', 'Reads as a check'], ['open', 'Opens a conversation']].map(([kind, label], i) => (
                 <div key={kind} style={riseAt(i * 2)}
-                  className={cn('kit-rise flex flex-col rounded-panel border-2 p-4',
-                    kind === 'check' ? 'border-ink bg-warn-wash' : 'kit-ground kit-edge')}>
+                  className={cn('kit-rise flex flex-col rounded-[18px] border p-4',
+                    kind === 'check' ? 'border-transparent bg-warn-wash' : 'kit-ground border-transparent')}>
                   <p className={cn('font-display text-tick font-bold',
                     kind === 'check' ? 'text-warn' : 'text-accent')}>{label}</p>
                   <p className="mt-2 max-w-[34ch] font-display text-head font-bold leading-[1.25] text-ink">

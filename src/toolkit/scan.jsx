@@ -1,33 +1,30 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { cn } from '../lib/utils'
-import { ActivityScreen, Choice } from './shell'
-import { createPacer, audioSupported } from './audio'
-import { useReduced } from './useReduced'
+import { ActivityScreen, OnDevice } from './shell'
 import { DidItWork } from './after'
+import { useGame, GameBar, Pops, LevelMeter, EndCard } from './game'
 
-/* Body Scan. A guided timer with a body outline that lights the current region.
+/* Body Scan, as "light up the body".
  *
- * WHAT RUNS. One requestAnimationFrame clock steps through seven regions,
- * twenty seconds each, feet to face. The silhouette is one SVG path; the seven
- * regions are shapes clipped to that path, and the live one is filled. A
- * two-word prompt names the region, the pacer cue sounds on each change
- * (src/toolkit/audio.js), and Pause and Skip are the controls.
+ * The guide moves feet to face. The part to notice glows on the figure; press
+ * and hold it (or the pad under it) while you notice that part, and it fills
+ * with light. About six seconds of holding lights it. Letting go only pauses
+ * the fill; nothing drains. Lit is 15 points, and a part lit in one hold is 5
+ * more. Skip is always there and costs nothing.
  *
- * SAFETY. Every prompt is noticing, never forcing: no tensing, squeezing or
- * holding. The one line under the controls says to skip any part that hurts. */
+ * SAFETY. Every prompt is noticing, never tensing or squeezing. */
 
 const REGIONS = [
-  { id:'feet',      say:'Feet. Notice.' },
-  { id:'legs',      say:'Legs. Soften.' },
-  { id:'belly',     say:'Belly. Breathe.' },
-  { id:'chest',     say:'Chest. Loosen.' },
-  { id:'hands',     say:'Hands. Open.' },
-  { id:'shoulders', say:'Shoulders. Drop.' },
-  { id:'face',      say:'Face. Rest.' },
+  { id:'feet',      name:'Feet',      say:'Notice the floor under them.' },
+  { id:'legs',      name:'Legs',      say:'Let them feel heavy.' },
+  { id:'belly',     name:'Belly',     say:'Breathe slowly into it.' },
+  { id:'chest',     name:'Chest',     say:'Feel it rise and fall.' },
+  { id:'hands',     name:'Hands',     say:'Let your fingers open.' },
+  { id:'shoulders', name:'Shoulders', say:'Let them drop a little.' },
+  { id:'face',      name:'Face',      say:'Soften your jaw and eyes.' },
 ]
-const SECS = 20
-const TOTAL = SECS * REGIONS.length
+const HOLD = 6
 
 /* Front view, one path, drawn clockwise from the top of the head. */
 const BODY = [
@@ -45,118 +42,207 @@ const BODY = [
 const SHAPES = {
   feet:      [[0, 208, 120, 30]],
   legs:      [[0, 132, 120, 76]],
-  belly:     [[30, 100, 60, 32]],
-  chest:     [[30, 66, 60, 34]],
-  hands:     [[8, 64, 26, 72], [86, 64, 26, 72]],
+  belly:     [[34, 100, 52, 32]],
+  chest:     [[34, 66, 52, 34]],
+  hands:     [[0, 64, 34, 72], [86, 64, 34, 72]],
   shoulders: [[0, 40, 120, 26]],
   face:      [[0, 0, 120, 40]],
 }
+const centre = id => { const [x, y, w, h] = SHAPES[id][0]; return id === 'hands' ? [17, 100] : [x + w / 2, y + h / 2] }
 
-function Figure({ at, still }) {
+function Figure({ cur, fill, lit, skipped, onDown, onUp }) {
   return (
-    <svg viewBox="0 0 120 240" role="img" aria-label={at ? `Highlighting ${at}` : 'Body outline'}
-      className="mx-auto block h-[46vh] w-auto max-h-[34rem] lg:h-[62vh]">
+    <svg viewBox="0 0 120 240" role="img"
+      aria-label={cur ? `Body outline. ${cur} is glowing.` : 'Body outline'}
+      onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp}
+      onContextMenu={e => e.preventDefault()}
+      className="mx-auto block h-[40vh] max-h-[30rem] w-auto touch-none select-none lg:h-[58vh]">
       <defs><clipPath id="scan-body"><path d={BODY}/></clipPath></defs>
       <path d={BODY} className="fill-aqua-2"/>
       <g clipPath="url(#scan-body)">
-        {Object.entries(SHAPES).map(([id, rects]) => rects.map(([x, y, w, h], k) => (
-          <rect key={id + k} x={x} y={y} width={w} height={h} className="fill-accent"
-            opacity={at === id ? 1 : 0}
-            style={{ transition: still ? 'none' : 'opacity .35s var(--ease-out)' }}/>
-        )))}
+        {Object.entries(SHAPES).map(([id, rects]) => rects.map(([x, y, w, h], k) => {
+          const isCur = id === cur
+          const on = lit.includes(id)
+          const p = isCur ? fill : on ? 1 : 0
+          return (
+            <g key={id + k} data-region={id}>
+              <rect data-region={id} x={x} y={y} width={w} height={h}
+                style={{ fill: isCur ? '#ffffff' : 'transparent' }}/>
+              {p > 0 && (
+                <rect data-region={id} x={x} y={y + h * (1 - p)} width={w} height={h * p}
+                  stroke={on ? '#ffffff' : 'none'} strokeWidth="1.2"
+                  style={{ fill:'var(--g-main)', opacity: on ? 1 : 0.85 }}/>
+              )}
+              {skipped.includes(id) && (
+                <rect data-region={id} x={x} y={y} width={w} height={h} fill="none"
+                  stroke="#426a58" strokeWidth="1.5" strokeDasharray="3 3"/>
+              )}
+            </g>
+          )
+        }))}
       </g>
-      <path d={BODY} fill="none" className="stroke-ink" strokeWidth="2.5" strokeLinejoin="round"/>
+      <path d={BODY} fill="none" className="stroke-ink" strokeWidth="2.5" strokeLinejoin="round"
+        pointerEvents="none"/>
+      {cur && SHAPES[cur].map(([x, y, w, h], k) => (
+        <rect key={k} x={x + 2} y={y + 2} width={w - 4} height={h - 4} rx="6" fill="none" strokeWidth="2.5"
+          strokeDasharray="5 4" pointerEvents="none" clipPath="url(#scan-body)"
+          style={{ stroke:'var(--g-ink)' }}/>
+      ))}
     </svg>
   )
 }
 
 export default function BodyScan() {
-  const reduced = useReduced()
-  const [running, setRunning] = React.useState(false)
-  const [sound, setSound] = React.useState(true)
+  const g = useGame('scan')
+  const [stage, setStage] = React.useState('idle')     // idle | play | done
   const [i, setI] = React.useState(0)
-  const [left, setLeft] = React.useState(SECS)
-  const [started, setStarted] = React.useState(false)
-  const [finished, setFinished] = React.useState(false)
+  const [fill, setFill] = React.useState(0)
+  const [lit, setLit] = React.useState([])
+  const [skipped, setSkipped] = React.useState([])
+  const [held, setHeld] = React.useState(false)
+  const [between, setBetween] = React.useState(false)
+  const [hint, setHint] = React.useState('')
+  const [steady, setSteady] = React.useState(0)
 
-  const pacer = React.useRef(null)
-  const t0 = React.useRef(0)
-  const lastI = React.useRef(-1)
-  const soundOn = React.useRef(true)
-  soundOn.current = sound
+  const heldRef = React.useRef(false)
+  const breaks = React.useRef(0)
+  const fillRef = React.useRef(0)
+  const box = React.useRef(null)
 
-  const cue = idx => {
-    if (!soundOn.current) return
-    pacer.current ||= createPacer()
-    pacer.current.cue(247 - idx * 6, 0.5)
+  const region = REGIONS[Math.min(i, REGIONS.length - 1)]
+  const hold = on => {
+    if (heldRef.current && !on && fillRef.current > 0 && fillRef.current < 1) breaks.current++
+    heldRef.current = on; setHeld(on)
   }
 
+  const nextRegion = React.useCallback((idx) => {
+    if (idx + 1 >= REGIONS.length) { setStage('done'); g.finish(); return }
+    setI(idx + 1); fillRef.current = 0; setFill(0); breaks.current = 0; setBetween(false)
+    g.cue('turn')
+  }, [g.finish, g.cue])
+
   React.useEffect(() => {
-    if (!running) return
-    let id = 0
-    t0.current = performance.now() - i * SECS * 1000 - (SECS - left) * 1000
+    if (stage !== 'play' || between) return
+    let id = 0, last = performance.now()
     const tick = now => {
-      /* A rAF timestamp can precede the performance.now() the effect read,
-         so el is clamped at zero or the first index would be -1. */
-      const el = Math.max(0, (now - t0.current) / 1000)
-      if (el >= TOTAL) { setRunning(false); setFinished(true); setLeft(0); return }
-      const idx = Math.min(REGIONS.length - 1, Math.floor(el / SECS))
-      setI(idx)
-      setLeft(Math.max(0, Math.ceil(SECS - (el - idx * SECS))))
-      if (idx !== lastI.current) { lastI.current = idx; cue(idx) }
+      const dt = Math.min(0.1, (now - last) / 1000); last = now
+      if (heldRef.current) {
+        fillRef.current = Math.min(1, fillRef.current + dt / HOLD)
+        setFill(fillRef.current)
+        if (fillRef.current >= 1) {
+          const [x, y] = centre(region.id)
+          const b = box.current?.getBoundingClientRect(), sv = box.current?.querySelector('svg')?.getBoundingClientRect()
+          const pos = b && sv ? { x: (sv.left - b.left + x / 120 * sv.width) / b.width * 100,
+                                  y: (sv.top - b.top + y / 240 * sv.height) / b.height * 100 - 6 } : {}
+          setLit(l => [...l, region.id])
+          g.add(15, { ...pos, sound:'good' })
+          if (breaks.current === 0) { setSteady(s => s + 1); setTimeout(() => g.add(5, { ...pos, y: pos.y + 8, label:'steady' }), 220) }
+          heldRef.current = false; setHeld(false); setBetween(true)
+          setTimeout(() => nextRegion(i), 900)
+          return
+        }
+      }
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running])
+  }, [stage, between, i, region.id, g.add, nextRegion])
 
-  React.useEffect(() => () => { pacer.current?.close(); pacer.current = null }, [])
-
-  const reset = () => { setI(0); setLeft(SECS); setFinished(false); lastI.current = -1 }
-
-  const start = async () => {
-    if (finished) reset()
-    setStarted(true)
-    if (sound) { pacer.current ||= createPacer(); await pacer.current.start() }
-    setRunning(r => !r)
-  }
-  const skip = () => {
-    if (i >= REGIONS.length - 1) { setRunning(false); setFinished(true); setLeft(0); return }
-    const n = i + 1
-    setI(n); setLeft(SECS); lastI.current = n; cue(n)
-    t0.current = performance.now() - n * SECS * 1000
+  const onDown = e => {
+    if (stage !== 'play' || between) return
+    /* Hit test in figure units against the region's boxes, not the clipped
+       shapes, so the gap between the legs still counts as feet or legs. */
+    const svg = e.currentTarget
+    let inside = false
+    try {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY
+      const q = pt.matrixTransform(svg.getScreenCTM().inverse())
+      inside = SHAPES[region.id].some(([x, y, w, h]) => q.x >= x - 4 && q.x <= x + w + 4 && q.y >= y - 4 && q.y <= y + h + 4)
+    } catch { inside = (e.target?.dataset?.region === region.id) }
+    if (inside) { e.currentTarget.setPointerCapture?.(e.pointerId); setHint(''); hold(true) }
+    else setHint(`Hold the glowing part: ${region.name.toLowerCase()}.`)
   }
 
-  const region = REGIONS[i]
-  const lit = started && !finished ? region.id : null
+  const start = () => {
+    g.reset(); setI(0); fillRef.current = 0; setFill(0); setLit([]); setSkipped([]); setSteady(0)
+    breaks.current = 0; setBetween(false); setHint(''); setStage('play'); g.cue('turn')
+  }
+  const skip = () => { setSkipped(s => [...s, region.id]); hold(false); nextRegion(i) }
 
   return (
     <ActivityScreen family="pool" title="Body Scan">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
-        <Figure at={lit} still={reduced}/>
-        <div className="text-center lg:text-left">
-          <p className="font-display text-head font-bold tracking-tight text-ink lg:text-sub">
-            {finished ? 'Whole body. Rest.' : started ? region.say : 'Feet to face.'}
-          </p>
-          <p className="mt-2 font-display text-dial font-bold tabular-nums text-ink">
-            {started && !finished ? left : ''}
-          </p>
-          <p className="mt-1 font-display text-ui font-semibold text-ink-2">
-            {finished ? 'Done' : `${i + 1} of ${REGIONS.length}`}
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2.5 lg:justify-start">
-            <Button size="sm" className="min-w-[9rem]" onClick={start}>
-              {finished ? 'Start again' : running ? 'Pause' : started ? 'Resume' : 'Start'}
-            </Button>
-            {started && !finished && <Button size="sm" variant="outline" onClick={skip}>Skip</Button>}
-            <Choice on={sound} disabled={!audioSupported()} onClick={() => setSound(s => !s)}>Sound</Choice>
+      <div style={g.vars} className="mx-auto w-full max-w-[60rem]">
+        {stage !== 'done' && <GameBar game={g} className="mb-3">
+          <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
+            {lit.length} of {REGIONS.length} lit
+          </span>
+        </GameBar>}
+
+        {stage !== 'done' && (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
+            <div ref={box} className="relative">
+              <Figure cur={stage === 'play' && !between ? region.id : null} fill={fill} lit={lit}
+                skipped={skipped} onDown={onDown} onUp={() => hold(false)}/>
+              <Pops game={g}/>
+            </div>
+            <div className="text-center lg:text-left">
+              {stage === 'idle' && (
+                <>
+                  <p className="font-display text-row font-bold text-ink">Light up the body</p>
+                  <p className="mt-1 text-sec text-ink-2">Hold each glowing part while you notice it.</p>
+                  <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={start}>Start</Button>
+                  <LevelMeter className="mt-5 text-left"/>
+                </>
+              )}
+              {stage === 'play' && (
+                <>
+                  <p className="font-display text-fine font-semibold text-ink-2">
+                    {Math.min(i + 1, REGIONS.length)} of {REGIONS.length}
+                  </p>
+                  <p key={region.id} className={cn('font-display text-head font-bold tracking-tight text-ink',
+                    !g.reduced && 'g-in')}>{between ? `${region.name} lit` : region.name}</p>
+                  <p className="mt-1 text-sec text-ink-2">{between ? 'Moving on.' : region.say}</p>
+                  <button type="button" aria-pressed={held} disabled={between}
+                    onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); setHint(''); hold(true) }}
+                    onPointerUp={() => hold(false)} onPointerCancel={() => hold(false)}
+                    onLostPointerCapture={() => hold(false)}
+                    onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); hold(true) } }}
+                    onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); hold(false) } }}
+                    onContextMenu={e => e.preventDefault()}
+                    className={cn('relative mt-3 h-16 w-full touch-none select-none overflow-hidden rounded-panel border-2',
+                      'border-ink font-display text-ui font-bold text-ink transition-colors duration-150',
+                      held ? 'bg-mist' : 'bg-card')}>
+                    <span aria-hidden className="absolute inset-y-0 left-0"
+                      style={{ width: `${Math.round(fill * 100)}%`, background:'var(--g-wash)' }}/>
+                    <span className="relative">{held ? 'Holding' : 'Press and hold'}</span>
+                  </button>
+                  <p className="mt-2 min-h-[1.5rem] text-fine text-ink-2" aria-live="polite">{hint}</p>
+                  <div className="mt-1 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                    <Button size="sm" variant="outline" onClick={skip} disabled={between}>Skip</Button>
+                    <span className="text-fine text-ink-2">Skip any part that hurts.</span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          <p className="mt-3 text-fine text-ink-2">Skip any part that hurts.</p>
-        </div>
+        )}
+        {stage === 'idle' && <DidItWork tool="scan" phase="before" className="mt-4"/>}
+
+        {stage === 'done' && (
+          <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
+            <div className="hidden lg:block">
+              <Figure cur={null} fill={0} lit={lit} skipped={skipped} onDown={() => {}} onUp={() => {}}/>
+            </div>
+            <EndCard game={g} title={lit.length === REGIONS.length ? 'Whole body lit' : 'Scan done'}
+              stats={[['Parts lit', `${lit.length} of ${REGIONS.length}`],
+                      ['Lit in one hold', String(steady)]]}
+              onAgain={start}>
+              <DidItWork tool="scan" phase="after"/>
+            </EndCard>
+          </div>
+        )}
+        <OnDevice className="mt-4">Nothing leaves this device.</OnDevice>
       </div>
-      {!started && <DidItWork tool="scan" phase="before" className="mt-4"/>}
-      {finished && <DidItWork tool="scan" phase="after" className="mt-4"/>}
     </ActivityScreen>
   )
 }

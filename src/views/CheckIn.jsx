@@ -15,6 +15,8 @@ import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
 import { BackBar, Stage, StageStyles } from './reading/stage'
 import { takeReadingIntent } from './reading/intent'
+import { ReadingLog } from './reading/Log'
+import { addReading, updateReading } from '../lib/readingLog'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
@@ -192,6 +194,11 @@ export function CheckInBody({ go }){
   /* True while this screen owns the history entry it pushed on entering a
      reading, so leaving consumes that entry. */
   const pushed = React.useRef(false)
+  /* The survey's log entry: added once when the sixth answer lands, then kept
+     in step if an answer changes. */
+  const logged = React.useRef(null)
+  const toLog = React.useRef(false)
+  const logHead = React.useRef(null)
 
   const open = React.useCallback(id => {
     from.current = id
@@ -236,8 +243,17 @@ export function CheckInBody({ go }){
     window.scrollTo(0, 0)
     if (screen !== 'choose') { head.current?.focus({ preventScroll:true }); return }
     const id = from.current
-    if (!id) return
     from.current = null
+    if (toLog.current) {
+      toLog.current = false
+      /* After App's own popstate focus of #main, which would scroll back up. */
+      const t = setTimeout(() => {
+        logHead.current?.focus({ preventScroll:true })
+        document.getElementById('reading-log')?.scrollIntoView({ block:'start' })
+      }, 240)
+      return () => clearTimeout(t)
+    }
+    if (!id) return
     let b = 0
     const a = requestAnimationFrame(() => {
       b = requestAnimationFrame(() => cards.current[id]?.focus({ preventScroll:true }))
@@ -250,6 +266,16 @@ export function CheckInBody({ go }){
     const want = takeReadingIntent()
     if (want === 'sensors' || want === 'survey') open(want)
   }, [open])
+
+  React.useEffect(() => {
+    if (!done || !r) return
+    if (!logged.current) {
+      const e = addReading({ at: Date.now(), score: r.score, source: 'survey' })
+      logged.current = e ? e.id : 'unsaved'
+    } else if (logged.current !== 'unsaved') {
+      updateReading(logged.current, { score: r.score })
+    }
+  }, [done, r?.score])
 
   // Answering the last item scrolls to the result; 260ms lets the card mount
   // and the layout settle before scrollIntoView measures.
@@ -278,7 +304,7 @@ export function CheckInBody({ go }){
             {/* This screen scores real answers in both modes; the notice
                 describes the surrounding screens. */}
             {mode === 'real'
-              ? <RealNotice inline>No patch is needed here.</RealNotice>
+              ? <RealNotice inline>Patch use is optional but recommended.</RealNotice>
               : <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
           </div>
 
@@ -322,6 +348,7 @@ export function CheckInBody({ go }){
             </ScrollRow>
           </div>
           <Compare/>
+          <ReadingLog headRef={logHead}/>
         </Stage>
       )}
 
@@ -374,6 +401,14 @@ export function CheckInBody({ go }){
                         <dt className="text-ink-3">The other rings</dt>
                         <dd className="m-0 text-ink">A patch fills heart, sweat, temperature and movement</dd>
                       </dl>
+                      <p className="mt-3 flex flex-wrap items-center gap-x-3 text-meta text-ink-2">
+                        Added to your log.
+                        <button type="button" onClick={() => { toLog.current = true; leave() }}
+                          className="inline-flex min-h-[44px] items-center gap-1.5 font-display font-bold
+                            text-accent underline-offset-4 hoverOnly:underline">
+                          See your log<ArrowRight aria-hidden className="size-4"/>
+                        </button>
+                      </p>
                     </div>
                   </div>
                   <AllDetail label={`See what moved your ${SCORE}`}>

@@ -5,7 +5,8 @@ import { MODES, useMode } from '../lib/mode'
 /* Selection is carried by fill and weight, never by hue, so it survives
    grayscale. */
 
-const LABEL = { demo: 'Demo', real: 'Real' }
+/* The value stays 'real' in src/lib/mode.js; only the word changed. */
+const LABEL = { demo: 'Demo', real: 'Live' }
 
 /* A radiogroup, not two buttons: screen readers get the "1 of 2" position for
    free. Arrow-key selection is hand-written below. */
@@ -71,7 +72,7 @@ export function ModeToggle({ className, compact = false }) {
       {/* Set as text and wired with aria-describedby, not a title attribute:
        * title is unreachable by touch and keyboard and mostly unannounced. */}
       <p id={helpId} className={cn('note max-w-[30ch]', compact ? 'sr-only' : 'hidden lg:block')}>
-        Real shows the app with no patch paired. That is what a visitor gets today.
+        Live shows your own readings and network. Demo shows a worked example.
       </p>
     </div>
   )

@@ -147,7 +147,7 @@ export function Pacer() {
         ? 'Your device asks for reduced motion, so the dial is held still and the count is the pacer: breathe in while it runs down the in-breath, out through the longer half.'
         : 'Breathe in while the disc grows and out while it shrinks. The shorter, darker run on the ring is the in-breath, two fifths of it, and the longer, lighter run is the out-breath. Look at it rather than counting.'}</p>
 
-      <div className="kit-ground mt-5 rounded-panel border-2 border-ink p-4 sm:p-5">
+      <div className="kit-ground mt-5 rounded-[18px] border border-rule p-4 sm:p-5">
         <div aria-hidden className="relative mx-auto size-[208px]">
           {/* The ring, and the one fact it is here to carry: the out-breath is
               the longer half. pathLength normalises the circle to 100 units so
@@ -178,7 +178,7 @@ export function Pacer() {
         {/* The readout. Three figures rather than one, because "how long is
             left" and "how long have I been doing this" are different questions
             and the second one is the one a reader asks at the end. */}
-        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border-2 border-ink
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border border-rule
           bg-ink sm:grid-cols-3">
           {/* Announced, because under reduced motion and for a reader who
               cannot see the disc this cell is the pacer. Twice a breath at five

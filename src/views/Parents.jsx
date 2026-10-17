@@ -7,11 +7,10 @@ import { PrivacyBody } from './Privacy'
    both of which are tabs on the bar at the bottom of the app. */
 const PANES = { week: ParentDash, shared: PrivacyBody }
 
-/* The shell carries the honesty line, a few words each (design spec 0f). The
-   sentence about what the screen is for is gone: the screen shows it. */
+/* The shell carries the honesty line, a few words each (design spec 0f). */
 const COPY = {
   week: {
-    note: 'These figures are made up. No child is named.',
+    note: 'These children and figures are made up.',
     realNote: 'No patch is paired yet.',
   },
   shared: {},

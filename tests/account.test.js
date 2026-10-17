@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  AVATAR_IDS, SETTINGS, approveLink, changePasscode, createAccount, createInvite, current,
+  AVATAR_ALL_IDS, AVATAR_IDS, ROLES, SETTINGS, homeFor, approveLink, changePasscode, createAccount, createInvite, current,
   declineLink, deleteAccount, exportAll, listNetwork, listPendingApprovals, redeemInvite,
   removeLink, signIn, signOut, updateProfile, wipe,
 } from '../src/account/store.js'
@@ -17,6 +17,7 @@ const EXTRA = {
   student: {},
   parent: { email: 'dana@example.com' },
   pro: { email: 'lee@example.com', setting: 'school' },
+  other: {},
 }
 async function make(role, name, passcode = '1234', extra = {}) {
   const r = await createAccount({ role, name, passcode, ...EXTRA[role], ...extra })
@@ -152,6 +153,67 @@ describe('accounts', () => {
     signOut()
     expect(await signIn('Samir', '2468')).toBe('wrong')
     expect(await signIn('Samir', '1357')).toBe('ok')
+  })
+})
+
+describe('passwords, the Other role and every picture', () => {
+  it('takes a password of 8 or more characters and still takes a 4 to 6 digit passcode', async () => {
+    const a = await make('student', 'Sam', 'blue kite 42')
+    expect(a.passcodeHash).toMatch(/^[0-9a-f]{64}$/)
+    expect(JSON.stringify(a)).not.toContain('blue kite')
+    signOut()
+    expect(await signIn('Sam', 'blue kite 4')).toBe('wrong')
+    expect(await signIn('Sam', 'blue kite 42')).toBe('ok')
+    signOut()
+    await make('student', 'Alex', '1357')
+    signOut()
+    expect(await signIn('Alex', '1357')).toBe('ok')
+  })
+
+  it('refuses 7 characters, 7 digits, short letters and anything over 128', async () => {
+    for (const p of ['abcdefg', '1234567', 'abcd', 'x'.repeat(129), '']) {
+      expect((await createAccount({ role: 'student', name: 'Sam', passcode: p })).reason, p).toBe('passcode')
+    }
+    expect(current()).toBeNull()
+  })
+
+  it('changes a passcode to a password and refuses a short one', async () => {
+    await make('student', 'Sam', '2468')
+    expect(await changePasscode('2468', 'short')).toBe('invalid')
+    expect(await changePasscode('0000', 'a longer one')).toBe('wrong')
+    expect(await changePasscode('2468', 'a longer one')).toBe('ok')
+    signOut()
+    expect(await signIn('Sam', '2468')).toBe('wrong')
+    expect(await signIn('Sam', 'a longer one')).toBe('ok')
+  })
+
+  it('makes an Other account that needs an email, lands on the launcher and never links', async () => {
+    expect(ROLES).toContain('other')
+    expect(homeFor('other')).toBe('app')
+    expect(homeFor('parent')).toBe('app-parent')
+    expect((await createAccount({ role: 'other', name: 'Robin', passcode: '1234' })).reason).toBe('email')
+    const parent = await make('parent', 'Dana')
+    const inv = createInvite()
+    signOut()
+    const other = await make('other', 'Robin', 'a fine password', { email: 'robin@example.com' })
+    expect(other.role).toBe('other')
+    expect(redeemInvite(inv.code).reason).toBe('role')
+    const mine = createInvite()
+    signOut()
+    await signIn('Dana', '1234')
+    expect(redeemInvite(mine.code).reason).toBe('role')
+    expect(listNetwork(other.id)).toHaveLength(0)
+    expect(listNetwork(parent.id)).toHaveLength(0)
+  })
+
+  it('keeps any picture on the full list, over a hundred, and refuses others', async () => {
+    expect(AVATAR_ALL_IDS.length).toBeGreaterThanOrEqual(100)
+    expect(new Set(AVATAR_ALL_IDS).size).toBe(AVATAR_ALL_IDS.length)
+    for (const id of AVATAR_IDS) expect(AVATAR_ALL_IDS).toContain(id)
+    const a = await make('student', 'Sam', '2468', { avatar: 'pat-dots-dusk' })
+    expect(a.avatar).toBe('pat-dots-dusk')
+    expect(updateProfile({ avatar: 'face-grin' }).avatar).toBe('face-grin')
+    expect(updateProfile({ avatar: 'face-nope' }).avatar).toBe('face-grin')
   })
 })
 

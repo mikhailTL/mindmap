@@ -12,10 +12,11 @@ import AlertnessCheck from '../toolkit/alert'
 import PocketPacer from '../toolkit/pocket'
 import WalkItOff from '../toolkit/walk'
 import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } from '../toolkit/parent'
+import { SessionOpeners, NextStepGuide, GroundingTimer, TalkingWithParents, ReferralNote } from '../kit/pro'
 
 /* The Toolkit, as a router.
  *
- * `who` is 'student' or 'parent'. `open` names an activity and comes from the
+ * `who` is 'student', 'parent' or 'pro'. `open` names an activity and comes from the
  * route table in src/views/App.jsx:
  *
  *   toolkit-breathing  -> open="breathing"   Box Breathing
@@ -34,15 +35,17 @@ import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } 
  * activity as the whole screen. The eleven student activities are audience
  * independent, so a parent who lands on one gets the activity.
  *
- * THE PARENT SET HAS NO ROUTES YET. Its five activities open in place in the
- * same shell with an `onBack` control. The ids are wired here, so adding them
- * to App.jsx is five lines there:
+ * The parent set has routes (toolkit-openers and the rest) and also opens in
+ * place from the index when it is handed `onBack`.
  *
- *   'toolkit-openers'  -> <Toolkit who={audience} open="openers"/>
- *   'toolkit-phrasing' -> <Toolkit who={audience} open="phrasing"/>
- *   'toolkit-score'    -> <Toolkit who={audience} open="score"/>
- *   'toolkit-rules'    -> <Toolkit who={audience} open="rules"/>
- *   'toolkit-reach'    -> <Toolkit who={audience} open="reach"/>
+ * THE MEDICAL PROFESSIONAL SET HAS NO ROUTES YET. It opens in place by state.
+ * Adding routes is five lines in App.jsx:
+ *
+ *   'toolkit-pro-opener'   -> <Toolkit who="pro" open="pro-opener"/>
+ *   'toolkit-pro-triage'   -> <Toolkit who="pro" open="pro-triage"/>
+ *   'toolkit-pro-ground'   -> <Toolkit who="pro" open="pro-ground"/>
+ *   'toolkit-pro-parents'  -> <Toolkit who="pro" open="pro-parents"/>
+ *   'toolkit-pro-referral' -> <Toolkit who="pro" open="pro-referral"/>
  *
  * Nothing in this screen calls a server. The camera and microphone, where an
  * activity turns one on, are measured in the page and never recorded, and
@@ -68,6 +71,11 @@ const IN_PLACE = {
   score:    ParentScore,
   rules:    ParentRules,
   reach:    ParentReach,
+  'pro-opener':   SessionOpeners,
+  'pro-triage':   NextStepGuide,
+  'pro-ground':   GroundingTimer,
+  'pro-parents':  TalkingWithParents,
+  'pro-referral': ReferralNote,
 }
 
 export default function Toolkit({ who = 'student', open = null }) {
@@ -80,7 +88,7 @@ export default function Toolkit({ who = 'student', open = null }) {
   if (Direct) return <Direct/>
 
   const Local = here && IN_PLACE[here]
-  if (Local) return <Local onBack={() => setHere(null)}/>
+  if (Local) return <Local onBack={() => { setHere(null); window.scrollTo(0, 0) }}/>
 
   return <ToolkitIndex who={who} onOpen={setHere}/>
 }

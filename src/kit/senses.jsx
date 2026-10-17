@@ -85,7 +85,7 @@ export function Senses() {
       <p className="max-w-[54ch] text-sec text-ink-2">Attention goes where it is sent. This sends it
         outwards, one sense at a time, and keeps count so you do not have to.</p>
 
-      <div className="kit-ground mt-5 rounded-panel border-2 border-ink p-3 sm:p-4">
+      <div className="kit-ground mt-5 rounded-[18px] border border-rule p-3 sm:p-4">
         {STEPS.map((s, i) => (
           <Rung key={s.id} step={s} done={got[s.id].length} live={!done && i === at}
             skipped={skipped.has(s.id)}/>
@@ -118,7 +118,7 @@ export function Senses() {
           {got[step.id].length > 0 && (
             <ul className="m-0 mt-4 flex list-none flex-wrap gap-2 p-0">
               {got[step.id].map((g, i) => (
-                <li key={i} style={riseAt(i)} className="kit-rise rounded-chip border-2 border-ink bg-card
+                <li key={i} style={riseAt(i)} className="kit-rise rounded-field border border-rule bg-card
                   px-2.5 py-1 text-fine text-ink-2">{g}</li>
               ))}
             </ul>

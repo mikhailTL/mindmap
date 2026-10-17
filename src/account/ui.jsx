@@ -3,6 +3,9 @@ import { cn } from '../lib/utils'
 import { Check, Chevron, Person } from '../ui/marks'
 import { ROLE_LABEL, useAccount } from './store'
 import { AVATARS, AvatarArt } from './avatars'
+import { GROUPS, avatarEntry, avatarWords } from './avatar-catalog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import './appearance'
 
 /* The pieces the three account screens share. Same idiom as
    src/app/controls.jsx: a row is 56 tall, carries an icon, and says its state
@@ -31,22 +34,63 @@ export function Avatar({ name, avatar = null, size = 'md', className }) {
   )
 }
 
-/* The twelve pictures as a radiogroup, 44 square each. `none` is the
-   initial circle. */
-export function AvatarPicker({ value, onChange, name, label = 'Your picture', className }) {
+/* The local marks this folder needs, in the same 24 box and 1.6 stroke as
+   src/ui/marks.jsx. */
+const M = ({ children, size = 20, className }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden stroke="currentColor"
+    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={cn('shrink-0', className)}>{children}</svg>
+)
+export const ShuffleMark = p => <M {...p}><path d="M3.5 7h3.5c5 0 5 10 10 10h3.5M17.5 14l3 3-3 3M3.5 17h3.5c1.6 0 2.7-1 3.6-2.4M13.4 9.4C14.3 8 15.4 7 17 7h3.5M17.5 4l3 3-3 3"/></M>
+export const SearchMark  = p => <M {...p}><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></M>
+export const TextMark    = p => <M {...p}><path d="M3.5 18.5l4.5-12 4.5 12M5.2 14h5.6M14 18.5l3.2-8 3.3 8M15.1 15.8h4.3"/></M>
+export const ShieldMark  = p => <M {...p}><path d="M12 3.5l7 2.5v5.5c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></M>
+export const HelpMark    = p => <M {...p}><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8h.01"/></M>
+export const LinkMark    = p => <M {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></M>
+
+const PICK_GROUPS = GROUPS.map(g => ({ ...g, items: AVATARS.filter(a => a.group === g.id) }))
+const groupOf = id => avatarEntry(id)?.group || PICK_GROUPS[0].id
+
+/* One grid of pictures as a radiogroup with a roving tab stop: Tab enters on
+   the chosen one (or the first), the arrows walk the grid in two directions,
+   Home and End jump to the ends, and a press chooses. */
+function PictureGrid({ items, value, onChange, name, label }) {
+  const refs = React.useRef([])
+  const gridRef = React.useRef(null)
+  const at = Math.max(0, items.findIndex(a => a.id === value))
+  const [focus, setFocus] = React.useState(at)
+  React.useEffect(() => { setFocus(at) }, [at, items])
+  function cols() {
+    try { return getComputedStyle(gridRef.current).gridTemplateColumns.split(' ').length || 1 } catch { return 1 }
+  }
+  function onKey(e) {
+    const last = items.length - 1
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols(), ArrowUp: -cols() }[e.key]
+    let to = null
+    if (step) to = Math.min(last, Math.max(0, focus + step))
+    else if (e.key === 'Home') to = 0
+    else if (e.key === 'End') to = last
+    if (to == null) return
+    e.preventDefault()
+    setFocus(to)
+    refs.current[to]?.focus()
+  }
+  if (!items.length) return <p className="py-3 text-fine text-ink-3">No picture matches that word.</p>
   return (
-    <div role="radiogroup" aria-label={label}
-      className={cn('grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-2', className)}>
-      {[{ id: null }, ...AVATARS].map(a => {
+    <div ref={gridRef} role="radiogroup" aria-label={label} onKeyDown={onKey}
+      className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-1.5">
+      {items.map((a, i) => {
         const on = value === a.id
         return (
           <button key={a.id || 'none'} type="button" role="radio" aria-checked={on}
-            aria-label={a.id ? a.label : 'Your initial'}
+            aria-label={a.id ? a.label : 'Your initial'} title={a.id ? a.label : 'Your initial'}
+            ref={el => { refs.current[i] = el }}
+            tabIndex={i === focus ? 0 : -1}
+            onFocus={() => setFocus(i)}
             onClick={() => onChange(a.id)}
-            className={cn('relative grid aspect-square min-h-[44px] w-full place-items-center rounded-chip',
+            className={cn('relative grid aspect-square min-h-[48px] w-full place-items-center rounded-chip',
               'border-2 transition-colors duration-150',
-              on ? 'border-accent' : 'border-transparent hoverOnly:border-rule')}>
-            <Avatar name={name || 'A'} avatar={a.id} size="md" className="size-12"/>
+              on ? 'border-accent bg-accent-wash' : 'border-transparent hoverOnly:border-rule')}>
+            <Avatar name={name || 'A'} avatar={a.id} size="md" className="size-11"/>
             {on && (
               <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center
                 rounded-chip bg-accent text-paper">
@@ -56,6 +100,118 @@ export function AvatarPicker({ value, onChange, name, label = 'Your picture', cl
           </button>
         )
       })}
+    </div>
+  )
+}
+
+/* Every picture, over a hundred, in four groups with a search box, a Random
+   button and a preview of the one chosen. `null` is the initial circle. */
+export function AvatarPicker({ value, onChange, name, label = 'Your picture', className, actions = null }) {
+  const [tab, setTab] = React.useState(() => groupOf(value))
+  const [q, setQ] = React.useState('')
+  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const chosen = value ? avatarEntry(value) : null
+  const term = q.trim().toLowerCase()
+  const found = term ? AVATARS.filter(a => avatarWords(avatarEntry(a.id)).includes(term)) : null
+  function random() {
+    const pool = AVATARS.filter(a => a.id !== value)
+    const next = pool[Math.floor(Math.random() * pool.length)]
+    setQ(''); setTab(next.group); onChange(next.id)
+  }
+  return (
+    <div className={cn('min-w-0', className)}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Avatar name={name || 'A'} avatar={value} size="lg" className="size-16"/>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-ui font-bold text-ink" aria-live="polite">
+            {chosen ? chosen.label : 'Your initial'}
+          </p>
+          <p className="text-fine text-ink-3">
+            {chosen ? GROUPS.find(g => g.id === chosen.group)?.label : 'No picture chosen'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={random} className={outline}>
+            <ShuffleMark size={18}/>Random
+          </button>
+          {value && (
+            <button type="button" onClick={() => onChange(null)} className={cn(outline, 'px-3')}>
+              Use initial
+            </button>
+          )}
+          {actions}
+        </div>
+      </div>
+
+      <label htmlFor={uid + 'q'} className="mt-3 block font-display text-fine font-medium text-ink-2">
+        Search {AVATARS.length} pictures
+      </label>
+      <div className="relative">
+        <SearchMark size={18} className="pointer-events-none absolute left-3 top-1/2 mt-0.5 -translate-y-1/2 text-ink-3"/>
+        <input id={uid + 'q'} type="search" value={q} onChange={e => setQ(e.target.value)}
+          placeholder="Star, cat, pizza, stripes" autoComplete="off" spellCheck={false}
+          className={cn(field, 'pl-9')}/>
+      </div>
+
+      {found ? (
+        <div className="mt-3">
+          <p className="mb-2 text-fine text-ink-3" role="status">
+            {found.length === 1 ? '1 match' : `${found.length} matches`}
+          </p>
+          <PictureGrid items={found} value={value} onChange={onChange} name={name} label={label}/>
+        </div>
+      ) : (
+        <Tabs value={tab} onValueChange={setTab} className="mt-2">
+          <TabsList scroll aria-label="Picture groups" className="gap-x-5 border-rule">
+            {PICK_GROUPS.map(g => (
+              <TabsTrigger key={g.id} value={g.id} className="min-h-[44px] text-ui">
+                {g.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {PICK_GROUPS.map(g => (
+            <TabsContent key={g.id} value={g.id} className="mt-3">
+              <PictureGrid items={g.items} value={value} onChange={onChange} name={name}
+                label={`${label}: ${g.label}`}/>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+    </div>
+  )
+}
+
+/* The picker folded behind its preview, for a form where it is one field of
+   several. `open` starts it unfolded. */
+export function AvatarChooser({ value, onChange, name, open: startOpen = false, className }) {
+  const [open, setOpen] = React.useState(startOpen)
+  const panel = React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const chosen = value ? avatarEntry(value) : null
+  /* The button moves when the picker opens; keep the focus on it. */
+  const btn = React.useRef(null)
+  const moved = React.useRef(false)
+  React.useEffect(() => { if (moved.current) btn.current?.focus() }, [open])
+  const toggle = (
+    <button ref={btn} type="button" aria-expanded={open} aria-controls={panel}
+      onClick={() => { moved.current = true; setOpen(o => !o) }}
+      className={outline}>
+      {open ? 'Done' : 'Choose a picture'}
+      <Chevron aria-hidden className={cn('size-4 transition-transform duration-150', open ? '-rotate-90' : 'rotate-90')}/>
+    </button>
+  )
+  return (
+    <div id={panel} className={className}>
+      {open ? (
+        <AvatarPicker value={value} onChange={onChange} name={name} actions={toggle}/>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <Avatar name={name || 'A'} avatar={value} size="lg"/>
+          <span className="min-w-0 flex-1 font-display text-ui font-medium leading-tight text-ink-2">
+            {chosen ? chosen.label : 'Your initial'}
+          </span>
+          {toggle}
+        </div>
+      )}
     </div>
   )
 }

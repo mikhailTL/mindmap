@@ -1,29 +1,29 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
-import { ArrowLeft, Bell, Bin, Check, Devices, Download, Exit, Grid, Info, Key, People } from '../ui/marks'
+import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People } from '../ui/marks'
 import { CONSENT_SHORT } from '../lib/terms'
 import {
-  ROLE_LABEL, SETTINGS, backend, changePasscode, deleteAccount, exportAll, listNetwork,
-  signOut, signOutOthers, updateProfile, useAccount,
+  ROLE_LABEL, SECRET_MAX, SETTINGS, backend, homeFor, changePasscode, deleteAccount, exportAll, listNetwork,
+  signOutOthers, updateProfile, useAccount,
 } from './store'
 import { Avatar, AvatarPicker, Row, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
+import { APP_VERSION, SHARING_ROUTE, Settings } from './Settings'
 
-/* The account portal. Index rows lead to sections at #/account/<section>. */
+/* The account portal: the profile card, then every setting in one menu
+   (./Settings.jsx). Its rows lead to sections at #/account/<section>. */
 
 const SECTIONS = {
   profile:  { title: 'Your Profile' },
-  passcode: { title: 'Passcode and Sign-in' },
+  passcode: { title: 'Password and Sign-in' },
   sharing:  { title: 'Sharing and Privacy' },
   data:     { title: 'Your Data' },
   about:    { title: 'About MindMap' },
 }
 
-const SHARING_ROUTE = { student: 'shared', parent: 'privacy', pro: 'app-pro' }
-const SHARING_LABEL = { student: 'Sharing', parent: 'Sharing record', pro: 'Students' }
-
-const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+const SHARING_LABEL = { student: 'Sharing', parent: 'Sharing record', pro: 'Students', other: 'Privacy' }
+const VERSION = APP_VERSION
 
 const WHERE = () => (backend() === 'remote' ? 'Saved to your MindMap account' : 'Kept on this device')
 
@@ -50,11 +50,9 @@ const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
 function Index({ me, go }) {
   const role = me.role
-  const linked = listNetwork(me.id).filter(l => l.status === 'active').length
-  const open = s => go('account/' + s)
   return (
     <main className="wrap">
-      <button type="button" onClick={() => open('profile')}
+      <button type="button" onClick={() => go('account/profile')}
         className="flex w-full items-center gap-3.5 rounded-panel border border-rule bg-card p-3.5
           text-left transition-colors duration-150 hoverOnly:bg-mist/50 active:bg-mist/50">
         <Avatar name={me.name} avatar={me.avatar} size="lg"/>
@@ -64,26 +62,7 @@ function Index({ me, go }) {
         </span>
         <span className="shrink-0 font-display text-fine font-medium text-accent-ink">Edit</span>
       </button>
-
-      <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
-        <Panel title="Your Account" className="self-start">
-          <Row label="Passcode and sign-in" Mark={Key} onClick={() => open('passcode')}/>
-          <Row label="Sharing and privacy" Mark={Grid} onClick={() => open('sharing')}/>
-          <Row label="Network" Mark={People} aside={String(linked)} onClick={() => go('network')}/>
-        </Panel>
-        <Panel title="Data and App" className="self-start">
-          <Row label="Notifications" Mark={Bell} onClick={() => go('app-notify')}/>
-          <Row label="Your data" Mark={Download} onClick={() => open('data')}/>
-          <Row label="About" Mark={Info} aside={VERSION} onClick={() => open('about')}/>
-        </Panel>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-fine text-ink-3">{WHERE()}.</p>
-        <button type="button" onClick={() => { signOut(); go('app-' + role) }} className={outline}>
-          <Exit aria-hidden className="size-4"/>Sign out
-        </button>
-      </div>
+      <Settings me={me} go={go} className="mt-5"/>
     </main>
   )
 }
@@ -98,7 +77,7 @@ function Section({ title, go, children }) {
         <ArrowLeft aria-hidden className="size-4"/>Account
       </button>
       <h2 className="mt-1 font-display font-bold text-ink">{title}</h2>
-      <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">{children}</div>
+      <div className="mt-3.5 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">{children}</div>
     </main>
   )
 }
@@ -189,33 +168,32 @@ function Passcode({ me, go }) {
     const r = await signOutOthers()
     setOthers(r.ok ? r.ended : null)
   }
-  const digits = v => v.replace(/\D/g, '').slice(0, 6)
   const wrong = state === 'wrong', invalid = state === 'invalid'
   return (
     <Section title={SECTIONS.passcode.title} go={go}>
-      <Panel title="Change Passcode" className="self-start">
+      <Panel title="Change Password" className="self-start">
         <form onSubmit={save} noValidate className="p-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="pass-cur" className={labelClass}>Current</label>
-              <input id="pass-cur" ref={curRef} type="password" value={cur} inputMode="numeric" pattern="[0-9]*"
-                autoComplete="current-password" maxLength={6} aria-invalid={wrong || undefined}
+              <input id="pass-cur" ref={curRef} type="password" value={cur}
+                autoComplete="current-password" maxLength={SECRET_MAX} aria-invalid={wrong || undefined}
                 aria-describedby={wrong ? 'pass-err' : undefined}
-                onChange={e => { setCur(digits(e.target.value)); setState(null) }}
+                onChange={e => { setCur(e.target.value); setState(null) }}
                 className={cn(field, wrong && fieldError)}/>
             </div>
             <div>
               <label htmlFor="pass-new" className={labelClass}>New</label>
-              <input id="pass-new" ref={nextRef} type="password" value={next} inputMode="numeric" pattern="[0-9]*"
-                autoComplete="new-password" maxLength={6} aria-invalid={invalid || undefined}
-                placeholder="4 to 6 digits" aria-describedby={invalid ? 'pass-err' : undefined}
-                onChange={e => { setNext(digits(e.target.value)); setState(null) }}
+              <input id="pass-new" ref={nextRef} type="password" value={next}
+                autoComplete="new-password" maxLength={SECRET_MAX} aria-invalid={invalid || undefined}
+                placeholder="8 or more characters" aria-describedby={invalid ? 'pass-err' : undefined}
+                onChange={e => { setNext(e.target.value); setState(null) }}
                 className={cn(field, invalid && fieldError)}/>
             </div>
           </div>
           {state && state !== 'ok' && (
             <p id="pass-err" role="alert" className="mt-2 font-display text-fine font-medium text-crit">
-              {wrong ? 'Wrong passcode. Try again.' : 'Use 4 to 6 digits.'}
+              {wrong ? 'Wrong password. Try again.' : 'Use 8 or more characters.'}
             </p>
           )}
           <button type="submit" className={cn(outline, 'mt-3')} disabled={!cur || !next}>
@@ -260,7 +238,7 @@ function Sharing({ me, go }) {
 
 
 function Data({ me, go }) {
-  function erase() { deleteAccount(); go('app-' + me.role) }
+  function erase() { deleteAccount(); go(homeFor(me.role)) }
   return (
     <Section title={SECTIONS.data.title} go={go}>
       <Panel title="Download a Copy" className="self-start">
@@ -309,6 +287,7 @@ function About({ go }) {
 
 export function Account({ go, section = null }) {
   const me = useAccount()
+  if (!me && section === 'about') return <About go={go}/>
   if (!me) return <SignIn go={go}/>
   const Body = { profile: Profile, passcode: Passcode, sharing: Sharing, data: Data, about: About }[section]
   if (!Body) return <Index me={me} go={go}/>

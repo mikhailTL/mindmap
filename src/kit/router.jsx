@@ -40,7 +40,7 @@ export function Router({ items, onOpen }) {
 
   return (
     <section style={varsFamily('leaf')}
-      className="kit-block kit-ground rounded-panel border-2 border-ink p-5 sm:p-6">
+      className="kit-block kit-ground rounded-[18px] border border-rule p-5 sm:p-6">
       <h2 className="font-display text-head font-bold tracking-tight text-ink">Pick one for me</h2>
       <p className="mt-2 max-w-[48ch] text-sec text-ink-2">Two taps. Or skip this and read the list.</p>
 
@@ -64,13 +64,13 @@ export function Router({ items, onOpen }) {
 
       <div aria-live="polite" className="mt-5">
         {picks ? (
-          <div className="rounded-panel border-2 border-ink bg-card p-4">
+          <div className="rounded-[18px] border border-rule bg-card p-4">
             <p className="max-w-[48ch] text-sec text-ink-2">{WHY[state]}</p>
             <div className="mt-3.5 flex flex-wrap gap-2.5">
               {picks.map((id, n) => (
                 <button key={id} type="button" onClick={() => onOpen(id)}
                   style={vars(id)}
-                  className="kit-fill kit-card min-h-[48px] rounded-field border-2 border-ink px-4
+                  className="kit-fill kit-card min-h-[48px] rounded-field border border-rule px-4
                     font-display text-ui font-bold text-paper">
                   {n === 0 ? 'Open' : 'Then'} {names[id]}
                 </button>

@@ -1,0 +1,46 @@
+/* Motion for the shared game pieces. Under reduced motion the components
+   skip these classes in JavaScript, so nothing here needs a fallback. */
+
+@keyframes g-pop {
+  0%   { opacity: 0; transform: translate(-50%, 6px) scale(.85) }
+  18%  { opacity: 1; transform: translate(-50%, 0) scale(1.08) }
+  70%  { opacity: 1; transform: translate(-50%, -18px) scale(1) }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(1) }
+}
+.g-pop { animation: g-pop .9s cubic-bezier(0.23,1,0.32,1) both }
+
+@keyframes g-bump {
+  0%   { transform: scale(1) }
+  35%  { transform: scale(1.14) }
+  100% { transform: scale(1) }
+}
+.g-bump { display: inline-block; animation: g-bump .32s cubic-bezier(0.23,1,0.32,1) }
+
+@keyframes g-in {
+  from { opacity: 0; transform: translateY(6px) scale(.98) }
+  to   { opacity: 1; transform: none }
+}
+.g-in { animation: g-in .28s cubic-bezier(0.23,1,0.32,1) both }
+
+@keyframes g-count {
+  0%   { opacity: 0; transform: scale(1.35) }
+  25%  { opacity: 1; transform: scale(1) }
+  100% { opacity: 1; transform: scale(1) }
+}
+.g-count { animation: g-count .9s cubic-bezier(0.23,1,0.32,1) both }
+
+/* A card turning over. The two faces sit in one grid cell. */
+.g-flip { perspective: 900px }
+.g-flip-inner {
+  display: grid; transform-style: preserve-3d;
+  transition: transform .45s cubic-bezier(0.23,1,0.32,1);
+}
+.g-flip-inner > * { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden }
+.g-flip-inner > .g-back { transform: rotateY(180deg) }
+.g-flip.is-flipped .g-flip-inner { transform: rotateY(180deg) }
+@media (prefers-reduced-motion: reduce) {
+  .g-flip-inner { transition: none !important }
+  .g-flip-inner > * { backface-visibility: visible }
+  .g-flip.is-flipped .g-flip-inner { transform: none }
+  .g-flip.is-flipped .g-front, .g-flip:not(.is-flipped) .g-back { visibility: hidden }
+}

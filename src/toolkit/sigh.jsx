@@ -1,344 +1,307 @@
 import React from 'react'
 import { Button } from '../ui/button'
-import { ArrowRight, Cross, Wave } from '../ui/marks'
-import { ActivityScreen, Sheet, OnDevice, Choice } from './shell'
-import { createPacer, createMicMeter, audioSupported } from './audio'
-import { DarkSheet, buzz, cueWords } from './dark'
-import { breathsFromEnvelope } from '../signals/breath'
-import { useReduced } from './useReduced'
+import { ActivityScreen } from './shell'
+import { audioSupported } from './audio'
+import { useWakeLock, buzz, useMounted, useHold, readBest, saveBest, HowTo, CountOver, useTopOn } from './dark'
+import { useGame, GameBar, Pops, EndCard } from './game'
 import { DidItWork } from './after'
 
-/* Long exhale: cyclic sighing (Balban 2023), paced and measured. The
- * microphone level (read once a frame and dropped) is the exhale detector; the
- * same level, sampled into a 60-second ring, gives breaths per minute. With
- * the microphone refused the pacer runs on counts. No audio is kept. */
+/* Long Exhale, as a candle game.
+ *
+ * Five breaths. Each one is two sniffs in through the nose and one long,
+ * slow breath out toward the phone, the cyclic sigh (Balban 2023). The
+ * microphone level is read once a frame and dropped: it bends the flame, and
+ * the time it stays bent is the exhale. Too hard and the flame flickers and
+ * the clock waits. Holding Space, or holding the button, is the same breath
+ * for a laptop or a refused microphone. No audio is kept. */
 
-const TOTAL = 300                     // five minutes
-const HZ = 20                         // ring buffer rate
-const WINDOW = 60 * HZ                // one rolling minute
-const FLOOR = 0.2                     // level above this is a mouth exhale
-const MIN_EXHALE = 1                  // seconds; shorter runs are noise
-const DROP = 0.35                     // seconds below the floor that end a run
-const TARGET = 6                      // the soft exhale target
-const EXHALE_CAP = 20                 // the longest the pacer waits
-const BARS = 12
-const BAR_MAX = 10                    // seconds at full width
+const ROUNDS = 5
+const IN_S = 2
+const AGAIN_S = 1
+const WAIT_S = 6                    // how long the flame waits for a breath out
+const DROP_S = 0.45                 // quiet this long ends a breath out
+const MIN_S = 1                     // shorter is a cough, not an exhale
+const REST_S = 1.4
+const GOAL_S = 6                    // the long mark on the gauge
+const GAUGE_S = 12                  // the gauge's full length
+const HARD = 0.97                   // a level this high is a blow, not a breath
+const HARD_S = 0.5
 
-const PHASES = [
-  { id:'in',    word:'In',          secs:2,    hz:294 },
-  { id:'again', word:'In again',    secs:1,    hz:330 },
-  { id:'out',   word:'Out, slowly', secs:null, hz:196 },
-]
+const one = v => (Math.round(v * 10) / 10).toFixed(1)
 
-function makeRing(n) {
-  const buf = new Float32Array(n)
-  let at = 0, count = 0
-  return {
-    push(v) { buf[at] = v; at = (at + 1) % n; if (count < n) count++ },
-    ordered() {
-      const out = new Array(count)
-      const start = count < n ? 0 : at
-      for (let i = 0; i < count; i++) out[i] = buf[(start + i) % n]
-      return out
-    },
-    seconds() { return count / HZ },
-    reset() { at = 0; count = 0 },
+/* The microphone as a loudness and nothing else. Unlike the meter in
+   audio.js this hands back the raw RMS, because the game measures the room
+   during the 3 2 1 and needs a level it can compare with that. */
+async function openMic() {
+  const C = window.AudioContext || window.webkitAudioContext
+  if (!C || !navigator.mediaDevices?.getUserMedia) throw new Error('unsupported')
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  })
+  const ctx = new C()
+  if (ctx.state === 'suspended') { try { await ctx.resume() } catch { /* ignored */ } }
+  const src = ctx.createMediaStreamSource(stream)
+  const an = ctx.createAnalyser()
+  an.fftSize = 1024
+  src.connect(an)
+  const buf = new Float32Array(an.fftSize)
+  const read = () => {
+    an.getFloatTimeDomainData(buf)
+    let s = 0
+    for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]
+    return Math.sqrt(s / buf.length)
   }
+  const stop = () => {
+    try { src.disconnect() } catch { /* ignored */ }
+    for (const t of stream.getTracks()) t.stop()
+    try { ctx.close() } catch { /* ignored */ }
+  }
+  return { read, stop }
 }
 
-const EyeShut = p => (
-  <svg viewBox="0 0 24 24" width={18} height={18} fill="none" aria-hidden stroke="currentColor"
-    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" {...p}>
-    <path d="M3 10c2.5 3.5 5.5 5 9 5s6.5-1.5 9-5M6 13.5l-1.5 2.5M12 15v3M18 13.5l1.5 2.5"/>
-  </svg>
-)
-
-const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
-const one = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1)
-
-/* Under reduced motion the disc holds still and the count carries the pace. */
-function Ring({ phase, t, count, scale, still, idle, level, micOn }) {
-  const dash = (idle ? 0 : t) * 578
+/* The candle, the flame and the exhale gauge around them. `lean` 0 to 1
+   bends the flame; `out` hides it; `secs` fills the gauge. */
+function Candle({ lean = 0, flicker = false, out = false, secs = 0, word, sub, still, small = false }) {
+  const R = 100, C = 2 * Math.PI * R
+  const arc = 0.75                                    // the gauge is three quarters of a circle
+  const v = Math.min(1, secs / GAUGE_S)
+  const goal = GOAL_S / GAUGE_S
+  const goalA = (-225 + 270 * goal) * Math.PI / 180
+  const bend = still ? lean * 0.6 : lean
+  const w = flicker && !still ? Math.sin(performance.now() / 40) * 0.12 : 0
   return (
-    <div className="relative mx-auto grid aspect-square w-full max-w-[22rem] place-items-center
-      sm:max-w-[26rem]">
-      <svg viewBox="0 0 200 200" aria-hidden focusable="false" className="absolute inset-0 size-full">
-        <circle cx="100" cy="100" r="92" fill="none" className="stroke-rule" strokeWidth="4"/>
-        <circle cx="100" cy="100" r="92" fill="none" className="kit-s" strokeWidth="7"
-          strokeLinecap="round" transform="rotate(-90 100 100)"
-          strokeDasharray={`${dash} 578`}/>
-        <circle cx="100" cy="100" r="68" className="kit-f-tint kit-s-art" strokeWidth="3"
-          style={{ transformBox:'fill-box', transformOrigin:'center',
-                   transform:`scale(${still ? 0.78 : scale})` }}/>
-        {micOn && !idle && (
-          <circle cx="100" cy="100" r="68" className="kit-f-art" opacity={0.22 + 0.5 * level}
-            style={{ transformBox:'fill-box', transformOrigin:'center',
-                     transform:`scale(${still ? 0.3 : 0.18 + 0.6 * level})` }}/>
+    <div className={small ? 'relative mx-auto aspect-square w-full max-w-[15rem]'
+      : 'relative mx-auto aspect-square w-full max-w-[20rem] sm:max-w-[24rem]'}>
+      <svg viewBox="0 0 240 240" aria-hidden focusable="false" className="absolute inset-0 size-full">
+        <g transform="rotate(135 120 120)">
+          <circle cx="120" cy="120" r={R} fill="none" stroke="#c2d7ca" strokeWidth="10"
+            strokeLinecap="round" strokeDasharray={`${C * arc} ${C}`}/>
+          {v > 0 && <circle cx="120" cy="120" r={R} fill="none" strokeWidth="10" strokeLinecap="round"
+            strokeDasharray={`${C * arc * v} ${C}`} style={{ stroke:'var(--g-main)' }}/>}
+        </g>
+        <circle cx={120 + R * Math.cos(goalA)} cy={120 + R * Math.sin(goalA)} r="9"
+          className="fill-card stroke-ink" strokeWidth="3"/>
+        <g transform="translate(0 -14)">
+        {/* the candle */}
+        <rect x="104" y="128" width="32" height="64" rx="5" className="fill-card stroke-ink" strokeWidth="3"/>
+        <path d="M104 140h32" className="stroke-rule" strokeWidth="3"/>
+        <path d="M120 128v-8" className="stroke-ink" strokeWidth="3" strokeLinecap="round"/>
+        {/* the flame: leans right with the breath, shorter as it leans */}
+        {!out && (
+          <g style={{ transformBox:'view-box', transformOrigin:'120px 122px',
+                      transform:`rotate(${(bend + w) * 62}deg) scale(${1 - bend * 0.25}, ${1 + bend * 0.15})` }}>
+            <path d="M120 122c-11 0-16-9-15-19 1-11 9-17 15-31 6 14 14 20 15 31 1 10-4 19-15 19z"
+              style={{ fill:'var(--g-main)' }} opacity="0.9"/>
+            <path d="M120 120c-5 0-7-4-7-9 0-5 4-9 7-15 3 6 7 10 7 15 0 5-2 9-7 9z" fill="#ffffff" opacity="0.85"/>
+          </g>
         )}
+        {out && <path d="M120 116c4-8-4-12 0-20M126 112c3-6-3-9 0-15" className="stroke-ink-3" strokeWidth="2.5"
+          fill="none" strokeLinecap="round"/>}
+        </g>
       </svg>
-      <div className="relative text-center">
-        <p className="font-display text-row font-bold tracking-tight text-ink">
-          {idle ? 'Ready' : phase.word}
-        </p>
-        <p className="mt-1 font-display text-dial font-bold tabular-nums text-ink">
-          {idle ? '' : count}
-        </p>
+      <div className="absolute inset-x-0 bottom-0 text-center">
+        <p className="font-display text-row font-bold tracking-tight text-ink">{word}</p>
+        <p className="h-6 font-display text-ui font-semibold tabular-nums text-ink-2">{sub}</p>
       </div>
     </div>
   )
 }
 
-/* The last twelve exhales, each a bar as long as it was. */
-function Bars({ bars, still }) {
-  const targetPct = Math.min(100, (TARGET / BAR_MAX) * 100)
-  return (
-    <div className="relative">
-      <div aria-hidden className="absolute inset-y-0 w-0.5 bg-ink-3/60" style={{ left: `${targetPct}%` }}/>
-      <ol className="space-y-1.5" aria-label="Exhales, newest last">
-        {bars.map((b, i) => (
-          <li key={b.id} className="flex items-center gap-2">
-            <div className="h-3 flex-1 overflow-hidden rounded-bar bg-mist">
-              <div className={still ? 'h-full rounded-bar kit-fill-art'
-                : 'h-full rounded-bar kit-fill-art transition-[width] duration-200 ease-[var(--ease-out)]'}
-                style={{ width: `${Math.min(100, (b.seconds / BAR_MAX) * 100)}%`,
-                         opacity: 0.55 + 0.45 * ((i + 1) / bars.length) }}/>
-            </div>
-            <span className="w-10 text-right font-display text-fine font-semibold tabular-nums text-ink-2">
-              {one(b.seconds)} s
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  )
-}
-
 export default function Sigh() {
-  const reduced = useReduced()
-  const [running, setRunning] = React.useState(false)
-  const [done, setDone] = React.useState(false)
-  const [sound, setSound] = React.useState(false)
-  const [eyes, setEyes] = React.useState(false)
-  const [mic, setMic] = React.useState('off')      // off | asking | on | refused | unsupported
-  const [frame, setFrame] = React.useState({ phase:PHASES[0], t:0, count:2, scale:0.46, left:TOTAL, level:0 })
-  const [bars, setBars] = React.useState([])
-  const [bpm, setBpm] = React.useState(null)
-  const [result, setResult] = React.useState(null)
-
-  const pacer = React.useRef(null)
+  const g = useGame('sigh')
+  const mounted = useMounted()
+  const [stage, setStage] = React.useState('intro')     // intro | count | play | end
+  useTopOn(stage === 'end')
+  const [mic, setMic] = React.useState('off')           // off | asking | on | none
+  const [frame, setFrame] = React.useState({ step:'in', round:0, lean:0, secs:0, left:IN_S, flicker:false, out:false })
+  const [summary, setSummary] = React.useState(null)
+  const hold = useHold(stage === 'play' || stage === 'count')
   const meter = React.useRef(null)
-  const ring = React.useRef(makeRing(WINDOW))
-  const soundOn = React.useRef(false); soundOn.current = sound
-  const eyesOn = React.useRef(false); eyesOn.current = eyes
-  const micOn = React.useRef(false); micOn.current = mic === 'on'
-  const machine = React.useRef(null)
-  const all = React.useRef([])                   // every exhale this session, {seconds}
-  const bpmStart = React.useRef(null)
-  const bpmNow = React.useRef(null)
-  const endRef = React.useRef(() => {})
+  const calib = React.useRef([])
+  const floor = React.useRef(0.01)
+  const runs = React.useRef([])
 
-  const cue = React.useCallback(phase => {
-    if (eyesOn.current) buzz(30)
-    if (soundOn.current) {
-      pacer.current ||= createPacer()
-      pacer.current.cue(phase.hz, 0.42)
+  useWakeLock(stage === 'play' || stage === 'count')
+
+  React.useEffect(() => () => { meter.current?.stop(); meter.current = null }, [])
+
+  const begin = async () => {
+    g.reset(); runs.current = []; calib.current = []; setSummary(null)
+    document.activeElement?.blur?.()
+    if (!meter.current && audioSupported() && mic !== 'none') {
+      /* asked again on Play again: the round ended and the microphone was closed */
+      setMic('asking')
+      try {
+        const m = await openMic()
+        if (!mounted.current) { m.stop(); return }
+        meter.current = m; setMic('on')
+      } catch {
+        if (!mounted.current) return
+        setMic('none')
+      }
     }
-  }, [])
+    if (!mounted.current) return
+    setFrame({ step:'in', round:0, lean:0, secs:0, left:IN_S, flicker:false, out:false })
+    setStage('count')
+  }
+
+  /* While the 3 2 1 runs, the room is measured so a breath means louder
+     than this room, not louder than some fixed number. */
+  React.useEffect(() => {
+    if (stage !== 'count' || !meter.current) return
+    let id = 0
+    const tick = () => { calib.current.push(meter.current.read()); id = requestAnimationFrame(tick) }
+    id = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(id)
+  }, [stage])
+
+  const finish = React.useCallback(() => {
+    const secs = runs.current
+    const longest = secs.length ? Math.max(...secs) : 0
+    const b = saveBest('sigh', longest > 0 ? Math.round(longest * 10) / 10 : NaN)
+    setSummary({ longest, n: secs.length, long: secs.filter(s => s >= GOAL_S).length, best: b })
+    meter.current?.stop(); meter.current = null
+    g.finish()
+    setStage('end')
+  }, [g])
+  const finishRef = React.useRef(finish); finishRef.current = finish
 
   React.useEffect(() => {
-    if (!running) return
+    if (stage !== 'play') return
+    const sorted = [...calib.current].sort((a, b) => a - b)
+    const room = sorted.length ? sorted[Math.floor(sorted.length * 0.5)] : 0.004
+    floor.current = Math.max(0.006, room * 3)
     let id = 0
-    const now0 = performance.now()
-    const m = machine.current = {
-      t0: now0, i: 0, phaseAt: now0,
-      above: false, runAt: 0, lastAbove: 0, exhaled: false,
-      lastSample: now0, lastBpm: now0,
-    }
-    cue(PHASES[0])
-    const advance = now => {
-      m.i = (m.i + 1) % PHASES.length
-      m.phaseAt = now
-      m.above = false; m.exhaled = false
-      cue(PHASES[m.i])
+    const m = { round:0, step:'in', at:performance.now(), runAt:0, lastOn:0, on:false,
+                secs:0, hardAt:0, lean:0, last:performance.now(), result:null }
+    g.cue('turn'); buzz(25)
+    const go = (step, now) => { m.step = step; m.at = now }
+    const level = () => {
+      if (hold.ref.current) return 0.55
+      if (!meter.current) return 0
+      const r = meter.current.read()
+      if (r <= floor.current) return 0
+      return Math.min(1, Math.log2(r / floor.current) / 5)
     }
     const tick = now => {
-      const el = (now - m.t0) / 1000
-      const left = Math.max(0, TOTAL - el)
-      if (left <= 0) { endRef.current(); return }
-
-      let level = 0
-      if (meter.current) {
-        level = meter.current.read()
-        if (level > FLOOR) {
-          if (!m.above) { m.above = true; m.runAt = now }
-          m.lastAbove = now
-        } else if (m.above && now - m.lastAbove > DROP * 1000) {
-          m.above = false
-          const secs = (m.lastAbove - m.runAt) / 1000
-          if (secs >= MIN_EXHALE) {
-            const bar = { id: now, seconds: secs }
-            all.current.push(bar)
-            setBars(b => [...b, bar].slice(-BARS))
-            if (PHASES[m.i].id === 'out') m.exhaled = true
+      const dt = Math.min(0.05, (now - m.last) / 1000); m.last = now
+      const into = (now - m.at) / 1000
+      const lv = level()
+      m.lean += (lv - m.lean) * Math.min(1, dt * 10)
+      let flicker = false
+      if (m.step === 'in' && into >= IN_S) { go('again', now); g.cue('tick') }
+      else if (m.step === 'again' && into >= AGAIN_S) { go('out', now); g.cue('low'); buzz(15) }
+      else if (m.step === 'out') {
+        const breathing = lv > 0.12
+        if (breathing) { if (!m.on) { m.on = true; m.runAt = now; m.secs = 0 } m.lastOn = now }
+        if (m.on) {
+          if (lv >= HARD) { if (!m.hardAt) m.hardAt = now } else m.hardAt = 0
+          flicker = !!m.hardAt && now - m.hardAt > HARD_S * 1000
+          if (breathing && !flicker) m.secs += dt
+          if (!breathing && now - m.lastOn > DROP_S * 1000) {
+            m.on = false
+            if (m.secs >= MIN_S) {
+              const s = m.secs
+              runs.current.push(s)
+              const pts = Math.round(s * 8) + (s >= GOAL_S ? 15 : 0)
+              g.add(pts, { x:50, y:30, sound: s >= GOAL_S ? 'good' : 'tick', label: `${one(s)} s` })
+              m.result = s
+              go('rest', now)
+            } else m.secs = 0
           }
-        }
-        if (now - m.lastSample >= 1000 / HZ) {
-          m.lastSample = now
-          ring.current.push(level)
-        }
-        if (now - m.lastBpm >= 1000 && ring.current.seconds() >= 10) {
-          m.lastBpm = now
-          const r = breathsFromEnvelope(ring.current.ordered(), HZ, { floor:FLOOR, minSeconds:MIN_EXHALE })
-          bpmNow.current = r.perMinute
-          if (bpmStart.current == null && ring.current.seconds() >= 60) bpmStart.current = r.perMinute
-          setBpm(r.perMinute)
-        }
+        } else if (into >= WAIT_S) { m.result = 0; go('rest', now) }
+      } else if (m.step === 'rest' && into >= REST_S) {
+        m.round += 1
+        if (m.round >= ROUNDS) { finishRef.current(); return }
+        m.result = null; m.secs = 0
+        go('in', now); g.cue('turn'); buzz(25)
       }
-
-      const phase = PHASES[m.i]
-      const into = (now - m.phaseAt) / 1000
-      let t, count, scale
-      if (phase.secs != null) {
-        t = Math.min(1, into / phase.secs)
-        count = Math.max(1, Math.ceil(phase.secs - into))
-        scale = phase.id === 'in' ? 0.46 + 0.4 * t : 0.86 + 0.14 * t
-        if (into >= phase.secs) advance(now)
-      } else {
-        t = Math.min(1, into / TARGET)
-        count = Math.ceil(into)
-        scale = Math.max(0.46, 1 - 0.54 * t)
-        const over = micOn.current
-          ? m.exhaled || (into >= TARGET && !m.above) || into >= EXHALE_CAP
-          : into >= TARGET
-        if (over && into >= MIN_EXHALE) advance(now)
-      }
-      setFrame({ phase, t, count, scale, left, level })
+      const step = m.step
+      const left = step === 'in' ? IN_S - into : step === 'again' ? AGAIN_S - into : 0
+      setFrame({ step, round:m.round, lean: step === 'out' || m.on ? m.lean : 0, secs:m.secs,
+                 left:Math.max(0, left), flicker, out: step === 'rest' && m.result === 0, result:m.result })
       id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(id)
-  }, [running, cue])
+  }, [stage]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const end = React.useCallback(() => {
-    setRunning(false)
-    setEyes(false)
-    const ex = all.current
-    const mean = a => a.length ? a.reduce((s, e) => s + e.seconds, 0) / a.length : null
-    setResult({
-      last: mean(ex.slice(-3)), n: ex.length,
-      bpmStart: bpmStart.current ?? bpmNow.current, bpmEnd: bpmNow.current,
-    })
-    setDone(true)
-  }, [])
-  endRef.current = end
+  const again = () => begin()
 
-  /* `mounted` gates every await below against a prompt resolving late. */
-  const mounted = React.useRef(true)
-  React.useEffect(() => () => {
-    mounted.current = false
-    meter.current?.stop(); meter.current = null
-    pacer.current?.close(); pacer.current = null
-  }, [])
+  const word = stage !== 'play' ? 'Get ready'
+    : frame.step === 'in' ? 'Breathe in'
+    : frame.step === 'again' ? 'Sniff once more'
+    : frame.step === 'out' ? (frame.flicker ? 'Softer' : frame.lean > 0.1 ? 'Keep going' : 'Breathe out slowly')
+    : frame.result ? `${one(frame.result)} seconds` : 'Next breath'
+  const sub = stage !== 'play' ? null
+    : frame.step === 'out' || frame.step === 'rest' ? `${one(frame.secs)} s` : Math.ceil(frame.left)
 
-  const askMic = async () => {
-    if (!audioSupported() || !navigator.mediaDevices?.getUserMedia) { setMic('unsupported'); return }
-    setMic('asking')
-    try {
-      const m = await createMicMeter()
-      if (!mounted.current) { m.stop(); return }
-      meter.current = m; setMic('on')
-    }
-    catch (e) { if (mounted.current) setMic(e?.message === 'unsupported' ? 'unsupported' : 'refused') }
+  const micLine = mic === 'on' ? 'Breathe out toward the phone. Holding Space or the button works too.'
+    : 'No microphone. Hold Space or the button while you breathe out.'
+
+  if (stage === 'intro') {
+    const best = readBest('sigh')
+    return (
+      <ActivityScreen family="tide" title="Long Exhale">
+        <div style={g.vars}>
+          <HowTo onStart={begin} disabled={mic === 'asking'}
+            startLabel={mic === 'asking' ? 'Asking for the microphone' : 'Light the candle'}
+            art={<Candle word="Five breaths" sub={best != null ? `Your best ${one(best)} s` : 'Bend the flame, keep it lit'} still={g.reduced} small/>}
+            steps={[
+              'Breathe in through your nose, then sniff once more.',
+              'Breathe out slowly on the flame. Long and soft wins.',
+              'Too hard and it flickers. No mic? Hold Space or the button.',
+            ]}
+            measured="Sound level is measured here and never recorded.">
+            <DidItWork tool="sigh" phase="before" className="mt-4"/>
+          </HowTo>
+        </div>
+      </ActivityScreen>
+    )
   }
 
-  const start = async () => {
-    all.current = []; ring.current.reset(); bpmStart.current = null; bpmNow.current = null
-    setBars([]); setBpm(null); setResult(null); setDone(false)
-    if (sound) { pacer.current ||= createPacer(); await pacer.current.start() }
-    if (!mounted.current) return
-    if (mic === 'off' || mic === 'refused') await askMic()
-    if (!mounted.current) return
-    setRunning(true)
+  if (stage === 'end' && summary) {
+    return (
+      <ActivityScreen family="tide" title="Long Exhale">
+        <EndCard game={g} title={summary.best.isNew && summary.best.before != null ? 'New personal best' : 'Candle done'}
+          onAgain={again}
+          stats={[
+            ['Longest breath out', `${one(summary.longest)} s`],
+            ['Over six seconds', `${summary.long} of ${ROUNDS}`],
+            ['Your best', summary.best.best != null ? `${one(summary.best.best)} s` : 'None yet'],
+            ['Breaths counted', `${summary.n} of ${ROUNDS}`],
+          ]}>
+          <DidItWork tool="sigh" phase="after" className="border border-rule"/>
+        </EndCard>
+      </ActivityScreen>
+    )
   }
-
-  const toggleSound = async () => {
-    const next = !sound
-    setSound(next)
-    if (next) { pacer.current ||= createPacer(); await pacer.current.start() }
-  }
-
-  const idle = !running && !done
-  const line = mic === 'refused' ? 'Allow the microphone to see your exhales.'
-    : mic === 'unsupported' ? 'No microphone here. The pacer still runs.'
-    : mic === 'asking' ? 'Asking for the microphone.'
-    : eyes ? cueWords(sound)
-    : 'Twice in through the nose, slowly out the mouth.'
 
   return (
     <ActivityScreen family="tide" title="Long Exhale">
-      <DarkSheet on={eyes && running} onStop={end} line={`${cueWords(sound)} Tap to stop.`}>
-        <p className="font-display text-view font-bold tracking-tight text-mist">{frame.phase.word}</p>
-        <p className="mt-2 font-display text-dial font-bold tabular-nums text-mist/80">
-          {frame.count}
-        </p>
-      </DarkSheet>
-
-      {!done && (
-        <>
-          <Ring phase={frame.phase} t={frame.t} count={frame.count} scale={frame.scale}
-            still={reduced} idle={idle} level={frame.level} micOn={mic === 'on'}/>
-
-          <p className="mx-auto mt-2 max-w-[32rem] text-center font-display text-ui font-semibold
-            tabular-nums text-ink-2" aria-live="off">
-            {mmss(frame.left)} left
-          </p>
-          {bpm != null && (
-            <p className="mx-auto mt-1 max-w-[32rem] text-center font-display text-ui font-semibold
-              tabular-nums text-ink" aria-live="polite">
-              {Math.round(bpm)} breaths per minute
-            </p>
-          )}
-
-          <div className="mx-auto mt-4 flex w-full max-w-[32rem] flex-wrap justify-center gap-2.5">
-            {running
-              ? <Button size="sm" className="min-w-[9rem]" onClick={end}><Cross/>Stop</Button>
-              : <Button size="sm" className="min-w-[9rem]" disabled={mic === 'asking'} onClick={start}>
-                  <ArrowRight/>Start</Button>}
-            <Choice on={sound} disabled={!audioSupported()} onClick={toggleSound}
-              className="inline-flex items-center gap-2"><Wave size={18}/>Sound</Choice>
-            <Choice on={eyes} onClick={() => setEyes(e => !e)}
-              className="inline-flex items-center gap-2"><EyeShut/>Eyes closed</Choice>
-          </div>
-          <p className="mx-auto mt-3 max-w-[32rem] text-center text-fine text-ink-2">{line}</p>
-          <OnDevice className="mx-auto mt-2 max-w-[32rem] justify-center">
-            Sound level is measured here and never recorded.
-          </OnDevice>
-
-          {bars.length > 0 && (
-            <div className="mx-auto mt-5 w-full max-w-[32rem]">
-              <h3 className="font-display text-ui font-bold text-ink">Your Exhales</h3>
-              <div className="mt-2"><Bars bars={bars} still={reduced}/></div>
-            </div>
-          )}
-          {idle && <DidItWork tool="sigh" phase="before" className="mx-auto mt-4 w-full max-w-[32rem]"/>}
-        </>
-      )}
-
-      {done && result && (
-        <Sheet className="mx-auto w-full max-w-[32rem]">
-          <h3 className="font-display text-row font-bold tracking-tight text-ink">Your Session</h3>
-          <p className="mt-3 font-display text-ui font-semibold text-ink-2">Exhale at the end</p>
-          <p className="mt-1 font-display text-stat font-bold tabular-nums text-ink">
-            {one(result.last ?? 0)}<span className="ml-1 text-fine font-semibold text-ink-2">s</span>
-          </p>
-          <p className="mt-2 text-fine text-ink-2">
-            {result.bpmStart == null ? 'Needs the microphone.'
-              : `Breathing ${Math.round(result.bpmStart)} to ${Math.round(result.bpmEnd)} a minute, ${result.n} exhales.`}
-          </p>
-          <Button size="sm" className="mt-4 min-w-[9rem]" onClick={start}><ArrowRight/>Again</Button>
-        </Sheet>
-      )}
-      {done && <DidItWork tool="sigh" phase="after" className="mx-auto mt-3 w-full max-w-[32rem]"/>}
+      <div style={g.vars} className="mx-auto w-full max-w-[34rem]">
+        <GameBar game={g}>
+          <span className="font-display text-ui font-semibold tabular-nums text-ink-2">
+            Breath {Math.min(ROUNDS, frame.round + 1)} of {ROUNDS}
+          </span>
+        </GameBar>
+        <div className="relative mt-2">
+          <Candle lean={frame.lean} flicker={frame.flicker} out={frame.out} secs={frame.secs}
+            word={word} sub={sub} still={g.reduced}/>
+          <Pops game={g}/>
+          <CountOver on={stage === 'count'} onDone={() => setStage('play')}/>
+        </div>
+        <Button {...hold.bind} aria-pressed={hold.held}
+          className="mt-3 w-full touch-none select-none"
+          variant={hold.held ? 'solid' : 'outline'}>
+          {hold.held ? 'Breathing out' : 'Hold while you breathe out'}
+        </Button>
+        <p className="mt-2 text-center text-fine text-ink-2">{micLine}</p>
+        <p className="mt-1 text-center text-fine text-ink-2">Sound level is measured here and never recorded.</p>
+        <div className="mt-3 flex justify-center">
+          <Button size="sm" variant="outline" onClick={() => finishRef.current()}>End round</Button>
+        </div>
+      </div>
     </ActivityScreen>
   )
 }

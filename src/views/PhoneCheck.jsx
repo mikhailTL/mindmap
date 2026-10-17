@@ -16,6 +16,7 @@ import { fitCalibration, identityCalibration } from '../signals/tnam'
 import { SCORE_DEF } from '../lib/terms'
 import { StepFigure, SAY_LINES } from '../charts/camera'
 import { addReachPoint, getReach } from '../app/store'
+import { addReading } from '../lib/readingLog'
 
 /* Camera + mic reading, no patch. Nothing leaves the device: each frame
    becomes one number and the audio six, then both are dropped. Never buffer
@@ -110,6 +111,7 @@ export function PhoneCheck() {
   const [calibration, setCalibration] = React.useState(identityCalibration)
   const [answered, setAnswered] = React.useState(false)
   const [noPosition, setNoPosition] = React.useState(false)
+  const [logged, setLogged] = React.useState(false)
   const videoRef = React.useRef(null)
   const live = React.useRef({ cam: null, ppg: null, motion: null })
 
@@ -173,6 +175,9 @@ export function PhoneCheck() {
       const next = updateBaseline(baseline, featuresFrom({ ppg, voice }), dayKey())
       setBaseline(next); saveBaseline(next)
       setResult(scored)
+      /* A held reading is shown with its reason but kept out of the log. */
+      setLogged(scored.held ? false
+        : !!addReading({ at: Date.now(), score: scored.score, source: 'camera', pulse: ppg.hr }))
       setAnswered(false)
       setDetail({ ppg, voice, move, torch: cam.torch })
       setPhase('done')
@@ -326,6 +331,10 @@ export function PhoneCheck() {
                     <dt className="text-ink-3">What to watch</dt>
                     <dd className="m-0 text-ink-2">Which way the score moved, more than the number</dd>
                   </dl>
+
+                  {logged && (
+                    <p className="mt-3 text-meta text-ink-2">Added to your log. Go back to see it.</p>
+                  )}
 
                   {noPosition && (
                     <p className="mt-2 text-fine text-ink-3">No position this time.</p>

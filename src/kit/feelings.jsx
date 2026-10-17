@@ -100,7 +100,7 @@ export function FeelingMap() {
         onPointerUp={release}
         onPointerCancel={release}
         className="relative mx-auto mt-1.5 aspect-square w-full max-w-[20rem] touch-none
-          overflow-hidden rounded-panel border-2 border-ink kit-ground">
+          overflow-hidden rounded-[18px] border border-rule kit-ground">
         <span aria-hidden className="absolute inset-x-0 top-1/2 border-t border-dashed border-ruling"/>
         <span aria-hidden className="absolute inset-y-0 left-1/2 border-l border-dashed border-ruling"/>
 
@@ -156,7 +156,7 @@ export function FeelingMap() {
       </div>
 
       <div aria-live="polite"
-        className="kit-edge mt-5 min-h-[7rem] rounded-panel border-2 border-l-[6px] bg-card p-4">
+        className="kit-edge mt-5 min-h-[7rem] rounded-[18px] border border-l-[6px] bg-card p-4">
         {found ? (
           /* Keyed on the word, so a new answer arrives rather than swapping
              under the reader's eye mid-drag. */

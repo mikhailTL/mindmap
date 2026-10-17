@@ -21,6 +21,7 @@ import { Students } from './Students'
 import { Parents } from './Parents'
 import { Pro, settingLineFor } from './Pro'
 import { Launch } from './Launch'
+import { AppHome } from './AppHome'
 import { ForStudents, ForParents, ForSchools } from './audience'
 import { HeadsUpPage } from '../traffic/Page'
 import { ModeToggle } from '../ui/mode-toggle'
@@ -39,6 +40,8 @@ import { Network } from '../account/Network'
 import { AccountButton } from '../account/ui'
 import { useAccount } from '../account/store'
 import { ScrollProgress } from '../ui/motion'
+import { MotionConfig } from 'framer-motion'
+import { motionPreference, useAppearance } from '../account/appearance'
 import { RealNotice } from '../ui/notice'
 import { Frame as Photo } from '../ui/frame'
 import { PatchFront } from '../charts/patch-front'
@@ -59,7 +62,7 @@ const VIEWS = [
   /* the three audience explainer pages, and Heads Up */
   'students','parents','pro','heads-up',
   /* the product */
-  'app','app-student','app-parent','app-pro',
+  'app','app-home','app-student','app-parent','app-pro','app-pro-trends',
   /* inside the product */
   'reading','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
@@ -67,6 +70,8 @@ const VIEWS = [
   'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
   /* the five parent activities, which belong to the parent app */
   'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules','toolkit-reach',
+  /* the five Medical Professional activities */
+  'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground','toolkit-pro-parents','toolkit-pro-referral',
   /* kept, not in section 18 */
   'tour','notes',
   /* accounts: sign in, the portal, its sections, and who is linked to whom */
@@ -82,13 +87,15 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','reading','shared',
+const APP_VIEWS = new Set(['app','app-student','app-parent','app-pro','app-pro-trends','reading','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
                            'toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
                            'toolkit-openers','toolkit-phrasing','toolkit-score','toolkit-rules',
                            'toolkit-reach',
+                           'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground',
+                           'toolkit-pro-parents','toolkit-pro-referral',
                            'signin','account','account-section','network'])
 
 /* The three account routes belong to whichever app the signed in account is
@@ -108,7 +115,15 @@ const ALIAS = {
 /* Both kit ids land on the one Toolkit route, so the audience they name is
    carried here: `kit-parent` opens the parent Toolkit, not the teen one. */
 const KIT_OF = { 'kit-student': 'student', 'kit-parent': 'parent' }
-const rawHash = () => location.hash.replace(/^#\/?/, '')
+/* The route, without a `?…` after it: `#/network?code=ABC123` is the network
+   route, and the query stays in the address for the page (and for the
+   editor's ?edit=1, which src/editor/boot.js reads first) to read. */
+const hashParts = () => {
+  const h = location.hash.replace(/^#\/?/, '')
+  const i = h.indexOf('?')
+  return i < 0 ? [h, ''] : [h.slice(0, i), h.slice(i)]
+}
+const rawHash = () => hashParts()[0]
 
 const TITLE = {
   site:'MindMap, a wellbeing app for teenagers',
@@ -119,6 +134,8 @@ const TITLE = {
   pro:'MindMap for Medical Professionals',
   'heads-up':'Heads Up, by MindMap',
   app:'Open the MindMap app',
+  'app-home':'The MindMap app',
+  'app-pro-trends':'Caseload trends in MindMap',
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
   'app-pro':'The Medical Professional screen in MindMap',
@@ -142,6 +159,11 @@ const TITLE = {
   'toolkit-score':`Reading the ${SCORE}, in the MindMap Toolkit`,
   'toolkit-rules':'Conversation Ground Rules, in the MindMap Toolkit',
   'toolkit-reach':'When to Get Help, in the MindMap Toolkit',
+  'toolkit-pro-opener':'Session Openers, in the MindMap Toolkit',
+  'toolkit-pro-triage':'Next Step Guide, in the MindMap Toolkit',
+  'toolkit-pro-ground':'Grounding Timer, in the MindMap Toolkit',
+  'toolkit-pro-parents':'Talking With Parents, in the MindMap Toolkit',
+  'toolkit-pro-referral':'Referral Note, in the MindMap Toolkit',
   ai:'MindMap AI',
   shared:'Sharing in MindMap',
   notes:'Your notes in MindMap',
@@ -454,22 +476,25 @@ const CalendarMark = p => (
  * is where the three live. */
 const APP_NAV = {
   student: [
-    ['app-student', 'Today',    PulseMark],
+    /* Spoken apart from the top bar's Home, which goes to the app home. */
+    ['app-student', 'Home',     PulseMark, 'Student home'],
     ['reading',     'Reading',  DialMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
-    ['shared',      'Sharing',  Grid],
+    ['shared',      'Privacy',  Grid],
   ],
   parent: [
-    ['app-parent',  'Week',     PulseMark],
+    ['app-parent',  'Trends',   PulseMark],
     ['calendar',    'Calendar', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
-    ['privacy',     'Sharing',  Grid],
+    ['privacy',     'Privacy',  Grid],
   ],
   pro: [
-    ['app-pro',     'Students', Grid],
-    ['network',     'Network',  People],
+    /* Short at 390, the full words past sm. The linking screen is the
+       Connect tab, so two tabs never both say Network. */
+    ['app-pro',     ['Network', 'Your Network'], Grid, 'Your Network'],
+    ['network',     'Connect',  People, 'Connect with parents and teens'],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['toolkit',     'Toolkit',  Bracket],
   ],
@@ -485,7 +510,9 @@ const APP_OF = {
   'app-parent': 'parent', privacy: 'parent',
   'toolkit-openers': 'parent', 'toolkit-phrasing': 'parent', 'toolkit-score': 'parent',
   'toolkit-rules': 'parent', 'toolkit-reach': 'parent',
-  'app-pro': 'pro',
+  'app-pro': 'pro', 'app-pro-trends': 'pro',
+  'toolkit-pro-opener': 'pro', 'toolkit-pro-triage': 'pro', 'toolkit-pro-ground': 'pro',
+  'toolkit-pro-parents': 'pro', 'toolkit-pro-referral': 'pro',
 }
 const SHARED_VIEWS = new Set(['toolkit','ai','calendar','help',
                               'toolkit-breathing','toolkit-ground','toolkit-reframe',
@@ -505,8 +532,11 @@ const APP_TAB = { app:null,
                   'toolkit-openers':'toolkit', 'toolkit-phrasing':'toolkit',
                   'toolkit-score':'toolkit', 'toolkit-rules':'toolkit',
                   'toolkit-reach':'toolkit',
+                  'toolkit-pro-opener':'toolkit', 'toolkit-pro-triage':'toolkit',
+                  'toolkit-pro-ground':'toolkit', 'toolkit-pro-parents':'toolkit',
+                  'toolkit-pro-referral':'toolkit',
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
-                  'app-pro':'app-pro',
+                  'app-pro':'app-pro', 'app-pro-trends':'app-pro',
                   /* Network is a tab only on the pro bar; on the other two it
                      lights nothing and is reached from the account portal. */
                   signin:null, account:null, 'account-section':null, network:'network' }
@@ -515,8 +545,8 @@ const APP_TAB = { app:null,
    button, the demo switch and the way back, so the long one would be the thing
    that gets truncated. */
 const APP_TITLE = {
-  app:            ['Screens',          'Choose a screen'],
-  'app-student':  ['Today',            'Today'],
+  app:            ['Welcome',          'Welcome'],
+  'app-student':  ['Student',          'Student'],
   monitor:        ['Readings',         'Every reading'],
   reading:        ['Reading',          'Take a reading'],
   calendar:       ['Calendar',         'Calendar'],
@@ -537,17 +567,23 @@ const APP_TITLE = {
   'toolkit-score':     [SCORE,         `Reading the ${SCORE}`],
   'toolkit-rules':     ['Ground rules','Conversation Ground Rules'],
   'toolkit-reach':     ['Get help',    'When to Get Help'],
+  'toolkit-pro-opener':   ['Openers',  'Session Openers'],
+  'toolkit-pro-triage':   ['Next step','Next Step Guide'],
+  'toolkit-pro-ground':   ['Grounding','Grounding Timer'],
+  'toolkit-pro-parents':  ['Parents',  'Talking With Parents'],
+  'toolkit-pro-referral': ['Referral', 'Referral Note'],
   /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
      spelling is the tab's word and the full name is the heading on the
      screen and this element's accessible name. */
   ai:             ['Ask',              'MindMap AI'],
-  shared:         ['Sharing',          'Sharing'],
+  shared:         ['Privacy',          'Privacy'],
   notes:          ['Notes',            'Notes'],
   'app-notify':   ['Reminders',        'Reminders'],
   help:           ['Help',             'Getting help'],
-  'app-parent':   ['Week',             'This week'],
-  privacy:        ['Sharing',          'Sharing'],
-  'app-pro':      ['Students',         'Students'],
+  'app-parent':   ['Parent',           'Parent'],
+  privacy:        ['Privacy',          'Privacy'],
+  'app-pro':      ['Medical',          'Medical Professionals'],
+  'app-pro-trends': ['Trends',         'Trends'],
   signin:         ['Sign in',          'Sign in'],
   account:        ['Account',          'Account'],
   'account-section': ['Account',       'Account'],
@@ -619,7 +655,12 @@ function AppTabBar({ app, view, go }) {
                   <Mark size={20}/>
                 </span>
                 <span className={cn('max-w-full truncate font-display text-fine leading-none',
-                  on ? 'font-bold' : 'font-medium')}>{label}</span>
+                  on ? 'font-bold' : 'font-medium')}>
+                  {Array.isArray(label) ? <>
+                    <span className="sm:hidden">{label[0]}</span>
+                    <span className="hidden sm:inline">{label[1]}</span>
+                  </> : label}
+                </span>
               </button>
             </li>
           )
@@ -644,6 +685,27 @@ function ExitToSite({ go, className, short = false }) {
   )
 }
 
+const HomeMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+    className="shrink-0">
+    <path d="M3.5 11 12 4l8.5 7"/>
+    <path d="M5.5 9.5V20h4.5v-5.5h4V20h4.5V9.5"/>
+  </svg>
+)
+
+/* The way back to the app home (#/app-home), on every app screen. First in
+   the row, where a home control is looked for. */
+function HomeButton({ go }) {
+  return (
+    <button type="button" onClick={() => go('app-home')} aria-label="Home" title="Home"
+      className="-ml-2 grid size-11 shrink-0 place-items-center rounded-field text-ink-2
+        transition-colors duration-150 hoverOnly:bg-mist hoverOnly:text-ink sm:-ml-3">
+      <HomeMark size={21}/>
+    </button>
+  )
+}
+
 function AppTopBar({ view, go }) {
   const [short, long] = APP_TITLE[view] || ['App', 'App']
   return (
@@ -651,7 +713,8 @@ function AppTopBar({ view, go }) {
       {/* px-4 at 390, not the wrap's 22: this row carries the screen name, the
           help button, the demo switch and the way back, and the 12px bought
           here is 12px the name keeps. */}
-      <div className="flex h-12 items-center gap-2 px-4 sm:gap-3 sm:px-10 lg:px-14">
+      <div className="flex h-12 items-center gap-1 px-4 sm:gap-3 sm:px-10 lg:px-14">
+        <HomeButton go={go}/>
         {/* The accent rule is ornament, so it is the first thing to go on a
             handset where the row is full. */}
         <span aria-hidden className="hidden h-4 w-[3px] shrink-0 rounded-bar bg-accent sm:block"/>
@@ -673,7 +736,9 @@ function AppTopBar({ view, go }) {
               hurry is the one nearest their thumb. */}
           <GetHelp compact/>
           <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-2 sm:[&_button]:px-3"/>
-          <ExitToSite go={go} short/>
+          {/* Off below sm, where the Home button took its room: the app home
+              carries the link to the site. */}
+          <ExitToSite go={go} short className="hidden sm:flex"/>
           {/* Last, at the right: the way to sign in, or to the account. */}
           <AccountButton go={go} className="-mr-2 w-10 sm:w-11"/>
         </div>
@@ -921,6 +986,11 @@ function SurveyPage() {
  * Grounds and inks: card and aqua, ink, ink-2, ink-3, accent and accent-ink.
  * Worst text pair on the screen is ink-3 on aqua at 5.14 : 1.
  */
+/* Twelve tiles, one drawing (the reading tile is about the patch) and eleven
+   photographs. The owner: "3 of the stock images under parent dashboard are
+   the same, needs to be a variety for all 4 across all 3 audiences." No two
+   tiles here show the same people: parent-card, parent-hero and parent-laptop
+   are one shoot, as are pro-hero and school-card, so each set appears once. */
 const START = {
   student: {
     head: 'Start here',
@@ -929,8 +999,8 @@ const START = {
       { id:'toolkit', title:'Open the Toolkit',  Mark:Bracket,
         photo:'student-basketball', alt:'A teenager dribbling a basketball on an outdoor court' },
       { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
-        photo:'friends-steps', alt:'Two students on concrete steps outside, heads together over a notebook' },
-      { id:'demo',    title:'See an example day', Mark:Wave,
+        photo:'student-homework', alt:'A teenager in headphones writing in a notebook at a desk' },
+      { id:'demo',    title:'View Demo',         Mark:Wave,
         photo:'student-bus', alt:'Two boys laughing together on a school bus seat, one holding a phone' },
     ],
     setup: { id:'pairing', title:'Connect a patch', Mark:Frame, cta:'Start pairing' },
@@ -938,14 +1008,14 @@ const START = {
   parent: {
     head: 'Start here',
     actions: [
-      { id:'calendar', title:'See the week',      Mark:CalendarMark,
+      { id:'calendar', title:'Analyze trends',   Mark:CalendarMark,
         photo:'parent-laptop', alt:'A mother and her teenage son at a dining table, looking at an open laptop' },
-      { id:'privacy',  title:'What is shared',    Mark:Grid,
+      { id:'privacy',  title:'What is shared',   Mark:Grid,
         photo:'parent-kitchen', alt:'A mother and her teenage son chopping vegetables side by side at a kitchen counter' },
-      { id:'ai',       title:'Ask MindMap AI',    Mark:AskMark,
-        photo:'parent-hero', alt:'A mother and her teenage child smiling at an open laptop together at home' },
-      { id:'demo',     title:'See an example week', Mark:Wave,
-        photo:'parent-card', alt:'A mother and her teenage child sitting close together on a sofa at home' },
+      { id:'ai',       title:'Ask MindMap AI',   Mark:AskMark,
+        photo:'student-controller', alt:'A teenager in headphones holding a game controller on a sofa at home' },
+      { id:'demo',     title:'View Demo',        Mark:Wave,
+        photo:'friends-steps', alt:'Two students on concrete steps outside, heads together over a notebook' },
     ],
     /* Static: no light here, since nothing has been measured. */
     feature: { id:'heads-up', title:'Heads Up',
@@ -954,18 +1024,21 @@ const START = {
   },
   pro: {
     head: 'Start here',
+    /* The worked example goes last: the owner wants every feature first. */
     actions: [
-      { id:'demo',    title:'See an example week', Mark:Wave,
-        photo:'pro-hero', alt:'A teenager and an adult sitting and talking on a sofa by a sunlit window' },
       { id:'ai',      title:'Ask MindMap AI',    Mark:AskMark,
-        photo:'clinic-talk', alt:'A woman and a teenage boy talking in a room lined with shelves' },
-      { id:'methods', title:'How scoring works', Mark:Rule, art:'patch' },
+        photo:'pro-hero', alt:'A woman with a notepad listening to a teenager on a sofa' },
+      /* The caseload dashboard with nobody added yet, in live mode. */
+      { id:'app-pro-trends', title:'View Trends', Mark:PulseMark,
+        photo:'students-hallway', alt:'Four students walking and talking down a school corridor' },
       { id:'help',    title:'Get help',          Mark:Search,
-        photo:'school-card', alt:'A Medical Professional and a student talking on a sofa' },
+        photo:'clinic-talk', alt:'A man and a teenage boy talking on a sofa by a sunlit window' },
+      { id:'demo',    title:'View sample caseload', Mark:Wave,
+        photo:'student-card', alt:'Five teenagers walking together through a park' },
     ],
     /* The setup slot the other two audiences use for the patch: here it is
-       the network, where a code is made for a student to enter. */
-    setup: { id:'network', title:'Your students', Mark:People, cta:'Add a student' },
+       the network, parents and teens alike. */
+    setup: { id:'network', title:'Your Network', Mark:People, cta:'Connect with parents and teens' },
   },
 }
 
@@ -981,7 +1054,7 @@ function StartAction({ action, run, className }) {
       className={cn('group flex h-full w-full flex-col items-start overflow-hidden',
         'rounded-panel border border-rule bg-card text-left transition-colors',
         'duration-150 hoverOnly:border-accent active:bg-accent-wash', className)}>
-      <span aria-hidden className="relative block h-[96px] w-full overflow-hidden bg-accent-wash sm:h-[112px] lg:h-[132px]">
+      <span aria-hidden className="relative block h-[96px] w-full overflow-hidden bg-accent-wash sm:h-[140px] lg:h-[148px]">
         {action.art === 'patch'
           ? <span className="flex h-full w-full items-center justify-center"><PatchFront className="h-[84%] w-auto"/></span>
           : <Photo photo={action.photo} alt={action.alt} className="absolute inset-0"/>}
@@ -1006,6 +1079,7 @@ function AudienceStart({ go, who }) {
      example, which is the demo fixture set and says so on the toggle above. */
   const run = React.useCallback(id => {
     if (id === 'demo') setMode('demo')
+    else if (id === 'app-pro-trends') { setMode('real'); go(id) }
     else go(id)
   }, [go])
 
@@ -1013,7 +1087,10 @@ function AudienceStart({ go, who }) {
     <main className="wrap">
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="font-display font-bold text-ink">{s.head}</h2>
-      <RealNotice className="mt-2" inline>{settingLine || 'No patch is paired yet.'}</RealNotice>
+      {/* The pro start screen has no patch to pair, so it says nothing about one. */}
+      {who === 'pro'
+        ? settingLine && <p className="mt-2 text-fine text-ink-3">{settingLine}</p>
+        : <RealNotice className="mt-2" inline>No patch is paired yet.</RealNotice>}
 
       <ul className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 lg:mt-4 lg:grid-cols-4 lg:gap-4">
         {s.actions.map(a => (
@@ -1093,10 +1170,15 @@ function ProApp(p) {
  */
 /* One resolver for the hash, for `go` and for the alias table, so a link to an
    old id lands in exactly one place. */
-const resolve = raw => ALIAS[raw] || (VIEWS.includes(raw) || SECTION_RE.test(raw) ? raw : 'site')
+const resolve = r => {
+  const raw = String(r ?? '').split('?')[0]
+  return ALIAS[raw] || (VIEWS.includes(raw) || SECTION_RE.test(raw) ? raw : 'site')
+}
 const fromHash = () => resolve(rawHash())
 
 export function App() {
+  /* Re-renders on the Reduce motion setting, so framer-motion follows it too. */
+  useAppearance()
   const [view, setView] = React.useState(fromHash)
   const mainRef = React.useRef(null)
   const [said, setSaid] = React.useState('')
@@ -1130,7 +1212,8 @@ export function App() {
   const go = React.useCallback(raw => {
     if (KIT_OF[raw]) setAudience(KIT_OF[raw])
     const v = resolve(raw)
-    if (location.hash !== '#/' + v) history.pushState(null, '', '#/' + v)
+    const q = String(raw ?? '').includes('?') ? String(raw).slice(String(raw).indexOf('?')) : ''
+    if (location.hash !== '#/' + v + q) history.pushState(null, '', '#/' + v + q)
     setView(v); land(v)
   }, [land])
   React.useEffect(() => {
@@ -1138,8 +1221,8 @@ export function App() {
        fixes, so a bookmark of `#/check` keeps working and the address bar then
        agrees with every link on the site. A bare url is left alone. */
     if (KIT_OF[rawHash()]) setAudience(KIT_OF[rawHash()])
-    if (location.hash && location.hash !== '#/' + view) {
-      history.replaceState(null, '', '#/' + view)
+    if (location.hash && rawHash() !== view) {
+      history.replaceState(null, '', '#/' + view + hashParts()[1])
     }
     land(view)
   }, [])
@@ -1155,7 +1238,10 @@ export function App() {
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
   /* The route id: a portal section folds to `account-section`. */
   const id = idOf(view)
-  const inApp = APP_VIEWS.has(id)
+  /* The app home stands alone, centred, with no bar above or below: at
+     #/app-home always, and at #/app until somebody has signed in. */
+  const bare = id === 'app-home' || (id === 'app' && !me)
+  const inApp = APP_VIEWS.has(id) && !bare
   /* `app` itself is the launcher and has no bar; a shared screen takes the bar
      of the app it was opened from. */
   const appOf = APP_OF[id]
@@ -1169,12 +1255,17 @@ export function App() {
               methods:Methods, pairing:Pairing,
               students:ForStudents, parents:ForParents, pro:ForSchools,
               'heads-up': HeadsUpPage,
-              app:Launch,
+              /* Signed out, the app home; signed in, the three doors. */
+              app: me ? Launch : AppHome,
+              'app-home': AppHome,
               /* Start screen with nothing measured, dashboard with the worked
                  set behind it. */
               'app-student': StudentApp,
               'app-parent':  ParentApp,
               'app-pro':     ProApp,
+              /* "View Trends": the caseload dashboard in live mode, with
+                 nobody added yet. Pro.jsx draws its own empty state. */
+              'app-pro-trends': p => <Pro {...p}/>,
               /* The student screen with every reading on it, whichever mode. */
               monitor:       p => <Students {...p} tab="today"/>,
               reading:       p => <Students {...p} tab="check"/>,
@@ -1205,6 +1296,12 @@ export function App() {
               'toolkit-score':     () => <Toolkit who="parent" open="score"/>,
               'toolkit-rules':     () => <Toolkit who="parent" open="rules"/>,
               'toolkit-reach':     () => <Toolkit who="parent" open="reach"/>,
+              /* The Medical Professional set: always the pro shell. */
+              'toolkit-pro-opener':   () => <Toolkit who="pro" open="pro-opener"/>,
+              'toolkit-pro-triage':   () => <Toolkit who="pro" open="pro-triage"/>,
+              'toolkit-pro-ground':   () => <Toolkit who="pro" open="pro-ground"/>,
+              'toolkit-pro-parents':  () => <Toolkit who="pro" open="pro-parents"/>,
+              'toolkit-pro-referral': () => <Toolkit who="pro" open="pro-referral"/>,
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: p => <Calendar {...p} who={audience}/>,
               /* Accounts, kept on this device. */
@@ -1213,7 +1310,7 @@ export function App() {
               'account-section': p => <Account {...p} section={sectionOf(view)}/>,
               network:  Network }[id]
   return (
-    <>
+    <MotionConfig reducedMotion={motionPreference()}>
       {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
           and which leaves a keyboard user no hit area. */}
       <a href="#main"
@@ -1223,12 +1320,12 @@ export function App() {
           focus:translate-y-4">Skip to the main content</a>
       {/* The chooser, and the guided tour behind its fourth option. It owns its
           own fixed layers and its own session flag. */}
-      <Entry go={go} enabled={!admin}/>
+      <Entry go={go} enabled={!admin && !bare}/>
       {/* The name is only ever used to label a survey answer, so it is asked
           inside the survey now rather than across the whole site before anyone
           has seen anything. A full-screen panel between a first-time reader and
           the product is a cost paid by everybody to serve one page. */}
-      {!inApp && <Header view={view} go={go}/>}
+      {!inApp && !bare && <Header view={view} go={go}/>}
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
       {/* Nothing in here is clipped or transformed: a transform creates a
           containing block and breaks the sticky columns in the reading screen. */}
@@ -1242,11 +1339,11 @@ export function App() {
         </div>
         {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
         {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
-        {!admin && !inApp && view !== 'survey' && id !== 'heads-up' && <ReviewLauncher page={view}/>}
+        {!admin && !inApp && !bare && view !== 'survey' && id !== 'heads-up' && <ReviewLauncher page={view}/>}
         {/* The extra foot room under sm is load-bearing: the feedback pill is
             fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
         {/* Heads Up draws its own one-line footer, so the site footer stays off it. */}
-        {inApp ? <AppFoot/> : id === 'heads-up' ? null : (
+        {inApp ? <AppFoot/> : id === 'heads-up' || bare ? null : (
           <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
               <p className="max-w-[70ch] text-meta text-ink-3">MindMap measures body signals and shows patterns. It is not a
@@ -1263,6 +1360,6 @@ export function App() {
             sm:h-[calc(4rem+env(safe-area-inset-bottom))]"/>}
       </div>
       {inApp && <AppTabBar app={appOf} view={id} go={go}/>}
-    </>
+    </MotionConfig>
   )
 }

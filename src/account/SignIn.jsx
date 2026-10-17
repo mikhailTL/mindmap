@@ -3,13 +3,16 @@ import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
 import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
 import { PRO } from '../lib/terms'
-import { SETTINGS, createAccount, signIn, takePreferredRole, current } from './store'
-import { AvatarPicker, field, fieldError, outline, solid } from './ui'
+import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole } from './store'
+import { AvatarChooser, field, fieldError, outline, solid } from './ui'
+import { Settings } from './Settings'
 
 /* Sign in, or create an account.
  *
- * Two modes on one screen. Sign in wants a name or email and a passcode.
- * Create asks who you are (three tiles), then name, email, passcode, where
+ * Two modes on one screen. Sign in wants a name or email and a password.
+ * Create asks who you are (four tiles: the three audiences or Other), then
+ * name, email, password (8 or more characters; an old 4 to 6 digit passcode
+ * still signs in), where
  * a professional works, and a picture. A conventional form on purpose:
  * labels, autocomplete, the right keypad, one inline error, focus on the
  * first field at fault.
@@ -27,10 +30,18 @@ const ClipMark = p => (
   </svg>
 )
 
+const OtherMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
+    <circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>
+  </svg>
+)
+
 const TILES = [
   { role: 'student', label: 'Student', Mark: Person },
   { role: 'parent',  label: 'Parent',  Mark: People },
   { role: 'pro',     label: PRO,       Mark: ClipMark },
+  { role: 'other',   label: 'Other',   Mark: OtherMark },
 ]
 
 const ERROR = {
@@ -38,16 +49,19 @@ const ERROR = {
   name:     'The name field is empty. Fill it in.',
   email:    'Email is missing or not valid. Enter a working address.',
   setting:  'Nothing chosen under Where you work. Pick one.',
-  passcode: 'Passcode is missing or too short. Use 4 to 6 digits.',
+  passcode: 'Password is missing or too short. Use 8 or more characters.',
   taken:    'That name or email already has an account. Sign in instead.',
-  wrong:    'Wrong passcode. Try again.',
+  wrong:    'Wrong password. Try again.',
   locked:   'Five wrong tries. Wait fifteen minutes, then try again.',
   offline:  'No connection. Check your internet and try again.',
 }
 
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
-export function SignIn({ go, note }) {
+/* `after` is the route to open once signed in, for a screen that sent the
+   reader here (the network, answering an invite); without it, the app for
+   the account's role. `bare` leaves out the settings menu under the form. */
+export function SignIn({ go, note, after = null, bare = false }) {
   /* Arriving from the front door's chooser: Create, with that role pressed. */
   const preset = React.useMemo(() => takePreferredRole(), [])
   const [mode, setMode] = React.useState(preset ? 'create' : 'signin')
@@ -76,7 +90,7 @@ export function SignIn({ go, note }) {
     setBusy(true)
     const r = await createAccount({ role, name, passcode: pass, email, setting, avatar })
     setBusy(false)
-    if (r.ok) { setErr(null); go('app-' + r.account.role); return }
+    if (r.ok) { setErr(null); go(after || homeFor(r.account.role)); return }
     const at = { passcode: 'passcode', email: 'email', setting: 'setting', role: 'role' }[r.reason] || 'name'
     fail(at, r.reason)
   }
@@ -89,7 +103,7 @@ export function SignIn({ go, note }) {
     setBusy(true)
     const r = await signIn(name, pass)
     setBusy(false)
-    if (r === 'ok') { setErr(null); go('app-' + (current()?.role || 'student')); return }
+    if (r === 'ok') { setErr(null); go(after || homeFor(current()?.role)); return }
     fail('passcode', ERROR[r] ? r : 'wrong')
   }
 
@@ -102,10 +116,10 @@ export function SignIn({ go, note }) {
       <h2 className="font-display font-bold text-ink">{creating ? 'Create your account' : 'Welcome back'}</h2>
       {note && <p className="mt-1 text-fine text-ink-3">{note}</p>}
 
-      <div className="mt-3.5 grid gap-3 lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-4">
+      <div className="mt-3.5 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-4">
         {creating ? (
           <div role="radiogroup" aria-label="Who you are" aria-describedby={bad('role') && errId}
-            className="grid grid-cols-3 gap-2.5 self-start lg:grid-cols-1 lg:gap-3">
+            className="grid grid-cols-2 gap-2.5 self-start sm:grid-cols-4 lg:grid-cols-1 lg:gap-3">
             {TILES.map((t, i) => {
               const on = role === t.role
               return (
@@ -139,9 +153,9 @@ export function SignIn({ go, note }) {
           </div>
         )}
 
-        <form onSubmit={creating ? create : enter} noValidate>
+        <form onSubmit={creating ? create : enter} noValidate className="min-w-0">
           <Panel title={creating ? 'Your details' : 'Sign in'}>
-            <div className="grid gap-3 p-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
               <div className={cn(!creating && 'sm:col-span-2')}>
                 <label htmlFor="signin-name" className={labelClass}>{creating ? 'Name' : 'Name or email'}</label>
                 <input id="signin-name" ref={refs.name} type="text" value={name}
@@ -164,14 +178,16 @@ export function SignIn({ go, note }) {
                 </div>
               )}
               <div>
-                <label htmlFor="signin-pass" className={labelClass}>Passcode</label>
+                <label htmlFor="signin-pass" className={labelClass}>Password</label>
                 <input id="signin-pass" ref={refs.passcode} type="password" value={pass}
                   autoComplete={creating ? 'new-password' : 'current-password'}
-                  inputMode="numeric" pattern="[0-9]*" maxLength={6}
+                  maxLength={SECRET_MAX} spellCheck={false} autoCapitalize="none"
                   aria-invalid={bad('passcode')} aria-describedby={describe('passcode', 'signin-hint')}
-                  onChange={e => { setPass(e.target.value.replace(/\D/g, '')); if (bad('passcode')) setErr(null) }}
+                  onChange={e => { setPass(e.target.value); if (bad('passcode')) setErr(null) }}
                   className={cn(field, bad('passcode') && fieldError)}/>
-                <span id="signin-hint" className="mt-1 block text-fine text-ink-3">Use 4 to 6 digits.</span>
+                <span id="signin-hint" className="mt-1 block text-fine text-ink-3">
+                  {creating ? 'Use 8 or more characters.' : 'An old 4 to 6 digit passcode still works.'}
+                </span>
               </div>
               {creating && role === 'pro' && (
                 <div className="sm:col-span-2" role="radiogroup" aria-label="Where you work"
@@ -196,9 +212,9 @@ export function SignIn({ go, note }) {
                 </div>
               )}
               {creating && (
-                <div className="sm:col-span-2">
+                <div className="min-w-0 sm:col-span-2">
                   <span className={labelClass}>Picture</span>
-                  <AvatarPicker value={avatar} onChange={setAvatar} name={name} className="mt-1"/>
+                  <AvatarChooser value={avatar} onChange={setAvatar} name={name} className="mt-1"/>
                 </div>
               )}
             </div>
@@ -226,6 +242,7 @@ export function SignIn({ go, note }) {
           </Panel>
         </form>
       </div>
+      {!bare && <Settings me={null} go={go} className="mt-8 border-t border-rule pt-6"/>}
     </main>
   )
 }

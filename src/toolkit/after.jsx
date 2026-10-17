@@ -141,12 +141,15 @@ export function DidItWork({ tool, phase = 'after', className }) {
   return (
     <Sheet className={className}>
       {video}
-      <h3 className="font-display text-ui font-bold text-ink">Check Your Pulse</h3>
+      <h3 className="font-display text-ui font-bold text-ink">Did It Help?</h3>
 
       {state === 'idle' && (
         supported
-          ? <Button size="sm" className="mt-3" onClick={run}><Camera/>Check my pulse, {SECONDS} seconds</Button>
-          : <p className="mt-2 text-fine text-ink-3">No camera here.</p>
+          ? <>
+              <p className="mt-1 text-fine text-ink-2">Optional. A fingertip on the camera for {SECONDS} seconds.</p>
+              <Button size="sm" variant="outline" className="mt-3" onClick={run}><Camera/>Check my pulse</Button>
+            </>
+          : <p className="mt-2 text-fine text-ink-2">No camera here, so no pulse check.</p>
       )}
 
       {state === 'camera' && (

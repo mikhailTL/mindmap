@@ -192,7 +192,7 @@ export function Overview({ go }) {
 
           <div className="flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
             <ScrollIn as="p" className="mb-4 font-body text-ui font-semibold text-accent-ink">
-              A wellbeing app for teenagers
+              A wellness app for teenagers
             </ScrollIn>
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
                 1.06, not 1.02, where the descenders of "Making your stress"
@@ -203,7 +203,7 @@ export function Overview({ go }) {
               Making your stress <span className="text-accent">readable</span>.
             </h1>
             <ScrollIn as="p" className="mt-5 max-w-[30ch] text-lead font-medium leading-[1.3] text-ink">
-              MindMap is an app that helps teenagers track their stress.
+              The world’s only wearable patch and app system designed exclusively for adolescent wellness.
             </ScrollIn>
             <ScrollIn className="mt-4">
               <List>
@@ -216,7 +216,7 @@ export function Overview({ go }) {
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
               <Button onClick={() => { setMode('demo'); go('app-student') }}>Watch the demo<span aria-hidden>→</span></Button>
               <Button variant="ghost" className="min-h-[44px] px-0 sm:ml-3" onClick={toDifferent}>
-                What makes MindMap different
+                More than your typical stress monitoring app
               </Button>
             </ScrollIn>
           </div>

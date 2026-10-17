@@ -1,26 +1,32 @@
 import React from 'react'
 import { Light } from '../signals/light.js'
 import TeenPhone from './TeenPhone'
-import { ParentPhone } from './ParentReport'
+import { ParentPhone, SignalIcon } from './ParentReport'
 import { LampFace } from './Face'
 import { STATE_WORD } from './Parent'
 import { useHeadsUp } from './useHeadsUp'
-import { TYPING_KEYS } from './core'
+import { KEY_OF, RATE } from './core'
 import { cn } from '../lib/utils'
 
 /* The Heads Up tab. Three phones running at once: what the teen sees on the
- * left two, what the parent sees on the right. Nothing to press; it starts on
- * open and loops. Every light is the real engine's, from real key and scroll
- * events, on a 4x session clock. */
+ * two teen phones, what the parent sees on the third. Nothing to press; it
+ * starts on open and loops. The teen phones take turns: about three seconds
+ * of usual use, then the stressed use until the light is red, a hold on that
+ * moment, then the other phone. The phone in its turn gets a ring once the
+ * stressed use starts, with the signals called out under it; the other teen
+ * phone dims. Every light is the real engine's, from real key and scroll
+ * events, on a faster session clock.
+ *
+ * Every layout is symmetric about the column's centre line: equal tracks,
+ * equal gaps, captions under the phones and never beside them, so the phones
+ * sit exactly in the middle at every width. */
 
 const PHONE_W = 413
 const PHONE_H = 872
-
-/* where each signal comes from, as a fraction of the drawn phone */
-const TARGET = {
-  typing: { x: 0.3, y: 0.665 },
-  scrolling: { x: 0.68, y: 0.4 },
-}
+const PHONE_R = 65
+const RING_GAP = 9
+const RING = '0 0 0 3px #1d8fb0, 0 0 32px 6px rgba(29,143,176,0.32)'
+const TITLE = { texting: 'Texting', scrolling: 'Scrolling videos' }
 
 function useWidth(ref) {
   const [w, setW] = React.useState(0)
@@ -37,86 +43,59 @@ function useWidth(ref) {
   return w
 }
 
-/* Row when three phones and two label margins fit; a stack otherwise. */
-function layoutFor(W) {
-  const g = 28, G = 44
-  if (W >= 900) {
-    const L = W >= 1180 ? 176 : 140
-    const s = Math.max(0.42, Math.min(0.66, (W - 2 * L - g - G) / (3 * PHONE_W)))
-    return { row: true, L, g, G, s, font: W >= 1180 ? 24 : 20 }
-  }
-  const L = Math.round(Math.min(156, Math.max(104, W * 0.31)))
-  const s = Math.max(0.4, Math.min(0.62, (W - L - 10) / PHONE_W))
-  return { row: false, L, s, font: W >= 600 ? 20 : 16 }
-}
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
-/* The callout: a bold label in the margin and an arrow drawn from it, from
-   outside the phone, to the place the signal comes from. */
-function Callout({ c, side, L, P, H, font, reduced }) {
-  if (!c) return null
-  const where = TYPING_KEYS.has(c.key) ? TARGET.typing : TARGET.scrolling
-  const x0 = side === 'left' ? L : 0
-  const E = { x: x0 + P * where.x, y: H * where.y }
-  const labelW = L - 18
-  const labelTop = Math.max(0, E.y - 128)
-  /* the arrow leaves from under the label, at the end nearer the phone */
-  const lines = Math.max(1, Math.ceil((c.label.length * font * 0.56) / labelW))
-  const below = labelTop + lines * font * 1.12 + 8
-  const S = side === 'left' ? { x: labelW - 14, y: below } : { x: P + 18 + 14, y: below }
-  const C1 = { x: S.x, y: E.y }
-  const ang = Math.atan2(E.y - C1.y, E.x - C1.x)
-  const head = 13
-  const h1 = { x: E.x - head * Math.cos(ang - 0.5), y: E.y - head * Math.sin(ang - 0.5) }
-  const h2 = { x: E.x - head * Math.cos(ang + 0.5), y: E.y - head * Math.sin(ang + 0.5) }
-  const d = `M${S.x} ${S.y} Q${C1.x} ${C1.y} ${E.x} ${E.y}`
-  const hd = `M${h1.x} ${h1.y} L${E.x} ${E.y} L${h2.x} ${h2.y}`
-  return (
-    <>
-      <p key={c.id} className="pointer-events-none absolute z-20 m-0 font-display font-bold leading-[1.12] tracking-[-0.01em] text-ink"
-        style={{ top: labelTop, left: side === 'left' ? 0 : P + 18, width: labelW, fontSize: font,
-          textAlign: side === 'left' ? 'right' : 'left', animation: 'hu-label 220ms ease-out both' }}>
-        {c.label}
-      </p>
-      <svg key={`${c.id}-a`} aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-visible" width="100%" height="100%">
-        <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d={d} stroke="#fff" strokeWidth="7" pathLength="1" strokeDasharray="1"
-            style={reduced ? undefined : { strokeDashoffset: 1, animation: 'hu-draw 420ms cubic-bezier(0.23,1,0.32,1) forwards' }}/>
-          <path d={d} stroke="#0d2b1e" strokeWidth="3" pathLength="1" strokeDasharray="1"
-            style={reduced ? undefined : { strokeDashoffset: 1, animation: 'hu-draw 420ms cubic-bezier(0.23,1,0.32,1) forwards' }}/>
-          <path d={hd} stroke="#fff" strokeWidth="7" style={reduced ? undefined : { opacity: 0, animation: 'hu-label 120ms 360ms ease-out forwards' }}/>
-          <path d={hd} stroke="#0d2b1e" strokeWidth="3" style={reduced ? undefined : { opacity: 0, animation: 'hu-label 120ms 360ms ease-out forwards' }}/>
-        </g>
-      </svg>
-    </>
-  )
+/* Three across when they fit, the two teen phones side by side over the
+   parent's when two fit, one column otherwise. */
+function layoutFor(W) {
+  if (W >= 900) {
+    const g = W >= 1180 ? 56 : 40
+    return { cols: 3, g, s: clamp((W - 2 * g) / (3 * PHONE_W), 0.42, 0.66) }
+  }
+  if (W >= 560) {
+    const g = 32
+    return { cols: 2, g, s: clamp((W - g) / (2 * PHONE_W), 0.4, 0.62) }
+  }
+  return { cols: 1, g: 0, s: clamp((W - 2 * RING_GAP - 8) / PHONE_W, 0.4, 0.62) }
 }
 
 function StateLine({ light }) {
   return (
-    <span className="inline-flex items-center gap-2" aria-live="polite">
+    <span className="inline-flex items-center gap-2">
       <LampFace light={light} size={20}/>
       <span className="font-body text-ui font-semibold text-ink-2">{STATE_WORD[light] || STATE_WORD[Light.GREEN]}</span>
     </span>
   )
 }
 
-function TeenFigure({ kind, side, lay, hu, label }) {
-  const P = PHONE_W * lay.s, H = PHONE_H * lay.s
-  const x0 = side === 'left' ? lay.L : 0
-  const light = hu.teen[kind]
+function TeenFigure({ kind, s, hu, label }) {
+  const P = PHONE_W * s
+  const phase = hu.phase[kind]
+  const lit = phase === 'stress' || phase === 'detected'
+  const dim = hu.focus != null && hu.focus !== kind
+  const fade = hu.reduced ? undefined : 'opacity 400ms ease, filter 400ms ease'
   return (
-    <figure className="m-0" style={{ width: lay.L + P }}>
-      <div className="relative" style={{ height: H }}>
-        <div className="absolute top-0" style={{ left: x0 }}>
-          <TeenPhone kind={kind} scale={lay.s} viewRef={hu.views[kind]} sessionRef={hu.sessions[kind]} clock={hu.clock}
+    <figure className="m-0" style={{ width: P }} data-phone={kind}>
+      <div className="relative" style={{ width: P, height: PHONE_H * s }}>
+        <span aria-hidden className="pointer-events-none absolute"
+          style={{ inset: -RING_GAP, borderRadius: PHONE_R * s + RING_GAP, boxShadow: RING, opacity: lit ? 1 : 0, transition: fade }}/>
+        <div style={{ opacity: dim ? 0.6 : 1, filter: dim ? 'saturate(0.6)' : 'none', transition: fade }}>
+          <TeenPhone kind={kind} scale={s} viewRef={hu.views[kind]} sessionRef={hu.sessions[kind]} clock={hu.clock}
             reduced={hu.reduced} label={label}/>
         </div>
-        <Callout c={hu.callouts[kind]} side={side} L={lay.L} P={P} H={H} font={lay.font} reduced={hu.reduced}/>
-        <p className="sr-only" aria-live="polite">{hu.callouts[kind]?.label || ''}</p>
       </div>
-      <figcaption className="mt-3 flex flex-col items-center gap-1 text-center" style={{ marginLeft: x0, width: P }}>
-        <span className="font-display text-row font-bold text-ink">{kind === 'texting' ? 'Texting' : 'Scrolling videos'}</span>
-        <StateLine light={light}/>
+      <figcaption className="mt-4 flex flex-col items-center gap-1 text-center">
+        <span className="font-display text-row font-bold text-ink">{TITLE[kind]}</span>
+        <StateLine light={hu.teen[kind]}/>
+        <ul aria-live="polite" aria-label={`Signals on the ${TITLE[kind].toLowerCase()} phone`}
+          className="m-0 mt-1.5 flex min-h-[3.5rem] list-none flex-col items-center gap-1 p-0">
+          {hu.detected[kind].map(l => (
+            <li key={l} className="flex items-center gap-2 font-body text-ui font-semibold leading-snug text-ink"
+              style={hu.reduced ? undefined : { animation: 'hu-label 220ms ease-out both' }}>
+              <span className="shrink-0 text-beam-ink"><SignalIcon k={KEY_OF[l]} size={18}/></span>{l}
+            </li>
+          ))}
+        </ul>
       </figcaption>
     </figure>
   )
@@ -139,39 +118,40 @@ function Stage() {
   const hu = useHeadsUp()
   const lay = layoutFor(W || 1200)
   const P = PHONE_W * lay.s
+  const texting = <TeenFigure kind="texting" s={lay.s} hu={hu} label="The teen's phone, texting"/>
+  const scrolling = <TeenFigure kind="scrolling" s={lay.s} hu={hu} label="The teen's phone, scrolling videos"/>
   const parent = (
-    <figure className="m-0" style={{ width: P }}>
+    <figure className="m-0" style={{ width: P }} data-phone="parent">
       <ParentPhone {...hu.parent} scale={lay.s} reduced={hu.reduced}/>
     </figure>
   )
   return (
-    <div ref={ref} className="w-full">
-      <style>{`@keyframes hu-draw{to{stroke-dashoffset:0}}@keyframes hu-label{from{opacity:0}to{opacity:1}}`}</style>
-      {lay.row ? (
+    <div ref={ref} className="w-full" data-stage>
+      <style>{`@keyframes hu-label{from{opacity:0}to{opacity:1}}`}</style>
+      {lay.cols === 3 ? (
         <div className="grid justify-center"
-          style={{ gridTemplateColumns: `${lay.L}px ${P}px ${lay.g}px ${P}px ${lay.L}px ${lay.G}px ${P}px`, rowGap: 22 }}>
-          <Heading style={{ gridColumn: '2 / 5', gridRow: 1 }}>What the teen sees</Heading>
-          <Heading style={{ gridColumn: '7 / 8', gridRow: 1 }}>What the parent sees</Heading>
-          <div style={{ gridColumn: '1 / 3', gridRow: 2 }}>
-            <TeenFigure kind="texting" side="left" lay={lay} hu={hu} label="The teen's phone, texting"/>
-          </div>
-          <div style={{ gridColumn: '4 / 6', gridRow: 2 }}>
-            <TeenFigure kind="scrolling" side="right" lay={lay} hu={hu} label="The teen's phone, scrolling videos"/>
-          </div>
-          <div style={{ gridColumn: '7 / 8', gridRow: 2 }}>{parent}</div>
+          style={{ gridTemplateColumns: `repeat(3, ${P}px)`, columnGap: lay.g, rowGap: 22 }}>
+          <Heading style={{ gridColumn: '1 / 3', gridRow: 1 }}>What the teen sees</Heading>
+          <Heading style={{ gridColumn: '3 / 4', gridRow: 1 }}>What the parent sees</Heading>
+          <div style={{ gridColumn: 1, gridRow: 2 }}>{texting}</div>
+          <div style={{ gridColumn: 2, gridRow: 2 }}>{scrolling}</div>
+          <div style={{ gridColumn: 3, gridRow: 2 }}>{parent}</div>
         </div>
       ) : (
         <div className="flex flex-col items-center">
           <Heading>What the teen sees</Heading>
-          <div className="mt-6 flex flex-col items-center gap-10">
-            <TeenFigure kind="texting" side="left" lay={lay} hu={hu} label="The teen's phone, texting"/>
-            <TeenFigure kind="scrolling" side="left" lay={lay} hu={hu} label="The teen's phone, scrolling videos"/>
-          </div>
-          <Heading className="mt-14">What the parent sees</Heading>
+          {lay.cols === 2 ? (
+            <div className="mt-6 grid justify-center" style={{ gridTemplateColumns: `repeat(2, ${P}px)`, columnGap: lay.g }}>
+              {texting}{scrolling}
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col items-center gap-8">{texting}{scrolling}</div>
+          )}
+          <Heading className="mt-10">What the parent sees</Heading>
           <div className="mt-6">{parent}</div>
         </div>
       )}
-      <p className="mx-auto mt-8 text-center font-body text-meta text-ink-2">Time runs 4x faster here.</p>
+      <p className="mx-auto mt-8 text-center font-body text-meta text-ink-2">Time runs {RATE}x faster here.</p>
     </div>
   )
 }

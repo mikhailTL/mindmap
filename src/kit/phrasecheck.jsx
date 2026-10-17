@@ -98,7 +98,7 @@ function Rulebook({ hits }) {
   const on = new Set(hits.map(h => h.label))
   let n = -1
   return (
-    <div className="mt-3 rounded-panel border-2 border-ink bg-card p-3.5">
+    <div className="mt-3 rounded-[18px] border border-rule bg-card p-3.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
         <Readout n={hits.length} unit={hits.length === 1 ? 'phrasing matched' : 'phrasings matched'}/>
         <Readout n={PATTERNS.length} unit="on the list"/>

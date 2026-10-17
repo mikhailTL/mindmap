@@ -133,6 +133,60 @@ describe('profile and passcode', () => {
   })
 })
 
+describe('passwords, the Other role and every picture', () => {
+  it('takes a password of 8 or more characters and still takes a 4 to 6 digit passcode', async () => {
+    const r = await create({ passcode: 'correct horse 9!' })
+    expect(r.body.ok).toBe(true)
+    expect(JSON.stringify(r.body)).not.toContain('correct horse')
+    expect((await call('signin', { who: 'Dana', passcode: 'correct horse 9!' })).body.ok).toBe(true)
+    expect((await call('signin', { who: 'Dana', passcode: 'correct horse 9' })).body.reason).toBe('wrong')
+    const old = await create({ name: 'Kim', email: 'kim@example.com', passcode: '4321' })
+    expect(old.body.ok).toBe(true)
+    expect((await call('signin', { who: 'Kim', passcode: '4321' })).body.ok).toBe(true)
+  })
+  it('refuses a secret of 7 characters, 7 digits, letters under 8, or over 128', async () => {
+    for (const passcode of ['abcdefg', '1234567', 'abcd', '12', 'x'.repeat(129), '']) {
+      expect((await create({ passcode })).body, passcode).toMatchObject({ ok: false, reason: 'passcode' })
+    }
+  })
+  it('changes a passcode to a password only with the old one, and refuses a short one', async () => {
+    const { body } = await create()
+    expect((await call('passcode', { old: '1234', next: 'short' }, body.token)).body.reason).toBe('invalid')
+    expect((await call('passcode', { old: '0000', next: 'longer password' }, body.token)).body.reason).toBe('wrong')
+    expect((await call('passcode', { old: '1234', next: 'longer password' }, body.token)).body.ok).toBe(true)
+    expect((await call('signin', { who: 'Dana', passcode: '1234' })).body.ok).toBe(false)
+    expect((await call('signin', { who: 'Dana', passcode: 'longer password' })).body.ok).toBe(true)
+  })
+  it('a long wrong password still counts toward the lock', async () => {
+    await create({ passcode: 'a good password' })
+    for (let i = 0; i < 5; i++) await call('signin', { who: 'Dana', passcode: 'y'.repeat(500) })
+    expect((await call('signin', { who: 'Dana', passcode: 'a good password' })).body.reason).toBe('locked')
+  })
+  it('makes an Other account that needs an email and can never link to anyone', async () => {
+    expect((await create({ role: 'other', name: 'Robin', email: '' })).body.reason).toBe('email')
+    const other = (await create({ role: 'other', name: 'Robin', email: 'robin@example.com' })).body
+    expect(other.ok).toBe(true)
+    expect(other.snapshot.me.role).toBe('other')
+    const parent = (await create()).body
+    await call('invite', {}, parent.token)
+    const code = (await call('me', {}, parent.token)).body.snapshot.invite.code
+    expect((await call('redeem', { code }, other.token)).body.reason).toBe('role')
+    await call('invite', {}, other.token)
+    const mine = (await call('me', {}, other.token)).body.snapshot
+    expect((await call('redeem', { code: mine.invite.code }, parent.token)).body.reason).toBe('role')
+    expect(mine.people).toEqual([])
+    expect(mine.links).toEqual([])
+    expect(mine.approvals).toEqual([])
+  })
+  it('keeps any picture on the client list, and nothing else', async () => {
+    const { body } = await create({ avatar: 'pat-stripes-ember' })
+    expect(body.snapshot.me.avatar).toBe('pat-stripes-ember')
+    expect((await call('update', { avatar: 'emo-rocket' }, body.token)).body.snapshot.me.avatar).toBe('emo-rocket')
+    expect((await call('update', { avatar: 'sym-not-a-shape' }, body.token)).body.snapshot.me.avatar).toBe('emo-rocket')
+    expect((await call('update', { avatar: 'fox' }, body.token)).body.snapshot.me.avatar).toBe('fox')
+  })
+})
+
 describe('invitations and links', () => {
   async function trio() {
     const parent = (await create()).body

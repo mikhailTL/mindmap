@@ -3,10 +3,13 @@
  *
  * One session per teen phone: real key and scroll events in, the engine in
  * signals/light.js turns the last minute into features, an index, a light and
- * the signals that are showing. The session clock runs four times faster than
- * the wall so red, which needs a sustained minute, arrives in fifteen seconds
- * of watching. Key and scroll timestamps stay on the wall, so a speed or a
- * gap is the real one.
+ * the signals that are showing. The session clock runs six times faster than
+ * the wall so red, which needs a sustained minute, arrives ten seconds after
+ * the index first reaches red. Key and scroll timestamps stay on the wall, so
+ * a speed or a gap is the real one.
+ *
+ * The two teen phones take turns: one scene plays while the other phone sits
+ * on its usual screen, so only one phone is ever stressed at a time.
  *
  * The scripts are generators. A script yields a wait in ms, or a test that is
  * polled until true. They drive a `view`, which is either the drawn phone or
@@ -16,21 +19,20 @@ import {
   Light, sessionFeatures, strainIndex, decideLight, nudgeFor, signalsFrom, SIGNAL, parentSummary,
 } from '../signals/light.js'
 
-export const RATE = 4
-export const TICK_MS = 2000
+export const RATE = 6
+export const TICK_MS = 1000
 export const WINDOW_MS = 60 * 1000
 export const RING = 400
 export const SAMPLE_MS = 100
 export const SWIPE_GAP_MS = 400
 export const MIN_SWIPES = 2
 export const SLIDE_H = 852
-export const PAUSE_MS = 2000
-export const BANNER_HOLD_MS = 4000
-export const LOOP_MS = 104 * 1000
-export const STAGGER_MS = 52 * 1000
-export const WALK_SECS = 120
-export const WALK_STEPS = 212
-export const REACTION_MS = [243, 229, 251]
+export const PAUSE_MS = 1500
+export const BANNER_HOLD_MS = 3000
+/* one turn per phone: a scene of about twenty seconds and a short gap */
+export const TURN_MS = 23 * 1000
+export const LOOP_MS = 2 * TURN_MS
+export const STAGGER_MS = TURN_MS
 
 /* feature key for each label, so a label can be traced to where it comes from */
 export const KEY_OF = Object.freeze(Object.fromEntries(Object.entries(SIGNAL).map(([k, v]) => [v, k])))
@@ -58,7 +60,7 @@ export function ring(size) {
   }
 }
 
-/* The page's clock: 4x, starting at 9:38 pm on the viewer's own day. */
+/* The page's clock: RATE times the wall, starting at 9:38 pm on the viewer's own day. */
 export function makeClock(rate = RATE) {
   const t0 = Date.now()
   const d = new Date(t0); d.setHours(21, 38, 0, 0)
@@ -199,105 +201,81 @@ export function scroller(getY, setY) {
 
 /* ── the scripts ───────────────────────────────────────────────────────── */
 
+/* Each scene is short: about three seconds of usual use while the light is
+   green, then the stressed use the engine measures, until the light is red
+   and the notification is up. The phone holds on that moment, then starts
+   over. */
+export const CALM_MS = 3000
+
 const CALM_PACE = { gap: 240, jit: 70, space: 50, del: 240 }
 const HOT_PACE = { gap: 82, jit: 34, space: 8, del: 58 }
 
+/* Hot keys stop the moment the notification is up. */
+const flagged = v => v.bannerAge() >= 0
 function* typeText(v, text, p, rnd) {
-  for (const c of text) { v.key(c, false); yield Math.round(p.gap + (rnd() - 0.5) * p.jit + (c === ' ' ? p.space : 0)) }
+  for (const c of text) {
+    if (p === HOT_PACE && flagged(v)) return
+    v.key(c, false); yield Math.round(p.gap + (rnd() - 0.5) * p.jit + (c === ' ' ? p.space : 0))
+  }
 }
 function* erase(v, n, p, rnd) {
-  for (let i = 0; i < n; i++) { v.key(null, true); yield Math.round(p.del + (rnd() - 0.5) * p.jit * 0.5) }
+  for (let i = 0; i < n; i++) {
+    if (flagged(v)) return
+    v.key(null, true); yield Math.round(p.del + (rnd() - 0.5) * p.jit * 0.5)
+  }
 }
 function* incoming(v, text, ms) { v.typing(true); yield ms; v.typing(false); v.receive(text) }
 
-/* The banner holds about four seconds, "Take a break" is pressed, the
-   "Take 2 minutes" sheet opens and this phone's activity runs. */
-function* breakFlow(v, s, kind) {
+/* Red, and the notification is showing: hold on it, then start over. */
+function* detected(v, s) {
+  yield () => flagged(v)
+  v.mark('detected')
+  v.freeze(true)
   yield () => v.bannerAge() >= BANNER_HOLD_MS
-  v.mark('break')
-  v.pressAction()
-  yield 520
   v.hideBanner()
-  v.openSheet()
-  yield 1700
-  v.pick(kind === 'react' ? 'react' : 'walk')
-  yield 650
-  v.startActivity(kind)
-  yield 500
-  if (kind === 'react') {
-    for (let i = 0; i < REACTION_MS.length; i++) {
-      v.reaction({ trial: i, phase: 'wait' })
-      yield 1400
-      v.reaction({ trial: i, phase: 'tap', ms: REACTION_MS[i] })
-      yield 1200
-    }
-    v.endCard('Best 229 ms. Quicker than your usual 262.')
-  } else {
-    /* the walk runs on the session clock: two minutes in thirty seconds */
-    const total = (WALK_SECS * 1000) / RATE
-    const stepMs = 250
-    for (let t = 0; t <= total; t += stepMs) {
-      const p = t / total
-      v.walk({ steps: Math.round(WALK_STEPS * p), secs: Math.round(WALK_SECS * p) })
-      yield stepMs
-    }
-    v.endCard('212 steps in 2 minutes.')
-  }
-  yield 2400
-  v.showBack(kind === 'react' ? 'Back to Messages' : 'Back to videos')
-  yield 1100
-  v.pressBack()
-  yield 450
-  v.closeSheet()
+  yield 420
+  v.freeze(false)
   s.reset()
   v.fresh()
   v.mark('done')
 }
 
+/* The thread a fresh Messages screen opens on. */
+export const TEXT_SEED = Object.freeze([
+  { me: false, text: 'u free saturday?' },
+  { me: true, text: "yeah what's up" },
+  { me: false, text: 'beach with sam and ellie, leaving at 10' },
+])
+
+/* What the teen does once it turns: typing fast, deleting, retyping. */
+const TEXT_STRESS = [
+  ['in', "did u see maya's story", 700], ['in', 'she said she invited you??', 650],
+  ['type', "she didn't"], ['erase', 10], ['type', 'i never got'], ['erase', 11],
+  ['type', 'wait who was there'], ['send'],
+  ['in', 'literally everyone', 600], ['in', 'also the chem lab is due at 8 tomorrow', 700],
+  ['type', "i haven't even started"], ['erase', 22], ['type', 'how is it due tomorrow'], ['erase', 22],
+  ['type', "i can't do this rn"], ['send'],
+]
+const TEXT_AGAIN = [['type', 'why does everyone'], ['erase', 17], ['type', 'ok whatever'], ['erase', 11]]
+
 export function* textingLoop(v, s, rnd) {
   v.fresh()
   v.mark('calm')
-  yield 600
-  yield* incoming(v, 'u free saturday?', 1500)
-  yield 1500
-  yield* typeText(v, "yeah what's up", CALM_PACE, rnd)
-  yield 500; v.send()
-  yield 800
-  yield* incoming(v, 'beach with sam and ellie, leaving at 10', 2000)
-  yield 1600
-  yield* typeText(v, "down. i'll bring snacks", CALM_PACE, rnd)
-  yield 500; v.send()
-  yield 700
-  yield* incoming(v, 'perfect', 1100)
-  yield 3000
+  yield 300
+  yield* typeText(v, 'sounds good', CALM_PACE, rnd)
+  yield 300; v.send()
+  yield 200
   v.mark('stress')
-  yield* incoming(v, "did u see maya's story", 1300)
-  yield 450
-  yield* incoming(v, 'everyone was at her place last night', 1000)
-  yield 350
-  yield* incoming(v, 'she said she invited you??', 900)
-  yield 500
-  yield* typeText(v, "she didn't", HOT_PACE, rnd); yield 320
-  yield* erase(v, 10, HOT_PACE, rnd); yield 260
-  yield* typeText(v, 'i never got', HOT_PACE, rnd); yield 320
-  yield* erase(v, 11, HOT_PACE, rnd); yield 260
-  yield* typeText(v, 'wait who was there', HOT_PACE, rnd)
-  yield 160; v.send()
-  yield 500
-  yield* incoming(v, 'literally everyone', 800)
-  yield 300
-  yield* incoming(v, 'also the chem lab is due at 8 tomorrow', 1100)
-  yield 300
-  yield* incoming(v, 'mr. patel said no extensions', 900)
-  yield 400
-  yield* typeText(v, "i haven't even started", HOT_PACE, rnd); yield 300
-  yield* erase(v, 22, HOT_PACE, rnd); yield 240
-  yield* typeText(v, 'how is it due tomorrow', HOT_PACE, rnd); yield 300
-  yield* erase(v, 22, HOT_PACE, rnd); yield 240
-  yield* typeText(v, "i can't do this rn", HOT_PACE, rnd)
-  yield 160; v.send()
-  v.mark('sent-last')
-  yield* breakFlow(v, s, 'react')
+  const run = function* (step) {
+    const [op, a, b] = step
+    if (op === 'in') { yield* incoming(v, a, b); yield 180 }
+    else if (op === 'type') { yield* typeText(v, a, HOT_PACE, rnd); yield 240 }
+    else if (op === 'erase') { yield* erase(v, a, HOT_PACE, rnd); yield 200 }
+    else { v.send(); yield 260 }
+  }
+  for (const step of TEXT_STRESS) { if (flagged(v)) break; yield* run(step) }
+  for (let i = 0; !flagged(v); i++) yield* run(TEXT_AGAIN[i % TEXT_AGAIN.length])
+  yield* detected(v, s)
 }
 
 /* The feed, in order. Five calm clips, then the six that do the damage. */
@@ -315,18 +293,19 @@ export const CLIPS = Object.freeze([
   { id: '4537', handle: '@maya.r', caption: 'round two tonight', likes: '1,240', comments: '173', shares: '44', c: '#7a5cf0' },
 ])
 
-const CALM_FEED = 5
 const FLICK_MS = 170, PEEK_MS = 140, PEEK = 0.3, BEAT_MS = 1000
-/* back to 4606 (5) twice and to 46893 (8) more than twice */
-export const STRESS_PATH = [5, 6, 7, 6, 5, 6, 7, 8, 9, 8, 9, 10, 9, 8, 7, 6, 5, 6, 7, 8, 9, 8, 9, 10]
+/* One gentle swipe while green, then flicking back and forth through the
+   feed: back to 4606 (5) twice and to 46893 (8) more than twice. */
+export const STRESS_PATH = [2, 1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 5, 6, 7, 8, 7, 8, 9, 8, 9, 10, 9, 8, 7, 6, 5, 6, 7, 8, 9, 10]
 
 export function* scrollingLoop(v, s, rnd) {
   v.fresh()
   v.mark('calm')
-  yield 4000
-  for (let i = 1; i < CALM_FEED; i++) { v.go(i, 460, 'gentle'); yield 4000 }
+  yield 1500
+  v.go(1, 460, 'gentle')
+  yield CALM_MS - 1500
   v.mark('stress')
-  let prev = CALM_FEED - 1
+  let prev = 1
   const beat = function* (idx) {
     const d = Math.sign(idx - prev) || 1
     prev = idx
@@ -337,17 +316,18 @@ export function* scrollingLoop(v, s, rnd) {
     yield Math.round(BEAT_MS - FLICK_MS - 200 + rnd() * 160)
   }
   for (const idx of STRESS_PATH) {
-    if (v.bannerAge() >= 0) break
+    if (flagged(v)) break
     yield* beat(idx)
   }
   let k = 0
-  while (v.bannerAge() < 0) yield* beat(k++ % 2 ? 10 : 9)
-  yield* breakFlow(v, s, 'walk')
+  while (!flagged(v)) yield* beat(k++ % 2 ? 10 : 9)
+  yield* detected(v, s)
 }
 
-/* Runs a script forever. Loop k starts at base + k * period. `hold(ms)`
-   freezes the script where it is and moves every later loop by the same
-   amount, so a pause never shortens the next loop. */
+/* Runs a script forever. Loop k starts at base + k * period, or as soon as
+   loop k - 1 ends if that is later. `hold(ms)` freezes the script where it
+   is; later loops keep their start, so two phones on the same period keep
+   taking turns. */
 export function runLoop(make, { offset = 0, period = LOOP_MS } = {}) {
   let base = Date.now() + offset
   let k = 0, gen = null, timer = 0, due = 0, pending = null, stopped = false
@@ -371,7 +351,7 @@ export function runLoop(make, { offset = 0, period = LOOP_MS } = {}) {
   }
   at(base, begin)
   return {
-    hold(ms) { base += ms; if (pending) at(Math.max(due, Date.now()) + ms, pending) },
+    hold(ms) { if (pending) at(Math.max(due, Date.now()) + ms, pending) },
     stop() { stopped = true; clearTimeout(timer) },
     loop: () => k,
   }
@@ -435,9 +415,7 @@ export function headlessView(kind, getSession) {
     send: noop, typing: noop, receive: noop,
     go(idx, ms, k) { sc.to(idx * SLIDE_H, ms, k === 'flick' ? OUT_CUBIC : IOS_CURVE) },
     fresh() { if (kind === 'scrolling') { sc.stop(); y = 0 } },
-    showBanner: noop, hideBanner: noop, pressAction: noop,
-    openSheet: noop, pick: noop, startActivity: noop, reaction: noop, walk: noop,
-    endCard: noop, showBack: noop, pressBack: noop, closeSheet: noop,
+    showBanner: noop, hideBanner: noop,
     freeze: noop, mark: noop, dispose() { sc.stop() },
   }
 }

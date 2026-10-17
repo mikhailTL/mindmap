@@ -24,20 +24,29 @@ import { BAND, CROSSED, PEAK, READ, TAKEN_AT, TODAY, TODAY_SHORT, USUAL,
   WBAND, WEEK, WEEK_COUNT, clock12 } from './reading/demo'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
+import { daySentence } from './student/sentence'
+import { Welcome } from './student/Welcome'
+import { HeadsUpCard } from './student/HeadsUpCard'
+import { Trends } from './student/Trends'
+import { TEEN } from './student/demoTeen'
 
 /* The student app's Today screen, and the shell the three student tabs sit in.
  *
- * 16 OCTOBER, simplicity run. The screen is:
+ * 17 OCTOBER, the owner's editor prompt. The screen is:
  *
- *   1. ONE CARD with the sentence and the dial, and beside it at 1280 the
- *      four live channels. At 390 the channels drop under the card. Tapping a
- *      ring on the dial opens that signal's working under the dial. Every
- *      sentence is ten words or fewer; the working behind the sentence is
- *      behind a "?".
- *   2. The settle card.
- *   3. ONE `See details` DISCLOSURE, collapsed, holding what moved the
- *      score, the day, the week, reach, what works, how today felt and who
- *      sees what, in two columns at 1280.
+ *   1. "Welcome, <first name>", from the signed-in account (the demo teen's
+ *      name in the demo with nobody signed in).
+ *   2. ONE CARD with the dial and, under it, the sentence about calm and
+ *      stress against the teen's own usual (src/views/student/sentence.js).
+ *      Tapping a ring opens that signal's working; the figures are behind
+ *      the "?".
+ *   3. Heads Up, the teen's own light for today and the week, then the four
+ *      live channels. At 1280 these two sit beside the dial card.
+ *   4. ONE `See details` DISCLOSURE, collapsed: the settle card, what moved
+ *      the score, the day, the week, reach, what works, how today felt and
+ *      who sees what.
+ *   5. Trends: a month calendar and a date range over the demo teen's ninety
+ *      days, with the body's readings by source and Heads Up for the range.
  *
  * No narrow column: the content runs the width of the app shell.
  *
@@ -55,12 +64,7 @@ import { SCORE } from '../lib/terms'
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
                'eight', 'nine', 'ten']
 const word = n => WORDS[n] ?? String(n)
-const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
 const pct = n => `${Math.round(n * 100)}%`
-
-/* Tier bar beside the band word. Colour is never the only carrier: the word is
-   the state, and the dial marks the reader's own usual day on the scale. */
-const TIER_BAR = { low:'bg-calm', usual:'bg-calm', up:'bg-warn', high:'bg-crit' }
 
 const nameOf = r => SENSORS[r.id]?.name || r.name || ''
 /* How far a signal sits above the top of its own normal band. Negative means
@@ -80,67 +84,21 @@ function direction(r) {
 
 /* ── The one sentence ───────────────────────────────────────────────────── */
 
-/* Design spec section 7c. The screen used to lead with "Today is 51, five
-   above a usual 46, with heart furthest above its own normal", which is three
-   numbers and is not a sentence anybody reads about their own day.
+/* The owner, 17 October: the sentence talks about calm and stress against
+   the teen's own usual, never the number. It is generated in
+   src/views/student/sentence.js from the same day series and usual band the
+   rest of the screen draws, and tested there for clinical words.
  *
- * What replaces it is plain, second person, and carries no figure. It is also
- * about the BODY and never about a feeling: MindMap measures four physical
- * signals and has never measured anxiety, mood or how a day felt, so a line
- * like "you are more anxious than usual" would be a claim this product cannot
- * make. Every branch below is generated from the same rings, normal band and
- * day series the rest of the screen draws, so the sentence stays true when the
- * data changes rather than being typed in beside it. */
-
-const HOURS = ['twelve', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
-               'eight', 'nine', 'ten', 'eleven']
-
-/* "14:00" to "about two in the afternoon". Rounded to the hour on purpose: a
-   reader is being told roughly when their day turned, not given a timestamp,
-   and the exact clock time is printed under the day chart. */
-function hourWords(t) {
-  const [h, m] = String(t).split(':').map(Number)
-  if (!Number.isFinite(h)) return 'earlier today'
-  const near = (m >= 30 ? h + 1 : h) % 24
-  const part = near < 12 ? 'this morning' : near < 17 ? 'this afternoon' : 'this evening'
-  return `around ${HOURS[near % 12]} ${part}`
-}
-
-/* How far above its own normal, in words rather than in standard deviations,
-   which is what the quieter second line owes a sixteen year old. */
+ * The quieter working behind the "?" still names the body: which of the four
+ * signals moved most, in words rather than standard deviations. */
 const amountWords = n => (n >= 10 ? 'well above its own normal'
   : n >= 4 ? 'above its own normal' : 'just above its own normal')
 
-function heroFor({ tier, rings, day, band, crossed }) {
+function signalNote(rings) {
   const top = topSignal(rings)
-  const moved = rings.filter(r => over(r) > 0)
-  const last = day.length ? day[day.length - 1].v : null
-  const stillUp = last != null && band && last > band.hi
-  /* Two things are true on this day and the sentence has to carry the one the
-     reader cannot see for themselves. The day's line crossed above the usual
-     range in the afternoon; the one capture under the sentence was taken
-     earlier and sits inside that range. Neither cancels the other, so the
-     sentence is about the day and says which range it crossed, and the figure
-     under it is labelled as one reading with the time it was taken. */
-  let lead
-  if (tier.key === 'high' || tier.key === 'up')
-    lead = crossed
-      ? `Your score rose above usual ${hourWords(crossed)}.`
-      : 'Your score is above your usual range today.'
-  else if (tier.key === 'low')
-    lead = 'Your score is below your usual range today.'
-  else if (crossed && stillUp)
-    lead = `Your score rose above usual ${hourWords(crossed)}.`
-  else if (crossed)
-    lead = 'Your score rose above usual earlier, then came back.'
-  else if (moved.length)
-    lead = `Your score is in range, but ${word(moved.length)} signal${moved.length === 1 ? '' : 's'} moved.`
-  else
-    lead = 'Your score is inside your usual range today.'
-  const note = top && over(top) > 0
+  return top && over(top) > 0
     ? `${nameOf(top)} moved the most, ${amountWords(over(top))}.`
     : 'All four signals stayed inside their normal ranges.'
-  return { lead, note }
 }
 
 /* The comparison the old sentence carried, kept under the dial so no figure is
@@ -445,7 +403,7 @@ function TodayDemo({ go, openTab }) {
   const tier = bandOf(TODAY.score)
   const top = topSignal(rings)
   const open = route => (openTab ? openTab(route) : go(route))
-  const hero = heroFor({ tier, rings, day: DATA.day || [], band: BAND, crossed: CROSSED })
+  const said = daySentence({ day: DATA.day || [], band: BAND })
   const openRing = rings.find(r => r.id === picked)
   const moved = READ.contrib.map(c => ({
     label: c.label, x: Math.max(-1, Math.min(1, c.raw)),
@@ -453,50 +411,52 @@ function TodayDemo({ go, openTab }) {
 
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
-      {/* THE FOLD. One card: the sentence, then the dial, then the band word.
-          Beside it at 1280, the four live channels (design spec 0f rule 5).
-          Everything the old card said under the dial is behind the "?". */}
+      {/* THE FOLD, 17 October: the welcome, the dial with its sentence,
+          then Heads Up, then See details. At 1280 the dial card holds the
+          left column and Heads Up sits over the live signals on the right;
+          at 390 the three stack in that order, so Heads Up comes before the
+          signals. */}
+      <Welcome/>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
         {/* The owner, 14 October: "add some gradients or cool effects to the
             cards to make it like a dashboard". The card runs card to aqua, a
-            radial glow sits behind the dial, the clouds are back on, and the
-            card lifts on a soft shadow. */}
+            radial glow sits behind the dial, and the card lifts on a soft
+            shadow. */}
         <Panel className="relative flex flex-col justify-center overflow-hidden
           bg-gradient-to-b from-card via-card to-aqua
-          shadow-[0_24px_48px_-32px_rgba(10,110,104,0.55)]">
-          <span aria-hidden className="pointer-events-none absolute left-1/2 top-[46%] h-[70%] w-[82%]
+          shadow-[0_24px_48px_-32px_rgba(10,110,104,0.55)] lg:row-span-2">
+          <span aria-hidden className="pointer-events-none absolute left-1/2 top-[40%] h-[70%] w-[82%]
             -translate-x-1/2 -translate-y-1/2 rounded-[50%]
             bg-[radial-gradient(closest-side,rgba(10,110,104,0.14),rgba(10,110,104,0))]"/>
           <div className="relative flex flex-col items-center text-center">
-            <p className="max-w-[30ch] font-display text-row font-bold leading-[1.14]
-              tracking-tight text-ink sm:text-head">{hero.lead}</p>
             {/* 352 is a ceiling: the dial is w-full under it, so at 390 it
                 takes the card's 318 and at 1280 the full 352. */}
-            <RainbowDial className="mt-3" score={TODAY.score} usual={USUAL} rings={rings}
+            <RainbowDial score={TODAY.score} usual={USUAL} rings={rings}
               size={352} picked={picked}
               onPick={id => setPicked(p => (p === id ? null : id))}/>
-            <p className="mt-2 flex items-center gap-2 font-display text-ui font-medium text-ink">
-              <span aria-hidden className={cn('h-4 w-[3px] shrink-0 rounded-bar', TIER_BAR[tier.key])}/>
-              {cap(tier.word)}
-            </p>
-            <Why label="What this reading means" align="center" className="mt-2">
-              {hero.note} {figureWords(TODAY.score, USUAL)}
+            <p className="mt-3 max-w-[30ch] font-display text-row font-bold leading-[1.18]
+              tracking-tight text-ink sm:text-head">{said.lead}</p>
+            {said.sub && <p className="mt-1.5 max-w-[40ch] text-note text-ink-2">{said.sub}</p>}
+            <Why label="What this reading means" align="center" className="mt-2.5">
+              {signalNote(rings)} {figureWords(TODAY.score, USUAL)} On its own, that reading
+              was {tier.word}.
             </Why>
           </div>
           {openRing && <SignalDetail ring={openRing}/>}
         </Panel>
+        <HeadsUpCard teen={TEEN} go={go}/>
         <LiveSignals/>
       </div>
-
-      {/* The card no other product has: how long the body took to settle
-          after each peak, and the climb before each marked event. From
-          src/signals/recovery.js over the demo day. */}
-      <SettleCard/>
 
       {/* ONE DISCLOSURE. Everything else is in here, collapsed, two abreast
           at 1280. */}
       <SeeDetails label="See details">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+          {/* How long the body took to settle after each peak, and the climb
+              before each marked event. From src/signals/recovery.js over the
+              demo day. Moved in here on 17 October so the fold is the
+              welcome, the dial and Heads Up. */}
+          <SettleCard className="lg:col-span-2"/>
           {/* The working behind the one number. Every figure in here is
               returned by scoreCapture for the reading, not written in. */}
           <Panel className="lg:col-span-2">
@@ -581,6 +541,10 @@ function TodayDemo({ go, openTab }) {
           </div>
         </div>
       </SeeDetails>
+
+      {/* The owner, 17 October: a calendar and date ranges of Mind Scores and
+          the body's readings, phone-only ones included, with Heads Up. */}
+      <Trends teen={TEEN} className="mt-3 lg:mt-4"/>
     </div>
   )
 }
@@ -647,6 +611,7 @@ function StudentToday({ go, openTab }) {
        patch: no readings, today's marked events, and reach. */
     return (
       <div className="flex w-full flex-col gap-3 lg:gap-4">
+        <Welcome/>
         <StudentBody go={go} openTab={openTab}/>
         <SettleCard/>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">

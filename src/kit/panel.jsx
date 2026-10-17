@@ -33,7 +33,7 @@ import './kit.css'
 export function Panel({ id, kit, title, time, lede, mark, open, onOpenChange, panelRef, index = 0, children }) {
   return (
     <section ref={panelRef} id={id} style={{ ...vars(kit), animationDelay: `${Math.min(index, 6) * 60}ms` }}
-      className="kit-card kit-settle kit-ground scroll-mt-16 overflow-hidden rounded-panel border-2 border-ink">
+      className="kit-card kit-settle scroll-mt-16 overflow-hidden rounded-[18px] border border-rule bg-card">
       <C.Root open={open} onOpenChange={onOpenChange}>
         <h2 className="m-0">
           <C.Trigger className="group block w-full p-3 text-left sm:p-4">
@@ -48,14 +48,12 @@ export function Panel({ id, kit, title, time, lede, mark, open, onOpenChange, pa
                   {title}
                 </span>
                 <span className="mt-2 block max-w-[48ch] text-sec text-ink-2 [text-wrap:pretty]">{lede}</span>
-                <span className="kit-fill mt-3 inline-block rounded-chip px-3 py-1 font-display
-                  text-fine font-bold text-paper">{time}</span>
+                <span className="kit-ink mt-3 block font-display text-fine font-bold">{time}</span>
               </span>
               {/* A drawn control rather than a bare chevron: on a page built
                   out of edges, the one thing a reader has to press should have
                   one too. */}
-              <span className="grid size-11 shrink-0 place-items-center rounded-chip border-2
-                border-ink bg-card">
+              <span className="kit-ground grid size-11 shrink-0 place-items-center rounded-full">
                 <Chevron aria-hidden className="size-4 text-ink transition-transform duration-200
                   ease-[var(--ease-out)] group-data-[state=open]:rotate-90"/>
               </span>
@@ -67,38 +65,22 @@ export function Panel({ id, kit, title, time, lede, mark, open, onOpenChange, pa
               name badge, not its reading surface: a form filled in on a tint
               is harder to read than one on paper, and this is where somebody
               actually types. */}
-          <div className="border-t-2 border-ink bg-card p-4 sm:p-5">{children}</div>
+          <div className="border-t border-rule bg-card p-4 sm:p-5">{children}</div>
         </C.Content>
       </C.Root>
     </section>
   )
 }
 
-/* A chip in a row of choices. Selection is carried by fill, weight and ink, so
-   it survives a greyscale screenshot. 44px floor on every target, and the
-   selected one takes the activity's own colour rather than a house green, so a
-   reader looking at two open panels can tell which is which. */
-export function Choice({ on = false, className, ...rest }) {
-  return (
-    <button type="button" aria-pressed={on}
-      className={cn('min-h-[46px] rounded-field border-2 px-3.5 text-left font-display text-ui',
-        'transition-colors duration-150 ease-[var(--ease-out)]',
-        on ? 'kit-fill border-ink font-bold text-paper'
-           : 'kit-hoverable border-ink bg-card font-medium text-ink',
-        className)} {...rest}/>
-  )
-}
-
-export const FIELD = cn(
-  'block w-full rounded-field border-2 border-ink bg-card p-3 font-body text-sec text-ink',
-  'placeholder:text-ink-3 transition-colors duration-150'
-)
+/* A choice and a text field: the same soft controls the Toolkit shell uses,
+   so a parent tool and a student tool feel like one set. */
+export { Choice, FIELD } from '../toolkit/shell'
 
 /* Ruled label inside a panel, in the activity's own ink. Not .mark: that one
    is a heading. */
 export function Step({ children, className }) {
   return (
-    <p className={cn('kit-ink border-t-2 border-ink pt-2.5 font-display text-tick font-bold', className)}>
+    <p className={cn('kit-ink border-t border-rule pt-3 font-display text-ui font-bold', className)}>
       {children}
     </p>
   )
@@ -128,8 +110,8 @@ export function Readout({ n, unit, className }) {
    a button, which is why it is allowed to be smaller than a 44px target. */
 export function Tag({ on = false, className, children, ...rest }) {
   return (
-    <span className={cn('inline-block rounded-chip border-2 px-2.5 py-0.5 font-display text-fine',
-      on ? 'kit-mark kit-fill border-ink font-bold text-paper'
+    <span className={cn('inline-block rounded-xs border px-2 py-0.5 font-display text-fine',
+      on ? 'kit-mark kit-fill border-transparent font-bold text-white'
          : 'border-rule bg-card font-medium text-ink-2', className)} {...rest}>
       {children}
     </span>

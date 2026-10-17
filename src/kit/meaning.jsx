@@ -60,8 +60,8 @@ const CLAIMS = [
 
 function Column({ title, rows, lit }) {
   return (
-    <div className={cn('rounded-panel border-2 p-3.5',
-      lit ? 'kit-ground kit-edge' : 'border-ink bg-card')}>
+    <div className={cn('rounded-[18px] border p-3.5',
+      lit ? 'kit-ground border-transparent' : 'border-rule bg-card')}>
       <p className={cn('font-display text-tick font-bold', lit ? 'kit-ink' : 'text-ink-2')}>{title}</p>
       <dl className="m-0 mt-2">
         {rows.map((r, i) => (
@@ -99,8 +99,7 @@ export function Meaning() {
               <Chevron aria-hidden className="kit-ink size-3.5 shrink-0 transition-transform
                 duration-200 ease-[var(--ease-out)] group-data-[state=open]:rotate-90"/>
               <span className="min-w-0 flex-1 text-body text-ink">{c.q}</span>
-              <span className="shrink-0 whitespace-nowrap rounded-chip border-2 border-ink bg-card
-                px-2.5 py-0.5 font-display text-fine font-bold text-ink-2">{c.verdict}</span>
+              <span className="kit-ink shrink-0 whitespace-nowrap font-display text-ui font-bold">{c.verdict}</span>
             </C.Trigger>
             <C.Content className="overflow-hidden data-[state=open]:animate-down data-[state=closed]:animate-up">
               <p className="max-w-[56ch] pb-4 pl-6 text-sec text-ink-2">{c.a}</p>

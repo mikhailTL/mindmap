@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { PRO } from '../lib/terms'
 import { call, probe, readToken, writeToken } from './remote'
+import { AVATAR_ALL_IDS } from './avatar-catalog'
 
 /* Accounts, links and invitations.
  *
@@ -31,9 +32,15 @@ import { call, probe, readToken, writeToken } from './remote'
 
 const VERSION = 1
 
-export const ROLES = ['student', 'parent', 'pro']
+/* `other` is anyone outside the three audiences. It has the least access:
+   no link kind names it, so it never links and sees only itself, like a
+   parent linked to nobody. It lands on the launcher, not a role's app. */
+export const ROLES = ['student', 'parent', 'pro', 'other']
 
-export const ROLE_LABEL = { student: 'Student', parent: 'Parent', pro: PRO }
+export const ROLE_LABEL = { student: 'Student', parent: 'Parent', pro: PRO, other: 'Other' }
+
+/* Where an account lands after signing in or signing out. */
+export const homeFor = role => (role === 'student' || role === 'parent' || role === 'pro' ? 'app-' + role : 'app')
 
 /* Where a Medical Professional works. The console reads the words off this;
    the k-floor and the consent rules are the same for all three. */
@@ -50,6 +57,13 @@ export const AVATAR_IDS = [
   'fox', 'owl', 'panda', 'frog', 'cat', 'bear',
   'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth',
 ]
+
+/* Every picture on offer: the twelve above plus the shapes, faces and
+   patterns in ./avatar-catalog.js, over a hundred in all. The server checks
+   against the same list. AVATAR_IDS stays the original twelve. */
+export { AVATAR_ALL_IDS }
+const AVATAR_SET = new Set(AVATAR_ALL_IDS)
+export const isAvatar = v => typeof v === 'string' && AVATAR_SET.has(v)
 
 /* Who may link to whom. Two of the same role never link: a teen to teen link
    is social comparison on a product about stress, and is not offered. */
@@ -146,7 +160,7 @@ function normaliseAccounts(s) {
         role: a.role,
         name: a.name.trim().slice(0, NAME_MAX),
         email: EMAIL.test(cleanEmail(a.email)) ? cleanEmail(a.email) : null,
-        avatar: AVATAR_IDS.includes(a.avatar) ? a.avatar : null,
+        avatar: isAvatar(a.avatar) ? a.avatar : null,
         setting: a.role === 'pro' && SETTING_IDS.includes(a.setting) ? a.setting : null,
         passcodeHash: a.passcodeHash || null,
         createdAt: iso(a.createdAt) || now(),
@@ -279,6 +293,15 @@ if (typeof window !== 'undefined') ready()
 /* ── Passcode ───────────────────────────────────────────────────────────── */
 
 export const PASSCODE = /^\d{4,6}$/
+/* A secret is a password of 8 to 128 characters of any kind, or the 4 to 6
+   digit passcode accounts had before passwords. The server's rule is the
+   same, and both are hashed the same way. */
+export const PASSWORD_MIN = 8
+export const SECRET_MAX = 128
+export function validSecret(raw) {
+  const v = String(raw ?? '')
+  return PASSCODE.test(v) || (v.length >= PASSWORD_MIN && v.length <= SECRET_MAX)
+}
 
 /* Salted with a fixed string: the hash is a local lock on a phone, not a
    credential anywhere else, and the point is only that the digits are never
@@ -324,13 +347,13 @@ export async function createAccount({ role, name, passcode, email, avatar, setti
   if (mail && !EMAIL.test(mail)) return { ok: false, reason: 'email' }
   if (!mail && role !== 'student') return { ok: false, reason: 'email' }
   if (role === 'pro' && !SETTING_IDS.includes(setting)) return { ok: false, reason: 'setting' }
-  if (!PASSCODE.test(String(passcode ?? ''))) return { ok: false, reason: 'passcode' }
+  if (!validSecret(passcode)) return { ok: false, reason: 'passcode' }
   if (accounts.get().items.some(a => sameName(a.name, clean))) return { ok: false, reason: 'taken' }
   if (mail && accounts.get().items.some(a => a.email === mail)) return { ok: false, reason: 'taken' }
   const account = {
     id: newId('a'), role, name: clean,
     email: mail || null,
-    avatar: AVATAR_IDS.includes(avatar) ? avatar : null,
+    avatar: isAvatar(avatar) ? avatar : null,
     setting: role === 'pro' ? setting : null,
     passcodeHash: await hash(String(passcode)), createdAt: now(), lastSignInAt: now(),
   }
@@ -396,7 +419,7 @@ export function updateProfile(patch = {}) {
   }
   if ('avatar' in patch) {
     if (patch.avatar === null) next.avatar = null
-    else if (AVATAR_IDS.includes(patch.avatar)) next.avatar = patch.avatar
+    else if (isAvatar(patch.avatar)) next.avatar = patch.avatar
   }
   if ('setting' in patch && me.role === 'pro' && SETTING_IDS.includes(patch.setting)) next.setting = patch.setting
   accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? next : a) })
@@ -417,7 +440,7 @@ export async function changePasscode(oldPasscode, newPasscode) {
     const r = await call('passcode', { old: oldPasscode, next: newPasscode })
     return r.ok ? 'ok' : (r.reason === 'invalid' ? 'invalid' : 'wrong')
   }
-  if (!PASSCODE.test(String(newPasscode ?? ''))) return 'invalid'
+  if (!validSecret(newPasscode)) return 'invalid'
   if (await hash(String(oldPasscode ?? '')) !== me.passcodeHash) return 'wrong'
   const passcodeHash = await hash(String(newPasscode))
   accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? { ...a, passcodeHash } : a) })
