@@ -16,6 +16,7 @@ import { Different } from './landing/Different'
 import { WhatIs } from './landing/WhatIs'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
+import heroField from '../photos/hero-field.webp'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC,
@@ -156,7 +157,16 @@ export function Overview({ go }) {
           xl:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
-          <div className="flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
+          <div className="relative flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
+            {/* The owner's field photograph, faint behind the title half. It
+                runs out to the viewport's left edge (the section clips it) and
+                a paper veil keeps the words at full contrast. */}
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 -left-[50vw] -right-[22px] -z-10
+              sm:-right-10 lg:right-0">
+              <img src={heroField} alt="" width={728} height={408} decoding="async"
+                className="absolute inset-0 h-full w-full object-cover object-[70%_60%] opacity-[0.34]"/>
+              <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(247,250,248,0.55)_0%,rgba(247,250,248,0.35)_55%,rgba(247,250,248,0.1)_100%)]"/>
+            </div>
             <ScrollIn as="p" className="mb-4 font-body text-[1.125rem] font-semibold text-accent-ink sm:text-[1.25rem]">
               A wellness app for teenagers
             </ScrollIn>

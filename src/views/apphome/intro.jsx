@@ -11,7 +11,7 @@ import React from 'react'
 export const LINES = [
   { word: 'Map',     rest: ' your Mind.',    tone: 'text-accent' },
   { word: 'Support', rest: ' your Stress.',  tone: 'text-beam-ink' },
-  { word: 'Network', rest: ' your Journey.', tone: 'text-lilac-ink' },
+  { word: 'Network', rest: ' your Journey.', tone: 'text-sky-ink' },
 ]
 
 export const T = {
