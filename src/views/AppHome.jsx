@@ -33,8 +33,8 @@ const DEMO = [
 function DemoPanel({ go, onSignIn }) {
   return (
     <div className="w-full rounded-panel border border-rule bg-card p-4 text-left shadow-card sm:p-5">
-      <h2 className="m-0 font-display text-row font-bold text-ink">View the demo as</h2>
-      <p className="m-0 mt-1 text-fine text-ink-2">Sample data. No account needed.</p>
+      <h2 className="m-0 font-display text-row font-bold text-ink">Guest Mode</h2>
+      <p className="m-0 mt-1 text-fine text-ink-2">The demo only, on sample data. No account needed. Pick a view:</p>
       <div className="mt-3.5 grid gap-2.5">
         {DEMO.map((d, i) => (
           <button key={d.id} type="button" onClick={() => { setMode('demo'); go(d.id) }}
@@ -178,7 +178,22 @@ export function AppHome({ go }) {
               </div>
             </div>
           ) : (
-            <AuthPanel go={go}/>
+            <>
+              <AuthPanel go={go}/>
+              {/* Guest Mode: the demo and nothing else. Live screens still
+                  ask for an account, so a guest cannot reach real data. */}
+              <button type="button"
+                onClick={() => { setMode('demo'); setDemo(true); history.replaceState(null, '', '#/app-home?demo') }}
+                className="mt-3 flex min-h-[52px] w-full items-center justify-between gap-3 rounded-panel border-[1.5px]
+                  border-dashed border-accent/60 bg-accent-wash/60 px-4 text-left transition-colors duration-150
+                  hoverOnly:border-accent hoverOnly:bg-accent-wash">
+                <span>
+                  <span className="block font-display text-ui font-bold text-ink">Guest Mode</span>
+                  <span className="block text-fine text-ink-2">View the demo only. No account.</span>
+                </span>
+                <span aria-hidden className="font-display text-ui font-bold text-accent-ink">→</span>
+              </button>
+            </>
           )}
         </div>
 

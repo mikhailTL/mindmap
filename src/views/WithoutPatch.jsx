@@ -9,6 +9,7 @@ import { CameraModule, SignalCoverage } from '../charts/camera'
 import { PhoneCheck } from './PhoneCheck'
 import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
+import { FACE_SECONDS } from '../signals/face'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { cardClass } from '../ui/card'
@@ -31,11 +32,26 @@ const ROUTES = [
     gives:['Heart rate', 'Beat-to-beat', 'Voice'] },
   { id:'ask', title:`Answer ${ITEMS.length} questions`, when:'About a minute', art:'ask',
     gives:['Tension', 'Sleep', 'Energy', 'Focus', 'Load'] },
+  { id:'mirror', title:'Mental Mirror', when:`${FACE_SECONDS} seconds`, art:'mirror',
+    gives:['Pulse', 'Blinks', 'Brow', 'Eyes', 'Mouth'] },
 ]
 
 function RouteArt({ kind }) {
+  /* A face with the landmark mesh over it, as the mirror draws it. */
+  if (kind === 'mirror') return (
+    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
+      <rect x="62" y="2" width="76" height="70" rx="12" className="fill-ink"/>
+      <ellipse cx="100" cy="38" rx="21" ry="27" className="fill-none stroke-beam" strokeWidth="1.6"/>
+      <path d="M86 30q5-4 10 0M104 30q5-4 10 0" className="fill-none stroke-accent-lit" strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M87 36h8M105 36h8M93 52q7 4 14 0" className="fill-none stroke-accent-lit" strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M79 38 100 12 121 38 100 64Z M100 12v52 M79 38h42" className="fill-none stroke-beam" strokeWidth="0.7" opacity="0.7"/>
+      <path d="M22 38h14l4-8 5 16 4-8h12" className="fill-none stroke-coral" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="166" cy="38" r="16" className="fill-accent-wash stroke-accent" strokeWidth="1.6"/>
+      <path d="M158 40a8 8 0 0 1 16 0" className="fill-none stroke-accent" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  )
   if (kind === 'sensors') return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-14 sm:w-[12rem]">
+    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
       <rect x="14" y="4" width="52" height="66" rx="13" className="fill-aqua-2 stroke-ink" strokeWidth="1.6"/>
       <rect x="24" y="12" width="30" height="30" rx="9" className="fill-card stroke-ink-3" strokeWidth="1.3"/>
       <circle cx="33" cy="21" r="5" className="fill-none stroke-ink-3" strokeWidth="1.3"/>
@@ -49,7 +65,7 @@ function RouteArt({ kind }) {
     </svg>
   )
   return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-14 sm:w-[12rem]">
+    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
       {[0, 1, 2].map(i => (
         <rect key={i} x={16 + i * 9} y={2 + i * 7} width="116" height="52" rx="8"
           className={i === 2 ? 'fill-card stroke-ink' : 'fill-aqua-2 stroke-ruling'} strokeWidth="1.5"/>
@@ -79,32 +95,18 @@ function Figures({ items, className }) {
   )
 }
 
-/* The site sets scroll-behavior: smooth on <html>, so the route change's
-   window.scrollTo(0, 0) animates up from the overview's depth, and this page,
-   being shorter, first clamps that to its own bottom. A phone can stop the
-   animation there. Arriving jumps to the top at once instead. */
-function useArriveAtTop() {
-  React.useLayoutEffect(() => {
-    const html = document.documentElement
-    const was = html.style.scrollBehavior
-    html.style.scrollBehavior = 'auto'
-    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) } catch { window.scrollTo(0, 0) }
-    const id = requestAnimationFrame(() => { html.style.scrollBehavior = was })
-    return () => { cancelAnimationFrame(id); html.style.scrollBehavior = was }
-  }, [])
-}
-
 /* One of the two ways, sized for the hero. */
 function Route({ r, i, go, toCheck }) {
   return (
     <ScrollRow index={i} className="h-full">
       {/* The camera way is the white card; the questions take the turquoise
           wash (src/ui/card.jsx), so the pair reads as two choices. */}
-      <div className={cn(i ? cardClass('tint', 'beam') : PANEL, 'flex h-full flex-col border-l-[3px] p-3.5 lg:p-4',
-        i ? 'border-l-beam' : 'border-l-accent')}>
+      <div className={cn(i === 1 ? cardClass('tint', 'beam') : i === 2 ? cardClass('tint', 'lilac') : PANEL,
+        'flex h-full flex-col border-l-[3px] p-3.5 lg:p-4',
+        i === 1 ? 'border-l-beam' : i === 2 ? 'border-l-lilac' : 'border-l-accent')}>
         {/* Art beside the title on a phone, above it once the cards pair up. */}
         <div className="flex items-center gap-3 sm:block">
-          <div className={cn('w-fit shrink-0 rounded-panel px-2 py-1.5 sm:px-3 sm:py-2',
+          <div className={cn('w-fit shrink-0 rounded-panel px-2 py-1.5 sm:px-2 sm:py-2',
             i ? 'bg-card' : 'bg-accent-wash')}>
             <RouteArt kind={r.art}/>
           </div>
@@ -129,6 +131,10 @@ function Route({ r, i, go, toCheck }) {
                 onClick={() => { setReadingIntent('survey'); go('check') }}>
                 Start the questions<span aria-hidden>→</span>
               </Button>
+            : r.id === 'mirror'
+            ? <Button variant="outline" size="sm" onClick={() => go('mirror')}>
+                Open the mirror<span aria-hidden>→</span>
+              </Button>
             : <Button variant="outline" size="sm" onClick={toCheck}>
                 Use the camera<span aria-hidden>→</span>
               </Button>}
@@ -138,32 +144,37 @@ function Route({ r, i, go, toCheck }) {
   )
 }
 
-export function WithoutPatch({ go }) {
-  useArriveAtTop()
+/* `as` and `level`: the hub (views/PatchHub) draws this inside its own
+   <main>, under its own band. */
+export function WithoutPatch({ go, as: Root = 'main', level = 1 }) {
+  const H = level === 1 ? 'h1' : 'h2'
+  const Sub = level === 1 ? 'h2' : 'h3'
   const toCheck = () => document.getElementById('take')?.scrollIntoView({ behavior:'smooth', block:'start' })
 
   return (
-    <main>
+    <Root>
       <header className="border-t border-rule bg-accent-wash">
         <div className="wrap grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-center
           lg:gap-8 lg:py-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,31rem)]">
           <div className="min-w-0">
-            <p className="font-body text-ui font-semibold text-accent-ink">
-              Without the patch
-            </p>
-            <h1 className="mt-2 max-w-[18ch] font-display font-bold text-major
+            {level === 1 && (
+              <p className="mb-2 font-body text-ui font-semibold text-accent-ink">
+                Without the patch
+              </p>
+            )}
+            <H className="max-w-[18ch] font-display font-bold text-major
               leading-[1.04] tracking-tight text-ink">
               A {SCORE} from your phone
-            </h1>
+            </H>
             <p className="mt-2.5 text-meta leading-[1.4] text-ink-2">
               Use the phone you already have.
             </p>
             <Figures items={HERO_FACTS} className="mt-2.5"/>
 
-            <h2 className="mt-5 font-display text-head font-bold leading-tight text-ink lg:mt-6">
-              Two ways to take a reading
-            </h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:auto-rows-fr">
+            <Sub className="mt-5 font-display text-head font-bold leading-tight text-ink lg:mt-6">
+              Three ways to take a reading
+            </Sub>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3 sm:auto-rows-fr">
               {ROUTES.map((r, i) => <Route key={r.id} r={r} i={i} go={go} toCheck={toCheck}/>)}
             </div>
           </div>
@@ -184,7 +195,7 @@ export function WithoutPatch({ go }) {
         </div>
       </header>
 
-      <Section tone="card" tight id="camera">
+      <Section tone="card" tight id="camera" className="scroll-mt-[7.5rem]">
         <SectionHead>Your pulse, from the phone camera</SectionHead>
         <ScrollIn className="mt-3 lg:mt-4">
           <div className={cn(PANEL, 'overflow-hidden border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
@@ -196,10 +207,10 @@ export function WithoutPatch({ go }) {
         </ScrollIn>
       </Section>
 
-      <Section tone="paper" tight id="take">
+      <Section tone="paper" tight id="take" className="scroll-mt-[7.5rem]">
         <SectionHead>Take a reading now</SectionHead>
         <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
       </Section>
-    </main>
+    </Root>
   )
 }

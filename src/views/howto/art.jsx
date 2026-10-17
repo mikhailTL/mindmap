@@ -917,12 +917,35 @@ function Referral() {
   )
 }
 
+/* The Mental Mirror: a phone's front camera on a face, the landmark mesh
+   over it and a pulse read off the forehead. */
+function FaceMesh() {
+  return (
+    <Svg>
+      <rect x="44" y="4" width="72" height="92" rx="12" fill={C.ink}/>
+      <circle cx="80" cy="12" r="2.4" fill={C.mist}/>
+      <ellipse cx="80" cy="54" rx="22" ry="29" fill={C.skin} opacity=".9"/>
+      <g fill="none" stroke={C.beam} strokeWidth=".8" opacity=".85">
+        <ellipse cx="80" cy="54" rx="22" ry="29"/>
+        <path d="M58 54h44M80 25v58M62 38l18 16 18-16M62 70l18-16 18 16M66 30l14 24 14-24"/>
+      </g>
+      <g fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round">
+        <path d="M68 45q5-3 9 0M83 45q5-3 9 0"/>
+        <path d="M69 51h7M84 51h7"/>
+        <path d="M73 68q7 4 14 0"/>
+      </g>
+      <circle cx="80" cy="35" r="5" fill={C.coral} {...a('ht-pulse')}/>
+    </Svg>
+  )
+}
+
 export const ART = {
   patch: Patch,
   cards: Cards,
   tabbar: TabBar,
   threeWays: ThreeWays,
   fingerCam: FingerCam,
+  faceMesh: FaceMesh,
   dial: Dial,
   range: Range,
   faces: Faces,

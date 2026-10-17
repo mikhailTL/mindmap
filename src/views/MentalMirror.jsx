@@ -17,14 +17,34 @@ import { fitCalibration, identityCalibration } from '../signals/tnam'
  * read, thirty seconds, one Mind Score. Students only: the route is inside
  * the student app and the screen asks once before the camera opens.
  *
- * Nothing leaves the device. Each frame becomes 52 expression scores, one
+ * No picture leaves the phone. Each frame becomes 52 expression scores, one
  * eye figure, one nose position and one skin-colour level, then is dropped.
- * No image is kept or sent, in either mode. The copy on screen says so; any
- * change that buffers or persists frames breaks it.
+ * The Mind Score that comes out is saved like any other reading (and shared
+ * the way the student has chosen); the frames never are. Any change that
+ * buffers or persists frames breaks what the screen says.
  *
  * The heart rate read off the skin goes through the Mind Score model with
- * this person's calibration. The expression features enter with a starting
- * allocation that has not been fitted, and the screen says that too. */
+ * this person's calibration. The expression cues are weighed against this
+ * person's own earlier mirror readings (face-score.js). */
+
+/* The four bands of the dial, one per group of cues, each 0 to 100 where 50
+   is this person's usual: pulse, brow, eyes (blinks, squint, movement) and
+   mouth and head. Same colours as every other dial, so it reads as a Mind
+   Score, but the names are the mirror's own. */
+const BANDS = [
+  { id: 'mirror-pulse', name: 'Pulse', glow: '#e11919', of: ['hr'] },
+  { id: 'mirror-brow',  name: 'Brow',  glow: '#e86a05', of: ['browFurrow'] },
+  { id: 'mirror-eyes',  name: 'Eyes',  glow: '#199e19', of: ['blinkRate', 'eyeSquint', 'earVar'] },
+  { id: 'mirror-mouth', name: 'Mouth and head', glow: '#1560e0', of: ['lipPress', 'headMotion'] },
+]
+function bandsOf(result) {
+  return BANDS.map(b => {
+    const zs = result.contrib.filter(c => b.of.includes(c.id)).map(c => c.z)
+    const z = zs.length ? zs.reduce((a, x) => a + x, 0) / zs.length : null
+    return { id: b.id, name: b.name, glow: b.glow,
+      value: z == null ? 50 : Math.round(100 / (1 + Math.exp(-1.1 * z))) }
+  })
+}
 
 const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
 const STORE = 'mindmap.mirror.baseline'
@@ -113,6 +133,7 @@ export function MentalMirror({ go }) {
       })
       live.current.capture = capture
       const frames = await capture.done
+      if (!frames) return                     /* stopped by the student */
       stopAll()
       setPhase('working')
 
@@ -157,9 +178,9 @@ export function MentalMirror({ go }) {
         <dl className="m-0 mt-3 list-none p-0">
           {[
             ['For students', 'The mirror is part of the student app and is read against your own earlier readings, never against anyone else.'],
-            ['Nothing leaves the phone', 'Each frame becomes a few numbers (how far your brow moved, how often you blinked, the colour of a patch of forehead) and is dropped. No picture is kept or sent.'],
+            ['No picture is kept', 'Each frame becomes a few numbers (how far your brow moved, how often you blinked, the colour of a patch of forehead) and is dropped. Only the score is saved, like your other readings.'],
             ['Not a diagnosis', `It gives a ${SCORE}, the same 0 to 100 the other readings give, and a range for how sure it is.`],
-            ['Still being validated', 'The pulse comes from a published method. The expression weights are a starting allocation and have not been fitted to a dataset yet. The range is wider on purpose.'],
+            ['How it reads you', 'Your pulse comes from tiny colour changes in your skin, a published camera method. Blinks, brow, eyes and mouth are compared with your own usual.'],
           ].map(([k, v]) => (
             <div key={k} className="border-b border-rule py-2.5 last:border-b-0">
               <dt className="font-display text-ui font-medium text-ink">{k}</dt>
@@ -207,7 +228,7 @@ export function MentalMirror({ go }) {
               {LIVE.map(([k, label, fmt]) => (
                 <div key={k}>
                   <dt className="text-fine text-ink-3">{label}</dt>
-                  <dd className="m-0 font-mono text-ui tabular-nums text-ink">{peek?.[k] != null ? fmt(peek[k]) : '—'}</dd>
+                  <dd className="m-0 font-mono text-ui tabular-nums text-ink">{peek?.[k] != null ? fmt(peek[k]) : '...'}</dd>
                 </div>
               ))}
             </dl>
@@ -225,7 +246,7 @@ export function MentalMirror({ go }) {
         </div>
         {error && <p className="mt-3 max-w-[48ch] text-sec text-warn" role="alert">{error}</p>}
         <p className="mt-3 max-w-[52ch] text-fine text-ink-3">
-          The lines are the model reading your face as it happens. Frames become numbers on the phone and are dropped; nothing is kept or sent.
+          The lines are the model reading your face as it happens. Frames become numbers on the phone and are dropped. No picture is kept or sent.
         </p>
       </div>
 
@@ -237,9 +258,7 @@ export function MentalMirror({ go }) {
         {result && (
           <>
             <div className="flex flex-col items-start gap-4">
-              <RainbowDial score={result.score} size={300}
-                rings={[{ id: 'mirror', name: 'Mirror', glow: '#1d8fb0', value: result.score,
-                          reading: result.heartRead ? 'face + pulse' : 'face' }]}/>
+              <RainbowDial score={result.score} size={300} rings={bandsOf(result)}/>
               <div className="w-full">
                 <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
                 <p className="mt-3 max-w-[42ch] text-meta text-ink-2">{s.tail}</p>
@@ -299,7 +318,7 @@ export function MentalMirror({ go }) {
                   <React.Fragment key={t.id}>
                     <dt className="text-ink-3">{t.label}</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">
-                      {result.features[t.id] == null ? '—'
+                      {result.features[t.id] == null ? 'Not read'
                         : t.id === 'blinkRate' ? `${result.features[t.id].toFixed(1)} per min`
                         : t.id === 'headMotion' ? `${(result.features[t.id] * 100).toFixed(1)}% face width per s`
                         : t.id === 'earVar' ? `${(result.features[t.id] * 100).toFixed(0)}% variation`
@@ -310,9 +329,8 @@ export function MentalMirror({ go }) {
               </dl>
               <p className="mt-4 max-w-[52ch] text-fine text-ink-3">
                 The pulse is read by a published method (skin-colour photoplethysmography) and goes through the same
-                learned model as the fingertip reading. The expression weights are a starting allocation, not a fitted
-                result: no dataset pairs face video with stress on these sensors yet, which is why the band is wider here.
-                Nothing on this screen has been validated against a person.
+                learned model as the fingertip reading. Each face cue is measured against your own earlier mirror
+                readings, so the more you use it, the narrower the range gets.
               </p>
             </AllDetail>
           </>

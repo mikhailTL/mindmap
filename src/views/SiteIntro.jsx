@@ -6,12 +6,12 @@ import { PatchFront } from '../charts/patch-front'
 import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { AvatarArt } from '../account/avatars'
-import { LampFace } from '../traffic/Face'
-import { PRO, PRO_PLURAL } from '../lib/terms'
+import { PRO } from '../lib/terms'
 
-/* The site's onboarding. Three short beats, then the name: the patch reads
- * the body, MindMap turns it into one Mind Score, and a teen shares it with
- * their parent and Medical Professional. No questions and no sign in here:
+/* The site's onboarding. Three short beats, then the name. The owner: "it
+ * needs to start with the rainbow and reduce text as much as possible". So
+ * the Mind Score rainbow opens, then where the reading comes from, then who
+ * sees it; one short line each and nothing under it. No questions and no sign in here:
  * roles and accounts are asked only when the visitor opens the app. Plays on
  * every load of the landing page and every time the visitor comes back to
  * it (App.jsx decides when); Skip sits under the stage the whole time, and
@@ -19,43 +19,35 @@ import { PRO, PRO_PLURAL } from '../lib/terms'
 
 const BEAT_MS = 2600
 const BEATS = [
-  { id: 'patch',   line: 'A patch reads your body’s stress signals.',  sub: 'Or use your phone camera instead.' },
-  { id: 'score',   line: 'MindMap turns them into one Mind Score.',    sub: 'Measured against your own usual day.' },
-  { id: 'network', line: 'Teens share it with the people they choose.', sub: `Parents and ${PRO_PLURAL} see only what the teen allows.` },
+  { id: 'score',   line: 'Your stress, as one score.' },
+  { id: 'patch',   line: 'Read by a patch or your phone.' },
+  { id: 'network', line: 'Shared only with who you choose.' },
 ]
 const FINAL = BEATS.length
 const NAME_MS = 1800
 
 /* ── the three pictures ─────────────────────────────────────────────────── */
 
-const SIGNALS = [
-  { label: 'Heart', tone: 'bg-coral' },
-  { label: 'Sweat', tone: 'bg-sun' },
-  { label: 'Temperature', tone: 'bg-sky' },
-  { label: 'Movement', tone: 'bg-lilac' },
-]
-
 function PatchPicture({ still }) {
   return (
-    <div className="relative flex items-center justify-center gap-5 sm:gap-8">
+    <div className="flex items-center justify-center gap-6 sm:gap-10">
       <div className="relative grid place-items-center">
         {!still && [0, 1].map(i => (
           <motion.span key={i} aria-hidden className="absolute rounded-full border-2 border-beam/50"
-            style={{ width: 150, height: 150 }}
+            style={{ width: 130, height: 130 }}
             initial={{ scale: 0.7, opacity: 0.7 }} animate={{ scale: 1.5, opacity: 0 }}
             transition={{ duration: 1.8, delay: i * 0.9, repeat: Infinity, ease: 'easeOut' }}/>
         ))}
-        <PatchFront size={118} label="The MindMap patch"/>
+        <PatchFront size={108} label="The MindMap patch"/>
       </div>
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {SIGNALS.map((s, i) => (
-          <motion.li key={s.label} className="flex items-center gap-2 font-display text-ui font-semibold text-ink"
-            initial={still ? false : { opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.25 + i * 0.18, duration: 0.35 }}>
-            <span aria-hidden className={cn('h-2.5 w-2.5 rounded-full', s.tone)}/>{s.label}
-          </motion.li>
-        ))}
-      </ul>
+      <span className="font-display text-row font-bold text-ink-3">or</span>
+      <motion.svg viewBox="0 0 70 120" aria-label="A phone" role="img" className="h-[120px] w-auto"
+        initial={still ? false : { opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.4 }}>
+        <rect x="3" y="3" width="64" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2.5"/>
+        <circle cx="35" cy="16" r="4" className="fill-ink"/>
+        <path d="M12 66h12l5-12 7 24 6-16 4 4h12" fill="none" stroke="#e11919" strokeWidth="3"
+          strokeLinecap="round" strokeLinejoin="round"/>
+      </motion.svg>
     </div>
   )
 }
@@ -100,13 +92,7 @@ function NetworkPicture({ still }) {
             p.centre ? 'size-[64px] ring-2 ring-accent' : 'size-[52px]')}>
             <AvatarArt id={p.avatar} className={p.centre ? 'size-14' : 'size-11'}/>
           </span>
-          <span className="mt-2 font-display text-ui font-bold leading-tight text-ink">{p.name}</span>
-          <span className="text-fine leading-tight text-ink-2">{p.role}</span>
-          {p.centre && (
-            <span className="mt-1.5 inline-flex items-center gap-1.5 text-fine font-semibold text-ink">
-              <LampFace light="green" size={16}/>Chooses
-            </span>
-          )}
+          <span className="mt-2 font-display text-ui font-bold leading-tight text-ink">{p.role}</span>
         </motion.div>
       ))}
     </div>
@@ -164,7 +150,6 @@ export function SiteIntro({ onDone }) {
                 className="m-0 mt-6 max-w-[22ch] font-display text-[1.6rem] font-bold leading-[1.15] tracking-tight text-ink sm:text-[2rem]">
                 {B.line}
               </h2>
-              <p className="m-0 mt-2.5 max-w-[40ch] text-meta text-ink-2">{B.sub}</p>
             </motion.div>
           ) : (
             <motion.div key="final" {...fade} transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}

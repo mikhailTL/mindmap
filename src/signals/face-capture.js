@@ -40,13 +40,16 @@ export function loadLandmarker() {
     landmarkerPromise = (async () => {
       const v = await loadVision()
       const fileset = await v.FilesetResolver.forVisionTasks(WASM_PATH)
-      return v.FaceLandmarker.createFromOptions(fileset, {
-        baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
+      const make = delegate => v.FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: MODEL_PATH, delegate },
         runningMode: 'VIDEO',
         numFaces: 1,
         outputFaceBlendshapes: true,
         outputFacialTransformationMatrixes: false,
       })
+      /* The GPU delegate is not there on every phone browser (older iOS
+         Safari, some school laptops); the CPU one always is. */
+      try { return await make('GPU') } catch { return make('CPU') }
     })().catch(e => { landmarkerPromise = null; throw e })
   }
   return landmarkerPromise
@@ -79,13 +82,23 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
   canvas.width = W; canvas.height = H
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   const frames = []
-  let stop = false, raf = 0, lastTs = -1
+  let stop = false, raf = 0, lastTs = -1, lastVideoTime = -1, finish = null
   const t0 = performance.now()
 
   const done = new Promise(resolve => {
+    finish = resolve
     const step = now => {
-      if (stop) return resolve(frames)
+      if (stop) return
       const elapsed = (now - t0) / 1000
+      /* One record per camera frame, not per screen refresh: a 60 Hz screen
+         over a 30 fps camera would otherwise log every frame twice, and the
+         repeats read as a face that never moves. */
+      if (video.currentTime === lastVideoTime) {
+        if (elapsed >= seconds) return resolve(frames)
+        raf = requestAnimationFrame(step)
+        return
+      }
+      lastVideoTime = video.currentTime
       try {
         const ts = Math.max(lastTs + 1, Math.round(now))
         lastTs = ts
@@ -96,10 +109,13 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
           for (const c of res.faceBlendshapes?.[0]?.categories ?? []) bs[c.categoryName] = c.score
           /* Forehead patch: between the brow line and the hairline, centred on
              the nose. Normalised coordinates → the 64×48 downscale. */
+          /* lm[10] sits on the hairline, so the patch starts a fifth of the
+             way down and stops short of the brows: skin only, no hair. */
           const brow = lm[9], top = lm[10]
+          const span = Math.abs(brow.y - top.y) * H
           const cx = ((brow.x + top.x) / 2) * W
-          const cy = Math.max(0, Math.min(top.y * H, brow.y * H))
-          const ph = Math.max(2, Math.abs(brow.y - top.y) * H * 0.8)
+          const cy = Math.max(0, Math.min(top.y, brow.y) * H + span * 0.2)
+          const ph = Math.max(2, span * 0.6)
           const pw = Math.max(4, Math.abs(lm[FACE_R].x - lm[FACE_L].x) * W * 0.35)
           ctx.drawImage(video, 0, 0, W, H)
           const d = ctx.getImageData(
@@ -128,7 +144,8 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
     raf = requestAnimationFrame(step)
   })
 
-  return { done, frames, cancel() { stop = true; cancelAnimationFrame(raf) } }
+  /* Stop resolves with null, so the caller knows to score nothing. */
+  return { done, frames, cancel() { if (stop) return; stop = true; cancelAnimationFrame(raf); finish?.(null) } }
 }
 
 /* The mesh, drawn from the landmarker's own connection tables. */

@@ -32,11 +32,16 @@ const BLINK = ['eyeBlinkLeft', 'eyeBlinkRight']
 const BLINK_ON = 0.5          /* blendshape score at which a blink has started */
 const BLINK_OFF = 0.3
 const MIN_S = 12
+/* A slow phone (CPU face model, older GPU) may manage only a few frames a
+   second. The face cues still read at that rate; the pulse needs at least
+   8 a second to see a 3 Hz beat, so below that it is withheld, not guessed. */
+const MIN_FRAMES = 60
+const MIN_PULSE_FPS = 8
 
 const avg = (bs, keys) => mean(keys.map(k => bs[k] ?? 0))
 
 export function analyseFace(frames) {
-  if (frames.length < MIN_S * 15) return fail('too-short', 'The capture stopped early.')
+  if (frames.length < MIN_FRAMES) return fail('too-short', 'The capture stopped early.')
   const durS = (frames[frames.length - 1].t - frames[0].t) / 1000
   if (durS < MIN_S) return fail('too-short', 'The capture stopped early.')
   const seen = frames.filter(f => f.ok)
@@ -68,14 +73,18 @@ export function analyseFace(frames) {
 
   /* Head micro-movement: frame-to-frame nose displacement as a fraction of
      face width, so distance from the camera cancels. */
+  /* Speeds use each step's own time, so the figure does not depend on the
+     camera's frame rate. */
   const steps = []
   for (let i = 1; i < seen.length; i++) {
     const a = seen[i - 1], b = seen[i]
+    const dt = (b.t - a.t) / 1000
+    if (!(dt > 0) || dt > 0.5) continue
     const w = (a.faceW + b.faceW) / 2 || 1
-    steps.push(Math.hypot(b.nose[0] - a.nose[0], b.nose[1] - a.nose[1]) / w)
+    steps.push(Math.hypot(b.nose[0] - a.nose[0], b.nose[1] - a.nose[1]) / w / dt)
   }
-  const headMotion = steps.length ? median(steps) * FS : 0   /* face-widths per second */
-  const headTurns = steps.length ? percentile(steps, 0.95) * FS : 0
+  const headMotion = steps.length ? median(steps) : 0   /* face-widths per second */
+  const headTurns = steps.length ? percentile(steps, 0.95) : 0
 
   const rppg = analyseRPPG(seen.map(f => ({ t: f.t, v: f.green })))
 
@@ -93,7 +102,10 @@ export function analyseFace(frames) {
  * Survey of the method: McDuff, "Camera Measurement of Physiological Vital
  * Signs", 2021. */
 export function analyseRPPG(samples) {
-  if (samples.length < MIN_S * 15) return { ok: false, reason: 'too-short' }
+  if (samples.length < MIN_FRAMES) return { ok: false, reason: 'too-short' }
+  const spanS = (samples[samples.length - 1].t - samples[0].t) / 1000
+  if (spanS < MIN_S) return { ok: false, reason: 'too-short' }
+  if (samples.length / spanS < MIN_PULSE_FPS) return { ok: false, reason: 'low-rate' }
   const { y } = resample(samples.map(s => s.t), samples.map(s => s.v), FS)
   const raw = y.slice(2 * FS)                   /* auto-exposure settles */
   if (raw.length < MIN_S * FS) return { ok: false, reason: 'too-short' }

@@ -11,8 +11,9 @@ import { K_ANONYMITY } from '../lib/caseload'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
+import { ToolkitBand } from './methods/ToolkitBand'
 
-/* How it works, in five categories, one at a time.
+/* How it works, in six categories, one at a time.
  *
  * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
  * everything is cluttered and still too complex, like nobody needs to know
@@ -100,7 +101,16 @@ const CATEGORIES = [
       ['Location', 'How far from home a reading happened. Never a map.', PinMark],
     ],
     figure: PhoneParts },
+  /* "Toolkit isn't yet on how mindmap works." Its own band, drawn with the
+     Toolkit's own nameplates and level emblems (methods/ToolkitBand.jsx). */
+  { id: 'toolkit', tab: 'Toolkit', band: ToolkitBand },
 ]
+
+/* `#/methods?tab=toolkit` opens on that tab, so other pages can link to it. */
+const tabFromHash = () => {
+  const m = /[?&]tab=([a-z]+)/.exec(typeof location !== 'undefined' ? location.hash : '')
+  return m && CATEGORIES.some(c => c.id === m[1]) ? m[1] : CATEGORIES[0].id
+}
 
 /* Three marks the shared set lacks, same 24 box and 1.6 stroke. */
 const M = ({ children, size = 20, className }) => (
@@ -166,7 +176,7 @@ const TRIGGER = cn(
 export function Methods({ go }) {
   return (
     <main>
-      <TabsPrimitive.Root defaultValue={CATEGORIES[0].id}>
+      <TabsPrimitive.Root defaultValue={tabFromHash()}>
 
         {/* ── the opening band: title, one action, the switcher ── */}
         <section className="border-t border-rule bg-paper">
@@ -197,6 +207,14 @@ export function Methods({ go }) {
 
         {/* ── one band per category, one on screen at a time ── */}
         {CATEGORIES.map(c => {
+          if (c.band) {
+            const Band = c.band
+            return (
+              <TabsPrimitive.Content key={c.id} value={c.id} className="outline-none">
+                <Band go={go}/>
+              </TabsPrimitive.Content>
+            )
+          }
           const dark = c.tone === 'ink'
           const Figure = c.figure
           return (

@@ -41,6 +41,17 @@ export const GUIDES = {
       ],
       use: 'Check in before a test, after practice, or any time.',
     },
+    mirror: {
+      section: 'Mental Mirror',
+      title: 'How to use the Mental Mirror',
+      tones: ['beam', 'accent', 'lilac'],
+      steps: [
+        { art: 'faceMesh', cap: 'Face the front camera in good light, 30 seconds.' },
+        { art: 'dial',     cap: 'Your face and pulse become one Mind Score.' },
+        { art: 'calendar', cap: 'It lands in your Trends with your other readings.' },
+      ],
+      use: 'A quick reading with no patch and no fingertip.',
+    },
     'student-trends': {
       section: 'Trends',
       title: 'How to use Trends',

@@ -1,11 +1,9 @@
 import React from 'react'
 import { SCORE } from '../lib/terms'
 import { Overview } from './Overview'
-import { PatchPage } from './PatchPage'
-import { WithoutPatch } from './WithoutPatch'
+import { PatchHub } from './PatchHub'
 import { Tour } from './Tour'
 import { Methods } from './Methods'
-import { Pairing } from './Pairing'
 import { Responses } from './Responses'
 import { Entry } from './Entry'
 import { SiteIntro } from './SiteIntro'
@@ -700,7 +698,9 @@ function AppTabBar({ app, view, go }) {
                   on ? 'bg-accent-lit text-ink' : 'bg-transparent')}>
                   <Mark size={20}/>
                 </span>
-                <span className={cn('max-w-full truncate font-display text-fine leading-none',
+                <span className={cn('max-w-full truncate font-display leading-none',
+                  /* Seven tabs on the student bar: 55px each at 390. */
+                  tabs.length > 6 ? 'text-[11.5px] sm:text-fine' : 'text-fine',
                   on ? 'font-bold' : 'font-medium')}>
                   {Array.isArray(label) ? <>
                     <span className="sm:hidden">{label[0]}</span>
@@ -1200,9 +1200,13 @@ export function App() {
 
   /* The route table. Every id in spec 0e section 18 is here and resolves.
      Several routes are a tab inside a section and keep their own url. */
-  const V = { site:Overview, patch:PatchPage, 'without-patch':WithoutPatch,
+  const V = { site:Overview,
+              /* One page in three parts; each route lands on its part. */
+              patch: p => <PatchHub {...p} section="patch"/>,
+              pairing: p => <PatchHub {...p} section="pairing"/>,
+              'without-patch': p => <PatchHub {...p} section="without-patch"/>,
               tour:Tour, responses:Responses, survey:SurveyPage,
-              methods:Methods, pairing:Pairing,
+              methods:Methods,
               students:ForStudents, parents:ForParents, pro:ForSchools,
               'heads-up': HeadsUpPage,
               /* Signed out, the app home; signed in, the three doors. */

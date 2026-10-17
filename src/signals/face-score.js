@@ -31,7 +31,7 @@ export const FACE_TERMS = [
   { id: 'lipPress',   w: 0.40, label: 'Lip pressing' },
   { id: 'eyeSquint',  w: 0.30, label: 'Eye tightening' },
   { id: 'headMotion', w: 0.35, label: 'Restlessness' },
-  { id: 'earVar',     w: 0.25, label: 'Eye steadiness' },
+  { id: 'earVar',     w: 0.25, label: 'Eye movement' },
 ]
 
 /* Population starting points, deliberately wide, used until this person has
@@ -147,7 +147,7 @@ export function faceSentence(r) {
   const verb = b.key === 'usual' ? 'sitting' : 'running'
   const tail = !top || Math.abs(top.raw) < 0.3
     ? 'Nothing in your face stands out on its own.'
-    : `${top.label} is the biggest single part of that: ${fmtZ(top.z)} your own usual.`
+    : `${top.label} is the biggest single part of that: ${fmtZ(top.z)} ${r.baselineDays ? 'your own usual' : 'the typical range, until you have a few readings of your own'}.`
   return { lead: `Right now you are ${verb} `, word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
 }
 

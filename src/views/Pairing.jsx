@@ -83,7 +83,9 @@ function statusOf(i, cursor, phase) {
 const MARK = { done: Check, now: Always, stuck: Minus }
 const LABEL = { done:'Done', now:'Now', stuck:'Stopped here' }
 
-export function Pairing({ go }) {
+/* `as`, `level` and `tail`: the hub (views/PatchHub) draws this inside its
+   own <main>, under its own band, with Without the patch straight after. */
+export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
   const [phase, setPhase] = React.useState('idle')
   const [cursor, setCursor] = React.useState(0)      // steps revealed
   const [msg, setMsg] = React.useState('')
@@ -111,18 +113,20 @@ export function Pairing({ go }) {
   const art = seeing >= 0 ? STEPS[seeing] : null
 
   return (
-    <main>
+    <Root>
       <header className="border-t border-rule bg-accent-wash">
         <div className="wrap py-7 lg:py-10">
           <div className="grid items-end gap-5
             lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-8">
             <div className="min-w-0">
-              <p className="font-body text-ui font-semibold text-accent-ink">
-                Using the patch
-              </p>
+              {level === 1 && (
+                <p className="mb-2 font-body text-ui font-semibold text-accent-ink">
+                  Using the patch
+                </p>
+              )}
               {/* The owner's own heading, spec 0d rule 3. */}
-              <RevealLines as="h1"
-                className="mt-2 max-w-[20ch] font-display font-bold text-major leading-[1.05]
+              <RevealLines as={level === 1 ? 'h1' : 'h2'}
+                className="max-w-[20ch] font-display font-bold text-major leading-[1.05]
                   tracking-tight text-ink"
                 lines={['Fully Wireless,', '2 Minutes of Setup']}/>
               <ScrollIn className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -300,7 +304,7 @@ export function Pairing({ go }) {
 
       {/* Size, charging slot and baseline live on the patch page. The one thing
           kept here is the way through without a patch. */}
-      <Section tone="paper" tight className="bg-aqua-2">
+      {tail && <Section tone="paper" tight className="bg-aqua-2">
         <ScrollIn>
         <Card className="p-3.5 lg:p-4">
           <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
@@ -318,7 +322,7 @@ export function Pairing({ go }) {
           </div>
         </Card>
         </ScrollIn>
-      </Section>
-    </main>
+      </Section>}
+    </Root>
   )
 }

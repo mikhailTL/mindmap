@@ -5,7 +5,7 @@ import { HowTo, GUIDES, guideFor, storageKey } from '../src/views/howto'
 import { ART } from '../src/views/howto/art'
 
 const PAIRS = {
-  student: ['app-student', 'reading', 'student-trends', 'toolkit', 'ai', 'shared'],
+  student: ['app-student', 'reading', 'mirror', 'student-trends', 'toolkit', 'ai', 'shared'],
   parent: ['app-parent', 'parent-trends', 'toolkit', 'ai', 'privacy'],
   pro: ['app-pro', 'app-pro-trends', 'network', 'ai', 'toolkit'],
 }

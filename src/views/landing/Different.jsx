@@ -60,7 +60,7 @@ export const DIFFERENT = [
     rule: 'bg-beam', pane: 'bg-beam-wash',
     place: 'xl:col-start-3 xl:row-start-1',
     title: 'Patch or phone',
-    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera.' },
+    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
   { id: 'heads', go: 'heads-up', look: 'ink',
     place: 'xl:col-start-4 xl:row-start-1',
     title: 'Heads Up',

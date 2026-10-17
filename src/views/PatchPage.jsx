@@ -69,23 +69,8 @@ function noWebgl2() {
   } catch { return true }
 }
 
-/* The site sets scroll-behavior: smooth on <html>, so the route change's
-   window.scrollTo(0, 0) animates up from the overview's depth, and this page,
-   being shorter, first clamps that to its own bottom. A phone can stop the
-   animation there. Arriving jumps to the top at once instead. */
-function useArriveAtTop() {
-  React.useLayoutEffect(() => {
-    const html = document.documentElement
-    const was = html.style.scrollBehavior
-    html.style.scrollBehavior = 'auto'
-    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) } catch { window.scrollTo(0, 0) }
-    const id = requestAnimationFrame(() => { html.style.scrollBehavior = was })
-    return () => { cancelAnimationFrame(id); html.style.scrollBehavior = was }
-  }, [])
-}
-
-export function PatchPage() {
-  useArriveAtTop()
+/* `as`: the hub (views/PatchHub) draws this inside its own <main>. */
+export function PatchPage({ as: Root = 'main' }) {
   const [picked, setPicked] = React.useState(null)
   const [down, setDown] = React.useState(false)
   const model = React.useRef(null)
@@ -135,7 +120,7 @@ export function PatchPage() {
   }, [])
 
   return (
-    <main>
+    <Root>
       <section className="relative overflow-hidden bg-accent-wash">
         <div className="wrap relative py-7 lg:py-10
           lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-center lg:gap-8">
@@ -273,7 +258,7 @@ export function PatchPage() {
             </Card>
           </Parallax2D>
 
-          <ScrollIn className="lg:sticky lg:top-24">
+          <ScrollIn className="lg:sticky lg:top-32">
           <Card variant="ink" className="p-3.5 lg:p-4">
             <h3 className="font-display text-row font-bold leading-tight text-paper">
               Decided so far
@@ -307,6 +292,6 @@ export function PatchPage() {
         </div>
       </Section>
 
-    </main>
+    </Root>
   )
 }

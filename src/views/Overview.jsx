@@ -57,7 +57,7 @@ const WAYS = [
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
   { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
-    steps: ['Open the app and tap Take a reading', 'Hold your fingertip over the phone camera', 'After 45 seconds, your score appears'],
+    steps: ['Open the app and tap Take a reading', 'Fingertip on the camera, or face the Mental Mirror', 'Your score appears in under a minute'],
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
