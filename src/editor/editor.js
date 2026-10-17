@@ -13,6 +13,7 @@
  * so the changes can be found in the source and made for real. */
 
 const STORE = 'mindmap.editor.changes'
+const FSTORE = 'mindmap.editor.features'
 const FLAG = 'mindmap.editor'
 const BLUE = '#0868d4'
 const GREEN = '#157446'
@@ -58,6 +59,8 @@ const css = `
 
 const loadChanges = () => { try { return JSON.parse(localStorage.getItem(STORE) || '{}') || {} } catch { return {} } }
 const saveChanges = c => { try { localStorage.setItem(STORE, JSON.stringify(c)) } catch {} }
+const loadFeatures = () => { try { return JSON.parse(localStorage.getItem(FSTORE) || '{}') || {} } catch { return {} } }
+const saveFeatures = f => { try { localStorage.setItem(FSTORE, JSON.stringify(f)) } catch {} }
 
 /* ── describing an element ──────────────────────────────────────────────── */
 
@@ -106,6 +109,11 @@ export function startEditor() {
   if (window.__mmxEditor) { window.__mmxEditor.show(); return }
 
   const changes = loadChanges()
+  /* Feature requests: instructions about functionality for a page, a section
+     or one element. They go into the prompt as instructions and are never
+     shown on, or written into, the site's own text. */
+  const features = loadFeatures()
+  let featScope = 'element'
   let selectOn = true, sel = null, hoverEl = null, editing = null
   const ui = document.createElement('div')
   ui.className = 'mmx-root'
@@ -471,6 +479,8 @@ export function startEditor() {
     nt.appendChild(ta)
     panel.appendChild(nt)
 
+    panel.appendChild(featureBox(el))
+
     const un = mk('div', 'mmx-sec')
     un.appendChild(btn('Undo all changes to this element', () => undoEl(el)))
     panel.appendChild(un)
@@ -502,23 +512,91 @@ export function startEditor() {
     })
   }
 
+  /* ── feature requests ── */
+  function featKey(scope, el) {
+    if (scope === 'page') return route() + '|page'
+    if (scope === 'section') return route() + '|section|' + sectionOf(el)
+    return route() + '|el|' + pathOf(el)
+  }
+  function setFeature(scope, el, text) {
+    const key = featKey(scope, el)
+    text = String(text || '').trim()
+    if (!text) delete features[key]
+    else features[key] = {
+      key, scope, route: route(), page: pageName(), text, at: (features[key] && features[key].at) || Date.now(),
+      section: el ? sectionOf(el) : '', kind: el ? kindOf(el) : '',
+      original: el ? short(el.dataset.mmxOriginal || textOf(el), 160) : '', path: el && scope === 'element' ? pathOf(el) : '',
+    }
+    saveFeatures(features)
+    renderBar()
+  }
+  const featureText = (scope, el) => { const f = features[featKey(scope, el)]; return f ? f.text : '' }
+
+  function featureBox(el) {
+    const box = mk('div', 'mmx-sec')
+    box.style.background = '#f1f7fd'
+    box.appendChild(mk('div', 'mmx-label', 'Feature request: an instruction for the build, never added as site text'))
+    const row = mk('div', 'mmx-row')
+    const sec = el ? sectionOf(el) : ''
+    const scopes = [['element', 'This element'], ['section', 'This section'], ['page', 'This page']]
+    for (const [v, lab] of scopes) {
+      if (v === 'section' && !sec) continue
+      row.appendChild(btn(lab, () => { featScope = v; renderPanel() }, featScope === v ? 'mmx-on' : ''))
+    }
+    if (featScope === 'section' && !sec) featScope = 'element'
+    box.appendChild(row)
+    const where = mk('div', 'mmx-snip', featScope === 'page' ? 'Applies to the whole page: ' + pageName()
+      : featScope === 'section' ? 'Applies to the section: ' + sec : 'Applies to this element only')
+    box.appendChild(where)
+    const ta = mk('textarea', 'mmx-note')
+    ta.style.marginTop = '6px'
+    ta.value = featureText(featScope, el)
+    ta.placeholder = 'e.g. add a weekly chart here, remove this toggle, make this card open the Toolkit…'
+    ta.addEventListener('keydown', e => e.stopPropagation())
+    ta.addEventListener('input', () => setFeature(featScope, el, ta.value))
+    box.appendChild(ta)
+    return box
+  }
+
+  function pageNote() {
+    modal('Feature request for this page: ' + pageName(), card => {
+      const p = mk('p', 'mmx-snip', 'An instruction for what to add, change or remove on this page. It goes into the prompt and is never put on the site as text.')
+      p.style.padding = '0 14px 8px'
+      card.appendChild(p)
+      const ta = mk('textarea')
+      ta.style.fontFamily = 'inherit'
+      ta.style.minHeight = '180px'
+      ta.value = featureText('page', null)
+      ta.placeholder = 'e.g. add a short FAQ at the bottom, remove the survey link, add a video of the patch…'
+      ta.addEventListener('keydown', e => e.stopPropagation())
+      ta.addEventListener('input', () => setFeature('page', null, ta.value))
+      card.appendChild(ta)
+      const pad = mk('div'); pad.style.height = '14px'; card.appendChild(pad)
+      setTimeout(() => ta.focus(), 30)
+    })
+  }
+
   /* ── the bar ── */
   function renderBar() {
     const list = Object.values(changes)
-    const pages = new Set(list.map(c => c.route)).size
+    const feats = Object.values(features)
+    const pages = new Set(list.map(c => c.route).concat(feats.map(f => f.route))).size
+    const total = list.length + feats.length
     bar.innerHTML = ''
-    bar.appendChild(mk('span', 'mmx-count', list.length
-      ? `${list.length} change${list.length === 1 ? '' : 's'} on ${pages} page${pages === 1 ? '' : 's'}`
+    bar.appendChild(mk('span', 'mmx-count', total
+      ? `${list.length} edit${list.length === 1 ? '' : 's'}, ${feats.length} feature note${feats.length === 1 ? '' : 's'}, ${pages} page${pages === 1 ? '' : 's'}`
       : 'Editor: click anything to select it'))
     bar.append(
       btn(selectOn ? 'Selecting' : 'Browsing', () => { selectOn = !selectOn; if (!selectOn) deselect(); renderBar() }, selectOn ? 'mmx-on' : ''),
+      btn('Page feature note', pageNote),
       btn('All changes', showList),
       btn('Copy prompt', copyPrompt, 'mmx-primary'),
       btn('Clear all', () => {
-        if (!list.length) return
-        if (!confirm('Clear every recorded change? This cannot be undone.')) return
+        if (!total) return
+        if (!confirm('Clear every recorded change and feature note? This cannot be undone.')) return
         for (const k of Object.keys(changes)) delete changes[k]
-        saveChanges(changes); location.reload()
+        for (const k of Object.keys(features)) delete features[k]
+        saveChanges(changes); saveFeatures(features); location.reload()
       }),
       btn('Exit', exit),
     )
@@ -551,20 +629,34 @@ export function startEditor() {
 
   function buildPrompt() {
     const list = Object.values(changes).sort((a, b) => a.route.localeCompare(b.route) || a.at - b.at)
-    if (!list.length) return ''
+    const feats = Object.values(features)
+    if (!list.length && !feats.length) return ''
     const head = [
       'Apply these edits I made in the browser editor to the MindMap website (repo ~/Desktop/mindmap-patient-react).',
       'Each item names the page and section, then "Find" quotes the element\'s text as it is now in the site, so you can grep for it in src. Under it are the changes I made by hand.',
       'Sizes and spacing are CSS px measured at the screen width noted; map them to the nearest Tailwind tokens and keep the layout responsive at 390px too. Keep the site\'s copy rules (plain words, no dashes). If a change cannot be made exactly, make the closest change and tell me.',
+      'Lines under "Feature requests" are my instructions about functionality to add, change or remove there. Build them; never put their words on the site as text.',
       '',
     ]
     const body = []
-    let page = null, n = 0
-    for (const ch of list) {
-      if (ch.route !== page) {
-        page = ch.route
-        body.push(`## ${ch.page} (#/${ch.route})`)
+    const routes = [...new Set(list.map(c => c.route).concat(feats.map(f => f.route)))].sort()
+    const order = { page: 0, section: 1, element: 2 }
+    let n = 0
+    for (const r of routes) {
+      const pf = feats.filter(f => f.route === r).sort((a, b) => order[a.scope] - order[b.scope] || a.at - b.at)
+      const pc = list.filter(c => c.route === r)
+      body.push(`## ${(pc[0] || pf[0]).page} (#/${r})`)
+      if (pf.length) {
+        body.push('Feature requests (instructions, not site text):')
+        for (const f of pf) {
+          const where = f.scope === 'page' ? 'Whole page'
+            : f.scope === 'section' ? `Section "${f.section}"`
+            : `${f.kind[0].toUpperCase() + f.kind.slice(1)}${f.section ? ` in section "${f.section}"` : ''}, find "${f.original || '(no text)'}"`
+          body.push(`- ${where}: ${f.text}`)
+        }
+        body.push('')
       }
+      for (const ch of pc) {
       n++
       const where = ch.section && ch.section !== ch.original ? `Section "${ch.section}", ${ch.kind}` : ch.kind
       body.push(`${n}. ${where[0].toUpperCase() + where.slice(1)}`)
@@ -572,6 +664,7 @@ export function startEditor() {
       for (const l of lineFor(ch)) body.push(`   - ${l}`)
       body.push(`   (edited at ${ch.width}px wide; element: ${ch.path})`)
       body.push('')
+      }
     }
     return head.concat(body).join('\n').trim() + '\n'
   }
@@ -615,7 +708,18 @@ export function startEditor() {
     modal('All changes', (card) => {
       const list = mk('div', 'mmx-list')
       const items = Object.values(changes).sort((a, b) => a.route.localeCompare(b.route) || a.at - b.at)
-      if (!items.length) list.appendChild(mk('p', '', 'No changes yet.'))
+      const fs = Object.values(features).sort((a, b) => a.route.localeCompare(b.route) || a.at - b.at)
+      if (!items.length && !fs.length) list.appendChild(mk('p', '', 'No changes yet.'))
+      for (const f of fs) {
+        const row = mk('div', 'mmx-item')
+        const d = mk('div')
+        d.appendChild(mk('b', '', `${f.page}: feature note for the ${f.scope === 'page' ? 'page' : f.scope === 'section' ? 'section "' + f.section + '"' : f.kind}`))
+        d.appendChild(mk('div', 'mmx-snip', f.text))
+        row.appendChild(d)
+        row.appendChild(btn('Go', () => { location.hash = '#/' + f.route }))
+        row.appendChild(btn('Remove', () => { delete features[f.key]; saveFeatures(features); row.remove(); renderBar() }))
+        list.appendChild(row)
+      }
       for (const ch of items) {
         const row = mk('div', 'mmx-item')
         const d = mk('div')
