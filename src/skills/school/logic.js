@@ -152,7 +152,7 @@ export const SOURCE_QUESTIONS = [
     next:'Ask who gains if you believe it. Look for a source with nothing to sell.' },
   { id:'bias', title:'Bias signals',
     ask:'Is the tone calm, with no loaded words, all caps or outrage, and other views mentioned fairly?',
-    next:'Rewrite the claim in neutral words. If it sounds weaker, the tone was doing the work.' },
+    next:'Rewrite the claim in neutral words. If it sounds less convincing, the tone was making it seem stronger.' },
   { id:'second', title:'Second source',
     ask:'Does a separate source you trust say the same thing?',
     next:'Find one more source that did not copy this one. Chatbot answers do not count until you find the original.' },
@@ -224,7 +224,7 @@ export function readiness(must = []) {
 export function gutCheck(feel, actual) {
   const a = Math.round(actual * 100)
   if (a - feel >= 25) return { kind:'doubt',
-    line:'Your checklist is further along than it feels. That gap is the perfectionism, not the work.' }
+    line:'Your checklist shows more done than it feels. Trust the list.' }
   if (feel - a >= 25) return { kind:'ahead',
     line:'It feels more finished than the checklist says. Finish the must-haves first.' }
   return { kind:'agree', line:'Your gut and your checklist roughly agree. Trust the list.' }
@@ -309,7 +309,7 @@ export function precision(f = {}) {
     { id:'ask',   ok: ok(f.ask, 3),   tip:'End with one question that has a short answer.' },
   ]
   const score = checks.filter(c => c.ok).length
-  const line = score === 5 ? 'Precise. A teacher can answer this in a minute.'
+  const line = score === 5 ? 'Clear. A teacher can answer this quickly.'
     : score >= 3 ? 'Close. Fill the parts marked below.' : 'Still vague. Add the parts marked below.'
   return { score, checks, line }
 }

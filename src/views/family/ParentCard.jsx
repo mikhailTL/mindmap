@@ -3,20 +3,30 @@ import { FACE_LABEL } from '../../lib/roster'
 import { FaceTrend, LampFace, trendLabel } from '../../traffic/Face'
 import { ArrowRight } from '../../ui/marks'
 import { cn } from '../../lib/utils'
-import { TeenAvatar } from './TeenCard'
+import { CardDial, TeenAvatar } from './TeenCard'
 import { SourceLine } from './Source'
 import { PREV, STATUS_SUB, STATUS_WORD, metaLine, statusOfTeen, subOf, summaryOf } from './data'
 
-/* One child on the parent's home: who, their Heads Up face for the range
- * picked at the top, today's Mind Score with what it means, where the
- * readings come from, and one clear Open button for their page.
+/* One child on the parent's Trends tab: who, their Heads Up face for the
+ * range picked at the top, the Mind Score for that range on a small rainbow
+ * with what it means, where the readings come from, and one clear Open button
+ * for their page.
  *
- * Today's figure only. The range on the face is named under it, so a week
- * face is never read as today's. Beside the face, an arrow: the Mind Score
- * for that range up, down or level against the range before it. */
+ * The range drives the figure as well as the face. The owner, 18 October:
+ * "it needs to say trends for day week month, bc it needs to apply to
+ * mindscore and everything else as well, not just heads up". Day is today's
+ * Mind Score, Week the average of the last 7 days, Month of the last 30, and
+ * the label above it names which, so a week's figure is never read as
+ * today's. The words under it compare that same figure with the usual band.
+ * Beside the face, an arrow: the Mind Score for that range up, down or level
+ * against the range before it. */
+
+const FIGURE_LABEL = Object.freeze({ day: 'Mind Score today', week: 'Mind Score, last 7 days', month: 'Mind Score, last 30 days' })
+const NONE_YET = Object.freeze({ day: 'No readings yet today', week: 'No readings in the last 7 days',
+  month: 'No readings in the last 30 days' })
 
 export default function ParentCard({ teen, range = 'day', onOpen, className }) {
-  const today = teen.days[teen.days.length - 1]
+  const figure = summaryOf(teen, range)?.mean ?? null
   const light = statusOfTeen(teen, range)
   const shared = teen.consent?.score !== false
   const change = light ? summaryOf(teen, range)?.change : null
@@ -45,20 +55,19 @@ export default function ParentCard({ teen, range = 'day', onOpen, className }) {
       </div>
 
       <div className="mt-4 border-t border-rule pt-4">
-        <p className="m-0 text-fine font-semibold text-ink-2">Mind Score today</p>
+        <p className="m-0 text-fine font-semibold text-ink-2">{FIGURE_LABEL[range]}</p>
         {!shared ? (
           <p className="m-0 mt-1.5 text-ui text-ink-2">{teen.first} does not share their Mind Score with you.</p>
-        ) : today.score == null ? (
-          <p className="m-0 mt-1.5 font-display text-ui font-bold text-ink">No readings yet today</p>
+        ) : figure == null ? (
+          <p className="m-0 mt-1.5 font-display text-ui font-bold text-ink">{NONE_YET[range]}</p>
         ) : (
-          <div className="mt-1 flex items-end gap-4">
-            <p className="m-0 flex items-baseline gap-1.5">
-              <span className="font-display text-stat font-bold tabular-nums leading-none text-ink">{today.score}</span>
-              <span className="text-fine text-ink-2">of 100</span>
-            </p>
-            <div className="min-w-0 pb-0.5">
-              {subOf(teen, today.score) && <p className="m-0 font-display text-ui font-bold leading-tight text-ink">{subOf(teen, today.score)}</p>}
-              {teen.usual && <p className="m-0 text-fine text-ink-2">Usual {teen.usual.lo} to {teen.usual.hi}</p>}
+          /* The figure is the centre of the small rainbow (owner, 18 October:
+             "it should show the rainbow (small) with the mindscore"). */
+          <div className="mt-2 flex items-center gap-4">
+            <CardDial teen={teen} range={range} score={figure}/>
+            <div className="min-w-0">
+              {subOf(teen, figure) && <p className="m-0 font-display text-ui font-bold leading-tight text-ink">{subOf(teen, figure)}</p>}
+              {teen.usual && <p className="m-0 mt-0.5 text-fine text-ink-2">Usual {teen.usual.lo} to {teen.usual.hi}</p>}
             </div>
           </div>
         )}

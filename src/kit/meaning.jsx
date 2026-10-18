@@ -25,37 +25,37 @@ import { SCORE } from '../lib/terms'
 
 const CARRIES = [
   ...SENSOR_ORDER.map(id => ({ k: SENSORS[id].name, v: SENSORS[id].short })),
-  { k: 'One number a day', v: `The ${SCORE}, 0 to 100, for each of the fourteen days.` },
-  { k: 'Her own normal', v: 'Every value is a distance from her baseline, not from anybody else’s.' },
+  { k: 'One number a day', v: `The ${SCORE}, 0 to 100, for each of the last 14 days.` },
+  { k: 'Compared to their usual', v: 'Each value is compared to your teen’s own usual levels, never to other teens.' },
 ]
 
 const CARRIES_NOT = [
-  { k: 'What happened', v: 'No event, no subject, no reason. A test and a fallout look identical.' },
-  { k: 'What was said', v: 'Notes are hers. They are never on a parent’s screen in any form.' },
-  { k: 'Where she was', v: 'Location is never shared with a parent.' },
-  { k: 'Who she was with', v: 'Nobody else is named, and she is never set beside another student.' },
-  { k: 'Anything finer than a day', v: 'No hours, no moments, no raw reading. One value per day is the floor.' },
+  { k: 'What happened', v: 'No events or reasons. A test and a fight with a friend look the same.' },
+  { k: 'What was said', v: 'Your teen’s notes are private and never shown to a parent.' },
+  { k: 'Where they were', v: 'Location is never shared with a parent.' },
+  { k: 'Who they were with', v: 'No one else is named, and your teen is never compared with other students.' },
+  { k: 'Hour by hour detail', v: 'No hours, moments or raw readings. One value per day only.' },
 ]
 
 const CLAIMS = [
   { q: 'A high stretch means something is wrong at school.',
     verdict: 'It cannot say',
-    a: 'The score moves with whatever the body treats as load: a test, a fallout, a cold, three short nights, a hard training week. It has no way of telling you which of those it was.' },
-  { q: 'A high stretch means she is not coping.',
+    a: 'The score rises with anything the body treats as load: a test, a fight with a friend, a cold, short nights or a hard training week. It cannot tell you which one.' },
+  { q: 'A high stretch means my teen is not coping.',
     verdict: 'No',
-    a: 'A rise above her own baseline is a measurement of load, not of whether she is handling it. Plenty of heavy stretches are handled.' },
+    a: 'A rise above their usual shows more load. It does not show whether they are handling it. Many hard weeks are handled well.' },
   { q: 'A calm stretch means everything is fine.',
     verdict: 'Not on its own',
-    a: 'A quiet fortnight with one bad Tuesday averages out to a quiet fortnight. The number does not know what was said to her on Tuesday.' },
+    a: 'Two calm weeks with one bad day still average out as calm. The number does not show what happened on that day.' },
   { q: 'The number tells me whether to worry.',
-    verdict: 'Yours to decide',
-    a: 'It tells you what her body did against her own normal. Whether that is worth worrying about is a judgement about your teenager, and you have information the patch does not.' },
-  { q: 'If I can see their trends, I do not need to ask.',
+    verdict: 'Your call',
+    a: 'It shows how your teen’s body responded compared to their usual. You know things about your teen that the patch does not.' },
+  { q: 'If I can see their Trends, I do not need to ask.',
     verdict: 'No',
-    a: 'Four signals and a baseline. Nothing about what happened, nothing about what was said, nobody named. Asking is the only route to any of that.' },
+    a: 'The score is four signals and a baseline. It does not show what happened, what was said or who was there. Only asking can tell you that.' },
   { q: 'A run of high days means I should check the app more often.',
     verdict: 'No',
-    a: 'Checking more often changes nothing about those days and changes what the app is for. It was built for one look, and for the conversation that follows it.' },
+    a: 'Checking more often does not change those days. The app is meant for one look, then a conversation.' },
 ]
 
 function Column({ title, rows, lit }) {
@@ -78,18 +78,18 @@ function Column({ title, rows, lit }) {
 export function Meaning() {
   return (
     <div>
-      <p className="max-w-[54ch] text-sec text-ink-2">The {SCORE} is four signals measured against your
-        teenager’s own fortnight. Here is what that will and will not carry.</p>
+      <p className="max-w-[54ch] text-sec text-ink-2">The {SCORE} combines four body signals, compared to
+        your teen’s own last two weeks. Here is what it shows and what it does not.</p>
 
-      <Step className="mt-5">What a fortnight on your screen is made of</Step>
+      <Step className="mt-5">What you see</Step>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <Column title={`${CARRIES.length} things it carries`} rows={CARRIES} lit/>
-        <Column title={`${CARRIES_NOT.length} things it does not`} rows={CARRIES_NOT}/>
+        <Column title={`${CARRIES.length} things it shows`} rows={CARRIES} lit/>
+        <Column title={`${CARRIES_NOT.length} things it never shows`} rows={CARRIES_NOT}/>
       </div>
-      <p className="note mt-2.5">The left column is the patch. The right one is not missing by
-        accident: a parent’s view never holds any of it, and no setting adds it.</p>
+      <p className="note mt-2.5">The first list comes from the patch. A parent’s view never includes
+        the second list, and no setting adds it.</p>
 
-      <Step className="mt-6">Six things parents read into a high fortnight</Step>
+      <Step className="mt-6">Six common assumptions</Step>
       <div className="mt-3 border-t border-rule">
         {CLAIMS.map(c => (
           <C.Root key={c.q} className="border-b border-rule">
@@ -107,7 +107,7 @@ export function Meaning() {
           </C.Root>
         ))}
       </div>
-      <Hint className="mt-4">None of this is a diagnosis and the app does not make one.</Hint>
+      <Hint className="mt-4">The app does not diagnose.</Hint>
     </div>
   )
 }

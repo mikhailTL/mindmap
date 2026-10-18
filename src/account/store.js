@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { PRO } from '../lib/terms'
 import { call, probe, readToken, writeToken } from './remote'
-import { AVATAR_ALL_IDS } from './avatar-catalog'
+import { AVATAR_ALL_IDS, isPhotoAvatar } from './avatar-catalog'
 
 /* Accounts, links and invitations.
  *
@@ -63,7 +63,10 @@ export const AVATAR_IDS = [
    against the same list. AVATAR_IDS stays the original twelve. */
 export { AVATAR_ALL_IDS }
 const AVATAR_SET = new Set(AVATAR_ALL_IDS)
-export const isAvatar = v => typeof v === 'string' && AVATAR_SET.has(v)
+/* A drawing's id, or an uploaded photo (a small data URL). */
+export const isAvatar = v => typeof v === 'string' && (AVATAR_SET.has(v) || isPhotoAvatar(v))
+/* A teen never holds a photo: teens pick from the drawings. */
+const avatarFor = (role, v) => (isAvatar(v) && !(role === 'student' && isPhotoAvatar(v)) ? v : null)
 
 /* Who may link to whom. Two of the same role never link: a teen to teen link
    is social comparison on a product about stress, and is not offered. */
@@ -160,7 +163,7 @@ function normaliseAccounts(s) {
         role: a.role,
         name: a.name.trim().slice(0, NAME_MAX),
         email: EMAIL.test(cleanEmail(a.email)) ? cleanEmail(a.email) : null,
-        avatar: isAvatar(a.avatar) ? a.avatar : null,
+        avatar: avatarFor(a.role, a.avatar),
         setting: a.role === 'pro' && SETTING_IDS.includes(a.setting) ? a.setting : null,
         passcodeHash: a.passcodeHash || null,
         createdAt: iso(a.createdAt) || now(),
@@ -388,7 +391,7 @@ export async function createAccount({ role, name, passcode, email, avatar, setti
   const account = {
     id: newId('a'), role, name: clean,
     email: mail || null,
-    avatar: isAvatar(avatar) ? avatar : null,
+    avatar: avatarFor(role, avatar),
     setting: role === 'pro' ? setting : null,
     passcodeHash: await hash(String(passcode)), createdAt: now(), lastSignInAt: now(),
   }
@@ -454,7 +457,7 @@ export function updateProfile(patch = {}) {
   }
   if ('avatar' in patch) {
     if (patch.avatar === null) next.avatar = null
-    else if (isAvatar(patch.avatar)) next.avatar = patch.avatar
+    else if (avatarFor(me.role, patch.avatar)) next.avatar = patch.avatar
   }
   if ('setting' in patch && me.role === 'pro' && SETTING_IDS.includes(patch.setting)) next.setting = patch.setting
   accounts.merge({ items: accounts.get().items.map(a => a.id === me.id ? next : a) })

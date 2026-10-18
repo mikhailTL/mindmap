@@ -203,8 +203,8 @@ export default function Reframe() {
         <div ref={box} className="relative">
           {stage === 'pick' && (
             <div>
-              <h3 className="font-display text-row font-bold tracking-tight text-ink">Pick the thought</h3>
-              <p className="mt-1 text-sec text-ink-2">The one that is loudest right now.</p>
+              <h3 className="font-display text-row font-bold tracking-tight text-ink">Pick a thought</h3>
+              <p className="mt-1 text-sec text-ink-2">Choose the one that bothers you most right now.</p>
               <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 {THOUGHTS.map((t, k) => (
                   <button key={t} type="button" onClick={e => pick(t, e.currentTarget)}
@@ -229,7 +229,7 @@ export default function Reframe() {
               <p className="rounded-field p-3 font-display text-ui font-semibold text-ink"
                 style={{ background:'var(--g-wash)' }}>{thought}</p>
               <h3 className="mt-3 font-display text-row font-bold tracking-tight text-ink">Flip three cards</h3>
-              <p className="mt-1 text-sec text-ink-2">Tap a card to turn it over. Pick the answer that fits.</p>
+              <p className="mt-1 text-sec text-ink-2">Tap each card to turn it over, then pick an answer.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {cards.map((c, i) => (
                   <FlipCard key={c.q} n={i + 1} prompt={c} open={open[i]} answer={answers[i]}
@@ -247,7 +247,7 @@ export default function Reframe() {
           {stage === 'build' && (
             <div>
               <h3 className="font-display text-row font-bold tracking-tight text-ink">Build a balanced thought</h3>
-              <p className="mt-1 text-sec text-ink-2">Tap the pieces in the order you like.</p>
+              <p className="mt-1 text-sec text-ink-2">Tap your answers to add them. Then edit the words if you like.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {answers.map((a, i) => (
                   <button key={i} type="button" onClick={() => place(i)} disabled={order.includes(i)}

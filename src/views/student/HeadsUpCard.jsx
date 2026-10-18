@@ -60,7 +60,7 @@ export function HeadsUpCard({ teen, go, className }) {
       {now.length > 0 && (
         <p className="mt-2 text-fine text-ink">Noticed today: {list(now)}.</p>
       )}
-      <WeekLamps days={week} className="mt-3 border-t border-rule pt-3"/>
+      <WeekLamps days={week} className="mt-4"/>
       <ul className="m-0 mt-2 list-none space-y-0.5 p-0 text-fine text-ink">
         {lines.length ? lines.map(l => <li key={l}>{l}</li>) : <li>All week looked like your usual.</li>}
       </ul>
@@ -70,7 +70,7 @@ export function HeadsUpCard({ teen, go, className }) {
       </p>
       {go && (
         <button type="button" onClick={() => go('heads-up')}
-          className="group mt-2 flex min-h-[44px] w-full items-center gap-3 border-t border-rule pt-2 text-left">
+          className="group mt-2 flex min-h-[44px] w-full items-center gap-3 border-t border-sun/25 pt-2 text-left">
           <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink transition-colors
             duration-150 groupHoverOnly:text-accent-ink">How Heads Up works</span>
           <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>

@@ -18,23 +18,6 @@ export function KV({ k, v, tone = 'text-ink' }) {
 export const Note = ({ children, className }) =>
   <p className={cn('mt-3 max-w-[66ch] border-t border-rule pt-2.5 text-fine text-ink-3', className)}>{children}</p>
 
-/* A labelled bar off a shared scale. The figure is printed, so the width and
-   the colour never carry anything on their own. */
-export function BarRow({ label, figure, pct, tone, aria }) {
-  return (
-    <li className="border-b border-rule py-2 last:border-b-0">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="min-w-0 text-fine text-ink-2">{label}</span>
-        <span className="shrink-0 text-fine tabular-nums text-ink">{figure}</span>
-      </div>
-      <div className="mt-1.5 h-2 w-full overflow-hidden rounded-xs bg-aqua-2" role="img"
-        aria-label={aria || `${label}, ${figure}`}>
-        <div className={cn('h-full rounded-xs', tone)} style={{ width: Math.max(2, Math.round(pct)) + '%' }}/>
-      </div>
-    </li>
-  )
-}
-
 /* The hatch that marks a group too small to show. Each use passes its own
    id: two patterns with one id in one document collide. */
 export const Hatch = ({ id, className, label = 'Hidden, fewer than five teens' }) => (

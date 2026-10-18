@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
    a row of bare inputs does not: arrow keys move within the scale, Tab leaves it. */
 export function Scale({ name, legend, low, high, value, onChange }){
   return (
-    <fieldset className="py-6 border-b border-rule">
+    <fieldset className="py-6 border-b border-rule/50">
       <legend className="font-display font-bold text-row text-ink p-0">{legend}</legend>
       <R.Root value={value==null?'':String(value)}
         onValueChange={v=>onChange(Number(v))}

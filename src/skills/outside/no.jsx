@@ -106,7 +106,7 @@ function How({ s, set }) {
   return (
     <>
       <StepHead n={3} of={STEPS} title="Pick a firm, kind way to say it"/>
-      <Note>You do not owe a long reason. Kind and firm can be the same sentence.</Note>
+      <Note>You do not need a long reason. You can be kind and firm at the same time.</Note>
       <div className="mt-4 grid gap-2">
         {NO_STYLES.map(st => (
           <Choice key={st.id} on={s.style === st.id} onClick={() => set({ style:st.id })} className="w-full py-3">
@@ -141,13 +141,13 @@ function How({ s, set }) {
           <p className="mt-1 font-display text-row font-bold tracking-tight text-ink" aria-live="polite">{line}</p>
         </Result>
       )}
-      {line && <Win className="mt-3">Line ready. Next, hold it against three rounds of pushback.</Win>}
+      {line && <Win className="mt-3">Line ready. Next, practice it against three rounds of pushback.</Win>}
       <fieldset className="mt-5">
         <legend className="font-display text-ui font-bold text-ink">If it gets hard, I can text</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {BACKUPS.map(b => <Choice key={b} on={s.backup === b} onClick={() => set({ backup:s.backup === b ? '' : b })}>{b}</Choice>)}
         </div>
-        <p className="mt-2 text-fine text-ink-2">If they get upset, that is not proof you did something wrong.</p>
+        <p className="mt-2 text-fine text-ink-2">If they get upset, it does not mean you did something wrong.</p>
       </fieldset>
       {s.who === 'partner' && <Consent compact/>}
       <Row>
@@ -283,9 +283,9 @@ export default function SayNo({ onExit }) {
   const set = patch => setS(prev => ({ ...prev, ...patch }))
   return (
     <Screen id={ID} family="lilac" title="Saying No" icon={<NoIcon/>} onExit={onExit}>
-      {s.step === 1 && <Intro problem="Saying no to friends, dates or adults can feel like risking your place."
-        doing="Build a firm, kind no, practice it against pushback, and keep a list."/>}
-      <Quest game={g} body="mt-5" goal="Build a firm, kind no and hold it for three rounds."
+      {s.step === 1 && <Intro problem="Practice saying no to friends, dates or adults."
+        doing="Write a firm, kind no, practice it when someone pushes back, and save it."/>}
+      <Quest game={g} body="mt-5" goal="Write a firm, kind no and stick to it for three rounds."
         steps={['Who is asking', 'What to say no to', 'How to say it', 'Pushback']} at={s.step - 1}>
       {s.step === 1 && <Who s={s} set={set}/>}
       {s.step === 2 && <What s={s} set={set}/>}

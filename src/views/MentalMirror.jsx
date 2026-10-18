@@ -46,7 +46,7 @@ function bandsOf(result) {
   })
 }
 
-const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
+const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
 const STORE = 'mindmap.mirror.baseline'
 const CHECKINS = 'mindmap.phone.checkins'   /* shared with the camera reading: one calibration per person */
 const CONSENT = 'mindmap.mirror.ok'
@@ -76,7 +76,7 @@ const KEEP = [
   ['bg-accent', 'Students only.'],
   ['bg-beam', 'No picture is kept.'],
   ['bg-sky', 'Not a diagnosis.'],
-  ['bg-coral', 'It reads your pulse from skin colour and your face against your own usual.'],
+  ['bg-coral', "Google's MediaPipe Face Landmarker maps 478 points on your face. Your pulse is read from skin colour."],
 ]
 
 /* Any render failure inside the mirror shows a short note and a retry, not a
@@ -290,7 +290,7 @@ function Mirror() {
           {phase !== 'capture' && (
             <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
               <p className="max-w-[28ch] text-sec text-paper/90">
-                {phase === 'loading' ? 'Loading the face model…'
+                {phase === 'loading' ? 'Loading MediaPipe Face Landmarker…'
                   : phase === 'working' ? 'Reading…'
                   : phase === 'done' ? 'Done. The camera is off.'
                   : 'Face the phone in good light.'}
@@ -306,7 +306,7 @@ function Mirror() {
           <div className="mt-3">
             <Progress value={progress} max={100} label="Reading progress"/>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-fine text-ink-2">
-              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full bg-accent-lit"/>Face model</span>
+              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full bg-accent-lit"/>Face Landmarker</span>
               <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-[2px] border-2 border-coral"/>Pulse patch</span>
             </p>
           </div>
@@ -346,7 +346,7 @@ function Mirror() {
                 </dl>
 
                 {/* The check-in: the label this person teaches the model with. */}
-                <div className="mt-5 border-t border-rule pt-4">
+                <div className="mt-5 border-t border-rule/60 pt-4">
                   {!answered ? (
                     <>
                       <p className="text-sec text-ink">Does this match how you feel?</p>

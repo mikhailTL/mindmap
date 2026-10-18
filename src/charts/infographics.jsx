@@ -38,7 +38,7 @@ const BAND = {
   heart: { band: [15, 25], base: 20, out: [37, 9],  says: 'beats faster, with more even gaps between beats' },
   sweat: { band: [24, 33], base: 30, out: [22, 7],  says: 'rises first, and fastest, when the body tenses' },
   temp:  { band: [10, 19], base: 14, out: [54, 21], says: 'drifts down under strain and back up on settling' },
-  move:  { band: [17, 23], base: 20, out: [62, 16], says: 'spikes, telling a hard run from a hard day' },
+  move:  { band: [17, 23], base: 20, out: [62, 16], says: 'spikes when you move, so exercise is not read as stress' },
 }
 
 /* The root stays an <svg> sized by className, so a caller that passes a height

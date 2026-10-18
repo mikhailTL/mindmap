@@ -10,16 +10,19 @@
  *   pat-*   a pattern, generated from its id, so it is the same every time
  */
 
+/* Animals first: the owner, 18 October, "kids should be the animal and fun
+   ones". These drawings are the teen's set; parents and
+   Counselors/Professionals get initials or a photo (see below). */
 export const GROUPS = [
-  { id: 'shapes',   label: 'Shapes and signs' },
-  { id: 'faces',    label: 'Faces and things' },
-  { id: 'patterns', label: 'Patterns' },
   { id: 'animals',  label: 'Animals' },
+  { id: 'faces',    label: 'Faces and things' },
+  { id: 'shapes',   label: 'Shapes and signs' },
+  { id: 'patterns', label: 'Patterns' },
 ]
 
 export const HUES = ['coral', 'sun', 'mint', 'sky', 'lilac', 'blush']
 
-const ANIMALS = [
+export const ANIMALS = [
   'fox', 'owl', 'panda', 'frog', 'cat', 'bear',
   'koala', 'penguin', 'bunny', 'whale', 'hedgehog', 'sloth',
 ]
@@ -88,3 +91,23 @@ export const avatarEntry = id => BY_ID.get(id) || null
 /* Words a search box matches: the label, the group, and the drawing's key. */
 export const avatarWords = c =>
   [c.label, c.key, c.pair || '', c.hue || '', GROUPS.find(g => g.id === c.group)?.label || ''].join(' ').toLowerCase()
+
+/* Uploaded photos. The owner, 18 October: "parents should use either letter
+   avatars or uploaded pictures, and counselors should use uploaded
+   professional images". A photo is cropped square and shrunk on the device
+   (src/account/ui.jsx), then kept as a small data URL. A teen's account never
+   holds one: teens pick from the drawings above. */
+export const PHOTO_MAX = 60000
+const PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/
+export const isPhotoAvatar = v => typeof v === 'string' && v.length <= PHOTO_MAX && PHOTO_RE.test(v)
+
+/* Initials for a letter avatar: the first letters of the first and last
+   words, a title such as Dr. or Ms. left out. "Dr. Shah" is S, "Rosa Diaz"
+   is RD. */
+const TITLE = /^(dr|mr|mrs|ms|mx|prof)\.?$/i
+export function initialsOf(name) {
+  const words = String(name || '').trim().split(/\s+/).filter(w => w && !TITLE.test(w))
+  if (!words.length) return ''
+  const first = words[0].charAt(0), last = words.length > 1 ? words[words.length - 1].charAt(0) : ''
+  return (first + last).toUpperCase()
+}

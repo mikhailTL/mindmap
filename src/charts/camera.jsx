@@ -488,12 +488,10 @@ export function CameraModule({ className }) {
           {/* The steps again as HTML for the narrow crop: at 390px a 16-unit
               sentence inside a 700-unit viewBox renders at nine pixels. */}
           {narrow && (
-            <ol className="m-0 mt-4 list-none border-y border-rule p-0">
-              {CAMERA_STEPS.map((s, i) => (
-                <li key={s.id}
-                  className={cn('grid grid-cols-[1.9rem_1fr] gap-x-2 px-2 py-1.5',
-                    i && 'border-t border-rule', i % 2 && 'bg-mist')}>
-                  <span className="border-r border-rule pr-2 text-right text-fine tabular-nums text-accent">{s.n}</span>
+            <ol className="m-0 mt-4 grid list-none gap-2 p-0">
+              {CAMERA_STEPS.map(s => (
+                <li key={s.id} className="grid grid-cols-[1.9rem_1fr] gap-x-2">
+                  <span className="text-right text-fine font-bold tabular-nums text-accent">{s.n}</span>
                   <span className="text-note leading-[1.35] text-ink">{s.lines.join(' ')}</span>
                 </li>
               ))}
@@ -507,7 +505,7 @@ export function CameraModule({ className }) {
             beside the drawing, sized to fill it rather than leave a column of
             blank card with one line of type in it. */}
         {!narrow && (
-          <figcaption className="m-0 grid gap-3 border-t border-rule pt-4
+          <figcaption className="m-0 grid gap-3 border-t border-rule/60 pt-4
             md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] md:items-center md:gap-6
             xl:grid-cols-1 xl:content-center xl:self-stretch xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0">
             <SensorTrace p={p}/>
@@ -538,7 +536,7 @@ export function SignalCoverage({ className }) {
       {COVERAGE.map(s => (
         <li key={s.id}
           className={cn('rounded-panel border px-3 py-2.5',
-            s.on ? 'border-rule bg-card' : 'border-dashed border-ruling bg-transparent')}>
+            s.on ? 'border-rule/60 bg-card' : 'border-dashed border-ruling bg-transparent')}>
           <SignalTrace kind={s.id} muted={!s.on}/>
           <p className={cn('mt-1.5 font-display text-ui font-bold',
             s.on ? 'text-ink' : 'text-ink-3')}>{s.name}</p>

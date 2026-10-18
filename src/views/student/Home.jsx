@@ -1,14 +1,12 @@
 import React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useAccount } from '../../account/store'
-import { useGuest, useMode } from '../../lib/mode'
+import { useMode } from '../../lib/mode'
 import { cn } from '../../lib/utils'
 import { PatchFront } from '../../charts/patch-front'
 import { Button } from '../../ui/button'
 import { setReadingIntent } from '../reading/intent'
 import { TextLink } from './charts'
-import { DEMO_FIRST } from './demoTeen'
-import { firstName } from './Welcome'
+import { useViewerName } from '../../account/viewer'
 import { TODAY_LONG, longDate } from './PartHead'
 import { LeadCard, StartGrid, StartTile } from '../home/StartGrid'
 
@@ -198,28 +196,26 @@ const TILES = [
   { id: 'ai', title: 'Ask MindMap AI', tone: 'bg-lilac-wash', chevron: 'text-lilac-ink',
     Motif: ChatMotif, motif: 'h-auto w-[84%]',
     photo: 'student-hero', alt: 'A teenager with headphones, smiling on a sofa' },
-  { id: 'network', title: 'Your network', tone: 'bg-coral-wash', chevron: 'text-coral-ink',
+  { id: 'network', title: 'Network', tone: 'bg-coral-wash', chevron: 'text-coral-ink',
     Motif: NetworkMotif, motif: 'h-auto w-[86%]',
     photo: 'friends-steps', alt: 'Two friends talking on school steps' },
 ]
 
 export function StudentHome({ go }) {
   const [mode] = useMode()
-  const me = useAccount()
   const calm = !!useReducedMotion()
   const demo = mode !== 'real'
-  /* A guest is a spectator, not a role: no demo name for them. */
-  const guest = useGuest() && demo && !me
-  const name = guest ? 'Guest' : demo ? DEMO_FIRST : firstName(me?.name)
+  /* "Welcome, Student" in the demo, the account's first name in Live. */
+  const name = useViewerName('student')
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       <header>
         <p className="m-0 text-fine text-ink-2">{demo ? TODAY_LONG : longDate()}</p>
         <h1 className="m-0 mt-0.5 font-display text-head font-bold tracking-tight text-ink">
-          {name ? `Hi, ${name}` : 'Hi there'}</h1>
+          {name ? `Welcome, ${name}` : 'Welcome'}</h1>
       </header>
 
-      <LeadCard title="Take a reading" line="About a minute. Patch, camera, Mental Mirror or questions."
+      <LeadCard title="Take a reading" line="About a minute. Patch, camera, Mental Mirror or survey."
         cta="Start a reading" onClick={() => go('reading')}
         art={<PulseMotif calm={calm} className="h-8 w-full"/>}/>
 

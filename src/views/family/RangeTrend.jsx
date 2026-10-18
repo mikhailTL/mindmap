@@ -102,42 +102,6 @@ export function DayGauge({ teen, value, prev, large = false, className }) {
   )
 }
 
-/* ── The card's sparkline ───────────────────────────────────────────────── */
-
-export function Sparkline({ teen, range = 'week', variant = 'parent', className }) {
-  const s = summaryOf(teen, range)
-  if (range === 'day' && !showsHours(teen, variant)) {
-    const days = teen.days
-    if (s.mean == null) return null
-    return <DayGauge teen={teen} value={s.mean} prev={days[days.length - 2].score} className={className}/>
-  }
-  if (s.points.length < 2) return null
-  return <Spark teen={teen} points={s.points} className={className}/>
-}
-
-function Spark({ teen, points, className }) {
-  const [ref, W] = useWidth(140, 48)
-  const H = 40, pad = 4
-  const x = i => pad + ((W - pad * 2) * i) / Math.max(1, points.length - 1)
-  /* Scaled to this teen's own spread, not 0 to 100, so a week's shape shows. */
-  const band = teen.usual || { lo: Math.min(...points.map(p => p.score)), hi: Math.max(...points.map(p => p.score)) }
-  const lo = Math.min(band.lo, ...points.map(p => p.score)) - 4
-  const hi = Math.max(band.hi, ...points.map(p => p.score)) + 4
-  const y = v => pad + ((H - pad * 2) * (hi - v)) / (hi - lo)
-  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.score).toFixed(1)}`).join('')
-  const last = points[points.length - 1]
-  return (
-    <div ref={ref} className={cn('w-full min-w-0 overflow-hidden', className)}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden className="block">
-        {teen.usual && <rect x={pad} y={y(teen.usual.hi)} width={W - pad * 2} height={y(teen.usual.lo) - y(teen.usual.hi)} fill={BAND} rx="3"/>}
-        <path d={d} fill="none" stroke={LINE} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
-        <circle cx={x(points.length - 1)} cy={y(last.score)} r="4" fill={fillOf(teen, last.score)}
-          stroke="#ffffff" strokeWidth="2"/>
-      </svg>
-    </div>
-  )
-}
-
 /* ── The full chart ─────────────────────────────────────────────────────── */
 
 function Chart({ teen, range, s, day, onDay }) {
@@ -260,7 +224,7 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
           <p className="m-0 max-w-[52ch] text-ui text-ink-2">No readings {range === 'day' ? 'today' : `in ${RANGE_LABEL[range].toLowerCase()}`} yet.
             {' '}{teen.first}’s Mind Score shows here after their next reading.</p>
         ) : !trends ? (
-          <p className="m-0 max-w-[52ch] text-ui text-ink-2">This student has not shared trends. Only the score
+          <p className="m-0 max-w-[52ch] text-ui text-ink-2">This student has not shared Trends. Only the score
             for the range is shown.</p>
         ) : range === 'day' && !hours ? (
           <>

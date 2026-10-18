@@ -76,10 +76,11 @@ export function isReal() {
   return current === 'real'
 }
 
-/* Guest Mode: a visitor who chose to look at the demo without an account.
-   A guest is a spectator, not a student, parent or professional, so the
-   homes greet "Guest" rather than a demo person's name. Kept for this visit
-   (sessionStorage), and only meaningful in demo mode with nobody signed in. */
+/* Demo Mode (the "guest" flag): a visitor who chose to look at the demo
+   without an account. The homes greet the role word (Student, Parent,
+   Counselor; src/account/viewer.js), never a demo person's name. Kept for
+   this visit (sessionStorage), and only meaningful in demo mode with nobody
+   signed in. */
 const GUEST_KEY = 'mindmap.guest'
 let guest = (() => { try { return sessionStorage.getItem(GUEST_KEY) === '1' } catch { return false } })()
 const guestListeners = new Set()

@@ -88,7 +88,7 @@ export function ReferralNote({ onBack }) {
                   <Choice key={id} on={f.when === id} onClick={() => setF(x => ({ ...x, when:id }))}>{label}</Choice>
                 ))}
               </div>
-              <p className="mt-2 text-fine text-ink-2">Danger now is not a referral. Call your local emergency number.</p>
+              <p className="mt-2 text-fine text-ink-2">If the teen is in danger now, call your local emergency number instead.</p>
             </fieldset>
 
             <Field label="What you observed">

@@ -6,6 +6,7 @@ import { Bell, Download, Exit, Grid, Key, People, Person, Search } from '../../u
 import { useMode } from '../../lib/mode'
 import { ROLE_LABEL, SETTINGS, signOut, useAccount } from '../store'
 import { Avatar } from '../ui'
+import { VIEWER } from '../viewer'
 
 /* The top bar's account menu: the avatar opens a short list of places, with
  * Sign out last. Menu button pattern: the button says it has a popup and
@@ -16,7 +17,7 @@ import { Avatar } from '../ui'
  * above the sticky top bar (z-40) and the fixed tab bar (z-40) alike. */
 
 /* Where "Privacy and sharing" goes for each role. */
-export const MENU_PRIVACY = { student: 'shared', parent: 'privacy', pro: 'network', other: 'privacy' }
+export const MENU_PRIVACY = { student: 'shared', parent: 'privacy', pro: 'app-pro-privacy', other: 'privacy' }
 
 const TextSize = p => (
   <svg viewBox="0 0 24 24" width={p.size || 18} height={p.size || 18} fill="none" aria-hidden
@@ -84,7 +85,9 @@ function place(btn) {
   return { top: r.bottom + 6, right, width, maxHeight: Math.max(200, window.innerHeight - r.bottom - 20) }
 }
 
-export function AccountMenu({ go, className }) {
+/* `app`: the app the reader is in. In the demo with nobody signed in, the
+   menu names them by its role word, as the home does (../viewer.js). */
+export function AccountMenu({ go, app, className }) {
   const me = useAccount()
   const [mode] = useMode()
   const reduce = useReducedMotion()
@@ -176,6 +179,7 @@ export function AccountMenu({ go, className }) {
   }
 
   const setting = me?.role === 'pro' ? SETTINGS.find(s => s.value === me.setting)?.label : null
+  const viewer = !me && mode === 'demo' ? VIEWER[app] : null
   const btnId = uid + 'b', menuId = uid + 'm'
 
   const popup = (
@@ -202,10 +206,10 @@ export function AccountMenu({ go, className }) {
             </div>
           ) : (
             <div className="flex items-center gap-3 border-b border-rule bg-paper px-3.5 py-3">
-              <Avatar size="lg" className="size-12"/>
+              <Avatar name={viewer?.name} avatar={viewer?.avatar} size="lg" className="size-12"/>
               <div className="min-w-0">
-                <p className="font-display text-ui font-bold leading-tight text-ink">Not signed in</p>
-                <p className="text-fine text-ink-3">{mode === 'demo' ? 'Looking at the demo' : 'Live mode'}</p>
+                <p className="font-display text-ui font-bold leading-tight text-ink">{viewer ? viewer.name : 'Not signed in'}</p>
+                <p className="text-fine text-ink-3">{viewer ? 'Demo, not signed in' : mode === 'demo' ? 'Looking at the demo' : 'Live mode'}</p>
               </div>
             </div>
           )}
@@ -248,7 +252,7 @@ export function AccountMenu({ go, className }) {
         onKeyDown={onButtonKey}
         className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-field transition-colors',
           'duration-150 hoverOnly:bg-mist', open && 'bg-mist', className)}>
-        <Avatar name={me?.name} avatar={me?.avatar} size="sm"/>
+        <Avatar name={me?.name || viewer?.name} avatar={me ? me.avatar : viewer?.avatar} size="sm"/>
       </button>
       {typeof document !== 'undefined' && createPortal(popup, document.body)}
     </>

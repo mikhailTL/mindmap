@@ -76,15 +76,15 @@ export default function Enough({ onExit }) {
 
   return (
     <Screen title="Good Enough Meter" family="coral" icon={EnoughIcon} onExit={onExit}
-      problem="Fear of getting it wrong can stop you finishing at all."
-      plan="List what the work must have, tick it off, and let the list say when it is ready.">
+      problem="Decide when your work is ready, so worry about mistakes does not stop you finishing."
+      plan="List what the work must have and tick each item. When the list is done, hand it in.">
       <Quest game={g} at={step} goal="Tick every must-have, then hand it in. Extras are optional."
         steps={['List the must-haves', 'Tick them off', 'Hand it in']}>
 
       {s.submitted && g.result ? (
         <EndCard game={g} title="Handed in" againLabel="Start the next one" onAgain={again} onDone={leave(onExit)}
           stats={[['Must-haves met', `${r.done} of ${r.total}`], ['Extras skipped', s.nice.filter(x => !x.done).length]]}>
-          <p className="text-ui text-ink">{s.goal ? `${s.goal}: ` : ''}everything asked for was there. That is what good enough means.</p>
+          <p className="text-ui text-ink">{s.goal ? `${s.goal}: ` : ''}everything the assignment asked for is done.</p>
         </EndCard>
       ) : s.submitted ? (
         <Sheet className="kit-ground border-transparent">
@@ -92,7 +92,7 @@ export default function Enough({ onExit }) {
           <p className="mt-1 text-sec text-ink">
             {s.goal ? `${s.goal}: ` : ''}all {r.total} must-haves met. That is what was asked for.
           </p>
-          <p className="mt-2 text-ui text-ink-2">If feedback comes back, log anything useful below as a data point.</p>
+          <p className="mt-2 text-ui text-ink-2">When you get feedback, note anything useful below.</p>
           <Action className="mt-4 w-full" kind="quiet" onClick={again}>Start again</Action>
         </Sheet>
       ) : (
@@ -112,7 +112,7 @@ export default function Enough({ onExit }) {
             {r.ready ? (
               <>
                 <Win className="mt-3" reduced={g.reduced}>Ready to submit. Everything required is there.</Win>
-                <p className="mt-2 text-ui text-ink-2">More polishing now is a choice, not a requirement.</p>
+                <p className="mt-2 text-ui text-ink-2">Any more polishing is optional.</p>
                 <Action className="mt-4 w-full" onClick={submit}>
                   I submitted it
                 </Action>
@@ -152,7 +152,7 @@ export default function Enough({ onExit }) {
 
       <Sheet>
         <H>Mistake log</H>
-        <p className="mt-1 text-ui text-ink-2">A mistake is a data point. Write what happened and what it tells you.</p>
+        <p className="mt-1 text-ui text-ink-2">Write down a mistake, what it shows you, and what to try next time.</p>
         <form onSubmit={log} className="mt-3 grid gap-3">
           <Field label="What happened" placeholder="e.g. Lost marks for missing units" value={m.what} maxLength={140}
             onChange={e => setM({ ...m, what:e.target.value })}/>
@@ -182,7 +182,7 @@ export default function Enough({ onExit }) {
             ))}
           </ol>
         )}
-        {s.mistakes.length >= 3 && <Note className="mt-3">Look for a pattern in your next tries. That is the real lesson.</Note>}
+        {s.mistakes.length >= 3 && <Note className="mt-3">Look for patterns in the mistakes you log.</Note>}
       </Sheet>
     </Screen>
   )

@@ -40,7 +40,7 @@ function Make({ s, set, g }) {
       </Sheet>
       {s.drafts.length > 0 && (
         <>
-          <Note>Fix any question that reads oddly. A question in your own words sticks better.</Note>
+          <Note>Fix any question that reads oddly. Questions in your own words are easier to remember.</Note>
           <ol className="grid gap-3">
             {s.drafts.map((d, i) => (
               <li key={d.id}>
@@ -89,7 +89,7 @@ function Quiz({ s, set, g, onExit }) {
         <Sheet>
           <H>{due.length ? `${due.length} ${due.length === 1 ? 'card' : 'cards'} to review` : 'Nothing due today'}</H>
           <p className="mt-1 text-ui text-ink-2">
-            {due.length ? 'Answer from memory before you look. Pulling it out is what makes it stick.'
+            {due.length ? 'Answer from memory before you check. Recalling it helps you remember.'
               : `Your next card comes back ${inDays(next)}. You can still run through all of them.`}
           </p>
           <div className="mt-4 grid gap-3">
@@ -127,7 +127,7 @@ function Quiz({ s, set, g, onExit }) {
       <EndCard game={g} title={run.tally.partly + run.tally.not === 0 ? 'Every card from memory' : 'Quiz done'}
         againLabel="Back to my cards" onAgain={() => { setRun(null); g.reset() }} onDone={leave(onExit)}
         stats={[['Got it', run.tally.got], ['Partly', run.tally.partly], ['Not yet', run.tally.not], ['Answers from memory', seen]]}>
-        <p className="text-ui text-ink">Cards you got wait longer before they come back. The rest return sooner, which is how they stick.</p>
+        <p className="text-ui text-ink">Cards you got right come back later. The rest come back sooner.</p>
       </EndCard>
     )
     return (
@@ -308,8 +308,8 @@ export default function Active({ onExit }) {
     : s.tab === 'ask' ? (precision(s.ask).score >= 3 ? 1 : 0) : 0
   return (
     <Screen title="Active Recall" family="mint" icon={ActiveIcon} onExit={onExit}
-      problem="Rereading and memorising feels like work but fades fast."
-      plan="Turn notes into questions, quiz yourself over days, and ask sharper questions in class.">
+      problem="Study by quizzing yourself instead of rereading your notes."
+      plan="Turn notes into questions, quiz yourself over several days, and write clear questions for your teacher.">
       <Seg small label="Part" value={s.tab} onChange={v => { set({ tab:v }); g.reset() }} options={TABS}/>
       <Quest game={g} goal={GOALS[s.tab][0]} steps={GOALS[s.tab][1]} at={step}>
         {s.tab === 'make' && <Make s={s} set={set} g={g}/>}

@@ -108,12 +108,12 @@ export function TalkingWithParents({ onBack }) {
           </ul>
         </Sheet>
         <Sheet>
-          <Label>Take it into the call</Label>
+          <Label>Use it during the call</Label>
           <p className="mt-2 text-sec text-ink-2">Copies all five steps as a plain checklist.</p>
           <div className="mt-3"><CopyButton text={plain()} label="Copy checklist"/></div>
         </Sheet>
       </div>
-      <p className="note mt-4 max-w-[64ch]">A parent sees what the teen agreed to share. Nothing finer than a day.</p>
+      <p className="note mt-4 max-w-[64ch]">A parent sees only what the teen agreed to share, as daily summaries.</p>
     </ActivityScreen>
   )
 }

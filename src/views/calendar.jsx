@@ -9,6 +9,7 @@ import {
   subscribe as onAccount, useAccount,
 } from '../account/store'
 import { Avatar } from '../account/ui'
+import { VIEWER } from '../account/viewer'
 import { EVENT_KINDS, addEvent, eventsOn, getVersion, removeEvent, subscribe } from '../app/store'
 import { WBAND, clock12 } from './reading/demo'
 import { LampFace } from '../traffic/Face'
@@ -48,11 +49,13 @@ const mondayIndex = d => (d.getDay() + 6) % 7
    network screen (src/account/Network.jsx); this card shows who is on them
    and starts the invite. */
 
-/* The demo network: the student, a parent and a Counselor/Professional. */
+/* The demo network: the student, a parent and a Counselor/Professional.
+   The reader's own row is the role word and its picture (./account/viewer.js),
+   never a demo person's name. */
 const DEMO_PEOPLE = [
   { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'fox' },
-  { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: null },
-  { id: 'demo-pro',     name: 'Dr. Shah', role: 'pro',   avatar: null },
+  { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: 'initials-E' },
+  { id: 'demo-pro',     name: 'Dr. Shah', role: 'pro',   avatar: 'photo-counselor-a' },
 ]
 
 /* What each person on the network receives. */
@@ -130,7 +133,7 @@ function NetworkCard({ go, reader, real, className }) {
   const people = real
     ? (me ? [{ ...me, you: true },
             ...listNetwork(me.id).filter(l => l.status === 'active').map(l => l.person)] : [])
-    : DEMO_PEOPLE.map(p => ({ ...p, you: p.role === role }))
+    : DEMO_PEOPLE.map(p => (p.role === role ? { ...p, ...VIEWER[role], you: true } : p))
   const others = people.filter(p => !p.you)
   return (
     <Panel className={className}>
@@ -398,7 +401,7 @@ function WeekRows({ days, lo, hi, selected, onSelect }) {
 }
 
 /* One picked day on the calendar route: its face, figure and readings. */
-const READ_SOURCE = { patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions' }
+const READ_SOURCE = { patch: 'Patch', camera: 'Phone camera', survey: 'Survey' }
 function CalendarDay({ d, usual }) {
   if (!d) return null
   const counts = (d.readings || []).reduce((a, r) => ({ ...a, [r.source]: (a[r.source] || 0) + 1 }), {})
@@ -630,16 +633,9 @@ export function CalendarBody({ go, who }) {
   )
 }
 
-const COPY = {
-  note: 'These are demo figures.',
-}
-
-/* Real mode carries no notice: the shared one is tagged No patch, and here
-   the empty grid and the network card already say where readings come from. */
 export function Calendar({ go, who }) {
-  const [mode] = useMode()
   return (
-    <SectionShell go={go} note={mode === 'real' ? null : COPY.note}>
+    <SectionShell go={go}>
       <CalendarBody go={go} who={who}/>
     </SectionShell>
   )

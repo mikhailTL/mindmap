@@ -76,7 +76,7 @@ export function TypingLine({ rhythm, usual, onBreath, className }) {
   return (
     <div aria-live="polite" className={cn('mt-2 flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
       <p className="text-fine text-ink-2">
-        You are typing faster than usual. Want thirty seconds first?
+        You are typing faster than usual. Take 30 seconds to breathe first?
       </p>
       <div className="flex gap-2">
         <a href="#/toolkit-breathing" onClick={onBreath}
@@ -116,8 +116,8 @@ export function TypingWeek({ className }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-fine text-ink-3">{"Exploratory. Only inside MindMap's own fields."}</p>
-      <OnDevice className="mt-1">The time between keys, never the keys.</OnDevice>
+      <p className="mt-3 text-fine text-ink-3">{"Measured only in MindMap's own text boxes."}</p>
+      <OnDevice className="mt-1">Records the time between keys, never what you type.</OnDevice>
     </section>
   )
 }

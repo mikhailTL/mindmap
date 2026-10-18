@@ -2,7 +2,6 @@ import React from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
-import { DemoNotice } from '../ui/notice'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import { ArrowLeft, ArrowRight, Never } from '../ui/marks'
 import { ExplodedStack, LAYERS } from './Patch'
@@ -317,7 +316,6 @@ const STOPS = [
           Today is a little higher than your normal.</p>
         <p className="mt-1 text-meta leading-[1.35] text-ink-2">
           Up since third period.</p>
-        <DemoNotice className="mt-auto pt-3">This is sample data, not a real person.</DemoNotice>
       </div>
     ),
     go: ['student', 'Open the student screen'],
@@ -325,7 +323,7 @@ const STOPS = [
   {
     id: 'parent', drift: true, nav: 'Parent screen',
     title: 'What the parent sees',
-    lede: `A day's ${SCORE}, and their trends over weeks and months.`,
+    lede: `A day's ${SCORE}, and Trends over weeks and months.`,
     photo: 'parent-laptop',
     alt: 'A mother and her teenage son sitting together at a dining table, both looking at an open laptop',
     facts: [
@@ -375,7 +373,7 @@ const STOPS = [
       return [
         ['On the list', `${all} students.`],
         ['Trends shared', `${trends}, with Parental Consent.`],
-        ['Score only', `${partial}, sharing a ${SCORE} but not trends.`],
+        ['Score only', `${partial}, sharing a ${SCORE} but not Trends.`],
         ['Alerts only', `${alerts}, sharing crisis alerts and nothing else.`],
         ['Always on', `Crisis alerts reach the ${PRO} in every case.`],
       ]
@@ -551,7 +549,7 @@ export function Tour({ go }) {
               Open the app<ArrowRight aria-hidden/>
             </Button>
             <Button variant="outline" size="sm" onClick={() => go('check')}>
-              Get a {SCORE} from a short check-in
+              Get a {SCORE} from a short survey
             </Button>
           </div>
         </ScrollIn>

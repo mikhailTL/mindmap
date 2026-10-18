@@ -241,6 +241,11 @@ const WaveGlyph = ({ x, y, c }) => (
   <path transform={`translate(${x} ${y})`} d="M-7 0h3l2-5 3 10 2-5h4" fill="none" stroke={c}
     strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
 )
+/* Messages, videos and apps: what a Professional never sees. */
+const ChatGlyph = ({ x, y, c }) => (
+  <path transform={`translate(${x} ${y})`} d="M-6 -5h12v8h-7l-4 3v-3h-1z" fill="none" stroke={c}
+    strokeWidth="1.6" strokeLinejoin="round"/>
+)
 
 
 /* ── the pictures ───────────────────────────────────────────────────────── */
@@ -303,7 +308,7 @@ function MiniFace({ x, y, s = 1 }) {
 }
 
 /* The four ways to take a reading, one lit at a time: patch, fingertip on
-   the camera, check-in questions, Mental Mirror. */
+   the camera, the survey, Mental Mirror. */
 function FourWays() {
   const xs = [5, 44, 83, 122]
   return (
@@ -335,7 +340,7 @@ function FourWays() {
   )
 }
 
-/* Each way, on the phone: fingertip on the lens, a check-in question, the
+/* Each way, on the phone: fingertip on the lens, a survey question, the
    face in front of the camera. A bar fills as it reads. */
 function HowWays() {
   return (
@@ -638,29 +643,6 @@ function Table() {
           </g>
         )
       })}
-    </Svg>
-  )
-}
-
-/* The three tool shortcuts on the Professional's home. */
-function QuickTools() {
-  return (
-    <Svg>
-      <rect x="6" y="18" width="46" height="64" rx="9" fill={C.skyWash}/>
-      <Bubble x={13} y={30} w={32} h={20} fill={C.sky} tail="left">
-        <path d="M20 40h18" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
-      </Bubble>
-      <path d="M16 70h26" stroke={C.sky} strokeWidth="2.4" strokeLinecap="round"/>
-      <rect x="57" y="18" width="46" height="64" rx="9" fill={C.mintWash}/>
-      <circle cx="80" cy="44" r="13" fill="none" stroke={C.mint} strokeWidth="2.4"/>
-      <path d="M80 44v-8M80 44l6 4" stroke={C.mint} strokeWidth="2.2" strokeLinecap="round"/>
-      <path d="M67 70h26" stroke={C.mint} strokeWidth="2.4" strokeLinecap="round"/>
-      <rect x="108" y="18" width="46" height="64" rx="9" fill={C.lilacWash}/>
-      <path d="M121 28h16l6 6v22h-22z" fill={C.card} stroke={C.lilac} strokeWidth="1.6" strokeLinejoin="round"/>
-      <path d="M125 40h12M125 46h14M125 52h8" stroke={C.lilac} strokeWidth="1.8" strokeLinecap="round" opacity=".8"/>
-      <path d="M118 70h26" stroke={C.lilac} strokeWidth="2.4" strokeLinecap="round"/>
-      <Ripple x={80} y={44} r={9} color={C.mint}/>
-      <Finger x={83} y={48} rot={-30}/>
     </Svg>
   )
 }
@@ -1100,8 +1082,8 @@ function DayView() {
   )
 }
 
-function Locked() {
-  const items = [[38, NoteGlyph, C.lilac], [80, PinGlyph, C.lilac], [122, WaveGlyph, C.lilac]]
+function Locked({ last = WaveGlyph }) {
+  const items = [[38, NoteGlyph, C.lilac], [80, PinGlyph, C.lilac], [122, last, C.lilac]]
   return (
     <Svg>
       {items.map(([x, G, c]) => (
@@ -1115,6 +1097,30 @@ function Locked() {
         <circle cx="80" cy="80" r="13" fill={C.ink2}/>
         <Lock x={80} y={79} s={1.05} color={C.card}/>
       </g>
+    </Svg>
+  )
+}
+
+/* For a Professional: Notes, Location and messages stay locked. */
+const ProNever = () => <Locked last={ChatGlyph}/>
+
+/* The access log: a line per record opened, the newest arriving. */
+function OpenLog() {
+  const rows = [[20, '2:34'], [42, '2:21'], [64, '11:02']]
+  const Line = ({ y, t, fill = C.card, stroke = C.rule }) => (
+    <g>
+      <rect x="14" y={y - 9} width="132" height="18" rx="7" fill={fill} stroke={stroke}/>
+      <g transform={`translate(28 ${y})`} fill="none" stroke={C.beam} strokeWidth="1.4">
+        <path d="M-6 0c3-4 9-4 12 0-3 4-9 4-12 0z"/><circle r="1.6" fill={C.beam}/>
+      </g>
+      <path d={`M40 ${y}h56`} stroke={C.ink3} strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+      <text x="138" y={y + 3} textAnchor="end" fontFamily={FONT} fontSize="8" fontWeight="700" fill={C.ink3}>{t}</text>
+    </g>
+  )
+  return (
+    <Svg>
+      <g {...a('ht-in')}><Line y={20} t="2:40" fill={C.beamWash} stroke={C.beam}/></g>
+      {rows.map(([y, t]) => <Line key={y} y={y + 22} t={t}/>)}
     </Svg>
   )
 }
@@ -1230,9 +1236,10 @@ export const ART = {
   invite: Invite,
   teenChoose: TeenChoose,
   joined: Joined,
-  quickTools: QuickTools,
   roster: Roster,
   headsCount: HeadsCount,
   eachGroup: EachGroup,
   filterOpen: FilterOpen,
+  proNever: ProNever,
+  openLog: OpenLog,
 }

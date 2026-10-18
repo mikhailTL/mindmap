@@ -25,40 +25,40 @@ import { cn } from '../lib/utils'
 const PATTERNS = [
   { label: 'you always or you never',
     re: /\byou (always|never)\b/i,
-    note: 'A claim about a pattern is arguable, so it gets argued. One instance is not.' },
+    note: 'Always and never invite an argument. Talk about one time instead.' },
   { label: 'why didn’t you',
     re: /\bwhy (did\s?n'?t|don'?t|are\s?n'?t) you\b/i,
-    note: 'Asks her to defend a decision before she has described it.' },
+    note: 'Puts your teen on the defensive before they have explained.' },
   { label: 'the score',
     re: /\b(your|the|that) (score|number|reading|graph)\b/i,
-    note: 'Leads with the data, so the conversation belongs to the app rather than to the two of you.' },
+    note: 'Starts with the data, so the talk is about the app instead of the two of you.' },
   { label: 'calm down',
     re: /\b(calm down|relax|cheer up|stop (worrying|stressing))\b/i,
-    note: 'Tells her what to feel, which is the one thing nobody can do on request.' },
+    note: 'Tells your teen how to feel. Nobody can feel calm on request.' },
   { label: 'just',
     re: /\bjust\b/i,
-    note: '“Just” makes the thing sound small. If it were small it would already be done.' },
+    note: '“Just” makes the problem sound small.' },
   { label: 'at least',
     re: /\bat least\b/i,
-    note: 'A comparison. It reads as a correction of how much this is allowed to hurt.' },
+    note: 'Compares it to something worse. It can sound like they should hurt less.' },
   { label: 'should',
     re: /\bshould\b/i,
-    note: 'A rule. Worth knowing whose rule it is before you say it out loud.' },
+    note: 'Sounds like a rule. Use it only if you mean it as one.' },
   { label: 'when I was your age',
     re: /\bwhen i was your age\b/i,
-    note: 'Moves the subject to you, and the comparison cannot be won.' },
+    note: 'Makes the talk about you and sets up a comparison.' },
   { label: 'nothing to worry about',
     re: /\bnothing to (worry|stress) about\b/i,
-    note: 'Settles the question on her behalf, before she has said what the question is.' },
+    note: 'Answers for your teen before they have said what is wrong.' },
   { label: 'I am worried that',
     re: /\bI'?m (just )?(worried|concerned) (about|that)\b/i,
-    note: 'Your worry becomes the thing she has to manage. True, and better said later.' },
+    note: 'Your worry becomes something your teen has to manage. Save it for later in the talk.' },
 ]
 
 const SHAPE = [
-  'One thing you saw yourself, not a number. “You were quiet at dinner.”',
-  'A question she can answer in one word. “Long day, or a bad one?”',
-  'An offer with an exit in it. “I am around if you want. If not, that is fine.”',
+  'Start with something you saw, not a number. “You were quiet at dinner.”',
+  'Ask a question they can answer in one word. “Long day, or a bad one?”',
+  'Offer to talk with no pressure. “I am around if you want. If not, that is fine.”',
 ]
 
 /* Matches, in the order they appear in the sentence, with overlaps dropped so
@@ -110,9 +110,8 @@ function Rulebook({ hits }) {
           return <Tag key={p.label} on={lit} style={lit ? riseAt(n) : undefined}>{p.label}</Tag>
         })}
       </div>
-      <p className="note mt-2.5">Every phrasing this knows is above. It looks for those ten in what you
-        typed and prints the note that goes with each match. It cannot tell whether your sentence is
-        kind, and it does not know your teenager.</p>
+      <p className="note mt-2.5">It looks for these ten phrasings in what you typed and explains each
+        match. It cannot tell if your sentence is kind, and it does not know your teen.</p>
     </div>
   )
 }
@@ -125,8 +124,8 @@ export function PhraseCheck() {
 
   return (
     <div>
-      <p className="max-w-[54ch] text-sec text-ink-2">The sentence you were about to open with. Type it
-        the way you would say it.</p>
+      <p className="max-w-[54ch] text-sec text-ink-2">Type the first thing you plan to say to your teen.
+        This checks it for phrasings that can shut a talk down.</p>
 
       <textarea rows={3} value={text} maxLength={240} onChange={e => setText(e.target.value)}
         aria-label="What you were going to say"
@@ -144,14 +143,14 @@ export function PhraseCheck() {
           remounted live region would read ten chips out again each time. */}
       <div aria-live="polite">
         <Step className="mt-6">{!shown.trim() ? 'What it looks for'
-          : hits.length === 0 ? 'Your line, nothing matched'
-          : hits.length === 1 ? 'Your line, one phrasing matched'
-          : `Your line, ${hits.length} phrasings matched`}</Step>
+          : hits.length === 0 ? 'No phrasings matched'
+          : hits.length === 1 ? '1 phrasing matched'
+          : `${hits.length} phrasings matched`}</Step>
         {shown.trim() && <Marked text={shown} spans={spans}/>}
 
         {shown.trim() && hits.length === 0 && (
-          <Hint className="mt-3">None of the {PATTERNS.length} matched. That is not approval. It means
-            the phrasings this tool knows how to look for are not in your sentence.</Hint>
+          <Hint className="mt-3">None of the {PATTERNS.length} phrasings this tool checks for are in your
+            sentence.</Hint>
         )}
 
         {hits.length > 0 && (
@@ -170,7 +169,7 @@ export function PhraseCheck() {
       </div>
       <Rulebook key={pass} hits={hits}/>
 
-      <Step className="mt-6">A shape that usually holds</Step>
+      <Step className="mt-6">A better way to start</Step>
       <List className="mt-3">
         {SHAPE.map(s => <Item key={s}><span className="text-sec text-ink-2">{s}</span></Item>)}
       </List>

@@ -47,7 +47,7 @@ export function SessionOpeners({ onBack }) {
   return (
     <ActivityScreen id="pro-opener" title="Session Openers" onBack={onBack}>
       <Sheet>
-        <Label>The situation</Label>
+        <Label>Situation</Label>
         <div className="mt-3 flex flex-wrap gap-2.5">
           {CASES.map(x => (
             <Choice key={x.id} on={at === x.id} onClick={() => { setAt(x.id); setLine(0) }}>{x.pick}</Choice>
@@ -82,7 +82,7 @@ export function SessionOpeners({ onBack }) {
       <Sheet className="mt-4">
         <Label>Lines to leave out</Label>
         <Lines className="mt-2" rows={AVOID.map(a => `“${a}”`)}/>
-        <p className="note mt-3">They ask for a defence, or speak for the teen.</p>
+        <p className="note mt-3">These can make a teen defensive or speak for them.</p>
       </Sheet>
     </ActivityScreen>
   )

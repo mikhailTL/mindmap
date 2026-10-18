@@ -23,9 +23,9 @@ export function gradeRound(items = [], picks = {}) {
 export function roundLine(right, total) {
   if (!total) return ''
   if (right === total) return 'Every one right.'
-  if (right >= total - 1) return 'Nearly all of them. Read the one you missed.'
-  if (right * 2 >= total) return 'More than half. The why under each one is the useful part.'
-  return 'Good practice. The why under each one is where it sticks.'
+  if (right >= total - 1) return 'Nearly all right. Read why for the one you missed.'
+  if (right * 2 >= total) return 'More than half right. Read why for each one.'
+  return 'Good practice. Read why for each one.'
 }
 
 /* A stable shuffle, so the right answer is not always first and a round

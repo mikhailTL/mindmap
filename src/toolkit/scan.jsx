@@ -241,11 +241,11 @@ export default function BodyScan() {
               <p className="absolute left-4 top-4 font-display text-fine font-bold text-ink-2">Starts here</p>
             </div>
             <div>
-              <p className="font-display text-row font-bold tracking-tight text-ink">Seven parts, feet to face</p>
+              <p className="font-display text-row font-bold tracking-tight text-ink">Relax seven body parts, feet to face</p>
               <ol className="mt-3 space-y-2.5">
                 {['The glowing part is the one to notice.',
                   'Read the line and breathe slowly while the ring fills.',
-                  'The scan moves on by itself. Next region moves on early.'].map((s, k) => (
+                  'The scan moves on by itself. Tap Next region to go sooner.'].map((s, k) => (
                   <li key={k} className="flex items-start gap-3">
                     <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full font-display text-fine font-bold text-white"
                       style={{ background:'var(--g-ink)' }}>{k + 1}</span>
@@ -264,7 +264,7 @@ export default function BodyScan() {
                 ))}
               </div>
               <Button className="mt-4 w-full" onClick={start}>Start the scan</Button>
-              <p className="mt-2 text-fine text-ink-2">Skip any part you like. Noticing only, no squeezing.</p>
+              <p className="mt-2 text-fine text-ink-2">Skip any part you like. You only notice each part. No need to tense anything.</p>
               <LevelMeter className="mt-5"/>
               <DidItWork tool="scan" phase="before" className="mt-4"/>
             </div>
@@ -321,7 +321,7 @@ export default function BodyScan() {
                 <motion.p key={region.id + between} aria-live="polite" className="mt-1 font-display text-row font-bold leading-snug text-ink"
                   initial={g.reduced ? false : { opacity:0, x:14 }} animate={{ opacity:1, x:0 }}
                   exit={g.reduced ? undefined : { opacity:0, x:-14 }} transition={{ duration:0.22 }}>
-                  {between ? (last ? 'Well noticed. Tap Finish.' : `Next: ${REGIONS[i + 1].name.toLowerCase()}.`) : region.say}
+                  {between ? (last ? 'Tap Finish.' : `Next: ${REGIONS[i + 1].name.toLowerCase()}.`) : region.say}
                 </motion.p>
               </AnimatePresence>
             </div>
@@ -352,7 +352,7 @@ export default function BodyScan() {
             <div>
               <p className="font-display text-fine font-bold uppercase tracking-[0.1em]" style={{ color:'var(--g-ink)' }}>Quick check in</p>
               <h3 className="mt-1 font-display text-head font-bold tracking-tight text-ink">Which part felt most tense?</h3>
-              <p className="mt-1 text-sec text-ink-2">Tap one. It goes on your results, nowhere else.</p>
+              <p className="mt-1 text-sec text-ink-2">Tap one. It only shows on your results.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {REGIONS.map((r, k) => (
                   <motion.div key={r.id} initial={g.reduced ? false : { opacity:0, y:10 }} animate={{ opacity:1, y:0 }}

@@ -30,7 +30,7 @@ export function ModeToggle({ className, compact = false }) {
   }
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-1.5', className)}>
+    <div className={cn('flex flex-wrap items-center gap-y-1.5', compact ? 'gap-x-0' : 'gap-x-4', className)}>
       <div
         role="radiogroup"
         aria-label="Data source"
@@ -69,11 +69,57 @@ export function ModeToggle({ className, compact = false }) {
           )
         })}
       </div>
+      {mode === 'demo' && <DemoInfo/>}
       {/* Set as text and wired with aria-describedby, not a title attribute:
        * title is unreachable by touch and keyboard and mostly unannounced. */}
       <p id={helpId} className={cn('note max-w-[30ch]', compact ? 'sr-only' : 'hidden lg:block')}>
         Live shows your own readings and network. Demo shows a worked example.
       </p>
+    </div>
+  )
+}
+
+/* The owner, 18 October: no demo notice on the pages, only "Demo" at the top
+   and a small "?" after it saying the people and data are made up. A
+   disclosure, not a title tooltip, so it opens by tap and by keyboard. */
+function DemoInfo() {
+  const [open, setOpen] = React.useState(false)
+  const box = React.useRef(null)
+  const btn = React.useRef(null)
+  const id = React.useId()
+
+  React.useEffect(() => {
+    if (!open) return
+    const away = e => { if (!box.current?.contains(e.target)) setOpen(false) }
+    const esc = e => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus() } }
+    const shut = () => setOpen(false)
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', esc)
+    /* The top bar stays mounted across routes, so a new page closes it. */
+    window.addEventListener('hashchange', shut)
+    return () => {
+      document.removeEventListener('pointerdown', away)
+      document.removeEventListener('keydown', esc)
+      window.removeEventListener('hashchange', shut)
+    }
+  }, [open])
+
+  return (
+    <div ref={box} className="relative">
+      <button ref={btn} type="button" aria-label="About demo mode"
+        aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}
+        className="group grid size-11 min-h-[44px] place-items-center !px-0">
+        <span aria-hidden className={cn('grid size-6 place-items-center rounded-full border border-ink',
+          'font-display text-fine font-bold leading-none transition-colors duration-150',
+          open ? 'bg-ink text-paper' : 'bg-card text-ink groupHoverOnly:bg-mist')}>?</span>
+      </button>
+      {open && (
+        <p id={id} role="status"
+          className="absolute right-0 top-full z-50 m-0 mt-1 w-max max-w-[16rem] rounded-field border border-ink
+            bg-card px-3 py-2 text-fine text-ink shadow-card">
+          Demo mode. The people and data are made up.
+        </p>
+      )}
     </div>
   )
 }

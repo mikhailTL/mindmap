@@ -8,11 +8,11 @@ import { LIGHT_TONE, TrafficLight } from './look'
 import { ProTeenCard, ProTeenRow, ProRowHead } from './TeenCard'
 import TeenCard from '../family/TeenCard'
 import { RangeSwitch } from '../family/RangeTrend'
-import { COLUMNS, DEFAULT_COLUMNS, GRADES, SORTS, CARD_RANGES, cardRange, trendRange, STATUS_WORD, filterTeens, sortTeens,
-  statusCounts } from './metrics'
+import { GRADES, SORTS, cardRange, STATUS_WORD, filterTeens, sortTeens, statusCounts } from './metrics'
 
-/* The Caseload tab: one toolbar, then a card per teen. A card opens that
- * teen's record; nothing about one teen is shown anywhere else. */
+/* The Caseload tab: one toolbar, then a card per teen. A card shows today;
+ * its record holds the Trends. The owner, 18 October: the cards were "very
+ * too complex", so the range switch and the figure chooser are gone. */
 
 /* The reader's own layout choices, kept in this browser only. */
 const PREFS = 'mindmap.pro.layout'
@@ -33,7 +33,6 @@ export function useLayout() {
       range: cardRange(s.range),
       density: s.density === 'list' ? 'list' : 'cards',
       sort: SORTS.some(([k]) => k === s.sort) ? s.sort : 'stress',
-      columns: Array.isArray(s.columns) ? s.columns.filter(k => COLUMNS.some(c => c.key === k)) : [...DEFAULT_COLUMNS],
     }
   })
   const set = patch => setP(cur => { const next = { ...cur, ...patch }; writePrefs(next); return next })
@@ -45,17 +44,14 @@ function Label({ htmlFor, children }) {
 }
 
 function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
-  const [chooser, setChooser] = React.useState(false)
   const toggleStatus = s => setFilters(f => ({ ...f,
     statuses: f.statuses.includes(s) ? f.statuses.filter(x => x !== s) : [...f.statuses, s] }))
-  const toggleCol = k => setLayout({ columns: layout.columns.includes(k)
-    ? layout.columns.filter(x => x !== k) : COLUMNS.map(c => c.key).filter(x => x === k || layout.columns.includes(x)) })
   return (
     <fieldset disabled={disabled} className={cn('m-0 min-w-0 rounded-panel border border-rule bg-card p-3 lg:p-3.5',
       disabled && 'opacity-60')}>
       <legend className="sr-only">Find and arrange teens</legend>
-      <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_12rem_9rem]">
-        <div className="min-w-0">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[minmax(0,1fr)_12rem_9rem]">
+        <div className="col-span-2 min-w-0 sm:col-span-1">
           <Label htmlFor="pro-q">Search</Label>
           <div className="relative">
             <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"/>
@@ -100,43 +96,17 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
           </div>
         </div>
         <div className="min-w-0">
-          <p aria-hidden className="tick mb-1">Range</p>
-          <Seg label="Range for every card" value={cardRange(layout.range)} onChange={v => setLayout({ range: v })} options={CARD_RANGES}/>
-        </div>
-        <div className="min-w-0">
           <p aria-hidden className="tick mb-1">View</p>
           <Seg label="View" value={layout.density} onChange={v => setLayout({ density: v })}
             options={[['cards', 'Cards'], ['list', 'List']]}/>
         </div>
-        <div className="min-w-0">
-          <p aria-hidden className="tick mb-1">Figures</p>
-          <button type="button" aria-expanded={chooser} aria-controls="pro-cols" onClick={() => setChooser(v => !v)}
-            className={cn('inline-flex min-h-[40px] items-center gap-1.5 rounded-field border px-3 font-display text-fine font-bold',
-              chooser ? 'border-ink bg-ink text-paper' : 'border-ruling bg-card text-ink hoverOnly:bg-aqua')}>
-            Choose figures <span className={cn('font-body font-normal tabular-nums', chooser ? 'text-paper' : 'text-ink-3')}>
-              {layout.columns.length} of {COLUMNS.length}</span>
-          </button>
-        </div>
       </div>
-
-      {chooser && (
-        <div id="pro-cols" role="group" aria-label="Figures shown on each teen"
-          className="mt-3 grid grid-cols-2 gap-x-4 border-t border-rule pt-2 sm:grid-cols-4">
-          {COLUMNS.map(c => (
-            <label key={c.key} className="flex min-h-[40px] cursor-pointer items-center gap-2">
-              <input type="checkbox" checked={layout.columns.includes(c.key)} onChange={() => toggleCol(c.key)}
-                className="size-4 accent-accent"/>
-              <span className="text-fine text-ink">{c.label}<span className="ml-1 text-ink-3">{c.unit}</span></span>
-            </label>
-          ))}
-        </div>
-      )}
     </fieldset>
   )
 }
 
-/* Live, with nobody connected yet: the lamps are dark until a teen shares,
-   and the one thing to do is connect. */
+/* Live, with nobody linked yet: the lamps are dark until a teen shares,
+   and the one thing to do is add a family in Network. */
 function Empty({ go }) {
   return (
     <section aria-labelledby="pro-empty-h"
@@ -144,14 +114,14 @@ function Empty({ go }) {
         sm:items-center sm:p-5 lg:mt-2">
       <TrafficLight size={28} horizontal cycle={false} className="opacity-60"/>
       <div className="min-w-0 flex-1">
-        <h3 id="pro-empty-h" className="m-0 font-display text-row font-bold leading-tight text-ink">No teens connected yet</h3>
-        <p className="m-0 mt-1.5 max-w-[52ch] text-fine text-ink-2">Connect with a family. Once a parent approves the
-          link, that teen&rsquo;s Mind Score and Heads Up show up here.</p>
+        <h3 id="pro-empty-h" className="m-0 font-display text-row font-bold leading-tight text-ink">No teens in your network yet</h3>
+        <p className="m-0 mt-1.5 max-w-[52ch] text-fine text-ink-2">Add a family in Network. Once a parent approves,
+          that teen&rsquo;s Mind Score and Heads Up show here.</p>
       </div>
       <button type="button" onClick={() => go('network')}
         className="inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 rounded-field bg-mint-ink px-5
           font-display text-ui font-bold text-white transition-colors duration-150 hoverOnly:bg-ink sm:w-auto">
-        <Plus aria-hidden className="size-4 shrink-0"/> Connect with families
+        <Plus aria-hidden className="size-4 shrink-0"/> Open Network
       </button>
     </section>
   )
@@ -194,7 +164,7 @@ export function Caseload({ go, real, layout, setLayout, onOpen, alert, liveTeens
   const [filters, setFilters] = React.useState({ query: '', statuses: [], grade: 'all' })
   const counts = statusCounts(list, 'day')
   const shown = sortTeens(filterTeens(list, { ...filters, range: 'day' }), layout.sort,
-    layout.sort === 'stress' ? 'day' : trendRange(layout.range))
+    layout.sort === 'stress' ? 'day' : 'week')
   const filtered = filters.query.trim() || filters.statuses.length || filters.grade !== 'all'
   if (real && liveTeens.length) return <LiveCaseload teens={liveTeens} layout={layout} setLayout={setLayout} onOpen={onOpen} go={go}/>
   return (
@@ -216,7 +186,7 @@ export function Caseload({ go, real, layout, setLayout, onOpen, alert, liveTeens
           <Toolbar layout={layout} setLayout={setLayout} filters={filters} setFilters={setFilters} counts={counts}/>
           <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 lg:mt-4">
             <p aria-live="polite" className="text-fine text-ink-2">
-              Showing {shown.length} of {list.length} teens, sorted by {SORTS.find(([k]) => k === layout.sort)[1].toLowerCase()}</p>
+              {shown.length} of {list.length} teens, {SORTS.find(([k]) => k === layout.sort)[1].toLowerCase()}</p>
             {filtered && (
               <button type="button" onClick={() => setFilters({ query: '', statuses: [], grade: 'all' })}
                 className="min-h-[40px] font-display text-fine font-bold text-accent underline decoration-accent/40
@@ -231,15 +201,15 @@ export function Caseload({ go, real, layout, setLayout, onOpen, alert, liveTeens
             <ul className="m-0 mt-2 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
               {shown.map(t => (
                 <li key={t.id} className="min-w-0">
-                  <ProTeenCard teen={t} range={layout.range} columns={layout.columns} onOpen={onOpen}/>
+                  <ProTeenCard teen={t} onOpen={onOpen}/>
                 </li>
               ))}
             </ul>
           ) : shown.length > 0 && (
             <div className="mt-2 rounded-panel border border-rule bg-card p-2.5 shadow-card lg:p-3">
-              <ProRowHead columns={layout.columns}/>
+              <ProRowHead/>
               <ul className="m-0 list-none p-0">
-                {shown.map(t => <ProTeenRow key={t.id} teen={t} range={layout.range} columns={layout.columns} onOpen={onOpen}/>)}
+                {shown.map(t => <ProTeenRow key={t.id} teen={t} onOpen={onOpen}/>)}
               </ul>
             </div>
           )}

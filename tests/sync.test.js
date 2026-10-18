@@ -85,7 +85,7 @@ describe('toTeen: a snapshot teen in the roster shape', () => {
     expect(liveSummary(t, 'week')).toMatchObject({ mean: 51, min: 38, max: 62, change: null })
     expect(liveSummary(t, 'week').points).toHaveLength(2)
     expect(liveStatus(t, 'day')).toBe('yellow')
-    expect(liveSourceLine(t)).toBe('Phone camera and check-in questions')
+    expect(liveSourceLine(t)).toBe('Phone camera and survey')
   })
   it('says nothing when there are no readings, and no light without a usual band', () => {
     const empty = toTeen({ ...snap, days: [] }, 'parent', NOW)

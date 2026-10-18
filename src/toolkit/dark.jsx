@@ -167,7 +167,7 @@ export function HowTo({ art, steps = [], onStart, startLabel = 'Start', disabled
         style={{ background:'radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--g-wash, #dcefe4) 100%)' }}>
         {art}
       </div>
-      <p className="mt-4 font-display text-fine font-bold uppercase tracking-[0.1em] text-ink-2">How to play</p>
+      <p className="mt-4 font-display text-fine font-bold uppercase tracking-[0.1em] text-ink-2">How it works</p>
       <ol className="mt-2 space-y-2.5">
         {steps.map((s, i) => (
           <li key={i} className="flex items-start gap-3">

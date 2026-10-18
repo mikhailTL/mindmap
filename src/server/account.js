@@ -1,5 +1,5 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
-import { AVATAR_ALL_IDS } from '../account/avatar-catalog.js'
+import { AVATAR_ALL_IDS, isPhotoAvatar } from '../account/avatar-catalog.js'
 
 /* The account API. One POST endpoint, one `op` per request, and a snapshot
  * of everything the signed-in account may see in every mutating reply, so
@@ -38,6 +38,12 @@ export const SETTINGS = ['school', 'practice', 'other']
    and patterns. An id not on it is stored as null, and the client draws the
    initial instead. */
 export const AVATARS = AVATAR_ALL_IDS
+/* An uploaded photo (a small data URL) counts too, but never on a teen's
+   account, as in src/account/store.js. Before this, a photo was dropped on
+   sync (18 October). */
+const AVATAR_SET = new Set(AVATARS)
+const avatarFor = (role, v) => (typeof v === 'string'
+  && (AVATAR_SET.has(v) || (role !== 'student' && isPhotoAvatar(v))) ? v : null)
 export const LINK_KINDS = {
   'parent-student': ['parent', 'student'],
   'pro-student':    ['pro', 'student'],
@@ -341,7 +347,7 @@ export function makeHandler({ kv }) {
       const salt = randomBytes(16).toString('hex')
       const a = {
         id, role, name, email: email || null,
-        avatar: AVATARS.includes(b.avatar) ? b.avatar : null,
+        avatar: avatarFor(role, b.avatar),
         setting: role === 'pro' ? b.setting : null,
         salt, passHash: hashPasscode(b.passcode, salt),
         failed: 0, lockedUntil: 0, createdAt: now(), lastSignInAt: now(),
@@ -398,7 +404,7 @@ export function makeHandler({ kv }) {
           if (a.email) await kv.del(K.email(a.email)); a.email = email
         }
       }
-      if ('avatar' in b) a.avatar = b.avatar === null ? null : (AVATARS.includes(b.avatar) ? b.avatar : a.avatar)
+      if ('avatar' in b) a.avatar = b.avatar === null ? null : (avatarFor(a.role, b.avatar) ?? a.avatar)
       if ('setting' in b && a.role === 'pro' && SETTINGS.includes(b.setting)) a.setting = b.setting
       await putAccount(a)
       return { ok: true, snapshot: await snapshot(a) }

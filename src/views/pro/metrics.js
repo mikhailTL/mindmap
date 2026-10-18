@@ -25,10 +25,8 @@ export const TREND_TITLE = Object.freeze({ week: 'Last 7 days', month: 'Last 30 
 export const TREND_PREV = Object.freeze({ week: 'the 7 days before', month: 'the 30 days before' })
 export const trendDays = (teen, r) => teen.days.slice(r === 'month' ? -30 : -7)
 
-/* The caseload's one range switch, as on the parent cards: it sets each
-   card's Heads Up band to Today, the week average or the month average.
-   The Trends part under it still reads a week when Today is picked. */
-export const CARD_RANGES = Object.freeze([['day', 'Today'], ['week', 'Week'], ['month', 'Month']])
+/* The stored range: the live cards' switch, and the range a record opens on.
+   The demo cards show today only (owner, 18 October). */
 export const cardRange = r => (r === 'day' || r === 'month' ? r : 'week')
 
 const avg = (a, k) => a.reduce((s, d) => s + d[k], 0) / Math.max(1, a.length)
@@ -63,20 +61,6 @@ export function figures(teen, range = 'week') {
     light: s.light, signals: s.signals,
   }
 }
-
-/* The figures a card can show. `key` indexes figures(); `unit` is printed
-   beside the number, always. */
-export const COLUMNS = Object.freeze([
-  { key: 'score',    label: 'Mind Score',     unit: 'of 100' },
-  { key: 'change',   label: 'Change',         unit: 'points' },
-  { key: 'peaks',    label: 'Peaks',          unit: 'peaks' },
-  { key: 'recovery', label: 'Recovery time',  unit: 'min' },
-  { key: 'pulse',    label: 'Resting pulse',  unit: 'bpm' },
-  { key: 'hrv',      label: 'Variability',    unit: 'ms' },
-  { key: 'eda',      label: 'Sweat response', unit: 'µS' },
-  { key: 'readings', label: 'Readings',       unit: 'readings' },
-])
-export const DEFAULT_COLUMNS = Object.freeze(['score', 'change', 'peaks', 'recovery', 'pulse', 'hrv'])
 
 export const signed = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)
 
@@ -157,22 +141,6 @@ export function networkSeries(list = CASELOAD, n = 30) {
   return { n: shared.length, points: out }
 }
 
-/* This week's mean per grade, across every teen (a week's mean is not
-   movement). The change is added only when at least K_ANONYMITY of that
-   grade share trends. A grade under K_ANONYMITY prints neither a mean nor a
-   count. */
-export function gradeGroups(list = CASELOAD) {
-  return GRADES.map(g => {
-    const teens = list.filter(t => t.grade === g)
-    if (teens.length < K_ANONYMITY) return { grade: g, hidden: true }
-    const mean = Math.round(teens.reduce((s, t) => s + figures(t, 'week').score, 0) / teens.length)
-    const moving = teens.filter(trendsShared)
-    const change = moving.length >= K_ANONYMITY
-      ? one(moving.reduce((s, t) => s + figures(t, 'week').change, 0) / moving.length) : null
-    return { grade: g, hidden: false, n: teens.length, mean, change }
-  })
-}
-
 /* The audit log in src/lib/caseload.js names the study codes of the older
    eight-student demo. On this screen its rows are re-pointed at teens in
    CASELOAD so the log and the cards agree. */
@@ -183,6 +151,6 @@ export function logSubjects(list = CASELOAD) {
   return t => t.replace(/\b(8241|5512)\b/g, m => map[m])
 }
 
-export const SOURCE_WORD = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions' })
-export const sourceLine = teen => (teen.patch ? 'Patch and phone readings' : 'Phone camera and questions')
+export const SOURCE_WORD = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Survey' })
+export const sourceLine = teen => (teen.patch ? 'Patch and phone readings' : 'Phone camera and survey')
 export { TODAY }

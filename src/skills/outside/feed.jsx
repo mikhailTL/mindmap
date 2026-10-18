@@ -139,7 +139,7 @@ function Tricks({ s, set, g, named, setNamed }) {
         {pick && (
           <div role="status" className={cn('mt-3 rounded-[12px] p-3', pick === t.id ? 'bg-accent-wash' : 'bg-warn-wash')}>
             <p className="font-display text-ui font-bold text-ink">{pick === t.id ? `Right: ${t.name}.` : `It is ${t.name}.`}</p>
-            <p className="mt-1 text-ui text-ink"><span className="font-bold">Counter move: </span>{t.fix}</p>
+            <p className="mt-1 text-ui text-ink"><span className="font-bold">What to do: </span>{t.fix}</p>
           </div>
         )}
         {pick && <fieldset className="mt-4">
@@ -181,9 +181,9 @@ function Numbers({ s, set }) {
   const worse = drainers(s.apps)
   return (
     <>
-      <StepHead n={3} of={4} title="Your attention is the product"/>
+      <StepHead n={3} of={4} title="Your numbers"/>
       <p className="text-sec text-ink">Most of these apps are free because they sell ads. The longer you stay,
-        the more ads they can sell. What they are selling is your time and attention.</p>
+        the more ads they can sell. So they are selling your time and attention.</p>
       <Result className="mt-4">
         <div className="grid grid-cols-2 gap-3">
           <Stat wide value={hoursText(a.weekMinutes)} label="on these apps each week"/>
@@ -267,7 +267,7 @@ function Bounds({ s, set, g, named }) {
   return (
     <>
       <StepHead n={4} of={4} title="Set your boundaries"/>
-      <Note>Pick what you will actually keep. Small and real beats big and forgotten.</Note>
+      <Note>Pick limits you will actually keep. Small limits are easier to stick to.</Note>
       <h4 className="mt-4 font-display text-ui font-bold text-ink">Daily app limits</h4>
       <ul className="mt-2 grid gap-2">
         {used.map(a => <Limit key={a.name} app={a} value={s.limits[a.name]} onChange={v => setLimit(a.name, v)}/>)}
@@ -302,7 +302,7 @@ function Plan({ s, set, onExit, again, g, named }) {
       {g.result && (
         <EndCard className="mb-4" game={g} title="Screen plan saved" againLabel="Start again" onAgain={again}
           onDone={leave(onExit)}
-          stats={[['Frees up a week', p.saved > 0 ? hoursText(p.saved) : 'None yet'], ['App limits', names.length],
+          stats={[['Time saved each week', p.saved > 0 ? hoursText(p.saved) : 'None yet'], ['App limits', names.length],
                   ['Tricks named', `${right} of ${TRICKS.length}`], ['Phone-free times', p.free.length]]}/>
       )}
       <Result>
@@ -331,7 +331,7 @@ function Plan({ s, set, onExit, again, g, named }) {
         )}
       </Result>
       <Sheet className="mt-4">
-        <h4 className="font-display text-ui font-bold text-ink">Make it stick</h4>
+        <h4 className="font-display text-ui font-bold text-ink">Set it up on your phone</h4>
         <ul className="mt-2 grid gap-1.5 text-ui text-ink">
           <li><b>iPhone:</b> Settings, Screen Time, App Limits.</li>
           <li><b>Android:</b> Settings, Digital Wellbeing, Dashboard, then tap the app.</li>
@@ -340,8 +340,8 @@ function Plan({ s, set, onExit, again, g, named }) {
       </Sheet>
       <Sheet className="mt-4">
         <h4 className="font-display text-ui font-bold text-ink">How MindMap fits in</h4>
-        <p className="mt-1 text-ui text-ink-2">Heads Up notices when phone time is stressing you out by watching how
-          you react, not what you watch. Messages, videos and apps are never read.</p>
+        <p className="mt-1 text-ui text-ink-2">Heads Up notices when phone time is stressing you out from how your
+          body reacts. It does not look at what you watch. Messages, videos and apps are never read.</p>
         <a href="#/heads-up" className="kit-ink mt-2 inline-flex min-h-[48px] items-center font-display text-ui
           font-bold underline underline-offset-4">How Heads Up works</a>
       </Sheet>
@@ -369,9 +369,9 @@ export default function Feed({ onExit }) {
   const again = () => { const f = fresh(); writeStore(ID, { ...f, step:undefined }); setS(f); setNamed({}); g.reset() }
   return (
     <Screen id={ID} family="sky" title="Feed Check" icon={<FeedIcon/>} onExit={onExit}>
-      {s.step === 1 && <Intro problem="Feeds are built to keep you scrolling, and comparing yourself can wear you down."
-        doing="Audit your apps, spot the tricks they use, then set limits you choose."/>}
-      <Quest game={g} body="mt-5" goal="Build a screen plan you will actually keep."
+      {s.step === 1 && <Intro problem="Apps are designed to keep you scrolling, and comparing yourself to others can wear you down."
+        doing="Check your time on each app, learn the tricks apps use, then set your own limits."/>}
+      <Quest game={g} body="mt-5" goal="Make a screen time plan you can stick to."
         steps={['Your apps', 'Spot the tricks', 'Your numbers', 'Set limits']} at={s.step - 1}>
       {s.step === 1 && <Apps s={s} set={set}/>}
       {s.step === 2 && <Tricks s={s} set={set} g={g} named={named} setNamed={setNamed}/>}

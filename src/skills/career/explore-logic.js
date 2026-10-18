@@ -90,7 +90,7 @@ const POINTS = Object.fromEntries(ANSWERS.map(a => [a.id, a.points]))
 export const TEST_KINDS = {
   taster:'Free online taster',
   shadow:'Shadow day',
-  project:'Tiny project or side hustle',
+  project:'Small project or side job',
 }
 
 /* answers: { [statement index]: 'yes' | 'maybe' | 'no' } */

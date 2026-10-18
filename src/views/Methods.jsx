@@ -84,7 +84,7 @@ const CATEGORIES = [
     rows: [
       ['Made with', 'React, running in the browser.'],
       ['Without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone.'],
-      ['Privacy', `Parents see trends by day, week and month, never anything finer than a day. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
+      ['Privacy', `Parents see Trends by day, week and month, never anything finer than a day. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
       ['Toolkit', 'Short activities, each on its own page.'],
       ['Sync', 'Readings sync to your account and to the people you share with.'],
     ],

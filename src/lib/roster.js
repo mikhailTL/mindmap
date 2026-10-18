@@ -28,8 +28,15 @@ function rng(seed) {
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
 const round = v => Math.round(v)
 
-/* The demo's "today": fixed, so the screens and their tests do not move. */
-export const TODAY = '2026-10-16'
+/* The demo's "today". The owner, 18 October: dates must follow the real day,
+   so in the browser (and on the server) it is the viewer's own date and the
+   demo days roll forward each day. Under the tests it stays fixed, so their
+   figures do not move. */
+const FIXED_DAY = '2026-10-16'
+const inTests = typeof process !== 'undefined' && !!process.env?.VITEST
+const localDay = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export const TODAY = inTests ? FIXED_DAY : localDay()
 const day0 = new Date(TODAY + 'T12:00:00Z')
 const isoDay = offset => new Date(day0.getTime() - offset * 86400000).toISOString().slice(0, 10)
 const weekday = iso => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(iso + 'T12:00:00Z').getUTCDay()]

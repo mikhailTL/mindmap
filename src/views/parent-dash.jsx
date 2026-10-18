@@ -9,7 +9,7 @@ import ChildPage from './family/ChildPage'
 import ChildTrends from './family/Trends'
 import ParentHomeBoard from './family/Home'
 import { RangeSwitch } from './family/RangeTrend'
-import { SourceLine, sourceOf } from './family/Source'
+import { sourceOf } from './family/Source'
 import { useLiveTeens } from './family/useLive'
 import { PartHead, TODAY_LONG, longDate } from './student/PartHead'
 
@@ -36,10 +36,11 @@ export function ParentHome({ go }) {
 export const ParentDash = ParentHome
 
 /* ParentTrends({ go }): the Trends tab, in two parts with the same heads as
- * every other screen. Today: every child's card (Heads Up for the range
- * picked above them with its arrow, today's Mind Score, an Open button for
- * their page). Trends: one tab per child over that child's week, month and
- * calendar, the same layout for every child (./family/Trends.jsx). */
+ * every other screen. Today: every child's card (Heads Up and Mind Score for
+ * the range picked above them, the face with its arrow, the figure on a small
+ * rainbow, an Open button for their page). Trends: one tab per child over that child's week, month and
+ * calendar, the same layout for every child (./family/Trends.jsx). The tab
+ * names where readings come from, so no source line repeats it under them. */
 export function ParentTrends({ go }) {
   const [mode] = useMode()
   const live = useLiveTeens('parent')
@@ -84,12 +85,15 @@ export function ParentTrends({ go }) {
 
       <section aria-labelledby="parent-today" className="flex flex-col gap-4">
         <PartHead id="parent-today" kind="today" title="Today"
-          line={`${real ? longDate() : TODAY_LONG}. Whole days only.`}/>
+          line={real ? longDate() : TODAY_LONG}/>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <h3 className="m-0 font-display text-head font-bold leading-tight text-ink">Your children</h3>
           <div className="flex items-center gap-3">
-            <span className="text-fine font-semibold text-ink-2">Heads Up for</span>
-            <RangeSwitch compact value={range} onChange={setRange} label="Heads Up range on every card"/>
+            {/* "Trends for", not "Heads Up for": the owner, 18 October, "it needs
+                to apply to mindscore and everything else as well, not just
+                heads up". The range sets the face and the figure on every card. */}
+            <span className="text-fine font-semibold text-ink-2">Trends for</span>
+            <RangeSwitch compact value={range} onChange={setRange} label="Trends for, on every card"/>
           </div>
         </div>
         <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 lg:gap-5 xl:grid-cols-3">
@@ -103,7 +107,7 @@ export function ParentTrends({ go }) {
 
       <section aria-labelledby="parent-trends" className="mt-4 flex flex-col gap-4">
         <PartHead id="parent-trends" kind="trends" title="Trends"
-          line="Week, month and the calendar. Pick a child, then a range or a day."/>
+          line="Pick a child, then a range or a day."/>
         <div role="tablist" aria-label="Child" className="flex flex-wrap gap-2">
           {list.map((t, n) => {
             const on = t === teen
@@ -122,7 +126,6 @@ export function ParentTrends({ go }) {
             )
           })}
         </div>
-        <SourceLine teen={teen}/>
         <ChildTrends key={teen.id} teen={teen}/>
       </section>
     </div>

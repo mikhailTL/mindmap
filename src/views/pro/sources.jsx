@@ -4,10 +4,10 @@ import { cn } from '../../lib/utils'
 /* Where a teen's readings come from, drawn the same way on every card, row
  * and record. The owner: "u need to make it clear that its readings come from
  * the specific source". A patch teen reads from the patch; a teen without one
- * reads from the phone camera and the check-in questions. Each source has its
+ * reads from the phone camera and the survey. Each source has its
  * own drawn icon, so the source never rests on colour or on a word alone. */
 
-export const SOURCE_NAME = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions', phone: 'Phone' })
+export const SOURCE_NAME = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Survey', phone: 'Phone' })
 const TONE = { patch: 'text-accent-ink', camera: 'text-beam-ink', survey: 'text-lilac-ink', phone: 'text-beam-ink' }
 
 /* The sources a teen's readings can come from, in a fixed order. */
@@ -42,7 +42,7 @@ export function SourceIcon({ source, size = 18, className }) {
 }
 
 /* "Readings from [patch] Patch" or "Readings from [camera] Phone camera and
-   [questions] check-in questions". One line, the same on every teen. */
+   [survey] Survey". One line, the same on every teen. */
 export function SourceLine({ teen, className, lead = 'Readings from' }) {
   const s = mainSources(teen)
   return (

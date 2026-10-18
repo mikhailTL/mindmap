@@ -2,21 +2,21 @@ import React from 'react'
 import { PatchPage } from './PatchPage'
 import { Pairing } from './Pairing'
 import { WithoutPatch } from './WithoutPatch'
+import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* About the patch, Pairing the patch and Without the patch, read top to bottom
    on one page. The three routes ('patch', 'pairing', 'without-patch') all
-   render this, and each lands on its own part. */
+   render this, and each lands on its own part. The owner, 18 October: no
+   numbers and no loud colour bands, just titles. Each part opens on the same
+   wash with the same title, and the sections inside sit on white. */
 
 const PARTS = [
-  { id:'about-patch',   route:'patch',         short:'About the patch', mark:'after:bg-accent', num:'text-accent',
-    title:'About the patch' },
-  { id:'pairing-patch', route:'pairing',       short:'Pairing',         mark:'after:bg-beam', num:'text-beam-ink',
-    title:'Pairing the patch', line:'How to connect the patch to your phone.',
-    band:'bg-beam-ink' },
-  { id:'without-patch', route:'without-patch', short:'Without the patch', mark:'after:bg-sky', num:'text-sky-ink',
-    title:'Without the patch', line:'Take a reading with your phone camera instead.',
-    band:'bg-sky-ink' },
+  { id:'about-patch',   route:'patch',         short:'About the patch',   title:'About the patch' },
+  { id:'pairing-patch', route:'pairing',       short:'Pairing',           title:'Pairing the patch',
+    line:'Fully wireless, 2 minutes of setup.' },
+  { id:'without-patch', route:'without-patch', short:'Without the patch', title:'Without the patch',
+    line:`Three ways to get a ${SCORE} with only your phone.` },
 ]
 const BY_ROUTE = Object.fromEntries(PARTS.map(p => [p.route, p]))
 
@@ -77,22 +77,16 @@ function routeInHash() {
   return BY_ROUTE[raw] ? raw : null
 }
 
-function Band({ part, n }) {
+/* The part's title, on the wash its first band continues. */
+function PartHead({ part, as: H = 'h2' }) {
   return (
-    <div className={cn(part.band, 'text-paper')}>
-      <div className="wrap flex items-center gap-4 py-7 sm:gap-6 lg:py-10">
-        <span aria-hidden
-          className="font-display text-[56px] font-bold leading-none tabular-nums text-paper/70
-            sm:text-[80px]">
-          {n}
-        </span>
-        <div className="min-w-0 border-l-2 border-paper/30 pl-4 sm:pl-6">
-          <h2 id={part.id + '-h'}
-            className="m-0 font-display text-major font-bold leading-[1.05] tracking-tight text-paper">
-            {part.title}
-          </h2>
-          <p className="mt-2 text-meta leading-[1.4] text-paper">{part.line}</p>
-        </div>
+    <div className={cn(H !== 'h1' && 'border-t border-rule', 'bg-accent-wash')}>
+      <div className="wrap pt-8 lg:pt-12">
+        <H id={part.id + '-h'}
+          className="m-0 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">
+          {part.title}
+        </H>
+        {part.line && <p className="mt-2 text-meta leading-[1.4] text-ink-2">{part.line}</p>}
       </div>
     </div>
   )
@@ -159,7 +153,7 @@ export function PatchHub({ go, section = 'patch' }) {
         <div className="wrap">
         <ul className="-mx-1.5 m-0 flex h-[52px] list-none items-stretch overflow-x-auto p-0
           [scrollbar-width:none] sm:-mx-3 sm:gap-2 [&::-webkit-scrollbar]:hidden">
-          {PARTS.map((p, i) => {
+          {PARTS.map(p => {
             const here = on === p.id
             return (
               <li key={p.id} className="flex min-w-0">
@@ -170,8 +164,7 @@ export function PatchHub({ go, section = 'patch' }) {
                     'after:pointer-events-none after:absolute after:inset-x-1.5 after:bottom-0 after:h-[3px]',
                     'sm:text-ui',
                     'after:rounded-bar sm:px-3 sm:after:inset-x-3',
-                    here ? cn('text-ink', p.mark) : 'text-ink-2 after:bg-transparent hoverOnly:text-ink')}>
-                  <span aria-hidden className={cn('hidden font-bold tabular-nums sm:inline', p.num)}>{i + 1}</span>
+                    here ? 'text-ink after:bg-accent' : 'text-ink-2 after:bg-transparent hoverOnly:text-ink')}>
                   {p.short}
                 </button>
               </li>
@@ -181,21 +174,22 @@ export function PatchHub({ go, section = 'patch' }) {
         </div>
       </nav>
 
-      <section id="about-patch" tabIndex={-1} aria-label="About the patch"
+      <section id="about-patch" tabIndex={-1} aria-labelledby="about-patch-h"
         className="outline-none" style={{ scrollMarginTop: CLEAR }}>
+        <PartHead part={PARTS[0]} as="h1"/>
         <PatchPage as="div" go={go}/>
       </section>
 
       <section id="pairing-patch" tabIndex={-1} aria-labelledby="pairing-patch-h"
         className="outline-none" style={{ scrollMarginTop: CLEAR }}>
-        <Band part={PARTS[1]} n={2}/>
-        <Pairing as="div" level={2} tail={false} go={go}/>
+        <PartHead part={PARTS[1]}/>
+        <Pairing as="div"/>
       </section>
 
       <section id="without-patch" tabIndex={-1} aria-labelledby="without-patch-h"
         className="outline-none" style={{ scrollMarginTop: CLEAR }}>
-        <Band part={PARTS[2]} n={3}/>
-        <WithoutPatch as="div" level={2} go={go}/>
+        <PartHead part={PARTS[2]}/>
+        <WithoutPatch as="div" go={go}/>
       </section>
     </main>
   )

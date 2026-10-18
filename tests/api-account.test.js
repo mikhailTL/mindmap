@@ -187,6 +187,16 @@ describe('passwords, the Other role and every picture', () => {
     expect((await call('update', { avatar: 'sym-not-a-shape' }, body.token)).body.snapshot.me.avatar).toBe('emo-rocket')
     expect((await call('update', { avatar: 'fox' }, body.token)).body.snapshot.me.avatar).toBe('fox')
   })
+  it('keeps an uploaded photo for a parent or a pro, never for a teen', async () => {
+    const PHOTO = 'data:image/jpeg;base64,' + 'A'.repeat(400)
+    const { body } = await create({ avatar: PHOTO })
+    expect(body.snapshot.me.avatar).toBe(PHOTO)
+    expect((await call('update', { avatar: 'owl' }, body.token)).body.snapshot.me.avatar).toBe('owl')
+    expect((await call('update', { avatar: PHOTO }, body.token)).body.snapshot.me.avatar).toBe(PHOTO)
+    const teen = (await create({ role: 'student', name: 'Sam', email: '', avatar: PHOTO })).body
+    expect(teen.snapshot.me.avatar).toBeNull()
+    expect((await call('update', { avatar: PHOTO }, teen.token)).body.snapshot.me.avatar).toBeNull()
+  })
 })
 
 describe('invitations and links', () => {

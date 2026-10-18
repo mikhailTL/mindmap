@@ -111,7 +111,7 @@ export function liveSourceLine(teen) {
   for (const d of teen.days) if (d.sources) { known = true; n.patch += d.sources.patch; n.camera += d.sources.camera; n.survey += d.sources.survey }
   if (!teen.hasReadings) return 'No readings yet'
   if (!known) return 'Readings shared by day'
-  const words = [n.patch && 'Patch', n.camera && 'phone camera', n.survey && 'check-in questions'].filter(Boolean)
+  const words = [n.patch && 'Patch', n.camera && 'phone camera', n.survey && 'survey'].filter(Boolean)
   const line = words.length > 1 ? words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1] : words[0]
   return line.charAt(0).toUpperCase() + line.slice(1)
 }

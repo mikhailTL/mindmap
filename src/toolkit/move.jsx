@@ -171,7 +171,7 @@ export default function MoveBreak() {
         {stage === 'idle' && (
           <div>
             <p className="font-display text-row font-bold text-ink">Five moves, twenty seconds each</p>
-            <p className="mt-1 text-sec text-ink-2">Hold your phone. Moving fills the meter.</p>
+            <p className="mt-1 text-sec text-ink-2">Hold your phone as you move. The meter fills as you move.</p>
             <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={start}>Start</Button>
             <p className="mt-2 text-fine text-ink-2">Gentle moves only. Stop if anything hurts.</p>
             <LevelMeter className="mt-5"/>

@@ -109,7 +109,7 @@ export function GroundingTimer({ onBack }) {
                   </>
                 ) : (
                   <Action className="min-w-[11rem]" onClick={() => setRunning(true)}>
-                    {at === 0 && left === pace && named === 0 ? 'Start' : 'Carry on'}
+                    {at === 0 && left === pace && named === 0 ? 'Start' : 'Resume'}
                   </Action>
                 )}
                 <Action kind="quiet" onClick={next}>Next step</Action>
@@ -135,8 +135,8 @@ export function GroundingTimer({ onBack }) {
           <ol className="m-0 mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-sec text-ink-2">
             <li>Read each line aloud, slowly.</li>
             <li>Tap once for each thing they name.</li>
-            <li>Let silence sit. The timer moves on.</li>
-            <li>Any answer counts. There is no wrong one.</li>
+            <li>Allow pauses. The timer moves on by itself.</li>
+            <li>Any answer counts.</li>
           </ol>
           <p className="note mt-4">Nothing here is saved.</p>
         </Sheet>

@@ -20,7 +20,7 @@ import { useSkill, Quest, QuickRound, Win, leave } from '../../toolkit/game/skil
 const TOOL = META.email
 const TABS = [['practice', 'Quick round'], ['email', 'Email'], ['interview', 'Interview'], ['network', 'Networking']]
 const GOALS = {
-  practice: 'Pick the professional line, five times.',
+  practice: 'Pick the more professional line in five examples.',
   email: 'Write an email that passes every check.',
   interview: 'Build one STAR answer you can say in under two minutes.',
   network: 'Write a thank-you or follow-up note.',
@@ -207,8 +207,8 @@ export default function Email({ onExit }) {
   const again = () => { setEnd(null); g.reset() }
   return (
     <Screen tool={TOOL} onExit={onExit}
-      problem="A work email, an interview or a new contact is not a group chat."
-      doing={`Build a short email and check it for texting habits, practise interview answers, and learn the basics of keeping in touch. Aim for under ${WORD_LIMIT} words.`}>
+      problem="Write to teachers, employers and other adults, and prepare for interviews."
+      doing={`Write a short email, under ${WORD_LIMIT} words, and check it for texting habits. Practise interview answers and learn how to keep in touch.`}>
       <div role="group" aria-label="Part" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {TABS.map(([id, label]) => (
           <Choice key={id} on={s.tab === id} onClick={() => { patch({ tab:id }); again() }}
@@ -221,7 +221,7 @@ export default function Email({ onExit }) {
         )}
         {s.tab === 'practice' && !g.result && (
           <QuickRound game={g} items={FIX_ROUND} label="Line" seed={2} doneLabel="Finish the round"
-            onDone={grade => win(grade.clean ? 'Inbox pro' : 'Round done', [['Right', `${grade.right} of ${grade.total}`]],
+            onDone={grade => win(grade.clean ? 'All correct' : 'Round done', [['Right', `${grade.right} of ${grade.total}`]],
               grade.clean ? ['script', 'clean'] : ['script'])}/>
         )}
         {s.tab === 'email' && <EmailTab s={s} patch={patch} g={g} win={win}/>}

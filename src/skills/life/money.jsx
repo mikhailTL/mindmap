@@ -99,7 +99,7 @@ function Subs({ data, patch, g, win }) {
           </ul>
         )}
         {list.length > 0 && !g.result && (
-          <Action className="mt-3 w-full sm:w-auto" onClick={() => win('Leaks found',
+          <Action className="mt-3 w-full sm:w-auto" onClick={() => win('Subscriptions checked',
             [['Every month', money(t.monthly)], ['Every year', money(t.yearly)], ['Not used this month', t.flagged.length],
              ['Could save a year', money(t.flaggedYearly)]], ['plan'])}>I have checked them all</Action>
         )}
@@ -135,13 +135,13 @@ function Pause({ data, patch, g, win }) {
       patch('kept', k => Math.round(((k || 0) + add) * 100) / 100)
       g.hit(10, e, { label:'kept', sound:'good' })
       if (!g.result) win('Skipped it', [['Kept this time', money(add)], ['Kept so far', money(kept + add)]], [])
-    } else if (!g.result) win('Decided with a clear head', [['Waited', `${PAUSE_HOURS} hours`], ['Kept so far', money(kept)]], [])
+    } else if (!g.result) win('Decided after waiting', [['Waited', `${PAUSE_HOURS} hours`], ['Kept so far', money(kept)]], [])
   }
   return (
     <>
       <Panel>
         <Heading>Want it? Wait {PAUSE_HOURS} hours.</Heading>
-        <Lead>Put it here instead of the cart. Tomorrow, decide with a clear head.</Lead>
+        <Lead>Put it here instead of the cart. Decide tomorrow.</Lead>
         <form onSubmit={add} className="mt-3 grid gap-3 sm:grid-cols-[1fr_10rem_auto]">
           <Field label="What is it?" value={d.name} onChange={e => setD({ ...d, name: e.target.value })} placeholder="Wireless earbuds"/>
           <Field label="Price" inputMode="decimal" value={d.price} onChange={e => setD({ ...d, price: digits(e.target.value) })} placeholder="49.99"/>
@@ -209,7 +209,7 @@ function Budget({ data, patch, g, win }) {
       </Panel>
       <Panel>
         <Heading>Money out each month</Heading>
-        <Lead>Put Saving here too, so it happens first, not last.</Lead>
+        <Lead>Include saving here too, so you save first.</Lead>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">{SPEND.map(Money)}</div>
       </Panel>
       <Panel>
@@ -226,19 +226,19 @@ function Budget({ data, patch, g, win }) {
             </div>
           </div>
         ) : (
-          <GoalMeter className="mt-3" reduced={g.reduced} value={share} label="Dollars with a job"
+          <GoalMeter className="mt-3" reduced={g.reduced} value={share} label="Dollars planned"
             right={r.income > 0 ? `${Math.round(share * 100)}%` : ''}/>
         )}
-        {r.income > 0 && r.left === 0 && <Win className="mt-3" reduced={g.reduced}>Every dollar has a job.</Win>}
+        {r.income > 0 && r.left === 0 && <Win className="mt-3" reduced={g.reduced}>Every dollar is planned.</Win>}
         <p className="mt-2 text-ui text-ink" role="status">
           {r.income === 0 && r.spending === 0 ? 'Fill in what comes in and goes out.'
             : r.over ? `You plan to spend ${money(-r.left)} more than comes in. Trim one category until Left is zero or more.`
-            : r.left === 0 ? `Every dollar has a job. Nice planning.` : `You have planned ${Math.round(share * 100)}% of what comes in. ${money(r.left)} has no job yet: give it one, like saving.`}
+            : r.left === 0 ? `Every dollar is planned.` : `You have planned ${Math.round(share * 100)}% of what comes in. ${money(r.left)} is not planned yet. Put it toward saving or another category.`}
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           {r.income > 0 && !r.over && !g.result && (
-            <Action onClick={() => win('Budget locked in', [['In', money(r.income)], ['Out', money(r.spending)],
-              ['Left with no job', money(r.left)], ['Saving', money(parseFloat(b.save) || 0)]], ['plan'])}>Lock in my budget</Action>
+            <Action onClick={() => win('Budget saved', [['In', money(r.income)], ['Out', money(r.spending)],
+              ['Not planned', money(r.left)], ['Saving', money(parseFloat(b.save) || 0)]], ['plan'])}>Save my budget</Action>
           )}
           <Action kind="quiet" onClick={() => patch('budget', {})}>Start again</Action>
         </div>
@@ -319,15 +319,15 @@ function Interest({ data, patch, g, win }) {
     {quiz && !g.result ? (
       <QuickRound className="mt-4" game={g} items={GUESS} label="Guess" seed={5} doneLabel="Finish"
         head={<p className="mb-3 text-fine text-ink-2">Assumes a fixed yearly rate, interest added monthly, no fees and no tax.</p>}
-        onDone={grade => { setQuiz(false); win(grade.clean ? 'Interest pro' : 'Guesses done',
+        onDone={grade => { setQuiz(false); win(grade.clean ? 'All correct' : 'Guesses done',
           [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : []) }}/>
     ) : !g.result && (
-      <PlayCard title="Guess the total" line="Three quick guesses. Most people guess too low, for savings and for debt."
+      <PlayCard title="Guess the total" line="Make three quick guesses. Most people guess too low for both savings and debt."
         onPlay={() => setQuiz(true)}/>
     )}
     <Panel>
       <Heading>Watch money grow</Heading>
-      <Lead>Interest earns interest. Time does most of the work.</Lead>
+      <Lead>Interest earns more interest over time. The longer you save, the more it grows.</Lead>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <Field label="Start with ($)" inputMode="decimal" value={c.start} onChange={e => set('start', e.target.value)}/>
         <Field label="Monthly add ($)" inputMode="decimal" value={c.monthly} onChange={e => set('monthly', e.target.value)}/>
@@ -346,7 +346,7 @@ function Interest({ data, patch, g, win }) {
         <p className="mt-1 text-ink-2">P is the start amount, M the monthly add, r the yearly rate as a decimal, t the years.
           Assumes the rate stays the same, interest is added monthly, you add money at the end of each month, and no fees or tax.
           Real savings rates and investments change, and investments can lose money.</p>
-        <p className="mt-2 text-ink-2">It works against you too: a credit card balance grows the same way, often at 20% a year or more.</p>
+        <p className="mt-2 text-ink-2">Debt grows the same way. A credit card balance often grows at 20% a year or more.</p>
       </div>
       <Action kind="quiet" className="mt-3" onClick={() => patch('ci', {})}>Start again</Action>
     </Panel>
@@ -386,10 +386,10 @@ function Credit({ data, patch, g, win }) {
           onDone={(grade, picks) => {
             patch('quiz', Object.fromEntries(Object.entries(picks).map(([k, v]) => [k, v === 'fact'])))
             setPlay(false)
-            win(grade.clean ? 'Myth buster' : 'Quiz done', [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : [])
+            win(grade.clean ? 'All correct' : 'Quiz done', [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : [])
           }}/>
       ) : !g.result && (
-        <PlayCard title="Myth or fact?" line="Four things people say about credit. Bust the myths."
+        <PlayCard title="Myth or fact?" line="Four things people say about credit. Pick myth or fact."
           onPlay={() => { patch('quiz', {}); setPlay(true) }}/>
       )}
       <Panel>
@@ -456,10 +456,10 @@ const TABS = [['subs', 'Subscriptions'], ['pause', '24 hour pause'], ['budget', 
 
 const GOALS = {
   subs:     'Add what you pay for and spot one you could cut.',
-  pause:    'Wait a day before you buy, then decide with a clear head.',
-  budget:   'Give every dollar a job, saving first.',
+  pause:    'Wait a day before you buy, then decide.',
+  budget:   'Plan where every dollar goes, saving first.',
   interest: 'Guess three totals, then play with the numbers.',
-  credit:   'Bust four credit myths.',
+  credit:   'Learn what affects a credit score.',
 }
 
 export default function LifeMoney({ onExit }) {
@@ -472,8 +472,8 @@ export default function LifeMoney({ onExit }) {
   const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="mint" title="Money Check" icon={MoneyIcon} onExit={onExit}
-      problem="Small charges and quick buys add up without you noticing."
-      doing="Find the leaks, plan a month, and see how interest and credit work. Educational only.">
+      problem="Small purchases add up without you noticing."
+      doing="See where your money goes, plan a monthly budget, and learn how interest and credit work. For learning only.">
       <Sections label="Money tools" items={TABS} value={tab} onChange={go}/>
       <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
         {end && g.result && (

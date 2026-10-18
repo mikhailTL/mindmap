@@ -44,7 +44,7 @@ function Visit({ data, patch, g, win }) {
       </Panel>
       <Panel>
         <Heading>What is going on</Heading>
-        <Lead>Doctors only have a few minutes. Notes help you say it all.</Lead>
+        <Lead>Visits are short. A note helps you remember everything.</Lead>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Field label="Reason for the visit" value={v.reason || ''} onChange={e => set('reason', e.target.value)} placeholder="Knee pain after running"/>
           <Field label="When it started" value={v.started || ''} onChange={e => set('started', e.target.value)} placeholder="About 2 weeks ago"/>
@@ -294,7 +294,7 @@ function FirstAid({ data, patch, g, win }) {
       )}
       <Panel>
         <Heading>First-aid basics</Heading>
-        <Lead>Pick a card. Read it now, so you are not reading it for the first time in a panic.</Lead>
+        <Lead>Pick a card. Read it now so you know what to do in an emergency.</Lead>
         <div role="group" aria-label="First-aid cards" className="mt-3 flex flex-wrap gap-2">
           {Object.entries(FIRST_AID).map(([k, x]) => <Choice key={k} on={pick === k} onClick={() => setPick(k)}>{x.name}</Choice>)}
         </div>
@@ -391,7 +391,7 @@ function Info({ data, patch }) {
 const TABS = [['visit', 'Appointment'], ['meds', 'Medicines'], ['aid', 'First aid'], ['info', 'My info']]
 
 const GOALS = {
-  visit: 'Walk in with a note that says it all.',
+  visit: 'Write a note to bring to your doctor visit.',
   aid:   'Read the cards, then pass the six question first-aid check.',
 }
 
@@ -404,9 +404,9 @@ export default function LifeHealth({ onExit }) {
   const again = () => { setEnd(null); g.reset() }
   const go = v => { patch('tab', v); again() }
   return (
-    <LifeScreen id={ID} family="coral" title="Own Your Health" icon={HealthIcon} onExit={onExit}
-      problem="If a parent has always handled your health, the basics can be a blank."
-      doing="Prepare for a visit, keep a medicine list, learn first aid and keep your key info.">
+    <LifeScreen id={ID} family="coral" title="Health Basics" icon={HealthIcon} onExit={onExit}
+      problem="Learn to manage your own health care."
+      doing="Prepare for a doctor visit, keep a medicine list, learn first aid and save your key health info.">
       <Sections label="Health tools" items={TABS} value={tab} onChange={go}/>
       {GOALS[tab] ? (
         <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">

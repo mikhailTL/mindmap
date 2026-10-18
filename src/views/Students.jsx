@@ -37,7 +37,7 @@ const GIVES = [
 const KEPT_HERE = [
   ['Camera frames', 'The phone turns them into numbers, then deletes them.'],
   ['Microphone audio', 'The phone turns it into pitch figures, then deletes it.'],
-  ['Your check-in answers', 'Turned into one score. Only the score syncs to your account.'],
+  ['Your survey answers', 'Turned into one score. Only the score syncs to your account.'],
 ]
 
 function Rows({ items }) {

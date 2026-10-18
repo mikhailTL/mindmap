@@ -15,8 +15,8 @@ export const FeedbackIcon = () => <I><path d="M4 5h12v8H8l-4 3z"/><path d="M14 1
 export const BelongIcon   = () => <I><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></I>
 
 export const META = {
-  explore:  { id:'career-explore',  title:'Try a Career',        line:'Small tests, not forever choices', family:'sun',   icon:ExploreIcon },
-  email:    { id:'career-email',    title:'Professional Email',  line:'Emails, interviews, follow-ups',   family:'sky',   icon:EmailIcon },
-  feedback: { id:'career-feedback', title:'Feedback Notes',      line:'Turn a note into one skill',       family:'mint',  icon:FeedbackIcon },
-  belong:   { id:'career-belong',   title:'You Belong Here',     line:'Real wins, one brave ask',         family:'lilac', icon:BelongIcon },
+  explore:  { id:'career-explore',  title:'Try a Career',        line:'Try out careers with small tests', family:'sun',   icon:ExploreIcon },
+  email:    { id:'career-email',    title:'Professional Email',  line:'Write emails and prepare for interviews',   family:'sky',   icon:EmailIcon },
+  feedback: { id:'career-feedback', title:'Feedback Notes',      line:'Turn feedback into one skill to work on',       family:'mint',  icon:FeedbackIcon },
+  belong:   { id:'career-belong',   title:'Speak Up for Yourself', line:'List your wins and ask for what you need',         family:'lilac', icon:BelongIcon },
 }

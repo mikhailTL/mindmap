@@ -258,7 +258,7 @@ export default function Pocket() {
           <p className="mt-2 text-center font-display text-ui font-semibold tabular-nums text-ink-2" aria-live="polite">
             {blocked ? 'Tap Start again'
               : running ? `${mmss(frame.left)} left. ${lit} of ${stars} stars.`
-              : ready ? `${mmss(sched.current.seconds)}. One star for each full breath.` : 'Making the sound'}
+              : ready ? `${mmss(sched.current.seconds)}. Breathe with the sound. Each full breath lights a star.` : 'Making the sound'}
           </p>
 
           <div className="mt-4 flex flex-wrap justify-center gap-2.5">
@@ -298,7 +298,7 @@ export default function Pocket() {
           )}
 
           <p className="mt-3 flex items-center justify-center gap-2 text-center text-fine text-ink-2">
-            <Lock/>{hasSession() ? 'Lock your phone. The sound keeps going.' : 'No lock screen controls here. The sound still plays.'}
+            <Lock/>{hasSession() ? 'You can lock your phone. The sound keeps playing.' : 'No lock screen controls here. The sound still plays.'}
           </p>
           <OnDevice className="mt-2 justify-center">A sound file made on this phone. Nothing is recorded.</OnDevice>
           {idle && <DidItWork tool="pocket" phase="before" className="mt-4"/>}

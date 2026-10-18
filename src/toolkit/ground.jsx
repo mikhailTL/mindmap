@@ -142,8 +142,8 @@ export default function Grounding() {
 
         {stage === 'idle' && (
           <div className="mt-4">
-            <p className="font-display text-row font-bold text-ink">Scavenger hunt</p>
-            <p className="mt-1 text-sec text-ink-2">Find it in the room, then tap its card.</p>
+            <p className="font-display text-row font-bold text-ink">How it works</p>
+            <p className="mt-1 text-sec text-ink-2">Find 5 things you see, 4 you hear, 3 you feel, 2 you smell and 1 you taste. Tap each card when you find it.</p>
             <Button className="mt-4 w-full sm:w-auto sm:min-w-[12rem]" onClick={start}>Start</Button>
             <LevelMeter className="mt-5 max-w-[34rem]"/>
             <DidItWork tool="ground" phase="before" className="mt-4"/>
@@ -161,7 +161,7 @@ export default function Grounding() {
                 {mine.length} of {sense.n}
               </span>
             </div>
-            <p className="mt-0.5 text-sec text-ink-2">Spot it around you, then tap its card.</p>
+            <p className="mt-0.5 text-sec text-ink-2">Find it around you, then tap its card.</p>
             <div data-hunt className="relative mt-3">
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 {hand.map((c, k) => {

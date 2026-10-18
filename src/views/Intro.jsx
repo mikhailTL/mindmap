@@ -30,7 +30,7 @@ const BEATS = [
   { ms: 6300, bg: '#eef7f3', head: 'You choose who sees your score.',
     sub: 'Your readings sync to the people you share with.' },
   { ms: 5000, bg: '#eaf6f2', head: 'MindMap',
-    sub: 'Wear the patch, or answer a short check-in. Either way you get one score a day.' },
+    sub: 'Wear the patch, or answer a short survey. Either way you get one score a day.' },
 ]
 const LAST = BEATS.length - 1
 const EXIT_MS = 620          // matches the overlay opacity transition

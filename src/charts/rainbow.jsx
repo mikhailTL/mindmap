@@ -78,7 +78,7 @@ const MINORS = Array.from({ length: 21 }, (_, i) => i * 5).filter(v => v % 25)
    own radius at 168, which clears both their own tick and the band. */
 const axisFont = size => Math.max(7.5, Math.min(16, (11 * 320) / size))
 
-function Axis({ font }) {
+function Axis({ font, numbers = true }) {
   const ray = (v, len) => {
     const d = 180 + 1.8 * v
     const [x1, y1] = pol(AXIS_R, d), [x2, y2] = pol(AXIS_R + len, d)
@@ -94,11 +94,13 @@ function Axis({ font }) {
         {MAJORS.map(v => <path key={v} d={ray(v, 8)}/>)}
         <path d={ray(50, 3)}/>
       </g>
-      <g fill={INK3} fontSize={font.toFixed(2)} textAnchor="middle">
-        <text x="41.2" y={(49.2 + font * 0.36).toFixed(1)}>25</text>
-        <text x="160" y="13">50</text>
-        <text x="278.8" y={(49.2 + font * 0.36).toFixed(1)}>75</text>
-      </g>
+      {numbers && (
+        <g fill={INK3} fontSize={font.toFixed(2)} textAnchor="middle">
+          <text x="41.2" y={(49.2 + font * 0.36).toFixed(1)}>25</text>
+          <text x="160" y="13">50</text>
+          <text x="278.8" y={(49.2 + font * 0.36).toFixed(1)}>75</text>
+        </g>
+      )}
     </g>
   )
 }
@@ -271,8 +273,16 @@ function UsualMark({ at }) {
    a dial narrower than the size the call site asked for leaves the arrow
    pointing at nothing on every phone load of the walkthrough. The size has to
    come down at the call site, where the overlay is, not here. */
+/* `compact`, off by default, is the small dial on a person's card (the
+   owner, 18 October: "it should show the rainbow (small) with the
+   mindscore"). At ~150px the 25 / 50 / 75 numbers print at 6px and the foot
+   labels, centred on the feet, run past the dial's own edge. So, compact
+   only: the ticks keep their rule but lose their numbers, the foot labels sit
+   flush with the dial's two edges at text-fine, the "out of 100" line goes
+   (the card names the range beside it) and the figure takes that room.
+   Every call site without `compact` renders as before. */
 export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
-  plate = false, weather = true, className }) {
+  plate = false, weather = true, compact = false, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
   /* Do not hit-test the arcs: a filtered sibling's hit area is its whole
@@ -298,8 +308,8 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
       <div ref={boxRef} role="img" onClick={hit} className="relative"
         style={{ aspectRatio: `${VW} / ${VH}`, cursor: onPick ? 'pointer' : undefined, containerType: 'inline-size' }}
         aria-label={`${score} out of 100${usual != null ? `, marked against a usual day of ${usual}` : ''}. 0 is calm, 100 is peak.
-          The scale outside the bands is ticked every 5 points and numbered every 25.
-          Each signal out of 100: ${read}.`}>
+          ${compact ? '' : 'The scale outside the bands is ticked every 5 points and numbered every 25.'}
+          ${compact && !read ? '' : `Each signal out of 100: ${read}.`}`}>
         <svg viewBox={`0 0 ${VW} ${VH}`} aria-hidden className="size-full">
           {plate && <rect x="1" y="1" width={VW - 2} height={VH - 2} rx="14"
             fill={PLATE} stroke={EDGE} strokeWidth="1.6"/>}
@@ -314,7 +324,7 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
           })}
           {/* after the bands, because every band paints a full-length mist
               track over anything drawn before it */}
-          <Axis font={axisFont(size)}/>
+          <Axis font={axisFont(size)} numbers={!compact}/>
           {weather && <ArchWeather/>}
           {usual != null && <UsualMark at={usual}/>}
         </svg>
@@ -325,17 +335,17 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
               dial's width the figure and its label always sit inside it. A
               fixed 50px figure ran into the blue band on any dial under ~300px. */}
           <span className="font-display text-dial font-medium leading-none tracking-tight text-ink"
-            style={{ fontSize: 'clamp(18px, 14.5cqw, 50px)' }}>{shown}</span>
-          <span className="mt-[0.2em] text-tick leading-none text-ink-3" style={{ fontSize: 'clamp(10px, 4.4cqw, 14px)' }}>out of 100</span>
+            style={{ fontSize: compact ? 'clamp(18px, 17cqw, 32px)' : 'clamp(18px, 14.5cqw, 50px)' }}>{shown}</span>
+          {!compact && <span className="mt-[0.2em] text-tick leading-none text-ink-3" style={{ fontSize: 'clamp(10px, 4.4cqw, 14px)' }}>out of 100</span>}
         </div>
         {/* 15% and 85% are the feet's own centres in the viewBox, so the
             labels track the ends they name at any size. Both ends carry their
             number as well as their word: the scale is labelled, not implied. */}
-        <span aria-hidden className="absolute bottom-[2.5%] left-[15%] -translate-x-1/2
-          whitespace-nowrap text-tick text-ink-3">
+        <span aria-hidden className={cn('absolute bottom-[2.5%] whitespace-nowrap text-ink-3',
+          compact ? 'left-0 text-fine leading-none' : 'left-[15%] -translate-x-1/2 text-tick')}>
           <b className="font-normal text-ink-2">0</b> calm</span>
-        <span aria-hidden className="absolute bottom-[2.5%] left-[85%] -translate-x-1/2
-          whitespace-nowrap text-tick text-ink-3">
+        <span aria-hidden className={cn('absolute bottom-[2.5%] whitespace-nowrap text-ink-3',
+          compact ? 'right-0 text-fine leading-none' : 'left-[85%] -translate-x-1/2 text-tick')}>
           <b className="font-normal text-ink-2">100</b> peak</span>
       </div>
       {/* No caption under the dial. The usual-day mark is drawn on the scale
@@ -545,7 +555,7 @@ export function SensorDetail({ ring, onClose }) {
     return () => clearTimeout(t)
   }, [ring.id])
   return (
-    <section ref={ref} tabIndex={-1} className="mt-8 border-t border-ink pt-5">
+    <section ref={ref} tabIndex={-1} className="mt-8 border-t border-rule pt-5">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <h3 className="font-display text-row font-medium text-ink">{s.name}</h3>
         <p className="m-0 text-stat font-medium leading-none tabular-nums text-ink">

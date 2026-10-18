@@ -46,8 +46,8 @@ export default function Feedback({ onExit }) {
 
   return (
     <Screen tool={TOOL} onExit={onExit}
-      problem="Criticism at school or work can land like a personal attack."
-      doing="Split the facts from the feelings, turn the note into one skill, and pick a next step.">
+      problem="Use feedback from school or work to improve one skill."
+      doing="Separate the facts from the feelings, pick one skill to work on, and plan a next step.">
       <Quest game={g} goal="Turn one piece of feedback into one skill and one next step.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
@@ -66,7 +66,7 @@ export default function Feedback({ onExit }) {
             <button type="button" onClick={() => setWarm(true)}
               className="kit-ground flex min-h-[56px] items-center justify-between gap-3 rounded-[14px] px-4 text-left">
               <span><span className="block font-display text-ui font-bold text-ink">Warm up: work or about me?</span>
-                <span className="block text-fine text-ink-2">Five quick lines. Spot the useful part.</span></span>
+                <span className="block text-fine text-ink-2">Five quick lines. Is each about the work or about you?</span></span>
               <span aria-hidden className="kit-fill grid size-9 shrink-0 place-items-center rounded-full text-white">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4"
                   strokeLinecap="round" strokeLinejoin="round"><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>
@@ -112,13 +112,13 @@ export default function Feedback({ onExit }) {
           {(d.facts.length > 0 || feelings.length > 0) && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="kit-ground rounded-[14px] p-4">
-                <p className="font-display text-ui font-bold text-ink">The note is about the work</p>
+                <p className="font-display text-ui font-bold text-ink">What the note says about the work</p>
                 <ul className="m-0 mt-2 grid list-disc gap-1 pl-5 text-sec text-ink">
                   {d.facts.length ? d.facts.map(f => <li key={f}>{f}</li>) : <li>Tap a fact above.</li>}
                 </ul>
               </div>
               <div className="rounded-[14px] border border-rule bg-card p-4">
-                <p className="font-display text-ui font-bold text-ink">The feelings are real, but they are not the note</p>
+                <p className="font-display text-ui font-bold text-ink">How it made you feel</p>
                 <ul className="m-0 mt-2 grid list-disc gap-1 pl-5 text-sec text-ink-2">
                   {feelings.length ? feelings.map(f => <li key={f}>{f}</li>) : <li>Nothing picked.</li>}
                 </ul>

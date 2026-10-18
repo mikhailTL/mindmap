@@ -1,14 +1,15 @@
 import React from 'react'
-import { useGuest, useMode } from '../../lib/mode'
+import { useMode } from '../../lib/mode'
 import { useAccount } from '../../account/store'
+import { useViewerName } from '../../account/viewer'
 import { TODAY_LONG, longDate } from '../student/PartHead'
 import NetworkBox from './NetworkBox'
 import { StartGrid, StartTile } from '../home/StartGrid'
 
 /* The parent's home: a greeting, four tiles (Trends, Toolkit,
- * Ask MindMap AI, Privacy and sharing), then the network box with Add a teen
- * and Add a PRO. No figures here at all: every Mind Score, Heads Up face and
- * chart is on Trends. */
+ * Ask MindMap AI, Network), then the network box with Add a teen and Add a
+ * PRO. No figures here at all: every Mind Score, Heads Up face and chart is
+ * on Trends. Privacy is on the tab bar only (owner, 18 October). */
 
 const HUE = {
   sky:   { ground: 'bg-sky-wash',   ink: 'text-sky-ink',   art: '#2294e6', ring: 'focus-visible:outline-sky-ink' },
@@ -21,16 +22,15 @@ export default function ParentHomeBoard({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
-  /* A guest is a spectator, not a role: no demo name for them. */
-  const guest = useGuest() && !real && !me
-  const name = guest ? 'Guest' : real ? (me?.name ? me.name.split(' ')[0] : null) : 'Elena'
+  /* "Welcome, Parent" in the demo, the account's first name in Live. */
+  const name = useViewerName('parent')
 
   /* Cards first, as on the earlier start screen, then the network. */
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       <header>
         <p className="m-0 text-fine text-ink-2">{real ? longDate() : TODAY_LONG}</p>
-        <h2 className="m-0 mt-0.5 font-display !text-head font-bold tracking-tight text-ink">{name ? `Hi, ${name}` : 'Hi there'}</h2>
+        <h2 className="m-0 mt-0.5 font-display !text-head font-bold tracking-tight text-ink">{name ? `Welcome, ${name}` : 'Welcome'}</h2>
       </header>
 
       <StartGrid label="Parent app">
@@ -43,9 +43,9 @@ export default function ParentHomeBoard({ go }) {
         <StartTile title="Ask MindMap AI" tone={HUE.lilac.ground} chevron={HUE.lilac.ink}
           photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
           onClick={() => go('ai')} art={<AskArt className="h-auto w-[80%]"/>}/>
-        <StartTile title="Privacy and sharing" tone={HUE.mint.ground} chevron={HUE.mint.ink}
+        <StartTile title="Network" tone={HUE.mint.ground} chevron={HUE.mint.ink}
           photo="parent-laptop" photoAlt="A parent and teen looking at a laptop together"
-          onClick={() => go('privacy')} art={<ShieldArt className="h-auto w-[62%]"/>}/>
+          onClick={() => go('network')} art={<NetArt className="h-auto w-[78%]"/>}/>
       </StartGrid>
 
       <NetworkBox go={go} real={real} me={me} className="w-full"/>
@@ -96,13 +96,20 @@ function AskArt({ className }) {
   )
 }
 
-function ShieldArt({ className }) {
+/* Three people, joined: the parent, a teen and their PRO. */
+function NetArt({ className }) {
   const c = HUE.mint.art
+  const at = [[20, 52], [48, 20], [76, 52]]
   return (
-    <svg viewBox="0 0 96 96" className={className} fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M48 8l32 11v24c0 20-13.5 35-32 41C29.5 78 16 63 16 43V19z" fill="#fff" stroke={c} strokeWidth="2.2"/>
-      <path d="M48 18l22 7.6v17.6c0 14-9.2 24.6-22 29V18z" fill={c} opacity="0.2"/>
-      <path d="M35 46l9 9 17-19" stroke={c} strokeWidth="3.4"/>
+    <svg viewBox="0 0 96 72" className={className} fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 52 48 20 76 52M20 52h56" stroke={c} strokeWidth="2.2" strokeDasharray="1 6" opacity="0.6"/>
+      {at.map(([x, y], i) => (
+        <g key={x}>
+          <circle cx={x} cy={y} r="13" fill={i === 1 ? c : '#fff'} stroke={c} strokeWidth="2.2"/>
+          <circle cx={x} cy={y - 3} r="3.6" fill={i === 1 ? '#fff' : c}/>
+          <path d={`M${x - 6} ${y + 7}a6 6 0 0 1 12 0`} fill={i === 1 ? '#fff' : c}/>
+        </g>
+      ))}
     </svg>
   )
 }

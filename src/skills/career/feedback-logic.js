@@ -67,7 +67,7 @@ const W = (id, prompt, work, why) => ({ id, prompt, why, fixed:true,
   options:[{ id:'work', text:'About the work', ok:work }, { id:'me', text:'A judgement about me', ok:!work }] })
 export const WARMUP = [
   W('units', 'Three answers were missing their units.', true, 'You can check it and change it next time. That is a fact about the work.'),
-  W('careless', 'You are just careless.', false, 'A label, not something you can check. Ask what exactly was careless: that part is useful.'),
+  W('careless', 'You are just careless.', false, 'This is a label you cannot check. Ask what exactly was careless. That part is useful.'),
   W('late', 'The report came in two days late.', true, 'A fact you can plan around. It says nothing about who you are.'),
   W('care', 'You clearly do not care about this class.', false, 'A guess about your feelings. Ask what they saw that made them think so.'),
   W('intro', 'The intro does not say what the essay will argue.', true, 'Specific and fixable: add one sentence that says your argument.'),

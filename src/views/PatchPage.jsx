@@ -3,7 +3,7 @@ import { Frame } from '../ui/frame'
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { PatchStack } from '../charts/patchstack'
-import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
+import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { Card, cardInk } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
@@ -122,14 +122,11 @@ export function PatchPage({ as: Root = 'main' }) {
   return (
     <Root>
       <section className="relative overflow-hidden bg-accent-wash">
-        <div className="wrap relative py-7 lg:py-10
-          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-center lg:gap-8">
+        {/* The part's title sits just above, in views/PatchHub. */}
+        <div className="wrap relative pb-7 pt-4 lg:pb-10 lg:pt-6
+          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-start lg:gap-8">
           <div className="min-w-0">
-          <p className="font-body text-ui font-semibold text-accent-ink">The patch</p>
-          <RevealLines as="h1"
-            className="mt-2 max-w-[22ch] font-display font-bold text-major leading-[1.05] tracking-tight text-ink"
-            lines={['A patch that sticks to your arm']}/>
-          <ScrollIn className="mt-4">
+          <ScrollIn>
             <Card variant="rule" side="left" className="max-w-[46ch] py-1 pl-3.5">
               <ul className="m-0 grid list-none gap-1.5 p-0">
                 {CHAIN.map(t => (
@@ -248,13 +245,15 @@ export function PatchPage({ as: Root = 'main' }) {
         </div>
       </section>
 
-      <Section tone="card" tight className="bg-aqua-2">
+      {/* White, not a wash: a wash opens each part of the page. */}
+      <Section tone="card" tight>
         <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
           <Parallax2D distance={28} className="min-w-0">
             <Card className="min-w-0 p-3.5 lg:p-5">
-              <PatchStack/>
+              {/* The drawing names every layer; the owner found the notes too wordy. */}
+              <PatchStack brief/>
             </Card>
           </Parallax2D>
 

@@ -107,13 +107,17 @@ export function NoData({ go, className }) {
  * ticks   [{ x, label }] under the chart
  * usual   { lo, hi }: the reader's own usual range, shaded
  * band    v => { fill, word, ink }: a dot's colour and the readout's words
+ * detail  point => node: how that point's readings were taken. Shown under
+ *         the chart only once a point is tapped (the owner, 18 October:
+ *         "only show how readings were taken once the reading is clicked").
  */
 export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = bandFor, label,
-  className, tall = false }) {
+  className, tall = false, detail }) {
   const [ref, w] = useWidth()
   const [sel, setSel] = React.useState(null)
+  const [open, setOpen] = React.useState(null)
   const gid = 'sc' + React.useId().replace(/:/g, '')
-  React.useEffect(() => { setSel(null) }, [points.length, points[0]?.key])
+  React.useEffect(() => { setSel(null); setOpen(null) }, [points.length, points[0]?.key])
 
   const H = (w < 520 ? 210 : w < 640 ? 250 : 320) + (tall ? 30 : 0)
   const P = { l: 38, r: 14, t: 26, b: 30 }
@@ -130,25 +134,28 @@ export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = 
   const empty = !points.length
 
   const nearest = clientX => {
-    if (empty) return
+    if (empty) return null
     const box = ref.current.getBoundingClientRect()
     const px = ((clientX - box.left) / box.width) * w
     let best = 0
     for (let k = 1; k < pts.length; k++) if (Math.abs(pts[k][0] - px) < Math.abs(pts[best][0] - px)) best = k
     setSel(best)
+    return best
   }
   const onKey = e => {
     if (empty) return
+    if (detail && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setOpen(i); return }
     const go_ = { ArrowLeft: Math.max(0, i - 1), ArrowRight: Math.min(points.length - 1, i + 1),
       Home: 0, End: points.length - 1 }[e.key]
     if (go_ == null) return
     e.preventDefault(); setSel(go_)
+    if (open != null) setOpen(go_)
   }
   const vs = points.map(p => p.v)
   const aria = empty ? `${label || SCORE + ' chart'}. No data yet.`
     : `${label || SCORE + ' chart'}, ${points.length} point${points.length === 1 ? '' : 's'}, lowest
       ${Math.min(...vs)}, highest ${Math.max(...vs)}. Your usual range is ${usual.lo} to ${usual.hi}.
-      Arrow keys step through the points.`
+      Arrow keys step through the points.${detail ? ' Enter shows how that point was taken.' : ''}`
 
   return (
     <figure className={cn('m-0', className)}>
@@ -162,7 +169,7 @@ export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = 
         ) : <span className="sr-only">No data yet</span>}
       </p>
       <div ref={ref} tabIndex={empty ? -1 : 0} role="group" aria-label={aria} onKeyDown={onKey}
-        onPointerMove={e => nearest(e.clientX)} onPointerDown={e => nearest(e.clientX)}
+        onPointerMove={e => nearest(e.clientX)} onPointerDown={e => { const k = nearest(e.clientX); if (detail && k != null) setOpen(k) }}
         className="relative mt-1 touch-pan-y select-none rounded-field outline-offset-2">
         <svg aria-hidden width={w} height={H} className="block max-w-full">
           <defs>
@@ -212,7 +219,11 @@ export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = 
       </div>
       <figcaption className="mt-1.5 text-fine text-ink-3">
         Shaded: your usual range, {usual.lo} to {usual.hi}.
+        {detail && !empty && open == null && ' Tap a point to see how it was taken.'}
       </figcaption>
+      {detail && open != null && points[open] && (
+        <div aria-live="polite" className="mt-2.5 border-t border-rule pt-2.5">{detail(points[open])}</div>
+      )}
     </figure>
   )
 }

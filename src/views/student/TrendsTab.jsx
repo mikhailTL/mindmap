@@ -1,21 +1,20 @@
 import React from 'react'
 import { SectionShell } from '../shell'
-import { Panel, PanelHead, Why } from '../Monitor'
+import { Panel, PanelHead } from '../Monitor'
 import { LampFace } from '../../traffic/Face'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 import { SCORE } from '../../lib/terms'
 import { bandOf } from '../../lib/readingLog'
-import { useMode } from '../../lib/mode'
 import { useReadingLog } from '../reading/useReadingLog'
-import { BAND, SOURCE, Shape, clock } from '../reading/marks'
+import { BAND, SOURCE, Shape } from '../reading/marks'
 import { Latest, MindScoreLog } from '../reading/Log'
 import { Trends } from './Trends'
 import { TEEN } from './demoTeen'
 import { PartHead, TODAY_LONG, longDate } from './PartHead'
 import { DemoTodayDetail } from './TodayDetail'
-import { NoData, ScoreChart, TakeReading } from './charts'
-import { RANGE_LABEL, SOURCE_WORD, byDay, clockOf, dayKey, longDay, midnight, rangeView }
+import { ScoreChart, TakeReading } from './charts'
+import { RANGE_LABEL, byDay, clockOf, dayKey, longDay, midnight, rangeView }
   from './liveSeries'
 
 /* The student's Trends tab: the app tab "Trends", route `student-trends`.
@@ -27,10 +26,12 @@ import { RANGE_LABEL, SOURCE_WORD, byDay, clockOf, dayKey, longDay, midnight, ra
  * shown on the trend graphs." And: "Make sure theres difference between Today
  * and Trends sections."
  *
- * So the tab opens with a "Take a reading" link, then two parts with their
- * own heads: Today (the latest reading on the rainbow and today's readings)
- * and Trends (the Day / Week / Month line, the calendar with each day's
- * Heads Up face, readings by source, then the Mind Score Log).
+ * So the tab is three parts with their own heads: Today (the rainbow, with
+ * Heads Up in the demo; "Take a reading" at the end of its heading), Trends
+ * (the Day / Week / Month line and the calendar with each day's Heads Up
+ * face) and the Mind Score Log. The owner, 18 October: "everything looks too
+ * overwhelming", so today's readings list (the log's Today repeats it) and
+ * the trend's explainer went.
  *
  *   Demo  the demo teen's ninety days (src/views/student/Trends.jsx) and the
  *         generated fortnight of logged readings
@@ -39,33 +40,9 @@ import { RANGE_LABEL, SOURCE_WORD, byDay, clockOf, dayKey, longDay, midnight, ra
 
 /* ── Today ─────────────────────────────────────────────────────────────── */
 
-function TodayList({ items, now }) {
-  return (
-    <ul className="m-0 list-none p-0">
-      {[...items].reverse().map(r => {
-        const b = BAND[bandOf(r.score)]
-        const S = SOURCE[r.source]
-        return (
-          <li key={r.id} className="grid grid-cols-[4.6rem_auto_minmax(0,1fr)] items-center gap-x-2.5
-            border-t border-rule py-2 first:border-t-0">
-            <span className="font-mono text-meta tabular-nums text-ink-2">{clock(r.at)}</span>
-            <span className="inline-flex items-center gap-1.5">
-              <Shape source={r.source} fill={b.fill}/>
-              <span className="font-display text-row font-bold tabular-nums text-ink">{r.score}</span>
-            </span>
-            <span className="min-w-0 text-fine text-ink-2">
-              <span className="flex items-center gap-1.5"><S.Icon aria-hidden className="size-4 shrink-0 text-ink-3"/>
-                {S.word}{r.pulse != null && <span className="tabular-nums text-ink-3"> · {r.pulse} bpm</span>}</span>
-              <span className={cn('block', b.ink)}>{b.short}</span>
-            </span>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-function TodayPart({ entries, now, go, listOnly = false }) {
+/* The latest reading on the rainbow. Today's readings themselves are the
+   first day of the log below. */
+function TodayPart({ entries, now, go }) {
   const today = dayKey(now)
   const todays = entries.filter(r => dayKey(r.at) === today)
   const last = entries[entries.length - 1]
@@ -80,22 +57,7 @@ function TodayPart({ entries, now, go, listOnly = false }) {
       </Panel>
     )
   }
-  const mean = Math.round(todays.reduce((a, r) => a + r.score, 0) / todays.length)
-  return (
-    <div className={cn('grid grid-cols-1 gap-3 lg:items-start lg:gap-4',
-      !listOnly && 'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
-      {!listOnly && <Latest entries={todays} now={now}/>}
-      <Panel variant="tint" hue="accent">
-        <PanelHead title="Today's Readings" meta={`${todays.length} so far`}/>
-        <p className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-gap font-bold tabular-nums text-ink">{mean}</span>
-          <span className="text-fine text-ink-2">average today, {BAND[bandOf(mean)].word.toLowerCase()}</span>
-        </p>
-        <div className="mt-2"><TodayList items={todays} now={now}/></div>
-        <TakeReading go={go} className="mt-1">Take another reading</TakeReading>
-      </Panel>
-    </div>
-  )
+  return <Latest entries={todays} now={now}/>
 }
 
 /* ── Live trends ───────────────────────────────────────────────────────── */
@@ -207,39 +169,22 @@ function LiveCalendar({ days, now, picked, onPick }) {
   )
 }
 
-function BySource({ list, go }) {
-  const keys = ['camera', 'survey', 'patch', 'mirror']
-  const count = k => list.filter(r => r.source === k).length
-  const latestOf = k => [...list].reverse().find(r => r.source === k)
+/* Shown under the trend once a point is tapped: how its readings were
+   taken, one row each. */
+function Taken({ list, title }) {
   return (
     <div>
-      <ul className="m-0 grid list-none grid-cols-4 gap-x-3 p-0">
-        {keys.map(k => (
-          <li key={k} className="min-w-0">
-            <p className="tick flex items-center gap-1.5"><Shape source={k} fill="#2a5744" size={12}/>{SOURCE[k].word}</p>
-            <p className="mt-0.5 font-display text-row font-medium tabular-nums leading-none text-ink">{count(k)}</p>
+      <p className="m-0 font-display text-ui font-bold text-ink">{title}</p>
+      <ul className="m-0 mt-1 list-none p-0">
+        {list.map(r => (
+          <li key={r.id} className="flex items-center gap-3 border-b border-rule py-1.5 last:border-b-0">
+            <Shape source={r.source} fill={BAND[bandOf(r.score)].fill} size={12}/>
+            <span className="min-w-0 flex-1 text-fine text-ink">{clockOf(r.at)}
+              <span className="text-ink-3"> · {SOURCE[r.source].word}</span></span>
+            <span className="shrink-0 font-display text-ui font-bold tabular-nums text-ink">{r.score}</span>
           </li>
         ))}
       </ul>
-      {list.length ? (
-        <ul className="m-0 mt-3 list-none p-0">
-          {keys.map(k => {
-            const r = latestOf(k)
-            return r ? (
-              <li key={k} className="flex items-center gap-3 border-t border-rule py-1.5">
-                <Shape source={k} fill={BAND[bandOf(r.score)].fill} size={12}/>
-                <span className="min-w-0 flex-1 text-fine text-ink">Latest {SOURCE_WORD[k]},
-                  <span className="text-ink-2"> {longDay(r.at)}, {clockOf(r.at)}</span></span>
-                <span className="shrink-0 font-display text-ui font-bold tabular-nums text-ink">{r.score}</span>
-              </li>
-            ) : null
-          })}
-        </ul>
-      ) : (
-        <NoData go={go} className="mt-3 items-start text-left"/>
-      )}
-      <p className="mt-2 text-fine text-ink-3">
-        The camera and the check-in questions need no patch.</p>
     </div>
   )
 }
@@ -253,23 +198,17 @@ function LiveTrendsPart({ entries, now, go, range, setRange, anchor, setAnchor }
       <div className="flex min-w-0 flex-col gap-3 lg:gap-4">
       <Panel tone="aqua">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <PanelHead title={`${SCORE} Trend`} meta={view.label} className="min-w-0 flex-1"/>
-          <Why label="How to read the trend" className="pt-1">
-            Each point is a reading, or one day's average on Week and Month. The shaded band is your usual
-            range. Higher means more stress.
-          </Why>
+          <PanelHead as="h3" title={SCORE} meta={view.label} className="min-w-0 flex-1"/>
         </div>
         <div className="mt-2"><RangeTabs value={range} onChange={k => { setRange(k); if (k !== 'day') setAnchor(null) }}/></div>
         <ScoreChart className="mt-3" points={view.points} ticks={view.ticks} go={go} tall
-          label={`${SCORE}, ${RANGE_LABEL[range]}`}/>
-      </Panel>
-      <Panel variant="outline">
-        <PanelHead title="Readings by Source" meta={`${view.list.length} in this range`}/>
-        <div className="mt-3"><BySource list={view.list} go={go}/></div>
+          label={`${SCORE}, ${RANGE_LABEL[range]}`}
+          detail={pt => <Taken list={range === 'day' ? view.list.filter(r => r.id === pt.key)
+            : view.list.filter(r => dayKey(r.at) === pt.key)} title={pt.read}/>}/>
       </Panel>
       </div>
       <Panel>
-        <PanelHead title="Your Days" meta="tap a day"/>
+        <PanelHead as="h3" title="Your Days" meta="tap a day"/>
         <div className="mt-3">
           <LiveCalendar days={days} now={now} picked={range === 'day' ? dayKey(view.from) : null} onPick={pick}/>
         </div>
@@ -288,7 +227,7 @@ export function StudentTrendsBody({ go }) {
   const [demoSpan, setDemoSpan] = React.useState(null)
 
   /* The log covers the same days as the trend above it, in both modes, so
-     "Readings by Source" and the log count the same readings. */
+     the trend and the log count the same readings. */
   let list = entries, rangeLabel = 'last 14 days'
   if (demo && demoSpan) {
     list = entries.filter(r => { const k = dayKey(r.at); return k >= demoSpan.from && k <= demoSpan.to })
@@ -301,29 +240,32 @@ export function StudentTrendsBody({ go }) {
 
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="m-0 font-display text-head font-bold tracking-tight text-ink sm:text-sub">Trends</h1>
-        <TakeReading go={go}/>
-      </div>
-
-      <PartHead id="st-today-h" kind="today" title="Today"
-        line={`${demo ? TODAY_LONG : longDate()}. Your readings so far today.`}/>
-      {/* The demo day in full moved here from the home on 17 October: the
-          home is navigation only, and all data lives on this tab. */}
-      {demo && <DemoTodayDetail go={go}/>}
-      <TodayPart entries={entries} now={now} go={go} listOnly={demo}/>
+      {/* The page's own "Trends" heading went on 18 October: the app bar
+          above already names the tab. */}
+      <PartHead id="st-today-h" kind="today" title="Today" line={demo ? TODAY_LONG : longDate()}
+        action={<TakeReading go={go}/>}/>
+      {/* The demo day moved here from the home on 17 October: the home is
+          navigation only, and all data lives on this tab. */}
+      {demo ? <DemoTodayDetail go={go}/> : <TodayPart entries={entries} now={now} go={go}/>}
 
       <section aria-labelledby="st-trends-h"
         className="mt-4 flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4
           lg:mt-6 lg:gap-4 lg:p-5">
-        <PartHead id="st-trends-h" kind="trends" title="Trends"
-          line={`Days, weeks and months, compared only with your own usual.${demo ? ' Demo days.' : ''}`}/>
+        <PartHead id="st-trends-h" kind="trends" title="Trends" line="Compared only with your own usual."/>
         {demo
           ? <Trends teen={TEEN} bare log={entries} onSpan={setDemoSpan}/>
           : <LiveTrendsPart entries={entries} now={now} go={go} range={range} setRange={setRange}
               anchor={anchor} setAnchor={setAnchor}/>}
-        <MindScoreLog className="mt-2" entries={entries} list={list} now={now} demo={demo} setNote={setNote}
-          rangeLabel={rangeLabel} latest go={go}/>
+      </section>
+
+      {/* The owner, 18 October: the log is its own part, under Trends. */}
+      <section aria-labelledby="reading-log-h"
+        className="mt-4 flex flex-col gap-3 rounded-[24px] border border-accent/20 bg-accent-wash/60 p-3 sm:p-4
+          lg:mt-6 lg:gap-4 lg:p-5">
+        <PartHead id="reading-log-h" kind="log" title={`${SCORE} Log`}
+          line={`Every reading, ${rangeLabel}.`}/>
+        <MindScoreLog entries={entries} list={list} now={now} demo={demo} setNote={setNote}
+          rangeLabel={rangeLabel} head={false} go={go}/>
       </section>
     </div>
   )
@@ -332,9 +274,8 @@ export function StudentTrendsBody({ go }) {
 /** The app tab "Trends" (route `student-trends`), in the same shell as the
     student's other tabs. */
 export function StudentTrends({ go }) {
-  const [mode] = useMode()
   return (
-    <SectionShell go={go} note={mode === 'demo' ? 'These are demo figures.' : undefined}>
+    <SectionShell go={go}>
       <StudentTrendsBody go={go}/>
     </SectionShell>
   )

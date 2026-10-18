@@ -52,8 +52,8 @@ export default function Sources({ onExit }) {
 
   return (
     <Screen title="Source Checker" family="lilac" icon={SourceIcon} onExit={onExit}
-      problem="Endless links, chatbot answers and opinions that disagree."
-      plan="Run a claim through six checks before you trust it, or practise on sample sources.">
+      problem="Check if a link, chatbot answer or opinion can be trusted."
+      plan="Run a claim through six checks, or practise on sample sources.">
 
       <Seg label="Mode" value={s.mode} onChange={v => { set({ mode:v }); g.reset(); setLast(null) }}
         options={[['check', 'Check a source'], ['practice', 'Practice round']]}/>
@@ -172,7 +172,7 @@ export default function Sources({ onExit }) {
       {s.mode === 'practice' && s.graded && (
         <>
           {g.result ? (
-            <EndCard game={g} title={sort.right === sort.total ? 'Clean sweep' : 'Sort done'} againLabel="Sort again"
+            <EndCard game={g} title={sort.right === sort.total ? 'All matched' : 'Sort done'} againLabel="Sort again"
               onAgain={practiseAgain} onDone={leave(onExit)}
               stats={[['Same call as a careful checker', `${sort.right} of ${sort.total}`]]}>
               <p className="text-ui text-ink">{roundLine(sort.right, sort.total)}</p>
@@ -180,7 +180,7 @@ export default function Sources({ onExit }) {
           ) : (
             <Sheet className="kit-ground border-transparent">
               <H>{sort.right} of {sort.total} sorted the same way a careful checker would</H>
-              <p className="mt-1 text-ui text-ink">Read why for each one below. The habit matters more than the score.</p>
+              <p className="mt-1 text-ui text-ink">Read why for each one below.</p>
             </Sheet>
           )}
           <ul className="grid gap-3">

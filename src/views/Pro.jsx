@@ -1,11 +1,11 @@
 import React from 'react'
 import { Why } from './Monitor'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
-import { DemoNotice } from '../ui/notice'
-import { useGuest, useMode } from '../lib/mode'
+import { useMode } from '../lib/mode'
 import { PRO } from '../lib/terms'
 import { ArrowRight } from '../ui/marks'
 import { useAccount } from '../account/store'
+import { useViewerName } from '../account/viewer'
 import { cn } from '../lib/utils'
 import { Caseload, useLayout } from './pro/Caseload'
 import { GroupTrends } from './pro/GroupTrends'
@@ -22,7 +22,7 @@ import { useLiveTeens } from './family/useLive'
 /* THE COUNSELOR/PROFESSIONAL APP: its home and its Trends screen.
  *
  * ProHome ('app-pro') is a way in: a greeting and four big cards, Trends,
- * Connect, Ask and Toolkit. No teen's figures are on it.
+ * Toolkit, Ask and Network. No teen's figures are on it.
  *
  * Pro ('app-pro-trends') is where the data lives. Heads Up today across the
  * group sits above two tabs. EACH TEEN (the default) is a card per teen, with
@@ -37,7 +37,7 @@ import { useLiveTeens } from './family/useLive'
  * the teens linked to this account whose link a parent approved, from the
  * account snapshot (day figures only, and only what each teen shares),
  * refreshed every 20 seconds by useLiveSync. `empty` shows nobody, and the
- * empty state points to Connect. No line here mentions a patch being missing:
+ * empty state points to Network. No line here mentions a patch being missing:
  * the owner, "dont say 'No Patch' under the counselor/professional dashboard".
  *
  * The four safeguards, in RULES, sit behind the "?" beside the heading and
@@ -84,7 +84,7 @@ const RULES = [
 
 const clock = () => new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
-/* The live-mode margin note. Not RealNotice: its tag reads "No patch". */
+/* The live-mode margin note. */
 const LiveNote = ({ children, className }) => (
   <span className={cn('inline-flex items-baseline gap-x-2.5 border-l-2 border-accent py-0.5 pl-3', className)}>
     <span className="shrink-0 font-display text-fine font-bold text-accent-ink">Live</span>
@@ -133,7 +133,7 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
     setNotes(n => ({ ...n, [teen.id]: [...(n[teen.id] || []), { text, at: 'Today, ' + clock() }] }))
     write('Saved a note', teen)
   }
-  const onTab = v => { setTab(v); announce(v === 'trends' ? 'Showing group trends' : 'Showing each teen') }
+  const onTab = v => { setTab(v); announce(v === 'trends' ? 'Showing the whole group' : 'Showing each teen') }
 
   return (
     <main>
@@ -146,13 +146,13 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
               <ul className="m-0 list-none p-0">{RULES.map(r => <li key={r} className="py-0.5">{r}</li>)}</ul>
             </Why>
           </div>
-          <div className="mt-2">
-            {real
-              ? <LiveNote>{liveTeens.length
-                  ? `${liveTeens.length === 1 ? 'One teen shares' : `${liveTeens.length} teens share`} with you. Updated as readings arrive.`
-                  : 'Nobody shares with you yet.'}</LiveNote>
-              : <DemoNotice inline>A sample caseload of 24 teens.</DemoNotice>}
-          </div>
+          {real && (
+            <div className="mt-2">
+              <LiveNote>{liveTeens.length
+                ? `${liveTeens.length === 1 ? 'One teen shares' : `${liveTeens.length} teens share`} with you. Updated as readings arrive.`
+                : 'Nobody shares with you yet.'}</LiveNote>
+            </div>
+          )}
           {today.n >= K_ANONYMITY && !open && (
             <section aria-labelledby="pro-today-h" className="mt-4">
               <h3 id="pro-today-h" className="m-0 flex items-baseline gap-2 font-display text-ui font-bold text-ink">
@@ -213,16 +213,13 @@ const RainbowMark = () => (
  * pictures (see pro/HomeArt.jsx), never a reading. The one number is how many
  * teens share with you. */
 
-const DEMO_NAME = 'Dr. Shah'
-
 export function ProHome({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
   const live = useLiveTeens('pro')
-  /* A guest is a spectator, not a role: no demo name for them. */
-  const guest = useGuest() && !real && !me
-  const name = guest ? 'Guest' : real ? String(me?.name || '').trim() : DEMO_NAME
+  /* "Welcome, Counselor" in the demo, the account's name in Live. */
+  const name = useViewerName('pro')
   const setting = real ? settingLineFor(me) : SETTING_WORDS.school.head + '.'
   const n = real ? live.teens.length : CASELOAD.length
   const shares = n === 0 ? 'No teens connected yet' : n === 1 ? 'One teen shares with you' : `${n} teens share with you`
@@ -234,21 +231,20 @@ export function ProHome({ go }) {
         <h2 className="m-0 font-display !text-head font-bold tracking-tight text-ink">{name ? `Welcome, ${name}` : 'Welcome'}</h2>
         {setting && <p className="m-0 mt-0.5 text-fine text-ink-2">{setting}</p>}
       </header>
-      {!real && <DemoNotice inline className="mt-2">A sample caseload.</DemoNotice>}
 
       <StartGrid label={`${PRO} app`} className="mt-3 lg:mt-4">
         <StartTile title="Trends" tone="bg-sky-wash" chevron="text-sky-ink"
           photo="friends-steps" photoAlt="Two students talking on school steps"
           onClick={() => go('app-pro-trends')} art={<RainbowArt size={150} className="w-[86%] pt-1"/>}/>
-        <StartTile title="Connect with families" tone="bg-mint-wash" chevron="text-mint-ink"
-          photo="parent-hero" photoAlt="A parent and teen smiling together"
-          onClick={() => go('network')} art={<LinkArt className="w-[88%]"/>}/>
-        <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
-          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
-          onClick={() => go('ai')} art={<ChatArt className="h-auto w-[88%]"/>}/>
         <StartTile title="Toolkit" tone="bg-sun-wash" chevron="text-sun-ink"
           photo="pro-hero" photoAlt="A teen talking with a counselor" photoFocal="74% 24%"
           onClick={() => go('toolkit')} art={<ToolArt className="h-auto w-[76%]"/>}/>
+        <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
+          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
+          onClick={() => go('ai')} art={<ChatArt className="h-auto w-[88%]"/>}/>
+        <StartTile title="Network" tone="bg-mint-wash" chevron="text-mint-ink"
+          photo="parent-hero" photoAlt="A parent and teen smiling together"
+          onClick={() => go('network')} art={<LinkArt className="w-[88%]"/>}/>
       </StartGrid>
 
       <section aria-label="Who shares with you"
@@ -259,7 +255,7 @@ export function ProHome({ go }) {
           className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-field
             bg-accent px-4 font-display text-ui font-medium text-paper transition-colors duration-150
             hoverOnly:bg-accent-lit hoverOnly:text-ink active:bg-accent-lit active:text-ink sm:w-auto">
-          {n ? 'Open Trends' : 'Connect with families'}
+          {n ? 'Open Trends' : 'Open Network'}
           <ArrowRight aria-hidden className="size-4 shrink-0"/>
         </button>
       </section>

@@ -108,7 +108,7 @@ function Build({ s, set, g }) {
   return (
     <>
       <StepHead n={2} of={STEPS} title="Build an I-statement"/>
-      <Note>Say how it hit you, not what is wrong with them. People listen to that.</Note>
+      <Note>Say how it made you feel instead of what is wrong with them. People are more likely to listen.</Note>
       {s.sit === 'online' && (
         <p className="mt-2 text-ui text-ink">For bullying, use this with a trusted adult or a report, not as a reply
           to the person.</p>
@@ -159,7 +159,7 @@ function Moves({ s, set }) {
   return (
     <>
       <StepHead n={3} of={STEPS} title="Pick your calm-down moves"/>
-      <Note>Choose up to {MAX_MOVES}. These keep a hard talk from turning into a fight.</Note>
+      <Note>Choose up to {MAX_MOVES}. These help keep a hard talk from turning into a fight.</Note>
       <div className="mt-4 grid gap-2">
         {MOVES.map(m => (
           <Choice key={m.id} on={s.moves.includes(m.id)} onClick={() => flip(m.id)}
@@ -326,9 +326,9 @@ export default function Conflict({ onExit }) {
   const set = patch => setS(prev => ({ ...prev, ...patch }))
   return (
     <Screen id={ID} family="coral" title="Say It Calmly" icon={<ConflictIcon/>} onExit={onExit}>
-      {s.step === 1 && <Intro problem="Some fights get dodged and some blow up. Neither fixes much."
-        doing="Build an I-statement, pick calm-down moves, then practice."/>}
-      <Quest game={g} body="mt-5" goal="Build one calm sentence, then test it on three scenes."
+      {s.step === 1 && <Intro problem="Talk through a disagreement without avoiding it or making it worse."
+        doing="Write an I-statement, pick ways to calm down, then practice."/>}
+      <Quest game={g} body="mt-5" goal="Write one calm sentence, then practice it in three situations."
         steps={['Pick the situation', 'Build the sentence', 'Calm-down moves', 'Practice']} at={s.step - 1}>
       {s.step === 1 && <Pick s={s} set={set}/>}
       {s.step === 2 && <Build s={s} set={set} g={g}/>}

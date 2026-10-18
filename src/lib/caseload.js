@@ -1,4 +1,4 @@
-import { PRO, PRO_LC } from './terms.js'
+import { PRO } from './terms.js'
 
 /* Counselor/Professional demo data. Two rules:
    1. CONSENT is the single source of truth. It feeds both the Consent-tab
@@ -110,10 +110,10 @@ export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
   { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the student in person',                 subject:'Student 8241' },
   { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Student 8241' },
-  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:`Crisis alert raised, ${PRO_LC} notified`,subject:'Student 8241' },
+  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:`Crisis alert raised, ${PRO} notified`,subject:'Student 8241' },
   { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Student 5512' },
   { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:PRO,                action:'Exported year-group report (no group under five)', subject:'Grade 11' },
-  { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed trends',                                    subject:'Student 8241' },
+  { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed Trends',                                    subject:'Student 8241' },
   { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Set raw readings to be kept 30 days',              subject:'Student 8241' },
 ]
 

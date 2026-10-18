@@ -15,12 +15,12 @@ import { LOCATION, NOTES, PRO, SCORE, CONSENT_SHORT } from '../lib/terms'
 /* A tone is a ground and an edge, never a state. The last six are retired
    hue names two files still index by. */
 export const TONES = {
-  card:  'border-rule bg-card',
-  brand: 'border-accent/30 bg-accent-wash',
-  aqua:  'border-rule bg-aqua',
-  deep:  'border-rule bg-aqua-2',
-  beam:  'border-beam/30 bg-beam-wash',
-  paper: 'border-rule bg-paper',
+  card:  'border-rule/60 bg-card',
+  brand: 'border-accent/20 bg-accent-wash',
+  aqua:  'border-rule/60 bg-aqua',
+  deep:  'border-rule/60 bg-aqua-2',
+  beam:  'border-beam/20 bg-beam-wash',
+  paper: 'border-rule/60 bg-paper',
   ink:   'border-ink bg-ink text-paper',
   /* retired, aliased */
   lilac: 'border-rule bg-aqua',
@@ -45,10 +45,13 @@ export function Panel({ className, tone = 'card', variant, hue = 'accent', as: A
   )
 }
 
-/* The module label. */
+/* The module label. The owner, 18 October: the dark rule above every heading
+   read as generated, so a heading is set by weight alone. Other files that
+   want the same label import HEAD rather than `.mark`. */
+export const HEAD = 'block font-display text-ui font-bold text-ink'
 export function PanelHead({ title, meta, as: As = 'h2', className }) {
   return (
-    <As className={cn('mark flex items-baseline justify-between gap-3', className)}>
+    <As className={cn(HEAD, 'flex items-baseline justify-between gap-3', className)}>
       <span className="min-w-0">{title}</span>
       {meta && <span className="tick shrink-0">{meta}</span>}
     </As>
@@ -162,7 +165,7 @@ export function SeeDetails({ label = 'See details', sub, children, className, de
 
 /* ── The one thing the patch cannot measure ─────────────────────────────── */
 
-/* The legend for the check-in questions, not a stored rating. */
+/* The legend for the survey, not a stored rating. */
 const FACES = [
   ['easier',      'bg-aqua',   'M8.5 14.6c1.4 1.7 5.6 1.7 7 0'],
   ['about usual', 'bg-aqua-2', 'M8.5 15h7'],
@@ -187,9 +190,9 @@ export function FeltCard({ go, className }) {
   return (
     <Panel tone="aqua" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PanelHead title="How Today Felt" meta="check-in" className="min-w-0 flex-1"/>
-        <Why label="What the check-in questions are" className="pt-1.5">
-          The patch cannot read a feeling, so a short check-in asks. Answers become one
+        <PanelHead title="How Today Felt" meta="survey" className="min-w-0 flex-1"/>
+        <Why label="What the survey is" className="pt-1.5">
+          The patch cannot read a feeling, so a short survey asks. Answers become one
           score, which syncs to your account. The answers are not kept.
         </Why>
       </div>
@@ -208,7 +211,7 @@ export function FeltCard({ go, className }) {
         <span className="flex w-full items-center gap-3 border-t border-rule pt-2.5">
           <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink
             transition-colors duration-150 groupHoverOnly:text-accent-ink">
-            Answer the check-in</span>
+            Take the survey</span>
           <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
         </span>
       </button>

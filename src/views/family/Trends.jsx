@@ -7,14 +7,15 @@ import { cn } from '../../lib/utils'
 import { cardClass } from '../../ui/card'
 import { RangeSwitch } from './RangeTrend'
 import { ScoreChart, ScoreLegend } from './charts'
-import DayFacts, { SourceRows } from './DayFacts'
-import { PREV, STATUS_SUB, STATUS_WORD, bodyFor, bodySource, bodyWord, fullDate, lightCounts, rangeDays,
-  sleepOf, sleepShared, sourceTotals, statusOfTeen, summaryOf } from './data'
+import DayFacts from './DayFacts'
+import { PREV, STATUS_SUB, STATUS_WORD, fullDate, lightCounts, rangeDays, statusOfTeen, summaryOf } from './data'
 
 /* One child's Trends, the same layout for every child: the Mind Score by day
- * for a Day, Week or Month; Heads Up across that range; everything recorded
- * in it; and the month calendar with each day's face, where picking a day
- * shows that day under the grid.
+ * for a Day, Week or Month; Heads Up across that range; and the month
+ * calendar with each day's face, where picking a day shows its face and
+ * Mind Score beside the grid. The owner, 18 October, "everything looks too
+ * overwhelming": the "Everything recorded" box and the day's long list of
+ * rows are gone.
  *
  * Whole days only (the parent's consent scope). Used on a child's page under
  * its Today part and on the parent's Trends tab. */
@@ -22,9 +23,8 @@ import { PREV, STATUS_SUB, STATUS_WORD, bodyFor, bodySource, bodyWord, fullDate,
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const wd = iso => WD[new Date(iso + 'T12:00:00Z').getUTCDay()]
 
-/* `variant` and `hue` pick the surface (src/ui/card.jsx). The four boxes sit
-   two by two, so Heads Up takes the sun wash and the record an outline, and
-   no two neighbours share one. */
+/* `variant` and `hue` pick the surface (src/ui/card.jsx). Heads Up takes the
+   sun wash so it never matches the Mind Score beside it. */
 function Card({ title, line, right, children, className, labelId, variant = 'plain', hue = 'accent' }) {
   return (
     <section aria-labelledby={labelId}
@@ -75,15 +75,10 @@ export default function ChildTrends({ teen, className }) {
   const s = summaryOf(teen, range)
   const points = pointsFor(teen, range)
   const counts = lightCounts(days)
-  const totals = sourceTotals(days)
   const face = statusOfTeen(teen, range)
-  const above = teen.usual ? days.filter(d => d.score != null && d.score > teen.usual.hi).length : null
   const withScore = days.filter(d => d.score != null)
-  const sleeps = withScore.map(d => sleepOf(teen, d)).filter(v => v != null)
-  const sleepAvg = sleeps.length ? Math.round((sleeps.reduce((a, b) => a + b, 0) / sleeps.length) * 10) / 10 : null
   const calDays = React.useMemo(() => teen.days.map(d => ({ date: d.date, score: d.score, light: d.light })), [teen])
-  const pickedIdx = teen.days.findIndex(d => d.date === picked)
-  const pickedDay = teen.days[pickedIdx]
+  const pickedDay = teen.days.find(d => d.date === picked)
   const empty = !withScore.length
 
   const pick = iso => {
@@ -93,7 +88,7 @@ export default function ChildTrends({ teen, className }) {
 
   return (
     <div className={cn('grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-5', className)}>
-      <Card labelId={ids + 'ms'} title="Mind Score" line={`${RANGE_LABEL[range]}. One figure per day, 0 calm to 100 peak.`}
+      <Card labelId={ids + 'ms'} title="Mind Score" line={`${RANGE_LABEL[range]}. 0 calm to 100 peak.`}
         right={<RangeSwitch value={range} onChange={setRange} label="Range for the Trends"/>}>
         {empty ? (
           <p className="m-0 mt-5 max-w-[52ch] text-ui text-ink-2">No readings {range === 'day' ? 'today or yesterday'
@@ -102,20 +97,18 @@ export default function ChildTrends({ teen, className }) {
           <>
             <ScoreChart className="mt-4" teen={teen} points={points} kind={range === 'month' ? 'line' : 'bars'}
               selected={picked} onPick={pick} height={range === 'day' ? 200 : 236}/>
-            <ScoreLegend teen={teen} className="mt-2" hint="Tap a day to see it below."/>
-            <dl className="m-0 mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-rule pt-4 sm:grid-cols-4">
+            <ScoreLegend teen={teen} className="mt-2"/>
+            <dl className="m-0 mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-rule pt-4">
               <Fig k={range === 'day' ? 'Today' : 'Average'} v={s.mean ?? 'None'} sub={s.light ? STATUS_SUB[s.light] : undefined}/>
               <Fig k={`Change vs ${PREV[range]}`} v={s.change == null ? 'None'
                 : `${s.change > 0 ? '+' : s.change < 0 ? '−' : ''}${Math.abs(s.change)}`}
                 sub={s.change == null ? 'Nothing earlier' : s.change === 0 ? 'The same' : s.change > 0 ? 'Higher' : 'Lower'}/>
-              <Fig k="Lowest to highest" v={withScore.length ? `${Math.min(...withScore.map(d => d.score))} to ${Math.max(...withScore.map(d => d.score))}` : 'None'}/>
-              <Fig k="Days above usual" v={above == null ? 'Not shared' : `${above} of ${withScore.length}`}/>
             </dl>
           </>
         )}
       </Card>
 
-      <Card labelId={ids + 'hu'} variant="tint" hue="sun" title="Heads Up" line={`${RANGE_LABEL[range]}. From how ${teen.first} uses their phone, never what is on it.`}>
+      <Card labelId={ids + 'hu'} variant="tint" hue="sun" title="Heads Up" line={`${RANGE_LABEL[range]}. From phone use, never what is on it.`}>
         {face ? (
           <div className="mt-4 flex items-center gap-3.5">
             <LampFace light={face} size={52}/>
@@ -163,54 +156,17 @@ export default function ChildTrends({ teen, className }) {
         </dl>
       </Card>
 
-      <Card labelId={ids + 'cal'} title="Calendar" line="Each day’s Heads Up face and Mind Score. Pick a day to see it.">
-        <MonthCalendar className="mt-4" days={calDays} today={today} selected={picked} onSelect={pick}/>
-        <div ref={dayRef} aria-live="polite" className="mt-4 scroll-mt-24 rounded-panel border border-rule bg-paper p-4">
-          <h4 className="m-0 font-display text-ui font-bold text-ink">
-            {picked === today ? `Today, ${fullDate(picked)}` : fullDate(picked)}</h4>
-          <DayFacts className="mt-3" teen={teen} d={pickedDay} prev={teen.days[pickedIdx - 1]} signals/>
+      {/* Full width, the picked day beside the grid on a wide screen and under
+          it on a phone. */}
+      <Card labelId={ids + 'cal'} title="Calendar" line="Pick a day to see it." className="lg:col-span-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-5">
+          <MonthCalendar days={calDays} today={today} selected={picked} onSelect={pick} legend={false}/>
+          <div ref={dayRef} aria-live="polite" className="scroll-mt-24 self-start rounded-panel border border-rule bg-paper p-4">
+            <h4 className="m-0 font-display text-ui font-bold text-ink">
+              {picked === today ? `Today, ${fullDate(picked)}` : fullDate(picked)}</h4>
+            <DayFacts className="mt-3" d={pickedDay}/>
+          </div>
         </div>
-      </Card>
-
-      <Card labelId={ids + 'rec'} variant="outline" title="Everything recorded" line={`${RANGE_LABEL[range]}. Whole days only.`}>
-        <dl className="m-0 mt-3 p-0">
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
-            <dt className="text-fine text-ink-2">Days with readings</dt>
-            <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{totals.days} of {days.length}</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
-            <dt className="text-fine text-ink-2">Readings</dt>
-            <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{totals.total}</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2.5">
-            <dt className="text-fine text-ink-2">Average sleep</dt>
-            <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">
-              {!sleepShared(teen) ? 'Not shared' : sleepAvg != null ? `${sleepAvg} hours` : 'Not sent yet'}</dd>
-          </div>
-        </dl>
-        <p className="m-0 mt-4 text-fine font-semibold text-ink-2">Where the readings came from</p>
-        {totals.known ? <SourceRows teen={teen} totals={totals}/>
-          : <p className="m-0 mt-1 text-fine text-ink-2">{teen.hasReadings === false ? 'No readings yet.' : 'Not shared.'}</p>}
-        <p className="m-0 mt-4 text-fine font-semibold text-ink-2">Body signals, average for the range</p>
-        {teen.live ? (
-          <p className="m-0 mt-1 text-fine text-ink-2">Body signals stay on {teen.first}’s phone.</p>
-        ) : (
-          <ul className="m-0 list-none p-0">
-            {bodyFor(teen).map(m => {
-              const avg = withScore.reduce((a, d) => a + d[m.k], 0) / Math.max(1, withScore.length)
-              return (
-                <li key={m.k} className="flex items-center gap-2.5 border-b border-rule py-2">
-                  <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: m.color }}/>
-                  <span className="min-w-0 flex-1 text-fine text-ink-2">{m.label}
-                    <span className="text-ink-3"> ({bodySource(teen, m)})</span></span>
-                  <span className="shrink-0 text-right text-fine font-semibold text-ink">{bodyWord(teen, m, today, avg)}</span>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        <p className="m-0 mt-auto pt-4 text-fine text-ink-2">
-          Times, single readings, notes and location stay with {teen.first}.</p>
       </Card>
     </div>
   )

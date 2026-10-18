@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { List, Item } from '../ui/list'
 import { Progress } from '../ui/progress'
-import { Headline, AllDetail } from './Monitor'
+import { Headline, AllDetail, HEAD } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { Diverge } from '../charts/diverge'
 import { cn } from '../lib/utils'
@@ -61,7 +61,7 @@ function loadCheckins() {
 }
 function saveCheckins(a) { try { localStorage.setItem(CHECKINS, JSON.stringify(a)) } catch {} }
 
-const PANEL = 'rounded-panel border border-rule bg-card p-4 lg:p-5'
+const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
 
 /* The waveform confirms finger placement. Keep it live. */
 function Trace({ samples, className }) {
@@ -84,7 +84,7 @@ function Trace({ samples, className }) {
 
 function Step({ title, note, children, on }) {
   return (
-    <div className="grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule py-3">
+    <div className="grid grid-cols-[2.25rem_1fr] gap-x-3 border-t border-rule/60 py-3 first:border-t-0">
       <span aria-hidden className={cn('mt-2 size-3 rounded-chip justify-self-center',
         on ? 'bg-accent' : 'border-2 border-ruling')}/>
       <div>
@@ -126,7 +126,7 @@ function Waiting() {
       <p className="max-w-[36ch] text-meta text-ink-3 xl:mt-4 xl:text-center xl:font-display xl:font-bold xl:text-ink xl:mx-auto">
         Your Mind Score appears here.
       </p>
-      <div className="mt-4 hidden border-t border-rule pt-4 xl:block">
+      <div className="mt-4 hidden border-t border-rule/60 pt-4 xl:block">
         <p className="text-fine font-semibold text-ink-3">After the reading</p>
         <ol className="m-0 mt-2 grid list-none gap-2 p-0">
           {AFTER.map((t, i) => (
@@ -234,7 +234,7 @@ export function PhoneCheck({ go }) {
       stopStream(cam?.stream)
       live.current.motion?.stop(); live.current.motion = null
       setError(e?.name === 'NotAllowedError'
-        ? 'The camera was not allowed. The check-in questions still work.'
+        ? 'The camera was not allowed. The survey still works.'
         : (e?.message || 'Something stopped the capture.'))
       setPhase('idle')
     }
@@ -330,7 +330,7 @@ export function PhoneCheck({ go }) {
             </div>
             {!supported && (
               <p className="mt-3 max-w-[46ch] text-fine text-ink-2">
-                No camera in this browser. The questions still work.
+                No camera in this browser. The survey still works.
               </p>
             )}
         </div>
@@ -399,7 +399,7 @@ export function PhoneCheck({ go }) {
 
                   {/* The check-in: the label the network learns this person from. */}
                   {!result.held && (
-                    <div className="mt-4 border-t border-rule pt-4">
+                    <div className="mt-4 border-t border-rule/60 pt-4">
                       {!answered ? (
                         <>
                           <p className="max-w-[40ch] text-meta text-ink">Does this match how you feel?</p>
@@ -508,8 +508,8 @@ function PulseResult({ ppg }) {
     : { value: `Under ${(ppg.rmssd + ppg.rmssdBand).toFixed(0)}`, unit: 'ms', sub: 'Too steady for the camera' }
   return (
     <section aria-label="Your pulse from this reading"
-      className="mt-4 rounded-panel border border-rule bg-card p-3 shadow-card">
-      <h3 className="mark flex items-baseline justify-between gap-3">
+      className="mt-4 rounded-panel border border-rule/60 bg-card p-4 shadow-card">
+      <h3 className={cn(HEAD, 'flex items-baseline justify-between gap-3')}>
         <span>Your Pulse</span><span className="tick">from the camera</span>
       </h3>
       <PulseChart className="mt-2" wave={ppg.wave} fs={FS} seconds={6}/>

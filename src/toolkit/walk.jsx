@@ -208,8 +208,8 @@ export default function Walk() {
             steps={[
               'Pick a walk. Keep the screen on and the phone in your hand.',
               'Your steps fill the path. Three flags, then the finish.',
-              best != null ? `No step sensor? The path fills on the clock. Most steps so far: ${best}.`
-                : 'No step sensor? The path fills on the clock instead.',
+              best != null ? `No step sensor? The path fills over time. Most steps so far: ${best}.`
+                : 'No step sensor? The path fills over time instead.',
             ]}>
             <DidItWork tool="walk" phase="before" className="mt-4"/>
           </HowTo>
@@ -251,7 +251,7 @@ export default function Walk() {
           <CountOver on={stage === 'count'} onDone={() => setStage('play')}/>
         </div>
         <p className="mt-3 text-center font-display text-row font-bold tabular-nums text-ink" aria-live="polite">
-          {stage !== 'play' ? 'Get ready' : mode === 'steps' ? `${live.steps} steps` : 'Walking on the clock'}
+          {stage !== 'play' ? 'Get ready' : mode === 'steps' ? `${live.steps} steps` : 'Timed walk'}
         </p>
         <p className="mt-1 text-center font-display text-ui font-semibold tabular-nums text-ink-2">{left}</p>
         {mode === 'clock' && stage === 'play' && (

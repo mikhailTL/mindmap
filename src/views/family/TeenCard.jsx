@@ -1,26 +1,19 @@
 import React from 'react'
-import { FACE_LABEL, RANGE_LABEL } from '../../lib/roster'
-import { FaceTrend, LampFace, trendLabel } from '../../traffic/Face'
+import { FACE_LABEL } from '../../lib/roster'
+import { FaceTrend, LampFace } from '../../traffic/Face'
 import { AvatarArt } from '../../account/avatars'
+import { RainbowDial } from '../../charts/rainbow'
+import { ringsFor } from '../pro/charts'
 import { Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
-import { RangeSwitch, Sparkline } from './RangeTrend'
-import { PREV, STATUS_SUB, STATUS_WORD, changeWords, displayName, isPro, metaLine, showsScore, showsTrends,
-  sourceLine, statusOfTeen, summaryOf } from './data'
+import { toneOf } from '../pro/look'
+import { PREV, RANGE_DAYS, STATUS_WORD, displayName, isPro, metaLine, showsScore, showsTrends, statusOfTeen,
+  summaryOf } from './data'
 
-/* One teen as a card: who, the Heads Up face for the range shown (today's,
- * or the week's or month's average) with its word,
- * the Mind Score for the range with its change and a sparkline, and where the
- * readings come from. The whole card opens the teen's page.
+/* A linked teen as a card in the Counselor/Professional's live caseload, and
+ * the parts the other cards share: TeenAvatar, CardDial and StatusMark.
  *
- * TeenCard({ teen, onOpen, variant = 'parent' | 'pro', range, onRange })
- *   range given      the card follows it (a switch shared at the top)
- *   range not given  the card carries its own Day / Week / Month switch
- *
- * The card is a stretched button: the name's button covers the card, and the
- * switch, when there is one, sits above it so both stay reachable. */
-
-const RANGES_ROW = [['day', 'Today'], ['week', 'Week'], ['month', 'Month']]
+ * TeenCard({ teen, onOpen, variant, range })   range: the figure in the dial */
 
 export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   if (teen.avatar && !isPro(variant)) return <AvatarArt id={teen.avatar} className={size}/>
@@ -29,6 +22,29 @@ export function TeenAvatar({ teen, variant, size = 'size-12' }) {
     <span aria-hidden className={cn('grid shrink-0 place-items-center rounded-chip bg-accent-wash font-display',
       'text-ui font-bold text-accent-ink', size)}>{label}</span>
   )
+}
+
+/* The small rainbow on a card, with the Mind Score for the range in its
+   centre. The owner, 18 October: "On the parent cards for kids, it should show
+   the rainbow (small) with the mindscore, same for counselors (except kids
+   that dont share with them)". The caller decides whether the score is shared
+   and draws nothing when it is not; this only draws.
+   The bands are the day's signals for Day and their average over the days
+   for Week and Month, so the arch and the figure cover the same days. A
+   linked account sends no body signals, so a live teen's dial is the scale,
+   the usual-day mark and the figure, as on their page. */
+export function cardRings(teen, range = 'day') {
+  if (teen.live || !teen.days?.length) return []
+  const days = teen.days.slice(-(RANGE_DAYS[range] || 1)).filter(d => d.pulse != null)
+  if (!days.length) return []
+  const per = days.map(d => ringsFor(teen, d))
+  return per[0].map((r, i) => ({ ...r, value: Math.round(per.reduce((t, p) => t + p[i].value, 0) / per.length) }))
+}
+
+export function CardDial({ teen, range = 'day', score, size = 148, className }) {
+  const rings = React.useMemo(() => cardRings(teen, range), [teen, range])
+  return <RainbowDial compact score={score} usual={teen.usual?.base} rings={rings} size={size} weather={false}
+    className={className}/>
 }
 
 /* `change`, when given, puts the up / down / level arrow beside the face. */
@@ -44,97 +60,80 @@ export function StatusMark({ teen, range = 'week', size = 30, change = null, cla
   )
 }
 
-export default function TeenCard({ teen, onOpen, variant = 'parent', range: given, onRange, className }) {
-  const [own, setOwn] = React.useState('week')
-  const range = given ?? own
-  const ownSwitch = given == null
+/* Where the range's Mind Score sits against this teen's own usual range. */
+const WHEN = { day: 'today', week: 'this week', month: 'this month' }
+function usualWord(teen, v, range) {
+  if (!teen.usual) return null
+  const when = WHEN[range] || WHEN.week
+  if (v > teen.usual.hi) return `Above usual ${when}`
+  if (v < teen.usual.lo) return `Below usual ${when}`
+  return `In their usual range ${when}`
+}
+
+/* The week against the 7 days before, in words. */
+function weekWords(teen) {
+  const c = summaryOf(teen, 'week').change
+  if (c == null) return 'Nothing earlier to compare'
+  const pts = n => `${n} ${n === 1 ? 'point' : 'points'}`
+  return c > 0 ? `Week up ${pts(c)}` : c < 0 ? `Week down ${pts(Math.abs(c))}` : 'Week unchanged'
+}
+
+/* The owner, 18 October: the live card is drawn like the demo
+   Counselor/Professional card (../pro/TeenCard.jsx): avatar, Heads Up face,
+   the small rainbow with the Mind Score when shared, one line against the
+   usual range, one line for the week, Open record. No sparkline, no row of
+   ranges. `range` picks the figure in the rainbow. */
+export default function TeenCard({ teen, onOpen, variant = 'parent', range = 'week', className }) {
   const s = summaryOf(teen, range)
   const light = statusOfTeen(teen, range)
   const name = displayName(teen, variant)
   const score = showsScore(teen, variant)
   const trends = showsTrends(teen, variant)
-  const meta = metaLine(teen, variant)
-  const titleId = React.useId()
-  /* A linked teen with nothing in this range yet: say so, never a number. */
+  const tone = (score && toneOf(light)) || null
   const empty = s.mean == null
-  const change = trends && !empty ? s.change : null
-  const status = (light ? `${FACE_LABEL[range]}: ${STATUS_WORD[light]}, ${STATUS_SUB[light].toLowerCase()}`
-    : !score ? 'Mind Score not shared' : empty ? 'No readings yet' : `Mind Score ${s.mean}`)
-    + (score && trendLabel(change, PREV[range]) ? `. ${trendLabel(change, PREV[range])}` : '')
+  const usual = score && !empty ? usualWord(teen, s.mean, range) : null
+  const week = score && !empty ? (trends ? weekWords(teen) : 'Trend not shared') : null
+  const status = !score ? 'Mind Score not shared' : empty ? 'No readings yet'
+    : [light && `${FACE_LABEL[range]}: ${STATUS_WORD[light]}`, `Mind Score ${s.mean} of 100`, usual, week]
+      .filter(Boolean).join('. ')
 
   return (
-    <article aria-labelledby={titleId}
-      className={cn('group relative flex flex-col rounded-panel border border-rule bg-card p-5 shadow-card',
-        'transition-[box-shadow,border-color] duration-200 ease-out hoverOnly:border-ruling hoverOnly:shadow-raise',
-        'focus-within:border-accent motion-reduce:transition-none', className)}>
-      <div className="flex items-start gap-3.5">
-        <TeenAvatar teen={teen} variant={variant}/>
+    <article aria-label={name}
+      className={cn('group relative flex h-full w-full flex-col rounded-panel border-2 bg-card p-3.5 text-left',
+        'transition-colors duration-150 hoverOnly:border-ink/50 lg:p-4', tone ? tone.edge : 'border-rule', className)}>
+      <div className="flex items-center gap-3">
+        <TeenAvatar teen={teen} variant={variant} size="size-11"/>
         <div className="min-w-0 flex-1">
-          <h3 id={titleId} className="m-0 font-display text-head font-bold leading-tight text-ink">
-            <button type="button" onClick={() => onOpen?.(teen)}
-              aria-label={`${name}. ${status}. Open ${isPro(variant) ? 'record' : 'their page'}`}
-              className="text-left after:absolute after:inset-0 after:rounded-panel after:content-['']
-                focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2
-                focus-visible:after:outline-offset-2 focus-visible:after:outline-accent">
-              {name}
-            </button>
-          </h3>
-          <p className="m-0 mt-0.5 text-fine text-ink-2">{meta}</p>
+          <h3 className="m-0 truncate font-display text-ui font-bold text-ink">{name}</h3>
+          <p className="m-0 text-fine text-ink-2">{metaLine(teen, variant)}</p>
         </div>
-        {score ? light && (
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <StatusMark teen={teen} range={range} change={change}/>
-            <span className="text-fine text-ink-3">{FACE_LABEL[range]}</span>
-          </div>
-        ) : <span className="shrink-0 text-fine text-ink-2">Not shared</span>}
-      </div>
-
-      <div className="mt-5 border-t border-rule pt-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="m-0 text-fine font-semibold text-ink-2">Mind Score, {RANGE_LABEL[range].toLowerCase()}</p>
-          {ownSwitch && <RangeSwitch compact value={range} onChange={onRange ?? setOwn} label={`${name} range`}/>}
-        </div>
-        {score && empty ? (
-          <p className="m-0 mt-2 font-display text-ui font-bold text-ink">No readings yet</p>
-        ) : score ? (
-          <div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4">
-            <div>
-              <p className="m-0 font-display text-stat font-bold tabular-nums leading-none text-ink">{s.mean}</p>
-              <p className="m-0 mt-1.5 text-fine text-ink-2">{!trends ? 'Trend not shared'
-                : s.change == null ? 'Nothing earlier to compare' : changeWords(s.change, range, variant)}</p>
-            </div>
-            {trends && <Sparkline teen={teen} range={range} variant={variant} className="self-center"/>}
-          </div>
-        ) : (
-          <p className="m-0 mt-2 text-ui text-ink-2">{teen.live ? 'Their Mind Score is not shared.' : 'Crisis alerts only.'}</p>
-        )}
-        {score && teen.usual && (
-          <p className="m-0 mt-2 text-fine text-ink-3">Usual {teen.usual.lo} to {teen.usual.hi}
-            {teen.usual.general ? ', the general range until three days of readings' : ''}</p>
-        )}
-        {/* The three ranges side by side, each a mean of whole days. */}
-        {score && trends && !empty && (
-          <dl className="m-0 mt-3 grid grid-cols-3 gap-2 border-t border-rule pt-2.5">
-            {RANGES_ROW.map(([r, label]) => {
-              const m = summaryOf(teen, r).mean
-              return (
-                <div key={r} className="min-w-0">
-                  <dt className="text-fine text-ink-3">{label}</dt>
-                  <dd className={cn('m-0 font-display text-ui tabular-nums', m == null ? 'font-medium text-ink-2' : 'font-bold text-ink')}>
-                    {m == null ? 'None' : m}</dd>
-                </div>
-              )
-            })}
-          </dl>
+        {tone && (
+          <span className={cn('flex shrink-0 items-center gap-1.5 rounded-field px-2 py-1', tone.band)}>
+            <LampFace light={light} size={28}/>
+            <span className={cn('font-display text-fine font-bold', tone.ink)}>{STATUS_WORD[light]}</span>
+          </span>
         )}
       </div>
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-        <p className="m-0 text-fine text-ink-2">{sourceLine(teen)}</p>
-        <span aria-hidden className="flex items-center gap-1 font-display text-fine font-bold text-accent-ink">
-          Open<Chevron className="size-4 transition-transform duration-200 groupHoverOnly:translate-x-0.5
-            motion-reduce:transition-none"/>
-        </span>
+      {!score ? (
+        <p className="m-0 mt-3 text-ui text-ink-2">Mind Score not shared.</p>
+      ) : empty ? (
+        <p className="m-0 mt-3 font-display text-ui font-bold text-ink">No readings yet</p>
+      ) : (
+        <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4">
+          <CardDial teen={teen} range={range} score={s.mean} size={136} className="w-[136px]"/>
+          <div className="min-w-0">
+            {usual && <p className="m-0 font-display text-ui font-bold text-ink">{usual}</p>}
+            <p className="m-0 mt-1 text-fine text-ink-2">{week}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-auto pt-2">
+        <button type="button" onClick={() => onOpen?.(teen)} aria-label={`${name}. ${status}. Open record`}
+          className="inline-flex min-h-[44px] items-center gap-1 font-display text-ui font-bold text-accent
+            after:absolute after:inset-0 after:rounded-panel after:content-[''] hoverOnly:text-accent-ink">
+          Open record<Chevron aria-hidden className="size-4"/></button>
       </div>
     </article>
   )

@@ -103,15 +103,15 @@ export function NextStepGuide({ onBack }) {
           ) : (
             <Sheet>
               <p className="text-sec text-ink-2">
-                {light || trend ? 'One more choice.' : 'Pick the light and the trend.'}
+                {light || trend ? 'Pick one more.' : 'Pick today\'s light and the trend.'}
               </p>
             </Sheet>
           )}
           {!danger && <Crisis/>}
         </div>
       </div>
-      <p className="note mt-4 max-w-[64ch]">A guide, not a diagnosis. The light is a reading pattern.
-        Your clinical judgement and your service's protocol lead.</p>
+      <p className="note mt-4 max-w-[64ch]">This guide does not diagnose. The light shows a pattern in readings.
+        Use your clinical judgement and your service's protocol.</p>
     </ActivityScreen>
   )
 }

@@ -91,7 +91,7 @@ export function rangeView(entries, days, now, range, anchor) {
   }
 }
 
-export const SOURCE_WORD = { camera: 'camera', survey: 'check-in questions', patch: 'patch', mirror: 'mirror' }
+export const SOURCE_WORD = { camera: 'camera', survey: 'survey', patch: 'patch', mirror: 'mirror' }
 
 export function clockOf(at) {
   const d = new Date(at)

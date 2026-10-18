@@ -8,25 +8,25 @@ import { SCORE } from '../lib/terms'
 /* The parent side of the Toolkit, in the same shell as the student side.
  *
  * Three of these are tools already written for this audience in src/kit/,
- * given a screen each. Two are short lists, held to one line a row and no
- * sentence over ten words (spec 0f). Nothing a parent reads here is reported
+ * given a screen each. Two are short lists, one plain sentence a row
+ * (spec 0f; rewritten plainly 18 October, owner). Nothing a parent reads here is reported
  * to their teenager or to anybody else. */
 
 const RULES = [
-  'Pick a moment with an end: a car, a walk.',
-  'Lead with what you saw, not what you read.',
-  'Ask one question, then stop talking.',
-  'Do not solve anything in the first two minutes.',
-  'Say first what you will not do.',
-  'Never compare her with a sibling or classmate.',
+  'Talk during something with an end, like a drive or a walk.',
+  'Start with what you noticed, not what the app shows.',
+  'Ask one question, then listen.',
+  'Do not try to fix anything in the first two minutes.',
+  'Say early on what you will not do.',
+  'Do not compare your teen with a sibling or classmate.',
 ]
 
 const REACH = [
-  'A high fortnight is not a diagnosis.',
-  'No threshold is needed to make a call.',
-  'Not herself for a month is enough for a GP.',
-  'Tell her before you ring anybody.',
-  'Danger now means an emergency number, not an app.',
+  'Two weeks of high scores is not a diagnosis.',
+  'You do not need a certain score to call for help.',
+  'See a doctor if your teen seems unlike themselves for a month.',
+  'Tell your teen before you call anyone.',
+  'If your teen is in danger now, call an emergency number. Do not rely on an app.',
 ]
 
 function Rows({ rows }) {

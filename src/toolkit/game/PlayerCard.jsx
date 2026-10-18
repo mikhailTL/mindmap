@@ -148,9 +148,9 @@ export function PlayerCard({ className, tab = null }) {
         <div className="min-w-0">
           {fresh ? (
             <>
-              <p className="font-display text-ui font-bold text-ink">Your collection starts here</p>
+              <p className="font-display text-ui font-bold text-ink">Earn your first badge</p>
               <p className="mt-0.5 text-fine text-ink-2">
-                Finish any tool for {FINISH_POINTS + NEW_TOOL_BONUS} points and your first badge. No streaks, no pressure.
+                Finish any tool for {FINISH_POINTS + NEW_TOOL_BONUS} points and your first badge.
               </p>
             </>
           ) : (

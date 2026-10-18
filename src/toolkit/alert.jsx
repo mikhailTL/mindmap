@@ -155,7 +155,7 @@ export default function Alertness() {
   }
   const play = () => { setStage('play'); arm() }
 
-  const measured = 'Taps are timed here and never sent. This is reaction time, not stress.'
+  const measured = 'Taps are timed here and never sent. It measures reaction time only, not stress.'
 
   if (stage === 'intro') {
     const best = readBest('alert')

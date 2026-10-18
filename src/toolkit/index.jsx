@@ -49,54 +49,54 @@ const NoteIcon    = () => <I><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12
 export const STUDENT_GROUPS = [
   { label:'Calm your body', items:[
     { id:'breathing', route:'toolkit-breathing', family:'sky',    icon:BreathIcon,
-      title:'Box Breathing',       line:'Follow the light round a square' },
+      title:'Box Breathing',       line:'Breathe in time with a moving light' },
     { id:'scan',      route:'toolkit-scan',      family:'mint',   icon:ScanIcon,
-      title:'Body Scan',           line:'Hold each glowing part' },
+      title:'Body Scan',           line:'Relax your body one part at a time' },
     { id:'move',      route:'toolkit-move',      family:'coral',  icon:MoveIcon,
-      title:'Movement Break',      line:'Five 20-second moves' },
+      title:'Movement Break',      line:'Five gentle moves, 20 seconds each' },
   ]},
   { label:'Clear your head', items:[
     { id:'ground',    route:'toolkit-ground',    family:'sun',    icon:GroundIcon,
-      title:'5-4-3-2-1 Grounding', line:'A tap-card scavenger hunt' },
+      title:'5-4-3-2-1 Grounding', line:'Find things you see, hear, feel, smell and taste' },
     { id:'reframe',   route:'toolkit-reframe',   family:'lilac',  icon:ReframeIcon,
-      title:'Thought Reframe',     line:'Flip cards, build a balanced thought' },
+      title:'Thought Reframe',     line:'Turn a harsh thought into a fairer one' },
   ]},
   { label:'Try it with your phone', items:[
     { id:'sigh',      route:'toolkit-sigh',      family:'aqua',   icon:SighIcon,
-      title:'Long Exhale',         line:'Keep the candle flame steady' },
+      title:'Long Exhale',         line:'Practice slow breaths out using the mic' },
     { id:'chest',     route:'toolkit-chest',     family:'blush',  icon:ChestIcon,
-      title:'Breath Counter',      line:'Match the wave with your breath' },
+      title:'Breath Counter',      line:'Breathe with a wave, phone on your chest' },
     { id:'steady',    route:'toolkit-steady',    family:'accent', icon:SteadyIcon,
-      title:'Hold Still',          line:'Keep the marble centred' },
+      title:'Hold Still',          line:'Tilt your phone to keep a marble in the middle' },
     { id:'alert',     route:'toolkit-alert',     family:'sun',    icon:AlertIcon,
-      title:'Reaction Test',       line:'Whack the light, 30 seconds' },
+      title:'Reaction Test',       line:'Tap each light as fast as you can' },
     { id:'pocket',    route:'toolkit-pocket',    family:'lilac',  icon:PocketIcon,
-      title:'Breathing by Sound',  line:'Follow the sound, collect stars' },
+      title:'Breathing by Sound',  line:'Breathe along to a sound' },
     { id:'walk',      route:'toolkit-walk',      family:'coral',  icon:WalkIcon,
-      title:'Short Walk',          line:'Fill the trail, 150 to 600 steps' },
+      title:'Short Walk',          line:'Take a 150 to 600 step walk' },
   ]},
 ]
 
 export const PARENT_GROUPS = [
   { label:'Start the talk', items:[
-    { id:'openers',  route:'toolkit-openers',  family:'coral', icon:TalkIcon,  title:'Conversation Openers',    line:'One intention, said two ways' },
-    { id:'phrasing', route:'toolkit-phrasing', family:'lilac', icon:CheckIcon, title:'Opening Line Check',      line:'Your line, checked here' },
+    { id:'openers',  route:'toolkit-openers',  family:'coral', icon:TalkIcon,  title:'Conversation Openers',    line:'Ways to start a talk with your teen' },
+    { id:'phrasing', route:'toolkit-phrasing', family:'lilac', icon:CheckIcon, title:'Opening Line Check',      line:'Check how your first words may sound' },
   ]},
   { label:'Know the next step', items:[
-    { id:'score',    route:'toolkit-score',    family:'sky',   icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What a high fortnight carries' },
-    { id:'rules',    route:'toolkit-rules',    family:'sun',   icon:RulesIcon, title:'Conversation Ground Rules', line:'Six rules before anybody speaks' },
-    { id:'reach',    route:'toolkit-reach',    family:'mint',  icon:ReachIcon, title:'When to Get Help',        line:'Who to tell, and when' },
+    { id:'score',    route:'toolkit-score',    family:'sky',   icon:DialIcon,  title:`Reading the ${SCORE}`,    line:'What the score can and cannot tell you' },
+    { id:'rules',    route:'toolkit-rules',    family:'sun',   icon:RulesIcon, title:'Conversation Ground Rules', line:'Six tips for a calm talk' },
+    { id:'reach',    route:'toolkit-reach',    family:'mint',  icon:ReachIcon, title:'When to Get Help',        line:'When to call for help, and who to call' },
   ]},
 ]
 
 /* No routes yet: these open in place inside Toolkit.jsx. */
 export const PRO_GROUPS = [
   { label:'For your sessions', items:[
-    { id:'pro-opener',   family:'sky',   icon:ScriptIcon, title:'Session Openers',      line:'First lines for a check-in' },
-    { id:'pro-triage',   family:'sun',   icon:SignIcon,   title:'Next Step Guide',      line:'Light and trend to a next step' },
-    { id:'pro-ground',   family:'mint',  icon:TimerIcon,  title:'Grounding Timer',      line:'Run 5-4-3-2-1 together' },
-    { id:'pro-parents',  family:'lilac', icon:FamilyIcon, title:'Talking With Parents', line:'Five steps, consent first' },
-    { id:'pro-referral', family:'coral', icon:NoteIcon,   title:'Referral Note',        line:'Fill in, copy, paste' },
+    { id:'pro-opener',   family:'sky',   icon:ScriptIcon, title:'Session Openers',      line:'Questions to start a check-in' },
+    { id:'pro-triage',   family:'sun',   icon:SignIcon,   title:'Next Step Guide',      line:'Pick a next step from the light and trend' },
+    { id:'pro-ground',   family:'mint',  icon:TimerIcon,  title:'Grounding Timer',      line:'Run 5-4-3-2-1 grounding with a teen' },
+    { id:'pro-parents',  family:'lilac', icon:FamilyIcon, title:'Talking With Parents', line:'Five steps to involve a parent, with consent' },
+    { id:'pro-referral', family:'coral', icon:NoteIcon,   title:'Referral Note',        line:'Write a referral note to copy and send' },
   ]},
 ]
 
@@ -154,7 +154,7 @@ export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
       <div className="wrap">
         <Head first title="For you" line="Nothing here is shown to your teenager."/>
         <Groups groups={PARENT_GROUPS} onOpen={onOpen}/>
-        <Head title="Do it with your teen" line="The same exercises your teen has. Try one together."/>
+        <Head title="Do these with your teen" line="The same exercises your teen has. Try one together."/>
         <Groups groups={STUDENT_GROUPS} start={PARENT_COUNT} onOpen={onOpen}/>
       </div>
     )
@@ -171,7 +171,7 @@ export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
   }
   return (
     <div className="wrap">
-      <Head first title="Your exercises" line="Nobody is told which you opened."/>
+      <Head first title="Your exercises" line="Nobody else sees which ones you open."/>
       <Groups groups={STUDENT_GROUPS} onOpen={onOpen}/>
     </div>
   )

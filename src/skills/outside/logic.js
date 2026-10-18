@@ -41,7 +41,7 @@ export const TRICKS = [
     fix:'Decide a stop time before you open it, or set an app limit.' },
   { id:'streaks',  name:'Streaks',
     how:'A count you lose if you skip a day, so missing feels like losing something.',
-    fix:'Turn off streak reminders. A streak is not a friendship.' },
+    fix:'Turn off streak reminders.' },
   { id:'autoplay', name:'Autoplay',
     how:'The next video starts before you have decided to watch it.',
     fix:'Turn autoplay off in the app settings.' },

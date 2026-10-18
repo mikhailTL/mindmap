@@ -89,7 +89,6 @@ export function ReachCard({ className }) {
       <section className={cn(CARD, className)}>
         <Head/>
         <Bars thisKm={DEMO.thisWeek} lastKm={DEMO.lastWeek}/>
-        <p className="mt-3 text-fine text-ink-3">Demo figures.</p>
         <p className="mt-3 text-fine text-ink-2">{REACH_LABEL}</p>
       </section>
     )

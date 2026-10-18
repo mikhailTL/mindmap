@@ -270,7 +270,7 @@ function TreatmentGap() {
    them as written and the owner's own rule is approved statistics only:
    "nearly 70% undiagnosed" is NIMH's 59.4% untreated, and "+126% since
    2010" became the same YRBS question a decade apart, 30% to 40%, since
-   replaced (18 October) by 53% of teen girls, the YRBS 2023 value. The Florida
+   replaced (18 October) by his Florida count, over 225,000. The Florida
    40% is the national 2023 figure (Florida left the YRBS in 2022); the
    Florida line here is the one Florida figure with a source, 20.1% with a
    major depressive episode. */
@@ -308,7 +308,8 @@ const FL  = { label: 'SAMHSA, Behavioral Health Barometer, Florida, 2021 to 2023
               href: 'https://www.samhsa.gov/data/sites/default/files/reports/rpt56788/2023-nsduh-barometer-florida.pdf' }
 const NIMH_SUICIDE = { label: 'NIMH, Suicide, from CDC WISQARS 2023',
               href: 'https://www.nimh.nih.gov/health/statistics/suicide' }
-const YRBS_TRENDS = { label: 'CDC, YRBS Data Summary and Trends, 2013 to 2023', href: 'https://www.cdc.gov/yrbs/dstr/index.html' }
+const KFF_FL = { label: 'KFF, Adolescents with a Major Depressive Episode in the Past Year, from NSDUH 2023 to 2024',
+                 href: 'https://www.kff.org/mental-health/state-indicator/adolescents-with-a-major-depressive-episode-in-the-past-year/' }
 
 const FIGURES = [
   { big: '1 in 7', line: 'teens live with a mental health condition globally',
@@ -333,14 +334,14 @@ const FIGURES = [
         <rect x="0" y="19" width="150" height="10" rx="5" fill="#a8321f"/>
         <rect x="0" y="38" width="110" height="10" rx="5" fill="none" stroke="#426a58" strokeWidth="0.9"/>
       </svg>) },
-  /* The owner, 18 October: the 30% to 40% trend swapped for a figure over
-     half. CDC's own summary says "More than half of female students
-     experienced persistent feelings of sadness or hopelessness during the
-     past year in 2023"; the exact split, 53% of girls against 28% of boys,
-     is the YRBS 2023 value as JED and Becker's report it. */
-  { big: '53%', line: 'of teen girls felt persistently sad or hopeless',
-    exact: '53% of US high school girls in 2023, against 28% of boys', src: YRBS_TRENDS,
-    art: <People on={5} of={10}/> },
+  /* The owner, 18 October, from his own paragraph: "over 225,000 depressive
+     episodes within young people over just a year" in Florida. 225,000
+     (15.51%) is MHA 2023 as the Florida Hospital Association's 2023
+     behavioral health brief reports it; NSDUH via KFF puts every later
+     year higher (256,000 in 2023 to 2024), so "over 225,000" holds. */
+  { big: '225,000+', wide: true, line: 'depressive episodes among Florida teens in just one year',
+    exact: '256,000 Floridians aged 12 to 17, 2023 to 2024', src: KFF_FL,
+    art: <People on={20} of={20}/> },
 ]
 
 export function ProblemFigures({ className }) {

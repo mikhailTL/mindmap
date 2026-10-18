@@ -53,14 +53,14 @@ export function sentence(r){
 const UART = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 export async function connectPatch(){
   if(!navigator.bluetooth) return { ok:false, msg:
-    'This browser cannot open a Bluetooth connection from inside an embedded page. Open the site directly in Chrome on a computer, or use the check-in below.' }
+    'This browser cannot open a Bluetooth connection from inside an embedded page. Open the site directly in Chrome on a computer, or use the survey below.' }
   try{
     const d = await navigator.bluetooth.requestDevice({ filters:[{ services:[UART] }] })
     await d.gatt.connect()
     return { ok:true, msg:`Connected to ${d.name||'the patch'}. Streaming at 1 Hz.` }
   }catch(e){
     return { ok:false, msg: e?.name==='NotFoundError'
-      ? 'No patch was selected. The check-in below works without one.'
-      : `Could not connect: ${e?.message||'unknown'}. The check-in below works without a patch.` }
+      ? 'No patch was selected. The survey below works without one.'
+      : `Could not connect: ${e?.message||'unknown'}. The survey below works without a patch.` }
   }
 }

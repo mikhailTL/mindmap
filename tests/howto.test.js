@@ -6,9 +6,9 @@ import { ART } from '../src/views/howto/art'
 import { PRO } from '../src/lib/terms'
 
 const PAIRS = {
-  student: ['app-student', 'reading', 'student-trends', 'toolkit', 'ai', 'shared'],
-  parent: ['app-parent', 'parent-trends', 'toolkit', 'ai', 'privacy'],
-  pro: ['app-pro', 'app-pro-trends', 'network', 'ai', 'toolkit'],
+  student: ['app-student', 'reading', 'student-trends', 'toolkit', 'ai', 'network', 'shared'],
+  parent: ['app-parent', 'parent-trends', 'toolkit', 'ai', 'network', 'privacy'],
+  pro: ['app-pro', 'app-pro-trends', 'toolkit', 'ai', 'network', 'app-pro-privacy'],
 }
 const ALL = Object.entries(PAIRS).flatMap(([app, tabs]) => tabs.map(tab => [app, tab]))
 
@@ -129,6 +129,6 @@ describe('How to use guides', () => {
   it('names the Professional only through the shared term', () => {
     const caps = Object.values(GUIDES).flatMap(g => Object.values(g))
       .flatMap(g => g.steps.map(s => s.cap)).join(' ')
-    expect(caps).toContain(PRO)
+    expect(caps.replace(/\u200B/g, '')).toContain(PRO)
   })
 })

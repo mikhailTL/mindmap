@@ -1,4 +1,4 @@
-import { PRO, PRO_PLURAL } from '../../lib/terms'
+import { PRO_PLURAL, PRO_WRAP } from '../../lib/terms'
 
 /* What each "How to use" guide says, per audience and per tab id.
  *
@@ -13,12 +13,17 @@ import { PRO, PRO_PLURAL } from '../../lib/terms'
  * House rules for this copy: no em dashes, no diagnostic words, nothing
  * called AI except the MindMap AI chat, no streaks, no comparison between
  * teens, and the Professional's name only ever from src/lib/terms.js.
+ * Captions use the breakable spelling: the caption column is narrower than
+ * "Counselor/Professional" on a phone.
  * tests/howto.test.js checks the mechanical ones. */
+
+const PRO = PRO_WRAP
+const PROS = PRO_PLURAL.replace('/', '/\u200B')
 
 const AI_STEPS = [
   { art: 'chat',   cap: 'Tap a starter or ask in your own words.' },
   { art: 'source', cap: 'Framework and Sources shows where answers come from.' },
-  { art: 'help',   cap: 'Want a person? Help lines sit beside the chat.' },
+  { art: 'help',   cap: 'Help lines are listed next to the chat.' },
 ]
 
 const TRENDS = 'How to use Trends'
@@ -31,10 +36,10 @@ export const GUIDES = {
       tones: ['accent', 'sky', 'mint'],
       steps: [
         { art: 'startBar', cap: 'Start a reading from the bar at the top.' },
-        { art: 'cards',    cap: 'Cards open Trends, Toolkit, MindMap AI and your network.' },
+        { art: 'cards',    cap: 'Cards open Trends, Toolkit, MindMap AI and Network.' },
         { art: 'patch',    cap: 'The patch box shows if your patch is connected.' },
       ],
-      use: 'Your starting point. One tap to anywhere in MindMap.',
+      use: 'Start here. Every part of MindMap is one tap away.',
       go: { label: 'Take a reading', route: 'reading' },
     },
     reading: {
@@ -42,11 +47,11 @@ export const GUIDES = {
       title: 'How to take a reading',
       tones: ['accent', 'coral', 'beam'],
       steps: [
-        { art: 'fourWays', cap: 'Pick a way: patch, camera, questions or Mental Mirror.' },
+        { art: 'fourWays', cap: 'Pick a way: patch, camera, survey or Mental Mirror.' },
         { art: 'howWays',  cap: 'Follow the screen. Each way takes a minute or less.' },
         { art: 'dial',     cap: 'Get a Mind Score, 0 to 100, against your usual.' },
       ],
-      use: 'Check in before a test, after practice, or any time.',
+      use: 'Take one before a test, after practice, or any time.',
     },
     'student-trends': {
       section: 'Trends',
@@ -77,6 +82,17 @@ export const GUIDES = {
       steps: AI_STEPS,
       use: 'Questions about sleep, stress, school or a hard week.',
     },
+    network: {
+      section: 'Network',
+      title: 'How to use Network',
+      tones: ['beam', 'accent', 'mint'],
+      steps: [
+        { art: 'teenChoose',   cap: `Open a link from a parent or ${PRO} to join.` },
+        { art: 'twoAudiences', cap: 'Choose what each person sees. Everything starts on.' },
+        { art: 'joined',       cap: 'Change or remove anyone in your network, any time.' },
+      ],
+      use: 'See who is in your network and what they see.',
+    },
     shared: {
       section: 'Privacy',
       title: 'How to use Privacy',
@@ -96,8 +112,8 @@ export const GUIDES = {
       title: 'How to use Home',
       tones: ['sky', 'mint', 'beam'],
       steps: [
-        { art: 'cards',      cap: 'Cards open Trends, Toolkit, MindMap AI and Privacy.' },
-        { art: 'familyNet',  cap: `Your network lists your teens and their ${PRO_PLURAL}.` },
+        { art: 'cards',      cap: 'Cards open Trends, Toolkit, MindMap AI and Network.' },
+        { art: 'familyNet',  cap: `Your network lists your teens and their ${PROS}.` },
         { art: 'inviteBoth', cap: `Add a teen or ${PRO} by sending a link.` },
       ],
       use: 'Your starting point, and where your family network lives.',
@@ -131,6 +147,17 @@ export const GUIDES = {
       steps: AI_STEPS,
       use: 'Ask how to support your teen through a hard week.',
     },
+    network: {
+      section: 'Network',
+      title: 'How to use Network',
+      tones: ['beam', 'accent', 'mint'],
+      steps: [
+        { art: 'invite',    cap: 'Copy your invite link and send it to your teen.' },
+        { art: 'familyNet', cap: `Approve a ${PRO} before they see anything.` },
+        { art: 'table',     cap: 'Your teen chooses what each person sees.' },
+      ],
+      use: `Add your teens and approve their ${PRO_PLURAL}.`,
+    },
     privacy: {
       section: 'Privacy',
       title: 'How to use Privacy',
@@ -150,12 +177,12 @@ export const GUIDES = {
       title: 'How to use Home',
       tones: ['mint', 'sky', 'beam'],
       steps: [
-        { art: 'cards',      cap: 'Cards open Trends, Connect, MindMap AI and Toolkit.' },
-        { art: 'quickTools', cap: 'Shortcuts open Session Openers, Grounding Timer and Referral Note.' },
-        { art: 'roster',     cap: 'See how many teens share with you, then open Trends.' },
+        { art: 'cards',      cap: 'Cards open Trends, Toolkit, MindMap AI and Network.' },
+        { art: 'roster',     cap: 'The dark band shows how many teens share with you.' },
+        { art: 'eachGroup',  cap: 'Open Trends to see each teen and the whole group.' },
       ],
       use: 'One place to start your day with families.',
-      go: { label: 'Open Connect', route: 'network' },
+      go: { label: 'Open Network', route: 'network' },
     },
     'app-pro-trends': {
       section: 'Trends',
@@ -167,17 +194,6 @@ export const GUIDES = {
         { art: 'filterOpen', cap: 'Filter and sort, then open a record. Opens are logged.' },
       ],
       use: 'See who may want a check-in today.',
-    },
-    network: {
-      section: 'Connect',
-      title: 'How to use Connect',
-      tones: ['beam', 'accent', 'mint'],
-      steps: [
-        { art: 'invite',     cap: 'Copy your invite link or code and send it.' },
-        { art: 'teenChoose', cap: 'The teen opens it, joins and picks what is shared.' },
-        { art: 'joined',     cap: 'They appear in Your Network with what they share.' },
-      ],
-      use: 'Add families with nothing shared until the teen agrees.',
     },
     ai: {
       section: 'MindMap AI',
@@ -196,6 +212,28 @@ export const GUIDES = {
         { art: 'toolTabs', cap: 'More tabs: School, Outside, Life, Career, Resources.' },
       ],
       use: 'Quick tools for before, during and after a session.',
+    },
+    network: {
+      section: 'Network',
+      title: 'How to use Network',
+      tones: ['beam', 'accent', 'mint'],
+      steps: [
+        { art: 'invite',     cap: 'Copy your invite link or code and send it.' },
+        { art: 'teenChoose', cap: 'The teen opens it, joins and picks what is shared.' },
+        { art: 'joined',     cap: 'They appear in Your Network with what they share.' },
+      ],
+      use: 'Add families with nothing shared until the teen agrees.',
+    },
+    'app-pro-privacy': {
+      section: 'Privacy',
+      title: 'How to use Privacy',
+      tones: ['accent', 'lilac', 'beam'],
+      steps: [
+        { art: 'table',    cap: 'Each teen chooses what you see and can change it.' },
+        { art: 'proNever', cap: 'Notes, Location and messages are never shared.' },
+        { art: 'openLog',  cap: 'Every record you open is logged.' },
+      ],
+      use: 'Know what each teen shares with you.',
     },
   },
 }

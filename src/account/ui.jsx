@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import { Check, Chevron, Person } from '../ui/marks'
 import { ROLE_LABEL, useAccount } from './store'
 import { AVATARS, AvatarArt } from './avatars'
-import { GROUPS, avatarEntry, avatarWords } from './avatar-catalog'
+import { GROUPS, PHOTO_MAX, avatarEntry, avatarWords, initialsOf, isPhotoAvatar } from './avatar-catalog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import './appearance'
 
@@ -19,10 +19,10 @@ export const field = cn(
 
 export const fieldError = 'border-crit'
 
-/* The chosen picture; with none, a circle with the first letter; signed out,
+/* The chosen picture; with none, a circle with the initials; signed out,
    the outline person mark. */
 export function Avatar({ name, avatar = null, size = 'md', className }) {
-  const letter = String(name || '').trim().charAt(0).toUpperCase()
+  const letter = initialsOf(name)
   const box = size === 'lg' ? 'size-14 text-row' : size === 'sm' ? 'size-8 text-fine' : 'size-10 text-ui'
   if (avatar) return <AvatarArt id={avatar} className={cn(box, 'rounded-chip', className)}/>
   return (
@@ -45,6 +45,7 @@ export const SearchMark  = p => <M {...p}><circle cx="10.5" cy="10.5" r="6.5"/><
 export const TextMark    = p => <M {...p}><path d="M3.5 18.5l4.5-12 4.5 12M5.2 14h5.6M14 18.5l3.2-8 3.3 8M15.1 15.8h4.3"/></M>
 export const ShieldMark  = p => <M {...p}><path d="M12 3.5l7 2.5v5.5c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></M>
 export const HelpMark    = p => <M {...p}><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8h.01"/></M>
+export const CameraMark  = p => <M {...p}><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.4"/></M>
 export const LinkMark    = p => <M {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></M>
 
 const PICK_GROUPS = GROUPS.map(g => ({ ...g, items: AVATARS.filter(a => a.group === g.id) }))
@@ -82,7 +83,7 @@ function PictureGrid({ items, value, onChange, name, label }) {
         const on = value === a.id
         return (
           <button key={a.id || 'none'} type="button" role="radio" aria-checked={on}
-            aria-label={a.id ? a.label : 'Your initial'} title={a.id ? a.label : 'Your initial'}
+            aria-label={a.id ? a.label : 'Your initials'} title={a.id ? a.label : 'Your initials'}
             ref={el => { refs.current[i] = el }}
             tabIndex={i === focus ? 0 : -1}
             onFocus={() => setFocus(i)}
@@ -104,9 +105,21 @@ function PictureGrid({ items, value, onChange, name, label }) {
   )
 }
 
-/* Every picture, over a hundred, in four groups with a search box, a Random
-   button and a preview of the one chosen. `null` is the initial circle. */
-export function AvatarPicker({ value, onChange, name, label = 'Your picture', className, actions = null }) {
+/* What each role picks from. The owner, 18 October: "kids should be the
+   animal and fun ones, parents should use either letter avatars or uploaded
+   pictures, and counselors should use uploaded professional images". A teen
+   gets the drawings; everyone else their initials or a photo. */
+export const usesPhoto = role => role !== 'student'
+
+/* The picker for the reader's role. Two components, not one with a branch,
+   so a role change never reorders hooks. */
+export function AvatarPicker({ role = 'student', ...props }) {
+  return usesPhoto(role) ? <PhotoPicker role={role} {...props}/> : <DrawingPicker {...props}/>
+}
+
+/* Every drawing, over a hundred, in four groups with a search box, a Random
+   button and a preview of the one chosen. `null` is the initials circle. */
+function DrawingPicker({ value, onChange, name, label = 'Your picture', className, actions = null }) {
   const [tab, setTab] = React.useState(() => groupOf(value))
   const [q, setQ] = React.useState('')
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
@@ -124,7 +137,7 @@ export function AvatarPicker({ value, onChange, name, label = 'Your picture', cl
         <Avatar name={name || 'A'} avatar={value} size="lg" className="size-16"/>
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-ui font-bold text-ink" aria-live="polite">
-            {chosen ? chosen.label : 'Your initial'}
+            {chosen ? chosen.label : 'Your initials'}
           </p>
           <p className="text-fine text-ink-3">
             {chosen ? GROUPS.find(g => g.id === chosen.group)?.label : 'No picture chosen'}
@@ -136,13 +149,12 @@ export function AvatarPicker({ value, onChange, name, label = 'Your picture', cl
           </button>
           {value && (
             <button type="button" onClick={() => onChange(null)} className={cn(outline, 'px-3')}>
-              Use initial
+              Use initials
             </button>
           )}
           {actions}
         </div>
       </div>
-
       <label htmlFor={uid + 'q'} className="mt-3 block font-display text-fine font-medium text-ink-2">
         Search {AVATARS.length} pictures
       </label>
@@ -183,7 +195,7 @@ export function AvatarPicker({ value, onChange, name, label = 'Your picture', cl
 
 /* The picker folded behind its preview, for a form where it is one field of
    several. `open` starts it unfolded. */
-export function AvatarChooser({ value, onChange, name, open: startOpen = false, className }) {
+export function AvatarChooser({ value, onChange, name, role = 'student', open: startOpen = false, className }) {
   const [open, setOpen] = React.useState(startOpen)
   const panel = React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const chosen = value ? avatarEntry(value) : null
@@ -195,23 +207,93 @@ export function AvatarChooser({ value, onChange, name, open: startOpen = false, 
     <button ref={btn} type="button" aria-expanded={open} aria-controls={panel}
       onClick={() => { moved.current = true; setOpen(o => !o) }}
       className={outline}>
-      {open ? 'Done' : 'Choose a picture'}
+      {open ? 'Done' : usesPhoto(role) ? 'Photo or initials' : 'Choose a picture'}
       <Chevron aria-hidden className={cn('size-4 transition-transform duration-150', open ? '-rotate-90' : 'rotate-90')}/>
     </button>
   )
   return (
     <div id={panel} className={className}>
       {open ? (
-        <AvatarPicker value={value} onChange={onChange} name={name} actions={toggle}/>
+        <AvatarPicker role={role} value={value} onChange={onChange} name={name} actions={toggle}/>
       ) : (
         <div className="flex flex-wrap items-center gap-3">
           <Avatar name={name || 'A'} avatar={value} size="lg"/>
           <span className="min-w-0 flex-1 font-display text-ui font-medium leading-tight text-ink-2">
-            {chosen ? chosen.label : 'Your initial'}
+            {isPhotoAvatar(value) ? 'Your photo' : chosen ? chosen.label : 'Your initials'}
           </span>
           {toggle}
         </div>
       )}
+    </div>
+  )
+}
+
+/* Shrink a chosen image to a 160px square JPEG data URL, cut from the
+   middle and a little above it, where a face usually is. Nothing is sent
+   anywhere by this; the account keeps the result. */
+async function photoFromFile(file) {
+  if (!file || !/^image\//.test(file.type)) throw new Error('type')
+  const url = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    const w = img.naturalWidth, h = img.naturalHeight, side = Math.min(w, h)
+    const c = document.createElement('canvas')
+    c.width = c.height = 160
+    c.getContext('2d').drawImage(img, (w - side) / 2, (h - side) * 0.3, side, side, 0, 0, 160, 160)
+    for (const q of [0.85, 0.7, 0.5]) {
+      const d = c.toDataURL('image/jpeg', q)
+      if (d.length <= PHOTO_MAX && isPhotoAvatar(d)) return d
+    }
+    throw new Error('size')
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+const PHOTO_HINT = {
+  pro: 'A clear, professional photo. Your initials show until you add one.',
+  parent: 'Or upload a photo.',
+}
+
+/* A parent's or a Counselor/Professional's picture: initials, or a photo
+   they upload. */
+function PhotoPicker({ role, value, onChange, name, className, actions = null }) {
+  const uid = 'ph' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const [err, setErr] = React.useState(null)
+  const photo = isPhotoAvatar(value)
+  async function pick(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try { onChange(await photoFromFile(file)); setErr(null) }
+    catch { setErr('That file did not work. Try a JPEG or PNG photo.') }
+  }
+  return (
+    <div className={cn('min-w-0', className)}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Avatar name={name || 'A'} avatar={value} size="lg" className="size-16"/>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-ui font-bold text-ink" aria-live="polite">
+            {photo ? 'Your photo' : value ? 'Your picture' : 'Your initials'}
+          </p>
+          {!photo && <p className="text-fine text-ink-3">{PHOTO_HINT[role] || PHOTO_HINT.parent}</p>}
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input id={uid} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick}
+          aria-describedby={err ? uid + 'e' : undefined} className="peer sr-only"/>
+        <label htmlFor={uid} className={cn(solid, 'cursor-pointer peer-focus-visible:outline',
+          'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent')}>
+          <CameraMark size={18}/>{photo ? 'Change photo' : role === 'pro' ? 'Upload a professional photo' : 'Upload a photo'}
+        </label>
+        {value && (
+          <button type="button" onClick={() => { onChange(null); setErr(null) }} className={outline}>Use initials</button>
+        )}
+        {actions}
+      </div>
+      {err && <p id={uid + 'e'} role="alert" className="mt-2 font-display text-fine font-medium text-crit">{err}</p>}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { DATA } from '../../lib/assets'
 import { emptyBaseline, scoreCapture, updateBaseline } from '../../signals/score'
+import { TODAY as ROSTER_TODAY } from '../../lib/roster'
 
 /* The demo reading, and everything derived from it, in one module.
  *
@@ -58,7 +59,11 @@ export const TAKEN_AT = (() => {
   return best.t
 })()
 
-export const TODAY = { score: READ.score, day: 'Thursday', clock: clock12(TAKEN_AT) }
+/* The weekday follows the demo's today (src/lib/roster.js), which follows
+   the real date. */
+const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+export const TODAY = { score: READ.score, day: WEEKDAY[new Date(`${ROSTER_TODAY}T12:00:00Z`).getUTCDay()],
+  clock: clock12(TAKEN_AT) }
 
 /* The first reading after the morning that sits above the normal band. The day
    chart picks the same point out in warn; this names the time it happened. */

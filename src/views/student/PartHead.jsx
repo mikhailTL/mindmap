@@ -2,9 +2,10 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { TODAY } from '../../lib/roster'
 
-/* The two parts of the student screen, Today and Trends, each open on one of
+/* The parts of the student screen, Today, Trends and the Log, each open on one of
  * these: an icon tile, the part's name, a rule running to the edge, and one
- * line under it. Same shape both times, so the change of part reads at a
+ * line under it. Kind 'recs' is for a Recommendations part, where a page has
+ * one. Same shape both times, so the change of part reads at a
  * glance. */
 
 const ICONS = {
@@ -21,11 +22,25 @@ const ICONS = {
       <path d="M6.5 17l3-3.2 2.6 2 4.4-4.6"/>
     </svg>
   ),
+  log: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false">
+      <rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/>
+    </svg>
+  ),
+  recs: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false">
+      <path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>
+    </svg>
+  ),
 }
 
 const TONE = {
   today: 'bg-accent-wash text-accent-ink',
   trends: 'bg-card text-beam-ink',
+  log: 'bg-card text-accent-ink',
+  recs: 'bg-sun-wash text-sun-ink',
 }
 
 /* "Friday, October 16": the demo's today, and the reader's own for Live. */
@@ -34,13 +49,16 @@ export const TODAY_LONG = new Intl.DateTimeFormat('en-US', { ...LONG, timeZone: 
   .format(new Date(`${TODAY}T12:00:00Z`))
 export const longDate = (d = new Date()) => new Intl.DateTimeFormat('en-US', LONG).format(d)
 
-export function PartHead({ id, kind, title, line, className }) {
+/* `action`: an optional link at the end of the heading row, such as "Take a
+   reading". `as`: the heading level, h2 unless the page already has one. */
+export function PartHead({ id, kind, title, line, action, className, as: H = 'h2' }) {
   return (
     <div className={cn('flex flex-col gap-1', className)}>
       <div className="flex items-center gap-3">
         <span className={cn('grid size-10 shrink-0 place-items-center rounded-[12px]', TONE[kind])}>{ICONS[kind]}</span>
-        <h2 id={id} className="m-0 shrink-0 font-display font-bold leading-none tracking-tight text-ink">{title}</h2>
+        <H id={id} className="m-0 shrink-0 font-display font-bold leading-none tracking-tight text-ink">{title}</H>
         <span aria-hidden className="h-[2px] min-w-6 flex-1 rounded-bar bg-ink/10"/>
+        {action && <span className="shrink-0">{action}</span>}
       </div>
       {line && <p className="m-0 pl-[52px] text-fine text-ink-2">{line}</p>}
     </div>

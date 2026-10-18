@@ -143,7 +143,7 @@ function Reset({ data, patch, g, win }) {
   return (
     <Panel>
       <Heading>Quick body reset</Heading>
-      <Lead>Stress lives in the body too. These take under 2 minutes each. Stop any that hurts.</Lead>
+      <Lead>Stress shows up in the body too. Each one takes under 2 minutes. Stop any that hurts.</Lead>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {Object.keys(EXERCISES).map(id => <Exercise key={id} id={id} g={g} did={ticks[id]} onDid={v => patch('did', { ...ticks, [id]: v })}/>)}
       </div>
@@ -173,7 +173,7 @@ const RESULT = {
   some: { title:'Some signs of being stretched thin', say:'This is common when a lot changes at once. Small changes this week can help.',
     steps:['Pick one thing to drop, move or ask help with this week.', 'Protect sleep: same bedtime, phone away 30 minutes before.',
       'Take one 10 minute break a day that is not a screen or a task.', 'Tell one person you trust how you are really doing.'] },
-  high: { title:'A lot of signs. This is too much to carry alone.', say:'Please talk to a trusted adult this week: a parent, school counselor, coach or your doctor. Show them this list if it is easier than saying it.',
+  high: { title:'A lot of signs. Please do not handle this alone.', say:'Please talk to a trusted adult this week: a parent, school counselor, coach or your doctor. Show them this list if it is easier than saying it.',
     steps:['Choose who you will talk to and when.', 'Drop or postpone one thing on your list today.', 'Protect sleep and eat regular meals.',
       'If body symptoms like headaches or stomach aches keep going, see a doctor.'] },
 }
@@ -244,7 +244,7 @@ function Routine({ data, patch, g, win }) {
     <>
       <Panel>
         <Heading>Build a self-care routine</Heading>
-        <Lead>Pick two or three small things per part of the day. Small and steady beats big and rare.</Lead>
+        <Lead>Pick two or three small things for each part of the day. Small habits are easier to keep.</Lead>
         {SLOTS.map(([k, name, ideas]) => (
           <div key={k} className="mt-4">
             <p className="font-display text-ui font-bold text-ink">{name}</p>
@@ -293,7 +293,7 @@ function Routine({ data, patch, g, win }) {
 const TABS = [['check', 'Check-in'], ['reset', 'Body reset'], ['burnout', 'Burnout signs'], ['routine', 'Routine']]
 
 const GOALS = {
-  check:   'Notice where stress sits in your body, then do one small thing.',
+  check:   'Notice where you feel stress in your body, then do one small thing.',
   reset:   'Try one body reset and notice the difference.',
   routine: 'Build a small routine you can keep. Missing a day is fine.',
 }
@@ -308,7 +308,7 @@ export default function LifeStress({ onExit }) {
   const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="sky" title="Overwhelm Reset" icon={StressIcon} onExit={onExit}
-      problem="Changes in life, your body or what people expect can pile up until you freeze."
+      problem="For when changes in life, your body or what people expect pile up and you feel stuck."
       doing="Check in with your body for a minute, then do one small thing that helps.">
       <Sections label="Reset tools" items={TABS} value={tab} onChange={go}/>
       {tab === 'burnout' ? <Burnout data={data} patch={patch}/> : (

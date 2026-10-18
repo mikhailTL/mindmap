@@ -5,7 +5,7 @@ import { cardClass } from '../ui/card'
 import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People, Person } from '../ui/marks'
 import { CONSENT_SHORT } from '../lib/terms'
 import { useMode } from '../lib/mode'
-import { demoCounts } from './demo-network'
+import { demoSide } from './demo-network'
 import {
   ROLE_LABEL, SECRET_MAX, SETTINGS, backend, homeFor, changePasscode, deleteAccount, exportAll, listNetwork,
   signOutOthers, updateProfile, useAccount,
@@ -79,7 +79,7 @@ function Confetti() {
 function ProfileHeader({ me, go }) {
   const setting = me.role === 'pro' ? SETTINGS.find(s => s.value === me.setting)?.label : null
   const [mode] = useMode()
-  const linked = mode === 'demo' ? demoCounts().linked : listNetwork(me.id).filter(l => l.status === 'active').length
+  const linked = mode === 'demo' ? demoSide(me.role).linked : listNetwork(me.id).filter(l => l.status === 'active').length
   const facts = [
     ['Linked', linked === 0 ? 'Nobody yet' : String(linked)],
     ['Last sign-in', when(me.lastSignInAt)],
@@ -221,7 +221,7 @@ function Profile({ me, go }) {
           Your picture
         </h3>
         <div className="p-4 lg:p-5">
-          <AvatarPicker value={me.avatar} onChange={a => updateProfile({ avatar: a })} name={me.name}/>
+          <AvatarPicker role={me.role} value={me.avatar} onChange={a => updateProfile({ avatar: a })} name={me.name}/>
         </div>
       </section>
     </Section>

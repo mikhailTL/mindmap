@@ -49,9 +49,9 @@ export default function Belong({ onExit }) {
 
   return (
     <Screen tool={TOOL} onExit={onExit}
-      problem="A new team, class or job can make you feel like everyone else belongs and you do not."
-      doing="Collect your real wins, find the strengths they prove, write one ask, and plan one small step.">
-      <Quest game={g} goal="Collect real wins, find what they prove, and plan one brave step.">
+      problem="For when a new team, class or job makes you feel like you do not fit in."
+      doing="List your real wins, see the strengths they show, write one request, and plan one small step.">
+      <Quest game={g} goal="List real wins, see the strengths they show, and plan one step.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
       {s.stage === 'wins' && (
@@ -118,7 +118,7 @@ export default function Belong({ onExit }) {
         <>
           <Sheet>
             <H>Ask for what you need</H>
-            <p className="mt-1 text-fine text-ink-2">Asking is a skill, not a sign you do not belong.</p>
+            <p className="mt-1 text-fine text-ink-2">Asking is a skill you can practise.</p>
             <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label="What kind of ask">
               {KINDS.map(k => (
                 <Choice key={k.id} on={s.kind === k.id} onClick={() => patch({ kind:k.id })}
@@ -158,8 +158,8 @@ export default function Belong({ onExit }) {
       {s.stage === 'try' && (
         <>
           <Sheet>
-            <H>One calculated step this week</H>
-            <p className="mt-1 text-fine text-ink-2">Calculated means small, planned, and fine if it goes wrong.</p>
+            <H>One small step this week</H>
+            <p className="mt-1 text-fine text-ink-2">Pick something small and planned. It is OK if it does not work out.</p>
             <div className="mt-3 grid gap-2">
               {INITIATIVES.map(t => (
                 <Choice key={t} on={!s.own.trim() && s.init === t} className="w-full"
@@ -176,19 +176,19 @@ export default function Belong({ onExit }) {
               <Field label="My back-up if it goes wrong" placeholder="Ask what I could do first instead" value={s.backup} onChange={e => patch({ backup:e.target.value })}/>
             </div>
           </Sheet>
-          <Nav next={finish} back={() => go('ask')} disabled={!initiative} nextLabel="See my evidence"/>
+          <Nav next={finish} back={() => go('ask')} disabled={!initiative} nextLabel="See my summary"/>
         </>
       )}
 
       {s.stage === 'done' && (
         <>
           {g.result && (
-            <EndCard game={g} title="Evidence collected" againLabel="Start again, keep my wins" onDone={leave(onExit)}
+            <EndCard game={g} title="Plan saved" againLabel="Start again, keep my wins" onDone={leave(onExit)}
               onAgain={() => { set({ ...BLANK, wins:s.wins.map(w => ({ ...w })) }); g.reset() }}
               stats={[['Real wins', s.wins.length], ['Top strength', top[0]?.name || 'Tag a win']]}/>
           )}
           <Sheet>
-            <p className="text-fine font-semibold text-ink-2">The evidence says</p>
+            <p className="text-fine font-semibold text-ink-2">What your wins show</p>
             <H className="mt-1">{s.wins.length} real {s.wins.length === 1 ? 'win' : 'wins'}.{top.length ? ` They show you are ${listOf(top.slice(0, 3).map(t => t.trait))}.` : ''}</H>
             {top.length > 0 && (
               <ul className="m-0 mt-3 grid list-none gap-2 p-0">

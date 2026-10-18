@@ -124,7 +124,7 @@ export function DidItWork({ tool, phase = 'after', className }) {
         )}
         {state === 'done' && reading && (
           <p className="text-center font-display text-ui font-semibold tabular-nums text-ink" aria-live="polite">
-            {bpm(reading.hr)} bpm, kept until you finish.
+            {bpm(reading.hr)} bpm. Check again after the activity to compare.
           </p>
         )}
         {state === 'error' && (
@@ -141,12 +141,12 @@ export function DidItWork({ tool, phase = 'after', className }) {
   return (
     <Sheet className={className}>
       {video}
-      <h3 className="font-display text-ui font-bold text-ink">Did It Help?</h3>
+      <h3 className="font-display text-ui font-bold text-ink">Did it help?</h3>
 
       {state === 'idle' && (
         supported
           ? <>
-              <p className="mt-1 text-fine text-ink-2">Optional. A fingertip on the camera for {SECONDS} seconds.</p>
+              <p className="mt-1 text-fine text-ink-2">Optional. Hold a fingertip on the camera for {SECONDS} seconds to check your pulse.</p>
               <Button size="sm" variant="outline" className="mt-3" onClick={run}><Camera/>Check my pulse</Button>
             </>
           : <p className="mt-2 text-fine text-ink-2">No camera here, so no pulse check.</p>

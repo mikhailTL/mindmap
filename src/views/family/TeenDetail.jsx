@@ -12,6 +12,7 @@ import RangeTrend from './RangeTrend'
 import FamilyPrivacy, { Box } from './Privacy'
 import { StatusMark, TeenAvatar } from './TeenCard'
 import { LampFace } from '../../traffic/Face'
+import { PartHead } from '../student/PartHead'
 import { STATUS_SUB, STATUS_WORD, dayLabel, dayOf, displayName, isPro, lightOf, metaLine, showsReadings, showsScore,
   sourceLine, subOf, summaryOf, usualOf } from './data'
 
@@ -54,7 +55,7 @@ const METRICS = [
 ]
 
 const SHORT = { green: 'usual', yellow: 'above usual', red: 'well above' }
-const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Check-in questions' }
+const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Survey' }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 export function BackButton({ onBack, label }) {
@@ -218,7 +219,7 @@ function Measures({ teen, d }) {
     ['Minutes to settle after a peak', d.recovery],
     ['Usual band', `${teen.usual.lo} to ${teen.usual.hi}`],
     ['30-day mean, SD', `${u.mean.toFixed(1)}, ${u.sd.toFixed(1)}`],
-    ['Sources', [d.sources.patch && 'patch', d.sources.camera && 'camera', d.sources.survey && 'questions'].filter(Boolean).join(', ')],
+    ['Sources', [d.sources.patch && 'patch', d.sources.camera && 'camera', d.sources.survey && 'survey'].filter(Boolean).join(', ')],
   ]
   return (
     <Box title="Measures" meta="this day">
@@ -253,8 +254,10 @@ function Consent({ teen }) {
   )
 }
 
-/* For a parent: the week's hardest day and a few ways to start. */
-export function AskAbout({ teen }) {
+/* The week's hardest day and two ways to start. It sits in its own
+   Recommendations part after Trends (the owner, 18 October). A parent also
+   gets the safety line. */
+export function AskAbout({ teen, variant = 'parent' }) {
   const w = summaryOf(teen, 'week')
   const over = teen.usual ? w.points.filter(p => p.score > teen.usual.hi) : []
   const peak = over.length ? over.reduce((a, b) => (b.score > a.score ? b : a)) : null
@@ -262,27 +265,23 @@ export function AskAbout({ teen }) {
   return (
     <Box title="What to ask about" meta="this week">
       {!peak ? (
-        <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">No day sat above {teen.first}’s own range this week.</p>
+        <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">No day this week was above {teen.first}’s usual range.</p>
       ) : (
-        <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
           <div>
             <p className="m-0 font-display text-ui font-bold text-ink">{name}</p>
             <p className="m-0 mt-1 font-display text-stat font-bold tabular-nums leading-none text-ink">{peak.score}
-              <span className="ml-1.5 font-body text-fine font-normal text-ink-3">out of 100</span></p>
-            <p className="m-0 mt-2 text-fine text-ink-2">The app cannot say why.</p>
-            <p className="m-0 mt-3 max-w-[50ch] text-fine text-ink-2">Try not to say &ldquo;Your {teen.live ? 'readings say' : 'patch says'} you were
-              stressed.&rdquo; {teen.first} can see this page too.</p>
-            <p className="m-0 mt-1.5 max-w-[50ch] text-fine text-ink-2">Worried about their safety? Call their counselor/professional
-              or a crisis line.</p>
+              <span className="ml-1.5 font-body text-fine font-normal text-ink-2">out of 100</span></p>
           </div>
-          <div>
-            <p className="m-0 text-fine font-semibold text-ink-2">Ways to start</p>
-            <ul className="m-0 mt-1 list-none p-0">
-              {[`How was ${name}?`, 'Anything this week you want to get off your chest?', 'Do you want help with it, or just to talk?']
-                .map(o => <li key={o} className="border-b border-rule py-2.5 text-ui text-ink">&ldquo;{o}&rdquo;</li>)}
-            </ul>
-          </div>
+          <ul className="m-0 list-none p-0">
+            {[`How was ${name}?`, 'Do you want help with it, or just to talk?']
+              .map(o => <li key={o} className="border-b border-rule py-2.5 text-ui text-ink">&ldquo;{o}&rdquo;</li>)}
+          </ul>
         </div>
+      )}
+      {!isPro(variant) && (
+        <p className="m-0 mt-4 max-w-[56ch] text-fine text-ink-2">Worried about their safety? Call their Counselor/Professional
+          or a crisis line.</p>
       )}
     </Box>
   )
@@ -319,7 +318,7 @@ export function LiveShares({ teen, variant }) {
   )
 }
 
-const SOURCE_PLURAL = { patch: 'Patch', camera: 'Phone camera checks', survey: 'Check-in questions' }
+const SOURCE_PLURAL = { patch: 'Patch', camera: 'Phone camera checks', survey: 'Surveys' }
 const timeOf = t => new Date(t).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
 
 function LiveDay({ teen, d, variant }) {
@@ -366,6 +365,7 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
   const name = displayName(teen, variant)
   const head = React.useRef(null)
   const dayRef = React.useRef(null)
+  const recId = React.useId()
   React.useEffect(() => { head.current?.focus({ preventScroll: true }) }, [teen.id])
   const score = showsScore(teen, variant)
   const last = [...teen.days].reverse().find(x => x.score != null)
@@ -432,6 +432,14 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
       {score && <RangeTrend teen={teen} range={range} onRange={setRange} variant={variant}
         day={range === 'day' ? undefined : date} onDay={pickDay}/>}
 
+      {/* Its own part, after Trends (the owner, 18 October). */}
+      {score && teen.usual && (
+        <section aria-labelledby={recId} className="flex flex-col gap-4">
+          <PartHead id={recId} as="h3" kind="recs" title="Recommendations" className="[&_h3]:text-head"/>
+          <AskAbout teen={teen} variant={variant}/>
+        </section>
+      )}
+
       <div ref={dayRef} className="scroll-mt-20">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="m-0 font-display text-head font-bold text-ink">The day in detail</h3>
@@ -442,8 +450,6 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
           <LiveShares teen={teen} variant={variant}/>
         </div>
       </div>
-
-      {!pro && score && <AskAbout teen={teen}/>}
     </div>
   )
 }

@@ -119,14 +119,10 @@
      letterspaced eyebrow that used to sit above every section is gone; these
      are its replacements and none of them shout.
 
-     `.mark` is a section's opening: a hairline the full width of its column
-     with the label sitting on the rule in the left margin, which is how an
-     observation chart separates one band of readings from the next.
-     Deliberately square: it is a ruled line across the column, not a panel,
-     so the new radius scale does not apply to it. */
+     `.mark` is a section's small label. The owner, 18 October: no dark line
+     above any heading, so the rule it once sat on is gone. */
   .mark {
-    @apply relative block rounded-none border-t border-ink pt-3 font-display
-           text-tick font-bold text-ink-2;
+    @apply relative block font-display text-tick font-bold text-ink-2;
   }
   /* A caption or an annotation. Body face, sentence case, no tracking games.
      ink-3 #426a58 is 5.33 : 1 on paper and 4.68 : 1 on mist, so a caption

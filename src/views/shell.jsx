@@ -1,11 +1,8 @@
 import React from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
-import { DemoNotice, RealNotice } from '../ui/notice'
-import { useMode } from '../lib/mode'
 
 /* Shared section shell for all three audience views. */
-export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab, onTab, children }) {
-  const [mode] = useMode()
+export function SectionShell({ title, sub, tabs, panes, go, tab, onTab, children }) {
   const [said, setSaid] = React.useState('')
   /* Switching a tab swaps the panel while focus stays on <body>, so the new
      label is announced through the aria-live region. Clearing `said` first
@@ -28,10 +25,8 @@ export function SectionShell({ title, sub, note, realNote, tabs, panes, go, tab,
         {/* The one sentence that says what this screen is for stays; the
             heading above it went. */}
         {sub && <p className="max-w-[58ch] text-sec text-ink-2">{sub}</p>}
-        {note && (mode === 'real'
-          ? <RealNotice className="mt-4">{realNote}</RealNotice>
-          : <DemoNotice className="mt-4">{note}</DemoNotice>)}
-        <div className="mt-7">
+        {/* No gap above the content unless the line above it is drawn. */}
+        <div className={sub ? 'mt-7' : undefined}>
         {tabs ? (
           <Tabs value={tab} onValueChange={pick}>
             <TabsList aria-label={`${title} views`} scroll>

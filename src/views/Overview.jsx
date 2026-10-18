@@ -12,24 +12,24 @@ import { Card, cardClass } from '../ui/card'
 import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
-import { Different } from './landing/Different'
 import { WhatIs } from './landing/WhatIs'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
 import heroField from '../photos/hero-field.webp'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
-  SCORE, NOTES, LOCATION, PRO, PRO_LC,
+  SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL_LC,
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* The owner's order: hero, the problem, what MindMap is, what makes it
- * different, the rainbow picture break, the two ways in, who it is for,
- * privacy. Nothing else is on the page.
+/* The owner's order: hero, the problem, what MindMap is, the rainbow picture
+ * break, the two ways in, who it is for, privacy. Nothing else is on the page.
+ * The "what makes MindMap different" bento came out on 18 October: "very
+ * cluttered".
  *
  * Grounds alternate green, white and blue so the page reads as a sequence:
  *   hero paper, problem ink, two ways sky.wash,
- *   tools paper, different (its own), who for accent.wash, privacy
+ *   tools paper, who for accent.wash, privacy
  *   beam.wash, every age aqua.2.
  * Measured on each wash (ink : ink.2 : ink.3 : accent : accent.ink):
  *   accent.wash 12.68 : 6.88 : 4.67 : 4.84 : 7.09
@@ -43,9 +43,10 @@ import {
  * read as part of the page rather than as a strip.
  */
 
-/* The two ways in. Each card is the steps themselves, so the band needs no
-   second block explaining them. The patch comes first, as the owner asked;
-   `lead` gives the first card the green edge. */
+/* The two ways in, both on the white card (owner, 18 October: the tinted one
+   "looks like a diff section" on a phone). The patch comes first, as the
+   owner asked; `lead` gives it the green edge. Without the patch names the
+   three readings, Mental Mirror first, and no steps. */
 const WAYS = [
   { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true,
     steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
@@ -57,7 +58,11 @@ const WAYS = [
         <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
       </svg>) },
   { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
-    steps: ['Open the app and tap Take a reading', 'Fingertip on the camera, or face the Mental Mirror', 'Your score appears in under a minute'],
+    ways: [
+      ['Mental Mirror', "reads your face with Google's MediaPipe Face Landmarker, a machine learning model."],
+      ['Camera pulse check', 'reads your pulse from skin colour with your phone camera.'],
+      ['Survey', 'asks a few short questions.'],
+    ],
     art:(
       <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
         <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
@@ -69,9 +74,10 @@ const WAYS = [
       </svg>) },
 ]
 
-/* Three stacked doors on the green band, three surfaces (src/ui/card.jsx), so
-   the stack reads as three places rather than one card printed three times. */
-const SCREEN_LOOK = [['plain'], ['tint', 'beam'], ['outline']]
+/* Three stacked doors on the green band. Each is the white card with its
+   audience's colour along the top, so none blends into the band (owner,
+   18 October: the pale green one "blends in"). */
+const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
 
 const SCREENS = [
   { id:'student', who:'Student',
@@ -113,17 +119,6 @@ function DriftWash({ photo, className, imgClassName, distance = 48 }) {
       <Frame wash photo={photo} className={cn('absolute inset-0 scale-[1.1]', imgClassName)}/>
     </Parallax2D>
   )
-}
-
-/* The hero's second button. The site routes by hash, so a plain #different
-   link would change the route; this scrolls instead, under the sticky header,
-   and jumps without animating when the reader asks for reduced motion. */
-function toDifferent() {
-  const el = document.getElementById('different')
-  if (!el) return
-  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  const head = document.querySelector('header')?.offsetHeight ?? 58
-  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - head, behavior: reduced ? 'auto' : 'smooth' })
 }
 
 /* The owner's rainbow photograph as a full bleed break between the product
@@ -188,9 +183,6 @@ export function Overview({ go }) {
             {/* "Open the app" is in the header, so not repeated here. */}
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
               <Button onClick={() => { setMode('demo'); go('app-home?demo') }}>View the demo<span aria-hidden>→</span></Button>
-              <Button variant="ghost" className="min-h-[44px] px-0 sm:ml-3" onClick={toDifferent}>
-                More than your typical stress monitoring app
-              </Button>
             </ScrollIn>
           </div>
 
@@ -260,13 +252,23 @@ export function Overview({ go }) {
         <ScrollIn className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
           <ProblemFigures/>
         </ScrollIn>
+        {/* The owner's own words, 18 October, under the figures and inside
+            the band, on a solid deep-green panel so the photo wash does not
+            show through: why MindMap answers them. */}
+        <ScrollIn className="mt-6 rounded-panel border border-accent-lit/40 bg-ink p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] lg:mt-8 lg:p-7">
+          <h3 className="m-0 font-display text-head font-bold tracking-tight text-accent-lit lg:text-sub">Why MindMap</h3>
+          <p className="m-0 mt-3 max-w-[72ch] text-meta leading-[1.6] text-paper">
+            With these mental illnesses showing no sign of ceasing, current approaches do not focus on connections
+            and support systems, leaving millions of teens suffering alone. MindMap introduces the world’s first
+            wearable patch and app system designed for adolescents, contrary to existing solutions focused on adults,
+            individual health, and driving stigma. MindMap is the only app that bridges the gap between teens,
+            parents, and {PRO_PLURAL_LC} to reduce isolation and nurture caring and supportive environments.
+          </p>
+        </ScrollIn>
       </Section>
 
       {/* -- what MindMap is (views/landing/WhatIs.jsx) ---------------------- */}
       <WhatIs go={go}/>
-
-      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
-      <Different/>
 
       {/* -- the picture break: the owner's rainbow, in two dimensions ------ */}
       <RainbowBreak/>
@@ -283,20 +285,32 @@ export function Overview({ go }) {
           {WAYS.map((w, i) => (
             <ScrollRow key={w.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(w.go)}
-                variant={w.lead ? 'plain' : 'tint'} hue="mint"
+                variant="plain"
                 className={cn('flex h-full w-full flex-col p-5 text-left', w.lead && 'border-l-accent')}>
                 <span className="grid h-[52px] place-items-start" aria-hidden>{w.art}</span>
                 <span className="mt-3 block font-display text-head font-bold leading-tight text-ink">
                   {w.title}
                 </span>
-                <ol className="m-0 mt-3 list-none space-y-2 p-0">
-                  {w.steps.map((step, n) => (
-                    <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
-                      <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-sky-wash font-display text-xs font-bold text-sky-ink">{n + 1}</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
+                {w.steps && (
+                  <ol className="m-0 mt-3 list-none space-y-2 p-0">
+                    {w.steps.map((step, n) => (
+                      <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
+                        <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-sky-wash font-display text-xs font-bold text-sky-ink">{n + 1}</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {w.ways && (
+                  <ul className="m-0 mt-3 list-none space-y-2 p-0">
+                    {w.ways.map(([name, line]) => (
+                      <li key={name} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
+                        <span aria-hidden className="mt-[0.6em] size-2 shrink-0 rounded-full bg-accent"/>
+                        <span><strong className="font-semibold text-ink">{name}</strong> {line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <span className="mt-auto flex items-center gap-2 pt-5 font-display text-meta
                   font-bold text-accent">
                   {w.cta}
@@ -331,10 +345,10 @@ export function Overview({ go }) {
           {SCREENS.map((s2, i) => (
             <ScrollRow key={s2.id} index={i} className="h-full">
               <button type="button" onClick={() => go(s2.id)}
-                className={cn(cardClass(...SCREEN_LOOK[i % SCREEN_LOOK.length]),
+                className={cn(cardClass('plain'), 'border-t-4', SCREEN_TOP[i % SCREEN_TOP.length],
                   `group flex h-full w-full flex-col gap-3 p-5 text-left touch-manipulation
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
-                  motion-safe:active:scale-[0.99] hoverOnly:border-accent`)}>
+                  motion-safe:active:scale-[0.99] hoverOnly:border-x-accent hoverOnly:border-b-accent`)}>
                 <span className="font-body text-ui font-semibold text-accent-ink">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}

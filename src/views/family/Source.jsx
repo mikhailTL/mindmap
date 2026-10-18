@@ -6,7 +6,7 @@ import { liveSourceLine } from './live.js'
  * page: a drawn mark, a short title, one line under it.
  *
  *   patch   the patch on the arm, plus the odd phone check
- *   phone   no patch: the phone camera and the check-in questions
+ *   phone   no patch: the phone camera and the survey
  *   none    a linked teen with nothing yet */
 
 export function PatchIcon({ className }) {
@@ -30,21 +30,6 @@ export function PhoneIcon({ className }) {
   )
 }
 
-export function QuestionIcon({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"
-      strokeLinejoin="round" aria-hidden focusable="false" className={className}>
-      <rect x="3.5" y="4" width="17" height="14" rx="3"/>
-      <path d="M8 18.5 7 21l4-3"/>
-      <path d="M8 9h8M8 13h5"/>
-    </svg>
-  )
-}
-
-/* One icon per source of a single reading. */
-export const SOURCE_ICON = { patch: PatchIcon, camera: PhoneIcon, survey: QuestionIcon }
-export const SOURCE_NAME = { patch: 'Patch', camera: 'Phone camera', survey: 'Check-in questions' }
-
 export function sourceOf(teen) {
   if (teen.live && !teen.hasReadings) {
     return { kind: 'none', Icon: PhoneIcon, title: 'No readings yet', line: 'Their first reading shows here.' }
@@ -54,7 +39,7 @@ export function sourceOf(teen) {
       line: teen.live ? `Readings from: ${liveSourceLine(teen).toLowerCase()}` : 'Readings from the patch, plus phone checks' }
   }
   return { kind: 'phone', Icon: PhoneIcon, title: 'Phone only, no patch',
-    line: teen.live ? `Readings from: ${liveSourceLine(teen).toLowerCase()}` : 'Readings from the phone camera and check-in questions' }
+    line: teen.live ? `Readings from: ${liveSourceLine(teen).toLowerCase()}` : 'Readings from the phone camera and the survey' }
 }
 
 export function SourceLine({ teen, className, compact = false }) {

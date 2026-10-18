@@ -3,7 +3,6 @@ import { Frame } from '../ui/frame'
 import { Button } from '../ui/button'
 import { ArrowLeft, ArrowRight, Check, Never } from '../ui/marks'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { DemoNotice } from '../ui/notice'
 import { Progress } from '../ui/progress'
 import { WeekChart } from '../charts/week'
 import { DayChart } from '../charts/day'
@@ -86,19 +85,22 @@ function Chips({ head, rows, className, variant = 'plain', hue = 'accent' }) {
   )
 }
 
-/* DemoNotice is attached here so a figure cannot lose its "generated" line.
-   `aside` is the photograph of the people a chart is about, drawn from 2xl
+/* Every figure is the demo's, so its caption carries a small Demo tag (the
+   owner, 18 October: a tag, not a ruled line under each chart). `aside` is the photograph of the people a chart is about, drawn from 2xl
    only: below that it took the room the figure needs. */
 function Fig({ title, aside, asideAlt, children, className }) {
   const body = (
     <div className="min-w-0 p-3.5 lg:p-4">
       {children}
-      <DemoNotice className="mt-3"/>
     </div>
   )
   return (
     <figure className={cn(PANEL, 'm-0 flex flex-col', className)}>
-      {title && <figcaption className={HEAD}>{title}</figcaption>}
+      {title && (
+        <figcaption className={cn(HEAD, 'flex items-baseline justify-between gap-3')}>
+          {title}<span className="shrink-0 font-medium text-ink-2">Demo</span>
+        </figcaption>
+      )}
       {aside ? (
         <div className="grid min-w-0 flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,230px)]">
           {body}
@@ -317,7 +319,7 @@ export function ForStudents({ go }) {
             <Facts head="How to read the dial" variant="rule" hue="accent" rows={[
               ['Each ring', 'Each ring shows one body signal against your own last fourteen days.'],
               ['The mark on the arc', 'The mark shows where a usual day sits for you.'],
-              ['Movement', 'Movement tells the app a hard run apart from a hard day.'],
+              ['Movement', 'How much you move, so exercise is not read as stress.'],
             ]}/>
           </ScrollIn>
         </Pair>
@@ -572,7 +574,7 @@ export function ForSchools({ go }) {
     <main>
       <Hero go={go} label={PRO_FOR} ground="bg-aqua-2" photo="clinic-talk"
         photoAlt="A teenager and an adult sitting and talking on a sofa by a sunlit window"
-        title="See trends across your students"
+        title="See Trends across your students"
         lede="You see how each student who shares with you is trending, and how groups are doing."
         facts={[
           ['What you see', `Each student's ${SCORE} and the direction it moved.`],
@@ -636,7 +638,7 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Facts head="Who is on the list" variant="outline" rows={[
-              ['On the list', `${BOARD.length} students, all of whom agreed to share trends.`],
+              ['On the list', `${BOARD.length} students, all of whom agreed to share Trends.`],
               ['Off the list', 'Students who share only a score, or only alerts, are not listed.'],
               ['Why change, not score', 'A student steady at 86 for a month is not a change.'],
             ]}/>

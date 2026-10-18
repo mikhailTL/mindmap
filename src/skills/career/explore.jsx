@@ -47,9 +47,9 @@ export default function Explore({ onExit }) {
 
   return (
     <Screen tool={TOOL} onExit={onExit}
-      problem="Picking a career or a major now can feel like a forever choice."
-      doing="Sort what you like, pick a cluster, and plan three small tests for this month.">
-      <Quest game={g} goal="Find a career cluster to test, and plan three small tests for this month.">
+      problem="Try out careers with small tests before you choose one."
+      doing="Sort what you like, pick a career group, and plan three small tests for this month.">
+      <Quest game={g} goal="Find a career group to test, and plan three small tests for this month.">
       <Steps steps={STEPS} at={s.stage} reached={s.reached} onGo={go}/>
 
       {s.stage === 'sort' && (
@@ -70,7 +70,7 @@ export default function Explore({ onExit }) {
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             {s.card > 0 && <Action kind="quiet" onClick={() => patch({ card: s.card - 1 })}>Back a card</Action>}
-            {answered >= 6 && <Action kind="quiet" onClick={() => go('pick')}>See my clusters</Action>}
+            {answered >= 6 && <Action kind="quiet" onClick={() => go('pick')}>See my career groups</Action>}
           </div>
         </Sheet>
       )}
@@ -78,8 +78,8 @@ export default function Explore({ onExit }) {
       {s.stage === 'pick' && (
         <>
           <Sheet>
-            <H>Your closest clusters</H>
-            <p className="mt-1 text-fine text-ink-2">A starting point to test, not a verdict. Pick one to try this month.</p>
+            <H>Your closest career groups</H>
+            <p className="mt-1 text-fine text-ink-2">These are ideas to test. Pick one to try this month.</p>
             <div className="mt-4 grid gap-3">
               {ranked.slice(0, 3).map(r => {
                 const c = CLUSTERS.find(x => x.id === r.id)
@@ -129,7 +129,7 @@ export default function Explore({ onExit }) {
           </Sheet>
           <Sheet>
             <H>One page test plan</H>
-            <p className="mt-1 text-fine text-ink-2">For the tiny project. Small enough to finish, with one number that says if it worked.</p>
+            <p className="mt-1 text-fine text-ink-2">For your small project. Keep it small enough to finish, with one number to show if it worked.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Field label="The idea" value={s.plan.idea ?? cluster.tests[2].text}
                 onChange={e => patch(o => ({ plan:{ ...o.plan, idea:e.target.value } }))} className="sm:col-span-2"/>

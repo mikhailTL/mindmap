@@ -1,7 +1,7 @@
 import React from 'react'
 import { LampFace } from '../../traffic/Face'
 import { Chevron } from '../../ui/marks'
-import { Panel, PanelHead, Why } from '../Monitor'
+import { Panel, PanelHead } from '../Monitor'
 import { cn } from '../../lib/utils'
 import { ScrollIn } from '../../ui/motion'
 import { PartHead } from './PartHead'
@@ -19,12 +19,13 @@ import { ScoreChart } from './charts'
  *   range      Day, Week, Month, or a custom From and To
  *   calendar   one month, each day's Mind Score coloured by the teen's OWN
  *              usual band (never anyone else's), with that day's Heads Up lamp
- *   chart      the range as columns over the usual band
- *   body       pulse, variability, sweat response, temperature and steps for
- *              the range, each naming where it comes from
- *   readings   every reading by source: patch, camera, check-in questions; the
- *              phone-only ones listed
+ *   chart      the range as a line over the usual band; tap a point to see
+ *              how its readings were taken
  *   Heads Up   the range's lights and what was noticed, in the teen's words
+ *
+ * The owner, 18 October: "everything looks too overwhelming". The day counts
+ * under the chart and its "How the colours work" note went; the calendar
+ * already colours each day.
  *
  * P2's shared RangeTrend (src/views/family/RangeTrend.jsx) did not exist when
  * this was written, so the range chart here is local. */
@@ -224,7 +225,7 @@ const clock12 = t => {
 function chartItems(teen, span, byDate) {
   if (span[0] === span[1]) {
     if (span[0] === TODAY) {
-      return teen.hours.map(h => ({ key: 'h' + h.hour, label: clockOf(h.hour), v: h.score,
+      return teen.hours.map(h => ({ key: 'h' + h.hour, hour: h.hour, label: clockOf(h.hour), v: h.score,
         read: `${h.hour % 12 || 12} ${h.hour < 12 ? 'am' : 'pm'} hour` }))
     }
     const d = byDate.get(span[0])
@@ -232,7 +233,8 @@ function chartItems(teen, span, byDate) {
       return [{ key: d.date, label: d.weekday, v: d.score, read: `${shortDate(d.date)}, day score` }]
     }
     return (d?.readings || []).slice().sort((a, b) => (a.time < b.time ? -1 : 1)).map((r, i) => ({
-      key: r.time + i, label: clock12(r.time).replace(':00', '').replace(' ', ''), v: r.score, source: r.source,
+      key: r.time + i, time: r.time, label: clock12(r.time).replace(':00', '').replace(' ', ''), v: r.score,
+      source: r.source,
       read: `${clock12(r.time)}, ${SOURCES[r.source].word.toLowerCase()}`,
     }))
   }
@@ -244,91 +246,46 @@ function chartItems(teen, span, byDate) {
 
 /* The range as one line over the usual band (src/views/student/charts.jsx):
    evenly spaced, a label under every few points. */
-function RangeChart({ items, usual }) {
+function RangeChart({ items, usual, detail }) {
   const n = items.length
   const every = Math.ceil(n / 8)
   const at = k => (n > 1 ? k / (n - 1) : 0.5)
-  const points = items.map((it, k) => ({ key: it.key, x: at(k), v: it.v, read: it.read }))
-  const ticks = items.map((it, k) => ({ x: at(k), label: k % every === 0 || k === n - 1 ? it.label : '' }))
+  const points = items.map((it, k) => ({ key: it.key, x: at(k), v: it.v, read: it.read, item: it }))
+  /* The last point is always labelled, so a regular label too close to it is
+     dropped rather than drawn over it. */
+  const ticks = items.map((it, k) => ({ x: at(k),
+    label: k === n - 1 || (k % every === 0 && n - 1 - k >= every) ? it.label : '' }))
   return <ScoreChart points={points} ticks={ticks} usual={usual} band={v => BANDS[bandKey(v, usual)]}
-    label={`${SCORE} over the range`}/>
+    label={`${SCORE} over the range`} detail={detail}/>
 }
 
-/* ── The body, over the range ───────────────────────────────────────────── */
+/* ── How a point was taken ──────────────────────────────────────────────
+   Shown under the chart once a point is tapped: the readings behind it, each
+   with its source. */
 
-const METRICS = [
-  { key: 'pulse', label: 'Pulse', unit: 'bpm', from: 'patch and camera', dp: 0 },
-  { key: 'hrv', label: 'Variability', unit: 'ms', from: 'patch and camera', dp: 0 },
-  { key: 'eda', label: 'Sweat response', unit: 'µS', from: 'patch', dp: 1 },
-  { key: 'temp', label: 'Skin temperature', unit: '°C', from: 'patch', dp: 1 },
-  { key: 'steps', label: 'Steps', unit: 'a day', from: 'phone', dp: 0 },
-]
-const fmt = (v, dp) => (dp ? v.toFixed(dp) : Math.round(v).toLocaleString('en-US'))
-
-function Body({ days, all }) {
-  return (
-    <dl className="m-0 grid grid-cols-1">
-      {METRICS.map(m => {
-        const vs = days.map(d => d[m.key]).filter(v => typeof v === 'number')
-        if (!vs.length) return null
-        const mean = vs.reduce((a, b) => a + b, 0) / vs.length
-        const usual = all.reduce((a, d) => a + d[m.key], 0) / all.length
-        const min = Math.min(...vs), max = Math.max(...vs)
-        return (
-          <div key={m.key} className="flex items-baseline justify-between gap-3 border-b border-rule py-2">
-            <dt className="min-w-0">
-              <span className="block font-display text-ui font-medium text-ink">{m.label}</span>
-              <span className="block text-fine text-ink-3">From the {m.from}</span>
-            </dt>
-            <dd className="m-0 shrink-0 text-right">
-              <span className="font-display text-row font-medium tabular-nums leading-none text-ink">
-                {fmt(mean, m.dp)}</span>
-              <span className="ml-1 text-fine text-ink-3">{m.unit}</span>
-              <span className="block text-fine tabular-nums text-ink-2">
-                {vs.length > 1 ? `${fmt(min, m.dp)} to ${fmt(max, m.dp)}, ` : ''}usual {fmt(usual, m.dp)}</span>
-            </dd>
-          </div>
-        )
-      })}
-    </dl>
-  )
-}
-
-/* ── Readings by source ─────────────────────────────────────────────────── */
-
-function Readings({ days, single }) {
-  const all = days.flatMap(d => d.readings.map(r => ({ ...r, date: d.date })))
-  const count = s => all.filter(r => r.source === s).length
-  const phone = all.filter(r => r.source !== 'patch').reverse()
-  const shown = single ? all.slice().sort((a, b) => (a.time < b.time ? -1 : 1)) : phone.slice(0, 6)
+function Taken({ item, byDate }) {
+  const rs = item.source ? [{ time: item.time, source: item.source, score: item.v }]
+    : item.hour != null ? (byDate.get(TODAY)?.readings || []).filter(r => Number(r.time.slice(0, 2)) === item.hour)
+      : byDate.get(item.key)?.readings || []
+  const sorted = rs.slice().sort((x, y) => (x.time < y.time ? -1 : 1))
+  const title = item.source ? `Reading at ${clock12(item.time)}`
+    : `Readings for ${item.hour != null ? `the ${item.read}` : shortDate(item.key)}`
   return (
     <div>
-      <ul className="m-0 grid list-none grid-cols-4 gap-x-3 gap-y-2 p-0 lg:grid-cols-2">
-        {Object.keys(SOURCES).map(s => (
-          <li key={s} className="min-w-0">
-            <p className="tick flex items-center gap-1.5"><SourceMark source={s}/>{SOURCES[s].word}</p>
-            <p className="mt-0.5 font-display text-row font-medium tabular-nums leading-none text-ink">
-              {count(s)}</p>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-fine text-ink-2">
-        {single ? (shown.length ? 'Every reading that day.' : 'No readings logged that day.') : phone.length
-          ? 'Latest readings taken on the phone, without the patch.'
-          : 'No phone-only readings in this range.'}</p>
-      {shown.length > 0 && (
+      <p className="m-0 font-display text-ui font-bold text-ink">{title}</p>
+      {sorted.length ? (
         <ul className="m-0 mt-1 list-none p-0">
-          {shown.map((r, i) => (
-            <li key={r.date + r.time + i} className="flex items-center gap-3 border-b border-rule py-1.5
-              last:border-b-0">
+          {sorted.map((r, i) => (
+            <li key={r.time + i} className="flex items-center gap-3 border-b border-rule py-1.5 last:border-b-0">
               <SourceMark source={r.source}/>
-              <span className="min-w-0 flex-1 text-fine text-ink">
-                {single ? '' : `${shortDate(r.date)}, `}{clock12(r.time)}
+              <span className="min-w-0 flex-1 text-fine text-ink">{clock12(r.time)}
                 <span className="text-ink-3"> · {SOURCES[r.source].word}</span></span>
               <span className="shrink-0 font-display text-ui font-medium tabular-nums text-ink">{r.score}</span>
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="m-0 mt-1 text-fine text-ink-2">From the patch.</p>
       )}
     </div>
   )
@@ -384,7 +341,6 @@ export function Trends({ teen, className, bare = false, log, onSpan }) {
     .map(d => byDate.get(d.date))
   const items = chartItems(teen, clampSpan, byDate)
   const single = clampSpan[0] === clampSpan[1]
-  const counts = BAND_ORDER.map(k => [k, days.filter(d => bandKey(d.score, teen.usual) === k).length])
   const label = single ? `${dayName(clampSpan[0])}, ${shortDate(clampSpan[0]).slice(4)}`
     : `${shortDate(clampSpan[0])} to ${shortDate(clampSpan[1])}`
 
@@ -407,7 +363,7 @@ export function Trends({ teen, className, bare = false, log, onSpan }) {
       className={bare ? 'flex flex-col gap-3 lg:gap-4'
         : 'flex flex-col gap-3 rounded-[24px] border border-beam/25 bg-beam-wash p-3 sm:p-4 lg:gap-4 lg:p-5'}>
       {!bare && <PartHead id="trends-h" kind="trends" title="Trends"
-        line="Days, weeks and months, compared only with your own usual. Demo days."/>}
+        line="Compared only with your own usual."/>}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-4">
         <Panel className="flex flex-col gap-4">
           <RangePicker state={state} set={set} first={first}/>
@@ -416,45 +372,14 @@ export function Trends({ teen, className, bare = false, log, onSpan }) {
         </Panel>
         <div className="flex min-w-0 flex-col gap-3 lg:gap-4">
           <Panel tone="aqua">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <PanelHead title={`${SCORE}, ${RANGE_WORD[state.kind]}`} meta={label} className="min-w-0 flex-1"/>
-              <Why label="How the colours work" className="pt-1">
-                Each day is coloured against your own usual range, {teen.usual.lo} to {teen.usual.hi}.
-                Higher means more stress. Nobody else is in the comparison.
-              </Why>
-            </div>
-            <div className="mt-3"><RangeChart items={items} usual={teen.usual}/></div>
-            {!single && (
-              <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-rule pt-2.5 sm:grid-cols-4">
-                {counts.map(([k, n]) => (
-                  <div key={k} className="min-w-0">
-                    <dt className="tick flex items-center gap-1.5">
-                      <span aria-hidden className={cn('h-3.5 w-[3px] rounded-bar', BANDS[k].bar)}/>
-                      {BANDS[k].word}</dt>
-                    <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none text-ink">
-                      {n}<span className="ml-1 font-body text-fine font-normal text-ink-3">
-                        {n === 1 ? 'day' : 'days'}</span></dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            <PanelHead as="h3" title={SCORE} meta={label}/>
+            <div className="mt-3"><RangeChart items={items} usual={teen.usual}
+              detail={pt => <Taken item={pt.item} byDate={byDate}/>}/></div>
           </Panel>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-            <Panel>
-              <PanelHead title="Your Body" meta={single ? 'that day' : 'average'}/>
-              <div className="mt-1"><Body days={days} all={teen.days}/></div>
-            </Panel>
-            <div className="flex flex-col gap-3 lg:gap-4">
-              <Panel variant="outline">
-                <PanelHead title="Readings by Source" meta={`${days.reduce((a, d) => a + d.readings.length, 0)} in all`}/>
-                <div className="mt-3"><Readings days={days} single={single}/></div>
-              </Panel>
-              <Panel variant="tint" hue="sun">
-                <PanelHead title="Heads Up" meta={RANGE_WORD[state.kind].toLowerCase()}/>
-                <div className="mt-3"><RangeHeadsUp days={days}/></div>
-              </Panel>
-            </div>
-          </div>
+          <Panel variant="tint" hue="sun">
+            <PanelHead as="h3" title="Heads Up" meta={single ? 'that day' : RANGE_WORD[state.kind].toLowerCase()}/>
+            <div className="mt-3"><RangeHeadsUp days={days}/></div>
+          </Panel>
         </div>
       </div>
     </section>

@@ -248,7 +248,7 @@ export default function Chest() {
               'Breathe in as the wave rises. Breathe out as it falls.',
               'Hold Space or the pad while you breathe in. Let go to breathe out.',
               best != null ? `On a phone, lie down with it on your chest. Your best so far: ${best}% in time.`
-                : 'On a phone, lie down with it on your chest. It feels you breathe.',
+                : 'On a phone, lie down and rest it on your chest. It senses your breathing.',
             ]}>
             <DidItWork tool="chest" phase="before" className="mt-4"/>
           </HowTo>
@@ -274,7 +274,7 @@ export default function Chest() {
     )
   }
 
-  const source = frame.source === 'motion' ? 'Reading your chest. Touch the pad to use taps.'
+  const source = frame.source === 'motion' ? 'Sensing your breathing. Touch the pad to use taps instead.'
     : motionOk ? 'Hold while breathing in. Or lay the phone on your chest.'
     : 'Hold while breathing in. Let go to breathe out.'
   return (

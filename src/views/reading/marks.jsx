@@ -21,7 +21,7 @@ export const SOURCE = {
   mirror: { word: 'Mirror',        Icon: Person },
 }
 
-/* Circle for the camera, square for the check-in questions, diamond for the patch,
+/* Circle for the camera, square for the survey, diamond for the patch,
    triangle for the mirror.
    Drawn about a centre so the chart and the list share one geometry. */
 export function ShapePath({ source, cx, cy, r, ...rest }) {
@@ -72,8 +72,7 @@ export function when(at, now) {
 }
 
 /* The rings a logged reading draws on the rainbow. A camera reading reads the
-   heart, so it fills the heart band; the check-in questions fill one band of
-   their own. A patch reading fills all four. Only the score is kept in the
+   heart, so it fills the heart band; the survey fills one band of its own. A patch reading fills all four. Only the score is kept in the
    log, so a band carries the score and never a figure that was not measured. */
 const HEART = { id: 'heart', name: 'Heart', glow: '#e11919' }
 const SELF = { id: 'self', name: 'Your answers', color: '#157446', glow: '#1d8fb0' }
@@ -84,5 +83,5 @@ export function ringsFor(entry) {
   const v = entry.score
   if (entry.source === 'camera') return [{ ...HEART, value: v, reading: 'Camera' }]
   if (entry.source === 'patch') return PATCH.map(([id, name, glow]) => ({ id, name, glow, value: v }))
-  return [{ ...SELF, value: v, reading: 'Check-in questions' }]
+  return [{ ...SELF, value: v, reading: 'Survey' }]
 }

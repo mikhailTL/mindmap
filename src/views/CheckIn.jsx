@@ -5,10 +5,10 @@ import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
 import { ArrowRight, Camera, Link, Person, Stack } from '../ui/marks'
 import { Button } from '../ui/button'
-import { Card, cardClass } from '../ui/card'
+import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
 import { Scale } from '../ui/radio-scale'
-import { DemoNotice, PatchNotice } from '../ui/notice'
+import { PatchNotice } from '../ui/notice'
 import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
@@ -26,10 +26,10 @@ import { cn } from '../lib/utils'
    survey. Entering a reading replaces the chooser. The step guide and its
    drawings belong to PhoneCheck, so they never sit on the chooser. */
 
-const PANEL = 'rounded-panel border border-rule bg-card'
+const PANEL = 'rounded-panel border border-rule/60 bg-card'
 
 /* One line per screen and its figures. Every figure is measured elsewhere:
-   PPG_SECONDS plus VOICE_SECONDS is 45; ITEMS (lib/engine.js) holds the check-in questions. */
+   PPG_SECONDS plus VOICE_SECONDS is 45; ITEMS (lib/engine.js) holds the survey. */
 const SCREENS = {
   sensors: {
     title: 'Camera and microphone',
@@ -37,24 +37,23 @@ const SCREENS = {
     facts: [['45', 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames or audio kept']],
   },
   survey: {
-    title: 'Check-in questions',
+    title: 'Survey',
     lede: 'Your answers become one number.',
     facts: [[String(ITEMS.length), 'scales to fill in'], [SCORE_RANGE, SCORE],
       ['1', 'score saved to your account']],
   },
   mirror: {
     title: 'Mental Mirror',
-    lede: `The front camera reads your face and your pulse from skin colour; the ${SCORE} model scores it.`,
+    lede: "Google's MediaPipe Face Landmarker maps 478 points on your face. Your pulse is read from skin colour.",
     facts: [[String(FACE_SECONDS), 'seconds of capture'], [SCORE_RANGE, SCORE], ['0', 'frames kept']],
   },
 }
 
-/* The four ways in. Each card has its own hue and surface so the four read
-   apart at a glance: the check-in questions on the dark ground as the start
-   here pick, the Mental Mirror on a sky wash, the camera with a turquoise band
-   and the patch with a sun edge. `fact` is the one figure shown large. */
+/* The four ways in, numbered 1 to 4. The owner, 18 October: the dark survey
+   card stood out and the bands and edges read as blocky, so all four sit on
+   the same white card and the hue lives in the icon and the button only. */
 const WAYS = [
-  { id:'survey', title:'Check-in questions', opens:true, Mark:Stack, tag:'Start here',
+  { id:'survey', title:'Survey', opens:true, Mark:Stack, tag:'Start here',
     line:'Only needs this phone. Take it as often as you like.',
     fact:['60', 'seconds'],
     cta:'Answer',
@@ -65,7 +64,7 @@ const WAYS = [
     ],
     foot:'Your answers become one score. The score syncs to your account.' },
   { id:'mirror', title:'Mental Mirror', opens:true, Mark:Person,
-    line:'Face the phone. Lines trace your face as it is read.',
+    line:"Google's MediaPipe Face Landmarker maps 478 points on your face.",
     fact:[String(FACE_SECONDS), 'seconds'],
     cta:'Open the Mirror',
     spec:[
@@ -94,43 +93,22 @@ const WAYS = [
     ] },
 ]
 
-/* Per way: the surface (cardClass via Card), the icon tile, the big figure,
-   the action and any extra edge. Text on ink is paper, mist or accent-lit;
-   each action clears 4.5 : 1 (paper on sky-ink, beam-ink and sun-ink, ink
-   on accent-lit). */
+/* Per way: the icon tile and the action. Each action clears 4.5 : 1 with
+   paper on it (accent, sky-ink, beam-ink, sun-ink). */
 const LOOK = {
-  survey: {
-    variant:'ink', tile:'bg-paper/10 text-accent-lit', num:'text-accent-lit', unit:'text-mist',
-    head:'text-paper', body:'text-mist', tag:'text-accent-lit',
-    cta:'bg-accent-lit text-ink groupHoverOnly:bg-paper',
-  },
-  mirror: {
-    variant:'tint', hue:'sky', tile:'bg-card text-sky-ink', num:'text-sky-ink', unit:'text-ink-2',
-    head:'text-ink', body:'text-ink-2',
-    cta:'bg-sky-ink text-paper groupHoverOnly:bg-ink',
-  },
-  sensors: {
-    variant:'plain', tile:'bg-beam-wash text-beam-ink', num:'text-beam-ink', unit:'text-ink-2',
-    head:'text-ink', body:'text-ink-2', band:'bg-beam',
-    cta:'bg-beam-ink text-paper groupHoverOnly:bg-ink',
-  },
-  patch: { tile:'bg-sun-wash text-sun-ink' },
+  survey:  { tile:'bg-accent-wash text-accent-ink', cta:'bg-accent text-paper groupHoverOnly:bg-ink' },
+  mirror:  { tile:'bg-sky-wash text-sky-ink',       cta:'bg-sky-ink text-paper groupHoverOnly:bg-ink' },
+  sensors: { tile:'bg-beam-wash text-beam-ink',     cta:'bg-beam-ink text-paper groupHoverOnly:bg-ink' },
+  patch:   { tile:'bg-sun-wash text-sun-ink' },
 }
-/* The same hues on the white panels under "Compare the four ways". */
-const COMPARE_TILE = {
-  survey:'bg-ink text-accent-lit', mirror:'bg-sky-wash text-sky-ink',
-  sensors:'bg-beam-wash text-beam-ink', patch:'bg-sun-wash text-sun-ink',
-}
+const CARD = 'rounded-panel border border-rule/60 bg-card shadow-card'
 
-/* Figures as a ruled row: each a big number over a short label, left
-   aligned, with a hairline between them. Spans, so it can sit inside a
-   button. */
+/* Figures in a row: each a number over a short label, spaced, no rules. */
 function Figures({ items, className }) {
   return (
-    <span className={cn('flex border-t border-rule pt-2.5', className)}>
+    <span className={cn('flex flex-wrap gap-x-6 gap-y-2', className)}>
       {items.map(([value, label]) => (
-        <span key={label} className="flex min-w-0 flex-col border-l border-rule px-3
-          first:border-l-0 first:pl-0">
+        <span key={label} className="flex min-w-0 flex-col">
           <span className="font-display text-head font-bold tabular-nums leading-none text-accent-ink">
             {value}
           </span>
@@ -144,10 +122,10 @@ function Figures({ items, className }) {
 /* Spans, not a `dl`: a button's content model is phrasing. */
 function Spec({ rows }) {
   return (
-    <span className="mt-3 block">
+    <span className="mt-3 block space-y-1.5">
       {rows.map(([k, v]) => (
-        <span key={k} className="flex items-baseline gap-3 border-t border-rule py-1.5">
-          <span className="tick w-[3.6rem] shrink-0">{k}</span>
+        <span key={k} className="flex items-baseline gap-3">
+          <span className="w-[3.6rem] shrink-0 text-fine text-ink-3">{k}</span>
           <span className="min-w-0 flex-1 text-fine leading-[1.45] text-ink-2">{v}</span>
         </span>
       ))}
@@ -164,33 +142,38 @@ function Tile({ Mark, className }) {
   )
 }
 
+/* The card's top line: its number, its icon, and how long it takes. The
+   number is drawn; the list it sits in gives a screen reader the count. */
+function Top({ n, way, look }) {
+  return (
+    <span className="flex items-center gap-3">
+      <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-chip border
+        border-ruling bg-paper font-display text-fine font-bold tabular-nums text-ink">{n}</span>
+      <Tile Mark={way.Mark} className={look.tile}/>
+      {way.tag && (
+        <span className="rounded-chip bg-accent-wash px-2.5 py-0.5 font-display text-fine font-bold
+          text-accent-ink">{way.tag}</span>
+      )}
+      {way.fact && (
+        <span className="ml-auto shrink-0 text-fine tabular-nums text-ink-3">
+          {`${way.fact[0]} ${way.fact[1]}`}</span>
+      )}
+    </span>
+  )
+}
+
 /* A way in. The whole card is the control and the hit area; the action
    inside it is drawn as a button so the next step is plain. */
-const Way = React.forwardRef(function Way({ way, onOpen, children }, ref) {
+const Way = React.forwardRef(function Way({ n, way, onOpen, children }, ref) {
   const look = LOOK[way.id]
   return (
     <Card interactive as="button" type="button" ref={ref} onClick={onOpen}
-      variant={look.variant} hue={look.hue}
-      className="group relative flex h-full flex-col p-4 lg:p-5">
-      {look.band && <span aria-hidden className={cn('absolute inset-x-0 top-0 h-[5px]', look.band)}/>}
-      <span className="flex items-start justify-between gap-3">
-        <Tile Mark={way.Mark} className={look.tile}/>
-        {way.fact && (
-          <span className="flex items-baseline gap-1.5">
-            <span className={cn('font-display text-[2.5rem] font-bold leading-none tabular-nums', look.num)}>
-              {way.fact[0]}</span>
-            <span className={cn('text-fine', look.unit)}>{way.fact[1]}</span>
-          </span>
-        )}
-      </span>
-      {way.tag && (
-        <span className={cn('mt-3 block font-display text-fine font-bold', look.tag)}>{way.tag}</span>
-      )}
-      <span className={cn('block font-display text-head font-bold leading-tight', way.tag ? 'mt-0.5' : 'mt-3',
-        look.head)}>{way.title}</span>
-      <span className={cn('mt-1 block max-w-[38ch] text-meta leading-[1.4]', look.body)}>{way.line}</span>
+      className="group flex h-full flex-col border-rule/60 p-5 lg:p-6">
+      <Top n={n} way={way} look={look}/>
+      <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">{way.title}</span>
+      <span className="mt-1.5 block max-w-[38ch] text-meta leading-[1.45] text-ink-2">{way.line}</span>
       {children}
-      <span className="mt-auto pt-4">
+      <span className="mt-auto pt-5">
         <span className={cn('inline-flex min-h-[46px] items-center gap-2 rounded-field px-5 font-display',
           'text-ui font-bold transition-colors duration-150', look.cta)}>
           {way.cta}
@@ -210,9 +193,9 @@ function Compare() {
         {WAYS.map(way => {
           const Mark = way.Mark
           return (
-            <section key={way.id} className={cn(PANEL, 'p-4')}>
+            <section key={way.id} className={cn(CARD, 'p-5')}>
               <h3 className="flex items-center gap-2.5 font-display text-meta font-bold text-ink">
-                <Tile Mark={Mark} className={cn('size-9 [&_svg]:size-5', COMPARE_TILE[way.id])}/>
+                <Tile Mark={Mark} className={cn('size-9 [&_svg]:size-5', LOOK[way.id].tile)}/>
                 {way.title}
               </h3>
               <Spec rows={way.spec}/>
@@ -238,7 +221,7 @@ const ReadingHead = React.forwardRef(function ReadingHead({ id, onBack }, ref) {
         <h2 ref={ref} tabIndex={-1} className="max-w-[26ch] font-display font-bold text-ink">
           {s.title}
         </h2>
-        <Why label={`What ${s.title.toLowerCase()} measures`}>
+        <Why label="What this reading measures">
           <p>{s.lede}</p>
           <Figures items={s.facts} className="mt-2"/>
         </Why>
@@ -369,44 +352,42 @@ export function CheckInBody({ go }){
         <Stage dir={dir}>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
             <h2 className="font-display font-bold text-ink">Take a reading</h2>
-            {/* This screen scores real answers in both modes; the notice
-                describes the surrounding screens. */}
-            {mode !== 'real' && <DemoNotice inline>This screen scores your real answers.</DemoNotice>}
             <PatchNotice inline/>
           </div>
 
-          <div className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
-            <ScrollRow index={0} className="h-full">
-              <Way ref={el => { cards.current.survey = el }} way={survey}
+          {/* An ordered list: the owner, 18 October, could not tell there were
+              four ways, so they are numbered 1 to 4. */}
+          <ol className="m-0 mt-4 grid list-none gap-4 p-0 lg:mt-5 lg:grid-cols-2 lg:gap-5">
+            <ScrollRow as="li" index={0} className="h-full">
+              <Way n={1} ref={el => { cards.current.survey = el }} way={survey}
                 onOpen={() => open('survey')}>
-                <span className="mt-3 flex items-center gap-3">
+                <span className="mt-4 flex items-center gap-3">
                   {/* aria-hidden: the figure beside it says the same. */}
                   <span aria-hidden className="block flex-1">
-                    <Progress value={answered} max={ITEMS.length} className="bg-paper/15"/>
+                    <Progress value={answered} max={ITEMS.length}/>
                   </span>
-                  <span className="shrink-0 text-fine tabular-nums text-mist">
+                  <span className="shrink-0 text-fine tabular-nums text-ink-3">
                     {`${answered} of ${ITEMS.length} answered`}
                   </span>
                 </span>
               </Way>
             </ScrollRow>
-            <ScrollRow index={1} className="h-full">
-              <Way ref={el => { cards.current.mirror = el }} way={mirror}
+            <ScrollRow as="li" index={1} className="h-full">
+              <Way n={2} ref={el => { cards.current.mirror = el }} way={mirror}
                 onOpen={() => open('mirror')}/>
             </ScrollRow>
-            <ScrollRow index={2} className="h-full">
-              <Way ref={el => { cards.current.sensors = el }} way={sensors}
+            <ScrollRow as="li" index={2} className="h-full">
+              <Way n={3} ref={el => { cards.current.sensors = el }} way={sensors}
                 onOpen={() => open('sensors')}/>
             </ScrollRow>
             {/* Pairing is a device handshake, not a reading, so this card is
                 a panel with a control in it. */}
-            <ScrollRow index={3} className="h-full">
-              <section className={cn(cardClass('plain'), 'flex h-full flex-col border-l-[5px] border-l-sun p-4 lg:p-5')}>
-                <h3 className="flex items-center gap-3 font-display !text-head font-bold !leading-tight text-ink">
-                  <Tile Mark={Link} className={LOOK.patch.tile}/>{patch.title}
-                </h3>
-                <p className="mt-2 max-w-[38ch] text-meta leading-[1.4] text-ink-2">{patch.line}</p>
-                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
+            <ScrollRow as="li" index={3} className="h-full">
+              <section className={cn(CARD, 'flex h-full flex-col p-5 lg:p-6')}>
+                <Top n={4} way={patch} look={LOOK.patch}/>
+                <h3 className="mt-4 font-display !text-head font-bold !leading-tight text-ink">{patch.title}</h3>
+                <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.45] text-ink-2">{patch.line}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5">
                   <Button size="sm" onClick={pairUp} disabled={busy}
                     className="bg-sun-ink px-5 font-bold text-paper hoverOnly:bg-ink active:bg-ink">
                     <Link aria-hidden/>{busy ? 'Connecting…' : patch.cta}
@@ -417,7 +398,7 @@ export function CheckInBody({ go }){
                 </div>
               </section>
             </ScrollRow>
-          </div>
+          </ol>
           <Compare/>
           {/* The owner, 17 October: no log or trends on this tab. They are
               on the Trends tab, and this link goes there. */}
@@ -444,8 +425,9 @@ export function CheckInBody({ go }){
           <ReadingHead id="survey" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]
             xl:items-start xl:gap-4">
-            {/* The panel supplies the gutter and tightens the row height. */}
-            <div className={cn(PANEL, 'px-4 lg:px-5 [&_fieldset]:py-4')}>
+            {/* The panel supplies the gutter; pt-4 because a legend sits on the
+                fieldset's top edge, so the first question needs the air. */}
+            <div className={cn(PANEL, 'px-5 pt-4 lg:px-6 [&_fieldset]:border-rule/50 [&_fieldset]:py-5')}>
               {ITEMS.map((it,i)=>(
                 <ScrollRow key={it.id} index={i}
                   className={i === ITEMS.length - 1 ? '[&_fieldset]:border-b-0' : undefined}>
@@ -470,7 +452,7 @@ export function CheckInBody({ go }){
                     {/* RainbowDial takes raw hex: #157446 is accent, #1d8fb0 is beam. */}
                     <RainbowDial score={r.score} size={268}
                       rings={[{ id:'self', name:'Your answers', color:'#157446', glow:'#1d8fb0',
-                                value:r.score, reading:'Check-in questions' }]}/>
+                                value:r.score, reading:'Survey' }]}/>
                     <div className="w-full">
                       <Headline>{s.pre}<b className={`font-bold ${s.calm ? 'text-calm' : 'text-warn'}`}>{s.word}</b>{s.tail}</Headline>
                       <dl className="m-0 mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">

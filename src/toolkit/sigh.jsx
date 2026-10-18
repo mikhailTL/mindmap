@@ -264,11 +264,11 @@ export default function Sigh() {
         <div style={g.vars}>
           <HowTo onStart={begin} disabled={mic === 'asking'}
             startLabel={mic === 'asking' ? 'Asking for the microphone' : 'Light the candle'}
-            art={<Candle word="Five breaths" sub={best != null ? `Your best ${one(best)} s` : 'Bend the flame, keep it lit'} still={g.reduced} small/>}
+            art={<Candle word="Five breaths" sub={best != null ? `Your best ${one(best)} s` : 'Breathe out slowly on the flame'} still={g.reduced} small/>}
             steps={[
               'Breathe in through your nose, then sniff once more.',
-              'Breathe out slowly on the flame. Long and soft wins.',
-              'Too hard and it flickers. No mic? Hold Space or the button.',
+              'Breathe out slowly and softly, for as long as you can.',
+              'Blow too hard and the flame flickers. No microphone? Hold Space or the button.',
             ]}
             measured="Sound level is measured here and never recorded.">
             <DidItWork tool="sigh" phase="before" className="mt-4"/>

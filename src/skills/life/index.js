@@ -10,8 +10,8 @@ import LifeHealth from './health.jsx'
 export const CATEGORY = { id: 'life', title: 'Life', sub: 'Wellness', family: 'mint' }
 
 export const TOOLS = [
-  { id: 'life-home',   title: 'Home Basics',      line: 'Meals, laundry, car, bus',     family: 'sun',   icon: HomeIcon,   Component: LifeHome },
-  { id: 'life-money',  title: 'Money Check',      line: 'Find leaks, plan a month',     family: 'mint',  icon: MoneyIcon,  Component: LifeMoney },
-  { id: 'life-stress', title: 'Overwhelm Reset',  line: 'Body check, then one step',    family: 'sky',   icon: StressIcon, Component: LifeStress },
-  { id: 'life-health', title: 'Own Your Health',  line: 'Visits, medicines, first aid', family: 'coral', icon: HealthIcon, Component: LifeHealth },
+  { id: 'life-home',   title: 'Home Basics',      line: 'Meals, laundry, car care and the bus',     family: 'sun',   icon: HomeIcon,   Component: LifeHome },
+  { id: 'life-money',  title: 'Money Check',      line: 'Track spending and plan a monthly budget',     family: 'mint',  icon: MoneyIcon,  Component: LifeMoney },
+  { id: 'life-stress', title: 'Overwhelm Reset',  line: 'Calm down, then pick one next step',    family: 'sky',   icon: StressIcon, Component: LifeStress },
+  { id: 'life-health', title: 'Health Basics',    line: 'Doctor visits, medicines and first aid', family: 'coral', icon: HealthIcon, Component: LifeHealth },
 ]

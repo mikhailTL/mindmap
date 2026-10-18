@@ -191,7 +191,7 @@ export const BADGES = [
     has:p => (p.marks?.script || 0) > 0 },
   { id:'clean',     name:'Clean sweep',    line:'Get every answer right in a quiz round.',
     has:p => (p.marks?.clean || 0) > 0 },
-  { id:'firstaid',  name:'First aider',    line:'Finish the first-aid check in Own Your Health.',
+  { id:'firstaid',  name:'First aider',    line:'Finish the first-aid check in Health Basics.',
     has:p => (p.marks?.firstaid || 0) > 0 },
   { id:'five',      name:'Five tried',     line:'Finish five different tools.',
     has:p => finished(p).length >= 5 },

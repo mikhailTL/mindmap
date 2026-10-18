@@ -61,7 +61,6 @@ export function WhatWorksCard({ className }) {
       ) : (
         <Rows rows={rows}/>
       )}
-      {mode === 'demo' && <p className="mt-1 text-fine text-ink-3">Demo figures.</p>}
     </Panel>
   )
 }

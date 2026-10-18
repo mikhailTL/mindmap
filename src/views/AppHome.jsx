@@ -14,7 +14,8 @@ import { PRO } from '../lib/terms'
 /* The owner fills this in. Plain text; a blank line starts a new paragraph. */
 export const ABOUT_TEXT = `Inspiration and function of MindMap. Text coming soon.`
 
-const MOTTO = 'Making your stress readable'
+/* Owner, 18 October: "a wellness app for teenagers" in place of the old motto. */
+const MOTTO = 'A wellness app for teenagers'
 /* The app's front page: the mark, the motto, About, and the way in. Plays its
    opening every time the page is opened or refreshed, signed in or out (the
    owner, 17 October), with Skip under it; reduced motion and the screenshot
@@ -33,8 +34,8 @@ const DEMO = [
 function DemoPanel({ go, onSignIn }) {
   return (
     <div className="w-full rounded-panel border border-rule bg-card p-4 text-left shadow-card sm:p-5">
-      <h2 className="m-0 font-display text-row font-bold text-ink">Guest Mode</h2>
-      <p className="m-0 mt-1 text-fine text-ink-2">The demo only, on sample data. No account needed. Pick a view:</p>
+      <h2 className="m-0 font-display text-row font-bold text-ink">Demo Mode</h2>
+      <p className="m-0 mt-1 text-fine text-ink-2">No account needed. Pick a view:</p>
       <div className="mt-3.5 grid gap-2.5">
         {DEMO.map((d, i) => (
           <button key={d.id} type="button" onClick={() => { setMode('demo'); setGuest(true); go(d.id) }}
@@ -179,20 +180,21 @@ export function AppHome({ go }) {
             </div>
           ) : (
             <>
-              <AuthPanel go={go}/>
-              {/* Guest Mode: the demo and nothing else. Live screens still
-                  ask for an account, so a guest cannot reach real data. */}
+              {/* Demo Mode, first (owner, 18 October): the demo and nothing
+                  else. Live screens still ask for an account, so it cannot
+                  reach real data. Stored as the guest flag (lib/mode.js). */}
               <button type="button"
                 onClick={() => { setMode('demo'); setGuest(true); setDemo(true); history.replaceState(null, '', '#/app-home?demo') }}
-                className="mt-3 flex min-h-[52px] w-full items-center justify-between gap-3 rounded-panel border-[1.5px]
+                className="mb-3 flex min-h-[52px] w-full items-center justify-between gap-3 rounded-panel border-[1.5px]
                   border-dashed border-accent/60 bg-accent-wash/60 px-4 text-left transition-colors duration-150
                   hoverOnly:border-accent hoverOnly:bg-accent-wash">
                 <span>
-                  <span className="block font-display text-ui font-bold text-ink">Guest Mode</span>
+                  <span className="block font-display text-ui font-bold text-ink">Demo Mode</span>
                   <span className="block text-fine text-ink-2">View the demo only. No account.</span>
                 </span>
                 <span aria-hidden className="font-display text-ui font-bold text-accent-ink">→</span>
               </button>
+              <AuthPanel go={go}/>
             </>
           )}
         </div>

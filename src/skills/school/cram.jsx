@@ -84,10 +84,10 @@ export default function Cram({ onExit }) {
 
   return (
     <Screen title="Time-Block Planner" family="sky" icon={CramIcon} onExit={onExit}
-      problem="Leaving it all to one late night ends in a crash the next day."
-      plan="List what is due, guess the minutes, and spread the work over the nights before.">
-      <Quest game={g} goal="Spread the work so every night ends before bedtime."
-        steps={['List what is due', 'Fix late nights', 'Lock in the plan']} at={step}>
+      problem="Plan homework so it is not all left for one late night."
+      plan="List what is due and how long each task takes. The planner spreads the work over the nights before.">
+      <Quest game={g} goal="Plan the work so every night ends before bedtime."
+        steps={['List what is due', 'Fix late nights', 'Save the plan']} at={step}>
 
       {s.stage === 'list' && (
         <>
@@ -165,7 +165,7 @@ export default function Cram({ onExit }) {
       {s.stage !== 'list' && s.plan && (
         <>
           {s.stage === 'done' && g.result && (
-            <EndCard game={g} title="Plan locked in" againLabel="Plan another" onAgain={again}
+            <EndCard game={g} title="Plan saved" againLabel="Plan another" onAgain={again}
               onDone={leave(onExit)}
               stats={[['Nights', nights.length], ['Work', hm(nights.reduce((a, n) => a + n.workMins, 0))],
                       ['Latest finish', fmtTime(Math.max(...nights.map(n => n.end)))],
@@ -184,7 +184,7 @@ export default function Cram({ onExit }) {
             ? <p role="status" className="rounded-[12px] bg-warn-wash p-3 font-display text-ui font-bold text-warn">
                 {late} {late === 1 ? 'night runs' : 'nights run'} past bedtime. Move a part earlier to fix it.
               </p>
-            : <Win reduced={g.reduced}>Every night ends before bedtime. Lock it in.</Win>)}
+            : <Win reduced={g.reduced}>Every night ends before bedtime.</Win>)}
           {nights.map(n => (
             <Sheet key={n.i}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -242,7 +242,7 @@ export default function Cram({ onExit }) {
               <Note>Parts can only move to nights before they are due.</Note>
               <div className="grid grid-cols-2 gap-3">
                 <Action kind="quiet" onClick={() => set({ stage:'list', plan:null })}>Edit list</Action>
-                <Action onClick={finish}>{late ? 'Lock it in anyway' : 'Lock it in'}</Action>
+                <Action onClick={finish}>{late ? 'Save plan anyway' : 'Save plan'}</Action>
               </div>
             </>
           )}
@@ -250,7 +250,7 @@ export default function Cram({ onExit }) {
             <>
               <Sheet>
                 <H>Log how long it really took</H>
-                <p className="mt-1 text-fine text-ink-2">After you finish a task, log the real minutes. This is what teaches the planner your guesses.</p>
+                <p className="mt-1 text-fine text-ink-2">After you finish a task, log the real minutes. The planner uses them to correct your next guesses.</p>
                 <ul className="mt-3 grid gap-3">
                   {s.tasks.map(t => (
                     <li key={t.id}>

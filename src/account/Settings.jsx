@@ -4,7 +4,7 @@ import { Bell, Chevron, Download, Exit, Grid, Info, Key } from '../ui/marks'
 import { useMode } from '../lib/mode'
 import { PRO_PLURAL } from '../lib/terms'
 import { MOTION, TEXT_SIZES, setAppearance, useAppearance } from './appearance'
-import { DEMO_LINKS, demoCounts } from './demo-network'
+import { demoSide } from './demo-network'
 import { backend, canInvite, homeFor, listNetwork, listPendingApprovals, signOut } from './store'
 import { Avatar, HelpMark, LinkMark, outline, solid } from './ui'
 
@@ -35,8 +35,8 @@ const GroupHead = ({ id, children, aside }) => (
 function People({ me, go, demo, role }) {
   let people, linked, waiting
   if (demo) {
-    const c = demoCounts()
-    people = DEMO_LINKS.map(l => l.person); linked = c.linked; waiting = c.waiting
+    const d = demoSide(role)
+    people = d.people; linked = d.linked; waiting = d.waiting
   } else if (me) {
     const rows = listNetwork(me.id).filter(l => l.status !== 'declined')
     people = rows.map(l => l.person)
@@ -67,7 +67,7 @@ function People({ me, go, demo, role }) {
               </span>
             )}
             <p className="min-w-0 font-display text-ui font-bold leading-tight text-ink">
-              {demo ? 'Maya’s network' : linked === 0 ? 'Nobody linked yet' : `${linked} linked`}
+              {demo ? 'Your network' : linked === 0 ? 'Nobody linked yet' : `${linked} linked`}
               {demo && <span className="block font-medium text-ink-2">
                 Demo, {linked} linked{waiting > 0 ? `, ${waiting} waiting` : ''}
               </span>}

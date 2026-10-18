@@ -23,6 +23,7 @@ import { MentalMirror } from './MentalMirror'
 import { Parents, ParentHome, ParentTrends } from './Parents'
 import { StudentTrends } from './student/TrendsTab'
 import { Pro, ProHome } from './Pro'
+import { ProPrivacy } from './pro/Privacy'
 import { Launch } from './Launch'
 import { AppHome } from './AppHome'
 import { ForStudents, ForParents, ForSchools } from './audience'
@@ -35,7 +36,7 @@ import { Logo, LogoMark } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame, Grid,
+import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame,
          People, PulseMark } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
@@ -64,7 +65,7 @@ const VIEWS = [
   /* the three audience explainer pages, and Heads Up */
   'students','parents','pro','heads-up',
   /* the product */
-  'app','app-home','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends',
+  'app','app-home','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','app-pro-privacy',
   /* inside the product */
   'reading','mirror','calendar','toolkit','ai','help','shared','app-notify',
   /* one route per toolkit activity, spec 0d section 7 */
@@ -91,7 +92,7 @@ const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 /* Routes that render app screens, so the chrome switches: `reading` is the
    student section on its reading tab, `privacy` the parent section on its
    sharing tab, whatever the urls suggest. */
-const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','reading','mirror','shared',
+const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','app-pro-privacy','reading','mirror','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
                            'toolkit-scan','toolkit-move','toolkit-sigh','toolkit-chest',
@@ -146,6 +147,7 @@ const TITLE = {
   'app-student':'The student screen in MindMap',
   'app-parent':'The parent screen in MindMap',
   'app-pro':`The ${PRO} screen in MindMap`,
+  'app-pro-privacy':'Privacy in MindMap',
   monitor:'Every reading in MindMap',
   reading:'Take a reading in MindMap',
   mirror:'Your Mental Mirror in MindMap',
@@ -507,6 +509,17 @@ const CalendarMark = p => (
  * bottom of every screen. Nobody switches audience; you are one of them. The
  * bar now lists what is inside the app you opened, and the launcher at /#/app
  * is where the three live. */
+const ShieldMark = p => (
+  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+    className="shrink-0">
+    <path d="M12 3.5 19 6v5.2c0 4.3-2.9 7.6-7 9.3-4.1-1.7-7-5-7-9.3V6z"/>
+    <path d="m9.2 12 2 2 3.6-3.8"/>
+  </svg>
+)
+
+/* One order on all three bars (owner, 18 October): Home, then the student's
+   Reading, then Trends, Toolkit, Ask, Network, and Privacy always last. */
 const APP_NAV = {
   student: [
     /* Spoken apart from the top bar's Home, which goes to the app home. */
@@ -515,23 +528,24 @@ const APP_NAV = {
     ['student-trends', 'Trends', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
-    ['shared',      'Privacy',  Grid],
+    ['network',     'Network',  People],
+    ['shared',      'Privacy',  ShieldMark],
   ],
   parent: [
     ['app-parent',  'Home',     PulseMark, 'Parent home'],
     ['parent-trends', 'Trends', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
     ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
-    ['privacy',     'Privacy',  Grid],
+    ['network',     'Network',  People],
+    ['privacy',     'Privacy',  ShieldMark],
   ],
   pro: [
-    /* Short at 390, the full words past sm. The linking screen is the
-       Connect tab, so two tabs never both say Network. */
     ['app-pro',     'Home',     PulseMark, `${PRO} home`],
     ['app-pro-trends', 'Trends', CalendarMark],
-    ['network',     'Connect',  People, 'Connect with parents and teens'],
-    ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
     ['toolkit',     'Toolkit',  Bracket],
+    ['ai',          'Ask',      AskMark, 'Ask MindMap AI'],
+    ['network',     'Network',  People],
+    ['app-pro-privacy', 'Privacy', ShieldMark],
   ],
 }
 
@@ -546,7 +560,7 @@ const APP_OF = {
   'app-parent': 'parent', privacy: 'parent',
   'toolkit-openers': 'parent', 'toolkit-phrasing': 'parent', 'toolkit-score': 'parent',
   'toolkit-rules': 'parent', 'toolkit-reach': 'parent',
-  'app-pro': 'pro', 'app-pro-trends': 'pro',
+  'app-pro': 'pro', 'app-pro-trends': 'pro', 'app-pro-privacy': 'pro',
   'toolkit-pro-opener': 'pro', 'toolkit-pro-triage': 'pro', 'toolkit-pro-ground': 'pro',
   'toolkit-pro-parents': 'pro', 'toolkit-pro-referral': 'pro',
 }
@@ -575,8 +589,8 @@ const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends',
                   ...Object.fromEntries(SKILL_ROUTES.map(r => [r, 'toolkit'])),
                   'app-parent':'app-parent', calendar:'calendar', privacy:'privacy',
                   'app-pro':'app-pro', 'app-pro-trends':'app-pro-trends',
-                  /* Network is a tab only on the pro bar; on the other two it
-                     lights nothing and is reached from the account portal. */
+                  'app-pro-privacy':'app-pro-privacy',
+                  /* Network is a tab on all three bars. */
                   signin:null, account:null, 'account-section':null, network:'network' }
 
 /* Two spellings of each screen name. At 390 the top bar also carries the help
@@ -627,6 +641,7 @@ const APP_TITLE = {
   privacy:        ['Privacy',          'Privacy'],
   'app-pro':      ['Home',             'Home'],
   'app-pro-trends': ['Trends',         'Trends'],
+  'app-pro-privacy': ['Privacy',       'Privacy'],
   signin:         ['Sign in',          'Sign in'],
   account:        ['Account',          'Account'],
   'account-section': ['Account',       'Account'],
@@ -783,14 +798,17 @@ function AppTopBar({ view, go, app }) {
           {/* The corner: MindMap's mark and name, back to the site's home. */}
           <button type="button" onClick={() => go('site')} aria-label="MindMap, back to the site"
             className="order-1 -ml-1.5 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
-              text-[1.15rem] text-ink transition-colors duration-150 hoverOnly:bg-mist sm:text-[1.3rem]">
-            <Logo/>
+              text-[1rem] text-ink transition-colors duration-150 hoverOnly:bg-mist min-[400px]:text-[1.15rem]
+              sm:text-[1.3rem]">
+            {/* Room for the demo "?" on a phone: below 375px the mark stands
+                alone (the button's label still names it). */}
+            <Logo className="gap-2 max-[374px]:[&>span:first-of-type]:hidden"/>
           </button>
           <div className="order-4 ml-auto flex items-center gap-1 sm:gap-2">
             <GetHelp compact/>
-            <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-2 sm:[&_button]:px-3"/>
+            <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-1.5 sm:[&_button]:px-3"/>
           </div>
-          <AccountMenu go={go} className="order-7 -mr-2 ml-1 w-11"/>
+          <AccountMenu go={go} app={app} className="order-7 -mr-2 ml-0.5 w-11 sm:ml-1"/>
         </div>
         <div className="flex h-11 items-center gap-1 border-t border-rule sm:contents">
           <span aria-hidden className="order-2 hidden h-6 w-px shrink-0 bg-rule sm:block"/>
@@ -1019,7 +1037,7 @@ function SurveyPage() {
         <div>
           {SECTIONS.map(section => (
             <section key={section.id}
-              className="mt-9 border-t border-ink pt-3 first:mt-0
+              className="mt-9 border-t border-rule pt-3 first:mt-0
                 lg:grid lg:grid-cols-[17rem_minmax(0,44rem)] lg:gap-x-14">
               <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
                 <h2 className="font-display text-head font-bold text-ink-2">{section.title}</h2>
@@ -1222,6 +1240,7 @@ export function App() {
               /* "View Trends": the caseload dashboard in live mode, with
                  nobody added yet. Pro.jsx draws its own empty state. */
               'app-pro-trends': p => <Pro {...p}/>,
+              'app-pro-privacy': p => <ProPrivacy {...p}/>,
               /* The student screen with every reading on it, whichever mode. */
               monitor:       p => <Students {...p} tab="today"/>,
               reading:       p => <Students {...p} tab="check"/>,

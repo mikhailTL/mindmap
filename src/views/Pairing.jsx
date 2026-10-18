@@ -3,9 +3,9 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
 import { ArrowRight, Check, Always, Cross, Minus, ChevronDown } from '../ui/marks'
-import { Parallax2D, RevealLines, ScrollIn, ScrollRow } from '../ui/motion'
+import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { WirelessLink, StepArt } from '../charts/pairing-art'
-import { ITEMS, connectPatch } from '../lib/engine'
+import { connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
@@ -52,20 +52,20 @@ const LINK_FACTS = [
 const TROUBLE = [
   { /* engine.js:47, the navigator.bluetooth guard: an embedded page and plain
        http both land on this one message, so one card. */
-    title:'The Browser Has No Bluetooth',
+    title:'The browser has no Bluetooth',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
       + 'site directly in Chrome on a computer, or use the check-in below.',
     fix:'Open the site directly in Chrome, over https.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
-    title:'The List Is Empty',
+    title:'The list is empty',
     seen:'The browser’s list shows no devices.',
     fix:'Take the patch off charge, near the phone. Press Connect again.' },
   { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
-    title:'You Closed the List',
+    title:'You closed the list',
     seen:'No patch was selected. The check-in below works without one.',
     fix:'Press Connect again and choose the patch.' },
   { /* engine.js:56: anything requestDevice or gatt.connect throws */
-    title:'The Connection Failed',
+    title:'The connection failed',
     seen:'Could not connect: unknown. The check-in below works without a patch.',
     fix:`Try again, or take a ${SCORE} instead.` },
 ]
@@ -83,9 +83,9 @@ function statusOf(i, cursor, phase) {
 const MARK = { done: Check, now: Always, stuck: Minus }
 const LABEL = { done:'Done', now:'Now', stuck:'Stopped here' }
 
-/* `as`, `level` and `tail`: the hub (views/PatchHub) draws this inside its
-   own <main>, under its own band, with Without the patch straight after. */
-export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
+/* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
+   part's title, with Without the patch straight after. */
+export function Pairing({ as: Root = 'main' }) {
   const [phase, setPhase] = React.useState('idle')
   const [cursor, setCursor] = React.useState(0)      // steps revealed
   const [msg, setMsg] = React.useState('')
@@ -114,48 +114,27 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
 
   return (
     <Root>
-      <header className="border-t border-rule bg-accent-wash">
-        <div className="wrap py-7 lg:py-10">
-          <div className="grid items-end gap-5
+      {/* The part's title and the owner's line sit just above, in views/PatchHub. */}
+      <header className="bg-accent-wash">
+        <div className="wrap pb-7 pt-4 lg:pb-10 lg:pt-6">
+          <div className="grid items-start gap-5
             lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-8">
-            <div className="min-w-0">
-              {level === 1 && (
-                <p className="mb-2 font-body text-ui font-semibold text-accent-ink">
-                  Using the patch
-                </p>
-              )}
-              {/* The owner's own heading, spec 0d rule 3. */}
-              <RevealLines as={level === 1 ? 'h1' : 'h2'}
-                className="max-w-[20ch] font-display font-bold text-major leading-[1.05]
-                  tracking-tight text-ink"
-                lines={['Fully Wireless,', '2 Minutes of Setup']}/>
-              {/* Two different surfaces (src/ui/card.jsx): the absences sit
-                  beside a coral rule with no box, the note in an outline on
-                  the band. The figure beside them keeps the white card. */}
-              <ScrollIn className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-5">
-                <Card variant="rule" hue="coral" side="left" className="pl-3.5">
-                  <p className="font-display text-tick font-bold text-ink">What You Do Not Need</p>
-                  {/* A struck-through list, two columns, no capsules. */}
-                  <ul className="m-0 mt-1.5 grid list-none grid-cols-2 gap-x-4 p-0">
-                    {NOTHING.map(t => (
-                      <li key={t} className="flex min-h-[2rem] items-center gap-2 border-b border-coral/25
-                        text-fine text-ink">
-                        <Cross aria-hidden className="size-3.5 shrink-0 text-coral-ink"/>
-                        <span className="line-through decoration-coral-ink/60 decoration-[1.5px]">{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-                <Card variant="outline" className="p-3.5">
-                  <p className="font-display text-tick font-bold text-ink">
-                    How It Connects
-                  </p>
-                  <p className="mt-2 max-w-[44ch] text-fine text-ink-2">
-                    The connect steps below run the app’s real code.
-                  </p>
-                </Card>
-              </ScrollIn>
-            </div>
+            <ScrollIn className="min-w-0">
+              {/* The absences beside a coral rule, no box; a struck-through
+                  list, two columns, no capsules. */}
+              <Card variant="rule" hue="coral" side="left" className="pl-3.5">
+                <p className="font-display text-tick font-bold text-ink">What you do not need</p>
+                <ul className="m-0 mt-1.5 grid list-none grid-cols-2 gap-x-4 p-0">
+                  {NOTHING.map(t => (
+                    <li key={t} className="flex min-h-[2rem] items-center gap-2 border-b border-coral/25
+                      text-fine text-ink">
+                      <Cross aria-hidden className="size-3.5 shrink-0 text-coral-ink"/>
+                      <span className="line-through decoration-coral-ink/60 decoration-[1.5px]">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </ScrollIn>
 
             <Parallax2D distance={40} className="min-w-0">
               <Card className="min-w-0 p-3.5">
@@ -171,7 +150,7 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
       {/* The console: one button, the steps it reveals, the failures behind
           their own control. */}
       <Section tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">Connect the Patch</SectionHead>
+        <SectionHead className="mt-1 max-w-[26ch]">Connect the patch</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
             <div className="border-b border-rule bg-paper p-3.5 lg:p-4">
@@ -309,27 +288,6 @@ export function Pairing({ go, as: Root = 'main', level = 1, tail = true }) {
         )}
       </Section>
 
-      {/* Size, charging slot and baseline live on the patch page. The one thing
-          kept here is the way through without a patch. */}
-      {tail && <Section tone="paper" tight className="bg-aqua-2">
-        <ScrollIn>
-        <Card variant="tint" hue="beam" className="p-3.5 lg:p-4">
-          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
-            <div className="min-w-0">
-              <h2 className="m-0 font-display text-row font-bold leading-tight text-ink">
-                Without the Patch
-              </h2>
-              <p className="mt-1.5 max-w-[46ch] text-fine text-ink-2">
-                Phone camera and microphone, or {ITEMS.length} questions.
-              </p>
-            </div>
-            <Button onClick={() => go && go('without-patch')}>
-              Take a reading<ArrowRight aria-hidden/>
-            </Button>
-          </div>
-        </Card>
-        </ScrollIn>
-      </Section>}
     </Root>
   )
 }

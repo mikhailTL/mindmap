@@ -161,7 +161,7 @@ export default function Breathing() {
         t.sides++
         const [x, y] = at(starts[side.i] + steps[side.i][2] * 0.9)
         if (ratio >= PASS) { t.good++; g.add(10, { x: x / 2, y: y / 2 - 4 }) }
-        else { lapClean = false; g.miss(); noteRef.current = now; setNote('Catch the next side.') }
+        else { lapClean = false; g.miss(); noteRef.current = now; setNote('Try the next side.') }
         if (lap !== lastLap) {
           t.laps++
           if (lapClean) { t.clean++; g.add(10, { x:50, y:44, label:'clean lap', sound:'good' }) }
@@ -212,14 +212,14 @@ export default function Breathing() {
                 idle={idle} held={held} onHold={setHeld} reduced={g.reduced}>
                 {stage === 'idle' && (
                   <>
-                    <p className="font-display text-row font-bold text-ink">Follow the light</p>
-                    <p className="mt-1 text-fine text-ink-2">Hold while it climbs. Let go while it falls.</p>
+                    <p className="font-display text-row font-bold text-ink">How it works</p>
+                    <p className="mt-1 text-fine text-ink-2">Hold the box while the light goes up. Let go while it comes down.</p>
                   </>
                 )}
                 {stage === 'ready' && (
                   <>
                     <Countdown from={3} onDone={() => setStage('play')}/>
-                    <p className="mt-1 text-fine text-ink-2">Hold when the light climbs.</p>
+                    <p className="mt-1 text-fine text-ink-2">Hold when the light goes up.</p>
                   </>
                 )}
                 {stage === 'play' && (
@@ -235,7 +235,7 @@ export default function Breathing() {
               <Pops game={g}/>
             </div>
             <p className="mt-2 min-h-[1.5rem] text-center text-fine text-ink-2" aria-live="polite">
-              {stage === 'play' ? (note || (view.match ? 'In time.' : 'Your dot slipped. Match the light.')) : ''}
+              {stage === 'play' ? (note || (view.match ? 'In time.' : 'Off time. Match the light.')) : ''}
             </p>
           </>
         )}
@@ -263,7 +263,7 @@ export default function Breathing() {
         )}
 
         {stage === 'done' && (
-          <EndCard game={g} title={steady >= 80 ? 'Right with the light' : 'Round done'}
+          <EndCard game={g} title={steady >= 80 ? 'In time with the light' : 'Round done'}
             stars={steady >= 85 ? 3 : steady >= 60 ? 2 : 1}
             stats={[['Sides in time', `${tally.good} of ${tally.sides}`],
                     ['Clean laps', `${tally.clean} of ${tally.laps}`],

@@ -4,7 +4,8 @@ import { Panel } from '../app/controls'
 import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
 import { PRO_WRAP } from '../lib/terms'
 import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole, useAccount } from './store'
-import { AvatarChooser, field, fieldError, outline, solid } from './ui'
+import { AvatarChooser, field, fieldError, outline, solid, usesPhoto } from './ui'
+import { isPhotoAvatar } from './avatar-catalog'
 import { Settings } from './Settings'
 
 /* Sign in, or create an account.
@@ -74,6 +75,11 @@ export function SignIn({ go, note, after = null, bare = false }) {
   const [pass, setPass] = React.useState('')
   const [setting, setSetting] = React.useState(null)
   const [avatar, setAvatar] = React.useState(null)
+  /* A drawing is a teen's, a photo an adult's: a role change drops the one
+     that no longer fits. */
+  React.useEffect(() => {
+    setAvatar(a => (a && usesPhoto(role || 'student') !== isPhotoAvatar(a) ? null : a))
+  }, [role])
   const [err, setErr] = React.useState(null)     /* { at, code } */
   const [busy, setBusy] = React.useState(false)
   const refs = { role: React.useRef(null), name: React.useRef(null), email: React.useRef(null),
@@ -217,7 +223,7 @@ export function SignIn({ go, note, after = null, bare = false }) {
               {creating && (
                 <div className="min-w-0 sm:col-span-2">
                   <span className={labelClass}>Picture</span>
-                  <AvatarChooser value={avatar} onChange={setAvatar} name={name} className="mt-1"/>
+                  <AvatarChooser role={role || 'student'} value={avatar} onChange={setAvatar} name={name} className="mt-1"/>
                 </div>
               )}
             </div>

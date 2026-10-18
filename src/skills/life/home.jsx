@@ -75,7 +75,7 @@ function Meals({ data, patch, g, win }) {
       <Panel>
         <Heading>Shopping list</Heading>
         {list.length === 0
-          ? <Lead>Pick at least one meal and the list builds itself here.</Lead>
+          ? <Lead>Pick at least one meal to build your list.</Lead>
           : <>
               <Lead>{left === 0 ? 'Everything is ticked. You are ready to cook.' : `${left} of ${list.length} still to get. Tick as you shop.`}</Lead>
               <ul className="mt-2 grid gap-0.5">
@@ -216,7 +216,7 @@ function Laundry({ data, patch, g, win }) {
     <>
       {quiz && !g.result ? (
         <QuickRound className="mt-4" game={g} items={LABEL_ROUND} label="Symbol" seed={3} doneLabel="Finish the quiz"
-          onDone={grade => { setQuiz(false); win(grade.clean ? 'Label pro' : 'Label quiz done',
+          onDone={grade => { setQuiz(false); win(grade.clean ? 'Every symbol right' : 'Label quiz done',
             [['Right', `${grade.right} of ${grade.total}`]], grade.clean ? ['clean'] : []) }}/>
       ) : !g.result && (
         <PlayCard title="Care label quiz" line="Six symbols, three choices each." onPlay={() => setQuiz(true)}/>
@@ -258,12 +258,12 @@ function Laundry({ data, patch, g, win }) {
 
       <Panel>
         <Heading>Load checklist</Heading>
-        <Lead>{done === LOAD_STEPS.length ? 'All done. That load is sorted.' : `${done} of ${LOAD_STEPS.length} done.`}</Lead>
+        <Lead>{done === LOAD_STEPS.length ? 'All done.' : `${done} of ${LOAD_STEPS.length} done.`}</Lead>
         <Checklist items={LOAD_STEPS} ticks={ticks} onTick={v => {
           if (Object.values(v).filter(Boolean).length > done) g.add(5, { x:50, y:85 })
           patch('load', v)
         }}/>
-        {done === LOAD_STEPS.length && <Win className="mt-2" reduced={g.reduced}>Load sorted. Nothing shrank, nothing turned pink.</Win>}
+        {done === LOAD_STEPS.length && <Win className="mt-2" reduced={g.reduced}>Load done.</Win>}
         <Action kind="quiet" className="mt-2" onClick={() => patch('load', {})}>Start again</Action>
       </Panel>
     </>
@@ -275,7 +275,7 @@ function Laundry({ data, patch, g, win }) {
 const CAR_ITEMS = [
   ['oil', 'Oil change', 'Use the interval in the owner\'s manual. Many cars say every 5,000 to 10,000 miles or 6 to 12 months.', { everyMonths:'', everyMiles:'' }],
   ['tires', 'Tire pressure and tread', 'Check once a month. Use the pressure on the sticker inside the driver\'s door, not the number on the tire. Penny test: put a penny in the tread, head down. If you can see all of the head, the tread is worn.', { everyMonths:'1', everyMiles:'' }],
-  ['lights', 'Lights walk round', 'Once a month, with a helper: headlights, brake lights, turn signals, hazards.', { everyMonths:'1', everyMiles:'' }],
+  ['lights', 'Lights check', 'Once a month, with a helper: headlights, brake lights, turn signals, hazards.', { everyMonths:'1', everyMiles:'' }],
   ['wipers', 'Wipers and washer fluid', 'Top up the fluid when low. Change blades when they streak.', { everyMonths:'3', everyMiles:'' }],
 ]
 const STATE_WORD = { ok:'OK', soon:'Due soon', due:'Due now', unset:'Not set' }
@@ -303,7 +303,7 @@ function Car({ data, patch, g, win }) {
           value={miles} onChange={e => patch('car', { ...car, miles: e.target.value.replace(/[^\d]/g, '') })} placeholder="e.g. 42150"/>
         <ul className="mt-3 grid gap-2" aria-live="polite">
           {flagged.length === 0
-            ? <li className="text-ui text-ink-2">Nothing due. Log a job below and set how often it comes round.</li>
+            ? <li className="text-ui text-ink-2">Nothing due. Log a job below and set how often it is due.</li>
             : flagged.map(([id, name, s]) => (
                 <li key={id} className="flex flex-wrap items-center gap-2 text-ui text-ink">
                   <Chip state={s.state}>{STATE_WORD[s.state]}</Chip> {name}
@@ -421,8 +421,8 @@ const TABS = [['meals', 'Meals'], ['laundry', 'Laundry'], ['car', 'Car'], ['tran
 
 const GOALS = {
   meals:   'Plan a few meals and tick off the shopping list.',
-  laundry: 'Ace the care label quiz, then run a load.',
-  car:     'Log one job and set when it comes round again.',
+  laundry: 'Learn the care label symbols, then run a load.',
+  car:     'Log a car job and set when it is next due.',
   transit: 'Make a trip card and tick every check before you go.',
 }
 
@@ -436,8 +436,8 @@ export default function LifeHome({ onExit }) {
   const go = v => { patch('tab', v); again() }
   return (
     <LifeScreen id={ID} family="sun" title="Home Basics" icon={HomeIcon} onExit={onExit}
-      problem="Living on your own comes fast, and nobody hands you the manual."
-      doing="Pick a job below and work through its card. Your ticks and notes are kept.">
+      problem="Learn everyday skills for living on your own."
+      doing="Pick a task below and work through its card. Your ticks and notes are saved.">
       <Sections label="Home jobs" items={TABS} value={tab} onChange={go}/>
       <Quest className="mt-4" game={g} goal={GOALS[tab]} body="">
         {end && g.result && (

@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { cn } from '../lib/utils'
 
-/* The sample-data disclosure, as a ruled margin note. No background, so it can
-   sit on paper, card or mist without a contrast audit per surface: warn, crit
-   and ink-2 all clear 4.5:1 on all three (worst case warn on mist, 4.94:1).
-   Do not lighten any of the three. */
+/* A ruled margin note. No background, so it can sit on paper, card or mist
+   without a contrast audit per surface: ink and ink-2 clear 4.5:1 on all
+   three. The demo and no-patch notices went on 18 October: the owner wanted
+   one "?" beside the Demo toggle instead (ui/mode-toggle). */
 
 function Notice({ tag, tone, rule, inline, children, className }) {
   return (
@@ -30,26 +30,7 @@ function Notice({ tag, tone, rule, inline, children, className }) {
   )
 }
 
-export function DemoNotice({ children = 'Figures shown are sample data.', className, inline = false }) {
-  return (
-    <Notice tag="Demo" tone="text-warn" rule="border-warn" inline={inline} className={className}>
-      {children}
-    </Notice>
-  )
-}
-
-/* 3px rule, not 2px: in grayscale the tag word is the only other difference
-   between the two notices. */
-export function RealNotice({ children = 'No patch is paired, so there is nothing to read yet.', className, inline = false }) {
-  return (
-    <Notice tag="No patch" tone="text-crit" rule="border-l-[3px] border-crit" inline={inline} className={className}>
-      {children}
-    </Notice>
-  )
-}
-
-/* Neutral, for a note that is neither sample data nor a missing pairing: an
-   ink tag on an accent rule, no alarm colour. */
+/* An ink tag on an accent rule, no alarm colour. */
 export function PatchNotice({ children = 'Patch use is optional but recommended.', className, inline = false }) {
   return (
     <Notice tag="Patch" tone="text-ink" rule="border-accent" inline={inline} className={className}>

@@ -31,9 +31,10 @@ import { SignIn } from './SignIn'
  *      and the server's.
  *   4. Both of them see the connection.
  *
- * Demo mode shows Maya's network from ./demo-network.js, from any of the
- * three sides (Dr. Shah's side is the whole demo caseload, Maya among them),
- * and every button works on that copy only. Live mode is the
+ * Demo mode shows the network in ./demo-network.js, from any of the three
+ * sides (the Counselor/Professional's side is the whole demo caseload, Maya
+ * among them), and every button works on that copy only. The reader is
+ * "you" on every side, never a demo name (owner, 18 October). Live mode is the
  * real store. No reading, score or trend is shown here: only names, link
  * status and the names of what is shared.
  */
@@ -233,7 +234,7 @@ function JoinByLink({ demo = false }) {
         Your parent or {PRO} sends you a link. Open it and you join their network.
       </p>
       <p className="max-w-none px-4 pt-1.5 text-fine text-ink-2">
-        {demo ? 'In the demo, Maya joined Elena’s and Dr. Shah’s networks this way.' : 'Teens do not make networks.'}
+        {demo ? 'In the demo, you joined Elena’s and Dr. Shah’s networks this way.' : 'Teens do not make networks.'}
       </p>
       {demo ? <div className="h-4"/> : <CodeField/>}
     </Panel>
@@ -270,7 +271,7 @@ function CodeField({ onDone }) {
           onChange={e => { setCode(e.target.value.toUpperCase()); setErr(null); setDone(null) }}
           className={cn(field, '!mt-0 flex-1 uppercase tracking-[0.18em]', err && fieldError)}/>
         <button type="submit" className={cn(outline, 'shrink-0')} disabled={code.replace(/\W/g, '').length < 6}>
-          Connect
+          Join
         </button>
       </div>
       {err && <p id="net-code-err" role="alert" className="mt-2 font-display text-fine font-medium text-crit">{err}</p>}
@@ -508,12 +509,12 @@ function ProNetwork({ me }) {
 
 const DEMO_INVITE = { code: 'K7M2QX' }
 const VIEWS = [
-  { value: 'student', label: 'Maya, teen' },
-  { value: 'parent',  label: 'Elena, parent' },
-  { value: 'pro',     label: `Dr. Shah, ${PRO}` },
+  { value: 'student', label: 'Student' },
+  { value: 'parent',  label: 'Parent' },
+  { value: 'pro',     label: PRO },
 ]
 
-/* Dr. Shah's side: every teen on the caseload, by grade. A grade opens to
+/* The Counselor/Professional's side: every teen on the caseload, by grade. A grade opens to
    its teens, each with their student code (the name the dashboards use) and
    what that teen has chosen to share. Only the teen changes that. */
 const proSharesLine = keys => (keys.length
@@ -583,8 +584,8 @@ function ProCaseload({ rows, parents, onRemove, onRemoveParent }) {
 
 function DemoNetwork({ who }) {
   /* Opened from one of the three apps, the demo stays on that side: a
-     Counselor/Professional pressing Connect sees Dr. Shah's network, never the
-     teen's or the parent's. Only a visit with no app behind it can switch. */
+     Counselor/Professional opening Network sees that side, never the teen's
+     or the parent's. Only a visit with no app behind it can switch. */
   const fixed = who === 'student' || who === 'parent' || who === 'pro'
   const [view, setView] = React.useState(fixed ? who : 'student')
   const [links, setLinks] = React.useState(DEMO_LINKS)
@@ -697,9 +698,7 @@ function DemoNetwork({ who }) {
   return (
     <>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        {fixed ? (
-          <p className="m-0 font-display text-ui font-semibold text-ink">{VIEWS.find(v => v.value === view)?.label}</p>
-        ) : (
+        {fixed ? <span/> : (
           <Tabs value={view} onValueChange={v => { setView(v); setEditing(null) }} className="min-w-0 max-w-full">
             <TabsList scroll aria-label="Whose side to show" className="gap-x-5 border-rule">
               {VIEWS.map(v => <TabsTrigger key={v.value} value={v.value} className="min-h-[44px] text-ui">{v.label}</TabsTrigger>)}

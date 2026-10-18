@@ -310,14 +310,14 @@ function ReviewDialog({ onClose }) {
 
           {SECTIONS.map(section => (
             <section key={section.id} className="mt-8">
-              <h3 className="mark">{section.title}</h3>
+              <h3 className="font-display text-row font-bold text-ink">{section.title}</h3>
               {section.note && <p className="mt-1.5 max-w-[52ch] text-meta text-ink-3">{section.note}</p>}
               <div className="mt-5 flex flex-col gap-6">
                 {section.items.map(q => {
                   const a = byId.get(q.id)
                   const isSkipped = skipped.has(q.id)
                   return (
-                    <div key={q.id} className="border-t border-rule pt-4">
+                    <div key={q.id} className="border-t border-rule/60 pt-4">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         {/* The numeral comes from ask order, not the prompt. */}
                         <span className="text-fine tabular-nums text-ink-3">
