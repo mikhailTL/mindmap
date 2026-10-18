@@ -4,7 +4,7 @@
    The package ships its files read-only, so a second run used to fail with
    EACCES trying to overwrite them: an up-to-date copy is now left alone, and
    copies are made writable. */
-import { chmodSync, copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync, statSync, unlinkSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -15,9 +15,20 @@ mkdirSync(dst, { recursive: true })
 let copied = 0
 for (const f of ['vision_wasm_internal.js', 'vision_wasm_internal.wasm', 'vision_wasm_nosimd_internal.js', 'vision_wasm_nosimd_internal.wasm']) {
   const from = join(src, f), to = join(dst, f)
-  if (existsSync(to) && statSync(to).size === statSync(from).size) continue
-  if (existsSync(to)) { try { chmodSync(to, 0o644) } catch {} }
-  copyFileSync(from, to)
+  let same = false
+  try { same = statSync(to).size === statSync(from).size } catch {}
+  if (same) continue
+  try {
+    if (existsSync(to)) { try { chmodSync(to, 0o644) } catch {} }
+    copyFileSync(from, to)
+  } catch {
+    /* A copy left unreadable (wrong owner or mode) cannot be overwritten in
+       place; replace it instead. */
+    try { unlinkSync(to); copyFileSync(from, to) } catch (e) {
+      console.error(`mediapipe-wasm: cannot replace ${to} (${e.code}). Run: sudo rm -rf public/mediapipe && npm run build`)
+      process.exit(1)
+    }
+  }
   try { chmodSync(to, 0o644) } catch {}
   copied++
 }

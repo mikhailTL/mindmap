@@ -1,0 +1,9 @@
+# Uploaded by `npx vercel` from this folder. Vercel builds from source and
+# regenerates public/mediapipe in prebuild, so local build output and the
+# copied runtime are never sent.
+node_modules
+dist
+public/mediapipe
+_to_delete
+.env*.local
+.DS_Store
