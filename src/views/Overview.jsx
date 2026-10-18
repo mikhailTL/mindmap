@@ -13,12 +13,13 @@ import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
 import { WhatIs } from './landing/WhatIs'
+import { HeadsUp } from './audience'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
 import heroField from '../photos/hero-field.webp'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
-  SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL_LC,
+  SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL, PRO_PLURAL_LC,
   CONSENT_SHORT,
 } from '../lib/terms'
 
@@ -42,6 +43,18 @@ import {
  * One photograph per band at most, each in a different treatment, so they
  * read as part of the page rather than as a strip.
  */
+
+/* The page's green section names, in page order, for the header's Overview
+   menu (owner, 18 October). Each id is on its band below; `what-is` is in
+   landing/WhatIs.jsx. */
+export const OVERVIEW_SECTIONS = [
+  ['problem',  'The problem'],
+  ['why',      'Why MindMap'],
+  ['what-is',  'About'],
+  ['start',    'Getting started'],
+  ['screens',  'Audiences'],
+  ['privacy',  'Privacy'],
+]
 
 /* The two ways in, both on the white card (owner, 18 October: the tinted one
    "looks like a diff section" on a phone). The patch comes first, as the
@@ -79,18 +92,24 @@ const WAYS = [
    18 October: the pale green one "blends in"). */
 const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
 
+/* Owner, 18 October: each card says who the audience is, not only what they
+   get ("Students WHO ARE, Parents WHO ARE, counselors WHO ARE"). The student
+   line is his sentence. `gets` names Heads Up with its traffic light. */
 const SCREENS = [
-  { id:'student', who:'Student',
-    title:`Your ${SCORE} each day`,
-    line:'Every reading you take, and what moved it.',
+  { id:'students', title:'Students',
+    who:`Students seeking proactive wellness management, recommended by a parent or ${PRO}, or in a state of mental distress.`,
+    gets:[`Your ${SCORE} each day.`,
+      <><HeadsUp/> notices stress in how you use your phone, never what is on it. You see it first.</>],
     cta:'What a student gets' },
-  { id:'parent',  who:'Parent',
-    title:'Trends',
-    line:'Day by day, week by week, month by month, in plain words, with no raw readings.',
+  { id:'parents', title:'Parents',
+    who:'Parents who want to understand and support their teen’s stress without invading their privacy, or whose teen was recommended MindMap.',
+    gets:['Trends by day, week and month, in plain words.',
+      <><HeadsUp/> tells you when phone activity is causing your teen stress.</>],
     cta:'What a parent gets' },
-  { id:'pro',     who:PRO,
-    title:'Students to check on',
-    line:'Only the students who chose to share.',
+  { id:'pro', title:PRO_PLURAL,
+    who:'Counselors, therapists and other professionals who support teens and want to see which students may need a check-in, with the teen’s consent.',
+    gets:['Only the students who chose to share.',
+      <>Each student’s <HeadsUp/> colour, never the content.</>],
     cta:`What a ${PRO_LC} gets` },
 ]
 
@@ -244,7 +263,7 @@ export function Overview({ go }) {
       {/* -- the problem, on the one dark band -----------------------------
           Every figure on this band is external and sourced. The figures sit
           on a frosted panel: on the band directly they measured under AA. */}
-      <Section name="The problem" tone="ink" className="relative isolate overflow-hidden">
+      <Section name="The problem" id="problem" tone="ink" className="relative isolate overflow-hidden">
         <DriftWash photo="student-homework" className="-z-10" imgClassName="opacity-[0.22]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
           Teen stress is a global crisis often invisible until it’s too late
@@ -255,6 +274,7 @@ export function Overview({ go }) {
         {/* The owner's own words, 18 October, under the figures and inside
             the band, on a solid deep-green panel so the photo wash does not
             show through: why MindMap answers them. */}
+        <div id="why" className="scroll-mt-14 outline-none">
         <ScrollIn className="mt-6 rounded-panel border border-accent-lit/40 bg-ink p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] lg:mt-8 lg:p-7">
           <h3 className="m-0 font-display text-head font-bold tracking-tight text-accent-lit lg:text-sub">Why MindMap</h3>
           <p className="m-0 mt-3 max-w-[72ch] text-meta leading-[1.6] text-paper">
@@ -265,6 +285,7 @@ export function Overview({ go }) {
             parents, and {PRO_PLURAL_LC} to reduce isolation and nurture caring and supportive environments.
           </p>
         </ScrollIn>
+        </div>
       </Section>
 
       {/* -- what MindMap is (views/landing/WhatIs.jsx) ---------------------- */}
@@ -276,7 +297,7 @@ export function Overview({ go }) {
       {/* -- the two ways in, on blue ---------------------------------------
           The photograph sits at 0.14 with no scrim so the ground stays blue.
           Over it accent measured 4.0, so the band's name takes accent.ink. */}
-      <Section name="Getting started" tone="card"
+      <Section name="Getting started" id="start" tone="card"
         className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
         <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.08]"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
@@ -349,11 +370,18 @@ export function Overview({ go }) {
                   `group flex h-full w-full flex-col gap-3 p-5 text-left touch-manipulation
                   transition-[border-color,transform] duration-150 ease-[var(--ease-out)]
                   motion-safe:active:scale-[0.99] hoverOnly:border-x-accent hoverOnly:border-b-accent`)}>
-                <span className="font-body text-ui font-semibold text-accent-ink">{s2.who}</span>
                 <span className="font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                   {s2.title}
                 </span>
-                <span className="max-w-[34ch] text-sec leading-[1.5] text-ink-2">{s2.line}</span>
+                <span className="max-w-[52ch] text-sec font-medium leading-[1.5] text-ink">{s2.who}</span>
+                <span className="block space-y-1.5">
+                  {s2.gets.map((g, n) => (
+                    <span key={n} className="flex items-start gap-2.5 text-meta leading-[1.5] text-ink-2">
+                      <span aria-hidden className="mt-[0.6em] size-1.5 shrink-0 rounded-full bg-accent"/>
+                      <span>{g}</span>
+                    </span>
+                  ))}
+                </span>
                 <span className="mt-auto flex items-center gap-2.5 pt-2 font-display text-meta
                   font-bold text-accent groupHoverOnly:text-accent-ink">
                   {s2.cta}
@@ -367,7 +395,7 @@ export function Overview({ go }) {
       </Section>
 
       {/* ── privacy, on blue, with a rounded photograph beside it at lg ───── */}
-      <Section name="Privacy" tone="card" className="bg-sky-band">
+      <Section name="Privacy" id="privacy" tone="card" className="bg-sky-band">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
           xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div className="min-w-0">
@@ -375,10 +403,10 @@ export function Overview({ go }) {
             <SectionLede>{CONSENT_SHORT}</SectionLede>
             <dl className="mt-5 grid gap-3.5 sm:grid-cols-2">
               {SEES.map((r, i) => (
-                <ScrollRow key={r.who} index={i} className={cn(cardClass(i ? 'plain' : 'ink'), 'p-5')}>
-                  <dt className={cn('font-body text-ui font-semibold', i ? 'text-accent-ink' : 'text-accent-lit')}>{r.who}</dt>
-                  <dd className={cn('m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight',
-                    i ? 'text-ink' : 'text-paper')}>
+                /* Both white (owner, 18 October: "both the cards should be white"). */
+                <ScrollRow key={r.who} index={i} className={cn(cardClass('plain'), 'p-5')}>
+                  <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
+                  <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">
                     {r.sees}
                   </dd>
                 </ScrollRow>

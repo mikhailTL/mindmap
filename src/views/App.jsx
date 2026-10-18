@@ -1,6 +1,6 @@
 import React from 'react'
 import { SCORE, PRO, PRO_PLURAL } from '../lib/terms'
-import { Overview } from './Overview'
+import { Overview, OVERVIEW_SECTIONS } from './Overview'
 import { PatchHub } from './PatchHub'
 import { Tour } from './Tour'
 import { Methods } from './Methods'
@@ -10,8 +10,8 @@ import { SiteIntro } from './SiteIntro'
 import { captureHarness } from './Intro'
 import { GetHelp, HelpBody, NotificationSettings, NotesJournal } from '../app'
 import { NameGate } from '../survey/NameGate'
-import { ReviewLauncher } from '../survey/Survey'
-import { PAGE, REQUIRED, SECTIONS, questionNumber } from '../survey/questions'
+import { ReviewLauncher, QuestionHead, TextAnswer } from '../survey/Survey'
+import { PAGE, REQUIRED, SECTIONS } from '../survey/questions'
 import {
   answersFor, getVersion, getVisitor,
   isQueued, recordAnswer, submitResponse, subscribe, syncPending, wasSent,
@@ -218,6 +218,27 @@ const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
                   students:'who', parents:'who', pro:'who', 'heads-up':'heads-up', survey:'survey' }
 
+/* Set by the app's "Back to site" and by the Overview menu from another page:
+   the next landing on the overview skips the site intro, once (owner,
+   18 October: "takes back to overview and skips site onboarding"). */
+let skipIntro = false
+
+/* The Overview menu's jump: land on the overview if not there, then scroll to
+   the band and move focus to it. land() scrolls to the top and focuses main a
+   frame after a route change, so the jump waits past that. */
+function toSection(id, view, go) {
+  const away = view !== 'site'
+  if (away) { skipIntro = true; go('site') }
+  setTimeout(() => {
+    const el = document.getElementById(id)
+    if (!el) return
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1')
+    el.focus({ preventScroll: true })
+  }, away ? 90 : 30)
+}
+
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
   /* Colour only. `transition-colors` also covers the 2px active indicator,
@@ -231,7 +252,7 @@ const linkClass = on => cn(
  * an outside press close, arrows walk the items, and close returns focus to the
  * trigger -- focus falling to <body> loses a keyboard user the page.
  */
-function NavMenu({ view, go, label, items: entries, section }) {
+function NavMenu({ view, go, label, items: entries, section, pick }) {
   const [open, setOpen] = React.useState(false)
   const [at, setAt] = React.useState(0)
   const wrap = React.useRef(null)
@@ -292,8 +313,8 @@ function NavMenu({ view, go, label, items: entries, section }) {
       </button>
       {open && (
         <div role="menu" aria-label={label}
-          className="absolute left-0 top-full z-50 mt-px w-[19rem] overflow-hidden rounded-panel
-            border border-rule bg-card py-1.5 shadow-lift">
+          className={cn('absolute left-0 top-full z-50 mt-px overflow-hidden rounded-panel',
+            'border border-rule bg-card py-1.5 shadow-lift', pick ? 'w-[15rem]' : 'w-[19rem]')}>
           {entries.map(([id, text, hint], i) => (
             <button
               key={id}
@@ -301,15 +322,15 @@ function NavMenu({ view, go, label, items: entries, section }) {
               type="button"
               role="menuitem"
               tabIndex={-1}
-              aria-current={view === id ? 'page' : undefined}
-              onClick={() => { close(false); go(id) }}
+              aria-current={!pick && view === id ? 'page' : undefined}
+              onClick={() => { close(false); pick ? pick(id) : go(id) }}
               onKeyDown={e => onItemKey(e, i)}
               className={cn('block w-full px-4 py-2.5 text-left transition-colors duration-150',
                 'hoverOnly:bg-mist focus-visible:bg-mist',
-                view === id && 'bg-accent-wash')}
+                !pick && view === id && 'bg-accent-wash')}
             >
               <span className="block font-display text-ui font-medium text-ink">{text}</span>
-              <span className="mt-0.5 block text-fine text-ink-3">{hint}</span>
+              {hint && <span className="mt-0.5 block text-fine text-ink-3">{hint}</span>}
             </button>
           ))}
         </div>
@@ -348,8 +369,11 @@ function Drawer({ view, go, onClose }) {
      opens by itself when one of them is the page you are on. */
   const onPatch = PATCH.some(([id]) => id === view)
   const [patchOpen, setPatchOpen] = React.useState(onPatch)
+  /* The Overview's sections fold the same way, open on the overview. */
+  const onSite = view === 'site'
+  const [siteOpen, setSiteOpen] = React.useState(onSite)
   const rows = [
-    ['site', 'Overview'],
+    'site-group',
     'patch-group',
     ['methods', 'How it works'],
     ...AUDIENCE.map(([id, label]) => [id, label]),
@@ -357,10 +381,11 @@ function Drawer({ view, go, onClose }) {
     ['survey', 'Give feedback'],
   ]
 
-  const row = (id, label, inner = false) => {
-    const here = view === id
+  const row = (id, label, inner = false, jump = false) => {
+    const here = !jump && view === id
     return (
-      <button key={id} type="button" onClick={() => { onClose(); go(id) }}
+      <button key={id} type="button"
+        onClick={() => { onClose(); jump ? toSection(id, view, go) : go(id) }}
         aria-current={here ? 'page' : undefined}
         className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
           'font-display text-sec font-medium transition-colors duration-150',
@@ -385,7 +410,25 @@ function Drawer({ view, go, onClose }) {
           </button>
         </div>
         <nav aria-label="Sections" className="wrap pb-5">
-          {rows.map(r => r === 'patch-group' ? (
+          {rows.map(r => r === 'site-group' ? (
+            <div key="site-group">
+              <button type="button" onClick={() => setSiteOpen(o => !o)}
+                aria-expanded={siteOpen} aria-controls="drawer-site"
+                className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
+                  'font-display text-sec font-medium transition-colors duration-150',
+                  onSite ? 'text-ink' : 'text-ink-2 hoverOnly:text-ink')}>
+                <span className={cn('mr-3 h-5 w-[3px] rounded-bar', onSite ? 'bg-accent' : 'bg-transparent')}/>
+                Overview
+                <ChevronDown aria-hidden className={cn('ml-auto size-4 shrink-0 transition-transform duration-150',
+                  siteOpen && 'rotate-180')}/>
+              </button>
+              {siteOpen && (
+                <div id="drawer-site">
+                  {OVERVIEW_SECTIONS.map(([id, label]) => row(id, label, true, true))}
+                </div>
+              )}
+            </div>
+          ) : r === 'patch-group' ? (
             <div key="patch-group">
               <button type="button" onClick={() => setPatchOpen(o => !o)}
                 aria-expanded={patchOpen} aria-controls="drawer-patch"
@@ -428,9 +471,10 @@ function Header({ view, go }) {
         </button>
 
         <nav aria-label="Sections" className="hidden h-full items-stretch xl:flex">
-          <button onClick={() => go('site')}
-            aria-current={SECTION[view] === 'site' ? 'page' : undefined}
-            className={linkClass(SECTION[view] === 'site')}>Overview</button>
+          {/* Owner, 18 October: a dropdown of the Overview's green section
+              names. The logo still goes to the top of the overview. */}
+          <NavMenu view={view} go={go} label="Overview" items={OVERVIEW_SECTIONS} section="site"
+            pick={id => toSection(id, view, go)}/>
           <NavMenu view={view} go={go} label="The patch" items={PATCH} section="kit"/>
           <button onClick={() => go('methods')}
             aria-current={SECTION[view] === 'methods' ? 'page' : undefined}
@@ -778,10 +822,12 @@ function SwitchRole({ go, className }) {
   return (
     <button type="button" onClick={run}
       title={live ? 'Sign out and sign in with another role' : `Choose Student, Parent or ${PRO}`}
-      className={cn('flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-field px-2 font-display',
+      className={cn('flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-field px-2 font-display',
         'text-fine font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash',
         'sm:text-ui', className)}>
-      <SwitchMark/>Switch role
+      {/* From sm to lg the bar is one full row, so the words go to the
+          screen reader only and the mark carries the button. */}
+      <SwitchMark/><span className="sm:max-lg:sr-only">Switch role</span>
     </button>
   )
 }
@@ -791,20 +837,37 @@ function SwitchRole({ go, className }) {
    `contents` and the order classes put them back in reading order. */
 function AppTopBar({ view, go, app }) {
   const [short, long] = APP_TITLE[view] || ['App', 'App']
+  const toSite = () => { skipIntro = true; go('site') }
+  /* The wordmark gives way where the row is full: below 375px, and from sm
+     to lg where both rows fold into one. The demo adds a "?" beside the
+     toggle, so there it gives way at every width under lg. */
+  const [mode] = useMode()
+  const demo = mode !== 'real'
   return (
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
       <div className="flex flex-col px-4 sm:h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-10 lg:px-14">
         <div className="flex h-12 items-center gap-1 sm:contents">
-          {/* The corner: MindMap's mark and name, back to the site's home. */}
-          <button type="button" onClick={() => go('site')} aria-label="MindMap, back to the site"
-            className="order-1 -ml-1.5 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
+          {/* Owner, 18 October: a back arrow left of the logo, "Back to site",
+              to the overview with no site intro. The words show from lg; on a
+              phone and a tablet the arrow stands alone and the label names it. */}
+          <button type="button" onClick={toSite} aria-label="Back to site" title="Back to site"
+            className="order-1 -ml-2 flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center
+              gap-1.5 rounded-field px-2 font-display text-ui font-semibold text-accent-ink
+              transition-colors duration-150 hoverOnly:bg-accent-wash lg:pr-3">
+            <ArrowLeft className="size-5"/>
+            <span className="hidden lg:inline">Back to site</span>
+          </button>
+          {/* The corner: MindMap's mark and name, also to the overview. */}
+          <button type="button" onClick={toSite} aria-label="MindMap, back to the site"
+            className="order-1 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
               text-[1rem] text-ink transition-colors duration-150 hoverOnly:bg-mist min-[400px]:text-[1.15rem]
               sm:text-[1.3rem]">
-            {/* Room for the demo "?" on a phone: below 375px the mark stands
-                alone (the button's label still names it). */}
-            <Logo className="gap-2 max-[374px]:[&>span:first-of-type]:hidden"/>
+            {/* Room for the back arrow and the demo "?": where the mark stands
+                alone the button's label still names it. */}
+            <Logo className={cn('gap-2', demo ? 'max-lg:[&>span:first-of-type]:hidden'
+              : 'max-[374px]:[&>span:first-of-type]:hidden sm:max-lg:[&>span:first-of-type]:hidden')}/>
           </button>
-          <div className="order-4 ml-auto flex items-center gap-1 sm:gap-2">
+          <div className="order-4 ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <GetHelp compact/>
             <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-1.5 sm:[&_button]:px-3"/>
           </div>
@@ -891,11 +954,6 @@ const Bar = ({ on }) => (
     on ? 'bg-accent' : 'bg-transparent')}/>
 )
 
-const fieldClass = cn(
-  'block w-full rounded-field border border-rule bg-card p-3 font-body text-sec text-ink',
-  'placeholder:text-ink-3 transition-colors duration-150 ease-out hoverOnly:border-ink-3'
-)
-
 function ScaleField({ q, value, onPick }) {
   return (
     <div role="radiogroup" aria-label={q.prompt} className="mt-3 flex flex-col">
@@ -912,30 +970,11 @@ function ScaleField({ q, value, onPick }) {
   )
 }
 
-function TextField({ q, initial = '', onSave, onSkip }) {
-  const [text, setText] = React.useState(initial)
-  const empty = !text.trim()
-  return (
-    <div className="mt-3">
-      <textarea rows={3} value={text} maxLength={q.maxLength} placeholder={q.placeholder}
-        aria-label={q.prompt} onChange={e => setText(e.target.value)} className={fieldClass}/>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
-        <span className="text-fine tabular-nums text-ink-3">{text.length}/{q.maxLength}</span>
-      </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <Button size="sm" type="button" disabled={empty} onClick={() => onSave(text.trim())}>Save</Button>
-        {onSkip && <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>}
-      </div>
-    </div>
-  )
-}
-
-function SurveyField({ q, answer, onAnswer, onSkip }) {
+function SurveyField({ q, answer, onAnswer }) {
   const v = answer?.value
   if (q.kind === 'scale') return <ScaleField q={q} value={v ?? null} onPick={onAnswer}/>
-  if (q.kind === 'text')  return <TextField q={q} initial={typeof v === 'string' ? v : ''}
-                                   onSave={t => onAnswer(t, null)} onSkip={q.optional ? onSkip : undefined}/>
+  if (q.kind === 'text')  return <TextAnswer q={q} bg="bg-card" initial={typeof v === 'string' ? v : ''}
+                                   onSave={t => onAnswer(t, null)}/>
   if (q.kind === 'stars') return (
     <div className="mt-3">
       <StarRating label={q.prompt} max={q.max} step={q.step}
@@ -997,7 +1036,6 @@ function SubmitRow({ done, total }) {
 
 function SurveyPage() {
   useSurveyStore()
-  const [skipped, setSkipped] = React.useState(() => new Set())
   React.useEffect(() => { syncPending() }, [])
 
   const byId = new Map(answersFor(PAGE).map(a => [a.qid, a]))
@@ -1046,22 +1084,10 @@ function SurveyPage() {
               <div className="mt-5 flex flex-col gap-6 lg:mt-0">
                 {section.items.map(q => {
                   const a = byId.get(q.id)
-                  const off = skipped.has(q.id)
                   return (
                     <div key={q.id} className="border-t border-rule pt-4">
-                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        {/* The numeral comes from ask order, not the prompt. */}
-                        <span className="text-fine tabular-nums text-ink-3">
-                          {questionNumber(q.id)}
-                        </span>
-                        <p className="max-w-[44ch] font-display text-body font-bold text-ink">{q.prompt}</p>
-                        {q.optional && <span className="note">Optional</span>}
-                      </div>
-                      {off && !a ? <p className="note mt-3">Skipped.</p> : (
-                        <SurveyField q={q} answer={a}
-                          onAnswer={(v, l) => answer(q, v, l)}
-                          onSkip={() => setSkipped(new Set(skipped).add(q.id))}/>
-                      )}
+                      <QuestionHead q={q} size="text-body"/>
+                      <SurveyField q={q} answer={a} onAnswer={(v, l) => answer(q, v, l)}/>
                       {a && (
                         <p className="mt-2.5 text-fine font-medium text-calm">
                           Saved{a.label ? `, ${a.label}` : ''}
@@ -1170,7 +1196,10 @@ export function App() {
   const [siteIntro, setSiteIntro] = React.useState(false)
   const lastView = React.useRef(null)
   React.useEffect(() => {
-    if (view === 'site' && lastView.current !== 'site' && !captureHarness()) setSiteIntro(true)
+    if (view === 'site' && lastView.current !== 'site' && !captureHarness()) {
+      if (skipIntro) skipIntro = false
+      else setSiteIntro(true)
+    }
     lastView.current = view
   }, [view])
   const closeIntro = React.useCallback(() => {

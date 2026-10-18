@@ -1,6 +1,6 @@
 import { PRO, PRO_FOR } from '../lib/terms'
 
-/* One survey, twelve questions, numbered continuously.
+/* One survey, fifteen questions, numbered continuously.
  *
  * ─── What this is, and what it is not ───────────────────────────────────────
  * This is a HOUSE QUESTIONNAIRE. It is not a published instrument, it has no
@@ -25,11 +25,10 @@ import { PRO, PRO_FOR } from '../lib/terms'
  * An opaque id generated in the browser, a timestamp, and the answers below.
  * NO name, NO email, NO school, NO date of birth. Age is a band only, and the
  * youngest band spans the age of majority so that answering it never states
- * that the respondent is a minor. One short free text, capped, asked in a form
- * that wants two or three words about a feature and not a sentence about a
- * person. Teenagers answer this survey; that is the reason for every line of
- * this paragraph, and src/survey/NameGate.jsx says the same thing to the
- * reader before a single answer is taken. */
+ * that the respondent is a minor. Four short written answers close the survey,
+ * all optional and capped. Teenagers answer this survey; that is the reason
+ * for every line of this paragraph, and src/survey/NameGate.jsx says the same
+ * thing to the reader before a single answer is taken. */
 
 const pts = (...labels) => labels.map((label, i) => ({ value: i + 1, label }))
 
@@ -90,17 +89,20 @@ export const BLOCKER_ITEM = choice('blocker', 'What would most stop you from usi
   'Nothing I can think of', 'Wearing a patch every day', 'Who else could see a reading',
   'Trusting what the score says', 'Cost', 'Something else')
 
-/* The one free text in the whole survey, and the only one allowed. Short on
-   purpose: 200 characters wants a feature named, not a story told, and a
-   reviewer who cannot fit identifying detail will not type it. */
-export const TEXT_ITEM = {
-  id: 'blocker-note',
-  kind: 'text',
-  optional: true,
-  prompt: 'If something would stop you, name it in a few words.',
-  placeholder: 'The patch, the price, the sharing...',
-  maxLength: 200,
-}
+/* The four short written answers that end the survey, in the owner's order
+   and wording (18 October). All optional. The first is the one he most wants
+   answered, so it is flagged `important` and gets more room; the renderers
+   mark it, and it stays optional. Caps keep each to a few sentences. */
+const open = (id, prompt, maxLength, extra) =>
+  ({ id, kind: 'text', optional: true, prompt, maxLength, ...extra })
+
+export const OPEN_ITEMS = [
+  open('open-like', 'What do you like about MindMap?', 500,
+    { important: true, hint: 'This helps us most.' }),
+  open('open-use', 'How would you use MindMap?', 300),
+  open('open-improve', 'What improvements would you like to see in MindMap?', 300),
+  open('open-other', 'Any other feedback or questions?', 300),
+]
 
 export const STARS_ITEM = {
   id: 'stars',
@@ -129,15 +131,18 @@ export const SECTIONS = [
     note: 'Whether a reading is something you would hand to someone else.',
     items: TRUST_ITEMS },
   { id: 'overall', title: 'Overall Rating',
-    note: 'The rating, then what would stop you. The written answer is optional and wants a few words, not a sentence about you.',
-    items: [STARS_ITEM, BLOCKER_ITEM, TEXT_ITEM] },
+    note: 'The rating, then what would stop you.',
+    items: [STARS_ITEM, BLOCKER_ITEM] },
+  { id: 'written', title: 'Short Answers',
+    note: 'All optional. The first one helps us most.',
+    items: OPEN_ITEMS },
 ]
 
 export const PAGE = 'review'
 export const ALL_ITEMS = SECTIONS.flatMap(s => s.items)
 export const REQUIRED = ALL_ITEMS.filter(q => !q.optional)
 
-/* Numbers run 1-12 across the whole survey, not per section, and come from ask
+/* Numbers run 1-15 across the whole survey, not per section, and come from ask
    order rather than being written next to the prompts, because a hand-written
    numeral survives an insertion and produces two of the same number. */
 const NUMBERS = new Map(ALL_ITEMS.map((q, i) => [q.id, i + 1]))
@@ -215,6 +220,8 @@ const RETIRED_QUESTIONS = {
   'sus-10': 'I needed to learn a lot of things before I could get going with MindMap.',
   change: 'What confused you, or what would you change?',
   impact: 'If this were actually used, what difference would it make?',
+  /* The single short text before the four written answers (until 18 October). */
+  'blocker-note': 'If something would stop you, name it in a few words.',
   'about-age': 'Your age range',
   'about-education': 'How far you got in school',
   'about-role': 'Which describes you best?',

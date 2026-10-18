@@ -1,5 +1,5 @@
 import { exportRows, visitorCode } from './store'
-import { ALL_ITEMS, SCALE_ITEMS, DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, TEXT_ITEM, STARS_ITEM } from './questions'
+import { ALL_ITEMS, SCALE_ITEMS, DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, STARS_ITEM } from './questions'
 
 /* Emails one finished response from a static build. One mail per response.
  * Two transports, tried in order:
@@ -46,7 +46,7 @@ export function answersText(rows) {
  *   demographics and the blocker -> the LABEL, because the number is an
  *     arbitrary position in a list. A mean of "Parent or guardian" is the
  *     error this split exists to make impossible.
- *   the rating -> the number. The free text -> the text. */
+ *   the rating -> the number. The four written answers -> the text. */
 const NUMERIC_IDS = new Set([...SCALE_ITEMS.map(q => q.id), STARS_ITEM.id])
 const LABEL_IDS = new Set([...DEMOGRAPHIC_ITEMS.map(q => q.id), BLOCKER_ITEM.id])
 

@@ -23,7 +23,8 @@ const NAME = {
    mostly picture; the default is for one that is mostly read. */
 export function Section({ name, tone = 'paper', id, className, children, bleed = false, tight = false }) {
   return (
-    <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', className)}>
+    /* scroll-mt clears the 56px sticky header when the Overview menu jumps here. */
+    <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', id && 'scroll-mt-14 outline-none', className)}>
       <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-5 lg:py-7' : 'py-7 lg:py-10')}>
         {name && (
           <p className={cn('font-body text-ui font-semibold', NAME[tone])}>{name}</p>

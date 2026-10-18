@@ -18,7 +18,14 @@ import { cn } from '../lib/utils'
  * scroll events, on a faster session clock.
  *
  * Every layout is symmetric about the column's centre line, so the phones sit
- * exactly in the middle at every width; see the arrows note below. */
+ * exactly in the middle at every width; see the arrows note below.
+ *
+ * Only one teen phone moves at a time: the one out of its turn holds still,
+ * video paused, caret off. On a beat (a signal's callout, or the parent's
+ * light turning red) the page stops: everything else holds its last frame and
+ * goes dark and soft behind a scrim, and the phone the callout points at
+ * stays lit above it. Owner, 18 Oct: "everything should freeze when a blue
+ * notice comes up". */
 
 const PHONE_W = 413
 const PHONE_H = 872
@@ -63,6 +70,8 @@ const TARGET = {
   parent:    { x: 0.155, y: 0.215, above: true, run: 0.108 },
 }
 const ARROW = '#1d8fb0'
+const HL = 'rgba(29,143,176,0.26)'
+const HL_LIT = 'rgba(29,143,176,0.6)'
 const targetFor = label => (TYPING_KEYS.has(KEY_OF[label]) ? TARGET.typing : TARGET.scrolling)
 
 /* The biggest label size at which the longest word of any signal
@@ -86,7 +95,7 @@ function layoutFor(W) {
 
 /* One arrow, in a box the size of the phone plus its label room. `side` is
    where the label sits: 'left' or 'right' of the phone, or 'top'. */
-function Callout({ id, label, icon, where, side, L, P, H, T = 0, font, reduced }) {
+function Callout({ id, label, icon, where, side, L, P, H, T = 0, font, reduced, lit }) {
   if (!label) return null
   const x0 = side === 'left' ? L : 0
   const E = { x: x0 + P * where.x, y: T + H * where.y }
@@ -140,9 +149,10 @@ function Callout({ id, label, icon, where, side, L, P, H, T = 0, font, reduced }
         style={{ ...box, fontSize: font, animation: reduced ? undefined : 'hu-label 220ms ease-out both' }}>
         {side !== 'left' && icon}
         {/* a highlighter stroke under the lower half of each line */}
-        <span className="[text-wrap:balance]">
+        {/* over the scrim the label turns white, with a brighter stroke */}
+        <span className="[text-wrap:balance]" style={{ color: lit ? '#fff' : undefined, transition: 'color 240ms ease' }}>
           <span className="[box-decoration-break:clone] [-webkit-box-decoration-break:clone]"
-            style={{ background: 'linear-gradient(transparent 56%, rgba(29,143,176,0.26) 56%, rgba(29,143,176,0.26) 94%, transparent 94%)' }}>
+            style={{ background: `linear-gradient(transparent 56%, ${lit ? HL_LIT : HL} 56%, ${lit ? HL_LIT : HL} 94%, transparent 94%)` }}>
             {label}</span></span>
         {side === 'left' && icon}
       </p>
@@ -173,19 +183,39 @@ function StateLine({ light }) {
   )
 }
 
+/* true while `on`, and for `ms` after, so a lit phone stays above the scrim
+   until the scrim has faded */
+function useTrail(on, ms) {
+  const [v, setV] = React.useState(on)
+  React.useEffect(() => {
+    if (on) { setV(true); return }
+    const id = setTimeout(() => setV(false), ms)
+    return () => clearTimeout(id)
+  }, [on, ms])
+  return on || v
+}
+
+const SCRIM_OUT_MS = 520
+const BRIDGE_MS = 650
+const EASE_OUT = 'cubic-bezier(0.23,1,0.32,1)'
+
 /* A phone in its label room. The box is margin + phone (or label band +
    phone), and the phone sits at the box's own offset, so a column of these
-   lines up with the grid. */
-function Framed({ side, lay, children, callout, caption, dataPhone }) {
+   lines up with the grid. `lift` raises the phone and its callout above the
+   scrim on a beat. */
+function Framed({ side, lay, children, callout, caption, dataPhone, lift = false, reduced }) {
   const P = PHONE_W * lay.s, H = PHONE_H * lay.s
   const T = side === 'top' ? lay.top : 0
   const x0 = side === 'left' ? lay.L : 0
   const w = side === 'top' ? P : lay.L + P
+  const up = useTrail(lift, SCRIM_OUT_MS)
   return (
     <figure className="m-0" style={{ width: w }} data-phone={dataPhone}>
-      <div className="relative" style={{ height: T + H }}>
+      <div className="relative" data-lift={dataPhone} style={{ height: T + H, zIndex: up ? 61 : undefined,
+        transform: lift && !reduced ? 'scale(1.02)' : 'none',
+        transition: reduced ? undefined : `transform 600ms ${EASE_OUT}` }}>
         <div className="absolute" style={{ left: x0, top: T, width: P, height: H }}>{children}</div>
-        {callout && <Callout key={callout.id} {...callout} side={side} L={lay.L} P={P} H={H} T={T} font={lay.font}/>}
+        {callout && <Callout key={callout.id} {...callout} side={side} L={lay.L} P={P} H={H} T={T} font={lay.font} lit={lift}/>}
       </div>
       {caption && <figcaption className="mt-4 flex flex-col items-center gap-1 text-center"
         style={{ marginLeft: x0, width: P }}>{caption}</figcaption>}
@@ -193,7 +223,7 @@ function Framed({ side, lay, children, callout, caption, dataPhone }) {
   )
 }
 
-function TeenFigure({ kind, side, lay, hu, label }) {
+function TeenFigure({ kind, side, lay, hu, label, light, lift }) {
   const s = lay.s, P = PHONE_W * s
   const phase = hu.phase[kind]
   const lit = phase === 'stress' || phase === 'detected'
@@ -207,9 +237,9 @@ function TeenFigure({ kind, side, lay, hu, label }) {
   /* the phone out of its turn steps back by losing its colour, not its
      contrast: every word on it still clears 4.5 : 1 */
   return (
-    <Framed side={side} lay={lay} dataPhone={kind} callout={callout} caption={<>
+    <Framed side={side} lay={lay} dataPhone={kind} callout={callout} lift={lift} reduced={hu.reduced} caption={<>
       <span className="font-display text-row font-bold text-ink">{TITLE[kind]}</span>
-      <StateLine light={hu.teen[kind]}/>
+      <StateLine light={light}/>
       <ul aria-live="polite" aria-label={`Signals on the ${TITLE[kind].toLowerCase()} phone`}
         className="m-0 mt-1.5 flex min-h-[3.5rem] list-none flex-col items-center gap-1 p-0">
         {list.map(l => (
@@ -225,20 +255,20 @@ function TeenFigure({ kind, side, lay, hu, label }) {
           style={{ inset: -RING_GAP, borderRadius: PHONE_R * s + RING_GAP, boxShadow: RING, opacity: lit ? 1 : 0, transition: fade }}/>
         <div style={{ filter: dim ? 'saturate(0.2)' : 'none', transition: fade }}>
           <TeenPhone kind={kind} scale={s} viewRef={hu.views[kind]} sessionRef={hu.sessions[kind]} clock={hu.clock}
-            reduced={hu.reduced} label={label}/>
+            reduced={hu.reduced} label={label} hold={hu.focus !== kind}/>
         </div>
       </div>
     </Framed>
   )
 }
 
-function ParentFigure({ side, lay, hu }) {
-  const red = hu.parent.light === Light.RED
+function ParentFigure({ side, lay, hu, parent, lift }) {
+  const red = parent.light === Light.RED
   const callout = red ? { id: 'parent-red', label: 'Light turns red', where: TARGET.parent, reduced: hu.reduced,
     icon: <span className="mt-[0.1em] shrink-0"><LampFace light="red" size={Math.round(lay.font * 0.95)}/></span> } : null
   return (
-    <Framed side={side} lay={lay} dataPhone="parent" callout={callout}>
-      <ParentPhone {...hu.parent} scale={lay.s} reduced={hu.reduced}/>
+    <Framed side={side} lay={lay} dataPhone="parent" callout={callout} lift={lift} reduced={hu.reduced}>
+      <ParentPhone {...parent} scale={lay.s} reduced={hu.reduced}/>
     </Framed>
   )
 }
@@ -257,6 +287,24 @@ function Heading({ children, className, style }) {
 const KEYFRAMES = `@keyframes hu-draw{to{stroke-dashoffset:0}}@keyframes hu-label{from{opacity:0}to{opacity:1}}
 @keyframes hu-pulse{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}`
 
+/* How much of each phone is on screen, so the scrim only falls when the lit
+   phone can be seen. */
+function useSeen(ref, key) {
+  const [seen, setSeen] = React.useState({})
+  React.useEffect(() => {
+    const root = ref.current
+    if (!root || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(es => setSeen(s => {
+      const n = { ...s }
+      es.forEach(e => { n[e.target.dataset.lift] = e.intersectionRatio })
+      return n
+    }), { threshold: [0, 0.25, 0.5, 0.75, 1] })
+    root.querySelectorAll('[data-lift]').forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [ref, key])
+  return seen
+}
+
 function Stage() {
   const ref = React.useRef(null)
   const W = useWidth(ref)
@@ -264,11 +312,46 @@ function Stage() {
   const lay = layoutFor(W || 1200)
   const P = PHONE_W * lay.s
   const one = lay.cols === 1
-  const texting = <TeenFigure kind="texting" side={one ? 'top' : 'left'} lay={lay} hu={hu} label="The teen's phone, texting"/>
-  const scrolling = <TeenFigure kind="scrolling" side={one ? 'top' : 'right'} lay={lay} hu={hu} label="The teen's phone, scrolling videos"/>
+  const seen = useSeen(ref, lay.cols)
+
+  /* The lit phones: the one the callout points at, and on red the parent's
+     too. The scrim falls only when one of them is on screen, and lingers a
+     moment after, so two callouts in a row read as one beat. */
+  const beat = hu.beat
+  const litNow = !beat ? [] : beat.kind === 'parent' ? ['parent', beat.phone].filter(Boolean) : [beat.kind]
+  const darkNow = litNow.some(k => (seen[k] ?? 1) >= 0.25)
+  const dark = useTrail(darkNow, BRIDGE_MS)
+  const lastLit = React.useRef([])
+  if (darkNow) lastLit.current = litNow
+  const lit = new Set(dark ? (darkNow ? litNow : lastLit.current) : [])
+
+  /* on a beat, everything not lit shows the frame it had when the beat began */
+  const snap = React.useRef(null)
+  if (!beat && !dark) snap.current = null
+  else if (beat && snap.current?.id !== beat.id) snap.current = { id: beat.id, kind: beat.kind, phone: beat.phone, teen: hu.teen, parent: hu.parent }
+  const still = snap.current
+  const teenLight = k => (still && !(still.kind === 'parent' && still.phone === k) ? still.teen[k] : hu.teen[k])
+  const parent = still && still.kind !== 'parent' ? still.parent : hu.parent
+
+  const texting = <TeenFigure kind="texting" side={one ? 'top' : 'left'} lay={lay} hu={hu} light={teenLight('texting')}
+    lift={lit.has('texting')} label="The teen's phone, texting"/>
+  const scrolling = <TeenFigure kind="scrolling" side={one ? 'top' : 'right'} lay={lay} hu={hu} light={teenLight('scrolling')}
+    lift={lit.has('scrolling')} label="The teen's phone, scrolling videos"/>
   return (
-    <div ref={ref} className="w-full" data-stage>
+    <div ref={ref} className="w-full" data-stage data-beat={beat && darkNow ? beat.id : undefined} data-dark={dark || undefined}>
       <style>{KEYFRAMES}</style>
+      {/* the scrim: the whole window goes dark, grey and soft; the lit phone
+          sits above it. It never takes a click or a focus. */}
+      <div aria-hidden data-scrim className="pointer-events-none fixed inset-0 z-[60]"
+        style={{
+          background: 'rgba(4,14,10,0.66)',
+          backdropFilter: hu.reduced ? 'saturate(0.35)' : 'blur(3px) saturate(0.35)',
+          WebkitBackdropFilter: hu.reduced ? 'saturate(0.35)' : 'blur(3px) saturate(0.35)',
+          opacity: dark ? 1 : 0, visibility: dark ? 'visible' : 'hidden',
+          transition: dark
+            ? `opacity ${hu.reduced ? 160 : 380}ms ${EASE_OUT}, visibility 0s`
+            : `opacity ${hu.reduced ? 160 : SCRIM_OUT_MS}ms ease, visibility 0s linear ${hu.reduced ? 160 : SCRIM_OUT_MS}ms`,
+        }}/>
       {lay.cols === 3 ? (
         <div className="grid justify-center"
           style={{ gridTemplateColumns: `${lay.L}px ${P}px ${lay.g}px ${P}px ${lay.L}px ${P}px ${lay.L}px`, rowGap: 22 }}>
@@ -276,7 +359,7 @@ function Stage() {
           <Heading style={{ gridColumn: '6 / 7', gridRow: 1 }}>What the parent sees</Heading>
           <div style={{ gridColumn: '1 / 3', gridRow: 2 }}>{texting}</div>
           <div style={{ gridColumn: '4 / 6', gridRow: 2 }}>{scrolling}</div>
-          <div style={{ gridColumn: '6 / 8', gridRow: 2 }}><ParentFigure side="right" lay={lay} hu={hu}/></div>
+          <div style={{ gridColumn: '6 / 8', gridRow: 2 }}><ParentFigure side="right" lay={lay} hu={hu} parent={parent} lift={lit.has('parent')}/></div>
         </div>
       ) : (
         <div className="flex flex-col items-center">
@@ -293,7 +376,7 @@ function Stage() {
           {/* two columns: an empty margin on the left keeps the phone centred */}
           <div className={one ? 'mt-4' : 'mt-6 grid'} style={one ? undefined : { gridTemplateColumns: `${lay.L}px ${lay.L + P}px` }}>
             {!one && <span/>}
-            <ParentFigure side={one ? 'top' : 'right'} lay={lay} hu={hu}/>
+            <ParentFigure side={one ? 'top' : 'right'} lay={lay} hu={hu} parent={parent} lift={lit.has('parent')}/>
           </div>
         </div>
       )}
@@ -389,7 +472,7 @@ export function HeadsUpPage() {
     <main className="bg-paper">
       <section className="border-b border-rule bg-accent-wash">
         <div className="wrap py-8 lg:py-12">
-          <h1 className="m-0 font-display text-page font-bold leading-[1] tracking-tight text-ink">Heads Up</h1>
+          <h1 className="m-0 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">Heads Up</h1>
           <p className="mt-4 max-w-[40ch] font-body text-lead font-semibold leading-[1.4] text-ink">
             Heads Up tells you when phone activity is causing your teen stress.
           </p>

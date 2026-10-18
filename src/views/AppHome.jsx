@@ -1,7 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { LogoMark } from '../ui/logo'
-import { Cross } from '../ui/marks'
 import { useAccount, signOut } from '../account/store'
 import { solid, outline } from '../account/ui'
 import { captureHarness } from './Intro'
@@ -10,9 +9,8 @@ import { IntroOverlay, END, T, prog } from './apphome/intro'
 import { AuthPanel } from './apphome/AuthPanel'
 import { setMode, setGuest } from '../lib/mode'
 import { PRO } from '../lib/terms'
-
-/* The owner fills this in. Plain text; a blank line starts a new paragraph. */
-export const ABOUT_TEXT = `Inspiration and function of MindMap. Text coming soon.`
+import { AboutButton } from './about/AboutButton'
+import { AboutSheet } from './about/AboutSheet'
 
 /* Owner, 18 October: "a wellness app for teenagers" in place of the old motto. */
 const MOTTO = 'A wellness app for teenagers'
@@ -76,35 +74,6 @@ function useClock(play) {
   return [t, skip]
 }
 
-function AboutDialog({ open, onClose }) {
-  const ref = React.useRef(null)
-  React.useEffect(() => {
-    const d = ref.current
-    if (!d) return
-    if (open && !d.open) d.showModal?.()
-    if (!open && d.open) d.close()
-  }, [open])
-  return (
-    <dialog ref={ref} onClose={onClose} aria-labelledby="apphome-about-title"
-      onClick={e => { if (e.target === ref.current) onClose() }}
-      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-panel border border-rule bg-card p-0
-        text-left text-ink shadow-lift backdrop:bg-ink/45">
-      <div className="flex items-center gap-3 border-b border-rule py-2 pl-5 pr-2">
-        <h2 id="apphome-about-title" className="m-0 font-display text-row font-bold text-ink">About MindMap</h2>
-        <button type="button" onClick={onClose} aria-label="Close"
-          className="ml-auto grid size-11 place-items-center rounded-field text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink">
-          <Cross className="size-4"/>
-        </button>
-      </div>
-      <div className="px-5 py-5">
-        {ABOUT_TEXT.split(/\n\s*\n/).map((p, i) => (
-          <p key={i} className="m-0 mt-3 max-w-[56ch] text-sec text-ink-2 first:mt-0">{p.trim()}</p>
-        ))}
-      </div>
-    </dialog>
-  )
-}
-
 export function AppHome({ go }) {
   const me = useAccount()
   const [play] = React.useState(shouldPlay)
@@ -159,11 +128,8 @@ export function AppHome({ go }) {
           Mind<span className="text-accent">Map</span>
         </h1>
         <p style={rise(1)} className="m-0 mt-2 font-body text-meta text-ink-2">{MOTTO}</p>
-        <button type="button" style={rise(2)} onClick={() => setAbout(true)}
-          className="mt-3 min-h-[44px] px-3 font-display text-ui font-bold text-accent-ink underline
-            decoration-accent/50 decoration-2 underline-offset-[5px] hoverOnly:decoration-accent">
-          About
-        </button>
+        {/* The About text now fills a full screen sheet (owner, 18 October). */}
+        <AboutButton style={rise(2)} onClick={() => setAbout(true)}/>
 
         <div style={rise(3)} className="mt-4 w-full">
           {demo ? (
@@ -210,7 +176,7 @@ export function AppHome({ go }) {
       </div>
 
       {!done && <IntroOverlay t={t} box={box} size={size} onSkip={skip}/>}
-      <AboutDialog open={about} onClose={() => setAbout(false)}/>
+      <AboutSheet open={about} onClose={() => setAbout(false)}/>
     </main>
   )
 }

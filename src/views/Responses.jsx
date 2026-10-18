@@ -4,7 +4,7 @@ import { cn } from '../lib/utils'
 import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
 import {
   PAGE, ALL_ITEMS, REQUIRED,
-  SCALE_ITEMS, DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, TEXT_ITEM, STARS_ITEM,
+  SCALE_ITEMS, DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, OPEN_ITEMS, STARS_ITEM,
   SCALE_MAX, summariseItem, ratedAnswered,
   questionText, itemById, pageLabel,
 } from '../survey/questions'
@@ -109,8 +109,15 @@ function build(id, rows, startedAt) {
     if (p) demo.set(item.id, p)
   })
 
-  const noteRow = by.get(TEXT_ITEM.id)
-  const note = noteRow ? String(noteRow.value || '').trim() : ''
+  /* The four short written answers, by question id. */
+  const notes = new Map()
+  OPEN_ITEMS.forEach(item => {
+    const r = by.get(item.id)
+    const t = r ? String(r.value || '').trim() : ''
+    if (t) notes.set(item.id, t)
+  })
+  /* The one short text asked before 18 October, kept for the CSV column. */
+  const oldNote = rows.find(r => r.questionId === 'blocker-note')
 
   const done = REQUIRED_IDS.filter(qid => {
     const r = by.get(qid)
@@ -130,9 +137,10 @@ function build(id, rows, startedAt) {
     demo,
     blocker: picked(BLOCKER_ITEM.id),
     stars: value(STARS_ITEM.id),
-    note,
+    notes,
+    oldNote: oldNote ? String(oldNote.value || '').trim() : '',
     done,
-    commented: !!note,
+    commented: notes.size > 0,
   }
 }
 
@@ -271,7 +279,7 @@ const PERSON_HEAD = [
   'respondent', 'startedAt', 'lastAt',
   ...DEMOGRAPHIC_ITEMS.map(q => q.id),
   ...SCALE_ITEMS.map(q => q.id),
-  'stars', 'blocker', 'blockerNote',
+  'stars', 'blocker', ...OPEN_ITEMS.map(q => q.id), 'blockerNote',
   'ratedAnswered', 'ratedTotal', 'requiredAnswered', 'requiredTotal',
 ]
 
@@ -283,13 +291,14 @@ function personRows(people) {
       lastAt: p.lastAt || '',
       stars: p.stars == null ? '' : p.stars,
       blocker: p.blocker || '',
-      blockerNote: p.note || '',
+      blockerNote: p.oldNote || '',
       ratedAnswered: p.rated,
       ratedTotal: SCALE_ITEMS.length,
       requiredAnswered: p.done,
       requiredTotal: REQUIRED_COUNT,
     }
     DEMOGRAPHIC_ITEMS.forEach(q => { row[q.id] = p.demo.get(q.id) || '' })
+    OPEN_ITEMS.forEach(q => { row[q.id] = p.notes.get(q.id) || '' })
     SCALE_ITEMS.forEach(q => {
       const v = p.scales.get(q.id)
       row[q.id] = v == null ? '' : v
@@ -607,9 +616,13 @@ export function Responses() {
   /* Over everyone, never the filtered view. */
   const s = React.useMemo(() => summarise(people), [people])
 
+  /* Per written question, quoted in full under its own wording. */
   const notes = React.useMemo(
-    () => people.filter(p => p.note).map(p => ({
-      key: p.id + '/note', code: p.code, at: p.lastAt, text: p.note,
+    () => OPEN_ITEMS.map(item => ({
+      item,
+      quotes: people.filter(p => p.notes.has(item.id)).map(p => ({
+        key: p.id + '/' + item.id, code: p.code, at: p.lastAt, text: p.notes.get(item.id),
+      })),
     })),
     [people])
 
@@ -702,10 +715,10 @@ export function Responses() {
                   : `From ${s.starsAnswered} ratings, in half stars.`}
             </Figure>
 
-            <Figure label="Written notes" value={s.commented}>
+            <Figure label="Short answers" value={s.commented}>
               {s.commented === 0
-                ? 'The one written question is optional. Nobody has used it.'
-                : `${s.commented} of ${s.people} named something that would put them off.`}
+                ? 'No short answers yet. All four are optional.'
+                : `${s.commented} of ${s.people} wrote at least one.`}
             </Figure>
           </div>
         </section>
@@ -893,24 +906,28 @@ export function Responses() {
         </section>
 
         {/* ------------------------------------------------------ free text */}
-        <section aria-label="Written notes" className="mt-20">
-          <p className="mark">Written Notes</p>
-          {notes.length === 0 ? (
-            <p className="mt-4 max-w-measure text-sec text-ink-2">
-              No notes yet. The one written question is optional.
-            </p>
-          ) : (
-            <>
-              <p className="mt-4 max-w-measure text-sec text-ink-2">
-                {notes.length} of {s.people} answered “{TEXT_ITEM.prompt}” Quoted in full.
-              </p>
-              <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-2">
-                {notes.map(c => (
-                  <Quote key={c.key} code={c.code} at={c.at}>{c.text}</Quote>
-                ))}
+        <section aria-label="Short answers" className="mt-20">
+          <p className="mark">Short Answers</p>
+          <div className="mt-6 flex flex-col gap-12">
+            {notes.map(({ item, quotes }) => (
+              <div key={item.id}>
+                <h2 className={cn('max-w-read font-display font-bold text-ink',
+                  item.important ? 'text-head' : 'text-row')}>
+                  {item.prompt}
+                </h2>
+                <p className="note mt-1.5">
+                  {quotes.length === 0 ? 'No answers yet.' : `${quotes.length} of ${s.people} answered.`}
+                </p>
+                {quotes.length > 0 && (
+                  <div className="mt-5 grid gap-x-12 gap-y-6 lg:grid-cols-2">
+                    {quotes.map(c => (
+                      <Quote key={c.key} code={c.code} at={c.at}>{c.text}</Quote>
+                    ))}
+                  </div>
+                )}
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </section>
 
         {/* ---------------------------------------------------- the archive */}
@@ -930,12 +947,12 @@ export function Responses() {
 
         {retiredGroups.length > 0 && (
           <section aria-label="Retired answers" className="mt-20">
-            <p className="mark">Retired Questions</p>
+            <p className="mark">Earlier Questions</p>
             <p className="mt-4 max-w-measure text-sec text-ink-2">
-              Answers to questions since dropped. Kept in full, counted in no figure.
+              Answers to questions no longer asked. Kept in full, counted in no figure.
             </p>
             <Fold
-              summary="older answers"
+              summary="earlier answers"
               note={`${s.retired} answer${s.retired === 1 ? '' : 's'} in ${retiredGroups.length} group${retiredGroups.length === 1 ? '' : 's'}`}
             >
               <div className="flex flex-col gap-8">

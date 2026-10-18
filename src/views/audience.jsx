@@ -18,6 +18,7 @@ import { ScrollIn, ScrollRow } from '../ui/motion'
 import { CalendarLegend, FACE_MEANS, FACE_WORD, MonthCalendar, longDay } from './calendar'
 import { TEEN } from './student/demoTeen'
 import { LampFace } from '../traffic/Face'
+import { TrafficLight } from './pro/look'
 import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
 import {
@@ -124,6 +125,31 @@ function Pair({ children, wide }) {
 }
 
 /* ───────────────────────────── shared page parts ───────────────────────── */
+
+/* "Heads Up" with its traffic light beside it, everywhere an audience section
+   names it (owner, 18 October). The light is still and aria-hidden; the words
+   carry the name. Also used on the Overview's audience cards. */
+export function HeadsUp({ size = 9, className }) {
+  return (
+    <span className={cn('whitespace-nowrap', className)}>
+      <TrafficLight size={size} horizontal cycle={false}
+        className="mr-[0.35em] align-middle"/>Heads Up
+    </span>
+  )
+}
+
+/* The Heads Up band on each audience page: the name, one line, the demo. */
+function HeadsUpBand({ line, go, tone = 'card' }) {
+  return (
+    <Section tone={tone} tight>
+      <SectionHead><HeadsUp size={14}/></SectionHead>
+      <SectionLede>{line}</SectionLede>
+      <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
+        See how it works <ArrowRight aria-hidden/>
+      </Button>
+    </Section>
+  )
+}
 
 function Hero({ label, title, lede, go, photo, photoAlt, facts, ground }) {
   return (
@@ -303,6 +329,9 @@ export function ForStudents({ go }) {
           STOCK,
         ]}/>
 
+      <HeadsUpBand go={go} tone="paper"
+        line="Notices stress patterns in how you use your phone, never what is on it. You see it first."/>
+
       <Section tone="card" tight>
         <SectionHead>Your {SCORE} today</SectionHead>
         <Pair>
@@ -334,7 +363,7 @@ export function ForStudents({ go }) {
           <ScrollIn>
             <Facts head="How to read the Trends" variant="rule" hue="beam" rows={[
               ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
-              ['The calendar', `Each day shows its Heads Up face and ${SCORE}. Pick a day to see it.`],
+              ['The calendar', <>Each day shows its <HeadsUp/> face and {SCORE}. Pick a day to see it.</>],
               ['The shaded band', 'The band is your usual range, built from your last fourteen days.'],
             ]}/>
           </ScrollIn>
@@ -422,13 +451,7 @@ export function ForParents({ go }) {
           STOCK,
         ]}/>
 
-      <Section tone="card" tight>
-        <SectionHead>Heads Up</SectionHead>
-        <SectionLede>Heads Up tells you when phone activity is causing your teen stress.</SectionLede>
-        <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
-          See Heads Up <ArrowRight aria-hidden/>
-        </Button>
-      </Section>
+      <HeadsUpBand go={go} line="Tells you when phone activity is causing your teen stress."/>
 
       <Section tone="paper" tight>
         <SectionHead>The {SCORE}</SectionHead>
@@ -449,7 +472,7 @@ export function ForParents({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
-              ['Days, weeks, months', `One ${SCORE} a day with its Heads Up face, by week or by month.`],
+              ['Days, weeks, months', <>One {SCORE} a day with its <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['A day at most', `Nothing finer than a day. Never ${NOTES}, ${LOCATION} or raw readings.`],
             ]}/>
@@ -582,6 +605,8 @@ export function ForSchools({ go }) {
           STOCK,
         ]}/>
 
+      <HeadsUpBand go={go} line="You see each sharing student’s colour, never the content."/>
+
       <Section tone="paper" tight>
         <SectionHead>The {SCORE}</SectionHead>
         <ScoreExplain rings={rings} rows={[
@@ -599,7 +624,7 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
-              ['Days, weeks, months', `Each student's ${SCORE} and Heads Up face, by week or by month.`],
+              ['Days, weeks, months', <>Each student’s {SCORE} and <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['Consented students only', 'You see a student only if they chose to share with you.'],
               ['Small groups', `A group under ${K_ANONYMITY} students shows nothing.`],

@@ -1,19 +1,18 @@
 import React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { Section, SectionHead } from '../ui/section'
-import { Button } from '../ui/button'
-import { ArrowRight, Camera, MoveMark } from '../ui/marks'
-import { ConsentRules, FrameworkFan, NetworkPath, PatchLink } from '../charts/architecture'
+import { Camera, MoveMark } from '../ui/marks'
+import { FrameworkFan, NetworkPath } from '../charts/architecture'
 import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
-import { K_ANONYMITY } from '../lib/caseload'
 import { SCORE, PRO_PLURAL_LC } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { ToolkitBand } from './methods/ToolkitBand'
+import { MirrorDemo } from './methods/MirrorDemo'
 
-/* How it works, in six categories, one at a time.
+/* How it works, one category at a time.
  *
  * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
  * everything is cluttered and still too complex, like nobody needs to know
@@ -38,13 +37,16 @@ const SUBJECTS = R.per_subject.length
 const WINS = R.paired.wins
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
-/* ── the four categories ─────────────────────────────────────────────────
-   `tone` is the band's ground. Three near-whites and one ink band, which is
-   the range spec 0f rule 7 asks for; the dark one is the network, so the one
-   drawing with real data on it sits on the one ground that sets it apart. */
+/* ── the categories ──────────────────────────────────────────────────────
+   `tone` is the band's ground. Near-whites and one ink band, which is the
+   range spec 0f rule 7 asks for; the dark one is the network, so the one
+   drawing with real data on it sits on the one ground that sets it apart.
+   `still` skips the parallax: the patch render and the Mirror demo hold
+   their place. 18 October, the owner: "remove app and site from how it
+   works", so that tab is gone. */
 const CATEGORIES = [
-  { id: 'hardware', tab: 'The patch', tone: 'paper', ground: 'bg-paper',
-    title: 'Your body, once a second',
+  { id: 'hardware', tab: 'The patch', tone: 'paper', ground: 'bg-paper', still: true,
+    title: 'What the patch measures',
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
     rows: [
       ['Measures', `${SENSORS[SENSOR_ORDER[0]].name}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
@@ -52,7 +54,14 @@ const CATEGORIES = [
       ['Connects', 'To your phone over Bluetooth, with no wires.'],
     ],
     close: 'MindMap also works without the patch, with readings from the phone camera pulse and the survey.',
-    figure: PatchLink },
+    figure: PatchRender },
+  /* "Add Mental Mirror as a whole new feature on the how it works complete
+     with a video demo" (18 October). Facts from docs/mental-mirror.md. */
+  { id: 'mirror', tab: 'Mental Mirror', tone: 'card', ground: 'bg-aqua', still: true,
+    title: 'Mental Mirror',
+    line: "Google's MediaPipe Face Landmarker maps 478 points on your face, frame by frame.",
+    close: `In 30 seconds it reads your pulse, brow, eyes and mouth, and gives a ${SCORE} without the patch. No picture is kept.`,
+    figure: MirrorDemo },
   { id: 'ai', tab: 'MindMap AI', tone: 'card', ground: 'bg-aqua',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
@@ -78,17 +87,6 @@ const CATEGORIES = [
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkPath },
-  { id: 'software', tab: 'App and site', tone: 'card', ground: 'bg-beam-wash',
-    title: 'Your readings follow your account',
-    line: 'Use the app with or without the patch, on any device.',
-    rows: [
-      ['Made with', 'React, running in the browser.'],
-      ['Without the patch', '45 seconds in all: 30 with the camera, then 15 with the microphone.'],
-      ['Privacy', `Parents see Trends by day, week and month, never anything finer than a day. Groups under ${K_ANONYMITY} show nothing. Every record opened is logged.`],
-      ['Toolkit', 'Short activities, each on its own page.'],
-      ['Sync', 'Readings sync to your account and to the people you share with.'],
-    ],
-    figure: ConsentRules },
   { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
     title: 'What your phone adds',
     line: 'Sensors you already carry, used only inside MindMap.',
@@ -120,6 +118,20 @@ const M = ({ children, size = 20, className }) => (
 function MicMark(p) { return <M {...p}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></M> }
 function KeysMark(p) { return <M {...p}><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></M> }
 function PinMark(p) { return <M {...p}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></M> }
+
+/* The patch tab's picture: the real CAD model (the one in the 3D viewer on
+   the patch page) rendered face up from public/di/arena, revision DI-03,
+   with the engraved logo and wordmark on top. A still image, outlined in the
+   accent so the pale shell reads on paper. */
+function PatchRender({ className }) {
+  return (
+    <figure className={cn('m-0 flex justify-center', className)}>
+      <img src={`${import.meta.env.BASE_URL}patch-front-cad.png`} width={605} height={871}
+        alt="The MindMap patch CAD model, face up, with the MindMap logo engraved on top."
+        className="block h-auto w-[220px] lg:w-[260px]" decoding="async"/>
+    </figure>
+  )
+}
 
 /* The phone tab's drawing: one phone, the five sensors around it. */
 function PhoneParts({ className }) {
@@ -162,7 +174,7 @@ function Row({ k, icon: Icon, dark, first, children }) {
   )
 }
 
-/* The switcher. Five controls a reader presses, so rounded-field, body face,
+/* The switcher. Six controls a reader presses, so rounded-field, body face,
    normal case (spec 0d rule 2). Two by two on a phone, one row from sm. */
 const TRIGGER = cn(
   'min-h-[44px] rounded-field border px-3 font-display text-ui font-medium',
@@ -180,18 +192,13 @@ export function Methods({ go }) {
         {/* ── the opening band: title, one action, the switcher ── */}
         <section className="border-t border-rule bg-paper">
           <div className="wrap pb-5 pt-7 lg:pb-6 lg:pt-10">
-            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-              <div className="min-w-0">
-                <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
-                  How MindMap works
-                </h1>
-                <p className="mt-2 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
-                  Every number is read against your own last two weeks, never anyone else's.
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => go('check')}>
-                Take a reading<ArrowRight aria-hidden/>
-              </Button>
+            <div className="min-w-0">
+              <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
+                How MindMap works
+              </h1>
+              <p className="mt-2 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
+                Every number is read against your own last two weeks, never anyone else's.
+              </p>
             </div>
             <TabsPrimitive.List aria-label="Category"
               className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -228,11 +235,11 @@ export function Methods({ go }) {
                         {c.line}
                       </p>
                     </ScrollIn>
-                    <div className="mt-4">
+                    {c.rows && <div className="mt-4">
                       {c.rows.map(([k, line, icon], i) => (
                         <ScrollRow key={k} index={i}><Row k={k} icon={icon} dark={dark} first={i === 0}>{line}</Row></ScrollRow>
                       ))}
-                    </div>
+                    </div>}
                     {c.close && (
                       <p className={cn('mt-4 max-w-[48ch] border-t pt-3 text-sec font-semibold leading-[1.5]',
                         dark ? 'border-ink-3 text-paper' : 'border-rule text-ink')}>
@@ -240,9 +247,11 @@ export function Methods({ go }) {
                       </p>
                     )}
                   </div>
-                  <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
-                    <Figure dark={dark}/>
-                  </Parallax2D>
+                  {c.still
+                    ? <div className="min-w-0 lg:pt-1"><Figure dark={dark}/></div>
+                    : <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
+                        <Figure dark={dark}/>
+                      </Parallax2D>}
                 </div>
               </Section>
             </TabsPrimitive.Content>

@@ -56,40 +56,66 @@ function ScaleControl({ q, value, onPick }) {
   )
 }
 
-function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
+/* A short written answer. Saves on blur as well as on Save, so leaving the
+ * field never loses what was typed (owner, 18 October: four of these in a row,
+ * and a forgotten Save would drop an answer). No Skip: every one is optional,
+ * and a blank field is already a skip. Exported so the #/survey page uses the
+ * same field. `bg` is the field fill on the surface it sits on. */
+export function TextAnswer({ q, initial = '', onSave, bg = 'bg-paper' }) {
   const [text, setText] = React.useState(initial)
+  const saved = React.useRef(initial)
   const empty = !text.trim()
-  const id = React.useId()
+  const save = () => {
+    const t = text.trim()
+    if (!t || t === saved.current) return
+    saved.current = t
+    onSave(t)
+  }
   return (
     <div className="mt-3">
       <textarea
-        id={id}
-        rows={3}
+        rows={q.important ? 4 : 3}
         value={text}
         maxLength={q.maxLength}
         placeholder={q.placeholder}
         onChange={e => setText(e.target.value)}
+        onBlur={save}
         aria-label={q.prompt}
         className={cn(
-          'block w-full rounded-field border border-rule bg-paper p-3',
+          'block w-full rounded-field border p-3',
           'font-body text-sec text-ink placeholder:text-ink-3',
           'transition-[border-color,background-color] duration-150 ease-out',
-          'hoverOnly:border-ink-3 focus:bg-card'
+          q.important
+            ? 'border-2 border-accent bg-accent-wash/40'
+            : cn('border-rule hoverOnly:border-ink-3', bg)
         )}
       />
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        {/* The disabled Save says why it is disabled. */}
-        <span className="note">{empty ? 'Save turns on once you write something.' : ''}</span>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <Button size="sm" type="button" variant="outline" disabled={empty} onClick={save}>Save</Button>
         <span className="text-fine tabular-nums text-ink-3">
           {text.length}/{q.maxLength}
         </span>
       </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <Button size="sm" type="button" disabled={empty} onClick={() => onSave(text.trim())}>
-          {saveLabel}
-        </Button>
-        {onSkip && (
-          <Button size="sm" type="button" variant="ghost" onClick={onSkip}>Skip</Button>
+    </div>
+  )
+}
+
+/* Number, prompt, then "Optional" and the hint on one line under it. The
+ * important question gets a larger prompt and the hint. Exported so the
+ * #/survey page renders the same head. */
+export function QuestionHead({ q, size = 'text-ui' }) {
+  return (
+    <div className="flex items-baseline gap-x-3">
+      {/* The numeral comes from ask order, not the prompt. */}
+      <span className="shrink-0 text-fine tabular-nums text-ink-3">{questionNumber(q.id)}</span>
+      <div className="min-w-0">
+        <p className={cn('max-w-[44ch] font-display font-bold text-ink',
+          q.important ? 'text-row' : size)}>{q.prompt}</p>
+        {(q.hint || q.optional) && (
+          <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {q.hint && <span className="text-meta font-medium text-accent-ink">{q.hint}</span>}
+            {q.optional && <span className="note">Optional</span>}
+          </p>
         )}
       </div>
     </div>
@@ -98,17 +124,16 @@ function TextControl({ q, initial = '', onSave, onSkip, saveLabel = 'Save' }) {
 
 /* One question, whichever kind it is. Shared by the page cards and the final
  * block so wording and spacing cannot drift between them. */
-function Question({ q, answer, onAnswer, onSkip }) {
+function Question({ q, answer, onAnswer }) {
   if (q.kind === 'scale') {
     return <ScaleControl q={q} value={answer?.value ?? null} onPick={(v, l) => onAnswer(v, l)} />
   }
   if (q.kind === 'text') {
     return (
-      <TextControl
+      <TextAnswer
         q={q}
         initial={typeof answer?.value === 'string' ? answer.value : ''}
         onSave={v => onAnswer(v, null)}
-        onSkip={q.optional ? onSkip : undefined}
       />
     )
   }
@@ -221,7 +246,6 @@ export function ReviewLauncher({ page }) {
 function ReviewDialog({ onClose }) {
   useSurvey()
   const ref = React.useRef(null)
-  const [skipped, setSkipped] = React.useState(() => new Set())
 
   React.useEffect(() => { syncPending() }, [])
   React.useEffect(() => {
@@ -315,27 +339,10 @@ function ReviewDialog({ onClose }) {
               <div className="mt-5 flex flex-col gap-6">
                 {section.items.map(q => {
                   const a = byId.get(q.id)
-                  const isSkipped = skipped.has(q.id)
                   return (
                     <div key={q.id} className="border-t border-rule/60 pt-4">
-                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        {/* The numeral comes from ask order, not the prompt. */}
-                        <span className="text-fine tabular-nums text-ink-3">
-                          {questionNumber(q.id)}
-                        </span>
-                        <p className="max-w-[44ch] font-display text-ui font-bold text-ink">{q.prompt}</p>
-                        {q.optional && <span className="note">Optional</span>}
-                      </div>
-                      {isSkipped && !a ? (
-                        <p className="note mt-3">Skipped.</p>
-                      ) : (
-                        <Question
-                          q={q}
-                          answer={a}
-                          onAnswer={(v, l) => answer(q, v, l)}
-                          onSkip={() => setSkipped(new Set(skipped).add(q.id))}
-                        />
-                      )}
+                      <QuestionHead q={q}/>
+                      <Question q={q} answer={a} onAnswer={(v, l) => answer(q, v, l)}/>
                       {a && (
                         <p className="mt-2.5 text-fine font-medium text-calm">
                           Saved{a.label ? `, ${a.label}` : ''}

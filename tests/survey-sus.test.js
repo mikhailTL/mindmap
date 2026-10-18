@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import * as Q from '../src/survey/questions.js'
 import {
   AGREE, CLEAR, ALL_ITEMS, REQUIRED, SECTIONS,
-  DEMOGRAPHIC_ITEMS, SCALE_ITEMS, BLOCKER_ITEM, TEXT_ITEM, STARS_ITEM,
+  DEMOGRAPHIC_ITEMS, SCALE_ITEMS, BLOCKER_ITEM, OPEN_ITEMS, STARS_ITEM,
   TOP_BOX, SCALE_MAX, summariseItem, ratedAnswered,
   questionNumber, questionText, itemById,
 } from '../src/survey/questions.js'
@@ -74,10 +74,11 @@ describe('the old instrument is gone and nothing replaced its benchmark', () => 
 })
 
 describe('no question is the negative mirror of another', () => {
-  it('asks twelve questions, each one once', () => {
-    expect(ALL_ITEMS).toHaveLength(12)
-    expect(new Set(ids(ALL_ITEMS)).size).toBe(12)
-    expect(new Set(prompts(ALL_ITEMS)).size).toBe(12)
+  /* Owner, 18 October: four short written answers replaced the one short text. */
+  it('asks fifteen questions, each one once', () => {
+    expect(ALL_ITEMS).toHaveLength(15)
+    expect(new Set(ids(ALL_ITEMS)).size).toBe(15)
+    expect(new Set(prompts(ALL_ITEMS)).size).toBe(15)
   })
 
   it('pins the ask order, so an insertion is deliberate', () => {
@@ -85,7 +86,8 @@ describe('no question is the negative mirror of another', () => {
       'who-age', 'who-role', 'who-school',
       'use-easy', 'sentence-clear', 'use-again',
       'trust-parent', 'trust-clinician', 'would-recommend',
-      'stars', 'blocker', 'blocker-note',
+      'stars', 'blocker',
+      'open-like', 'open-use', 'open-improve', 'open-other',
     ])
   })
 
@@ -186,12 +188,25 @@ describe('the demographics block', () => {
 })
 
 describe('what the survey is allowed to collect', () => {
-  it('has exactly one free text, and it is optional and short', () => {
+  /* Owner, 18 October: the survey ends with these four, in this order. */
+  it('ends with the four short written answers, all optional and capped', () => {
     const texts = ALL_ITEMS.filter(q => q.kind === 'text')
-    expect(texts).toEqual([TEXT_ITEM])
-    expect(TEXT_ITEM.optional).toBe(true)
-    expect(TEXT_ITEM.maxLength).toBeLessThanOrEqual(200)
-    expect(REQUIRED).not.toContain(TEXT_ITEM)
+    expect(texts).toEqual(OPEN_ITEMS)
+    expect(ALL_ITEMS.slice(-4)).toEqual(OPEN_ITEMS)
+    expect(prompts(OPEN_ITEMS)).toEqual([
+      'What do you like about MindMap?',
+      'How would you use MindMap?',
+      'What improvements would you like to see in MindMap?',
+      'Any other feedback or questions?',
+    ])
+    for (const q of OPEN_ITEMS) {
+      expect(q.optional).toBe(true)
+      expect(q.maxLength).toBeGreaterThan(0)
+      expect(q.maxLength).toBeLessThanOrEqual(500)
+      expect(REQUIRED).not.toContain(q)
+    }
+    /* The first is the one marked as most useful, and it is still optional. */
+    expect(OPEN_ITEMS.filter(q => q.important)).toEqual([OPEN_ITEMS[0]])
   })
 
   it('asks for no name, email, phone, address or birth date', () => {
@@ -207,9 +222,9 @@ describe('what the survey is allowed to collect', () => {
     }
   })
 
-  it('makes every question but the free text compulsory', () => {
-    expect(REQUIRED).toHaveLength(ALL_ITEMS.length - 1)
-    expect(ids(REQUIRED)).not.toContain(TEXT_ITEM.id)
+  it('makes every question but the written answers compulsory', () => {
+    expect(REQUIRED).toHaveLength(ALL_ITEMS.length - OPEN_ITEMS.length)
+    for (const q of OPEN_ITEMS) expect(ids(REQUIRED)).not.toContain(q.id)
   })
 })
 
@@ -230,8 +245,8 @@ describe('the rated items', () => {
 
   /* The split that keeps a band out of a mean. If a demographic ever leaks
      into SCALE_ITEMS, the page starts averaging "Parent or guardian". */
-  it('exclude the demographics, the blocker, the rating and the free text', () => {
-    for (const q of [...DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, STARS_ITEM, TEXT_ITEM]) {
+  it('exclude the demographics, the blocker, the rating and the written answers', () => {
+    for (const q of [...DEMOGRAPHIC_ITEMS, BLOCKER_ITEM, STARS_ITEM, ...OPEN_ITEMS]) {
       expect(SCALE_ITEMS).not.toContain(q)
       expect(q.rated).toBeUndefined()
     }
@@ -372,7 +387,7 @@ describe('ratedAnswered', () => {
 describe('sections', () => {
   it('reach every item exactly once, in ask order', () => {
     expect(SECTIONS.flatMap(s => s.items)).toEqual(ALL_ITEMS)
-    expect(SECTIONS.map(s => s.id)).toEqual(['background', 'using', 'trust', 'overall'])
+    expect(SECTIONS.map(s => s.id)).toEqual(['background', 'using', 'trust', 'overall', 'written'])
   })
 
   /* The heading rule: plain Title Case noun phrases, no pronouns, no empty
@@ -395,10 +410,10 @@ describe('sections', () => {
 })
 
 describe('questionNumber and questionText', () => {
-  it('numbers 1 to 12 continuously across the whole survey, not per section', () => {
+  it('numbers 1 to 15 continuously across the whole survey, not per section', () => {
     expect(ALL_ITEMS.map(q => questionNumber(q.id)))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    expect(new Set(ALL_ITEMS.map(q => questionNumber(q.id))).size).toBe(12)
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    expect(new Set(ALL_ITEMS.map(q => questionNumber(q.id))).size).toBe(15)
   })
 
   it('returns null for an id the survey does not ask', () => {
@@ -420,6 +435,8 @@ describe('questionNumber and questionText', () => {
       .toBe('If this were actually used, what difference would it make?')
     expect(questionText('nps')).toBe('How likely are you to recommend MindMap?')
     expect(questionText('about-age')).toBe('Your age range')
+    expect(questionText('blocker-note')).toBe('If something would stop you, name it in a few words.')
+    expect(itemById('blocker-note')).toBeNull()
     expect(questionText('never-asked')).toBe('never-asked')
   })
 
@@ -443,7 +460,8 @@ describe('the flat payload the endpoint stores', () => {
     row('would-recommend', '5', 'Strongly agree'),
     row('stars', '4.5', '4.5 of 5'),
     row('blocker', '3', 'Who else could see a reading'),
-    row('blocker-note', 'the sharing', null),
+    row('open-like', 'the calm view', null),
+    row('open-improve', 'more colours', null),
   ]
 
   it('carries one field per question, in ask order', () => {
@@ -466,7 +484,9 @@ describe('the flat payload the endpoint stores', () => {
     expect(f['who-role']).toBe('Parent or guardian')
     expect(f['who-school']).toBe('Four-year degree')
     expect(f.blocker).toBe('Who else could see a reading')
-    expect(f['blocker-note']).toBe('the sharing')
+    expect(f['open-like']).toBe('the calm view')
+    expect(f['open-improve']).toBe('more colours')
+    expect(f['open-use']).toBe('')
   })
 
   it('leaves an unanswered question blank rather than zero', () => {

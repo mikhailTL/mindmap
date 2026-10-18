@@ -9,8 +9,10 @@ import { cn } from '../lib/utils'
  * the element fires is one sample for the engine, the same path a finger
  * would take. At most three videos decode at once.
  *
- * Handle: { go(idx, ms, kind), fresh(), freeze(on) }. Invented handles only,
- * no real app's name or logo. Follow is an 8 px-corner rectangle. */
+ * Handle: { go(idx, ms, kind), fresh(), freeze(on) }. `paused` holds the
+ * feed still while the other phone has its turn. Under Reduce Motion no clip
+ * plays; each slide shows its first frame. Invented handles only, no real
+ * app's name or logo. Follow is an 8 px-corner rectangle. */
 
 const SRC = id => `${(import.meta.env && import.meta.env.BASE_URL) || '/'}headsup/clips/clip-${id}.mp4`
 
@@ -47,7 +49,7 @@ function Clip({ clip, near, current, frozen }) {
     <div className="relative overflow-hidden bg-black" style={{ height: SLIDE_H }} data-clip={clip.id}>
       <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${clip.c}, #000 85%)` }}/>
       {near && (
-        <video ref={ref} src={SRC(clip.id)} muted playsInline loop autoPlay={current} preload="auto" aria-hidden
+        <video ref={ref} src={SRC(clip.id)} muted playsInline loop autoPlay={current && !frozen}preload="auto" aria-hidden
           className="absolute inset-0 h-full w-full object-cover"/>
       )}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%]"
@@ -75,7 +77,7 @@ function Clip({ clip, near, current, frozen }) {
   )
 }
 
-export default function Feed({ handleRef, onScroll, reduced }) {
+export default function Feed({ handleRef, onScroll, reduced, paused = false }) {
   const feedRef = React.useRef(null)
   const [cur, setCur] = React.useState(0)
   const [frozen, setFrozen] = React.useState(false)
@@ -112,7 +114,8 @@ export default function Feed({ handleRef, onScroll, reduced }) {
         anim.to(y, ms, kind === 'flick' ? OUT_CUBIC : IOS_CURVE)
       },
       fresh() { anim.stop(); const el = feedRef.current; if (el) el.scrollTop = 0; setCur(0) },
-      freeze(on) { setFrozen(!!on) },
+      /* a freeze stops a swipe where it is, like a held frame */
+      freeze(on) { if (on) anim.stop(); setFrozen(!!on) },
     }
     return () => { clearTimeout(fade); handleRef.current = null }
   }, [handleRef, anim])
@@ -120,7 +123,7 @@ export default function Feed({ handleRef, onScroll, reduced }) {
   return (
     <div className="absolute inset-0 bg-black" style={{ fontFamily: IOS.font }}>
       <div ref={feedRef} aria-hidden className={cn('absolute inset-0 overflow-hidden transition-opacity duration-150', cut && 'opacity-40')}>
-        {CLIPS.map((c, i) => <Clip key={c.id} clip={c} near={Math.abs(i - cur) <= 1} current={i === cur} frozen={frozen}/>)}
+        {CLIPS.map((c, i) => <Clip key={c.id} clip={c} near={Math.abs(i - cur) <= 1} current={i === cur} frozen={frozen || paused || reduced}/>)}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
         <StatusBar dark/>
