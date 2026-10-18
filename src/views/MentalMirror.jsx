@@ -7,6 +7,7 @@ import { Diverge } from '../charts/diverge'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 import { addReading } from '../lib/readingLog'
+import { TechButton, TechRoot, TechTitle } from '../ui/tech'
 
 import { FACE_SECONDS, analyseFace } from '../signals/face'
 import { captureFace, drawOverlay, faceAvailable, loadLandmarker, loadVision, openFrontCamera } from '../signals/face-capture'
@@ -27,7 +28,13 @@ import { fitCalibration, identityCalibration } from '../signals/tnam'
  * move the id on, so a run still waiting on the model or the camera finds out
  * when it wakes, stops its own camera and touches nothing else. Before this,
  * a run stopped while the model loaded carried on, and its failure stopped
- * the next run's camera (docs/mental-mirror.md). */
+ * the next run's camera (docs/mental-mirror.md).
+ *
+ * 18 October: the consent card and the camera panel sit on the dark tech
+ * ground (ui/tech) with the How it works Mirror tab. The landmark overlay
+ * glows through a CSS drop-shadow on its canvas; signals/face-capture.js,
+ * which draws it, is unchanged. The result panel stays light: the dial and
+ * the charts in it are drawn for paper. */
 
 /* The four bands of the dial, one per group of cues, each 0 to 100 where 50
    is this person's usual. */
@@ -47,6 +54,9 @@ function bandsOf(result) {
 }
 
 const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
+const TECH = 't-band rounded-[20px] border border-[#1b3a2c] p-5 shadow-[0_30px_60px_-36px_rgba(7,20,14,.9)] lg:p-6'
+const HUD = ['left-3 top-3 border-l-2 border-t-2', 'right-3 top-3 border-r-2 border-t-2',
+  'bottom-3 left-3 border-b-2 border-l-2', 'bottom-3 right-3 border-b-2 border-r-2']
 const STORE = 'mindmap.mirror.baseline'
 const CHECKINS = 'mindmap.phone.checkins'   /* shared with the camera reading: one calibration per person */
 const CONSENT = 'mindmap.mirror.ok'
@@ -73,10 +83,10 @@ function cameraMessage(e) {
 }
 
 const KEEP = [
-  ['bg-accent', 'Students only.'],
-  ['bg-beam', 'No picture is kept.'],
-  ['bg-sky', 'Not a diagnosis.'],
-  ['bg-coral', "Google's MediaPipe Face Landmarker maps 478 points on your face. Your pulse is read from skin colour."],
+  ['#3ecf9a', 'Students only.'],
+  ['#67e3f5', 'No picture is kept.'],
+  ['#c4b5fd', 'Not a diagnosis.'],
+  ['#ffb4a1', "Google's MediaPipe Face Landmarker maps 478 points on your face. Your pulse is read from skin colour."],
 ]
 
 /* Any render failure inside the mirror shows a short note and a retry, not a
@@ -262,34 +272,48 @@ function Mirror() {
 
   if (!consented) {
     return (
-      <div className={cn(PANEL, 'max-w-[44ch]')}>
-        <h3 className="font-display text-row font-bold text-ink">Before you start</h3>
-        <ul className="m-0 mt-3 list-none space-y-2.5 p-0">
+      <TechRoot className={cn(TECH, 'max-w-[44ch]')}>
+        <TechTitle as="h3" className="text-row">Before you start</TechTitle>
+        <ul className="m-0 mt-4 list-none space-y-3 p-0">
           {KEEP.map(([dot, line]) => (
-            <li key={line} className="flex items-baseline gap-3 text-ui text-ink">
-              <span aria-hidden className={cn('size-2.5 shrink-0 translate-y-[-1px] rounded-[3px]', dot)}/>
+            <li key={line} className="flex items-baseline gap-3 text-ui text-[#eafaf2]">
+              <span aria-hidden className="size-2.5 shrink-0 translate-y-[-1px] rounded-full"
+                style={{ background: dot, boxShadow: `0 0 10px 1px ${dot}` }}/>
               {line}
             </li>
           ))}
         </ul>
-        <Button className="mt-5" onClick={agree} disabled={!supported}>Open the mirror</Button>
-        {!supported && <p className="mt-3 text-fine text-ink-3">This browser cannot open a camera here.</p>}
-      </div>
+        <TechButton className="mt-6" onClick={agree} disabled={!supported}>Open the mirror</TechButton>
+        {!supported && <p className="mt-3 text-fine text-[#a9c4b7]">This browser cannot open a camera here.</p>}
+      </TechRoot>
     )
   }
 
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
       {/* ── the mirror ─────────────────────────────────────────────── */}
-      <div className={PANEL}>
-        <div ref={boxRef} className="relative overflow-hidden rounded-field bg-ink/90" style={{ aspectRatio: '4 / 3' }}>
+      <TechRoot className={TECH}>
+        <div ref={boxRef} className="relative overflow-hidden rounded-[12px] bg-[#04100b] ring-1 ring-[#3ecf9a]/30"
+          style={{ aspectRatio: '4 / 3' }}>
           <video ref={videoRef} muted playsInline autoPlay
             className={cn('absolute inset-0 h-full w-full object-cover', phase === 'capture' ? 'opacity-100' : 'opacity-0')}
             style={{ transform: 'scaleX(-1)' }} aria-hidden/>
-          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden/>
+          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden
+            style={{ filter: 'drop-shadow(0 0 3px rgba(62,207,154,.8))' }}/>
+          {phase === 'capture' && <span aria-hidden className="t-scan-y t-anim"/>}
+          {/* Where a face goes, before the camera opens. */}
+          {phase === 'idle' && (
+            <svg viewBox="0 0 120 90" aria-hidden focusable="false" className="pointer-events-none absolute inset-0 h-full w-full">
+              <ellipse cx="60" cy="45" rx="19" ry="27" fill="none" stroke="#3ecf9a" strokeOpacity=".45"
+                strokeWidth=".5" strokeDasharray="1.5 1.5"/>
+            </svg>
+          )}
+          {HUD.map(k => (
+            <span key={k} aria-hidden className={cn('pointer-events-none absolute size-5 rounded-[3px] border-[#3ecf9a]/80', k)}/>
+          ))}
           {phase !== 'capture' && (
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-              <p className="max-w-[28ch] text-sec text-paper/90">
+            <div className={cn('absolute inset-0 flex justify-center p-6 text-center', phase === 'idle' ? 'items-end' : 'items-center')}>
+              <p className="max-w-[28ch] text-sec text-[#eafaf2]">
                 {phase === 'loading' ? 'Loading MediaPipe Face Landmarker…'
                   : phase === 'working' ? 'Reading…'
                   : phase === 'done' ? 'Done. The camera is off.'
@@ -298,14 +322,21 @@ function Mirror() {
             </div>
           )}
           {phase === 'capture' && !seen && (
-            <p className="absolute inset-x-0 bottom-3 text-center text-fine text-paper/90">Looking for a face…</p>
+            <p className="absolute inset-x-0 bottom-3 text-center text-fine text-[#eafaf2] [text-shadow:0_1px_3px_#000]">Looking for a face…</p>
           )}
         </div>
 
         {phase === 'capture' && (
-          <div className="mt-3">
-            <Progress value={progress} max={100} label="Reading progress"/>
-            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-fine text-ink-2">
+          <div className="t-glass t-glass--quiet mt-3 px-3.5 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="t-mono text-[0.8125rem] text-[#3ecf9a]">{seen ? 'Face found' : 'Looking'}</span>
+              <span className="t-mono text-[0.8125rem] tabular-nums text-[#eafaf2]">
+                {Math.round(progress / 100 * FACE_SECONDS)} / {FACE_SECONDS} s
+              </span>
+            </div>
+            <Progress value={progress} max={100} label="Reading progress" tone="#3ecf9a"
+              className="mt-2 bg-white/10 shadow-[0_0_14px_-4px_rgba(62,207,154,.8)]"/>
+            <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-fine text-[#a9c4b7]">
               <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full bg-accent-lit"/>Face Landmarker</span>
               <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-[2px] border-2 border-coral"/>Pulse patch</span>
             </p>
@@ -313,13 +344,13 @@ function Mirror() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button onClick={run} disabled={busy || !supported}>
+          <TechButton onClick={run} disabled={busy || !supported}>
             {phase === 'done' ? 'Read again' : busy ? 'Reading…' : `Start · ${FACE_SECONDS}s`}
-          </Button>
-          {busy && <Button variant="outline" onClick={stop}>Stop</Button>}
+          </TechButton>
+          {busy && <TechButton variant="ghost" onClick={stop}>Stop</TechButton>}
         </div>
-        {error && <p className="mt-3 max-w-[40ch] text-sec text-warn" role="alert">{error}</p>}
-      </div>
+        {error && <p className="mt-3 max-w-[40ch] text-sec text-[#ffb4a1]" role="alert">{error}</p>}
+      </TechRoot>
 
       {/* ── the result ─────────────────────────────────────────────── */}
       <div className={PANEL} aria-live="polite">

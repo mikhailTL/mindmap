@@ -21,6 +21,8 @@ import { LampFace } from '../traffic/Face'
 import { TrafficLight } from './pro/look'
 import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
+import { HeroScene, heroGround } from '../ui/scenes/art'
+import { TONES } from '../ui/scenes/tones'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
@@ -151,27 +153,40 @@ function HeadsUpBand({ line, go, tone = 'card' }) {
   )
 }
 
-function Hero({ label, title, lede, go, photo, photoAlt, facts, ground }) {
+/* `scene` lights the hero (owner, 18 October: more of the Toolkit's depth
+   across the site, not everywhere): 'dusk' is the deep green with light
+   words, 'dawn' the pale one with the usual dark words. The words sit on the
+   measured CSS gradient (ui/scenes/tones.js); the drawn scene stays right of
+   them, or under the photograph on a phone. */
+function Hero({ label, title, lede, go, photo, photoAlt, facts, ground, scene }) {
+  const dark = scene === 'dusk'
+  const t = scene && TONES[scene]
   return (
-    <div className={cn('border-b border-rule', ground || 'bg-aqua')}>
+    <div className={cn('relative isolate overflow-hidden border-b border-rule',
+      scene ? 'bg-[image:var(--hg-v)] lg:bg-[image:var(--hg-h)]' : (ground || 'bg-aqua'))}
+      style={scene ? { backgroundColor: t.sky[0], ...heroGround(scene) } : undefined}>
+      {scene && <HeroScene tone={scene} className="inset-x-0 bottom-0 -z-10 h-[46%] lg:inset-y-0 lg:left-auto lg:h-full lg:w-[62%]"/>}
       <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]
         lg:items-end lg:gap-5 lg:py-7">
         <div className="min-w-0">
           <button onClick={() => go('site')}
-            className="mb-3 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
-              font-medium text-accent transition-colors duration-150 hoverOnly:text-accent-ink">
+            className={cn('mb-3 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta',
+              'font-medium transition-colors duration-150',
+              dark ? 'text-accent-lit hoverOnly:text-paper' : 'text-accent hoverOnly:text-accent-ink')}>
             <ArrowLeft aria-hidden className="size-4"/> Overview
           </button>
-          <p className="font-body text-ui font-semibold text-accent-ink">{label}</p>
+          <p className={cn('font-body text-ui font-semibold', dark ? 'text-accent-lit' : 'text-accent-ink')}>{label}</p>
           <h1 className="mt-2 max-w-[16ch] font-display text-major font-bold leading-[1.06]
-            tracking-tight text-ink">{title}</h1>
+            tracking-tight text-ink" style={t ? { color: t.ink } : undefined}>{title}</h1>
           {lede && (
-            <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">{lede}</p>
+            <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink"
+              style={t ? { color: dark ? t.sub : t.ink } : undefined}>{lede}</p>
           )}
           <Facts className="mt-3 lg:max-w-[36rem]" rows={facts}/>
         </div>
         {photo && (
-          <div className={cn(PANEL, 'h-[190px] sm:h-[240px] md:h-[320px] lg:h-[320px]')}>
+          <div className={cn(PANEL, 'h-[190px] sm:h-[240px] md:h-[320px] lg:h-[320px]',
+            dark && 'border-white/20 shadow-[0_24px_48px_-28px_rgba(62,207,154,0.7)]')}>
             <Frame photo={photo} alt={photoAlt} eager/>
           </div>
         )}
@@ -319,7 +334,7 @@ export function ForStudents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For students" ground="bg-accent-wash" photo="student-hero"
+      <Hero go={go} label="For students" scene="dusk" photo="student-hero"
         photoAlt="A teenager in headphones sitting in front of a sofa, holding a games controller"
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
@@ -441,7 +456,7 @@ export function ForParents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For parents" ground="bg-beam-wash" photo="parent-hero"
+      <Hero go={go} label="For parents" scene="dawn" photo="parent-hero"
         photoAlt="A mother and her teenage child smiling at an open laptop together at home"
         title="See how your teen is doing"
         lede="One Mind Score a day for your child, over days, weeks and months."

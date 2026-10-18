@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
+import '../../ui/tech/tech.css'
 
 /* The Mental Mirror demo on How it works. A drawn face, not a person: the
  * outline is a formula and the 478 points are laid out from it, matching the
@@ -16,7 +17,7 @@ const STILL_T = 8.4
 const SWEEP = [0.7, 3.0]
 
 const GREEN = '#3ecf9a', LINE = 'rgba(62,207,154,0.22)', BRIGHT = '#b9f7dd'
-const LABEL = '#a9c4b7', VALUE = '#f7faf8', PULSE = '#ff7a7a'
+const LABEL = '#a9c4b7', VALUE = '#eafaf2', PULSE = '#ff7a7a'
 const BANDS = [
   { name: 'Pulse', color: '#ff5d5d', to: 62 },
   { name: 'Brow', color: '#ff9a3d', to: 58 },
@@ -306,8 +307,16 @@ export function MirrorDemo({ className }) {
 
   return (
     <figure className={cn('m-0', className)}>
-      <div ref={box} className="w-full overflow-hidden rounded-panel border border-ink-3 bg-[#0a1f16] font-body">
-        <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
+      {/* The tech register's glass (ui/tech), with four corner brackets and
+          the values in mono, so it reads as one system with the dark tabs. */}
+      <div className="t-glass relative w-full overflow-hidden">
+        <div ref={box} className="t-mono w-full">
+          <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
+        </div>
+        {['left-2.5 top-2.5 border-l border-t', 'right-2.5 top-2.5 border-r border-t',
+          'bottom-2.5 left-2.5 border-b border-l', 'bottom-2.5 right-2.5 border-b border-r'].map(k => (
+          <span key={k} aria-hidden className={cn('pointer-events-none absolute size-4 rounded-[2px] border-[#3ecf9a]/70', k)}/>
+        ))}
       </div>
       <figcaption className="sr-only">
         A drawn face fills with 478 tracked points. Live values for brow, eyes, lips and pulse change

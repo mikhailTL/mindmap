@@ -12,6 +12,7 @@ import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
+import { PatchLinkScene } from '../ui/scenes/art'
 
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
@@ -144,6 +145,9 @@ export function PatchPage({ as: Root = 'main' }) {
               {down ? 'See the three parts' : 'Turn the 3D model'}<ChevronDown/>
             </button>
           </ScrollIn>
+          {/* The patch to the phone as a lit scene (owner, 18 October: the
+              flat outline diagram was too plain beside the Toolkit). */}
+          <PatchLinkScene className="mt-5 max-w-[34rem] lg:mt-6"/>
           </div>
 
           <figure className="m-0 mt-6 lg:mt-0">

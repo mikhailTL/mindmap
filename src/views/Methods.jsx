@@ -2,7 +2,8 @@ import React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { Section, SectionHead } from '../ui/section'
 import { Camera, MoveMark } from '../ui/marks'
-import { FrameworkFan, NetworkPath } from '../charts/architecture'
+import { FrameworkGlow, NetworkGlow } from './methods/TechFigures'
+import { TechBand, TechTitle, Glass } from '../ui/tech'
 import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
@@ -38,9 +39,10 @@ const WINS = R.paired.wins
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
 /* ── the categories ──────────────────────────────────────────────────────
-   `tone` is the band's ground. Near-whites and one ink band, which is the
-   range spec 0f rule 7 asks for; the dark one is the network, so the one
-   drawing with real data on it sits on the one ground that sets it apart.
+   `tone` is a light band's ground. `tech` puts a band on the dark tech
+   ground instead (ui/tech), its value the second bloom's hue: 18 October,
+   the owner: "Especially for the AI and ML, implement the cool discord style
+   design strats at a technical cool level ... different from toolkit".
    `still` skips the parallax: the patch render and the Mirror demo hold
    their place. 18 October, the owner: "remove app and site from how it
    works", so that tab is gone. */
@@ -57,12 +59,12 @@ const CATEGORIES = [
     figure: PatchRender },
   /* "Add Mental Mirror as a whole new feature on the how it works complete
      with a video demo" (18 October). Facts from docs/mental-mirror.md. */
-  { id: 'mirror', tab: 'Mental Mirror', tone: 'card', ground: 'bg-aqua', still: true,
+  { id: 'mirror', tab: 'Mental Mirror', tech: 'mint', still: true,
     title: 'Mental Mirror',
     line: "Google's MediaPipe Face Landmarker maps 478 points on your face, frame by frame.",
     close: `In 30 seconds it reads your pulse, brow, eyes and mouth, and gives a ${SCORE} without the patch. No picture is kept.`,
     figure: MirrorDemo },
-  { id: 'ai', tab: 'MindMap AI', tone: 'card', ground: 'bg-aqua',
+  { id: 'ai', tab: 'MindMap AI', tech: 'vio',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
     rows: [
@@ -72,8 +74,8 @@ const CATEGORIES = [
       ['Never', 'Diagnoses, scores severity or names a medication.'],
       ['In a crisis', 'A crisis line comes before anything else.'],
     ],
-    figure: FrameworkFan },
-  { id: 'ml', tab: 'Machine Learning', tone: 'ink', ground: 'bg-ink',
+    figure: FrameworkGlow },
+  { id: 'ml', tab: 'Machine Learning', tech: 'mint',
     title: 'A novel neural network',
     line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
     rows: [
@@ -86,7 +88,7 @@ const CATEGORIES = [
       ['Made for', 'Stress, not sadness. A sad film does not move the score.'],
       ['More', 'Full figures are in the repository, under docs.'],
     ],
-    figure: NetworkPath },
+    figure: NetworkGlow },
   { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
     title: 'What your phone adds',
     line: 'Sensors you already carry, used only inside MindMap.',
@@ -162,15 +164,68 @@ function PhoneParts({ className }) {
 
 /* A row: label, one line. Ruled, never boxed. */
 /* `first`, not :first-child: each row sits in its own ScrollRow wrapper. */
-function Row({ k, icon: Icon, dark, first, children }) {
+function Row({ k, icon: Icon, first, children }) {
   return (
-    <div className={cn('grid gap-x-4 gap-y-0.5 border-t py-2', first && 'border-t-0 pt-0',
-      'sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)]', dark ? 'border-ink-3' : 'border-rule')}>
-      <p className={cn('flex items-center gap-2 font-body text-ui font-semibold', dark ? 'text-paper' : 'text-ink')}>
+    <div className={cn('grid gap-x-4 gap-y-0.5 border-t border-rule py-2', first && 'border-t-0 pt-0',
+      'sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)]')}>
+      <p className="flex items-center gap-2 font-body text-ui font-semibold text-ink">
         {Icon && <Icon size={18} className="text-accent"/>}{k}
       </p>
-      <p className={cn('text-meta leading-[1.45]', dark ? 'text-mist' : 'text-ink-2')}>{children}</p>
+      <p className="text-meta leading-[1.45] text-ink-2">{children}</p>
     </div>
+  )
+}
+
+/* A fact on the dark ground: a glass card, the label in mono. The crisis row
+   gets the warm edge so it is the first card the eye finds. */
+function Fact({ k, children }) {
+  const crisis = k === 'In a crisis'
+  return (
+    <Glass tone={crisis ? 'coral' : 'quiet'} className="h-full px-4 py-3">
+      <p className={cn('t-mono text-[0.8125rem] font-semibold leading-tight',
+        crisis ? 'text-[#ffb4a1]' : 'text-[#3ecf9a]')}>{k}</p>
+      <p className="mt-1.5 text-ui leading-[1.45] text-[#eafaf2]">{children}</p>
+    </Glass>
+  )
+}
+
+/* A category on the tech ground. */
+function TechCategory({ c }) {
+  const Figure = c.figure
+  const odd = c.rows && c.rows.length % 2 === 1
+  return (
+    <TechBand hue={c.tech}>
+      {/* Heading, drawing, facts on a phone; facts beside the drawing from lg. */}
+      <div className="grid gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:grid-rows-[auto_1fr] lg:items-start">
+        <ScrollIn className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <TechTitle className="max-w-[24ch] text-sub leading-[1.12]">{c.title}</TechTitle>
+          <p className="mt-2.5 max-w-[48ch] text-sec leading-[1.5] text-[#a9c4b7]">{c.line}</p>
+        </ScrollIn>
+        {c.still
+          ? <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1"><Figure/></div>
+          : <Parallax2D className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1" distance={36} scale={0.03}><Figure/></Parallax2D>}
+        {(c.rows || c.close) && (
+          <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:-mt-2">
+            {c.rows && (
+              <ul className="m-0 grid list-none gap-2.5 p-0 sm:grid-cols-2">
+                {c.rows.map(([k, line], i) => (
+                  <ScrollRow as="li" key={k} index={i}
+                    className={cn(odd && i === c.rows.length - 1 && 'sm:col-span-2')}>
+                    <Fact k={k}>{line}</Fact>
+                  </ScrollRow>
+                ))}
+              </ul>
+            )}
+            {c.close && (
+              <p className={cn('max-w-[48ch] border-t border-[#1f4433] pt-3.5 text-sec font-semibold leading-[1.5] text-[#eafaf2]',
+                c.rows && 'mt-5')}>
+                {c.close}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </TechBand>
   )
 }
 
@@ -221,7 +276,13 @@ export function Methods({ go }) {
               </TabsPrimitive.Content>
             )
           }
-          const dark = c.tone === 'ink'
+          if (c.tech) {
+            return (
+              <TabsPrimitive.Content key={c.id} value={c.id} className="outline-none">
+                <TechCategory c={c}/>
+              </TabsPrimitive.Content>
+            )
+          }
           const Figure = c.figure
           return (
             <TabsPrimitive.Content key={c.id} value={c.id} className="outline-none">
@@ -230,27 +291,25 @@ export function Methods({ go }) {
                   <div className="min-w-0">
                     <ScrollIn>
                       <SectionHead tone={c.tone} className="mt-0 max-w-[24ch]">{c.title}</SectionHead>
-                      <p className={cn('mt-2 max-w-[48ch] text-sec leading-[1.5]',
-                        dark ? 'text-mist' : 'text-ink-2')}>
+                      <p className="mt-2 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
                         {c.line}
                       </p>
                     </ScrollIn>
                     {c.rows && <div className="mt-4">
                       {c.rows.map(([k, line, icon], i) => (
-                        <ScrollRow key={k} index={i}><Row k={k} icon={icon} dark={dark} first={i === 0}>{line}</Row></ScrollRow>
+                        <ScrollRow key={k} index={i}><Row k={k} icon={icon} first={i === 0}>{line}</Row></ScrollRow>
                       ))}
                     </div>}
                     {c.close && (
-                      <p className={cn('mt-4 max-w-[48ch] border-t pt-3 text-sec font-semibold leading-[1.5]',
-                        dark ? 'border-ink-3 text-paper' : 'border-rule text-ink')}>
+                      <p className="mt-4 max-w-[48ch] border-t border-rule pt-3 text-sec font-semibold leading-[1.5] text-ink">
                         {c.close}
                       </p>
                     )}
                   </div>
                   {c.still
-                    ? <div className="min-w-0 lg:pt-1"><Figure dark={dark}/></div>
+                    ? <div className="min-w-0 lg:pt-1"><Figure/></div>
                     : <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
-                        <Figure dark={dark}/>
+                        <Figure/>
                       </Parallax2D>}
                 </div>
               </Section>

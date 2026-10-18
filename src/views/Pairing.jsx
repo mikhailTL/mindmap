@@ -4,7 +4,8 @@ import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
 import { ArrowRight, Check, Always, Cross, Minus, ChevronDown } from '../ui/marks'
 import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
-import { WirelessLink, StepArt } from '../charts/pairing-art'
+import { StepArt } from '../charts/pairing-art'
+import { PairScene } from '../ui/scenes/art'
 import { connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
@@ -136,12 +137,9 @@ export function Pairing({ as: Root = 'main' }) {
               </Card>
             </ScrollIn>
 
+            {/* The key visual as a lit scene (owner, 18 October). */}
             <Parallax2D distance={40} className="min-w-0">
-              <Card className="min-w-0 p-3.5">
-                <figure className="m-0 min-w-0">
-                  <WirelessLink/>
-                </figure>
-              </Card>
+              <PairScene className="min-w-0"/>
             </Parallax2D>
           </div>
         </div>

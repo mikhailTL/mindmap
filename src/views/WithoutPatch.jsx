@@ -11,6 +11,8 @@ import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 import { FACE_SECONDS } from '../signals/face'
 import { cn } from '../lib/utils'
+import { SceneCard } from '../ui/scenes/SceneCard'
+import { mirrorArt, pulseArt, surveyArt } from '../ui/scenes/art'
 
 /* Taking a reading with nothing on your arm. Capture instructions live in
    PhoneCheck, at the point of use; do not duplicate them here. Every figure
@@ -29,80 +31,31 @@ const ROUTES = [
     line:`${ITEMS.length} questions on how you feel.` },
 ]
 
-function RouteArt({ kind }) {
-  /* A face with the landmark mesh over it, as the mirror draws it. */
-  if (kind === 'mirror') return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
-      <rect x="62" y="2" width="76" height="70" rx="12" className="fill-ink"/>
-      <ellipse cx="100" cy="38" rx="21" ry="27" className="fill-none stroke-beam" strokeWidth="1.6"/>
-      <path d="M86 30q5-4 10 0M104 30q5-4 10 0" className="fill-none stroke-accent-lit" strokeWidth="1.6" strokeLinecap="round"/>
-      <path d="M87 36h8M105 36h8M93 52q7 4 14 0" className="fill-none stroke-accent-lit" strokeWidth="1.6" strokeLinecap="round"/>
-      <path d="M79 38 100 12 121 38 100 64Z M100 12v52 M79 38h42" className="fill-none stroke-beam" strokeWidth="0.7" opacity="0.7"/>
-      <path d="M22 38h14l4-8 5 16 4-8h12" className="fill-none stroke-coral" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="166" cy="38" r="16" className="fill-accent-wash stroke-accent" strokeWidth="1.6"/>
-      <path d="M158 40a8 8 0 0 1 16 0" className="fill-none stroke-accent" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  )
-  if (kind === 'sensors') return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
-      <rect x="14" y="4" width="52" height="66" rx="13" className="fill-aqua-2 stroke-ink" strokeWidth="1.6"/>
-      <rect x="24" y="12" width="30" height="30" rx="9" className="fill-card stroke-ink-3" strokeWidth="1.3"/>
-      <circle cx="33" cy="21" r="5" className="fill-none stroke-ink-3" strokeWidth="1.3"/>
-      <circle cx="45" cy="33" r="5" className="fill-none stroke-ink-3" strokeWidth="1.3"/>
-      <circle cx="45" cy="21" r="3" className="fill-accent"/>
-      <ellipse cx="39" cy="27" rx="19" ry="15" className="fill-accent-wash stroke-ink" strokeWidth="1.8" opacity="0.9"/>
-      <path d="M92 38h16M100 30v16" className="stroke-ruling" strokeWidth="1.6" strokeLinecap="round"/>
-      <rect x="132" y="8" width="20" height="34" rx="10" className="fill-card stroke-ink" strokeWidth="1.6"/>
-      <path d="M124 36a18 18 0 0 0 36 0M142 54v10M132 64h20" className="fill-none stroke-ink" strokeWidth="1.6" strokeLinecap="round"/>
-      <path d="M168 18c5 6 5 14 0 20M178 12c9 10 9 22 0 32" className="fill-none stroke-beam" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  )
-  return (
-    <svg viewBox="0 0 200 74" aria-hidden className="h-10 w-[8.6rem] sm:h-12 sm:w-[10rem]">
-      {[0, 1, 2].map(i => (
-        <rect key={i} x={16 + i * 9} y={2 + i * 7} width="116" height="52" rx="8"
-          className={i === 2 ? 'fill-card stroke-ink' : 'fill-aqua-2 stroke-ruling'} strokeWidth="1.5"/>
-      ))}
-      <path d="M46 29h48M46 43h58M46 57h38" className="stroke-ink-3" strokeWidth="1.8" strokeLinecap="round"/>
-      <circle cx="128" cy="29" r="6" className="fill-none stroke-ruling" strokeWidth="1.6"/>
-      <circle cx="128" cy="57" r="6" className="fill-none stroke-ruling" strokeWidth="1.6"/>
-      <circle cx="128" cy="43" r="9" className="fill-accent-wash stroke-accent" strokeWidth="1.8"/>
-      <path d="M123.5 43l3 3.5 6-7" className="fill-none stroke-accent" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
+/* One of the three ways, as a lit scene card (owner, 18 October: the site
+   should carry more of the Toolkit's depth). Each takes its own tone and a
+   small loop that shows what it reads. */
+const ART = { mirror: [mirrorArt, 'dusk', [0.62, 0.5]], sensors: [pulseArt, 'lagoon', [0.47, 0.3]],
+  ask: [surveyArt, 'tide', [0.66, 0.55]] }
 
-/* One of the three ways. All three take the same white card. */
 function Route({ r, i, go, toCheck }) {
+  const [art, tone, light] = ART[r.art]
+  const cta = r.id === 'ask'
+    ? <Button variant="outline" size="sm"
+        onClick={() => { setReadingIntent('survey'); go('check') }}>
+        Start the Survey<span aria-hidden>→</span>
+      </Button>
+    : r.id === 'mirror'
+    ? <Button variant="outline" size="sm" onClick={() => go('mirror')}>
+        Open the Mirror<span aria-hidden>→</span>
+      </Button>
+    : <Button variant="outline" size="sm" onClick={toCheck}>
+        Check my pulse<span aria-hidden>→</span>
+      </Button>
   return (
     <ScrollRow index={i} className="h-full">
-      <div className={cn(PANEL, 'flex h-full flex-col p-3.5 lg:p-4')}>
-        {/* Art beside the title on a phone, above it once the cards pair up. */}
-        <div className="flex items-center gap-3 sm:block">
-          <div className="w-fit shrink-0 rounded-panel bg-accent-wash px-2 py-1.5 sm:px-2 sm:py-2">
-            <RouteArt kind={r.art}/>
-          </div>
-          <div className="min-w-0 sm:mt-3">
-            <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
-            <p className="mt-0.5 text-fine font-semibold tabular-nums text-ink-3">{r.when}</p>
-          </div>
-        </div>
-        <p className="mt-2.5 border-t border-rule pt-2.5 text-fine text-ink-2">{r.line}</p>
-        <div className="mt-auto pt-3">
-          {r.id === 'ask'
-            ? <Button variant="outline" size="sm"
-                onClick={() => { setReadingIntent('survey'); go('check') }}>
-                Start the Survey<span aria-hidden>→</span>
-              </Button>
-            : r.id === 'mirror'
-            ? <Button variant="outline" size="sm" onClick={() => go('mirror')}>
-                Open the Mirror<span aria-hidden>→</span>
-              </Button>
-            : <Button variant="outline" size="sm" onClick={toCheck}>
-                Check my pulse<span aria-hidden>→</span>
-              </Button>}
-        </div>
-      </div>
+      <SceneCard tone={tone} art={art} w={240} h={110} sky={{ light, rings: 5, ringGap: 14 }}
+        bandClass="h-[88px] sm:h-[112px]"
+        title={r.title} meta={r.when} line={r.line} footer={cta}/>
     </ScrollRow>
   )
 }

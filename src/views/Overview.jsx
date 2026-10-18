@@ -14,6 +14,8 @@ import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
 import { WhatIs } from './landing/WhatIs'
 import { HeadsUp } from './audience'
+import { SceneBand } from '../ui/scenes/SceneCard'
+import { patchWayArt, phoneWayArt } from '../ui/scenes/art'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
 import heroField from '../photos/hero-field.webp'
@@ -63,28 +65,14 @@ export const OVERVIEW_SECTIONS = [
 const WAYS = [
   { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true,
     steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
-    art:(
-      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
-        <rect x="7" y="23" width="206" height="74" rx="37" className="fill-card stroke-ink" strokeWidth="2"/>
-        <rect x="56" y="33" width="108" height="54" rx="22" className="fill-mist stroke-ink" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="14" fill="none" className="stroke-ink-3" strokeWidth="1.6"/>
-        <circle cx="110" cy="60" r="4.5" className="fill-accent"/>
-      </svg>) },
+    scene:[patchWayArt, 'dusk', [0.29, 0.48]] },
   { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
     ways: [
       ['Mental Mirror', "reads your face with Google's MediaPipe Face Landmarker, a machine learning model."],
       ['Camera pulse check', 'reads your pulse from skin colour with your phone camera.'],
       ['Survey', 'asks a few short questions.'],
     ],
-    art:(
-      <svg viewBox="0 0 220 120" className="h-[46px] w-auto" aria-hidden focusable="false">
-        <rect x="74" y="3" width="72" height="114" rx="12" className="fill-card stroke-ink" strokeWidth="2"/>
-        <rect x="86" y="19" width="48" height="48" rx="8" className="fill-ink"/>
-        <circle cx="102" cy="39" r="8" className="fill-accent"/>
-        <circle cx="122" cy="39" r="5" className="fill-beam"/>
-        <path d="M84 91 q10 -16 20 0 t20 0 t12 -6" fill="none" stroke="#a8321f"
-          strokeWidth="2.4" strokeLinecap="round"/>
-      </svg>) },
+    scene:[phoneWayArt, 'lagoon', [0.51, 0.5]] },
 ]
 
 /* Three stacked doors on the green band. Each is the white card with its
@@ -307,9 +295,12 @@ export function Overview({ go }) {
             <ScrollRow key={w.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(w.go)}
                 variant="plain"
-                className={cn('flex h-full w-full flex-col p-5 text-left', w.lead && 'border-l-accent')}>
-                <span className="grid h-[52px] place-items-start" aria-hidden>{w.art}</span>
-                <span className="mt-3 block font-display text-head font-bold leading-tight text-ink">
+                className={cn('flex h-full w-full flex-col overflow-hidden p-5 text-left', w.lead && 'border-l-accent')}>
+                {/* The card stays white (owner, 18 October); only its header
+                    band is a lit scene. */}
+                <SceneBand as="span" tone={w.scene[1]} w={360} h={120} sky={{ light: w.scene[2], rings: 6 }}
+                  className="-mx-5 -mt-5 h-[112px] sm:h-[128px]">{w.scene[0]}</SceneBand>
+                <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">
                   {w.title}
                 </span>
                 {w.steps && (

@@ -1,4 +1,5 @@
 import React from 'react'
+import { contourPath } from '../../../ui/scenes/kit'
 
 /* The three illustrations for the What is MindMap? band. Owner, 18 October:
  * the old demo pictures (readings, a consent table, role tabs, a Toolkit
@@ -10,6 +11,8 @@ import React from 'react'
  *   app      a phone with three app layers (Trends, Toolkit, AI) lifting off
  *
  * Drawn here by hand: true isometric (30 degrees), site tokens only. The
+ * ground is lit from the top left and carries the site scenes' contour rings
+ * (owner, 18 October: more depth and light across the site). The
  * drawings are decorative (aria-hidden); the card text carries the meaning.
  * Motion is CSS transform and opacity only, 5 to 7 second eased loops, and
  * stops under prefers-reduced-motion. */
@@ -101,22 +104,21 @@ function Shadow({ x, y, z = 0, w, d, r = 4, blur, opacity = 0.16, className, sty
   )
 }
 
-/* The ground: a soft wash and a faint isometric dot lattice. */
-function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5' }) {
+/* The ground: a soft wash lit from the top left, and contour rings lying
+   flat on the plane round `focus`, the same map lines the site's scenes use
+   (ui/scenes). They drift a little; under reduced motion they hold. */
+function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5', focus = [40, 40] }) {
   const [vx, vy, vw, vh] = viewBox.split(' ').map(Number)
-  const dots = []
-  for (let i = -12; i <= 12; i++) {
-    for (let j = -12; j <= 12; j++) {
-      const [px, py] = iso(i * 20, j * 20, 0)
-      if (px > vx + 6 && px < vx + vw - 6 && py > vy + 6 && py < vy + vh - 6) dots.push([px, py])
-    }
-  }
   return (
     <svg viewBox={viewBox} aria-hidden="true" focusable="false" className="block h-auto w-full">
       <defs>
         <linearGradient id={`${id}g`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={ground[0]}/><stop offset="1" stopColor={ground[1]}/>
         </linearGradient>
+        <radialGradient id={`${id}l`} cx="0.18" cy="0.05" r="0.85">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95"/>
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0"/>
+        </radialGradient>
         <filter id={`${id}b`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="3.2"/>
         </filter>
@@ -125,8 +127,14 @@ function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5' }) {
         </filter>
       </defs>
       <rect x={vx} y={vy} width={vw} height={vh} fill={`url(#${id}g)`}/>
-      <g fill={INK} opacity="0.09">
-        {dots.map(([px, py]) => <circle key={`${px} ${py}`} cx={px} cy={py} r="0.9"/>)}
+      <rect x={vx} y={vy} width={vw} height={vh} fill={`url(#${id}l)`}/>
+      <g className="mm-iso-rings">
+        <g transform={plane(0)} fill="none" stroke="#157446" strokeOpacity="0.13">
+          {[34, 58, 82, 106, 130].map((r, i) => (
+            <path key={r} d={contourPath(focus[0], focus[1], r, { amp: 2 + i, phase: i * 0.9, squash: 1 })}
+              strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+          ))}
+        </g>
       </g>
       {children}
     </svg>
@@ -204,10 +212,14 @@ ${travel('mm-iso-p2b', P2B)}
 @keyframes mm-iso-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .mm-iso-float{animation:mm-iso-float 6.6s cubic-bezier(.45,.05,.55,.95) infinite}
 @keyframes mm-iso-shade{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes mm-iso-rings{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,2px)}}
+.mm-iso-rings{animation:mm-iso-rings 20s cubic-bezier(.45,.05,.55,.95) infinite}
 .mm-iso-shade{animation:mm-iso-shade 6.6s cubic-bezier(.45,.05,.55,.95) infinite}
+[data-off] .mm-iso-dot,[data-off] .mm-iso-ripple,[data-off] .mm-iso-arrive,[data-off] .mm-iso-float,
+[data-off] .mm-iso-shade,[data-off] .mm-iso-rings{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){
   .mm-iso-dot{display:none}
-  .mm-iso-ripple,.mm-iso-arrive,.mm-iso-float,.mm-iso-shade,.mm-iso-dot{animation:none}
+  .mm-iso-ripple,.mm-iso-arrive,.mm-iso-float,.mm-iso-shade,.mm-iso-dot,.mm-iso-rings{animation:none}
 }
 `
 
@@ -218,7 +230,7 @@ export function PatchPicture() {
   const b = `${id}b`
   const [sx, sy] = [PHONE1.x + 6, PHONE1.y + 8]
   return (
-    <Stage id={id} ground={['#f1f8f4', '#e2f0e8']}>
+    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} focus={[23, 56]}>
       <Shadow {...ARM} blur={b}/>
       <Shadow {...PHONE1} blur={b} opacity={0.2}/>
       {/* The forearm, then the patch on it, its light, and the ripple. */}
@@ -285,7 +297,7 @@ export function NetworkPicture() {
   const b = `${id}b`
   const p = centre(PARENT), q = centre(PROF)
   return (
-    <Stage id={id} ground={['#f1f8f4', '#e2f0e8']} viewBox="-112 -6 224 131.4">
+    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} viewBox="-112 -6 224 131.4" focus={[89, 89]}>
       {[TEEN, PARENT, PROF].map((s, i) => <Shadow key={i} {...s} blur={b}/>)}
       <Slab {...PROF} tone="white"/>
       <Slab {...PARENT} tone="white"/>
@@ -345,7 +357,7 @@ export function AppPicture() {
   const b = `${id}b`
   const L = { x: PHONE3.x + 10, w: PHONE3.w - 20, d: 26, h: 4, r: 6 }
   return (
-    <Stage id={id} ground={['#f1f8f4', '#e2f0e8']} viewBox="-125 -52 250 146.6">
+    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} viewBox="-125 -52 250 146.6" focus={[50, 50]}>
       <Shadow {...PHONE3} blur={b} opacity={0.2}/>
       <Slab {...PHONE3} tone="ink">
         <rect x={PHONE3.x + 5} y={PHONE3.y + 8} width={PHONE3.w - 10} height={PHONE3.d - 16} rx="7" fill="#103a28"/>

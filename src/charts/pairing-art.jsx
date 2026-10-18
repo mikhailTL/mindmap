@@ -120,58 +120,6 @@ function DimH({ y, x1, x2, from, size }) {
   )
 }
 
-/* ---- the hero: two objects, one link, nothing between them -------------- */
-
-const LINK_ALT =
-  'A drawing of the patch on the left and a phone on the right, with three arcs of Bluetooth Low '
-  + 'Energy leaving the side of the patch and reaching the phone. In the gap between them a cable '
-  + 'is drawn and struck through, because no cable runs between the two.'
-
-export function WirelessLink({ className }) {
-  const cx = 80, cy = 108, a = 32, b = 48
-  return (
-    <svg viewBox="0 0 460 240" role="img" aria-label={LINK_ALT}
-      className={cn('block h-auto w-full', className)} style={{ maxWidth: 520 }}>
-      <Plate cx={cx} cy={cy} a={a} b={b} wall={7}/>
-      <Slot cx={cx} cy={cy} a={a} b={b}/>
-      <circle cx={cx} cy={cy} r="5" fill={ACCENT}/>
-      <Advert x={cx + a} cy={cy} rings={[[16, 30], [26, 48], [36, 66]]}/>
-
-      {/* The phone is a drawing here rather than the ui/iphone mockup: at this
-          size the mockup's bezel detail is mush, and the figure is about the
-          gap between the two objects, not about the device. */}
-      <rect x="316" y="28" width="108" height="168" rx="20" fill={CARD} stroke={INK} strokeWidth="1.8"/>
-      <rect x="325" y="37" width="90" height="150" rx="13" fill={PAPER} stroke={RULE} strokeWidth="1"/>
-      <rect x="354" y="44" width="32" height="8" rx="4" fill={INK}/>
-      <g stroke={RULE} strokeWidth="5" strokeLinecap="round">
-        <line x1="337" y1="150" x2="403" y2="150"/>
-        <line x1="337" y1="166" x2="383" y2="166"/>
-      </g>
-      <circle cx="370" cy="104" r="22" fill={WASH} stroke={ACCENT} strokeWidth="2"/>
-      <path d="M361 104l6 7 12-14" fill="none" stroke={ACCENT} strokeWidth="2.6"
-        strokeLinecap="round" strokeLinejoin="round"/>
-
-      {/* The cable is the only shape in this file that exists to be denied. It
-          stops short of the phone on purpose: a cable drawn into the frame
-          would overlap the screen and read as part of the device. */}
-      <path d="M178 150Q238 186 298 148" fill="none" stroke={RULING} strokeWidth="3.4"
-        strokeLinecap="round"/>
-      <rect x="170" y="142" width="12" height="16" rx="3" fill={MIST} stroke={RULING} strokeWidth="1.4"/>
-      <rect x="296" y="140" width="12" height="16" rx="3" fill={MIST} stroke={RULING} strokeWidth="1.4"/>
-      <line x1="218" y1="142" x2="258" y2="192" stroke={INK} strokeWidth="2.8" strokeLinecap="round"/>
-
-      <g className="font-mono" fontSize="12.5" fill={INK3}>
-        <text x="232" y="62" textAnchor="middle">Bluetooth Low Energy</text>
-        <text x="232" y="212" textAnchor="middle">no cable, no computer</text>
-      </g>
-      <g className="font-display" fontSize="15" fontWeight="700" fill={INK}>
-        <text x={cx} y="196" textAnchor="middle">The patch</text>
-        <text x="370" y="226" textAnchor="middle">Your phone</text>
-      </g>
-    </svg>
-  )
-}
-
 /* ---- where it goes ------------------------------------------------------ */
 
 const ARM_ALT =

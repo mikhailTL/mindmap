@@ -1,0 +1,279 @@
+/* The tech register: How it works (AI, Machine Learning, Mental Mirror), the
+ * MindMap AI chat and the Mental Mirror capture screen.
+ *
+ * 18 October, the owner: "implement the cool discord style design strats at a
+ * technical cool level but not like copying discord and different from
+ * toolkit". So: the MindMap greens pushed into a dark register, glass panels
+ * with gradient edges, soft bloom, a faint grid, mono labels for values.
+ *
+ * Motion is transform, opacity and background-position only. Every animated
+ * element carries .t-anim and is paused until the .tech root it sits in is on
+ * screen (data-live="on", set by useLive in ./index.jsx). Under
+ * prefers-reduced-motion nothing moves and the packets are hidden.
+ *
+ * Text on the dark ground, measured on --t-bg #07140e and on the lightest
+ * panel fill #13291f (the bloom at its brightest):
+ *   --t-hi   #eafaf2  17.4 : 13.9
+ *   --t-dim  #a9c4b7  10.0 :  8.0
+ *   --t-mint #3ecf9a   9.3 :  7.4
+ *   --t-turq #67e3f5  11.9 :  9.5
+ *   --t-vio  #c4b5fd  10.4 :  8.3
+ *   --t-coral #ffb4a1 10.9 :  8.7  */
+
+.tech {
+  --t-bg: #07140e;
+  --t-ink: #0d2b1e;
+  --t-panel: #0c1f17;
+  --t-hi: #eafaf2;
+  --t-dim: #a9c4b7;
+  --t-mint: #3ecf9a;
+  --t-turq: #67e3f5;
+  --t-beam: #1d8fb0;
+  --t-vio: #c4b5fd;
+  --t-coral: #ffb4a1;
+  --t-edge: linear-gradient(135deg, rgba(62,207,154,.75), rgba(29,143,176,.28) 45%, rgba(167,139,250,.55));
+  --t-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  color: var(--t-hi);
+}
+.tech :where(a,button,summary,input,select,textarea,[role="tab"],[tabindex]):focus-visible {
+  outline: 2px solid var(--t-mint);
+  outline-offset: 2px;
+}
+
+/* ── the ground: ink, two blooms, a grid that fades out at the edges ────── */
+.t-band {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(29,143,176,.16), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, rgba(62,207,154,.12), transparent 60%),
+    var(--t-bg);
+}
+.t-band::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  background-image:
+    linear-gradient(rgba(62,207,154,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(62,207,154,.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 40%, #000, transparent);
+  mask-image: radial-gradient(80% 70% at 50% 40%, #000, transparent);
+  pointer-events: none;
+}
+.t-band::after {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  opacity: .06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* A bloom: a soft radial light that drifts. Size and colour at the call site. */
+.t-bloom {
+  position: absolute; z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+  will-change: transform;
+}
+.t-drift { animation: t-drift 18s var(--t-ease) infinite alternate; }
+.t-drift-2 { animation: t-drift-2 22s var(--t-ease) infinite alternate; }
+@keyframes t-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-8%, 10%, 0) scale(1.12); }
+}
+@keyframes t-drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to   { transform: translate3d(10%, -6%, 0) scale(.92); }
+}
+
+/* ── glass with a gradient edge ─────────────────────────────────────────── */
+.t-glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(19,41,31,.78), rgba(10,26,19,.82));
+  box-shadow: 0 24px 48px -28px rgba(0,0,0,.8), 0 0 42px -22px rgba(62,207,154,.45);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.t-glass::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--t-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+.t-glass--vio::before { background: linear-gradient(135deg, rgba(167,139,250,.75), rgba(29,143,176,.3) 50%, rgba(62,207,154,.6)); }
+.t-glass--coral::before { background: linear-gradient(135deg, rgba(255,140,110,.9), rgba(255,140,110,.25) 55%, rgba(62,207,154,.4)); }
+.t-glass--coral { box-shadow: 0 24px 48px -28px rgba(0,0,0,.8), 0 0 42px -20px rgba(255,120,90,.4); }
+.t-glass--quiet::before { background: linear-gradient(135deg, rgba(62,207,154,.35), rgba(169,196,183,.12) 60%); }
+.t-glass--quiet { box-shadow: none; }
+
+/* The sheen: one band of light that crosses a panel. */
+.t-sheen::after {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 35%, rgba(185,247,221,.07) 48%, transparent 60%);
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  pointer-events: none;
+}
+.t-sheen.t-anim::after, .t-anim.t-sheen::after { animation: t-sheen 7s var(--t-ease) infinite; animation-play-state: inherit; }
+@keyframes t-sheen {
+  0%, 30% { background-position: 130% 0; }
+  100%    { background-position: -30% 0; }
+}
+
+/* ── a heading lit by a slow sheen. Every stop is a light green, so the
+      text never drops below 13 : 1 wherever the light is. ──────────────── */
+.t-title {
+  background-image: linear-gradient(100deg, #eafaf2 0%, #eafaf2 38%, #c4f8e2 46%, #9df5d9 50%, #c4f8e2 54%, #eafaf2 62%, #eafaf2 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.t-title.t-anim { animation: t-title 6s var(--t-ease) infinite; }
+@keyframes t-title {
+  0%, 25% { background-position: 100% 0; }
+  100%    { background-position: 0% 0; }
+}
+@media (forced-colors: active) {
+  .t-title { color: CanvasText; -webkit-text-fill-color: CanvasText; background: none; }
+}
+
+/* ── mono labels for technical values ───────────────────────────────────── */
+.t-mono {
+  font-family: ui-monospace, "SF Mono", "Chivo Mono", Menlo, Consolas, monospace;
+  font-feature-settings: "zero" 1;
+  letter-spacing: .02em;
+}
+.t-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  min-height: 1.75rem;
+  padding: 0 .6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(62,207,154,.35);
+  background: rgba(62,207,154,.08);
+  color: var(--t-mint);
+  font-size: .8125rem; line-height: 1;
+}
+
+/* ── live dot ───────────────────────────────────────────────────────────── */
+.t-dot { position: relative; display: inline-block; width: .5rem; height: .5rem; border-radius: 999px; background: currentColor; }
+.t-dot::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor;
+  opacity: 0;
+}
+.t-dot.t-anim::after { animation: t-ping 2.2s var(--t-ease) infinite; animation-play-state: inherit; }
+@keyframes t-ping {
+  0%   { transform: scale(1); opacity: .6; }
+  80%, 100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* ── packets: a glowing dot that runs along a lane. The lane is a
+      full-width box, so translateX(%) is a share of the figure's width. ── */
+.t-lane { position: absolute; left: 0; top: 0; width: 100%; height: 0; pointer-events: none; }
+.t-lane > i {
+  position: absolute; left: 0; top: 0;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  border-radius: 999px;
+  background: #b9f7dd;
+  box-shadow: 0 0 8px 2px rgba(62,207,154,.85);
+}
+.t-lane.t-anim { animation: t-lane 2.6s var(--t-ease) infinite; opacity: 0; }
+@keyframes t-lane {
+  0%   { transform: translate(var(--x0), var(--y0)); opacity: 0; }
+  12%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(var(--x1), var(--y1)); opacity: 0; }
+}
+
+/* the memory strip's scan */
+.t-scan { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.t-scan > i {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 30%;
+  background: linear-gradient(90deg, transparent, rgba(103,227,245,.35), transparent);
+  transform: translateX(-100%);
+}
+.t-scan.t-anim > i { animation: t-scan-x 3.2s linear infinite; animation-play-state: inherit; }
+@keyframes t-scan-x { to { transform: translateX(340%); } }
+
+/* the mirror's vertical scan */
+.t-scan-y {
+  position: absolute; left: 0; right: 0; top: 0; height: 22%;
+  background: linear-gradient(180deg, transparent, rgba(62,207,154,.18) 80%, rgba(185,247,221,.5) 100%);
+  pointer-events: none;
+  transform: translateY(-100%);
+}
+.t-scan-y.t-anim { animation: t-scan-y 2.8s cubic-bezier(0.77,0,0.175,1) infinite alternate; }
+@keyframes t-scan-y { to { transform: translateY(455%); } }
+
+/* ── typing indicator ───────────────────────────────────────────────────── */
+.t-typing { display: inline-flex; gap: 4px; align-items: center; }
+.t-typing > i { width: 6px; height: 6px; border-radius: 999px; background: var(--t-mint); opacity: .4; }
+.t-typing.t-anim > i { animation: t-type 1.1s var(--t-ease) infinite; animation-play-state: inherit; }
+.t-typing.t-anim > i:nth-child(2) { animation-delay: .15s; }
+.t-typing.t-anim > i:nth-child(3) { animation-delay: .3s; }
+@keyframes t-type {
+  0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ── the orb behind the chat heading ────────────────────────────────────── */
+.t-orb {
+  position: absolute; z-index: -1; pointer-events: none;
+  width: 18rem; height: 18rem; border-radius: 999px;
+  background:
+    radial-gradient(closest-side at 35% 40%, rgba(62,207,154,.4), transparent),
+    radial-gradient(closest-side at 70% 60%, rgba(167,139,250,.34), transparent),
+    radial-gradient(closest-side at 50% 50%, rgba(29,143,176,.3), transparent);
+  will-change: transform;
+}
+.t-orb.t-anim { animation: t-orb 14s var(--t-ease) infinite alternate; }
+@keyframes t-orb {
+  0%   { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+  50%  { transform: translate3d(-6%,4%,0) rotate(40deg) scale(1.08); }
+  100% { transform: translate3d(4%,-4%,0) rotate(80deg) scale(.96); }
+}
+
+/* ── the glowing focus ring on the composer ─────────────────────────────── */
+.t-field { position: relative; border-radius: 12px; }
+.t-field::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: linear-gradient(135deg, #3ecf9a, #1d8fb0 50%, #a78bfa);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: .35;
+  transition: opacity .2s var(--t-ease);
+  pointer-events: none;
+}
+.t-field::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 16px; z-index: -1;
+  background: radial-gradient(60% 80% at 30% 50%, rgba(62,207,154,.35), transparent 70%),
+              radial-gradient(60% 80% at 80% 50%, rgba(167,139,250,.3), transparent 70%);
+  opacity: 0;
+  transition: opacity .25s var(--t-ease);
+  pointer-events: none;
+}
+.t-field:focus-within::before { opacity: 1; padding: 2px; inset: -2px; }
+.t-field:focus-within::after { opacity: 1; }
+.t-field textarea:focus-visible { outline: none; }
+
+/* ── paused unless on screen, still under reduced motion ────────────────── */
+.tech .t-anim, .tech .t-anim::after { animation-play-state: paused; }
+.tech[data-live="on"] .t-anim, .tech[data-live="on"] .t-anim::after { animation-play-state: running; }
+@media (prefers-reduced-motion: reduce) {
+  .tech .t-anim, .tech .t-anim::after { animation: none !important; }
+  .tech .t-lane { display: none; }
+  .tech .t-scan-y { display: none; }
+}

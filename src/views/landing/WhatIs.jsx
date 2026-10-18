@@ -5,6 +5,7 @@ import { ArrowRight } from '../../ui/marks'
 import { PRO_PLURAL } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 import { cardClass } from '../../ui/card'
+import { useSceneWatch } from '../../ui/scenes/kit'
 import { AppPicture, NetworkPicture, PatchPicture, PICTURE_CSS } from './whatis/pictures'
 
 /* What is MindMap? The owner's own three-point description, each point under
@@ -46,11 +47,14 @@ function Feature({ f, n, go }) {
   const [variant, hue] = LOOK[(n - 1) % LOOK.length]
   const titleId = React.useId()
   const { Picture } = f
+  /* Pauses the drawing's loops while it is off screen. */
+  const pic = React.useRef(null)
+  useSceneWatch(pic)
   return (
     <article aria-labelledby={titleId}
       className={cn(cardClass(variant, hue), `flex h-full flex-col p-2
         md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-start md:gap-4 lg:flex lg:items-stretch lg:gap-0`)}>
-      <div className="overflow-hidden rounded-[10px]"><Picture/></div>
+      <div ref={pic} className="overflow-hidden rounded-[10px]"><Picture/></div>
       <div className="flex flex-1 flex-col px-2.5 pb-1 pt-3.5 md:self-stretch md:pt-2 lg:pt-3.5">
         <h3 id={titleId} className="m-0 flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
           <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-full',

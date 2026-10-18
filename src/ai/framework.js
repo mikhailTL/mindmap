@@ -140,7 +140,7 @@ export const AUDIENCES = {
   student: {
     id: 'student',
     label: 'Student',
-    heading: 'MindMap AI For Students',
+    heading: 'MindMap AI for students',
     opener: 'Ask about a day, a week, sleep, school or a worry. Answers are short on purpose.',
     starters: [
       'My sleep has been bad all week.',
@@ -151,7 +151,7 @@ export const AUDIENCES = {
   parent: {
     id: 'parent',
     label: 'Parent',
-    heading: 'MindMap AI For Parents',
+    heading: 'MindMap AI for parents',
     opener: 'Ask how to open a conversation, what a reading does and does not show, or what to do next.',
     starters: [
       'How do I ask about a low week without starting a fight?',
@@ -162,7 +162,7 @@ export const AUDIENCES = {
   pro: {
     id: 'pro',
     label: PRO,
-    heading: 'MindMap AI For ' + PRO_PLURAL,
+    heading: 'MindMap AI for ' + PRO_PLURAL,
     opener: 'Ask what a signal is, where it comes from, and which published guidance a reply rests on.',
     starters: [
       'What exactly does MindMap measure, and how?',
