@@ -266,7 +266,7 @@ export function Overview({ go }) {
       <WhatIs go={go}/>
 
       {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
-      <Different go={go}/>
+      <Different/>
 
       {/* -- the picture break: the owner's rainbow, in two dimensions ------ */}
       <RainbowBreak/>

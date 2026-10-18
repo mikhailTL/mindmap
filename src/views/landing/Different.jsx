@@ -9,8 +9,9 @@ import { cn } from '../../lib/utils'
 import { PICTURES } from './different/index.js'
 
 /* What makes MindMap different: eight points, each a card with one
- * purpose-built picture (./different/pictures.jsx), a title, one line, and a
- * link to the page that explains it.
+ * purpose-built picture (./different/pictures.jsx), a title and one line.
+ * No links: there is no page per feature, so a card is not a button (the
+ * owner, 18 October).
  *
  * Cards are not all the same box. Four looks, shared by the site's radius
  * and type: `tint` (the point's own wash as the ground), `outline` (the
@@ -21,83 +22,71 @@ import { PICTURES } from './different/index.js'
  * feature, the network a wide card across the bottom. Below that they are one
  * row that swipes sideways with the next card peeking in. From sm, arrow
  * buttons beside the heading move the row a card at a time for a mouse; a
- * phone swipes, and a keyboard reaches every card's link.
+ * phone swipes, and the row itself takes keyboard focus and arrow keys.
  *
  * Order is the owner's: the score first, the network second. */
 
 const LOOK = {
   tint: {
     card: '', pane: '',
-    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+    title: 'text-ink', body: 'text-ink-2',
   },
   outline: {
     card: 'border border-rule bg-card', pane: '',
-    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+    title: 'text-ink', body: 'text-ink-2',
   },
   rule: {
     card: 'bg-card', pane: '',
-    title: 'text-ink', body: 'text-ink-2', link: 'text-accent-ink',
+    title: 'text-ink', body: 'text-ink-2',
   },
   ink: {
     card: 'bg-ink', pane: 'bg-white/[0.06]',
-    title: 'text-paper', body: 'text-mist', link: 'text-accent-lit',
+    title: 'text-paper', body: 'text-mist',
   },
 }
 
 export const DIFFERENT = [
-  { id: 'score', go: 'methods', look: 'tint',
+  { id: 'score', look: 'tint',
     ground: 'bg-accent-wash', pane: 'bg-card/60',
     place: 'xl:col-span-2 xl:row-span-2 xl:col-start-1 xl:row-start-1',
     title: 'Mind Score',
     line: 'One daily number from our own neural network, built from your body’s signals.' },
-  { id: 'network', go: 'network', look: 'outline',
+  { id: 'network', look: 'outline',
     pane: 'bg-coral-wash',
     place: 'xl:col-span-2 xl:col-start-1 xl:row-start-3', wide: true,
     title: 'Support network',
-    line: `Link a parent and a ${PRO}. The teen decides what each one sees.`,
-    more: { go: 'privacy', label: 'Privacy' } },
-  { id: 'patch', go: 'patch', look: 'rule',
+    line: `Link a parent and a ${PRO}. The teen decides what each one sees.` },
+  { id: 'patch', look: 'rule',
     rule: 'bg-beam', pane: 'bg-beam-wash',
     place: 'xl:col-start-3 xl:row-start-1',
     title: 'Patch or phone',
     line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
-  { id: 'heads', go: 'heads-up', look: 'ink',
+  { id: 'heads', look: 'ink',
     place: 'xl:col-start-4 xl:row-start-1',
     title: 'Heads Up',
     line: 'Tells parents when phone use shows signs of stress.' },
-  { id: 'settle', go: 'methods', look: 'rule',
+  { id: 'settle', look: 'rule',
     rule: 'bg-lilac', pane: 'bg-lilac-wash',
     place: 'xl:col-start-4 xl:row-start-2',
     title: 'Recovery time',
     line: 'The patch shows how fast your body settles after a peak, and what helps.' },
-  { id: 'event', go: 'calendar', look: 'tint',
+  { id: 'event', look: 'tint',
     ground: 'bg-sun-wash', pane: 'bg-card/70',
     place: 'xl:col-start-3 xl:row-start-2',
     title: 'Stress before events',
     line: 'Mark a test and see how stress builds in the hours before it.' },
-  { id: 'ai', go: 'ai', look: 'ink',
+  { id: 'ai', look: 'ink',
     place: 'xl:col-start-3 xl:row-start-3',
     title: 'MindMap AI',
     line: 'Ask about stress, sleep and school. Get a plain, practical answer.' },
-  { id: 'toolkit', go: 'toolkit', look: 'tint',
+  { id: 'toolkit', look: 'tint',
     ground: 'bg-mint-wash', pane: 'bg-card/55',
     place: 'xl:col-start-4 xl:row-start-3',
     title: 'Toolkit with levels',
     line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.' },
 ]
 
-function Go({ onClick, label, title, look, children }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={`${label}: ${title}`}
-      className={cn('group -ml-1 inline-flex min-h-[44px] items-center gap-1.5 rounded-field px-1 font-display text-ui font-bold', look.link)}>
-      {children}
-      <ArrowRight aria-hidden size={18} className="transition-transform duration-200 ease-out
-        motion-safe:groupHoverOnly:translate-x-1"/>
-    </button>
-  )
-}
-
-function Point({ d, go }) {
+function Point({ d }) {
   const titleId = React.useId()
   const Picture = PICTURES[d.id]
   const look = LOOK[d.look]
@@ -116,12 +105,6 @@ function Point({ d, go }) {
         <h3 id={titleId} className={cn('m-0 font-display font-bold leading-tight',
           big ? 'text-sec xl:text-head' : 'text-sec', look.title)}>{d.title}</h3>
         <p className={cn('m-0 mt-1 text-fine leading-[1.5]', big && 'xl:max-w-[46ch] xl:text-ui', look.body)}>{d.line}</p>
-        <div className={cn('flex flex-wrap items-center gap-x-3 pt-1', !d.wide && 'mt-auto', d.wide && 'mt-auto xl:mt-1')}>
-          <Go onClick={() => go?.(d.go)} label="See how it works" title={d.title} look={look}>See how it works</Go>
-          {d.more && (
-            <Go onClick={() => go?.(d.more.go)} label="See how it works" title={d.more.label} look={look}>{d.more.label}</Go>
-          )}
-        </div>
       </div>
     </article>
   )
@@ -139,7 +122,7 @@ function Nudge({ dir, disabled, onClick }) {
   )
 }
 
-export function Different({ go }) {
+export function Different() {
   const reduced = useReduced()
   const row = React.useRef(null)
   const [ends, setEnds] = React.useState({ start: true, end: false })
@@ -174,14 +157,15 @@ export function Different({ go }) {
       </div>
 
       <ScrollRow index={0}>
-        <ol ref={row} onScroll={read} aria-label="What makes MindMap different"
+        <ol ref={row} onScroll={read} aria-label="What makes MindMap different" tabIndex={0}
           className="m-0 mt-5 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto p-0 pb-1
             [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
             -mx-[22px] scroll-px-[22px] px-[22px] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-14 lg:scroll-px-14 lg:px-14
+            focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink
             xl:mx-0 xl:grid xl:grid-cols-4 xl:gap-4 xl:overflow-visible xl:px-0">
           {DIFFERENT.map(d => (
             <li key={d.id} className={cn('w-[80%] max-w-[310px] shrink-0 snap-start xl:w-auto xl:max-w-none', d.place)}>
-              <Point d={d} go={go}/>
+              <Point d={d}/>
             </li>
           ))}
         </ol>
