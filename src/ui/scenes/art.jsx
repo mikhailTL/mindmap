@@ -1,6 +1,5 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
-import { SENSORS, SENSOR_ORDER } from '../../lib/sensors'
 import { TONES, MICRO, glowShadow } from './tones'
 import {
   Sky, Ridges, Arm, Travel, Ripples, PatchMark, SceneSvg, useSceneWatch, useUid, contourPath,
@@ -41,73 +40,6 @@ function Phone({ x, y, w, h, r = 14, bezel = 6 }) {
         fill="#f7faf8" stroke={RULE} strokeWidth=".8"/>
       <rect x={x + w / 2 - 8} y={y + bezel + 4} width="16" height="4" rx="2" fill={INK} opacity=".85"/>
     </g>
-  )
-}
-
-/* ── the patch and the phone (About the patch) ─────────────────────────── */
-
-/* Upper arm and patch on the left, pulses travelling to a phone on the right,
-   the four signals named underneath as small chips. Replaces the flat
-   outline diagram (owner, 18 October: too plain next to the Toolkit). */
-export function PatchLinkScene({ className }) {
-  const ref = React.useRef(null)
-  const u = useUid()
-  useSceneWatch(ref)
-  const t = TONES.mint
-  const P = [74, 84]
-  return (
-    <figure ref={ref} id="patch-link" className={cn('sc m-0 overflow-hidden rounded-[22px] border border-rule bg-card',
-      className)} style={{ boxShadow: glowShadow('mint') }}>
-      <SceneSvg w={360} h={168} fit="xMidYMid meet" className="block h-auto w-full">
-        <Sky u={u} tone="mint" w={360} h={168} light={[0.2, 0.5]} rings={7}/>
-        <Ridges tone="mint" y={146} w={360} gap={9} amp={4}/>
-        {/* the upper arm under a sleeve, running off the top and bottom */}
-        <Arm u={u} cx={P[0]} cy={P[1] - 6} rot={-9} len={320} w={82} hem={40}>
-          <PatchMark cx={P[0]} cy={P[1]} a={16} b={24} d="4s"/>
-        </Arm>
-        {/* the radio: three arcs lighting outward in turn */}
-        <g fill="none" stroke={TURQ} strokeWidth="2" strokeLinecap="round">
-          {[[9, 14], [15, 23], [21, 32]].map(([rx, ry], i) => (
-            <path key={rx} className="sc-a sc-glow" style={{ '--d': '2s', '--w': `${i * 0.25}s` }}
-              d={`M${P[0] + 22} ${P[1] - ry}A${rx} ${ry} 0 0 1 ${P[0] + 22} ${P[1] + ry}`}/>
-          ))}
-        </g>
-        <path d={`M${P[0] + 46} ${P[1]}H258`} stroke={TURQ} strokeOpacity=".4" strokeWidth="1.2"
-          strokeDasharray="2 6" strokeLinecap="round"/>
-        <Travel from={[P[0] + 44, P[1]]} to={[268, 78]} lift={-22} d="4s" color={TURQ}/>
-        <Travel from={[P[0] + 44, P[1]]} to={[268, 78]} lift={-22} d="4s" w="-2s" color={TURQ}/>
-        {/* the phone, its ring lighting as a pulse lands */}
-        <Phone x={262} y={26} w={66} h={116}/>
-        <circle className="sc-a sc-glow" style={{ '--d': '2s', '--w': '0.6s' }} cx="295" cy="78" r="22"
-          fill={LIT} fillOpacity=".3"/>
-        <circle cx="295" cy="78" r="15" fill="#ffffff" stroke="#dcefe4" strokeWidth="4"/>
-        <circle cx="295" cy="78" r="15" fill="none" stroke={ACCENT} strokeWidth="4" strokeLinecap="round"
-          strokeDasharray="58 100" transform="rotate(135 295 78)"/>
-        <rect x="278" y="106" width="34" height="3.5" rx="1.75" fill={RULE}/>
-        <rect x="278" y="114" width="22" height="3.5" rx="1.75" fill={RULE}/>
-        <Ticks w={360} h={168}/>
-      </SceneSvg>
-      <figcaption className="border-t border-rule px-4 pb-4 pt-3">
-        <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 whitespace-nowrap
-          text-[0.6875rem] font-medium sm:text-fine"
-          style={{ color: t.sub, fontFamily: MICRO }}>
-          <span>Upper arm</span>
-          <span className="text-center">Bluetooth Low Energy</span>
-          <span className="text-right">Phone</span>
-        </span>
-        <span className="mt-3 flex flex-wrap gap-2">
-          {SENSOR_ORDER.map((id, i) => (
-            <span key={id} className="inline-flex items-center gap-2 rounded-chip border border-rule
-              bg-paper px-2.5 py-1 text-fine" style={{ color: t.sub }}>
-              <span aria-hidden className="sc-a sc-chip size-2 rounded-chip"
-                style={{ backgroundColor: SENSORS[id].glow, boxShadow: `0 0 7px ${SENSORS[id].glow}`,
-                  '--d': '4.8s', '--w': `${-i * 1.2}s` }}/>
-              {SENSORS[id].name}
-            </span>
-          ))}
-        </span>
-      </figcaption>
-    </figure>
   )
 }
 

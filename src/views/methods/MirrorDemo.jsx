@@ -347,9 +347,9 @@ export function MirrorDemo({ className }) {
           ))}
         </div>
       </div>
-      <figcaption className="mt-3 text-meta leading-[1.45] text-[#2a5744]">
-        A sped-up drawing of one reading. Each of the four bands runs from 0 to 100, and 50 is your usual.
-        <span className="sr-only"> A drawn face fills with 478 tracked points. Live values for brow, eyes,
+      <figcaption className="sr-only">
+        A sped-up drawing of one reading.
+        <span> A drawn face fills with 478 tracked points. Live values for brow, eyes,
           lips and pulse change as the reading runs, then four bands fill and one Mind Score appears.</span>
       </figcaption>
     </figure>

@@ -157,7 +157,7 @@ export function NetworkGlow({ className }) {
         </svg>
         <p className="mt-1 font-display text-ui font-bold text-[#0d2b1e]">{SCORE}</p>
       </div>
-      <figcaption className={CAPTION}>
+      <figcaption className="sr-only">
         Read it top to bottom. Each curve shows how much one signal adds as it moves away from your
         normal, and the curves plus the last {MEMORY_MIN} minutes add up to the {SCORE}.
       </figcaption>
@@ -195,7 +195,7 @@ export function FrameworkGlow({ className }) {
           </li>
         ))}
       </ul>
-      <figcaption className={CAPTION}>
+      <figcaption className="sr-only">
         One set of rules from these four publishers, worded for each person who reads the reply.
         <span className="sr-only"> The rules are adapted for students, parents and {PRO_PLURAL_LC}.</span>
       </figcaption>

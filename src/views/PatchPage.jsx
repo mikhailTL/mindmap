@@ -7,12 +7,10 @@ import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { Card, cardInk } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
-import { ChevronDown } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
-import { PatchLinkScene } from '../ui/scenes/art'
 import { TONES, glowShadow, MICRO } from '../ui/scenes/tones'
 import { contourPath } from '../ui/scenes/kit'
 
@@ -110,17 +108,7 @@ export function PatchPage({ as: Root = 'main' }) {
   const [picked, setPicked] = React.useState(null)
   const [down, setDown] = React.useState(false)
   const model = React.useRef(null)
-  const band = React.useRef(null)
   const stage = React.useRef(null)
-
-  /* scrollTo, not scrollIntoView, which no-ops in some engines under an
-     inherited smooth behaviour. The header offset comes from scroll-margin-top. */
-  const toModel = React.useCallback(() => {
-    const el = band.current
-    if (!el) return
-    const clear = parseFloat(getComputedStyle(el).scrollMarginTop) || 0
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - clear })
-  }, [])
 
   React.useEffect(() => {
     if (picked) model.current?.isolateGroup(GROUP[picked])
@@ -157,67 +145,11 @@ export function PatchPage({ as: Root = 'main' }) {
 
   return (
     <Root>
-      <section className="relative overflow-hidden bg-accent-wash">
-        {/* The part's title sits just above, in views/PatchHub. */}
-        <div className="wrap relative pb-7 pt-4 lg:pb-10 lg:pt-6
-          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-start lg:gap-8">
-          <div className="min-w-0">
-          <ScrollIn>
-            <Card variant="rule" side="left" className="max-w-[46ch] py-1 pl-3.5">
-              <ul className="m-0 grid list-none gap-1.5 p-0">
-                {CHAIN.map(t => (
-                  <li key={t} className="flex gap-2.5 text-meta leading-[1.4] text-ink-2">
-                    <span aria-hidden
-                      className="mt-[0.5em] h-[7px] w-[7px] shrink-0 rounded-chip bg-accent"/>
-                    <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <button type="button" onClick={toModel}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 border-b-2 border-accent/35
-                font-display text-ui font-medium text-accent hoverOnly:border-accent hoverOnly:text-accent-ink">
-              {down ? 'See the three parts' : 'Turn the 3D model'}<ChevronDown/>
-            </button>
-          </ScrollIn>
-          {/* The patch to the phone as a lit scene (owner, 18 October: the
-              flat outline diagram was too plain beside the Toolkit). */}
-          <PatchLinkScene className="mt-5 max-w-[34rem] lg:mt-6"/>
-          </div>
-
-          <figure className="m-0 mt-6 lg:mt-0">
-            <Parallax2D distance={52}>
-              <div className="h-[240px] overflow-hidden rounded-panel border border-rule
-                sm:mx-auto sm:h-[340px] sm:max-w-[600px] lg:h-[380px] lg:max-w-none">
-                <Frame photo="patch-worn" alt={ARM_ALT} eager/>
-              </div>
-            </Parallax2D>
-          </figure>
-        </div>
-      </section>
-
-      <Section tone="card" tight>
-        <SectionHead className="mt-0 max-w-[24ch]">What the patch records</SectionHead>
-        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          {RAINBOW.map((s2, i) => (
-            <ScrollRow key={s2.id} index={i} className="h-full">
-              <Card variant="tint" hue={SIGNAL_HUE[i]} className="flex h-full flex-col">
-                <div className={cn('border-b px-3 py-3 lg:px-4', cardInk('tint', SIGNAL_HUE[i]).line)}>
-                  <SignalTrace kind={s2.id} className="h-12"/>
-                </div>
-                <dl className="m-0 px-3 pb-3 pt-2 lg:px-4 lg:pb-3.5">
-                  <dt className="font-display text-ui font-bold text-ink">{s2.name}</dt>
-                  <dd className="m-0 mt-1 max-w-[26ch] text-fine text-ink-2">{s2.short}</dd>
-                </dl>
-              </Card>
-            </ScrollRow>
-          ))}
-        </div>
-      </Section>
-
-      <section ref={band} id="model" data-anchor
-        className="border-t border-rule bg-paper">
-        <div className="wrap py-8 lg:py-12">
+      <section id="model" data-anchor
+        className="bg-paper">
+        {/* The owner, 19 October: the CAD model is the first thing seen on
+            the patch page. */}
+        <div className="wrap pb-8 pt-4 lg:pb-12 lg:pt-6">
           <SectionHead className="mt-0 max-w-[26ch]">Take the patch apart</SectionHead>
           <div className={cn('mt-4 grid gap-4 lg:mt-6 lg:gap-6',
             !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
@@ -283,6 +215,52 @@ export function PatchPage({ as: Root = 'main' }) {
           </div>
         </div>
       </section>
+
+      <section className="relative overflow-hidden border-t border-rule bg-accent-wash">
+        {/* The part's title sits just above, in views/PatchHub. */}
+        <div className="wrap relative pb-7 pt-4 lg:pb-10 lg:pt-6
+          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-start lg:gap-8">
+          <div className="min-w-0">
+          <ScrollIn>
+            <Card variant="rule" side="left" className="max-w-[46ch] py-1 pl-3.5">
+              <ul className="m-0 grid list-none gap-1.5 p-0">
+                {CHAIN.map(t => (
+                  <li key={t} className="text-meta leading-[1.4] text-ink-2">{t}</li>
+                ))}
+              </ul>
+            </Card>
+          </ScrollIn>
+          </div>
+
+          <figure className="m-0 mt-6 lg:mt-0">
+            <Parallax2D distance={52}>
+              <div className="h-[240px] overflow-hidden rounded-panel border border-rule
+                sm:mx-auto sm:h-[340px] sm:max-w-[600px] lg:h-[380px] lg:max-w-none">
+                <Frame photo="patch-worn" alt={ARM_ALT} eager/>
+              </div>
+            </Parallax2D>
+          </figure>
+        </div>
+      </section>
+
+      <Section tone="card" tight>
+        <SectionHead className="mt-0 max-w-[24ch]">What the patch records</SectionHead>
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          {RAINBOW.map((s2, i) => (
+            <ScrollRow key={s2.id} index={i} className="h-full">
+              <Card variant="tint" hue={SIGNAL_HUE[i]} className="flex h-full flex-col">
+                <div className={cn('border-b px-3 py-3 lg:px-4', cardInk('tint', SIGNAL_HUE[i]).line)}>
+                  <SignalTrace kind={s2.id} className="h-12"/>
+                </div>
+                <dl className="m-0 px-3 pb-3 pt-2 lg:px-4 lg:pb-3.5">
+                  <dt className="font-display text-ui font-bold text-ink">{s2.name}</dt>
+                  <dd className="m-0 mt-1 max-w-[26ch] text-fine text-ink-2">{s2.short}</dd>
+                </dl>
+              </Card>
+            </ScrollRow>
+          ))}
+        </div>
+      </Section>
 
       {/* White, not a wash: a wash opens each part of the page. */}
       <Section tone="card" tight>

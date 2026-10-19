@@ -32,8 +32,8 @@ import { MirrorDemo } from './methods/MirrorDemo'
  * model".
  *
  * 19 October (later), the owner: "some of the words under how it works are
- * too little, needs some more explanation". Each tab gets `explain`: two or
- * three plain sentences on how the part works and why it is there, every
+ * too little, needs some more explanation". Each tab gets `explain`: one plain
+ * sentence (trimmed the same day: "wayy too much text") on how the part works and why it is there, every
  * fact taken from the code or docs/. And: "stop making things dark, site
  * should be more peaceful and light ... keep adding the topographic,
  * isometric, and technological designs". Every tab now sits on the light
@@ -59,7 +59,7 @@ const CATEGORIES = [
   { id: 'hardware', tab: 'The patch', tech: 'mint', plain: true, still: true,
     title: 'What the patch measures',
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
-    explain: 'Stress changes the body in small ways you may not notice. The gaps between heartbeats get more even, skin sweat rises a little and skin temperature drifts down. A lot of movement holds the score back, so a run is not read as stress.',
+    explain: 'Stress shows up in small body changes, and the patch reads them every second.',
     rows: [
       ['Measures', `${SENSORS[SENSOR_ORDER[0]].name}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
       ['Sits', 'On your upper arm, inside a small printed shell.'],
@@ -72,16 +72,16 @@ const CATEGORIES = [
   { id: 'mirror', tab: 'Mental Mirror', tech: 'mint', still: true,
     title: 'Mental Mirror',
     line: "Google's MediaPipe Face Landmarker maps 478 points on your face, frame by frame.",
-    explain: 'It uses the front camera for one 30 second reading. Your pulse comes from tiny colour changes in the skin of your forehead. Blinks, brow, lips and head movement are each compared with your own earlier Mirror readings.',
-    close: `It gives a ${SCORE} without the patch. Each video frame is turned into numbers and dropped, so no picture is kept.`,
+    explain: 'One 30 second reading with the front camera, compared with your own earlier readings.',
+    close: `It gives a ${SCORE} without the patch. No picture is kept.`,
     figure: MirrorDemo },
   { id: 'ai', tab: 'MindMap AI', tech: 'vio',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
-    explain: 'MindMap AI is a chat built on a language model. Every reply follows one written set of rules, and the chat screen lists those rules with their sources. It says plainly that it is not a clinician or a crisis service.',
+    explain: 'A chat built on a language model that follows one written set of rules, with its sources listed.',
     rows: [
       ['Answers', `Stress, sleep, school and the ${SCORE}.`],
-      ['Follows', 'Guidance from three U.S. health agencies (SAMHSA, NIMH, CDC) and the American Academy of Pediatrics.'],
+      ['Follows', 'Guidance from SAMHSA, NIMH, AAP and CDC.'],
       ['Speaks to', `Teens, parents and ${PRO_PLURAL_LC}, each in their own voice.`],
       ['Never', 'Diagnoses, scores severity or names a medication.'],
       ['In a crisis', 'A crisis line comes before anything else.'],
@@ -90,7 +90,7 @@ const CATEGORIES = [
   { id: 'ml', tab: 'Machine Learning', tech: 'mint',
     title: 'A novel neural network',
     line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
-    explain: `Each signal goes through its own learned curve, and the curves are added together with a memory of the last ${MEMORY_MIN} minutes. Because the parts are added, every score can be split back into what moved it. After a reading you can answer "Stressed" or "Fine", and those answers tune it to you.`,
+    explain: `Each signal gets its own learned curve, and the curves add up, so every score shows what moved it.`,
     rows: [
       ['Size', `${PARAM_COUNT.toLocaleString('en-US')} parameters, small enough to run on the phone.`],
       ['Tested on', `${SUBJECTS + R.transfer.subjects} adults in two public lab datasets, and ${R.exams.spearman_flagged_vs_grade.n} real exam sessions.`],
@@ -104,7 +104,7 @@ const CATEGORIES = [
   { id: 'beyond', tab: 'Phone sensors', tech: 'mint', plain: true,
     title: 'What your phone adds',
     line: 'Sensors you already carry, used only inside MindMap.',
-    explain: 'They give a reading when the patch is off, and they run some of the Toolkit activities. Your words, the sound of your voice and place names are never kept.',
+    explain: 'They give a reading when the patch is off and run some Toolkit activities.',
     rows: [
       ['Camera', 'Reads your pulse from a fingertip on the lens.', Camera],
       ['Microphone', 'Times each long breath out in the breathing tools.', MicMark],

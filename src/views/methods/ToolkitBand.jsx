@@ -32,9 +32,7 @@ export function ToolkitBand({ go }) {
             Pick one in the Toolkit and follow the screen.
           </p>
           <p className="mt-3 max-w-[48ch] text-sec leading-[1.5] text-[#2a5744]">
-            The calming activities are short, like box breathing or a walk. Some use your phone,
-            such as the microphone to pace slow breaths out. The life skills cover school, social
-            life, daily life and careers.
+            Short calming activities, plus life skills for school, social life and careers.
           </p>
           <TechButton className="mt-5" onClick={() => go('toolkit')}>
             Open the Toolkit<ArrowRight aria-hidden/>

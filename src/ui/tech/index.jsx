@@ -79,7 +79,7 @@ export function Topo({ seed = 0.6, className, style }) {
   )
 }
 
-/* An isometric floor: a diamond of 30° lines with a few lit nodes, for a
+/* An isometric floor: a diamond of 30° lines, for a
    drawing to stand on. */
 export function IsoPlate({ className, n = 6 }) {
   const W = 240, H = W * Math.tan(Math.PI / 6), cx = W / 2, cy = H / 2
@@ -88,7 +88,6 @@ export function IsoPlate({ className, n = 6 }) {
   for (let k = 0; k <= n; k++) {
     lines.push([at(k, 0), at(k, n)], [at(0, k), at(n, k)])
   }
-  const nodes = [[0, 0], [n, 0], [0, n], [n, n], [2, 4], [4, 2]]
   return (
     <svg viewBox={`-6 -6 ${W + 12} ${H + 12}`} aria-hidden focusable="false" fill="none"
       className={cn('pointer-events-none block', className)}>
@@ -97,13 +96,6 @@ export function IsoPlate({ className, n = 6 }) {
       {lines.map(([a, b], i) => (
         <path key={i} d={`M${a}L${b}`} stroke="#157446" strokeOpacity=".16" strokeWidth="1"/>
       ))}
-      {nodes.map(([i, j]) => {
-        const [x, y] = at(i, j)
-        return <g key={i + ':' + j}>
-          <circle cx={x} cy={y} r="6" fill="#3ecf9a" fillOpacity=".22"/>
-          <circle cx={x} cy={y} r="2.4" fill="#18a370"/>
-        </g>
-      })}
     </svg>
   )
 }
