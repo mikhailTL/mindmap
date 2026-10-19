@@ -108,7 +108,7 @@ function DemoInfo() {
     <div ref={box} className="relative">
       <button ref={btn} type="button" aria-label="About demo mode"
         aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}
-        className="group grid size-11 min-h-[44px] place-items-center !px-0">
+        className="group grid h-11 w-9 min-h-[44px] place-items-center !px-0 lg:w-11">
         <span aria-hidden className={cn('grid size-6 place-items-center rounded-full border border-ink',
           'font-display text-fine font-bold leading-none transition-colors duration-150',
           open ? 'bg-accent-wash text-accent-ink' : 'bg-card text-ink groupHoverOnly:bg-mist')}>?</span>

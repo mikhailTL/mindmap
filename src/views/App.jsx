@@ -36,7 +36,7 @@ import { Logo, LogoMark } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowLeft, ArrowRight, Bracket, ChevronDown, Cross, Frame,
+import { ArrowRight, Bracket, ChevronDown, Cross, Frame,
          People, PulseMark } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
@@ -218,7 +218,7 @@ const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
                   students:'who', parents:'who', pro:'who', 'heads-up':'heads-up', survey:'survey' }
 
-/* Set by the app's "Back to site" and by the Overview menu from another page:
+/* Set by the app's "Return to site" and MindMap logo, and by the Overview menu from another page:
    the next landing on the overview skips the site intro, once (owner,
    18 October: "takes back to overview and skips site onboarding"). */
 let skipIntro = false
@@ -838,51 +838,37 @@ function SwitchRole({ go, className }) {
 function AppTopBar({ view, go, app }) {
   const [short, long] = APP_TITLE[view] || ['App', 'App']
   const toSite = () => { skipIntro = true; go('site') }
-  /* The wordmark gives way where the row is full: below 375px, and from sm
-     to lg where both rows fold into one. The demo adds a "?" beside the
-     toggle, so there it gives way at every width under lg. */
-  const [mode] = useMode()
-  const demo = mode !== 'real'
   return (
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
-      <div className="flex flex-col px-4 sm:h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-10 lg:px-14">
-        <div className="flex h-12 items-center gap-1 sm:contents">
-          {/* Owner, 18 October: a back arrow left of the logo, "Back to site",
-              to the overview with no site intro. The words show from lg; on a
-              phone and a tablet the arrow stands alone and the label names it. */}
-          <button type="button" onClick={toSite} aria-label="Back to site" title="Back to site"
-            className="order-1 -ml-2 flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center
-              gap-1.5 rounded-field px-2 font-display text-ui font-semibold text-accent-ink
-              transition-colors duration-150 hoverOnly:bg-accent-wash lg:pr-3">
-            <ArrowLeft className="size-5"/>
-            <span className="hidden lg:inline">Back to site</span>
-          </button>
-          {/* The corner: MindMap's mark and name, also to the overview. */}
+      <div className="flex flex-col px-4 sm:h-14 sm:flex-row sm:items-center sm:gap-1 md:gap-2 md:px-10 lg:gap-3 lg:px-14">
+        <div className="flex h-12 items-center gap-0.5 min-[375px]:gap-1 sm:contents">
+          {/* The corner: MindMap's mark and name, to the overview. Owner, 18
+              October: the name shows at every width; "Return to site" is in
+              the account menu, not a back arrow here. */}
           <button type="button" onClick={toSite} aria-label="MindMap, back to the site"
-            className="order-1 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
+            className="order-1 -ml-1.5 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
               text-[1rem] text-ink transition-colors duration-150 hoverOnly:bg-mist min-[400px]:text-[1.15rem]
-              sm:text-[1.3rem]">
-            {/* Room for the back arrow and the demo "?": where the mark stands
-                alone the button's label still names it. */}
-            <Logo className={cn('gap-2', demo ? 'max-lg:[&>span:first-of-type]:hidden'
-              : 'max-[374px]:[&>span:first-of-type]:hidden sm:max-lg:[&>span:first-of-type]:hidden')}/>
+              md:text-[1.3rem]">
+            <Logo className="gap-2"/>
           </button>
-          <div className="order-4 ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="order-4 ml-auto flex shrink-0 items-center gap-0.5 min-[375px]:gap-1 sm:gap-2">
             <GetHelp compact/>
-            <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-1.5 sm:[&_button]:px-3"/>
+            <ModeToggle compact className="[&_button]:min-h-[44px] [&_button]:px-1 min-[375px]:[&_button]:px-1.5
+              md:[&_button]:px-2 lg:[&_button]:px-3"/>
           </div>
-          <AccountMenu go={go} app={app} className="order-7 -mr-2 ml-0.5 w-11 sm:ml-1"/>
+          <AccountMenu go={go} app={app} toSite={toSite} className="order-7 -mr-2 ml-0.5 w-11 sm:ml-0"/>
         </div>
         <div className="flex h-11 items-center gap-1 border-t border-rule sm:contents">
-          <span aria-hidden className="order-2 hidden h-6 w-px shrink-0 bg-rule sm:block"/>
+          <span aria-hidden className="order-2 hidden h-6 w-px shrink-0 bg-rule md:block"/>
           <div className="order-2 flex min-w-0 items-center gap-1">
             <HomeButton go={go} app={app}/>
             {/* Each app route's only heading. Both spellings are in the DOM and
-                CSS picks one, so the name rides on the element. */}
+                CSS picks one, so the name rides on the element. The short one
+                holds until xl, where the one-row bar has room for the long. */}
             <h1 aria-label={long}
               className="min-w-0 truncate font-display text-tick font-bold text-ink">
-              <span aria-hidden className="sm:hidden">{short}</span>
-              <span aria-hidden className="hidden sm:inline">{long}</span>
+              <span aria-hidden className="xl:hidden">{short}</span>
+              <span aria-hidden className="hidden xl:inline">{long}</span>
             </h1>
           </div>
           <SwitchRole go={go} className="order-5 ml-auto -mr-2 sm:ml-0 sm:mr-0"/>
@@ -1197,7 +1183,8 @@ export function App() {
   const lastView = React.useRef(null)
   React.useEffect(() => {
     if (view === 'site' && lastView.current !== 'site' && !captureHarness()) {
-      if (skipIntro) skipIntro = false
+      /* A skip also clears an intro left open by leaving mid-way (Back). */
+      if (skipIntro) { skipIntro = false; setSiteIntro(false) }
       else setSiteIntro(true)
     }
     lastView.current = view

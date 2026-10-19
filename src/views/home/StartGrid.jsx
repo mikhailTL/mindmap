@@ -1,14 +1,13 @@
 import React from 'react'
 import { ArrowRight, Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
-import { Frame } from '../../ui/frame'
 
 /* The cards every role home opens with. The owner, 17 October, after the
  * big-card homes: "i liked how it was before with the cards at the top, was
  * more usable". So the earlier start screen's shape comes back: a 2 x 2 grid
- * of even tiles (four across from lg), each a picture panel over a one-line
- * label with a chevron. What stays from the big cards is the picture: every
- * tile keeps its own colour and drawing, so no two look alike.
+ * of even tiles (four across from lg), each a drawing over a one-line label
+ * with a chevron. Every tile keeps its own colour and drawing, so no two look
+ * alike.
  *
  * LeadCard is the screen's one callout, for the single action a role does
  * most (a student taking a reading). */
@@ -23,40 +22,41 @@ export function StartGrid({ label, children, className }) {
   )
 }
 
-/* tone: the picture panel's ground, e.g. 'bg-sky-wash'. art: the drawing,
-   sized by the panel (give it h-[..] or w-[..] classes).
+/* tone: the tile's ground, e.g. 'bg-sky-wash'. chevron: the hue's ink, which
+   also draws the contour lines. art: the drawing, fitted into the panel (give
+   it h-full w-full, or h-full w-auto with an aspect, so it scales).
 
-   photo: a key from src/lib/photos.js. The owner, 17 October: "half the
-   graphic you have and half a stock image, have it diagonal split between the
-   two". With a photo the drawing keeps the left half on its colour wash and
-   the photograph takes the right, cut on a diagonal with a thin white seam.
-   The photo box stays near square (about 1:1 at every width), well under the
-   widest crop any file survives (minAspect 1.8 and up), so Frame never has to
-   grow the panel and its focal point keeps faces inside the visible part.
-   photoFocal overrides that point for a file whose subjects sit wide apart. */
-const SEAM = 'polygon(26% 0, 100% 0, 100% 100%, 0 100%)'
-const CUT = 'polygon(calc(26% + 4px) 0, 100% 0, 100% 100%, 4px 100%)'
+   The owner, 19 October: "Remove the half and half stock photos on all
+   dashboards, just have icons or the imagery". So no photograph: the whole
+   tile is its own colour wash, the drawing fills the panel, a few faint
+   contour lines sit behind it, and the label sits under it on the same wash. */
+function Contours() {
+  return (
+    <svg aria-hidden viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0 size-full opacity-[0.22]" fill="none"
+      stroke="currentColor" strokeWidth="1" strokeLinecap="round">
+      <path d="M110 90c2-12 11-20 23-20 10 0 19 6 27 15" vectorEffect="non-scaling-stroke"/>
+      <path d="M93 90c3-21 19-34 39-34 12 0 21 4 28 11" vectorEffect="non-scaling-stroke"/>
+      <path d="M76 90c5-30 27-48 55-48 11 0 21 3 29 8" vectorEffect="non-scaling-stroke"/>
+      <path d="M0 24c11-1 20-9 21-24" vectorEffect="non-scaling-stroke"/>
+      <path d="M0 40c22-2 36-18 37-40" vectorEffect="non-scaling-stroke"/>
+    </svg>
+  )
+}
 
-export function StartTile({ title, art, tone, onClick, chevron = 'text-accent', photo, photoAlt, photoFocal }) {
+export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }) {
   return (
     <button type="button" onClick={onClick}
-      className="group flex h-full w-full flex-col items-stretch overflow-hidden rounded-panel border
-        border-rule bg-card text-left transition-[border-color,transform] duration-150
-        hoverOnly:border-accent active:scale-[0.985] motion-reduce:active:scale-100
-        focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink">
-      <span aria-hidden className={cn('relative flex aspect-[16/9] w-full shrink-0 items-center justify-center overflow-hidden', tone)}>
-        {photo ? (
-          <>
-            <span className="absolute inset-y-0 left-0 flex w-[50%] items-center justify-center pl-[3%]">{art}</span>
-            <span className="absolute inset-y-0 right-0 w-[58%] bg-card" style={{ clipPath: SEAM }}/>
-            <span className="absolute inset-y-0 right-0 w-[58%] overflow-hidden" style={{ clipPath: CUT }}>
-              <Frame photo={photo} alt={photoAlt || title} focal={photoFocal} eager
-                className="transition-transform duration-300 ease-out groupHoverOnly:scale-[1.04] motion-reduce:transition-none motion-reduce:groupHoverOnly:scale-100"/>
-            </span>
-          </>
-        ) : art}
+      className={cn('group flex h-full w-full flex-col items-stretch overflow-hidden rounded-panel border',
+        'border-ink/10 text-left transition-[border-color,transform] duration-150',
+        'hoverOnly:border-accent active:scale-[0.985] motion-reduce:active:scale-100',
+        'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink', tone)}>
+      <span aria-hidden className={cn('relative flex aspect-[16/9] w-full shrink-0 items-center justify-center overflow-hidden', chevron)}>
+        <Contours/>
+        <span className="relative flex h-[72%] w-[78%] items-center justify-center transition-transform duration-300 ease-out
+          groupHoverOnly:scale-[1.04] motion-reduce:transition-none motion-reduce:groupHoverOnly:scale-100">{art}</span>
       </span>
-      <span className="flex w-full flex-1 items-center justify-between gap-2 p-3 sm:p-3.5 lg:px-4 lg:py-3.5">
+      <span className="flex w-full flex-1 items-center justify-between gap-2 border-t border-ink/[0.07] bg-white/45 p-3 sm:p-3.5 lg:px-4 lg:py-3.5">
         <span className="min-w-0 font-display text-ui font-bold leading-[1.22] text-ink">{title}</span>
         <Chevron aria-hidden className={cn('size-4 shrink-0 transition-transform duration-150 groupHoverOnly:translate-x-0.5', chevron)}/>
       </span>

@@ -188,17 +188,13 @@ function PatchStatus({ paired, go }) {
    thing a student does most, then four even tiles, then the patch. */
 const TILES = [
   { id: 'student-trends', title: 'Trends', tone: 'bg-sky-wash', chevron: 'text-sky-ink',
-    Motif: RainbowMotif, motif: 'h-auto w-[86%]',
-    photo: 'student-homework', alt: 'A student working through notes at a desk' },
+    Motif: RainbowMotif, motif: 'h-full w-full' },
   { id: 'toolkit', title: 'Toolkit', tone: 'bg-sun-wash', chevron: 'text-sun-ink',
-    Motif: BreatheMotif, motif: 'h-auto w-[62%]',
-    photo: 'student-basketball', alt: 'A teenager playing basketball outside' },
+    Motif: BreatheMotif, motif: 'h-full w-full' },
   { id: 'ai', title: 'Ask MindMap AI', tone: 'bg-lilac-wash', chevron: 'text-lilac-ink',
-    Motif: ChatMotif, motif: 'h-auto w-[84%]',
-    photo: 'student-hero', alt: 'A teenager with headphones, smiling on a sofa' },
+    Motif: ChatMotif, motif: 'h-full w-full' },
   { id: 'network', title: 'Network', tone: 'bg-coral-wash', chevron: 'text-coral-ink',
-    Motif: NetworkMotif, motif: 'h-auto w-[86%]',
-    photo: 'friends-steps', alt: 'Two friends talking on school steps' },
+    Motif: NetworkMotif, motif: 'h-full w-full' },
 ]
 
 export function StudentHome({ go }) {
@@ -222,7 +218,6 @@ export function StudentHome({ go }) {
       <StartGrid label="Your MindMap">
         {TILES.map(t => (
           <StartTile key={t.id} title={t.title} tone={t.tone} chevron={t.chevron}
-            photo={t.photo} photoAlt={t.alt}
             onClick={() => go(t.id)} art={<t.Motif calm={calm} className={t.motif}/>}/>
         ))}
       </StartGrid>

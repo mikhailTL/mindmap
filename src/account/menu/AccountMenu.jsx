@@ -2,7 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { cn } from '../../lib/utils'
-import { Bell, Download, Exit, Grid, Key, People, Person, Search } from '../../ui/marks'
+import { ArrowLeft, Bell, Download, Exit, Grid, Key, People, Person, Search } from '../../ui/marks'
 import { useMode } from '../../lib/mode'
 import { ROLE_LABEL, SETTINGS, signOut, useAccount } from '../store'
 import { Avatar } from '../ui'
@@ -53,11 +53,17 @@ function goToAnchor(go, view, anchor, reduce) {
   setTimeout(look, 60)
 }
 
-function itemsFor(me, go, reduce) {
+/* Owner, 18 October: "Return to site" lives here, last before Sign out, in
+   place of the top bar's back arrow. `toSite` lands on the overview with no
+   site intro; without it the menu just goes to the overview. */
+function itemsFor(me, go, reduce, toSite) {
+  const site = { id: 'site', label: 'Return to site', Mark: ArrowLeft, hue: 'ink',
+    run: toSite || (() => go('site')) }
   if (!me) {
     return [
       { id: 'signin', label: 'Sign in or create an account', Mark: Person, hue: 'accent', run: () => go('app-home') },
       { id: 'help', label: 'Get help', Mark: Search, hue: 'blush', run: () => go('help') },
+      site,
     ]
   }
   return [
@@ -71,6 +77,7 @@ function itemsFor(me, go, reduce) {
     { id: 'notify', label: 'Reminders', Mark: Bell, hue: 'coral', run: () => go('app-notify'), only: 'student' },
     { id: 'data', label: 'Your data', Mark: Download, hue: 'ink', run: () => go('account/data') },
     { id: 'help', label: 'Get help', Mark: Search, hue: 'blush', run: () => go('help') },
+    site,
   ].filter(i => !i.only || i.only === me.role)
 }
 
@@ -86,8 +93,9 @@ function place(btn) {
 }
 
 /* `app`: the app the reader is in. In the demo with nobody signed in, the
-   menu names them by its role word, as the home does (../viewer.js). */
-export function AccountMenu({ go, app, className }) {
+   menu names them by its role word, as the home does (../viewer.js).
+   `toSite`: the top bar's way back to the overview. */
+export function AccountMenu({ go, app, toSite, className }) {
   const me = useAccount()
   const [mode] = useMode()
   const reduce = useReducedMotion()
@@ -99,7 +107,7 @@ export function AccountMenu({ go, app, className }) {
   const startAt = React.useRef(0)
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
 
-  const items = itemsFor(me, go, reduce)
+  const items = itemsFor(me, go, reduce, toSite)
   const all = me
     ? [...items, { id: 'signout', label: 'Sign out', Mark: Exit, hue: 'ink', run: () => { signOut(); go('app-home') } }]
     : items

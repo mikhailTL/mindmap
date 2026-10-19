@@ -42,6 +42,11 @@ describe('About MindMap', () => {
 
   it('keeps the About button’s name', () => {
     const b = renderToString(React.createElement(AboutButton, { onClick: () => {} }))
-    expect(b).toMatch(/<button[^>]*>About<\/button>/)
+    expect(b).toMatch(/<button[^>]*>(<svg[^>]*aria-hidden[\s\S]*?<\/svg>)?About<\/button>/)
+  })
+
+  it('keeps the About button and sheet free of gold, star and tape', () => {
+    const b = renderToString(React.createElement(AboutButton, { onClick: () => {} }))
+    expect(b + html).not.toMatch(/f2b705|825d07|d9a514|eadfc8|fbf7ee|ab-star|ab-tape|ab-twinkle|ab-drop/i)
   })
 })

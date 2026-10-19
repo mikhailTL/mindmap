@@ -35,17 +35,13 @@ export default function ParentHomeBoard({ go }) {
 
       <StartGrid label="Parent app">
         <StartTile title="Trends" tone={HUE.sky.ground} chevron={HUE.sky.ink}
-          photo="parent-hero" photoAlt="A parent and teen smiling at a laptop"
-          onClick={() => go('parent-trends')} art={<CalendarArt className="h-auto w-[74%]"/>}/>
+          onClick={() => go('parent-trends')} art={<CalendarArt className="h-full w-full"/>}/>
         <StartTile title="Toolkit" tone={HUE.sun.ground} chevron={HUE.sun.ink}
-          photo="parent-kitchen" photoAlt="A parent and teen cooking and talking in a kitchen"
-          onClick={() => go('toolkit')} art={<TalkArt className="h-auto w-[80%]"/>}/>
+          onClick={() => go('toolkit')} art={<TalkArt className="h-full w-full"/>}/>
         <StartTile title="Ask MindMap AI" tone={HUE.lilac.ground} chevron={HUE.lilac.ink}
-          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
-          onClick={() => go('ai')} art={<AskArt className="h-auto w-[80%]"/>}/>
+          onClick={() => go('ai')} art={<AskArt className="h-full w-full"/>}/>
         <StartTile title="Network" tone={HUE.mint.ground} chevron={HUE.mint.ink}
-          photo="parent-laptop" photoAlt="A parent and teen looking at a laptop together"
-          onClick={() => go('network')} art={<NetArt className="h-auto w-[78%]"/>}/>
+          onClick={() => go('network')} art={<NetArt className="h-full w-full"/>}/>
       </StartGrid>
 
       <NetworkBox go={go} real={real} me={me} className="w-full"/>

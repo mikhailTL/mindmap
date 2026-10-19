@@ -234,17 +234,13 @@ export function ProHome({ go }) {
 
       <StartGrid label={`${PRO} app`} className="mt-3 lg:mt-4">
         <StartTile title="Trends" tone="bg-sky-wash" chevron="text-sky-ink"
-          photo="friends-steps" photoAlt="Two students talking on school steps"
-          onClick={() => go('app-pro-trends')} art={<RainbowArt size={150} className="w-[86%] pt-1"/>}/>
+          onClick={() => go('app-pro-trends')} art={<RainbowArt size={260} className="aspect-[320/232] h-full w-auto"/>}/>
         <StartTile title="Toolkit" tone="bg-sun-wash" chevron="text-sun-ink"
-          photo="pro-hero" photoAlt="A teen talking with a counselor" photoFocal="74% 24%"
-          onClick={() => go('toolkit')} art={<ToolArt className="h-auto w-[76%]"/>}/>
+          onClick={() => go('toolkit')} art={<ToolArt className="h-full w-full"/>}/>
         <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
-          photo="clinic-talk" photoAlt="An adult and a teen talking by a window"
-          onClick={() => go('ai')} art={<ChatArt className="h-auto w-[88%]"/>}/>
+          onClick={() => go('ai')} art={<ChatArt className="h-full w-full"/>}/>
         <StartTile title="Network" tone="bg-mint-wash" chevron="text-mint-ink"
-          photo="parent-hero" photoAlt="A parent and teen smiling together"
-          onClick={() => go('network')} art={<LinkArt className="w-[88%]"/>}/>
+          onClick={() => go('network')} art={<LinkArt className="w-full"/>}/>
       </StartGrid>
 
       <section aria-label="Who shares with you"

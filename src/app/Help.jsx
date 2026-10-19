@@ -388,10 +388,12 @@ export function GetHelp({ compact = false, className }) {
         className={cn('inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2',
           'rounded-field border border-[#7a2314] bg-crit font-display text-ui font-medium',
           'text-paper transition-colors duration-150 ease hoverOnly:bg-[#7a2314]',
-          compact ? 'w-11 px-0 sm:w-auto sm:gap-2 sm:px-3' : 'px-3', className)}>
+          compact ? 'w-10 px-0 sm:w-11 lg:w-auto lg:gap-2 lg:px-3' : 'px-3', className)}>
         <CallMark size={16}/>
+        {/* Compact is the app top bar: the mark alone below lg, so the
+            MindMap name fits beside it (owner, 18 October). */}
         {compact
-          ? <span className="sr-only sm:not-sr-only">{COPY.en.getHelp}</span>
+          ? <span className="sr-only lg:not-sr-only">{COPY.en.getHelp}</span>
           : COPY.en.getHelp}
       </button>
       <HelpSheet open={open} onOpenChange={setOpen}/>

@@ -36,7 +36,7 @@ export function LinkArt({ className }) {
       <span className="absolute left-[34.5%] top-[13%] aspect-square w-[33.3%] rounded-full ring-2 ring-white">
         <AvatarArt id="fox" className="size-full"/></span>
       <span className="absolute left-[69%] top-[18%] aspect-square w-[31%] rounded-full ring-2 ring-white">
-        <AvatarArt id="photo-counselor-a" className="size-full"/></span>
+        <AvatarArt id="initials-S" className="size-full"/></span>
     </span>
   )
 }

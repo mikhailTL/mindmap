@@ -15,12 +15,9 @@ import parentHero from '../photos/parent-hero.webp'
 import parentKitchen from '../photos/parent-kitchen.webp'
 import parentLaptop from '../photos/parent-laptop.webp'
 import patchWorn from '../photos/patch-worn.webp'
-import proHero from '../photos/pro-hero.webp'
 import schoolCard from '../photos/school-card.webp'
-import studentBasketball from '../photos/student-basketball.webp'
 import studentBus from '../photos/student-bus.webp'
 import studentCard from '../photos/student-card.webp'
-import studentController from '../photos/student-controller.webp'
 import studentGame from '../photos/student-game.webp'
 import studentHero from '../photos/student-hero.webp'
 import studentHomework from '../photos/student-homework.webp'
@@ -37,12 +34,9 @@ export const PHOTOS = {
   'parent-kitchen': parentKitchen,
   'parent-laptop': parentLaptop,
   'patch-worn': patchWorn,
-  'pro-hero': proHero,
   'school-card': schoolCard,
-  'student-basketball': studentBasketball,
   'student-bus': studentBus,
   'student-card': studentCard,
-  'student-controller': studentController,
   'student-game': studentGame,
   'student-hero': studentHero,
   'student-homework': studentHomework,
@@ -50,7 +44,7 @@ export const PHOTOS = {
 }
 
 /* 160px square crops of three frames above, for the demo's people: the man
-   in clinic-talk, the woman in pro-hero (both shown as Counselors/
+   in clinic-talk, the woman in pro-hero.webp (both shown as Counselors/
    Professionals) and the woman in parent-kitchen (a parent). Models, not
    MindMap users: each is drawn with alt="" beside a demo name. Owner, 18
    October: "counselors should use uploaded professional images, make that
@@ -111,19 +105,13 @@ export const PHOTO_META = {
   // Face high at y 2 to 40 and the patch low on the arm near x 57, y 78, so
   // this one needs most of its own height before it says what it is for.
   'patch-worn': { w: 1024, h: 688, focal: [44, 40], minAspect: 1.8, face: true },
-  // Two figures far apart, x 28 and x 68, so width is the binding constraint.
-  'pro-hero': { w: 1344, h: 752, focal: [48, 24], minAspect: 2.7, face: true },
   // Letterbox already. Two women turned towards each other at x 27 and x 68.
   'school-card': { w: 1200, h: 423, focal: [48, 32], minAspect: 4.2, face: true },
-  // One face, high and just left of centre at x 48, y 8 to 28; the ball is low.
-  'student-basketball': { w: 1600, h: 1066, focal: [48, 20], minAspect: 3.4, face: true },
   // Two boys on a bus seat, the left head almost touching the top edge, so the
   // focal point sits high: anything lower crops hair off the blond boy.
   'student-bus': { w: 1600, h: 1067, focal: [38, 14], minAspect: 3.0, face: true },
   // Five teenagers walking, faces strung from x 15 to x 70 at y 8 to 35.
   'student-card': { w: 1200, h: 423, focal: [42, 20], minAspect: 4.0, face: true },
-  // A single subject sitting right of centre at x 62. A centred crop cuts him.
-  'student-controller': { w: 1600, h: 1067, focal: [62, 24], minAspect: 3.3, face: true },
   // Three boys on a sofa, heads stepping up from y 20 on the left to y 8 on
   // the right, which is what the old 50% 34% was cutting at the eyebrow.
   'student-game': { w: 1600, h: 1066, focal: [52, 24], minAspect: 2.8, face: true },

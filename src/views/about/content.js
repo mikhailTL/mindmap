@@ -66,7 +66,7 @@ export const VISION = [
   'Overall, MindMap aims to ensure that no teen ever feels their invisible stress is invisible alone, turning quiet body signals and metrics into meaningful solutions and support systems that address the teen mental illness epidemic at its very root, an approach never before seen in an app.',
   'MindMap visualizes a world where mental health is no longer a scary topic of discussion, no longer causes stigma, and is no longer contained within the minds of teens alone.',
 ]
-/* The words in the vision line that carry the gold. */
+/* The words in the vision line set in the accent green. */
 export const VISION_MARK = 'no teen ever feels their invisible stress is invisible alone'
 
 /* Every string a reader sees, for the copy checks in tests/about.test.js. */
