@@ -1,179 +1,179 @@
 import React from 'react'
 import { Section, SectionHead } from '../../ui/section'
-import { ArrowLeft, ArrowRight } from '../../ui/marks'
 import { useReduced } from '../../toolkit/useReduced'
-import { ScrollRow } from '../../ui/motion'
+import { useSceneWatch } from '../../ui/scenes/kit'
 import { PRO } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 /* The folder path in full: on a case-insensitive disk './different' is this file. */
-import { PICTURES } from './different/index.js'
+import { PICTURES, Glyph, DIF_CSS } from './different/index.js'
 
-/* What makes MindMap different: eight points, each a card with one
- * purpose-built picture (./different/pictures.jsx), a title and one line.
- * No links: there is no page per feature, so a card is not a button (the
- * owner, 18 October).
+/* What makes MindMap different: eight points, one stage. Owner, 18 October:
+ * the bento was "very cluttered" and "looks very childish", and on the 19th:
+ * "i said redesign not remove". So the eight are a plain list of rows (mark,
+ * title, one line) beside one isometric drawing (./different/pictures.jsx)
+ * that changes to the row chosen.
  *
- * Cards are not all the same box. Four looks, shared by the site's radius
- * and type: `tint` (the point's own wash as the ground), `outline` (the
- * site's white card), `rule` (no box, a coloured rule over the picture) and
- * `lit` (the light callout in input.css: grid, hairline, soft glow; it was a
- * dark card until the owner, 19 October: "stop making things dark").
- * Neighbours never share a look.
+ * A row is a tab: focus, a click or tap, the arrow keys, or (from lg) hover
+ * choose it. Until the reader does any of that, the rows advance on their own
+ * every five seconds, only while the band is on screen and never under
+ * reduced motion. The thin green rule beside the chosen row fills over those
+ * five seconds.
  *
- * At xl the eight sit in a four-column bento: the Mind Score is the 2 by 2
- * feature, the network a wide card across the bottom. Below that they are one
- * row that swipes sideways with the next card peeking in. From sm, arrow
- * buttons beside the heading move the row a card at a time for a mouse; a
- * phone swipes, and the row itself takes keyboard focus and arrow keys.
+ * From lg the stage is on the left and stays in view; below lg it sits above
+ * the list, shorter, and only the chosen row shows its line.
  *
  * Order is the owner's: the score first, the network second. */
 
-const LOOK = {
-  tint: {
-    card: '', pane: '',
-    title: 'text-ink', body: 'text-ink-2',
-  },
-  outline: {
-    card: 'border border-rule bg-card', pane: '',
-    title: 'text-ink', body: 'text-ink-2',
-  },
-  rule: {
-    card: 'bg-card', pane: '',
-    title: 'text-ink', body: 'text-ink-2',
-  },
-  lit: {
-    card: 'lit', pane: '',
-    title: 'text-ink', body: 'text-ink-2',
-  },
-}
-
 export const DIFFERENT = [
-  { id: 'score', look: 'tint',
-    ground: 'bg-accent-wash', pane: 'bg-card/60',
-    place: 'xl:col-span-2 xl:row-span-2 xl:col-start-1 xl:row-start-1',
-    title: 'Mind Score',
-    line: 'One daily number from our own neural network, built from your body’s signals.' },
-  { id: 'network', look: 'outline',
-    pane: 'bg-coral-wash',
-    place: 'xl:col-span-2 xl:col-start-1 xl:row-start-3', wide: true,
-    title: 'Support network',
-    line: `Link a parent and a ${PRO}. The teen decides what each one sees.` },
-  { id: 'patch', look: 'rule',
-    rule: 'bg-beam', pane: 'bg-beam-wash',
-    place: 'xl:col-start-3 xl:row-start-1',
-    title: 'Patch or phone',
-    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
-  { id: 'heads', look: 'lit',
-    pane: 'bg-sky-wash',
-    place: 'xl:col-start-4 xl:row-start-1',
-    title: 'Heads Up',
-    line: 'Tells parents when phone use shows signs of stress.' },
-  { id: 'settle', look: 'rule',
-    rule: 'bg-lilac', pane: 'bg-lilac-wash',
-    place: 'xl:col-start-4 xl:row-start-2',
-    title: 'Recovery time',
-    line: 'The patch shows how fast your body settles after a peak, and what helps.' },
-  { id: 'event', look: 'tint',
-    ground: 'bg-sun-wash', pane: 'bg-card/70',
-    place: 'xl:col-start-3 xl:row-start-2',
-    title: 'Stress before events',
-    line: 'Mark a test and see how stress builds in the hours before it.' },
-  { id: 'ai', look: 'lit',
-    pane: 'bg-lilac-wash',
-    place: 'xl:col-start-3 xl:row-start-3',
-    title: 'MindMap AI',
-    line: 'Ask about stress, sleep and school. Get a plain, practical answer.' },
-  { id: 'toolkit', look: 'tint',
-    ground: 'bg-mint-wash', pane: 'bg-card/55',
-    place: 'xl:col-start-4 xl:row-start-3',
-    title: 'Toolkit with levels',
-    line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.' },
+  { id: 'score', title: 'Mind Score',
+    line: 'One daily number from our own neural network, built from your body’s signals.',
+    alt: 'A dial standing on a plate, its needle at the day’s reading.' },
+  { id: 'network', title: 'Support network',
+    line: `Link a parent and a ${PRO}. The teen decides what each one sees.`,
+    alt: `Three linked tiles for a teen, a parent and a ${PRO}, with a lock on the teen’s.` },
+  { id: 'patch', title: 'Patch or phone',
+    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.',
+    alt: 'The patch and a phone side by side.' },
+  { id: 'heads', title: 'Heads Up',
+    line: 'Tells parents when phone use shows signs of stress.',
+    alt: 'A phone with a traffic light beside it, the green lamp lit.' },
+  { id: 'settle', title: 'Recovery time',
+    line: 'The patch shows how fast your body settles after a peak, and what helps.',
+    alt: 'A curve rising to a peak and settling back to its usual level.' },
+  { id: 'event', title: 'Stress before events',
+    line: 'Mark a test and see how stress builds in the hours before it.',
+    alt: 'A calendar with one day marked and a curve rising towards it.' },
+  { id: 'ai', title: 'MindMap AI',
+    line: 'Ask about stress, sleep and school. Get a plain, practical answer.',
+    alt: 'Three chat panels stacked in the air.' },
+  { id: 'toolkit', title: 'Toolkit with levels',
+    line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.',
+    alt: 'Three steps with a block climbing to the top one.' },
 ]
 
-function Point({ d }) {
-  const titleId = React.useId()
-  const Picture = PICTURES[d.id]
-  const look = LOOK[d.look]
-  const big = d.id === 'score'
-  return (
-    <article aria-labelledby={titleId}
-      className={cn('relative flex h-full flex-col overflow-hidden rounded-[16px] p-2',
-        look.card, d.ground, d.wide && 'xl:flex-row xl:items-stretch')}>
-      {d.rule && <span aria-hidden className={cn('mx-1.5 mb-2 mt-0.5 block h-1 rounded-bar', d.rule)}/>}
-      <div className={cn('relative shrink-0 overflow-hidden rounded-[12px]', look.pane, d.pane,
-        'h-[148px]', big && 'xl:h-auto xl:min-h-[280px] xl:flex-1',
-        d.wide && 'xl:h-auto xl:min-h-[168px] xl:w-[54%]')}>
-        <Picture/>
-      </div>
-      <div className={cn('flex flex-1 flex-col px-1.5 pt-3', big && 'xl:flex-none', d.wide && 'xl:justify-center xl:pl-5 xl:pt-1')}>
-        <h3 id={titleId} className={cn('m-0 font-display font-bold leading-tight',
-          big ? 'text-sec xl:text-head' : 'text-sec', look.title)}>{d.title}</h3>
-        <p className={cn('m-0 mt-1 text-fine leading-[1.5]', big && 'xl:max-w-[46ch] xl:text-ui', look.body)}>{d.line}</p>
-      </div>
-    </article>
-  )
-}
+const STEP_MS = 5000
 
-function Nudge({ dir, disabled, onClick }) {
-  const Icon = dir < 0 ? ArrowLeft : ArrowRight
-  return (
-    <button type="button" onClick={onClick} disabled={disabled}
-      aria-label={dir < 0 ? 'Previous card' : 'Next card'}
-      className="grid size-11 place-items-center rounded-full border border-rule bg-card text-ink
-        transition-opacity duration-150 disabled:opacity-40">
-      <Icon aria-hidden size={20}/>
-    </button>
-  )
-}
+/* Hover chooses a row only from lg, where every line shows. Below that the
+   chosen row opens and the rest shift, which would put a different row under
+   a resting pointer and choose that one too. */
+const wide = () => window.matchMedia?.('(min-width: 1024px)').matches ?? true
 
 export function Different() {
   const reduced = useReduced()
-  const row = React.useRef(null)
-  const [ends, setEnds] = React.useState({ start: true, end: false })
-
-  const read = React.useCallback(() => {
-    const el = row.current
-    if (!el) return
-    setEnds({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 })
-  }, [])
+  const uid = React.useId()
+  const tabId = i => `${uid}t${i}`
+  const [on, setOn] = React.useState(0)
+  const [prev, setPrev] = React.useState(-1)
+  const [auto, setAuto] = React.useState(true)
+  const [seen, setSeen] = React.useState(false)
+  const box = React.useRef(null)
+  const stage = React.useRef(null)
+  const tabs = React.useRef([])
+  useSceneWatch(stage)
 
   React.useEffect(() => {
-    read()
-    window.addEventListener('resize', read)
-    return () => window.removeEventListener('resize', read)
-  }, [read])
+    const el = box.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.35 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
-  const step = dir => {
-    const el = row.current
-    const card = el?.querySelector(':scope > li')
-    if (!el || !card) return
-    el.scrollBy({ left: dir * (card.getBoundingClientRect().width + 12), behavior: reduced ? 'auto' : 'smooth' })
+  const show = i => {
+    if (i === on) return
+    setPrev(on)
+    setOn(i)
   }
+
+  const playing = auto && seen && !reduced
+  React.useEffect(() => {
+    if (!playing) return undefined
+    const t = setTimeout(() => { setPrev(on); setOn((on + 1) % DIFFERENT.length) }, STEP_MS)
+    return () => clearTimeout(t)
+  }, [playing, on])
+
+  const take = i => { setAuto(false); show(i) }
+
+  const onKey = e => {
+    const n = DIFFERENT.length
+    const to = { ArrowDown: on + 1, ArrowRight: on + 1, ArrowUp: on - 1, ArrowLeft: on - 1, Home: 0, End: n - 1 }[e.key]
+    if (to === undefined) return
+    e.preventDefault()
+    tabs.current[(to + n) % n]?.focus()
+  }
+
+  const cur = DIFFERENT[on]
 
   return (
     <Section name="Features" id="different" tone="card">
-      <div className="flex items-end justify-between gap-4">
-        <SectionHead>What makes MindMap different</SectionHead>
-        <div className="hidden shrink-0 gap-2 sm:flex xl:hidden">
-          <Nudge dir={-1} disabled={ends.start} onClick={() => step(-1)}/>
-          <Nudge dir={1} disabled={ends.end} onClick={() => step(1)}/>
+      <style>{DIF_CSS}</style>
+      <SectionHead>What makes MindMap different</SectionHead>
+
+      <div ref={box} className="mt-6 grid gap-5 lg:mt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] lg:items-start lg:gap-12">
+        <div role="tabpanel" id={`${uid}p`} aria-labelledby={tabId(on)} tabIndex={0}
+          className="relative h-[220px] overflow-hidden rounded-panel border border-rule bg-paper sm:h-[300px]
+            lg:sticky lg:top-[76px] lg:h-auto lg:aspect-[6/5]">
+          <div ref={stage} className="absolute inset-0">
+            {DIFFERENT.map((d, i) => {
+              const Picture = PICTURES[d.id]
+              return (
+                <div key={d.id} aria-hidden="true"
+                  className={cn('absolute inset-0 transition-[opacity,transform] ease-quint',
+                    'motion-reduce:transform-none motion-reduce:duration-200',
+                    i === on ? 'dif-on z-10 translate-y-0 opacity-100 duration-700'
+                      : i === prev ? '-translate-y-2 opacity-0 duration-500'
+                      : 'translate-y-3 opacity-0 duration-500')}>
+                  <Picture/>
+                </div>
+              )
+            })}
+          </div>
+          <p className="sr-only">{cur.alt}</p>
+        </div>
+
+        <div role="tablist" aria-orientation="vertical" aria-label="What makes MindMap different" onKeyDown={onKey}
+          className="m-0 border-b border-rule">
+          {DIFFERENT.map((d, i) => {
+            const sel = i === on
+            return (
+              <button key={d.id} type="button" role="tab" id={tabId(i)}
+                ref={el => { tabs.current[i] = el }}
+                aria-selected={sel} aria-controls={`${uid}p`} tabIndex={sel ? 0 : -1}
+                aria-labelledby={`${tabId(i)}n`} aria-describedby={`${tabId(i)}l`}
+                onClick={() => take(i)} onFocus={() => take(i)}
+                onPointerEnter={e => { if (e.pointerType === 'mouse' && wide()) take(i) }}
+                className="relative grid w-full grid-cols-[28px_minmax(0,1fr)] items-start gap-x-3.5 border-t border-rule
+                  py-3.5 pl-4 pr-1 text-left touch-manipulation lg:py-4">
+                {/* The rule: a hairline track, filled green for the chosen row,
+                    filling over the five seconds while the rows advance. */}
+                <span aria-hidden className="absolute bottom-3 left-0 top-3 w-[2px] overflow-hidden rounded-bar">
+                  {sel && (
+                    <span key={`${on}${playing}`}
+                      className={cn('block h-full w-full origin-top bg-accent', playing && 'dif-fill')}
+                      style={playing ? { animationDuration: `${STEP_MS}ms` } : undefined}/>
+                  )}
+                </span>
+                <Glyph id={d.id} className={cn('mt-0.5 size-7 transition-colors duration-200',
+                  sel ? 'text-accent' : 'text-ink-3')}/>
+                <span className="min-w-0">
+                  <span id={`${tabId(i)}n`} className={cn('block font-display text-sec font-bold leading-snug transition-colors duration-200',
+                    sel ? 'text-ink' : 'text-ink-2')}>
+                    {d.title}
+                  </span>
+                  {/* Below lg only the chosen row opens; from lg every line shows,
+                      so a hover never moves the row under the pointer. */}
+                  <span className={cn('grid transition-[grid-template-rows] duration-300 ease-quint motion-reduce:transition-none lg:grid-rows-[1fr]',
+                    sel ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+                    <span id={`${tabId(i)}l`} className="block overflow-hidden">
+                      <span className="block pt-1 text-ui leading-[1.5] text-ink-2">{d.line}</span>
+                    </span>
+                  </span>
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
-
-      <ScrollRow index={0}>
-        <ol ref={row} onScroll={read} aria-label="What makes MindMap different" tabIndex={0}
-          className="m-0 mt-5 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto p-0 pb-1
-            [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-            -mx-[22px] scroll-px-[22px] px-[22px] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-14 lg:scroll-px-14 lg:px-14
-            focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink
-            xl:mx-0 xl:grid xl:grid-cols-4 xl:gap-4 xl:overflow-visible xl:px-0">
-          {DIFFERENT.map(d => (
-            <li key={d.id} className={cn('w-[80%] max-w-[310px] shrink-0 snap-start xl:w-auto xl:max-w-none', d.place)}>
-              <Point d={d}/>
-            </li>
-          ))}
-        </ol>
-      </ScrollRow>
     </Section>
   )
 }

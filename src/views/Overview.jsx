@@ -13,6 +13,7 @@ import { List, Item } from '../ui/list'
 import { cn } from '../lib/utils'
 import { setMode } from '../lib/mode'
 import { WhatIs } from './landing/WhatIs'
+import { Different } from './landing/Different'
 import { HeadsUp } from './audience'
 import { SceneBand } from '../ui/scenes/SceneCard'
 import { patchWayArt, phoneWayArt } from '../ui/scenes/art'
@@ -25,10 +26,11 @@ import {
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* The owner's order: hero, the problem, what MindMap is, the rainbow picture
- * break, the two ways in, who it is for, privacy. Nothing else is on the page.
- * The "what makes MindMap different" bento came out on 18 October: "very
- * cluttered".
+/* The owner's order: hero, the problem, what MindMap is, what makes MindMap
+ * different, the rainbow picture break, the two ways in, who it is for,
+ * privacy. Nothing else is on the page. The "different" band was a bento until
+ * 18 October ("very cluttered"); on the 19th it came back redesigned: "i said
+ * redesign not remove".
  *
  * Grounds alternate green, white and blue so the page reads as a sequence:
  *   hero paper, problem ink, two ways sky.wash,
@@ -48,11 +50,12 @@ import {
 
 /* The page's green section names, in page order, for the header's Overview
    menu (owner, 18 October). Each id is on its band below; `what-is` is in
-   landing/WhatIs.jsx. */
+   landing/WhatIs.jsx and `different` in landing/Different.jsx. */
 export const OVERVIEW_SECTIONS = [
-  ['problem',  'The problem'],
-  ['why',      'Why MindMap'],
-  ['what-is',  'About'],
+  ['problem',   'The problem'],
+  ['why',       'Why MindMap'],
+  ['what-is',   'About'],
+  ['different', 'Features'],
   ['start',    'Getting started'],
   ['screens',  'Audiences'],
   ['privacy',  'Privacy'],
@@ -128,6 +131,17 @@ function DriftWash({ photo, className, imgClassName, distance = 48 }) {
   )
 }
 
+/* The hero's second button. The site routes by hash, so a plain #different
+   link would change the route; this scrolls instead, under the sticky header,
+   and jumps without animating when the reader asks for reduced motion. */
+function toDifferent() {
+  const el = document.getElementById('different')
+  if (!el) return
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const head = document.querySelector('header')?.offsetHeight ?? 58
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - head, behavior: reduced ? 'auto' : 'smooth' })
+}
+
 /* The owner's rainbow photograph as a full bleed break between the product
    bands and the ways in. Two dimensions of scroll: the picture rises against
    the page and slides sideways, 24% oversize so no edge ever shows. The
@@ -190,6 +204,13 @@ export function Overview({ go }) {
             {/* "Open the app" is in the header, so not repeated here. */}
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
               <Button onClick={() => { setMode('demo'); go('app-home?demo') }}>View the demo<span aria-hidden>→</span></Button>
+              {/* Back on 19 October (owner: "add back immediately"). It wraps
+                  rather than overflow a phone. accent.ink, not accent: over the
+                  field photograph accent measured 4.48 at 390. */}
+              <Button variant="ghost" className="min-h-[44px] whitespace-normal px-0 text-left text-accent-ink
+                hoverOnly:text-ink sm:ml-3" onClick={toDifferent}>
+                More than your typical stress monitoring app
+              </Button>
             </ScrollIn>
           </div>
 
@@ -278,6 +299,9 @@ export function Overview({ go }) {
 
       {/* -- what MindMap is (views/landing/WhatIs.jsx) ---------------------- */}
       <WhatIs go={go}/>
+
+      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
+      <Different/>
 
       {/* -- the picture break: the owner's rainbow, in two dimensions ------ */}
       <RainbowBreak/>
