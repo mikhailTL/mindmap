@@ -28,6 +28,9 @@ const iso = (x, y, z = 0) => [r1((x - y) * C), r1((x + y) * S - z)]
 const plane = z => `matrix(${C} ${S} ${-C} ${S} 0 ${-z})`
 
 const INK = '#0d2b1e'
+/* A phone screen, light like the app. */
+const SCREEN = '#eef8f3'
+const GROUND = ['#fbfdfc', '#dcf1e6']
 const TONE = {
   white:  { top: '#ffffff', left: '#e5efea', right: '#cfe1d8' },
   arm:    { top: '#f4f7f5', left: '#dde9e3', right: '#c6dace' },
@@ -104,7 +107,8 @@ function Shadow({ x, y, z = 0, w, d, r = 4, blur, opacity = 0.16, className, sty
   )
 }
 
-/* The ground: a soft wash lit from the top left, and contour rings lying
+/* The ground: white running to pale mint, a soft turquoise light from the
+   top left (the site scenes' daylight, 19 October), and contour rings lying
    flat on the plane round `focus`, the same map lines the site's scenes use
    (ui/scenes). They drift a little; under reduced motion they hold. */
 function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5', focus = [40, 40] }) {
@@ -117,7 +121,8 @@ function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5', focus = [
         </linearGradient>
         <radialGradient id={`${id}l`} cx="0.18" cy="0.05" r="0.85">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0.95"/>
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0"/>
+          <stop offset="0.3" stopColor="#7fd8e6" stopOpacity="0.22"/>
+          <stop offset="1" stopColor="#7fd8e6" stopOpacity="0"/>
         </radialGradient>
         <filter id={`${id}b`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="3.2"/>
@@ -129,7 +134,7 @@ function Stage({ id, ground, children, viewBox = '-128 -36 260 152.5', focus = [
       <rect x={vx} y={vy} width={vw} height={vh} fill={`url(#${id}g)`}/>
       <rect x={vx} y={vy} width={vw} height={vh} fill={`url(#${id}l)`}/>
       <g className="mm-iso-rings">
-        <g transform={plane(0)} fill="none" stroke="#157446" strokeOpacity="0.13">
+        <g transform={plane(0)} fill="none" stroke="#8fd6b8" strokeOpacity="0.6">
           {[34, 58, 82, 106, 130].map((r, i) => (
             <path key={r} d={contourPath(focus[0], focus[1], r, { amp: 2 + i, phase: i * 0.9, squash: 1 })}
               strokeWidth="1" vectorEffect="non-scaling-stroke"/>
@@ -230,27 +235,30 @@ export function PatchPicture() {
   const b = `${id}b`
   const [sx, sy] = [PHONE1.x + 6, PHONE1.y + 8]
   return (
-    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} focus={[23, 56]}>
+    <Stage id={id} ground={GROUND} focus={[23, 56]}>
       <Shadow {...ARM} blur={b}/>
       <Shadow {...PHONE1} blur={b} opacity={0.2}/>
       {/* The forearm, then the patch on it, its light, and the ripple. */}
       <Slab {...ARM} tone="arm"/>
-      <Slab {...PATCH} z={ARM.h} tone="ink">
+      {/* The patch is white, as it is made; the phone keeps a dark frame and
+          a light screen, like the app (owner, 19 October: "stop making
+          things dark"). */}
+      <Slab {...PATCH} z={ARM.h} tone="white">
         <circle cx={PATCH.x + PATCH.w / 2} cy={PATCH.y + PATCH.d / 2} r="5" {...STROKE}
-          stroke="#3ecf9a" strokeWidth="1" opacity="0.5"/>
-        <circle cx={PATCH.x + PATCH.w / 2} cy={PATCH.y + PATCH.d / 2} r="2.4" fill="#3ecf9a"/>
+          stroke="#157446" strokeWidth="1" opacity="0.45"/>
+        <circle cx={PATCH.x + PATCH.w / 2} cy={PATCH.y + PATCH.d / 2} r="2.4" fill="#18a370"/>
         <circle className="mm-iso-ripple" cx={PATCH.x + PATCH.w / 2} cy={PATCH.y + PATCH.d / 2} r="7"
-          {...STROKE} stroke="#3ecf9a" strokeWidth="1.2"/>
+          {...STROKE} stroke="#18a370" strokeWidth="1.2"/>
       </Slab>
       {/* The phone: one number on its screen. */}
       <Slab {...PHONE1} tone="ink">
-        <rect x={sx} y={sy} width={PHONE1.w - 12} height={PHONE1.d - 16} rx="6" fill="#103a28"/>
+        <rect x={sx} y={sy} width={PHONE1.w - 12} height={PHONE1.d - 16} rx="6" fill={SCREEN}/>
         <rect className="mm-iso-arrive" x={sx} y={sy} width={PHONE1.w - 12} height={PHONE1.d - 16} rx="6"
           fill="#3ecf9a" opacity="0"/>
-        <text x={sx + 7} y={sy + 34} fill="#3ecf9a" fontFamily="Quicksand, system-ui, sans-serif"
+        <text x={sx + 7} y={sy + 34} fill="#157446" fontFamily="Quicksand, system-ui, sans-serif"
           fontWeight="700" fontSize="26" letterSpacing="-0.5">38</text>
-        <rect x={sx + 7} y={sy + 50} width="26" height="3" rx="1.5" fill="#fff" opacity="0.14"/>
-        <rect x={sx + 7} y={sy + 58} width="18" height="3" rx="1.5" fill="#fff" opacity="0.14"/>
+        <rect x={sx + 7} y={sy + 50} width="26" height="3" rx="1.5" fill={INK} opacity="0.16"/>
+        <rect x={sx + 7} y={sy + 58} width="18" height="3" rx="1.5" fill={INK} opacity="0.16"/>
       </Slab>
       <path d={curve(P1)} fill="none" stroke="#1d8fb0" strokeWidth="1.1" strokeDasharray="1.5 4.5"
         strokeLinecap="round" opacity="0.6"/>
@@ -297,7 +305,7 @@ export function NetworkPicture() {
   const b = `${id}b`
   const p = centre(PARENT), q = centre(PROF)
   return (
-    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} viewBox="-112 -6 224 131.4" focus={[89, 89]}>
+    <Stage id={id} ground={GROUND} viewBox="-112 -6 224 131.4" focus={[89, 89]}>
       {[TEEN, PARENT, PROF].map((s, i) => <Shadow key={i} {...s} blur={b}/>)}
       <Slab {...PROF} tone="white"/>
       <Slab {...PARENT} tone="white"/>
@@ -357,10 +365,10 @@ export function AppPicture() {
   const b = `${id}b`
   const L = { x: PHONE3.x + 10, w: PHONE3.w - 20, d: 26, h: 4, r: 6 }
   return (
-    <Stage id={id} ground={['#eef7f2', '#d6ebe0']} viewBox="-125 -52 250 146.6" focus={[50, 50]}>
+    <Stage id={id} ground={GROUND} viewBox="-125 -52 250 146.6" focus={[50, 50]}>
       <Shadow {...PHONE3} blur={b} opacity={0.2}/>
       <Slab {...PHONE3} tone="ink">
-        <rect x={PHONE3.x + 5} y={PHONE3.y + 8} width={PHONE3.w - 10} height={PHONE3.d - 16} rx="7" fill="#103a28"/>
+        <rect x={PHONE3.x + 5} y={PHONE3.y + 8} width={PHONE3.w - 10} height={PHONE3.d - 16} rx="7" fill={SCREEN}/>
       </Slab>
       {/* Each layer's shadow on the screen, then the layers back to front,
           floating out of step. */}

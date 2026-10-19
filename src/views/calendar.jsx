@@ -516,7 +516,7 @@ function MarkEvent({ className }) {
                 <button key={k} type="button" onClick={() => setKind(k)} aria-pressed={on}
                   className={cn('flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 rounded-field',
                     'border px-2 font-display text-ui font-medium transition-colors duration-150',
-                    on ? 'border-ink bg-ink text-paper' : 'border-rule bg-card text-ink hoverOnly:bg-aqua')}>
+                    on ? 'border-accent bg-accent-wash font-bold text-accent-ink' : 'border-rule bg-card text-ink hoverOnly:bg-aqua')}>
                   {on && <Check aria-hidden className="size-4 shrink-0"/>}
                   <span className="truncate">{KIND_WORD[k]}</span>
                 </button>
@@ -599,7 +599,7 @@ export function CalendarBody({ go, who }) {
                 aria-pressed={view === v}
                 className={cn('min-h-[44px] px-4 font-display text-ui font-medium',
                   'transition-colors duration-150',
-                  view === v ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+                  view === v ? 'bg-accent-wash font-bold text-accent-ink shadow-[inset_0_-2px_0_#157446]' : 'bg-card text-ink hoverOnly:bg-aqua')}>
                 {label}
               </button>
             ))}

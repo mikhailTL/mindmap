@@ -41,7 +41,7 @@ export function Seg({ label, value, options, onChange, className }) {
         <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)}
           className={cn('min-h-[44px] px-3 font-display text-fine font-bold transition-colors duration-100',
             i > 0 && 'border-l border-ruling',
-            value === v ? 'bg-ink text-paper' : 'text-ink-2 hoverOnly:bg-aqua hoverOnly:text-ink')}>
+            value === v ? 'bg-accent-wash text-accent-ink shadow-[inset_0_-2px_0_#157446]' : 'text-ink-2 hoverOnly:bg-aqua hoverOnly:text-ink')}>
           {text}
         </button>
       ))}

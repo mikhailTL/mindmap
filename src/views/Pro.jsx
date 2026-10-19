@@ -248,13 +248,13 @@ export function ProHome({ go }) {
       </StartGrid>
 
       <section aria-label="Who shares with you"
-        className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border border-ink bg-ink p-3.5 lg:mt-4 lg:p-4">
+        className="lit mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 p-3.5 lg:mt-4 lg:p-4">
         <TrafficLight size={16} horizontal className="shrink-0"/>
-        <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">{shares}</span>
+        <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-ink">{shares}</span>
         <button type="button" onClick={() => go(n ? 'app-pro-trends' : 'network')}
           className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-field
             bg-accent px-4 font-display text-ui font-medium text-paper transition-colors duration-150
-            hoverOnly:bg-accent-lit hoverOnly:text-ink active:bg-accent-lit active:text-ink sm:w-auto">
+            hoverOnly:bg-accent-ink active:bg-accent-ink sm:w-auto">
           {n ? 'Open Trends' : 'Open Network'}
           <ArrowRight aria-hidden className="size-4 shrink-0"/>
         </button>

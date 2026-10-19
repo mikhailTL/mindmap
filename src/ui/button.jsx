@@ -19,7 +19,11 @@ const button = cva(
   {
     variants: {
       variant: {
-        solid:   'rounded-field font-display font-semibold bg-ink text-paper shadow-card active:bg-accent-ink ' +
+        /* The accent green, not ink (owner, 19 October: "stop making things
+           dark"). paper on accent 5.52 : 1, on accent-ink 9.0 : 1. The tinted
+           shadow keeps the edge on an accent-wash band. */
+        solid:   'rounded-field font-display font-semibold bg-accent text-paper ' +
+                 'shadow-[0_1px_2px_rgba(13,43,30,.12),0_6px_16px_-8px_rgba(21,116,70,.55)] active:bg-accent-ink ' +
                  'hoverOnly:bg-accent-ink',
         outline: 'rounded-field font-display font-semibold text-ink bg-card ' +
                  'border border-rule shadow-card active:bg-mist ' +

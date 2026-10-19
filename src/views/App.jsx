@@ -729,11 +729,11 @@ function AppTabBar({ app, view, go }) {
   if (!tabs) return null
   return (
     <nav aria-label="App screens"
-      /* The one dark band the app keeps (design spec 0f rule 7): the bar is
-         ink, the way Apple Fitness and Dexcom draw theirs. mist on ink is
-         12.1 : 1, accent-lit on ink 7.67. */
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink bg-ink
-        pb-[env(safe-area-inset-bottom)]">
+      /* Light, like the iOS tab bar (owner, 19 October: "stop making things
+         dark"): frosted white, a hairline and a soft green shadow. ink-2 on
+         white is 8.2 : 1, accent-ink on accent-wash 7.3. */
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-card/95 backdrop-blur-md
+        shadow-[0_-10px_28px_-18px_rgba(13,43,30,.35)] pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-[40rem] list-none p-0">
         {tabs.map(([id, label, Mark, spoken]) => {
           const on = here === id
@@ -750,10 +750,10 @@ function AppTabBar({ app, view, go }) {
                   'sm:min-h-[56px] sm:gap-1 sm:px-1 sm:pb-1.5 sm:pt-2',
                   /* rule on the cell edge: the fill alone could read as hover */
                   'before:absolute before:inset-x-0 before:top-0 before:h-[2px]',
-                  on ? 'text-accent-lit before:bg-accent-lit' : 'text-mist before:bg-transparent')}>
+                  on ? 'text-accent-ink before:bg-accent' : 'text-ink-2 hoverOnly:text-ink before:bg-transparent')}>
                 <span aria-hidden className={cn('flex h-6 w-11 items-center justify-center rounded-bar',
                   'transition-colors duration-150 sm:h-7 sm:w-14',
-                  on ? 'bg-accent-lit text-ink' : 'bg-transparent')}>
+                  on ? 'bg-accent-wash text-accent-ink' : 'bg-transparent')}>
                   <Mark size={20}/>
                 </span>
                 <span className={cn('max-w-full truncate font-display leading-none',

@@ -60,7 +60,7 @@ export function ModeToggle({ className, compact = false }) {
                 /* Rule on the second cell only, or the border doubles. */
                 i > 0 && 'border-l border-ink',
                 on
-                  ? 'bg-ink font-medium text-paper'
+                  ? 'bg-accent-wash font-bold text-accent-ink'
                   : 'bg-transparent font-light text-ink-2 hoverOnly:bg-mist active:bg-mist'
               )}
             >
@@ -111,7 +111,7 @@ function DemoInfo() {
         className="group grid size-11 min-h-[44px] place-items-center !px-0">
         <span aria-hidden className={cn('grid size-6 place-items-center rounded-full border border-ink',
           'font-display text-fine font-bold leading-none transition-colors duration-150',
-          open ? 'bg-ink text-paper' : 'bg-card text-ink groupHoverOnly:bg-mist')}>?</span>
+          open ? 'bg-accent-wash text-accent-ink' : 'bg-card text-ink groupHoverOnly:bg-mist')}>?</span>
       </button>
       {open && (
         <p id={id} role="status"

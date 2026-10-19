@@ -1,0 +1,159 @@
+/* The Mental Mirror's own register (views/MentalMirror.jsx). 19 October, the
+ * owner: "too dry", and site-wide "stop making things dark, site should be
+ * more peaceful and light ... keep adding the topographic, isometric, and
+ * technological designs". So every surface here is light: a pale mint wash
+ * with contour lines and a faint isometric grid, white glass, a mint glow.
+ * The camera feed is the only dark thing, and only while it runs.
+ *
+ * Motion is transform and opacity only. Under prefers-reduced-motion nothing
+ * moves.
+ *
+ * Text measured on the lightest and darkest ground under it (the frame runs
+ * #ffffff to about #dff5ec where the mint bloom sits; chips are white):
+ *   #0d2b1e ink        13.3 : 1 at worst
+ *   #2a5744 ink-2       7.2 : 1
+ *   #426a58 ink-3       5.4 : 1
+ *   #157446 calm word   5.1 : 1;  #99590c warn word 4.9 : 1
+ *   #b23009 error       5.4 : 1 on #ffe8e0
+ *   white on #157446    5.8 : 1 */
+
+.mm {
+  --mm-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  color: #0d2b1e;
+}
+.mm :where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid #157446;
+  outline-offset: 2px;
+}
+
+/* A card on the light ground, contour lines inside it. */
+.mm-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #c2d7ca;
+  border-radius: 22px;
+  background:
+    radial-gradient(110% 80% at 100% 0%, rgba(29,143,176,.07), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, rgba(62,207,154,.10), transparent 60%),
+    linear-gradient(180deg, #ffffff, #f1f9f5);
+  box-shadow: 0 1px 2px rgb(11 43 51 / .04), 0 22px 46px -30px rgb(13 43 30 / .32);
+}
+.mm-topo {
+  position: absolute; inset: -6%;
+  z-index: -1;
+  width: 112%; height: 112%;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent);
+  mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent);
+}
+
+/* The viewfinder: a white bezel round a pale screen. */
+.mm-bezel {
+  border-radius: 20px;
+  padding: 6px;
+  background: rgba(255,255,255,.9);
+  border: 1px solid #d6e6dc;
+  box-shadow: 0 0 0 4px rgba(62,207,154,.10), 0 18px 40px -26px rgba(13,43,30,.35);
+}
+.mm-screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+  background:
+    radial-gradient(60% 60% at 50% 45%, #ffffff, rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, #eef8f4, #e2f2ec);
+}
+.mm-screen.is-live { background: #0d2b1e; }
+
+.mm-chip {
+  border-radius: 14px;
+  border: 1px solid #d6e6dc;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 1px 2px rgb(11 43 51 / .04);
+}
+
+/* A soft breathing dot: on while something is live. */
+.mm-dot {
+  width: .5rem; height: .5rem; border-radius: 999px;
+  background: #18a370;
+  box-shadow: 0 0 0 0 rgba(62,207,154,.6), 0 0 8px rgba(62,207,154,.9);
+}
+.mm-breathe { animation: mm-breathe 2.4s var(--mm-ease) infinite; }
+@keyframes mm-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.8); }
+}
+
+/* Three dots while a value is not in yet. */
+.mm-wait { display: inline-flex; gap: 3px; align-items: center; height: 1em; }
+.mm-wait i {
+  width: 4px; height: 4px; border-radius: 999px; background: #426a58;
+  animation: mm-wait 1.2s ease-in-out infinite;
+}
+.mm-wait i:nth-child(2) { animation-delay: .15s; }
+.mm-wait i:nth-child(3) { animation-delay: .3s; }
+@keyframes mm-wait { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* The ring's lit ticks fade in one by one. */
+.mm-tick { transition: opacity .35s var(--mm-ease); }
+
+/* A slow line down the face while it reads: a full-size layer whose top
+   edge is the line, moved by its own height. */
+.mm-scan {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  animation: mm-scan 3.6s var(--mm-ease) infinite;
+}
+.mm-scan::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(62,207,154,.9), transparent);
+  box-shadow: 0 0 12px rgba(62,207,154,.8);
+}
+@keyframes mm-scan {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.mm-drift { animation: mm-drift 40s ease-in-out infinite alternate; }
+@keyframes mm-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-2.5%, 2%, 0); }
+}
+
+/* While the camera runs, the ground holds still: the face model gets the
+   frames, not the decoration. */
+.mm[data-reading] .mm-drift { animation: none; }
+
+.mm-fade { transition: opacity .45s var(--mm-ease); }
+
+/* The result arrives: a short rise, then its cards one after another. */
+.mm-reveal { animation: mm-reveal .6s var(--mm-ease) both; }
+@keyframes mm-reveal {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The calm to peak strip under the two answers. */
+.mm-scale {
+  height: 4px; border-radius: 999px;
+  background: linear-gradient(90deg, #18a370, #b5871b 60%, #f25424);
+  opacity: .55;
+}
+
+.mm-answer {
+  transition: transform .15s var(--mm-ease), background-color .15s, border-color .15s, box-shadow .15s;
+}
+.mm-answer:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .mm-answer:hover { border-color: #93b2a1; box-shadow: 0 8px 20px -14px rgba(13,43,30,.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-breathe, .mm-wait i, .mm-drift, .mm-reveal { animation: none; }
+  .mm-scan { display: none; }
+  .mm-tick, .mm-fade, .mm-answer { transition: none; }
+  .mm-answer:active { transform: none; }
+}

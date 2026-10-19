@@ -36,14 +36,16 @@ import { Chip, Glass, TechRoot, TechTitle } from '../ui/tech'
  *
  * 18 OCTOBER, the owner: "implement the cool discord style design strats at a
  * technical cool level but not like copying discord". The screen sits on the
- * dark tech ground (ui/tech): a header with a slow gradient orb, glass
- * bubbles with gradient edges, a glowing ring on the composer and three dots
- * while the model answers. Behaviour is unchanged. Text on it is #eafaf2 or
- * #a9c4b7, both over 8 : 1 on every fill here; the help lines keep the red
- * button and a warm edge so they are the first panel the eye finds.
+ * tech ground (ui/tech): a header with a slow soft orb, glass bubbles with
+ * gradient edges, a glowing ring on the composer and three dots while the
+ * model answers. 19 October, the owner: "too many black gradient
+ * backgrounds", so that ground is the light one. Behaviour is unchanged.
+ * Text on it is #0d2b1e or #2a5744, both over 7 : 1 on every fill here; the
+ * help lines keep the red button and a warm edge so they are the first panel
+ * the eye finds.
  */
 
-const HI = 'text-[#eafaf2]', DIM = 'text-[#a9c4b7]'
+const HI = 'text-[#0d2b1e]', DIM = 'text-[#2a5744]'
 
 const ENDPOINT = '/api/mindmap-ai'
 const MAX_CHARS = 1200
@@ -68,12 +70,12 @@ function Disclosure({ label, children, className }) {
       <button type="button" onClick={() => setOpen(v => !v)}
         aria-expanded={open} aria-controls={id}
         className={cn('flex min-h-[48px] w-full items-center gap-3 rounded-panel px-4 py-3 text-left',
-          'font-display text-ui font-semibold transition-colors duration-150 ease hoverOnly:bg-white/[0.05]', HI)}>
+          'font-display text-ui font-semibold transition-colors duration-150 ease hoverOnly:bg-[#3ecf9a]/[0.08]', HI)}>
         <span className="min-w-0 flex-1">{label}</span>
         <ChevronDown aria-hidden size={18}
           className={cn('shrink-0 transition-transform duration-200 ease', DIM, open && 'rotate-180')}/>
       </button>
-      {open && <div id={id} className="border-t border-[#1f4433] px-4 py-3.5">{children}</div>}
+      {open && <div id={id} className="border-t border-rule px-4 py-3.5">{children}</div>}
     </Glass>
   )
 }
@@ -90,14 +92,14 @@ const LEAVES = [
 function Leaves() {
   return (
     <Glass as="section" className="overflow-hidden">
-      <div className="border-b border-[#1f4433] px-4 py-3">
+      <div className="border-b border-rule px-4 py-3">
         <Heading>Data sent</Heading>
       </div>
       <dl className="m-0 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3 text-fine
         sm:grid-cols-[6.5rem_minmax(0,1fr)]">
         {LEAVES.map(([k, v]) => (
           <React.Fragment key={k}>
-            <dt className="t-mono text-[0.8125rem] font-semibold leading-[1.75] text-[#3ecf9a]">{k}</dt>
+            <dt className="t-mono text-[0.8125rem] font-semibold leading-[1.75] text-[#0f5836]">{k}</dt>
             <dd className={cn('m-0 mb-1.5 max-w-[56ch] last:mb-0', HI)}>{v}</dd>
           </React.Fragment>
         ))}
@@ -119,10 +121,10 @@ function Framework() {
         {PILLARS.map(p => {
           const src = pillarSources(p)
           return (
-            <li key={p.id} className="border-t border-[#1f4433] py-2.5 first:border-t-0 first:pt-0">
+            <li key={p.id} className="border-t border-rule py-2.5 first:border-t-0 first:pt-0">
               <h4 className={cn('font-display font-semibold', HI)}>{p.title}</h4>
               <p className={cn('mt-0.5 max-w-[62ch] text-fine', HI)}>{p.rule}</p>
-              <p className="t-mono mt-1 max-w-[62ch] text-[0.8125rem] text-[#3ecf9a]">
+              <p className="t-mono mt-1 max-w-[62ch] text-[0.8125rem] text-[#0f5836]">
                 {src.length
                   ? src.map(s => s.body).filter((b, i, a) => a.indexOf(b) === i).join(', ')
                   : 'A MindMap rule, not published guidance.'}
@@ -136,9 +138,9 @@ function Framework() {
         {SOURCES.map(s => (
           <li key={s.id} className="py-1.5">
             <a href={s.url} target="_blank" rel="noreferrer"
-              className="font-display text-fine font-medium text-[#3ecf9a] underline
-                decoration-[#3ecf9a]/50 underline-offset-2 transition-colors duration-150
-                ease hoverOnly:text-[#b9f7dd]">
+              className="font-display text-fine font-medium text-[#157446] underline
+                decoration-[#157446]/50 underline-offset-2 transition-colors duration-150
+                ease hoverOnly:text-[#0f5836]">
               {s.body}, {s.title}
             </a>
             <span className={cn('ml-1.5 text-fine', DIM)}>{s.detail}</span>
@@ -163,8 +165,8 @@ function Turn({ turn }) {
         {!mine && turn.model && <span>{' · ' + turn.model}</span>}
       </p>
       {mine ? (
-        <div className="mt-1 rounded-[14px] rounded-br-[4px] border border-[#3ecf9a]/45 px-3.5 py-2.5
-          bg-[linear-gradient(135deg,rgba(62,207,154,.2),rgba(29,143,176,.16))]">
+        <div className="mt-1 rounded-[14px] rounded-br-[4px] border border-[#3ecf9a]/70 px-3.5 py-2.5
+          bg-[linear-gradient(135deg,#e2f7ee,#e0f1f6)] shadow-[0_6px_18px_-12px_rgba(62,207,154,.9)]">
           <p className={cn('max-w-none whitespace-pre-line text-ui leading-[1.55]', HI)}>{turn.content}</p>
         </div>
       ) : (
@@ -292,8 +294,8 @@ export function MindMapAI({ who = 'student', go, className }) {
 
   return (
     <div className={cn('wrap', className)}>
-     <TechRoot className="t-band relative rounded-[20px] border border-[#1b3a2c] p-4 shadow-[0_30px_60px_-36px_rgba(7,20,14,.9)] sm:p-6 lg:p-7">
-      <header className="relative isolate -mx-4 -mt-4 overflow-hidden rounded-t-[20px] border-b border-[#1b3a2c]
+     <TechRoot className="t-band relative rounded-[20px] border border-rule p-4 shadow-[0_24px_48px_-34px_rgba(13,43,30,.4)] sm:p-6 lg:p-7">
+      <header className="relative isolate -mx-4 -mt-4 overflow-hidden rounded-t-[20px] border-b border-rule
         px-4 pb-4 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-7 lg:-mt-7 lg:px-7 lg:pt-6">
         <span aria-hidden className="t-orb t-anim -right-24 -top-36 sm:-right-10"/>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -319,8 +321,8 @@ export function MindMapAI({ who = 'student', go, className }) {
             {typeof go === 'function' && (
               <button type="button" onClick={() => go('methods')}
                 className={cn('mt-3.5 inline-flex min-h-[44px] items-center gap-2 rounded-field',
-                  'border border-[#3ecf9a]/60 px-4 font-display text-ui font-medium',
-                  'transition-colors duration-150 ease hoverOnly:bg-white/[0.06]', HI)}>
+                  'border border-[#157446]/60 bg-white px-4 font-display text-ui font-medium',
+                  'transition-colors duration-150 ease hoverOnly:bg-[#3ecf9a]/[0.08]', HI)}>
                 How it works
                 <ArrowRight aria-hidden size={16}/>
               </button>
@@ -343,12 +345,12 @@ export function MindMapAI({ who = 'student', go, className }) {
                   {spec.starters.map(s => (
                     <li key={s}>
                       <button type="button" onClick={() => send(s)}
-                        className={cn('group flex w-full items-center gap-3 rounded-[12px] border border-[#2f5a47]',
-                          'bg-white/[0.03] px-3.5 py-3 text-left font-body text-ui',
-                          'transition-[background-color,border-color] duration-150 ease',
-                          'hoverOnly:border-[#3ecf9a]/70 hoverOnly:bg-white/[0.06]', HI)}>
+                        className={cn('group flex w-full items-center gap-3 rounded-[12px] border border-rule',
+                          'bg-white px-3.5 py-3 text-left font-body text-ui',
+                          'transition-[background-color,border-color,box-shadow] duration-150 ease',
+                          'hoverOnly:border-[#3ecf9a] hoverOnly:bg-[#f3fbf7] hoverOnly:shadow-[0_0_16px_-6px_rgba(62,207,154,.8)]', HI)}>
                         <span className="min-w-0 flex-1">{s}</span>
-                        <ArrowRight aria-hidden size={16} className="shrink-0 text-[#3ecf9a] transition-transform
+                        <ArrowRight aria-hidden size={16} className="shrink-0 text-[#157446] transition-transform
                           duration-150 ease-[var(--ease-out)] groupHoverOnly:translate-x-0.5"/>
                       </button>
                     </li>
@@ -389,9 +391,9 @@ export function MindMapAI({ who = 'student', go, className }) {
                     }
                   }}
                   placeholder={spec.opener}
-                  className="block w-full resize-y rounded-[12px] border-0 bg-[#0a1a13]/90
-                    p-3 font-body text-ui leading-[1.55] text-[#eafaf2] placeholder:text-[#a9c4b7]
-                    caret-[#3ecf9a]"/>
+                  className="block w-full resize-y rounded-[12px] border-0 bg-white
+                    p-3 font-body text-ui leading-[1.55] text-[#0d2b1e] placeholder:text-[#426a58]
+                    caret-[#157446]"/>
               </label>
               {/* The typing nudge is a light component from the Toolkit, so
                   it gets its own paper ground; empty when it has nothing. */}
@@ -404,16 +406,16 @@ export function MindMapAI({ who = 'student', go, className }) {
                     'px-5 font-display text-ui font-bold transition-[background-color,color,transform] duration-150',
                     'ease-[var(--ease-out)] motion-safe:active:scale-[0.97]',
                     !draft.trim() || pending
-                      ? 'cursor-not-allowed border-[#2f5a47] bg-white/[0.04] text-[#a9c4b7]'
-                      : 'border-[#3ecf9a] bg-[#3ecf9a] text-[#07140e] shadow-[0_0_24px_-6px_rgba(62,207,154,.75)] hoverOnly:bg-[#5fe0b0]')}>
+                      ? 'cursor-not-allowed border-rule bg-white text-[#2a5744]'
+                      : 'border-accent bg-accent text-white shadow-[0_6px_22px_-8px_rgba(62,207,154,.9)] hoverOnly:bg-accent-ink')}>
                   {pending ? 'Sending' : 'Send'}
                   <SendMark aria-hidden size={16}/>
                 </button>
                 {turns.length > 0 && (
                   <button type="button" onClick={() => { setTurns([]); setError('') }}
                     className="inline-flex min-h-[44px] items-center rounded-field px-3
-                      font-display text-ui font-medium text-[#a9c4b7] transition-colors
-                      duration-150 ease hoverOnly:text-[#eafaf2]">
+                      font-display text-ui font-medium text-[#2a5744] transition-colors
+                      duration-150 ease hoverOnly:text-[#0d2b1e]">
                     Clear
                   </button>
                 )}

@@ -168,7 +168,7 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [], go 
               <TrafficLight size={22} horizontal cycle={false} className="opacity-60"/>
               <button type="button" onClick={() => go('network')}
                 className="inline-flex min-h-[48px] items-center gap-2 rounded-field bg-mint-ink px-5 font-display text-ui
-                  font-bold text-white transition-colors duration-150 hoverOnly:bg-ink">
+                  font-bold text-white transition-colors duration-150 hoverOnly:bg-accent-ink">
                 <Plus aria-hidden className="size-4 shrink-0"/> Open Network</button>
             </div>
           )}
@@ -194,19 +194,19 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [], go 
 
       <ProPart kind="rules" title="Rules and the log" className="mt-8"/>
       <div className={cn(ROW, 'lg:grid-cols-2')}>
-        {/* The one dark panel on this screen (src/ui/card.jsx): the rule that
-            cannot be switched off. Paper and mist on ink, never accent. */}
-        <Panel variant="ink">
-          <PanelHead as="h3" title="When an urgent alert is raised" className="border-paper/40 text-mist"/>
+        {/* The rule that cannot be switched off, on the coral tint (owner,
+            19 October: "stop making things dark"). The words carry it. */}
+        <Panel variant="tint" hue="coral">
+          <PanelHead as="h3" title="When an urgent alert is raised"/>
           <ol className="m-0 mt-2 list-none p-0">
             {PROTOCOL.map((p, i) => (
-              <li key={p} className="flex items-baseline gap-3 border-b border-paper/20 py-2 last:border-b-0">
-                <span className="w-4 shrink-0 text-fine tabular-nums text-mist">{i + 1}</span>
-                <span className="text-fine text-paper">{p}</span>
+              <li key={p} className="flex items-baseline gap-3 border-b border-coral/25 py-2 last:border-b-0">
+                <span className="w-4 shrink-0 text-fine font-bold tabular-nums text-coral-ink">{i + 1}</span>
+                <span className="text-fine text-ink">{p}</span>
               </li>
             ))}
           </ol>
-          <Note className="border-paper/20 text-mist">Urgent alerts reach you for every teen. They cannot be switched off.</Note>
+          <Note className="border-coral/25 text-ink-2">Urgent alerts reach you for every teen. They cannot be switched off.</Note>
         </Panel>
 
         <div className="flex flex-col gap-3 lg:gap-4">

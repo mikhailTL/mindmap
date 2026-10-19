@@ -35,7 +35,7 @@ const PULSE = 'M0 26H34l5-2 4 2h12l5-16 7 30 6-24 4 10h21l5-4 4 4H120l5-2 4 2h12
 function PulseMotif({ calm, className }) {
   const line = (
     <svg viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden className="block h-full w-1/2">
-      <path d={PULSE} fill="none" stroke="#3ecf9a" strokeWidth="2.6" strokeLinejoin="round"
+      <path d={PULSE} fill="none" stroke="#18a370" strokeWidth="2.6" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
     </svg>
   )

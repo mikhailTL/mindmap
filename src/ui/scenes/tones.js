@@ -1,39 +1,42 @@
-/* The site's scene palette. The Toolkit's nameplates have a sky of their own
- * per activity (navy, plum, sun, coral), playful and many coloured. The site
- * scenes stay inside the brand instead: deep green ink running to teal and
- * turquoise, contour lines (the "map" in MindMap) and one soft light source.
- * So the two are related (gradient grounds, layered depth, glow, slow loops)
- * and the Toolkit still stands out as the colourful one.
+/* The site's scene palette, in daylight. Owner, 19 October: "too many black
+ * gradient backgrounds, needs to fit site more while maintaining technological
+ * edge". So every scene now sits on the site's own light grounds: white or
+ * paper running to pale mint or pale sky, one soft turquoise light, contour
+ * lines in light mint over a fine grid, and deep green ink for the drawing and
+ * the words. The Toolkit's nameplates keep their deep, many coloured skies, so
+ * the Toolkit is still the colourful one.
  *
  *   sky    three stops, left to right (or top to bottom on a band).
  *   ridge  the layered hills, far to near.
- *   glow   the light source.
- *   line   contour lines, drawn at low opacity.
- *   ink    a title on `sky[0]`.   sub  a line under it, also on `sky[0]`.
+ *   glow   the light source.        shade  the tint of a soft shadow.
+ *   line   contour lines.           grid   the fine grid under them.
+ *   ink    a title.  sub  a line under it.  lit  a green word or mark.
  *
- * Text only ever sits on `sky[0]` or on a solid panel of it, so the ratios
- * are exact. Measured (contrast() below), ink : sub on sky[0] and on sky[1]:
- *   dusk    15.20 : 12.25   and  11.68 : 9.41
- *   lagoon  15.07 : 12.35   and  10.34 : 8.47
- *   tide    16.02 : 12.62   and  12.00 : 9.45
- *   dawn    14.20 :  7.71   and  13.26 : 7.20 (accent 4.67 at sky[2])
- * accent-lit on dusk: 7.67 on sky[0], 5.89 on sky[1]. */
+ * Words may sit on any of the three sky stops. Measured (contrast() below),
+ * on sky[0] : sky[1] : sky[2]:
+ *   mint   ink 15.20 : 14.04 : 12.86   sub 8.25 : 7.62 : 6.98   lit 5.80 : 5.36 : 4.91
+ *   sky    ink 15.20 : 13.91 : 12.58   sub 8.25 : 7.55 : 6.83   lit 5.80 : 5.31 : 4.80
+ *   paper  ink 15.20 : 14.09 : 12.91   sub 8.25 : 7.65 : 7.01   lit 5.80 : 5.38 : 4.93
+ * accent.ink, the hero's label, is 7.03 or more on all nine. */
 
 export const TONES = {
-  dusk:   { sky: ['#0d2b1e', '#11402f', '#1a6450'], ridge: ['#18573f', '#124632', '#0c3324'],
-            glow: '#3ecf9a', line: '#bff5dc', ink: '#ffffff', sub: '#cfeedd', lit: '#3ecf9a' },
-  lagoon: { sky: ['#0b2a33', '#0f4656', '#1a7189'], ridge: ['#156176', '#0f4b5c', '#0a3542'],
-            glow: '#7fdcf0', line: '#c9f1fb', ink: '#ffffff', sub: '#d3edf5', lit: '#7fdcf0' },
-  tide:   { sky: ['#0c2430', '#123b4a', '#1c5a6e'], ridge: ['#1a5468', '#134456', '#0d3140'],
-            glow: '#9fe8d0', line: '#d2f4ea', ink: '#ffffff', sub: '#cfe9ee', lit: '#3ecf9a' },
-  dawn:   { sky: ['#f1f9f6', '#e2f3f1', '#d2ebf2'], ridge: ['#c7e5e3', '#b5dcdc', '#a3d2d5'],
-            glow: '#ffffff', line: '#1d8fb0', ink: '#0d2b1e', sub: '#2a5744', lit: '#157446' },
+  mint:  { sky: ['#ffffff', '#eff8f3', '#dcf1e6'], ridge: ['#e2f3ea', '#d2ecde', '#c1e3d1'],
+           glow: '#7fd8e6', shade: '29 143 176', line: '#8fd6b8', grid: '#1d8fb0',
+           ink: '#0d2b1e', sub: '#2a5744', lit: '#157446' },
+  sky:   { sky: ['#ffffff', '#eef6fb', '#dcecf6'], ridge: ['#e0eef6', '#d0e4f0', '#bfd9e9'],
+           glow: '#7fd8e6', shade: '29 143 176', line: '#93d6c4', grid: '#1d8fb0',
+           ink: '#0d2b1e', sub: '#2a5744', lit: '#157446' },
+  paper: { sky: ['#ffffff', '#f0f8f6', '#dff0ee'], ridge: ['#e3f2ef', '#d3ebe6', '#c3e2dc'],
+           glow: '#8fe0d8', shade: '21 116 70', line: '#8fd6b8', grid: '#157446',
+           ink: '#0d2b1e', sub: '#2a5744', lit: '#157446' },
 }
 
-/* The four signals, lifted so each reads as a light on the deep grounds
-   (each clears 3 : 1 as a graphic on every dark sky[0]). The names beside
-   them carry the meaning; the colour never does alone. */
-export const SIGNAL_LIT = { heart: '#ff7a7a', sweat: '#ffad5c', temp: '#6fdc6f', move: '#7fb0ff' }
+/* A soft shadow in the tone's own colour, so a light card still lifts. */
+export const glowShadow = (tone, s = '0 22px 44px -26px') =>
+  `0 1px 2px rgb(13 43 30 / 0.06), ${s} rgb(${TONES[tone].shade} / 0.45)`
+
+/* System monospace for the scenes' small labels: the technical edge. */
+export const MICRO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
 
 const lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
 export function luminance(hex) {

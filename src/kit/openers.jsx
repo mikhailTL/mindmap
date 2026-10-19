@@ -95,7 +95,7 @@ function Arrow({ back, delay }) {
 function Node({ strong, className, children }) {
   return (
     <span className={cn('rounded-field border px-2 py-0.5 text-center font-display text-fine',
-      strong ? 'border-ink bg-ink font-bold text-paper' : 'border-rule bg-card font-medium text-ink-2',
+      strong ? 'border-accent bg-accent-wash font-bold text-accent-ink' : 'border-rule bg-card font-medium text-ink-2',
       className)}>
       {children}
     </span>

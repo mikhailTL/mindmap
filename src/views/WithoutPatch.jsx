@@ -32,10 +32,10 @@ const ROUTES = [
 ]
 
 /* One of the three ways, as a lit scene card (owner, 18 October: the site
-   should carry more of the Toolkit's depth). Each takes its own tone and a
-   small loop that shows what it reads. */
-const ART = { mirror: [mirrorArt, 'dusk', [0.62, 0.5]], sensors: [pulseArt, 'lagoon', [0.47, 0.3]],
-  ask: [surveyArt, 'tide', [0.66, 0.55]] }
+   should carry more of the Toolkit's depth; 19 October: light cards, not
+   dark). Each takes its own tone and a small loop that shows what it reads. */
+const ART = { mirror: [mirrorArt, 'mint', [0.62, 0.5]], sensors: [pulseArt, 'sky', [0.47, 0.3]],
+  ask: [surveyArt, 'paper', [0.66, 0.55]] }
 
 function Route({ r, i, go, toCheck }) {
   const [art, tone, light] = ART[r.art]

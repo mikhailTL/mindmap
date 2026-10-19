@@ -126,7 +126,7 @@ function Tabs({ who, tab, onTab }) {
               onClick={() => onTab(t.id)}
               className={cn('min-h-[44px] shrink-0 rounded-full border border-rule px-4 font-display text-ui font-semibold',
                 'transition-colors duration-150',
-                on ? 'border-ink bg-ink text-paper' : 'bg-card text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink')}>
+                on ? 'border-accent bg-accent-wash text-accent-ink' : 'bg-card text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink')}>
               {t.label}
             </button>
           )

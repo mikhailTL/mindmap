@@ -19,7 +19,8 @@ export function Scale({ name, legend, low, high, value, onChange }){
               'min-h-[56px] rounded-field border border-rule bg-paper font-mono text-meta text-ink-2',
               'transition-[background-color,color,border-color] duration-150 ease-out',
               'hoverOnly:border-ink-3 hoverOnly:bg-mist/50',
-              'data-[state=checked]:bg-ink data-[state=checked]:text-paper data-[state=checked]:border-ink')}>
+              'data-[state=checked]:border-accent data-[state=checked]:bg-accent-wash data-[state=checked]:font-bold',
+              'data-[state=checked]:text-accent-ink data-[state=checked]:shadow-[inset_0_0_0_1px_#157446]')}>
             {v}
           </R.Item>
         ))}

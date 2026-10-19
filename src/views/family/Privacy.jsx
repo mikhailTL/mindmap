@@ -48,7 +48,7 @@ function Switch({ on, disabled, label, onClick }) {
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
         disabled
           ? on ? 'border-ink-3 bg-mist font-medium text-ink' : 'border-ink-3 bg-transparent font-light text-ink-2'
-          : on ? 'border-ink bg-ink font-medium text-paper hoverOnly:bg-accent-ink'
+          : on ? 'border-accent bg-accent font-medium text-paper hoverOnly:bg-accent-ink'
                : 'border-ink bg-transparent font-light text-ink-2 hoverOnly:bg-mist')}>
       {on ? 'Shared' : 'Not shared'}
     </button>

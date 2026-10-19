@@ -60,7 +60,7 @@ export default function AddCard({ label = 'Add a child', onAdd, who = 'your teen
                   className="min-h-[44px] min-w-0 flex-1 rounded-field border border-ruling bg-paper px-3 font-body
                     text-fine text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"/>
                 <button type="button" onClick={copy}
-                  className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-field bg-ink px-4 font-display
+                  className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-field bg-accent px-4 font-display
                     text-ui font-bold text-paper hoverOnly:bg-accent-ink focus-visible:outline focus-visible:outline-2
                     focus-visible:outline-offset-2 focus-visible:outline-accent">
                   <Copy aria-hidden className="size-4"/>{copied ? 'Copied' : 'Copy'}

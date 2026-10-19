@@ -247,3 +247,46 @@
      left the glow a half-width off centre; it is restated here. */
   .mm-glow { animation: none; opacity: .75; transform: translate(-50%, -50%); }
 }
+
+@layer components {
+  /* The light callout: what the dark `ink` panel used to be for, the one box
+     a screen must not miss. White to pale mint, a fine grid that fades from
+     the middle, a mint to turquoise hairline and a soft green shadow (owner,
+     19 October: "stop making things dark ... keep adding the topographic,
+     isometric, and technological designs"). The palest ground under text is
+     #eef8f3: ink 13.9 : 1, ink-2 7.5, ink-3 5.1, accent 5.1. */
+  .lit {
+    @apply rounded-panel;
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(90% 80% at 100% 0%, rgb(29 143 176 / .08), transparent 60%),
+      radial-gradient(80% 80% at 0% 100%, rgb(62 207 154 / .12), transparent 60%),
+      linear-gradient(180deg, #ffffff, #eef8f3);
+    box-shadow: 0 1px 2px rgb(13 43 30 / .05), 0 14px 32px -20px rgb(13 43 30 / .25),
+      0 0 30px -18px rgb(62 207 154 / .6);
+  }
+  .lit::before {
+    content: '';
+    position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit;
+    background-image:
+      linear-gradient(rgb(21 116 70 / .07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(21 116 70 / .07) 1px, transparent 1px);
+    background-size: 18px 18px;
+    -webkit-mask-image: radial-gradient(75% 90% at 70% 50%, #000, transparent);
+    mask-image: radial-gradient(75% 90% at 70% 50%, #000, transparent);
+    pointer-events: none;
+  }
+  .lit::after {
+    content: '';
+    position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgb(62 207 154 / .9), rgb(29 143 176 / .5) 55%, rgb(62 207 154 / .3));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+}

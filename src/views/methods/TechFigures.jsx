@@ -6,15 +6,20 @@ import { PRO, PRO_PLURAL_LC, SCORE } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 import { Glass } from '../../ui/tech'
 
-/* The two drawings on the dark How it works tabs (ui/tech): the Mind Score
+/* The two drawings on the How it works tech tabs (ui/tech): the Mind Score
  * network and MindMap AI's framework. They replace charts/architecture.jsx.
  *
  * Labels are HTML; the SVGs hold lines only and are aria-hidden, so a label
  * never shrinks with the drawing. Nothing is invented: the curves are read out
  * of signals/tnam-results.js, the memory length from signals/tnam.js. Glowing
- * dots run along the lines while the band is on screen (tech.css). */
+ * dots run along the lines while the band is on screen (tech.css).
+ *
+ * 19 October (later), the owner: "some of the words under how it works are
+ * too little, needs some more explanation". Each drawing now ends in one
+ * plain line saying how to read it (CAPTION, #2a5744: 6.6 : 1 on the band). */
 
-const LABEL = 't-mono text-[0.8125rem] leading-none text-[#a9c4b7]'
+const LABEL = 't-mono text-[0.8125rem] leading-none text-[#0f5836]'
+const CAPTION = 'mt-4 text-meta leading-[1.45] text-[#2a5744]'
 
 /* ── the Mind Score network ─────────────────────────────────────────────── */
 
@@ -44,11 +49,11 @@ function Lines({ h, paths, className }) {
       className={cn('absolute inset-0 block h-full w-full', className)} fill="none">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#3ecf9a" stopOpacity=".9"/>
-          <stop offset="1" stopColor="#67e3f5" stopOpacity=".7"/>
+          <stop offset="0" stopColor="#18a370"/>
+          <stop offset="1" stopColor="#1d8fb0"/>
         </linearGradient>
       </defs>
-      {paths.map(d => <path key={'g' + d} d={d} stroke="#3ecf9a" strokeOpacity=".16" strokeWidth="6" vectorEffect="non-scaling-stroke"/>)}
+      {paths.map(d => <path key={'g' + d} d={d} stroke="#3ecf9a" strokeOpacity=".28" strokeWidth="7" vectorEffect="non-scaling-stroke"/>)}
       {paths.map(d => <path key={d} d={d} stroke={`url(#${id})`} strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>)}
     </svg>
   )
@@ -75,11 +80,11 @@ export function NetworkGlow({ className }) {
           const S = SENSORS[id], Icon = S.icon
           return (
             <li key={id} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-              <span className="grid size-11 place-items-center rounded-full border bg-[#0c1f17]"
-                style={{ borderColor: S.glow, boxShadow: `0 0 18px -4px ${S.glow}` }}>
-                <Icon aria-hidden size={20} className="text-[#eafaf2]"/>
+              <span className="grid size-11 place-items-center rounded-full border-[1.5px] bg-white"
+                style={{ borderColor: S.glow, boxShadow: `0 0 16px -3px ${S.glow}99, inset 0 0 10px -4px ${S.glow}66` }}>
+                <Icon aria-hidden size={20} className="text-[#0d2b1e]"/>
               </span>
-              <span className="max-w-full break-words text-[0.8125rem] font-semibold leading-tight text-[#eafaf2]">{S.name}</span>
+              <span className="max-w-full break-words text-[0.8125rem] font-semibold leading-tight text-[#0d2b1e]">{S.name}</span>
             </li>
           )
         })}
@@ -97,15 +102,15 @@ export function NetworkGlow({ className }) {
             <Glass tone="quiet" className="px-1 py-1.5">
               <svg viewBox={`0 0 ${TW} ${TH}`} aria-hidden focusable="false" className="block w-full"
                 fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d={`M${PAD} ${TH - PAD}H${TW - PAD}`} stroke="#a9c4b7" strokeOpacity=".25" strokeDasharray="2 4"/>
-                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#3ecf9a" strokeOpacity=".25" strokeWidth="8"/>
-                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#b9f7dd" strokeWidth="2.6"/>
+                <path d={`M${PAD} ${TH - PAD}H${TW - PAD}`} stroke="#93b2a1" strokeOpacity=".6" strokeDasharray="2 4"/>
+                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#3ecf9a" strokeOpacity=".3" strokeWidth="8"/>
+                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#157446" strokeWidth="2.4"/>
               </svg>
             </Glass>
           </li>
         ))}
       </ul>
-      <p className={cn(LABEL, 'mt-2 text-center')}>One curve each</p>
+      <p className={cn(LABEL, 'mb-2 mt-2 text-center')}>One curve each</p>
 
       <div className="relative h-12">
         <Lines h={48} paths={COLS.map(x => `M${x} 0L50 48`)}/>
@@ -118,17 +123,17 @@ export function NetworkGlow({ className }) {
           <div className="relative grid grid-cols-8 gap-[3px] rounded-[6px]">
             {Array.from({ length: CONTEXT_WINDOWS }, (_, i) => (
               <span key={i} className={cn('block h-5 rounded-[3px] border',
-                i === CONTEXT_WINDOWS - 1 ? 'border-[#67e3f5] bg-[#67e3f5]/70' : 'border-[#2f5a47] bg-[#67e3f5]/[0.08]')}/>
+                i === CONTEXT_WINDOWS - 1 ? 'border-[#1d8fb0] bg-[#1d8fb0]/70 shadow-[0_0_10px_-1px_rgba(29,143,176,.7)]' : 'border-[#c2d7ca] bg-[#1d8fb0]/[0.08]')}/>
             ))}
             <span aria-hidden className="t-scan t-anim"><i/></span>
           </div>
           <p className={cn(LABEL, 'mt-1.5')}>Last {MEMORY_MIN} minutes</p>
         </div>
-        <span className="relative grid size-14 place-items-center rounded-full border border-[#3ecf9a] bg-[#0c1f17]
-          shadow-[0_0_28px_-4px_rgba(62,207,154,.8),inset_0_0_14px_rgba(62,207,154,.25)]">
+        <span className="relative grid size-14 place-items-center rounded-full border-[1.5px] border-[#3ecf9a] bg-white
+          shadow-[0_0_26px_-4px_rgba(62,207,154,.85),inset_0_0_14px_rgba(62,207,154,.22)]">
           <svg viewBox="0 0 24 24" aria-hidden focusable="false" className="size-6" fill="none"
-            stroke="#b9f7dd" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span className="pointer-events-none absolute right-full top-1/2 mr-0.5 h-px w-2 bg-[#67e3f5]"/>
+            stroke="#157446" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span className="pointer-events-none absolute right-full top-1/2 mr-0.5 h-px w-2 bg-[#1d8fb0]"/>
         </span>
         <p className={LABEL}>Added up</p>
       </div>
@@ -143,18 +148,18 @@ export function NetworkGlow({ className }) {
         <svg viewBox="0 0 96 64" aria-hidden focusable="false" className="block h-16 w-24" fill="none" strokeLinecap="round">
           <defs>
             <linearGradient id="t-dial" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#3ecf9a"/><stop offset=".6" stopColor="#67e3f5"/><stop offset="1" stopColor="#c4b5fd"/>
+              <stop offset="0" stopColor="#18a370"/><stop offset=".6" stopColor="#1d8fb0"/><stop offset="1" stopColor="#8b6cf0"/>
             </linearGradient>
           </defs>
-          <path d="M12 56a36 36 0 0 1 72 0" stroke="#a9c4b7" strokeOpacity=".18" strokeWidth="7"/>
-          <path d="M12 56a36 36 0 0 1 58 -27" stroke="#3ecf9a" strokeOpacity=".25" strokeWidth="14"/>
+          <path d="M12 56a36 36 0 0 1 72 0" stroke="#c2d7ca" strokeOpacity=".7" strokeWidth="7"/>
+          <path d="M12 56a36 36 0 0 1 58 -27" stroke="#3ecf9a" strokeOpacity=".3" strokeWidth="14"/>
           <path d="M12 56a36 36 0 0 1 58 -27" stroke="url(#t-dial)" strokeWidth="7"/>
         </svg>
-        <p className="mt-1 font-display text-ui font-bold text-[#eafaf2]">{SCORE}</p>
+        <p className="mt-1 font-display text-ui font-bold text-[#0d2b1e]">{SCORE}</p>
       </div>
-      <figcaption className="sr-only">
-        Four signals each pass through their own learned curve. The curves and the last {MEMORY_MIN} minutes
-        are added up into one {SCORE}.
+      <figcaption className={CAPTION}>
+        Read it top to bottom. Each curve shows how much one signal adds as it moves away from your
+        normal, and the curves plus the last {MEMORY_MIN} minutes add up to the {SCORE}.
       </figcaption>
     </figure>
   )
@@ -172,7 +177,7 @@ export function FrameworkGlow({ className }) {
   return (
     <figure className={cn('m-0 mx-auto w-full max-w-[22rem]', className)}>
       <Glass tone="vio" sheen className="px-4 py-3.5 text-center">
-        <p className="font-display text-ui font-bold text-[#eafaf2]">One framework</p>
+        <p className="font-display text-ui font-bold text-[#0d2b1e]">One framework</p>
         <ul className="m-0 mt-2.5 flex list-none flex-wrap justify-center gap-1.5 p-0">
           {PUBLISHERS.map(p => <li key={p} className="t-chip t-mono">{p}</li>)}
         </ul>
@@ -185,13 +190,14 @@ export function FrameworkGlow({ className }) {
         {ADAPTATIONS.map(a => (
           <li key={a} className="h-full">
             <Glass tone="quiet" className="flex h-full min-h-[3.25rem] items-center justify-center px-2 py-2 text-center">
-              <span className="text-[0.875rem] font-semibold leading-tight text-[#eafaf2]">{soft(a)}</span>
+              <span className="text-[0.875rem] font-semibold leading-tight text-[#0d2b1e]">{soft(a)}</span>
             </Glass>
           </li>
         ))}
       </ul>
-      <figcaption className="sr-only">
-        One framework from {PUBLISHERS.join(', ')}, adapted for students, parents and {PRO_PLURAL_LC}.
+      <figcaption className={CAPTION}>
+        One set of rules from these four publishers, worded for each person who reads the reply.
+        <span className="sr-only"> The rules are adapted for students, parents and {PRO_PLURAL_LC}.</span>
       </figcaption>
     </figure>
   )

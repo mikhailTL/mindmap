@@ -30,17 +30,22 @@ function Reading() {
         letterSpacing:'-0.02em', color:'#0d2b1e' }}>Hold still.</p>
       <p style={{ margin:'6px 0 0', fontFamily:'Chivo,sans-serif', fontSize:16, color:'#2a5744' }}>
         Fingertip over the camera. Twenty eight seconds left.</p>
-      <div style={{ marginTop:22, borderRadius:14, background:'#0d2b1e', padding:'20px 18px' }}>
+      {/* A light plate with a fine grid, like the app (owner, 19 October:
+          "stop making things dark"). Text on #eef8f3: ink 13.9, ink-2 7.5,
+          accent-ink 7.9. */}
+      <div style={{ marginTop:22, borderRadius:14, padding:'20px 18px',
+        background:'linear-gradient(rgba(21,116,70,.06) 1px, transparent 1px) 0 0 / 100% 16px, linear-gradient(180deg,#f8fcfa,#eef8f3)',
+        boxShadow:'inset 0 0 0 1px rgba(21,116,70,.18), 0 10px 24px -18px rgba(13,43,30,.4)' }}>
         <svg viewBox="0 0 300 96" style={{ width:'100%', display:'block' }} aria-hidden>
           <path d="M0 62 L26 62 L34 26 L42 84 L50 62 L86 62 L112 62 L120 26 L128 84 L136 62 L172 62
                    L198 62 L206 26 L214 84 L222 62 L258 62 L284 62 L292 40"
-            fill="none" stroke="#3ecf9a" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"
+            fill="none" stroke="#157446" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"
             className="mm-trace"/>
         </svg>
         <div style={{ marginTop:14, display:'flex', alignItems:'baseline', gap:8 }}>
-          <span style={{ fontFamily:'Chivo Mono,monospace', fontSize:30, color:'#f7faf8' }}>72</span>
-          <span style={{ fontFamily:'Chivo,sans-serif', fontSize:14, color:'#c2d7ca' }}>bpm</span>
-          <span style={{ marginLeft:'auto', fontFamily:'Chivo,sans-serif', fontSize:14, color:'#3ecf9a' }}>
+          <span style={{ fontFamily:'Chivo Mono,monospace', fontSize:30, color:'#0d2b1e' }}>72</span>
+          <span style={{ fontFamily:'Chivo,sans-serif', fontSize:14, color:'#2a5744' }}>bpm</span>
+          <span style={{ marginLeft:'auto', fontFamily:'Chivo,sans-serif', fontSize:14, color:'#0f5836' }}>
             Signal good</span>
         </div>
       </div>

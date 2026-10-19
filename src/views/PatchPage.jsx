@@ -13,6 +13,8 @@ import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { PatchLinkScene } from '../ui/scenes/art'
+import { TONES, glowShadow, MICRO } from '../ui/scenes/tones'
+import { contourPath } from '../ui/scenes/kit'
 
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
@@ -52,6 +54,39 @@ const PART_LINE = {
   pod:  'Closes the stack. Charges through a slot in the side.',
   pcb:  'Holds the Bluetooth Low Energy radio.',
   base: 'Sits on the arm. All four signals read here.',
+}
+
+/* Light grounds (owner, 19 October: "stop making things dark, site should be
+   more peaceful and light", keep the topographic and technical designs). The
+   part strips are the scenes' mint sky under a fine turquoise grid; the
+   drawings on them are measured in charts/patch-parts.jsx. */
+const M = TONES.mint
+const GRID = 'linear-gradient(rgb(29 143 176 / .08) 1px, transparent 1px), '
+  + 'linear-gradient(90deg, rgb(29 143 176 / .08) 1px, transparent 1px), '
+const STRIP = {
+  backgroundImage: GRID + `linear-gradient(90deg, ${M.sky.join(', ')})`,
+  backgroundSize: '10px 10px, 10px 10px, auto',
+}
+/* "Decided so far" is a white card in a fine green to turquoise edge, with
+   contour lines in its corner. Measured on white: ink 15.20, ink-2 8.25,
+   ink-3 6.11, accent-ink 8.50. */
+const SPEC_EDGE = {
+  border: '1px solid transparent',
+  background: 'linear-gradient(#fff, #fff) padding-box, '
+    + 'linear-gradient(135deg, rgb(21 116 70 / .55), rgb(29 143 176 / .4) 55%, #c2d7ca) border-box',
+  boxShadow: glowShadow('mint'),
+}
+
+function Contours({ className }) {
+  return (
+    <svg aria-hidden viewBox="0 0 160 120" className={cn('pointer-events-none absolute', className)}>
+      <g fill="none" stroke={M.line} strokeOpacity=".55" strokeWidth=".9">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <path key={i} d={contourPath(110, 40, 10 + i * 11, { amp: 1.6 + i * 0.6, phase: i * 0.9 })}/>
+        ))}
+      </g>
+    </svg>
+  )
 }
 
 /* The 3D viewer needs a GPU and can sit on its loading panel forever. Its
@@ -211,11 +246,11 @@ export function PatchPage({ as: Root = 'main' }) {
                    : 'lg:h-full lg:grid-rows-[repeat(3,minmax(min-content,1fr))]')}>
               {LAYERS.map((l, idx) => {
                 const on = !down && picked === l.part
-                /* bg-ink panel: the part strokes are drawn for a dark plate.
+                /* A light strip under each drawing (STRIP above).
                    `[&_svg]:h-full` outranks the svg's own height at lg. */
                 const body = (
                   <>
-                    <div className="bg-ink px-3 py-2.5
+                    <div style={STRIP} className="border-b border-rule px-3 py-2.5
                       lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&_svg]:h-full">
                       {PART_ART[l.part]}</div>
                     <div className="p-3.5 lg:p-3">
@@ -262,29 +297,33 @@ export function PatchPage({ as: Root = 'main' }) {
           </Parallax2D>
 
           <ScrollIn className="lg:sticky lg:top-32">
-          <Card variant="ink" className="p-3.5 lg:p-4">
-            <h3 className="font-display text-row font-bold leading-tight text-paper">
+          <Card style={SPEC_EDGE} className="relative p-3.5 lg:p-4">
+            <Contours className="-right-8 -top-6 h-32 w-44"/>
+            <h3 className="relative font-display text-row font-bold leading-tight text-ink">
               Decided so far
             </h3>
-            <dl className="m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
+            <dl className="relative m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
               {FIGURES.map(f => (
                 <div key={f.k}
-                  className="flex items-baseline gap-3 border-t border-paper/20 py-1.5
+                  className="flex items-baseline gap-3 border-t border-rule py-1.5
                     first:border-t-0 lg:[&:nth-child(2)]:border-t">
-                  <dt className="min-w-0 flex-1 text-fine text-mist">{f.k}</dt>
-                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-paper">
+                  <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
+                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
                     {f.v}
-                    <span className="ml-1.5 font-body text-fine font-normal text-mist">{f.u}</span>
+                    <span style={{ fontFamily: MICRO }}
+                      className="ml-1.5 text-[0.8125rem] font-normal text-ink-3">{f.u}</span>
                   </dd>
                 </div>
               ))}
             </dl>
-            <div className="mt-3 border-t border-paper/20 pt-2.5">
-              <p className="text-fine font-semibold text-mist">Not decided yet</p>
+            <div className="relative mt-3 border-t border-rule pt-2.5">
+              <p style={{ fontFamily: MICRO }}
+                className="flex items-center gap-2 text-[0.8125rem] font-semibold text-accent-ink">
+                <span aria-hidden className="h-px w-3 bg-accent"/>Not decided yet</p>
               <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
                 {OPEN.map(o => (
-                  <li key={o} className="rounded-field border border-paper/25 px-2.5 py-[3px]
-                    text-fine text-mist">
+                  <li key={o} className="rounded-field border border-dashed border-ruling bg-paper
+                    px-2.5 py-[3px] text-fine text-ink-2">
                     {o}
                   </li>
                 ))}

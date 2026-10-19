@@ -10,8 +10,8 @@ import { Frame } from '../../ui/frame'
  * label with a chevron. What stays from the big cards is the picture: every
  * tile keeps its own colour and drawing, so no two look alike.
  *
- * LeadCard is the earlier screen's one dark card, for the single action a
- * role does most (a student taking a reading). */
+ * LeadCard is the screen's one callout, for the single action a role does
+ * most (a student taking a reading). */
 
 export function StartGrid({ label, children, className }) {
   return (
@@ -66,19 +66,21 @@ export function StartTile({ title, art, tone, onClick, chevron = 'text-accent', 
 
 export function LeadCard({ art, title, line, cta, onClick, className }) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-3 rounded-panel border border-ink bg-ink p-3.5 lg:p-4', className)}>
-      <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-field bg-paper/10">
+    /* The light callout (.lit in input.css): owner, 19 October, "stop making
+     things dark". */
+    <div className={cn('lit flex flex-wrap items-center gap-x-4 gap-y-3 p-3.5 lg:p-4', className)}>
+      <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-field border border-accent/20 bg-accent-wash">
         {art}
       </span>
       <span className="min-w-[9rem] flex-1">
-        <span className="block font-display text-ui font-bold text-paper">{title}</span>
-        {line && <span className="mt-0.5 block text-fine text-paper/80">{line}</span>}
+        <span className="block font-display text-ui font-bold text-ink">{title}</span>
+        {line && <span className="mt-0.5 block text-fine text-ink-2">{line}</span>}
       </span>
       <button type="button" onClick={onClick}
         className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-field
           bg-accent px-4 font-display text-ui font-medium text-paper transition-colors duration-150
-          hoverOnly:bg-accent-lit hoverOnly:text-ink active:bg-accent-lit active:text-ink sm:w-auto
-          focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-accent-lit">
+          hoverOnly:bg-accent-ink active:bg-accent-ink sm:w-auto
+          focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-accent">
         {cta}
         <ArrowRight aria-hidden className="size-4 shrink-0"/>
       </button>

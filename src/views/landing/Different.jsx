@@ -16,7 +16,9 @@ import { PICTURES } from './different/index.js'
  * Cards are not all the same box. Four looks, shared by the site's radius
  * and type: `tint` (the point's own wash as the ground), `outline` (the
  * site's white card), `rule` (no box, a coloured rule over the picture) and
- * `ink` (the dark band's ground). Neighbours never share a look.
+ * `lit` (the light callout in input.css: grid, hairline, soft glow; it was a
+ * dark card until the owner, 19 October: "stop making things dark").
+ * Neighbours never share a look.
  *
  * At xl the eight sit in a four-column bento: the Mind Score is the 2 by 2
  * feature, the network a wide card across the bottom. Below that they are one
@@ -39,9 +41,9 @@ const LOOK = {
     card: 'bg-card', pane: '',
     title: 'text-ink', body: 'text-ink-2',
   },
-  ink: {
-    card: 'bg-ink', pane: 'bg-white/[0.06]',
-    title: 'text-paper', body: 'text-mist',
+  lit: {
+    card: 'lit', pane: '',
+    title: 'text-ink', body: 'text-ink-2',
   },
 }
 
@@ -61,7 +63,8 @@ export const DIFFERENT = [
     place: 'xl:col-start-3 xl:row-start-1',
     title: 'Patch or phone',
     line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
-  { id: 'heads', look: 'ink',
+  { id: 'heads', look: 'lit',
+    pane: 'bg-sky-wash',
     place: 'xl:col-start-4 xl:row-start-1',
     title: 'Heads Up',
     line: 'Tells parents when phone use shows signs of stress.' },
@@ -75,7 +78,8 @@ export const DIFFERENT = [
     place: 'xl:col-start-3 xl:row-start-2',
     title: 'Stress before events',
     line: 'Mark a test and see how stress builds in the hours before it.' },
-  { id: 'ai', look: 'ink',
+  { id: 'ai', look: 'lit',
+    pane: 'bg-lilac-wash',
     place: 'xl:col-start-3 xl:row-start-3',
     title: 'MindMap AI',
     line: 'Ask about stress, sleep and school. Get a plain, practical answer.' },

@@ -21,7 +21,6 @@ export const TONES = {
   deep:  'border-rule/60 bg-aqua-2',
   beam:  'border-beam/20 bg-beam-wash',
   paper: 'border-rule/60 bg-paper',
-  ink:   'border-ink bg-ink text-paper',
   /* retired, aliased */
   lilac: 'border-rule bg-aqua',
   sky:   'border-beam/30 bg-beam-wash',
@@ -124,7 +123,7 @@ export function Why({ label = 'What this means', children, className, align = 'l
         onClick={() => setOpen(v => !v)}
         className={cn('inline-flex size-7 shrink-0 items-center justify-center rounded-chip border',
           'font-display text-fine font-bold transition-colors duration-150',
-          open ? 'border-ink bg-ink text-paper'
+          open ? 'border-accent bg-accent-wash text-accent-ink'
                : 'border-ink-3 bg-card text-ink-2 hoverOnly:border-ink hoverOnly:text-ink',
           className)}>
         ?

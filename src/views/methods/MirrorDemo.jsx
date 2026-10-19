@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
+import { Topo } from '../../ui/tech'
 import '../../ui/tech/tech.css'
 
 /* The Mental Mirror demo on How it works. A drawn face, not a person: the
@@ -9,20 +10,33 @@ import '../../ui/tech/tech.css'
  *
  * One 9.6 s loop on a canvas: outline, points sweep in, a 30 s reading run
  * fast with live tags, then four bands and one Mind Score. Under
- * prefers-reduced-motion it draws the finished frame once and stops. */
+ * prefers-reduced-motion it draws the finished frame once and stops.
+ *
+ * 19 October (later), the owner: "they cant be the black dark thing". The
+ * panel is light (ui/tech .t-paper): the mesh in deep green and turquoise
+ * with a soft glow, the readouts in deep green mono on a white plate.
+ * Text on the canvas, measured in the build against the darkest pixel of
+ * the ground under it (19 October):
+ *   #0d2b1e values on the plate        14.4 : 1
+ *   #0f5836 labels on the plate         8.1 : 1
+ *   #426a58 "--" on the plate           5.8 : 1
+ *   #0d2b1e score on the panel         11.0 : 1
+ *   #0f5836 bottom labels on the panel  5.3 : 1 */
 
 const W = 360, H = 440, LOOP = 9.6
 const FACE = { x: 116, y: 162, rx: 86, ry: 112 }
 const STILL_T = 8.4
 const SWEEP = [0.7, 3.0]
 
-const GREEN = '#3ecf9a', LINE = 'rgba(62,207,154,0.22)', BRIGHT = '#b9f7dd'
-const LABEL = '#a9c4b7', VALUE = '#eafaf2', PULSE = '#ff7a7a'
+const DOT = '#14895f', GLOW = 'rgba(62,207,154,0.75)', LINE = 'rgba(29,143,176,0.3)'
+const EDGE = '#157446', FEATURE = '#1781a0', TEAL_GLOW = 'rgba(29,143,176,0.55)'
+const LABEL = '#0f5836', VALUE = '#0d2b1e', MUTED = '#426a58', PULSE = '#d23c3c'
+const RULE = 'rgba(21,116,70,0.16)'
 const BANDS = [
-  { name: 'Pulse', color: '#ff5d5d', to: 62 },
-  { name: 'Brow', color: '#ff9a3d', to: 58 },
-  { name: 'Eyes', color: '#4fd27a', to: 46 },
-  { name: 'Mouth and head', color: '#5b96ff', to: 54 },
+  { name: 'Pulse', color: '#dc3c3c', to: 62 },
+  { name: 'Brow', color: '#e07a12', to: 58 },
+  { name: 'Eyes', color: '#18a370', to: 46 },
+  { name: 'Mouth and head', color: '#2f6fdc', to: 54 },
 ]
 const SCORE_TO = 57
 
@@ -126,7 +140,7 @@ function draw(ctx, m, t, font) {
   /* Outline first, as a line drawn round the face. */
   const outline = m.groups.outline
   const drawn = span(t, 0, 0.7)
-  ctx.lineWidth = 1.2; ctx.strokeStyle = BRIGHT; ctx.shadowColor = GREEN; ctx.shadowBlur = 8
+  ctx.lineWidth = 1.3; ctx.strokeStyle = EDGE; ctx.shadowColor = GLOW; ctx.shadowBlur = 8
   ctx.beginPath()
   const n = Math.max(1, Math.round(outline.length * drawn))
   for (let s = 0; s <= n && s <= outline.length; s++) {
@@ -146,13 +160,13 @@ function draw(ctx, m, t, font) {
   if (sweep > 0 && sweep < 1) {
     const y = m.top + sweep * (m.low - m.top)
     const g = ctx.createLinearGradient(FACE.x - 110, 0, FACE.x + 110, 0)
-    g.addColorStop(0, 'rgba(62,207,154,0)'); g.addColorStop(0.5, 'rgba(62,207,154,0.75)'); g.addColorStop(1, 'rgba(62,207,154,0)')
-    ctx.strokeStyle = g; ctx.lineWidth = 1
+    g.addColorStop(0, 'rgba(29,143,176,0)'); g.addColorStop(0.5, 'rgba(29,143,176,0.8)'); g.addColorStop(1, 'rgba(29,143,176,0)')
+    ctx.strokeStyle = g; ctx.lineWidth = 1.2
     ctx.beginPath(); ctx.moveTo(FACE.x - 110, y); ctx.lineTo(FACE.x + 110, y); ctx.stroke()
   }
 
   /* Points. Each lands bright and settles. */
-  ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 6
+  ctx.fillStyle = DOT; ctx.shadowColor = GLOW; ctx.shadowBlur = 5
   ctx.beginPath()
   m.pts.forEach((p, i) => {
     if (!on(i)) return
@@ -165,7 +179,7 @@ function draw(ctx, m, t, font) {
   const lit = span(t, 2.6, 3.2)
   if (lit > 0) {
     ctx.globalAlpha = fade * lit
-    ctx.strokeStyle = BRIGHT; ctx.lineWidth = 1.1; ctx.shadowBlur = 8
+    ctx.strokeStyle = FEATURE; ctx.shadowColor = TEAL_GLOW; ctx.lineWidth = 1.2; ctx.shadowBlur = 8
     for (const k of ['browL', 'browR', 'eyeL', 'eyeR', 'irisL', 'irisR', 'lipsO', 'lipsI', 'nose', 'noseBase']) {
       const g = m.groups[k], closed = !k.startsWith('brow') && !k.startsWith('nose')
       ctx.beginPath()
@@ -182,7 +196,13 @@ function draw(ctx, m, t, font) {
   }
   ctx.shadowBlur = 0
 
-  /* Readouts, right column. */
+  /* Readouts, right column, on a white plate so their contrast is exact. */
+  ctx.save()
+  ctx.globalAlpha = fade; ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.strokeStyle = RULE; ctx.lineWidth = 1
+  ctx.shadowColor = 'rgba(62,207,154,0.35)'; ctx.shadowBlur = 14
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(226, 18, 128, 258, 8) : ctx.rect(226, 18, 128, 258); ctx.fill()
+  ctx.shadowBlur = 0; ctx.stroke()
+  ctx.restore()
   const reading = span(t, 3, 7)
   const tags = [
     ['Points', String(Math.min(478, m.pts.filter((p, i) => on(i)).length)), 0.7],
@@ -191,15 +211,17 @@ function draw(ctx, m, t, font) {
     ['Lips', `${Math.round(12 + 3 * Math.sin(t * 2.9) + 30 * press)}%`, 3],
     ['Pulse', t < 4.6 ? '--' : `${Math.round(76 + 2.4 * Math.sin(t * 1.3))} bpm`, 3],
   ]
+  /* Full strength always: a tag not yet live shows "--" in the muted ink. */
   tags.forEach(([k, v, from], r) => {
     const y = 40 + r * 50, a = span(t, from, from + 0.4)
-    ctx.globalAlpha = fade * (0.35 + 0.65 * a)
     ctx.fillStyle = LABEL; ctx.font = `600 11.5px ${font}`; ctx.textAlign = 'left'
     ctx.fillText(k, 236, y)
-    ctx.fillStyle = VALUE; ctx.font = `700 19px ${font}`
+    ctx.fillStyle = a > 0 ? VALUE : MUTED; ctx.font = `700 19px ${font}`
     ctx.fillText(a > 0 ? v : '--', 236, y + 22)
-    ctx.strokeStyle = 'rgba(169,196,183,0.25)'; ctx.lineWidth = 1
-    ctx.beginPath(); ctx.moveTo(236, y + 32); ctx.lineTo(346, y + 32); ctx.stroke()
+    if (r < tags.length - 1) {
+      ctx.strokeStyle = RULE; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(236, y + 32); ctx.lineTo(344, y + 32); ctx.stroke()
+    }
   })
   /* A small pulse trace under its tag once it is in. */
   if (t >= 4.6) {
@@ -221,18 +243,21 @@ function draw(ctx, m, t, font) {
   ctx.fillText('30 second reading', 24, by - 8)
   ctx.textAlign = 'right'
   ctx.fillText(`${Math.round(30 * reading)} s`, 346, by - 8)
-  ctx.fillStyle = 'rgba(169,196,183,0.22)'; ctx.fillRect(24, by, 322, 3)
-  ctx.fillStyle = GREEN; ctx.fillRect(24, by, 322 * reading, 3)
+  ctx.fillStyle = 'rgba(21,116,70,0.14)'; ctx.fillRect(24, by, 322, 3)
+  const bar = ctx.createLinearGradient(24, 0, 346, 0)
+  bar.addColorStop(0, '#18a370'); bar.addColorStop(1, '#1d8fb0')
+  ctx.fillStyle = bar; ctx.shadowColor = GLOW; ctx.shadowBlur = 6
+  ctx.fillRect(24, by, 322 * reading, 3); ctx.shadowBlur = 0
 
   /* Four bands and the score. */
   const cx = W / 2, cy = 420, dial = span(t, 7.0, 8.2)
   BANDS.forEach((b, i) => {
     const r = 82 - i * 11
     ctx.lineWidth = 7; ctx.lineCap = 'butt'
-    ctx.strokeStyle = 'rgba(169,196,183,0.16)'
+    ctx.strokeStyle = 'rgba(21,116,70,0.09)'
     ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI * 2); ctx.stroke()
     if (dial > 0) {
-      ctx.strokeStyle = b.color; ctx.shadowColor = b.color; ctx.shadowBlur = 6
+      ctx.strokeStyle = b.color; ctx.shadowColor = b.color; ctx.shadowBlur = 5
       ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI + Math.PI * (b.to / 100) * dial); ctx.stroke()
       ctx.shadowBlur = 0
     }
@@ -307,20 +332,25 @@ export function MirrorDemo({ className }) {
 
   return (
     <figure className={cn('m-0', className)}>
-      {/* The tech register's glass (ui/tech), with four corner brackets and
-          the values in mono, so it reads as one system with the dark tabs. */}
-      <div className="t-glass relative w-full overflow-hidden">
-        <div ref={box} className="t-mono w-full">
-          <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
+      {/* A light instrument panel (ui/tech .t-paper) in a white glass bezel,
+          faint contour lines behind the face. 19 October, the owner: "i like
+          the mental mirror thing a lot", so the drawing and its timing stay. */}
+      <div className="t-glass w-full p-1.5">
+        <div className="t-paper relative w-full overflow-hidden">
+          <Topo seed={1.3} className="-left-[20%] -top-[8%] h-auto w-[140%] text-[#157446] opacity-[.13]"/>
+          <div ref={box} className="t-mono relative w-full">
+            <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
+          </div>
+          {['left-2.5 top-2.5 border-l border-t', 'right-2.5 top-2.5 border-r border-t',
+            'bottom-2.5 left-2.5 border-b border-l', 'bottom-2.5 right-2.5 border-b border-r'].map(k => (
+            <span key={k} aria-hidden className={cn('pointer-events-none absolute size-4 rounded-[2px] border-[#157446]/45', k)}/>
+          ))}
         </div>
-        {['left-2.5 top-2.5 border-l border-t', 'right-2.5 top-2.5 border-r border-t',
-          'bottom-2.5 left-2.5 border-b border-l', 'bottom-2.5 right-2.5 border-b border-r'].map(k => (
-          <span key={k} aria-hidden className={cn('pointer-events-none absolute size-4 rounded-[2px] border-[#3ecf9a]/70', k)}/>
-        ))}
       </div>
-      <figcaption className="sr-only">
-        A drawn face fills with 478 tracked points. Live values for brow, eyes, lips and pulse change
-        as the reading runs, then four bands fill and one Mind Score appears.
+      <figcaption className="mt-3 text-meta leading-[1.45] text-[#2a5744]">
+        A sped-up drawing of one reading. Each of the four bands runs from 0 to 100, and 50 is your usual.
+        <span className="sr-only"> A drawn face fills with 478 tracked points. Live values for brow, eyes,
+          lips and pulse change as the reading runs, then four bands fill and one Mind Score appears.</span>
       </figcaption>
     </figure>
   )

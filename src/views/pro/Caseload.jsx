@@ -86,10 +86,10 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
                 <button key={s} type="button" aria-pressed={on} onClick={() => toggleStatus(s)}
                   aria-label={`${STATUS_WORD[s]}, ${counts[s]} teens`}
                   className={cn('inline-flex min-h-[44px] items-center gap-1.5 rounded-field border-2 px-2.5 transition-colors duration-100',
-                    on ? 'border-ink bg-ink text-paper' : cn(LIGHT_TONE[s].band, LIGHT_TONE[s].edge, 'text-ink hoverOnly:border-ink/40'))}>
+                    on ? 'border-accent bg-accent-wash text-accent-ink' : cn(LIGHT_TONE[s].band, LIGHT_TONE[s].edge, 'text-ink hoverOnly:border-ink/40'))}>
                   <LampFace light={s} size={22}/>
                   <span className="font-display text-fine font-bold">{STATUS_WORD[s]}</span>
-                  <span className={cn('text-fine tabular-nums', on ? 'text-paper' : 'text-ink-2')}>{counts[s]}</span>
+                  <span className={cn('text-fine tabular-nums', on ? 'text-accent-ink' : 'text-ink-2')}>{counts[s]}</span>
                 </button>
               )
             })}
@@ -120,7 +120,7 @@ function Empty({ go }) {
       </div>
       <button type="button" onClick={() => go('network')}
         className="inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 rounded-field bg-mint-ink px-5
-          font-display text-ui font-bold text-white transition-colors duration-150 hoverOnly:bg-ink sm:w-auto">
+          font-display text-ui font-bold text-white transition-colors duration-150 hoverOnly:bg-accent-ink sm:w-auto">
         <Plus aria-hidden className="size-4 shrink-0"/> Open Network
       </button>
     </section>

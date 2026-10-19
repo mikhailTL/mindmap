@@ -5,6 +5,7 @@ import { Cross } from '../../ui/marks'
 import { captureHarness } from '../Intro'
 import { getAppearance } from '../../account/appearance'
 import { GoldStar } from './AboutButton'
+import { Topo } from '../mirror/Topo'
 import {
   PARTS, PROBLEM, STATS, WHY, WHY_QUOTE, PERSONAL, WHAT_LEAD, FEATURES, WHAT_CLOSE, VISION, VISION_MARK,
 } from './content'
@@ -26,7 +27,7 @@ const CSS = `
 [data-rv="wait"] { opacity: 0; transform: translateY(18px); }
 .ab-bar { transform-origin: 0 50%; transition: transform .18s linear; }
 .ab-vbar { transform-origin: 50% 0; transition: transform .18s linear; }
-.ab-mark { color: #f2b705; font-weight: 700; }
+.ab-mark { color: #0d2b1e; font-weight: 700; background-image: linear-gradient(transparent 60%, rgb(242 183 5 / .55) 60%, rgb(242 183 5 / .55) 92%, transparent 92%); }
 .ab-swash { background-image: linear-gradient(transparent 62%, rgb(242 183 5 / .5) 62%, rgb(242 183 5 / .5) 92%, transparent 92%); }
 .ab-serif { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif; }
 .ab-drop::first-letter {
@@ -34,11 +35,16 @@ const CSS = `
   font-size: 3.4em; line-height: .82; margin: .08em .1em 0 0;
 }
 .ab-tape { background: rgb(242 183 5 / .32); transform: translateX(-50%) rotate(-2.5deg); }
+.ab-problem {
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%, rgb(29 143 176 / .12), transparent 70%),
+    linear-gradient(160deg, #e6f5ee, #d5f2e8 60%, #dcefe9);
+}
 .ab-vision {
   background:
-    radial-gradient(ellipse 70% 60% at 85% 0%, rgb(62 207 154 / .20), transparent 70%),
-    radial-gradient(ellipse 60% 70% at 0% 100%, rgb(242 183 5 / .14), transparent 70%),
-    linear-gradient(160deg, #0f3324, #0a2218 70%);
+    radial-gradient(ellipse 70% 60% at 85% 0%, rgb(62 207 154 / .22), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 0% 100%, rgb(242 183 5 / .22), transparent 70%),
+    linear-gradient(160deg, #fdf3d8, #f4f6e6 50%, #def2e8);
 }
 .ab-twinkle { animation: ab-tw 4.2s ease-in-out infinite; }
 @keyframes ab-tw { 0%, 100% { opacity: .35; transform: scale(.85) } 50% { opacity: 1; transform: scale(1.1) } }
@@ -72,14 +78,11 @@ function marked(text, marks, cls) {
   return out
 }
 
-function PartHead({ part, tone = 'paper', id }) {
-  const dark = tone === 'ink'
+function PartHead({ part, id }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span aria-hidden className={cn('font-display text-ui font-bold tabular-nums',
-        dark ? 'text-[#f2b705]' : 'text-[#825d07]')}>{part.n}</span>
-      <h3 id={id} tabIndex={-1} className={cn('font-display text-head font-bold outline-none sm:text-sub',
-        dark ? 'text-[#fbf7ee]' : 'text-ink')}>{part.title}</h3>
+      <span aria-hidden className="font-display text-ui font-bold tabular-nums text-[#825d07]">{part.n}</span>
+      <h3 id={id} tabIndex={-1} className="font-display text-head font-bold text-ink outline-none sm:text-sub">{part.title}</h3>
     </div>
   )
 }
@@ -91,11 +94,11 @@ function Stat({ s, k, i }) {
   const v = counts ? Math.round(s.to * k) : s.to
   return (
     <li data-rv="" style={{ '--d': `${i * 90}ms` }}
-      className={cn('border-t border-white/15 pt-4', i === STATS.length - 1 && 'col-span-2 lg:col-span-1')}>
-      {s.pre && <span className="block font-display text-fine font-bold text-[#c9d8cf]">{s.pre}</span>}
+      className={cn('border-t border-ink/15 pt-4', i === STATS.length - 1 && 'col-span-2 lg:col-span-1')}>
+      {s.pre && <span className="block font-display text-fine font-bold text-ink-2">{s.pre}</span>}
       <span className={cn('block font-display text-[2.6rem] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[3.1rem]',
-        i % 2 ? 'text-[#f2b705]' : 'text-[#3ecf9a]')}>{s.fmt(v)}</span>
-      <span className="mt-2 block max-w-[30ch] text-fine text-[#c9d8cf]">{s.note}</span>
+        i % 2 ? 'text-[#825d07]' : 'text-accent-ink')}>{s.fmt(v)}</span>
+      <span className="mt-2 block max-w-[30ch] text-fine text-ink-2">{s.note}</span>
     </li>
   )
 }
@@ -103,10 +106,14 @@ function Stat({ s, k, i }) {
 function Problem({ k, statsRef }) {
   return (
     <section id="ab-problem" data-part="problem" aria-labelledby="ab-h-problem"
-      className="-mx-4 bg-[#0d2b1e] px-5 py-12 text-[#eef3ee] sm:mx-0 sm:rounded-[28px] sm:px-10 sm:py-14 lg:px-12">
-      <div data-rv=""><PartHead part={PARTS[0]} tone="ink" id="ab-h-problem"/></div>
+      /* Light mint with contour lines (owner, 19 October: "stop making things
+         dark"; the sheet should not be monotonous, so the colour is rich
+         rather than dark). ink-2 on #d5f2e8 is 7.1 : 1, #825d07 5.0. */
+      className="ab-problem relative isolate -mx-4 overflow-hidden px-5 py-12 text-ink sm:mx-0 sm:rounded-[28px] sm:px-10 sm:py-14 lg:px-12">
+      <Topo className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-70"/>
+      <div data-rv=""><PartHead part={PARTS[0]} id="ab-h-problem"/></div>
       <div className="mt-7 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:gap-14">
-        <p data-rv="" className="max-w-[60ch] text-meta leading-[1.75] text-[#eef3ee] sm:text-lead">
+        <p data-rv="" className="max-w-[60ch] text-meta leading-[1.75] text-ink sm:text-lead">
           {marked(PROBLEM, STATS.map(s => s.mark), 'ab-mark')}
         </p>
         {/* The same figures, large. The paragraph already says them, so the
@@ -253,7 +260,7 @@ function Vision({ onClose }) {
   const cut = VISION[0].indexOf(VISION_MARK) + VISION_MARK.length + 1
   return (
     <section id="ab-vision" data-part="vision" aria-labelledby="ab-h-vision"
-      className="ab-vision relative overflow-hidden px-5 py-20 text-[#eef3ee] sm:px-10 sm:py-28">
+      className="ab-vision relative overflow-hidden px-5 py-20 text-ink sm:px-10 sm:py-28">
       {SKY.map((p, i) => (
         <span key={i} aria-hidden className="pointer-events-none absolute" style={{ left: p.x, top: p.y }}>
           <svg viewBox="0 0 24 24" className="ab-twinkle" style={{ width: p.s, height: p.s, animationDelay: p.d }}>
@@ -262,14 +269,14 @@ function Vision({ onClose }) {
         </span>
       ))}
       <div className="relative mx-auto max-w-[62rem]">
-        <div data-rv=""><PartHead part={PARTS[4]} tone="ink" id="ab-h-vision"/></div>
-        <p data-rv="" className="mt-8 max-w-[30ch] font-display text-[1.7rem] font-bold leading-[1.2] tracking-[-0.02em] text-[#fbf7ee] sm:text-[2.6rem]">
-          {marked(VISION[0].slice(0, cut), [VISION_MARK], 'text-[#f2b705]')}
+        <div data-rv=""><PartHead part={PARTS[4]} id="ab-h-vision"/></div>
+        <p data-rv="" className="mt-8 max-w-[30ch] font-display text-[1.7rem] font-bold leading-[1.2] tracking-[-0.02em] text-ink sm:text-[2.6rem]">
+          {marked(VISION[0].slice(0, cut), [VISION_MARK], 'text-[#825d07]')}
         </p>
-        <p data-rv="" className="mt-5 max-w-[60ch] text-meta leading-[1.75] text-[#c9d8cf] sm:text-lead">
+        <p data-rv="" className="mt-5 max-w-[60ch] text-meta leading-[1.75] text-ink-2 sm:text-lead">
           {VISION[0].slice(cut)}
         </p>
-        <p data-rv="" className="mt-8 max-w-[60ch] border-l-[3px] border-[#3ecf9a] pl-5 text-meta leading-[1.75] text-[#eef3ee] sm:text-lead">
+        <p data-rv="" className="mt-8 max-w-[60ch] border-l-[3px] border-accent pl-5 text-meta leading-[1.75] text-ink sm:text-lead">
           {VISION[1]}
         </p>
         <button type="button" onClick={onClose}

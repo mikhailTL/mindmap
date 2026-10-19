@@ -51,20 +51,19 @@ export function ridgePath(y, amp, { x0 = -40, x1 = 440, period = 120, phase = 0,
   return d + `L${x1} ${bottom}Z`
 }
 
-/* The ground of a scene: the tone's gradient, its light source and the
-   contour rings round it, and dust that twinkles. `w`/`h` are the viewBox
-   size; `light` is where the light source sits; `vertical` runs the
-   gradient top to bottom. */
-export function Sky({ u, tone = 'dusk', w = 360, h = 180, light = [0.25, 0.5], rings = 6,
-  ringGap = 16, vertical = false, dust = true }) {
+/* The ground of a scene, in daylight: the tone's pale gradient, a fine grid,
+   one soft turquoise light with the contour rings round it, and specks that
+   twinkle. `w`/`h` are the viewBox size; `light` is where the light source
+   sits; `vertical` runs the gradient top to bottom. */
+export function Sky({ u, tone = 'mint', w = 360, h = 180, light = [0.25, 0.5], rings = 6,
+  ringGap = 16, vertical = false, dust = true, grid = 12 }) {
   const t = TONES[tone]
   const [lx, ly] = [light[0] * w, light[1] * h]
-  const dark = tone !== 'dawn'
   const dots = React.useMemo(() => {
     if (!dust) return []
     const out = []
-    for (let i = 0; i < 14; i++) {
-      out.push([r1(((i * 73) % 97) / 97 * w), r1(((i * 41) % 53) / 53 * h * 0.62 + 4), (i % 3) * 0.3 + 0.6, i])
+    for (let i = 0; i < 12; i++) {
+      out.push([r1(((i * 73) % 97) / 97 * w), r1(((i * 41) % 53) / 53 * h * 0.62 + 4), (i % 3) * 0.25 + 0.7, i])
     }
     return out
   }, [dust, w, h])
@@ -77,30 +76,37 @@ export function Sky({ u, tone = 'dusk', w = 360, h = 180, light = [0.25, 0.5], r
           <stop offset="1" stopColor={t.sky[2]}/>
         </linearGradient>
         <radialGradient id={u + 'glow'}>
-          <stop offset="0" stopColor={t.glow} stopOpacity={dark ? 0.55 : 0.9}/>
-          <stop offset=".45" stopColor={t.glow} stopOpacity={dark ? 0.18 : 0.5}/>
+          <stop offset="0" stopColor="#ffffff" stopOpacity=".95"/>
+          <stop offset=".18" stopColor={t.glow} stopOpacity=".42"/>
+          <stop offset=".55" stopColor={t.glow} stopOpacity=".12"/>
           <stop offset="1" stopColor={t.glow} stopOpacity="0"/>
         </radialGradient>
+        {grid > 0 && (
+          <pattern id={u + 'grid'} width={grid} height={grid} patternUnits="userSpaceOnUse">
+            <path d={`M${grid} 0H0V${grid}`} fill="none" stroke={t.grid} strokeOpacity=".07" strokeWidth=".6"/>
+          </pattern>
+        )}
       </defs>
       <rect x="-20" y="-20" width={w + 40} height={h + 40} fill={`url(#${u}sky)`}/>
+      {grid > 0 && <rect x="0" y="0" width={w} height={h} fill={`url(#${u}grid)`}/>}
       <circle className="sc-a sc-breathe" style={{ '--d': '9s' }} cx={lx} cy={ly} r={Math.min(w, h) * 0.62}
         fill={`url(#${u}glow)`}/>
       <g className="sc-a sc-drift" style={{ '--d': '22s' }} fill="none" stroke={t.line}
-        strokeOpacity={dark ? 0.12 : 0.16} strokeWidth="1">
+        strokeOpacity=".55" strokeWidth=".9">
         {Array.from({ length: rings }, (_, i) => (
           <path key={i} d={contourPath(lx, ly, 18 + i * ringGap, { amp: 2 + i * 0.7, phase: i * 0.9 })}/>
         ))}
       </g>
       {dots.map(([x, y, s, i]) => (
         <circle key={i} className="sc-a sc-twinkle" style={{ '--d': `${5 + (i % 4)}s`, '--w': `${-i * 0.7}s` }}
-          cx={x} cy={y} r={s} fill={dark ? '#ffffff' : t.line}/>
+          cx={x} cy={y} r={s} fill={t.grid} fillOpacity=".5"/>
       ))}
     </>
   )
 }
 
 /* Layered hills along the bottom, far to near, with a contour line on each. */
-export function Ridges({ tone = 'dusk', y = 150, w = 360, gap = 12, amp = 5 }) {
+export function Ridges({ tone = 'mint', y = 150, w = 360, gap = 12, amp = 5 }) {
   const t = TONES[tone]
   return (
     <g>
@@ -108,7 +114,7 @@ export function Ridges({ tone = 'dusk', y = 150, w = 360, gap = 12, amp = 5 }) {
         <g key={i}>
           <path d={ridgePath(y + i * gap, amp - i, { x1: w + 40, period: 140 + i * 40, phase: i * 1.7 })} fill={c}/>
           <path d={ridgePath(y + i * gap + 5, amp - i, { x1: w + 40, period: 140 + i * 40, phase: i * 1.7, bottom: y + i * gap + 5 })}
-            fill="none" stroke={t.line} strokeOpacity={tone === 'dawn' ? 0.18 : 0.1} strokeWidth="1"/>
+            fill="none" stroke={t.line} strokeOpacity=".6" strokeWidth=".9"/>
         </g>
       ))}
     </g>
@@ -119,8 +125,8 @@ export function Ridges({ tone = 'dusk', y = 150, w = 360, gap = 12, amp = 5 }) {
 export function Light({ x, y, r = 3, color = '#3ecf9a', halo = 4, className, style }) {
   return (
     <g className={className} style={style}>
-      <circle cx={x} cy={y} r={r * halo} fill={color} opacity=".18"/>
-      <circle cx={x} cy={y} r={r * 2} fill={color} opacity=".35"/>
+      <circle cx={x} cy={y} r={r * halo} fill={color} opacity=".16"/>
+      <circle cx={x} cy={y} r={r * 2} fill={color} opacity=".32"/>
       <circle cx={x} cy={y} r={r} fill={color}/>
       <circle cx={x} cy={y} r={r * 0.4} fill="#ffffff"/>
     </g>
@@ -163,14 +169,14 @@ export function ovalPath(cx, cy, a, b, k = 0.66) {
     + `C${r1(cx - a)} ${r1(cy - hy)} ${r1(cx - hx)} ${r1(cy - b)} ${r1(cx)} ${r1(cy - b)}Z`
 }
 
-/* The patch seen from above, lit: a side wall, a pale face, an inner ring and
-   its light. */
+/* The patch seen from above, lit: a soft shadow, a side wall, a pale face
+   with a fine ink edge, an inner ring and its light. */
 export function PatchMark({ cx, cy, a = 16, b = 24, ripple = true, d = '3.6s' }) {
   return (
     <g>
-      <path d={ovalPath(cx + 1.5, cy + 4, a, b)} fill="#000" opacity=".28"/>
+      <path d={ovalPath(cx + 1.5, cy + 4, a, b)} fill="#0d2b1e" opacity=".16"/>
       <path d={ovalPath(cx, cy + 2.5, a, b)} fill="#9fbfb0"/>
-      <path d={ovalPath(cx, cy, a, b)} fill="#f4faf7"/>
+      <path d={ovalPath(cx, cy, a, b)} fill="#f4faf7" stroke="#0d2b1e" strokeOpacity=".18" strokeWidth=".8"/>
       <path d={ovalPath(cx, cy, a * 0.78, b * 0.8)} fill="none" stroke="#c2d7ca" strokeWidth="1"/>
       {ripple && <Ripples x={cx} y={cy} r={6} d={d}/>}
       <Light x={cx} y={cy} r={2.6}/>

@@ -222,12 +222,14 @@ function HeadsUpPic() {
   const loop = useLoop()
   return (
     <Pic label={`Demo: a Heads Up notification lands on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
-      <div className="absolute bottom-0 left-1/2 h-[118px] w-[min(210px,84%)] -translate-x-1/2 rounded-t-[26px] border-[3px] border-b-0 border-ink-3 bg-ink-2">
-        <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-bar bg-ink"/>
+      {/* A graphite frame and a light screen, like the app (19 October). */}
+      <div className="absolute bottom-0 left-1/2 h-[118px] w-[min(210px,84%)] -translate-x-1/2 rounded-t-[26px] border-[3px] border-b-0 border-ink-2
+        bg-[linear-gradient(180deg,#f7faf8,#e9f6f1)] shadow-[0_-8px_24px_-16px_rgba(13,43,30,.45)]">
+        <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-bar bg-ink-2"/>
         {/* The card is on screen for 95% of the loop: it drops in fast, rests,
             and leaves fast. The first frame is the resting card, so a page
             that paints mid-loop never shows an empty phone. */}
-        <motion.div className="absolute inset-x-2 top-6 rounded-[12px] bg-card px-2.5 py-2"
+        <motion.div className="absolute inset-x-2 top-6 rounded-[12px] border border-rule bg-card px-2.5 py-2 shadow-[0_6px_16px_-10px_rgba(13,43,30,.4)]"
           initial={false}
           animate={loop ? { y: [0, 0, -10, 0], opacity: [1, 1, 0, 1] } : undefined}
           transition={{ duration: 8, repeat: Infinity, times: [0, 0.94, 0.97, 1], ease: 'easeOut' }}>
@@ -342,10 +344,10 @@ function AiPic() {
           <motion.p className="m-0 max-w-[92%] rounded-[14px] rounded-bl-[4px] bg-card px-3 py-1.5 text-fine leading-snug text-ink"
             animate={{ opacity: replied ? 1 : 0, y: replied ? 0 : 6 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}>
             That sounds tiring. When does your phone go away at night?</motion.p>
-          <motion.span className="absolute left-0 top-0 flex gap-1 rounded-[14px] rounded-bl-[4px] bg-ink-2 px-3 py-2.5"
+          <motion.span className="absolute left-0 top-0 flex gap-1 rounded-[14px] rounded-bl-[4px] bg-card px-3 py-2.5"
             animate={{ opacity: replied ? 0 : 1 }} transition={{ duration: 0.2 }}>
             {[0, 1, 2].map(i => (
-              <motion.span key={i} className="size-1.5 rounded-full bg-mist"
+              <motion.span key={i} className="size-1.5 rounded-full bg-ink-3"
                 animate={loop && !replied ? { opacity: [0.3, 1, 0.3] } : undefined}
                 transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}/>
             ))}

@@ -1,17 +1,19 @@
 import React from 'react'
 import { Button } from '../ui/button'
-import { Progress } from '../ui/progress'
-import { Headline, AllDetail } from './Monitor'
+import { Headline } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
-import { Diverge } from '../charts/diverge'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 import { addReading } from '../lib/readingLog'
-import { TechButton, TechRoot, TechTitle } from '../ui/tech'
+import './mirror/mirror.css'
+import { Topo } from './mirror/Topo'
+import { MeshPreview } from './mirror/MeshPreview'
+import { BANDS, CheckInScale, LiveChips, MirrorButton, Movers, ReadsChips, TickRing } from './mirror/parts'
+import { readoutOf } from './mirror/readout'
 
 import { FACE_SECONDS, analyseFace } from '../signals/face'
 import { captureFace, drawOverlay, faceAvailable, loadLandmarker, loadVision, openFrontCamera } from '../signals/face-capture'
-import { FACE_TERMS, emptyFaceBaseline, faceFeatures, faceSentence, scoreFace, updateFaceBaseline } from '../signals/face-score'
+import { emptyFaceBaseline, faceFeatures, faceSentence, scoreFace, updateFaceBaseline } from '../signals/face-score'
 import { fitCalibration, identityCalibration } from '../signals/tnam'
 
 /* The Mental Mirror. The front camera, the face model's landmarks drawn over
@@ -30,20 +32,22 @@ import { fitCalibration, identityCalibration } from '../signals/tnam'
  * a run stopped while the model loaded carried on, and its failure stopped
  * the next run's camera (docs/mental-mirror.md).
  *
- * 18 October: the consent card and the camera panel sit on the dark tech
- * ground (ui/tech) with the How it works Mirror tab. The landmark overlay
- * glows through a CSS drop-shadow on its canvas; signals/face-capture.js,
- * which draws it, is unchanged. The result panel stays light: the dial and
- * the charts in it are drawn for paper. */
+ * 18 October: the consent card and the camera panel sit on the tech ground
+ * (ui/tech) with the How it works Mirror tab. 19 October, the owner: "too
+ * many black gradient backgrounds", so that ground is light and only the
+ * camera viewfinder stays dark (.mm-screen.is-live in mirror.css). The landmark
+ * overlay glows through a CSS drop-shadow on its canvas;
+ * signals/face-capture.js, which draws it, is unchanged.
+ *
+ * 19 October, the owner: "too dry". The whole flow is light now (views/
+ * mirror/): a contour ground, a mesh preview before the camera opens, a ring
+ * of ticks round the face for the 30 seconds, live chips with the same
+ * figures the face tags draw, a one-tap check-in, and the result as light
+ * cards. No longer on ui/tech. The logic below is unchanged; the only
+ * addition is `tags`, a 4 Hz copy of the tag figures for the chips. */
 
-/* The four bands of the dial, one per group of cues, each 0 to 100 where 50
-   is this person's usual. */
-const BANDS = [
-  { id: 'mirror-pulse', name: 'Pulse', glow: '#e11919', of: ['hr'] },
-  { id: 'mirror-brow',  name: 'Brow',  glow: '#e86a05', of: ['browFurrow'] },
-  { id: 'mirror-eyes',  name: 'Eyes',  glow: '#199e19', of: ['blinkRate', 'eyeSquint', 'earVar'] },
-  { id: 'mirror-mouth', name: 'Mouth and head', glow: '#1560e0', of: ['lipPress', 'headMotion'] },
-]
+/* The four bands of the dial (BANDS, ./mirror/parts), one per group of cues,
+   each 0 to 100 where 50 is this person's usual. */
 function bandsOf(result) {
   return BANDS.map(b => {
     const zs = result.contrib.filter(c => b.of.includes(c.id)).map(c => c.z)
@@ -54,9 +58,8 @@ function bandsOf(result) {
 }
 
 const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
-const TECH = 't-band rounded-[20px] border border-[#1b3a2c] p-5 shadow-[0_30px_60px_-36px_rgba(7,20,14,.9)] lg:p-6'
-const HUD = ['left-3 top-3 border-l-2 border-t-2', 'right-3 top-3 border-r-2 border-t-2',
-  'bottom-3 left-3 border-b-2 border-l-2', 'bottom-3 right-3 border-b-2 border-r-2']
+const HUD = ['left-2.5 top-2.5 border-l-2 border-t-2', 'right-2.5 top-2.5 border-r-2 border-t-2',
+  'bottom-2.5 left-2.5 border-b-2 border-l-2', 'bottom-2.5 right-2.5 border-b-2 border-r-2']
 const STORE = 'mindmap.mirror.baseline'
 const CHECKINS = 'mindmap.phone.checkins'   /* shared with the camera reading: one calibration per person */
 const CONSENT = 'mindmap.mirror.ok'
@@ -82,12 +85,7 @@ function cameraMessage(e) {
   return 'Something went wrong. Try again.'
 }
 
-const KEEP = [
-  ['#3ecf9a', 'Students only.'],
-  ['#67e3f5', 'No picture is kept.'],
-  ['#c4b5fd', 'Not a diagnosis.'],
-  ['#ffb4a1', "Google's MediaPipe Face Landmarker maps 478 points on your face. Your pulse is read from skin colour."],
-]
+const KEEP = ['Students only.', 'No picture is kept.', 'Not a diagnosis.']
 
 /* Any render failure inside the mirror shows a short note and a retry, not a
    blank tab. Unmounting the broken mirror runs its cleanup, so the camera is
@@ -134,6 +132,7 @@ function Mirror() {
   const [checkins, setCheckins] = React.useState([])
   const [calibration, setCalibration] = React.useState(identityCalibration)
   const [answered, setAnswered] = React.useState(false)
+  const [tags, setTags] = React.useState(null)   /* the chips' copy of the face tags, 4 Hz */
   const supported = faceAvailable()
 
   const stopAll = React.useCallback(() => {
@@ -184,7 +183,7 @@ function Mirror() {
     const alive = () => mounted.current && runId.current === id
     const fail = msg => { if (alive()) { setError(msg); setPhase('idle') } }
     stopAll()
-    setError(null); setResult(null); setFace(null); setSeen(false); setAnswered(false); setProgress(0)
+    setError(null); setResult(null); setFace(null); setSeen(false); setAnswered(false); setProgress(0); setTags(null)
     pulseRef.current = null
     setPhase('loading')
 
@@ -211,7 +210,7 @@ function Mirror() {
 
     const vision = visR.value
     setPhase('capture')
-    let lastPct = -1, lastPeek = 0, found = false
+    let lastPct = -1, lastPeek = 0, lastRead = 0, found = false
     const capture = captureFace(video, lmR.value, {
       seconds: FACE_SECONDS,
       onFrame: (res, rec, frac) => {
@@ -232,6 +231,7 @@ function Mirror() {
           const partial = analyseFace(capture.frames)
           pulseRef.current = partial?.ok ? partial.hr : null
         }
+        if (now - lastRead > 250) { lastRead = now; setTags(readoutOf(res, pulseRef.current)) }
       },
     })
     live.current.capture = capture
@@ -272,147 +272,149 @@ function Mirror() {
 
   if (!consented) {
     return (
-      <TechRoot className={cn(TECH, 'max-w-[44ch]')}>
-        <TechTitle as="h3" className="text-row">Before you start</TechTitle>
-        <ul className="m-0 mt-4 list-none space-y-3 p-0">
-          {KEEP.map(([dot, line]) => (
-            <li key={line} className="flex items-baseline gap-3 text-ui text-[#eafaf2]">
-              <span aria-hidden className="size-2.5 shrink-0 translate-y-[-1px] rounded-full"
-                style={{ background: dot, boxShadow: `0 0 10px 1px ${dot}` }}/>
-              {line}
-            </li>
-          ))}
-        </ul>
-        <TechButton className="mt-6" onClick={agree} disabled={!supported}>Open the mirror</TechButton>
-        {!supported && <p className="mt-3 text-fine text-[#a9c4b7]">This browser cannot open a camera here.</p>}
-      </TechRoot>
+      <section className="mm mm-frame max-w-[48rem] p-5 sm:p-7" aria-labelledby="mm-start">
+        <Topo/>
+        <div className="grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_12.5rem] sm:gap-7">
+          <div className="mm-bezel order-1 mx-auto w-[10.5rem] rounded-[28px] sm:order-2 sm:w-full">
+            <div className="mm-screen rounded-[22px] px-[8%] py-[6%]"><MeshPreview/></div>
+          </div>
+          <div className="order-2 min-w-0 sm:order-1">
+            <h2 id="mm-start" className="font-display text-head font-bold tracking-tight text-ink">Before you start</h2>
+            <p className="mt-2 max-w-[40ch] text-sec text-ink-2">
+              Google's MediaPipe Face Landmarker maps 478 points on your face for {FACE_SECONDS} seconds.
+            </p>
+            <ReadsChips className="mt-4"/>
+            <ul className="m-0 mt-4 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0">
+              {KEEP.map(line => (
+                <li key={line} className="flex items-center gap-1.5 text-fine text-ink-2">
+                  <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden focusable="false">
+                    <path d="M3.5 8.5l2.8 2.6L12.5 5" fill="none" stroke="#067049" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {line}
+                </li>
+              ))}
+            </ul>
+            <MirrorButton className="mt-6 w-full sm:w-auto" onClick={agree} disabled={!supported}>Open the mirror</MirrorButton>
+            {!supported && <p className="mt-3 text-fine text-ink-2">This browser cannot open a camera here.</p>}
+          </div>
+        </div>
+      </section>
     )
   }
 
+  /* One line under the viewfinder: what to do now. */
+  const guide = phase === 'loading' ? "Loading Google's MediaPipe Face Landmarker…"
+    : phase === 'working' ? 'Reading…'
+    : phase === 'done' ? 'Done. The camera is off.'
+    : phase === 'capture' ? (!seen ? 'Looking for a face…' : tags && !tags.present ? 'Face the light.' : 'Face found. Hold still.')
+    : 'Face the phone in good light.'
+  const still = phase === 'idle' || phase === 'loading'
+  /* The status dot breathes while a face is in view, or while the model loads. */
+  const glow = phase === 'loading' || phase === 'working' || (phase === 'capture' && !!tags?.present)
+
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
+    <div className="mm grid gap-3 lg:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:items-start"
+      data-reading={busy ? '' : undefined}>
       {/* ── the mirror ─────────────────────────────────────────────── */}
-      <TechRoot className={TECH}>
-        <div ref={boxRef} className="relative overflow-hidden rounded-[12px] bg-[#04100b] ring-1 ring-[#3ecf9a]/30"
-          style={{ aspectRatio: '4 / 3' }}>
-          <video ref={videoRef} muted playsInline autoPlay
-            className={cn('absolute inset-0 h-full w-full object-cover', phase === 'capture' ? 'opacity-100' : 'opacity-0')}
-            style={{ transform: 'scaleX(-1)' }} aria-hidden/>
-          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden
-            style={{ filter: 'drop-shadow(0 0 3px rgba(62,207,154,.8))' }}/>
-          {phase === 'capture' && <span aria-hidden className="t-scan-y t-anim"/>}
-          {/* Where a face goes, before the camera opens. */}
-          {phase === 'idle' && (
-            <svg viewBox="0 0 120 90" aria-hidden focusable="false" className="pointer-events-none absolute inset-0 h-full w-full">
-              <ellipse cx="60" cy="45" rx="19" ry="27" fill="none" stroke="#3ecf9a" strokeOpacity=".45"
-                strokeWidth=".5" strokeDasharray="1.5 1.5"/>
-            </svg>
-          )}
-          {HUD.map(k => (
-            <span key={k} aria-hidden className={cn('pointer-events-none absolute size-5 rounded-[3px] border-[#3ecf9a]/80', k)}/>
-          ))}
-          {phase !== 'capture' && (
-            <div className={cn('absolute inset-0 flex justify-center p-6 text-center', phase === 'idle' ? 'items-end' : 'items-center')}>
-              <p className="max-w-[28ch] text-sec text-[#eafaf2]">
-                {phase === 'loading' ? 'Loading MediaPipe Face Landmarker…'
-                  : phase === 'working' ? 'Reading…'
-                  : phase === 'done' ? 'Done. The camera is off.'
-                  : 'Face the phone in good light.'}
-              </p>
+      <section className="mm-frame p-3 sm:p-5 lg:p-6" aria-label="Camera">
+        <Topo/>
+        <div className="mm-bezel mx-auto max-w-[34rem]">
+          <div ref={boxRef} className={cn('mm-screen', phase === 'capture' && 'is-live')}
+            style={{ aspectRatio: '4 / 3' }}>
+            {/* Before the camera opens: the mesh, waiting inside the ring. */}
+            <div aria-hidden className={cn('mm-fade absolute inset-0 flex items-center justify-center',
+              still ? 'opacity-100' : 'opacity-0')}>
+              {still && <MeshPreview className="w-[50%]"/>}
             </div>
-          )}
-          {phase === 'capture' && !seen && (
-            <p className="absolute inset-x-0 bottom-3 text-center text-fine text-[#eafaf2] [text-shadow:0_1px_3px_#000]">Looking for a face…</p>
-          )}
+            <video ref={videoRef} muted playsInline autoPlay
+              className={cn('mm-fade absolute inset-0 h-full w-full object-cover', phase === 'capture' ? 'opacity-100' : 'opacity-0')}
+              style={{ transform: 'scaleX(-1)' }} aria-hidden/>
+            <TickRing progress={phase === 'capture' ? progress : phase === 'working' || phase === 'done' ? 100 : 0}
+              live={phase === 'capture'}/>
+            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden
+              style={{ filter: 'drop-shadow(0 0 4px rgba(62,207,154,.9))' }}/>
+            {phase === 'capture' && <span aria-hidden className="mm-scan"/>}
+            {HUD.map(k => (
+              <span key={k} aria-hidden className={cn('pointer-events-none absolute size-5 rounded-[3px] border-accent-lit', k)}/>
+            ))}
+          </div>
         </div>
 
-        {phase === 'capture' && (
-          <div className="t-glass t-glass--quiet mt-3 px-3.5 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="t-mono text-[0.8125rem] text-[#3ecf9a]">{seen ? 'Face found' : 'Looking'}</span>
-              <span className="t-mono text-[0.8125rem] tabular-nums text-[#eafaf2]">
+        <div className="mx-auto mt-3 max-w-[34rem] space-y-2">
+          <div className="mm-chip flex min-h-[48px] items-center justify-between gap-3 px-3.5 py-2">
+            <p role="status" className="m-0 flex min-w-0 items-center gap-2.5 text-ui text-ink">
+              <span aria-hidden className={cn('mm-dot shrink-0', glow && 'mm-breathe')}
+                style={glow ? undefined : { background: '#93b2a1', boxShadow: 'none' }}/>
+              {guide}
+            </p>
+            {phase === 'capture' && (
+              <span className="shrink-0 font-display text-ui font-bold tabular-nums text-ink"
+                role="progressbar" aria-label="Reading progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
                 {Math.round(progress / 100 * FACE_SECONDS)} / {FACE_SECONDS} s
               </span>
-            </div>
-            <Progress value={progress} max={100} label="Reading progress" tone="#3ecf9a"
-              className="mt-2 bg-white/10 shadow-[0_0_14px_-4px_rgba(62,207,154,.8)]"/>
-            <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-fine text-[#a9c4b7]">
-              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2 rounded-full bg-accent-lit"/>Face Landmarker</span>
-              <span className="inline-flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-[2px] border-2 border-coral"/>Pulse patch</span>
-            </p>
+            )}
           </div>
-        )}
+          {phase === 'capture' && <LiveChips live={tags}/>}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <TechButton onClick={run} disabled={busy || !supported}>
-            {phase === 'done' ? 'Read again' : busy ? 'Reading…' : `Start · ${FACE_SECONDS}s`}
-          </TechButton>
-          {busy && <TechButton variant="ghost" onClick={stop}>Stop</TechButton>}
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <MirrorButton onClick={run} disabled={busy || !supported}>
+              {phase === 'done' ? 'Read again' : busy ? 'Reading…' : `Start · ${FACE_SECONDS}s`}
+            </MirrorButton>
+            {busy && <MirrorButton variant="ghost" onClick={stop}>Stop</MirrorButton>}
+          </div>
+          {error && (
+            <p className="m-0 max-w-[44ch] rounded-2xl bg-coral-wash px-3.5 py-2.5 text-sec text-coral-ink" role="alert">{error}</p>
+          )}
         </div>
-        {error && <p className="mt-3 max-w-[40ch] text-sec text-[#ffb4a1]" role="alert">{error}</p>}
-      </TechRoot>
+      </section>
 
       {/* ── the result ─────────────────────────────────────────────── */}
-      <div className={PANEL} aria-live="polite">
+      <section className="mm-frame p-4 sm:p-5 lg:p-6" aria-live="polite" aria-label={`Your ${SCORE}`}>
+        <Topo/>
         {!result && (
-          <p className="max-w-[36ch] text-sec text-ink-3">Your {SCORE} shows here.</p>
-        )}
-        {result && (
           <>
-            <div className="flex flex-col items-start gap-4">
-              <RainbowDial score={result.score} size={300} rings={bandsOf(result)}/>
-              <div className="w-full">
-                <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
-                <p className="mt-2 max-w-[40ch] text-meta text-ink-2">{s.tail}</p>
-
-                <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
-                  <dt className="text-ink-3">{SCORE}</dt>
-                  <dd className="m-0 font-mono tabular-nums text-ink">{result.score} of 100</dd>
-                  <dt className="text-ink-3">Range</dt>
-                  <dd className="m-0 font-mono tabular-nums text-ink">{result.low} to {result.high}</dd>
-                  <dt className="text-ink-3">Pulse</dt>
-                  <dd className="m-0 text-ink">{face?.hr
-                    ? <span className="font-mono tabular-nums">{Math.round(face.hr)} bpm</span>
-                    : <span className="text-ink-3">Not read</span>}</dd>
-                </dl>
-
-                {/* The check-in: the label this person teaches the model with. */}
-                <div className="mt-5 border-t border-rule/60 pt-4">
-                  {!answered ? (
-                    <>
-                      <p className="text-sec text-ink">Does this match how you feel?</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button onClick={() => answer(true)}>Stressed</Button>
-                        <Button variant="outline" onClick={() => answer(false)}>Fine</Button>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-sec text-ink-2">Noted. Thanks.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <AllDetail label="What moved it">
-              <Diverge items={result.contrib.map(c => ({ label: c.label, x: Math.max(-1, Math.min(1, c.raw)) }))}/>
-              <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-fine">
-                {FACE_TERMS.map(t => (
-                  <React.Fragment key={t.id}>
-                    <dt className="text-ink-3">{t.label}</dt>
-                    <dd className="m-0 font-mono tabular-nums text-ink">
-                      {result.features[t.id] == null ? 'Not read'
-                        : t.id === 'blinkRate' ? `${result.features[t.id].toFixed(1)} per min`
-                        : t.id === 'headMotion' ? `${(result.features[t.id] * 100).toFixed(1)}% face width per s`
-                        : t.id === 'earVar' ? `${(result.features[t.id] * 100).toFixed(0)}% variation`
-                        : `${Math.round(result.features[t.id] * 100)}%`}
-                    </dd>
-                  </React.Fragment>
-                ))}
-              </dl>
-            </AllDetail>
+            <p className="m-0 max-w-[36ch] text-sec text-ink-2">Your {SCORE} shows here.</p>
+            <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
+              {BANDS.map(b => (
+                <li key={b.id} className="mm-chip inline-flex min-h-[32px] items-center gap-2 px-3 text-fine text-ink-2">
+                  <span aria-hidden className="h-1.5 w-4 rounded-full" style={{ background: b.glow }}/>{b.name}
+                </li>
+              ))}
+            </ul>
           </>
         )}
-      </div>
+        {result && (
+          <div key={result.score + ':' + result.low} className="mm-reveal">
+            <div className="flex justify-center">
+              <RainbowDial score={result.score} size={300} rings={bandsOf(result)}/>
+            </div>
+            <div className="mt-2">
+              <Headline>{s.lead}<b className={cn('font-bold', s.calm ? 'text-calm' : 'text-warn')}>{s.word}</b>.</Headline>
+              <p className="mt-2 max-w-[40ch] text-meta text-ink-2">{s.tail}</p>
+              <dl className="m-0 mt-4 flex flex-wrap gap-2">
+                <div className="mm-chip px-3 py-2">
+                  <dt className="text-fine text-ink-3">Range</dt>
+                  <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{result.low} to {result.high}</dd>
+                </div>
+                <div className="mm-chip px-3 py-2">
+                  <dt className="text-fine text-ink-3">Pulse</dt>
+                  <dd className="m-0 font-display text-ui font-bold text-ink">{face?.hr
+                    ? <span className="tabular-nums">{Math.round(face.hr)} bpm</span>
+                    : <span className="font-body font-normal text-ink-3">Not read</span>}</dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* The check-in: the label this person teaches the model with. */}
+            <div className="mm-chip mt-5 p-4">
+              <CheckInScale answered={answered} onAnswer={answer}/>
+            </div>
+
+            <Movers result={result}/>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

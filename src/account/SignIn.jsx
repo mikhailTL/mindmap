@@ -152,9 +152,8 @@ export function SignIn({ go, note, after = null, bare = false }) {
             })}
           </div>
         ) : (
-          <div className="flex flex-wrap items-center gap-3 self-start rounded-panel border border-ink
-            bg-ink p-3.5 lg:flex-col lg:items-start lg:p-4">
-            <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-paper">New here?</span>
+          <div className="lit flex flex-wrap items-center gap-3 self-start p-3.5 lg:flex-col lg:items-start lg:p-4">
+            <span className="min-w-[9rem] flex-1 font-display text-ui font-bold text-ink">New here?</span>
             <button type="button" onClick={() => switchTo('create')}
               className={cn(solid, 'w-full sm:w-auto')}>
               <Plus aria-hidden className="size-4"/>Create an account

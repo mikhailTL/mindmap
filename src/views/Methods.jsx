@@ -1,9 +1,8 @@
 import React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
-import { Section, SectionHead } from '../ui/section'
 import { Camera, MoveMark } from '../ui/marks'
 import { FrameworkGlow, NetworkGlow } from './methods/TechFigures'
-import { TechBand, TechTitle, Glass } from '../ui/tech'
+import { TechBand, TechTitle, Glass, IsoPlate, Topo } from '../ui/tech'
 import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
@@ -30,7 +29,16 @@ import { MirrorDemo } from './methods/MirrorDemo'
  * balanced accuracy, no F1 and no decimal figure anywhere on this page.
  *
  * VOCABULARY. The neural network is "the Mind Score network". Never "the
- * model". */
+ * model".
+ *
+ * 19 October (later), the owner: "some of the words under how it works are
+ * too little, needs some more explanation". Each tab gets `explain`: two or
+ * three plain sentences on how the part works and why it is there, every
+ * fact taken from the code or docs/. And: "stop making things dark, site
+ * should be more peaceful and light ... keep adding the topographic,
+ * isometric, and technological designs". Every tab now sits on the light
+ * tech ground (ui/tech TechBand: grid, contours, blooms); nothing on this
+ * page is dark. */
 
 const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
@@ -39,17 +47,19 @@ const WINS = R.paired.wins
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
 /* ── the categories ──────────────────────────────────────────────────────
-   `tone` is a light band's ground. `tech` puts a band on the dark tech
-   ground instead (ui/tech), its value the second bloom's hue: 18 October,
-   the owner: "Especially for the AI and ML, implement the cool discord style
-   design strats at a technical cool level ... different from toolkit".
+   Every band is on the light tech ground (ui/tech); `tech` is the second
+   bloom's hue. 18 October, the owner: "Especially for the AI and ML,
+   implement the cool discord style design strats at a technical cool level
+   ... different from toolkit". `plain` keeps a tab's facts as ruled rows
+   with icons instead of glass cards.
    `still` skips the parallax: the patch render and the Mirror demo hold
    their place. 18 October, the owner: "remove app and site from how it
    works", so that tab is gone. */
 const CATEGORIES = [
-  { id: 'hardware', tab: 'The patch', tone: 'paper', ground: 'bg-paper', still: true,
+  { id: 'hardware', tab: 'The patch', tech: 'mint', plain: true, still: true,
     title: 'What the patch measures',
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
+    explain: 'Stress changes the body in small ways you may not notice. The gaps between heartbeats get more even, skin sweat rises a little and skin temperature drifts down. A lot of movement holds the score back, so a run is not read as stress.',
     rows: [
       ['Measures', `${SENSORS[SENSOR_ORDER[0]].name}, ${SIGNAL_NAMES[1]}, skin ${SIGNAL_NAMES[2]} and ${SIGNAL_NAMES[3]}, once a second.`],
       ['Sits', 'On your upper arm, inside a small printed shell.'],
@@ -62,14 +72,16 @@ const CATEGORIES = [
   { id: 'mirror', tab: 'Mental Mirror', tech: 'mint', still: true,
     title: 'Mental Mirror',
     line: "Google's MediaPipe Face Landmarker maps 478 points on your face, frame by frame.",
-    close: `In 30 seconds it reads your pulse, brow, eyes and mouth, and gives a ${SCORE} without the patch. No picture is kept.`,
+    explain: 'It uses the front camera for one 30 second reading. Your pulse comes from tiny colour changes in the skin of your forehead. Blinks, brow, lips and head movement are each compared with your own earlier Mirror readings.',
+    close: `It gives a ${SCORE} without the patch. Each video frame is turned into numbers and dropped, so no picture is kept.`,
     figure: MirrorDemo },
   { id: 'ai', tab: 'MindMap AI', tech: 'vio',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
+    explain: 'MindMap AI is a chat built on a language model. Every reply follows one written set of rules, and the chat screen lists those rules with their sources. It says plainly that it is not a clinician or a crisis service.',
     rows: [
       ['Answers', `Stress, sleep, school and the ${SCORE}.`],
-      ['Follows', 'Guidance from SAMHSA, NIMH, AAP and CDC.'],
+      ['Follows', 'Guidance from three U.S. health agencies (SAMHSA, NIMH, CDC) and the American Academy of Pediatrics.'],
       ['Speaks to', `Teens, parents and ${PRO_PLURAL_LC}, each in their own voice.`],
       ['Never', 'Diagnoses, scores severity or names a medication.'],
       ['In a crisis', 'A crisis line comes before anything else.'],
@@ -78,20 +90,21 @@ const CATEGORIES = [
   { id: 'ml', tab: 'Machine Learning', tech: 'mint',
     title: 'A novel neural network',
     line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
+    explain: `Each signal goes through its own learned curve, and the curves are added together with a memory of the last ${MEMORY_MIN} minutes. Because the parts are added, every score can be split back into what moved it. After a reading you can answer "Stressed" or "Fine", and those answers tune it to you.`,
     rows: [
-      ['Learns', `Its own curve for each signal, with the last ${MEMORY_MIN} minutes in memory.`],
       ['Size', `${PARAM_COUNT.toLocaleString('en-US')} parameters, small enough to run on the phone.`],
       ['Tested on', `${SUBJECTS + R.transfer.subjects} adults in two public lab datasets, and ${R.exams.spearman_flagged_vs_grade.n} real exam sessions.`],
-      ['Against the formula', `Reads stress better than the standard formula for ${WINS} of ${SUBJECTS} people. Ties the other ${SUBJECTS - WINS}.`],
+      ['Against the old formula', `Reads stress better than the hand-set formula it replaced for ${WINS} of ${SUBJECTS} people. Ties the other ${SUBJECTS - WINS}.`],
       ['Accuracy', `Tells a stressful minute from a calm one ${Math.round(R.summary.tnam.bacc.mean * 100)} times in 100.`],
       ['Quiet when calm', `Flags ${Math.round(R.summary.tnam.meditation_false_alarm * 100)} in 100 meditation minutes. The formula flags ${Math.round(R.summary.formula.meditation_false_alarm * 100)}.`],
       ['Made for', 'Stress, not sadness. A sad film does not move the score.'],
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkGlow },
-  { id: 'beyond', tab: 'Phone sensors', tone: 'paper', ground: 'bg-paper',
+  { id: 'beyond', tab: 'Phone sensors', tech: 'mint', plain: true,
     title: 'What your phone adds',
     line: 'Sensors you already carry, used only inside MindMap.',
+    explain: 'They give a reading when the patch is off, and they run some of the Toolkit activities. Your words, the sound of your voice and place names are never kept.',
     rows: [
       ['Camera', 'Reads your pulse from a fingertip on the lens.', Camera],
       ['Microphone', 'Times each long breath out in the breathing tools.', MicMark],
@@ -124,25 +137,30 @@ function PinMark(p) { return <M {...p}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0
 /* The patch tab's picture: the real CAD model (the one in the 3D viewer on
    the patch page) rendered face up from public/di/arena, revision DI-03,
    with the engraved logo and wordmark on top. A still image, outlined in the
-   accent so the pale shell reads on paper. */
+   accent so the pale shell reads on paper, standing on an isometric plate. */
 function PatchRender({ className }) {
   return (
-    <figure className={cn('m-0 flex justify-center', className)}>
+    <figure className={cn('relative m-0 flex justify-center pb-14', className)}>
+      <IsoPlate className="absolute bottom-0 left-1/2 w-[300px] max-w-full -translate-x-1/2 lg:w-[340px]"/>
       <img src={`${import.meta.env.BASE_URL}patch-front-cad.png`} width={605} height={871}
         alt="The MindMap patch CAD model, face up, with the MindMap logo engraved on top."
-        className="block h-auto w-[220px] lg:w-[260px]" decoding="async"/>
+        className="relative block h-auto w-[200px] lg:w-[240px]" decoding="async"/>
     </figure>
   )
 }
 
-/* The phone tab's drawing: one phone, the five sensors around it. */
+/* The phone tab's drawing: one phone on an isometric plate, the five
+   sensors beside it. */
 function PhoneParts({ className }) {
   const parts = CATEGORIES.find(c => c.id === 'beyond').rows
   return (
     <figure className={cn('m-0 flex items-center justify-center gap-6', className)}>
-      <svg viewBox="0 0 80 150" aria-hidden focusable="false" className="block h-40 w-auto shrink-0"
+      <div className="relative shrink-0 pb-9">
+        <IsoPlate n={4} className="absolute bottom-0 left-1/2 w-[150px] -translate-x-1/2"/>
+      <svg viewBox="0 0 80 150" aria-hidden focusable="false"
+        className="relative block h-40 w-auto drop-shadow-[0_0_12px_rgba(62,207,154,.45)]"
         fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="4" width="72" height="142" rx="12" className="text-rule" stroke="currentColor" strokeWidth="2"/>
+        <rect x="4" y="4" width="72" height="142" rx="12" fill="#ffffff" stroke="#8fb3a2" strokeWidth="2"/>
         <circle cx="40" cy="16" r="4" className="text-accent" stroke="currentColor" strokeWidth="2"/>
         <path d="M32 136h16" className="text-accent" stroke="currentColor" strokeWidth="2"/>
         <rect x="14" y="30" width="52" height="94" rx="4" className="text-rule" stroke="currentColor" strokeWidth="1.6"/>
@@ -150,6 +168,7 @@ function PhoneParts({ className }) {
           strokeDasharray="66 22" transform="rotate(135 40 64)"/>
         <path d="M22 98h36M22 106h24" className="text-rule" stroke="currentColor" strokeWidth="2"/>
       </svg>
+      </div>
       <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
         {parts.map(([k, , Icon]) => (
           <li key={k} className="flex items-center gap-2 text-ink">
@@ -176,15 +195,15 @@ function Row({ k, icon: Icon, first, children }) {
   )
 }
 
-/* A fact on the dark ground: a glass card, the label in mono. The crisis row
+/* A fact on the tech ground: a glass card, the label in mono. The crisis row
    gets the warm edge so it is the first card the eye finds. */
 function Fact({ k, children }) {
   const crisis = k === 'In a crisis'
   return (
     <Glass tone={crisis ? 'coral' : 'quiet'} className="h-full px-4 py-3">
       <p className={cn('t-mono text-[0.8125rem] font-semibold leading-tight',
-        crisis ? 'text-[#ffb4a1]' : 'text-[#3ecf9a]')}>{k}</p>
-      <p className="mt-1.5 text-ui leading-[1.45] text-[#eafaf2]">{children}</p>
+        crisis ? 'text-[#b23009]' : 'text-[#0f5836]')}>{k}</p>
+      <p className="mt-1.5 text-ui leading-[1.45] text-[#0d2b1e]">{children}</p>
     </Glass>
   )
 }
@@ -199,14 +218,22 @@ function TechCategory({ c }) {
       <div className="grid gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:grid-rows-[auto_1fr] lg:items-start">
         <ScrollIn className="min-w-0 lg:col-start-1 lg:row-start-1">
           <TechTitle className="max-w-[24ch] text-sub leading-[1.12]">{c.title}</TechTitle>
-          <p className="mt-2.5 max-w-[48ch] text-sec leading-[1.5] text-[#a9c4b7]">{c.line}</p>
+          <p className="mt-2.5 max-w-[48ch] text-sec leading-[1.5] text-[#2a5744]">{c.line}</p>
+          {c.explain && <p className="mt-3 max-w-[52ch] text-sec leading-[1.5] text-[#0d2b1e]">{c.explain}</p>}
         </ScrollIn>
         {c.still
           ? <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1"><Figure/></div>
           : <Parallax2D className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1" distance={36} scale={0.03}><Figure/></Parallax2D>}
         {(c.rows || c.close) && (
           <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:-mt-2">
-            {c.rows && (
+            {c.rows && c.plain && (
+              <div className="max-w-[40rem]">
+                {c.rows.map(([k, line, icon], i) => (
+                  <ScrollRow key={k} index={i}><Row k={k} icon={icon} first={i === 0}>{line}</Row></ScrollRow>
+                ))}
+              </div>
+            )}
+            {c.rows && !c.plain && (
               <ul className="m-0 grid list-none gap-2.5 p-0 sm:grid-cols-2">
                 {c.rows.map(([k, line], i) => (
                   <ScrollRow as="li" key={k} index={i}
@@ -217,7 +244,7 @@ function TechCategory({ c }) {
               </ul>
             )}
             {c.close && (
-              <p className={cn('max-w-[48ch] border-t border-[#1f4433] pt-3.5 text-sec font-semibold leading-[1.5] text-[#eafaf2]',
+              <p className={cn('max-w-[48ch] border-t border-rule pt-3.5 text-sec font-semibold leading-[1.5] text-[#0d2b1e]',
                 c.rows && 'mt-5')}>
                 {c.close}
               </p>
@@ -245,7 +272,8 @@ export function Methods({ go }) {
       <TabsPrimitive.Root defaultValue={tabFromHash()}>
 
         {/* ── the opening band: title, one action, the switcher ── */}
-        <section className="border-t border-rule bg-paper">
+        <section className="relative isolate overflow-hidden border-t border-rule bg-paper">
+          <Topo seed={3.4} className="t-topo -right-56 -top-72 size-[44rem] text-[#157446]"/>
           <div className="wrap pb-5 pt-7 lg:pb-6 lg:pt-10">
             <div className="min-w-0">
               <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">
@@ -276,43 +304,9 @@ export function Methods({ go }) {
               </TabsPrimitive.Content>
             )
           }
-          if (c.tech) {
-            return (
-              <TabsPrimitive.Content key={c.id} value={c.id} className="outline-none">
-                <TechCategory c={c}/>
-              </TabsPrimitive.Content>
-            )
-          }
-          const Figure = c.figure
           return (
             <TabsPrimitive.Content key={c.id} value={c.id} className="outline-none">
-              <Section tone={c.tone} className={c.ground}>
-                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-10">
-                  <div className="min-w-0">
-                    <ScrollIn>
-                      <SectionHead tone={c.tone} className="mt-0 max-w-[24ch]">{c.title}</SectionHead>
-                      <p className="mt-2 max-w-[48ch] text-sec leading-[1.5] text-ink-2">
-                        {c.line}
-                      </p>
-                    </ScrollIn>
-                    {c.rows && <div className="mt-4">
-                      {c.rows.map(([k, line, icon], i) => (
-                        <ScrollRow key={k} index={i}><Row k={k} icon={icon} first={i === 0}>{line}</Row></ScrollRow>
-                      ))}
-                    </div>}
-                    {c.close && (
-                      <p className="mt-4 max-w-[48ch] border-t border-rule pt-3 text-sec font-semibold leading-[1.5] text-ink">
-                        {c.close}
-                      </p>
-                    )}
-                  </div>
-                  {c.still
-                    ? <div className="min-w-0 lg:pt-1"><Figure/></div>
-                    : <Parallax2D className="min-w-0 lg:pt-1" distance={36} scale={0.03}>
-                        <Figure/>
-                      </Parallax2D>}
-                </div>
-              </Section>
+              <TechCategory c={c}/>
             </TabsPrimitive.Content>
           )
         })}

@@ -809,7 +809,7 @@ export function Responses() {
                 'transition-[background-color,border-color,color] duration-150 ease-out',
                 'disabled:pointer-events-none disabled:opacity-45',
                 onlyCommented
-                  ? 'border-ink bg-ink text-paper hoverOnly:bg-accent-ink active:bg-accent-ink'
+                  ? 'border-accent bg-accent-wash font-bold text-accent-ink hoverOnly:bg-mist active:bg-mist'
                   : 'border-rule bg-card text-ink hoverOnly:border-ink-3 hoverOnly:bg-mist active:bg-accent-wash'
               )}
             >

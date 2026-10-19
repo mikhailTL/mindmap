@@ -50,21 +50,24 @@ function dayPhrase(days) {
   return names.length === 1 ? `on ${names[0]}` : `on ${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
 
-/* A lock screen, on `ink` because a locked phone is dark. */
+/* A lock screen with a light wallpaper, the way the app looks (owner, 19
+   October: "stop making things dark"): pale sky to mint, a frosted white
+   banner. ink on the palest stop is 13.5 : 1, ink-2 7.3. */
 function LockPreview({ settings, score }) {
   const line = lockLine(settings, score)
   const [app, ...rest] = line.split(' · ')
   return (
-    <div className="rounded-panel border border-ink-3 bg-ink p-4">
-      <p className="text-center font-mono text-stat tabular-nums text-paper">
+    <div className="rounded-panel border border-rule bg-[linear-gradient(160deg,#def0fc,#e9f6f1_55%,#d5f2e8)] p-4">
+      <p className="text-center font-mono text-stat tabular-nums text-ink">
         {spoken(settings.time).replace(/ (am|pm)$/, '')}
       </p>
-      <p className="mt-0.5 text-center text-fine text-mist">
+      <p className="mt-0.5 text-center text-fine text-ink-2">
         {cap(dayPhrase(settings.days))}
       </p>
-      <div className="mt-3 rounded-field border border-ink-2 bg-ink-2/60 px-3 py-2.5">
-        <p className="font-display text-fine font-bold text-paper">{app}</p>
-        <p className="mt-0.5 text-fine text-mist">
+      <div className="mt-3 rounded-field border border-white/80 bg-white/80 px-3 py-2.5
+        shadow-[0_8px_20px_-14px_rgba(13,43,30,.4)] backdrop-blur-sm">
+        <p className="font-display text-fine font-bold text-ink">{app}</p>
+        <p className="mt-0.5 text-fine text-ink-2">
           {rest.length ? rest.join(' · ') : 'Name only.'}
         </p>
       </div>

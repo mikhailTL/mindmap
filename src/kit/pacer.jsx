@@ -179,7 +179,7 @@ export function Pacer() {
             left" and "how long have I been doing this" are different questions
             and the second one is the one a reader asks at the end. */}
         <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border border-rule
-          bg-ink sm:grid-cols-3">
+          bg-rule sm:grid-cols-3">
           {/* Announced, because under reduced motion and for a reader who
               cannot see the disc this cell is the pacer. Twice a breath at five
               a minute is ten announcements a minute, which is the instruction

@@ -203,7 +203,7 @@ function InvitePanel({ who, real, me, onClose }) {
           <p className="m-0 mt-3 break-all rounded-field border border-rule bg-card px-3 py-2.5 text-fine text-ink">{url}</p>
           <div className="mt-2.5 flex flex-wrap gap-2">
             <button type="button" onClick={copy}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-field bg-ink px-4 font-display text-ui font-bold
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-field bg-accent px-4 font-display text-ui font-bold
                 text-paper hoverOnly:bg-accent-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                 focus-visible:outline-accent">
               {said === 'Link copied.' ? <Check aria-hidden className="size-4"/> : <Copy aria-hidden className="size-4"/>}

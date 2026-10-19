@@ -563,7 +563,7 @@ export function Intro({ onDone }) {
   return (
     <div ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       role="dialog" aria-modal="true" aria-label="Introduction to MindMap"
-      style={{ background: BEATS[beat]?.bg || '#0d2b1e',
+      style={{ background: BEATS[beat]?.bg || '#e8f6f4',
         transition: `background ${FADE_MS}ms cubic-bezier(0.4,0,0.2,1)` }}
 
       onScroll={e => { e.currentTarget.scrollLeft = 0 }}
@@ -653,8 +653,8 @@ export function Intro({ onDone }) {
             Back
           </Button>
           <Button ref={skipRef} onClick={skip}
-            className="flex h-auto min-h-[54px] w-full max-w-[430px] flex-col gap-0.5 bg-ink py-3
-              text-paper hoverOnly:bg-ink-2 active:bg-ink-2">
+            className="flex h-auto min-h-[54px] w-full max-w-[430px] flex-col gap-0.5 bg-accent py-3
+              text-paper hoverOnly:bg-accent-ink active:bg-accent-ink">
             <span className="font-display text-ui font-medium">Skip the intro</span>
             <span className="font-body text-fine font-normal text-mist">
               and go straight to the site
@@ -898,7 +898,7 @@ export function GuidedTour({ go, onDone }) {
                 className={dockBtn}>{paused ? 'Play' : 'Pause'}</button>
             )}
             <button type="button" onClick={next} aria-label="The next page"
-              className="min-h-[46px] flex-1 rounded-field bg-ink px-4 font-display text-ui
+              className="min-h-[46px] flex-1 rounded-field bg-accent px-4 font-display text-ui
                 font-medium text-paper transition-colors duration-150 hoverOnly:bg-accent-ink
                 active:bg-accent-ink lg:flex-none lg:px-6">
               {step === END ? 'Done' : 'Next'}

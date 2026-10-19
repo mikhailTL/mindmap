@@ -65,14 +65,14 @@ export const OVERVIEW_SECTIONS = [
 const WAYS = [
   { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true,
     steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
-    scene:[patchWayArt, 'dusk', [0.29, 0.48]] },
+    scene:[patchWayArt, 'mint', [0.29, 0.48]] },
   { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
     ways: [
       ['Mental Mirror', "reads your face with Google's MediaPipe Face Landmarker, a machine learning model."],
       ['Camera pulse check', 'reads your pulse from skin colour with your phone camera.'],
       ['Survey', 'asks a few short questions.'],
     ],
-    scene:[phoneWayArt, 'lagoon', [0.51, 0.5]] },
+    scene:[phoneWayArt, 'sky', [0.51, 0.5]] },
 ]
 
 /* Three stacked doors on the green band. Each is the white card with its

@@ -1,7 +1,7 @@
 import React from 'react'
 import { ScrollScene } from '../ui/motion'
 
-/* One drawing per part card on the hardware page's dark band.
+/* One drawing per part card on the hardware page's light strips.
  *
  * WHAT WAS WRONG. Each card drew a single 440 by 260 silhouette into a strip
  * the page sizes at 324 by 50 at 1280 and 315 by 84 at 390. `meet` scales to
@@ -26,16 +26,23 @@ import { ScrollScene } from '../ui/motion'
  * and dimensioned on charts/patchstack.jsx, which is the figure that carries
  * the millimetre ruler.
  *
- * These sit on the ink band. Against #0d2b1e, ink is 1.00 and accent 2.80 -
- * both unusable - so every stroke is one of three measured values:
- *   paper      #f7faf8   14.47 : 1   the raised body
- *   mist       #e3ede7   12.69 : 1   the plastic
- *   accent.lit #3ecf9a    7.67 : 1   the one thing each card is about
+ * These sit on a light strip (owner, 19 October: "stop making things dark,
+ * site should be more peaceful and light"). The strip is the scenes' mint sky
+ * under a fine grid (src/ui/scenes/tones.js); the drawing is deep green ink
+ * with turquoise for the one thing each card is about, and bodies are filled
+ * white so they mask the grid. Measured on the strip's darkest stop #dcf1e6 :
+ * on the white bodies:
+ *   ink       #0d2b1e   12.86 : 15.20   the raised body
+ *   ink-2     #2a5744    6.98 :  8.25   the plastic
+ *   beam.ink  #11677f    5.43 :  6.42   the one thing each card is about
+ *   mint      #18a370      -   :  3.22   lit fills, only ever on a white body
  * Under reduced motion ScrollScene resolves each drawing to its `to` angle. */
-const PAPER = '#f7faf8'
-const MIST  = '#e3ede7'
-const LIT   = '#3ecf9a'
-const GND   = '#0d2b1e'   /* the panel's own ground, used to mask, never to draw */
+const INK   = '#0d2b1e'
+const LINE  = '#2a5744'
+const LIT   = '#11677f'
+const FILL  = '#18a370'
+const GND   = '#ffffff'   /* the bodies' white, used to mask the grid, never to draw */
+const GLOW  = '#7fd8e6'
 
 /* Stroke hierarchy. The strip renders at about half a viewBox unit per CSS
    pixel, so nothing thinner than 1.6 survives: the previous file's 1.0
@@ -55,7 +62,7 @@ const dashDot = { strokeDasharray: '11 3 2 3' }
 /* A centre line crossing a whole view, which is what says the part is
    symmetrical about both axes rather than merely drawn that way. */
 const Centre = ({ cx, cy = 50, w, h }) => (
-  <g stroke={MIST} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
+  <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
     <line x1={cx - w} y1={cy} x2={cx + w} y2={cy}/>
     <line x1={cx} y1={cy - h} x2={cx} y2={cy + h}/>
   </g>
@@ -64,7 +71,7 @@ const Centre = ({ cx, cy = 50, w, h }) => (
 /* The sheet furniture: two rules dividing the three views, and a corner tick
    at each end, so the strip reads as one sheet of three views. */
 const Sheet = () => (
-  <g stroke={MIST} strokeOpacity=".3" strokeWidth={CON}>
+  <g stroke={LINE} strokeOpacity=".3" strokeWidth={CON}>
     {RULE_X.map(x => <line key={x} x1={x} y1="8" x2={x} y2="92"/>)}
     <path d="M4 14V4h10M596 14V4h-10M4 86v10h10M596 86v10h-10" fill="none"/>
   </g>
@@ -78,7 +85,7 @@ const Skin = ({ x0, x1, y }) => {
      below the viewBox and pushes the svg's own bbox with it. */
   const y0 = +y
   return (
-    <g stroke={MIST} strokeOpacity=".42" strokeWidth={CON}>
+    <g stroke={LINE} strokeOpacity=".42" strokeWidth={CON}>
       <line x1={x0} y1={y0} x2={x1} y2={y0}/>
       {Array.from({ length: Math.floor((x1 - x0) / 9) }, (_, i) => (
         <line key={i} x1={x0 + 4 + i * 9} y1={y0} x2={x0 + i * 9} y2={y0 + 6}/>
@@ -90,16 +97,26 @@ const Skin = ({ x0, x1, y }) => {
 /* `tilt` is per drawing so the three do not move as one plate. The angles are
    smaller than they were: the strip is 50px tall at lg and a nine degree
    rotateX threw its own edges past the clip.
-   `h-full` on the scene is load-bearing at lg: the card's ink panel sets its
+   `h-full` on the scene is load-bearing at lg: the card's light strip sets its
    own height there and the page constrains the svg with `lg:[&_svg]:h-full`,
    and a percentage height resolves against this wrapper. */
 function Frame({ label, children, tilt }) {
+  const g = 'pp' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
   return (
     <ScrollScene perspective={760} narrow={0.5} className="h-full"
       from={tilt[0]} to={tilt[1]}>
       <svg viewBox="0 0 600 100" role="img" aria-label={label}
         preserveAspectRatio="xMidYMid meet"
         className="h-[56px] w-full sm:h-[64px]">
+        <defs>
+          <radialGradient id={g}>
+            <stop offset="0" stopColor={GLOW} stopOpacity=".5"/>
+            <stop offset=".6" stopColor={GLOW} stopOpacity=".14"/>
+            <stop offset="1" stopColor={GLOW} stopOpacity="0"/>
+          </radialGradient>
+        </defs>
+        {/* A soft turquoise light under the enlarged detail. */}
+        <ellipse cx={P[2].cx} cy="50" rx="70" ry="48" fill={`url(#${g})`}/>
         <Sheet/>
         {children}
       </svg>
@@ -128,23 +145,23 @@ export const ShellArt = (
     <defs>
       <pattern id="pp-shell-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
-        <line x1="0" y1="0" x2="0" y2="7" stroke={MIST} strokeOpacity=".5" strokeWidth="1.3"/>
+        <line x1="0" y1="0" x2="0" y2="7" stroke={LINE} strokeOpacity=".5" strokeWidth="1.3"/>
       </pattern>
       <pattern id="pp-shell-cut" width="6" height="6" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
-        <line x1="0" y1="0" x2="0" y2="6" stroke={PAPER} strokeOpacity=".45" strokeWidth="1.2"/>
+        <line x1="0" y1="0" x2="0" y2="6" stroke={INK} strokeOpacity=".45" strokeWidth="1.2"/>
       </pattern>
     </defs>
 
     {/* face */}
     <rect x={P[0].cx - FX} y={50 - FY} width={FX * 2} height={FY * 2} rx="26"
-      fill="url(#pp-shell-hatch)" stroke={MIST} strokeWidth={OUT}/>
+      fill="url(#pp-shell-hatch)" stroke={LINE} strokeWidth={OUT}/>
     <rect x={P[0].cx - FX + 7} y={50 - FY + 7} width={FX * 2 - 14} height={FY * 2 - 14} rx="20"
-      fill="none" stroke={MIST} strokeOpacity=".4" strokeWidth={CON}/>
+      fill="none" stroke={LINE} strokeOpacity=".4" strokeWidth={CON}/>
     <rect x={P[0].cx - 37} y="28" width="74" height="44" rx="15"
-      fill={GND} stroke={PAPER} strokeWidth={BODY}/>
+      fill={GND} stroke={INK} strokeWidth={BODY}/>
     <rect x={P[0].cx - 30} y="34" width="60" height="32" rx="10"
-      fill="none" stroke={PAPER} strokeOpacity=".38" strokeWidth={CON}/>
+      fill="none" stroke={INK} strokeOpacity=".38" strokeWidth={CON}/>
     <Centre cx={P[0].cx} w={FX + 9} h={FY + 5}/>
     <rect x={P[0].cx + 31} y="43" width="15" height="14" rx="4"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
@@ -152,26 +169,26 @@ export const ShellArt = (
     {/* long-axis elevation */}
     <Skin x0={P[1].cx - 70} x1={P[1].cx + 70} y="72"/>
     <rect x={P[1].cx - FX} y="62" width={FX * 2} height="10" rx="4"
-      fill="url(#pp-shell-hatch)" stroke={MIST} strokeWidth={OUT}/>
+      fill="url(#pp-shell-hatch)" stroke={LINE} strokeWidth={OUT}/>
     <path d={`M${P[1].cx - 38} 62V36a12 12 0 0 1 12-12h52a12 12 0 0 1 12 12v26`}
-      fill={GND} stroke={PAPER} strokeWidth={BODY}/>
+      fill={GND} stroke={INK} strokeWidth={BODY}/>
     <line x1={P[1].cx - 30} y1="32" x2={P[1].cx + 30} y2="32"
-      stroke={PAPER} strokeOpacity=".38" strokeWidth={CON}/>
+      stroke={INK} strokeOpacity=".38" strokeWidth={CON}/>
     <rect x={P[1].cx + 32} y="42" width="14" height="13" rx="4"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
-    <g stroke={MIST} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
+    <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
       <line x1={P[1].cx} y1="16" x2={P[1].cx} y2="80"/>
     </g>
 
     {/* the slot, enlarged: the wall is cut, so it is hatched */}
-    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={MIST} strokeOpacity=".3"
+    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={LINE} strokeOpacity=".3"
       strokeWidth={CON}/>
     <path d={`M${P[2].cx - 34} 18v64h22V62h26V38h-26V18Z`}
-      fill="url(#pp-shell-cut)" stroke={PAPER} strokeWidth={BODY}/>
+      fill="url(#pp-shell-cut)" stroke={INK} strokeWidth={BODY}/>
     <rect x={P[2].cx - 8} y="39" width="40" height="22" rx="7"
       fill={GND} stroke={LIT} strokeWidth={OUT}/>
-    <rect x={P[2].cx + 14} y="45" width="16" height="10" rx="3" fill={LIT} fillOpacity=".7"/>
-    <g stroke={MIST} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
+    <rect x={P[2].cx + 14} y="45" width="16" height="10" rx="3" fill={FILL}/>
+    <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
       <line x1={P[2].cx - 42} y1="50" x2={P[2].cx + 42} y2="50"/>
     </g>
   </Frame>
@@ -190,17 +207,17 @@ export const PodArt = (
     <defs>
       <pattern id="pp-pod-cut" width="6" height="6" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
-        <line x1="0" y1="0" x2="0" y2="6" stroke={MIST} strokeOpacity=".42" strokeWidth="1.2"/>
+        <line x1="0" y1="0" x2="0" y2="6" stroke={LINE} strokeOpacity=".42" strokeWidth="1.2"/>
       </pattern>
     </defs>
 
     {/* plan: the footprint dashed, the tray solid, the board lit */}
     <rect x={P[0].cx - FX} y={50 - FY} width={FX * 2} height={FY * 2} rx="26"
-      fill="none" stroke={MIST} strokeOpacity=".35" strokeWidth={CON} strokeDasharray="7 6"/>
+      fill="none" stroke={LINE} strokeOpacity=".35" strokeWidth={CON} strokeDasharray="7 6"/>
     <rect x={P[0].cx - 44} y="23" width="88" height="54" rx="8"
-      fill="none" stroke={MIST} strokeWidth={OUT}/>
+      fill="none" stroke={LINE} strokeWidth={OUT}/>
     <rect x={P[0].cx - 38} y="29" width="76" height="42" rx="5"
-      fill="none" stroke={MIST} strokeOpacity=".42" strokeWidth={CON}/>
+      fill="none" stroke={LINE} strokeOpacity=".42" strokeWidth={CON}/>
     <rect x={P[0].cx - 30} y="34" width="60" height="32" rx="3"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
     <rect x={P[0].cx - 8} y="29" width="16" height="6" rx="2"
@@ -214,31 +231,31 @@ export const PodArt = (
     <Centre cx={P[0].cx} w={FX + 9} h={FY + 5}/>
 
     {/* section: the tray cut, the board above it, two arrows */}
-    <path d={`M${P[1].cx - 56} 50v26h112V50`} fill="url(#pp-pod-cut)" stroke={MIST}
+    <path d={`M${P[1].cx - 56} 50v26h112V50`} fill="url(#pp-pod-cut)" stroke={LINE}
       strokeWidth={OUT}/>
-    <path d={`M${P[1].cx - 48} 58v12h96V58`} fill="none" stroke={MIST} strokeOpacity=".42"
+    <path d={`M${P[1].cx - 48} 58v12h96V58`} fill="none" stroke={LINE} strokeOpacity=".42"
       strokeWidth={CON}/>
     <rect x={P[1].cx - 44} y="28" width="88" height="12" rx="2"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
-    <g stroke={PAPER} strokeOpacity=".55" strokeWidth={CON} fill="none">
+    <g stroke={INK} strokeOpacity=".55" strokeWidth={CON} fill="none">
       <path d={`M${P[1].cx - 26} 44v8l-4-5M${P[1].cx - 26} 52l4-5`}/>
       <path d={`M${P[1].cx + 26} 44v8l-4-5M${P[1].cx + 26} 52l4-5`}/>
     </g>
-    <g stroke={MIST} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
+    <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
       <line x1={P[1].cx} y1="20" x2={P[1].cx} y2="84"/>
     </g>
 
     {/* one pad row, enlarged against the cut wall */}
-    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={MIST} strokeOpacity=".3"
+    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={LINE} strokeOpacity=".3"
       strokeWidth={CON}/>
-    <path d={`M${P[2].cx - 36} 20v60h18V20Z`} fill="url(#pp-pod-cut)" stroke={MIST}
+    <path d={`M${P[2].cx - 36} 20v60h18V20Z`} fill="url(#pp-pod-cut)" stroke={LINE}
       strokeWidth={BODY}/>
     <rect x={P[2].cx - 10} y="22" width="46" height="56" rx="3"
       fill={GND} stroke={LIT} strokeWidth={OUT}/>
     <g stroke={LIT} strokeWidth="2.6">
       {[32, 44, 56, 68].map(y => <path key={y} d={`M${P[2].cx - 18} ${y}h26`}/>)}
     </g>
-    <g stroke={PAPER} strokeOpacity=".4" strokeWidth={CON} {...dashDot}>
+    <g stroke={INK} strokeOpacity=".4" strokeWidth={CON} {...dashDot}>
       <line x1={P[2].cx - 42} y1="50" x2={P[2].cx + 42} y2="50"/>
     </g>
   </Frame>
@@ -259,15 +276,15 @@ export const BaseArt = (
     <defs>
       <pattern id="pp-base-hatch" width="7" height="7" patternTransform="rotate(45)"
         patternUnits="userSpaceOnUse">
-        <line x1="0" y1="0" x2="0" y2="7" stroke={MIST} strokeOpacity=".42" strokeWidth="1.3"/>
+        <line x1="0" y1="0" x2="0" y2="7" stroke={LINE} strokeOpacity=".42" strokeWidth="1.3"/>
       </pattern>
     </defs>
 
     {/* the adhesive face */}
     <rect x={P[0].cx - FX} y={50 - FY} width={FX * 2} height={FY * 2} rx="26"
-      fill="url(#pp-base-hatch)" stroke={MIST} strokeWidth={OUT}/>
+      fill="url(#pp-base-hatch)" stroke={LINE} strokeWidth={OUT}/>
     <rect x={P[0].cx - 37} y="28" width="74" height="44" rx="15"
-      fill="none" stroke={MIST} strokeOpacity=".35" strokeWidth={CON} strokeDasharray="6 5"/>
+      fill="none" stroke={LINE} strokeOpacity=".35" strokeWidth={CON} strokeDasharray="6 5"/>
     {[P[0].cx - 44, P[0].cx + 44].map(cx => (
       <g key={cx}>
         <circle cx={cx} cy="50" r="13" fill={GND} stroke={LIT} strokeWidth={BODY}/>
@@ -277,35 +294,35 @@ export const BaseArt = (
     ))}
     <rect x={P[0].cx - 15} y="40" width="30" height="20" rx="6"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
-    <circle cx={P[0].cx - 7} cy="47" r="2.6" fill={LIT}/>
-    <circle cx={P[0].cx + 7} cy="47" r="2.6" fill={LIT}/>
+    <circle cx={P[0].cx - 7} cy="47" r="2.6" fill={FILL}/>
+    <circle cx={P[0].cx + 7} cy="47" r="2.6" fill={FILL}/>
     <rect x={P[0].cx - 6} y="52" width="12" height="5" rx="1.5" fill="none"
-      stroke={PAPER} strokeOpacity=".7" strokeWidth={CON}/>
+      stroke={INK} strokeOpacity=".7" strokeWidth={CON}/>
     <Centre cx={P[0].cx} w={FX + 9} h={FY + 5}/>
 
     {/* section against the skin */}
     <Skin x0={P[1].cx - 70} x1={P[1].cx + 70} y="66"/>
-    <path d={`M${P[1].cx - FX} 66V44h${FX * 2}v22`} fill="url(#pp-base-hatch)" stroke={MIST}
+    <path d={`M${P[1].cx - FX} 66V44h${FX * 2}v22`} fill="url(#pp-base-hatch)" stroke={LINE}
       strokeWidth={OUT}/>
     <path d={`M${P[1].cx - 52} 66v6h14v-6M${P[1].cx + 38} 66v6h14v-6`}
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
     <rect x={P[1].cx - 15} y="58" width="30" height="8" rx="2"
       fill={GND} stroke={LIT} strokeWidth={BODY}/>
     <line x1={P[1].cx - 44} y1="44" x2={P[1].cx + 44} y2="44"
-      stroke={MIST} strokeOpacity=".42" strokeWidth={CON}/>
-    <g stroke={MIST} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
+      stroke={LINE} strokeOpacity=".42" strokeWidth={CON}/>
+    <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
       <line x1={P[1].cx} y1="22" x2={P[1].cx} y2="82"/>
     </g>
 
     {/* the window, enlarged: emitters, detector, and the path between them */}
-    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={MIST} strokeOpacity=".3"
+    <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={LINE} strokeOpacity=".3"
       strokeWidth={CON}/>
     <rect x={P[2].cx - 34} y="20" width="68" height="20" rx="5"
-      fill={GND} stroke={PAPER} strokeWidth={BODY}/>
-    <circle cx={P[2].cx - 22} cy="30" r="5" fill={LIT}/>
-    <circle cx={P[2].cx + 22} cy="30" r="5" fill={LIT}/>
+      fill={GND} stroke={INK} strokeWidth={BODY}/>
+    <circle cx={P[2].cx - 22} cy="30" r="5" fill={FILL}/>
+    <circle cx={P[2].cx + 22} cy="30" r="5" fill={FILL}/>
     <rect x={P[2].cx - 8} y="25" width="16" height="10" rx="2" fill="none"
-      stroke={PAPER} strokeOpacity=".75" strokeWidth={BODY}/>
+      stroke={INK} strokeOpacity=".75" strokeWidth={BODY}/>
     <Skin x0={P[2].cx - 36} x1={P[2].cx + 36} y="74"/>
     <g stroke={LIT} strokeOpacity=".85" strokeWidth={CON} fill="none">
       <path d={`M${P[2].cx - 22} 36C${P[2].cx - 22} 60 ${P[2].cx} 68 ${P[2].cx} 40`}/>

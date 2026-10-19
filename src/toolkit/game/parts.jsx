@@ -274,7 +274,7 @@ export function SoundToggle({ className }) {
     <button type="button" aria-pressed={p.sound} onClick={flip}
       className={cn('min-h-[44px] rounded-field border px-3 font-display text-ui',
         'transition-[background-color,color,transform] duration-150 motion-safe:active:scale-[0.96]',
-        p.sound ? 'border-ink bg-ink font-bold text-paper' : 'border-rule bg-card font-medium text-ink', className)}>
+        p.sound ? 'border-accent bg-accent-wash font-bold text-accent-ink' : 'border-rule bg-card font-medium text-ink', className)}>
       {p.sound ? 'Sound on' : 'Sound off'}
     </button>
   )

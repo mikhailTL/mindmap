@@ -96,9 +96,9 @@ const WAYS = [
 /* Per way: the icon tile and the action. Each action clears 4.5 : 1 with
    paper on it (accent, sky-ink, beam-ink, sun-ink). */
 const LOOK = {
-  survey:  { tile:'bg-accent-wash text-accent-ink', cta:'bg-accent text-paper groupHoverOnly:bg-ink' },
-  mirror:  { tile:'bg-sky-wash text-sky-ink',       cta:'bg-sky-ink text-paper groupHoverOnly:bg-ink' },
-  sensors: { tile:'bg-beam-wash text-beam-ink',     cta:'bg-beam-ink text-paper groupHoverOnly:bg-ink' },
+  survey:  { tile:'bg-accent-wash text-accent-ink', cta:'bg-accent text-paper groupHoverOnly:bg-accent-ink' },
+  mirror:  { tile:'bg-sky-wash text-sky-ink',       cta:'bg-sky-ink text-paper groupHoverOnly:bg-[#07507f]' },
+  sensors: { tile:'bg-beam-wash text-beam-ink',     cta:'bg-beam-ink text-paper groupHoverOnly:bg-[#0b4f62]' },
   patch:   { tile:'bg-sun-wash text-sun-ink' },
 }
 const CARD = 'rounded-panel border border-rule/60 bg-card shadow-card'
@@ -389,7 +389,7 @@ export function CheckInBody({ go }){
                 <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.45] text-ink-2">{patch.line}</p>
                 <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5">
                   <Button size="sm" onClick={pairUp} disabled={busy}
-                    className="bg-sun-ink px-5 font-bold text-paper hoverOnly:bg-ink active:bg-ink">
+                    className="bg-sun-ink px-5 font-bold text-paper hoverOnly:bg-[#664805] active:bg-[#664805]">
                     <Link aria-hidden/>{busy ? 'Connecting…' : patch.cta}
                   </Button>
                   <p aria-live="polite" className="m-0 max-w-[44ch] text-fine leading-[1.4] text-ink-2">

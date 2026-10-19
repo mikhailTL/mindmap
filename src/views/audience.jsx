@@ -22,7 +22,8 @@ import { TrafficLight } from './pro/look'
 import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
 import { HeroScene, heroGround } from '../ui/scenes/art'
-import { TONES } from '../ui/scenes/tones'
+import { glowShadow, TONES } from '../ui/scenes/tones'
+import { contourPath } from '../ui/scenes/kit'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
@@ -43,29 +44,64 @@ const PHOTO_H = 'h-[184px] sm:h-[240px] md:h-[320px] lg:h-[268px]'
    paragraph. `photo` makes the card's top edge a banner. `variant` and `hue`
    pick the surface (src/ui/card.jsx): reading notes beside a figure are a
    `rule`, a box on a coloured band an `outline`, the one rule a page must not
-   miss `ink`. */
+   miss `spec`: a white card in a fine green to turquoise edge, its head on the
+   scenes' mint sky and grid, contour lines in a corner (owner, 19 October:
+   "stop making things dark", keep the topographic and technical designs). It
+   replaces the ink card these rules sat on. Measured: ink on the head's
+   darkest stop #dcf1e6 12.86, ink-2 on white 8.25. */
 function Facts({ rows, head, photo, photoAlt, className, variant = 'plain', hue = 'accent' }) {
-  const t = cardInk(variant, hue)
+  const spec = variant === 'spec'
+  const t = cardInk(spec ? 'plain' : variant, hue)
   const flat = variant === 'rule'
   return (
-    <div className={cn(cardClass(variant, hue), 'overflow-hidden', className)}>
+    <div className={cn(spec ? 'relative rounded-panel' : cardClass(variant, hue), 'overflow-hidden', className)}
+      style={spec ? SPEC_EDGE : undefined}>
+      {spec && <Contours/>}
       {photo && (
         <div className={cn('border-b border-rule', PHOTO_H)}>
           <Frame photo={photo} alt={photoAlt} eager/>
         </div>
       )}
       {head && (
-        <p className={cn(variant === 'plain' ? HEAD
+        <p style={spec ? SPEC_HEAD : undefined} className={cn(variant === 'plain' ? HEAD
+          : spec ? 'relative max-w-none border-b border-rule px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink'
           : cn('max-w-none border-b py-2 font-display text-fine font-bold leading-tight', t.line, t.head,
             flat ? 'px-0 pt-2.5' : 'px-3.5'))}>{head}</p>
       )}
       {rows.map(([label, value], i) => (
-        <div key={label} className={cn(flat ? 'py-2' : 'px-3.5 py-2', i && cn('border-t', t.line))}>
+        <div key={label} className={cn('relative', flat ? 'py-2' : 'px-3.5 py-2', i && cn('border-t', t.line))}>
           <p className={cn('font-display text-fine font-bold leading-tight', t.head)}>{label}</p>
           <p className={cn('mt-0.5 text-meta leading-[1.35]', t.body)}>{value}</p>
         </div>
       ))}
     </div>
+  )
+}
+
+const M = TONES.mint
+const SPEC_EDGE = {
+  border: '1px solid transparent',
+  background: 'linear-gradient(#fff, #fff) padding-box, '
+    + 'linear-gradient(135deg, rgb(21 116 70 / .55), rgb(29 143 176 / .4) 55%, #c2d7ca) border-box',
+  boxShadow: glowShadow('mint'),
+}
+const SPEC_HEAD = {
+  backgroundImage: 'linear-gradient(rgb(29 143 176 / .08) 1px, transparent 1px), '
+    + 'linear-gradient(90deg, rgb(29 143 176 / .08) 1px, transparent 1px), '
+    + `linear-gradient(90deg, ${M.sky.join(', ')})`,
+  backgroundSize: '10px 10px, 10px 10px, auto',
+}
+
+/* Contour rings in the card's lower corner, under the rows. */
+function Contours() {
+  return (
+    <svg aria-hidden viewBox="0 0 160 120" className="pointer-events-none absolute -bottom-12 -right-12 h-28 w-40">
+      <g fill="none" stroke={M.line} strokeOpacity=".4" strokeWidth=".9">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <path key={i} d={contourPath(110, 80, 10 + i * 11, { amp: 1.6 + i * 0.6, phase: i * 0.9 })}/>
+        ))}
+      </g>
+    </svg>
   )
 }
 
@@ -154,39 +190,35 @@ function HeadsUpBand({ line, go, tone = 'card' }) {
 }
 
 /* `scene` lights the hero (owner, 18 October: more of the Toolkit's depth
-   across the site, not everywhere): 'dusk' is the deep green with light
-   words, 'dawn' the pale one with the usual dark words. The words sit on the
-   measured CSS gradient (ui/scenes/tones.js); the drawn scene stays right of
-   them, or under the photograph on a phone. */
+   across the site, not everywhere). In daylight since 19 October: 'mint' for
+   students, 'sky' for parents, both with the usual dark words. The words sit
+   on the measured CSS gradient (ui/scenes/tones.js); the drawn scene stays
+   right of them, or under the photograph on a phone. */
 function Hero({ label, title, lede, go, photo, photoAlt, facts, ground, scene }) {
-  const dark = scene === 'dusk'
-  const t = scene && TONES[scene]
   return (
     <div className={cn('relative isolate overflow-hidden border-b border-rule',
       scene ? 'bg-[image:var(--hg-v)] lg:bg-[image:var(--hg-h)]' : (ground || 'bg-aqua'))}
-      style={scene ? { backgroundColor: t.sky[0], ...heroGround(scene) } : undefined}>
+      style={scene ? heroGround(scene) : undefined}>
       {scene && <HeroScene tone={scene} className="inset-x-0 bottom-0 -z-10 h-[46%] lg:inset-y-0 lg:left-auto lg:h-full lg:w-[62%]"/>}
       <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]
         lg:items-end lg:gap-5 lg:py-7">
         <div className="min-w-0">
           <button onClick={() => go('site')}
-            className={cn('mb-3 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta',
-              'font-medium transition-colors duration-150',
-              dark ? 'text-accent-lit hoverOnly:text-paper' : 'text-accent hoverOnly:text-accent-ink')}>
+            className="mb-3 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
+              font-medium text-accent transition-colors duration-150 hoverOnly:text-accent-ink">
             <ArrowLeft aria-hidden className="size-4"/> Overview
           </button>
-          <p className={cn('font-body text-ui font-semibold', dark ? 'text-accent-lit' : 'text-accent-ink')}>{label}</p>
+          <p className="font-body text-ui font-semibold text-accent-ink">{label}</p>
           <h1 className="mt-2 max-w-[16ch] font-display text-major font-bold leading-[1.06]
-            tracking-tight text-ink" style={t ? { color: t.ink } : undefined}>{title}</h1>
+            tracking-tight text-ink">{title}</h1>
           {lede && (
-            <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink"
-              style={t ? { color: dark ? t.sub : t.ink } : undefined}>{lede}</p>
+            <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">{lede}</p>
           )}
           <Facts className="mt-3 lg:max-w-[36rem]" rows={facts}/>
         </div>
         {photo && (
-          <div className={cn(PANEL, 'h-[190px] sm:h-[240px] md:h-[320px] lg:h-[320px]',
-            dark && 'border-white/20 shadow-[0_24px_48px_-28px_rgba(62,207,154,0.7)]')}>
+          <div className={cn(PANEL, 'h-[190px] sm:h-[240px] md:h-[320px] lg:h-[320px]')}
+            style={scene ? { boxShadow: glowShadow(scene, '0 24px 48px -28px') } : undefined}>
             <Frame photo={photo} alt={photoAlt} eager/>
           </div>
         )}
@@ -245,7 +277,7 @@ function RangeSwitch({ ranges, value, onChange }) {
           className={cn('min-h-[44px] min-w-[4.5rem] px-4 font-display text-ui font-medium',
             'transition-colors duration-150 focus-visible:outline focus-visible:outline-2',
             'focus-visible:-outline-offset-2 focus-visible:outline-accent',
-            value === r ? 'bg-ink text-paper' : 'bg-card text-ink hoverOnly:bg-aqua')}>
+            value === r ? 'bg-accent-wash text-accent-ink shadow-[inset_0_-3px_0_#157446]' : 'bg-card text-ink hoverOnly:bg-aqua')}>
           {RANGE_LABEL[r]}
         </button>
       ))}
@@ -334,7 +366,7 @@ export function ForStudents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For students" scene="dusk" photo="student-hero"
+      <Hero go={go} label="For students" scene="mint" photo="student-hero"
         photoAlt="A teenager in headphones sitting in front of a sofa, holding a games controller"
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
@@ -456,7 +488,7 @@ export function ForParents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For parents" scene="dawn" photo="parent-hero"
+      <Hero go={go} label="For parents" scene="sky" photo="parent-hero"
         photoAlt="A mother and her teenage child smiling at an open laptop together at home"
         title="See how your teen is doing"
         lede="One Mind Score a day for your child, over days, weeks and months."
@@ -500,7 +532,7 @@ export function ForParents({ go }) {
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           <SeenUnseen/>
           <ScrollIn className="sm:col-span-2 lg:col-span-1">
-            <Facts head="Who decides what is shared" variant="ink" rows={[
+            <Facts head="Who decides what is shared" variant="spec" rows={[
               ['Who decides', CONSENT_SHORT],
               ['Shared per person', `What your child shares with you does not go to a ${PRO_LC}.`],
               ['Switching off', 'The student can switch sharing off at any time.'],
@@ -698,7 +730,7 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <div className="flex flex-col gap-3 lg:gap-4">
             <ScrollIn>
-              <Facts head="Why small groups show nothing" variant="ink" rows={[
+              <Facts head="Why small groups show nothing" variant="spec" rows={[
                 ['The rule', `A group needs at least ${K_ANONYMITY} students. Below that, no average is computed or shown.`],
                 ['Hidden here', `${suppressed} of ${COHORT_PERIOD.length} periods are under the limit.`],
                 ['Cannot be turned off', 'No setting anywhere in MindMap turns this rule off.'],
