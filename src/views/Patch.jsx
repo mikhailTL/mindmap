@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion, useTransform } from 'framer-motion'
 import { ScrollScene } from '../ui/motion'
-const T = { fontFamily:'ui-monospace,monospace' }
+const T = { fontFamily:'Chivo,system-ui,sans-serif', fontVariantNumeric:'tabular-nums' }
 
 /* Shell, Board and Face share the 440x260 viewBox and the FL/POD coordinates,
    so the exploded layers register without per-layer nudging; keep all three the

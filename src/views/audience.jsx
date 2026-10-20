@@ -21,9 +21,6 @@ import { LampFace } from '../traffic/Face'
 import { TrafficLight } from './pro/look'
 import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
-import { HeroScene, heroGround } from '../ui/scenes/art'
-import { glowShadow, TONES } from '../ui/scenes/tones'
-import { contourPath } from '../ui/scenes/kit'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
@@ -37,71 +34,48 @@ import {
 
 const PANEL = 'overflow-hidden rounded-panel border border-rule bg-card'
 const HEAD = 'max-w-none border-b border-rule bg-aqua px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink'
-/* Spec 0d rule 4: a frame holding a face is at least 176px tall. */
-const PHOTO_H = 'h-[184px] sm:h-[240px] md:h-[320px] lg:h-[268px]'
+
+/* Owner, 20 October: less topography and glow, more of the light palette,
+   stock photos beside the demos. Each audience takes two light hues and
+   keeps deep green words: students mint and sky, parents sky and sun,
+   counselors/professionals turquoise and lilac. Measured, ink-3 clears
+   4.9 : 1 on every ground here and each label ink clears 5.3 on its hero. */
+const THEME = {
+  students: { hero: 'bg-[#ecf8f2]', block: 'bg-sky-band', label: 'text-mint-ink',
+    a: 'bg-sky-wash', b: 'bg-mint-wash' },
+  parents:  { hero: 'bg-[#ebf5fd]', block: 'bg-sun-wash', label: 'text-sky-ink',
+    a: 'bg-sun-wash', b: 'bg-sky-wash' },
+  pro:      { hero: 'bg-[#e2f2f0]', block: 'bg-lilac-wash', label: 'text-beam-ink',
+    a: 'bg-lilac-wash', b: 'bg-beam-wash' },
+}
 
 /* A card of labelled rows: a label and its value, never a label over a
    paragraph. `photo` makes the card's top edge a banner. `variant` and `hue`
    pick the surface (src/ui/card.jsx): reading notes beside a figure are a
    `rule`, a box on a coloured band an `outline`, the one rule a page must not
-   miss `spec`: a white card in a fine green to turquoise edge, its head on the
-   scenes' mint sky and grid, contour lines in a corner (owner, 19 October:
-   "stop making things dark", keep the topographic and technical designs). It
-   replaces the ink card these rules sat on. Measured: ink on the head's
-   darkest stop #dcf1e6 12.86, ink-2 on white 8.25. */
+   miss a `tint`. */
 function Facts({ rows, head, photo, photoAlt, className, variant = 'plain', hue = 'accent' }) {
-  const spec = variant === 'spec'
-  const t = cardInk(spec ? 'plain' : variant, hue)
+  const t = cardInk(variant, hue)
   const flat = variant === 'rule'
   return (
-    <div className={cn(spec ? 'relative rounded-panel' : cardClass(variant, hue), 'overflow-hidden', className)}
-      style={spec ? SPEC_EDGE : undefined}>
-      {spec && <Contours/>}
+    <div className={cn(cardClass(variant, hue), 'overflow-hidden', className)}>
       {photo && (
-        <div className={cn('border-b border-rule', PHOTO_H)}>
-          <Frame photo={photo} alt={photoAlt} eager/>
+        <div className="h-[184px] border-b border-rule sm:h-[240px] md:h-[320px] lg:h-[268px]">
+          <Frame photo={photo} alt={photoAlt}/>
         </div>
       )}
       {head && (
-        <p style={spec ? SPEC_HEAD : undefined} className={cn(variant === 'plain' ? HEAD
-          : spec ? 'relative max-w-none border-b border-rule px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink'
+        <p className={cn(variant === 'plain' ? HEAD
           : cn('max-w-none border-b py-2 font-display text-fine font-bold leading-tight', t.line, t.head,
             flat ? 'px-0 pt-2.5' : 'px-3.5'))}>{head}</p>
       )}
       {rows.map(([label, value], i) => (
-        <div key={label} className={cn('relative', flat ? 'py-2' : 'px-3.5 py-2', i && cn('border-t', t.line))}>
+        <div key={label} className={cn(flat ? 'py-2' : 'px-3.5 py-2', i && cn('border-t', t.line))}>
           <p className={cn('font-display text-fine font-bold leading-tight', t.head)}>{label}</p>
           <p className={cn('mt-0.5 text-meta leading-[1.35]', t.body)}>{value}</p>
         </div>
       ))}
     </div>
-  )
-}
-
-const M = TONES.mint
-const SPEC_EDGE = {
-  border: '1px solid transparent',
-  background: 'linear-gradient(#fff, #fff) padding-box, '
-    + 'linear-gradient(135deg, rgb(21 116 70 / .55), rgb(29 143 176 / .4) 55%, #c2d7ca) border-box',
-  boxShadow: glowShadow('mint'),
-}
-const SPEC_HEAD = {
-  backgroundImage: 'linear-gradient(rgb(29 143 176 / .08) 1px, transparent 1px), '
-    + 'linear-gradient(90deg, rgb(29 143 176 / .08) 1px, transparent 1px), '
-    + `linear-gradient(90deg, ${M.sky.join(', ')})`,
-  backgroundSize: '10px 10px, 10px 10px, auto',
-}
-
-/* Contour rings in the card's lower corner, under the rows. */
-function Contours() {
-  return (
-    <svg aria-hidden viewBox="0 0 160 120" className="pointer-events-none absolute -bottom-12 -right-12 h-28 w-40">
-      <g fill="none" stroke={M.line} strokeOpacity=".4" strokeWidth=".9">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <path key={i} d={contourPath(110, 80, 10 + i * 11, { amp: 1.6 + i * 0.6, phase: i * 0.9 })}/>
-        ))}
-      </g>
-    </svg>
   )
 }
 
@@ -125,39 +99,57 @@ function Chips({ head, rows, className, variant = 'plain', hue = 'accent' }) {
 }
 
 /* Every figure is the demo's, so its caption carries a small Demo tag (the
-   owner, 18 October: a tag, not a ruled line under each chart). `aside` is the photograph of the people a chart is about, drawn from 2xl
-   only: below that it took the room the figure needs. */
-function Fig({ title, aside, asideAlt, children, className }) {
-  const body = (
-    <div className="min-w-0 p-3.5 lg:p-4">
-      {children}
-    </div>
-  )
+   owner, 18 October: a tag, not a ruled line under each chart). `fill`
+   stretches it to a taller photo-and-notes column beside it and centres the
+   figure in the room, rather than leaving white space under the card. */
+function Fig({ title, children, className, fill }) {
   return (
-    <figure className={cn(PANEL, 'm-0 flex flex-col', className)}>
+    <figure className={cn(PANEL, 'm-0 flex flex-col', fill && 'h-full', className)}>
       {title && (
         <figcaption className={cn(HEAD, 'flex items-baseline justify-between gap-3')}>
           {title}<span className="shrink-0 font-medium text-ink-2">Demo</span>
         </figcaption>
       )}
-      {aside ? (
-        <div className="grid min-w-0 flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,230px)]">
-          {body}
-          <div className="hidden border-l border-rule 2xl:block">
-            <Frame photo={aside} alt={asideAlt} eager/>
-          </div>
-        </div>
-      ) : body}
+      <div className={cn('min-w-0 p-3.5 lg:p-4', fill && 'flex flex-1 flex-col justify-center')}>{children}</div>
     </figure>
   )
 }
 
-/* A figure beside its reading notes: one column on a phone, two from lg. */
+/* A stock photograph in a rounded frame, a block of the page's second hue
+   set behind it. Spec 0d rule 4: a frame holding a face is at least 176px
+   tall, and Frame grows the box if the photograph needs more. */
+function Photo({ photo, alt, block, eager, className }) {
+  return (
+    <div className={cn('relative pb-3 pr-3', className)}>
+      {block && <span aria-hidden className={cn('absolute bottom-0 left-8 right-0 top-8 rounded-[20px]', block)}/>}
+      <div className={cn(PANEL, 'relative h-full')}>
+        <Frame photo={photo} alt={alt} eager={eager}/>
+      </div>
+    </div>
+  )
+}
+
+/* A figure beside its reading notes: one column on a phone, two from lg.
+   `photo` sits over the notes, so the figure's long side carries a picture
+   rather than white space. */
 function Pair({ children, wide }) {
   return (
     <div className={cn('mt-3 grid gap-3 lg:gap-4',
       wide ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]' : 'lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]')}>
       {children}
+    </div>
+  )
+}
+
+function Side({ photo, alt, block, children }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-3 lg:gap-4">
+      {photo && (
+        <ScrollIn>
+          <Photo photo={photo} alt={alt} block={block} className="h-[220px] sm:h-[300px] lg:h-[236px]"/>
+        </ScrollIn>
+      )}
+      <ScrollIn>{children}</ScrollIn>
     </div>
   )
 }
@@ -176,52 +168,53 @@ export function HeadsUp({ size = 9, className }) {
   )
 }
 
-/* The Heads Up band on each audience page: the name, one line, the demo. */
-function HeadsUpBand({ line, go, tone = 'card' }) {
+/* The Heads Up band on each audience page: the name, one line, the demo, and
+   on the student page a photograph beside them. */
+function HeadsUpBand({ line, go, ground, photo, photoAlt, block }) {
   return (
-    <Section tone={tone} tight>
-      <SectionHead><HeadsUp size={14}/></SectionHead>
-      <SectionLede>{line}</SectionLede>
-      <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
-        See how it works <ArrowRight aria-hidden/>
-      </Button>
+    <Section tone="card" tight className={ground}>
+      <div className={cn('grid gap-4', photo && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-8')}>
+        <div className="min-w-0">
+          <SectionHead><HeadsUp size={14}/></SectionHead>
+          <SectionLede>{line}</SectionLede>
+          <Button size="sm" className="mt-3" onClick={() => go('heads-up')}>
+            See how it works <ArrowRight aria-hidden/>
+          </Button>
+        </div>
+        {photo && (
+          <ScrollIn>
+            <Photo photo={photo} alt={photoAlt} block={block} className="h-[220px] sm:h-[300px] lg:h-[260px]"/>
+          </ScrollIn>
+        )}
+      </div>
     </Section>
   )
 }
 
-/* `scene` lights the hero (owner, 18 October: more of the Toolkit's depth
-   across the site, not everywhere). In daylight since 19 October: 'mint' for
-   students, 'sky' for parents, both with the usual dark words. The words sit
-   on the measured CSS gradient (ui/scenes/tones.js); the drawn scene stays
-   right of them, or under the photograph on a phone. */
-function Hero({ label, title, lede, go, photo, photoAlt, facts, ground, scene }) {
+/* The hero: the words and the facts on the audience's first hue, a large
+   photograph on a block of its second. No drawn scene and no glow since
+   20 October. On a phone the photograph sits between the lede and the facts. */
+function Hero({ label, title, lede, go, photo, photoAlt, facts, theme }) {
   return (
-    <div className={cn('relative isolate overflow-hidden border-b border-rule',
-      scene ? 'bg-[image:var(--hg-v)] lg:bg-[image:var(--hg-h)]' : (ground || 'bg-aqua'))}
-      style={scene ? heroGround(scene) : undefined}>
-      {scene && <HeroScene tone={scene} className="inset-x-0 bottom-0 -z-10 h-[46%] lg:inset-y-0 lg:left-auto lg:h-full lg:w-[62%]"/>}
-      <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]
-        lg:items-end lg:gap-5 lg:py-7">
+    <div className={cn('border-b border-rule', theme.hero)}>
+      <div className="wrap grid gap-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,46%)]
+        lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:gap-y-4 lg:py-8">
         <div className="min-w-0">
           <button onClick={() => go('site')}
             className="mb-3 flex min-h-[44px] w-fit items-center gap-2 py-2 font-display text-meta
               font-medium text-accent transition-colors duration-150 hoverOnly:text-accent-ink">
             <ArrowLeft aria-hidden className="size-4"/> Overview
           </button>
-          <p className="font-body text-ui font-semibold text-accent-ink">{label}</p>
+          <p className={cn('font-body text-ui font-semibold', theme.label)}>{label}</p>
           <h1 className="mt-2 max-w-[16ch] font-display text-major font-bold leading-[1.06]
             tracking-tight text-ink">{title}</h1>
           {lede && (
             <p className="mt-3 max-w-[42ch] text-sec font-medium leading-[1.35] text-ink">{lede}</p>
           )}
-          <Facts className="mt-3 lg:max-w-[36rem]" rows={facts}/>
         </div>
-        {photo && (
-          <div className={cn(PANEL, 'h-[190px] sm:h-[240px] md:h-[320px] lg:h-[320px]')}
-            style={scene ? { boxShadow: glowShadow(scene, '0 24px 48px -28px') } : undefined}>
-            <Frame photo={photo} alt={photoAlt} eager/>
-          </div>
-        )}
+        <Photo photo={photo} alt={photoAlt} block={theme.block} eager
+          className="h-[240px] sm:h-[340px] md:h-[400px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-auto lg:min-h-[420px]"/>
+        <Facts className="lg:max-w-[36rem] lg:self-end" rows={facts}/>
       </div>
     </div>
   )
@@ -234,7 +227,10 @@ function Closer({ title, line, label, view, go, rows, ground }) {
         <div className="min-w-0">
           <SectionHead>{title}</SectionHead>
           {line && <SectionLede>{line}</SectionLede>}
-          <Button size="sm" className="mt-3" onClick={() => go(view)}>
+          {/* Wraps: "Open the Counselor/Professional screen" is wider than a
+              390px phone allows by half a pixel. */}
+          <Button size="sm" className="mt-3 max-w-full whitespace-normal text-left"
+            onClick={() => go(view)}>
             {label} <ArrowRight aria-hidden/>
           </Button>
         </div>
@@ -248,19 +244,19 @@ function Closer({ title, line, label, view, go, rows, ground }) {
 
 /* The sample dial, read for a parent or a counselor/professional. The dial
    draws its own calm and peak ends and their clouds. */
-function ScoreExplain({ rings, rows, aside, asideAlt }) {
+function ScoreExplain({ rings, rows, photo, photoAlt, block }) {
   return (
     <Pair>
-      <ScrollIn>
-        <Fig title="One number, 0 to 100" aside={aside} asideAlt={asideAlt}>
+      <ScrollIn className="h-full">
+        <Fig title="One number, 0 to 100" fill={!!photo}>
           <div className="flex justify-center">
             <RainbowDial score={62} usual={51} rings={rings} size={320}/>
           </div>
         </Fig>
       </ScrollIn>
-      <ScrollIn>
+      <Side photo={photo} alt={photoAlt} block={block}>
         <Facts head="How to read the dial" rows={rows} variant="rule" hue="accent"/>
-      </ScrollIn>
+      </Side>
     </Pair>
   )
 }
@@ -302,12 +298,12 @@ function PickedDay({ d }) {
 
 /* Trends over a sample teen: a day's curve (students only), a week of bars,
    or a month calendar of Heads Up faces where any day can be picked. */
-function TrendsFig({ ranges, aside, asideAlt }) {
+function TrendsFig({ ranges }) {
   const shown = ranges.filter(r => r !== 'day' || (DATA.day && DATA.day.length))
   const [range, setRange] = React.useState(shown.includes('month') ? 'month' : shown[0])
   const [picked, setPicked] = React.useState(TEEN_TODAY)
   return (
-    <Fig title="Pick a range, then a day" aside={aside} asideAlt={asideAlt}>
+    <Fig title="Pick a range, then a day">
       <RangeSwitch ranges={shown} value={range} onChange={setRange}/>
       <div className="mt-3">
         {range === 'day' && <DayChart data={DATA.day} band={DATA.band}/>}
@@ -333,7 +329,7 @@ const HALLWAY = ['students-hallway',
 
 /* Read only; the interactive key is on the app screen. One ground step per
    tile, in the rainbow's own order, tells the four apart. */
-const SIGNAL_GROUND = ['bg-aqua', 'bg-aqua-2', 'bg-accent-wash', 'bg-beam-wash']
+const SIGNAL_GROUND = ['bg-coral-wash', 'bg-sun-wash', 'bg-mint-wash', 'bg-sky-wash']
 
 function Signals({ rings }) {
   return (
@@ -363,10 +359,11 @@ function Signals({ rings }) {
 
 export function ForStudents({ go }) {
   const rings = React.useMemo(() => studentRings(), [])
+  const th = THEME.students
 
   return (
     <main>
-      <Hero go={go} label="For students" scene="mint" photo="student-hero"
+      <Hero go={go} label="For students" theme={th} photo="student-hero"
         photoAlt="A teenager in headphones sitting in front of a sofa, holding a games controller"
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
@@ -376,15 +373,15 @@ export function ForStudents({ go }) {
           STOCK,
         ]}/>
 
-      <HeadsUpBand go={go} tone="paper"
+      <HeadsUpBand go={go} ground={th.a} block="bg-mint-wash" photo="student-bus"
+        photoAlt="Two teenage boys laughing on a bus seat, one holding a phone"
         line="Notices stress patterns in how you use your phone, never what is on it. You see it first."/>
 
       <Section tone="card" tight>
         <SectionHead>Your {SCORE} today</SectionHead>
         <Pair>
           <ScrollIn>
-            <Fig title="The dial and the four signals" aside="student-game"
-              asideAlt="Three teenage boys sitting on a sofa with games controllers and headphones">
+            <Fig title="The dial and the four signals">
               <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-6">
                 <RainbowDial score={62} usual={51} rings={rings} size={320}/>
                 <div className="w-full min-w-0"><Signals rings={rings}/></div>
@@ -401,19 +398,19 @@ export function ForStudents({ go }) {
         </Pair>
       </Section>
 
-      <Section tone="paper" className="bg-aqua-2" tight>
+      <Section tone="paper" className={th.b} tight>
         <SectionHead>Trends</SectionHead>
         <Pair>
           <ScrollIn>
-            <TrendsFig ranges={['day', 'week', 'month']} aside={HALLWAY[0]} asideAlt={HALLWAY[1]}/>
+            <TrendsFig ranges={['day', 'week', 'month']}/>
           </ScrollIn>
-          <ScrollIn>
-            <Facts head="How to read the Trends" variant="rule" hue="beam" rows={[
+          <Side photo={HALLWAY[0]} alt={HALLWAY[1]} block={th.block}>
+            <Facts head="How to read the Trends" variant="rule" hue="sky" rows={[
               ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
               ['The calendar', <>Each day shows its <HeadsUp/> face and {SCORE}. Pick a day to see it.</>],
               ['The shaded band', 'The band is your usual range, built from your last fourteen days.'],
             ]}/>
-          </ScrollIn>
+          </Side>
         </Pair>
       </Section>
 
@@ -431,14 +428,14 @@ export function ForStudents({ go }) {
                 [`What a ${PRO_LC} can see at most`, `A ${PRO_LC} sees your ${SCORE} and the direction it moved.`],
               ]}/>
           </ScrollIn>
-          <ScrollIn>
-            <Chips head="What is never shared" variant="tint" hue="lilac"
+          <ScrollIn className="self-start">
+            <Chips head="What is never shared" variant="tint" hue="sky"
               rows={[NOTES, LOCATION, 'Any raw reading', 'Anything you type in the app']}/>
           </ScrollIn>
         </Pair>
       </Section>
 
-      <Closer go={go} view="app-student" ground="bg-beam-wash"
+      <Closer go={go} view="app-student" ground={th.a}
         label="Open the student screen" title="Try the student screen"
         line="The demo uses sample readings."
         rows={[
@@ -462,14 +459,14 @@ function SeenUnseen() {
     <>
       {[['Shared with you', SEEN, true, 'tint'], ['Never shared with you', UNSEEN, false, 'outline']]
         .map(([head, rows, yes, variant], ci) => (
-          <ScrollRow key={head} index={ci} className="h-full">
-            <div className={cn(cardClass(variant, 'mint'), 'flex h-full flex-col overflow-hidden')}>
+          <ScrollRow key={head} index={ci}>
+            <div className={cn(cardClass(variant, 'sky'), 'flex h-full flex-col overflow-hidden')}>
               <h3 className={cn('max-w-none border-b px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink',
-                cardInk(variant, 'mint').line)}>{head}</h3>
+                cardInk(variant, 'sky').line)}>{head}</h3>
               <ul className="m-0 grid list-none gap-1.5 p-3.5">
                 {rows.map(r => (
                   <li key={r} className={cn('flex items-start gap-2 rounded-field border px-2.5 py-1.5',
-                    'text-meta leading-[1.3] text-ink-2', yes ? 'border-mint/25 bg-card/70' : 'border-rule')}>
+                    'text-meta leading-[1.3] text-ink-2', yes ? 'border-sky/25 bg-card/70' : 'border-rule')}>
                     {yes ? <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-accent"/>
                          : <Never aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3"/>}
                     <span className="min-w-0">{r}</span>
@@ -485,10 +482,11 @@ function SeenUnseen() {
 
 export function ForParents({ go }) {
   const rings = React.useMemo(() => studentRings(), [])
+  const th = THEME.parents
 
   return (
     <main>
-      <Hero go={go} label="For parents" scene="sky" photo="parent-hero"
+      <Hero go={go} label="For parents" theme={th} photo="parent-hero"
         photoAlt="A mother and her teenage child smiling at an open laptop together at home"
         title="See how your teen is doing"
         lede="One Mind Score a day for your child, over days, weeks and months."
@@ -498,32 +496,34 @@ export function ForParents({ go }) {
           STOCK,
         ]}/>
 
-      <HeadsUpBand go={go} line="Tells you when phone activity is causing your teen stress."/>
+      <HeadsUpBand go={go} ground={th.a} line="Tells you when phone activity is causing your teen stress."/>
 
-      <Section tone="paper" tight>
+      <Section tone="card" tight>
         <SectionHead>The {SCORE}</SectionHead>
-        <ScoreExplain rings={rings} rows={[
+        <ScoreExplain rings={rings} photo="patch-worn" block={th.block}
+          photoAlt={'A licensed stock photograph of a smiling teenager in a vest, with a drawing '
+            + 'of the patch placed on the outer upper arm to show where it sits'} rows={[
           ['0 to 100', 'One number a day, from the body signals the patch reads.'],
           ['Against their own usual', 'Compared with your teen\'s own usual day. Never with another teen.'],
           ['Calm to peak', 'The white cloud is calm. The rain cloud is peak.'],
         ]}/>
       </Section>
 
-      <Section tone="paper" className="bg-aqua-2" tight>
+      <Section tone="paper" className={th.b} tight>
         <SectionHead>Trends</SectionHead>
         <SectionLede>A high day is a good reason to be around that evening.</SectionLede>
         <Pair>
           <ScrollIn>
-            <TrendsFig ranges={['week', 'month']} aside="parent-kitchen"
-              asideAlt="A mother and her teenage son chopping vegetables side by side at a kitchen counter"/>
+            <TrendsFig ranges={['week', 'month']}/>
           </ScrollIn>
-          <ScrollIn>
-            <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
+          <Side photo="parent-kitchen" block="bg-sun-wash"
+            alt="A mother and her teenage son chopping vegetables side by side at a kitchen counter">
+            <Facts head="How to read Trends" variant="rule" hue="sky" rows={[
               ['Days, weeks, months', <>One {SCORE} a day with its <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['A day at most', `Nothing finer than a day. Never ${NOTES}, ${LOCATION} or raw readings.`],
             ]}/>
-          </ScrollIn>
+          </Side>
         </Pair>
       </Section>
 
@@ -532,7 +532,7 @@ export function ForParents({ go }) {
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           <SeenUnseen/>
           <ScrollIn className="sm:col-span-2 lg:col-span-1">
-            <Facts head="Who decides what is shared" variant="spec" rows={[
+            <Facts head="Who decides what is shared" variant="tint" hue="sun" rows={[
               ['Who decides', CONSENT_SHORT],
               ['Shared per person', `What your child shares with you does not go to a ${PRO_LC}.`],
               ['Switching off', 'The student can switch sharing off at any time.'],
@@ -543,7 +543,7 @@ export function ForParents({ go }) {
         </div>
       </Section>
 
-      <Closer go={go} view="app-parent" ground="bg-accent-wash"
+      <Closer go={go} view="app-parent" ground={th.a}
         label="Open the parent screen" title="Try the parent screen"
         line="The demo uses sample readings."
         rows={[
@@ -639,11 +639,13 @@ export function ForSchools({ go }) {
   const rings = React.useMemo(() => studentRings(), [])
   const suppressed = COHORT_PERIOD.filter(c => c.suppressed).length
   const peak = COHORT_WEEKDAY.reduce((a, b) => (b.mean > a.mean ? b : a))
+  const th = THEME.pro
 
   return (
     <main>
-      <Hero go={go} label={PRO_FOR} ground="bg-aqua-2" photo="clinic-talk"
-        photoAlt="A teenager and an adult sitting and talking on a sofa by a sunlit window"
+      <Hero go={go} label={PRO_FOR} theme={th} photo="pro-hero"
+        photoAlt={'A licensed stock photograph of a woman with a notepad listening to a teenager on a sofa, '
+          + 'with a drawing of the patch placed on his upper arm to show where it sits'}
         title="See Trends across your students"
         lede="You see how each student who shares with you is trending, and how groups are doing."
         facts={[
@@ -652,9 +654,9 @@ export function ForSchools({ go }) {
           STOCK,
         ]}/>
 
-      <HeadsUpBand go={go} line="You see each sharing student’s colour, never the content."/>
+      <HeadsUpBand go={go} ground={th.a} line="You see each sharing student’s colour, never the content."/>
 
-      <Section tone="paper" tight>
+      <Section tone="card" tight>
         <SectionHead>The {SCORE}</SectionHead>
         <ScoreExplain rings={rings} rows={[
           ['0 to 100', 'One number a day, from the body signals the patch reads.'],
@@ -663,43 +665,52 @@ export function ForSchools({ go }) {
         ]}/>
       </Section>
 
-      <Section tone="paper" className="bg-aqua-2" tight>
+      <Section tone="paper" className={th.b} tight>
         <SectionHead>Trends</SectionHead>
         <Pair>
           <ScrollIn>
             <TrendsFig ranges={['week', 'month']}/>
           </ScrollIn>
-          <ScrollIn>
+          <Side photo="clinic-talk" block={th.block}
+            alt="A teenager and an adult sitting and talking on a sofa by a sunlit window">
             <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
               ['Days, weeks, months', <>Each student’s {SCORE} and <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
               ['Consented students only', 'You see a student only if they chose to share with you.'],
               ['Small groups', `A group under ${K_ANONYMITY} students shows nothing.`],
             ]}/>
-          </ScrollIn>
+          </Side>
         </Pair>
       </Section>
 
       <Section tone="card" tight>
         <SectionHead>Stress across all your students</SectionHead>
-        <Pair>
+        {/* Three across from lg: the chart is short, so the photograph takes
+            its own column rather than stacking over the notes. A one-person
+            frame, because the column is upright. */}
+        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
+          <ScrollIn className="h-full">
+            <Photo photo="student-homework" block="bg-beam-wash"
+              alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them"
+              className="h-[220px] sm:h-[300px] lg:h-full"/>
+          </ScrollIn>
           <ScrollIn>
-            <Fig title={`Average ${SCORE} by school day`} aside={HALLWAY[0]} asideAlt={HALLWAY[1]}>
+            <Fig title={`Average ${SCORE} by school day`}>
               {/* Width cap: at 1360px each of the five bars is wider than it is tall. */}
               <Bars data={SCHOOL_WEEK} color={ACCENT} unit="school day" className="max-w-[640px]"/>
             </Fig>
           </ScrollIn>
           <ScrollIn>
-            <Facts head="How to read the chart" variant="rule" hue="sky" rows={[
+            <Facts head="How to read the chart" variant="rule" hue="lilac" rows={[
               ['Students in the chart', `${SCHOOL_N} students, all of whom chose to share with a ${PRO_LC}.`],
               ['Highest day', `${peak.full} ran highest, with an average of ${peak.mean}.`],
               ['Not a ranking', 'No single student can be picked out of this chart.'],
             ]}/>
           </ScrollIn>
-        </Pair>
+        </div>
       </Section>
 
-      <Section tone="paper" className="bg-accent-wash" tight>
+      <Section tone="paper" className={th.a} tight>
         <SectionHead>{CASELOAD_TITLE}</SectionHead>
         <SectionLede>{CASELOAD_DEF}</SectionLede>
         <Pair>
@@ -730,14 +741,14 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <div className="flex flex-col gap-3 lg:gap-4">
             <ScrollIn>
-              <Facts head="Why small groups show nothing" variant="spec" rows={[
+              <Facts head="Why small groups show nothing" variant="tint" hue="lilac" rows={[
                 ['The rule', `A group needs at least ${K_ANONYMITY} students. Below that, no average is computed or shown.`],
                 ['Hidden here', `${suppressed} of ${COHORT_PERIOD.length} periods are under the limit.`],
                 ['Cannot be turned off', 'No setting anywhere in MindMap turns this rule off.'],
               ]}/>
             </ScrollIn>
             <ScrollIn>
-              <Facts head="How the audit log works" variant="tint" hue="sky" rows={[
+              <Facts head="How the audit log works" variant="tint" hue="beam" rows={[
                 ['Every record opened', 'Every record you open is logged, with who opened it and when.'],
                 ['No setting turns it off', 'Nobody can switch the log off, including us.'],
                 ['Consent is per student', 'You see only what each student agreed to share.'],
@@ -748,7 +759,7 @@ export function ForSchools({ go }) {
         </Pair>
       </Section>
 
-      <Closer go={go} view="app-pro" ground="bg-beam-wash" label={`Open the ${PRO} screen`}
+      <Closer go={go} view="app-pro" ground={th.b} label={`Open the ${PRO} screen`}
         title={`Try the ${PRO} screen`}
         line="The demo uses sample students."
         rows={[

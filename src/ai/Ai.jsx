@@ -165,8 +165,7 @@ function Turn({ turn }) {
         {!mine && turn.model && <span>{' · ' + turn.model}</span>}
       </p>
       {mine ? (
-        <div className="mt-1 rounded-[14px] rounded-br-[4px] border border-[#3ecf9a]/70 px-3.5 py-2.5
-          bg-[linear-gradient(135deg,#e2f7ee,#e0f1f6)] shadow-[0_6px_18px_-12px_rgba(62,207,154,.9)]">
+        <div className="mt-1 rounded-[14px] rounded-br-[4px] border border-[#2294e6]/35 bg-[#def0fc] px-3.5 py-2.5">
           <p className={cn('max-w-none whitespace-pre-line text-ui leading-[1.55]', HI)}>{turn.content}</p>
         </div>
       ) : (
@@ -294,10 +293,10 @@ export function MindMapAI({ who = 'student', go, className }) {
 
   return (
     <div className={cn('wrap', className)}>
-     <TechRoot className="t-band relative rounded-[20px] border border-rule p-4 shadow-[0_24px_48px_-34px_rgba(13,43,30,.4)] sm:p-6 lg:p-7">
+     <TechRoot className="t-band t-band--sky relative rounded-[20px] border border-rule p-4 shadow-[0_24px_48px_-34px_rgba(13,43,30,.4)] sm:p-6 lg:p-7">
       <header className="relative isolate -mx-4 -mt-4 overflow-hidden rounded-t-[20px] border-b border-rule
         px-4 pb-4 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-7 lg:-mt-7 lg:px-7 lg:pt-6">
-        <span aria-hidden className="t-orb t-anim -right-24 -top-36 sm:-right-10"/>
+        <span aria-hidden className="t-field-shape -right-24 -top-36 size-72 sm:-right-10"/>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <TechTitle className="text-head">{spec.heading}</TechTitle>
           {state === 'ready' && <Chip dot>Connected</Chip>}
@@ -348,7 +347,7 @@ export function MindMapAI({ who = 'student', go, className }) {
                         className={cn('group flex w-full items-center gap-3 rounded-[12px] border border-rule',
                           'bg-white px-3.5 py-3 text-left font-body text-ui',
                           'transition-[background-color,border-color,box-shadow] duration-150 ease',
-                          'hoverOnly:border-[#3ecf9a] hoverOnly:bg-[#f3fbf7] hoverOnly:shadow-[0_0_16px_-6px_rgba(62,207,154,.8)]', HI)}>
+                          'hoverOnly:border-[#2294e6]/60 hoverOnly:bg-[#f3f9fd]', HI)}>
                         <span className="min-w-0 flex-1">{s}</span>
                         <ArrowRight aria-hidden size={16} className="shrink-0 text-[#157446] transition-transform
                           duration-150 ease-[var(--ease-out)] groupHoverOnly:translate-x-0.5"/>
@@ -407,7 +406,7 @@ export function MindMapAI({ who = 'student', go, className }) {
                     'ease-[var(--ease-out)] motion-safe:active:scale-[0.97]',
                     !draft.trim() || pending
                       ? 'cursor-not-allowed border-rule bg-white text-[#2a5744]'
-                      : 'border-accent bg-accent text-white shadow-[0_6px_22px_-8px_rgba(62,207,154,.9)] hoverOnly:bg-accent-ink')}>
+                      : 'border-accent bg-accent text-white hoverOnly:bg-accent-ink')}>
                   {pending ? 'Sending' : 'Send'}
                   <SendMark aria-hidden size={16}/>
                 </button>

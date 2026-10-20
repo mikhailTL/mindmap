@@ -27,11 +27,12 @@ import { ScrollScene } from '../ui/motion'
  * the millimetre ruler.
  *
  * These sit on a light strip (owner, 19 October: "stop making things dark,
- * site should be more peaceful and light"). The strip is the scenes' mint sky
- * under a fine grid (src/ui/scenes/tones.js); the drawing is deep green ink
- * with turquoise for the one thing each card is about, and bodies are filled
- * white so they mask the grid. Measured on the strip's darkest stop #dcf1e6 :
- * on the white bodies:
+ * site should be more peaceful and light"); each card's strip takes its own
+ * light hue (sky, lilac, sun) under a fine grid, set in views/PatchPage. No
+ * glow (owner, 20 October). The drawing is deep green ink with turquoise for
+ * the one thing each card is about, and bodies are filled white so they mask
+ * the grid. Measured on the old darkest strip #dcf1e6 : on the white bodies
+ * (the sky, lilac and sun strips are all lighter):
  *   ink       #0d2b1e   12.86 : 15.20   the raised body
  *   ink-2     #2a5744    6.98 :  8.25   the plastic
  *   beam.ink  #11677f    5.43 :  6.42   the one thing each card is about
@@ -42,7 +43,6 @@ const LINE  = '#2a5744'
 const LIT   = '#11677f'
 const FILL  = '#18a370'
 const GND   = '#ffffff'   /* the bodies' white, used to mask the grid, never to draw */
-const GLOW  = '#7fd8e6'
 
 /* Stroke hierarchy. The strip renders at about half a viewBox unit per CSS
    pixel, so nothing thinner than 1.6 survives: the previous file's 1.0
@@ -101,22 +101,12 @@ const Skin = ({ x0, x1, y }) => {
    own height there and the page constrains the svg with `lg:[&_svg]:h-full`,
    and a percentage height resolves against this wrapper. */
 function Frame({ label, children, tilt }) {
-  const g = 'pp' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
   return (
     <ScrollScene perspective={760} narrow={0.5} className="h-full"
       from={tilt[0]} to={tilt[1]}>
       <svg viewBox="0 0 600 100" role="img" aria-label={label}
         preserveAspectRatio="xMidYMid meet"
         className="h-[56px] w-full sm:h-[64px]">
-        <defs>
-          <radialGradient id={g}>
-            <stop offset="0" stopColor={GLOW} stopOpacity=".5"/>
-            <stop offset=".6" stopColor={GLOW} stopOpacity=".14"/>
-            <stop offset="1" stopColor={GLOW} stopOpacity="0"/>
-          </radialGradient>
-        </defs>
-        {/* A soft turquoise light under the enlarged detail. */}
-        <ellipse cx={P[2].cx} cy="50" rx="70" ry="48" fill={`url(#${g})`}/>
         <Sheet/>
         {children}
       </svg>

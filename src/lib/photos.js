@@ -5,16 +5,23 @@
  * a photograph changes its URL and busts the cache by itself.
  * Keyed map, because three components pick a photograph by short key.
  *
- * Every photograph here is a licensed Adobe Stock frame of models. Nobody in
- * them is a MindMap user and no unit has been built or worn, so no caption or
- * alt text anywhere may say or imply otherwise. */
+ * Every photograph here is a licensed Adobe Stock frame of models. Some
+ * frames (patch-worn, pro-hero, ovw-*) carry a rendering of the patch placed
+ * on the arm; the people are models and nobody in them uses MindMap, so no
+ * caption or alt text anywhere may say or imply otherwise. */
 import clinicTalk from '../photos/clinic-talk.webp'
 import friendsSteps from '../photos/friends-steps.webp'
+/* Not a photograph: the patch CAD render (public/patch-front-cad.png) with
+   its baked mint glow cut away, for How it works (owner, 20 October). */
+import hiwPatchCad from '../photos/hiw-patch-cad.webp'
 import parentCard from '../photos/parent-card.webp'
 import parentHero from '../photos/parent-hero.webp'
 import parentKitchen from '../photos/parent-kitchen.webp'
 import parentLaptop from '../photos/parent-laptop.webp'
 import patchWorn from '../photos/patch-worn.webp'
+import ppageMirrorUi from '../photos/ppage-mirror-ui.webp'
+import ppageSurveyUi from '../photos/ppage-survey-ui.webp'
+import proHero from '../photos/pro-hero.webp'
 import schoolCard from '../photos/school-card.webp'
 import studentBus from '../photos/student-bus.webp'
 import studentCard from '../photos/student-card.webp'
@@ -22,15 +29,25 @@ import studentGame from '../photos/student-game.webp'
 import studentHero from '../photos/student-hero.webp'
 import studentHomework from '../photos/student-homework.webp'
 import studentsHallway from '../photos/students-hallway.webp'
+import ovwPatchCourt from '../photos/ovw-patch-court.webp'
+import ovwProPatch from '../photos/ovw-pro-patch.webp'
+import ovwAppBus from '../photos/ovw-app-bus.webp'
+import ovwMirrorFace from '../photos/ovw-mirror-face.webp'
 
 export const PHOTOS = {
   'clinic-talk': clinicTalk,
   'friends-steps': friendsSteps,
+  'hiw-patch-cad': hiwPatchCad,
   'parent-card': parentCard,
   'parent-hero': parentHero,
   'parent-kitchen': parentKitchen,
   'parent-laptop': parentLaptop,
   'patch-worn': patchWorn,
+  /* Not photographs: crops of the app's own screens from the local build,
+     the Mirror's face mesh and the Survey's first question. */
+  'ppage-mirror-ui': ppageMirrorUi,
+  'ppage-survey-ui': ppageSurveyUi,
+  'pro-hero': proHero,
   'school-card': schoolCard,
   'student-bus': studentBus,
   'student-card': studentCard,
@@ -38,6 +55,10 @@ export const PHOTOS = {
   'student-hero': studentHero,
   'student-homework': studentHomework,
   'students-hallway': studentsHallway,
+  'ovw-patch-court': ovwPatchCourt,
+  'ovw-pro-patch': ovwProPatch,
+  'ovw-app-bus': ovwAppBus,
+  'ovw-mirror-face': ovwMirrorFace,
 }
 
 /* The demo's people are drawn characters now (src/account/characters/), not
@@ -80,6 +101,8 @@ export const PHOTOS = {
 export const PHOTO_META = {
   // Two figures on a sofa, boy at x 38, the other at x 68; heads run y 24 to 48.
   'clinic-talk': { w: 1600, h: 1066, focal: [50, 36], minAspect: 3.2, face: true },
+  // The patch render, no face; shown whole, never cropped.
+  'hiw-patch-cad': { w: 531, h: 797, focal: [50, 50], minAspect: 0.5, face: false },
   // Two students on steps, heads y 8 to 32, shoulders apart at x 28 and x 62.
   'friends-steps': { w: 1418, h: 1125, focal: [46, 20], minAspect: 3.0, face: true },
   // A letterbox crop of parent-laptop; both faces sit low, y 12 to 65.
@@ -93,6 +116,13 @@ export const PHOTO_META = {
   // Face high at y 2 to 40 and the patch low on the arm near x 57, y 78, so
   // this one needs most of its own height before it says what it is for.
   'patch-worn': { w: 1024, h: 688, focal: [44, 40], minAspect: 1.8, face: true },
+  // App screen crops, shown whole (object-contain), no face.
+  'ppage-mirror-ui': { w: 302, h: 332, focal: [50, 50], minAspect: 0.9, face: false },
+  'ppage-survey-ui': { w: 656, h: 386, focal: [50, 50], minAspect: 1.7, face: false },
+  // A woman with a notepad (head x 28, y 12 to 35) and a teenager (x 68, y 9
+  // to 35) on a sofa, a drawing of the patch on his upper arm at x 77, y 66.
+  // The frame has to keep the arm, so it needs three quarters of its height.
+  'pro-hero': { w: 1344, h: 752, focal: [50, 40], minAspect: 2.2, face: true },
   // Letterbox already. Two women turned towards each other at x 27 and x 68.
   'school-card': { w: 1200, h: 423, focal: [48, 32], minAspect: 4.2, face: true },
   // Two boys on a bus seat, the left head almost touching the top edge, so the
@@ -110,6 +140,22 @@ export const PHOTO_META = {
   // Four students across a corridor, x 15 to x 90, heads y 8 to 38. The widest
   // spread of faces on the site, so the shortest frame it survives is 2.6.
   'students-hallway': { w: 1600, h: 1068, focal: [50, 24], minAspect: 2.6, face: true },
+  // Derived (Overview, 20 October). student-basketball cropped to the player,
+  // with the patch render (public/patch-front-cad.png) placed on his upper
+  // arm at x 38, y 70; face x 42 to 59, y 10 to 38, hair from y 6. Hair to
+  // patch needs 70% of the height, so 1.7 is the widest frame it survives.
+  'ovw-patch-court': { w: 750, h: 650, focal: [46, 18], minAspect: 1.7, face: true },
+  // Derived: pro-hero cropped to 16:10 round the pair, with a contact shadow
+  // under the patch at x 71, y 69. Counselor's face x 9 to 19, the teen's
+  // x 55 to 63, both y 14 to 36.
+  'ovw-pro-patch': { w: 1104, h: 690, focal: [50, 40], minAspect: 2.4, face: true },
+  // Derived: student-bus cropped to 16:10 with a phone showing the student
+  // Home screen (rendered from this build, demo mode) at x 71 to 98. A laid
+  // out picture, so it is shown whole: its own aspect is the ceiling.
+  'ovw-app-bus': { w: 1600, h: 1000, focal: [50, 50], minAspect: 1.6, face: true },
+  // Derived: student-hero cropped above the game controller in his hands.
+  // One centred face, x 43 to 63, y 2 to 50.
+  'ovw-mirror-face': { w: 944, h: 650, focal: [53, 30], minAspect: 2.2, face: true },
 }
 
 /* A key nobody recorded still has to render. 16:9ish, centred, and treated as

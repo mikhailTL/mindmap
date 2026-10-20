@@ -96,36 +96,36 @@ const FLASH = { cx: 420, cy: 76, a: 22, r: 9, t: 5 }
  * staircase into it arrived at the same height as the cover-glass leader one
  * row below. Step 03 owns two plates, so its leader forks. */
 const TBL_X = 8, TBL_W = 344, TBL_TOP = 44, ROWH = 62
-const NUM_W = 40                       // the numeral's own cell, behind a divider
+const NUM_W = 30                       // the marker's own cell
 const TXT_X = TBL_X + NUM_W + 10
 const TBL_R = TBL_X + TBL_W            // where every leader leaves from
 const LEAD = 21                        // line leading inside a row
 
 export const CAMERA_STEPS = [
-  { id: 'flash', n: '01', elbow: 378,
+  { id: 'flash', elbow: 378,
     lines: ['The flash shines into', 'your fingertip.'],
     to: [[396, 76]] },
-  { id: 'blood', n: '02', diagonal: true,
+  { id: 'blood', diagonal: true,
     lines: ['Blood absorbs it. Each beat', 'changes how much.'],
     to: [[486, 82]] },
-  { id: 'optics', n: '03', elbow: 400,
+  { id: 'optics', elbow: 400,
     lines: ['Light comes back through the', 'glass. The lens focuses it.'],
     to: [[460, ROW.glass], [460, ROW.lens]] },
-  { id: 'ir', n: '04', elbow: 408,
+  { id: 'ir', elbow: 408,
     lines: ['The infrared filter drops', 'invisible light.'],
     to: [[460, ROW.ir]] },
-  { id: 'sensor', n: '05', elbow: 408,
+  { id: 'sensor', elbow: 408,
     lines: ['The sensor reads it thirty', 'times a second.'],
     to: [[460, ROW.sensor]] },
-  { id: 'pulse', n: '06', elbow: 420,
+  { id: 'pulse', elbow: 420,
     lines: ['That rise and fall', 'is your pulse.'],
     to: [[452, PHONE]] },
 ]
 
 const rowTop = i => TBL_TOP + i * ROWH
 const rowMid = i => rowTop(i) + ROWH / 2
-/* Two lines centred on the row, so the numeral and the first line share a
-   baseline and the block cannot drift off its leader. */
+/* Two lines centred on the row, so the marker and the first line share a
+   line and the block cannot drift off its leader. */
 const baseY = i => rowMid(i) - (LEAD / 2) + 5
 /* Out, along, then in: the last segment is horizontal and lands on a plate's
    left edge. */
@@ -351,8 +351,6 @@ function StepTable({ p }) {
         ))}
         <line x1={TBL_X} y1={rowTop(CAMERA_STEPS.length)} x2={TBL_R}
           y2={rowTop(CAMERA_STEPS.length)}/>
-        <line x1={TBL_X + NUM_W} y1={TBL_TOP} x2={TBL_X + NUM_W}
-          y2={rowTop(CAMERA_STEPS.length)}/>
       </g>
       {CAMERA_STEPS.map((s, i) => (
         <g key={s.id}>
@@ -361,8 +359,8 @@ function StepTable({ p }) {
               strokeWidth="1.1" strokeLinejoin="round" markerEnd={`url(#${p}-lead)`}/>
           ))}
           <circle cx={TBL_R} cy={rowMid(i)} r="2.8" fill={INK3}/>
-          <text x={TBL_X + NUM_W / 2} y={baseY(i)} fill={ACCENT} textAnchor="middle"
-            fontFamily="Chivo, sans-serif" fontSize="15" fontWeight="700">{s.n}</text>
+          {/* A plain marker, not 01 to 06 (owner, 20 October). */}
+          <circle cx={TBL_X + NUM_W / 2 + 2} cy={baseY(i) - 5} r="3.5" fill={BEAM}/>
           {s.lines.map((l, j) => (
             <text key={j} x={TXT_X} y={baseY(i) + j * LEAD} fill={INK}
               fontFamily="Chivo, sans-serif" fontSize="16">{l}</text>
@@ -458,7 +456,7 @@ export function CameraModule({ className }) {
             viewBox={narrow ? `390 -4 300 ${VB_H + 8}` : `0 0 700 ${VB_H}`}
             className={cn('block w-full', narrow && 'mx-auto max-w-[244px]')}
             role="img"
-            aria-label="An exploded view of a phone's rear camera, numbered along the light path.
+            aria-label="An exploded view of a phone's rear camera, labelled along the light path.
               The flash shines into the side of a fingertip. Blood absorbs some of that light,
               more with every heartbeat. What comes back crosses the cover glass, and the lens
               focuses it. The infrared filter drops the light the eye cannot see. The image
@@ -490,8 +488,8 @@ export function CameraModule({ className }) {
           {narrow && (
             <ol className="m-0 mt-4 grid list-none gap-2 p-0">
               {CAMERA_STEPS.map(s => (
-                <li key={s.id} className="grid grid-cols-[1.9rem_1fr] gap-x-2">
-                  <span className="text-right text-fine font-bold tabular-nums text-accent">{s.n}</span>
+                <li key={s.id} className="grid grid-cols-[0.75rem_1fr] items-baseline gap-x-2">
+                  <span aria-hidden className="size-1.5 translate-y-[-0.15rem] rounded-full bg-beam"/>
                   <span className="text-note leading-[1.35] text-ink">{s.lines.join(' ')}</span>
                 </li>
               ))}
@@ -499,7 +497,7 @@ export function CameraModule({ className }) {
           )}
         </div>
 
-        {/* NOT DRAWN ON A PHONE: at 390 step 06 of the list already says it.
+        {/* NOT DRAWN ON A PHONE: at 390 the last step of the list already says it.
             From md it is the drawing's last step at a size that reads: what
             the sensor's number does over a few seconds. On xl it is a rail
             beside the drawing, sized to fill it rather than leave a column of

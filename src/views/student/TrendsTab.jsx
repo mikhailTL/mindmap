@@ -258,9 +258,10 @@ export function StudentTrendsBody({ go }) {
               anchor={anchor} setAnchor={setAnchor}/>}
       </section>
 
-      {/* The owner, 18 October: the log is its own part, under Trends. */}
+      {/* The owner, 18 October: the log is its own part, under Trends.
+          20 October: on soft lilac, so Today, Trends and the Log differ. */}
       <section aria-labelledby="reading-log-h"
-        className="mt-4 flex flex-col gap-3 rounded-[24px] border border-accent/20 bg-accent-wash/60 p-3 sm:p-4
+        className="mt-4 flex flex-col gap-3 rounded-[24px] border border-lilac/20 bg-lilac-wash/60 p-3 sm:p-4
           lg:mt-6 lg:gap-4 lg:p-5">
         <PartHead id="reading-log-h" kind="log" title={`${SCORE} Log`}
           line={`Every reading, ${rangeLabel}.`}/>

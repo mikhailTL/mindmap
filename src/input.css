@@ -167,34 +167,21 @@
 }
 
 @layer components {
-  /* Weather on the score arch. Two keyframes, both tiny. These run far past
-     the 300ms ceiling on purpose and the exception is narrow: this is ambient
-     motion rather than a transition — nothing is waiting on it, no state
-     changes when it finishes, and a cloud that crossed in 300ms would read as
-     a twitch. Constant motion takes `linear`; the drift is an oscillation, so
-     it keeps the symmetric built-in ease-in-out rather than --ease-in-out,
-     which is cut for a deliberate 200ms move and would make a nine-second
-     cloud lurch through its midpoint.
-     The explicit `animation: none` below is what stops them under reduced
-     motion. An earlier comment here claimed the base-layer rule only collapsed
-     the duration, leaving a stopped cloud where it was drawn — that stopped
-     being true once these rules were added, and under the rewritten base rule
-     movement is dropped rather than sped up. */
-  .mm-drift { animation: mm-drift 9s ease-in-out infinite both; }
-  .mm-drift-slow { animation-duration: 12s; }
+  /* Rain on the score arch: ambient, so it runs past the 300ms ceiling, and
+     stops outright under reduced motion below. (The drifting cloud class went
+     unused and was removed, 20 October.) */
   .mm-rain line { animation: mm-fall 1.15s linear infinite both; }
   .mm-rain line:nth-child(2) { animation-delay: .29s; }
   .mm-rain line:nth-child(3) { animation-delay: .58s; }
   .mm-rain line:nth-child(4) { animation-delay: .86s; }
 }
-@keyframes mm-drift { 0%,100% { transform: translateX(0) } 50% { transform: translateX(7px) } }
 @keyframes mm-fall {
   0%   { transform: translateY(0);   opacity: 0 }
   20%  { opacity: .9 }
   100% { transform: translateY(11px); opacity: 0 }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mm-drift, .mm-rain line { animation: none; }
+  .mm-rain line { animation: none; }
 }
 
 @layer components {
@@ -227,44 +214,23 @@
 @keyframes mm-in-static { from { opacity: 0 } to { opacity: 1 } }
 
 @layer components {
-  /* The breathing light behind the patch drawing in the hero. One blurred
-     radial, nine seconds, and nothing else on that field moves. Ambient again,
-     so the 300ms ceiling does not apply: it is opacity and scale on a
-     decorative layer, it never resolves, and it is switched off outright under
-     reduced motion below. */
-  .mm-glow {
-    background: radial-gradient(closest-side, rgb(21 116 70 / 0.30), rgb(21 116 70 / 0.10) 58%, transparent 78%);
-    filter: blur(26px);
-    animation: mm-breathe 9s ease-in-out infinite both;
-  }
-}
-@keyframes mm-breathe {
-  0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(0.94) }
-  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.06) }
-}
-@media (prefers-reduced-motion: reduce) {
-  /* animation: none also drops the translate the keyframes were carrying, which
-     left the glow a half-width off centre; it is restated here. */
-  .mm-glow { animation: none; opacity: .75; transform: translate(-50%, -50%); }
-}
-
-@layer components {
   /* The light callout: what the dark `ink` panel used to be for, the one box
      a screen must not miss. White to pale mint, a fine grid that fades from
      the middle, a mint to turquoise hairline and a soft green shadow (owner,
      19 October: "stop making things dark ... keep adding the topographic,
      isometric, and technological designs"). The palest ground under text is
-     #eef8f3: ink 13.9 : 1, ink-2 7.5, ink-3 5.1, accent 5.1. */
+     #eef6fb (20 October: sky and sun, not mint): ink 13.9 : 1, ink-2 7.5,
+     ink-3 5.6, accent 5.3. */
   .lit {
     @apply rounded-panel;
     position: relative;
     isolation: isolate;
     background:
-      radial-gradient(90% 80% at 100% 0%, rgb(29 143 176 / .08), transparent 60%),
-      radial-gradient(80% 80% at 0% 100%, rgb(62 207 154 / .12), transparent 60%),
-      linear-gradient(180deg, #ffffff, #eef8f3);
-    box-shadow: 0 1px 2px rgb(13 43 30 / .05), 0 14px 32px -20px rgb(13 43 30 / .25),
-      0 0 30px -18px rgb(62 207 154 / .6);
+      radial-gradient(90% 80% at 100% 0%, rgb(34 148 230 / .08), transparent 60%),
+      radial-gradient(80% 80% at 0% 100%, rgb(245 236 215 / .7), transparent 60%),
+      linear-gradient(180deg, #ffffff, #eef6fb);
+    /* No green halo (owner, 20 October: much less glow). */
+    box-shadow: 0 1px 2px rgb(13 43 30 / .05), 0 14px 32px -20px rgb(13 43 30 / .25);
   }
   .lit::before {
     content: '';
@@ -283,7 +249,7 @@
     position: absolute; inset: 0; z-index: -1;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgb(62 207 154 / .9), rgb(29 143 176 / .5) 55%, rgb(62 207 154 / .3));
+    background: linear-gradient(135deg, rgb(34 148 230 / .55), rgb(29 143 176 / .4) 55%, rgb(181 135 27 / .3));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);

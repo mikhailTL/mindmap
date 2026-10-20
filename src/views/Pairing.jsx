@@ -1,19 +1,19 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
+import { Frame } from '../ui/frame'
 import { Section, SectionHead } from '../ui/section'
-import { ArrowRight, Check, Always, Cross, Minus, ChevronDown } from '../ui/marks'
-import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
-import { StepArt } from '../charts/pairing-art'
-import { PairScene } from '../ui/scenes/art'
+import { ArrowRight, Check, Always, Cross, Minus } from '../ui/marks'
+import { ScrollIn, ScrollRow } from '../ui/motion'
+import { WirelessLink, StepArt } from '../charts/pairing-art'
 import { connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* Using the patch: one console. Pressing Connect runs lib/engine.js
- * connectPatch for real, and the step list fills in as the flow moves. One
- * drawing shows at a time, for the current step; any revealed step can be
- * pressed to see its drawing again. The failures sit behind one control.
+ * connectPatch for real, and the step list marks progress as the flow moves.
+ * All six steps show before anything is pressed (owner, 20 October: "so much
+ * blank space"); any step can be pressed to see its drawing.
  *
  * Rules. Every step is the flow engine.js runs and every quoted message is a
  * string from that file, verbatim; the phase comes from the same
@@ -49,32 +49,36 @@ const LINK_FACTS = [
 ]
 
 /* `seen` is the engine's own string, quoted verbatim (line noted beside it);
-   `fix` is what to do. */
+   `fix` is what to do. Each card takes its own light hue (owner, 20 October:
+   "too green ... pls vary"). */
 const TROUBLE = [
-  { /* engine.js:47, the navigator.bluetooth guard: an embedded page and plain
+  { /* engine.js:54, the navigator.bluetooth guard: an embedded page and plain
        http both land on this one message, so one card. */
-    title:'The browser has no Bluetooth',
+    title:'The browser has no Bluetooth', hue:'sky',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
-      + 'site directly in Chrome on a computer, or use the check-in below.',
+      + 'site directly in Chrome on a computer, or use the survey below.',
     fix:'Open the site directly in Chrome, over https.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
-    title:'The list is empty',
+    title:'The list is empty', hue:'lilac',
     seen:'The browser’s list shows no devices.',
     fix:'Take the patch off charge, near the phone. Press Connect again.' },
-  { /* engine.js:54 and 55: NotFoundError is a cancel, not a fault */
-    title:'You closed the list',
-    seen:'No patch was selected. The check-in below works without one.',
+  { /* engine.js:61 and 62: NotFoundError is a cancel, not a fault */
+    title:'You closed the list', hue:'sun',
+    seen:'No patch was selected. The survey below works without one.',
     fix:'Press Connect again and choose the patch.' },
-  { /* engine.js:56: anything requestDevice or gatt.connect throws */
-    title:'The connection failed',
-    seen:'Could not connect: unknown. The check-in below works without a patch.',
+  { /* engine.js:63: anything requestDevice or gatt.connect throws */
+    title:'The connection failed', hue:'coral',
+    seen:'Could not connect: unknown. The survey below works without a patch.',
     fix:`Try again, or take a ${SCORE} instead.` },
 ]
+const QUOTE = { sky:'border-sky-ink/40', lilac:'border-lilac-ink/40', sun:'border-sun-ink/40',
+  coral:'border-coral-ink/40' }
 
 const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Connected', stuck:'Stopped' }
 
-/* done / now / stuck; a step past the cursor is not rendered at all. */
+/* done / now / stuck for a step the flow has reached; `todo` past it. */
 function statusOf(i, cursor, phase) {
+  if (i >= cursor) return 'todo'
   if (i < cursor - 1) return 'done'
   if (phase === 'live') return 'done'
   if (phase === 'stuck') return 'stuck'
@@ -82,16 +86,18 @@ function statusOf(i, cursor, phase) {
 }
 
 const MARK = { done: Check, now: Always, stuck: Minus }
-const LABEL = { done:'Done', now:'Now', stuck:'Stopped here' }
+const LABEL = { done:'Done', now:'Now', stuck:'Stopped here', todo:'' }
+
+/* A licensed stock frame of models: nobody shown uses MindMap. */
+const PHONE_ALT = 'A licensed stock photograph of two teenagers on a school bus, one holding a phone.'
 
 /* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
    part's title, with Without the patch straight after. */
 export function Pairing({ as: Root = 'main' }) {
   const [phase, setPhase] = React.useState('idle')
-  const [cursor, setCursor] = React.useState(0)      // steps revealed
+  const [cursor, setCursor] = React.useState(0)      // steps the flow reached
   const [msg, setMsg] = React.useState('')
   const [busy, setBusy] = React.useState(false)
-  const [trouble, setTrouble] = React.useState(false)
   const [focus, setFocus] = React.useState(null)     // which step's drawing shows
 
   /* The same guard engine.js runs, read only to place the cursor. The message
@@ -109,21 +115,22 @@ export function Pairing({ as: Root = 'main' }) {
     setBusy(false)
   }, [busy])
 
-  const shown = STEPS.slice(0, cursor)
-  const seeing = focus === null ? cursor - 1 : focus
-  const art = seeing >= 0 ? STEPS[seeing] : null
+  const seeing = focus ?? Math.max(0, cursor - 1)
+  const art = STEPS[seeing]
 
   return (
     <Root>
-      {/* The part's title and the owner's line sit just above, in views/PatchHub. */}
-      <header className="bg-accent-wash">
+      {/* The part's title and the owner's line sit just above, in views/PatchHub.
+          The figure is the drawing it had before the scene (owner, 20 October). */}
+      <header className="bg-[#e2f2f0]">
         <div className="wrap pb-7 pt-4 lg:pb-10 lg:pt-6">
           <div className="grid items-start gap-5
-            lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-8">
-            <ScrollIn className="min-w-0">
+            lg:grid-cols-[minmax(0,1fr)_minmax(0,46%)] lg:gap-8">
+            <ScrollIn className="grid min-w-0 gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
+              lg:grid-cols-1">
               {/* The absences beside a coral rule, no box; a struck-through
                   list, two columns, no capsules. */}
-              <Card variant="rule" hue="coral" side="left" className="pl-3.5">
+              <Card variant="rule" hue="coral" side="left" className="self-start pl-3.5">
                 <p className="font-display text-tick font-bold text-ink">What you do not need</p>
                 <ul className="m-0 mt-1.5 grid list-none grid-cols-2 gap-x-4 p-0">
                   {NOTHING.map(t => (
@@ -135,29 +142,34 @@ export function Pairing({ as: Root = 'main' }) {
                   ))}
                 </ul>
               </Card>
+              <div className="h-[200px] overflow-hidden rounded-panel border border-rule lg:h-[230px]">
+                <Frame photo="student-bus" alt={PHONE_ALT} focal="30% 30%"/>
+              </div>
             </ScrollIn>
 
-            {/* The key visual as a lit scene (owner, 18 October). */}
-            <Parallax2D distance={40} className="min-w-0">
-              <PairScene className="min-w-0"/>
-            </Parallax2D>
+            <ScrollIn className="min-w-0">
+              <Card className="min-w-0 p-3.5 lg:p-5">
+                <figure className="m-0 min-w-0">
+                  <WirelessLink className="mx-auto"/>
+                </figure>
+              </Card>
+            </ScrollIn>
           </div>
         </div>
       </header>
 
-      {/* The console: one button, the steps it reveals, the failures behind
-          their own control. */}
-      <Section tone="card" className="bg-card">
-        <SectionHead className="mt-1 max-w-[26ch]">Connect the patch</SectionHead>
+      {/* The console: one button, the six steps, the drawing for one of them. */}
+      <Section tone="card" tight className="bg-card">
+        <SectionHead className="mt-0 max-w-[26ch]">Connect the patch</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
-            <div className="border-b border-rule bg-paper p-3.5 lg:p-4">
+            <div className="border-b border-rule bg-sky-wash p-3.5 lg:p-4">
               {/* Column at 390: the nowrap button label overran the card. */}
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap
                 sm:items-center sm:justify-between sm:gap-x-5">
                 <div className="min-w-0" aria-live="polite">
                   <p className="font-display text-ui font-bold text-ink">{PHASE_WORD[phase]}</p>
-                  <p className="mt-0.5 text-fine tabular-nums text-ink-3">
+                  <p className="mt-0.5 text-fine tabular-nums text-ink-2">
                     {cursor} of {STEPS.length} steps
                   </p>
                 </div>
@@ -167,10 +179,10 @@ export function Pairing({ as: Root = 'main' }) {
                   <ArrowRight aria-hidden/>
                 </Button>
               </div>
-              <dl className="m-0 mt-3 grid gap-2 border-t border-rule pt-2.5 sm:grid-cols-2">
+              <dl className="m-0 mt-3 grid gap-2 border-t border-sky/25 pt-2.5 sm:grid-cols-2">
                 {LINK_FACTS.map(f => (
                   <div key={f.k} className="min-w-0">
-                    <dt className="text-fine font-semibold text-ink-3">{f.k}</dt>
+                    <dt className="text-fine font-semibold text-ink-2">{f.k}</dt>
                     <dd className="m-0 mt-0.5 font-display text-ui font-bold leading-tight text-ink">
                       {f.v}
                     </dd>
@@ -179,111 +191,99 @@ export function Pairing({ as: Root = 'main' }) {
               </dl>
             </div>
 
-            {/* The engine's own words, ruled rather than coloured. The live
-                region wraps the whole outcome, not just the phase word. */}
+            {/* The engine's own words. The live region wraps the whole
+                outcome, not just the phase word. */}
             <div aria-live="polite">
               {msg && (
                 /* Tint on the wrapper: input.css caps every <p> at 62ch. */
-                <div className="border-b border-rule bg-aqua px-3.5 py-3 lg:px-4">
+                <div className="border-b border-rule bg-sun-wash px-3.5 py-3 lg:px-4">
                   <p className="text-fine text-ink-2">{msg}</p>
                 </div>
               )}
             </div>
 
-            {cursor > 0 && (
-              <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
-                <div className="min-w-0 p-3.5 lg:p-4">
-                  {/* A real ordered list; the status rides beside the title so
-                      the step's line keeps its width at 390. */}
-                  <ol className="m-0 grid list-none gap-2 p-0">
-                    {shown.map((s, i) => {
-                      const st = statusOf(i, cursor, phase)
-                      const Mk = MARK[st]
-                      const on = seeing === i
-                      return (
-                        <li key={s.k}>
-                          <button type="button" onClick={() => setFocus(i)} aria-pressed={on}
-                            className={cn('flex w-full min-h-[44px] items-start gap-3 rounded-panel',
-                              'border border-rule bg-card px-3 py-2.5 text-left',
-                              'touch-manipulation transition-[border-color] duration-150',
-                              'ease-[var(--ease-out)] hoverOnly:border-ruling',
-                              on && 'border-l-[3px] border-l-accent')}>
-                            <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
-                              <span className="text-tick tabular-nums text-ink-3">
-                                {i + 1}
-                              </span>
-                              <Mk aria-hidden className={cn('size-4',
-                                st === 'done' ? 'text-accent' : 'text-ink-3')}/>
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+              <div className="min-w-0 p-3.5 lg:p-4">
+                {/* A real ordered list; the status rides beside the title so
+                    the step's line keeps its width at 390. */}
+                <ol className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-1">
+                  {STEPS.map((s, i) => {
+                    const st = statusOf(i, cursor, phase)
+                    const Mk = MARK[st]
+                    const on = seeing === i
+                    return (
+                      <li key={s.k}>
+                        <button type="button" onClick={() => setFocus(i)} aria-pressed={on}
+                          className={cn('flex h-full w-full min-h-[44px] items-start gap-3 rounded-panel',
+                            'border border-rule bg-card px-3 py-2.5 text-left',
+                            'touch-manipulation transition-[border-color,background-color] duration-150',
+                            'ease-[var(--ease-out)] hoverOnly:border-ruling',
+                            on && 'border-l-[3px] border-l-beam bg-beam-wash')}>
+                          <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
+                            <span className="text-tick font-bold tabular-nums text-beam-ink">
+                              {i + 1}
                             </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                <span className="font-display text-ui font-bold leading-tight text-ink">
-                                  {s.title}
-                                </span>
-                                {/* Plain type, never a capsule (spec 0d rule 2). */}
+                            {Mk && <Mk aria-hidden className={cn('size-4',
+                              st === 'done' ? 'text-accent' : 'text-ink-3')}/>}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                              <span className="font-display text-ui font-bold leading-tight text-ink">
+                                {s.title}
+                              </span>
+                              {/* Plain type, never a capsule (spec 0d rule 2). */}
+                              {LABEL[st] && (
                                 <span className={cn('text-fine font-semibold leading-[1.3]',
                                   st === 'done' ? 'text-accent' : 'text-ink-3')}>
                                   {LABEL[st]}
                                 </span>
-                              </span>
-                              <span className="mt-1 block max-w-[56ch] text-fine text-ink-2">
-                                {s.line}
-                              </span>
+                              )}
                             </span>
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ol>
-
-                  {/* The only way the failures appear; drawn as a control. */}
-                  <button type="button" onClick={() => setTrouble(v => !v)}
-                    aria-expanded={trouble} aria-controls="trouble"
-                    className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-field
-                      border border-ink bg-transparent px-4 font-display text-ui font-medium
-                      text-ink touch-manipulation transition-[background-color] duration-150
-                      ease-[var(--ease-out)] active:bg-aqua hoverOnly:bg-aqua">
-                    {trouble ? 'Hide the fixes' : 'Not working?'}
-                    <ChevronDown aria-hidden
-                      className={cn('transition-transform duration-150 ease-[var(--ease-out)]',
-                        trouble && 'rotate-180')}/>
-                  </button>
-                </div>
-
-                {/* One drawing, for the step being read. */}
-                <div className="flex items-center justify-center border-t border-rule bg-aqua
-                  p-3 lg:border-l lg:border-t-0">
-                  {art && <StepArt kind={art.k} scale={0.4}/>}
-                </div>
+                            <span className="mt-1 block max-w-[56ch] text-fine text-ink-2">
+                              {s.line}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ol>
               </div>
-            )}
+
+              {/* One drawing, for the step being read. */}
+              <div className="flex items-center justify-center border-t border-rule bg-lilac-wash
+                p-3 lg:border-l lg:border-t-0">
+                {art && <StepArt kind={art.k} scale={0.4}/>}
+              </div>
+            </div>
           </Card>
         </div>
 
-        {trouble && (
-          <ul id="trouble" className="m-0 mt-3 grid list-none gap-2.5 p-0 lg:grid-cols-2 lg:gap-3">
-            {TROUBLE.map((t, i) => (
-              <li key={t.title}>
-                <ScrollRow index={i} className="h-full">
-                  {/* The fixes take the sun wash: they are the one set of
-                      cards on this page about something going wrong. */}
-                  <Card variant="tint" hue="sun" className="flex h-full flex-col p-3.5 lg:p-4">
-                    <h3 className="font-display text-ui font-bold leading-tight text-ink">
-                      {t.title}
-                    </h3>
-                    <p className="mt-2 border-l-2 border-sun-ink/40 pl-2.5 text-fine text-ink-2">
-                      {t.seen}
-                    </p>
-                    <dl className="m-0 mt-2.5 flex gap-2">
-                      <dt className="shrink-0 text-fine font-semibold text-ink-3">Do</dt>
-                      <dd className="m-0 min-w-0 text-fine text-ink-2">{t.fix}</dd>
-                    </dl>
-                  </Card>
-                </ScrollRow>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* The failures, open (owner, 20 October: as they were, no blank
+            space behind a toggle). */}
+        <h3 className="mt-6 font-display text-row font-bold leading-tight text-ink lg:mt-8">
+          Not working?
+        </h3>
+        <ul className="m-0 mt-3 grid list-none gap-2.5 p-0 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
+          {TROUBLE.map((t, i) => (
+            <li key={t.title}>
+              <ScrollRow index={i} className="h-full">
+                <Card variant="tint" hue={t.hue} className="flex h-full flex-col p-3.5 lg:p-4">
+                  <h4 className="font-display text-ui font-bold leading-tight text-ink">
+                    {t.title}
+                  </h4>
+                  <p className={cn('mt-2 border-l-2 pl-2.5 text-fine text-ink-2', QUOTE[t.hue])}>
+                    {t.seen}
+                  </p>
+                  <dl className="m-0 mt-auto flex gap-2 pt-2.5">
+                    <dt className="shrink-0 text-fine font-semibold text-ink">Do</dt>
+                    <dd className="m-0 min-w-0 text-fine text-ink-2">{t.fix}</dd>
+                  </dl>
+                </Card>
+              </ScrollRow>
+            </li>
+          ))}
+        </ul>
       </Section>
 
     </Root>

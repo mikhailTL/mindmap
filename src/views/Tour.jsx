@@ -443,7 +443,8 @@ export function Tour({ go }) {
 
   return (
     <main>
-      <section className="border-t border-rule bg-mist">
+      {/* Pale sky, not mist green (owner, 20 October: vary the green). */}
+      <section className="border-t border-rule bg-sky-wash">
         <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]
           lg:gap-4 lg:py-7">
           <h1 className="min-w-0 max-w-[18ch] font-display text-major font-bold leading-[1.06]

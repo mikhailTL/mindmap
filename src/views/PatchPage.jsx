@@ -1,5 +1,4 @@
 import React from 'react'
-import { Frame } from '../ui/frame'
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { PatchStack } from '../charts/patchstack'
@@ -10,17 +9,9 @@ import { RAINBOW } from '../lib/sensors'
 import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
-import { SCORE, SCORE_RANGE } from '../lib/terms'
-import { TONES, glowShadow, MICRO } from '../ui/scenes/tones'
-import { contourPath } from '../ui/scenes/kit'
 
 /* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
-
-/* The hero frame is a licensed stock photograph with a drawing of the
-   oval placed on it. */
-const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
-  + 'of the patch placed on the outer upper arm to show where it sits.'
 
 /* Each signal's card takes its own trace's hue as a wash (src/ui/card.jsx),
    in the rainbow's order: heart, sweat, temperature, movement. */
@@ -29,13 +20,6 @@ const SIGNAL_HUE = ['coral', 'sun', 'mint', 'sky']
 /* Only settled facts. Battery, charge time, adhesive, wear time, electrode
    build, part numbers, ingress, weight and cost are open: no figure for any
    of them may be added anywhere on this page. */
-const CHAIN = [
-  'Sits on your upper arm, under a sleeve.',
-  'Records four signals, once a second.',
-  'Sends readings to your phone over Bluetooth.',
-  `Gives you one ${SCORE} a day, ${SCORE_RANGE}.`,
-]
-
 const FIGURES = [
   { k: 'Along the arm',       v: '54', u: 'mm' },
   { k: 'Across the arm',      v: '36', u: 'mm' },
@@ -54,38 +38,17 @@ const PART_LINE = {
   base: 'Sits on the arm. All four signals read here.',
 }
 
-/* Light grounds (owner, 19 October: "stop making things dark, site should be
-   more peaceful and light", keep the topographic and technical designs). The
-   part strips are the scenes' mint sky under a fine turquoise grid; the
-   drawings on them are measured in charts/patch-parts.jsx. */
-const M = TONES.mint
-const GRID = 'linear-gradient(rgb(29 143 176 / .08) 1px, transparent 1px), '
-  + 'linear-gradient(90deg, rgb(29 143 176 / .08) 1px, transparent 1px), '
-const STRIP = {
-  backgroundImage: GRID + `linear-gradient(90deg, ${M.sky.join(', ')})`,
+/* Light grounds (owner, 19 October: "stop making things dark"; 20 October:
+   "too green ... pls vary", and no topography or glow). Each part strip takes
+   its own light hue under a fine grid; the drawings on them are measured in
+   charts/patch-parts.jsx. */
+const GRID = 'linear-gradient(rgb(13 43 30 / .06) 1px, transparent 1px), '
+  + 'linear-gradient(90deg, rgb(13 43 30 / .06) 1px, transparent 1px), '
+const strip = ground => ({
+  backgroundImage: GRID + `linear-gradient(${ground}, ${ground})`,
   backgroundSize: '10px 10px, 10px 10px, auto',
-}
-/* "Decided so far" is a white card in a fine green to turquoise edge, with
-   contour lines in its corner. Measured on white: ink 15.20, ink-2 8.25,
-   ink-3 6.11, accent-ink 8.50. */
-const SPEC_EDGE = {
-  border: '1px solid transparent',
-  background: 'linear-gradient(#fff, #fff) padding-box, '
-    + 'linear-gradient(135deg, rgb(21 116 70 / .55), rgb(29 143 176 / .4) 55%, #c2d7ca) border-box',
-  boxShadow: glowShadow('mint'),
-}
-
-function Contours({ className }) {
-  return (
-    <svg aria-hidden viewBox="0 0 160 120" className={cn('pointer-events-none absolute', className)}>
-      <g fill="none" stroke={M.line} strokeOpacity=".55" strokeWidth=".9">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <path key={i} d={contourPath(110, 40, 10 + i * 11, { amp: 1.6 + i * 0.6, phase: i * 0.9 })}/>
-        ))}
-      </g>
-    </svg>
-  )
-}
+})
+const STRIP = { pod: strip('#def0fc'), pcb: strip('#f6e8ff'), base: strip('#f5ecd7') }
 
 /* The 3D viewer needs a GPU and can sit on its loading panel forever. Its
    controls stay disabled until the model is live, so a control still disabled
@@ -146,10 +109,11 @@ export function PatchPage({ as: Root = 'main' }) {
   return (
     <Root>
       <section id="model" data-anchor
-        className="bg-paper">
+        className="border-t border-rule bg-paper">
         {/* The owner, 19 October: the CAD model is the first thing seen on
-            the patch page. */}
-        <div className="wrap pb-8 pt-4 lg:pb-12 lg:pt-6">
+            the patch page; 20 October: right after a compact hero
+            (views/PatchHub). */}
+        <div className="wrap pb-8 pt-6 lg:pb-12 lg:pt-8">
           <SectionHead className="mt-0 max-w-[26ch]">Take the patch apart</SectionHead>
           <div className={cn('mt-4 grid gap-4 lg:mt-6 lg:gap-6',
             !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
@@ -182,7 +146,7 @@ export function PatchPage({ as: Root = 'main' }) {
                    `[&_svg]:h-full` outranks the svg's own height at lg. */
                 const body = (
                   <>
-                    <div style={STRIP} className="border-b border-rule px-3 py-2.5
+                    <div style={STRIP[l.part]} className="border-b border-rule px-3 py-2.5
                       lg:h-[clamp(44px,5.6vh,56px)] lg:py-2 lg:[&_svg]:h-full">
                       {PART_ART[l.part]}</div>
                     <div className="p-3.5 lg:p-3">
@@ -216,34 +180,8 @@ export function PatchPage({ as: Root = 'main' }) {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-t border-rule bg-accent-wash">
-        {/* The part's title sits just above, in views/PatchHub. */}
-        <div className="wrap relative pb-7 pt-4 lg:pb-10 lg:pt-6
-          lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)] lg:items-start lg:gap-8">
-          <div className="min-w-0">
-          <ScrollIn>
-            <Card variant="rule" side="left" className="max-w-[46ch] py-1 pl-3.5">
-              <ul className="m-0 grid list-none gap-1.5 p-0">
-                {CHAIN.map(t => (
-                  <li key={t} className="text-meta leading-[1.4] text-ink-2">{t}</li>
-                ))}
-              </ul>
-            </Card>
-          </ScrollIn>
-          </div>
-
-          <figure className="m-0 mt-6 lg:mt-0">
-            <Parallax2D distance={52}>
-              <div className="h-[240px] overflow-hidden rounded-panel border border-rule
-                sm:mx-auto sm:h-[340px] sm:max-w-[600px] lg:h-[380px] lg:max-w-none">
-                <Frame photo="patch-worn" alt={ARM_ALT} eager/>
-              </div>
-            </Parallax2D>
-          </figure>
-        </div>
-      </section>
-
-      <Section tone="card" tight>
+      {/* A light turquoise ground under the four hued cards (owner, 20 October). */}
+      <Section tone="card" tight className="bg-[#e2f2f0]">
         <SectionHead className="mt-0 max-w-[24ch]">What the patch records</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {RAINBOW.map((s2, i) => (
@@ -262,7 +200,7 @@ export function PatchPage({ as: Root = 'main' }) {
         </div>
       </Section>
 
-      {/* White, not a wash: a wash opens each part of the page. */}
+      {/* White between two coloured grounds. */}
       <Section tone="card" tight>
         <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
         <div className="mt-4 grid gap-3 lg:mt-5
@@ -275,8 +213,7 @@ export function PatchPage({ as: Root = 'main' }) {
           </Parallax2D>
 
           <ScrollIn className="lg:sticky lg:top-32">
-          <Card style={SPEC_EDGE} className="relative p-3.5 lg:p-4">
-            <Contours className="-right-8 -top-6 h-32 w-44"/>
+          <Card variant="tint" hue="lilac" className="relative p-3.5 lg:p-4">
             <h3 className="relative font-display text-row font-bold leading-tight text-ink">
               Decided so far
             </h3>
@@ -288,16 +225,14 @@ export function PatchPage({ as: Root = 'main' }) {
                   <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
                   <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
                     {f.v}
-                    <span style={{ fontFamily: MICRO }}
-                      className="ml-1.5 text-[0.8125rem] font-normal text-ink-3">{f.u}</span>
+                    <span className="ml-1.5 font-body text-fine font-normal text-ink-2">{f.u}</span>
                   </dd>
                 </div>
               ))}
             </dl>
             <div className="relative mt-3 border-t border-rule pt-2.5">
-              <p style={{ fontFamily: MICRO }}
-                className="flex items-center gap-2 text-[0.8125rem] font-semibold text-accent-ink">
-                <span aria-hidden className="h-px w-3 bg-accent"/>Not decided yet</p>
+              <p className="flex items-center gap-2 text-fine font-semibold text-lilac-ink">
+                <span aria-hidden className="h-px w-3 bg-lilac-ink"/>Not decided yet</p>
               <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
                 {OPEN.map(o => (
                   <li key={o} className="rounded-field border border-dashed border-ruling bg-paper

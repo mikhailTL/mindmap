@@ -47,41 +47,9 @@ export const TechRoot = React.forwardRef(function TechRoot({ as: As = 'div', cla
   return <As ref={set} data-live={on ? 'on' : 'off'} className={cn('tech', className)} {...p}>{children}</As>
 })
 
-/* Topographic contours: nested loops round one summit, each a circle bent by
-   three slow waves. Built once per seed, drawn as hairlines in currentColor.
-   19 October, the owner: "keep adding the topographic, isometric, and
-   technological designs". */
-const TOPO = {}
-function topoPaths(seed) {
-  if (TOPO[seed]) return TOPO[seed]
-  const out = []
-  for (let k = 0; k < 11; k++) {
-    const r0 = 34 + k * 27, pts = []
-    for (let s = 0; s < 120; s++) {
-      const a = (s / 120) * Math.PI * 2
-      const r = r0 * (1 + 0.13 * Math.sin(2 * a + seed + k * 0.16)
-        + 0.07 * Math.sin(3 * a + 1.9 * seed - k * 0.11) + 0.035 * Math.sin(5 * a + k * 0.3))
-      pts.push(`${(300 + r * Math.cos(a)).toFixed(1)} ${(300 + r * Math.sin(a) * 0.82).toFixed(1)}`)
-    }
-    out.push('M' + pts.join('L') + 'Z')
-  }
-  return (TOPO[seed] = out)
-}
-export function Topo({ seed = 0.6, className, style }) {
-  return (
-    <svg viewBox="0 0 600 600" aria-hidden focusable="false" fill="none"
-      className={cn('pointer-events-none absolute', className)} style={style}>
-      {topoPaths(seed).map((d, i) => (
-        <path key={i} d={d} stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke"
-          strokeOpacity={i % 4 === 3 ? 1 : 0.55}/>
-      ))}
-    </svg>
-  )
-}
-
 /* An isometric floor: a diamond of 30° lines, for a
-   drawing to stand on. */
-export function IsoPlate({ className, n = 6 }) {
+   drawing to stand on. `hue` is the band's colour. */
+export function IsoPlate({ className, n = 6, hue = '#157446' }) {
   const W = 240, H = W * Math.tan(Math.PI / 6), cx = W / 2, cy = H / 2
   const at = (i, j) => [cx + (i - j) * (W / 2 / n), (i + j) * (H / 2 / n)]
   const lines = []
@@ -91,28 +59,26 @@ export function IsoPlate({ className, n = 6 }) {
   return (
     <svg viewBox={`-6 -6 ${W + 12} ${H + 12}`} aria-hidden focusable="false" fill="none"
       className={cn('pointer-events-none block', className)}>
-      <path d={`M${at(0, 0)}L${at(n, 0)}L${at(n, n)}L${at(0, n)}Z`} fill="rgba(62,207,154,.07)"
-        stroke="#18a370" strokeOpacity=".55" strokeWidth="1.2"/>
+      <path d={`M${at(0, 0)}L${at(n, 0)}L${at(n, n)}L${at(0, n)}Z`} fill={hue} fillOpacity=".05"
+        stroke={hue} strokeOpacity=".45" strokeWidth="1.2"/>
       {lines.map(([a, b], i) => (
-        <path key={i} d={`M${a}L${b}`} stroke="#157446" strokeOpacity=".16" strokeWidth="1"/>
+        <path key={i} d={`M${a}L${b}`} stroke={hue} strokeOpacity=".14" strokeWidth="1"/>
       ))}
     </svg>
   )
 }
 
-/* A band on the light ground with the grid, two drifting blooms and faint
-   contour lines in two corners. `hue` tints the second bloom: 'mint'
-   (default), 'vio' for MindMap AI. */
-export function TechBand({ as = 'section', hue = 'mint', className, inner, children, ...p }) {
-  const second = hue === 'vio' ? 'rgba(167,139,250,.12)' : 'rgba(29,143,176,.1)'
+/* A band on one light colour of the site's scheme, a faint grid and one
+   still soft shape. `tone`: 'mint' (default), 'sky', 'teal', 'lilac', 'sun'
+   or 'coral'. 20 October, the owner: no contour lines, much less glow, and
+   not all green, so the drifting blooms and the contours are gone. */
+export const TONE_HUE = {
+  mint: '#157446', sky: '#0967ab', teal: '#11677f', lilac: '#6f09b2', sun: '#825d07', coral: '#b23009',
+}
+export function TechBand({ as = 'section', tone = 'mint', className, inner, children, ...p }) {
   return (
-    <TechRoot as={as} className={cn('t-band border-t border-rule', className)} {...p}>
-      <span aria-hidden className="t-bloom t-drift t-anim -left-24 -top-24 size-[26rem]"
-        style={{ background: 'radial-gradient(closest-side, rgba(62,207,154,.14), transparent)' }}/>
-      <span aria-hidden className="t-bloom t-drift-2 t-anim -bottom-32 -right-20 size-[30rem]"
-        style={{ background: `radial-gradient(closest-side, ${second}, transparent)` }}/>
-      <Topo seed={0.6} className="t-topo -right-40 -top-48 size-[40rem] text-[#157446]"/>
-      <Topo seed={2.1} className="t-topo -bottom-56 -left-48 size-[34rem] text-[#1d8fb0]"/>
+    <TechRoot as={as} className={cn('t-band border-t border-rule', tone !== 'mint' && `t-band--${tone}`, className)} {...p}>
+      <span aria-hidden className="t-field-shape -right-48 -top-48 size-[24rem] lg:-right-40 lg:-top-56 lg:size-[34rem]"/>
       <div className={cn('wrap py-8 lg:py-12', inner)}>{children}</div>
     </TechRoot>
   )
@@ -136,14 +102,14 @@ export function TechTitle({ as: As = 'h2', className, children }) {
 
 export function Chip({ className, children, dot = false }) {
   return (
-    <span className={cn('t-chip t-mono', className)}>
+    <span className={cn('t-chip', className)}>
       {dot && <span aria-hidden className="t-dot t-anim"/>}
       {children}
     </span>
   )
 }
 
-/* A primary action: the accent with a mint glow, white text (5.8 : 1). */
+/* A primary action: the accent, white text (5.8 : 1). No glow. */
 export const TechButton = React.forwardRef(function TechButton({ className, variant = 'solid', ...p }, ref) {
   return (
     <button ref={ref} type="button" {...p}
@@ -152,7 +118,7 @@ export const TechButton = React.forwardRef(function TechButton({ className, vari
         'ease-[var(--ease-out)] motion-safe:active:scale-[0.97] select-none touch-manipulation',
         'disabled:pointer-events-none disabled:opacity-50',
         variant === 'solid'
-          ? 'bg-accent text-white shadow-[0_6px_22px_-8px_rgba(62,207,154,.9)] hoverOnly:bg-accent-ink'
+          ? 'bg-accent text-white hoverOnly:bg-accent-ink'
           : 'border border-ruling bg-card text-ink hoverOnly:bg-mist',
         className)}/>
   )

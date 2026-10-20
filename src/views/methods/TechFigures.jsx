@@ -11,15 +11,19 @@ import { Glass } from '../../ui/tech'
  *
  * Labels are HTML; the SVGs hold lines only and are aria-hidden, so a label
  * never shrinks with the drawing. Nothing is invented: the curves are read out
- * of signals/tnam-results.js, the memory length from signals/tnam.js. Glowing
+ * of signals/tnam-results.js, the memory length from signals/tnam.js. Small
  * dots run along the lines while the band is on screen (tech.css).
  *
  * 19 October (later), the owner: "some of the words under how it works are
  * too little, needs some more explanation". Each drawing now ends in one
- * plain line saying how to read it (CAPTION, #2a5744: 6.6 : 1 on the band). */
+ * plain line saying how to read it, for screen readers (the figcaption).
+ *
+ * 20 October, the owner: "reduce glow a bit" and "AI font, remove". No glow
+ * under any line, dot or ring; labels in the body face; lines and dots take
+ * the band's own colour (--t-hue, ui/tech/tech.css), not always green. */
 
-const LABEL = 't-mono text-[0.8125rem] leading-none text-[#0f5836]'
-const CAPTION = 'mt-4 text-meta leading-[1.45] text-[#2a5744]'
+const LABEL = 'text-[0.8125rem] font-semibold leading-none text-[#0f5836]'
+const HUE = { stroke: 'var(--t-hue, #157446)' }
 
 /* ── the Mind Score network ─────────────────────────────────────────────── */
 
@@ -43,28 +47,20 @@ function curvePath(shape) {
 
 /* Lines in a 0..100 wide box that stretches; strokes stay 1.5px. */
 function Lines({ h, paths, className }) {
-  const id = React.useId()
   return (
     <svg viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" aria-hidden focusable="false"
       className={cn('absolute inset-0 block h-full w-full', className)} fill="none">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#18a370"/>
-          <stop offset="1" stopColor="#1d8fb0"/>
-        </linearGradient>
-      </defs>
-      {paths.map(d => <path key={'g' + d} d={d} stroke="#3ecf9a" strokeOpacity=".28" strokeWidth="7" vectorEffect="non-scaling-stroke"/>)}
-      {paths.map(d => <path key={d} d={d} stroke={`url(#${id})`} strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>)}
+      {paths.map(d => <path key={d} d={d} style={HUE} strokeOpacity=".55" strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>)}
     </svg>
   )
 }
 
-/* Glowing dots along straight lanes. Each is [x0 %, y0 px, x1 %, y1 px]. */
+/* Small dots along straight lanes. Each is [x0 %, y0 px, x1 %, y1 px]. */
 function Packets({ runs, delay = 0 }) {
   return runs.map(([x0, y0, x1, y1], i) => (
     <span key={i} aria-hidden className="t-lane t-anim"
       style={{ '--x0': `${x0}%`, '--y0': `${y0}px`, '--x1': `${x1}%`, '--y1': `${y1}px`,
-        animationDelay: `${delay + i * 0.35}s` }}><i/></span>
+        animationDelay: `${delay + i * 0.6}s` }}><i/></span>
   ))
 }
 
@@ -81,10 +77,10 @@ export function NetworkGlow({ className }) {
           return (
             <li key={id} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
               <span className="grid size-11 place-items-center rounded-full border-[1.5px] bg-white"
-                style={{ borderColor: S.glow, boxShadow: `0 0 16px -3px ${S.glow}99, inset 0 0 10px -4px ${S.glow}66` }}>
+                style={{ borderColor: S.glow }}>
                 <Icon aria-hidden size={20} className="text-[#0d2b1e]"/>
               </span>
-              <span className="max-w-full break-words text-[0.8125rem] font-semibold leading-tight text-[#0d2b1e]">{S.name}</span>
+              <span className="whitespace-nowrap text-[0.75rem] font-semibold leading-tight text-[#0d2b1e]">{S.name}</span>
             </li>
           )
         })}
@@ -103,8 +99,7 @@ export function NetworkGlow({ className }) {
               <svg viewBox={`0 0 ${TW} ${TH}`} aria-hidden focusable="false" className="block w-full"
                 fill="none" strokeLinecap="round" strokeLinejoin="round">
                 <path d={`M${PAD} ${TH - PAD}H${TW - PAD}`} stroke="#93b2a1" strokeOpacity=".6" strokeDasharray="2 4"/>
-                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#3ecf9a" strokeOpacity=".3" strokeWidth="8"/>
-                <path d={curvePath(R.shapes[CURVE_OF[id]])} stroke="#157446" strokeWidth="2.4"/>
+                <path d={curvePath(R.shapes[CURVE_OF[id]])} style={HUE} strokeWidth="2.2"/>
               </svg>
             </Glass>
           </li>
@@ -123,16 +118,15 @@ export function NetworkGlow({ className }) {
           <div className="relative grid grid-cols-8 gap-[3px] rounded-[6px]">
             {Array.from({ length: CONTEXT_WINDOWS }, (_, i) => (
               <span key={i} className={cn('block h-5 rounded-[3px] border',
-                i === CONTEXT_WINDOWS - 1 ? 'border-[#1d8fb0] bg-[#1d8fb0]/70 shadow-[0_0_10px_-1px_rgba(29,143,176,.7)]' : 'border-[#c2d7ca] bg-[#1d8fb0]/[0.08]')}/>
+                i === CONTEXT_WINDOWS - 1 ? 'border-[#11677f] bg-[#1d8fb0]/60' : 'border-[#c2d7ca] bg-[#1d8fb0]/[0.08]')}/>
             ))}
             <span aria-hidden className="t-scan t-anim"><i/></span>
           </div>
           <p className={cn(LABEL, 'mt-1.5')}>Last {MEMORY_MIN} minutes</p>
         </div>
-        <span className="relative grid size-14 place-items-center rounded-full border-[1.5px] border-[#3ecf9a] bg-white
-          shadow-[0_0_26px_-4px_rgba(62,207,154,.85),inset_0_0_14px_rgba(62,207,154,.22)]">
+        <span className="relative grid size-14 place-items-center rounded-full border-[1.5px] border-[#11677f] bg-white">
           <svg viewBox="0 0 24 24" aria-hidden focusable="false" className="size-6" fill="none"
-            stroke="#157446" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            stroke="#11677f" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
           <span className="pointer-events-none absolute right-full top-1/2 mr-0.5 h-px w-2 bg-[#1d8fb0]"/>
         </span>
         <p className={LABEL}>Added up</p>
@@ -152,7 +146,6 @@ export function NetworkGlow({ className }) {
             </linearGradient>
           </defs>
           <path d="M12 56a36 36 0 0 1 72 0" stroke="#c2d7ca" strokeOpacity=".7" strokeWidth="7"/>
-          <path d="M12 56a36 36 0 0 1 58 -27" stroke="#3ecf9a" strokeOpacity=".3" strokeWidth="14"/>
           <path d="M12 56a36 36 0 0 1 58 -27" stroke="url(#t-dial)" strokeWidth="7"/>
         </svg>
         <p className="mt-1 font-display text-ui font-bold text-[#0d2b1e]">{SCORE}</p>
@@ -176,10 +169,10 @@ const FAN = [16.67, 50, 83.33]
 export function FrameworkGlow({ className }) {
   return (
     <figure className={cn('m-0 mx-auto w-full max-w-[22rem]', className)}>
-      <Glass tone="vio" sheen className="px-4 py-3.5 text-center">
+      <Glass tone="vio" className="px-4 py-3.5 text-center">
         <p className="font-display text-ui font-bold text-[#0d2b1e]">One framework</p>
         <ul className="m-0 mt-2.5 flex list-none flex-wrap justify-center gap-1.5 p-0">
-          {PUBLISHERS.map(p => <li key={p} className="t-chip t-mono">{p}</li>)}
+          {PUBLISHERS.map(p => <li key={p} className="t-chip font-semibold">{p}</li>)}
         </ul>
       </Glass>
       <div className="relative h-14">

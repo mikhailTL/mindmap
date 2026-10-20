@@ -1,6 +1,5 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
-import '../../ui/tech/tech.css'
 import { INK, N, faceMesh, patchRect, project, strokePairs } from '../mirror/mesh'
 
 /* The Mental Mirror demo on How it works. Not a person: MediaPipe's
@@ -23,20 +22,27 @@ import { INK, N, faceMesh, patchRect, project, strokePairs } from '../mirror/mes
  *   #0f5836 labels on the plate         8.1 : 1
  *   #426a58 "--" on the plate           5.8 : 1
  *   #0d2b1e score on the panel         11.0 : 1
- *   #0f5836 bottom labels on the panel  5.3 : 1 */
+ *   #0f5836 bottom labels on the panel  5.3 : 1
+ * 20 October, the owner: "mirror looks too crazy". Calmer, same mesh: drawn
+ * smaller, time runs at 0.6 speed, the head turn is half as wide, the four
+ * sparks into the bands are gone, and the band colours are the site's
+ * quieter inks. Labels are the body face, not mono ("AI font, remove"). */
+
+/* Real seconds per drawing second: the 9.6 s loop plays over 16 s. */
+const PACE = 0.6
 
 const W = 360, H = 440, LOOP = 9.6
 const S = 11.4, CX = 116, CY = 162 - 0.57 * S
 const STILL_T = 8.4
 const SWEEP = [0.7, 3.0]
 
-const LABEL = '#0f5836', VALUE = '#0d2b1e', MUTED = '#426a58', PULSE = '#d23c3c'
+const LABEL = '#0f5836', VALUE = '#0d2b1e', MUTED = '#426a58', PULSE = '#c0604f'
 const RULE = 'rgba(21,116,70,0.16)'
 const BANDS = [
-  { name: 'Pulse', color: '#dc3c3c', to: 62 },
-  { name: 'Brow', color: '#e07a12', to: 58 },
-  { name: 'Eyes', color: '#18a370', to: 46 },
-  { name: 'Mouth and head', color: '#2f6fdc', to: 54 },
+  { name: 'Pulse', color: '#cf7a68', to: 62 },
+  { name: 'Brow', color: '#c9a24e', to: 58 },
+  { name: 'Eyes', color: '#5fae90', to: 46 },
+  { name: 'Mouth and head', color: '#6fa3d6', to: 54 },
 ]
 const SCORE_TO = 57
 
@@ -54,7 +60,7 @@ function pose(m, t) {
   const blink = Math.max(bump(t, 4.3, 0.12), bump(t, 6.1, 0.12))
   const brow = span(t, 4.9, 5.3) * (1 - span(t, 5.7, 6.1))
   const press = span(t, 5.4, 5.8) * (1 - span(t, 6.3, 6.7))
-  project(m, XY, { cx: CX, cy: CY, s: S, yaw: live * 0.14 * Math.sin(t * 1.7), pitch: live * 0.05 * Math.sin(t * 1.1 + 1),
+  project(m, XY, { cx: CX, cy: CY, s: S, yaw: live * 0.07 * Math.sin(t * 1.7), pitch: live * 0.05 * Math.sin(t * 1.1 + 1),
     blink, brow, press })
   return { blink, brow, press }
 }
@@ -172,17 +178,6 @@ function draw(ctx, m, t, font) {
       ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI + Math.PI * (b.to / 100) * dial); ctx.stroke()
     }
   })
-  /* Each tag sends a spark down into its band as the reading ends. */
-  const fly = span(t, 6.7, 7.3)
-  if (fly > 0 && fly < 1) {
-    BANDS.forEach((b, i) => {
-      const sx = 236, sy = 40 + (i === 0 ? 4 : i) * 50 + 22, r = 82 - i * 11
-      const ex = cx - r, ey = cy
-      const x = sx + (ex - sx) * fly, y = sy + (ey - sy) * fly - Math.sin(fly * Math.PI) * 30
-      ctx.fillStyle = b.color
-      ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill()
-    })
-  }
   ctx.textAlign = 'center'
   ctx.globalAlpha = fade * span(t, 7.2, 7.6)
   ctx.fillStyle = VALUE; ctx.font = `700 30px ${font}`
@@ -221,7 +216,7 @@ export function MirrorDemo({ className }) {
       last = now
       const r = host.getBoundingClientRect()
       if (document.hidden || r.bottom < 0 || r.top > innerHeight) return
-      t = (t + dt) % LOOP
+      t = (t + dt * PACE) % LOOP
       draw(ctx, m, t, font)
     }
     const run = () => {
@@ -240,15 +235,13 @@ export function MirrorDemo({ className }) {
   }, [])
 
   return (
-    <figure className={cn('m-0', className)}>
-      {/* A plain light panel: white card, hairline, flat paper inside.
-          19 October, the owner: "i like the mental mirror thing a lot", so
-          the drawing's timing stays; 20 October, its glow and ground went. */}
-      <div className="w-full rounded-[14px] border border-[#dde7e1] bg-white p-1.5 shadow-[0_1px_2px_rgba(13,43,30,.05)]">
-        <div className="relative w-full overflow-hidden rounded-[9px] bg-[#f6f8f7]">
-          <div ref={box} className="t-mono relative w-full">
-            <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
-          </div>
+    <figure className={cn('m-0 mx-auto w-full max-w-[20rem]', className)}>
+      {/* A plain light panel, flat paper. 19 October, the owner: "i like the
+          mental mirror thing a lot"; 20 October, its glow and ground went and
+          it sits smaller, inside the photo pair (Methods.jsx). */}
+      <div className="relative w-full overflow-hidden rounded-[10px] bg-[#f6f8f7]">
+        <div ref={box} className="relative w-full">
+          <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>
         </div>
       </div>
       <figcaption className="sr-only">

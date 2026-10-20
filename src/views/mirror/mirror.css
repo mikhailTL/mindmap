@@ -2,8 +2,7 @@
  * owner: "looks too cheesy, u need to remove topographic glow and
  * background". So every surface is plain: white cards, hairline borders, a
  * soft neutral shadow at most. The camera feed is the only dark thing, and
- * only while it runs. (.mm-topo and .mm-drift stay for ./Topo.jsx, which the
- * About sheet still uses.)
+ * only while it runs. The contour ground (Topo.jsx) is gone everywhere.
  *
  * Motion is transform, opacity and the ring's arc only. Under
  * prefers-reduced-motion nothing moves.
@@ -33,14 +32,6 @@
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 1px 2px rgb(13 43 30 / .05);
-}
-.mm-topo {
-  position: absolute; inset: -6%;
-  z-index: -1;
-  width: 112%; height: 112%;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent);
-  mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent);
 }
 
 /* The viewfinder: a hairline round a flat paper screen. */
@@ -88,13 +79,6 @@
 /* The ring's arc moves on smoothly between the once-a-percent updates. */
 .mm-arc { transition: stroke-dashoffset .45s linear, opacity .3s var(--mm-ease); }
 
-.mm-drift { animation: mm-drift 40s ease-in-out infinite alternate; }
-@keyframes mm-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-2.5%, 2%, 0); }
-}
-
-
 .mm-fade { transition: opacity .45s var(--mm-ease); }
 
 /* The result arrives: a short rise, then its cards one after another. */
@@ -120,7 +104,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mm-breathe, .mm-wait i, .mm-drift, .mm-reveal { animation: none; }
+  .mm-breathe, .mm-wait i, .mm-reveal { animation: none; }
   .mm-arc, .mm-fade, .mm-answer { transition: none; }
   .mm-answer:active { transform: none; }
 }

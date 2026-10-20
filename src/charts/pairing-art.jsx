@@ -92,7 +92,7 @@ function Plate({ cx, cy, a, b, wall }) {
   )
 }
 
-/* Arrowheads and witness lines, mono label outside. Two orientations, because
+/* Arrowheads and witness lines, label outside. Two orientations, because
    the arm figure has to carry both dimensions and neither is foreshortened on
    that view. */
 function DimV({ x, y1, y2, from, size }) {
@@ -117,6 +117,58 @@ function DimH({ y, x1, x2, from, size }) {
       <path d={`M${f(x1)} ${f(y)}l${f(size * 0.6)} ${f(-t)}M${f(x1)} ${f(y)}l${f(size * 0.6)} ${f(t)}`}/>
       <path d={`M${f(x2)} ${f(y)}l${f(-size * 0.6)} ${f(-t)}M${f(x2)} ${f(y)}l${f(-size * 0.6)} ${f(t)}`}/>
     </g>
+  )
+}
+
+/* ---- the hero: two objects, one link, nothing between them -------------- */
+
+const LINK_ALT =
+  'A drawing of the patch on the left and a phone on the right, with three arcs of Bluetooth Low '
+  + 'Energy leaving the side of the patch and reaching the phone. In the gap between them a cable '
+  + 'is drawn and struck through, because no cable runs between the two.'
+
+export function WirelessLink({ className }) {
+  const cx = 80, cy = 108, a = 32, b = 48
+  return (
+    <svg viewBox="0 0 460 240" role="img" aria-label={LINK_ALT}
+      className={cn('block h-auto w-full', className)} style={{ maxWidth: 520 }}>
+      <Plate cx={cx} cy={cy} a={a} b={b} wall={7}/>
+      <Slot cx={cx} cy={cy} a={a} b={b}/>
+      <circle cx={cx} cy={cy} r="5" fill={ACCENT}/>
+      <Advert x={cx + a} cy={cy} rings={[[16, 30], [26, 48], [36, 66]]}/>
+
+      {/* The phone is a drawing here rather than the ui/iphone mockup: at this
+          size the mockup's bezel detail is mush, and the figure is about the
+          gap between the two objects, not about the device. */}
+      <rect x="316" y="28" width="108" height="168" rx="20" fill={CARD} stroke={INK} strokeWidth="1.8"/>
+      <rect x="325" y="37" width="90" height="150" rx="13" fill={PAPER} stroke={RULE} strokeWidth="1"/>
+      <rect x="354" y="44" width="32" height="8" rx="4" fill={INK}/>
+      <g stroke={RULE} strokeWidth="5" strokeLinecap="round">
+        <line x1="337" y1="150" x2="403" y2="150"/>
+        <line x1="337" y1="166" x2="383" y2="166"/>
+      </g>
+      <circle cx="370" cy="104" r="22" fill={WASH} stroke={ACCENT} strokeWidth="2"/>
+      <path d="M361 104l6 7 12-14" fill="none" stroke={ACCENT} strokeWidth="2.6"
+        strokeLinecap="round" strokeLinejoin="round"/>
+
+      {/* The cable is the only shape in this file that exists to be denied. It
+          stops short of the phone on purpose: a cable drawn into the frame
+          would overlap the screen and read as part of the device. */}
+      <path d="M178 150Q238 186 298 148" fill="none" stroke={RULING} strokeWidth="3.4"
+        strokeLinecap="round"/>
+      <rect x="170" y="142" width="12" height="16" rx="3" fill={MIST} stroke={RULING} strokeWidth="1.4"/>
+      <rect x="296" y="140" width="12" height="16" rx="3" fill={MIST} stroke={RULING} strokeWidth="1.4"/>
+      <line x1="218" y1="142" x2="258" y2="192" stroke={INK} strokeWidth="2.8" strokeLinecap="round"/>
+
+      <g className="font-body" fontSize="15" fill={INK3}>
+        <text x="232" y="62" textAnchor="middle">Bluetooth Low Energy</text>
+        <text x="232" y="212" textAnchor="middle">no cable, no computer</text>
+      </g>
+      <g className="font-display" fontSize="17" fontWeight="700" fill={INK}>
+        <text x={cx} y="196" textAnchor="middle">The patch</text>
+        <text x="370" y="226" textAnchor="middle">Your phone</text>
+      </g>
+    </svg>
   )
 }
 
@@ -153,7 +205,7 @@ export function ArmPlacement({ className }) {
 
       <DimV x={dimX} y1={f(cy - b)} y2={f(cy + b)} from={f(cx + a)} size={size}/>
       <DimH y={dimY} x1={f(cx - a)} x2={f(cx + a)} from={f(cy + b)} size={size}/>
-      <g className="font-mono" fontSize={size} fill={INK3}>
+      <g className="font-body" fontSize={size} fill={INK3}>
         <text x={f(dimX + 10)} y={f(cy - 1)}>{MM_LONG} mm</text>
         <text x={f(dimX + 10)} y={f(cy + size + 2)} fontSize={f(size * 0.84)}>along the arm</text>
         <text x={cx} y={f(dimY + size * 1.5)} textAnchor="middle">{MM_CROSS} mm across</text>
@@ -182,10 +234,10 @@ function PatchWake({ height }) {
       <polyline points={`${cx - a - 6},${cy} 30,${cy} 30,246`} fill="none" stroke={RULING}
         strokeWidth="1"/>
       <circle cx="30" cy="246" r="2.6" fill={RULING}/>
-      <g className="font-mono" fontSize="12.5" fill={INK3}>
+      <g className="font-body" fontSize="12.5" fill={INK3}>
         <text x="18" y="268">charging slot</text>
-        <text x="132" y="76">sending a</text>
-        <text x="132" y="94">Bluetooth signal</text>
+        <text x="132" y="54">sending a</text>
+        <text x="132" y="72">Bluetooth signal</text>
       </g>
     </svg>
   )
@@ -200,7 +252,6 @@ function PatchWake({ height }) {
 
 const DISPLAY = 'Quicksand,sans-serif'
 const BODY = 'Chivo,sans-serif'
-const MONO = '"Chivo Mono",monospace'
 
 function Pad({ children }) {
   return (
@@ -218,7 +269,7 @@ const H1 = { margin:0, fontFamily:DISPLAY, fontWeight:700, fontSize:33, lineHeig
 function AppHome({ tap = false }) {
   return (
     <Pad>
-      <p style={{ margin:0, fontFamily:MONO, fontSize:17, color:INK3 }}>MindMap</p>
+      <p style={{ margin:0, fontFamily:BODY, fontSize:17, color:INK3 }}>MindMap</p>
       <p style={{ ...H1, marginTop:16 }}>Pair your patch.</p>
       <p style={{ margin:'10px 0 0', fontFamily:BODY, fontSize:19, lineHeight:1.4, color:INK2 }}>
         The patch connects over Bluetooth. Nothing to install.
@@ -231,7 +282,7 @@ function AppHome({ tap = false }) {
           streaming screen, which is the same four rows carrying units. */}
       <div style={{ marginTop:20, borderRadius:14, border:`1px solid ${RULE}`, background:CARD,
         padding:'15px 14px' }}>
-        <p style={{ margin:0, fontFamily:MONO, fontSize:16, color:INK3 }}>No patch connected</p>
+        <p style={{ margin:0, fontFamily:BODY, fontSize:16, color:INK3 }}>No patch connected</p>
         {SENSOR_ORDER.map((id, i) => {
           const s = SENSORS[id]
           return (
@@ -240,7 +291,7 @@ function AppHome({ tap = false }) {
               {/* Colour identifies the channel and never carries it alone. */}
               <span aria-hidden style={{ width:4, height:18, borderRadius:999, background:s.glow }}/>
               <span style={{ fontFamily:BODY, fontSize:18, color:INK2 }}>{s.name}</span>
-              <span style={{ marginLeft:'auto', fontFamily:MONO, fontSize:15, color:INK3 }}>
+              <span style={{ marginLeft:'auto', fontFamily:BODY, fontSize:15, color:INK3 }}>
                 waiting
               </span>
             </div>
@@ -292,7 +343,7 @@ function Chooser({ picked = false }) {
             MindMap patch
           </span>
         </div>
-        <p style={{ margin:'12px 0 0', fontFamily:MONO, fontSize:15, color:INK3 }}>
+        <p style={{ margin:'12px 0 0', fontFamily:BODY, fontSize:15, color:INK3 }}>
           only the patch is listed
         </p>
         <div style={{ marginTop:18, display:'flex', gap:12 }}>
@@ -318,7 +369,7 @@ function Streaming() {
   return (
     <Pad>
       <p style={H1}>Connected to the patch.</p>
-      <p style={{ margin:'10px 0 0', fontFamily:MONO, fontSize:18, color:ACCENT }}>
+      <p style={{ margin:'10px 0 0', fontFamily:BODY, fontSize:18, color:ACCENT }}>
         Readings arrive once a second.
       </p>
       <div style={{ marginTop:22, borderRadius:14, background:INK, padding:'18px 16px' }}>
@@ -331,7 +382,7 @@ function Streaming() {
                   name is beside it in paper. */}
               <span aria-hidden style={{ width:4, height:20, borderRadius:999, background:s.glow }}/>
               <span style={{ fontFamily:BODY, fontSize:19, color:PAPER }}>{s.name}</span>
-              <span style={{ marginLeft:'auto', fontFamily:MONO, fontSize:16, color:MIST }}>
+              <span style={{ marginLeft:'auto', fontFamily:BODY, fontSize:16, color:MIST }}>
                 {s.unit}
               </span>
             </div>

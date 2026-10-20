@@ -5,6 +5,7 @@ import { STUDENT_ITEMS } from '../../toolkit/index.jsx'
 import { SKILL_BY_ID } from '../../skills/index.js'
 import { ScrollIn } from '../../ui/motion'
 import { TechBand, TechTitle, TechButton } from '../../ui/tech'
+import { Frame } from '../../ui/frame'
 
 /* The Toolkit tab of How it works: the nameplates and a short explanation.
  *
@@ -17,7 +18,10 @@ import { TechBand, TechTitle, TechButton } from '../../ui/tech'
  * 19 October (later): "stop making things dark, site should be more peaceful
  * and light". The band sits on the light tech ground like the other tabs, the
  * button is the accent rather than ink, and the four plates are ones whose
- * banners are light (toolkit/nameplates/palettes.js). */
+ * banners are light (toolkit/nameplates/palettes.js).
+ *
+ * 20 October, the owner: pair the drawings with stock. The plates sit under
+ * one licensed stock frame (models, not users). */
 
 const ITEM = Object.fromEntries(STUDENT_ITEMS.map(i => [i.id, i]))
 const PLATES = [ITEM.ground, ITEM.walk, SKILL_BY_ID['life-money'], SKILL_BY_ID['school-sources']].filter(Boolean)
@@ -39,9 +43,16 @@ export function ToolkitBand({ go }) {
           </TechButton>
         </ScrollIn>
 
-        {/* Real nameplates: each one opens its activity. */}
-        <figure className="m-0 grid min-w-0 gap-2.5">
-          {PLATES.map((it, i) => <Nameplate key={it.id} item={it} index={i}/>)}
+        {/* A stock frame, then the real nameplates: each one opens its activity. */}
+        <figure className="m-0 mx-auto w-full min-w-0 max-w-[26rem]">
+          <div className="overflow-hidden rounded-[16px] bg-mist" style={{ aspectRatio: '16 / 10' }}>
+            <Frame photo="friends-steps"
+              alt="A stock photograph of two teenagers sitting on steps outside, reading a notebook together."/>
+          </div>
+          <div className="relative mx-3 -mt-6 grid gap-2.5 rounded-[14px] border border-rule/70 bg-white p-3
+            shadow-[0_1px_2px_rgba(13,43,30,.05),0_10px_24px_-18px_rgba(13,43,30,.25)]">
+            {PLATES.map((it, i) => <Nameplate key={it.id} item={it} index={i}/>)}
+          </div>
         </figure>
       </div>
     </TechBand>

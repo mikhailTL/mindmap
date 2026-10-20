@@ -26,9 +26,10 @@ import { cn } from '../lib/utils'
  *   focal    an explicit override, e.g. '70% 10%', for the rare frame that
  *            wants a different part of a file it shares with another frame
  *
- * Every photograph is a licensed stock frame of models. Nobody in one uses
- * MindMap, nobody is wearing the patch, and no alt text passed here may say or
- * imply otherwise.
+ * Every photograph is a licensed stock frame of models. Some frames carry a
+ * rendering of the patch placed on the arm; the people are models and nobody
+ * in them uses MindMap, and no alt text passed here may say or imply
+ * otherwise.
  *
  * max-w-none is load-bearing: Tailwind's preflight sets img { max-width: 100% }
  * and that undoes a frame set to fill a box wider than its own file. */

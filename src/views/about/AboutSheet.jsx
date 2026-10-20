@@ -4,7 +4,6 @@ import { LogoMark } from '../../ui/logo'
 import { Cross } from '../../ui/marks'
 import { captureHarness } from '../Intro'
 import { getAppearance } from '../../account/appearance'
-import { Topo } from '../mirror/Topo'
 import {
   PARTS, PROBLEM, STATS, WHY, WHY_QUOTE, PERSONAL, WHAT_LEAD, FEATURES, WHAT_CLOSE, VISION, VISION_MARK,
 } from './content'
@@ -15,7 +14,9 @@ import {
    not be all over the place, needs to be nice and smooth"). A native modal
    <dialog>: the page behind is inert, Esc closes it, focus returns to the
    About button. The sheet is its own scroller, so the rail and the reveals
-   read its scroll, not the window's. */
+   read its scroll, not the window's. 20 October, the owner: no contour lines
+   and not all green, so the hero sits on a pale sky field and the vision on
+   a pale lilac one, each with one soft round shape. */
 
 const CSS = `
 .ab-sheet { background: #ffffff; color: #0d2b1e; overscroll-behavior: contain; }
@@ -23,13 +24,13 @@ const CSS = `
 .ab-sheet::backdrop { background: rgb(13 43 30 / .5); }
 @keyframes ab-sheet-in { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
 .ab-head { background: rgb(255 255 255 / .92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.ab-hero { background: linear-gradient(180deg, #edf7f7, #ffffff); }
-.ab-vision { background: linear-gradient(170deg, #e3f2e9, #edf7f7 70%); }
+.ab-hero { background: linear-gradient(180deg, #ddf0f8, #ffffff); }
+.ab-vision { background: linear-gradient(170deg, #f6e8ff, #fdf9ff 75%); }
+.ab-shape { position: absolute; z-index: -1; border-radius: 999px; pointer-events: none; }
 [data-rv] { transition: opacity .7s cubic-bezier(.23,1,.32,1), transform .7s cubic-bezier(.23,1,.32,1); transition-delay: var(--d, 0ms); }
 [data-rv="wait"] { opacity: 0; transform: translateY(12px); }
 .ab-bar { transform-origin: 0 50%; transition: transform .18s linear; }
 .ab-vbar { transform-origin: 50% 0; transition: transform .18s linear; }
-.ab-sheet .mm-drift { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .ab-sheet[open] { animation: ab-sheet-fade .2s linear both !important; }
   [data-rv="wait"] { opacity: 1; transform: none; }
@@ -162,12 +163,15 @@ const ICONS = {
   lilac: <><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13.5v6M13.5 16.5h6"/></>,
 }
 
+/* Each feature in its own light hue (owner, 20 October: vary the green). */
+const HUE = { mint: 'bg-mint-wash text-mint-ink', sky: 'bg-sky-wash text-sky-ink', lilac: 'bg-lilac-wash text-lilac-ink' }
+
 function Feature({ f, i }) {
   return (
     <article data-rv="" style={{ '--d': `${i * 70}ms` }}
       className="rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
       <div className="flex items-center gap-3">
-        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-field bg-accent-wash text-accent-ink">
+        <span aria-hidden className={cn('grid size-10 shrink-0 place-items-center rounded-field', HUE[f.hue] || HUE.mint)}>
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.7"
             strokeLinecap="round" strokeLinejoin="round">{ICONS[f.hue]}</svg>
         </span>
@@ -212,7 +216,7 @@ function Vision({ onClose }) {
   return (
     <section id="ab-vision" data-part="vision" aria-labelledby="ab-h-vision"
       className="ab-vision relative isolate -mx-4 mt-14 overflow-hidden px-4 pb-16 pt-14 sm:mx-0 sm:mt-20 sm:rounded-[24px] sm:px-10 sm:py-16">
-      <Topo className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-60"/>
+      <span aria-hidden className="ab-shape -right-24 -top-24 size-72 bg-sun-wash opacity-80 sm:-right-16 sm:-top-28 sm:size-96"/>
       <PartHead part={PARTS[4]} id="ab-h-vision"/>
       <p data-rv="" className="m-0 mt-7 max-w-[30ch] font-display text-[1.5rem] font-bold leading-[1.3] tracking-[-0.015em] text-ink sm:text-[2rem]">
         {marked(VISION[0].slice(0, cut), [VISION_MARK], 'text-accent-ink')}
@@ -404,7 +408,7 @@ export function AboutSheet({ open, onClose }) {
         <div className="hidden lg:block"><Rail prog={prog} active={active} jump={jump}/></div>
         <article className="min-w-0 max-w-[48rem] sm:pb-24">
           <div className="ab-hero relative isolate -mx-4 overflow-hidden px-4 pb-2 pt-10 sm:mx-0 sm:mt-8 sm:rounded-[24px] sm:px-10 sm:py-12">
-            <Topo className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-50"/>
+            <span aria-hidden className="ab-shape -right-20 -top-28 size-64 bg-sky-band opacity-70 sm:-right-12 sm:size-80"/>
             <h2 id="ab-title" className="m-0 font-display text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-ink sm:text-[3.25rem]">
               About Mind<span className="text-accent">Map</span>
             </h2>

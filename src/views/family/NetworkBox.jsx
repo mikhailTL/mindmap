@@ -80,9 +80,10 @@ export default function NetworkBox({ go, real, me, className }) {
 
   return (
     <section aria-labelledby={titleId}
-      className={cn('flex min-w-0 flex-col rounded-panel border-2 border-accent bg-card', className)}>
-      <div className="flex items-start gap-3 border-b-2 border-accent bg-accent-wash px-5 pb-4 pt-5 [border-top-left-radius:12px] [border-top-right-radius:12px]">
-        <People aria-hidden className="mt-0.5 size-7 text-accent-ink"/>
+      className={cn('flex min-w-0 flex-col rounded-panel border-2 border-sky bg-card', className)}>
+      {/* Pale sky, not all green (owner, 20 October). */}
+      <div className="flex items-start gap-3 border-b-2 border-sky bg-sky-wash px-5 pb-4 pt-5 [border-top-left-radius:12px] [border-top-right-radius:12px]">
+        <People aria-hidden className="mt-0.5 size-7 text-sky-ink"/>
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="m-0 font-display !text-row font-bold leading-tight text-ink">Your network</h3>
           <p className="m-0 mt-1 text-fine text-ink-2">

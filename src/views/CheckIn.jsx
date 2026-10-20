@@ -13,6 +13,7 @@ import { useMode } from '../lib/mode'
 import { Diverge } from '../charts/diverge'
 import { ITEMS, score, sentence, connectPatch } from '../lib/engine'
 import { PhoneCheck } from './PhoneCheck'
+import { CameraModule, SignalCoverage } from '../charts/camera'
 import { MentalMirror } from './MentalMirror'
 import { FACE_SECONDS } from '../signals/face'
 import { BackBar, Stage, StageStyles } from './reading/stage'
@@ -411,6 +412,15 @@ export function CheckInBody({ go }){
         <Stage dir={dir}>
           <ReadingHead id="sensors" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4"><PhoneCheck go={go}/></div>
+          {/* Owner, 20 October: the camera explainer lives only here, closed,
+              below the steps ("only appear under a dropdown called 'How the
+              camera pulse check works'"). */}
+          <SeeDetails label="How the camera pulse check works" className="mt-4 lg:mt-5">
+            <div className={cn(PANEL, 'p-4 lg:p-6')}>
+              <CameraModule className="mx-auto max-w-[66rem]"/>
+              <SignalCoverage className="mt-4 border-t border-rule pt-4"/>
+            </div>
+          </SeeDetails>
         </Stage>
       )}
 

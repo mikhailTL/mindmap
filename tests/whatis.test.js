@@ -13,9 +13,26 @@ describe('What is MindMap? band', () => {
     expect((html.match(/<article/g) || []).length).toBe(3)
   })
 
-  it('draws one decorative illustration per card, hidden from screen readers', () => {
-    expect((html.match(/<svg[^>]*aria-hidden="true"[^>]*class="block h-auto w-full"/g) || []).length).toBe(3)
-    expect(html).not.toContain('role="img"')
+  /* Owner, 20 October: stock photographs in place of the isometric drawings,
+     the patch worn in the first two and the app in use in the third. */
+  it('shows one photograph per card, each with alt text naming models', () => {
+    expect((html.match(/<img /g) || []).length).toBe(3)
+    expect(WHAT_IS.map(f => f.photo)).toEqual(['patch-worn', 'ovw-pro-patch', 'ovw-app-bus'])
+    for (const f of WHAT_IS) {
+      expect(f.alt).toMatch(/model/)
+      expect(html).toContain(`alt="${f.alt}"`)
+    }
+    expect(WHAT_IS[0].alt).toMatch(/patch/)
+    expect(WHAT_IS[1].alt).toMatch(/patch/)
+    expect(WHAT_IS[2].alt).toMatch(/phone/)
+    expect(html).not.toContain('<svg class="block h-auto w-full"')
+  })
+
+  it('gives the three cards three different light washes, none green', () => {
+    const hues = WHAT_IS.map(f => f.hue)
+    expect(new Set(hues).size).toBe(3)
+    expect(hues).not.toContain('accent')
+    expect(html).not.toContain('bg-accent-wash')
   })
 
   it('leads with the owner sentence', () => {

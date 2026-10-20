@@ -2,7 +2,9 @@ import React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { Camera, MoveMark } from '../ui/marks'
 import { FrameworkGlow, NetworkGlow } from './methods/TechFigures'
-import { TechBand, TechTitle, Glass, IsoPlate, Topo } from '../ui/tech'
+import { TechBand, TechTitle, Glass, IsoPlate, TONE_HUE } from '../ui/tech'
+import { Frame } from '../ui/frame'
+import { PHOTOS } from '../lib/photos'
 import { CONTEXT_WINDOWS, PARAM_COUNT } from '../signals/tnam'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
@@ -37,8 +39,13 @@ import { MirrorDemo } from './methods/MirrorDemo'
  * fact taken from the code or docs/. And: "stop making things dark, site
  * should be more peaceful and light ... keep adding the topographic,
  * isometric, and technological designs". Every tab now sits on the light
- * tech ground (ui/tech TechBand: grid, contours, blooms); nothing on this
- * page is dark. */
+ * tech ground (ui/tech TechBand); nothing on this page is dark.
+ *
+ * 20 October, the owner: "The 'How it works' also needs stock paired with
+ * the glow diagrams, reduce glow a bit and pair with stock, mirror looks too
+ * crazy", and "AI font, remove". Each tab pairs its drawing with one licensed
+ * stock photograph (lib/photos.js), takes its own light colour (`tone`), and
+ * has no contour lines and no mono labels. */
 
 const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
@@ -47,8 +54,9 @@ const WINS = R.paired.wins
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
 /* ── the categories ──────────────────────────────────────────────────────
-   Every band is on the light tech ground (ui/tech); `tech` is the second
-   bloom's hue. 18 October, the owner: "Especially for the AI and ML,
+   Every band is on the light tech ground (ui/tech); `tone` is its colour,
+   `photo` and `alt` the stock frame paired with its drawing (models, not
+   users), `aspect` the frame's shape. 18 October, the owner: "Especially for the AI and ML,
    implement the cool discord style design strats at a technical cool level
    ... different from toolkit". `plain` keeps a tab's facts as ruled rows
    with icons instead of glass cards.
@@ -56,7 +64,9 @@ const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
    their place. 18 October, the owner: "remove app and site from how it
    works", so that tab is gone. */
 const CATEGORIES = [
-  { id: 'hardware', tab: 'The patch', tech: 'mint', plain: true, still: true,
+  { id: 'hardware', tab: 'The patch', tone: 'sun', plain: true, still: true,
+    photo: 'patch-worn', aspect: '3 / 2',
+    alt: 'A stock photograph of a teenager, a model, with a drawing of the patch on his upper arm to show where it sits.',
     title: 'What the patch measures',
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
     explain: 'Stress shows up in small body changes, and the patch reads them every second.',
@@ -69,13 +79,17 @@ const CATEGORIES = [
     figure: PatchRender },
   /* "Add Mental Mirror as a whole new feature on the how it works complete
      with a video demo" (18 October). Facts from docs/mental-mirror.md. */
-  { id: 'mirror', tab: 'Mental Mirror', tech: 'mint', still: true,
+  { id: 'mirror', tab: 'Mental Mirror', tone: 'sky', still: true,
+    photo: 'student-hero', aspect: '16 / 9',
+    alt: 'A stock photograph of a smiling teenager in headphones facing the camera.',
     title: 'Mental Mirror',
     line: "Google's MediaPipe Face Landmarker maps 478 points on your face, frame by frame.",
     explain: 'One 30 second reading with the front camera, compared with your own earlier readings.',
     close: `It gives a ${SCORE} without the patch. No picture is kept.`,
     figure: MirrorDemo },
-  { id: 'ai', tab: 'MindMap AI', tech: 'vio',
+  { id: 'ai', tab: 'MindMap AI', tone: 'lilac',
+    photo: 'parent-laptop', aspect: '2 / 1',
+    alt: 'A stock photograph of a mother and her teenager looking at a laptop together.',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
     explain: 'A chat built on a language model that follows one written set of rules, with its sources listed.',
@@ -87,7 +101,9 @@ const CATEGORIES = [
       ['In a crisis', 'A crisis line comes before anything else.'],
     ],
     figure: FrameworkGlow },
-  { id: 'ml', tab: 'Machine Learning', tech: 'mint',
+  { id: 'ml', tab: 'Machine Learning', tone: 'teal',
+    photo: 'students-hallway', aspect: '2 / 1',
+    alt: 'A stock photograph of four students walking down a school corridor.',
     title: 'A novel neural network',
     line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
     explain: `Each signal gets its own learned curve, and the curves add up, so every score shows what moved it.`,
@@ -101,7 +117,9 @@ const CATEGORIES = [
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkGlow },
-  { id: 'beyond', tab: 'Phone sensors', tech: 'mint', plain: true,
+  { id: 'beyond', tab: 'Phone sensors', tone: 'coral', plain: true,
+    photo: 'student-bus', aspect: '16 / 10',
+    alt: 'A stock photograph of two teenagers on a bus laughing at a phone.',
     title: 'What your phone adds',
     line: 'Sensors you already carry, used only inside MindMap.',
     explain: 'They give a reading when the patch is off and run some Toolkit activities.',
@@ -136,15 +154,15 @@ function PinMark(p) { return <M {...p}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0
 
 /* The patch tab's picture: the real CAD model (the one in the 3D viewer on
    the patch page) rendered face up from public/di/arena, revision DI-03,
-   with the engraved logo and wordmark on top. A still image, outlined in the
-   accent so the pale shell reads on paper, standing on an isometric plate. */
+   with the engraved logo and wordmark on top, standing on an isometric
+   plate. 20 October: the copy without the mint glow (photos/hiw-patch-cad). */
 function PatchRender({ className }) {
   return (
-    <figure className={cn('relative m-0 flex justify-center pb-14', className)}>
-      <IsoPlate className="absolute bottom-0 left-1/2 w-[300px] max-w-full -translate-x-1/2 lg:w-[340px]"/>
-      <img src={`${import.meta.env.BASE_URL}patch-front-cad.png`} width={605} height={871}
+    <figure className={cn('relative m-0 flex justify-center pb-10', className)}>
+      <IsoPlate hue={TONE_HUE.sun} className="absolute bottom-0 left-1/2 w-[220px] max-w-full -translate-x-1/2"/>
+      <img src={PHOTOS['hiw-patch-cad']} width={531} height={797}
         alt="The MindMap patch CAD model, face up, with the MindMap logo engraved on top."
-        className="relative block h-auto w-[200px] lg:w-[240px]" decoding="async"/>
+        className="relative block h-auto w-[120px] drop-shadow-[0_6px_10px_rgba(13,43,30,.12)]" decoding="async"/>
     </figure>
   )
 }
@@ -156,15 +174,15 @@ function PhoneParts({ className }) {
   return (
     <figure className={cn('m-0 flex items-center justify-center gap-6', className)}>
       <div className="relative shrink-0 pb-9">
-        <IsoPlate n={4} className="absolute bottom-0 left-1/2 w-[150px] -translate-x-1/2"/>
+        <IsoPlate n={4} hue={TONE_HUE.coral} className="absolute bottom-0 left-1/2 w-[150px] -translate-x-1/2"/>
       <svg viewBox="0 0 80 150" aria-hidden focusable="false"
-        className="relative block h-40 w-auto drop-shadow-[0_0_12px_rgba(62,207,154,.45)]"
+        className="relative block h-36 w-auto"
         fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="4" width="72" height="142" rx="12" fill="#ffffff" stroke="#8fb3a2" strokeWidth="2"/>
-        <circle cx="40" cy="16" r="4" className="text-accent" stroke="currentColor" strokeWidth="2"/>
-        <path d="M32 136h16" className="text-accent" stroke="currentColor" strokeWidth="2"/>
+        <rect x="4" y="4" width="72" height="142" rx="12" fill="#ffffff" stroke="#c9a59a" strokeWidth="2"/>
+        <circle cx="40" cy="16" r="4" stroke={TONE_HUE.coral} strokeWidth="2"/>
+        <path d="M32 136h16" stroke={TONE_HUE.coral} strokeWidth="2"/>
         <rect x="14" y="30" width="52" height="94" rx="4" className="text-rule" stroke="currentColor" strokeWidth="1.6"/>
-        <circle cx="40" cy="64" r="14" className="text-accent" stroke="currentColor" strokeWidth="2"
+        <circle cx="40" cy="64" r="14" stroke={TONE_HUE.coral} strokeWidth="2"
           strokeDasharray="66 22" transform="rotate(135 40 64)"/>
         <path d="M22 98h36M22 106h24" className="text-rule" stroke="currentColor" strokeWidth="2"/>
       </svg>
@@ -172,7 +190,7 @@ function PhoneParts({ className }) {
       <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
         {parts.map(([k, , Icon]) => (
           <li key={k} className="flex items-center gap-2 text-ink">
-            <Icon size={20} className="text-accent"/>
+            <Icon size={20} className="text-[#b23009]"/>
             <span className="text-ui font-semibold">{k}</span>
           </li>
         ))}
@@ -183,28 +201,44 @@ function PhoneParts({ className }) {
 
 /* A row: label, one line. Ruled, never boxed. */
 /* `first`, not :first-child: each row sits in its own ScrollRow wrapper. */
-function Row({ k, icon: Icon, first, children }) {
+function Row({ k, icon: Icon, first, hue, children }) {
   return (
     <div className={cn('grid gap-x-4 gap-y-0.5 border-t border-rule py-2', first && 'border-t-0 pt-0',
       'sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)]')}>
       <p className="flex items-center gap-2 font-body text-ui font-semibold text-ink">
-        {Icon && <Icon size={18} className="text-accent"/>}{k}
+        {Icon && <Icon size={18} style={{ color: hue }}/>}{k}
       </p>
       <p className="text-meta leading-[1.45] text-ink-2">{children}</p>
     </div>
   )
 }
 
-/* A fact on the tech ground: a glass card, the label in mono. The crisis row
-   gets the warm edge so it is the first card the eye finds. */
-function Fact({ k, children }) {
+/* A fact on the tech ground: a white card, the label in the band's colour.
+   The crisis row gets the warm edge so it is the first card the eye finds. */
+function Fact({ k, hue, children }) {
   const crisis = k === 'In a crisis'
   return (
     <Glass tone={crisis ? 'coral' : 'quiet'} className="h-full px-4 py-3">
-      <p className={cn('t-mono text-[0.8125rem] font-semibold leading-tight',
-        crisis ? 'text-[#b23009]' : 'text-[#0f5836]')}>{k}</p>
+      <p className="text-[0.8125rem] font-semibold leading-tight"
+        style={{ color: crisis ? TONE_HUE.coral : hue }}>{k}</p>
       <p className="mt-1.5 text-ui leading-[1.45] text-[#0d2b1e]">{children}</p>
     </Glass>
+  )
+}
+
+/* The stock frame and the drawing as one pair: the photograph on top, the
+   drawing on a white card that overlaps its lower edge. */
+export function Pair({ photo, alt, aspect, children, className }) {
+  return (
+    <div className={cn('mx-auto w-full max-w-[26rem]', className)}>
+      <div className="overflow-hidden rounded-[16px] bg-mist" style={{ aspectRatio: aspect }}>
+        <Frame photo={photo} alt={alt}/>
+      </div>
+      <div className="relative mx-3 -mt-6 rounded-[14px] border border-rule/70 bg-white px-4 py-5
+        shadow-[0_1px_2px_rgba(13,43,30,.05),0_10px_24px_-18px_rgba(13,43,30,.25)]">
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -212,8 +246,10 @@ function Fact({ k, children }) {
 function TechCategory({ c }) {
   const Figure = c.figure
   const odd = c.rows && c.rows.length % 2 === 1
+  const hue = TONE_HUE[c.tone]
+  const pair = <Pair photo={c.photo} alt={c.alt} aspect={c.aspect}><Figure/></Pair>
   return (
-    <TechBand hue={c.tech}>
+    <TechBand tone={c.tone}>
       {/* Heading, drawing, facts on a phone; facts beside the drawing from lg. */}
       <div className="grid gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:grid-rows-[auto_1fr] lg:items-start">
         <ScrollIn className="min-w-0 lg:col-start-1 lg:row-start-1">
@@ -222,14 +258,14 @@ function TechCategory({ c }) {
           {c.explain && <p className="mt-3 max-w-[52ch] text-sec leading-[1.5] text-[#0d2b1e]">{c.explain}</p>}
         </ScrollIn>
         {c.still
-          ? <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1"><Figure/></div>
-          : <Parallax2D className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1" distance={36} scale={0.03}><Figure/></Parallax2D>}
+          ? <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1">{pair}</div>
+          : <Parallax2D className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-1" distance={24} scale={0.02}>{pair}</Parallax2D>}
         {(c.rows || c.close) && (
           <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:-mt-2">
             {c.rows && c.plain && (
               <div className="max-w-[40rem]">
                 {c.rows.map(([k, line, icon], i) => (
-                  <ScrollRow key={k} index={i}><Row k={k} icon={icon} first={i === 0}>{line}</Row></ScrollRow>
+                  <ScrollRow key={k} index={i}><Row k={k} icon={icon} hue={hue} first={i === 0}>{line}</Row></ScrollRow>
                 ))}
               </div>
             )}
@@ -238,7 +274,7 @@ function TechCategory({ c }) {
                 {c.rows.map(([k, line], i) => (
                   <ScrollRow as="li" key={k} index={i}
                     className={cn(odd && i === c.rows.length - 1 && 'sm:col-span-2')}>
-                    <Fact k={k}>{line}</Fact>
+                    <Fact k={k} hue={hue}>{line}</Fact>
                   </ScrollRow>
                 ))}
               </ul>
@@ -273,7 +309,6 @@ export function Methods({ go }) {
 
         {/* ── the opening band: title, one action, the switcher ── */}
         <section className="relative isolate overflow-hidden border-t border-rule bg-paper">
-          <Topo seed={3.4} className="t-topo -right-56 -top-72 size-[44rem] text-[#157446]"/>
           <div className="wrap pb-5 pt-7 lg:pb-6 lg:pt-10">
             <div className="min-w-0">
               <h1 className="font-display font-bold text-major leading-[1.05] tracking-tight text-ink">

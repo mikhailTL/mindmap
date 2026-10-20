@@ -2,21 +2,26 @@ import React from 'react'
 import { PatchPage } from './PatchPage'
 import { Pairing } from './Pairing'
 import { WithoutPatch } from './WithoutPatch'
+import { Frame } from '../ui/frame'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
 /* About the patch, Pairing the patch and Without the patch, read top to bottom
    on one page. The three routes ('patch', 'pairing', 'without-patch') all
    render this, and each lands on its own part. The owner, 18 October: no
-   numbers and no loud colour bands, just titles. Each part opens on the same
-   wash with the same title, and the sections inside sit on white. */
+   numbers and no loud colour bands, just titles. 20 October: "too green",
+   so each part opens on its own light ground (sky, turquoise, lilac). */
 
 const PARTS = [
-  { id:'about-patch',   route:'patch',         short:'About the patch',   title:'About the patch' },
+  { id:'about-patch',   route:'patch',         short:'About the patch',   title:'About the patch',
+    line:`Sits on your upper arm, under a sleeve. Gives you one ${SCORE} a day, 0 calm to 100 peak.`,
+    ground:'bg-sky-band' },
   { id:'pairing-patch', route:'pairing',       short:'Pairing',           title:'Pairing the patch',
-    line:'Fully wireless, 2 minutes of setup.' },
+    line:'Fully wireless, 2 minutes of setup.', ground:'bg-[#e2f2f0]' },
+  /* One line, merged from two (owner, 20 October). */
   { id:'without-patch', route:'without-patch', short:'Without the patch', title:'Without the patch',
-    line:`Three ways to get a ${SCORE} with only your phone.` },
+    line:`Measure your stress right now as a ${SCORE}, 0 calm to 100 peak, with only your phone.`,
+    ground:'bg-lilac-wash' },
 ]
 const BY_ROUTE = Object.fromEntries(PARTS.map(p => [p.route, p]))
 
@@ -77,16 +82,45 @@ function routeInHash() {
   return BY_ROUTE[raw] ? raw : null
 }
 
-/* The part's title, on the wash its first band continues. */
-function PartHead({ part, as: H = 'h2' }) {
+/* The part's title, on the ground its first band continues. */
+function PartHead({ part }) {
   return (
-    <div className={cn(H !== 'h1' && 'border-t border-rule', 'bg-accent-wash')}>
+    <div className={cn('border-t border-rule', part.ground)}>
       <div className="wrap pt-8 lg:pt-12">
-        <H id={part.id + '-h'}
-          className="m-0 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">
+        <h2 id={part.id + '-h'}
+          className="m-0 font-display text-sect font-bold text-ink">
           {part.title}
-        </H>
-        {part.line && <p className="mt-2 text-meta leading-[1.4] text-ink-2">{part.line}</p>}
+        </h2>
+        {part.line && <p className="mt-2 max-w-[60ch] text-meta leading-[1.4] text-ink-2">{part.line}</p>}
+      </div>
+    </div>
+  )
+}
+
+/* A licensed stock frame of a model with a drawing of the patch placed on
+   the upper arm: nobody shown wears or uses MindMap. */
+const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
+  + 'of the patch placed on the outer upper arm to show where it sits.'
+
+/* The page's hero (owner, 20 October: the title bar "is too small", and the
+   photo of the patch on the arm goes "up there"). Compact, so the CAD model
+   right below stays in the first screen. */
+function AboutHero({ part }) {
+  return (
+    <div className={part.ground}>
+      <div className="wrap grid items-center gap-5 pb-6 pt-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,46%)]
+        lg:gap-10 lg:pb-8 lg:pt-8">
+        <div className="min-w-0">
+          <h1 id={part.id + '-h'}
+            className="m-0 font-display text-[clamp(2.75rem,5.4vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-ink">
+            {part.title}
+          </h1>
+          <p className="mt-3 max-w-[40ch] text-lead text-ink-2">{part.line}</p>
+        </div>
+        <div className="h-[210px] overflow-hidden rounded-panel border border-sky/30 sm:h-[300px]
+          lg:h-[290px]">
+          <Frame photo="patch-worn" alt={ARM_ALT} eager/>
+        </div>
       </div>
     </div>
   )
@@ -176,7 +210,7 @@ export function PatchHub({ go, section = 'patch' }) {
 
       <section id="about-patch" tabIndex={-1} aria-labelledby="about-patch-h"
         className="outline-none" style={{ scrollMarginTop: CLEAR }}>
-        <PartHead part={PARTS[0]} as="h1"/>
+        <AboutHero part={PARTS[0]}/>
         <PatchPage as="div" go={go}/>
       </section>
 

@@ -1,45 +1,58 @@
 import React from 'react'
 import { Frame } from '../ui/frame'
 import { Button } from '../ui/button'
+import { Card } from '../ui/card'
 import { Section, SectionHead } from '../ui/section'
-import { IPhone } from '../ui/iphone'
-import { PhoneApp } from '../ui/phone-app'
-import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
-import { CameraModule, SignalCoverage } from '../charts/camera'
+import { ScrollRow } from '../ui/motion'
 import { PhoneCheck } from './PhoneCheck'
 import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 import { FACE_SECONDS } from '../signals/face'
-import { SCORE } from '../lib/terms'
-import { cn } from '../lib/utils'
-import { SceneCard } from '../ui/scenes/SceneCard'
-import { mirrorArt, pulseArt, surveyArt } from '../ui/scenes/art'
 
 /* Taking a reading with nothing on your arm. Capture instructions live in
-   PhoneCheck, at the point of use; do not duplicate them here. Every figure
-   is 2D, so Parallax2D only, at unequal distances. */
-
-const PANEL = 'rounded-panel border border-rule bg-card'
+   PhoneCheck, at the point of use; do not duplicate them here. How the camera
+   pulse check works lives in the reading's camera screen only (owner, 20
+   October). */
 
 /* The owner, 18 October: the Mental Mirror first, then the camera pulse
-   check, then the Survey. 45 is PPG_SECONDS plus VOICE_SECONDS. */
+   check, then the Survey. 45 is PPG_SECONDS plus VOICE_SECONDS. Each card
+   takes its own light hue (owner, 20 October: less green, no topography). */
 const ROUTES = [
-  { id:'mirror', title:'Mental Mirror', when:`${FACE_SECONDS} seconds`, art:'mirror',
+  { id:'mirror', title:'Mental Mirror', when:`${FACE_SECONDS} seconds`, hue:'sky',
     line:"Google's MediaPipe Face Landmarker maps 478 points on your face." },
-  { id:'sensors', title:'Camera pulse check', when:'45 seconds', art:'sensors',
+  { id:'sensors', title:'Camera pulse check', when:'45 seconds', hue:'coral',
     line:'Reads your pulse from skin colour.' },
-  { id:'ask', title:'Survey', when:'About a minute', art:'ask',
+  { id:'ask', title:'Survey', when:'About a minute', hue:'sun',
     line:`${ITEMS.length} questions on how you feel.` },
 ]
 
-/* One of the three ways, as a lit scene card (owner, 18 October: the site
-   should carry more of the Toolkit's depth; 19 October: light cards, not
-   dark). Each takes its own tone and a small loop that shows what it reads. */
-const ART = { mirror: [mirrorArt, 'mint', [0.62, 0.5]], sensors: [pulseArt, 'sky', [0.47, 0.3]],
-  ask: [surveyArt, 'paper', [0.66, 0.55]] }
+/* The camera check has no screen worth cropping before it starts, so a plain
+   drawing: a fingertip over the lens, and the pulse it reads. */
+function PulsePreview() {
+  return (
+    <svg viewBox="0 0 220 100" aria-hidden className="h-full w-auto">
+      <rect x="8" y="14" width="72" height="72" rx="16" fill="#fff" stroke="#0d2b1e" strokeWidth="2"/>
+      <circle cx="30" cy="36" r="10" fill="none" stroke="#426a58" strokeWidth="1.6"/>
+      <circle cx="30" cy="64" r="10" fill="none" stroke="#426a58" strokeWidth="1.6"/>
+      <circle cx="58" cy="36" r="5" fill="#426a58"/>
+      <circle cx="44" cy="50" r="27" fill="#f25424" fillOpacity=".22" stroke="#b23009" strokeWidth="2"/>
+      <path d="M96 56h22l7-22 10 40 8-28 6 10h18l7-22 10 40 8-28 6 10h12" fill="none"
+        stroke="#b23009" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+/* Crops of the app's own screens (src/lib/photos.js), shown whole. */
+const PREVIEW = {
+  mirror: <Frame photo="ppage-mirror-ui" alt="The Mental Mirror screen: a mesh of points over a face."
+    className="!h-full !w-auto rounded-field border border-rule object-contain"/>,
+  sensors: <PulsePreview/>,
+  ask: <Frame photo="ppage-survey-ui"
+    alt="The first Survey question, How tense does your body feel right now, with answers 0 to 4."
+    className="!h-full !w-auto rounded-field border border-rule object-contain"/>,
+}
 
 function Route({ r, i, go, toCheck }) {
-  const [art, tone, light] = ART[r.art]
   const cta = r.id === 'ask'
     ? <Button variant="outline" size="sm"
         onClick={() => { setReadingIntent('survey'); go('check') }}>
@@ -54,63 +67,38 @@ function Route({ r, i, go, toCheck }) {
       </Button>
   return (
     <ScrollRow index={i} className="h-full">
-      <SceneCard tone={tone} art={art} w={240} h={110} sky={{ light, rings: 5, ringGap: 14 }}
-        bandClass="h-[88px] sm:h-[112px]"
-        title={r.title} meta={r.when} line={r.line} footer={cta}/>
+      <Card variant="tint" hue={r.hue} className="flex h-full flex-col overflow-hidden">
+        <div className="flex h-[140px] items-center justify-center bg-white/55 px-4 py-3 lg:h-[150px]">
+          {PREVIEW[r.id]}
+        </div>
+        <div className="flex flex-1 flex-col p-3.5 lg:p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+            <h3 className="font-display text-row font-bold leading-tight text-ink">{r.title}</h3>
+            <p className="font-body text-fine text-ink-2">{r.when}</p>
+          </div>
+          <p className="mt-1.5 text-fine text-ink-2">{r.line}</p>
+          <div className="mt-auto pt-3.5">{cta}</div>
+        </div>
+      </Card>
     </ScrollRow>
   )
 }
 
 /* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
-   part's title. */
+   part's title and its one line. */
 export function WithoutPatch({ go, as: Root = 'main' }) {
   const toCheck = () => document.getElementById('take')?.scrollIntoView({ behavior:'smooth', block:'start' })
 
   return (
     <Root>
-      <header className="bg-accent-wash">
-        <div className="wrap grid gap-5 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-center
-          lg:gap-8 lg:pb-8 lg:pt-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
-          <div className="min-w-0">
-            {/* What a reading is, before the ways (owner, 20 October). */}
-            <p className="mb-3 max-w-[60ch] text-sec leading-[1.5] text-ink-2">
-              A reading measures your stress level right now as your {SCORE}, 0 calm to 100 peak.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3 sm:auto-rows-fr">
-              {ROUTES.map((r, i) => <Route key={r.id} r={r} i={i} go={go} toCheck={toCheck}/>)}
-            </div>
-          </div>
-
-          {/* The phone on a faded photograph, so the space beside it is
-              picture rather than blank. A licensed stock frame of models:
-              nobody shown uses MindMap. */}
-          <div className="relative isolate flex justify-center overflow-hidden rounded-panel border
-            border-rule bg-accent-wash px-4 py-5">
-            <Frame wash photo="student-bus" className="absolute inset-0 -z-10 opacity-60"/>
-            <IPhone scale={0.54} label="The MindMap app running on a phone" className="shrink-0 lg:hidden">
-              <PhoneApp/>
-            </IPhone>
-            <IPhone scale={0.46} label="The MindMap app running on a phone" className="hidden shrink-0 lg:block">
-              <PhoneApp/>
-            </IPhone>
-          </div>
+      <header className="bg-lilac-wash">
+        <div className="wrap grid gap-3 pb-7 pt-4 sm:grid-cols-3 sm:auto-rows-fr lg:gap-4 lg:pb-10 lg:pt-6">
+          {ROUTES.map((r, i) => <Route key={r.id} r={r} i={i} go={go} toCheck={toCheck}/>)}
         </div>
       </header>
 
-      <Section tone="card" tight id="camera" className="scroll-mt-[7.5rem]">
-        <SectionHead>How the camera pulse check works</SectionHead>
-        <ScrollIn className="mt-3 lg:mt-4">
-          <div className={cn(PANEL, 'overflow-hidden border-l-[3px] border-l-accent p-3.5 lg:p-4')}>
-            <Parallax2D distance={30}>
-              <CameraModule className="mx-auto max-w-[66rem]"/>
-            </Parallax2D>
-            <SignalCoverage className="mt-4 border-t border-rule pt-4"/>
-          </div>
-        </ScrollIn>
-      </Section>
-
       <Section tone="paper" tight id="take" className="scroll-mt-[7.5rem]">
-        <SectionHead>Take a reading now</SectionHead>
+        <SectionHead className="mt-0">Take a reading now</SectionHead>
         <div className="mt-3 lg:mt-4"><PhoneCheck/></div>
       </Section>
     </Root>

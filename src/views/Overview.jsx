@@ -15,14 +15,12 @@ import { setMode } from '../lib/mode'
 import { WhatIs } from './landing/WhatIs'
 import { Different } from './landing/Different'
 import { HeadsUp } from './audience'
-import { SceneBand } from '../ui/scenes/SceneCard'
-import { patchWayArt, phoneWayArt } from '../ui/scenes/art'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
 import heroField from '../photos/hero-field.webp'
 /* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
-  SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL, PRO_PLURAL_LC,
+  SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL,
   CONSENT_SHORT,
 } from '../lib/terms'
 
@@ -32,20 +30,16 @@ import {
  * 18 October ("very cluttered"); on the 19th it came back redesigned: "i said
  * redesign not remove".
  *
- * Grounds alternate green, white and blue so the page reads as a sequence:
- *   hero paper, problem ink, two ways sky.wash,
- *   tools paper, who for accent.wash, privacy
- *   beam.wash, every age aqua.2.
- * Measured on each wash (ink : ink.2 : ink.3 : accent : accent.ink):
- *   accent.wash 12.68 : 6.88 : 4.67 : 4.84 : 7.09
- *   sky.wash    13.01 : 7.06 : 4.80 : 4.97 : 7.28
- *   beam.wash   12.95 : 7.03 : 4.78 : 4.95 : 7.25
- *   aqua.2      11.84 : 6.43 : 4.36 : 4.52 : 6.62
- * ink.3 fails on aqua.2, so that band sets no ink.3 and its green words take
- * accent.ink. Photographs never sit under text without an opaque ground.
- *
- * One photograph per band at most, each in a different treatment, so they
- * read as part of the page rather than as a strip.
+ * Grounds vary across the light palette, not only green (owner, 20 October):
+ *   hero paper with a sun tile, problem ink, what it is white with sky,
+ *   lilac and sun cards, two ways sky.band, who for coral.wash, privacy
+ *   lilac.wash.
+ * Measured on each ground (ink : ink.2 : ink.3 : accent : accent.ink):
+ *   sun.wash    12.93 : 7.02 : 5.20 : 4.94 : 7.23
+ *   coral.wash  12.94 : 7.02 : 5.20 : 4.94 : 7.24
+ *   lilac.wash  12.96 : 7.03 : 5.21 : 4.95 : 7.25
+ *   sky.band    12.20 : 6.62 : 4.91 : 4.66 : 6.82
+ * Photographs never sit under text without an opaque ground.
  */
 
 /* The page's green section names, in page order, for the header's Overview
@@ -63,22 +57,22 @@ export const OVERVIEW_SECTIONS = [
 
 /* The two ways in, both on the white card (owner, 18 October: the tinted one
    "looks like a diff section" on a phone). The patch comes first, as the
-   owner asked; `lead` gives it the green edge. Without the patch names the
-   three readings, Mental Mirror first, and no steps. */
+   owner asked; `lead` gives it the green edge. Owner, 20 October: both lists
+   numbered the same way, "none of that weird bolding", and a photograph in
+   place of each drawn strip: the patch on a player's arm, and a teen looking
+   straight at the camera, the way the Mental Mirror sees a face. */
 const WAYS = [
-  { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true,
-    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'],
-    scene:[patchWayArt, 'mint', [0.29, 0.48]] },
-  { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works',
-    ways: [
-      ['Mental Mirror', "reads your face with Google's MediaPipe Face Landmarker, a machine learning model."],
-      ['Camera pulse check', 'reads your pulse from skin colour with your phone camera.'],
-      ['Survey', 'asks a few short questions.'],
-    ],
-    scene:[phoneWayArt, 'sky', [0.51, 0.5]] },
+  { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true, photo:'ovw-patch-court',
+    steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'] },
+  { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works', photo:'ovw-mirror-face',
+    steps: [
+      "Mental Mirror reads your face with Google's MediaPipe Face Landmarker, a machine learning model.",
+      'Camera pulse check reads your pulse from skin colour with your phone camera.',
+      'Survey asks a few short questions.',
+    ] },
 ]
 
-/* Three stacked doors on the green band. Each is the white card with its
+/* Three stacked doors on the coral band. Each is the white card with its
    audience's colour along the top, so none blends into the band (owner,
    18 October: the pale green one "blends in"). */
 const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
@@ -219,14 +213,14 @@ export function Overview({ go }) {
           <div className="relative -mx-[22px] flex flex-1 border-t border-rule
             sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
+            {/* Soft sun, not green, and no glow behind the patch (owner, 20
+                October: less green, much less glow). */}
             <div className="relative flex flex-1 items-center justify-center overflow-hidden
-              border-r border-rule bg-accent-wash px-4 py-8 lg:py-0
+              border-r border-rule bg-sun-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-              after:bg-accent-wash after:content-[''] lg:after:block">
+              after:bg-sun-wash after:content-[''] lg:after:block">
               <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
               <span aria-hidden className="absolute bottom-3 left-3 h-3 w-3 border-b border-l border-ruling/55"/>
-              <span aria-hidden className="mm-glow pointer-events-none absolute left-1/2 top-1/2
-                h-[62%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]"/>
               <figure className="relative m-0 flex min-w-0 max-w-full flex-col items-center gap-3">
                 <PatchFront className="w-[180px] sm:w-[224px] lg:w-[250px] xl:w-[290px]"/>
                 <figcaption className="max-w-[17ch] text-balance text-center font-display text-fine
@@ -273,7 +267,10 @@ export function Overview({ go }) {
           Every figure on this band is external and sourced. The figures sit
           on a frosted panel: on the band directly they measured under AA. */}
       <Section name="The problem" id="problem" tone="ink" className="relative isolate overflow-hidden">
-        <DriftWash photo="student-homework" className="-z-10" imgClassName="opacity-[0.22]"/>
+        {/* The photograph fades out down the band, so Why MindMap? sits on
+            the plain deep green with no box of its own. */}
+        <DriftWash photo="student-homework" imgClassName="opacity-[0.22]"
+          className="-z-10 [mask-image:linear-gradient(to_bottom,black_45%,transparent_72%)]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
           Teen stress is a global crisis often invisible until it’s too late
         </SectionHead>
@@ -281,19 +278,31 @@ export function Overview({ go }) {
           <ProblemFigures/>
         </ScrollIn>
         {/* The owner's own words, 18 October, under the figures and inside
-            the band, on a solid deep-green panel so the photo wash does not
-            show through: why MindMap answers them. */}
+            the band. Owner, 20 October: the dark box with a green title
+            "looks vibe coded". Now an open two-column block on the band: the
+            question on the left; on the right his paragraph, its last
+            sentence (the answer) set larger. Every word is his. */}
         <div id="why" className="scroll-mt-14 outline-none">
-        <ScrollIn className="mt-6 rounded-panel border border-accent-lit/40 bg-ink p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] lg:mt-8 lg:p-7">
-          <h3 className="m-0 font-display text-head font-bold tracking-tight text-accent-lit lg:text-sub">Why MindMap?</h3>
-          <p className="m-0 mt-3 max-w-[72ch] text-meta leading-[1.6] text-paper">
-            With these mental illnesses showing no sign of ceasing, current approaches do not focus on connections
-            and support systems, leaving millions of teens suffering alone. MindMap introduces the world’s first
-            wearable patch and app system designed for adolescents, contrary to existing solutions focused on adults,
-            individual health, and driving stigma. MindMap is the only app that bridges the gap between teens,
-            parents, and {PRO_PLURAL_LC} to reduce isolation and nurture caring and supportive environments.
-          </p>
-        </ScrollIn>
+          <ScrollIn className="mt-8 grid gap-4 border-t border-paper/20 pt-7 lg:mt-12
+            lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-12 lg:pt-10
+            xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+            <h3 className="m-0 font-display text-sub font-bold leading-[1.1] tracking-tight text-paper">
+              Why MindMap?
+            </h3>
+            <div className="max-w-[60ch]">
+              <p className="m-0 text-sec leading-[1.6] text-mist">
+                With these mental illnesses showing no sign of ceasing, current approaches do not focus on connections
+                and support systems, leaving millions of teens suffering alone. MindMap introduces the world’s first
+                wearable patch and app system designed for adolescents, contrary to existing solutions focused on adults,
+                individual health, and driving stigma.
+              </p>
+              <p className="m-0 mt-5 font-display text-[1.25rem] font-semibold leading-[1.4] text-paper lg:text-[1.5rem]">
+                MindMap is the only app that bridges the gap between{' '}
+                <span className="text-accent-lit">teens, parents, and {PRO_PLURAL}</span>{' '}
+                to reduce isolation and nurture caring and supportive environments.
+              </p>
+            </div>
+          </ScrollIn>
         </div>
       </Section>
 
@@ -307,11 +316,9 @@ export function Overview({ go }) {
       <RainbowBreak/>
 
       {/* -- the two ways in, on blue ---------------------------------------
-          The photograph sits at 0.14 with no scrim so the ground stays blue.
-          Over it accent measured 4.0, so the band's name takes accent.ink. */}
+          No photograph behind the band now: each card carries its own. */}
       <Section name="Getting started" id="start" tone="card"
-        className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
-        <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.08]"/>
+        className="bg-sky-band [&>div>p:first-child]:text-accent-ink">
         <SectionHead>2 ways to use MindMap</SectionHead>
         <SectionLede>A reading turns your stress level into a {SCORE}, 0 calm to 100 peak. Both ways give the same score.</SectionLede>
         <div className="mt-5 grid gap-3.5 md:auto-rows-fr md:grid-cols-2">
@@ -319,15 +326,18 @@ export function Overview({ go }) {
             <ScrollRow key={w.id} index={i} className="h-full">
               <Card interactive as="button" type="button" onClick={() => go(w.go)}
                 variant="plain"
-                className={cn('flex h-full w-full flex-col overflow-hidden p-5 text-left', w.lead && 'border-l-accent')}>
-                {/* The card stays white (owner, 18 October); only its header
-                    band is a lit scene. */}
-                <SceneBand as="span" tone={w.scene[1]} w={360} h={120} sky={{ light: w.scene[2], rings: 6 }}
-                  className="-mx-5 -mt-5 h-[112px] sm:h-[128px]">{w.scene[0]}</SceneBand>
-                <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">
-                  {w.title}
+                className={cn('flex h-full w-full flex-col overflow-hidden p-0 text-left lg:flex-row',
+                  w.lead && 'border-l-accent')}>
+                {/* The photograph is on top on a phone and down the card's
+                    left from lg, where its tall frame keeps face and arm in. */}
+                <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-sky-wash
+                  lg:aspect-auto lg:w-[40%]">
+                  <Frame wash photo={w.photo} className="absolute inset-0"/>
                 </span>
-                {w.steps && (
+                <span className="flex flex-1 flex-col p-5">
+                  <span className="block font-display text-head font-bold leading-tight text-ink">
+                    {w.title}
+                  </span>
                   <ol className="m-0 mt-3 list-none space-y-2 p-0">
                     {w.steps.map((step, n) => (
                       <li key={step} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
@@ -336,22 +346,12 @@ export function Overview({ go }) {
                       </li>
                     ))}
                   </ol>
-                )}
-                {w.ways && (
-                  <ul className="m-0 mt-3 list-none space-y-2 p-0">
-                    {w.ways.map(([name, line]) => (
-                      <li key={name} className="flex items-start gap-3 text-sec leading-[1.5] text-ink-2">
-                        <span aria-hidden className="mt-[0.6em] size-2 shrink-0 rounded-full bg-accent"/>
-                        <span><strong className="font-semibold text-ink">{name}</strong> {line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <span className="mt-auto flex items-center gap-2 pt-5 font-display text-meta
-                  font-bold text-accent">
-                  {w.cta}
-                  <ArrowRight className="size-[1.1rem] transition-transform duration-200
-                    groupHoverOnly:translate-x-1.5"/>
+                  <span className="mt-auto flex items-center gap-2 pt-5 font-display text-meta
+                    font-bold text-accent">
+                    {w.cta}
+                    <ArrowRight className="size-[1.1rem] transition-transform duration-200
+                      groupHoverOnly:translate-x-1.5"/>
+                  </span>
                 </span>
               </Card>
             </ScrollRow>
@@ -359,12 +359,12 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- the three audiences, on green ----------------------------------
+      {/* -- the three audiences, on soft coral (owner, 20 October: not only green) --
           From lg the cards stack in the left column and the kitchen
-          photograph is the band's right edge, faded in from the green, so no
+          photograph is the band's right edge, faded in from the coral, so no
           card or word ever sits over a face. Under lg it is a rounded frame
           between the lede and the cards. */}
-      <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
+      <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-coral-wash">
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
           [mask-image:linear-gradient(to_right,transparent,black_45%)]">
           <DriftWash photo="parent-kitchen" imgClassName="opacity-90"/>
@@ -409,8 +409,8 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* ── privacy, on blue, with a rounded photograph beside it at lg ───── */}
-      <Section name="Privacy" id="privacy" tone="card" className="bg-sky-band">
+      {/* ── privacy, on soft lilac, with a rounded photograph beside it at lg ── */}
+      <Section name="Privacy" id="privacy" tone="card" className="bg-lilac-wash">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
           xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div className="min-w-0">

@@ -2,17 +2,19 @@ import React from 'react'
 import { Section, SectionHead, SectionLede } from '../../ui/section'
 import { ScrollRow } from '../../ui/motion'
 import { ArrowRight } from '../../ui/marks'
+import { Frame } from '../../ui/frame'
 import { PRO_PLURAL } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 import { cardClass } from '../../ui/card'
-import { useSceneWatch } from '../../ui/scenes/kit'
-import { AppPicture, NetworkPicture, PatchPicture, PICTURE_CSS } from './whatis/pictures'
 
-/* What is MindMap? The owner's own three-point description, each point under
- * one isometric drawing (whatis/pictures.jsx). Owner, 18 October: the demo
- * pictures were too complex, so each card is now number, title, text, link.
- * Sits between the dark problem band and the white "What makes MindMap
- * different" band, so it takes the green wash.
+/* What is MindMap? The owner's own three-point description, one photograph
+ * per card. Owner, 20 October: the isometric drawings go; "replace these with
+ * stock ... they must be wearing the patch in the images and third one they
+ * must be using app". So: a teen with the patch on his upper arm, a teen with
+ * the patch talking with a counselor, and two teens with a phone beside a
+ * screen of the app itself (the student Home, rendered from this build).
+ * Every frame is a licensed stock photograph of models; the patch and the
+ * phone screen are placed on them (src/lib/photos.js).
  *
  * The text is the owner's, with spelling, the product name and the third
  * audience's capitalisation fixed. One change of substance: he wrote that
@@ -25,41 +27,43 @@ export const WHAT_IS_LEAD =
   `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL} to address the teen mental health crisis at its root by measuring stress and quantifying wellness using innovative features. MindMap provides 3 main features:`
 
 export const WHAT_IS = [
-  { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch', Picture: PatchPicture,
+  { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch',
+    photo: 'patch-worn', hue: 'sky',
+    alt: 'A teenage model in a school gym with the white MindMap patch shown on his upper arm',
     text: 'A wearable patch that turns detailed, numerical data into readable and friendly updates using an original Neural Network, unlike most wellness apps, which use no hardware.',
     /* Owner, 18 October: readings do not need the patch. */
     more: 'Users can also take readings without the patch, through in-app features like the machine learning Mental Mirror, a camera pulse check, and the Survey.' },
-  { id: 'network', title: 'A support network', go: 'privacy', cta: 'Who sees what', Picture: NetworkPicture,
+  { id: 'network', title: 'A support network', go: 'privacy', cta: 'Who sees what',
+    photo: 'ovw-pro-patch', hue: 'lilac',
+    alt: 'A teenage model with the MindMap patch shown on his upper arm, talking with a counselor model who holds a clipboard',
     text: `A network support system between teens, parents, and ${PRO_PLURAL} to share data, manage different teens’ stress, and address issues at their root, as opposed to common, individualized monitoring apps. Teens have the freedom of privacy controls to decide who sees what.` },
-  { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit', Picture: AppPicture,
+  { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit',
+    photo: 'ovw-app-bus', hue: 'sun',
+    alt: 'Two teenage models laughing on a school bus, one holding a phone, beside a phone showing the MindMap student Home screen',
     text: 'A ‘one-stop’ application, providing tools like MindMap AI, grounded in published clinical guidance, and Heads Up, a parental tool to identify screen-related stress as it occurs. MindMap also offers many other utilities for academic success, social dynamics, wellness, and career skills.' },
 ]
 
-/* Three neighbours, three surfaces (src/ui/card.jsx): the patch is the white
-   card, the network takes the turquoise wash, the app white too (owner, 20
-   October: the outline card was the band's own colour). */
-const LOOK = [['plain'], ['tint', 'beam'], ['plain']]
+/* Three neighbours, three light washes (owner, 20 October: not all green).
+   The number takes the hue's own ink; every ink clears 4.5 on its wash. */
+const NUM = { sky: 'text-sky-ink', lilac: 'text-lilac-ink', sun: 'text-sun-ink' }
 
 /* A step under body size on a phone, so the patch card, the longest, stays
    about one screen tall. */
 const TEXT = 'm-0 mt-2 text-[0.9375rem] leading-[1.5] text-ink-2 md:text-ui md:leading-[1.55]'
 
 function Feature({ f, n, go }) {
-  const [variant, hue] = LOOK[(n - 1) % LOOK.length]
   const titleId = React.useId()
-  const { Picture } = f
-  /* Pauses the drawing's loops while it is off screen. */
-  const pic = React.useRef(null)
-  useSceneWatch(pic)
   return (
     <article aria-labelledby={titleId}
-      className={cn(cardClass(variant, hue), `flex h-full flex-col p-2
+      className={cn(cardClass('tint', f.hue), `flex h-full flex-col p-2
         md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-start md:gap-4 lg:flex lg:items-stretch lg:gap-0`)}>
-      <div ref={pic} className="overflow-hidden rounded-[10px]"><Picture/></div>
+      <div className="relative aspect-[16/10] overflow-hidden rounded-[10px]">
+        <Frame photo={f.photo} alt={f.alt} className="absolute inset-0"/>
+      </div>
       <div className="flex flex-1 flex-col px-2.5 pb-1 pt-3.5 md:self-stretch md:pt-2 lg:pt-3.5">
         <h3 id={titleId} className="m-0 flex items-center gap-2.5 font-display text-row font-bold leading-tight text-ink">
-          <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-full',
-            'font-display text-xs font-bold text-accent-ink', variant === 'plain' ? 'bg-accent-wash' : 'bg-card')}>{n}</span>
+          <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-full bg-card',
+            'font-display text-xs font-bold', NUM[f.hue])}>{n}</span>
           {f.title}
         </h3>
         <p className={TEXT}>{f.text}</p>
@@ -78,11 +82,12 @@ function Feature({ f, n, go }) {
   )
 }
 
+/* The band is white so the three washes read as three; no eyebrow, which
+   only repeated the heading. */
 export function WhatIs({ go }) {
   return (
-    <Section name="What is MindMap?" id="what-is" tone="card" className="bg-accent-wash">
-      <style>{PICTURE_CSS}</style>
-      <SectionHead>What is MindMap?</SectionHead>
+    <Section id="what-is" tone="card">
+      <SectionHead className="mt-0">What is MindMap?</SectionHead>
       <SectionLede className="max-w-[70ch]">{WHAT_IS_LEAD}</SectionLede>
       {/* Under md the three cards swipe sideways, the next one peeking in,
           so the band is one card tall on a phone rather than three. */}

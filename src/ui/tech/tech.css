@@ -9,8 +9,11 @@
  * mint grid on a pale wash, white glass with a mint to turquoise hairline,
  * colour-tinted glows, mono labels in deep green. 19 October (later), the
  * owner: "stop making things dark, site should be more peaceful and light".
- * The Mirror demo moved to .t-paper and the unused .t-dark panel is gone;
- * the camera viewfinder keeps its own dark ground (views/mirror/mirror.css).
+ * The camera viewfinder keeps its own dark ground (views/mirror/mirror.css).
+ * 20 October, the owner: "reduce glow a bit and pair with stock". The
+ * contour lines, drifting blooms and tinted glows are gone; each band takes
+ * one light colour of the site's scheme (.t-band--sky and the rest) and the
+ * labels are set in the body face, not mono ("AI font, remove").
  *
  * Motion is transform, opacity and background-position only. Every animated
  * element carries .t-anim and is paused until the .tech root it sits in is on
@@ -21,7 +24,7 @@
  * any ground under it:
  *   #0d2b1e ink          11.8 : 1
  *   #2a5744 secondary     6.6 : 1
- *   #0f5836 mono labels   7.0 : 1
+ *   #0f5836 labels        7.0 : 1
  *   #b23009 crisis label  6.3 : 1
  *   white on #157446      5.8 : 1  */
 
@@ -37,55 +40,48 @@
   outline-offset: 2px;
 }
 
-/* ── the ground: a pale wash, two blooms, a grid that fades at the edges ── */
+/* ── the ground: one light colour, a still colour field, a faint grid ──── */
 .t-band {
+  --t-wash: #eef7f2;   /* the band's light colour */
+  --t-field: #dcefe4;  /* the soft shape in one corner */
+  --t-hue: #157446;    /* lines, dots and icons on this band */
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background:
-    radial-gradient(120% 80% at 100% 0%, rgba(29,143,176,.07), transparent 60%),
-    radial-gradient(90% 70% at 0% 100%, rgba(62,207,154,.08), transparent 60%),
-    linear-gradient(180deg, #f7faf8, #f1f8f4);
+  background: linear-gradient(180deg, #fbfdfc, var(--t-wash));
 }
+.t-band--sky   { --t-wash: #eaf5fb; --t-field: #d4e9fb; --t-hue: #0967ab; }
+.t-band--teal  { --t-wash: #ecf6f5; --t-field: #e2f2f0; --t-hue: #11677f; }
+.t-band--lilac { --t-wash: #faf3ff; --t-field: #f6e8ff; --t-hue: #6f09b2; }
+.t-band--sun   { --t-wash: #faf6ec; --t-field: #f5ecd7; --t-hue: #825d07; }
+.t-band--coral { --t-wash: #fff4f0; --t-field: #ffe8e0; --t-hue: #b23009; }
 .t-band::before {
   content: '';
   position: absolute; inset: 0; z-index: -1;
   background-image:
-    linear-gradient(rgba(21,116,70,.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21,116,70,.075) 1px, transparent 1px);
+    linear-gradient(rgba(13,43,30,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13,43,30,.045) 1px, transparent 1px);
   background-size: 32px 32px;
   -webkit-mask-image: radial-gradient(80% 70% at 50% 40%, #000, transparent);
   mask-image: radial-gradient(80% 70% at 50% 40%, #000, transparent);
   pointer-events: none;
 }
-
-/* A bloom: a soft radial light that drifts. Size and colour at the call site. */
-.t-bloom {
+/* A still, soft shape in the band's colour. */
+.t-field-shape {
   position: absolute; z-index: -1;
   border-radius: 999px;
+  background: var(--t-field);
+  opacity: .7;
   pointer-events: none;
-  will-change: transform;
-}
-.t-drift { animation: t-drift 18s var(--t-ease) infinite alternate; }
-.t-drift-2 { animation: t-drift-2 22s var(--t-ease) infinite alternate; }
-@keyframes t-drift {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to   { transform: translate3d(-8%, 10%, 0) scale(1.12); }
-}
-@keyframes t-drift-2 {
-  from { transform: translate3d(0, 0, 0) scale(1.05); }
-  to   { transform: translate3d(10%, -6%, 0) scale(.92); }
 }
 
-/* ── white glass with a gradient hairline and a tinted glow ─────────────── */
+/* ── white card with a hairline. No glow (owner, 20 October). ──────────── */
 .t-glass {
   position: relative;
   isolation: isolate;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88));
-  box-shadow: 0 1px 2px rgba(13,43,30,.05), 0 14px 32px -20px rgba(13,43,30,.22), 0 0 30px -16px rgba(62,207,154,.55);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(13,43,30,.05), 0 10px 24px -18px rgba(13,43,30,.2);
 }
 .t-glass::before {
   content: '';
@@ -98,53 +94,17 @@
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   pointer-events: none;
 }
-.t-glass--vio::before { background: linear-gradient(135deg, rgba(29,143,176,.85), rgba(167,139,250,.6) 50%, rgba(62,207,154,.8)); }
-.t-glass--vio { box-shadow: 0 1px 2px rgba(13,43,30,.05), 0 14px 32px -20px rgba(13,43,30,.22), 0 0 30px -16px rgba(29,143,176,.5); }
-.t-glass--coral::before { background: linear-gradient(135deg, rgba(242,84,36,.9), rgba(242,84,36,.35) 55%, rgba(62,207,154,.5)); }
-.t-glass--coral { box-shadow: 0 1px 2px rgba(13,43,30,.05), 0 14px 32px -20px rgba(13,43,30,.22), 0 0 30px -14px rgba(242,84,36,.45); }
-.t-glass--quiet::before { background: linear-gradient(135deg, rgba(62,207,154,.6), rgba(29,143,176,.28) 60%, rgba(194,215,202,.6)); }
-.t-glass--quiet { box-shadow: 0 1px 2px rgba(13,43,30,.04), 0 8px 20px -16px rgba(13,43,30,.2); }
-
-/* Contour lines on a band: hairlines, faint, fading toward the text. The
-   strongest line is 16% #157446, so ink-2 text over one still reads 6 : 1. */
-.t-topo {
-  z-index: -1;
-  opacity: .16;
-  -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent);
-  mask-image: radial-gradient(closest-side, #000 30%, transparent);
-}
-
-/* The light instrument panel: the Mirror demo on How it works. Pale paper
-   to mint, a fine grid, a hairline and an inner glow. 19 October, the owner:
-   "they cant be the black dark thing". Text drawn on it sits on its own
-   white plate (methods/MirrorDemo.jsx), so its contrast is exact. */
-.t-paper {
-  position: relative;
-  isolation: isolate;
-  border-radius: 9px;
-  background:
-    radial-gradient(80% 55% at 30% 30%, rgba(62,207,154,.12), transparent 70%),
-    radial-gradient(70% 50% at 85% 90%, rgba(29,143,176,.08), transparent 70%),
-    linear-gradient(180deg, #f8fcfa, #eaf6f0);
-  box-shadow: inset 0 0 0 1px rgba(21,116,70,.16), inset 0 0 36px -14px rgba(62,207,154,.45);
-}
-.t-paper::before {
-  content: '';
-  position: absolute; inset: 0; z-index: -1;
-  border-radius: inherit;
-  background-image:
-    linear-gradient(rgba(21,116,70,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21,116,70,.06) 1px, transparent 1px);
-  background-size: 16px 16px;
-  pointer-events: none;
-}
+.t-glass--vio::before { background: linear-gradient(135deg, rgba(111,9,178,.4), rgba(34,148,230,.3)); }
+.t-glass--coral::before { background: linear-gradient(135deg, rgba(178,48,9,.55), rgba(178,48,9,.25)); }
+.t-glass--quiet::before { background: rgba(13,43,30,.12); }
+.t-glass--quiet { box-shadow: 0 1px 2px rgba(13,43,30,.04); }
 
 /* The sheen: one band of light that crosses a panel. */
 .t-sheen::after {
   content: '';
   position: absolute; inset: 0; z-index: -1;
   border-radius: inherit;
-  background: linear-gradient(115deg, transparent 35%, rgba(62,207,154,.12) 48%, rgba(29,143,176,.06) 52%, transparent 62%);
+  background: linear-gradient(115deg, transparent 35%, rgba(34,148,230,.06) 48%, rgba(111,9,178,.04) 52%, transparent 62%);
   background-size: 260% 100%;
   background-position: 130% 0;
   pointer-events: none;
@@ -177,11 +137,12 @@
   .t-title { color: CanvasText; -webkit-text-fill-color: CanvasText; background: none; }
 }
 
-/* ── mono labels for technical values ───────────────────────────────────── */
+/* ── labels for technical values: the body face. 20 October, the owner:
+      "AI font, remove", so this is no longer a typewriter face. Kept as a class
+      because the MindMap AI chat still names it (ai/Ai.jsx). ─────────── */
 .t-mono {
-  font-family: ui-monospace, "SF Mono", "Chivo Mono", Menlo, Consolas, monospace;
-  font-feature-settings: "zero" 1;
-  letter-spacing: .02em;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
 }
 .t-chip {
   display: inline-flex; align-items: center; gap: .4rem;
@@ -189,7 +150,7 @@
   padding: 0 .6rem;
   border-radius: 999px;
   border: 1px solid rgba(21,116,70,.28);
-  background: rgba(62,207,154,.1);
+  background: #ffffff;
   color: var(--t-label);
   font-size: .8125rem; line-height: 1;
 }
@@ -197,7 +158,7 @@
 /* ── live dot ───────────────────────────────────────────────────────────── */
 .t-dot {
   position: relative; display: inline-block; width: .5rem; height: .5rem; border-radius: 999px;
-  background: #18a370; box-shadow: 0 0 6px 1px rgba(62,207,154,.7);
+  background: #18a370;
 }
 .t-dot::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit; background: #3ecf9a;
@@ -209,17 +170,17 @@
   80%, 100% { transform: scale(2.8); opacity: 0; }
 }
 
-/* ── packets: a glowing dot that runs along a lane. The lane is a
+/* ── packets: a small dot that runs along a lane. The lane is a
       full-width box, so translateX(%) is a share of the figure's width. ── */
 .t-lane { position: absolute; left: 0; top: 0; width: 100%; height: 0; pointer-events: none; }
 .t-lane > i {
   position: absolute; left: 0; top: 0;
-  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
   border-radius: 999px;
-  background: #18a370;
-  box-shadow: 0 0 0 1.5px #fff, 0 0 10px 3px rgba(62,207,154,.6);
+  background: var(--t-hue, #157446);
+  box-shadow: 0 0 0 1.5px #fff;
 }
-.t-lane.t-anim { animation: t-lane 2.6s var(--t-ease) infinite; opacity: 0; }
+.t-lane.t-anim { animation: t-lane 4.2s var(--t-ease) infinite; opacity: 0; }
 @keyframes t-lane {
   0%   { transform: translate(var(--x0), var(--y0)); opacity: 0; }
   12%  { opacity: 1; }
@@ -231,25 +192,15 @@
 .t-scan { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
 .t-scan > i {
   position: absolute; top: 0; bottom: 0; left: 0; width: 30%;
-  background: linear-gradient(90deg, transparent, rgba(29,143,176,.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(17,103,127,.16), transparent);
   transform: translateX(-100%);
 }
-.t-scan.t-anim > i { animation: t-scan-x 3.2s linear infinite; animation-play-state: inherit; }
+.t-scan.t-anim > i { animation: t-scan-x 5s linear infinite; animation-play-state: inherit; }
 @keyframes t-scan-x { to { transform: translateX(340%); } }
-
-/* the viewfinder's vertical scan */
-.t-scan-y {
-  position: absolute; left: 0; right: 0; top: 0; height: 22%;
-  background: linear-gradient(180deg, transparent, rgba(62,207,154,.18) 80%, rgba(185,247,221,.5) 100%);
-  pointer-events: none;
-  transform: translateY(-100%);
-}
-.t-scan-y.t-anim { animation: t-scan-y 2.8s cubic-bezier(0.77,0,0.175,1) infinite alternate; }
-@keyframes t-scan-y { to { transform: translateY(455%); } }
 
 /* ── typing indicator ───────────────────────────────────────────────────── */
 .t-typing { display: inline-flex; gap: 4px; align-items: center; }
-.t-typing > i { width: 6px; height: 6px; border-radius: 999px; background: #18a370; opacity: .45; box-shadow: 0 0 6px rgba(62,207,154,.6); }
+.t-typing > i { width: 6px; height: 6px; border-radius: 999px; background: #18a370; opacity: .45; }
 .t-typing.t-anim > i { animation: t-type 1.1s var(--t-ease) infinite; animation-play-state: inherit; }
 .t-typing.t-anim > i:nth-child(2) { animation-delay: .15s; }
 .t-typing.t-anim > i:nth-child(3) { animation-delay: .3s; }
@@ -258,26 +209,9 @@
   30%           { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ── the soft orb behind the chat heading ───────────────────────────────── */
-.t-orb {
-  position: absolute; z-index: -1; pointer-events: none;
-  width: 18rem; height: 18rem; border-radius: 999px;
-  background:
-    radial-gradient(closest-side at 35% 40%, rgba(62,207,154,.26), transparent),
-    radial-gradient(closest-side at 70% 60%, rgba(167,139,250,.16), transparent),
-    radial-gradient(closest-side at 50% 50%, rgba(29,143,176,.16), transparent);
-  will-change: transform;
-}
-.t-orb.t-anim { animation: t-orb 14s var(--t-ease) infinite alternate; }
-@keyframes t-orb {
-  0%   { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
-  50%  { transform: translate3d(-6%,4%,0) rotate(40deg) scale(1.08); }
-  100% { transform: translate3d(4%,-4%,0) rotate(80deg) scale(.96); }
-}
-
-/* ── the glowing focus ring on the composer. At rest the hairline runs
-      #18a370 to #1d8fb0, both over 3 : 1 on white, so the field's edge
-      reads without the glow. ──────────────────────────────────────────── */
+/* ── the focus ring on the composer. At rest the hairline runs #18a370 to
+      #1d8fb0, both over 3 : 1 on white; on focus it thickens. No halo
+      (owner, 20 October: much less glow). ─────────────────────────────── */
 .t-field { position: relative; border-radius: 12px; }
 .t-field::before {
   content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
@@ -288,16 +222,7 @@
   transition: opacity .2s var(--t-ease);
   pointer-events: none;
 }
-.t-field::after {
-  content: ''; position: absolute; inset: -7px; border-radius: 18px; z-index: -1;
-  background: radial-gradient(60% 80% at 30% 50%, rgba(62,207,154,.3), transparent 70%),
-              radial-gradient(60% 80% at 80% 50%, rgba(29,143,176,.22), transparent 70%);
-  opacity: 0;
-  transition: opacity .25s var(--t-ease);
-  pointer-events: none;
-}
 .t-field:focus-within::before { padding: 2px; inset: -2px; }
-.t-field:focus-within::after { opacity: 1; }
 .t-field textarea:focus-visible { outline: none; }
 
 /* ── paused unless on screen, still under reduced motion ────────────────── */
@@ -306,5 +231,4 @@
 @media (prefers-reduced-motion: reduce) {
   .tech .t-anim, .tech .t-anim::after { animation: none !important; }
   .tech .t-lane { display: none; }
-  .tech .t-scan-y { display: none; }
 }

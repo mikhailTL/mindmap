@@ -22,28 +22,15 @@ export function StartGrid({ label, children, className }) {
   )
 }
 
-/* tone: the tile's ground, e.g. 'bg-sky-wash'. chevron: the hue's ink, which
-   also draws the contour lines. art: the drawing, fitted into the panel (give
-   it h-full w-full, or h-full w-auto with an aspect, so it scales).
+/* tone: the tile's ground, e.g. 'bg-sky-wash'. chevron: the hue's ink.
+   art: the drawing, fitted into the panel (give it h-full w-full, or h-full
+   w-auto with an aspect, so it scales).
 
    The owner, 19 October: "Remove the half and half stock photos on all
    dashboards, just have icons or the imagery". So no photograph: the whole
-   tile is its own colour wash, the drawing fills the panel, a few faint
-   contour lines sit behind it, and the label sits under it on the same wash. */
-function Contours() {
-  return (
-    <svg aria-hidden viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 size-full opacity-[0.22]" fill="none"
-      stroke="currentColor" strokeWidth="1" strokeLinecap="round">
-      <path d="M110 90c2-12 11-20 23-20 10 0 19 6 27 15" vectorEffect="non-scaling-stroke"/>
-      <path d="M93 90c3-21 19-34 39-34 12 0 21 4 28 11" vectorEffect="non-scaling-stroke"/>
-      <path d="M76 90c5-30 27-48 55-48 11 0 21 3 29 8" vectorEffect="non-scaling-stroke"/>
-      <path d="M0 24c11-1 20-9 21-24" vectorEffect="non-scaling-stroke"/>
-      <path d="M0 40c22-2 36-18 37-40" vectorEffect="non-scaling-stroke"/>
-    </svg>
-  )
-}
-
+   tile is its own colour wash, the drawing fills the panel and the label
+   sits under it. 20 October: no contour lines; one soft white disc behind
+   the drawing instead. */
 export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }) {
   return (
     <button type="button" onClick={onClick}
@@ -52,7 +39,7 @@ export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }
         'hoverOnly:border-accent active:scale-[0.985] motion-reduce:active:scale-100',
         'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink', tone)}>
       <span aria-hidden className={cn('relative flex aspect-[16/9] w-full shrink-0 items-center justify-center overflow-hidden', chevron)}>
-        <Contours/>
+        <span className="pointer-events-none absolute -bottom-1/3 -right-[12%] aspect-square w-[62%] rounded-full bg-white/40"/>
         <span className="relative flex h-[72%] w-[78%] items-center justify-center transition-transform duration-300 ease-out
           groupHoverOnly:scale-[1.04] motion-reduce:transition-none motion-reduce:groupHoverOnly:scale-100">{art}</span>
       </span>

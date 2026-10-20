@@ -43,7 +43,7 @@ function Reading() {
             className="mm-trace"/>
         </svg>
         <div style={{ marginTop:14, display:'flex', alignItems:'baseline', gap:8 }}>
-          <span style={{ fontFamily:'Chivo Mono,monospace', fontSize:30, color:'#0d2b1e' }}>72</span>
+          <span style={{ fontFamily:'Chivo,system-ui,sans-serif', fontVariantNumeric:'tabular-nums', fontSize:30, color:'#0d2b1e' }}>72</span>
           <span style={{ fontFamily:'Chivo,sans-serif', fontSize:14, color:'#2a5744' }}>bpm</span>
           <span style={{ marginLeft:'auto', fontFamily:'Chivo,sans-serif', fontSize:14, color:'#0f5836' }}>
             Signal good</span>
@@ -78,7 +78,7 @@ function Week() {
         {WEEK.map((v, i) => (
           <div key={i} style={{ flex:1, display:'flex', flexDirection:'column',
             alignItems:'center', justifyContent:'flex-end', gap:8 }}>
-            <span style={{ fontFamily:'Chivo Mono,monospace', fontSize:13,
+            <span style={{ fontFamily:'Chivo,system-ui,sans-serif', fontVariantNumeric:'tabular-nums', fontSize:13,
               color: v === hi ? '#0d2b1e' : '#426a58' }}>{v}</span>
             <span style={{ width:'100%', height:(v / 100) * 106, borderRadius:'5px 5px 0 0',
               background: v > 60 ? '#1d8fb0' : '#157446' }}/>

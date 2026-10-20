@@ -470,7 +470,8 @@ function Comparison() {
 export function HeadsUpPage() {
   return (
     <main className="bg-paper">
-      <section className="border-b border-rule bg-accent-wash">
+      {/* Soft sun, the Heads Up colour on Trends (owner, 20 October: less green). */}
+      <section className="border-b border-rule bg-sun-wash">
         <div className="wrap py-8 lg:py-12">
           <h1 className="m-0 font-display text-major font-bold leading-[1.05] tracking-tight text-ink">Heads Up</h1>
           <p className="mt-4 max-w-[40ch] font-body text-lead font-semibold leading-[1.4] text-ink">
