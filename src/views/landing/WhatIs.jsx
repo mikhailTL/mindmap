@@ -22,7 +22,7 @@ import { AppPicture, NetworkPicture, PatchPicture, PICTURE_CSS } from './whatis/
  * line says "grounded in published clinical guidance". */
 
 export const WHAT_IS_LEAD =
-  `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL} to address the teen mental health crisis at its root, providing 3 main features:`
+  `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL} to address the teen mental health crisis at its root by measuring stress and quantifying wellness using innovative features. MindMap provides 3 main features:`
 
 export const WHAT_IS = [
   { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch', Picture: PatchPicture,
@@ -80,7 +80,7 @@ function Feature({ f, n, go }) {
 
 export function WhatIs({ go }) {
   return (
-    <Section name="About" id="what-is" tone="card" className="bg-accent-wash">
+    <Section name="What is MindMap?" id="what-is" tone="card" className="bg-accent-wash">
       <style>{PICTURE_CSS}</style>
       <SectionHead>What is MindMap?</SectionHead>
       <SectionLede className="max-w-[70ch]">{WHAT_IS_LEAD}</SectionLede>

@@ -14,7 +14,7 @@ export const BANDS = [
 ]
 const toneOf = id => BANDS.find(b => b.of.includes(id))?.glow ?? '#18a370'
 
-/* A primary action: white on the accent, 5.8 : 1, with a mint glow. */
+/* A primary action: white on the accent, 5.8 : 1. */
 export const MirrorButton = React.forwardRef(function MirrorButton({ className, variant = 'solid', ...p }, ref) {
   return (
     <button ref={ref} type="button" {...p}
@@ -23,7 +23,7 @@ export const MirrorButton = React.forwardRef(function MirrorButton({ className, 
         'motion-safe:active:scale-[0.97] select-none touch-manipulation',
         'disabled:pointer-events-none disabled:opacity-50',
         variant === 'solid'
-          ? 'bg-accent text-white shadow-[0_8px_24px_-8px_rgba(62,207,154,.95)] hoverOnly:bg-accent-ink'
+          ? 'bg-accent text-white shadow-[0_1px_2px_rgba(13,43,30,.12)] hoverOnly:bg-accent-ink'
           : 'border border-ruling bg-white text-ink hoverOnly:bg-mist',
         className)}/>
   )
@@ -59,29 +59,18 @@ export function ReadsChips({ className }) {
   )
 }
 
-/* Sixty ticks round the face, one per half second of the reading. The lit
-   set fades in over the dim one, opacity only. */
-const TICKS = Array.from({ length: 60 }, (_, i) => {
-  const a = (i / 60) * Math.PI * 2 - Math.PI / 2
-  const c = Math.cos(a), s = Math.sin(a)
-  return { x1: 200 + 122 * c, y1: 150 + 122 * s, x2: 200 + 134 * c, y2: 150 + 134 * s }
-})
-export function TickRing({ progress = 0, live = false }) {
-  const lit = Math.round((progress / 100) * TICKS.length)
+/* One calm ring round the face: a pale track and a solid green arc that
+   fills over the 30 seconds, eased between updates. 20 October, the owner:
+   "the green circle needs to be more calming and solid". */
+export function ProgressRing({ progress = 0 }) {
+  const p = Math.max(0, Math.min(100, progress))
   return (
     <svg viewBox="0 0 400 300" aria-hidden focusable="false"
       className="pointer-events-none absolute inset-0 h-full w-full">
-      <g strokeWidth="3" strokeLinecap="round">
-        {TICKS.map((t, i) => (
-          <line key={i} {...t} stroke={live ? 'rgba(255,255,255,.55)' : '#93b2a1'}/>
-        ))}
-      </g>
-      <g strokeWidth="3.4" strokeLinecap="round" stroke={live ? '#3ecf9a' : '#18a370'}
-        style={{ filter: 'drop-shadow(0 0 3px rgba(62,207,154,.95))' }}>
-        {TICKS.map((t, i) => (
-          <line key={i} {...t} className="mm-tick" opacity={i < lit ? 1 : 0}/>
-        ))}
-      </g>
+      <circle cx="200" cy="150" r="128" fill="none" stroke="#e3efe9" strokeWidth="4.5"/>
+      <circle cx="200" cy="150" r="128" fill="none" stroke="#157446" strokeWidth="4.5"
+        strokeLinecap="round" pathLength="100" strokeDasharray="100 100" strokeDashoffset={100 - p}
+        transform="rotate(-90 200 150)" className="mm-arc" opacity={p > 0 ? 1 : 0}/>
     </svg>
   )
 }

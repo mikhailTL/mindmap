@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { AVATAR_IDS } from './store'
 import { CATALOG, PAIRS, avatarEntry, isPhotoAvatar } from './avatar-catalog'
-import { AVATAR_PHOTOS } from '../lib/photos'
+import { CharacterArt } from './characters/Character'
 
 /* Every picture an account can choose: the twelve animals first drawn here,
    then thirty shapes and signs, twelve faces, twenty four emoji and thirty six
@@ -10,9 +10,9 @@ import { AVATAR_PHOTOS } from '../lib/photos'
 
    Twelve animal characters, drawn here. Flat, rounded, two or three colours
    on one of the six hue washes from tailwind.config.js, in a 64 box that
-   still reads at 32px: big head, dot eyes, a small smile. Nothing here is a
-   photograph, a face, or anybody's character. The hues are graphics only;
-   no word is ever set in them. */
+   still reads at 32px: big head, dot eyes, a small smile. The hues are
+   graphics only; no word is ever set in them. The demo's people are drawn
+   in ./characters/Character.jsx. */
 
 /* Shared pieces. Eyes are two dots; the smile is one short arc. */
 const Eyes = ({ y = 30, dx = 7, r = 2.2 }) => (
@@ -302,41 +302,21 @@ function draw(c) {
   return { ground: FW[a], body: PAT[c.key]?.(a, b, c.id) }
 }
 
-/* The choices, in picker order: shapes, faces, patterns, animals. */
-export const AVATARS = CATALOG.map(c => ({ id: c.id, label: c.label, group: c.group }))
+/* The choices on a teen's picker, in order. The demo's other characters and
+   the adults' signs have no group and are left off. */
+export const AVATARS = CATALOG.filter(c => c.group).map(c => ({ id: c.id, label: c.label, group: c.group }))
 
-/* Two more kinds that are not on the picker's list:
-     photo-<key>   a demo person's photo, from AVATAR_PHOTOS in src/lib/photos.js
-     initials-XY   a letter avatar with fixed letters, for demo people drawn
-                   where no name is passed (Avatar in ./ui.jsx draws a live
-                   account's letters from its name)
-   and an uploaded photo, which is its own data URL. */
-const photoSrc = id => (typeof id !== 'string' ? null
-  : id.startsWith('photo-') ? AVATAR_PHOTOS[id.slice(6)] || null
-  : isPhotoAvatar(id) ? id : null)
-const lettersOf = id => (typeof id === 'string' && /^initials-[A-Z]{1,2}$/.test(id) ? id.slice(9) : '')
-
-/* One picture. Decorative: the name beside it carries the meaning, so a
-   photo has alt="" too. */
+/* One picture. Decorative: the name beside it carries the meaning, so an
+   uploaded photo (its own data URL) has alt="" too. */
 export function AvatarArt({ id, className }) {
   const clip = 'av' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
-  const src = photoSrc(id)
-  if (src) {
-    return <img src={src} alt="" aria-hidden width="160" height="160" loading="lazy" decoding="async"
+  if (isPhotoAvatar(id)) {
+    return <img src={id} alt="" aria-hidden width="160" height="160" loading="lazy" decoding="async"
       className={cn('block shrink-0 rounded-full bg-mist object-cover', className)}/>
-  }
-  const letters = lettersOf(id)
-  if (letters) {
-    return (
-      <svg viewBox="0 0 64 64" aria-hidden className={cn('block shrink-0', className)}>
-        <circle cx="32" cy="32" r="32" className="fill-accent"/>
-        <text x="32" y="33.5" textAnchor="middle" dominantBaseline="central" fontSize={letters.length > 1 ? 24 : 28}
-          fontWeight="700" className="fill-paper font-display">{letters}</text>
-      </svg>
-    )
   }
   const c = avatarEntry(id)
   if (!c) return null
+  if (c.kind === 'char' || c.kind === 'emblem') return <CharacterArt entry={c} className={className}/>
   const { ground, body } = draw(c)
   if (!body) return null
   return (

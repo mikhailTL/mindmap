@@ -197,21 +197,20 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
 
 /* Same four bands as the self-report route, so the two agree on "usual". */
 export function bandOf(n) {
-  if (n < 35) return { key: 'low',   word: 'easier than usual' }
+  if (n < 35) return { key: 'low',   word: 'lower than usual' }
   if (n < 58) return { key: 'usual', word: 'in your usual range' }
-  if (n < 73) return { key: 'up',    word: 'a little high' }
-  return { key: 'high', word: 'high' }
+  if (n < 73) return { key: 'up',    word: 'slightly higher than usual' }
+  return { key: 'high', word: 'much higher than usual' }
 }
 
 /* One sentence, then the number. Never the other way round. */
 export function sentenceFor(r) {
   const b = bandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]
-  const verb = b.key === 'usual' ? 'sitting' : 'running'
   const tail = Math.abs(top.raw) < 0.3
     ? 'Nothing in the reading stands out on its own.'
     : `${top.label} is the biggest single part of that: ${fmtZ(top.z)} your own average.`
-  return { lead: `Right now you are ${verb} `, word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
+  return { lead: 'Right now your stress is ', word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
 }
 
 const fmtZ = z => {

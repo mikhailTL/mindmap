@@ -53,8 +53,8 @@ import {
    landing/WhatIs.jsx and `different` in landing/Different.jsx. */
 export const OVERVIEW_SECTIONS = [
   ['problem',   'The problem'],
-  ['why',       'Why MindMap'],
-  ['what-is',   'About'],
+  ['why',       'Why MindMap?'],
+  ['what-is',   'What is MindMap?'],
   ['different', 'Features'],
   ['start',    'Getting started'],
   ['screens',  'Audiences'],
@@ -285,7 +285,7 @@ export function Overview({ go }) {
             show through: why MindMap answers them. */}
         <div id="why" className="scroll-mt-14 outline-none">
         <ScrollIn className="mt-6 rounded-panel border border-accent-lit/40 bg-ink p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] lg:mt-8 lg:p-7">
-          <h3 className="m-0 font-display text-head font-bold tracking-tight text-accent-lit lg:text-sub">Why MindMap</h3>
+          <h3 className="m-0 font-display text-head font-bold tracking-tight text-accent-lit lg:text-sub">Why MindMap?</h3>
           <p className="m-0 mt-3 max-w-[72ch] text-meta leading-[1.6] text-paper">
             With these mental illnesses showing no sign of ceasing, current approaches do not focus on connections
             and support systems, leaving millions of teens suffering alone. MindMap introduces the world’s first
@@ -313,7 +313,7 @@ export function Overview({ go }) {
         className="relative isolate overflow-hidden bg-sky-band [&>div>p:first-child]:text-accent-ink">
         <DriftWash photo="student-bus" className="-z-10" imgClassName="opacity-[0.08]"/>
         <SectionHead>2 ways to use MindMap</SectionHead>
-        <SectionLede>Both give you the same {SCORE} in the same app.</SectionLede>
+        <SectionLede>A reading turns your stress level into a {SCORE}, 0 calm to 100 peak. Both ways give the same score.</SectionLede>
         <div className="mt-5 grid gap-3.5 md:auto-rows-fr md:grid-cols-2">
           {WAYS.map((w, i) => (
             <ScrollRow key={w.id} index={i} className="h-full">

@@ -24,7 +24,7 @@ const TAB_WORD = { parent: 'Parent', pro: PRO }
 
 /* Short row labels, keyed by the store's field key. */
 const SHORT = {
-  parent: { score: `Daily ${SCORE}`, week: 'Days above usual', sleep: 'Hours slept', worn: 'Patch worn',
+  parent: { score: `Daily ${SCORE}`, week: 'Days with higher stress', sleep: 'Hours slept', worn: 'Patch worn',
             settle: 'Days slow to settle' },
   pro:    { score: SCORE, trends: 'Weekly change', raw: 'Raw readings', settle: 'Days slow to settle' },
 }

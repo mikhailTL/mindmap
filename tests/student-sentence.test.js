@@ -13,23 +13,23 @@ describe('student day sentence', () => {
   it('names the hour the day turned and the calm morning, without a figure', () => {
     const day = series([44, 43, 45, 44, 42, 44, 45, 43, 44, 46, 48, 52, 56, 58, 60, 62])
     const s = daySentence({ day, band })
-    expect(s.lead).toBe('You were more stressed than your usual from about 1 pm.')
-    expect(s.sub).toBe('You stayed calm all morning.')
+    expect(s.lead).toBe('Your stress was higher than usual from about 1 pm.')
+    expect(s.sub).toBe('Your stress stayed at or below usual all morning.')
     expect(all(s)).not.toMatch(/\d{2}/)
   })
 
   it('says when the day settled again', () => {
     const day = series([44, 45, 58, 60, 50, 46])
     expect(daySentence({ day, band })).toEqual({
-      lead: 'You were more stressed than your usual around 8 am.',
-      sub: 'You settled again by 9 am.',
+      lead: 'Your stress was higher than usual around 8 am.',
+      sub: 'It was back in your usual range by 9 am.',
     })
   })
 
   it('covers a usual day, a calm day and a hard day', () => {
-    expect(daySentence({ day: series([45, 47, 46]), band }).lead).toBe('Today was about your usual.')
-    expect(daySentence({ day: series([30, 31, 29]), band }).lead).toBe('You stayed calmer than your usual all day.')
-    expect(daySentence({ day: series([60, 70, 65]), band }).lead).toBe('You were more stressed than your usual all day.')
+    expect(daySentence({ day: series([45, 47, 46]), band }).lead).toBe('Your stress was in your usual range today.')
+    expect(daySentence({ day: series([30, 31, 29]), band }).lead).toBe('Your stress was lower than usual all day.')
+    expect(daySentence({ day: series([60, 70, 65]), band }).lead).toBe('Your stress was higher than usual all day.')
     expect(daySentence({ day: [], band }).lead).toBe('No readings yet today.')
   })
 

@@ -50,7 +50,7 @@ export function TrendsBox({ go, className }) {
               <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none text-ink">{mean}</dd>
             </div>
             <div className="min-w-0">
-              <dt className="tick">In your usual range</dt>
+              <dt className="tick">Days of usual stress</dt>
               <dd className="m-0 mt-0.5 font-display text-row font-medium tabular-nums leading-none text-ink">
                 {inside}<span className="ml-1 font-body text-fine font-normal text-ink-3">of {real.length}
                   {real.length === 1 ? ' day' : ' days'}</span></dd>

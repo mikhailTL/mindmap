@@ -47,11 +47,11 @@ export const GUIDES = {
       title: 'How to take a reading',
       tones: ['accent', 'coral', 'beam'],
       steps: [
-        { art: 'fourWays', cap: 'Pick a way: patch, camera, survey or Mental Mirror.' },
+        { art: 'fourWays', cap: 'Pick a way: Mental Mirror, phone camera, Survey or patch.' },
         { art: 'howWays',  cap: 'Follow the screen. Each way takes a minute or less.' },
         { art: 'dial',     cap: 'Get a Mind Score, 0 to 100, against your usual.' },
       ],
-      use: 'Take one before a test, after practice, or any time.',
+      use: 'Checking your stress level. It becomes your Mind Score, 0 calm to 100 peak.',
     },
     'student-trends': {
       section: 'Trends',

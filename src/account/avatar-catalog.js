@@ -8,13 +8,19 @@
  *   face-*  an emoji style face, drawn here
  *   emo-*   an object or plant, set in the system emoji font
  *   pat-*   a pattern, generated from its id, so it is the same every time
+ *   char-*  a drawn person from ./characters/specs.js: the demo's teens,
+ *           parents and Counselors/Professionals
+ *   emblem-* a sign a parent or a Counselor/Professional can pick
  */
+
+import { CHARACTERS, EMBLEMS, ROLE_PICKS } from './characters/specs.js'
 
 /* Animals first: the owner, 18 October, "kids should be the animal and fun
    ones". These drawings are the teen's set; parents and
-   Counselors/Professionals get initials or a photo (see below). */
+   Counselors/Professionals get initials, a photo or ROLE_PICKS (see below). */
 export const GROUPS = [
   { id: 'animals',  label: 'Animals' },
+  { id: 'people',   label: 'People' },
   { id: 'faces',    label: 'Faces and things' },
   { id: 'shapes',   label: 'Shapes and signs' },
   { id: 'patterns', label: 'Patterns' },
@@ -81,6 +87,10 @@ export const CATALOG = [
     id: `pat-${p}-${pair}`, group: 'patterns', kind: 'pat', key: p, pair, label: `${cap(pair)} ${p}`,
   }))),
   ...ANIMALS.map(s => ({ id: s, group: 'animals', kind: 'animal', key: s, label: cap(s) })),
+  /* The characters. Only the teens marked `pick` are on a teen's picker; the
+     rest have no group and are drawn for the demo's people. */
+  ...CHARACTERS.map(c => ({ ...c, id: 'char-' + c.key, group: c.pick ? 'people' : null, kind: 'char' })),
+  ...EMBLEMS.map(e => ({ ...e, id: 'emblem-' + e.key, group: null, kind: 'emblem' })),
 ]
 
 export const AVATAR_ALL_IDS = CATALOG.map(c => c.id)
@@ -100,6 +110,17 @@ export const avatarWords = c =>
 export const PHOTO_MAX = 60000
 const PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/
 export const isPhotoAvatar = v => typeof v === 'string' && v.length <= PHOTO_MAX && PHOTO_RE.test(v)
+
+/* The drawings a parent or a Counselor/Professional can pick besides a
+   photo: a sign and a character (owner, 18 October: a tree for a parent, a
+   Counselor fitting symbol). */
+export { ROLE_PICKS }
+
+/* Whether a picture suits a role: a teen any drawing on their picker, an
+   adult a photo or one of their role's picks. */
+export const fitsRole = (role, v) => (role === 'student'
+  ? !!avatarEntry(v)?.group
+  : isPhotoAvatar(v) || (ROLE_PICKS[role] || []).includes(v))
 
 /* Initials for a letter avatar: the first letters of the first and last
    words, a title such as Dr. or Ms. left out. "Dr. Shah" is S, "Rosa Diaz"

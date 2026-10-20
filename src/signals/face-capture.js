@@ -266,21 +266,37 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
 
 /* ── the overlay ─────────────────────────────────────────────────────────── */
 
-/* What the model is doing, drawn on the face it is doing it to: every landmark
-   as a dot, the tracked features as lines, the forehead patch the pulse is
-   read from as a box, and small tags with the live values. Mirrored like the
-   video, text left readable. Nothing here allocates per landmark. */
+/* What the model is doing, drawn on the face it is doing it to, the way
+   MediaPipe's own demos draw a result: the tessellation as hairlines, every
+   landmark as a small solid point, the features the reading uses a little
+   stronger in one colour, the forehead patch the pulse is read from as a
+   box, and small tags with the live values. No glow or blur (20 October,
+   the owner: "not like an LED gala mask"). Mirrored like the video, text
+   left readable. Nothing here allocates per landmark. */
 const COL = {
-  dot: 'rgba(255,255,255,0.6)',
-  line: '#3ecf9a',
-  oval: 'rgba(255,255,255,0.45)',
-  iris: '#7cc4ff',
-  patch: '#ff8a5c',
+  mesh: 'rgba(255,255,255,0.24)',
+  dot: 'rgba(255,255,255,0.78)',
+  line: '#7ce3cf',
+  patch: '#ff9f7a',
+  lead: 'rgba(255,255,255,0.6)',
   tag: 'rgba(13,43,30,0.86)',
   text: '#ffffff',
 }
 const map = {}
 const fpatch = {}
+
+/* The tessellation lists each shared edge twice; drawn once each. */
+let tess = null
+function tessellation(F) {
+  if (tess) return tess
+  const seen = new Set(), out = []
+  for (const c of F.FACE_LANDMARKS_TESSELATION ?? []) {
+    const key = c.start < c.end ? c.start * 1000 + c.end : c.end * 1000 + c.start
+    if (!seen.has(key)) { seen.add(key); out.push(c) }
+  }
+  tess = out
+  return tess
+}
 
 const avg2 = (cats, a, b) => {
   let x = 0, y = 0
@@ -310,14 +326,14 @@ function tag(ctx, text, ax, ay, side, edge, y, k, cw, ch) {
   let x = side < 0 ? edge - 10 * k - w : edge + 10 * k
   x = Math.max(4 * k, Math.min(cw - w - 4 * k, x))
   const top = Math.max(4 * k, Math.min(ch - h - 4 * k, y - h / 2))
-  ctx.strokeStyle = 'rgba(255,255,255,0.7)'
-  ctx.lineWidth = 1 * k
+  ctx.strokeStyle = COL.lead
+  ctx.lineWidth = 0.75 * k
   ctx.beginPath()
   ctx.moveTo(ax, ay)
   ctx.lineTo(side < 0 ? x + w : x, top + h / 2)
   ctx.stroke()
   ctx.fillStyle = '#ffffff'
-  ctx.beginPath(); ctx.arc(ax, ay, 2.5 * k, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(ax, ay, 1.5 * k, 0, Math.PI * 2); ctx.fill()
   ctx.fillStyle = COL.tag
   ctx.beginPath()
   if (ctx.roundRect) ctx.roundRect(x, top, w, h, 4 * k); else ctx.rect(x, top, w, h)
@@ -337,28 +353,28 @@ export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = 
   const k = dpr * Math.max(1, Math.min(1.25, cw / dpr / 380))
   const F = v.FaceLandmarker
 
-  /* Every landmark the model returns, as one path. */
+  /* The tessellation, then every landmark the model returns, one path each. */
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+  ctx.strokeStyle = COL.mesh; ctx.lineWidth = 0.7 * k
+  strokeSet(ctx, lm, tessellation(F), m)
   ctx.fillStyle = COL.dot
   ctx.beginPath()
-  const r = 1.3 * k
+  const r = 1.2 * k
   for (let i = 0; i < lm.length; i++) {
     const p = lm[i]
     ctx.rect(mapX(m, p.x) - r / 2, mapY(m, p.y) - r / 2, r, r)
   }
   ctx.fill()
 
-  /* The features the reading uses. */
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round'
-  ctx.strokeStyle = COL.oval; ctx.lineWidth = 1 * k
+  /* The features the reading uses, in one colour. */
+  ctx.strokeStyle = COL.line; ctx.lineWidth = 1.2 * k
   strokeSet(ctx, lm, F.FACE_LANDMARKS_FACE_OVAL, m)
-  ctx.strokeStyle = COL.line; ctx.lineWidth = 1.6 * k
   strokeSet(ctx, lm, F.FACE_LANDMARKS_LEFT_EYEBROW, m)
   strokeSet(ctx, lm, F.FACE_LANDMARKS_RIGHT_EYEBROW, m)
   strokeSet(ctx, lm, F.FACE_LANDMARKS_LEFT_EYE, m)
   strokeSet(ctx, lm, F.FACE_LANDMARKS_RIGHT_EYE, m)
   strokeSet(ctx, lm, F.FACE_LANDMARKS_LIPS, m)
   if (lm.length > 468) {
-    ctx.strokeStyle = COL.iris; ctx.lineWidth = 1.2 * k
     strokeSet(ctx, lm, F.FACE_LANDMARKS_LEFT_IRIS, m)
     strokeSet(ctx, lm, F.FACE_LANDMARKS_RIGHT_IRIS, m)
   }
@@ -368,7 +384,7 @@ export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = 
   const px0 = mapX(m, fp.x), px1 = mapX(m, fp.x + fp.w)
   const pl = Math.min(px0, px1), pw = Math.abs(px1 - px0)
   const pt = mapY(m, fp.y), ph = fp.h * m.sy
-  ctx.strokeStyle = COL.patch; ctx.lineWidth = 1.6 * k
+  ctx.strokeStyle = COL.patch; ctx.lineWidth = 1 * k
   ctx.strokeRect(pl, pt, pw, ph)
 
   /* Live values, each tied to the landmark it comes from. Tags sit outside

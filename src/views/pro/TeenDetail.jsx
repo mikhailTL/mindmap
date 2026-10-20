@@ -229,7 +229,7 @@ export function ProTeenDetail({ teen, initialRange = 'week', isAlert, openedAt, 
                   <KV k="Average" v={`${f.score} of 100`}/>
                   <KV k={`Change from ${TREND_PREV[range]}`} v={`${signed(f.change)} points`}
                     tone={f.change > 0 ? 'text-warn' : f.change < 0 ? 'text-accent' : 'text-ink'}/>
-                  <KV k="Days above usual" v={`${above} of ${days.length}`}/>
+                  <KV k="Days with higher stress" v={`${above} of ${days.length}`}/>
                   <KV k="Peaks" v={`${f.peaks} peaks`}/>
                 </dl>
               </>

@@ -69,9 +69,9 @@ function ScorePicture({ still }) {
 }
 
 const PEOPLE = [
-  { name: 'Elena', role: 'Parent', avatar: 'initials-E' },
-  { name: 'Maya',  role: 'Teen',   avatar: 'fox', centre: true },
-  { name: 'Dr. Shah', role: PRO_WRAP, avatar: 'photo-counselor-a' },
+  { name: 'Elena', role: 'Parent', avatar: 'char-elena' },
+  { name: 'Maya',  role: 'Teen',   avatar: 'char-maya', centre: true },
+  { name: 'Dr. Shah', role: PRO_WRAP, avatar: 'char-shah' },
 ]
 
 function NetworkPicture({ still }) {

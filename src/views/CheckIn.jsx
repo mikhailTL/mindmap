@@ -3,7 +3,9 @@ import { ScrollRow } from '../ui/motion'
 
 import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
-import { ArrowRight } from '../ui/marks'
+import { ArrowRight, Camera, Link, Person, Stack } from '../ui/marks'
+import { Button } from '../ui/button'
+import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
 import { Scale } from '../ui/radio-scale'
 import { PatchNotice } from '../ui/notice'
@@ -14,7 +16,6 @@ import { PhoneCheck } from './PhoneCheck'
 import { MentalMirror } from './MentalMirror'
 import { FACE_SECONDS } from '../signals/face'
 import { BackBar, Stage, StageStyles } from './reading/stage'
-import { ArtStyles, MirrorArt, PatchArt, SensorsArt, SurveyArt } from './reading/art'
 import { takeReadingIntent } from './reading/intent'
 import { SeeTrends } from './student/charts'
 import { addReading, updateReading } from '../lib/readingLog'
@@ -48,22 +49,18 @@ const SCREENS = {
   },
 }
 
-/* The four ways in, numbered 1 to 4. The owner, 19 October: the white cards
-   with an icon tile, a badge and a button read as "the flat ai design", so
-   each way is an isometric object on the page ground with its words beside
-   it, and the number is set as type. */
+/* What a reading is, said once above the ways (owner, 20 October: "u have
+   to explain that its reading your stress level"). */
+export const READING_IS =
+  `A reading measures your stress level right now and turns it into your ${SCORE}, from 0 calm to 100 peak.`
+
+/* The four ways in, numbered 1 to 4. The owner, 18 October: the dark survey
+   card stood out, so all four sit on the same white card and the hue lives in
+   the icon and the button only. 20 October: back to these cards from the 3D
+   objects, and in this order everywhere: Mental Mirror, phone camera,
+   Survey, patch. */
 const WAYS = [
-  { id:'survey', title:'Survey', Art:SurveyArt, tag:'Start here',
-    line:'Only needs this phone. Take it as often as you like.',
-    fact:['60', 'seconds'],
-    cta:'Answer',
-    spec:[
-      ['Takes', 'About a minute'],
-      ['Reads', 'Tension, worry, mood, sleep, energy, focus, body and support'],
-      ['Needs', 'Only this phone'],
-    ],
-    foot:'Your answers become one score. The score syncs to your account.' },
-  { id:'mirror', title:'Mental Mirror', Art:MirrorArt,
+  { id:'mirror', title:'Mental Mirror', Mark:Person,
     line:"Google's MediaPipe Face Landmarker maps 478 points on your face.",
     fact:[String(FACE_SECONDS), 'seconds'],
     cta:'Open the Mirror',
@@ -73,7 +70,7 @@ const WAYS = [
       ['Needs', 'A front camera and good light'],
     ],
     foot:'Frames become numbers, then get deleted. Students only. The score syncs to your account.' },
-  { id:'sensors', title:'Camera and microphone', Art:SensorsArt,
+  { id:'sensors', title:'Camera and microphone', Mark:Camera,
     line:'Put a fingertip on the lens, then speak.',
     fact:['45', 'seconds'],
     cta:'Start',
@@ -83,7 +80,17 @@ const WAYS = [
       ['Needs', 'A camera and a microphone'],
     ],
     foot:'Frames and audio become numbers, then get deleted. The score syncs to your account.' },
-  { id:'patch', title:'Connect a patch', Art:PatchArt,
+  { id:'survey', title:'Survey', Mark:Stack,
+    line:'Only needs this phone. Take it as often as you like.',
+    fact:['60', 'seconds'],
+    cta:'Answer',
+    spec:[
+      ['Takes', 'About a minute'],
+      ['Reads', 'Tension, worry, mood, sleep, energy, focus, body and support'],
+      ['Needs', 'Only this phone'],
+    ],
+    foot:'Your answers become one score. The score syncs to your account.' },
+  { id:'patch', title:'Connect a patch', Mark:Link,
     line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
     spec:[
@@ -92,6 +99,16 @@ const WAYS = [
       ['Needs', 'A MindMap patch over Bluetooth'],
     ] },
 ]
+
+/* Per way: the icon tile and the action. Each action clears 4.5 : 1 with
+   paper on it (sky-ink, beam-ink, accent, sun-ink). */
+const LOOK = {
+  mirror:  { tile:'bg-sky-wash text-sky-ink',       cta:'bg-sky-ink text-paper groupHoverOnly:bg-[#07507f]' },
+  sensors: { tile:'bg-beam-wash text-beam-ink',     cta:'bg-beam-ink text-paper groupHoverOnly:bg-[#0b4f62]' },
+  survey:  { tile:'bg-accent-wash text-accent-ink', cta:'bg-accent text-paper groupHoverOnly:bg-accent-ink' },
+  patch:   { tile:'bg-sun-wash text-sun-ink' },
+}
+const CARD = 'rounded-panel border border-rule/60 bg-card shadow-card'
 
 /* Figures in a row: each a number over a short label, spaced, no rules. */
 function Figures({ items, className }) {
@@ -111,7 +128,7 @@ function Figures({ items, className }) {
 
 function Spec({ rows }) {
   return (
-    <dl className="m-0 mt-2.5 space-y-1.5">
+    <dl className="m-0 mt-3 space-y-1.5">
       {rows.map(([k, v]) => (
         <div key={k} className="flex items-baseline gap-3">
           <dt className="w-[3.6rem] shrink-0 text-fine text-ink-3">{k}</dt>
@@ -122,72 +139,64 @@ function Spec({ rows }) {
   )
 }
 
-/* The number, set as type: light, large, beside the title. The list it sits
-   in gives a screen reader the count, so it is hidden from the name. */
-function Numeral({ n, className }) {
+/* The icon in its tile. */
+function Tile({ Mark, className }) {
   return (
-    <span aria-hidden className={cn('font-display font-light tabular-nums leading-none text-ink-3', className)}>
-      {n}
+    <span aria-hidden className={cn('grid size-11 shrink-0 place-items-center rounded-[12px]', className)}>
+      <Mark className="size-6"/>
     </span>
   )
 }
 
-/* A way in: the object, then its number, title, time, line and action. The
-   action is the real button and its ::after covers the whole row, so the row
-   is the tap target and the focus ring goes round all of it. The row lifts
-   the object on hover (art.jsx). */
-const Way = React.forwardRef(function Way({ n, way, onOpen, busy, label, children, after }, ref) {
-  const { Art } = way
-  const t = `way-${way.id}`
+/* The card's top line: its number, its icon, and how long it takes. The
+   number is drawn; the list it sits in gives a screen reader the count. */
+function Top({ n, way, look }) {
   return (
-    <div className="group relative -mx-2 flex h-full items-start gap-3 rounded-panel p-2
-      transition-colors duration-200 hoverOnly:bg-card/45 sm:items-center sm:gap-5 xl:flex-col
-      xl:items-stretch xl:gap-1">
-      <span className="mt-1 block w-[8.5rem] shrink-0 sm:mt-0 sm:w-[11rem] xl:w-full">
-        <Art/>
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col self-stretch sm:self-center xl:self-stretch xl:px-1 xl:pb-1">
-        <h3 id={`${t}-t`} className="flex items-baseline gap-2.5 font-display !text-row font-bold
-          !leading-tight text-ink sm:!text-head">
-          <Numeral n={n} className="text-[1.75rem] sm:text-[2rem]"/>
-          <span className="min-w-0">{way.title}</span>
-        </h3>
-        {(way.fact || way.tag) && (
-          <p className="mt-1 flex flex-wrap gap-x-3 text-fine text-ink-2">
-            {way.fact && <span className="tabular-nums">{`${way.fact[0]} ${way.fact[1]}`}</span>}
-            {way.tag && <span className="font-display font-bold text-accent-ink">{way.tag}</span>}
-          </p>
-        )}
-        <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.45] text-ink-2">{way.line}</p>
-        {children}
-        <button ref={ref} type="button" onClick={onOpen} disabled={busy}
-          aria-labelledby={`${t}-t ${t}-a`}
-          className="mt-2 inline-flex min-h-[44px] items-center self-start xl:mt-auto xl:pt-2 gap-1.5 font-display text-ui font-bold
-            text-accent-ink underline-offset-4 after:absolute after:inset-0 after:rounded-panel
-            after:content-[''] focus-visible:!outline-none focus-visible:after:outline
-            focus-visible:after:outline-2 focus-visible:after:outline-offset-2
-            focus-visible:after:outline-accent groupHoverOnly:underline disabled:cursor-progress">
-          <span id={`${t}-a`}>{label || way.cta}</span>
+    <span className="flex items-center gap-3">
+      <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-chip border
+        border-ruling bg-paper font-display text-fine font-bold tabular-nums text-ink">{n}</span>
+      <Tile Mark={way.Mark} className={look.tile}/>
+      {way.fact && (
+        <span className="ml-auto shrink-0 text-fine tabular-nums text-ink-3">
+          {`${way.fact[0]} ${way.fact[1]}`}</span>
+      )}
+    </span>
+  )
+}
+
+/* A way in. The whole card is the control and the hit area; the action
+   inside it is drawn as a button so the next step is plain. */
+const Way = React.forwardRef(function Way({ n, way, onOpen, children }, ref) {
+  const look = LOOK[way.id]
+  return (
+    <Card interactive as="button" type="button" ref={ref} onClick={onOpen}
+      className="group flex h-full flex-col border-rule/60 p-5 lg:p-6">
+      <Top n={n} way={way} look={look}/>
+      <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">{way.title}</span>
+      <span className="mt-1.5 block max-w-[38ch] text-meta leading-[1.45] text-ink-2">{way.line}</span>
+      {children}
+      <span className="mt-auto pt-5">
+        <span className={cn('inline-flex min-h-[46px] items-center gap-2 rounded-field px-5 font-display',
+          'text-ui font-bold transition-colors duration-150', look.cta)}>
+          {way.cta}
           <ArrowRight aria-hidden className="size-[1.05rem] transition-transform duration-200
             motion-safe:groupHoverOnly:translate-x-1"/>
-        </button>
-        {after}
-      </div>
-    </div>
+        </span>
+      </span>
+    </Card>
   )
 })
 
-/* The three facts per way, behind one disclosure under the list: columns
-   with a hairline on top and the same numbers, no boxes or icons. */
+/* The three facts per way, behind one disclosure under the grid. */
 function Compare() {
   return (
-    <SeeDetails label="Compare the four ways" className="mt-4 lg:mt-5">
-      <div className="grid gap-x-8 gap-y-6 pt-1 sm:grid-cols-2 xl:grid-cols-4">
+    <SeeDetails label="Compare the four ways" className="mt-3 lg:mt-4">
+      <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-4">
         {WAYS.map((way, i) => (
-          <section key={way.id} className="border-t border-ink/15 pt-3">
-            <h3 className="flex items-baseline gap-2 font-display !text-meta font-bold text-ink">
-              <Numeral n={i + 1} className="text-[1.375rem]"/>
-              {way.title}
+          <section key={way.id} className={cn(CARD, 'p-5')}>
+            <h3 className="flex items-center gap-2.5 font-display text-meta font-bold text-ink">
+              <Tile Mark={way.Mark} className={cn('size-9 [&_svg]:size-5', LOOK[way.id].tile)}/>
+              {`${i + 1}. ${way.title}`}
             </h3>
             <Spec rows={way.spec}/>
             {way.foot && (
@@ -331,12 +340,11 @@ export function CheckInBody({ go }){
     setPair(await connectPatch()); setBusy(false)
   }
 
-  const [survey, mirror, sensors, patch] = WAYS
+  const [mirror, sensors, survey, patch] = WAYS
 
   return (
     <>
       <StageStyles/>
-      <ArtStyles/>
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
 
       {screen === 'choose' && (
@@ -346,42 +354,50 @@ export function CheckInBody({ go }){
             <PatchNotice inline/>
           </div>
 
+          <p className="mt-1.5 max-w-[60ch] text-meta leading-[1.45] text-ink-2">{READING_IS}</p>
+
           {/* An ordered list: the owner, 18 October, could not tell there were
               four ways, so they are numbered 1 to 4. */}
-          <ol className="m-0 mt-4 grid list-none gap-3 p-0 sm:gap-4 lg:mt-5 lg:grid-cols-2 lg:gap-x-8
-            xl:grid-cols-4 xl:gap-x-5">
+          <ol className="m-0 mt-4 grid list-none gap-4 p-0 lg:mt-5 lg:grid-cols-2 lg:gap-5">
             <ScrollRow as="li" index={0} className="h-full">
-              <Way n={1} ref={el => { cards.current.survey = el }} way={survey}
+              <Way n={1} ref={el => { cards.current.mirror = el }} way={mirror}
+                onOpen={() => open('mirror')}/>
+            </ScrollRow>
+            <ScrollRow as="li" index={1} className="h-full">
+              <Way n={2} ref={el => { cards.current.sensors = el }} way={sensors}
+                onOpen={() => open('sensors')}/>
+            </ScrollRow>
+            <ScrollRow as="li" index={2} className="h-full">
+              <Way n={3} ref={el => { cards.current.survey = el }} way={survey}
                 onOpen={() => open('survey')}>
-                <span className="mt-2.5 flex max-w-[22rem] items-center gap-3">
+                <span className="mt-4 flex items-center gap-3">
                   {/* aria-hidden: the figure beside it says the same. */}
                   <span aria-hidden className="block flex-1">
                     <Progress value={answered} max={ITEMS.length}/>
                   </span>
-                  <span className="shrink-0 text-fine tabular-nums text-ink-2">
+                  <span className="shrink-0 text-fine tabular-nums text-ink-3">
                     {`${answered} of ${ITEMS.length} answered`}
                   </span>
                 </span>
               </Way>
             </ScrollRow>
-            <ScrollRow as="li" index={1} className="h-full">
-              <Way n={2} ref={el => { cards.current.mirror = el }} way={mirror}
-                onOpen={() => open('mirror')}/>
-            </ScrollRow>
-            <ScrollRow as="li" index={2} className="h-full">
-              <Way n={3} ref={el => { cards.current.sensors = el }} way={sensors}
-                onOpen={() => open('sensors')}/>
-            </ScrollRow>
-            {/* Pairing is a device handshake, not a reading: the row's
-                action pairs, and the line under it reports how that went. */}
+            {/* Pairing is a device handshake, not a reading, so this card is
+                a panel with a control in it. */}
             <ScrollRow as="li" index={3} className="h-full">
-              <Way n={4} way={patch} onOpen={pairUp} busy={busy}
-                label={busy ? 'Connecting…' : patch.cta}
-                after={
-                  <p aria-live="polite" className="max-w-[44ch] text-fine leading-[1.4] text-ink-2">
+              <section className={cn(CARD, 'flex h-full flex-col p-5 lg:p-6')}>
+                <Top n={4} way={patch} look={LOOK.patch}/>
+                <h3 className="mt-4 font-display !text-head font-bold !leading-tight text-ink">{patch.title}</h3>
+                <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.45] text-ink-2">{patch.line}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5">
+                  <Button size="sm" onClick={pairUp} disabled={busy}
+                    className="bg-sun-ink px-5 font-bold text-paper hoverOnly:bg-[#664805] active:bg-[#664805]">
+                    <Link aria-hidden/>{busy ? 'Connecting…' : patch.cta}
+                  </Button>
+                  <p aria-live="polite" className="m-0 max-w-[44ch] text-fine leading-[1.4] text-ink-2">
                     {pair?.msg || (mode === 'real' ? 'No patch is paired.' : 'The demo patch is paired.')}
                   </p>
-                }/>
+                </div>
+              </section>
             </ScrollRow>
           </ol>
           <Compare/>

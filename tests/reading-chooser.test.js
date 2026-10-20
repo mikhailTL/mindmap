@@ -1,30 +1,42 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
 import { renderToString } from 'react-dom/server'
-import { CheckInBody } from '../src/views/CheckIn'
+import { CheckInBody, READING_IS } from '../src/views/CheckIn'
 
-/* The Reading tab's chooser (owner, 19 October): four numbered ways, each an
-   isometric picture and words, with no icon tiles or pill badges. */
+/* The Reading tab's chooser (owner, 20 October): back to the white numbered
+   cards, in the order Mental Mirror, phone camera, Survey, patch, under one
+   line on what a reading is. */
 const html = renderToString(React.createElement(CheckInBody, { go: () => {} }))
 const ol = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'))
 const items = ol.split(/<li[\s>]/).slice(1)
 
 describe('Reading chooser', () => {
+  it('says what a reading is, above the ways', () => {
+    expect(READING_IS).toMatch(/stress level/)
+    expect(READING_IS).toMatch(/Mind Score, from 0 calm to 100 peak/)
+    expect(html.indexOf(READING_IS)).toBeGreaterThan(-1)
+    expect(html.indexOf(READING_IS)).toBeLessThan(html.indexOf('<ol'))
+  })
+
   it('lists four ways in order, numbered 1 to 4', () => {
     expect(items).toHaveLength(4)
-    const titles = ['Survey', 'Mental Mirror', 'Camera and microphone', 'Connect a patch']
+    const titles = ['Mental Mirror', 'Camera and microphone', 'Survey', 'Connect a patch']
     items.forEach((li, i) => {
       expect(li).toMatch(new RegExp(`aria-hidden="true"[^>]*>${i + 1}</span>`))
-      expect(li).toContain(`>${titles[i]}</span></h3>`)
-      expect(li).toContain('<svg viewBox')
+      expect(li).toContain(titles[i])
     })
   })
 
-  it('keeps each action a named button', () => {
-    for (const [id, cta] of [['survey', 'Answer'], ['mirror', 'Open the Mirror'], ['sensors', 'Start'], ['patch', 'Connect']]) {
-      expect(ol).toContain(`aria-labelledby="way-${id}-t way-${id}-a"`)
-      expect(ol).toContain(`id="way-${id}-a">${cta}</span>`)
-    }
+  it('draws the cards, not the 3D objects, and no Start here badge', () => {
+    items.forEach(li => {
+      expect(li).toContain('bg-card')
+      expect(li).toContain('rounded-[12px]')
+    })
+    expect(html).not.toContain('Start here')
+  })
+
+  it('keeps each action', () => {
+    for (const cta of ['Open the Mirror', 'Start', 'Answer', 'Connect']) expect(ol).toContain(cta)
   })
 
   it('carries no dashes in its copy', () => {

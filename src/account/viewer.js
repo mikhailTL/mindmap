@@ -11,10 +11,14 @@ import { useAccount } from './store'
  * signed-in account's name. Other people in the reader's network keep their
  * demo names: a student's Counselor/Professional can be Dr. Shah. */
 
+/* Each role's picture is its drawn character (./characters/specs.js): the
+   parent stands by a tree and the Counselor by a speech bubble with a heart
+   (owner, 18 October: "parent P needs to be switched to something more parent
+   like like a tree avatar"). */
 export const VIEWER = {
-  student: { name: 'Student', avatar: 'panda' },
-  parent:  { name: 'Parent', avatar: 'initials-P' },
-  pro:     { name: 'Counselor', avatar: 'initials-C' },
+  student: { name: 'Student', avatar: 'char-student' },
+  parent:  { name: 'Parent', avatar: 'char-parent' },
+  pro:     { name: 'Counselor', avatar: 'char-counselor' },
 }
 
 export function firstName(name) {

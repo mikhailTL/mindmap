@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 import { Check, Chevron, Person } from '../ui/marks'
 import { ROLE_LABEL, useAccount } from './store'
 import { AVATARS, AvatarArt } from './avatars'
-import { GROUPS, PHOTO_MAX, avatarEntry, avatarWords, initialsOf, isPhotoAvatar } from './avatar-catalog'
+import { GROUPS, PHOTO_MAX, ROLE_PICKS, avatarEntry, avatarWords, initialsOf, isPhotoAvatar } from './avatar-catalog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import './appearance'
 
@@ -254,11 +254,14 @@ async function photoFromFile(file) {
 
 const PHOTO_HINT = {
   pro: 'A clear, professional photo. Your initials show until you add one.',
-  parent: 'Or upload a photo.',
 }
 
-/* A parent's or a Counselor/Professional's picture: initials, or a photo
-   they upload. */
+const PICKS = Object.fromEntries(Object.entries(ROLE_PICKS).map(([role, ids]) =>
+  [role, ids.map(id => ({ id, label: avatarEntry(id)?.label || id }))]))
+
+/* A parent's or a Counselor/Professional's picture: initials, a photo they
+   upload, or one of their role's two drawings (a tree or a parent; a talk
+   bubble or a Counselor). */
 function PhotoPicker({ role, value, onChange, name, className, actions = null }) {
   const uid = 'ph' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const [err, setErr] = React.useState(null)
@@ -278,7 +281,7 @@ function PhotoPicker({ role, value, onChange, name, className, actions = null })
           <p className="font-display text-ui font-bold text-ink" aria-live="polite">
             {photo ? 'Your photo' : value ? 'Your picture' : 'Your initials'}
           </p>
-          {!photo && <p className="text-fine text-ink-3">{PHOTO_HINT[role] || PHOTO_HINT.parent}</p>}
+          {!value && PHOTO_HINT[role] && <p className="text-fine text-ink-3">{PHOTO_HINT[role]}</p>}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -294,6 +297,12 @@ function PhotoPicker({ role, value, onChange, name, className, actions = null })
         {actions}
       </div>
       {err && <p id={uid + 'e'} role="alert" className="mt-2 font-display text-fine font-medium text-crit">{err}</p>}
+      {PICKS[role] && (
+        <div className="mt-3 max-w-[8rem]">
+          <PictureGrid items={PICKS[role]} value={value} onChange={v => { onChange(v); setErr(null) }}
+            name={name} label="Or pick a picture"/>
+        </div>
+      )}
     </div>
   )
 }

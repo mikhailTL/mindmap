@@ -102,7 +102,7 @@ export default function ChildTrends({ teen, className }) {
               <Fig k={range === 'day' ? 'Today' : 'Average'} v={s.mean ?? 'None'} sub={s.light ? STATUS_SUB[s.light] : undefined}/>
               <Fig k={`Change vs ${PREV[range]}`} v={s.change == null ? 'None'
                 : `${s.change > 0 ? '+' : s.change < 0 ? '−' : ''}${Math.abs(s.change)}`}
-                sub={s.change == null ? 'Nothing earlier' : s.change === 0 ? 'The same' : s.change > 0 ? 'Higher' : 'Lower'}/>
+                sub={s.change == null ? 'Nothing earlier' : s.change === 0 ? 'Same stress' : s.change > 0 ? 'More stress' : 'Less stress'}/>
             </dl>
           </>
         )}
@@ -142,7 +142,7 @@ export default function ChildTrends({ teen, className }) {
           {['green', 'yellow', 'red'].map(l => (
             <div key={l} className="flex items-center gap-2.5 border-b border-rule py-2">
               <LampFace light={l} size={22}/>
-              <dt className="min-w-0 flex-1 text-fine text-ink-2"><b className="font-display font-bold text-ink">{STATUS_WORD[l]}</b> {STATUS_SUB[l].toLowerCase()}</dt>
+              <dt className="min-w-0 flex-1 text-fine text-ink-2"><b className="font-display font-bold text-ink">{STATUS_WORD[l]}:</b> {STATUS_SUB[l].toLowerCase()}</dt>
               <dd className="m-0 font-display text-ui font-bold tabular-nums text-ink">{counts[l]} {counts[l] === 1 ? 'day' : 'days'}</dd>
             </div>
           ))}

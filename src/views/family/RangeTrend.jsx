@@ -264,7 +264,7 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
         ) : above == null ? (
           <Fig k="Days with readings" v={`${s.points.length} of ${range === 'week' ? 7 : 30}`}/>
         ) : (
-          <Fig k="Days above usual" v={`${above} of ${s.points.length}`}/>
+          <Fig k="Days with higher stress" v={`${above} of ${s.points.length}`}/>
         )}
       </dl>
       )}

@@ -32,11 +32,13 @@ import { ScoreChart } from './charts'
 
 /* ── Bands: the teen against their own usual ───────────────────────────── */
 
+/* The same words as the Mind Score Log (src/views/reading/marks.jsx); `short`
+   is for the calendar key. */
 const BANDS = {
-  calm: { word: 'Calmer than usual', wash: 'bg-beam-wash', bar: 'bg-beam', fill: '#2294e6', ink: 'text-sky-ink' },
-  usual: { word: 'About usual', wash: 'bg-accent-wash', bar: 'bg-accent', fill: '#157446', ink: 'text-accent' },
-  up: { word: 'More stressed', wash: 'bg-warn-wash', bar: 'bg-warn', fill: '#b5871b', ink: 'text-sun-ink' },
-  high: { word: 'Much more stressed', wash: 'bg-coral-wash', bar: 'bg-crit', fill: '#a8321f', ink: 'text-crit' },
+  calm: { word: 'Stress is lower than usual', short: 'Lower stress', wash: 'bg-beam-wash', bar: 'bg-beam', fill: '#2294e6', ink: 'text-sky-ink' },
+  usual: { word: 'Stress is in your usual range', short: 'Usual stress', wash: 'bg-accent-wash', bar: 'bg-accent', fill: '#157446', ink: 'text-accent' },
+  up: { word: 'Stress is slightly higher than usual', short: 'Higher stress', wash: 'bg-warn-wash', bar: 'bg-warn', fill: '#b5871b', ink: 'text-sun-ink' },
+  high: { word: 'Stress is much higher than usual', short: 'Much higher stress', wash: 'bg-coral-wash', bar: 'bg-crit', fill: '#a8321f', ink: 'text-crit' },
 }
 const BAND_ORDER = ['calm', 'usual', 'up', 'high']
 export const bandKey = (v, usual) =>
@@ -206,7 +208,7 @@ function MonthCalendar({ teen, byDate, span, month, setMonth, onPick }) {
             <span aria-hidden className={cn('relative size-3.5 overflow-hidden rounded-xs', BANDS[k].wash)}>
               <span className={cn('absolute inset-x-0 top-0 h-[3px]', BANDS[k].bar)}/>
             </span>
-            {BANDS[k].word}
+            {BANDS[k].short}
           </li>
         ))}
       </ul>

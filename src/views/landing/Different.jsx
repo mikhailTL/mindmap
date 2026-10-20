@@ -1,177 +1,288 @@
 import React from 'react'
 import { Section, SectionHead } from '../../ui/section'
+import { ArrowLeft, ArrowRight } from '../../ui/marks'
 import { useReduced } from '../../toolkit/useReduced'
-import { useSceneWatch } from '../../ui/scenes/kit'
+import { ScrollRow } from '../../ui/motion'
 import { PRO } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 /* The folder path in full: on a case-insensitive disk './different' is this file. */
-import { PICTURES, Glyph, DIF_CSS } from './different/index.js'
+import { PICTURES, DIF_CSS } from './different/index.js'
 
-/* What makes MindMap different: eight points, one stage. Owner, 18 October:
- * the bento was "very cluttered" and "looks very childish", and on the 19th:
- * "i said redesign not remove". So the eight are a plain list of rows (mark,
- * title, one line) beside one isometric drawing (./different/pictures.jsx)
- * that changes to the row chosen.
+/* What makes MindMap different: eight cards in one sideways row. Owner,
+ * 20 October: "have the cards a horizontal carousel that autoscrolls, and
+ * revert the images to actual stuff from site ... have it colorful and stuff
+ * like it was before with cool animations but not overly overwhelming".
  *
- * A row is a tab: focus, a click or tap, the arrow keys, or (from lg) hover
- * choose it. Until the reader does any of that, the rows advance on their own
- * every five seconds, only while the band is on screen and never under
- * reduced motion. The thin green rule beside the chosen row fills over those
- * five seconds.
+ * Each card is a picture made of the app's own parts (./different/
+ * pictures.jsx), a title and one line, on its own two-hue wash. Three looks
+ * take turns so neighbours differ: `tint` (the wash is the card), `pane`
+ * (white card, washed picture) and `rule` (white card, a coloured rule over
+ * a washed picture). Cards are not links: there is no page per feature.
  *
- * From lg the stage is on the left and stays in view; below lg it sits above
- * the list, shorter, and only the chosen row shows its line.
+ * The row moves on by one card every four seconds and runs on past the
+ * eighth into a copy of the row, then jumps back to the same frame at the
+ * start, so the loop has no seam. It holds while the pointer is over it,
+ * while a keyboard focus is in it, while a finger is on it, while it is off
+ * screen and when paused, and starts again six seconds after the last touch.
+ * Under reduced motion it never moves on its own. Arrow buttons and the
+ * arrow keys on the row move one card; touch swipes and snaps.
+ *
+ * Only the card in front plays its picture's motion, once, as it arrives.
  *
  * Order is the owner's: the score first, the network second. */
 
 export const DIFFERENT = [
-  { id: 'score', title: 'Mind Score',
-    line: 'One daily number from our own neural network, built from your body’s signals.',
-    alt: 'A dial standing on a plate, its needle at the day’s reading.' },
-  { id: 'network', title: 'Support network',
-    line: `Link a parent and a ${PRO}. The teen decides what each one sees.`,
-    alt: `Three linked tiles for a teen, a parent and a ${PRO}, with a lock on the teen’s.` },
-  { id: 'patch', title: 'Patch or phone',
-    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.',
-    alt: 'The patch and a phone side by side.' },
-  { id: 'heads', title: 'Heads Up',
-    line: 'Tells parents when phone use shows signs of stress.',
-    alt: 'A phone with a traffic light beside it, the green lamp lit.' },
-  { id: 'settle', title: 'Recovery time',
-    line: 'The patch shows how fast your body settles after a peak, and what helps.',
-    alt: 'A curve rising to a peak and settling back to its usual level.' },
-  { id: 'event', title: 'Stress before events',
-    line: 'Mark a test and see how stress builds in the hours before it.',
-    alt: 'A calendar with one day marked and a curve rising towards it.' },
-  { id: 'ai', title: 'MindMap AI',
-    line: 'Ask about stress, sleep and school. Get a plain, practical answer.',
-    alt: 'Three chat panels stacked in the air.' },
-  { id: 'toolkit', title: 'Toolkit with levels',
-    line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.',
-    alt: 'Three steps with a block climbing to the top one.' },
+  { id: 'score', title: 'Mind Score', look: 'tint', wash: ['#dcefe4', '#def0fc'], hue: '#157446',
+    line: 'One daily number from our own neural network, built from your body’s signals.' },
+  { id: 'network', title: 'Support network', look: 'pane', wash: ['#ffe8e0', '#f5ecd7'], hue: '#f25424',
+    line: `Link a parent and a ${PRO}. The teen decides what each one sees.` },
+  { id: 'patch', title: 'Patch or phone', look: 'rule', wash: ['#fce6f1', '#f6e8ff'], hue: '#f2248b',
+    line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
+  { id: 'heads', title: 'Heads Up', look: 'tint', wash: ['#def0fc', '#ddf0f8'], hue: '#2294e6',
+    line: 'Tells parents when phone use shows signs of stress.' },
+  { id: 'settle', title: 'Recovery time', look: 'pane', wash: ['#f6e8ff', '#fce6f1'], hue: '#a024f2',
+    line: 'The patch shows how fast your body settles after a peak, and what helps.' },
+  { id: 'event', title: 'Stress before events', look: 'rule', wash: ['#f5ecd7', '#ffe8e0'], hue: '#b5871b',
+    line: 'Mark a test and see how stress builds in the hours before it.' },
+  { id: 'ai', title: 'MindMap AI', look: 'tint', wash: ['#ddf0f8', '#d5f2e8'], hue: '#1d8fb0',
+    line: 'Ask about stress, sleep and school. Get a plain, practical answer.' },
+  { id: 'toolkit', title: 'Toolkit with levels', look: 'pane', wash: ['#d5f2e8', '#f5ecd7'], hue: '#18a370',
+    line: 'Exercises your phone measures. Points open new levels, with no streaks to keep.' },
 ]
 
-const STEP_MS = 5000
+const N = DIFFERENT.length
+const STEP_MS = 4000
+const REST_MS = 6000
+const GLIDE_MS = 900
+const easeInOut = t => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
 
-/* Hover chooses a row only from lg, where every line shows. Below that the
-   chosen row opens and the rest shift, which would put a different row under
-   a resting pointer and choose that one too. */
-const wide = () => window.matchMedia?.('(min-width: 1024px)').matches ?? true
+const washOf = d => `linear-gradient(135deg, ${d.wash[0]} 0%, ${d.wash[1]} 100%)`
+
+function Card({ d, play, copy }) {
+  const titleId = React.useId()
+  const Picture = PICTURES[d.id]
+  const tint = d.look === 'tint'
+  return (
+    <article aria-labelledby={copy ? undefined : titleId}
+      className={cn('dif-card relative flex h-full flex-col overflow-hidden rounded-[18px] p-2', play && 'dif-play',
+        tint ? '' : 'border border-rule bg-card')}
+      style={tint ? { background: washOf(d) } : undefined}>
+      {d.look === 'rule' && <span aria-hidden className="mx-1.5 mb-2 mt-0.5 block h-1 shrink-0 rounded-bar" style={{ background: d.hue }}/>}
+      <div className={cn('relative shrink-0 overflow-hidden rounded-[13px]', tint ? 'bg-card/55' : '',
+        d.look === 'rule' ? 'h-[164px] lg:h-[178px]' : 'h-[176px] lg:h-[190px]')}
+        style={tint ? undefined : { background: washOf(d) }}>
+        <Picture play={play}/>
+      </div>
+      <div className="flex flex-1 flex-col px-1.5 pb-2 pt-3">
+        <h3 id={copy ? undefined : titleId} className="m-0 font-display text-sec font-bold leading-tight text-ink">{d.title}</h3>
+        <p className="m-0 mt-1 text-fine leading-[1.5] text-ink-2 lg:text-ui lg:leading-[1.5]">{d.line}</p>
+      </div>
+    </article>
+  )
+}
+
+function Nudge({ label, onClick, children }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label}
+      className="grid size-11 shrink-0 place-items-center rounded-full border border-rule bg-card text-ink
+        transition-[background-color,transform] duration-150 ease-quint hoverOnly:bg-mist active:scale-95
+        focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ink">
+      {children}
+    </button>
+  )
+}
 
 export function Different() {
   const reduced = useReduced()
-  const uid = React.useId()
-  const tabId = i => `${uid}t${i}`
-  const [on, setOn] = React.useState(0)
-  const [prev, setPrev] = React.useState(-1)
-  const [auto, setAuto] = React.useState(true)
-  const [seen, setSeen] = React.useState(false)
   const box = React.useRef(null)
-  const stage = React.useRef(null)
-  const tabs = React.useRef([])
-  useSceneWatch(stage)
+  const row = React.useRef(null)
+  const [cur, setCur] = React.useState(0)
+  const [seen, setSeen] = React.useState(false)
+  const [stopped, setStopped] = React.useState(false)
+  /* Pointer, focus and timing live in a ref: they change on every move and
+     only the timer reads them. */
+  const s = React.useRef({ hover: false, focus: false, held: false, driving: false,
+    lastMove: 0, lastTouch: 0, raf: 0, quiet: 0 })
+
+  const posOf = i => {
+    const el = row.current
+    const li = el?.children[i]
+    return li ? li.offsetLeft - parseFloat(getComputedStyle(el).paddingLeft || '0') : 0
+  }
+  const nearest = () => {
+    const el = row.current
+    let best = 0, gap = Infinity
+    for (let i = 0; i < el.children.length; i++) {
+      const g = Math.abs(posOf(i) - el.scrollLeft)
+      if (g < gap) { gap = g; best = i }
+    }
+    return best
+  }
+  /* Set the scroll without a snap pulling it about, then hand snap back. */
+  const place = x => {
+    const el = row.current
+    el.style.scrollSnapType = 'none'
+    el.scrollLeft = x
+    el.style.scrollSnapType = ''
+  }
+  /* On the copy of the row, jump back to the same frame on the real one. */
+  const fold = () => {
+    const i = nearest()
+    if (i >= N) place(posOf(i - N))
+  }
+  const halt = () => {
+    cancelAnimationFrame(s.current.raf)
+    if (s.current.driving) { row.current.style.scrollSnapType = ''; s.current.driving = false }
+  }
+
+  const glide = to => {
+    const el = row.current
+    if (!el) return
+    halt()
+    setCur(to % N)
+    s.current.lastMove = performance.now()
+    const from = el.scrollLeft, target = posOf(to)
+    if (reduced || Math.abs(target - from) < 1) { place(target); fold(); return }
+    s.current.driving = true
+    el.style.scrollSnapType = 'none'
+    const t0 = performance.now()
+    const frame = now => {
+      const t = Math.min(1, (now - t0) / GLIDE_MS)
+      el.scrollLeft = from + (target - from) * easeInOut(t)
+      if (t < 1) { s.current.raf = requestAnimationFrame(frame); return }
+      el.style.scrollSnapType = ''
+      fold()
+      /* The last scroll events of the glide arrive after this frame. */
+      requestAnimationFrame(() => { s.current.driving = false })
+    }
+    s.current.raf = requestAnimationFrame(frame)
+  }
+
+  const step = dir => {
+    if (!row.current) return
+    let i = nearest()
+    if (dir < 0 && i === 0) { place(posOf(N)); i = N }
+    glide(i + dir)
+  }
+
+  const touched = () => { s.current.lastTouch = performance.now() }
+
+  /* A scroll the row did not make itself is the reader's. */
+  const onScroll = () => {
+    if (s.current.driving) return
+    touched()
+    clearTimeout(s.current.quiet)
+    s.current.quiet = setTimeout(() => {
+      if (s.current.held || !row.current) return
+      setCur(nearest() % N)
+      fold()
+    }, 160)
+  }
 
   React.useEffect(() => {
     const el = box.current
-    if (!el || typeof IntersectionObserver === 'undefined') return undefined
-    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.35 })
+    if (!el || typeof IntersectionObserver === 'undefined') { setSeen(true); return undefined }
+    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.4 })
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  const show = i => {
-    if (i === on) return
-    setPrev(on)
-    setOn(i)
-  }
-
-  const playing = auto && seen && !reduced
   React.useEffect(() => {
-    if (!playing) return undefined
-    const t = setTimeout(() => { setPrev(on); setOn((on + 1) % DIFFERENT.length) }, STEP_MS)
-    return () => clearTimeout(t)
-  }, [playing, on])
+    const up = () => {
+      if (!s.current.held) return
+      s.current.held = false
+      touched()
+      onScroll()
+    }
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    window.addEventListener('touchend', up)
+    return () => {
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      window.removeEventListener('touchend', up)
+      cancelAnimationFrame(s.current.raf)
+      clearTimeout(s.current.quiet)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const take = i => { setAuto(false); show(i) }
+  const auto = seen && !reduced && !stopped
+  React.useEffect(() => {
+    if (!auto) return undefined
+    s.current.lastMove = performance.now()
+    const id = setInterval(() => {
+      const st = s.current
+      if (st.hover || st.focus || st.held || st.driving || document.hidden) return
+      const now = performance.now()
+      if (now - st.lastMove >= STEP_MS && now - st.lastTouch >= REST_MS) step(1)
+    }, 200)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto])
 
   const onKey = e => {
-    const n = DIFFERENT.length
-    const to = { ArrowDown: on + 1, ArrowRight: on + 1, ArrowUp: on - 1, ArrowLeft: on - 1, Home: 0, End: n - 1 }[e.key]
-    if (to === undefined) return
+    const dir = { ArrowRight: 1, ArrowLeft: -1 }[e.key]
+    if (!dir) return
     e.preventDefault()
-    tabs.current[(to + n) % n]?.focus()
+    touched()
+    step(dir)
   }
 
-  const cur = DIFFERENT[on]
+  const live = seen && !reduced
 
   return (
     <Section name="Features" id="different" tone="card">
       <style>{DIF_CSS}</style>
-      <SectionHead>What makes MindMap different</SectionHead>
+      <SectionHead>What makes MindMap different?</SectionHead>
 
-      <div ref={box} className="mt-6 grid gap-5 lg:mt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] lg:items-start lg:gap-12">
-        <div role="tabpanel" id={`${uid}p`} aria-labelledby={tabId(on)} tabIndex={0}
-          className="relative h-[220px] overflow-hidden rounded-panel border border-rule bg-paper sm:h-[300px]
-            lg:sticky lg:top-[76px] lg:h-auto lg:aspect-[6/5]">
-          <div ref={stage} className="absolute inset-0">
-            {DIFFERENT.map((d, i) => {
-              const Picture = PICTURES[d.id]
-              return (
-                <div key={d.id} aria-hidden="true"
-                  className={cn('absolute inset-0 transition-[opacity,transform] ease-quint',
-                    'motion-reduce:transform-none motion-reduce:duration-200',
-                    i === on ? 'dif-on z-10 translate-y-0 opacity-100 duration-700'
-                      : i === prev ? '-translate-y-2 opacity-0 duration-500'
-                      : 'translate-y-3 opacity-0 duration-500')}>
-                  <Picture/>
-                </div>
-              )
-            })}
+      <div ref={box} className="mt-5 lg:mt-7"
+        onPointerEnter={e => { if (e.pointerType === 'mouse') s.current.hover = true }}
+        onPointerLeave={e => { if (e.pointerType === 'mouse') { s.current.hover = false; touched() } }}
+        onFocus={e => { if (e.target.matches?.(':focus-visible')) s.current.focus = true }}
+        onBlur={e => {
+          if (box.current?.contains(e.relatedTarget)) return
+          s.current.focus = false
+          touched()
+        }}>
+        <ScrollRow index={0}>
+          <ol ref={row} onScroll={onScroll} onKeyDown={onKey} tabIndex={0}
+            onPointerDown={() => { s.current.held = true; halt(); touched() }}
+            onWheel={() => { halt(); touched() }}
+            aria-label="What makes MindMap different?"
+            className="relative m-0 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto p-0 py-1
+              [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4
+              -mx-[22px] scroll-px-[22px] px-[22px] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-14 lg:scroll-px-14 lg:px-14
+              focus-visible:outline focus-visible:outline-[3px] focus-visible:-outline-offset-[3px] focus-visible:outline-ink">
+            {[0, 1].map(copy => DIFFERENT.map((d, i) => (
+              <li key={`${copy}${d.id}`} aria-hidden={copy ? true : undefined}
+                className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-32px)/2.4)] lg:w-[calc((100%-48px)/3.5)]">
+                <Card d={d} copy={!!copy} play={live && i === cur}/>
+              </li>
+            )))}
+          </ol>
+        </ScrollRow>
+
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <div aria-hidden className="flex items-center gap-1.5">
+            {DIFFERENT.map((d, i) => (
+              <span key={d.id} className={cn('block h-1.5 rounded-bar transition-[width,background-color] duration-500 ease-quint',
+                i === cur ? 'w-6' : 'w-1.5 bg-ruling')}
+                style={i === cur ? { background: d.hue } : undefined}/>
+            ))}
           </div>
-          <p className="sr-only">{cur.alt}</p>
-        </div>
-
-        <div role="tablist" aria-orientation="vertical" aria-label="What makes MindMap different" onKeyDown={onKey}
-          className="m-0 border-b border-rule">
-          {DIFFERENT.map((d, i) => {
-            const sel = i === on
-            return (
-              <button key={d.id} type="button" role="tab" id={tabId(i)}
-                ref={el => { tabs.current[i] = el }}
-                aria-selected={sel} aria-controls={`${uid}p`} tabIndex={sel ? 0 : -1}
-                aria-labelledby={`${tabId(i)}n`} aria-describedby={`${tabId(i)}l`}
-                onClick={() => take(i)} onFocus={() => take(i)}
-                onPointerEnter={e => { if (e.pointerType === 'mouse' && wide()) take(i) }}
-                className="relative grid w-full grid-cols-[28px_minmax(0,1fr)] items-start gap-x-3.5 border-t border-rule
-                  py-3.5 pl-4 pr-1 text-left touch-manipulation lg:py-4">
-                {/* The rule: a hairline track, filled green for the chosen row,
-                    filling over the five seconds while the rows advance. */}
-                <span aria-hidden className="absolute bottom-3 left-0 top-3 w-[2px] overflow-hidden rounded-bar">
-                  {sel && (
-                    <span key={`${on}${playing}`}
-                      className={cn('block h-full w-full origin-top bg-accent', playing && 'dif-fill')}
-                      style={playing ? { animationDuration: `${STEP_MS}ms` } : undefined}/>
-                  )}
-                </span>
-                <Glyph id={d.id} className={cn('mt-0.5 size-7 transition-colors duration-200',
-                  sel ? 'text-accent' : 'text-ink-3')}/>
-                <span className="min-w-0">
-                  <span id={`${tabId(i)}n`} className={cn('block font-display text-sec font-bold leading-snug transition-colors duration-200',
-                    sel ? 'text-ink' : 'text-ink-2')}>
-                    {d.title}
-                  </span>
-                  {/* Below lg only the chosen row opens; from lg every line shows,
-                      so a hover never moves the row under the pointer. */}
-                  <span className={cn('grid transition-[grid-template-rows] duration-300 ease-quint motion-reduce:transition-none lg:grid-rows-[1fr]',
-                    sel ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                    <span id={`${tabId(i)}l`} className="block overflow-hidden">
-                      <span className="block pt-1 text-ui leading-[1.5] text-ink-2">{d.line}</span>
-                    </span>
-                  </span>
-                </span>
-              </button>
-            )
-          })}
+          <div className="flex shrink-0 gap-2">
+            {!reduced && (
+              <Nudge label={stopped ? 'Play the cards' : 'Pause the cards'}
+                onClick={() => { setStopped(v => !v); touched() }}>
+                {stopped
+                  ? <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+                  : <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6.5" y="5.5" width="4" height="13" rx="1"/><rect x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>}
+              </Nudge>
+            )}
+            <Nudge label="Previous card" onClick={() => { touched(); step(-1) }}><ArrowLeft aria-hidden size={20}/></Nudge>
+            <Nudge label="Next card" onClick={() => { touched(); step(1) }}><ArrowRight aria-hidden size={20}/></Nudge>
+          </div>
         </div>
       </div>
     </Section>

@@ -18,10 +18,12 @@ export const summaryOf = (teen, range) => (teen.live ? liveSummary(teen, range) 
 export const statusOfTeen = (teen, range) => (teen.live ? liveStatus(teen, range) : rosterStatus(teen, range))
 
 export const STATUS_WORD = Object.freeze({ green: 'Green', yellow: 'Yellow', red: 'Red' })
+/* Every status names stress; the owner, 18 October: "can never be
+   inspecific like 'A little above usual'". */
 export const STATUS_SUB = Object.freeze({
-  green: 'In their usual range',
-  yellow: 'A little above usual',
-  red: 'Well above usual',
+  green: 'Stress is in their usual range',
+  yellow: 'Stress is slightly higher than usual',
+  red: 'Stress is much higher than usual',
 })
 export const PREV = Object.freeze({ day: 'yesterday', week: 'last week', month: 'last month' })
 export const RANGE_WORD = Object.freeze({ day: 'Day', week: 'Week', month: 'Month' })
@@ -58,8 +60,8 @@ export function lightOf(teen, v) {
 /* "6 higher than last week". Higher means more stress on this scale. */
 export function changeWords(change, range, variant) {
   if (isPro(variant)) return change === 0 ? `No change vs ${PREV[range]}` : `${change > 0 ? '+' : '−'}${Math.abs(change)} vs ${PREV[range]}`
-  if (change === 0) return `Same as ${PREV[range]}`
-  return `${Math.abs(change)} ${change > 0 ? 'higher' : 'lower'} than ${PREV[range]}`
+  if (change === 0) return `Same stress as ${PREV[range]}`
+  return `${Math.abs(change)} points ${change > 0 ? 'more' : 'less'} stress than ${PREV[range]}`
 }
 
 /* The day record for an ISO date, or the latest. */

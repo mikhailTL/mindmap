@@ -67,9 +67,9 @@ export const signed = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)
 /* Status words beside the face. */
 export const STATUS_WORD = Object.freeze({ green: 'Green', yellow: 'Yellow', red: 'Red' })
 export const STATUS_LINE = Object.freeze({
-  green: 'Within their usual range',
-  yellow: 'Above their usual range',
-  red: 'Well above their usual range',
+  green: 'Stress is in their usual range',
+  yellow: 'Stress is slightly higher than usual',
+  red: 'Stress is much higher than usual',
 })
 const RANK = { [Light.RED]: 0, [Light.YELLOW]: 1, [Light.GREEN]: 2 }
 

@@ -10,6 +10,7 @@ import { PhoneCheck } from './PhoneCheck'
 import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 import { FACE_SECONDS } from '../signals/face'
+import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 import { SceneCard } from '../ui/scenes/SceneCard'
 import { mirrorArt, pulseArt, surveyArt } from '../ui/scenes/art'
@@ -71,6 +72,10 @@ export function WithoutPatch({ go, as: Root = 'main' }) {
         <div className="wrap grid gap-5 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-center
           lg:gap-8 lg:pb-8 lg:pt-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
           <div className="min-w-0">
+            {/* What a reading is, before the ways (owner, 20 October). */}
+            <p className="mb-3 max-w-[60ch] text-sec leading-[1.5] text-ink-2">
+              A reading measures your stress level right now as your {SCORE}, 0 calm to 100 peak.
+            </p>
             <div className="grid gap-3 sm:grid-cols-3 sm:auto-rows-fr">
               {ROUTES.map((r, i) => <Route key={r.id} r={r} i={i} go={go} toCheck={toCheck}/>)}
             </div>

@@ -54,7 +54,8 @@ const METRICS = [
   { k: 'steps', label: 'Steps', unit: 'steps', Mark: MoveMark, up: 'More active than usual', down: 'Less active than usual' },
 ]
 
-const SHORT = { green: 'usual', yellow: 'above usual', red: 'well above' }
+/* Short Mind Score words for the readings table; each still names stress. */
+const SHORT = { green: 'usual stress', yellow: 'higher stress', red: 'much higher stress' }
 const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Survey' }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
@@ -141,7 +142,7 @@ function Readings({ teen, d, variant }) {
                 <td className="py-2.5 text-fine tabular-nums text-ink">{r.time}</td>
                 <td className="py-2.5 text-fine text-ink-2">{SOURCE[r.source]}</td>
                 <td className="py-2.5 text-right font-display text-ui font-bold tabular-nums text-ink">
-                  {r.score}<span className="ml-2 inline-block w-[5.5rem] text-left font-body text-fine font-normal text-ink-3">{SHORT[lightOf(teen, r.score)]}</span></td>
+                  {r.score}<span className="ml-2 inline-block w-[7.5rem] text-left font-body text-fine font-normal text-ink-3">{SHORT[lightOf(teen, r.score)]}</span></td>
               </tr>
             ))}
           </tbody>
@@ -215,7 +216,7 @@ function Measures({ teen, d }) {
   const u = usualOf(teen, 'score', d.date)
   const rows = [
     ['Mind Score', d.score],
-    ['Peaks above usual', d.peaks],
+    ['Stress peaks above usual', d.peaks],
     ['Minutes to settle after a peak', d.recovery],
     ['Usual band', `${teen.usual.lo} to ${teen.usual.hi}`],
     ['30-day mean, SD', `${u.mean.toFixed(1)}, ${u.sd.toFixed(1)}`],
@@ -265,7 +266,7 @@ export function AskAbout({ teen, variant = 'parent' }) {
   return (
     <Box title="What to ask about" meta="this week">
       {!peak ? (
-        <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">No day this week was above {teen.first}’s usual range.</p>
+        <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">No day this week had stress above {teen.first}’s usual range.</p>
       ) : (
         <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
           <div>

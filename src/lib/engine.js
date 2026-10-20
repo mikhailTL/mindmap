@@ -31,18 +31,17 @@ export function score(ans){
   return { S, score: Math.round(100/(1+Math.exp(-K*S))), contrib }
 }
 export function band(n){
-  if(n<35) return { key:'low',   word:'easier than usual' }
+  if(n<35) return { key:'low',   word:'lower than usual' }
   if(n<58) return { key:'usual', word:'in your usual range' }
-  if(n<73) return { key:'up',    word:'a little high' }
-  return          { key:'high',  word:'high' }
+  if(n<73) return { key:'up',    word:'slightly higher than usual' }
+  return          { key:'high',  word:'much higher than usual' }
 }
 /* One sentence, then the number. Never the other way round. */
 export function sentence(r){
   const b = band(r.score)
   const top = [...r.contrib].sort((a,c)=>Math.abs(c.raw)-Math.abs(a.raw))[0]
   const calm = b.key==='usual' || b.key==='low'
-  const verb = b.key==='usual' ? 'sitting' : 'running'
-  const lead = { pre:`Right now you are ${verb} `, word:b.word, calm }
+  const lead = { pre:'Right now your stress is ', word:b.word, calm }
   const tail = Math.abs(top.raw)<0.25
     ? '. Nothing you answered stands out on its own.'
     : `. The biggest single part of that is ${top.raw>0?top.item.up:top.item.dn}.`

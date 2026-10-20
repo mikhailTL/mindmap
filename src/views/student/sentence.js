@@ -43,28 +43,28 @@ export function daySentence({ day = [], band } = {}) {
   const morning = day.filter(p => hourOf(p.t) < 12)
   const morningCalm = morning.length > 0 && !morning.some(above)
   const morningLine = morningCalm
-    ? (morning.every(below) ? 'You were calmer than your usual all morning.' : 'You stayed calm all morning.')
+    ? (morning.every(below) ? 'Your stress was lower than usual all morning.' : 'Your stress stayed at or below usual all morning.')
     : null
 
-  if (day.every(above)) return { lead: 'You were more stressed than your usual all day.', sub: null }
-  if (day.every(below)) return { lead: 'You stayed calmer than your usual all day.', sub: null }
+  if (day.every(above)) return { lead: 'Your stress was higher than usual all day.', sub: null }
+  if (day.every(below)) return { lead: 'Your stress was lower than usual all day.', sub: null }
 
   const first = day.findIndex(above)
   if (first >= 0) {
     const when = hourLabel(day[first].t)
     const last = day[day.length - 1]
     if (above(last)) {
-      return { lead: `You were more stressed than your usual from about ${when}.`,
+      return { lead: `Your stress was higher than usual from about ${when}.`,
                sub: first > 0 ? morningLine : null }
     }
     const back = day.findIndex((p, i) => i > first && !above(p))
-    return { lead: `You were more stressed than your usual around ${when}.`,
-             sub: back > 0 ? `You settled again by ${hourLabel(day[back].t)}.` : morningLine }
+    return { lead: `Your stress was higher than usual around ${when}.`,
+             sub: back > 0 ? `It was back in your usual range by ${hourLabel(day[back].t)}.` : morningLine }
   }
 
   if (morning.length && morning.every(below))
-    return { lead: 'You stayed calmer than your usual all morning.', sub: 'The rest of the day was about your usual.' }
+    return { lead: 'Your stress was lower than usual all morning.', sub: 'The rest of the day it was in your usual range.' }
   if (mean(day) < lo + (hi - lo) * 0.3)
-    return { lead: 'You were calmer than your usual today.', sub: null }
-  return { lead: 'Today was about your usual.', sub: null }
+    return { lead: 'Your stress was lower than usual today.', sub: null }
+  return { lead: 'Your stress was in your usual range today.', sub: null }
 }

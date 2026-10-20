@@ -135,10 +135,10 @@ export function scoreFace({ face, baseline = emptyFaceBaseline(), calibration = 
 }
 
 export function faceBandOf(n) {
-  if (n < 35) return { key: 'low',   word: 'easier than usual' }
+  if (n < 35) return { key: 'low',   word: 'lower than usual' }
   if (n < 58) return { key: 'usual', word: 'in your usual range' }
-  if (n < 73) return { key: 'up',    word: 'a little high' }
-  return { key: 'high', word: 'high' }
+  if (n < 73) return { key: 'up',    word: 'slightly higher than usual' }
+  return { key: 'high', word: 'much higher than usual' }
 }
 
 /* The words for each driver in the one-line result. */
@@ -151,11 +151,10 @@ const SAY = {
 export function faceSentence(r) {
   const b = faceBandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]
-  const verb = b.key === 'usual' ? 'sitting' : 'running'
   const tail = !top || Math.abs(top.raw) < 0.3
     ? 'Nothing stands out.'
     : `${SAY[top.id] ?? top.label} is ${top.z > 0 ? 'above' : 'below'} ${r.baselineDays ? 'your usual' : 'the typical range'}.`
-  return { lead: `Right now you are ${verb} `, word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
+  return { lead: 'Right now your stress is ', word: b.word, tail, calm: b.key === 'usual' || b.key === 'low' }
 }
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x))

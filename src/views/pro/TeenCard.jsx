@@ -30,9 +30,9 @@ const sourceWords = teen => mainSources(teen).map(k => SOURCE_NAME[k].toLowerCas
 
 /* Where today's score sits against this teen's own usual range. */
 function usualWord(teen, score) {
-  if (score > teen.usual.hi) return 'Above usual today'
-  if (score < teen.usual.lo) return 'Below usual today'
-  return 'In their usual range today'
+  if (score > teen.usual.hi) return 'Stress is higher than usual today'
+  if (score < teen.usual.lo) return 'Stress is lower than usual today'
+  return 'Stress is in their usual range today'
 }
 
 /* The week against the 7 days before, in words. Null without trend consent. */
@@ -40,7 +40,8 @@ function weekWords(teen) {
   if (!trendsShared(teen)) return null
   const c = figures(teen, 'week').change
   const pts = n => `${n} ${n === 1 ? 'point' : 'points'}`
-  return c > 0 ? `Week up ${pts(c)}` : c < 0 ? `Week down ${pts(Math.abs(c))}` : 'Week unchanged'
+  return c > 0 ? `${pts(c)} more stress than last week` : c < 0 ? `${pts(Math.abs(c))} less stress than last week`
+    : 'Same stress as last week'
 }
 
 function ariaFor(teen) {

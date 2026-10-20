@@ -7,11 +7,13 @@ import { Camera, Link, Person, Stack } from '../../ui/marks'
  *
  * Graphic hexes are the Tailwind tokens: crit, sun, accent, sky. Each clears
  * 3:1 on card. The `ink` classes are the same hues at text contrast. */
+/* Every band names stress; the owner, 18 October: "can never be inspecific
+   like 'A little above usual'". `short` is for legends. */
 export const BAND = {
-  high:  { word: 'Well above your usual',  short: 'Well above',  fill: '#a8321f', ink: 'text-crit' },
-  up:    { word: 'A little above your usual', short: 'A little above', fill: '#b5871b', ink: 'text-sun-ink' },
-  usual: { word: 'In your usual range',    short: 'Usual range', fill: '#157446', ink: 'text-accent' },
-  low:   { word: 'Below your usual range', short: 'Below',       fill: '#2294e6', ink: 'text-sky-ink' },
+  high:  { word: 'Stress is much higher than usual',     short: 'Much higher stress', fill: '#a8321f', ink: 'text-crit' },
+  up:    { word: 'Stress is slightly higher than usual', short: 'Higher stress',      fill: '#b5871b', ink: 'text-sun-ink' },
+  usual: { word: 'Stress is in your usual range',        short: 'Usual stress',       fill: '#157446', ink: 'text-accent' },
+  low:   { word: 'Stress is lower than usual',           short: 'Lower stress',       fill: '#2294e6', ink: 'text-sky-ink' },
 }
 
 export const SOURCE = {

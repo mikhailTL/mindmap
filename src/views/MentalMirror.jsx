@@ -6,9 +6,8 @@ import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 import { addReading } from '../lib/readingLog'
 import './mirror/mirror.css'
-import { Topo } from './mirror/Topo'
 import { MeshPreview } from './mirror/MeshPreview'
-import { BANDS, CheckInScale, LiveChips, MirrorButton, Movers, ReadsChips, TickRing } from './mirror/parts'
+import { BANDS, CheckInScale, LiveChips, MirrorButton, Movers, ProgressRing, ReadsChips } from './mirror/parts'
 import { readoutOf } from './mirror/readout'
 
 import { FACE_SECONDS, analyseFace } from '../signals/face'
@@ -35,16 +34,19 @@ import { fitCalibration, identityCalibration } from '../signals/tnam'
  * 18 October: the consent card and the camera panel sit on the tech ground
  * (ui/tech) with the How it works Mirror tab. 19 October, the owner: "too
  * many black gradient backgrounds", so that ground is light and only the
- * camera viewfinder stays dark (.mm-screen.is-live in mirror.css). The landmark
- * overlay glows through a CSS drop-shadow on its canvas;
- * signals/face-capture.js, which draws it, is unchanged.
+ * camera viewfinder stays dark (.mm-screen.is-live in mirror.css).
  *
  * 19 October, the owner: "too dry". The whole flow is light now (views/
  * mirror/): a contour ground, a mesh preview before the camera opens, a ring
  * of ticks round the face for the 30 seconds, live chips with the same
  * figures the face tags draw, a one-tap check-in, and the result as light
  * cards. No longer on ui/tech. The logic below is unchanged; the only
- * addition is `tags`, a 4 Hz copy of the tag figures for the chips. */
+ * addition is `tags`, a 4 Hz copy of the tag figures for the chips.
+ *
+ * 20 October, the owner: "too cheesy". The contour ground, the glows, the
+ * scan line and the corner brackets are gone; the tick ring is one solid
+ * progress arc; the landmarks are drawn like MediaPipe's own demos (thin
+ * tessellation, small points, no glow). Logic and copy unchanged. */
 
 /* The four bands of the dial (BANDS, ./mirror/parts), one per group of cues,
    each 0 to 100 where 50 is this person's usual. */
@@ -58,8 +60,6 @@ function bandsOf(result) {
 }
 
 const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
-const HUD = ['left-2.5 top-2.5 border-l-2 border-t-2', 'right-2.5 top-2.5 border-r-2 border-t-2',
-  'bottom-2.5 left-2.5 border-b-2 border-l-2', 'bottom-2.5 right-2.5 border-b-2 border-r-2']
 const STORE = 'mindmap.mirror.baseline'
 const CHECKINS = 'mindmap.phone.checkins'   /* shared with the camera reading: one calibration per person */
 const CONSENT = 'mindmap.mirror.ok'
@@ -273,7 +273,6 @@ function Mirror() {
   if (!consented) {
     return (
       <section className="mm mm-frame max-w-[48rem] p-5 sm:p-7" aria-labelledby="mm-start">
-        <Topo/>
         <div className="grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_12.5rem] sm:gap-7">
           <div className="mm-bezel order-1 mx-auto w-[10.5rem] rounded-[28px] sm:order-2 sm:w-full">
             <div className="mm-screen rounded-[22px] px-[8%] py-[6%]"><MeshPreview/></div>
@@ -318,7 +317,6 @@ function Mirror() {
       data-reading={busy ? '' : undefined}>
       {/* ── the mirror ─────────────────────────────────────────────── */}
       <section className="mm-frame p-3 sm:p-5 lg:p-6" aria-label="Camera">
-        <Topo/>
         <div className="mm-bezel mx-auto max-w-[34rem]">
           <div ref={boxRef} className={cn('mm-screen', phase === 'capture' && 'is-live')}
             style={{ aspectRatio: '4 / 3' }}>
@@ -330,14 +328,8 @@ function Mirror() {
             <video ref={videoRef} muted playsInline autoPlay
               className={cn('mm-fade absolute inset-0 h-full w-full object-cover', phase === 'capture' ? 'opacity-100' : 'opacity-0')}
               style={{ transform: 'scaleX(-1)' }} aria-hidden/>
-            <TickRing progress={phase === 'capture' ? progress : phase === 'working' || phase === 'done' ? 100 : 0}
-              live={phase === 'capture'}/>
-            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden
-              style={{ filter: 'drop-shadow(0 0 4px rgba(62,207,154,.9))' }}/>
-            {phase === 'capture' && <span aria-hidden className="mm-scan"/>}
-            {HUD.map(k => (
-              <span key={k} aria-hidden className={cn('pointer-events-none absolute size-5 rounded-[3px] border-accent-lit', k)}/>
-            ))}
+            <ProgressRing progress={phase === 'capture' ? progress : phase === 'working' || phase === 'done' ? 100 : 0}/>
+            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden/>
           </div>
         </div>
 
@@ -371,7 +363,6 @@ function Mirror() {
 
       {/* ── the result ─────────────────────────────────────────────── */}
       <section className="mm-frame p-4 sm:p-5 lg:p-6" aria-live="polite" aria-label={`Your ${SCORE}`}>
-        <Topo/>
         {!result && (
           <>
             <p className="m-0 max-w-[36ch] text-sec text-ink-2">Your {SCORE} shows here.</p>

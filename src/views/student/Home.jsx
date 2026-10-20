@@ -211,7 +211,7 @@ export function StudentHome({ go }) {
           {name ? `Welcome, ${name}` : 'Welcome'}</h1>
       </header>
 
-      <LeadCard title="Take a reading" line="About a minute. Patch, camera, Mental Mirror or survey."
+      <LeadCard title="Take a reading" line="Your stress level as a Mind Score. Mental Mirror, phone camera, Survey or patch."
         cta="Start a reading" onClick={() => go('reading')}
         art={<PulseMotif calm={calm} className="h-8 w-full"/>}/>
 

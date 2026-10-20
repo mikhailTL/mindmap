@@ -19,7 +19,7 @@ describe('What is MindMap? band', () => {
   })
 
   it('leads with the owner sentence', () => {
-    expect(WHAT_IS_LEAD).toBe('MindMap is an adolescent wearable patch and app system designed for teens, parents, and Counselors/Professionals to address the teen mental health crisis at its root, providing 3 main features:')
+    expect(WHAT_IS_LEAD).toBe('MindMap is an adolescent wearable patch and app system designed for teens, parents, and Counselors/Professionals to address the teen mental health crisis at its root by measuring stress and quantifying wellness using innovative features. MindMap provides 3 main features:')
   })
 
   it('says readings can be taken without the patch', () => {

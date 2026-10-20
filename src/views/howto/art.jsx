@@ -307,8 +307,8 @@ function MiniFace({ x, y, s = 1 }) {
   )
 }
 
-/* The four ways to take a reading, one lit at a time: patch, fingertip on
-   the camera, the survey, Mental Mirror. */
+/* The four ways to take a reading, one lit at a time, in the Reading tab's
+   order: Mental Mirror, fingertip on the camera, the survey, patch. */
 function FourWays() {
   const xs = [5, 44, 83, 122]
   return (
@@ -320,7 +320,7 @@ function FourWays() {
         <rect key={q} x={xs[i] - 2} y="16" width="37" height="68" rx="10" fill="none"
           stroke={C.accent} strokeWidth="2.6" {...a(q)}/>
       ))}
-      <PatchShape x={21.5} y={52} s={0.5}/>
+      <MiniFace x={21.5} y={50} s={0.95}/>
       <g>
         <rect x="50" y="28" width="21" height="44" rx="5" fill={C.ink2}/>
         <circle cx="57" cy="36" r="4.5" fill={C.coral}/>
@@ -335,24 +335,28 @@ function FourWays() {
           </g>
         ))}
       </g>
-      <MiniFace x={138.5} y={50} s={0.95}/>
+      <PatchShape x={138.5} y={52} s={0.5}/>
     </Svg>
   )
 }
 
-/* Each way, on the phone: fingertip on the lens, a survey question, the
-   face in front of the camera. A bar fills as it reads. */
+/* Each way, on the phone, in the Reading tab's order: the face in front of
+   the camera, fingertip on the lens, a survey question. A bar fills as it
+   reads. */
 function HowWays() {
   return (
     <Svg>
       <rect x="50" y="4" width="60" height="92" rx="11" fill={C.ink}/>
       <rect x="56" y="12" width="48" height="68" rx="6" fill={C.ink2}/>
       <g {...a('ht-f1')}>
+        <MiniFace x={80} y={46} s={1.3}/>
+      </g>
+      <g {...a('ht-f2')}>
         <circle cx="80" cy="44" r="13" fill={C.coral} opacity=".55"/>
         <circle cx="80" cy="44" r="8" fill={C.ink} stroke={C.mist} strokeWidth="1.2"/>
         <path d="M70 18h20v20a10 10 0 0 1-20 0z" fill={C.skin} stroke={C.skinEdge} strokeWidth="1"/>
       </g>
-      <g {...a('ht-f2')}>
+      <g {...a('ht-f3')}>
         <rect x="60" y="20" width="40" height="12" rx="3" fill={C.card}/>
         <path d="M64 26h28" stroke={C.ink3} strokeWidth="2" strokeLinecap="round" opacity=".6"/>
         {[0, 1, 2, 3].map(i => (
@@ -360,9 +364,6 @@ function HowWays() {
             stroke={C.mist} strokeWidth="1.3"/>
         ))}
         <rect x="60" y="60" width="40" height="10" rx="3" fill={C.accent}/>
-      </g>
-      <g {...a('ht-f3')}>
-        <MiniFace x={80} y={46} s={1.3}/>
       </g>
       <rect x="58" y="86" width="44" height="4" rx="2" fill={C.ink3}/>
       <rect x="58" y="86" width="44" height="4" rx="2" fill={C.lit} {...a('ht-fill')}/>

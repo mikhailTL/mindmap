@@ -132,8 +132,8 @@ export function daysBetween(teen, from, to) {
 
 /* A parent's two children. */
 export const FAMILY = Object.freeze([
-  makeTeen({ id: 'maya', first: 'Maya', age: 15, grade: 10, seed: 1501, base: 46, drift: 20, patch: true, avatar: 'fox' }),
-  makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'owl' }),
+  makeTeen({ id: 'maya', first: 'Maya', age: 15, grade: 10, seed: 1501, base: 46, drift: 20, patch: true, avatar: 'char-maya' }),
+  makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'char-leo' }),
 ])
 
 /* A Counselor/Professional's caseload: 24 teens across grades 8 to 12, each

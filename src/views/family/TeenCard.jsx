@@ -65,9 +65,9 @@ const WHEN = { day: 'today', week: 'this week', month: 'this month' }
 function usualWord(teen, v, range) {
   if (!teen.usual) return null
   const when = WHEN[range] || WHEN.week
-  if (v > teen.usual.hi) return `Above usual ${when}`
-  if (v < teen.usual.lo) return `Below usual ${when}`
-  return `In their usual range ${when}`
+  if (v > teen.usual.hi) return `Stress is higher than usual ${when}`
+  if (v < teen.usual.lo) return `Stress is lower than usual ${when}`
+  return `Stress is in their usual range ${when}`
 }
 
 /* The week against the 7 days before, in words. */
@@ -75,7 +75,8 @@ function weekWords(teen) {
   const c = summaryOf(teen, 'week').change
   if (c == null) return 'Nothing earlier to compare'
   const pts = n => `${n} ${n === 1 ? 'point' : 'points'}`
-  return c > 0 ? `Week up ${pts(c)}` : c < 0 ? `Week down ${pts(Math.abs(c))}` : 'Week unchanged'
+  return c > 0 ? `${pts(c)} more stress than last week` : c < 0 ? `${pts(Math.abs(c))} less stress than last week`
+    : 'Same stress as last week'
 }
 
 /* The owner, 18 October: the live card is drawn like the demo

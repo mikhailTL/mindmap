@@ -22,9 +22,6 @@ import studentGame from '../photos/student-game.webp'
 import studentHero from '../photos/student-hero.webp'
 import studentHomework from '../photos/student-homework.webp'
 import studentsHallway from '../photos/students-hallway.webp'
-import avatarCounselorA from '../photos/avatar-counselor-a.webp'
-import avatarCounselorB from '../photos/avatar-counselor-b.webp'
-import avatarParentA from '../photos/avatar-parent-a.webp'
 
 export const PHOTOS = {
   'clinic-talk': clinicTalk,
@@ -43,17 +40,8 @@ export const PHOTOS = {
   'students-hallway': studentsHallway,
 }
 
-/* 160px square crops of three frames above, for the demo's people: the man
-   in clinic-talk, the woman in pro-hero.webp (both shown as Counselors/
-   Professionals) and the woman in parent-kitchen (a parent). Models, not
-   MindMap users: each is drawn with alt="" beside a demo name. Owner, 18
-   October: "counselors should use uploaded professional images, make that
-   apparent in the demo". Read by src/account/avatars.jsx as photo-<key>. */
-export const AVATAR_PHOTOS = {
-  'counselor-a': avatarCounselorA,
-  'counselor-b': avatarCounselorB,
-  'parent-a': avatarParentA,
-}
+/* The demo's people are drawn characters now (src/account/characters/), not
+   crops of these frames. Owner, 18 October: the crops "look side profiles". */
 
 /* ---------------------------------------------------------------------------
  * Framing data, recorded once, per spec 0d rule 4:

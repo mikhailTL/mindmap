@@ -53,9 +53,9 @@ const mondayIndex = d => (d.getDay() + 6) % 7
    The reader's own row is the role word and its picture (./account/viewer.js),
    never a demo person's name. */
 const DEMO_PEOPLE = [
-  { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'fox' },
-  { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: 'initials-E' },
-  { id: 'demo-pro',     name: 'Dr. Shah', role: 'pro',   avatar: 'photo-counselor-a' },
+  { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'char-maya' },
+  { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: 'char-elena' },
+  { id: 'demo-pro',     name: 'Dr. Shah', role: 'pro',   avatar: 'char-shah' },
 ]
 
 /* What each person on the network receives. */
