@@ -12,8 +12,8 @@ import { PRO } from '../lib/terms'
 import { AboutButton } from './about/AboutButton'
 import { AboutSheet } from './about/AboutSheet'
 
-/* Owner, 18 October: "a wellness app for teenagers" in place of the old motto. */
-const MOTTO = 'A wellness app for teenagers'
+/* Owner, 18 October: "a wellness app for teenagers"; 20 October: "a teen wellness app". */
+const MOTTO = 'A teen wellness app'
 /* The app's front page: the mark, the motto, About, and the way in. Plays its
    opening every time the page is opened or refreshed, signed in or out (the
    owner, 17 October), with Skip under it; reduced motion and the screenshot

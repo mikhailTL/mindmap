@@ -177,7 +177,18 @@ function Dot({ name, dur, delay = 0 }) {
 
 /* ── 1. the patch ──────────────────────────────────────────────────────── */
 
-const ARM = { x: 0, y: -20, w: 46, d: 190, h: 18, r: 22 }
+const ARM = { x: 2, y: -20, w: 42, d: 120, h: 15, r: 20 }
+/* The hand at the end of the forearm (owner, 20 October: "u need a hand for
+   the wearable patch card not a bar"): a palm, four fingers and a thumb,
+   the same skin-pale tone as the arm, a little lower than the arm. */
+const PALM = { x: 4, y: 90, w: 38, d: 34, h: 13, r: 14 }
+const THUMB = { x: 36, y: 98, w: 20, d: 10, h: 9, r: 5 }
+const FINGERS = [
+  { x: 6, y: 116, w: 8, d: 20, h: 8, r: 4 },
+  { x: 15.5, y: 117, w: 8, d: 25, h: 8.5, r: 4 },
+  { x: 25, y: 117, w: 8, d: 24, h: 8.5, r: 4 },
+  { x: 34.5, y: 116, w: 7.5, d: 18, h: 8, r: 3.75 },
+]
 const PATCH = { x: 7, y: 36, w: 32, d: 40, h: 4, r: 9 }
 const PHONE1 = { x: 80, y: -16, w: 52, d: 92, h: 7, r: 10 }
 const P1 = [iso(23, 56, ARM.h + PATCH.h + 3), [16, -36], iso(108, 52, PHONE1.h + 6)]
@@ -239,7 +250,11 @@ export function PatchPicture() {
       <Shadow {...ARM} blur={b}/>
       <Shadow {...PHONE1} blur={b} opacity={0.2}/>
       {/* The forearm, then the patch on it, its light, and the ripple. */}
+      {[PALM, THUMB, ...FINGERS].map((f, i) => <Shadow key={i} {...f} blur={b} opacity={0.12}/>)}
       <Slab {...ARM} tone="arm"/>
+      <Slab {...THUMB} tone="arm"/>
+      <Slab {...PALM} tone="arm"/>
+      {FINGERS.map((f, i) => <Slab key={i} {...f} tone="arm"/>)}
       {/* The patch is white, as it is made; the phone keeps a dark frame and
           a light screen, like the app (owner, 19 October: "stop making
           things dark"). */}

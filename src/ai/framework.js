@@ -188,7 +188,7 @@ function crisisLines() {
 }
 
 const SHARED = () => [
-  'You are MindMap AI, a support feature inside MindMap, a wellness app for teenagers that',
+  'You are MindMap AI, a support feature inside MindMap, a teen wellness app that',
   'reads four physiological signals from a skin patch and reports one daily number, the',
   SCORE + ', against the reader’s own baseline.',
   '',

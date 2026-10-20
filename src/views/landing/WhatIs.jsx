@@ -36,8 +36,9 @@ export const WHAT_IS = [
 ]
 
 /* Three neighbours, three surfaces (src/ui/card.jsx): the patch is the white
-   card, the network takes the turquoise wash, the app an outline on the band. */
-const LOOK = [['plain'], ['tint', 'beam'], ['outline']]
+   card, the network takes the turquoise wash, the app white too (owner, 20
+   October: the outline card was the band's own colour). */
+const LOOK = [['plain'], ['tint', 'beam'], ['plain']]
 
 /* A step under body size on a phone, so the patch card, the longest, stays
    about one screen tall. */

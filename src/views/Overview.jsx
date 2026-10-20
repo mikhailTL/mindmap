@@ -188,7 +188,7 @@ export function Overview({ go }) {
               <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(247,250,248,0.55)_0%,rgba(247,250,248,0.35)_55%,rgba(247,250,248,0.1)_100%)]"/>
             </div>
             <ScrollIn as="p" className="mb-4 font-body text-[1.125rem] font-semibold text-accent-ink sm:text-[1.25rem]">
-              A wellness app for teenagers
+              A teen wellness app
             </ScrollIn>
             {/* No balanced wrapping: it moves the break mid-phrase. Leading is
                 1.06, not 1.02, where the descenders of "Making your stress"
