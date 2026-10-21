@@ -28,8 +28,8 @@ export const WHAT_IS_LEAD =
 
 export const WHAT_IS = [
   { id: 'patch', title: 'A wearable patch', go: 'patch', cta: 'About the patch',
-    photo: 'patch-worn', hue: 'sky',
-    alt: 'A teenage model in a school gym with the white MindMap patch shown on his upper arm',
+    photo: 'photos-hall-duo', hue: 'sky',
+    alt: 'Two teenage girls, models, talking in a school corridor, with the white MindMap patch shown on the upper arm of one of them',
     text: 'A wearable patch that turns detailed, numerical data into readable and friendly updates using an original Neural Network, unlike most wellness apps, which use no hardware.',
     /* Owner, 18 October: readings do not need the patch. */
     more: 'Users can also take readings without the patch, through in-app features like the machine learning Mental Mirror, a camera pulse check, and the Survey.' },

@@ -39,11 +39,27 @@ describe('Overview home', () => {
     expect(problem).not.toMatch(/id="why"[\s\S]*bg-ink p-5/)
   })
 
-  it('drops the glow behind the hero patch and varies the grounds', () => {
+  /* Owner, 21 October: "needs to be put into a white card". */
+  it('sets Why MindMap? on a white card with dark ink', () => {
+    const why = band('problem').split('id="why"')[1]
+    expect(why).toMatch(/^[^>]*>\s*<div[^>]*class="[^"]*rounded-panel bg-card /)
+    expect(why).toMatch(/<h3[^>]*text-ink"/)
+    expect(why).not.toMatch(/text-(paper|mist|accent-lit)/)
+  })
+
+  /* Owner, 21 October: the hero tile back to the original green; bands white,
+     green or blue ("not on entire page backgrounds"); cards keep their hues. */
+  it('drops the glow behind the hero patch and keeps the bands green and blue', () => {
     expect(html).not.toContain('mm-glow')
-    expect(html).toContain('bg-coral-wash')
-    expect(html).toContain('bg-lilac-wash')
-    expect(html).toContain('bg-sun-wash')
+    const hero = band('hero')
+    expect(hero).toContain('bg-accent-wash')
+    expect(hero).not.toMatch(/bg-(coral|lilac|sun)-wash/)
+    const open = id => html.match(new RegExp(`<section[^>]*id="${id}"[^>]*>`))[0]
+    expect(open('screens')).toContain('bg-accent-wash')
+    expect(open('privacy')).toContain('bg-[#e2f2f0]')
+    for (const tag of html.match(/<section[^>]*>/g)) {
+      expect(tag).not.toMatch(/bg-(coral|lilac|sun|blush)/)
+    }
   })
 
   it('registers every derived photograph with its framing data', () => {

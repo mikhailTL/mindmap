@@ -6,9 +6,10 @@
  * Keyed map, because three components pick a photograph by short key.
  *
  * Every photograph here is a licensed Adobe Stock frame of models. Some
- * frames (patch-worn, pro-hero, ovw-*) carry a rendering of the patch placed
- * on the arm; the people are models and nobody in them uses MindMap, so no
- * caption or alt text anywhere may say or imply otherwise. */
+ * frames (patch-worn, pro-hero, ovw-*, photos-steps-patch, photos-hall-duo)
+ * carry a rendering of the patch placed on the arm; the people are models
+ * and nobody in them uses MindMap, so no caption or alt text anywhere may say
+ * or imply otherwise. */
 import clinicTalk from '../photos/clinic-talk.webp'
 import friendsSteps from '../photos/friends-steps.webp'
 /* Not a photograph: the patch CAD render (public/patch-front-cad.png) with
@@ -33,6 +34,16 @@ import ovwPatchCourt from '../photos/ovw-patch-court.webp'
 import ovwProPatch from '../photos/ovw-pro-patch.webp'
 import ovwAppBus from '../photos/ovw-app-bus.webp'
 import ovwMirrorFace from '../photos/ovw-mirror-face.webp'
+/* Owner, 21 October: fewer repeats across pages and as many girls as boys.
+   A frame that sat unused, and four new crops: a girl from each of two
+   group frames with the patch render placed on her bare upper arm, one more
+   girl from the corridor frame, and an empty wall for the home hero. */
+import studentController from '../photos/student-controller.webp'
+import photosStepsPatch from '../photos/photos-steps-patch.webp'
+import photosHallDuo from '../photos/photos-hall-duo.webp'
+import photosHallDenim from '../photos/photos-hall-denim.webp'
+import photosGameWall from '../photos/photos-game-wall.webp'
+import photosKitchenCard from '../photos/photos-kitchen-card.webp'
 
 export const PHOTOS = {
   'clinic-talk': clinicTalk,
@@ -59,6 +70,12 @@ export const PHOTOS = {
   'ovw-pro-patch': ovwProPatch,
   'ovw-app-bus': ovwAppBus,
   'ovw-mirror-face': ovwMirrorFace,
+  'student-controller': studentController,
+  'photos-steps-patch': photosStepsPatch,
+  'photos-hall-duo': photosHallDuo,
+  'photos-hall-denim': photosHallDenim,
+  'photos-game-wall': photosGameWall,
+  'photos-kitchen-card': photosKitchenCard,
 }
 
 /* The demo's people are drawn characters now (src/account/characters/), not
@@ -139,7 +156,7 @@ export const PHOTO_META = {
   'student-homework': { w: 1592, h: 1194, focal: [56, 22], minAspect: 2.8, face: true },
   // Four students across a corridor, x 15 to x 90, heads y 8 to 38. The widest
   // spread of faces on the site, so the shortest frame it survives is 2.6.
-  'students-hallway': { w: 1600, h: 1068, focal: [50, 24], minAspect: 2.6, face: true },
+  'students-hallway': { w: 1600, h: 1068, focal: [56, 24], minAspect: 2.6, face: true },
   // Derived (Overview, 20 October). student-basketball cropped to the player,
   // with the patch render (public/patch-front-cad.png) placed on his upper
   // arm at x 38, y 70; face x 42 to 59, y 10 to 38, hair from y 6. Hair to
@@ -156,6 +173,24 @@ export const PHOTO_META = {
   // Derived: student-hero cropped above the game controller in his hands.
   // One centred face, x 43 to 63, y 2 to 50.
   'ovw-mirror-face': { w: 944, h: 650, focal: [53, 30], minAspect: 2.2, face: true },
+  // One teenager on a sofa in headphones, head x 54 to 74, y 9 to 38.
+  'student-controller': { w: 1600, h: 1067, focal: [60, 24], minAspect: 2.6, face: true },
+  // Derived (21 October): friends-steps cropped to the girl, with the patch
+  // render on her upper arm at x 8, y 42. Hair from y 6, face x 15 to 37,
+  // so the focal point sits high to keep the hair in a wide frame.
+  // Focal held left so a narrow upright frame still keeps the arm.
+  'photos-steps-patch': { w: 720, h: 900, focal: [10, 12], minAspect: 2.0, face: true },
+  // Derived: students-hallway cropped to two girls, the patch render on the
+  // left girl's upper arm at x 8, y 41. Faces x 23 to 83, y 6 to 29.
+  'photos-hall-duo': { w: 694, h: 730, focal: [40, 26], minAspect: 2.2, face: true },
+  // Derived: students-hallway cropped to one girl; face x 32 to 50, y 8 to 20.
+  'photos-hall-denim': { w: 390, h: 700, focal: [45, 8], minAspect: 1.5, face: true },
+  // Derived: the plain wall and cushions at the left of student-game. No
+  // person, so it is a ground behind the home hero's phone.
+  'photos-game-wall': { w: 380, h: 720, focal: [50, 40], minAspect: 0.3, face: false },
+  // Derived: parent-kitchen cut to a letterbox round both faces (y 8 to 83),
+  // for the app's door cards, which are about 2:1.
+  'photos-kitchen-card': { w: 1067, h: 530, focal: [52, 45], minAspect: 2.4, face: true },
 }
 
 /* A key nobody recorded still has to render. 16:9ish, centred, and treated as

@@ -45,7 +45,12 @@ import { MirrorDemo } from './methods/MirrorDemo'
  * the glow diagrams, reduce glow a bit and pair with stock, mirror looks too
  * crazy", and "AI font, remove". Each tab pairs its drawing with one licensed
  * stock photograph (lib/photos.js), takes its own light colour (`tone`), and
- * has no contour lines and no mono labels. */
+ * has no contour lines and no mono labels.
+ *
+ * 21 October, the owner: colours on cards, "not on entire page backgrounds".
+ * Each band (`tone`) is mint, sky, turquoise, leaf green or ocean blue; the
+ * white cards on it (`card`: the drawing and the fact labels) keep the hue
+ * they had, sun, sky, lilac, teal and coral. */
 
 const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
@@ -64,9 +69,9 @@ const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
    their place. 18 October, the owner: "remove app and site from how it
    works", so that tab is gone. */
 const CATEGORIES = [
-  { id: 'hardware', tab: 'The patch', tone: 'sun', plain: true, still: true,
-    photo: 'patch-worn', aspect: '3 / 2',
-    alt: 'A stock photograph of a teenager, a model, with a drawing of the patch on his upper arm to show where it sits.',
+  { id: 'hardware', tab: 'The patch', tone: 'mint', card: 'sun', plain: true, still: true,
+    photo: 'ovw-patch-court', aspect: '3 / 2',
+    alt: 'A stock photograph of a teenager, a model, playing basketball, with a drawing of the patch on his upper arm to show where it sits.',
     title: 'What the patch measures',
     line: 'The patch sends four body signals to your phone, where each is compared with your own normal.',
     explain: 'Stress shows up in small body changes, and the patch reads them every second.',
@@ -79,7 +84,7 @@ const CATEGORIES = [
     figure: PatchRender },
   /* "Add Mental Mirror as a whole new feature on the how it works complete
      with a video demo" (18 October). Facts from docs/mental-mirror.md. */
-  { id: 'mirror', tab: 'Mental Mirror', tone: 'sky', still: true,
+  { id: 'mirror', tab: 'Mental Mirror', tone: 'sky', card: 'sky', still: true,
     photo: 'student-hero', aspect: '16 / 9',
     alt: 'A stock photograph of a smiling teenager in headphones facing the camera.',
     title: 'Mental Mirror',
@@ -87,9 +92,9 @@ const CATEGORIES = [
     explain: 'One 30 second reading with the front camera, compared with your own earlier readings.',
     close: `It gives a ${SCORE} without the patch. No picture is kept.`,
     figure: MirrorDemo },
-  { id: 'ai', tab: 'MindMap AI', tone: 'lilac',
-    photo: 'parent-laptop', aspect: '2 / 1',
-    alt: 'A stock photograph of a mother and her teenager looking at a laptop together.',
+  { id: 'ai', tab: 'MindMap AI', tone: 'teal', card: 'lilac',
+    photo: 'student-card', aspect: '2 / 1',
+    alt: 'A stock photograph of five teenagers, models, walking and talking together in a park.',
     title: 'Plain answers to your questions',
     line: 'Ask when a reading or a hard week needs explaining.',
     explain: 'A chat built on a language model that follows one written set of rules, with its sources listed.',
@@ -101,9 +106,9 @@ const CATEGORIES = [
       ['In a crisis', 'A crisis line comes before anything else.'],
     ],
     figure: FrameworkGlow },
-  { id: 'ml', tab: 'Machine Learning', tone: 'teal',
-    photo: 'students-hallway', aspect: '2 / 1',
-    alt: 'A stock photograph of four students walking down a school corridor.',
+  { id: 'ml', tab: 'Machine Learning', tone: 'leaf', card: 'teal',
+    photo: 'photos-steps-patch', aspect: '2 / 1',
+    alt: 'A stock photograph of a teenage girl, a model, reading a notebook on outdoor steps, with a drawing of the patch on her upper arm.',
     title: 'A novel neural network',
     line: `It turns four body signals into one ${SCORE}, so you can see when a day sits above your own normal.`,
     explain: `Each signal gets its own learned curve, and the curves add up, so every score shows what moved it.`,
@@ -117,7 +122,7 @@ const CATEGORIES = [
       ['More', 'Full figures are in the repository, under docs.'],
     ],
     figure: NetworkGlow },
-  { id: 'beyond', tab: 'Phone sensors', tone: 'coral', plain: true,
+  { id: 'beyond', tab: 'Phone sensors', tone: 'ocean', card: 'coral', plain: true,
     photo: 'student-bus', aspect: '16 / 10',
     alt: 'A stock photograph of two teenagers on a bus laughing at a phone.',
     title: 'What your phone adds',
@@ -247,6 +252,7 @@ function TechCategory({ c }) {
   const Figure = c.figure
   const odd = c.rows && c.rows.length % 2 === 1
   const hue = TONE_HUE[c.tone]
+  const cardHue = TONE_HUE[c.card || c.tone]
   const pair = <Pair photo={c.photo} alt={c.alt} aspect={c.aspect}><Figure/></Pair>
   return (
     <TechBand tone={c.tone}>
@@ -274,7 +280,7 @@ function TechCategory({ c }) {
                 {c.rows.map(([k, line], i) => (
                   <ScrollRow as="li" key={k} index={i}
                     className={cn(odd && i === c.rows.length - 1 && 'sm:col-span-2')}>
-                    <Fact k={k} hue={hue}>{line}</Fact>
+                    <Fact k={k} hue={cardHue}>{line}</Fact>
                   </ScrollRow>
                 ))}
               </ul>

@@ -26,7 +26,7 @@ describe('How it works', () => {
   it('pairs every tab with a stock photograph and its own colour', () => {
     const s = read('src/views/Methods.jsx')
     const photos = [...s.matchAll(/photo: '([a-z-]+)'/g)].map(m => m[1])
-    expect(photos).toEqual(['patch-worn', 'student-hero', 'parent-laptop', 'students-hallway', 'student-bus'])
+    expect(photos).toEqual(['ovw-patch-court', 'student-hero', 'student-card', 'photos-steps-patch', 'student-bus'])
     const tones = [...s.matchAll(/tone: '([a-z]+)'/g)].map(m => m[1])
     expect(new Set(tones).size).toBe(tones.length)
     expect(read('src/views/methods/ToolkitBand.jsx')).toMatch(/photo="friends-steps"/)

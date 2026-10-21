@@ -30,14 +30,14 @@ import {
  * 18 October ("very cluttered"); on the 19th it came back redesigned: "i said
  * redesign not remove".
  *
- * Grounds vary across the light palette, not only green (owner, 20 October):
- *   hero paper with a sun tile, problem ink, what it is white with sky,
- *   lilac and sun cards, two ways sky.band, who for coral.wash, privacy
- *   lilac.wash.
+ * Bands are white, green or blue; cards keep their varied hues (owner, 21
+ * October: "you can have those colors on cards but not on entire page
+ * backgrounds"): hero paper with the green patch tile, problem ink, what it
+ * is white with sky, lilac and sun cards, two ways sky.band, who for
+ * accent.wash (one sun edge on the third card), privacy turquoise #e2f2f0.
  * Measured on each ground (ink : ink.2 : ink.3 : accent : accent.ink):
- *   sun.wash    12.93 : 7.02 : 5.20 : 4.94 : 7.23
- *   coral.wash  12.94 : 7.02 : 5.20 : 4.94 : 7.24
- *   lilac.wash  12.96 : 7.03 : 5.21 : 4.95 : 7.25
+ *   accent.wash 12.68 : 6.88 : 5.10 : 4.84 : 7.09
+ *   #e2f2f0     13.17 : 7.15 : 5.30 : 5.03 : 7.37
  *   sky.band    12.20 : 6.62 : 4.91 : 4.66 : 6.82
  * Photographs never sit under text without an opaque ground.
  */
@@ -59,10 +59,10 @@ export const OVERVIEW_SECTIONS = [
    "looks like a diff section" on a phone). The patch comes first, as the
    owner asked; `lead` gives it the green edge. Owner, 20 October: both lists
    numbered the same way, "none of that weird bolding", and a photograph in
-   place of each drawn strip: the patch on a player's arm, and a teen looking
+   place of each drawn strip: the patch on a student's arm, and a teen looking
    straight at the camera, the way the Mental Mirror sees a face. */
 const WAYS = [
-  { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true, photo:'ovw-patch-court',
+  { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true, photo:'photos-steps-patch',
     steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'] },
   { id:'phone', go:'without-patch', title:'Without the patch', cta:'See how it works', photo:'ovw-mirror-face',
     steps: [
@@ -72,7 +72,7 @@ const WAYS = [
     ] },
 ]
 
-/* Three stacked doors on the coral band. Each is the white card with its
+/* Three stacked doors on the green band. Each is the white card with its
    audience's colour along the top, so none blends into the band (owner,
    18 October: the pale green one "blends in"). */
 const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
@@ -213,12 +213,12 @@ export function Overview({ go }) {
           <div className="relative -mx-[22px] flex flex-1 border-t border-rule
             sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
-            {/* Soft sun, not green, and no glow behind the patch (owner, 20
-                October: less green, much less glow). */}
+            {/* The original mint green, no glow behind the patch (owner, 21
+                October: "remove the beige ... replace with the original green"). */}
             <div className="relative flex flex-1 items-center justify-center overflow-hidden
-              border-r border-rule bg-sun-wash px-4 py-8 lg:py-0
+              border-r border-rule bg-accent-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
-              after:bg-sun-wash after:content-[''] lg:after:block">
+              after:bg-accent-wash after:content-[''] lg:after:block">
               <span aria-hidden className="absolute left-3 top-3 h-3 w-3 border-l border-t border-ruling/55"/>
               <span aria-hidden className="absolute bottom-3 left-3 h-3 w-3 border-b border-l border-ruling/55"/>
               <figure className="relative m-0 flex min-w-0 max-w-full flex-col items-center gap-3">
@@ -239,8 +239,10 @@ export function Overview({ go }) {
               {/* Drawn 10% oversize so the drift shows no edge. */}
               <Parallax2D clip distance={24} scale={0.02}
                 className="absolute inset-0 [&>div]:absolute [&>div]:inset-0">
-                <Frame photo="students-hallway" eager
-                  alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
+                {/* A plain wall: the phone covers the middle of this frame,
+                    so a group here only ever showed as an arm. The corridor
+                    frame is the student page's hero (owner, 21 October). */}
+                <Frame photo="photos-game-wall" wash eager
                   className="absolute inset-0 scale-[1.1]"/>
               </Parallax2D>
               <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"
@@ -267,8 +269,7 @@ export function Overview({ go }) {
           Every figure on this band is external and sourced. The figures sit
           on a frosted panel: on the band directly they measured under AA. */}
       <Section name="The problem" id="problem" tone="ink" className="relative isolate overflow-hidden">
-        {/* The photograph fades out down the band, so Why MindMap? sits on
-            the plain deep green with no box of its own. */}
+        {/* The photograph fades out down the band, under the figures. */}
         <DriftWash photo="student-homework" imgClassName="opacity-[0.22]"
           className="-z-10 [mask-image:linear-gradient(to_bottom,black_45%,transparent_72%)]"/>
         <SectionHead tone="ink" className="max-w-[30ch]">
@@ -278,27 +279,27 @@ export function Overview({ go }) {
           <ProblemFigures/>
         </ScrollIn>
         {/* The owner's own words, 18 October, under the figures and inside
-            the band. Owner, 20 October: the dark box with a green title
-            "looks vibe coded". Now an open two-column block on the band: the
-            question on the left; on the right his paragraph, its last
+            the band. Owner, 21 October: "Why MindMap isn't in a card anymore,
+            needs to be put into a white card". A white card on the green band,
+            the question on the left; on the right his paragraph, its last
             sentence (the answer) set larger. Every word is his. */}
         <div id="why" className="scroll-mt-14 outline-none">
-          <ScrollIn className="mt-8 grid gap-4 border-t border-paper/20 pt-7 lg:mt-12
-            lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-12 lg:pt-10
+          <ScrollIn className="mt-6 grid gap-4 rounded-panel bg-card p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)]
+            lg:mt-8 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-12 lg:p-10
             xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-            <h3 className="m-0 font-display text-sub font-bold leading-[1.1] tracking-tight text-paper">
+            <h3 className="m-0 font-display text-sub font-bold leading-[1.1] tracking-tight text-ink">
               Why MindMap?
             </h3>
             <div className="max-w-[60ch]">
-              <p className="m-0 text-sec leading-[1.6] text-mist">
+              <p className="m-0 text-sec leading-[1.6] text-ink-2">
                 With these mental illnesses showing no sign of ceasing, current approaches do not focus on connections
                 and support systems, leaving millions of teens suffering alone. MindMap introduces the world’s first
                 wearable patch and app system designed for adolescents, contrary to existing solutions focused on adults,
                 individual health, and driving stigma.
               </p>
-              <p className="m-0 mt-5 font-display text-[1.25rem] font-semibold leading-[1.4] text-paper lg:text-[1.5rem]">
+              <p className="m-0 mt-5 font-display text-[1.25rem] font-semibold leading-[1.4] text-ink lg:text-[1.5rem]">
                 MindMap is the only app that bridges the gap between{' '}
-                <span className="text-accent-lit">teens, parents, and {PRO_PLURAL}</span>{' '}
+                <span className="text-accent">teens, parents, and {PRO_PLURAL}</span>{' '}
                 to reduce isolation and nurture caring and supportive environments.
               </p>
             </div>
@@ -359,12 +360,12 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- the three audiences, on soft coral (owner, 20 October: not only green) --
+      {/* -- the three audiences, on the mint green ---------------------------
           From lg the cards stack in the left column and the kitchen
-          photograph is the band's right edge, faded in from the coral, so no
+          photograph is the band's right edge, faded in from the green, so no
           card or word ever sits over a face. Under lg it is a rounded frame
           between the lede and the cards. */}
-      <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-coral-wash">
+      <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
           [mask-image:linear-gradient(to_right,transparent,black_45%)]">
           <DriftWash photo="parent-kitchen" imgClassName="opacity-90"/>
@@ -409,8 +410,8 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* ── privacy, on soft lilac, with a rounded photograph beside it at lg ── */}
-      <Section name="Privacy" id="privacy" tone="card" className="bg-lilac-wash">
+      {/* ── privacy, on turquoise, with a rounded photograph beside it at lg ── */}
+      <Section name="Privacy" id="privacy" tone="card" className="bg-[#e2f2f0]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
           xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div className="min-w-0">
@@ -446,8 +447,8 @@ export function Overview({ go }) {
           <Parallax2D clip={false} distance={40} scale={0.03} className="lg:[&>div]:h-full">
             <div className="relative h-[220px] overflow-hidden rounded-[28px] border border-rule shadow-card
               sm:h-[280px] lg:h-full lg:min-h-[340px]">
-              <Frame photo="parent-laptop"
-                alt="A mother and her teenage daughter sitting close together at a laptop on a living room table, both smiling"
+              <Frame photo="photos-hall-denim"
+                alt="A teenage girl, a model, walking down a school corridor holding a notebook and a coffee cup"
                 className="absolute inset-0"/>
             </div>
           </Parallax2D>

@@ -17,7 +17,7 @@ describe('What is MindMap? band', () => {
      the patch worn in the first two and the app in use in the third. */
   it('shows one photograph per card, each with alt text naming models', () => {
     expect((html.match(/<img /g) || []).length).toBe(3)
-    expect(WHAT_IS.map(f => f.photo)).toEqual(['patch-worn', 'ovw-pro-patch', 'ovw-app-bus'])
+    expect(WHAT_IS.map(f => f.photo)).toEqual(['photos-hall-duo', 'ovw-pro-patch', 'ovw-app-bus'])
     for (const f of WHAT_IS) {
       expect(f.alt).toMatch(/model/)
       expect(html).toContain(`alt="${f.alt}"`)
@@ -28,11 +28,15 @@ describe('What is MindMap? band', () => {
     expect(html).not.toContain('<svg class="block h-auto w-full"')
   })
 
-  it('gives the three cards three different light washes, none green', () => {
+  /* Owner, 21 October: "Don't change the what is mindmap cards ... i like
+     the color variations on cards, preserve", but no such colour on the band. */
+  it('gives the three cards three different light washes on a white band', () => {
     const hues = WHAT_IS.map(f => f.hue)
     expect(new Set(hues).size).toBe(3)
-    expect(hues).not.toContain('accent')
-    expect(html).not.toContain('bg-accent-wash')
+    expect(hues).toEqual(['sky', 'lilac', 'sun'])
+    const band = html.match(/<section[^>]*id="what-is"[^>]*>/)[0]
+    expect(band).toContain('bg-card')
+    expect(band).not.toMatch(/bg-(lilac|sun|coral|blush)/)
   })
 
   it('leads with the owner sentence', () => {

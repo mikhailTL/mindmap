@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Frame } from '../ui/frame'
 import { Section, SectionHead } from '../ui/section'
-import { ArrowRight, Check, Always, Cross, Minus } from '../ui/marks'
+import { ArrowRight, Check, Always, Cross, Minus, ChevronDown } from '../ui/marks'
 import { ScrollIn, ScrollRow } from '../ui/motion'
 import { WirelessLink, StepArt } from '../charts/pairing-art'
 import { connectPatch } from '../lib/engine'
@@ -12,8 +12,9 @@ import { cn } from '../lib/utils'
 
 /* Using the patch: one console. Pressing Connect runs lib/engine.js
  * connectPatch for real, and the step list marks progress as the flow moves.
- * All six steps show before anything is pressed (owner, 20 October: "so much
- * blank space"); any step can be pressed to see its drawing.
+ * The six steps sit in a disclosure, closed until opened (owner, 21 October:
+ * "too much space"); the button and the status stay in view. Any step can be
+ * pressed to see its drawing.
  *
  * Rules. Every step is the flow engine.js runs and every quoted message is a
  * string from that file, verbatim; the phase comes from the same
@@ -56,7 +57,7 @@ const TROUBLE = [
        http both land on this one message, so one card. */
     title:'The browser has no Bluetooth', hue:'sky',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
-      + 'site directly in Chrome on a computer, or use the survey below.',
+      + 'site directly in Chrome on a computer, or take the Survey in the app instead.',
     fix:'Open the site directly in Chrome, over https.' },
   { /* engine.js:45 and 50: the service filter on requestDevice */
     title:'The list is empty', hue:'lilac',
@@ -64,11 +65,11 @@ const TROUBLE = [
     fix:'Take the patch off charge, near the phone. Press Connect again.' },
   { /* engine.js:61 and 62: NotFoundError is a cancel, not a fault */
     title:'You closed the list', hue:'sun',
-    seen:'No patch was selected. The survey below works without one.',
+    seen:'No patch was selected. The Survey in the app works without one.',
     fix:'Press Connect again and choose the patch.' },
   { /* engine.js:63: anything requestDevice or gatt.connect throws */
     title:'The connection failed', hue:'coral',
-    seen:'Could not connect: unknown. The survey below works without a patch.',
+    seen:'Could not connect: unknown. The Survey in the app works without a patch.',
     fix:`Try again, or take a ${SCORE} instead.` },
 ]
 const QUOTE = { sky:'border-sky-ink/40', lilac:'border-lilac-ink/40', sun:'border-sun-ink/40',
@@ -88,8 +89,9 @@ function statusOf(i, cursor, phase) {
 const MARK = { done: Check, now: Always, stuck: Minus }
 const LABEL = { done:'Done', now:'Now', stuck:'Stopped here', todo:'' }
 
-/* A licensed stock frame of models: nobody shown uses MindMap. */
-const PHONE_ALT = 'A licensed stock photograph of two teenagers on a school bus, one holding a phone.'
+/* A licensed stock frame of models: nobody shown uses MindMap. The bus
+   frame moved to How it works (owner, 21 October: fewer repeats). */
+const PHOTO_ALT = 'A licensed stock photograph of two teenagers sitting on steps outside, reading a notebook together.'
 
 /* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
    part's title, with Without the patch straight after. */
@@ -99,6 +101,7 @@ export function Pairing({ as: Root = 'main' }) {
   const [msg, setMsg] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [focus, setFocus] = React.useState(null)     // which step's drawing shows
+  const [steps, setSteps] = React.useState(false)    // the six steps, closed at first
 
   /* The same guard engine.js runs, read only to place the cursor. The message
      shown is always the engine's own. */
@@ -143,7 +146,7 @@ export function Pairing({ as: Root = 'main' }) {
                 </ul>
               </Card>
               <div className="h-[200px] overflow-hidden rounded-panel border border-rule lg:h-[230px]">
-                <Frame photo="student-bus" alt={PHONE_ALT} focal="30% 30%"/>
+                <Frame photo="friends-steps" alt={PHOTO_ALT}/>
               </div>
             </ScrollIn>
 
@@ -202,7 +205,19 @@ export function Pairing({ as: Root = 'main' }) {
               )}
             </div>
 
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+            <button type="button" aria-expanded={steps} aria-controls="pairing-steps"
+              onClick={() => setSteps(v => !v)}
+              className="flex min-h-[48px] w-full items-center justify-between gap-3 px-3.5 py-2.5
+                text-left font-display text-ui font-bold text-ink touch-manipulation lg:px-4
+                hoverOnly:bg-beam-wash">
+              Steps to connect
+              <ChevronDown aria-hidden className={cn('size-5 shrink-0 text-ink-2',
+                'transition-transform duration-150 motion-reduce:transition-none', steps && 'rotate-180')}/>
+            </button>
+
+            {steps && (
+            <div id="pairing-steps"
+              className="grid border-t border-rule lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
               <div className="min-w-0 p-3.5 lg:p-4">
                 {/* A real ordered list; the status rides beside the title so
                     the step's line keeps its width at 390. */}
@@ -256,6 +271,7 @@ export function Pairing({ as: Root = 'main' }) {
                 {art && <StepArt kind={art.k} scale={0.4}/>}
               </div>
             </div>
+            )}
           </Card>
         </div>
 

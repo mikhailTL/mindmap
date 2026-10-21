@@ -53,8 +53,20 @@ const STRIP = { pod: strip('#def0fc'), pcb: strip('#f6e8ff'), base: strip('#f5ec
 /* The 3D viewer needs a GPU and can sit on its loading panel forever. Its
    controls stay disabled until the model is live, so a control still disabled
    MODEL_WAIT after the band comes within reach means the model is down, and
-   the band drops to the exploded drawing. */
+   the band drops to the exploded drawing. A model that fails outright drops
+   it at once (onError). */
 const MODEL_WAIT = 8000
+
+/* The exploded drawing beside the model. Owner, 21 October: it was cut off.
+   The box was 190px tall under a full-width sheet, so the stack spilled past
+   it through the scroll. Below lg the box is taller and the sheets narrower,
+   measured to clear the box at every point of the scroll at 390 and 768;
+   the 6% shift centres the stack, which rides high in its box. */
+const BESIDE_BOX = 'h-[clamp(260px,74vw,320px)] lg:h-full lg:min-h-[240px]'
+const BESIDE_SHEET = 'w-[min(62%,210px)] sm:w-[min(52%,250px)] lg:w-[min(84%,400px)]'
+/* The same drawing standing in for the model, given the model's room. */
+const DOWN_BOX = 'h-[clamp(260px,74vw,320px)] sm:h-[360px] lg:h-[440px]'
+const DOWN_SHEET = 'w-[min(62%,210px)] sm:w-[260px] lg:w-[340px]'
 
 function noWebgl2() {
   try {
@@ -115,31 +127,33 @@ export function PatchPage({ as: Root = 'main' }) {
             (views/PatchHub). */}
         <div className="wrap pb-8 pt-6 lg:pb-12 lg:pt-8">
           <SectionHead className="mt-0 max-w-[26ch]">Take the patch apart</SectionHead>
-          <div className={cn('mt-4 grid gap-4 lg:mt-6 lg:gap-6',
-            !down && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:items-stretch')}>
+          <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]
+            lg:items-stretch lg:gap-6">
             <figure className="m-0 min-w-0">
               {down ? (
-                /* The drawing's layer table is open in full just below. */
-                <Card className="p-3.5 lg:p-5">
-                  <PatchStack className="[&>dl]:hidden [&>p]:hidden"/>
+                /* The same exploded drawing, on its own, sized to clear its
+                   box. The layered drawing is in What is inside, below. */
+                <Card className="px-4 py-4 lg:px-5">
+                  <ExplodedStack caption="" className={DOWN_BOX} size={DOWN_SHEET} shift="0%, 6%"/>
                 </Card>
               ) : (
                 <div ref={stage}>
                   <PatchArena ref={model} onPlay={() => setPicked(null)} onShowAll={() => setPicked(null)}
-                    beside={<ExplodedStack caption="" className="h-[190px] lg:h-full lg:min-h-[240px]"/>}/>
+                    onError={() => setDown(true)}
+                    beside={<ExplodedStack caption="" className={BESIDE_BOX} size={BESIDE_SHEET}
+                      shift="0%, 6%"/>}/>
                 </div>
               )}
               {/* Only the fallback needs a caption. */}
               {down && (
                 <figcaption className="mt-2.5 max-w-[70ch] text-fine text-ink-3">
-                  This browser cannot show the 3D model, so the drawing stands in.
+                  The 3D model did not load, so a drawing stands in.
                 </figcaption>
               )}
             </figure>
 
-            <ol className={cn('m-0 grid list-none gap-3 p-0 lg:gap-2.5',
-              down ? 'sm:grid-cols-3 lg:gap-4'
-                   : 'lg:h-full lg:grid-rows-[repeat(3,minmax(min-content,1fr))]')}>
+            <ol className="m-0 grid list-none gap-3 p-0 lg:h-full lg:gap-2.5
+              lg:grid-rows-[repeat(3,minmax(min-content,1fr))]">
               {LAYERS.map((l, idx) => {
                 const on = !down && picked === l.part
                 /* A light strip under each drawing (STRIP above).
@@ -164,7 +178,7 @@ export function PatchPage({ as: Root = 'main' }) {
                 return (
                   <ScrollRow as="li" key={l.i} index={idx} className="lg:h-full">
                     {down ? (
-                      <Card>{body}</Card>
+                      <Card className="lg:h-full">{body}</Card>
                     ) : (
                       <Card interactive as="button" aria-pressed={on}
                         onClick={() => setPicked(on ? null : l.part)}

@@ -36,7 +36,7 @@ import { Logo, LogoMark } from '../ui/logo'
 import { Button } from '../ui/button'
 import { StarRating } from '../ui/stars'
 import { Section, SectionHead, SectionLede } from '../ui/section'
-import { ArrowRight, Bracket, ChevronDown, Cross, Frame,
+import { ArrowRight, Bracket, ChevronDown, Frame,
          People, PulseMark } from '../ui/marks'
 import { SignIn } from '../account/SignIn'
 import { Account } from '../account/Account'
@@ -339,31 +339,46 @@ function NavMenu({ view, go, label, items: entries, section, pick }) {
   )
 }
 
-function Drawer({ view, go, onClose }) {
+/* The phone menu. Owner, 21 October: "when u tap the menu button it
+   disappears". It was a fixed layer inside the header, whose backdrop blur
+   makes the header its containing block, so the panel sat over the button and
+   scrolled with the page. Now it hangs under the header: the button stays put
+   and turns into Close, and the page behind is dimmed and locked. */
+function Drawer({ view, go, onClose, header }) {
   const panel = React.useRef(null)
 
   React.useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const root = document.documentElement
+    const prev = [root.style.overflow, root.style.paddingRight]
+    const bar = window.innerWidth - root.clientWidth
+    root.style.overflow = 'hidden'
+    if (bar > 0) root.style.paddingRight = `${bar}px`
     const sel = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])'
-    const focusable = () => Array.from(panel.current?.querySelectorAll(sel) || [])
-    requestAnimationFrame(() => focusable()[0]?.focus())
+    /* The header stays live, so Tab walks it and the panel, then wraps. */
+    const focusable = () => Array.from(header.current?.querySelectorAll(sel) || [])
+      .filter(el => el.offsetParent !== null)
+    requestAnimationFrame(() => panel.current?.querySelector(sel)?.focus({ preventScroll: true }))
     const onKey = e => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose() }
+      if (e.key === 'Escape') { e.preventDefault(); onClose(true) }
       else if (e.key === 'Tab') {
         const f = focusable()
         if (!f.length) return
         const i = f.indexOf(document.activeElement)
         const next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1)
-        e.preventDefault(); f[next].focus()
+        e.preventDefault(); f[next].focus({ preventScroll: true })
       }
     }
+    /* The dimmed page closes it on a tap (below); this catches any other
+       layer. The header's own buttons do their own thing. */
+    const away = e => { if (!header.current?.contains(e.target)) onClose(false) }
     document.addEventListener('keydown', onKey)
+    document.addEventListener('pointerdown', away)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
+      document.removeEventListener('pointerdown', away)
+      ;[root.style.overflow, root.style.paddingRight] = prev
     }
-  }, [onClose])
+  }, [onClose, header])
 
   /* The three patch pages fold into one row, as on the desktop menu. It
      opens by itself when one of them is the page you are on. */
@@ -385,7 +400,7 @@ function Drawer({ view, go, onClose }) {
     const here = !jump && view === id
     return (
       <button key={id} type="button"
-        onClick={() => { onClose(); jump ? toSection(id, view, go) : go(id) }}
+        onClick={() => { onClose(false); jump ? toSection(id, view, go) : go(id) }}
         aria-current={here ? 'page' : undefined}
         className={cn('flex min-h-[52px] w-full items-center border-t border-rule',
           'font-display text-sec font-medium transition-colors duration-150',
@@ -398,18 +413,12 @@ function Drawer({ view, go, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] xl:hidden">
-      <div className="absolute inset-0 bg-ink/45" onClick={onClose} aria-hidden/>
-      <div ref={panel} role="dialog" aria-modal="true" aria-label="Menu"
-        className="absolute inset-x-0 top-0 max-h-[100dvh] overflow-y-auto overscroll-contain border-b border-ink bg-paper">
-        <div className="wrap flex h-14 items-center justify-between">
-          <span className="font-display text-row font-medium text-ink">Menu</span>
-          <button type="button" onClick={onClose} aria-label="Close the menu"
-            className="-mr-2 grid size-11 place-items-center rounded-field text-ink-2 hoverOnly:bg-mist hoverOnly:text-ink">
-            <Cross className="size-4"/>
-          </button>
-        </div>
-        <nav aria-label="Sections" className="wrap pb-5">
+    <div className="absolute inset-x-0 top-full xl:hidden">
+      <div className="absolute inset-x-0 top-px h-[100dvh] bg-ink/45" onClick={() => onClose(false)} aria-hidden/>
+      <div ref={panel} id="site-menu"
+        className="absolute inset-x-0 top-px max-h-[calc(100dvh-3.5rem-1px)] overflow-y-auto overscroll-contain
+          border-b border-ink bg-paper shadow-lift">
+        <nav aria-label="Menu" className="wrap pb-5 [&>div:first-child>button]:border-t-0">
           {rows.map(r => r === 'site-group' ? (
             <div key="site-group">
               <button type="button" onClick={() => setSiteOpen(o => !o)}
@@ -456,13 +465,16 @@ function Drawer({ view, go, onClose }) {
 function Header({ view, go }) {
   const [menu, setMenu] = React.useState(false)
   const burger = React.useRef(null)
-  const closeMenu = React.useCallback(() => {
+  const bar = React.useRef(null)
+  const closeMenu = React.useCallback((refocus = true) => {
     setMenu(false)
-    burger.current?.focus()
+    if (refocus) burger.current?.focus({ preventScroll: true })
   }, [])
+  /* Any route change, including the logo, closes it. */
+  React.useEffect(() => { setMenu(false) }, [view])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-rule bg-paper/80 backdrop-blur-md supports-[backdrop-filter]:bg-paper/70">
+    <header ref={bar} className="sticky top-0 z-50 border-b border-rule bg-paper/80 backdrop-blur-md supports-[backdrop-filter]:bg-paper/70">
       <div className="wrap flex h-14 items-center gap-1">
         <button onClick={() => go('site')} aria-label="MindMap, go to the overview"
           className="mr-1 shrink-0 rounded-field px-1 py-1 text-row text-ink
@@ -500,21 +512,22 @@ function Header({ view, go }) {
             <span aria-hidden className="hidden sm:inline">Open the app</span>
             <ArrowRight aria-hidden className="size-4 shrink-0"/>
           </button>
-          <button ref={burger} type="button" onClick={() => setMenu(true)}
-            aria-expanded={menu} aria-label="Open the menu"
-            className="-mr-1.5 grid size-11 shrink-0 place-items-center rounded-field text-ink
-              hoverOnly:bg-mist xl:hidden">
+          <button ref={burger} type="button" onClick={() => (menu ? closeMenu() : setMenu(true))}
+            aria-expanded={menu} aria-controls="site-menu"
+            aria-label={menu ? 'Close the menu' : 'Open the menu'}
+            className={cn('-mr-1.5 grid size-11 shrink-0 place-items-center rounded-field text-ink',
+              'transition-colors duration-150 hoverOnly:bg-mist xl:hidden', menu && 'bg-mist')}>
             {/* Inline, not the shared `Stack` mark: that one has a short third
                 rule and reads as a text-alignment icon beside a wordmark. */}
             <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none"
               stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
-              <path d="M4 7h16M4 12h16M4 17h16"/>
+              <path d={menu ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'}/>
             </svg>
           </button>
         </div>
       </div>
       <ScrollProgress/>
-      {menu && <Drawer view={view} go={go} onClose={closeMenu}/>}
+      {menu && <Drawer view={view} go={go} onClose={closeMenu} header={bar}/>}
     </header>
   )
 }

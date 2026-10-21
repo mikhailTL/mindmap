@@ -69,11 +69,14 @@ export function IsoPlate({ className, n = 6, hue = '#157446' }) {
 }
 
 /* A band on one light colour of the site's scheme, a faint grid and one
-   still soft shape. `tone`: 'mint' (default), 'sky', 'teal', 'lilac', 'sun'
-   or 'coral'. 20 October, the owner: no contour lines, much less glow, and
-   not all green, so the drifting blooms and the contours are gone. */
+   still soft shape. `tone`: 'mint' (default), 'sky', 'teal', 'leaf',
+   'ocean', 'lilac', 'sun' or 'coral'. 20 October, the owner: no contour
+   lines, much less glow, so the drifting blooms and the contours are gone.
+   21 October: site bands use only the greens and blues; lilac, sun and
+   coral stay for card hues (TONE_HUE) and the app's own panels. */
 export const TONE_HUE = {
   mint: '#157446', sky: '#0967ab', teal: '#11677f', lilac: '#6f09b2', sun: '#825d07', coral: '#b23009',
+  leaf: '#067049', ocean: '#1f5fae',
 }
 export function TechBand({ as = 'section', tone = 'mint', className, inner, children, ...p }) {
   return (

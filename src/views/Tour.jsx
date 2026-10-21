@@ -19,7 +19,7 @@ import { cn } from '../lib/utils'
 import { cardClass } from '../ui/card'
 import {
   SCORE, SCORE_RANGE, NOTES, LOCATION, CASELOAD_TITLE,
-  PRO, PRO_LC, CONSENT_SHORT,
+  PRO, CONSENT_SHORT,
 } from '../lib/terms'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 
@@ -271,8 +271,8 @@ const STOPS = [
     id: 'problem', drift: true, nav: 'The problem',
     title: 'Why stress is hard to track',
     lede: 'An adult hears only what a student says.',
-    photo: 'students-hallway',
-    alt: 'Four high school students walking along a bright corridor with folders and backpacks, talking as they go',
+    photo: 'photos-hall-denim',
+    alt: 'A teenage girl walking down a school corridor holding a notebook and a coffee cup',
     facts: [
       ['Compared with', `The student's own last two weeks, nobody else.`],
       ['The photographs', 'These are licensed stock photos of models.'],
@@ -324,8 +324,8 @@ const STOPS = [
     id: 'parent', drift: true, nav: 'Parent screen',
     title: 'What the parent sees',
     lede: `A day's ${SCORE}, and Trends over weeks and months.`,
-    photo: 'parent-laptop',
-    alt: 'A mother and her teenage son sitting together at a dining table, both looking at an open laptop',
+    photo: 'parent-kitchen',
+    alt: 'A mother and her teenage son cooking together in a bright kitchen',
     facts: [
       ['The finest detail', 'A whole day, never an hour or a moment.'],
       ['Trends', `Day by day, week by week and month by month, against their child's own range.`],
@@ -364,8 +364,8 @@ const STOPS = [
     id: 'pro', nav: `${PRO} screen`,
     title: `What the ${PRO} sees`,
     lede: `A short list, biggest ${SCORE} change first.`,
-    photo: 'clinic-talk',
-    alt: `A teenage boy talking with a ${PRO_LC} on a sofa by a sunlit window`,
+    photo: 'school-card',
+    alt: 'A woman and a teenager talking on a sofa in a room lined with shelves',
     /* Read off the roster the list draws, so a consent change cannot go stale. */
     facts: () => {
       const all = roster().length, trends = triage().length
@@ -415,8 +415,8 @@ const STOPS = [
     id: 'scale', nav: 'At scale',
     title: 'How the numbers add up',
     lede: 'One list, one school day.',
-    photo: 'school-card',
-    alt: 'A woman and a teenage boy talking in a room lined with shelves',
+    photo: 'student-bus',
+    alt: 'Two teenage boys laughing at a phone on a school bus',
     facts: [
       ['A waiting list today', 'Ordered by who asked first or was referred.'],
       ['This list', `Ordered by whose ${SCORE} moved most.`],

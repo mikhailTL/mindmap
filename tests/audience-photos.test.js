@@ -23,7 +23,7 @@ function keys(body) {
   return out
 }
 
-const PAGES = { ForStudents: 'student-hero', ForParents: 'parent-hero', ForSchools: 'pro-hero' }
+const PAGES = { ForStudents: 'students-hallway', ForParents: 'parent-hero', ForSchools: 'clinic-talk' }
 
 describe('audience pages', () => {
   it('have no contour lines, drawn scene, glow shadow or monospace', () => {
@@ -52,8 +52,13 @@ describe('audience pages', () => {
   it('gives each audience its own two light hues', () => {
     const t = src.slice(src.indexOf('const THEME'), src.indexOf('}\n', src.indexOf('pro:')))
     expect(t).toMatch(/students:[^}]*sky[^}]*mint/s)
-    expect(t).toMatch(/parents:[^}]*sun[^}]*sky/s)
-    expect(t).toMatch(/pro:[^}]*lilac[^}]*beam/s)
+    expect(t).toMatch(/parents:[^}]*accent[^}]*sky/s)
+    expect(t).toMatch(/pro:[^}]*sky[^}]*beam/s)
+    /* Owner, 21 October: full-width grounds (hero, a, b) white, green or blue;
+       the block behind a photograph is a card and may keep its hue. */
+    for (const m of t.matchAll(/(hero|a|b): '([^']+)'/g)) {
+      expect(m[2], m[1]).not.toMatch(/lilac|sun|coral|blush/)
+    }
   })
 
   it('keeps the Heads Up traffic light', () => {

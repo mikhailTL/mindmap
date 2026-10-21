@@ -119,7 +119,7 @@ function greenSelection(a) {
 }
 
 export const PatchArena = React.forwardRef(function PatchArena(
-  { className, view = 'closed', onPlay, onShowAll, beside }, ref) {
+  { className, view = 'closed', onPlay, onShowAll, onError, beside }, ref) {
   const host = React.useRef(null)
   const el = React.useRef(null)
   const cine = React.useRef(null)
@@ -133,6 +133,12 @@ export const PatchArena = React.forwardRef(function PatchArena(
   const [apart, setApart] = React.useState(false)
   const [turning, setTurning] = React.useState(false)
   const [more, setMore] = React.useState(false)
+
+  /* The host can swap in its own drawing the moment the model cannot load,
+     rather than show an empty stage. */
+  const failed = React.useRef(onError)
+  failed.current = onError
+  React.useEffect(() => { if (phase === 'error') failed.current?.() }, [phase])
 
   /* Any reader input takes hold of the model, so the sequence yields first
      and stays yielded. */

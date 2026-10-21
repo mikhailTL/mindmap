@@ -10,7 +10,8 @@ import { cn } from '../lib/utils'
    on one page. The three routes ('patch', 'pairing', 'without-patch') all
    render this, and each lands on its own part. The owner, 18 October: no
    numbers and no loud colour bands, just titles. 20 October: "too green",
-   so each part opens on its own light ground (sky, turquoise, lilac). */
+   so each part opens on its own light ground. 21 October: green and blue
+   variations only, so sky, turquoise and the mint green. */
 
 const PARTS = [
   { id:'about-patch',   route:'patch',         short:'About the patch',   title:'About the patch',
@@ -21,7 +22,7 @@ const PARTS = [
   /* One line, merged from two (owner, 20 October). */
   { id:'without-patch', route:'without-patch', short:'Without the patch', title:'Without the patch',
     line:`Measure your stress right now as a ${SCORE}, 0 calm to 100 peak, with only your phone.`,
-    ground:'bg-lilac-wash' },
+    ground:'bg-accent-wash' },
 ]
 const BY_ROUTE = Object.fromEntries(PARTS.map(p => [p.route, p]))
 

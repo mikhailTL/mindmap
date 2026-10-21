@@ -55,6 +55,11 @@
 .t-band--lilac { --t-wash: #faf3ff; --t-field: #f6e8ff; --t-hue: #6f09b2; }
 .t-band--sun   { --t-wash: #faf6ec; --t-field: #f5ecd7; --t-hue: #825d07; }
 .t-band--coral { --t-wash: #fff4f0; --t-field: #ffe8e0; --t-hue: #b23009; }
+/* Two more greens and blues for How it works (owner, 21 October: "green and
+   blue variations"). Site only. hue on wash : on field
+     leaf  #067049  5.70 : 5.17     ocean #1f5fae  5.69 : 4.83 */
+.t-band--leaf  { --t-wash: #eef9f4; --t-field: #d5f2e8; --t-hue: #067049; }
+.t-band--ocean { --t-wash: #edf3fc; --t-field: #d4e1fb; --t-hue: #1f5fae; }
 .t-band::before {
   content: '';
   position: absolute; inset: 0; z-index: -1;

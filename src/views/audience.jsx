@@ -37,16 +37,19 @@ const HEAD = 'max-w-none border-b border-rule bg-aqua px-3.5 py-2 font-display t
 
 /* Owner, 20 October: less topography and glow, more of the light palette,
    stock photos beside the demos. Each audience takes two light hues and
-   keeps deep green words: students mint and sky, parents sky and sun,
-   counselors/professionals turquoise and lilac. Measured, ink-3 clears
-   4.9 : 1 on every ground here and each label ink clears 5.3 on its hero. */
+   keeps deep green words. Owner, 21 October: full-width grounds (hero, a, b)
+   are white, green or blue only; the cards and the block behind each
+   photograph keep their varied hues. Students mint and sky, parents green
+   and sky with a sun block, counselors/professionals turquoise and sky with
+   a lilac block. Measured, ink-3 clears 4.9 : 1 on every ground here and
+   each label ink clears 5.3 on its hero. */
 const THEME = {
   students: { hero: 'bg-[#ecf8f2]', block: 'bg-sky-band', label: 'text-mint-ink',
     a: 'bg-sky-wash', b: 'bg-mint-wash' },
   parents:  { hero: 'bg-[#ebf5fd]', block: 'bg-sun-wash', label: 'text-sky-ink',
-    a: 'bg-sun-wash', b: 'bg-sky-wash' },
+    a: 'bg-accent-wash', b: 'bg-sky-wash' },
   pro:      { hero: 'bg-[#e2f2f0]', block: 'bg-lilac-wash', label: 'text-beam-ink',
-    a: 'bg-lilac-wash', b: 'bg-beam-wash' },
+    a: 'bg-sky-wash', b: 'bg-beam-wash' },
 }
 
 /* A card of labelled rows: a label and its value, never a label over a
@@ -322,8 +325,6 @@ function TrendsFig({ ranges }) {
 }
 
 const STOCK = ['The photographs', 'These are licensed stock photos of models.']
-const HALLWAY = ['students-hallway',
-  'Four high school students walking along a bright corridor with folders and backpacks']
 
 /* ═══════════════════════════════ for students ═══════════════════════════ */
 
@@ -363,8 +364,8 @@ export function ForStudents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For students" theme={th} photo="student-hero"
-        photoAlt="A teenager in headphones sitting in front of a sofa, holding a games controller"
+      <Hero go={go} label="For students" theme={th} photo="students-hallway"
+        photoAlt="Four high school students, models, walking along a bright corridor with folders and backpacks"
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
         facts={[
@@ -373,8 +374,8 @@ export function ForStudents({ go }) {
           STOCK,
         ]}/>
 
-      <HeadsUpBand go={go} ground={th.a} block="bg-mint-wash" photo="student-bus"
-        photoAlt="Two teenage boys laughing on a bus seat, one holding a phone"
+      <HeadsUpBand go={go} ground={th.a} block="bg-mint-wash" photo="student-controller"
+        photoAlt="A teenager in headphones on a sofa, smiling, holding a games controller"
         line="Notices stress patterns in how you use your phone, never what is on it. You see it first."/>
 
       <Section tone="card" tight>
@@ -404,7 +405,8 @@ export function ForStudents({ go }) {
           <ScrollIn>
             <TrendsFig ranges={['day', 'week', 'month']}/>
           </ScrollIn>
-          <Side photo={HALLWAY[0]} alt={HALLWAY[1]} block={th.block}>
+          <Side photo="photos-steps-patch" block={th.block}
+            alt="A teenage girl, a model, reading a notebook on outdoor steps, with a drawing of the patch on her upper arm">
             <Facts head="How to read the Trends" variant="rule" hue="sky" rows={[
               ['Day, week, month', 'Switch the view to see one day, a week or a month.'],
               ['The calendar', <>Each day shows its <HeadsUp/> face and {SCORE}. Pick a day to see it.</>],
@@ -418,8 +420,8 @@ export function ForStudents({ go }) {
         <SectionHead>Who can see your score</SectionHead>
         <Pair wide>
           <ScrollIn>
-            <Facts head="How sharing works" photo="friends-steps"
-              photoAlt="Two students sitting on concrete steps outside a building, heads together over an open notebook"
+            <Facts head="How sharing works" photo="student-card"
+              photoAlt="Five teenagers, models, walking together through a park, talking as they go"
               rows={[
                 ['Who opens the account', 'A guardian opens the account. You choose what is shared after that.'],
                 ['Shared per person', `Sharing with a parent does not share with a ${PRO_LC}. You set each one on its own.`],
@@ -500,9 +502,9 @@ export function ForParents({ go }) {
 
       <Section tone="card" tight>
         <SectionHead>The {SCORE}</SectionHead>
-        <ScoreExplain rings={rings} photo="patch-worn" block={th.block}
-          photoAlt={'A licensed stock photograph of a smiling teenager in a vest, with a drawing '
-            + 'of the patch placed on the outer upper arm to show where it sits'} rows={[
+        <ScoreExplain rings={rings} photo="photos-hall-duo" block={th.block}
+          photoAlt={'A licensed stock photograph of two teenage girls in a school corridor, with a drawing '
+            + 'of the patch placed on the upper arm of one of them to show where it sits'} rows={[
           ['0 to 100', 'One number a day, from the body signals the patch reads.'],
           ['Against their own usual', 'Compared with your teen\'s own usual day. Never with another teen.'],
           ['Calm to peak', 'The white cloud is calm. The rain cloud is peak.'],
@@ -516,8 +518,8 @@ export function ForParents({ go }) {
           <ScrollIn>
             <TrendsFig ranges={['week', 'month']}/>
           </ScrollIn>
-          <Side photo="parent-kitchen" block="bg-sun-wash"
-            alt="A mother and her teenage son chopping vegetables side by side at a kitchen counter">
+          <Side photo="student-game" block="bg-sun-wash"
+            alt="Three teenagers, models, playing a video game together on a sofa at home">
             <Facts head="How to read Trends" variant="rule" hue="sky" rows={[
               ['Days, weeks, months', <>One {SCORE} a day with its <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
@@ -643,9 +645,8 @@ export function ForSchools({ go }) {
 
   return (
     <main>
-      <Hero go={go} label={PRO_FOR} theme={th} photo="pro-hero"
-        photoAlt={'A licensed stock photograph of a woman with a notepad listening to a teenager on a sofa, '
-          + 'with a drawing of the patch placed on his upper arm to show where it sits'}
+      <Hero go={go} label={PRO_FOR} theme={th} photo="clinic-talk"
+        photoAlt="A licensed stock photograph of a teenager talking with an adult who holds a clipboard, on a sofa by a sunlit window"
         title="See Trends across your students"
         lede="You see how each student who shares with you is trending, and how groups are doing."
         facts={[
@@ -671,8 +672,8 @@ export function ForSchools({ go }) {
           <ScrollIn>
             <TrendsFig ranges={['week', 'month']}/>
           </ScrollIn>
-          <Side photo="clinic-talk" block={th.block}
-            alt="A teenager and an adult sitting and talking on a sofa by a sunlit window">
+          <Side photo="student-homework" block={th.block}
+            alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them">
             <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
               ['Days, weeks, months', <>Each student’s {SCORE} and <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
@@ -690,8 +691,8 @@ export function ForSchools({ go }) {
             frame, because the column is upright. */}
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn className="h-full">
-            <Photo photo="student-homework" block="bg-beam-wash"
-              alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them"
+            <Photo photo="photos-hall-denim" block="bg-beam-wash"
+              alt="A teenage girl, a model, walking down a school corridor holding a notebook and a coffee cup"
               className="h-[220px] sm:h-[300px] lg:h-full"/>
           </ScrollIn>
           <ScrollIn>
