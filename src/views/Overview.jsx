@@ -239,10 +239,10 @@ export function Overview({ go }) {
               {/* Drawn 10% oversize so the drift shows no edge. */}
               <Parallax2D clip distance={24} scale={0.02}
                 className="absolute inset-0 [&>div]:absolute [&>div]:inset-0">
-                {/* A plain wall: the phone covers the middle of this frame,
-                    so a group here only ever showed as an arm. The corridor
-                    frame is the student page's hero (owner, 21 October). */}
-                <Frame photo="photos-game-wall" wash eager
+                {/* The corridor frame, restored behind the phone (owner,
+                    21 October: "undo that"). */}
+                <Frame photo="students-hallway" eager
+                  alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
                   className="absolute inset-0 scale-[1.1]"/>
               </Parallax2D>
               <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"
