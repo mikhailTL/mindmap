@@ -3,9 +3,6 @@ import { describe, it, expect } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { CheckInBody, READING_IS } from '../src/views/CheckIn'
 
-/* The Reading tab's chooser (owner, 20 October): back to the white numbered
-   cards, in the order Mental Mirror, phone camera, Survey, patch, under one
-   line on what a reading is. */
 const html = renderToString(React.createElement(CheckInBody, { go: () => {} }))
 const ol = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'))
 const items = ol.split(/<li[\s>]/).slice(1)

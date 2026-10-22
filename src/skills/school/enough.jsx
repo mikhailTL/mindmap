@@ -6,11 +6,6 @@ import { readiness, gutCheck, mistakeEntry } from './logic'
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, GoalMeter, Win, leave } from '../../toolkit/game/skill'
 
-/* Good enough to submit. Write down what the work actually needs, tick it
- * off, and the meter says when it is ready, however it feels. A mistake log
- * turns each slip into a data point: what happened, what it tells you, what
- * you will try next. */
-
 const ID = 'school-good-enough'
 const START = { goal:'', must:[], nice:[], feel:50, mistakes:[], submitted:false }
 const BLANK = { what:'', tells:'', next:'' }

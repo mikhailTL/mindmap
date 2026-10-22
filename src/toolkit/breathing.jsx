@@ -6,21 +6,6 @@ import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, useSvgId } from './game'
 
-/* Box Breathing, as "follow the light".
- *
- * A light travels round a square at breathing pace. Hold the box while it
- * climbs and rests at the top (breathe in, rest), let go while it comes down
- * and along the bottom (breathe out, rest). While what you are doing matches
- * the light, your dot rides on it; when it does not, your dot slips inside
- * the track. Each side in time is 10 points and a clean lap is 10 more.
- *
- * One requestAnimationFrame clock drives the light, the count and the score,
- * so they always agree. The first half second of each side is free, because
- * nobody's thumb is that exact. Nothing is counted past this screen.
- *
- * SAFETY. The rests are named as rests, Even has none, and the line under
- * the patterns says to shorten any that feels uncomfortable. */
-
 const PATTERNS = {
   box:  { id:'box',  label:'Box', say:'In 4, rest 4, out 4, rest 4.', laps:4,
           steps:[['In', 4, .25], ['Rest', 4, .25], ['Out', 4, .25], ['Rest', 4, .25]] },
@@ -28,14 +13,13 @@ const PATTERNS = {
   long: { id:'long', label:'Long out', say:'In 4, out 6. No rests.', laps:5, steps:[['In', 4, .5], ['Out', 6, .5]] },
 }
 const SAY = { In:'Breathe in', Out:'Breathe out', Rest:'Rest' }
-const GRACE = 0.5
-const PASS = 0.7
+const GRACE = 0.5  // seconds at the start of each side that are not scored
+const PASS = 0.7  // share of a side that must match the light
 
-/* Which steps want the box held: an in-breath and the rest after it. */
 const wants = steps => steps.map((s, i) => s[0] === 'In' ||
   (s[0] === 'Rest' && steps[(i - 1 + steps.length) % steps.length][0] === 'In'))
 
-/* The square: (30,30) to (170,170), walked from the bottom left, up first. */
+// The square runs from (30,30) to (170,170), walked from the bottom left, up first.
 const A = 30, S = 140
 function at(u) {
   const k = ((u % 1) + 1) % 1 * 4, side = Math.floor(k), f = k - side

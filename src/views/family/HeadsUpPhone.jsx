@@ -7,24 +7,6 @@ import { SignalIcon } from '../../traffic/ParentReport'
 import { KEY_OF, known } from '../../traffic/core'
 import { cn } from '../../lib/utils'
 
-/* Heads Up today, on a parent's page for one child, drawn on the child's
- * phone.
- *
- * The owner, 18 October: a phone mockup "showing the reported stress or calm
- * signals without showing what content child was viewing". Later the same day:
- * "heads up today should show a vertical traffic light with the heads up
- * status face highlighted, within the phone mockup, not the phone mockup
- * notification". So the screen holds the Heads Up traffic light (the same
- * housing and lamps as everywhere else, ../../traffic/Parent.jsx), today's
- * lamp lit with its face and glow, the plain line under it, and on red the
- * signals. Behind it, faint and blurred, whatever was on the screen as grey
- * blocks only (never an app, a site, a message or a person).
- *
- * What is reported follows parentSummary in src/signals/light.js, the same
- * rule the teen is told on their own Heads Up card: on red the time and the
- * kind of signal, on yellow and green the plain line only. No animation, so
- * nothing to hold back under reduced motion. */
-
 /* What Heads Up reads, beside the phone. */
 const READS = [
   { k: 'pxPerSec', label: 'Scroll speed' },
@@ -40,8 +22,7 @@ const Lock = ({ size }) => (
   </svg>
 )
 
-/* What was on the screen, as blocks only, blurred and faint, so the light
-   reads first and the content is plainly not shown. */
+// Grey blocks blurred behind the light: the screen's layout only, not its content.
 function HiddenContent() {
   const block = (style, key) => <span key={key} className="absolute block" style={{ background: '#c9d3ce', ...style }}/>
   return (
@@ -60,11 +41,9 @@ function HiddenContent() {
   )
 }
 
-/* The light and what it says, in device points so the drawing scales with
-   the phone. Smaller lamps on red, the more so the more signals, so the
-   rows always fit the screen. */
 function Readout({ sum }) {
   const red = sum.light === 'red'
+  // Lamp size in device points: smaller on red, and smaller again for each signal past two, so the rows fit.
   const lamp = red ? Math.max(56, 92 - 16 * Math.max(0, sum.signals.length - 2)) : 124
   return (
     <div className={cn('absolute inset-x-0 bottom-0 top-[47px] flex flex-col items-center px-7 pb-[36px]',

@@ -8,14 +8,8 @@ import { money, moneyShort, monthlyCost, subsTotals, pauseStatus, budget, compou
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, GoalMeter, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
-/* Money Check: subscriptions, a 24 hour pause list, a monthly budget, a
- * compound interest calculator and a credit score explainer. Educational
- * only. Saved under `mindmap.skills.life-money`. */
-
 const ID = 'life-money'
 const digits = v => v.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
-
-/* ── Subscriptions ─────────────────────────────────────────────────────── */
 
 const CYCLES = [['weekly', 'Weekly'], ['monthly', 'Monthly'], ['yearly', 'Yearly']]
 const USED = [['week', 'This week'], ['month', 'This month'], ['not-month', 'Not this month'], ['unsure', 'Can\'t remember']]
@@ -109,8 +103,6 @@ function Subs({ data, patch, g, win }) {
   )
 }
 
-/* ── 24 hour pause ─────────────────────────────────────────────────────── */
-
 function useNow(ms = 30e3) {
   const [now, setNow] = React.useState(() => Date.now())
   React.useEffect(() => { const t = setInterval(() => setNow(Date.now()), ms); return () => clearInterval(t) }, [ms])
@@ -186,8 +178,6 @@ function Pause({ data, patch, g, win }) {
   )
 }
 
-/* ── Budget ────────────────────────────────────────────────────────────── */
-
 const INCOME = [['job', 'Job or gigs'], ['allowance', 'Allowance'], ['gifts', 'Gifts']]
 const SPEND = [['food', 'Food and snacks'], ['transport', 'Transport'], ['phone', 'Phone'], ['fun', 'Fun and going out'],
   ['clothes', 'Clothes'], ['subs', 'Subscriptions'], ['save', 'Saving'], ['other', 'Other']]
@@ -247,9 +237,7 @@ function Budget({ data, patch, g, win }) {
   )
 }
 
-/* ── Compound interest ─────────────────────────────────────────────────── */
-
-const C_PUT = '#2294e6', C_GROW = '#067049'   // validated pair, dataviz check
+const C_PUT = '#2294e6', C_GROW = '#067049'
 
 function Growth({ rows }) {
   const [pick, setPick] = React.useState(rows.length)
@@ -353,8 +341,6 @@ function Interest({ data, patch, g, win }) {
     </>
   )
 }
-
-/* ── Credit score ──────────────────────────────────────────────────────── */
 
 const FACTORS = [
   ['Payment history', 35, 'Paying every bill on time, every time.', 'Late or missed payments hurt most and stay on your report for years.'],

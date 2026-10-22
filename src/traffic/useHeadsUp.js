@@ -4,22 +4,8 @@ import { seededBaseline } from './baseline.js'
 import { useReduced } from '../toolkit/useReduced'
 import { startTeen, headlessView, makeClock, pickParent, known } from './core'
 
-/* Both teen engines and what the parent sees, for the page and for the panel
- * in the parent app. With `headless` the teen phones are not drawn and the
- * engines run against the stand-in view; otherwise the drawn phones register
- * their views on `views.texting` and `views.scrolling` before the loops start.
- * Starts on mount, loops forever, stops on unmount.
- *
- * The two phones take turns, strictly: a phone's turn starts only once the
- * other's scene is done, never on a clock, so a slow frame can never make the
- * two run at once. Owner, 18 Oct: the reel pauses while the texting plays,
- * and the other way round. `focus` is the phone whose scene is playing,
- * `phase` says where each one is (calm, stress, detected, done) and
- * `detected` lists the signals called out so far in the scene now playing.
- *
- * `beat` is the moment the page stops for: a signal's callout while its phone
- * pauses, or the parent's light while it is red. Null otherwise. */
-
+// Both teen engines plus what the parent sees. Phones take strict turns: the next scene starts
+// when the current one reports 'done', not on a timer, so the two cannot overlap.
 const VIEW_METHODS = ['key', 'send', 'typing', 'receive', 'go', 'fresh', 'showBanner', 'hideBanner', 'freeze', 'mark']
 const PLAYING = new Set(['calm', 'stress', 'detected'])
 const proxy = ref => Object.fromEntries(VIEW_METHODS.map(n => [n, (...a) => ref.current?.[n]?.(...a)]))
@@ -44,8 +30,7 @@ export function useHeadsUp({ headless = false } = {}) {
     const baseline = seededBaseline()
     const refs = { texting: [viewT, sessT], scrolling: [viewS, sessS] }
     let now = null, timer = 0, turn = 0, gone = false
-    /* one scene on one phone; its own loop never comes round, the next turn
-       is started from here when the scene is done */
+    // period 1e9 keeps a scene from looping on its own; the next turn comes from next().
     const play = kind => {
       const [vref, sref] = refs[kind]
       const view = headless ? headlessView(kind, () => sref.current) : proxy(vref)
@@ -78,7 +63,6 @@ export function useHeadsUp({ headless = false } = {}) {
     return () => { gone = true; clearTimeout(timer); now?.stop(); clearTimeout(cueTimer.current); setCue(null) }
   }, [headless, clock])
 
-  /* the parent: the higher of the two lights, and that phone's signals */
   const pick = pickParent(lives.texting, lives.scrolling)
   const light = known(pick?.light)
   const today = Math.max(lives.texting?.index ?? 0, lives.scrolling?.index ?? 0)

@@ -1,14 +1,5 @@
-/* A linked teen from the account snapshot, shaped like a roster teen
- * (src/lib/roster.js makeTeen) so the parent and Counselor/Professional cards
- * and pages draw them with the same components.
- *
- * Only what the server sent is here. A snapshot teen carries day figures
- * (date, mean, min, max, count, and sources when shared), the usual band when
- * the teen shares it, and for a professional the time of the latest reading
- * when the teen shares raw readings. There are no body signals, no hours and
- * no single readings, so those stay empty and the screens say so. A day with
- * no readings has a null score; nothing is filled in. */
-
+// Shapes a linked teen from the account snapshot like a roster teen. Only what the server sent:
+// no body signals, hours or single readings, and a day with no reading has a null score.
 import { Light } from '../../signals/light.js'
 
 const DAY_MS = 86400e3
@@ -23,7 +14,6 @@ export function localDay(t) {
 }
 const weekdayOf = iso => WEEKDAY[new Date(iso + 'T12:00:00Z').getUTCDay()]
 
-/* The same cut the roster uses for a day's light, against the teen's own band. */
 export function liveLight(usual, v) {
   if (!usual || v == null) return null
   const over = v - usual.hi
@@ -61,6 +51,7 @@ export function toTeen(t, audience = 'parent', now = Date.now()) {
     pseudonym: name, age: null, grade: null, avatar: t.avatar || null,
     patch: any.some(d => d.sources && d.sources.patch > 0),
     sharing,
+    // A parent's trend consent is the teen's `week` switch, and raw readings stay off for a parent.
     consent: pro
       ? { score: sharing.score === true, trends: sharing.trends === true, raw: sharing.raw === true, name: true }
       : { score: sharing.score === true, trends: sharing.week === true, raw: false, name: true },
@@ -71,8 +62,6 @@ export function toTeen(t, audience = 'parent', now = Date.now()) {
 
 const avg = a => Math.round(a.reduce((s, d) => s + d.score, 0) / a.length)
 
-/* roster.summary for a live teen. Means are over the days that have a
-   reading; a range with none has a null mean, and a change needs both. */
 export function liveSummary(teen, range = 'week') {
   const days = teen.days
   if (range === 'day') {
@@ -95,11 +84,11 @@ export function liveSummary(teen, range = 'week') {
   }
 }
 
-/* roster.statusOf for a live teen: null when there is nothing to judge. */
 export function liveStatus(teen, range = 'week') {
   if (range === 'day') return teen.days[teen.days.length - 1].light
   const lit = teen.days.slice(range === 'month' ? -30 : -7).filter(d => d.light)
   if (!lit.length) return null
+  // Average rank of the lit days (green 0, yellow 1, red 2), rounded to the nearest light.
   const m = lit.reduce((s, d) => s + RANK[d.light], 0) / lit.length
   return m >= 1.5 ? Light.RED : m >= 0.5 ? Light.YELLOW : Light.GREEN
 }

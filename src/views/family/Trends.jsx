@@ -10,21 +10,10 @@ import { ScoreChart, ScoreLegend } from './charts'
 import DayFacts from './DayFacts'
 import { PREV, STATUS_SUB, STATUS_WORD, fullDate, lightCounts, rangeDays, statusOfTeen, summaryOf } from './data'
 
-/* One child's Trends, the same layout for every child: the Mind Score by day
- * for a Day, Week or Month; Heads Up across that range; and the month
- * calendar with each day's face, where picking a day shows its face and
- * Mind Score beside the grid. The owner, 18 October, "everything looks too
- * overwhelming": the "Everything recorded" box and the day's long list of
- * rows are gone.
- *
- * Whole days only (the parent's consent scope). Used on a child's page under
- * its Today part and on the parent's Trends tab. */
-
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+// Dates parse at noon UTC so the weekday is the same in every time zone.
 const wd = iso => WD[new Date(iso + 'T12:00:00Z').getUTCDay()]
 
-/* `variant` and `hue` pick the surface (src/ui/card.jsx). Heads Up takes the
-   sun wash so it never matches the Mind Score beside it. */
 function Card({ title, line, right, children, className, labelId, variant = 'plain', hue = 'accent' }) {
   return (
     <section aria-labelledby={labelId}
@@ -51,6 +40,7 @@ function Fig({ k, v, sub }) {
   )
 }
 
+// Day compares today with yesterday, so it takes the last two days.
 function pointsFor(teen, range) {
   const all = teen.days
   const days = range === 'day' ? all.slice(-2) : rangeDays(teen, range)
@@ -156,8 +146,6 @@ export default function ChildTrends({ teen, className }) {
         </dl>
       </Card>
 
-      {/* Full width, the picked day beside the grid on a wide screen and under
-          it on a phone. */}
       <Card labelId={ids + 'cal'} title="Calendar" line="Pick a day to see it." className="lg:col-span-2">
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-5">
           <MonthCalendar days={calDays} today={today} selected={picked} onSelect={pick} legend={false}/>

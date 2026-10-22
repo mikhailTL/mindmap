@@ -2,24 +2,8 @@ import React from 'react'
 import { IOS, StatusBar } from './ios'
 import { cn } from '../lib/utils'
 
-/* A text conversation drawn the way the iPhone draws one: the frosted header
- * with the contact, grey bubbles in, blue bubbles out, the field and the
- * keyboard under it. It is live. Messages arrive after the typing dots, and
- * every key, whether the demo pressed it, the visitor clicked a drawn key or
- * typed on their own keyboard, goes out through `onKey(del)` and nothing
- * else: the engine learns that a key was pressed and whether it deleted,
- * never which key.
- *
- * Props:
- *   active     false pauses the dots and the caret
- *   onKey      (del) for every key press, from every source
- *   handleRef  ref; set to { key(del, ch), send(), receive(text, ms),
- *              typing(on), bubble(text, me), focus(), reset() }
- *   seed       the bubbles a fresh thread starts with
- *   day        the time under "Today" at the top of the thread
- *   reduced    bubbles and keys change in place, nothing slides or pops
- *   autoReply  when true, the contact answers a visitor's own message */
-
+// A live iOS Messages thread. Every key press, drawn, scripted or physical, reaches the engine
+// only as onKey(del): whether it deleted, not which key.
 const BLUE = IOS.blue
 const GREY = IOS.grey
 const SECONDARY = IOS.secondary
@@ -42,11 +26,10 @@ const KEYFRAMES = `
 @keyframes mm-msg-caret { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }
 `
 
-/* ── the keyboard ───────────────────────────────────────────────────────── */
-
 const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
 const PAD_X = 3
 const GAP = 6
+// Key width in pt: ten keys and nine 6 pt gaps across the 393 pt screen.
 const KW = (393 - PAD_X * 2 - GAP * 9) / 10
 const KH = 42
 const ROW_GAP = 12
@@ -77,9 +60,7 @@ function keyIdFor(ch, del) {
   return c.length === 1 && c >= 'a' && c <= 'z' ? c : null
 }
 
-/* The magnified key iOS shows above a letter while it is held: a wide
-   rounded head that narrows into the key itself. `dx` is where the key sits
-   inside the head, so the edge keys lean inward instead of leaving the screen. */
+// The magnified preview iOS shows above a held key; dx is the key's offset inside the wider head.
 function Balloon({ ch, dx }) {
   const w = KW, bw = KW + 22, bh = 54, neck = 12, total = bh + neck + KH, r = 9
   const kl = dx, kr = dx + w
@@ -145,8 +126,6 @@ function Keyboard({ pressed, shift, popups, onPress }) {
           </svg>
         </Key>
       </div>
-      {/* on a phone with Face ID the bottom row is 123, space, return; the
-          emoji and dictation keys sit in the strip under it */}
       <div style={{ ...row, marginTop: ROW_GAP, justifyContent: 'flex-start' }}>
         <Key id="123" fn label="123" width={FN_W} pressed={pressed} onPress={onPress}/>
         <Key id="space" label="space" width={393 - PAD_X * 2 - FN_W * 2 - GAP * 2} pressed={pressed} onPress={onPress}/>
@@ -164,10 +143,7 @@ function Keyboard({ pressed, shift, popups, onPress }) {
   )
 }
 
-/* ── the thread ─────────────────────────────────────────────────────────── */
-
-/* The tail is the familiar two-layer trick: a coloured curve, then a curve
-   the colour of the thread cut out of it. It only works on a white thread. */
+// Bubble tail: a coloured curve with a white curve cut over it, so it only works on a white thread.
 function Tail({ me }) {
   const fill = me ? BLUE : GREY
   const side = me ? 'right' : 'left'
@@ -234,8 +210,6 @@ function TypingDots({ running, reduced, gapTop }) {
   )
 }
 
-/* ── the header ─────────────────────────────────────────────────────────── */
-
 function Header() {
   return (
     <div className="absolute inset-x-0 top-0 z-10"
@@ -270,9 +244,8 @@ function Header() {
     </div>
   )
 }
+// Status bar (47 pt) plus the contact header (80 pt).
 const HEADER_H = 47 + 80
-
-/* ── the scene ──────────────────────────────────────────────────────────── */
 
 let uid = 0
 const seedBubbles = (seed = SEED) => seed.map(b => ({ ...b, id: ++uid, fresh: false }))
@@ -345,7 +318,6 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
     if (id.length === 1) { type(shiftRef.current ? id.toUpperCase() : id, false); if (shiftRef.current) putShift(false) }
   }
 
-  /* the visitor's own keyboard: keydown records { del } and nothing else */
   const onKeyDown = e => {
     press(keyIdFor(e.key))
     if (e.key === 'Enter') { e.preventDefault(); send({ human: true }); return }
@@ -354,8 +326,8 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
     lastKeyRef.current = performance.now()
     props.current.onKey?.(del)
   }
-  /* some phone keyboards send keydown as "Unidentified"; the input event
-     still says whether it was a deletion, and that is all we keep */
+  // Some mobile keyboards send keydown as "Unidentified"; inputType still tells a delete from an insert.
+  // Skipped within 40 ms of a counted keydown so one press is not recorded twice.
   const onInput = e => {
     putDraft(e.target.value)
     if (performance.now() - lastKeyRef.current < 40) return
@@ -384,7 +356,6 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
       },
       send() { press('send'); send() },
       receive,
-      /* the dots and the bubble as two steps, so a script can pause between */
       typing(on) { setTyping(!!on) },
       bubble(text, me = false) { add({ me, text }) },
       focus() { /* the field already shows its caret whenever the scene is up */ },
@@ -443,7 +414,6 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
         </span>
         <div className="relative h-[36px] min-w-0 flex-1 rounded-[18px]"
           style={{ boxShadow: 'inset 0 0 0 1px #c6c6c8' }}>
-          {/* what the demo types, with a caret, while the real field is not focused */}
           {!focused && (
             <span aria-hidden className="pointer-events-none absolute inset-y-0 left-3 right-11 flex items-center overflow-hidden whitespace-pre text-[17px] text-black">
               {draft}
@@ -465,8 +435,6 @@ export default function MessagesScene({ active = true, onKey, handleRef, reduced
             className="absolute bottom-[4px] right-[4px] grid size-[28px] place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/50"
             style={{ background: hasText ? BLUE : 'transparent', transition: reduced ? 'none' : 'background-color 150ms, transform 150ms',
               transform: sendDown && !reduced ? 'scale(0.88)' : 'none' }}>
-            {/* an empty field shows the microphone, as iOS does; the arrow
-                comes with the first letter */}
             {hasText ? (
               <svg aria-hidden width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M7 14.5V2M1.6 7.2 7 1.8l5.4 5.4"/>

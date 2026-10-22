@@ -1,69 +1,24 @@
-/* MindMap survey endpoint: a Google Apps Script web app.
+/* MindMap survey endpoint (Google Apps Script web app).
  *
- * Why this file is here. The site is a static build: there is no server of
- * ours between a reviewer's browser and a mailbox. Delivery therefore depends
- * on something outside the bundle, and the free relay the site falls back to
- * has an activation step, a rate limit, and an uptime nobody here controls.
- * This is the owner-controlled transport that goes first. Twelve lines of
- * setup, no key in the bundle (the URL is a destination, not a secret), and
- * the durable record is a spreadsheet rather than an inbox, so a response
- * survives a mail that bounces, a full mailbox, or a label that hides it.
+ * Appends each response to a sheet, one column per question, then emails a
+ * notification. The row is written first so a failed email never loses a
+ * response. Every request gets a 200 with a JSON body; malformed bodies are
+ * logged raw to a second sheet so clients do not retry forever.
  *
- * Setup is in SURVEY-SETUP.md, "Your own endpoint".
- *
- * ─── Changed on 13 October: REDEPLOY IS REQUIRED ────────────────────────────
- * The survey was replaced. It is no longer a ten-item usability scale with a
- * published benchmark; it is twelve house questions, three of them bands. The
- * browser now posts one flat field per question alongside the prose blob, so
- * this script writes ONE COLUMN PER QUESTION and the sheet can be averaged a
- * column at a time.
- *
- * Two consequences the owner has to act on:
- *
- * 1. PASTE THIS FILE OVER THE SCRIPT AND DEPLOY A NEW VERSION. Apps Script
- *    serves the deployed version, not the saved file, so saving alone changes
- *    nothing: Deploy > Manage deployments > the pencil > Version: New version
- *    > Deploy. The deployment URL does not change, so nothing in the site's
- *    env needs touching.
- * 2. The responses go to a NEW SHEET, named below. The old 'Responses' sheet
- *    is left exactly as it is, because its rows answered the retired
- *    questions and writing new answers under its old header would put a band
- *    in a column labelled 'name' and a blank in nine others. Keep it; it is
- *    the record of what was asked before.
- *
- * Two things this deliberately does in this order:
- *
- * 1. The row is written before the mail is sent. A spreadsheet append is the
- *    durable half; the mail is a notification. If the mail fails the response
- *    is still kept and the browser is still told 'accepted', because it has
- *    been. The reverse order would throw away a response over a notification.
- * 2. Every request is answered 200 with a JSON body, including a malformed
- *    one, which is logged raw to a second sheet. A 500 from here would make a
- *    client that already has the answers retry forever against a bug.
+ * Setup: paste into Apps Script and deploy as a web app. After editing, deploy
+ * a new version (Deploy > Manage deployments > Version: New version); the URL
+ * stays the same.
  */
 
 var MAIL_TO = '2020mik2020@gmail.com'
-/* New sheet, new header. See note 2 above before renaming this back. */
+// Responses to the current survey go to their own sheet.
 var SHEET_RESPONSES = 'Responses 2'
 var SHEET_RAW = 'Unparsed'
 
-/* One entry per question, in ask order, mirroring ALL_ITEMS in
- * src/survey/questions.js and FIELD_IDS in src/survey/mail.js. The order here
- * is the column order in the sheet, so changing it moves every column.
- *
- * `avg` records whether a column may be averaged, and it is the one thing in
- * this file worth reading twice:
- *
- *   true  -> a one-to-five rating, or the half-star rating. The browser sends
- *            the NUMBER for these, so the column averages.
- *   false -> a band or a free text. The browser sends the LABEL, because the
- *            number behind a band is its position in a list. A mean of
- *            'Parent or guardian' is arithmetic on a word.
- *
- * There is NO composite column and no grade column, on purpose. The retired
- * instrument had a published mean to compare a total against; these questions
- * were written for this product, so a total of them has nothing to be read
- * against and a grade drawn on it would be invented. Do not add one.
+/* One entry per question, in the order of ALL_ITEMS in src/survey/questions.js
+ * and FIELD_IDS in src/survey/mail.js; this is also the sheet's column order.
+ * avg: true for 1 to 5 ratings (sent as numbers), false for bands and free
+ * text (sent as labels).
  */
 var FIELDS = [
   { id: 'who-age',          head: 'age group',            avg: false },

@@ -4,49 +4,6 @@ import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* The exploded patch: five layers of ONE oval, separated along a single axis,
- * each with a leader to its label.
- *
- * WHAT CHANGED, AND WHY.
- *
- * 1. THE FOUR CHANNELS ARE NAMED ON THE DRAWING. The sensing layer was four
- *    coloured circles and nothing else, so the figure asked the reader to
- *    carry a colour down to the table below it. Each channel now carries a
- *    numbered callout on the plate and a keyed line in the label column that
- *    gives its name and its unit. Colour, a digit, a name and a unit: four
- *    carriers, so the figure survives greyscale and colour-vision deficiency.
- *
- * 2. THE DIMENSION IS A GRADUATED RULER, not one callout. The long axis was
- *    the figure's only stated size. It is a millimetre scale now, minor ticks
- *    every 5 mm and majored and numbered every 10, so any feature on the
- *    drawing can be measured off it rather than guessed at. The long axis is
- *    the one direction the tilt does not foreshorten, so it is the only one
- *    this view can graduate honestly; the cross dimension stays on the plan
- *    inset, which also carries graduations now.
- *
- * 3. THE BLANK SPACE IS GONE. The stack's openness used to be driven by the
- *    scroll position, and the viewBox reserves the height the SEPARATED stack
- *    needs. A figure below the fold therefore rendered collapsed into the
- *    middle of its own box, which left about 150px empty above the drawing at
- *    1280 and about 70px between the ruler and the button at 390, and no
- *    amount of scrolling fixed it in a full-page capture. Openness is now the
- *    reader's: the figure rests separated, which is the state the box is sized
- *    for, and the button is the only thing that closes it. The collapse is
- *    anchored on the bottom layer, so the ruler and the dimension never move.
- *
- * 4. EACH LABEL CARRIES A SPEC LINE at the wide size, where there were 180
- *    unused viewBox units to the right of the longest label. Every line is a
- *    settled fact, and nothing open joins them.
- *
- * Every claim here is a settled one. Battery, adhesive, electrode build, part
- * numbers, ingress rating, weight and cost are all open, so a layer that has
- * only an open fact is labelled by its FUNCTION and nothing else.
- *
- * Drawing idiom follows charts/rainbow.jsx and charts/patch-parts.jsx: flat
- * opaque strokes, one fill per shape, no gradient, no blur, no partial-opacity
- * decoration. Token values are inlined as hex the way patch-parts.jsx does it,
- * because SVG attributes cannot take a Tailwind class. */
-
 const INK = '#0d2b1e'      /* ink */
 const INK3 = '#426a58'     /* ink-3: 5.33 on paper, 5.61 on card */
 const RULE = '#c2d7ca'     /* rule */
@@ -56,21 +13,16 @@ const CARD = '#ffffff'
 const MIST = '#e3ede7'
 const AQUA = '#edf7f7'
 const AQUA2 = '#cee8ea'
-const BEAM = '#1d8fb0'     /* beam: 3.20 on paper, so a graphic and never a word */
+const BEAM = '#1d8fb0'  /* beam: 3.20 on paper, so graphics only */
 const ACCENT = '#157446'   /* accent */
 
-/* The settled footprint, in millimetres. Every plate in the figure, the
-   millimetre ruler and the orientation inset are scaled off these two
-   numbers, so the drawing cannot drift from the stated dimension. */
+// Footprint in mm; the plates, the ruler and the inset are all scaled from these.
 const MM_LONG = 54
 const MM_CROSS = 36
 
 const f = n => Number(n.toFixed(2))
 
-/* One superellipse, used for every plate. Same construction as
-   charts/patch-front.jsx, which does not export it; k is handle length as a
-   fraction of the radius, and 0.66 keeps the sides a little straighter than a
-   true ellipse without reading as a stadium. */
+// Superellipse; k is handle length over radius, and 0.66 gives slightly straighter sides than an ellipse.
 function oval(cx, cy, a, b, k = 0.66) {
   const hx = a * k, hy = b * k
   return `M${f(cx)} ${f(cy - b)}`
@@ -80,11 +32,6 @@ function oval(cx, cy, a, b, k = 0.66) {
     + `C${f(cx - a)} ${f(cy - hy)} ${f(cx - hx)} ${f(cy - b)} ${f(cx)} ${f(cy - b)}Z`
 }
 
-/* ---- the five layers, outside in, which is also top to bottom on screen ---- */
-
-/* Charging slot at the LEFT extreme, not the right: the right extreme is where
-   this layer's leader line starts. A port that does not break the outline is a
-   sticker, so the slot straddles the silhouette. */
 function shellArt({ cx, cy, a, b }) {
   return (
     <>
@@ -97,8 +44,6 @@ function shellArt({ cx, cy, a, b }) {
   )
 }
 
-/* Three open arcs off a module footprint. The arcs are elliptical, not
-   circular, so they are foreshortened by the same amount as the plate. */
 function radioArt({ cx, cy, a, b }) {
   const px = cx - a * 0.58
   const rings = [[0.14, 0.3], [0.22, 0.48], [0.3, 0.66]]
@@ -117,9 +62,6 @@ function radioArt({ cx, cy, a, b }) {
   )
 }
 
-/* Four channels in, one number out: the point of the board, drawn rather than
-   claimed. The four inbound traces carry the channel colours, so this plate
-   and the sensing plate under it read as the same four things. */
 function boardArt({ cx, cy, a, b }) {
   const bw = a * 0.56, bh = b * 0.52
   const collect = cx - a * 0.06
@@ -146,9 +88,6 @@ function boardArt({ cx, cy, a, b }) {
   )
 }
 
-/* The four channels, one flat SENSORS colour each, spaced along the long axis,
-   each with an ink ring and a numbered callout keyed to the label column. The
-   digit is what lets the figure be read without colour at all. */
 function senseArt({ cx, cy, a, b, cfg }) {
   return (
     <>
@@ -170,8 +109,6 @@ function senseArt({ cx, cy, a, b, cfg }) {
   )
 }
 
-/* The hatch covers the whole plate and is clipped by the plate path itself, so
-   the texture cannot leak past the silhouette. Window drawn after it. */
 function skinArt({ cx, cy, a, b, hatch, fore }) {
   return (
     <>
@@ -185,9 +122,6 @@ function skinArt({ cx, cy, a, b, hatch, fore }) {
   )
 }
 
-/* `spec` is one settled fact per layer, drawn under the title at the wide size
-   only: at the narrow size the label column is 105 units and holds a title and
-   nothing else. Nothing open may join this list. */
 const LAYERS = [
   { id:'shell', title:'Shell', face:CARD, wall:MIST, art:shellArt,
     spec:'Charging slot in the side',
@@ -197,8 +131,6 @@ const LAYERS = [
     body:'The radio sends readings to the phone over Bluetooth Low Energy.' },
   { id:'board', title:'Board', face:MIST, wall:RULE, art:boardArt,
     spec:'Four signals in, one score out',
-    /* Cut from four lines to one: the baseline window and the network shape
-       are the methods page's subject, not a patch drawing's. */
     body:`The board turns four signals into one ${SCORE}, on the patch itself.` },
   { id:'sense', title:'Sensing', face:PAPER, wall:MIST, art:senseArt,
     spec:'4 signals, 1 reading a second',
@@ -210,14 +142,8 @@ const LAYERS = [
 
 const LAST = LAYERS.length - 1
 
-/* ---- geometry ----
- * Both variants come out of the same arithmetic: `u` is px per millimetre and
- * `fore` is the foreshortening of the cross-arm direction under the tilt, so a
- * plate is always MM_LONG by MM_CROSS and nothing is hand-tuned.
- * `open` and `closed` are the pitch between plate centres at the two ends of
- * the travel; `closed` is deliberately short of the plate depth, because an
- * assembled stack overlaps. The travel is anchored on the LAST plate, so the
- * ruler under it is static whatever the reader does. */
+// u is px per mm and fore the cross-axis foreshortening. open and closed are the plate pitch at each end
+// of the travel; closed is less than the plate depth, so the assembled stack overlaps.
 function build({ w, u, fore, wall, open, closed, cx, top, labelSize, specSize, keySize,
                  chanSize, chanDy, lead, maxW, rulerNum, rulerCap, minor, major, spec }) {
   const a = (MM_LONG * u) / 2
@@ -236,27 +162,10 @@ function build({ w, u, fore, wall, open, closed, cx, top, labelSize, specSize, k
   }
 }
 
-/* 760 wide at an 820px cap renders the 15px labels at 15 to 16px on any column
-   a landing page gives this. */
 const WIDE = build({ w:760, u:8, fore:0.4, wall:9, open:126, closed:60,
   cx:234, top:10, labelSize:15, specSize:12, keySize:12, chanSize:14, chanDy:-32,
   lead:26, maxW:820, rulerNum:11, rulerCap:13, minor:5, major:9, spec:true })
 
-/* Below sm the plate shrinks and the label column narrows to the longest
-   title, "Skin interface". Labels stay beside the plates rather than under
-   them: under them, the closed state could not compress at all without a
-   label landing on the next plate.
-
-   SHORTER, 13 OCTOBER. Spec 0e section 14 caps a band at about one and a half
-   screens on a 390 phone and this figure ran well past two. The arithmetic in
-   build() is what sets the height, so the cut is made there and nothing is
-   hand-nudged: u 3.3 to 2.9 shrinks the plate, open 76 to 62 shortens the
-   travel, and top and wall each lose a unit. That takes the viewBox from
-   330 x 427 to 330 x 362, which is 65 units, or about 70px of rendered height
-   in a 358px column. `open` 62 still clears the tallest label stack, which is
-   the sensing layer at a 13-unit title over four 10.5-unit key lines, and
-   `closed` comes to 36 so it stays under the 41.8-unit plate depth and the
-   assembled stack still overlaps. */
 const NARROW = build({ w:330, u:2.9, fore:0.4, wall:6, open:62, closed:36,
   cx:90, top:6, labelSize:13, specSize:0, keySize:10.5, chanSize:11, chanDy:-13,
   lead:11, maxW:400, rulerNum:10.5, rulerCap:11, minor:4, major:7, spec:false })
@@ -274,12 +183,6 @@ const ALT = 'An exploded drawing of the MindMap patch, five layers of one oval. 
   + `A millimetre ruler under the bottom plate runs 0 to ${MM_LONG} mm. `
   + 'Ticked every 5 mm, numbered every 10.'
 
-/* The millimetre ruler: the drawing's scale, not just its overall size. Minor
-   ticks every 5 mm, majors numbered every 10, arrowheads and witness lines at
-   the two extremes so it doubles as the overall dimension. It is drawn outside
-   the travelling groups and anchored on the bottom plate, which never moves,
-   so the figure's one piece of measurement furniture is always where the
-   reader last saw it. */
 function Ruler({ cfg }) {
   const { cx, a, rulerY, numY, capY, minor, major, rulerNum, witnessFrom } = cfg
   const x0 = cx - a, x1 = cx + a
@@ -291,7 +194,6 @@ function Ruler({ cfg }) {
   return (
     <g>
       <g fill="none" stroke={INK3} strokeWidth="1">
-        {/* witness lines: the plate's two extremes carried down to the scale */}
         <line x1={f(x0)} y1={f(witnessFrom)} x2={f(x0)} y2={f(rulerY + major + 2)}/>
         <line x1={f(x1)} y1={f(witnessFrom)} x2={f(x1)} y2={f(rulerY + major + 2)}/>
         <line x1={f(x0)} y1={f(rulerY)} x2={f(x1)} y2={f(rulerY)}/>
@@ -324,21 +226,13 @@ function Ruler({ cfg }) {
   )
 }
 
-/* One layer: the plate, its depth wall, its art, its leader, its title, and at
-   the wide size one settled spec line. The sensing layer also carries the
-   channel key, because a numbered callout with nothing to key it to is worse
-   than no callout. */
 function Layer({ layer, i, t, cfg, hatch }) {
   const cy = cfg.cys[i]
-  /* Travel is measured from the LAST plate, which stays put: the ruler and the
-     overall dimension under it are then static in every state, and the figure
-     never shows blank space under its own drawing. */
+  // Travel is measured from the last plate, which stays put, so the ruler under it does not move.
   const y = useTransform(t, [0, 1], [(i - LAST) * (cfg.closed - cfg.open), 0])
   const { cx, a, b, wall, fore, labelX, labelSize, specSize, keySize } = cfg
   const last = i === LAST
   const isSense = layer.id === 'sense'
-  /* 1.4 of the label size, not 0.9: at 0.9 the spec line sat in the title's
-     descenders. */
   const specY = cy + labelSize * 1.4
   const keyTop = cfg.spec ? specY + keySize * 1.55 : cy + keySize * 1.6
   return (
@@ -346,8 +240,6 @@ function Layer({ layer, i, t, cfg, hatch }) {
       <path d={oval(cx, cy + wall, a, b)} fill={layer.wall} stroke={RULING} strokeWidth="1.3"/>
       <path d={oval(cx, cy, a, b)} fill={layer.face} stroke={RULING} strokeWidth="1.6"/>
       {layer.art({ cx, cy, a, b, hatch, fore, cfg })}
-      {/* The long axis, on the plate the ruler measures. A centre line is what
-          ties a dimension to the feature it dimensions. */}
       {last && (
         <line x1={f(cx - a - 8)} y1={f(cy)} x2={f(cx + a + 8)} y2={f(cy)} stroke={RULING}
           strokeWidth="1" strokeDasharray="11 3 2 3"/>
@@ -364,8 +256,6 @@ function Layer({ layer, i, t, cfg, hatch }) {
         const ky = keyTop + j * keySize * 1.22
         return (
           <g key={id}>
-            {/* the chip is the plate's colour and the digit is the plate's
-                digit: two carriers for one mapping */}
             <rect x={f(labelX)} y={f(ky - keySize * 0.72)} width="3" height={f(keySize * 0.84)}
               rx="1.5" fill={s.glow}/>
             <text x={f(labelX + 9)} y={f(ky)} fontSize={f(keySize)} fill={INK3}>
@@ -380,11 +270,7 @@ function Layer({ layer, i, t, cfg, hatch }) {
   )
 }
 
-/* `t` is openness, 0 closed and 1 separated. The figure RESTS at 1, which is
-   the state the viewBox is sized for, and the reader's button is its only
-   writer. It was scroll-driven, and a scroll-driven openness means a figure
-   below the fold renders collapsed inside a box sized for the open state,
-   which is where the blank space in this figure came from. */
+// t is openness, 0 closed to 1 separated. The figure rests at 1, the state the viewBox is sized for.
 function Stack({ shut, cfg }) {
   const reduced = useReducedMotion()
   const t = useMotionValue(1)
@@ -392,8 +278,7 @@ function Stack({ shut, cfg }) {
     const run = animate(t, shut ? 0 : 1, reduced ? { duration: 0 } : { duration: 0.5, ease: EASE })
     return () => run.stop()
   }, [shut, reduced, t])
-  /* Pattern ids must be per-instance: two of these on one page and the second
-     <defs> would silently lose to the first. */
+  // Per-instance pattern ids, so a second figure's defs do not collide with the first.
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const hatch = `ps-hatch-${uid}`
   return (
@@ -412,11 +297,6 @@ function Stack({ shut, cfg }) {
   )
 }
 
-/* The orientation, in true plan rather than under the tilt, because this is
-   the view that can carry both dimensions without lying about either. The
-   dashed line is the arm's own axis, and the oval's long axis lies on it.
-   Both dimension lines are graduated every 5 mm, so the inset carries a scale
-   and not only two numbers. */
 const IN = { w:300, h:238, u:2.6, cx:105, cy:100 }
 
 function ArmInset() {
@@ -431,17 +311,12 @@ function ArmInset() {
     <svg viewBox={`0 0 ${IN.w} ${IN.h}`} role="img"
       aria-label={`The patch seen from above on the outer upper arm, with its long axis along the arm. ${MM_LONG} mm along the arm, ${MM_CROSS} mm across. Both dimension lines are ticked every 5 mm.`}
       className="block h-auto w-full" style={{ maxWidth: IN.w }}>
-      {/* The limb is the one shape here that is drawn rather than calculated:
-          an arm has no arithmetic. It only has to be wider than the plate. */}
       <path d="M42 -6C36 56 40 150 48 250L162 250C170 150 174 56 168 -6Z"
         fill={MIST} stroke={RULING} strokeWidth="1.4"/>
       <ellipse cx={cx} cy={cy} rx={f(rx)} ry={f(ry)} fill={CARD} stroke={INK} strokeWidth="1.6"/>
       <ellipse cx={cx} cy={cy} rx={f(rx * 0.74)} ry={f(ry * 0.82)} fill="none"
         stroke={RULE} strokeWidth="1"/>
       <circle cx={cx} cy={cy} r="5" fill={ACCENT}/>
-      {/* Centre lines last, over the part: the vertical one is the arm's axis
-          and the oval's long axis at once, which is the whole point of this
-          view, and the horizontal one is what the cross dimension measures. */}
       <g stroke={RULING} strokeWidth="1" strokeDasharray="11 3 2 3">
         <line x1={cx} y1="2" x2={cx} y2="232"/>
         <line x1={f(cx - rx - 10)} y1={cy} x2={f(cx + rx + 10)} y2={cy}/>
@@ -478,8 +353,6 @@ function ArmInset() {
   )
 }
 
-/* Starts false and corrects on mount, the same way ui/motion.jsx does it, so a
-   browser without matchMedia still gets a drawing. */
 function useNarrow() {
   const [narrow, setNarrow] = React.useState(false)
   React.useEffect(() => {
@@ -493,31 +366,15 @@ function useNarrow() {
   return narrow
 }
 
-/* THE PHONE PUTS THE READING MATTER BEHIND A DISCLOSURE. Spec 0e section 14
-   caps a band at about one and a half screens at 390 and this one measured
-   2.78: the drawing is 347px, the orientation inset and its sentence another
-   266, and the five-layer table 684, which is 1545px of figure before the
-   page's own rail. The drawing, its control and its caption stay in view at
-   every width; the orientation inset and the
-   layer table - both of which repeat in words what the drawing already names
-   - sit behind one control on a phone and are open at every wider width.
-   Section 14 names a disclosure as the remedy, and this is the one band where
-   a reader on a phone is scrolling a drawing they have already seen. */
-/* `brief`: the drawing, its toggle and its caption only. The overview wires
-   it in this way; the patch page carries the inset and the layer notes. */
 export function PatchStack({ className, caption, brief = false }) {
   const [shut, setShut] = React.useState(false)
   const [more, setMore] = React.useState(false)
   const narrow = useNarrow()
   const cfg = narrow ? NARROW : WIDE
-  /* Wide is not a disclosure at all: `show` is simply true there, so no
-     keyboard or screen reader on a desktop meets a control that does nothing. */
   const show = !brief && (!narrow || more)
   return (
     <div className={cn('min-w-0', className)}>
       <figure className="m-0">
-        {/* Nothing here paints past its box, but the clip costs nothing and
-            the page sets overflow-x: clip anyway. */}
         <div className="overflow-x-clip">
           <Stack shut={shut} cfg={cfg}/>
         </div>
@@ -529,9 +386,6 @@ export function PatchStack({ className, caption, brief = false }) {
           {shut ? 'Separate the layers' : 'Close the stack'}
         </button>
 
-        {/* The inset is held to 232px rather than 300 on a phone: it is an
-            orientation drawing, not the subject, and 300 of a 358px column
-            spent 238px of height on it. */}
         {show && (
           <div className="mt-5 flex flex-wrap items-start gap-x-6 gap-y-3">
             <div className="min-w-0 max-w-full shrink-0 basis-[232px]"><ArmInset/></div>
@@ -541,15 +395,11 @@ export function PatchStack({ className, caption, brief = false }) {
           </div>
         )}
 
-        {/* The closing sentence is not behind the prop or the disclosure:
-            it names the figure as a drawing. */}
         <figcaption className="note mt-4">
           {caption ? `${caption} ` : ''}An exploded drawing of the patch layers.
         </figcaption>
       </figure>
 
-      {/* Plain type on a control, no capsule and no case games. The label
-          names what opens rather than saying "see more". */}
       {narrow && !brief && (
         <button type="button" onClick={() => setMore(v => !v)} aria-expanded={more}
           aria-controls="patchstack-detail"
@@ -560,15 +410,10 @@ export function PatchStack({ className, caption, brief = false }) {
         </button>
       )}
 
-      {/* A dl, not headings: another view wires this component in and this
-          figure must not guess at the page's heading level. */}
       {show && (
       <dl id="patchstack-detail" className="m-0 mt-5">
         {LAYERS.map(l => (
           <div key={l.id} className="border-t border-rule py-3">
-            {/* text-ui, not text-row: five layer names at 22px stacked over
-                17px bodies was a poster, and this list sits under a drawing
-                that already names every layer. */}
             <dt className="font-display text-ui font-bold leading-tight text-ink">{l.title}</dt>
             <dd className="m-0 mt-1 max-w-[56ch] text-note text-ink-2">{l.body}</dd>
             {l.id === 'sense' && (
@@ -578,9 +423,6 @@ export function PatchStack({ className, caption, brief = false }) {
                     const s = SENSORS[id]
                     return (
                       <li key={id} className="flex items-start gap-2.5 py-1">
-                        {/* The digit is the drawing's own callout number and
-                            the bar is the drawing's own colour: two ways back
-                            to the plate above. Neither touches the words. */}
                         <span aria-hidden className="mt-[0.34em] h-4 w-[3px] shrink-0 rounded-bar"
                           style={{ background: s.glow }}/>
                         <p className="m-0 min-w-0 text-note text-ink-2">
@@ -603,8 +445,6 @@ export function PatchStack({ className, caption, brief = false }) {
       </dl>
       )}
 
-      {/* Not behind the disclosure: a reader who takes the drawing at face
-          value would otherwise think movement is one of the four counted. */}
       <p className="note mt-4 max-w-[56ch]">
         Movement is not added to the {SCORE}. The app only uses it to decide when the other three signals count.
       </p>

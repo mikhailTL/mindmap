@@ -1,28 +1,7 @@
 import { FACE_SECONDS } from './face.js'
 
-/* Browser plumbing for the Mental Mirror: the front camera, MediaPipe's Face
- * Landmarker, the per-frame record face.js scores, and the overlay that shows
- * the model tracking the face. The numbers come out of face.js, which stays
- * DOM-free.
- *
- * Nothing leaves the device. Each frame is reduced to 52 blendshape scores,
- * one eye-aperture figure, one nose position and one green level as it
- * arrives, and the frame is dropped. No image is written, kept or sent. Any
- * change that buffers or persists frames breaks that promise and the copy on
- * screen.
- *
- * The model and its runtime are served from this origin (public/models,
- * public/mediapipe) so a reading works on school wifi that blocks CDNs.
- *
- * One rule the code below is built around, checked in headless Chromium
- * against @mediapipe/tasks-vision 1.1.1 (docs/mental-mirror.md): a single
- * failed detectForVideo call (a video with no frame yet, a 0x0 source, a
- * timestamp not above the last one) leaves the landmarker's graph in an error
- * state, and every later call throws "Graph has errors" whatever it is given.
- * So no call is made without a decoded frame, timestamps come from one
- * page-wide clock, only one capture may feed the landmarker at a time, and a
- * landmarker that has thrown is closed and rebuilt on the next reading. */
-
+// Front camera and MediaPipe Face Landmarker: one numeric record per frame for face.js, plus the tracking overlay.
+// Frames are reduced to numbers on arrival and not stored. Model files are served from this origin.
 const WASM_PATH = '/mediapipe/wasm'
 const MODEL_PATH = '/models/face_landmarker.task'
 
@@ -43,6 +22,8 @@ const STALL_MS = 4000
 let vision = null
 let landmarkerPromise = null
 let preferCPU = false
+// One failed detectForVideo call leaves the landmarker graph in an error state, so each call needs a decoded frame,
+// a strictly increasing timestamp from this page-wide clock, and a single active capture.
 let clock = 0           /* last timestamp handed to the landmarker, page-wide */
 let active = null       /* the one capture allowed to feed the landmarker */
 
@@ -55,7 +36,6 @@ export function faceAvailable() {
   return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof WebAssembly !== 'undefined'
 }
 
-/* One landmarker per page. ~4 MB model + ~13 MB runtime, fetched once. */
 export function loadLandmarker() {
   if (!landmarkerPromise) {
     landmarkerPromise = (async () => {
@@ -68,10 +48,7 @@ export function loadLandmarker() {
         outputFaceBlendshapes: true,
         outputFacialTransformationMatrixes: false,
       })
-      /* The GPU delegate is not there on every phone browser (older iOS
-         Safari, some school laptops); the CPU one always is. After a GPU
-         landmarker has failed mid-reading (a lost WebGL context when the phone
-         locks), the next one is built on the CPU. */
+      // The GPU delegate is missing on some browsers; after a GPU failure the next landmarker is built on the CPU.
       if (preferCPU) return make('CPU')
       try { return await make('GPU') } catch { preferCPU = true; return make('CPU') }
     })().catch(e => { landmarkerPromise = null; throw e })
@@ -79,16 +56,13 @@ export function loadLandmarker() {
   return landmarkerPromise
 }
 
-/* A landmarker that has thrown cannot be used again (see the note at the
-   top). Close it and let the next reading build a fresh one. */
+// A landmarker that has thrown keeps throwing, so it is closed and rebuilt on the next reading.
 function dropLandmarker(lm) {
   try { lm?.close() } catch { /* already gone */ }
   landmarkerPromise = null
   preferCPU = true
 }
 
-/* Front camera, no torch. 640×480 is enough for the landmarks and for a usable
-   forehead patch; higher only costs frames. */
 export async function openFrontCamera() {
   if (!faceAvailable()) throw new Error('This browser will not open a camera from here.')
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -98,23 +72,16 @@ export async function openFrontCamera() {
   return { stream, track: stream.getVideoTracks()[0] }
 }
 
-/* ── pure helpers (tested in tests/face.test.js) ─────────────────────────── */
-
-/* A video the landmarker can be given: a decoded frame with a size. */
 export function frameReady(video) {
   return !!video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0
 }
 
-/* Strictly increasing whole milliseconds, whatever the caller's clock does. */
 export function nextTimestamp(last, now) {
   const t = Math.floor(now)
   return Number.isFinite(t) && t > last ? t : last + 1
 }
 
-/* The forehead patch the pulse is read from, in normalised frame coordinates:
-   between the hairline (lm 10) and the brow line (lm 9), a fifth of the way
-   down from the hairline so it is skin, not hair, and a third of the face
-   wide. */
+// Forehead patch in normalised frame coords: between landmarks 10 (hairline) and 9 (brow), 35% of face width.
 export function foreheadPatch(lm, out = {}) {
   const brow = lm[9], top = lm[10]
   const span = Math.abs(brow.y - top.y)
@@ -127,9 +94,6 @@ export function foreheadPatch(lm, out = {}) {
   return out
 }
 
-/* That patch on a W×H raster, clipped to it and at least one pixel, or null
-   when the landmarks are not finite. Pixels outside the frame would read as
-   black and drag the green level with every head movement. */
 export function patchPixels(p, W, H, out = {}) {
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.w) || !Number.isFinite(p.h)) return null
   const x0 = Math.max(0, Math.min(W - 1, Math.round(p.x * W)))
@@ -140,8 +104,7 @@ export function patchPixels(p, W, H, out = {}) {
   return out
 }
 
-/* How a vw×vh frame lands in a cw×ch box under object-fit: cover, the way the
-   <video> shows it, optionally mirrored like a selfie view. */
+// Maps normalised frame coords onto a canvas the way object-fit: cover shows the video, optionally mirrored.
 export function coverMap(vw, vh, cw, ch, mirror = true, out = {}) {
   const s = Math.max(cw / vw, ch / vh)
   out.sx = vw * s; out.sy = vh * s
@@ -152,6 +115,7 @@ export function coverMap(vw, vh, cw, ch, mirror = true, out = {}) {
 export const mapX = (m, x) => (m.mirror ? m.cw - (m.ox + x * m.sx) : m.ox + x * m.sx)
 export const mapY = (m, y) => m.oy + y * m.sy
 
+// Eye aspect ratio: mean of the two vertical lid distances over the eye width.
 const ear = (lm, idx) => {
   const p0 = lm[idx[0]], p1 = lm[idx[1]], p2 = lm[idx[2]], p3 = lm[idx[3]], p4 = lm[idx[4]], p5 = lm[idx[5]]
   const v1 = Math.hypot(p1.x - p5.x, p1.y - p5.y)
@@ -160,12 +124,6 @@ const ear = (lm, idx) => {
   return (v1 + v2) / (2 * h)
 }
 
-/* ── the capture ─────────────────────────────────────────────────────────── */
-
-/* Runs the landmarker on every camera frame for `seconds`. `onFrame` gets the
-   raw result (for the overlay), the record and the fraction done.
-   `done` resolves to { ok: true, frames } or { ok: false, reason } with
-   reason one of 'stopped' | 'camera-ended' | 'stalled' | 'hidden' | 'model'. */
 export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame } = {}) {
   active?.cancel('stopped')
 
@@ -189,8 +147,7 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
     finish(outcome)
   }
   const onEnded = () => end({ ok: false, reason: 'camera-ended' })
-  /* A locked phone or a switched app pauses the page; the reading would come
-     back with a gap in it, so it ends here instead. */
+  // A hidden page pauses capture and would leave a gap, so the reading ends.
   const onHidden = () => { if (document.hidden) end({ ok: false, reason: 'hidden' }) }
 
   const done = new Promise(resolve => {
@@ -199,10 +156,7 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
       if (stop) return
       const elapsed = Math.max(0, now - t0) / 1000
       if (track && track.readyState === 'ended') return onEnded()
-      /* One record per camera frame, not per screen refresh: a 60 Hz screen
-         over a 30 fps camera would otherwise log every frame twice, and the
-         repeats read as a face that never moves. No call without a decoded
-         frame: one 0x0 call breaks the landmarker for good. */
+      // One record per new camera frame, not per screen refresh, so a 60 Hz display does not duplicate 30 fps frames.
       if (!frameReady(video) || video.currentTime === lastVideoTime) {
         if (now - lastFrameAt > STALL_MS) return end({ ok: false, reason: 'stalled' })
         if (elapsed >= seconds) return end({ ok: true, frames })
@@ -247,7 +201,6 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
       } else {
         frames.push({ t: now - t0, ok: false })
       }
-      /* A drawing or readout bug must not end the reading; it is logged once. */
       try { onFrame?.(res, rec, Math.min(1, elapsed / seconds)) } catch (e) {
         if (!warned) { warned = true; console.error('Mental Mirror: overlay', e) }
       }
@@ -264,15 +217,6 @@ export function captureFace(video, landmarker, { seconds = FACE_SECONDS, onFrame
   return handle
 }
 
-/* ── the overlay ─────────────────────────────────────────────────────────── */
-
-/* What the model is doing, drawn on the face it is doing it to, the way
-   MediaPipe's own demos draw a result: the tessellation as hairlines, every
-   landmark as a small solid point, the features the reading uses a little
-   stronger in one colour, the forehead patch the pulse is read from as a
-   box, and small tags with the live values. No glow or blur (20 October,
-   the owner: "not like an LED gala mask"). Mirrored like the video, text
-   left readable. Nothing here allocates per landmark. */
 const COL = {
   mesh: 'rgba(255,255,255,0.24)',
   dot: 'rgba(255,255,255,0.78)',
@@ -285,7 +229,7 @@ const COL = {
 const map = {}
 const fpatch = {}
 
-/* The tessellation lists each shared edge twice; drawn once each. */
+// MediaPipe lists each shared mesh edge twice; each is drawn once.
 let tess = null
 function tessellation(F) {
   if (tess) return tess
@@ -319,7 +263,6 @@ function strokeSet(ctx, lm, conns, m) {
   ctx.stroke()
 }
 
-/* A tag at (x, y) on the given side of `edge`, with a leader to the anchor. */
 function tag(ctx, text, ax, ay, side, edge, y, k, cw, ch) {
   const pad = 5 * k, h = 18 * k
   const w = ctx.measureText(text).width + pad * 2
@@ -343,8 +286,6 @@ function tag(ctx, text, ax, ay, side, edge, y, k, cw, ch) {
   return top
 }
 
-/* `pulse` is the running heart rate (or null while it locks). `box` is the
-   canvas size in device pixels and `dpr` the device pixel ratio. */
 export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = true, pulse = null } = {}) {
   ctx.clearRect(0, 0, cw, ch)
   const lm = result?.faceLandmarks?.[0]
@@ -353,7 +294,6 @@ export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = 
   const k = dpr * Math.max(1, Math.min(1.25, cw / dpr / 380))
   const F = v.FaceLandmarker
 
-  /* The tessellation, then every landmark the model returns, one path each. */
   ctx.lineCap = 'round'; ctx.lineJoin = 'round'
   ctx.strokeStyle = COL.mesh; ctx.lineWidth = 0.7 * k
   strokeSet(ctx, lm, tessellation(F), m)
@@ -379,7 +319,6 @@ export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = 
     strokeSet(ctx, lm, F.FACE_LANDMARKS_RIGHT_IRIS, m)
   }
 
-  /* The pulse patch, exactly the rectangle the colour is read from. */
   const fp = foreheadPatch(lm, fpatch)
   const px0 = mapX(m, fp.x), px1 = mapX(m, fp.x + fp.w)
   const pl = Math.min(px0, px1), pw = Math.abs(px1 - px0)
@@ -387,8 +326,6 @@ export function drawOverlay(ctx, result, v, { vw, vh, cw, ch, dpr = 1, mirror = 
   ctx.strokeStyle = COL.patch; ctx.lineWidth = 1 * k
   ctx.strokeRect(pl, pt, pw, ph)
 
-  /* Live values, each tied to the landmark it comes from. Tags sit outside
-     the face: brow and lips on the screen's left, pulse and eyes on its right. */
   const cats = result.faceBlendshapes?.[0]?.categories ?? []
   const xa = mapX(m, lm[FACE_L].x), xb = mapX(m, lm[FACE_R].x)
   const left = Math.min(xa, xb), right = Math.max(xa, xb)

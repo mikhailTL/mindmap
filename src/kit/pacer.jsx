@@ -3,46 +3,16 @@ import { useReducedMotion } from 'framer-motion'
 import { Button } from '../ui/button'
 import { Choice, Hint, Step } from './panel'
 
-/* Resonance Breathing. Paced at the resonance-frequency rate, 5 to 6 breaths a
- * minute, which is what the name is: it is not box breathing and it has no
- * holds in it, so it is not called that.
- *
- * THE DIAL. Three things, each saying something the others do not:
- *   the disc    scales 0.42 to 1 and is the breath itself, so the reader can
- *               follow it without reading anything
- *   the ring    is split 40 / 60 in the activity's two tones, which is the one
- *               fact about this technique that is hard to say in words: the
- *               out-breath is half as long again as the in-breath
- *   the hand    runs round the ring once per breath, so a glance says where
- *               in the cycle this is and how much of the long half is left
- * Under reduced motion the disc is held, the hand is parked at the top of the
- * cycle and the ring still carries the split. The count below keeps running,
- * because it is React state rather than motion, and it is the pacer in that
- * mode.
- *
- * The cycle is integrated rather than looked up from the clock, so the pace
- * can change mid-session without the dial jumping: the position advances by
- * dt / cycle every frame and the cycle length is free to move under it. That
- * is what the glide below needs.
- *
- * One rAF loop writes `transform` on two refs. State is set only when the
- * phase, the whole second or the elapsed second changes, so React renders
- * about once a second rather than sixty times. */
-
-const IN = 0.4                 // share of each cycle spent breathing in
-const RATES = [5, 5.5, 6]      // breaths a minute
-const WALK_MS = 120000         // measured pace to target pace, over two minutes
+const IN = 0.4  // share of each cycle spent breathing in
+const RATES = [5, 5.5, 6]  // breaths a minute
+const WALK_MS = 120000  // measured pace to target pace, over two minutes
 const cycleOf = rate => 60000 / rate
-/* The whole transform, written here rather than left half to a class. An
-   inline `transform` replaces the element's -translate-x-1/2 outright, so a
-   bare scale() put the disc's corner on the centre of the ring instead of its
-   middle, and it grew out of the bottom right. */
+// The whole transform is inline because an inline transform replaces the -translate-x-1/2 class.
 const discAt = k => `translate(-50%, -50%) scale(${k.toFixed(4)})`
 const s1 = ms => (ms / 1000).toFixed(1)
 const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-/* Four taps give three intervals; the median is the measurement. Anything
-   faster than 2.5s or slower than 20s a breath is a mis-tap, not a breath. */
+// Four taps give three intervals and the median is the pace; any interval under 2.5s or over 20s is a mis-tap.
 function fromTaps(taps) {
   if (taps.length < 4) return null
   const gaps = taps.slice(1).map((t, i) => t - taps[i]).sort((a, b) => a - b)
@@ -51,9 +21,6 @@ function fromTaps(taps) {
   return mid
 }
 
-/* One cell of the readout. The label sits above the figure rather than beside
-   it here, because three of these sit in a row and a side label would set the
-   column width from the longest word rather than from the figure. */
 function Cell({ label, children, className }) {
   return (
     <div className={`bg-card p-3 ${className || ''}`}>
@@ -80,13 +47,11 @@ export function Pacer() {
   const cyc = running ? beat.cycle : target      // idle shows the pace it is set to
   const tapped = fromTaps(taps)
 
-  /* Audio is built on the press that starts it, which is what the autoplay
-     policy requires, and torn down with it. Absent AudioContext is silent, not
-     an error. */
   React.useEffect(() => {
     if (!running || !tone) return
     let kit = null
     try {
+      // Created on the press that starts the pacer, as browser autoplay rules require. No AudioContext means no sound.
       const Ctx = window.AudioContext || window.webkitAudioContext
       if (!Ctx) return
       const ctx = new Ctx()
@@ -116,6 +81,7 @@ export function Pacer() {
       last = t
       const glide = typeof measured === 'number' ? Math.min(1, (t - t0) / WALK_MS) : 1
       const cycle = start + (target - start) * glide
+      // Position advances by dt / cycle, so the cycle length can glide toward the target without the dial jumping.
       p = (p + dt / cycle) % 1
       const inhale = p < IN
       const q = inhale ? p / IN : (p - IN) / (1 - IN)
@@ -132,6 +98,7 @@ export function Pacer() {
       const left = Math.max(1, Math.ceil(((inhale ? IN - p : 1 - p) * cycle) / 1000))
       const at = Math.max(0, Math.floor((t - began.current) / 1000))
       const key = (inhale ? 'i' : 'o') + left + '/' + at
+      // State is set only when the phase or a whole second changes, so React renders about once a second.
       if (key !== shown) { shown = key; setBeat({ phase: inhale ? 'in' : 'out', left, cycle, at }) }
       raf = requestAnimationFrame(frame)
     })
@@ -149,9 +116,6 @@ export function Pacer() {
 
       <div className="kit-ground mt-5 rounded-[18px] border border-rule p-4 sm:p-5">
         <div aria-hidden className="relative mx-auto size-[208px]">
-          {/* The ring, and the one fact it is here to carry: the out-breath is
-              the longer half. pathLength normalises the circle to 100 units so
-              the split is written as the numbers it actually is. */}
           <svg viewBox="0 0 100 100" className="absolute inset-0 size-full">
             <circle cx="50" cy="50" r="46" className="stroke-ruling" strokeWidth="2" fill="none"/>
             <circle cx="50" cy="50" r="46" pathLength="100" transform="rotate(-90 50 50)"
@@ -161,13 +125,9 @@ export function Pacer() {
               className="kit-s-art" strokeWidth="4" strokeLinecap="butt" fill="none"
               strokeDasharray="60 40" strokeDashoffset="-40"/>
           </svg>
-          {/* The breath. Held at the size it rests at when motion is reduced,
-              which is still a disc inside a ring rather than a blank field. */}
           <span ref={disc} style={{ transform: discAt(reduced ? 0.78 : 0.42) }}
             className="absolute left-1/2 top-1/2 size-[168px] rounded-chip kit-fill
               will-change-transform"/>
-          {/* The hand. A rotation on a wrapper, so the dot it carries is the
-              only thing that moves and it moves on the compositor. */}
           <span ref={hand} style={{ transform: 'rotate(0deg)' }}
             className="absolute inset-0 will-change-transform">
             <span className="absolute left-1/2 top-0 size-3.5 -translate-x-1/2 -translate-y-1/2
@@ -175,16 +135,8 @@ export function Pacer() {
           </span>
         </div>
 
-        {/* The readout. Three figures rather than one, because "how long is
-            left" and "how long have I been doing this" are different questions
-            and the second one is the one a reader asks at the end. */}
         <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-field border border-rule
           bg-rule sm:grid-cols-3">
-          {/* Announced, because under reduced motion and for a reader who
-              cannot see the disc this cell is the pacer. Twice a breath at five
-              a minute is ten announcements a minute, which is the instruction
-              rather than chatter. The two figures beside it are not announced:
-              a seconds counter read aloud every second is unusable. */}
           <Cell label="Now" className="col-span-2 sm:col-span-1">
             <p aria-live="polite" className="font-display text-row font-bold text-ink">
               {running ? (beat.phase === 'in' ? 'Breathe in' : 'Breathe out') : 'Ready'}

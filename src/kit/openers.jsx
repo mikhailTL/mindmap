@@ -3,23 +3,7 @@ import { List, Item } from '../ui/list'
 import { Choice, Hint, Step, riseAt } from './panel'
 import { cn } from '../lib/utils'
 
-/* Conversation Openers. Pick the situation and see the same intention said
- * two ways: one that puts the teen on the spot, one that starts a
- * conversation. 18 October: copy made plain and pronoun neutral (owner). The pairs are written per situation, so this branches
- * on the pick rather than swapping a noun.
- *
- * THE DIAGRAM. The lede makes a claim that is easy to agree with and hard to
- * see: the difference is not tone, it is which of you has to account for
- * something. So each phrasing carries the sentence drawn as what it does. A
- * check points one arrow at her and she is the end of it. An opener points two
- * arrows at the thing you both saw, and she is standing next to you looking at
- * it. That is the whole argument of this tool in two drawings.
- *
- * The arrows draw themselves, over 450ms, once per pick. A drawn line arrives
- * with a direction; a line that is simply there does not, and the direction is
- * the information. Under reduced motion the base layer lands the keyframe on
- * its end state, so both diagrams are drawn and only the drawing is lost. */
-
+// Each situation has one phrasing that puts the teen on the spot and one that opens a conversation.
 const CASES = [
   {
     id: 'high',
@@ -78,9 +62,7 @@ const CASES = [
   },
 ]
 
-/* One arrow. pathLength normalises the stroke to 100 units so the one dash
-   length in kit.css draws any of them, and the head is part of the same path
-   so it arrives last, which is what makes the direction land. */
+// pathLength normalises the stroke to 100 so the kit-draw dash fits any arrow; the head is in the same path, so it arrives last.
 function Arrow({ back, delay }) {
   return (
     <svg viewBox="0 0 34 12" aria-hidden focusable="false"
@@ -102,18 +84,9 @@ function Node({ strong, className, children }) {
   )
 }
 
-/* The sentence drawn as what it does to the two people in it. The wrapper
-   takes mt-auto, so in a two-up row at 1280 the two diagrams sit on the same
-   line as each other rather than wherever their paragraph happened to end;
-   the margin above it is on that paragraph instead. */
 function Shape({ kind, subject }) {
   return (
     <div className="mt-auto border-t border-rule pt-3">
-      {/* Two shapes, not one shape with a different label. The opener's three
-          nodes do not fit on one line in a 282px card at 390, and wrapping
-          "Her" onto a second row broke the sentence the drawing is making, so
-          it is drawn as what it is: two people, one arrow each, both arriving
-          at the same thing. */}
       <div className={cn('flex items-center gap-1.5',
         kind === 'check' ? 'text-warn' : 'text-accent')}>
         {kind === 'check' ? (
@@ -157,8 +130,6 @@ export function Openers() {
 
       <div aria-live="polite">
         {c && (
-          /* Keyed on the pick, so a second pick arrives as a new pair rather
-             than swapping its words under the reader mid-read. */
           <div key={c.id}>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {[['check', 'Puts them on the spot'], ['open', 'Starts a conversation']].map(([kind, label], i) => (

@@ -1,9 +1,7 @@
+// The student's own readings grouped into local days for the Trends tab and box.
+// A day with no reading has no score.
 import { USUAL } from '../../lib/readingLog'
 import { liveLight } from '../family/live.js'
-
-/* The student's own readings, cut into days for the Trends tab and the
- * Trends box. Only what the log holds: a day with no reading has no score,
- * and nothing is filled in. */
 
 const DAY = 864e5
 
@@ -17,7 +15,7 @@ export function midnight(t) {
   return d.getTime()
 }
 
-/* Noon, so a step of one day never lands on the wrong side of a clock change. */
+// Steps via noon so a daylight-saving change cannot land on the wrong day.
 export const addDay = (t, n) => {
   const d = new Date(midnight(t)); d.setDate(d.getDate() + n); d.setHours(12)
   return midnight(d.getTime())
@@ -40,7 +38,6 @@ export function byDay(entries = []) {
   return out
 }
 
-/** The last `n` days ending on the day of `now`, oldest first. */
 export function lastDays(days, now, n) {
   const end = midnight(now)
   const out = []
@@ -60,7 +57,6 @@ export const longDay = at => `${weekday(at)} ${monthDay(at)}`
 
 export const RANGE_LABEL = { day: 'that day', week: 'last 7 days', month: 'last 30 days' }
 
-/** What a range shows: the readings in it, the chart's points and ticks. */
 export function rangeView(entries, days, now, range, anchor) {
   if (range === 'day') {
     const from = midnight(anchor ?? now), to = from + DAY - 1
@@ -79,6 +75,7 @@ export function rangeView(entries, days, now, range, anchor) {
   const from = cells[0].at, to = midnight(now) + DAY - 1
   const list = entries.filter(r => r.at >= from && r.at <= to)
   const at = k => (n > 1 ? k / (n - 1) : 0.5)
+  // Month ticks label every 7th day, counted back from today so today is labelled.
   const every = n === 7 ? 1 : 7
   return {
     from, to, list,

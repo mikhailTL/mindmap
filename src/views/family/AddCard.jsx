@@ -3,11 +3,7 @@ import * as D from '@radix-ui/react-dialog'
 import { Copy, Cross, Plus } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 
-/* AddCard({ label, onAdd, who }): the dashed card at the end of the grid. It
- * opens a short sheet with an invite link and the one step the teen takes.
- * The teen approves the link in their own app (Network), so nothing is shared
- * until they do. The link is a demo and goes nowhere. */
-
+// Demo invite only; the link goes nowhere. A real link is approved by the teen in their own app.
 const DEMO_LINK = 'https://mindmap.app/join/K7Q-42M'
 const DEMO_CODE = 'K7Q-42M'
 

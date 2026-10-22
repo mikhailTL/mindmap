@@ -2,20 +2,14 @@ import React from 'react'
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { cn } from '../lib/utils'
 
-/* Scroll motion primitives. Content entrances, not UI, so they sit past the
-   300ms UI ceiling: 0.42s for the reveals, 0.5s for the two that travel
-   further. EASE is input.css's --ease-out in array form. opacity, y and scaleX
-   only — nothing that lays out. Every component checks
-   prefers-reduced-motion and renders the resting state with no animation. */
-
+// Same curve as --ease-out in input.css.
 const EASE = [0.23, 1, 0.32, 1]
 
 export function Reveal({ children, className, delay = 0, y = 18, as = 'div' }) {
   const reduced = useReducedMotion()
   const Comp = motion[as]
+  // Animates on mount rather than on viewport entry, so the hero does not wait for a scroll to appear.
   if (reduced) return <Comp className={className}>{children}</Comp>
-  // Runs on mount, not on viewport entry: whileInView and a hand-rolled
-  // IntersectionObserver both left the hero at opacity 0 until the first scroll.
   return (
     <Comp className={className} initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.42, ease: EASE, delay }}>
@@ -24,18 +18,12 @@ export function Reveal({ children, className, delay = 0, y = 18, as = 'div' }) {
   )
 }
 
-/** Rows that wipe up one after another. Give each child its index. */
 export function RevealRow({ children, index = 0, className, as = 'div' }) {
   return <Reveal as={as} className={className} delay={Math.min(index, 12) * 0.035} y={14}>{children}</Reveal>
 }
 
-/* One shared passive scroll/resize listener, coalesced into a rAF, measuring
- * with getBoundingClientRect. NOT an IntersectionObserver: `overflow-x: clip`
- * on html/body — which the full-bleed bands need — breaks the implicit
- * observer root, entries stop arriving, and content shipped stranded at
- * opacity 0 twice.
- * Elements render visible by default; only what starts below the fold is ever
- * hidden, and each has a 1500ms fallback, so nothing can stay invisible. */
+// One shared scroll/resize listener, batched into rAF. IntersectionObserver gets no entries
+// once html and body have overflow-x: clip, so positions are measured with getBoundingClientRect.
 const waiting = new Set()
 let frame = 0, listening = false
 
@@ -52,10 +40,7 @@ function sweep() {
 
 const onMove = () => { if (!frame) frame = requestAnimationFrame(sweep) }
 
-/* A ResizeObserver on the document, as well as the two listeners. Lazy
-   photographs and late-mounting routes change the page's height without a
-   scroll or a resize, so without this nothing re-sweeps and an element that
-   has just been pushed into view stays waiting until its own timer fires. */
+// Lazy images and late routes change the page height without a scroll, so a ResizeObserver also triggers a sweep.
 let ro = null
 function start() {
   if (listening) return
@@ -76,8 +61,6 @@ function stop() {
   if (ro) { ro.disconnect(); ro = null }
 }
 
-/* Whether `ref`'s element has arrived. `false` means below the fold and
-   waiting; it never means "could not tell". */
 function useArrival(ref) {
   const [shown, setShown] = React.useState(null)   // null = not measured yet
   React.useEffect(() => {
@@ -89,11 +72,7 @@ function useArrival(ref) {
     waiting.add(w)
     start()
     onMove()
-    /* 90ms, not 1500. This is the blind fallback for the case where no sweep
-       ever runs, and at 1500 it was not a fallback, it was the main path: a
-       plain load left every below-fold element at opacity 0 for a second and a
-       half, and a screenshot or a slow phone caught the page with its text
-       invisible. The sweep still beats this timer in the normal case. */
+    // Fallback for when no sweep runs; the sweep normally reports first.
     const t = setTimeout(() => { waiting.delete(w); setShown(true) }, 90)
     return () => { clearTimeout(t); waiting.delete(w); if (!waiting.size) stop() }
   }, [ref])
@@ -106,15 +85,11 @@ export function ScrollIn({ children, className, y = 26, delay = 0, once = true, 
   const ref = React.useRef(null)
   const shown = useArrival(ref)
   if (reduced) return <Comp ref={ref} className={className}>{children}</Comp>
-  /* null is the frame before the first measurement: render visible. */
+  // null means not measured yet and renders visible. Only y animates, so text stays readable if no measurement arrives.
   const hidden = shown === false
   return (
     <Comp ref={ref} className={className}
       initial={false}
-      /* Transform only, no opacity, which is the rule the scroll-linked
-         figures below already follow: if the watcher never reports, the
-         element sits at its `from` value and stays READABLE. Opacity was the
-         one property that could make a sentence disappear, and it did. */
       animate={hidden ? { y } : { y: 0 }}
       transition={{ duration: 0.42, ease: EASE, delay: hidden ? 0 : delay }}>
       {children}
@@ -131,7 +106,6 @@ function useInView() {
   return [ref, shown !== false]
 }
 
-/** Line mask-wipe. Driven by our own observer so it can never stall. */
 export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) {
   const reduced = useReducedMotion()
   const [ref, inView] = useInView()
@@ -150,32 +124,17 @@ export function RevealLines({ lines, className, lineClassName, as: As = 'h2' }) 
   )
 }
 
-
-/* ══ Scroll-linked motion ════════════════════════════════════════════════
- *
- * Scroll position is the clock, so these have no duration. Transform only, no
- * opacity: if useScroll never reports, the figure sits at its `from` value and
- * stays visible. Both clip themselves — a rotate or translate paints outside
- * the element's box and can reach the viewport edge, raising a horizontal
- * scrollbar. `clip` is a prop because two call sites paint past their box on
- * purpose; `clip={false}` is only safe for y-only motion. */
-
-/* Damping ratio 0.98 — just under critical, so it settles without overshoot.
-   restDelta is tight because the value is a 0-to-1 progress, not pixels. */
+// Damping ratio about 0.98, so it settles without overshoot; restDelta is small because the value is a 0 to 1 progress.
 const SCENE_SPRING = { stiffness: 190, damping: 27, mass: 1, restDelta: 0.0005 }
 
 const num = (v, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : d)
 
-/* Shrink a pair of endpoints toward their own midpoint: takes amplitude out of
-   the swing without moving the average. Scaling toward zero instead would
-   flatten the drawing itself. */
+// Pulls two endpoints toward their midpoint: less swing, same average angle.
 function damp(a, b, k) {
   const m = (a + b) / 2
   return [m + (a - m) * k, m + (b - m) * k]
 }
 
-/* True below the `sm` breakpoint. Starts false and corrects on mount, so a
-   browser without matchMedia still gets motion. */
 function useNarrowViewport() {
   const [narrow, setNarrow] = React.useState(false)
   React.useEffect(() => {
@@ -189,21 +148,8 @@ function useNarrowViewport() {
   return narrow
 }
 
-/** A perspective box whose contents rotate in 3D as the element crosses the
- *  viewport.
- *
- *  from / to   the transform at scroll progress 0 (element's top at the bottom
- *              of the viewport) and 1 (its bottom at the top). Each is
- *              `{ rotateX, rotateZ, z }` in degrees and px; missing keys are 0.
- *  perspective px, on the wrapper. Lower is a wider lens.
- *  narrow      multiplier on the swing below 640px. 1 disables the reduction.
- *  restAt      point of the range used as the resting state under
- *              prefers-reduced-motion. Defaults to 1.
- *  clip        true for both axes, 'x' for horizontal only, false for neither.
- *
- *  `children` may be a function, called with `{ progress, narrow, reduced }`
- *  so a caller can drive its own children off the same sprung progress. It
- *  must not call hooks — it runs inside this component's render. */
+// Rotates its children in 3D as the element crosses the viewport. from and to are
+// { rotateX, rotateZ, z } in degrees and px at progress 0 (entering) and 1 (leaving).
 export function ScrollScene({
   children,
   className,
@@ -220,8 +166,6 @@ export function ScrollScene({
   const narrow = useNarrowViewport()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const live = useSpring(scrollYProgress, SCENE_SPRING)
-  /* A constant progress, so the reduced-motion path runs the same useTransform
-     chain and resolves to a real angle rather than `undefined`. */
   const rest = useMotionValue(restAt)
   React.useEffect(() => { rest.set(restAt) }, [rest, restAt])
   const p = reduced ? rest : live
@@ -250,16 +194,6 @@ export function ScrollScene({
   )
 }
 
-/** The 2D half: a figure drifts against the scroll as it crosses the viewport.
- *
- *  distance  total vertical travel in px, split either side of centre (40 is
- *            +20 in, -20 out).
- *  x         optional total horizontal travel, px. Needs the clip.
- *  scale     optional total scale change, e.g. 0.04 for 0.98 to 1.02.
- *  clip      'x' by default: x and scale can widen the page, y cannot. false
- *            for a child that paints outside its own box.
- *
- *  Replaces `Parallax`, still exported below for the call sites that use it. */
 export function Parallax2D({
   children,
   className,
@@ -294,8 +228,6 @@ export function Parallax2D({
   )
 }
 
-/** Slow counter-scroll drift. Kept at its original signature for the call
-    sites that import it by name; new work wants Parallax2D above. */
 export function Parallax({ children, distance = 60, className }) {
   const ref = React.useRef(null)
   const reduced = useReducedMotion()
@@ -304,7 +236,6 @@ export function Parallax({ children, distance = 60, className }) {
   return <div ref={ref} className={className}><motion.div style={reduced ? undefined : { y }}>{children}</motion.div></div>
 }
 
-/** 1px reading-position bar pinned under the header. scaleX, never width. */
 export function ScrollProgress({ className }) {
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 240, damping: 40, restDelta: 0.001 })
@@ -312,9 +243,6 @@ export function ScrollProgress({ className }) {
     className={cn('absolute inset-x-0 -bottom-px h-px origin-left bg-accent', className)}/>
 }
 
-/** Numbers that count up once on first view, then hold. 1.4s because the
- *  number has to pass through the intermediate values legibly. Never used on a
- *  clinical value. */
 export function Tally({ to, suffix = '', duration = 1.4, className }) {
   const [ref, inView] = useInView()
   const [n, setN] = React.useState(0)

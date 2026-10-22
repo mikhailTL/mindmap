@@ -2,13 +2,7 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { liveSourceLine } from './live.js'
 
-/* Where a teen's readings come from, said the same way on every card and
- * page: a drawn mark, a short title, one line under it.
- *
- *   patch   the patch on the arm, plus the odd phone check
- *   phone   no patch: the phone camera and the survey
- *   none    a linked teen with nothing yet */
-
+// Where a teen's readings come from: the patch, the phone (camera and survey), or nothing yet.
 export function PatchIcon({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"

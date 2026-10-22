@@ -2,21 +2,16 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 
-/* Owner, 20 October: stock photos on each audience page, beside the demos,
-   less topography and glow, more of the light palette. Source-level checks:
-   the pages need a browser to render. */
 const read = p => fs.readFileSync(path.resolve(__dirname, '..', p), 'utf8')
 const src = read('src/views/audience.jsx')
 const photos = read('src/lib/photos.js')
 
-/* The body of one exported page, up to the next export or the file's end. */
 function page(name) {
   const a = src.indexOf(`export function ${name}(`)
   const b = src.indexOf('export function', a + 1)
   return src.slice(a, b < 0 ? undefined : b)
 }
 
-/* Every photograph key a page names: photo="key", or the HALLWAY pair. */
 function keys(body) {
   const out = [...body.matchAll(/photo=\{?["']([a-z-]+)["']/g)].map(m => m[1])
   if (/photo=\{HALLWAY\[0\]\}/.test(body)) out.push('students-hallway')
@@ -54,8 +49,6 @@ describe('audience pages', () => {
     expect(t).toMatch(/students:[^}]*sky[^}]*mint/s)
     expect(t).toMatch(/parents:[^}]*accent[^}]*sky/s)
     expect(t).toMatch(/pro:[^}]*sky[^}]*beam/s)
-    /* Owner, 21 October: full-width grounds (hero, a, b) white, green or blue;
-       the block behind a photograph is a card and may keep its hue. */
     for (const m of t.matchAll(/(hero|a|b): '([^']+)'/g)) {
       expect(m[2], m[1]).not.toMatch(/lilac|sun|coral|blush/)
     }

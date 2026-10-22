@@ -1,16 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { excursions, settleTimes, dailySettle, runUp, carryOver, settleWords, demoDay } from '../src/signals/recovery.js'
 
-/* A per-minute arousal index, 0 to 100. The usual band is lo..hi. An
-   excursion is a run above hi; its recovery time is the minutes from the peak
-   until the index first comes back to halfway between the peak and hi. */
-
 const flat = (n, v) => Array.from({ length: n }, () => v)
 
-/* 20 minutes flat at 45, a peak to 75 at minute 20, then a straight line
-   back down over 20 minutes to 45. Band 36..55. Half way between 75 and 55
-   is 65, reached 20 * (75 - 65) / (75 - 45) = 6.67 minutes after the peak,
-   so the first minute at or below 65 is minute 27 (7 minutes after). */
 const ramp = [...flat(20, 45), ...Array.from({ length: 21 }, (_, i) => 75 - i * 1.5), ...flat(10, 45)]
 const BAND = { lo: 36, hi: 55 }
 
@@ -69,8 +61,6 @@ describe('dailySettle', () => {
 
 describe('runUp', () => {
   it('is the rise in the two hours before an event against the usual for those minutes', () => {
-    /* A 24h per-minute day at 45, an event at minute 600 (10:00), and the
-       two hours before it at 55. Usual for every minute is 45. */
     const day = flat(1440, 45)
     for (let m = 480; m < 600; m++) day[m] = 55
     const usual = flat(1440, 45)
@@ -95,14 +85,8 @@ describe('runUp', () => {
 
 describe('carryOver', () => {
   it('counts peaks that ran into the next peak before settling', () => {
-    /* Two excursions: the first never gets half way down before the second
-       starts, the second settles. */
     const s = [...flat(10, 45), ...flat(10, 80), ...flat(5, 70), ...flat(10, 85),
                ...Array.from({ length: 30 }, (_, i) => 85 - i * 2).map(v => Math.max(v, 45)), ...flat(10, 45)]
-    /* The dip to 70 between the two peaks has a prominence of 10 and 15, so
-       it splits the run into two events. The first event's settle target
-       is (80 + 55) / 2 = 67.5, never reached before the second peak starts,
-       so it carried. */
     const c = carryOver(s, BAND)
     expect(c.events).toBe(2)
     expect(c.carried).toBe(1)

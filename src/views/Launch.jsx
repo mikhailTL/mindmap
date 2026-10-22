@@ -5,14 +5,6 @@ import { ArrowRight } from '../ui/marks'
 import { Frame } from '../ui/frame'
 import { PRO, PRO_LC } from '../lib/terms'
 
-/* The app's front door: three doors, one photograph each.
- *
- * The doors used to carry a live preview of each dashboard, which in real
- * mode is an empty phone, and under it a paragraph. The owner: "it needs to be
- * real icons for each or images, bc it looks plain, needs to be visual
- * regardless of if its real or demo ... No paragraph under the card, just
- * have student parent or med professional, and the one line under it." */
-
 const ROLES = [
   { id:'app-student', who:'Student', title:'Your Mind Score each day', cta:'Open the student screen',
     photo:'student-card',
@@ -33,7 +25,7 @@ function Door({ role, go }) {
         <Frame photo={role.photo} alt={role.alt} className="absolute inset-0"/>
       </span>
       <CardContent className="flex flex-1 flex-col gap-1.5 p-4">
-        {/* A span, not a heading: a button's content model is phrasing. */}
+        {/* A span, not a heading: a button's content model allows phrasing content only. */}
         <span className="block font-display text-row font-bold leading-[1.2] tracking-[-0.014em] text-ink">
           {role.who}
         </span>
@@ -51,7 +43,6 @@ export function Launch({ go }) {
   return (
     /* No vertical padding: `.wrap` takes it from the app shell. */
     <main className="wrap">
-      {/* lg:hidden: past lg the app rail carries the wordmark instead. */}
       <Logo className="text-ui text-ink lg:hidden" title="MindMap"/>
       {/* An h2: the app's top bar already carries this screen's h1. */}
       <h2 className="mt-3 font-display font-bold text-ink lg:mt-0">

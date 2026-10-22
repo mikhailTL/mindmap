@@ -1,27 +1,11 @@
-/* The reading log: every Mind Score the student has taken.
- *
- * One entry is { id, at, score, source, pulse?, note? }. `at` is epoch ms,
- * `score` 0 calm to 100 peak, `source` the way it was taken. Nothing else is
- * kept: no answers, no frames, no audio, no position.
- *
- * The log is kept here and synced to the student's account by
- * src/account/sync.js, so it follows them to another device and a linked
- * parent or Counselor/Professional sees the days it adds up to. A change from
- * the account arrives through setReadings() with `remote` set, which the
- * sync reads so it does not send the same rows straight back.
- *
- * Own key, own module. Every storage touch is guarded, because Safari private
- * mode throws on getItem and an embedded webview can have storage disabled; a
- * reading that cannot be saved still returns its entry so the screen can show
- * it. */
-
+// Local log of Mind Score readings { id, at (epoch ms), score 0 to 100, source, pulse?, note? }, synced by src/account/sync.js.
+// Storage access is guarded because Safari private mode throws on getItem.
 export const KEY = 'mindmap.readings.log'
 export const CAP = 500
 export const SOURCES = Object.freeze(['camera', 'survey', 'patch', 'mirror'])
 export const EVENT = 'mindmap:readings'
 
-/* The band edges every score route already uses (engine.band, score.bandOf).
-   Inclusive: 35 and 57 are both inside the usual range. */
+// Usual band shared by every scoring route; both ends inclusive.
 export const USUAL = Object.freeze({ lo: 35, hi: 57 })
 export const BANDS = Object.freeze(['high', 'up', 'usual', 'low'])
 
@@ -46,8 +30,6 @@ export function windowFor(id, now) {
   const r = RANGES.find(x => x.id === id) || RANGES[1]
   return { from: now - r.ms, to: now }
 }
-
-/* ── Storage ──────────────────────────────────────────────────────────── */
 
 function storage() {
   try { return globalThis.localStorage || null } catch { return null }
@@ -90,8 +72,7 @@ function writeAll(list, remote = false) {
   announce(remote)
 }
 
-/** Replaces the whole log, for the account sync. Rows are cleaned, sorted
- *  and capped like any other write. */
+// `remote` marks rows from the account so the sync does not send them straight back.
 export function setReadings(list = [], { remote = true } = {}) {
   const clean_ = (Array.isArray(list) ? list : []).map(clean).filter(r => r && r.id && !r.demo)
   writeAll(clean_.sort(byTime).slice(-CAP), remote)
@@ -103,7 +84,6 @@ const byTime = (a, b) => a.at - b.at
 let n = 0
 const newId = at => `${at.toString(36)}-${(n++).toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`
 
-/** Adds one reading. Returns the stored entry, or null for an invalid one. */
 export function addReading({ at = Date.now(), score, source, pulse, note } = {}) {
   const e = clean({ id: 'x', at, score, source, pulse, note })
   if (!e) return null
@@ -118,7 +98,6 @@ export function listReadings({ from = -Infinity, to = Infinity } = {}) {
   return readAll().sort(byTime).filter(r => r.at >= from && r.at <= to)
 }
 
-/** Changes the note or the score of one entry. */
 export function updateReading(id, patch = {}) {
   const list = readAll()
   const i = list.findIndex(r => r.id === id)
@@ -133,13 +112,11 @@ export function updateReading(id, patch = {}) {
 
 export function clearReadings() {
   const s = storage()
-  try { s?.removeItem ? s.removeItem(KEY) : s?.setItem(KEY, '[]') } catch { /* nothing to clear */ }
+  try { s?.removeItem ? s.removeItem(KEY) : s?.setItem(KEY, '[]') } catch { }
   announce(false)
 }
 
-/* ── Derived figures ──────────────────────────────────────────────────── */
-
-/* Largest-remainder rounding, so the four shares always add to 100. */
+// Largest-remainder rounding so the band percentages sum to 100.
 function shares(counts, total) {
   const keys = Object.keys(counts)
   const exact = keys.map(k => (counts[k] / total) * 100)
@@ -169,7 +146,7 @@ export function stats(list = []) {
     timeInUsual: byBand.usual, bySource, byBand }
 }
 
-/** The latest reading against the one before it. Within 3 points is flat. */
+// Within 3 points of the previous reading counts as flat.
 export function trend(list = []) {
   if (list.length < 2) return null
   const a = list[list.length - 2], b = list[list.length - 1]
@@ -196,12 +173,7 @@ export function groupByDay(list = []) {
   }))
 }
 
-/* ── Demo ─────────────────────────────────────────────────────────────── */
-
-/* Fourteen generated days for demo mode, never written to storage. Seeded, so
- * the same days come back on every load and in every screenshot. The last
- * entry is the figure the rest of the demo already shows for today. Weekends
- * sit lower and the middle of the week higher, as the demo week series does. */
+// 14 seeded demo days (Lehmer RNG), not stored; the last entry matches the demo's figure for today.
 export function demoReadings({ end, days = 14, last = { score: 51, clock: '13:10' } } = {}) {
   let s = 20261016
   const rnd = () => (s = (s * 48271) % 2147483647) / 2147483647

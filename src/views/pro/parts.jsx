@@ -1,9 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 
-/* Small pieces the Counselor/Professional screen shares between the caseload,
-   the teen detail and the group charts. */
-
 /* A key and a figure on one rule. */
 export function KV({ k, v, tone = 'text-ink' }) {
   return (
@@ -14,12 +11,10 @@ export function KV({ k, v, tone = 'text-ink' }) {
   )
 }
 
-/* A caption under a figure. One line, and it never restates the figure. */
 export const Note = ({ children, className }) =>
   <p className={cn('mt-3 max-w-[66ch] border-t border-rule pt-2.5 text-fine text-ink-3', className)}>{children}</p>
 
-/* The hatch that marks a group too small to show. Each use passes its own
-   id: two patterns with one id in one document collide. */
+// Each use passes its own id; two patterns with one id in the same document collide.
 export const Hatch = ({ id, className, label = 'Hidden, fewer than five teens' }) => (
   <svg className={cn('h-2 w-full', className)} preserveAspectRatio="none" role="img" aria-label={label}>
     <defs>
@@ -31,8 +26,6 @@ export const Hatch = ({ id, className, label = 'Hidden, fewer than five teens' }
   </svg>
 )
 
-/* A segmented control: square-cornered buttons in one bordered strip. The
-   chosen one is ink. */
 export function Seg({ label, value, options, onChange, className }) {
   return (
     <div role="group" aria-label={label}
@@ -54,8 +47,6 @@ export const fieldCls = `min-h-[40px] w-full rounded-field border border-ruling 
   text-fine text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
   focus-visible:outline-accent`
 
-/* The line on a card: the range's points against the teen's own usual band.
-   Decorative; the card states the figures in words. */
 export function Spark({ points, usual, className }) {
   const w = 240, h = 52, p = 3
   const lo = 0, hi = 100
@@ -74,8 +65,7 @@ export function Spark({ points, usual, className }) {
   )
 }
 
-/* The drawn width of a chart's box, so the svg is drawn at 1:1 and its
-   labels stay at their real size at 390 and at 1280. */
+// Measured width of the chart box, so the SVG draws at 1:1 and its labels keep their real size.
 export function useWidth(fallback = 720) {
   const ref = React.useRef(null)
   const [w, setW] = React.useState(fallback)
@@ -92,8 +82,6 @@ export function useWidth(fallback = 720) {
   return [ref, w]
 }
 
-/* The trend on a teen's detail: 0 to 100 on a fixed axis, the usual band
-   shaded, each point marked. */
 export function TrendChart({ points, usual, rangeLabel }) {
   const [box, W] = useWidth()
   const H = 210, L = 30, R = 8, T = 8, B = 180

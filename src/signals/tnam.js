@@ -1,23 +1,8 @@
+// Mind Score network, a Temporal Neural Additive Model: logit = bias + one learned curve per signal + a GRU term
+// over recent windows. Inputs are personal z-scores; weights are trained on WESAD (tnam-weights.js).
 import { TNAM_WEIGHTS as W } from './tnam-weights.js'
 
-/* The Mind Score network: a Temporal Neural Additive Model (T-NAM).
- *
- * Inputs are the wearer's readings as z-scores against their own baseline, one
- * per signal. The logit is a bias plus one learned curve per signal plus one
- * term for the last four minutes, so every score decomposes exactly into the
- * parts that made it. 4,572 weights, trained on WESAD (15 people, wrist
- * sensors) and evaluated leave-one-subject-out: AUROC 0.997 against 0.887 for
- * the hand-weighted formula it replaces. Numbers and provenance in
- * tnam-results.js; training code in the Conrad repo under ml/.
- *
- * A personal calibration layer sits on top: one gain per curve, one on the
- * temporal term, one offset, fitted from the person's own check-ins. On 20
- * new people under a stressor the network never saw, eight signal-triggered
- * check-ins took it from AUROC 0.78 to 0.95.
- *
- * Same port as src/engine/neural.ts in the Conrad and CAC repos. */
-
-export const FEATURES = W.features            /* rmssd sdnn pnn50 lfhf hr edaTonic edaPhasic scrPerMin tempSlope motion */
+export const FEATURES = W.features
 export const CONTEXT_WINDOWS = W.T
 export const PARAM_COUNT = countParams()
 export const THRESHOLD_LOGIT = Math.log(W.threshold / (1 - W.threshold))
@@ -37,15 +22,13 @@ function linear(l, x) {
 }
 const relu = v => { for (let i = 0; i < v.length; i++) if (v[i] < 0) v[i] = 0; return v }
 
-/* f_k(z): one scalar in, one contribution out. `k` is the signal's INDEX in
-   FEATURES, not its name, which is the one place in this module that is keyed
-   by position rather than by key. */
+// Per-signal MLP, one scalar in and one out. `k` is the index in FEATURES, not the feature name.
 export function shape(k, z) {
   const [l1, l2, l3] = W.shapes[k]
   return linear(l3, relu(linear(l2, relu(linear(l1, [z])))))[0]
 }
 
-/* PyTorch GRU, single layer, gates ordered [r, z, n]. Final hidden state. */
+// Single-layer GRU matching PyTorch, gate order [r, z, n]; returns the final hidden state.
 function gru(seq) {
   const H = W.gru.b_hh.length / 3
   let h = new Array(H).fill(0)
@@ -72,9 +55,7 @@ function gru(seq) {
   return h
 }
 
-/* Forward pass. `x` is the input vector in FEATURES order (missing signal = 0,
- * which is "at your usual" and what the network was trained to tolerate);
- * `history` is the input vectors of the preceding windows, oldest first. */
+// Missing signals are 0 (at the personal usual); history is padded with zero vectors to CONTEXT_WINDOWS.
 export function forward(x, history = []) {
   const contributions = {}
   let sum = W.bias
@@ -87,23 +68,17 @@ export function forward(x, history = []) {
   return { logit, probability: sigmoid(logit), contributions, temporal }
 }
 
-/* The logit of an ordinary day: every signal at this person's usual. The
- * display maps it to the middle of the scale so "your usual range" means what
- * it says, and spreads the rest with a monotone temperature. Ranking and
- * drivers are unchanged by either. */
+// Logit with every signal at usual; the display centres it at 50 and spreads the rest by SCORE_TEMPERATURE.
 export const ORDINARY_LOGIT = forward(new Array(FEATURES.length).fill(0)).logit
 export const SCORE_TEMPERATURE = 2.5
 export const displayScore = logit => Math.round(100 * sigmoid((logit - ORDINARY_LOGIT) / SCORE_TEMPERATURE))
-
-/* ---------------------------------------------------------- calibration */
 
 export function identityCalibration() {
   return { gains: FEATURES.map(() => 1), temporalGain: 1, offset: 0, n: 0 }
 }
 
-/* One gain per curve, one on the temporal term, one offset, pulled toward
- * identity by a prior that weakens as answers accumulate. Convex in the gains,
- * so plain gradient descent reaches the same optimum L-BFGS does. */
+// Per-person calibration (one gain per curve, a temporal gain, an offset), fitted by gradient descent with
+// class weighting and an L2 pull toward identity that weakens as labels accumulate.
 export function fitCalibration(examples, { iterations = 600, lr = 0.15, prior = CALIBRATION_PRIOR } = {}) {
   const F = FEATURES.length
   const cal = identityCalibration()
@@ -136,7 +111,6 @@ export function calibratedLogit(fw, cal = identityCalibration()) {
   return logit
 }
 
-/* The contributions after this person's gains: what the drivers list shows. */
 export function calibratedContributions(fw, cal = identityCalibration()) {
   const out = {}
   FEATURES.forEach((k, i) => { out[k] = cal.gains[i] * fw.contributions[k] })
@@ -144,9 +118,6 @@ export function calibratedContributions(fw, cal = identityCalibration()) {
   return out
 }
 
-/* Should the app ask how the person feels? Fires when the displayed band
- * changes, at most once per `minGap` windows: the query policy that reached
- * AUROC 0.95 from eight answers in the transfer study. */
 export function makeAsker({ minGap = 4, bands = [35, 58, 73] } = {}) {
   let lastBand = null, since = Infinity
   return score => {

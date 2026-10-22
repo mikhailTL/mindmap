@@ -14,9 +14,7 @@ import { Avatar, AvatarPicker, Row, field, fieldError, outline, solid } from './
 import { SignIn } from './SignIn'
 import { APP_VERSION, SHARING_ROUTE, Segmented, Settings } from './Settings'
 
-/* The account portal: the profile card, then every setting in one menu
-   (./Settings.jsx). Its rows lead to sections at #/account/<section>. */
-
+// Account portal: the profile card, then the settings menu. Each section opens at #/account/<section>.
 const SECTIONS = {
   profile:  { title: 'Your profile' },
   passcode: { title: 'Password and sign-in' },
@@ -50,9 +48,6 @@ const when = iso => {
 
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
-
-/* A band of small shapes in the six hues, behind the top of the profile
-   card. Decoration only. */
 function Confetti() {
   return (
     <svg aria-hidden viewBox="0 0 640 96" preserveAspectRatio="xMidYMid slice"
@@ -133,8 +128,6 @@ function Index({ me, go }) {
   )
 }
 
-
-/* Each section page carries the hue of the tile that opened it. */
 const SECTION_HUE = {
   profile:  'bg-accent-wash text-accent-ink',
   passcode: 'bg-sun-wash text-sun-ink',
@@ -163,7 +156,6 @@ function Section({ id, go, children }) {
     </main>
   )
 }
-
 
 function Profile({ me, go }) {
   const [name, setName] = React.useState(me.name)
@@ -227,7 +219,6 @@ function Profile({ me, go }) {
     </Section>
   )
 }
-
 
 function Passcode({ me, go }) {
   const [cur, setCur] = React.useState('')
@@ -303,7 +294,6 @@ function Passcode({ me, go }) {
   )
 }
 
-
 function Sharing({ me, go }) {
   return (
     <Section id="sharing" go={go}>
@@ -315,7 +305,6 @@ function Sharing({ me, go }) {
     </Section>
   )
 }
-
 
 function Data({ me, go }) {
   function erase() { deleteAccount(); go(homeFor(me.role)) }
@@ -349,7 +338,6 @@ function Data({ me, go }) {
   )
 }
 
-
 function About({ go }) {
   const rows = [
     ['Version', VERSION],
@@ -370,7 +358,6 @@ function About({ go }) {
     </Section>
   )
 }
-
 
 export function Account({ go, section = null }) {
   const me = useAccount()

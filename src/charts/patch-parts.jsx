@@ -1,66 +1,24 @@
 import React from 'react'
 import { ScrollScene } from '../ui/motion'
 
-/* One drawing per part card on the hardware page's light strips.
- *
- * WHAT WAS WRONG. Each card drew a single 440 by 260 silhouette into a strip
- * the page sizes at 324 by 50 at 1280 and 315 by 84 at 390. `meet` scales to
- * the smaller axis, so the drawing came out 109 units wide inside a 324 unit
- * panel: two thirds of every card was empty ground with one small outline
- * floating in it. The viewBox is 6 : 1 now, which is the shape of the strip
- * the page actually gives, and the drawing fills it.
- *
- * WHAT FILLS IT. Three orthographic views per part instead of one, on one
- * sheet divided by rules, the way a drawing sheet is divided: the face, a
- * long-axis elevation, and an enlarged detail of the one feature that card is
- * about. Every view carries centre lines, construction geometry dashed, and
- * hatching that means something (adhesive on the face, cut material in the
- * sections). No part of any view is decoration: the aria-label names every
- * piece of it, because a 50px strip has no room for type a reader could read
- * and a figure with unreadable labels is worse than one with none.
- *
- * DEPTH IS NOT DIMENSIONED. The elevations show that there is a raised body
- * on a flange; the thickness, the battery, the adhesive and the electrode
- * build are all open and no view here states a value for any of them. The
- * only settled dimension, 54 by 36 mm, is drawn to scale in every face view
- * and dimensioned on charts/patchstack.jsx, which is the figure that carries
- * the millimetre ruler.
- *
- * These sit on a light strip (owner, 19 October: "stop making things dark,
- * site should be more peaceful and light"); each card's strip takes its own
- * light hue (sky, lilac, sun) under a fine grid, set in views/PatchPage. No
- * glow (owner, 20 October). The drawing is deep green ink with turquoise for
- * the one thing each card is about, and bodies are filled white so they mask
- * the grid. Measured on the old darkest strip #dcf1e6 : on the white bodies
- * (the sky, lilac and sun strips are all lighter):
- *   ink       #0d2b1e   12.86 : 15.20   the raised body
- *   ink-2     #2a5744    6.98 :  8.25   the plastic
- *   beam.ink  #11677f    5.43 :  6.42   the one thing each card is about
- *   mint      #18a370      -   :  3.22   lit fills, only ever on a white body
- * Under reduced motion ScrollScene resolves each drawing to its `to` angle. */
 const INK   = '#0d2b1e'
 const LINE  = '#2a5744'
 const LIT   = '#11677f'
 const FILL  = '#18a370'
-const GND   = '#ffffff'   /* the bodies' white, used to mask the grid, never to draw */
+const GND   = '#ffffff'  /* fills the bodies so they mask the grid */
 
-/* Stroke hierarchy. The strip renders at about half a viewBox unit per CSS
-   pixel, so nothing thinner than 1.6 survives: the previous file's 1.0
-   construction lines aliased into a grey smear at the lg height. */
+// The strip renders at about half a CSS pixel per unit, so strokes under 1.6 alias.
 const OUT = 2.4, BODY = 1.8, CON = 1.6
 
 /* Three view panes and the rules between them. */
 const RULE_X = [201, 401]
 const P = [{ cx: 101 }, { cx: 301 }, { cx: 500 }]
 
-/* The settled footprint, to scale in every face view: 54 mm by 36 mm at
-   2.25 units per millimetre. */
+// Half of the 54 x 36 mm footprint at 2.25 units per mm.
 const FX = 60.75, FY = 40.5
 
 const dashDot = { strokeDasharray: '11 3 2 3' }
 
-/* A centre line crossing a whole view, which is what says the part is
-   symmetrical about both axes rather than merely drawn that way. */
 const Centre = ({ cx, cy = 50, w, h }) => (
   <g stroke={LINE} strokeOpacity=".45" strokeWidth={CON} {...dashDot}>
     <line x1={cx - w} y1={cy} x2={cx + w} y2={cy}/>
@@ -68,8 +26,6 @@ const Centre = ({ cx, cy = 50, w, h }) => (
   </g>
 )
 
-/* The sheet furniture: two rules dividing the three views, and a corner tick
-   at each end, so the strip reads as one sheet of three views. */
 const Sheet = () => (
   <g stroke={LINE} strokeOpacity=".3" strokeWidth={CON}>
     {RULE_X.map(x => <line key={x} x1={x} y1="8" x2={x} y2="92"/>)}
@@ -77,12 +33,8 @@ const Sheet = () => (
   </g>
 )
 
-/* The skin the part sits against, drawn as a surface line with hatch ticks
-   under it: the convention for "material continues below this line". */
 const Skin = ({ x0, x1, y }) => {
-  /* `y` is coerced: a JSX attribute written as y="72" arrives as a string and
-     `y + 6` would silently produce "726", which paints the hatch 600 units
-     below the viewBox and pushes the svg's own bbox with it. */
+  // y can arrive as a string from a JSX attribute, so it is coerced before arithmetic.
   const y0 = +y
   return (
     <g stroke={LINE} strokeOpacity=".42" strokeWidth={CON}>
@@ -94,12 +46,6 @@ const Skin = ({ x0, x1, y }) => {
   )
 }
 
-/* `tilt` is per drawing so the three do not move as one plate. The angles are
-   smaller than they were: the strip is 50px tall at lg and a nine degree
-   rotateX threw its own edges past the clip.
-   `h-full` on the scene is load-bearing at lg: the card's light strip sets its
-   own height there and the page constrains the svg with `lg:[&_svg]:h-full`,
-   and a percentage height resolves against this wrapper. */
 function Frame({ label, children, tilt }) {
   return (
     <ScrollScene perspective={760} narrow={0.5} className="h-full"
@@ -120,10 +66,6 @@ const TILT = {
   base:  [{ rotateX: -4, rotateZ: 2, z: 9 },   { rotateX: 6, rotateZ: -1.5, z: -11 }],
 }
 
-/* ── 1. The printed shell ───────────────────────────────────────────────── */
-/* Face, long-axis elevation, and the charging slot enlarged. The slot
-   straddles the body wall in both the face and the elevation: a port that
-   does not break the outline is a sticker. */
 export const ShellArt = (
   <Frame tilt={TILT.shell}
     label={'Three views of the printed shell. On the left, the face: the adhesive flange is '
@@ -184,9 +126,6 @@ export const ShellArt = (
   </Frame>
 )
 
-/* ── 2. The electronics pod ─────────────────────────────────────────────── */
-/* Tray in plan with the bought board in it, the same tray in section with the
-   board dropping in, and one pad row enlarged. */
 export const PodArt = (
   <Frame tilt={TILT.pod}
     label={'Three views of the electronics pod. On the left, the tray from above, with the '
@@ -251,10 +190,6 @@ export const PodArt = (
   </Frame>
 )
 
-/* ── 3. The skin-side base ─────────────────────────────────────────────── */
-/* The whole face is adhesive, so the whole stadium is hatched. The two wing
-   electrodes and the central window are the contacts, and the enlarged view
-   is the window: two emitters, one detector, and the path between them. */
 export const BaseArt = (
   <Frame tilt={TILT.base}
     label={'Three views of the skin-side base. On the left, the adhesive face, hatched over the '
@@ -304,7 +239,6 @@ export const BaseArt = (
       <line x1={P[1].cx} y1="22" x2={P[1].cx} y2="82"/>
     </g>
 
-    {/* the window, enlarged: emitters, detector, and the path between them */}
     <circle cx={P[2].cx} cy="50" r="38" fill="none" stroke={LINE} strokeOpacity=".3"
       strokeWidth={CON}/>
     <rect x={P[2].cx - 34} y="20" width="68" height="20" rx="5"
@@ -321,6 +255,5 @@ export const BaseArt = (
   </Frame>
 )
 
-/* Keyed by LAYERS[].part, so the page maps a card to its drawing without a
-   second ordering to keep in step. */
+// Keyed by LAYERS[].part, so the page maps each card to its drawing.
 export const PART_ART = { pod: ShellArt, pcb: PodArt, base: BaseArt }

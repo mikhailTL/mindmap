@@ -7,11 +7,6 @@ import { useSkill, Quest, Win, leave } from '../../toolkit/game/skill'
 import { parseTime, fmtTime, nightLabel, learnFactor, factorLine, adjust, splitTask, autoPlan,
          canMove, scheduleNight, minutesPastBed, BREAKS } from './logic'
 
-/* Time-block planner. List what is due, guess the minutes, and the plan puts
- * the work on the nights before each due date, in blocks with breaks, early
- * rather than late. Log how long things really took and the guesses get
- * corrected from your own numbers. */
-
 const ID = 'school-cram'
 const START = { tasks:[], start:'16:00', bed:'22:30', mode:'50/10', useAdjust:true,
                 history:[], plan:null, stage:'list', logged:{} }

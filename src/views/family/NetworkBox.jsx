@@ -9,21 +9,10 @@ import {
 import { ArrowRight, Check, Copy, Cross, Link, People, Plus } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 
-/* NetworkBox({ go, real, me, className }): the parent home's network box.
- *
- * Who is in this parent's network (teens and Counselors/Professionals: picture,
- * name, role, nothing else) and the two ways to add someone. Both make the
- * same invite link: one multi-use link per parent, of the form
- * #/network?code=CODE (src/account/Network.jsx reads it). The reader copies
- * or shares it; the teen opens it and joins.
- *
- * Demo shows Elena's people (the two demo children and the
- * Counselors/Professionals from src/account/demo-network.js) and an example link that
- * never reaches the server. Live uses the account store. No reading, score
- * or trend is ever shown here. */
-
+// Demo invite code; it is not sent to the server.
 const DEMO_CODE = 'K7M2QX'
 
+// One multi-use invite link per parent; src/account/Network.jsx reads the code from #/network?code=.
 const linkFor = code => {
   try { return `${window.location.origin}${window.location.pathname}#/network?code=${code}` }
   catch { return `#/network?code=${code}` }
@@ -41,7 +30,7 @@ function daysLeft(iso) {
   return d === 1 ? 'The link works for 1 more day.' : `The link works for ${d} more days.`
 }
 
-/* People, in one shape for both modes: { id, name, avatar, role, note }. */
+// Demo and live people share one shape: { id, name, avatar, role, note }.
 function demoPeople() {
   const teens = FAMILY.map(t => ({ id: 'demo-' + t.id, name: t.first, avatar: t.avatar, role: 'student' }))
   const pros = DEMO_LINKS.filter(l => l.person.role === 'pro').map(l => ({
@@ -81,7 +70,6 @@ export default function NetworkBox({ go, real, me, className }) {
   return (
     <section aria-labelledby={titleId}
       className={cn('flex min-w-0 flex-col rounded-panel border-2 border-sky bg-card', className)}>
-      {/* Pale sky, not all green (owner, 20 October). */}
       <div className="flex items-start gap-3 border-b-2 border-sky bg-sky-wash px-5 pb-4 pt-5 [border-top-left-radius:12px] [border-top-right-radius:12px]">
         <People aria-hidden className="mt-0.5 size-7 text-sky-ink"/>
         <div className="min-w-0 flex-1">
@@ -164,7 +152,6 @@ function AddButton({ on, controls, onClick, solid, children }) {
   )
 }
 
-/* The link, with Copy and (where the device has a share sheet) Share. */
 function InvitePanel({ who, real, me, onClose }) {
   const inv = real ? (me ? myInvite(me.id) : null) : { code: DEMO_CODE }
   const [said, setSaid] = React.useState('')

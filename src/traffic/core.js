@@ -1,40 +1,26 @@
-/* Heads Up, the moving parts behind the three phones. No React here, so the
- * whole loop runs under fake timers in a test exactly as it runs on the page.
- *
- * One session per teen phone: real key and scroll events in, the engine in
- * signals/light.js turns the last minute into features, an index, a light and
- * the signals that are showing. The session clock runs six times faster than
- * the wall so red, which needs a sustained minute, arrives ten seconds after
- * the index first reaches red. Key and scroll timestamps stay on the wall, so
- * a speed or a gap is the real one.
- *
- * The two teen phones take turns: one scene plays while the other phone sits
- * on its usual screen, so only one phone is ever stressed at a time.
- *
- * The scripts are generators. A script yields a wait in ms, or a test that is
- * polled until true. They drive a `view`, which is either the drawn phone or
- * the headless stand-in below, through the same methods. */
-
+// Heads Up demo engine with no React: per-phone sessions, the scripted scenes and the loop runner.
+// Scripts are generators that yield a delay in ms or a predicate polled until true.
 import {
   Light, sessionFeatures, strainIndex, decideLight, nudgeFor, signalsFrom, SIGNAL, parentSummary,
 } from '../signals/light.js'
 
+// The session clock runs 6x wall time, so the one-minute sustained red takes 10 s on screen.
 export const RATE = 6
 export const TICK_MS = 1000
 export const WINDOW_MS = 60 * 1000
 export const RING = 400
+// Scroll is sampled at 10 Hz. A gap over 400 ms starts a new swipe; under 2 swipes counts as no scrolling.
 export const SAMPLE_MS = 100
 export const SWIPE_GAP_MS = 400
 export const MIN_SWIPES = 2
+// One feed slide is a full iPhone screen, 852 pt tall.
 export const SLIDE_H = 852
 export const PAUSE_MS = 1500
 export const BANNER_HOLD_MS = 3000
-/* one turn per phone: a scene of about twenty seconds and a short gap */
 export const TURN_MS = 23 * 1000
 export const LOOP_MS = 2 * TURN_MS
 export const STAGGER_MS = TURN_MS
 
-/* feature key for each label, so a label can be traced to where it comes from */
 export const KEY_OF = Object.freeze(Object.fromEntries(Object.entries(SIGNAL).map(([k, v]) => [v, k])))
 export const TYPING_KEYS = new Set(['medianGap', 'deletions'])
 export const RANK = { [Light.GREEN]: 0, [Light.YELLOW]: 1, [Light.RED]: 2 }
@@ -60,7 +46,6 @@ export function ring(size) {
   }
 }
 
-/* The page's clock: RATE times the wall, starting at 9:38 pm on the viewer's own day. */
 export function makeClock(rate = RATE) {
   const t0 = Date.now()
   const d = new Date(t0); d.setHours(21, 38, 0, 0)
@@ -68,9 +53,6 @@ export function makeClock(rate = RATE) {
   return { now: () => anchor + (Date.now() - t0) * rate, rate }
 }
 
-/* One clock formatter for Heads Up: the engine's own, read through
-   parentSummary ("Red at 9:41 pm"), so the parent's time and the thread's
-   time can never disagree. Messages writes the meridiem in capitals. */
 export function clockText(ms) {
   const t = parentSummary({ light: Light.RED, at: ms, signals: [] }).time || ''
   return t.replace(/^Red at /, '').replace(/ (am|pm)$/, (_, ap) => ` ${ap.toUpperCase()}`)
@@ -78,6 +60,7 @@ export function clockText(ms) {
 
 /* One Heads Up session on one phone. */
 export function createSession({ baseline, clock, onState, onNudge }) {
+  // Key and scroll times use the wall clock so speeds and gaps are real; the light uses the fast clock.
   const wall = () => Date.now()
   const scrollRing = ring(RING), keyRing = ring(RING)
   let startAt = null
@@ -88,7 +71,7 @@ export function createSession({ baseline, clock, onState, onNudge }) {
   const start = () => { if (startAt == null) startAt = clock.now() }
 
   const recordKey = del => { keyRing.push({ t: wall(), del: !!del }); start() }
-  /* feed positions are sampled ten times a second, the rate a phone logs them */
+  // At most one sample per SAMPLE_MS; the last position in a burst is pushed when the interval ends.
   const onScroll = y => {
     const s = sample, w = wall()
     const push = (t, v) => { scrollRing.push({ t, y: v }); s.last = t; s.pending = null; start() }
@@ -143,6 +126,7 @@ export function seeded(n) {
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }
 }
 
+// CSS cubic-bezier easing: Newton steps solve x(t) for t, with bisection as a fallback.
 export function bezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx
   const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
@@ -177,7 +161,6 @@ const frameFn = () => (typeof requestAnimationFrame === 'function'
   ? { req: fn => requestAnimationFrame(fn), cancel: id => cancelAnimationFrame(id), now: () => performance.now() }
   : { req: fn => setTimeout(() => fn(Date.now()), 16), cancel: clearTimeout, now: () => Date.now() })
 
-/* Animates a scroll position frame by frame; each frame is one scroll event. */
 export function scroller(getY, setY) {
   const F = frameFn()
   let raf = 0
@@ -199,14 +182,9 @@ export function scroller(getY, setY) {
   }
 }
 
-/* ── the scripts ───────────────────────────────────────────────────────── */
-
-/* Each scene is short: about three seconds of usual use while the light is
-   green, then the stressed use the engine measures, until the light is red
-   and the notification is up. The phone holds on that moment, then starts
-   over. */
 export const CALM_MS = 3000
 
+// Typing pace in ms: base gap, jitter, extra pause after a space, and gap between deletions.
 const CALM_PACE = { gap: 240, jit: 70, space: 50, del: 240 }
 const HOT_PACE = { gap: 82, jit: 34, space: 8, del: 58 }
 
@@ -226,7 +204,6 @@ function* erase(v, n, p, rnd) {
 }
 function* incoming(v, text, ms) { v.typing(true); yield ms; v.typing(false); v.receive(text) }
 
-/* Red, and the notification is showing: hold on it, then start over. */
 function* detected(v, s) {
   yield () => flagged(v)
   v.mark('detected')
@@ -247,7 +224,6 @@ export const TEXT_SEED = Object.freeze([
   { me: false, text: 'beach with sam and ellie, leaving at 10' },
 ])
 
-/* What the teen does once it turns: typing fast, deleting, retyping. */
 const TEXT_STRESS = [
   ['in', "did u see maya's story", 700], ['in', 'she said she invited you??', 650],
   ['type', "she didn't"], ['erase', 10], ['type', 'i never got'], ['erase', 11],
@@ -278,7 +254,6 @@ export function* textingLoop(v, s, rnd) {
   yield* detected(v, s)
 }
 
-/* The feed, in order. Five calm clips, then the six that do the damage. */
 export const CLIPS = Object.freeze([
   { id: '51295', handle: '@kai.moves', caption: 'new choreo, learned it in a day', likes: '48.2K', comments: '611', shares: '2,904', c: '#c2366b' },
   { id: '4889', handle: '@sunday.walks', caption: 'no plans today', likes: '3,118', comments: '42', shares: '97', c: '#1f8a70' },
@@ -294,8 +269,7 @@ export const CLIPS = Object.freeze([
 ])
 
 const FLICK_MS = 170, PEEK_MS = 140, PEEK = 0.3, BEAT_MS = 1000
-/* One gentle swipe while green, then flicking back and forth through the
-   feed: back to 4606 (5) twice and to 46893 (8) more than twice. */
+// Clip indexes to flick through, doubling back often so scroll speed and reversals both rise.
 export const STRESS_PATH = [2, 1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 5, 6, 7, 8, 7, 8, 9, 8, 9, 10, 9, 8, 7, 6, 5, 6, 7, 8, 9, 10]
 
 export function* scrollingLoop(v, s, rnd) {
@@ -324,10 +298,8 @@ export function* scrollingLoop(v, s, rnd) {
   yield* detected(v, s)
 }
 
-/* Runs a script forever. Loop k starts at base + k * period, or as soon as
-   loop k - 1 ends if that is later. `hold(ms)` freezes the script where it
-   is; later loops keep their start, so two phones on the same period keep
-   taking turns. */
+// Loop k starts at base + k * period, or when loop k - 1 ends if that is later.
+// hold(ms) delays the pending step without moving later loop starts.
 export function runLoop(make, { offset = 0, period = LOOP_MS } = {}) {
   let base = Date.now() + offset
   let k = 0, gen = null, timer = 0, due = 0, pending = null, stopped = false
@@ -357,12 +329,8 @@ export function runLoop(make, { offset = 0, period = LOOP_MS } = {}) {
   }
 }
 
-/* ── one teen phone, wired ─────────────────────────────────────────────── */
-
-/* The callouts. In the stress phase, the first time a signal starts showing
-   on this phone the phone pauses for PAUSE_MS and the label is drawn. Each
-   label once per loop. One at a time: a second signal waits for the next
-   tick after the pause. */
+// In the stress phase, the first appearance of each signal holds the script for PAUSE_MS
+// and fires one callout.
 export function startTeen({ kind, baseline, clock, view, offset, period = LOOP_MS, seed, onState, onCallout, onNudge, onPhase }) {
   let phase = 'calm', seen = new Set(), busyUntil = 0, loop = null
   let shownAt = null
@@ -403,9 +371,6 @@ export function startTeen({ kind, baseline, clock, view, offset, period = LOOP_M
   }
 }
 
-/* A phone that is not drawn: the panel inside the parent app runs both teen
-   engines this way, and so do the tests. The feed is a number, not a div,
-   and every move of it is still a scroll sample. */
 export function headlessView(kind, getSession) {
   let y = 0
   const sc = scroller(() => y, v => { y = v; getSession()?.onScroll(v) })
@@ -420,8 +385,6 @@ export function headlessView(kind, getSession) {
   }
 }
 
-/* What the parent sees: the higher of the two teen lights, and that phone's
-   signals. Today's bar is the higher of the two indexes. */
 export function pickParent(a, b) {
   if (!a && !b) return null
   if (!a) return b
@@ -429,6 +392,7 @@ export function pickParent(a, b) {
   return RANK[known(b.light)] > RANK[known(a.light)] ? b : a
 }
 
+// Demo days before today (peak index) and the usual band; 40 and 70 are the yellow and red cuts.
 export const WEEK_PAST = Object.freeze([22, 31, 58, 24, 19, 27])
 export const USUAL_BAND = Object.freeze([15, 40])
 export const lightOfIndex = i => (i >= 70 ? Light.RED : i >= 40 ? Light.YELLOW : Light.GREEN)

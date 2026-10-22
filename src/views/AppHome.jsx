@@ -12,15 +12,8 @@ import { PRO } from '../lib/terms'
 import { AboutButton } from './about/AboutButton'
 import { AboutSheet } from './about/AboutSheet'
 
-/* Owner, 18 October: "a wellness app for teenagers"; 20 October: "a teen wellness app". */
 const MOTTO = 'A teen wellness app'
-/* The app's front page: the mark, the motto, About, and the way in. Plays its
-   opening every time the page is opened or refreshed, signed in or out (the
-   owner, 17 October), with Skip under it; reduced motion and the screenshot
-   harness get the last frame. */
-/* `#/app-home?demo` is where the site's "View the demo" lands: the opening
-   always plays (motion settings allowing), and the way in is a choice of
-   the three screens on demo data instead of the sign in form. */
+// `#/app-home?demo` is where the site's demo link lands: the way in is the three screens on demo data.
 const isDemo = () => typeof location !== 'undefined' && /[?&]demo\b/.test(location.hash)
 
 const DEMO = [
@@ -118,7 +111,7 @@ export function AppHome({ go }) {
     <main className="relative flex min-h-[100dvh] flex-col items-center overflow-hidden
       bg-[radial-gradient(ellipse_at_50%_0%,theme(colors.aqua.DEFAULT),theme(colors.paper)_62%)] px-4">
       <div className="my-auto flex w-full max-w-[24rem] flex-col items-center py-10 text-center sm:py-14">
-        {/* Hidden until the trace lands on it; the overlay draws it till then. */}
+        {/* Hidden until the trace lands on it; the overlay draws the mark until then. */}
         <span ref={markRef} className={cn('block w-[92px] [--logo-peak:theme(colors.beam.DEFAULT)] sm:w-[112px]',
           !done && 'opacity-0')}>
           <LogoMark className="block h-auto w-full text-accent"/>
@@ -128,7 +121,6 @@ export function AppHome({ go }) {
           Mind<span className="text-accent">Map</span>
         </h1>
         <p style={rise(1)} className="m-0 mt-2 font-body text-meta text-ink-2">{MOTTO}</p>
-        {/* The About text now fills a full screen sheet (owner, 18 October). */}
         <AboutButton style={rise(2)} onClick={() => setAbout(true)}/>
 
         <div style={rise(3)} className="mt-4 w-full">
@@ -146,9 +138,6 @@ export function AppHome({ go }) {
             </div>
           ) : (
             <>
-              {/* Demo Mode, first (owner, 18 October): the demo and nothing
-                  else. Live screens still ask for an account, so it cannot
-                  reach real data. Stored as the guest flag (lib/mode.js). */}
               <button type="button"
                 onClick={() => { setMode('demo'); setGuest(true); setDemo(true); history.replaceState(null, '', '#/app-home?demo') }}
                 className="mb-3 flex min-h-[52px] w-full items-center justify-between gap-3 rounded-panel border-[1.5px]

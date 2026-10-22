@@ -1,8 +1,3 @@
-/* Feedback Notes: turning a note into one skill. Pure functions.
- *
- * The skill suggestions come from plain keyword matching on the words of
- * the note. They are suggestions to pick from, not a reading of anybody. */
-
 export const SKILLS = [
   { name:'Checking my work',       words:['typo', 'typos', 'mistake', 'mistakes', 'error', 'errors', 'careless', 'detail', 'details', 'proofread', 'sloppy', 'spelling', 'double check', 'check your'] },
   { name:'Hitting deadlines',      words:['late', 'deadline', 'deadlines', 'on time', 'due', 'missed', 'rushed', 'last minute', 'slow'] },
@@ -32,7 +27,7 @@ export function splitSentences(text) {
   return (String(text || '').match(/[^.!?\n]+[.!?]*/g) || []).map(s => s.trim()).filter(Boolean)
 }
 
-/* Skill names the note's words point at, most hits first. */
+// Plain keyword matching on the note's words, most hits first.
 export function suggestSkills(text) {
   const t = ' ' + String(text || '').toLowerCase().replace(/[^a-z' ]+/g, ' ') + ' '
   return SKILLS
@@ -42,7 +37,7 @@ export function suggestSkills(text) {
     .map(s => s.name)
 }
 
-/* notes: [{ skill, practised }] -> [{ skill, count, practised }] */
+// notes: [{ skill, practised }] -> [{ skill, count, practised }]
 export function groupSkills(notes = []) {
   const m = new Map()
   for (const n of notes) {
@@ -60,9 +55,6 @@ export function clarifyScript(what) {
   return `Thanks for the feedback on ${w}. To make sure I get it right next time, could you show me one example of what good looks like?`
 }
 
-/* A warm up round: is a line about the work (something you can see, check
-   or change) or a judgement about the person? Five lines, one right answer
-   each. The why always points at the useful part. */
 const W = (id, prompt, work, why) => ({ id, prompt, why, fixed:true,
   options:[{ id:'work', text:'About the work', ok:work }, { id:'me', text:'A judgement about me', ok:!work }] })
 export const WARMUP = [

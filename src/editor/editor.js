@@ -1,17 +1,5 @@
-/* The owner's temporary editor (see boot.js for how it turns on).
- *
- * Plain DOM, no React: it sits on top of the live site, so it never changes
- * how the site renders for anyone who has not turned it on.
- *
- * Select mode: hover outlines an element, click selects it (the click does
- * not reach the site, so links and buttons do not fire). Double-click any
- * text to edit the words in place. The panel changes size, weight, width,
- * spacing, alignment and position, hides an element, records a reorder, and
- * takes a free note. Every change is stored per page in localStorage, shown
- * live, re-applied when you come back to a page, and "Copy prompt" turns the
- * lot into one instruction list with the exact current text of each element,
- * so the changes can be found in the source and made for real. */
-
+// Plain DOM editor overlay, so the site renders unchanged when it is off. Changes are stored per page
+// in localStorage and re-applied on return.
 const STORE = 'mindmap.editor.changes'
 const FSTORE = 'mindmap.editor.features'
 const FLAG = 'mindmap.editor'
@@ -55,14 +43,10 @@ const css = `
 [data-mmx-editing="1"] { outline: 2px solid ${BLUE} !important; outline-offset: 3px; cursor: text !important; }
 `
 
-/* ── store ───────────────────────────────────────────────────────────────── */
-
 const loadChanges = () => { try { return JSON.parse(localStorage.getItem(STORE) || '{}') || {} } catch { return {} } }
 const saveChanges = c => { try { localStorage.setItem(STORE, JSON.stringify(c)) } catch {} }
 const loadFeatures = () => { try { return JSON.parse(localStorage.getItem(FSTORE) || '{}') || {} } catch { return {} } }
 const saveFeatures = f => { try { localStorage.setItem(FSTORE, JSON.stringify(f)) } catch {} }
-
-/* ── describing an element ──────────────────────────────────────────────── */
 
 const route = () => (location.hash || '#/site').replace(/^#\/?/, '') || 'site'
 const clean = s => String(s || '').replace(/\s+/g, ' ').trim()
@@ -103,15 +87,10 @@ function pageName() {
   return t || route()
 }
 
-/* ── the editor ─────────────────────────────────────────────────────────── */
-
 export function startEditor() {
   if (window.__mmxEditor) { window.__mmxEditor.show(); return }
 
   const changes = loadChanges()
-  /* Feature requests: instructions about functionality for a page, a section
-     or one element. They go into the prompt as instructions and are never
-     shown on, or written into, the site's own text. */
   const features = loadFeatures()
   let featScope = 'element'
   let selectOn = true, sel = null, hoverEl = null, editing = null
@@ -148,7 +127,6 @@ export function startEditor() {
     const t = mk('div', 'mmx-toast', msg); ui.appendChild(t); setTimeout(() => t.remove(), 1800)
   }
 
-  /* ── change records ── */
   const keyOf = el => route() + '|' + pathOf(el)
 
   function record(el) {
@@ -176,7 +154,6 @@ export function startEditor() {
     renderBar()
   }
 
-  /* ── applying visual edits ── */
   function applyStyle(el, ch) {
     const e = ch.edits
     if (e.fontSize) el.style.fontSize = e.fontSize.to + 'px'
@@ -210,7 +187,6 @@ export function startEditor() {
     }
   }
 
-  /* ── hover and selection ── */
   function place(box, tag, el, label) {
     if (!el || !el.isConnected) { box.style.display = 'none'; return }
     const r = el.getBoundingClientRect()
@@ -228,8 +204,7 @@ export function startEditor() {
     if (!n || n.nodeType !== 1 || inUI(n)) return null
     if (n === document.body || n === document.documentElement || n.id === 'root') return null
     if (n.closest('svg') && n.tagName.toLowerCase() !== 'svg') n = n.closest('svg')
-    /* An inline piece of text (a span inside a heading, say) selects the
-       whole heading or paragraph; "Parent" and the panel reach further out. */
+    // Inline text selects its whole heading or paragraph.
     if (/^(SPAN|EM|STRONG|B|I|SMALL|SUP|SUB|BR)$/.test(n.tagName)) {
       const block = n.closest('h1, h2, h3, h4, h5, h6, p, li, button, a, dt, dd, label, td, th, figcaption')
       if (block && !inUI(block)) n = block
@@ -294,14 +269,12 @@ export function startEditor() {
     loop()
   }
 
-  /* ── text editing ── */
   function startText(el) {
     if (editing) finishText()
     editing = el
     el.dataset.mmxBefore = textOf(el)
     if (!el.dataset.mmxOriginal) el.dataset.mmxOriginal = textOf(el)
-    /* plaintext-only stops the browser pasting in its own fonts and inline
-       styles, so typed words keep the element's font. */
+    // plaintext-only keeps pasted text from bringing its own fonts and inline styles.
     el.setAttribute('contenteditable', 'plaintext-only')
     if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true')
     el.setAttribute('data-mmx-editing', '1')
@@ -326,8 +299,7 @@ export function startEditor() {
     el.removeAttribute('contenteditable')
     el.removeAttribute('data-mmx-editing')
     el.removeEventListener('keydown', keyInText)
-    /* Anything the browser wrapped the new words in (font tags, inline
-       font-family or colour) is unwrapped, so the site's own type shows. */
+    // Unwraps font tags and inline styles the browser adds while editing, so the site's own type shows.
     el.querySelectorAll('font, [style]').forEach(n => {
       if (n.tagName === 'FONT') n.replaceWith(...n.childNodes)
       else { n.style.removeProperty('font-family'); n.style.removeProperty('font-size'); n.style.removeProperty('color'); n.style.removeProperty('background-color'); if (!n.getAttribute('style')) n.removeAttribute('style') }
@@ -337,7 +309,6 @@ export function startEditor() {
     renderPanel()
   }
 
-  /* ── the panel ── */
   function current(el, name) {
     const ch = changes[el.dataset.mmxKey || keyOf(el)]
     return ch && ch.edits[name] ? ch.edits[name].to : null
@@ -369,7 +340,7 @@ export function startEditor() {
     return wrap
   }
 
-  /* Values read from the page as it was before any edit to this element. */
+  // Values as they were before any edit to this element.
   const base = (el, name, live) => {
     const ch = changes[el.dataset.mmxKey || keyOf(el)]
     if (ch && ch.edits[name]) return ch.edits[name].from
@@ -521,7 +492,6 @@ export function startEditor() {
     })
   }
 
-  /* ── feature requests ── */
   function featKey(scope, el) {
     if (scope === 'page') return route() + '|page'
     if (scope === 'section') return route() + '|section|' + sectionOf(el)
@@ -585,7 +555,6 @@ export function startEditor() {
     })
   }
 
-  /* ── the bar ── */
   function renderBar() {
     const list = Object.values(changes)
     const feats = Object.values(features)
@@ -611,7 +580,6 @@ export function startEditor() {
     )
   }
 
-  /* ── the prompt ── */
   function lineFor(ch) {
     const e = ch.edits, out = []
     if (e.text) out.push(`Change the text to: "${e.text.to}"`)
@@ -754,7 +722,6 @@ export function startEditor() {
     toast('Editor off. Your changes are kept; Alt+Shift+E turns it back on.')
   }
 
-  /* ── wiring ── */
   const onKey = e => {
     if (e.key === 'Escape' && !editing) deselect()
   }

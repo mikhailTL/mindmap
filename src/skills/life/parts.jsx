@@ -3,11 +3,6 @@ import { cn } from '../../lib/utils'
 import { ActivityScreen, Sheet, Choice, Action, FIELD, OnDevice } from '../../toolkit/shell'
 import { storeKey } from './logic'
 
-/* Pieces the four Life tools share: the screen, the two opening lines, the
- * section switcher, a tick row, labelled fields, a copy button and the
- * local store. Storage is one key per tool, `mindmap.skills.<id>`, every
- * access wrapped, and the tool still works when storage is blocked. */
-
 export function useStored(id, initial) {
   const key = storeKey(id)
   const [state, setState] = React.useState(() => {
@@ -47,8 +42,6 @@ export function LifeScreen({ id, family, title, icon: Icon, onExit, problem, doi
   )
 }
 
-/* The row of sections inside a tool. Real buttons with aria-pressed, so a
-   screen reader hears which one is open. */
 export function Sections({ items, value, onChange, label }) {
   return (
     <div role="group" aria-label={label} className="mt-4 flex flex-wrap gap-2">
@@ -71,8 +64,6 @@ export function Panel({ className, children }) {
   return <Sheet className={cn('mt-4', className)}>{children}</Sheet>
 }
 
-/* A checkbox row at least 48px tall. The tick is drawn so it reads in a
-   greyscale screenshot, and the native input keeps it keyboard usable. */
 export function Tick({ checked, onChange, children, className }) {
   return (
     <label className={cn('flex min-h-[48px] cursor-pointer items-start gap-3 rounded-[12px] px-2 py-2.5',
@@ -119,7 +110,6 @@ export function Field({ label, hint, className, as = 'input', children, ...rest 
   )
 }
 
-/* A large figure with its label beside it, for the one number a section ends on. */
 export function Figure({ label, value, tone, small, className }) {
   return (
     <div className={cn('min-w-0 rounded-[14px]', small ? 'p-2.5' : 'p-3.5', tone === 'bad' ? 'bg-[#fdece8]' : 'kit-ground', className)}>
@@ -155,7 +145,6 @@ export function RemoveButton({ name, onClick }) {
   )
 }
 
-/* A short status chip. Words carry the state; colour only repeats it. */
 const CHIP = {
   ok:      'bg-[#dcefe4] text-[#0f5836]',
   soon:    'bg-[#f5ecd7] text-[#6b4c05]',

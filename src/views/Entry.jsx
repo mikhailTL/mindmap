@@ -6,12 +6,7 @@ import { PRO } from '../lib/terms'
 import { GuidedTour, replayIntro } from './Intro'
 import { setPreferredRole } from '../account/store'
 
-/* The front door, in the owner's words: "What best describes you", Student,
- * Parent, Counselor/Professional or Other; the first three route, Other starts
- * the tour in Intro.jsx. A question, not a gate: the page behind it stays,
- * the answer is dropped once acted on, and Skip leaves the visitor where they
- * were with the whole navigation in reach. */
-
+/* The audience chooser shown over the site, and the guided tour behind its fourth option. */
 /* Audience names come from lib/terms.js. */
 const OPTIONS = [
   { id: 'student', label: 'Student' },
@@ -20,26 +15,16 @@ const OPTIONS = [
   { id: 'tour',    label: 'Other', hint: 'A guided tour of each page' },
 ]
 
-/* Which panel is up, held at module scope: the control that reopens the
-   chooser lives in App.jsx, when Entry is rendering null. A one-value store
-   with subscribers, the shape the survey already uses. */
+// Which panel is up, at module scope: the control that reopens it lives in App.jsx while Entry renders null.
 let at = null                                  // null, 'ask' or 'tour'
 
-/* Spec 0e, section 15: the walkthrough plays on every page load and no storage
-   suppresses it. The latch is per document: one load offers the chooser once,
-   a refresh offers it again, and `enabled` flipping (the admin route) does not
-   bring it back. */
+// Per-document latch: one page load offers the chooser once.
 let asked = false
 const watchers = new Set()
 const read = () => at
 const watch = f => { watchers.add(f); return () => { watchers.delete(f) } }
 const move = s => { at = s; watchers.forEach(f => f()) }
 
-/** Puts the chooser, and the tour behind its fourth option, back up.
- *  replayIntro() is the published name for "play it again" and stays in the
- *  call. Off the site navigation (spec 0e, section 15); the export stays for
- *  any caller that wants a control of its own. */
-/** Starts the guided tour directly: the site onboarding's "Other". */
 export function startTour() {
   asked = true
   move('tour')
@@ -51,8 +36,6 @@ export function replayTour() {
   move('ask')
 }
 
-/** A plain button, no longer in the site navigation (spec 0e, section 15).
- *  Kept as the one import that gives a caller the sequence and its way back. */
 export function ReplayTour({ className, children = 'Guided tour' }) {
   return (
     <button type="button" onClick={replayTour}
@@ -69,13 +52,11 @@ function Chooser({ onPick, onSkip }) {
   const first = React.useRef(null)
   const headId = React.useId()
 
-  /* Modal while up: scroll locked, Tab stays inside, Escape is Skip. */
   React.useEffect(() => {
     const was = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     first.current?.focus({ preventScroll: true })
-    /* Focus is held, not just taken: App.jsx focuses its main region from a
-       rAF after this effect, which took the keyboard out of the dialog. */
+    // App.jsx focuses main from a rAF after this effect, so focus is pulled back into the dialog.
     const onFocusIn = e => {
       if (!panel.current?.contains(e.target)) first.current?.focus({ preventScroll: true })
     }
@@ -100,13 +81,10 @@ function Chooser({ onPick, onSkip }) {
   }, [onSkip])
 
   return (
-    /* The menu drawer's scrim. Bottom sheet on a phone, centred from sm up. */
     <div className="fixed inset-0 z-[400] flex items-end justify-center bg-ink/45 p-3 sm:items-center sm:p-5">
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={headId}
         className="max-h-[94dvh] w-full max-w-[36rem] overflow-y-auto overscroll-contain
           rounded-panel border border-rule bg-card shadow-lift">
-        {/* Skip sits here as well as at the foot: the chooser plays on every
-            load and the way past it must never be hunted for. */}
         <div className="flex items-center gap-3 border-b border-rule px-5 py-2.5 sm:px-6">
           <Logo tone="paper" className="text-ui"/>
           <button type="button" onClick={onSkip}
@@ -158,36 +136,14 @@ function Chooser({ onPick, onSkip }) {
   )
 }
 
-/**
- * The whole entry sequence: the chooser, and the tour the fourth choice starts.
- *
- * `go`       the site's router, from App.jsx. Optional: without it the tour
- *            drives the hash instead.
- * `enabled`  false renders nothing, for routes that are not for visitors.
- *            App.jsx passes `!admin`.
- */
 export function Entry({ go, enabled = true }) {
   const now = React.useSyncExternalStore(watch, read, () => null)
 
-  /* Decided on mount, because whether this runs depends on a prop. One ask
-     per document; only the screenshot harness can hold it down. A device
-     with an account signed in is not asked again (the owner: "NOT repeatedly
-     do this on the same device where theyre signed in"). */
-  /* 17 October: the site onboarding (SiteIntro.jsx) asks this question as
-     its last frame, on every visit to the landing page, so nothing opens
-     the chooser on load any more. replayTour() still can. */
-
-  /* One exit for every choice and both ways out. App.jsx gives its main
-     region an id and a tabindex for the keyboard to land on. */
   const leave = React.useCallback(() => {
     move(null)
-    /* A frame later: while mounted, the chooser's own guard holds the keyboard. */
     requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
   }, [])
 
-  /* Student, Parent and Counselor/Professional open that audience's page; the
-     role is kept and pressed later when they sign up in the app, the only
-     place sign up happens. The fourth choice is the tour. */
   const pick = React.useCallback(id => {
     if (id === 'tour') { move('tour'); return }
     leave()

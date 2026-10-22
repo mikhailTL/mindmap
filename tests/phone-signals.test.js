@@ -4,10 +4,6 @@ import { pvtStats, LAPSE_MS } from '../src/signals/pvt.js'
 import { typingRhythm, fastBurst } from '../src/signals/typing.js'
 import { haversineKm, homePoint, weeklyReach } from '../src/signals/reach.js'
 
-/* ── breath ─────────────────────────────────────────────────────────────── */
-
-/* A microphone level envelope sampled at 20 Hz: quiet, then a 4 s exhale
-   (level up), quiet, a 6 s exhale, quiet. */
 function envelope() {
   const hz = 20
   const out = []
@@ -55,8 +51,6 @@ describe('breaths from chest motion', () => {
   })
 })
 
-/* ── pvt ────────────────────────────────────────────────────────────────── */
-
 describe('pvtStats', () => {
   it('reports mean, median, slowest tenth, lapses and false starts', () => {
     const trials = [
@@ -78,8 +72,6 @@ describe('pvtStats', () => {
     expect(pvtStats([]).mean).toBeNull()
   })
 })
-
-/* ── typing ─────────────────────────────────────────────────────────────── */
 
 describe('typingRhythm', () => {
   const keys = (gaps, dels = 0) => {
@@ -104,8 +96,6 @@ describe('typingRhythm', () => {
     expect(fastBurst(80, null)).toBe(false)
   })
 })
-
-/* ── reach ──────────────────────────────────────────────────────────────── */
 
 describe('reach', () => {
   it('haversine between two Sarasota points is about 10 km', () => {

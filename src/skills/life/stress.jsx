@@ -8,14 +8,7 @@ import { checkinSuggest, burnoutResult, BURNOUT_ITEMS, todayISO } from './logic'
 import { EndCard, FillRing } from '../../toolkit/game'
 import { useSkill, Quest, Win, leave } from '../../toolkit/game/skill'
 
-/* Overwhelm Reset: a 60 second body check-in, quick body-based exercises
- * (with links to the toolkit's breathing and grounding tools), an early
- * burnout signs check and a self-care routine. No diagnosis. Saved under
- * `mindmap.skills.life-stress`. */
-
 const ID = 'life-stress'
-
-/* ── Exercises ─────────────────────────────────────────────────────────── */
 
 export const EXERCISES = {
   shoulders: { name:'Shoulder drop', time:'30 sec', steps:[
@@ -60,8 +53,6 @@ function Exercise({ id, did, onDid, g }) {
     </article>
   )
 }
-
-/* ── 60 second check-in ────────────────────────────────────────────────── */
 
 const PARTS = [['jaw', 'Jaw'], ['shoulders', 'Shoulders'], ['chest', 'Chest'], ['breath', 'Fast or shallow breathing'],
   ['stomach', 'Stomach'], ['hands', 'Hands'], ['mind', 'Racing thoughts']]
@@ -154,8 +145,6 @@ function Reset({ data, patch, g, win }) {
   )
 }
 
-/* ── Burnout signs ─────────────────────────────────────────────────────── */
-
 const SIGNS = [
   'I feel tired even after a full night\'s sleep.',
   'Things I used to enjoy feel like a chore.',
@@ -220,8 +209,6 @@ function Burnout({ data, patch }) {
     </>
   )
 }
-
-/* ── Routine builder ───────────────────────────────────────────────────── */
 
 const SLOTS = [
   ['morning', 'Morning', ['Drink a glass of water', 'Open the curtains or step outside', 'Eat something before school', 'Stretch for 2 minutes']],

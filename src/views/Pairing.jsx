@@ -10,20 +10,7 @@ import { connectPatch } from '../lib/engine'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Using the patch: one console. Pressing Connect runs lib/engine.js
- * connectPatch for real, and the step list marks progress as the flow moves.
- * The six steps sit in a disclosure, closed until opened (owner, 21 October:
- * "too much space"); the button and the status stay in view. Any step can be
- * pressed to see its drawing.
- *
- * Rules. Every step is the flow engine.js runs and every quoted message is a
- * string from that file, verbatim; the phase comes from the same
- * navigator.bluetooth guard, so the console cannot claim a step the code did
- * not reach. Battery, adhesive, range and pairing time are unsettled and stay
- * unwritten.
- * Containers, density, small headings, no paragraphs (docs/design-spec.md). */
-
-/* The six steps of the real flow, one line each. Art is in charts/pairing-art. */
+// Pairing console: Connect runs connectPatch from lib/engine.js, and the step list follows that flow.
 const STEPS = [
   { k:'wake',    title:'Take the patch off charge',
     line:'It starts sending a Bluetooth signal.' },
@@ -39,22 +26,17 @@ const STEPS = [
     line:'Four signals, once a second.' },
 ]
 
-/* Stated as absences, because the absence is the point. */
+/* What pairing does not need, listed as absences. */
 const NOTHING = ['A cable', 'A driver', 'A download', 'A developer tool']
 
-/* The settled facts about the link, on the status bar before anything is
-   pressed. Range, pairing time and battery are open and not here. */
 const LINK_FACTS = [
   { k:'Link',    v:'Bluetooth Low Energy' },
   { k:'Signals', v:'4, once a second' },
 ]
 
-/* `seen` is the engine's own string, quoted verbatim (line noted beside it);
-   `fix` is what to do. Each card takes its own light hue (owner, 20 October:
-   "too green ... pls vary"). */
+// `seen` is the engine's own message, verbatim; `fix` is what to do about it.
 const TROUBLE = [
-  { /* engine.js:54, the navigator.bluetooth guard: an embedded page and plain
-       http both land on this one message, so one card. */
+  { /* engine.js:54, the navigator.bluetooth guard: an embedded page and plain http both get this message */
     title:'The browser has no Bluetooth', hue:'sky',
     seen:'This browser cannot open a Bluetooth connection from inside an embedded page. Open the '
       + 'site directly in Chrome on a computer, or take the Survey in the app instead.',
@@ -63,7 +45,7 @@ const TROUBLE = [
     title:'The list is empty', hue:'lilac',
     seen:'The browser’s list shows no devices.',
     fix:'Take the patch off charge, near the phone. Press Connect again.' },
-  { /* engine.js:61 and 62: NotFoundError is a cancel, not a fault */
+  { /* engine.js:61 and 62: NotFoundError is the device list being closed, not a fault */
     title:'You closed the list', hue:'sun',
     seen:'No patch was selected. The Survey in the app works without one.',
     fix:'Press Connect again and choose the patch.' },
@@ -77,7 +59,7 @@ const QUOTE = { sky:'border-sky-ink/40', lilac:'border-lilac-ink/40', sun:'borde
 
 const PHASE_WORD = { idle:'Not started', asking:'Asking the browser', live:'Connected', stuck:'Stopped' }
 
-/* done / now / stuck for a step the flow has reached; `todo` past it. */
+// done, now or stuck for a step the flow has reached; todo for steps past it.
 function statusOf(i, cursor, phase) {
   if (i >= cursor) return 'todo'
   if (i < cursor - 1) return 'done'
@@ -89,22 +71,17 @@ function statusOf(i, cursor, phase) {
 const MARK = { done: Check, now: Always, stuck: Minus }
 const LABEL = { done:'Done', now:'Now', stuck:'Stopped here', todo:'' }
 
-/* A licensed stock frame of models: nobody shown uses MindMap. The bus
-   frame moved to How it works (owner, 21 October: fewer repeats). */
 const PHOTO_ALT = 'A licensed stock photograph of two teenagers sitting on steps outside, reading a notebook together.'
 
-/* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
-   part's title, with Without the patch straight after. */
 export function Pairing({ as: Root = 'main' }) {
   const [phase, setPhase] = React.useState('idle')
   const [cursor, setCursor] = React.useState(0)      // steps the flow reached
   const [msg, setMsg] = React.useState('')
   const [busy, setBusy] = React.useState(false)
-  const [focus, setFocus] = React.useState(null)     // which step's drawing shows
-  const [steps, setSteps] = React.useState(false)    // the six steps, closed at first
+  const [focus, setFocus] = React.useState(null)
+  const [steps, setSteps] = React.useState(false)
 
-  /* The same guard engine.js runs, read only to place the cursor. The message
-     shown is always the engine's own. */
+  // Runs the same guard as engine.js only to place the cursor; the message shown is the engine's own.
   const connect = React.useCallback(async () => {
     if (busy) return
     setBusy(true); setMsg(''); setFocus(null)
@@ -123,16 +100,12 @@ export function Pairing({ as: Root = 'main' }) {
 
   return (
     <Root>
-      {/* The part's title and the owner's line sit just above, in views/PatchHub.
-          The figure is the drawing it had before the scene (owner, 20 October). */}
       <header className="bg-[#e2f2f0]">
         <div className="wrap pb-7 pt-4 lg:pb-10 lg:pt-6">
           <div className="grid items-start gap-5
             lg:grid-cols-[minmax(0,1fr)_minmax(0,46%)] lg:gap-8">
             <ScrollIn className="grid min-w-0 gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]
               lg:grid-cols-1">
-              {/* The absences beside a coral rule, no box; a struck-through
-                  list, two columns, no capsules. */}
               <Card variant="rule" hue="coral" side="left" className="self-start pl-3.5">
                 <p className="font-display text-tick font-bold text-ink">What you do not need</p>
                 <ul className="m-0 mt-1.5 grid list-none grid-cols-2 gap-x-4 p-0">
@@ -161,13 +134,12 @@ export function Pairing({ as: Root = 'main' }) {
         </div>
       </header>
 
-      {/* The console: one button, the six steps, the drawing for one of them. */}
       <Section tone="card" tight className="bg-card">
         <SectionHead className="mt-0 max-w-[26ch]">Connect the patch</SectionHead>
         <div className="mt-4 lg:mt-5">
           <Card>
             <div className="border-b border-rule bg-sky-wash p-3.5 lg:p-4">
-              {/* Column at 390: the nowrap button label overran the card. */}
+              {/* Column at 390, where the nowrap button label is wider than the card. */}
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap
                 sm:items-center sm:justify-between sm:gap-x-5">
                 <div className="min-w-0" aria-live="polite">
@@ -194,8 +166,6 @@ export function Pairing({ as: Root = 'main' }) {
               </dl>
             </div>
 
-            {/* The engine's own words. The live region wraps the whole
-                outcome, not just the phase word. */}
             <div aria-live="polite">
               {msg && (
                 /* Tint on the wrapper: input.css caps every <p> at 62ch. */
@@ -219,8 +189,6 @@ export function Pairing({ as: Root = 'main' }) {
             <div id="pairing-steps"
               className="grid border-t border-rule lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
               <div className="min-w-0 p-3.5 lg:p-4">
-                {/* A real ordered list; the status rides beside the title so
-                    the step's line keeps its width at 390. */}
                 <ol className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-1">
                   {STEPS.map((s, i) => {
                     const st = statusOf(i, cursor, phase)
@@ -246,7 +214,6 @@ export function Pairing({ as: Root = 'main' }) {
                               <span className="font-display text-ui font-bold leading-tight text-ink">
                                 {s.title}
                               </span>
-                              {/* Plain type, never a capsule (spec 0d rule 2). */}
                               {LABEL[st] && (
                                 <span className={cn('text-fine font-semibold leading-[1.3]',
                                   st === 'done' ? 'text-accent' : 'text-ink-3')}>
@@ -275,8 +242,6 @@ export function Pairing({ as: Root = 'main' }) {
           </Card>
         </div>
 
-        {/* The failures, open (owner, 20 October: as they were, no blank
-            space behind a toggle). */}
         <h3 className="mt-6 font-display text-row font-bold leading-tight text-ink lg:mt-8">
           Not working?
         </h3>

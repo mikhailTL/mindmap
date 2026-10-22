@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { SKILL_GROUPS, SKILL_TOOLS, SKILL_ROUTES } from '../src/skills/index.js'
 
 describe('life skills registry', () => {
-  it('has the four categories in the owner order', () => {
+  it('has the four categories in order', () => {
     expect(SKILL_GROUPS.map(g => g.title)).toEqual(['School', 'Outside', 'Life', 'Career'])
     expect(SKILL_GROUPS.map(g => g.sub)).toEqual(['Academic success', 'Social dynamics', 'Wellness', 'Career skills'])
   })

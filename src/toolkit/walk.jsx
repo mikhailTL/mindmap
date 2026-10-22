@@ -7,16 +7,6 @@ import { countSteps } from '../signals/steps'
 import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
-/* Short Walk, as a trail that fills.
- *
- * Pick a walk, then walk it: the path on the screen fills with your steps,
- * three flags on the way and a finish at the end. Steps come from
- * devicemotion: the magnitude less one g goes into a buffer for this walk and
- * countSteps reads it every two seconds. A laptop, or a phone that refuses
- * motion, fills the path on the clock instead, at a hundred steps a minute.
- * The Wake Lock holds the screen. The walk is never scored as stress, and
- * the buffer is dropped when the walk ends. */
-
 const GOALS = [
   { id:'short', name:'Short', steps:150, secs:90 },
   { id:'lap',   name:'Lap',   steps:300, secs:180 },
@@ -29,6 +19,7 @@ const NO_SENSOR_S = 3
 
 const TRAIL = 'M30 214C84 214 96 172 150 172S266 182 270 132S200 92 146 98S40 84 62 46S206 22 292 30'
 
+// Acceleration magnitude in g, minus 1 g of gravity, fed to countSteps.
 const magOf = e => {
   const a = e.accelerationIncludingGravity || e.acceleration
   if (!a || a.x == null) return null
@@ -36,7 +27,6 @@ const magOf = e => {
 }
 const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-/* The trail: a pale path, the walked part on top, flags and the walker. */
 function Trail({ p = 0 }) {
   const ref = React.useRef(null)
   const [pts, setPts] = React.useState(null)
@@ -161,7 +151,7 @@ export default function Walk() {
     const tick = now => {
       const secs = (now - t0) / 1000
       if (m === 'steps' && secs > NO_SENSOR_S && !buf.current.length) {
-        /* the API is there and nothing arrives: a laptop */
+        // The API exists but no readings arrive, as on a laptop.
         m = 'clock'; setMode('clock'); detach()
       }
       if (m === 'steps' && now >= next) {

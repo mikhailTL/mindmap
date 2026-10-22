@@ -3,23 +3,6 @@ import { Button } from '../ui/button'
 import { Choice, FIELD, Hint, Step, riseAt } from './panel'
 import { cn } from '../lib/utils'
 
-/* 5-4-3-2-1 Grounding. The exercise everybody half remembers, except that this
- * one holds the count and the entries, which is the part it never has on
- * paper.
- *
- * THE LADDER. Five rows on a five-column grid, so the shape of the exercise is
- * the shape of the drawing: five slots, then four, then three, down to one. A
- * slot grows and fills as its entry is typed, which is the only progress
- * indicator here and the reason the count does not need to be read. The row
- * being worked on carries a rule down its left edge.
- *
- * Reduced motion keeps the fill and drops the grow: the colour is what says
- * "that one is done", and the grow was only ever making the colour arrive with
- * some weight behind it.
- *
- * Nothing in here asks for discomfort. Every step is noticing what is already
- * there. */
-
 const STEPS = [
   { id:'see',   n:5, ask:'Five things you can see',            eg:'a door handle, the corner of a screen' },
   { id:'hear',  n:4, ask:'Four things you can hear',           eg:'a fan, traffic, somebody two rooms away' },
@@ -30,9 +13,7 @@ const STEPS = [
 
 const empty = () => Object.fromEntries(STEPS.map(s => [s.id, []]))
 
-/* One rung. `done` slots are filled, `n` is how many the rung has, and the
-   five-column grid is what makes a one-slot rung read as one of five rather
-   than as a full-width bar. */
+// A five-column grid, so a rung with fewer slots reads as part of five rather than a full-width bar.
 function Rung({ step, done, live, skipped }) {
   return (
     <div className={cn('flex items-center gap-3 border-l-2 py-1.5 pl-2.5 transition-colors duration-200',
@@ -96,8 +77,6 @@ export function Senses() {
         <>
           <div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <p className="font-display text-row font-bold text-ink">{step.ask}</p>
-            {/* Only the two figures are monospaced. "of" set in Chivo Mono
-                reads as a third number. */}
             <p className="text-meta text-ink-2">
               <span className="font-mono tabular-nums">{got[step.id].length}</span> of{' '}
               <span className="font-mono tabular-nums">{step.n}</span>

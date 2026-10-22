@@ -4,43 +4,18 @@ import { call, readToken } from './remote'
 import { EVENT, listReadings, setReadings } from '../lib/readingLog'
 import { applySharing, getSharing, subscribe as onAppStore } from '../app/store'
 
-/* The student's readings and sharing switches, kept in step with their
- * account, and the live refresh every dashboard reads.
- *
- *   readings  every add, edit or clear in src/lib/readingLog.js is sent
- *             (debounced) as the rows the account does not have yet, the
- *             rows that changed and the ids that went. Every snapshot that
- *             comes back is merged into the log, so a reading taken on one
- *             device shows on the next one the student signs in on.
- *   sharing   a switch changed in src/app/store.js is sent; the account's
- *             copy comes back on every snapshot and replaces the local one.
- *   refresh   useLiveSync() asks for a fresh snapshot every 20 seconds while
- *             the tab is visible, and on focus, so a parent's or a
- *             Counselor/Professional's dashboard shows a teen's new reading without a
- *             reload.
- *
- * Only on the account backend and only for a signed in student does anything
- * get sent. A parent or a professional only ever reads. */
-
+// Keeps a signed-in student's readings and sharing switches in step with the account, and refreshes
+// snapshots for the dashboards. Parents and professionals only read.
 const SYNCED = 'mindmap.readings.synced'
 const CHUNK = 100
 const POLL_MS = 20000
-
-/* ── Pure parts, tested in tests/sync.test.js ─────────────────────────── */
 
 /* What the server keeps of a row. A local `pulse` is not sent. */
 export const strip = e => ({ id: e.id, at: e.at, score: e.score, source: e.source, ...(e.note ? { note: e.note } : {}) })
 const same = (a, b) => JSON.stringify(strip(a)) === JSON.stringify(strip(b))
 
-/* The account's rows merged into this device's.
- *   remote  the rows in the snapshot
- *   local   the rows in this device's log
- *   known   ids this device last saw on the account
- *   dirty   a local change is waiting to be sent
- * A row on the account wins, unless a local change is waiting. A local row
- * the account never had is kept and sent. A row the account had and no
- * longer has was removed on another device, so it goes here too; while a
- * local change waits, a row removed here is not brought back. */
+// An account row wins unless a local change is pending. A local row missing from the account is kept;
+// a row the account dropped is deleted here too.
 export function mergePulled({ remote = [], local = [], known = new Set(), dirty = false }) {
   const localById = new Map(local.map(r => [r.id, r]))
   const remoteIds = new Set(remote.map(r => r.id))
@@ -66,8 +41,7 @@ export function mergePulled({ remote = [], local = [], known = new Set(), dirty 
   return { list: out.sort((a, b) => a.at - b.at), pushNeeded }
 }
 
-/* What to send: rows the account lacks or holds differently, and ids it
-   holds that this device no longer has. */
+// Rows the account lacks or holds differently, plus ids it holds that this device has deleted.
 export function diffForPush({ local = [], server = [] }) {
   const held = new Map(server.map(r => [r.id, r]))
   const here = new Set(local.map(r => r.id))
@@ -76,8 +50,6 @@ export function diffForPush({ local = [], server = [] }) {
     remove: server.map(r => r.id).filter(id => !here.has(id)),
   }
 }
-
-/* ── State ─────────────────────────────────────────────────────────────── */
 
 function readSynced() {
   try {
@@ -143,7 +115,6 @@ async function pushSharing() {
   applySnapshot(r.snapshot)
 }
 
-/* One snapshot in. Only a student's carries readings and sharing. */
 function handleSnapshot(snap) {
   if (!snap?.me || snap.me.role !== 'student') return
   const synced = readSynced()
@@ -166,8 +137,6 @@ function handleSnapshot(snap) {
   }
 }
 
-/* Idempotent. Called by src/account/store.js once the backend is known, and
-   by useLiveSync(). */
 export function startSync() {
   if (started || typeof window === 'undefined') return
   started = true
@@ -185,7 +154,6 @@ export function startSync() {
     sharingDirty = true
     schedulePushSharing()
   })
-  /* A snapshot that arrived before the sync started. */
   const me = current()
   const live = liveData()
   if (me && (live.readings || live.sharing)) handleSnapshot({ me, readings: live.readings, sharing: live.sharing })
@@ -198,9 +166,7 @@ function pull() {
   return pulling
 }
 
-/* Mount once in the app shell. Refreshes the account's snapshot every 20
-   seconds while somebody is signed in and the tab is visible, and on focus,
-   so a dashboard shows a linked teen's new readings as they arrive. */
+// Refreshes every POLL_MS while signed in and the tab is visible, and on focus.
 export function useLiveSync() {
   React.useEffect(() => {
     startSync()

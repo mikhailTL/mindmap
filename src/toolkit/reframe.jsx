@@ -7,16 +7,6 @@ import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, EndCard, SPRING } from './game'
 
-/* Thought Reframe, as a card game.
- *
- * 1. Pick the thought: tap one from the deck or write your own.
- * 2. Flip three cards. Each is a question; tap an answer or write one.
- * 3. Build: tap the answers in the order you like after "Right now it feels
- *    like ...". Edit the words, then save.
- *
- * The journal is localStorage on this device (`mindmap.toolkit.journal`),
- * every access wrapped. Nobody else can read it and it is never sent. */
-
 const JOURNAL_KEY = 'mindmap.toolkit.journal'
 
 const THOUGHTS = [
@@ -79,7 +69,6 @@ function Journal({ list, onDelete, className }) {
   )
 }
 
-/* A face-down card that turns over to a question and its answers. */
 function FlipCard({ n, prompt, open, answer, onFlip, onAnswer, reduced }) {
   const [own, setOwn] = React.useState('')
   return (

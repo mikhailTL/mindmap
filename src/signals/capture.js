@@ -1,6 +1,4 @@
-/* Browser plumbing for the two phone streams. The numbers come out of ppg.js
-   and voice.js, which stay DOM-free so they can be tested in Node. */
-
+// Browser capture for the camera pulse and the voice clip; the analysis is in ppg.js and voice.js.
 export const PPG_SECONDS = 30
 export const VOICE_SECONDS = 15
 
@@ -8,10 +6,7 @@ export function mediaAvailable() {
   return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-/* Rear camera with the torch on where allowed; returns { stream, track, torch }.
-   The torch is what makes this work indoors — on room light alone the pulse
-   rides on a signal too small to survive sensor noise. A phone that refuses it
-   still returns a stream, and the quality score catches that downstream. */
+// Rear camera with the torch on where supported; room light alone leaves the pulse below sensor noise.
 export async function openCamera() {
   if (!mediaAvailable()) throw new Error('This browser will not open a camera from here.')
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -28,11 +23,7 @@ export async function openCamera() {
   return { stream, track, torch }
 }
 
-/* Reduces each frame to one number — mean red channel over the middle of the
-   sensor — for `seconds`. Returns { done, cancel }; `done` resolves to
-   [{ t: ms, v }]. Frames go into a 32x24 canvas so the downscale averages in
-   the graphics path rather than looping 76,800 pixels every 33 ms, which on a
-   mid-range phone is the difference between 30 fps and dropped beats. */
+// One sample per frame: mean red of the central half of a 32x24 downscale, so the canvas does the averaging.
 export function capturePPG(video, { seconds = PPG_SECONDS, onTick } = {}) {
   const W = 32, H = 24
   const canvas = document.createElement('canvas')
@@ -51,7 +42,7 @@ export function capturePPG(video, { seconds = PPG_SECONDS, onTick } = {}) {
         let r = 0
         for (let i = 0; i < d.length; i += 4) r += d[i]
         samples.push({ t: now - t0, v: (r / (d.length / 4)) })
-      } catch { /* a frame that is not ready yet is simply not a sample */ }
+      } catch { }
       const elapsed = (now - t0) / 1000
       onTick?.(elapsed / seconds, samples)
       if (elapsed >= seconds) return resolve(samples)
@@ -63,10 +54,6 @@ export function capturePPG(video, { seconds = PPG_SECONDS, onTick } = {}) {
   return { done, cancel() { stop = true; cancelAnimationFrame(raf) } }
 }
 
-/* `seconds` of microphone, held as raw samples in memory and never written
-   anywhere. Resolves to { pcm: Float32Array, fs }. ScriptProcessorNode rather
-   than AudioWorklet: a worklet needs its own module file fetched at runtime,
-   and that request can fail on school wifi. */
 export async function captureVoice({ seconds = VOICE_SECONDS, onLevel } = {}) {
   if (!mediaAvailable()) throw new Error('This browser will not open a microphone from here.')
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -75,6 +62,7 @@ export async function captureVoice({ seconds = VOICE_SECONDS, onLevel } = {}) {
   const Ctx = window.AudioContext || window.webkitAudioContext
   const ac = new Ctx()
   const src = ac.createMediaStreamSource(stream)
+  // ScriptProcessorNode, since an AudioWorklet needs a separately fetched module file.
   const node = ac.createScriptProcessor(4096, 1, 1)
   const chunks = []
   let total = 0
@@ -99,9 +87,7 @@ export async function captureVoice({ seconds = VOICE_SECONDS, onLevel } = {}) {
       resolve({ pcm: out, fs: ac.sampleRate })
     }
     src.connect(node)
-    /* Chromium will not run a ScriptProcessor with no destination, so route it
-       through a muted gain node — connecting it straight to the speakers plays
-       the microphone back through the earpiece. */
+    // Chromium runs a ScriptProcessor only when it reaches a destination; a zero-gain node keeps the mic off the speaker.
     const mute = ac.createGain()
     mute.gain.value = 0
     node.connect(mute)

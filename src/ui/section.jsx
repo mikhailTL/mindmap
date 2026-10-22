@@ -1,8 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* Ground, heading size and padding live here, not at the call site. paper and
-   card differ by ~2% luminance, so `tone="ink"` is the only real separation. */
 const GROUND = {
   paper: 'bg-paper text-ink',
   card:  'bg-card text-ink',
@@ -10,8 +8,6 @@ const GROUND = {
   ink:   'bg-ink text-paper',
 }
 
-/* accent measures 2.80:1 on the ink ground and fails; that ground takes
-   accent-lit, at 7.67:1. */
 const NAME = {
   paper: 'text-accent',
   card:  'text-accent',
@@ -19,11 +15,9 @@ const NAME = {
   ink:   'text-accent-lit',
 }
 
-/* Two padding steps, not a number per section. `tight` is for a band that is
-   mostly picture; the default is for one that is mostly read. */
+// With an id, scroll-mt-14 clears the 56px sticky header when a link jumps to the section.
 export function Section({ name, tone = 'paper', id, className, children, bleed = false, tight = false }) {
   return (
-    /* scroll-mt clears the 56px sticky header when the Overview menu jumps here. */
     <section id={id} className={cn(GROUND[tone] || GROUND.paper, 'border-t border-rule', id && 'scroll-mt-14 outline-none', className)}>
       <div className={cn(bleed ? 'w-full' : 'wrap', tight ? 'py-5 lg:py-7' : 'py-7 lg:py-10')}>
         {name && (
@@ -35,8 +29,6 @@ export function Section({ name, tone = 'paper', id, className, children, bleed =
   )
 }
 
-/* text-sub is a single clamp. Do not split it into per-breakpoint sizes: the
-   pair it replaced shrank the heading as the viewport grew. */
 export function SectionHead({ children, tone = 'paper', className }) {
   return (
     <h2 className={cn('mt-2 font-display font-bold text-sub leading-[1.12] tracking-tight',

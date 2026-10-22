@@ -8,16 +8,8 @@ import {
   PARTS, PROBLEM, STATS, WHY, WHY_QUOTE, PERSONAL, WHAT_LEAD, FEATURES, WHAT_CLOSE, VISION, VISION_MARK,
 } from './content'
 
-/* About MindMap, as a full screen sheet. One long page in the site's own
-   colours, white and pale mint with green ink, so it reads top to bottom
-   without changing voice (owner, 19 October: "make it match site design and
-   not be all over the place, needs to be nice and smooth"). A native modal
-   <dialog>: the page behind is inert, Esc closes it, focus returns to the
-   About button. The sheet is its own scroller, so the rail and the reveals
-   read its scroll, not the window's. 20 October, the owner: no contour lines
-   and not all green, so the hero sits on a pale sky field and the vision on
-   a pale lilac one, each with one soft round shape. */
-
+// About MindMap in a native modal <dialog>: the page behind is inert, Esc closes it, and focus returns to
+// the About button. The sheet is its own scroller, so the rail and reveals read its scroll, not the window's.
 const CSS = `
 .ab-sheet { background: #ffffff; color: #0d2b1e; overscroll-behavior: contain; }
 .ab-sheet[open] { animation: ab-sheet-in .36s cubic-bezier(.23,1,.32,1) both; }
@@ -45,7 +37,6 @@ function stillMotion() {
   try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false }
 }
 
-/* Wraps each `marks` phrase found in `text` in a span with `cls`. */
 function marked(text, marks, cls) {
   const out = []
   let rest = text, k = 0
@@ -74,8 +65,6 @@ function PartHead({ part, id }) {
 const prose = 'max-w-[65ch] text-meta leading-[1.8] text-ink-2 sm:text-[1.125rem]'
 const part = 'scroll-mt-28 pt-14 sm:pt-20'
 
-/* ── 01 The Problem ─────────────────────────────────────────────────────── */
-
 function Stat({ s, k, i }) {
   const counts = s.to >= 10
   const v = counts ? Math.round(s.to * k) : s.to
@@ -98,8 +87,7 @@ function Problem({ k, statsRef }) {
       <p data-rv="" className={cn(prose, 'mt-6')}>
         {marked(PROBLEM, STATS.map(s => s.mark), 'font-bold text-ink')}
       </p>
-      {/* The same figures, large. The paragraph already says them, so the
-          list is hidden from screen readers. */}
+      {/* The paragraph above states the same figures, so this list is hidden from screen readers. */}
       <ul ref={statsRef} aria-hidden
         className="m-0 mt-9 grid max-w-[65ch] list-none grid-cols-2 gap-x-6 gap-y-6 p-0 sm:grid-cols-1 sm:gap-y-0">
         {STATS.map((s, i) => <Stat key={s.mark} s={s} k={k} i={i}/>)}
@@ -108,11 +96,7 @@ function Problem({ k, statsRef }) {
   )
 }
 
-/* ── 02 Why MindMap ─────────────────────────────────────────────────────── */
-
 function Why() {
-  /* His third sentence is the key line, so it is set as the pull quote and
-     the first two run as the paragraph before it. */
   const body = WHY.filter(w => w !== WHY_QUOTE)
   return (
     <section id="ab-why" data-part="why" aria-labelledby="ab-h-why" className={part}>
@@ -125,8 +109,6 @@ function Why() {
     </section>
   )
 }
-
-/* ── 03 Personal Experience & Research ──────────────────────────────────── */
 
 function Personal() {
   return (
@@ -155,15 +137,12 @@ function Personal() {
   )
 }
 
-/* ── 04 What is MindMap ─────────────────────────────────────────────────── */
-
 const ICONS = {
   mint: <><rect x="4" y="7" width="16" height="10" rx="5"/><path d="M7.5 12h2l1.4-2.6 2 5 1.4-2.4h2.2"/></>,
   sky: <><circle cx="12" cy="6" r="2.4"/><circle cx="5.5" cy="17" r="2.4"/><circle cx="18.5" cy="17" r="2.4"/><path d="M10.8 8.1 6.8 15M13.2 8.1l4 6.9M8 17h8"/></>,
   lilac: <><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13.5v6M13.5 16.5h6"/></>,
 }
 
-/* Each feature in its own light hue (owner, 20 October: vary the green). */
 const HUE = { mint: 'bg-mint-wash text-mint-ink', sky: 'bg-sky-wash text-sky-ink', lilac: 'bg-lilac-wash text-lilac-ink' }
 
 function Feature({ f, i }) {
@@ -207,11 +186,7 @@ function What() {
   )
 }
 
-/* ── 05 Vision ──────────────────────────────────────────────────────────── */
-
 function Vision({ onClose }) {
-  /* The first clause of his vision sentence is set large and the sentence runs
-     on below it, unchanged. */
   const cut = VISION[0].indexOf(VISION_MARK) + VISION_MARK.length + 1
   return (
     <section id="ab-vision" data-part="vision" aria-labelledby="ab-h-vision"
@@ -231,8 +206,6 @@ function Vision({ onClose }) {
     </section>
   )
 }
-
-/* ── The rail ───────────────────────────────────────────────────────────── */
 
 function Rail({ prog, active, jump }) {
   return (
@@ -278,8 +251,6 @@ function Strip({ prog, active, jump }) {
   )
 }
 
-/* ── The sheet ──────────────────────────────────────────────────────────── */
-
 export function AboutSheet({ open, onClose }) {
   const ref = React.useRef(null)
   const statsRef = React.useRef(null)
@@ -294,8 +265,6 @@ export function AboutSheet({ open, onClose }) {
     if (!open && d.open) d.close()
   }, [open])
 
-  /* While open: the page behind stays put, the rail follows the scroll, and
-     what starts below the fold rises in once. */
   React.useEffect(() => {
     const d = ref.current
     if (!open || !d) return
@@ -329,8 +298,7 @@ export function AboutSheet({ open, onClose }) {
     addEventListener('resize', onScroll)
     measure()
 
-    /* Reveals: only what is below the fold is ever hidden, and the observer
-       watches the sheet, not the window. */
+    // Only content below the fold is hidden for a reveal, and the observer watches the sheet, not the window.
     const els = [...d.querySelectorAll('[data-rv]')]
     els.forEach(el => { el.dataset.rv = '' })
     let io = null, timer = 0, count = 0
@@ -358,7 +326,7 @@ export function AboutSheet({ open, onClose }) {
       }, { root: d, rootMargin: '0px 0px -8% 0px' })
       els.forEach(el => { if (el.dataset.rv === 'wait') io.observe(el) })
       if (statsRef.current) io.observe(statsRef.current)
-      /* Nothing stays hidden if the observer never reports. */
+      // Fallback so nothing stays hidden if the observer does not report.
       timer = setTimeout(() => {
         if (!d.querySelector('[data-rv="in"]') && d.scrollTop > 0) els.forEach(el => { el.dataset.rv = 'in' })
       }, 2500)

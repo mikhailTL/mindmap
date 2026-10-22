@@ -2,8 +2,6 @@ import * as React from 'react'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-/* The variants differ by fill and weight as well as colour, so they survive
-   grayscale. Sample-data disclosure lives in notice.jsx, not here. */
 const badge = cva(
   'inline-flex items-center gap-1.5 whitespace-nowrap border align-middle',
   {

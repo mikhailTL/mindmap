@@ -1,19 +1,5 @@
-/* Typing rhythm, inside MindMap's own text fields and nowhere else.
- *
- * A web app cannot see what is typed into other apps, and this one does not
- * want to. In Notes and the check-in it records the TIME of each key and
- * whether it was a deletion, never the key itself. From those timestamps:
- * the median gap between keys, how many pauses longer than two seconds, and
- * the share of keys that were deletions.
- *
- * Longer inter-key delays went with lower mood in adults followed for weeks
- * (Zulueta 2018, BiAffect); backspace-heavy typing went with agitation (Liu
- * 2024); in 934 adolescents the keystroke signal on its own was weak (Braund
- * 2023). So this is labelled exploratory in the app, it is only ever
- * compared with the student's own earlier sessions, and the one thing it
- * does in the moment is offer a breath when a burst is much faster than
- * usual. */
-
+// Gaps of 2 s or more count as pauses and are left out of the median.
+// Typing rhythm inside the app's own text fields: key timestamps and a deletion flag only, not key values.
 export const PAUSE_MS = 2000
 export const MIN_KEYS = 8
 
@@ -35,14 +21,11 @@ export function typingRhythm(keys) {
   return { ok: true, keys: n, medianGap, pauses, deletions }
 }
 
-/* A burst is fast when its median gap is under 70% of the usual gap. */
 export function fastBurst(gap, usualGap) {
   if (gap == null || usualGap == null) return false
   return gap < usualGap * 0.7
 }
 
-/* A small recorder for a text field. Call `key(event)` from onKeyDown and
- * `summary()` when the field blurs or the note is saved. */
 export function recorder() {
   const keys = []
   return {

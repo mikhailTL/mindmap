@@ -1,10 +1,3 @@
-/* Pure logic and copy for the Outside tools (social dynamics, digital spaces,
- * boundaries). No React here, so tests/skills-outside.test.js can reach all
- * of it. Every figure the feed audit shows comes from these functions and the
- * one stated assumption, ADS_PER_MINUTE. */
-
-/* ---------- local store ---------- */
-
 const KEY = id => 'mindmap.skills.' + id
 
 export function readStore(id, fallback) {
@@ -18,10 +11,7 @@ export function writeStore(id, value) {
   try { localStorage.setItem(KEY(id), JSON.stringify(value)); return true } catch { return false }
 }
 
-/* ---------- outside-feed: the digital wellness audit ---------- */
-
-/* The one assumption behind "ads seen": about one ad for every two minutes in
-   a feed. Real rates vary by app and by account, so the screen says so. */
+// Assumed rate of one ad per two minutes of feed; real rates vary by app and account.
 export const ADS_PER_MINUTE = 0.5
 
 export const START_APPS = [
@@ -100,8 +90,7 @@ export function trickCounts(apps) {
   return out
 }
 
-/* About a third less, rounded down to 5 minutes, never under 15 unless the
-   app is already under 15. */
+// About a third less, rounded down to 5 minutes, with a floor of 15 unless already 15 or under.
 export function suggestLimit(min) {
   const m = perDay(min)
   if (m <= 15) return m
@@ -116,8 +105,6 @@ export function minutesSaved(apps, limits) {
     return sum + (cut > 0 ? cut : 0)
   }, 0) * 7
 }
-
-/* ---------- outside-conflict: I-statements and de-escalation ---------- */
 
 export const FEELINGS = [
   'hurt', 'left out', 'frustrated', 'embarrassed', 'pressured', 'ignored', 'disrespected', 'worried',
@@ -264,8 +251,6 @@ export function checkWhen(text) {
   return tips
 }
 
-/* ---------- outside-no: boundaries ---------- */
-
 export const WHO = [
   { id:'friend',  label:'A friend',
     asks:['lend them money', 'cover for them with a lie', 'give them my passwords', 'skip practice with them'] },
@@ -310,7 +295,7 @@ export const PUSHBACK = {
 
 export const pushbackFor = who => PUSHBACK[who] || PUSHBACK.friend
 
-/* The three ways a round can go. `hold` uses the person's own line. */
+// `hold` uses the person's own line.
 export const REPLIES = [
   { kind:'hold',    why:'You held your line without a fight. Repeating yourself calmly is enough.' },
   { kind:'explain', text:'"I mean, sorry, it\'s just that, I don\'t know, maybe..."',

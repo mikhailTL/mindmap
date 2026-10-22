@@ -2,11 +2,6 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { ActivityScreen, FIELD, OnDevice } from '../../toolkit/shell'
 
-/* Shared pieces for the School tools: storage, the screen wrapper, labelled
- * fields, a copy button and the icons. */
-
-/* ── storage: this device only, every access wrapped ─────────────────── */
-
 const KEY = id => `mindmap.skills.${id}`
 
 export function load(id, fallback) {
@@ -30,8 +25,6 @@ export function useSaved(id, fallback) {
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 9)
-
-/* ── layout ──────────────────────────────────────────────────────────── */
 
 export function Screen({ title, family, icon, onExit, problem, plan, children }) {
   return (
@@ -110,7 +103,6 @@ export function CopyButton({ text, className, children = 'Copy' }) {
   )
 }
 
-/* A small tick or cross box that says its state in words for screen readers. */
 export function Tick({ ok }) {
   return (
     <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-full',
@@ -122,8 +114,6 @@ export function Tick({ ok }) {
     </span>
   )
 }
-
-/* ── icons ───────────────────────────────────────────────────────────── */
 
 const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"

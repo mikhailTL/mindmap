@@ -10,28 +10,11 @@ import { useViewerName } from '../../account/viewer'
 import { TODAY_LONG, longDate } from './PartHead'
 import { LeadCard, StartGrid, StartTile } from '../home/StartGrid'
 
-/* The student home. The owner, 17 October: "the home for all audiences needs
- * to have the 4-5 boxes and for student a update whether the patch is paired
- * or not (yes for demo) and not the data, data always goes under trends
- * section!"
- *
- * So: a greeting, the patch's state, and five cards that each open a part of
- * the app. No score, no Heads Up history, no chart and no log here; all of
- * that is on the Trends tab (src/views/student/TrendsTab.jsx). Privacy is
- * already in the tab bar, so it has no card.
- *
- * Live has no stored pairing yet (the Bluetooth hand-off in lib/engine.js
- * connects and returns, it keeps no record), so Live always says no patch is
- * paired and offers the phone camera. */
-
 const EASE = [0.23, 1, 0.32, 1]
-
-/* ── Motifs: one small drawing per card, transform and opacity only ──────── */
 
 const PULSE = 'M0 26H34l5-2 4 2h12l5-16 7 30 6-24 4 10h21l5-4 4 4H120l5-2 4 2h12l5-16 7 30 6-24 4 10h21l5-4 4 4H200'
 
-/* A pulse trace that keeps arriving. Two copies side by side, the row slides
-   one copy's width and starts again, so the seam never shows. */
+// Two copies of the trace side by side; sliding by one copy's width loops with no visible seam.
 function PulseMotif({ calm, className }) {
   const line = (
     <svg viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden className="block h-full w-1/2">
@@ -133,8 +116,6 @@ function NetworkMotif({ calm, className }) {
   )
 }
 
-/* ── Patch status ───────────────────────────────────────────────────────── */
-
 function PatchStatus({ paired, go }) {
   const reduced = useReducedMotion()
   const camera = () => { setReadingIntent('sensors'); go('reading') }
@@ -182,10 +163,6 @@ function PatchStatus({ paired, go }) {
   )
 }
 
-/* ── The screen ─────────────────────────────────────────────────────────── */
-
-/* Cards first, as on the earlier start screen: the one dark card for the
-   thing a student does most, then four even tiles, then the patch. */
 const TILES = [
   { id: 'student-trends', title: 'Trends', tone: 'bg-sky-wash', chevron: 'text-sky-ink',
     Motif: RainbowMotif, motif: 'h-full w-full' },
@@ -201,7 +178,6 @@ export function StudentHome({ go }) {
   const [mode] = useMode()
   const calm = !!useReducedMotion()
   const demo = mode !== 'real'
-  /* "Welcome, Student" in the demo, the account's first name in Live. */
   const name = useViewerName('student')
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
@@ -222,6 +198,7 @@ export function StudentHome({ go }) {
         ))}
       </StartGrid>
 
+      {/* Live keeps no stored pairing, so only the demo shows a paired patch. */}
       <PatchStatus paired={demo} go={go}/>
     </div>
   )

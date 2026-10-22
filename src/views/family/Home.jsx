@@ -6,11 +6,6 @@ import { TODAY_LONG, longDate } from '../student/PartHead'
 import NetworkBox from './NetworkBox'
 import { StartGrid, StartTile } from '../home/StartGrid'
 
-/* The parent's home: a greeting, four tiles (Trends, Toolkit,
- * Ask MindMap AI, Network), then the network box with Add a teen and Add a
- * PRO. No figures here at all: every Mind Score, Heads Up face and chart is
- * on Trends. Privacy is on the tab bar only (owner, 18 October). */
-
 const HUE = {
   sky:   { ground: 'bg-sky-wash',   ink: 'text-sky-ink',   art: '#2294e6', ring: 'focus-visible:outline-sky-ink' },
   sun:   { ground: 'bg-sun-wash',   ink: 'text-sun-ink',   art: '#b5871b', ring: 'focus-visible:outline-sun-ink' },
@@ -22,10 +17,8 @@ export default function ParentHomeBoard({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
-  /* "Welcome, Parent" in the demo, the account's first name in Live. */
   const name = useViewerName('parent')
 
-  /* Cards first, as on the earlier start screen, then the network. */
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
       <header>
@@ -48,9 +41,6 @@ export default function ParentHomeBoard({ go }) {
     </div>
   )
 }
-
-/* The drawings. Each is in its card's own hue on white, at the same 2.2
- * stroke, and says what the place holds rather than decorating it. */
 
 function CalendarArt({ className }) {
   const c = HUE.sky.art

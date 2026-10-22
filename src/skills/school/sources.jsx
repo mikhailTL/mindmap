@@ -6,13 +6,8 @@ import { SOURCE_QUESTIONS, scoreSource, SAMPLES, SORT_BINS, gradeSort } from './
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, GoalMeter, leave, roundLine } from '../../toolkit/game/skill'
 
-/* The practice sort as a quick round: one made-up source at a time. */
 const ROUND = SAMPLES.map(x => ({ id:x.id, prompt:x.title, sub:x.detail, fixed:true, why:x.why,
   options: SORT_BINS.map(b => ({ id:b.id, text:b.label, ok:b.id === x.answer })) }))
-
-/* Source checker. Type the claim and where it came from, answer six quick
- * checks, and get a confidence result with what to do about each weak spot.
- * A practice round sorts six made-up sources. */
 
 const ID = 'school-sources'
 const START = { mode:'check', claim:'', source:'', answers:{}, done:false, note:'', saved:[], picks:{}, graded:false }

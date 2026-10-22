@@ -2,10 +2,6 @@ import React from 'react'
 import { vars } from './theme'
 import { cn } from '../lib/utils'
 
-/* Free videos and podcasts, moved from the landing page into the app's
- * Toolkit. Each opens the outside site in a new tab; nothing about which one
- * was opened is kept or sent. */
-
 export const RESOURCES = [
   { title: 'Free on YouTube', items: [
     { name: 'Yoga With Adriene', what: 'Yoga and stretching, all levels', href: 'https://www.youtube.com/@yogawithadriene' },

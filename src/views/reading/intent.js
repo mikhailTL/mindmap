@@ -1,7 +1,5 @@
-/* One-shot hand-off for a link that has to land on a reading rather than on the
-   chooser. A reading has no route of its own, so the page that links to one
-   sets this immediately before go('check') and the reading screen reads it once
-   on mount. Module state, not storage: it must not survive a reload. */
+// One-shot hand-off: a page sets this just before go('check'), and the reading screen takes it once on mount.
+// Module state, so it does not survive a reload.
 let want = null
 
 export function setReadingIntent(id) { want = id }

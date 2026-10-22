@@ -6,27 +6,7 @@ import { SharingControls } from '../app'
 import { MOVE_LIMIT_G } from '../signals/motion'
 import { StudentHome } from './student/Home'
 
-/* The student app's Home and Reading screens, and the shell the student tabs
- * sit in.
- *
- * The owner, 17 October: "the home for all audiences needs to have the 4-5
- * boxes and for student a update whether the patch is paired or not (yes for
- * demo) and not the data, data always goes under trends section!" and "log
- * and trends needs to be moved from home and readings into the trends
- * category for students both live and demo."
- *
- *   today   src/views/student/Home.jsx: greeting, patch status, five cards
- *   check   the ways to take a reading and the result of the one just taken
- *   shared  the sharing switches
- *
- * Everything the home used to show (the dial, Heads Up, the live signals, the
- * day and the working behind the score) is on the Trends tab now:
- * src/views/student/TrendsTab.jsx and src/views/student/TodayDetail.jsx. */
-
-/* ── Take a reading ─────────────────────────────────────────────────────── */
-
-/* Both lists are the engine read back, not copy: every row names something
-   scoreCapture returns or something the capture screens drop on the device. */
+// Each row names something scoreCapture returns, or something the capture screens drop on the device.
 const GIVES = [
   ['One number, 0 to 100', 'The score is compared with your own normal only.'],
   ['A likely range', 'The range widens when a signal is missing or noisy.'],
@@ -73,8 +53,7 @@ function CheckBody({ go }) {
   )
 }
 
-/* One screen per route, no tab strip: the bar at the bottom of the app is the
-   navigation. */
+// One screen per route with no tab strip; the app's bottom bar is the navigation.
 const PANES = { today: StudentHome, check: CheckBody, shared: SharingControls }
 
 export function Students({ go, tab = 'today' }) {

@@ -1,9 +1,3 @@
-/* The About text, in the owner's own words (18 October). Kept as he wrote it
-   apart from the fixes he asked for: "MindMap" spelled as the product,
-   Counselors/Professionals for "medical professionals/schools", and four
-   typos ("fast array", "months at end", "these crisis"). Long paragraphs are
-   split at sentence ends only; no sentence is reworded. */
-
 export const PARTS = [
   { id: 'problem',  n: '01', title: 'The Problem' },
   { id: 'why',      n: '02', title: 'Why MindMap' },
@@ -14,8 +8,6 @@ export const PARTS = [
 
 export const PROBLEM = 'Across the globe, millions of adolescents are silently suffering in the face of the rapidly growing plague of mental illness. 1 in 7 adolescents already suffer from a diagnosed mental illness, while nearly 70% of those showing symptoms remain undiagnosed. The detrimental impacts have expanded further, as mental-illness related suicide has become the #2 leading cause of death among adolescents globally. Within Florida, 40% of adolescents have reported persistent feelings of sadness or hopelessness, leading to over 225,000 depressive episodes within young people over just a year.'
 
-/* The figures in the paragraph above, lifted out as highlights. Each caption
-   is a fragment of his sentence, not a new claim. */
 export const STATS = [
   { mark: '1 in 7',       to: 7,      fmt: v => `1 in ${v}`,                     note: 'adolescents already suffer from a diagnosed mental illness' },
   { mark: 'nearly 70%',   to: 70,     fmt: v => `${v}%`, pre: 'nearly',          note: 'of those showing symptoms remain undiagnosed' },
@@ -69,7 +61,6 @@ export const VISION = [
 /* The words in the vision line set in the accent green. */
 export const VISION_MARK = 'no teen ever feels their invisible stress is invisible alone'
 
-/* Every string a reader sees, for the copy checks in tests/about.test.js. */
 export const ALL_TEXT = [
   PROBLEM, ...STATS.map(s => s.note), ...WHY, ...PERSONAL.flatMap(p => [p.step, p.text]),
   WHAT_LEAD, ...FEATURES.flatMap(f => [f.tag, f.text, ...(f.tools || []).flatMap(t => [t.name, t.text])]),

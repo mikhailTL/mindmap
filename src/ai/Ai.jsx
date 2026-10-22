@@ -1,3 +1,4 @@
+// MindMap AI chat. Messages go only to /api/mindmap-ai and are not stored; the composer renders only after the server confirms a key.
 import React from 'react'
 import { cn } from '../lib/utils'
 import { NOTES, PRO_LC, SCORE } from '../lib/terms'
@@ -8,60 +9,18 @@ import { usualTypingGap } from '../app/store'
 import { AUDIENCES, PILLARS, SOURCES, pillarSources } from './framework'
 import { Chip, Glass, TechRoot, TechTitle } from '../ui/tech'
 
-/* MindMap AI.
- *
- * A real language model behind api/mindmap-ai.js, with the owner's key in the
- * Vercel environment. Three things this screen is built around:
- *
- * 1. It asks the server whether a key exists before it draws anything a reader
- *    could type into. With no key the composer is never rendered: the screen
- *    says it is not connected and stops. It cannot appear to answer, because
- *    there is no field and no reply element to fill.
- * 2. Every reply carries the name of the model that produced it, read off the
- *    server response rather than written here. Nothing on this screen is
- *    labelled as an answer unless a model returned it.
- * 3. It says what leaves the phone, in the interface and not in a policy page.
- *    This is a real change from Notes, which never left the device: a message
- *    here goes to MindMap's server and on to the model. The panel above the
- *    composer is that sentence, and it is not collapsible.
- *
- * Nothing typed here reaches storage. There is no localStorage, no store.js
- * and no endpoint other than the one model call, and the server writes no
- * copy. Leaving the screen ends the conversation.
- *
- * 14 OCTOBER, design spec 0f: no paragraph, no sentence over ten words, and
- * the screen fills a laptop. At 1280 the conversation sits left and the
- * data-sent card, the help lines and the framework sit right; at 390 it is
- * one column.
- *
- * 18 OCTOBER, the owner: "implement the cool discord style design strats at a
- * technical cool level but not like copying discord". The screen sits on the
- * tech ground (ui/tech): a header with a slow soft orb, glass bubbles with
- * gradient edges, a glowing ring on the composer and three dots while the
- * model answers. 19 October, the owner: "too many black gradient
- * backgrounds", so that ground is the light one. Behaviour is unchanged.
- * Text on it is #0d2b1e or #2a5744, both over 7 : 1 on every fill here; the
- * help lines keep the red button and a warm edge so they are the first panel
- * the eye finds.
- */
-
+// Both text colours are above 7:1 on every fill used here.
 const HI = 'text-[#0d2b1e]', DIM = 'text-[#2a5744]'
 
 const ENDPOINT = '/api/mindmap-ai'
 const MAX_CHARS = 1200
 
-/* ── Marks ──────────────────────────────────────────────────────────────── */
-
 const SendMark = p => <ArrowRight {...p}/>
-
-/* ── Small pieces ───────────────────────────────────────────────────────── */
 
 function Heading({ children }) {
   return <h3 className={cn('font-display text-ui font-bold', HI)}>{children}</h3>
 }
 
-/* The disclosure the rest of the app uses: a full width control with a word
-   and a chevron, no capsule and no icon disc. */
 function Disclosure({ label, children, className }) {
   const [open, setOpen] = React.useState(false)
   const id = React.useId()
@@ -79,8 +38,6 @@ function Disclosure({ label, children, className }) {
     </Glass>
   )
 }
-
-/* ── What leaves the phone ──────────────────────────────────────────────── */
 
 const LEAVES = [
   ['Sent', 'Your words, to MindMap’s server and on to the model.'],
@@ -107,8 +64,6 @@ function Leaves() {
     </Glass>
   )
 }
-
-/* ── The framework, printed where the reader is ─────────────────────────── */
 
 function Framework() {
   return (
@@ -154,8 +109,6 @@ function Framework() {
   )
 }
 
-/* ── Transcript ─────────────────────────────────────────────────────────── */
-
 function Turn({ turn }) {
   const mine = turn.role === 'user'
   return (
@@ -177,20 +130,6 @@ function Turn({ turn }) {
   )
 }
 
-/* ── The screen ─────────────────────────────────────────────────────────── */
-
-/**
- * MindMap AI, for one of the three audiences.
- *
- * Props
- *   who        'student' | 'parent' | 'pro'   Which adaptation answers. Default 'student'.
- *   go         function                       Optional. The router, used only by the
- *                                             "How it works" button when present.
- *   className  string                         Optional.
- *
- * Mount at: route `ai` in src/views/App.jsx, in place of <AiPending/>:
- *   ai: p => <MindMapAI {...p} who={audience}/>,
- */
 export function MindMapAI({ who = 'student', go, className }) {
   const audience = AUDIENCES[who] ? who : 'student'
   const spec = AUDIENCES[audience]
@@ -200,8 +139,7 @@ export function MindMapAI({ who = 'student', go, className }) {
   const [model, setModel] = React.useState(null)
   const [turns, setTurns] = React.useState([])
   const [draft, setDraft] = React.useState('')
-  /* Typing rhythm: the time between keys in this one field, never the
-     keys. Summarised on send, kept on the device (src/signals/typing.js). */
+  // Records key timing only, not key values (src/signals/typing.js).
   const typing = useTypingRecorder()
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -210,9 +148,7 @@ export function MindMapAI({ who = 'student', go, className }) {
 
   React.useEffect(() => () => { live.current = false }, [])
 
-  /* One probe, before anything a reader could type into exists. A dev server
-     with no serverless runtime answers this with HTML, which is not a key and
-     is reported as unreachable rather than as connected. */
+  // Probes the endpoint before any input exists; a dev server without the API answers with HTML, treated as unreachable.
   React.useEffect(() => {
     let dead = false
     ;(async () => {
@@ -231,8 +167,7 @@ export function MindMapAI({ who = 'student', go, className }) {
     return () => { dead = true }
   }, [])
 
-  /* The conversation is per audience: switching adaptation mid thread would
-     answer a parent under a student's rules. */
+  // Each audience has its own rules, so the conversation resets when it changes.
   React.useEffect(() => { setTurns([]); setDraft(''); setError('') }, [audience])
 
   React.useEffect(() => {
@@ -278,6 +213,7 @@ export function MindMapAI({ who = 'student', go, className }) {
     }
   }, [audience, model, pending, turns])
 
+  // Enter sends only on fine-pointer devices; on touch it inserts a newline.
   const fine = typeof window !== 'undefined'
     && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches
 
@@ -379,8 +315,7 @@ export function MindMapAI({ who = 'student', go, className }) {
             <form className="mt-4" onSubmit={e => { e.preventDefault(); send(draft) }}>
               <label className="t-field block">
                 <span className="sr-only">Your message</span>
-                {/* text-ui is 16px: the floor that stops iOS Safari zooming the
-                    page when a field takes focus. Do not shrink it. */}
+                {/* text-ui is 16px, the minimum that stops iOS Safari zooming the page on focus. */}
                 <textarea rows={3} value={draft} maxLength={MAX_CHARS}
                   onChange={e => setDraft(e.target.value)}
                   onKeyDown={e => {
@@ -394,8 +329,6 @@ export function MindMapAI({ who = 'student', go, className }) {
                     p-3 font-body text-ui leading-[1.55] text-[#0d2b1e] placeholder:text-[#426a58]
                     caret-[#157446]"/>
               </label>
-              {/* The typing nudge is a light component from the Toolkit, so
-                  it gets its own paper ground; empty when it has nothing. */}
               <div className="mt-2 rounded-field bg-paper px-3 py-2 empty:hidden">
                 <TypingLine rhythm={typing.rhythm} usual={usualTypingGap()} className="mt-0"/>
               </div>

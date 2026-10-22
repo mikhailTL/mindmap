@@ -1,11 +1,11 @@
-"""MindMap neural scorer — the research run.
+"""MindMap neural scorer: the research run.
 
 A  WESAD leave-one-subject-out: formula vs linear vs NAM vs T-NAM vs black boxes
    (+ ablations by FEATSET, + amusement/meditation false-alarm rates).
 B  Zero-shot transfer: train on all of WESAD (lab TSST), test on 20 new people in
    the PhysioNet Non-EEG protocol (cognitive stress, emotional stress, relax),
    with no HRV channel available (missing-sensor robustness).
-C  The movement confound on real data: physical stress (walk/jog) windows —
+C  The movement confound on real data: physical stress (walk/jog) windows:
    how often each scorer flags them, next to how often it catches cognitive stress.
 D  Label-efficient personal calibration: a new person answers k check-ins; which
    windows to ask about (random / scheduled / signal-triggered) and how the

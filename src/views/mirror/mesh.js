@@ -1,16 +1,8 @@
 import { CONTOURS, TRIS, VERTS } from './canonicalFace'
 
-/* The face mesh the drawn previews use (MeshPreview here, MirrorDemo on How
- * it works): MediaPipe's own canonical face, 478 points in the Face
- * Landmarker's order, its real tessellation and feature contours. Drawn the
- * way MediaPipe's demos draw a result: hairline edges, small solid points,
- * the features a little stronger in one colour. No glow, no blur.
- * 20 October, the owner: the mask should "look more like an actual AI model
- * ML not like an LED gala mask". */
-
 export const N = 478
 
-/* Model space points, the ten iris points added at the centre of each eye. */
+// Model-space points, with the ten iris points (468 to 477) added at the centre of each eye.
 function points() {
   const p = new Float32Array(N * 3)
   p.set(VERTS)
@@ -56,9 +48,8 @@ export function faceMesh() {
   return MESH
 }
 
-/* Model space to the canvas: a small head turn (yaw, pitch in radians), a
-   blink, a brow lift and a lip press, then scale about (cx, cy). Writes into
-   `out` (x, y pairs) and returns it. */
+// Model space to canvas: head turn (yaw, pitch in radians), blink, brow lift and lip press, then scale about
+// (cx, cy). Writes x, y pairs into `out` and returns it.
 export function project(m, out, { cx, cy, s, yaw = 0, pitch = 0, blink = 0, brow = 0, press = 0 }) {
   const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch)
   const P = m.p
@@ -77,7 +68,6 @@ export function project(m, out, { cx, cy, s, yaw = 0, pitch = 0, blink = 0, brow
   return out
 }
 
-/* Pairs of point indices as one path. `on(i)` hides points not yet in. */
 export function strokePairs(ctx, xy, pairs, on, upto = pairs.length) {
   ctx.beginPath()
   for (let k = 0; k + 1 < upto; k += 2) {
@@ -88,9 +78,8 @@ export function strokePairs(ctx, xy, pairs, on, upto = pairs.length) {
   ctx.stroke()
 }
 
-/* The forehead patch the pulse is read from, as face-capture.js places it:
-   a fifth of the way down from the hairline (10) to the brow line (9), a
-   third of the face (234 to 454) wide. */
+// The forehead patch as face-capture.js places it: a fifth of the way from landmark 10 down to 9, and a third
+// of the face (234 to 454) wide.
 export function patchRect(xy) {
   const tx = xy[20], ty = xy[21], bx = xy[18], by = xy[19]
   const span = Math.abs(by - ty)

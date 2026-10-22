@@ -6,30 +6,12 @@ import { PRO, PRO_PLURAL_LC, SCORE } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 import { Glass } from '../../ui/tech'
 
-/* The two drawings on the How it works tech tabs (ui/tech): the Mind Score
- * network and MindMap AI's framework. They replace charts/architecture.jsx.
- *
- * Labels are HTML; the SVGs hold lines only and are aria-hidden, so a label
- * never shrinks with the drawing. Nothing is invented: the curves are read out
- * of signals/tnam-results.js, the memory length from signals/tnam.js. Small
- * dots run along the lines while the band is on screen (tech.css).
- *
- * 19 October (later), the owner: "some of the words under how it works are
- * too little, needs some more explanation". Each drawing now ends in one
- * plain line saying how to read it, for screen readers (the figcaption).
- *
- * 20 October, the owner: "reduce glow a bit" and "AI font, remove". No glow
- * under any line, dot or ring; labels in the body face; lines and dots take
- * the band's own colour (--t-hue, ui/tech/tech.css), not always green. */
-
+// Mind Score network and MindMap AI framework drawings. Labels are HTML over aria-hidden SVG lines, so a label
+// does not shrink with the drawing.
 const LABEL = 'text-[0.8125rem] font-semibold leading-none text-[#0f5836]'
 const HUE = { stroke: 'var(--t-hue, #157446)' }
 
-/* ── the Mind Score network ─────────────────────────────────────────────── */
-
-/* The plainest feature of each signal, as in the old figure: heart rate,
-   tonic sweat, temperature slope and movement. Each tile's y range is its
-   own, so it shows the curve's shape and nothing about its size. */
+// Curves come from signals/tnam-results.js. Each tile has its own y range, so it shows shape, not size.
 const CURVE_OF = { heart: 'hr', sweat: 'edaTonic', temp: 'tempSlope', move: 'motion' }
 const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
@@ -45,7 +27,6 @@ function curvePath(shape) {
   }).join('')
 }
 
-/* Lines in a 0..100 wide box that stretches; strokes stay 1.5px. */
 function Lines({ h, paths, className }) {
   return (
     <svg viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" aria-hidden focusable="false"
@@ -55,7 +36,6 @@ function Lines({ h, paths, className }) {
   )
 }
 
-/* Small dots along straight lanes. Each is [x0 %, y0 px, x1 %, y1 px]. */
 function Packets({ runs, delay = 0 }) {
   return runs.map(([x0, y0, x1, y1], i) => (
     <span key={i} aria-hidden className="t-lane t-anim"
@@ -158,10 +138,8 @@ export function NetworkGlow({ className }) {
   )
 }
 
-/* ── one framework, three adaptations ───────────────────────────────────── */
-
 const PUBLISHERS = ['SAMHSA', 'NIMH', 'AAP', 'CDC']
-/* "Counselor/Professional" may break after the slash in a narrow column. */
+// Lets "Counselor/Professional" break after the slash in a narrow column.
 const soft = s => s.split('/').flatMap((p, i, a) => i < a.length - 1 ? [p + '/', <wbr key={i}/>] : [p])
 const ADAPTATIONS = ['Student', 'Parent', PRO]
 const FAN = [16.67, 50, 83.33]

@@ -2,20 +2,14 @@ import * as React from 'react'
 import { cn } from '../lib/utils'
 import { MODES, useMode } from '../lib/mode'
 
-/* Selection is carried by fill and weight, never by hue, so it survives
-   grayscale. */
-
-/* The value stays 'real' in src/lib/mode.js; only the word changed. */
 const LABEL = { demo: 'Demo', real: 'Live' }
 
-/* A radiogroup, not two buttons: screen readers get the "1 of 2" position for
-   free. Arrow-key selection is hand-written below. */
 export function ModeToggle({ className, compact = false }) {
   const [mode, setMode] = useMode()
   const refs = React.useRef([])
   const helpId = React.useId()
 
-  /* In a radio group the arrow keys select as they move — no confirm step. */
+  // Arrow keys move and select in one step, as in a native radio group; the group is one tab stop.
   function onKeyDown(e) {
     const i = MODES.indexOf(mode)
     let next = -1
@@ -46,14 +40,10 @@ export function ModeToggle({ className, compact = false }) {
               type="button"
               role="radio"
               aria-checked={on}
-              /* Roving tabindex: the group is one tab stop, and Tab leaves it
-               * rather than walking through every option. */
               tabIndex={on ? 0 : -1}
               onClick={() => setMode(m)}
               onKeyDown={onKeyDown}
               className={cn(
-                /* 44px is the touch floor; compact drops to 36px because it
-                 * sits in the header beside a pointer-sized control. */
                 compact ? 'min-h-[36px] px-3 font-display text-fine' : 'min-h-[44px] px-4 font-display text-ui',
                 'transition-[background-color,color] duration-150 ease-out',
                 'disabled:pointer-events-none disabled:opacity-45',
@@ -70,8 +60,6 @@ export function ModeToggle({ className, compact = false }) {
         })}
       </div>
       {mode === 'demo' && <DemoInfo/>}
-      {/* Set as text and wired with aria-describedby, not a title attribute:
-       * title is unreachable by touch and keyboard and mostly unannounced. */}
       <p id={helpId} className={cn('note max-w-[30ch]', compact ? 'sr-only' : 'hidden lg:block')}>
         Live shows your own readings and network. Demo shows a worked example.
       </p>
@@ -79,9 +67,6 @@ export function ModeToggle({ className, compact = false }) {
   )
 }
 
-/* The owner, 18 October: no demo notice on the pages, only "Demo" at the top
-   and a small "?" after it saying the people and data are made up. A
-   disclosure, not a title tooltip, so it opens by tap and by keyboard. */
 function DemoInfo() {
   const [open, setOpen] = React.useState(false)
   const box = React.useRef(null)
@@ -95,7 +80,7 @@ function DemoInfo() {
     const shut = () => setOpen(false)
     document.addEventListener('pointerdown', away)
     document.addEventListener('keydown', esc)
-    /* The top bar stays mounted across routes, so a new page closes it. */
+    // The top bar stays mounted across routes, so a route change closes the popover.
     window.addEventListener('hashchange', shut)
     return () => {
       document.removeEventListener('pointerdown', away)

@@ -1,8 +1,4 @@
-/* Local saving for the Career tools. One object per tool under
-   `mindmap.skills.<tool id>`. Every access is wrapped: a private window, a
-   full disk or blocked site data gives back the fallback, never a crash.
-   Nothing here is ever sent anywhere. */
-
+// One object per tool under mindmap.skills.<id>; blocked storage returns the fallback.
 export const keyFor = id => `mindmap.skills.${id}`
 
 const local = () => { try { return globalThis.localStorage } catch { return undefined } }

@@ -8,12 +8,7 @@ import {
   DAYS, LOCK_COPY, LOCK_LEVELS, getNotify, getVersion, lockLine, setNotify, subscribe,
 } from './store'
 
-/* Reminder settings: whether, which days, what time, and what a locked
- * screen may show. Every default is the quietest option and the switch starts
- * off. No streaks, tallies or second reminders. The preview comes from
- * store.js's lockLine() so it cannot drift from the setting.
- */
-
+// Reminder settings. Every default is the quietest option; the lock-screen preview uses lockLine() from store.js.
 const DAY_CHIPS = DAYS.map(d => ({ value: d.n, label: d.short, full: d.full }))
 
 const LOCK_SHORT = { name: 'Name only', plain: 'Plain reminder', score: `Reminder and ${SCORE}` }
@@ -50,9 +45,6 @@ function dayPhrase(days) {
   return names.length === 1 ? `on ${names[0]}` : `on ${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
 
-/* A lock screen with a light wallpaper, the way the app looks (owner, 19
-   October: "stop making things dark"): pale sky to mint, a frosted white
-   banner. ink on the palest stop is 13.5 : 1, ink-2 7.3. */
 function LockPreview({ settings, score }) {
   const line = lockLine(settings, score)
   const [app, ...rest] = line.split(' · ')
@@ -89,7 +81,6 @@ function WhyPanel({ title, aside, why, whyLabel, children }) {
   )
 }
 
-/* The reminder screen, at route `app-notify`. `score` feeds the preview. */
 export function NotificationSettings({ score = null, className }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const s = getNotify()

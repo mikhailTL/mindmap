@@ -1,17 +1,6 @@
 import { MoveMark, PulseMark, SweatMark, TempMark } from '../ui/marks'
 
-/* The four patch signals and the one colour each owns on every surface. Used
-   flat at full strength, graphics only — no gradient, blur or partial opacity.
-   Contrast against paper, all clearing the 3:1 non-text graphics minimum:
-
-     heart  #e11919  red      0°   4.70
-     sweat  #e86a05  orange  27°   3.15
-     temp   #199e19  green  120°   3.44
-     move   #1560e0  blue   218°   5.41
-
-   Colour never touches text: a coloured figure reads as a status, and heart
-   red shares the reserved crisis red's hue. Bar, icon and dot carry identity;
-   the figure beside them is always ink. */
+// Each patch signal's colour; all clear 3:1 graphics contrast on paper and stay off text, since heart red shares the crisis hue.
 export const SENSORS = {
   heart: { id:'heart', name:'Heart',       unit:'bpm', icon:PulseMark,       glow:'#e11919',
            short:'Your heart rate, and how even the beats are.',
@@ -28,5 +17,4 @@ export const SENSORS = {
 }
 export const SENSOR_ORDER = ['heart','sweat','temp','move']
 
-/* Outer ring first, so the rainbow runs warm to cool from the outside in. */
 export const RAINBOW = SENSOR_ORDER.map(id => SENSORS[id])

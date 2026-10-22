@@ -12,8 +12,6 @@ const PAIRS = {
 }
 const ALL = Object.entries(PAIRS).flatMap(([app, tabs]) => tabs.map(tab => [app, tab]))
 
-/* A stand-in storage that says every guide was left open, so the server
-   render includes the steps. */
 let saved
 function fakeStorage(value) {
   const store = new Map()
@@ -97,7 +95,6 @@ describe('How to use guides', () => {
       const copy = [g.title, g.use, ...g.steps.map(s => s.cap), g.go?.label || ''].join(' ')
       expect(copy).not.toMatch(/[–—]/)
       expect(copy).not.toMatch(/diagnos|disorder|streak|treat/i)
-      /* "AI" only ever as the MindMap AI chat */
       expect(copy.replace(/MindMap AI/g, '')).not.toMatch(/\bAI\b/)
     }
   })

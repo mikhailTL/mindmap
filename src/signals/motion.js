@@ -1,7 +1,4 @@
-/* Movement during a capture. Movement is a disqualifier, not a stress signal:
- * above 0.35 g the score is held back rather than counted, because a hard run
- * and a hard day look alike in every other channel. Same rule as the patch,
- * and here it doubles as a check on a fingertip sliding off the lens. */
+// Peak movement above 0.35 g holds the score back, since exercise and stress look alike on the other channels.
 export const MOVE_LIMIT_G = 0.35
 
 export function startMotion() {
@@ -9,8 +6,7 @@ export function startMotion() {
   const on = e => {
     const a = e.accelerationIncludingGravity || e.acceleration
     if (!a || a.x == null) return
-    /* Subtract 1 g of magnitude, not an axis, so a phone held at any angle
-       reads zero when still. */
+    // Magnitude in g minus 1 g, so a still phone reads zero at any angle.
     const g = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) / 9.81
     mags.push(Math.abs(g - 1))
   }
@@ -26,7 +22,7 @@ export function startMotion() {
   }
 }
 
-/* iOS needs a user gesture before it will hand over the accelerometer. */
+// iOS grants accelerometer access only after a tap or click.
 export async function askMotion() {
   const C = typeof DeviceMotionEvent !== 'undefined' ? DeviceMotionEvent : null
   if (!C) return false

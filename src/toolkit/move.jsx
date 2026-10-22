@@ -7,20 +7,6 @@ import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, Countdown, EndCard, FillRing, SPRING } from './game'
 
-/* Movement Break, as a five move challenge.
- *
- * Each move has twenty seconds and a 3, 2, 1 before it. With the phone in
- * hand, the motion sensor (DeviceMotion) fills a meter as you move: about ten
- * seconds of real movement fills it, and a full meter ends the move early.
- * Points per move: up to 20 for the meter, 10 for finishing, 5 more for a
- * full meter. iPhone asks permission on the Start tap.
- *
- * No sensor (a laptop, a refusal, or no readings in the first second and a
- * half): tap mode. Do the move and tap Done; 30 points a move.
- *
- * WHERE THE READINGS GO. Nowhere. One number is kept for the current frame
- * and overwritten. SAFETY. Every move is gentle and within comfort. */
-
 const MOVES = [
   { id:'reach',     name:'Reach up',       say:'Reach both arms up high. Hold the phone loosely.' },
   { id:'shake',     name:'Shake it out',   say:'Shake your hands and arms loose.' },
@@ -29,9 +15,9 @@ const MOVES = [
   { id:'march',     name:'March',          say:'March on the spot. Easy knees.' },
 ]
 const SECS = 20
-const FILL_SECS = 10
+const FILL_SECS = 10  // seconds of real movement that fill the meter
 
-/* Motion sensor: resolves 'motion' when real readings arrive, 'tap' when not. */
+// Resolves 'motion' when real DeviceMotion readings arrive and 'tap' when none do.
 async function openMotion(energy) {
   if (typeof window === 'undefined' || !('DeviceMotionEvent' in window)) return { mode:'tap', stop:() => {} }
   try {

@@ -7,10 +7,6 @@ import { GROUPS, PHOTO_MAX, ROLE_PICKS, avatarEntry, avatarWords, initialsOf, is
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import './appearance'
 
-/* The pieces the three account screens share. Same idiom as
-   src/app/controls.jsx: a row is 56 tall, carries an icon, and says its state
-   in a word. Nothing here reads a score. */
-
 export const field = cn(
   'mt-1 block min-h-[44px] w-full rounded-field border border-rule bg-card px-3',
   'font-display text-ui text-ink transition-colors duration-150 ease',
@@ -19,8 +15,6 @@ export const field = cn(
 
 export const fieldError = 'border-crit'
 
-/* The chosen picture; with none, a circle with the initials; signed out,
-   the outline person mark. */
 export function Avatar({ name, avatar = null, size = 'md', className }) {
   const letter = initialsOf(name)
   const box = size === 'lg' ? 'size-14 text-row' : size === 'sm' ? 'size-8 text-fine' : 'size-10 text-ui'
@@ -34,8 +28,6 @@ export function Avatar({ name, avatar = null, size = 'md', className }) {
   )
 }
 
-/* The local marks this folder needs, in the same 24 box and 1.6 stroke as
-   src/ui/marks.jsx. */
 const M = ({ children, size = 20, className }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden stroke="currentColor"
     strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={cn('shrink-0', className)}>{children}</svg>
@@ -51,9 +43,7 @@ export const LinkMark    = p => <M {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 
 const PICK_GROUPS = GROUPS.map(g => ({ ...g, items: AVATARS.filter(a => a.group === g.id) }))
 const groupOf = id => avatarEntry(id)?.group || PICK_GROUPS[0].id
 
-/* One grid of pictures as a radiogroup with a roving tab stop: Tab enters on
-   the chosen one (or the first), the arrows walk the grid in two directions,
-   Home and End jump to the ends, and a press chooses. */
+// A radiogroup with a roving tab stop: arrows move in two directions, Home and End jump, a press chooses.
 function PictureGrid({ items, value, onChange, name, label }) {
   const refs = React.useRef([])
   const gridRef = React.useRef(null)
@@ -105,20 +95,13 @@ function PictureGrid({ items, value, onChange, name, label }) {
   )
 }
 
-/* What each role picks from. The owner, 18 October: "kids should be the
-   animal and fun ones, parents should use either letter avatars or uploaded
-   pictures, and counselors should use uploaded professional images". A teen
-   gets the drawings; everyone else their initials or a photo. */
 export const usesPhoto = role => role !== 'student'
 
-/* The picker for the reader's role. Two components, not one with a branch,
-   so a role change never reorders hooks. */
+// Two components rather than one with a branch, so a role change does not reorder hooks.
 export function AvatarPicker({ role = 'student', ...props }) {
   return usesPhoto(role) ? <PhotoPicker role={role} {...props}/> : <DrawingPicker {...props}/>
 }
 
-/* Every drawing, over a hundred, in four groups with a search box, a Random
-   button and a preview of the one chosen. `null` is the initials circle. */
 function DrawingPicker({ value, onChange, name, label = 'Your picture', className, actions = null }) {
   const [tab, setTab] = React.useState(() => groupOf(value))
   const [q, setQ] = React.useState('')
@@ -193,13 +176,10 @@ function DrawingPicker({ value, onChange, name, label = 'Your picture', classNam
   )
 }
 
-/* The picker folded behind its preview, for a form where it is one field of
-   several. `open` starts it unfolded. */
 export function AvatarChooser({ value, onChange, name, role = 'student', open: startOpen = false, className }) {
   const [open, setOpen] = React.useState(startOpen)
   const panel = React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const chosen = value ? avatarEntry(value) : null
-  /* The button moves when the picker opens; keep the focus on it. */
   const btn = React.useRef(null)
   const moved = React.useRef(false)
   React.useEffect(() => { if (moved.current) btn.current?.focus() }, [open])
@@ -228,9 +208,7 @@ export function AvatarChooser({ value, onChange, name, role = 'student', open: s
   )
 }
 
-/* Shrink a chosen image to a 160px square JPEG data URL, cut from the
-   middle and a little above it, where a face usually is. Nothing is sent
-   anywhere by this; the account keeps the result. */
+// A 160px square JPEG data URL, cropped from the centre and slightly above it, where a face usually is.
 async function photoFromFile(file) {
   if (!file || !/^image\//.test(file.type)) throw new Error('type')
   const url = URL.createObjectURL(file)
@@ -259,9 +237,6 @@ const PHOTO_HINT = {
 const PICKS = Object.fromEntries(Object.entries(ROLE_PICKS).map(([role, ids]) =>
   [role, ids.map(id => ({ id, label: avatarEntry(id)?.label || id }))]))
 
-/* A parent's or a Counselor/Professional's picture: initials, a photo they
-   upload, or one of their role's two drawings (a tree or a parent; a talk
-   bubble or a Counselor). */
 function PhotoPicker({ role, value, onChange, name, className, actions = null }) {
   const uid = 'ph' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const [err, setErr] = React.useState(null)
@@ -307,8 +282,6 @@ function PhotoPicker({ role, value, onChange, name, className, actions = null })
   )
 }
 
-/* A row with an icon and a chevron: the portal's sections and the way to the
-   next screen. */
 export function Row({ label, hint, Mark, onClick, aside, className }) {
   return (
     <button type="button" onClick={onClick}
@@ -331,9 +304,6 @@ export function Row({ label, hint, Mark, onClick, aside, className }) {
   )
 }
 
-/* A person on a network list: initial, name, role, and a status word. */
-/* `role` false drops the second line: under a heading that already names
-   the role, the row is the name alone. */
 export function PersonRow({ person, status, hint, comma = false, role = true, children, className }) {
   return (
     <div className={cn('flex min-h-[56px] items-center gap-3 border-t border-rule px-4 py-2.5',
@@ -385,13 +355,8 @@ export function Empty({ children }) {
   return <p className="px-4 py-4 text-fine text-ink-3">{children}</p>
 }
 
-/* The top bar's account menu (./menu/AccountMenu.jsx): the avatar opens a
-   dropdown of places with Sign out last. AccountButton below is the plain
-   one-press version and stays for anything that still mounts it. */
 export { AccountMenu } from './menu/AccountMenu'
 
-/* The top bar's account button. Owned here so App.jsx mounts one element.
-   Signed in: a circle with the initial; signed out: the outline mark. */
 export function AccountButton({ go, className }) {
   const me = useAccount()
   return (

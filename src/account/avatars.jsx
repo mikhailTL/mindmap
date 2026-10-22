@@ -4,17 +4,6 @@ import { AVATAR_IDS } from './store'
 import { CATALOG, PAIRS, avatarEntry, isPhotoAvatar } from './avatar-catalog'
 import { CharacterArt } from './characters/Character'
 
-/* Every picture an account can choose: the twelve animals first drawn here,
-   then thirty shapes and signs, twelve faces, twenty four emoji and thirty six
-   generated patterns from ./avatar-catalog.js.
-
-   Twelve animal characters, drawn here. Flat, rounded, two or three colours
-   on one of the six hue washes from tailwind.config.js, in a 64 box that
-   still reads at 32px: big head, dot eyes, a small smile. The hues are
-   graphics only; no word is ever set in them. The demo's people are drawn
-   in ./characters/Character.jsx. */
-
-/* Shared pieces. Eyes are two dots; the smile is one short arc. */
 const Eyes = ({ y = 30, dx = 7, r = 2.2 }) => (
   <><circle cx={32 - dx} cy={y} r={r} className="fill-ink"/><circle cx={32 + dx} cy={y} r={r} className="fill-ink"/></>
 )
@@ -122,7 +111,6 @@ const DRAW = {
   </>,
 }
 
-
 const WASH = {
   fox: 'fill-coral-wash', hedgehog: 'fill-coral-wash',
   owl: 'fill-sun-wash', bear: 'fill-sun-wash',
@@ -147,8 +135,6 @@ const star = (n, ro, ri) => Array.from({ length: n * 2 }, (_, i) => {
   const a = (-90 + (180 / n) * i) * Math.PI / 180, r = i % 2 ? ri : ro
   return `${(32 + r * Math.cos(a)).toFixed(2)},${(32 + r * Math.sin(a)).toFixed(2)}`
 }).join(' ')
-
-/* ── Shapes and signs ───────────────────────────────────────────────────── */
 
 const line = { strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' }
 
@@ -193,8 +179,6 @@ const SYM = {
     <rect key={x} x={x} y={y} width="7" height={50 - y} rx="3.5" className={i % 2 ? FI[h] : F[h]}/>))}</>,
 }
 
-/* ── Faces ──────────────────────────────────────────────────────────────── */
-
 const Dot = ({ x, y, r = 2.6 }) => <circle cx={x} cy={y} r={r} className="fill-ink"/>
 const ink = { strokeWidth: 2.6, className: 'stroke-ink', ...line }
 const Head = ({ h }) => <circle cx="32" cy="32" r="23" className={F[h]}/>
@@ -232,9 +216,7 @@ const FACE = {
   neutral: h => <><Head h={h}/><Dot x={24} y={28}/><Dot x={40} y={28}/><path d="M25 40h14" {...ink}/></>,
 }
 
-/* ── Patterns ───────────────────────────────────────────────────────────── */
-
-/* A fixed seed from the id, so a pattern is the same on every device. */
+// A seed derived from the id, so a generated pattern is identical on every device.
 function seeded(text) {
   let h = 2166136261
   for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619) }
@@ -302,12 +284,8 @@ function draw(c) {
   return { ground: FW[a], body: PAT[c.key]?.(a, b, c.id) }
 }
 
-/* The choices on a teen's picker, in order. The demo's other characters and
-   the adults' signs have no group and are left off. */
 export const AVATARS = CATALOG.filter(c => c.group).map(c => ({ id: c.id, label: c.label, group: c.group }))
 
-/* One picture. Decorative: the name beside it carries the meaning, so an
-   uploaded photo (its own data URL) has alt="" too. */
 export function AvatarArt({ id, className }) {
   const clip = 'av' + React.useId().replace(/[^a-zA-Z0-9]/g, '')
   if (isPhotoAvatar(id)) {
@@ -328,5 +306,4 @@ export function AvatarArt({ id, className }) {
   )
 }
 
-/* The original twelve, for anything that still wants only those. */
 export const ANIMAL_AVATARS = AVATAR_IDS.map(id => ({ id, label: id.charAt(0).toUpperCase() + id.slice(1) }))

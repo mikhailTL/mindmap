@@ -1,6 +1,3 @@
-/* You Belong Here: strengths from real wins, and the self-advocacy scripts.
- * Pure functions. */
-
 export const STRENGTHS = [
   { id:'reliable',  name:'Reliable', trait:'reliable' },
   { id:'curious',   name:'Curious', trait:'curious' },
@@ -23,7 +20,7 @@ export const WIN_PROMPTS = [
   'Something you learned on your own', 'A time you kept going', 'Something you made',
 ]
 
-/* wins: [{ text, strengths: [id] }] -> [{ id, name, count, wins: [text] }] */
+// wins: [{ text, strengths: [id] }] -> [{ id, name, count, wins: [text] }]
 export function topStrengths(wins = []) {
   const m = new Map()
   for (const w of wins) {
@@ -45,7 +42,7 @@ export const KINDS = [
   { id:'chance', label:'Ask for a chance' },
 ]
 
-/* "Fixed the printer" -> "I fixed the printer"; "I led it" stays. */
+// "Fixed the printer" -> "I fixed the printer"; text already starting with "I" is kept.
 export function asFirstPerson(text) {
   const t = String(text || '').trim().replace(/[.!?]+$/, '')
   if (!t) return ''
@@ -53,7 +50,6 @@ export function asFirstPerson(text) {
   return 'I ' + t[0].toLowerCase() + t.slice(1)
 }
 
-/* ["a", "b", "c"] -> "a, b and c" */
 export const listOf = xs => xs.length < 2 ? (xs[0] || '') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]
 
 const or = (v, ph) => (v && String(v).trim()) || ph

@@ -15,41 +15,10 @@ import { captureFace, drawOverlay, faceAvailable, loadLandmarker, loadVision, op
 import { emptyFaceBaseline, faceFeatures, faceSentence, scoreFace, updateFaceBaseline } from '../signals/face-score'
 import { fitCalibration, identityCalibration } from '../signals/tnam'
 
-/* The Mental Mirror. The front camera, the face model's landmarks drawn over
- * the face as it is read, thirty seconds, one Mind Score. Students only: it
- * lives under the Reading tab and asks once before the camera opens.
- *
- * No picture leaves the phone. Each frame becomes 52 expression scores, one
- * eye figure, one nose position and one skin-colour level, then is dropped.
- * The Mind Score that comes out is saved like any other reading; the frames
- * never are. Any change that buffers or persists frames breaks what the
- * screen says.
- *
- * Every reading owns a run id. Stop, a new Start and leaving the screen all
- * move the id on, so a run still waiting on the model or the camera finds out
- * when it wakes, stops its own camera and touches nothing else. Before this,
- * a run stopped while the model loaded carried on, and its failure stopped
- * the next run's camera (docs/mental-mirror.md).
- *
- * 18 October: the consent card and the camera panel sit on the tech ground
- * (ui/tech) with the How it works Mirror tab. 19 October, the owner: "too
- * many black gradient backgrounds", so that ground is light and only the
- * camera viewfinder stays dark (.mm-screen.is-live in mirror.css).
- *
- * 19 October, the owner: "too dry". The whole flow is light now (views/
- * mirror/): a contour ground, a mesh preview before the camera opens, a ring
- * of ticks round the face for the 30 seconds, live chips with the same
- * figures the face tags draw, a one-tap check-in, and the result as light
- * cards. No longer on ui/tech. The logic below is unchanged; the only
- * addition is `tags`, a 4 Hz copy of the tag figures for the chips.
- *
- * 20 October, the owner: "too cheesy". The contour ground, the glows, the
- * scan line and the corner brackets are gone; the tick ring is one solid
- * progress arc; the landmarks are drawn like MediaPipe's own demos (thin
- * tessellation, small points, no glow). Logic and copy unchanged. */
+// Mental Mirror: the front camera reads the face for 30 seconds and gives one Mind Score. Each frame becomes
+// 52 expression scores, an eye figure, a nose position and a skin-colour level, and is then dropped.
 
-/* The four bands of the dial (BANDS, ./mirror/parts), one per group of cues,
-   each 0 to 100 where 50 is this person's usual. */
+// Four bands, one per group of cues, each 0 to 100 where 50 is this person's usual.
 function bandsOf(result) {
   return BANDS.map(b => {
     const zs = result.contrib.filter(c => b.of.includes(c.id)).map(c => c.z)
@@ -87,9 +56,7 @@ function cameraMessage(e) {
 
 const KEEP = ['Students only.', 'No picture is kept.', 'Not a diagnosis.']
 
-/* Any render failure inside the mirror shows a short note and a retry, not a
-   blank tab. Unmounting the broken mirror runs its cleanup, so the camera is
-   off before the note shows. */
+// Unmounting the broken mirror runs its cleanup, so the camera is off before the retry note shows.
 class MirrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { failed: false, n: 0 } }
   static getDerivedStateFromError() { return { failed: true } }
@@ -116,6 +83,7 @@ function Mirror() {
   const canvasRef = React.useRef(null)
   const boxRef = React.useRef(null)
   const live = React.useRef({ stream: null, capture: null })
+  // Stop, Start and unmount all advance the run id, so a run waking from an await sees it is stale and only stops its own camera.
   const runId = React.useRef(0)
   const mounted = React.useRef(false)
   const dprRef = React.useRef(1)
@@ -154,8 +122,7 @@ function Mirror() {
     return () => { mounted.current = false; runId.current++; stopAll() }
   }, [stopAll])
 
-  /* The overlay canvas matches the box in device pixels, so the tags are
-     sharp and the landmarks land where the cropped video shows them. */
+  // The overlay canvas is sized in device pixels, so tags stay sharp and landmarks line up with the cropped video.
   React.useEffect(() => {
     const box = boxRef.current, canvas = canvasRef.current
     if (!box || !canvas) return
@@ -187,8 +154,7 @@ function Mirror() {
     pulseRef.current = null
     setPhase('loading')
 
-    /* All three settle before anything is decided, so a camera that opened
-       while the model failed is still closed. */
+    // All three settle before deciding, so a camera that opened while the model failed still gets closed.
     const [lmR, visR, camR] = await Promise.allSettled([loadLandmarker(), loadVision(), openFrontCamera()])
     const stream = camR.status === 'fulfilled' ? camR.value.stream : null
     const quit = () => stream?.getTracks().forEach(t => t.stop())
@@ -257,8 +223,7 @@ function Mirror() {
 
   const stop = () => { runId.current++; stopAll(); setPhase('idle') }
 
-  /* One answer is one label; the calibration is refitted on everything this
-     person has said, from the mirror and the fingertip reading alike. */
+  // The calibration is refitted on every label this person has given, from the mirror and the fingertip reading.
   const answer = stressed => {
     if (!result?.model) return
     const next = [...checkins, { contributions: result.model.contributions, temporal: result.model.temporal, label: stressed ? 1 : 0, day: dayKey(), source: 'mirror' }].slice(-200)
@@ -302,25 +267,21 @@ function Mirror() {
     )
   }
 
-  /* One line under the viewfinder: what to do now. */
   const guide = phase === 'loading' ? "Loading Google's MediaPipe Face Landmarker…"
     : phase === 'working' ? 'Reading…'
     : phase === 'done' ? 'Done. The camera is off.'
     : phase === 'capture' ? (!seen ? 'Looking for a face…' : tags && !tags.present ? 'Face the light.' : 'Face found. Hold still.')
     : 'Face the phone in good light.'
   const still = phase === 'idle' || phase === 'loading'
-  /* The status dot breathes while a face is in view, or while the model loads. */
   const glow = phase === 'loading' || phase === 'working' || (phase === 'capture' && !!tags?.present)
 
   return (
     <div className="mm grid gap-3 lg:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:items-start"
       data-reading={busy ? '' : undefined}>
-      {/* ── the mirror ─────────────────────────────────────────────── */}
       <section className="mm-frame p-3 sm:p-5 lg:p-6" aria-label="Camera">
         <div className="mm-bezel mx-auto max-w-[34rem]">
           <div ref={boxRef} className={cn('mm-screen', phase === 'capture' && 'is-live')}
             style={{ aspectRatio: '4 / 3' }}>
-            {/* Before the camera opens: the mesh, waiting inside the ring. */}
             <div aria-hidden className={cn('mm-fade absolute inset-0 flex items-center justify-center',
               still ? 'opacity-100' : 'opacity-0')}>
               {still && <MeshPreview className="w-[50%]"/>}
@@ -361,7 +322,6 @@ function Mirror() {
         </div>
       </section>
 
-      {/* ── the result ─────────────────────────────────────────────── */}
       <section className="mm-frame p-4 sm:p-5 lg:p-6" aria-live="polite" aria-label={`Your ${SCORE}`}>
         {!result && (
           <>

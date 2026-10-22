@@ -1,6 +1,3 @@
-/* The pure parts of the Life tools: sums, dates and checks. No React and no
- * storage here, so every rule can be tested on its own (tests/skills-life). */
-
 export const storeKey = id => 'mindmap.skills.' + id
 
 const num = v => { const n = typeof v === 'number' ? v : parseFloat(v); return Number.isFinite(n) ? n : 0 }
@@ -8,21 +5,16 @@ const pos = v => Math.max(0, num(v))
 
 const USD = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' })
 export const money = n => USD.format(num(n))
-/* Drops the cents when there are none, or always with `whole`, for a figure
-   that has to fit a third of a phone screen. */
 const USD0 = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 })
 export const moneyShort = (n, whole = false) => {
   const v = Math.round(num(n) * 100) / 100
   return whole || Number.isInteger(v) ? USD0.format(v) : USD.format(v)
 }
 
-/* ── Money ─────────────────────────────────────────────────────────────── */
-
 const PER_MONTH = { weekly: 52 / 12, monthly: 1, yearly: 1 / 12 }
 export const monthlyCost = (price, cycle) => pos(price) * (PER_MONTH[cycle] ?? 1)
 
-/* A subscription is flagged when it has not been used this month or the
-   person cannot remember when they last used it. */
+// A subscription is flagged when it was not used this month or the last use is unknown.
 const FORGOTTEN = new Set(['not-month', 'unsure'])
 export function subsTotals(list = []) {
   let monthly = 0, flaggedMonthly = 0
@@ -52,9 +44,8 @@ export function budget(income = [], spend = []) {
   return { income: i, spending: s, left, over: left < 0 }
 }
 
-/* Future value with monthly compounding and a deposit at the end of each
-   month:  FV = P(1 + r/12)^(12t) + PMT * ((1 + r/12)^(12t) - 1) / (r/12)
-   Walked month by month so the chart can show every year. */
+// Monthly compounding with a deposit at the end of each month:
+// FV = P(1 + r/12)^(12t) + PMT * ((1 + r/12)^(12t) - 1) / (r/12), walked month by month for the chart.
 export function compound({ start = 0, monthly = 0, rate = 0, years = 10 } = {}) {
   const P = pos(start), PMT = pos(monthly), r = Math.min(pos(rate), 100) / 100
   const Y = Math.max(1, Math.min(50, Math.round(pos(years)) || 1))
@@ -69,11 +60,7 @@ export function compound({ start = 0, monthly = 0, rate = 0, years = 10 } = {}) 
   return { total: value, contributed, interest: value - contributed, byYear }
 }
 
-/* A three question "guess the total" round. The right answers come from
-   compound() above, so the quiz and the calculator can never disagree. The
-   tempting wrong answer is simple interest (interest only on the first
-   amount), which is what most people guess. Assumes a fixed yearly rate,
-   interest added monthly, no fees, no tax and, for the card, no payments. */
+// Answers come from compound(); the tempting wrong option is simple interest on the first amount only.
 export function interestQuiz() {
   const opt = (id, value, ok = false) => ({ id, value, text: money(value), ok })
   const a = compound({ start:100, monthly:0, rate:5, years:10 })
@@ -92,8 +79,7 @@ export function interestQuiz() {
   ]
 }
 
-/* ── Dates (YYYY-MM-DD, read as calendar days, never as a time zone) ───── */
-
+// Dates are YYYY-MM-DD strings handled as calendar days, with no time zone.
 const parse = s => { const [y, m, d] = String(s).split('-').map(Number); return [y, m, d] }
 const valid = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))
 const iso = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -119,12 +105,9 @@ export function niceDate(s) {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' })
 }
 
-/* ── Vehicle ───────────────────────────────────────────────────────────── */
-
 export const SOON_DAYS = 30, SOON_MILES = 500
 
-/* Due by whichever comes first, date or miles, using the intervals the
-   person set from their owner's manual. */
+// Due at whichever comes first, the date or the mileage interval.
 export function vehicleStatus(item = {}, { today, miles } = {}) {
   const byDate = valid(item.lastDate) && pos(item.everyMonths) > 0
   const byMiles = item.lastMiles !== '' && item.lastMiles != null && pos(item.everyMiles) > 0
@@ -147,8 +130,6 @@ export function vehicleStatus(item = {}, { today, miles } = {}) {
   return out
 }
 
-/* ── Transit ───────────────────────────────────────────────────────────── */
-
 export function leaveBy(arrive, minutes, buffer) {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(arrive || ''))
   if (!m) return ''
@@ -157,7 +138,6 @@ export function leaveBy(arrive, minutes, buffer) {
   return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
 }
 
-/* "15:25" to "3:25 PM", the way a US phone shows it. */
 export function clock12(hhmm) {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || ''))
   if (!m) return ''
@@ -176,8 +156,6 @@ export function tripCard(t = {}) {
   return lines.join('\n')
 }
 
-/* ── Meals ─────────────────────────────────────────────────────────────── */
-
 export function shoppingList(plan = [], recipes = {}) {
   const map = new Map()
   for (const id of plan) {
@@ -191,8 +169,6 @@ export function shoppingList(plan = [], recipes = {}) {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
-/* ── Stress ────────────────────────────────────────────────────────────── */
-
 const PART_TO_EXERCISE = {
   jaw: 'jaw', shoulders: 'shoulders', hands: 'hands',
   chest: 'breathing', breath: 'breathing', stomach: 'breathing', mind: 'ground',
@@ -203,8 +179,7 @@ export function checkinSuggest(tight = []) {
   return out.length ? out : ['ground']
 }
 
-/* Eight signs, each 0 not really, 1 sometimes, 2 often. A sorting of where
-   to start, not a test and not a diagnosis. */
+// Each sign is scored 0 not really, 1 sometimes, 2 often.
 export const BURNOUT_ITEMS = 8
 export function burnoutResult(answers = []) {
   const complete = answers.length === BURNOUT_ITEMS && answers.every(a => a === 0 || a === 1 || a === 2)
@@ -212,8 +187,6 @@ export function burnoutResult(answers = []) {
   const level = score >= 10 ? 'high' : score >= 5 ? 'some' : 'low'
   return { complete, score, level }
 }
-
-/* ── Health ────────────────────────────────────────────────────────────── */
 
 export const REFILL_SOON = 7
 export function refillStatus(date, today) {

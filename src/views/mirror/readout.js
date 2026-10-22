@@ -1,10 +1,5 @@
-/* The live chips under the viewfinder. The same figures the overlay tags
- * draw on the face (signals/face-capture.js drawOverlay): brow is the mean of
- * the two browDown scores, eyes the mean squint or "Blink" from 0.5, lips the
- * mean mouthPress. Pulse is the running rate the forehead tag shows, or null
- * while it locks. Nothing here is estimated: a value the model did not return
- * this frame is null and its chip waits. */
-
+// Chip figures match the overlay tags (face-capture.js drawOverlay): brow is the mean browDown, eyes the mean squint
+// or "Blink" from 0.5, lips the mean mouthPress. A value the model did not return this frame is null.
 const pair = (cats, a, b) => {
   let x = 0, y = 0
   for (let i = 0; i < cats.length; i++) {

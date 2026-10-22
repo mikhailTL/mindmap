@@ -4,17 +4,7 @@ import { SCENES, FallbackScene } from './scenes.jsx'
 import { paletteFor } from './palettes.js'
 import './nameplates.css'
 
-/* A toolkit activity as a nameplate: a wide banner with its own illustrated
- * scene on the right and its name and one line on the left, in open sky of
- * the scene's own colour. The whole banner is the control: a link when the
- * activity has a route, a button when it opens in place (as before).
- *
- * The words sit on a solid colour (the `fade`), with a short gradient into
- * the drawing beside them, so their contrast is exact rather than depending
- * on what the drawing does underneath. */
-
-/* One observer for every banner on the page: a banner scrolled out of view
-   pauses its loop. */
+// One shared IntersectionObserver pauses the loop of any banner scrolled out of view.
 let watcher = null
 const watch = el => {
   if (typeof IntersectionObserver === 'undefined' || !el) return () => {}
@@ -37,8 +27,7 @@ export function Nameplate({ item, index = 0, onOpen = () => {} }) {
   const Scene = SCENES[item.id]
   React.useEffect(() => watch(ref.current), [])
 
-  /* A fine pointer tilts the layers toward it. Written straight to the
-     element's style, so moving the mouse never re-renders the card. */
+  // Writes the tilt straight to the element's style, so pointer moves do not re-render.
   const onMove = e => {
     if (e.pointerType !== 'mouse' || !ref.current) return
     const r = ref.current.getBoundingClientRect()

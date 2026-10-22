@@ -1,8 +1,7 @@
 import React from 'react'
 import { useWidth, line, scale } from './primitives'
 
-/* Emphasis form: one series, the stretch above her own range picked out.
-   Her range is a band, not a second line — a second y-scale is never an option. */
+// One series; the usual range is a shaded band rather than a second line or a second y-scale.
 export function DayChart({ data, band }){
   const [ref,W] = useWidth()
   const [hit,setHit] = React.useState(null)

@@ -12,19 +12,11 @@ import { Hatch, KV, Note } from './parts'
 import { DailyChart, groupRings } from './charts'
 import { logSubjects, networkSeries, readingsShared, signed, trendsShared } from './metrics'
 
-/* The whole group: today's average, the 30-day Trends, weekdays and class
- * periods, then the urgent-alert steps, what teens share and the log.
- * Nothing on this tab is about one teen. Groups under K_ANONYMITY show
- * nothing, not even their size.
- *
- * The owner, 18 October: the Trends pages were "very overwhelming". The
- * headline panel, readings by source, the grade bars, the export buttons and
- * the retention details came out. */
-
+// Group-level views only: nothing here is about one teen, and groups under K_ANONYMITY show
+// nothing, not even their size.
 const ROW = 'mt-3 grid items-start gap-3 [&>*]:min-w-0 lg:mt-4 lg:gap-4'
 const TICKS = [25, 50, 75]
-/* Bar fills: the higher-reading groups in the yellow lamp's hue, the rest in
-   mint. Every bar prints its figure, so the colour is never the only cue. */
+// Groups averaging 65 or more take the yellow lamp's hue; every bar also prints its figure.
 const HIGH = 'bg-[#e3a400]'
 const LOW = 'bg-mint'
 
@@ -102,8 +94,6 @@ function Weekdays() {
   )
 }
 
-/* The whole network over 30 days: a bar per day of the average Mind Score,
-   the group's usual range as the soft band behind. No middle-half band. */
 function Network({ list }) {
   const s = networkSeries(list, 30)
   if (!s) return null
@@ -127,9 +117,6 @@ function Network({ list }) {
   )
 }
 
-/* Today across the group: the average Mind Score on the rainbow (clouds on).
-   Today's Heads Up faces are counted above the tabs, in Pro.jsx.
-   Under K_ANONYMITY teens, nothing. */
 function GroupToday({ list, words }) {
   if (list.length < K_ANONYMITY) return null
   const today = list.map(t => t.days[t.days.length - 1])
@@ -194,8 +181,6 @@ export function GroupTrends({ words, real, list = CASELOAD, sessionLog = [], go 
 
       <ProPart kind="rules" title="Rules and the log" className="mt-8"/>
       <div className={cn(ROW, 'lg:grid-cols-2')}>
-        {/* The rule that cannot be switched off, on the coral tint (owner,
-            19 October: "stop making things dark"). The words carry it. */}
         <Panel variant="tint" hue="coral">
           <PanelHead as="h3" title="When an urgent alert is raised"/>
           <ol className="m-0 mt-2 list-none p-0">

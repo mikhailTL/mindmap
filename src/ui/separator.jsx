@@ -2,8 +2,6 @@ import * as React from 'react'
 import * as SeparatorPrimitive from '@radix-ui/react-separator'
 import { cn } from '@/lib/utils'
 
-/* `weight`: a hairline separates rows inside a band, an ink rule separates the
- * bands themselves. */
 export const Separator = React.forwardRef(function Separator(
   { className, orientation = 'horizontal', decorative = true, weight = 'hair', ...props }, ref) {
   return (

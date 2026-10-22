@@ -2,9 +2,6 @@ import React from 'react'
 import { ActivityScreen, Sheet, Choice } from '../../toolkit/shell'
 import { CopyButton, Label, Lines } from './common'
 
-/* Session Openers: pick the situation, get three first lines to choose from.
-   Written to open a conversation, not to assess. */
-
 const CASES = [
   { id:'first', pick:'First session', lines:[
     'Thanks for coming in. What would make today useful?',

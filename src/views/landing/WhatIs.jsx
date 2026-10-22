@@ -7,22 +7,6 @@ import { PRO_PLURAL } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 import { cardClass } from '../../ui/card'
 
-/* What is MindMap? The owner's own three-point description, one photograph
- * per card. Owner, 20 October: the isometric drawings go; "replace these with
- * stock ... they must be wearing the patch in the images and third one they
- * must be using app". So: a teen with the patch on his upper arm, a teen with
- * the patch talking with a counselor, and two teens with a phone beside a
- * screen of the app itself (the student Home, rendered from this build).
- * Every frame is a licensed stock photograph of models; the patch and the
- * phone screen are placed on them (src/lib/photos.js).
- *
- * The text is the owner's, with spelling, the product name and the third
- * audience's capitalisation fixed. One change of substance: he wrote that
- * MindMap AI is "trained on clinical data". It is not trained on anything of
- * ours: ai/framework.js builds a general language model's system prompt from
- * published SAMHSA, NIMH, AAP and CDC guidance and prints the sources. So the
- * line says "grounded in published clinical guidance". */
-
 export const WHAT_IS_LEAD =
   `MindMap is an adolescent wearable patch and app system designed for teens, parents, and ${PRO_PLURAL} to address the teen mental health crisis at its root by measuring stress and quantifying wellness using innovative features. MindMap provides 3 main features:`
 
@@ -31,7 +15,6 @@ export const WHAT_IS = [
     photo: 'photos-hall-duo', hue: 'sky',
     alt: 'Two teenage girls, models, talking in a school corridor, with the white MindMap patch shown on the upper arm of one of them',
     text: 'A wearable patch that turns detailed, numerical data into readable and friendly updates using an original Neural Network, unlike most wellness apps, which use no hardware.',
-    /* Owner, 18 October: readings do not need the patch. */
     more: 'Users can also take readings without the patch, through in-app features like the machine learning Mental Mirror, a camera pulse check, and the Survey.' },
   { id: 'network', title: 'A support network', go: 'privacy', cta: 'Who sees what',
     photo: 'ovw-pro-patch', hue: 'lilac',
@@ -43,12 +26,10 @@ export const WHAT_IS = [
     text: 'A ‘one-stop’ application, providing tools like MindMap AI, grounded in published clinical guidance, and Heads Up, a parental tool to identify screen-related stress as it occurs. MindMap also offers many other utilities for academic success, social dynamics, wellness, and career skills.' },
 ]
 
-/* Three neighbours, three light washes (owner, 20 October: not all green).
-   The number takes the hue's own ink; every ink clears 4.5 on its wash. */
+// Each number takes its hue's own ink, which clears 4.5:1 on that wash.
 const NUM = { sky: 'text-sky-ink', lilac: 'text-lilac-ink', sun: 'text-sun-ink' }
 
-/* A step under body size on a phone, so the patch card, the longest, stays
-   about one screen tall. */
+// A step under body size on a phone, so the longest card stays about one screen tall.
 const TEXT = 'm-0 mt-2 text-[0.9375rem] leading-[1.5] text-ink-2 md:text-ui md:leading-[1.55]'
 
 function Feature({ f, n, go }) {
@@ -82,15 +63,11 @@ function Feature({ f, n, go }) {
   )
 }
 
-/* The band is white so the three washes read as three; no eyebrow, which
-   only repeated the heading. */
 export function WhatIs({ go }) {
   return (
     <Section id="what-is" tone="card">
       <SectionHead className="mt-0">What is MindMap?</SectionHead>
       <SectionLede className="max-w-[70ch]">{WHAT_IS_LEAD}</SectionLede>
-      {/* Under md the three cards swipe sideways, the next one peeking in,
-          so the band is one card tall on a phone rather than three. */}
       <ol className="m-0 mt-6 grid list-none gap-4 p-0 lg:grid-cols-3 lg:gap-5
         max-md:-mx-[22px] max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto
         max-md:scroll-px-[22px] max-md:px-[22px] max-md:pb-2 max-md:[scrollbar-width:none]">

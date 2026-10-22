@@ -2,10 +2,6 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 
-/* Owner, 20 October: How it works pairs each drawing with stock, has less
-   glow and no contour lines, no monospace ("AI font, remove"), and the
-   camera pulse explainer lives only in the camera reading screen, behind a
-   disclosure. Source-level checks: these pages need a browser to render. */
 const read = p => fs.readFileSync(path.resolve(__dirname, '..', p), 'utf8')
 
 const METHODS = ['src/views/Methods.jsx', 'src/views/methods/TechFigures.jsx',

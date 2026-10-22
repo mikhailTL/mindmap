@@ -14,60 +14,15 @@ import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
 import { ToolkitBand } from './methods/ToolkitBand'
 import { MirrorDemo } from './methods/MirrorDemo'
 
-/* How it works, one category at a time.
- *
- * THE OWNER'S WORDS. "Nothing is sectioned into categories like I said to and
- * everything is cluttered and still too complex, like nobody needs to know
- * AUROC or anything." Later: "Remove sources from here, the phone sensor
- * section is dry and too much text." And: no count that will change (the
- * Toolkit grows), and no line anywhere saying the patch is unbuilt.
- *
- * So the page is a switcher and one band. A reader picks a category and sees
- * that category's band and nothing else: one heading, one line under it, a
- * few rows of label and one short line, and one drawing. No citations in the
- * text; the papers live in docs/.
- *
- * NO STATISTIC A JUDGE DOES NOT NEED. No AUROC, no p-value, no interval, no
- * balanced accuracy, no F1 and no decimal figure anywhere on this page.
- *
- * VOCABULARY. The neural network is "the Mind Score network". Never "the
- * model".
- *
- * 19 October (later), the owner: "some of the words under how it works are
- * too little, needs some more explanation". Each tab gets `explain`: one plain
- * sentence (trimmed the same day: "wayy too much text") on how the part works and why it is there, every
- * fact taken from the code or docs/. And: "stop making things dark, site
- * should be more peaceful and light ... keep adding the topographic,
- * isometric, and technological designs". Every tab now sits on the light
- * tech ground (ui/tech TechBand); nothing on this page is dark.
- *
- * 20 October, the owner: "The 'How it works' also needs stock paired with
- * the glow diagrams, reduce glow a bit and pair with stock, mirror looks too
- * crazy", and "AI font, remove". Each tab pairs its drawing with one licensed
- * stock photograph (lib/photos.js), takes its own light colour (`tone`), and
- * has no contour lines and no mono labels.
- *
- * 21 October, the owner: colours on cards, "not on entire page backgrounds".
- * Each band (`tone`) is mint, sky, turquoise, leaf green or ocean blue; the
- * white cards on it (`card`: the drawing and the fact labels) keep the hue
- * they had, sun, sky, lilac, teal and coral. */
-
+// How it works: a switcher over one band per category, with one band on screen at a time.
 const HOP_S = 30
 const MEMORY_MIN = (CONTEXT_WINDOWS * HOP_S) / 60
 const SUBJECTS = R.per_subject.length
 const WINS = R.paired.wins
 const SIGNAL_NAMES = SENSOR_ORDER.map(id => SENSORS[id].name.toLowerCase())
 
-/* ── the categories ──────────────────────────────────────────────────────
-   Every band is on the light tech ground (ui/tech); `tone` is its colour,
-   `photo` and `alt` the stock frame paired with its drawing (models, not
-   users), `aspect` the frame's shape. 18 October, the owner: "Especially for the AI and ML,
-   implement the cool discord style design strats at a technical cool level
-   ... different from toolkit". `plain` keeps a tab's facts as ruled rows
-   with icons instead of glass cards.
-   `still` skips the parallax: the patch render and the Mirror demo hold
-   their place. 18 October, the owner: "remove app and site from how it
-   works", so that tab is gone. */
+// `tone` is the band colour; `photo`, `alt` and `aspect` describe the stock frame; `plain` uses ruled rows;
+// `still` skips the parallax.
 const CATEGORIES = [
   { id: 'hardware', tab: 'The patch', tone: 'mint', card: 'sun', plain: true, still: true,
     photo: 'ovw-patch-court', aspect: '3 / 2',
@@ -82,8 +37,6 @@ const CATEGORIES = [
     ],
     close: 'MindMap also works without the patch, with readings from the phone camera pulse and the survey.',
     figure: PatchRender },
-  /* "Add Mental Mirror as a whole new feature on the how it works complete
-     with a video demo" (18 October). Facts from docs/mental-mirror.md. */
   { id: 'mirror', tab: 'Mental Mirror', tone: 'sky', card: 'sky', still: true,
     photo: 'student-hero', aspect: '16 / 9',
     alt: 'A stock photograph of a smiling teenager in headphones facing the camera.',
@@ -136,18 +89,15 @@ const CATEGORIES = [
       ['Location', 'How far from home a reading happened. Never a map.', PinMark],
     ],
     figure: PhoneParts },
-  /* "Toolkit isn't yet on how mindmap works." Its own band, drawn with the
-     Toolkit's own nameplates and level emblems (methods/ToolkitBand.jsx). */
   { id: 'toolkit', tab: 'Toolkit', band: ToolkitBand },
 ]
 
-/* `#/methods?tab=toolkit` opens on that tab, so other pages can link to it. */
+// `#/methods?tab=toolkit` opens on that tab, so other pages can link to it.
 const tabFromHash = () => {
   const m = /[?&]tab=([a-z]+)/.exec(typeof location !== 'undefined' ? location.hash : '')
   return m && CATEGORIES.some(c => c.id === m[1]) ? m[1] : CATEGORIES[0].id
 }
 
-/* Three marks the shared set lacks, same 24 box and 1.6 stroke. */
 const M = ({ children, size = 20, className }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden focusable="false"
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
@@ -157,10 +107,7 @@ function MicMark(p) { return <M {...p}><rect x="9" y="3" width="6" height="11" r
 function KeysMark(p) { return <M {...p}><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></M> }
 function PinMark(p) { return <M {...p}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></M> }
 
-/* The patch tab's picture: the real CAD model (the one in the 3D viewer on
-   the patch page) rendered face up from public/di/arena, revision DI-03,
-   with the engraved logo and wordmark on top, standing on an isometric
-   plate. 20 October: the copy without the mint glow (photos/hiw-patch-cad). */
+// The patch CAD model from the 3D viewer, rendered face up (public/di/arena, revision DI-03).
 function PatchRender({ className }) {
   return (
     <figure className={cn('relative m-0 flex justify-center pb-10', className)}>
@@ -172,8 +119,6 @@ function PatchRender({ className }) {
   )
 }
 
-/* The phone tab's drawing: one phone on an isometric plate, the five
-   sensors beside it. */
 function PhoneParts({ className }) {
   const parts = CATEGORIES.find(c => c.id === 'beyond').rows
   return (
@@ -204,8 +149,7 @@ function PhoneParts({ className }) {
   )
 }
 
-/* A row: label, one line. Ruled, never boxed. */
-/* `first`, not :first-child: each row sits in its own ScrollRow wrapper. */
+// `first` rather than :first-child, because each row sits in its own ScrollRow wrapper.
 function Row({ k, icon: Icon, first, hue, children }) {
   return (
     <div className={cn('grid gap-x-4 gap-y-0.5 border-t border-rule py-2', first && 'border-t-0 pt-0',
@@ -218,8 +162,6 @@ function Row({ k, icon: Icon, first, hue, children }) {
   )
 }
 
-/* A fact on the tech ground: a white card, the label in the band's colour.
-   The crisis row gets the warm edge so it is the first card the eye finds. */
 function Fact({ k, hue, children }) {
   const crisis = k === 'In a crisis'
   return (
@@ -231,8 +173,6 @@ function Fact({ k, hue, children }) {
   )
 }
 
-/* The stock frame and the drawing as one pair: the photograph on top, the
-   drawing on a white card that overlaps its lower edge. */
 export function Pair({ photo, alt, aspect, children, className }) {
   return (
     <div className={cn('mx-auto w-full max-w-[26rem]', className)}>
@@ -256,7 +196,6 @@ function TechCategory({ c }) {
   const pair = <Pair photo={c.photo} alt={c.alt} aspect={c.aspect}><Figure/></Pair>
   return (
     <TechBand tone={c.tone}>
-      {/* Heading, drawing, facts on a phone; facts beside the drawing from lg. */}
       <div className="grid gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:grid-rows-[auto_1fr] lg:items-start">
         <ScrollIn className="min-w-0 lg:col-start-1 lg:row-start-1">
           <TechTitle className="max-w-[24ch] text-sub leading-[1.12]">{c.title}</TechTitle>
@@ -298,8 +237,6 @@ function TechCategory({ c }) {
   )
 }
 
-/* The switcher. Six controls a reader presses, so rounded-field, body face,
-   normal case (spec 0d rule 2). Two by two on a phone, one row from sm. */
 const TRIGGER = cn(
   'min-h-[44px] rounded-field border px-3 font-display text-ui font-medium',
   'select-none touch-manipulation transition-colors duration-150 ease',
@@ -313,7 +250,6 @@ export function Methods({ go }) {
     <main>
       <TabsPrimitive.Root defaultValue={tabFromHash()}>
 
-        {/* ── the opening band: title, one action, the switcher ── */}
         <section className="relative isolate overflow-hidden border-t border-rule bg-paper">
           <div className="wrap pb-5 pt-7 lg:pb-6 lg:pt-10">
             <div className="min-w-0">
@@ -335,7 +271,6 @@ export function Methods({ go }) {
           </div>
         </section>
 
-        {/* ── one band per category, one on screen at a time ── */}
         {CATEGORIES.map(c => {
           if (c.band) {
             const Band = c.band

@@ -10,11 +10,7 @@ import TeenCard from '../family/TeenCard'
 import { RangeSwitch } from '../family/RangeTrend'
 import { GRADES, SORTS, cardRange, STATUS_WORD, filterTeens, sortTeens, statusCounts } from './metrics'
 
-/* The Caseload tab: one toolbar, then a card per teen. A card shows today;
- * its record holds the Trends. The owner, 18 October: the cards were "very
- * too complex", so the range switch and the figure chooser are gone. */
-
-/* The reader's own layout choices, kept in this browser only. */
+// Layout choices (range, density, sort) kept in this browser only; if storage throws they stay in memory.
 const PREFS = 'mindmap.pro.layout'
 function readPrefs() {
   try {
@@ -105,8 +101,6 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
   )
 }
 
-/* Live, with nobody linked yet: the lamps are dark until a teen shares,
-   and the one thing to do is add a family in Network. */
 function Empty({ go }) {
   return (
     <section aria-labelledby="pro-empty-h"
@@ -127,9 +121,7 @@ function Empty({ go }) {
   )
 }
 
-/* Live: the teens who share with this account, as the shared card. The
-   toolbar's figures need body signals the account does not send, so it is
-   not drawn; one range switch sets every card. */
+// The toolbar's figures need body signals a linked account does not send, so Live shows one range switch.
 function LiveCaseload({ teens, layout, setLayout, onOpen, go }) {
   return (
     <>

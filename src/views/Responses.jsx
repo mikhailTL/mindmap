@@ -10,15 +10,8 @@ import {
 } from '../survey/questions'
 import { exportRows, toCSV, getVisitor, visitorCode } from '../survey/store'
 
-/* Peer review survey results. A house questionnaire since 13 October
- * (docs/design-spec.md, section 0d, directive 10): no composite, no grade,
- * no benchmark, no percentage of a maximum. Per item: count, mean on its own
- * 1 to 5 scale, top two count, full distribution. Bands are never averaged.
- *
- * Unlisted, not protected. VITE_RESPONSES_KEY is a flag only: when set, a key
- * from the URL is forwarded as a header for the API to check. Until deployment
- * protection or a credentialed store is on, everything here is public. */
-
+// Peer review survey results. Per item: count, mean on its own 1 to 5 scale, top-two count and full distribution.
+// No composite score, and bands are not averaged.
 const ENDPOINT = import.meta.env?.VITE_SURVEY_ENDPOINT || '/api/responses'
 const KEY_EXPECTED = !!import.meta.env?.VITE_RESPONSES_KEY
 
@@ -32,7 +25,7 @@ const REQUIRED_COUNT = REQUIRED_IDS.length
 const STAR_MAX = STARS_ITEM.max
 const STAR_STEP = STARS_ITEM.step
 
-/* The app routes on the hash, so the key may sit on either side of '#'. */
+// The app routes on the hash, so the key may sit on either side of '#'.
 function urlKey() {
   try {
     const fromSearch = new URLSearchParams(location.search).get('key')
@@ -46,16 +39,12 @@ function urlKey() {
   }
 }
 
-/* ------------------------------------------------------------ question map */
-
-/* Ask order, not timestamp: a revised answer must stay by its question. */
+// Ask order, not timestamp, so a revised answer stays beside its question.
 const ASK_ORDER = new Map()
 ALL_ITEMS.forEach((item, i) => ASK_ORDER.set(item.id, i))
 const askIndex = r => ASK_ORDER.get(r.questionId) ?? 9999
 
-/* ------------------------------------------------------------- normalising */
-
-/* Deliberate duplicate of the store's flattener, which defines the CSV column. */
+// Mirrors the store's flattener, which defines the CSV column.
 function flat(value) {
   if (value == null) return ''
   if (typeof value === 'object') {
@@ -77,8 +66,7 @@ function mean(list) {
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 
-/* exportRows() shape. Current means given on this page to a question still
- * asked; the rest is retired, shown in full, never counted. */
+// Takes the exportRows() shape. Questions outside the current survey are shown in full but not counted.
 function build(id, rows, startedAt) {
   const sorted = rows.slice().sort((a, b) => askIndex(a) - askIndex(b))
   const live = r => r.page === PAGE && !!itemById(r.questionId)
@@ -88,7 +76,7 @@ function build(id, rows, startedAt) {
 
   const by = new Map(current.map(r => [r.questionId, r]))
   const value = qid => (by.has(qid) ? num(by.get(qid).value) : null)
-  /* Bands and the blocker are read as their label, never their number. */
+  // Bands and the blocker are read as their label, not their number.
   const picked = qid => {
     const r = by.get(qid)
     if (!r) return null
@@ -96,7 +84,6 @@ function build(id, rows, startedAt) {
     return label || null
   }
 
-  /* Partial stays partial: an unanswered item contributes nothing. */
   const scales = new Map()
   SCALE_ITEMS.forEach(item => {
     const v = value(item.id)
@@ -116,7 +103,7 @@ function build(id, rows, startedAt) {
     const t = r ? String(r.value || '').trim() : ''
     if (t) notes.set(item.id, t)
   })
-  /* The one short text asked before 18 October, kept for the CSV column. */
+  // `blocker-note` is a retired question, read here for its CSV column.
   const oldNote = rows.find(r => r.questionId === 'blocker-note')
 
   const done = REQUIRED_IDS.filter(qid => {
@@ -155,7 +142,7 @@ function group(rows, startedFor) {
     build(id, rs, startedFor ? startedFor(id) : null))
 }
 
-/* '' for anything no longer asked, which marks a row as retired. */
+// '' for a question not in the current survey, which marks the row as retired.
 function textFor(qid) {
   return itemById(qid) ? questionText(qid) : ''
 }
@@ -164,7 +151,7 @@ function fromRespondents(list) {
   return (Array.isArray(list) ? list : []).map(r => {
     const id = String(r?.id || '')
     const rows = (Array.isArray(r?.answers) ? r.answers : []).map(a => ({
-      /* Kept: existing spreadsheets expect the column. The survey collects no name. */
+      // Spreadsheets expect this column; the survey collects no name.
       visitorName: 'Anonymous',
       visitorId: id,
       page: String(a?.page || ''),
@@ -179,8 +166,7 @@ function fromRespondents(list) {
   })
 }
 
-/* The store may also carry a `respondents` archive pasted back in. The
- * store's own copy wins on an id clash. Guarded: a private window throws. */
+// The store may carry a pasted `respondents` archive; its own copy wins on an id clash. A private window throws.
 function archived() {
   try {
     const raw = window.localStorage.getItem(STORE_KEY)
@@ -202,9 +188,6 @@ function fromLocal() {
   return [...mine, ...archived().filter(p => !seen.has(p.id))]
 }
 
-/* ------------------------------------------------------------- aggregating */
-
-/* A count per option. Options nobody chose still print at zero. */
 function spread(people, valueOf, points) {
   const counts = {}
   let total = 0
@@ -220,7 +203,6 @@ function spread(people, valueOf, points) {
 const labelPoints = item => item.points.map(p => ({ value: p.label, label: p.label }))
 
 function summarise(people) {
-  /* Per item, over everyone who answered it. Nothing is summed across items. */
   const items = SCALE_ITEMS.map(item => ({
     item,
     sum: summariseItem(people.map(p => p.scales.get(item.id) ?? null)),
@@ -254,15 +236,13 @@ function summarise(people) {
   }
 }
 
-/* ---------------------------------------------------------------- download */
-
 function stamp() {
   const d = new Date()
   const p = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-/* RFC4180 quoting. The store's serialiser is bound to its own header. */
+// RFC 4180 quoting. The store's serialiser is bound to its own header, so this page has its own.
 function cell(v) {
   const s = v == null ? '' : String(v)
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -273,8 +253,6 @@ function csv(head, rows) {
   return [head.join(','), ...body].join('\r\n')
 }
 
-/* One row per respondent, one column per question. Rated items carry their
- * number, bands their label, so a band column cannot be averaged. */
 const PERSON_HEAD = [
   'respondent', 'startedAt', 'lastAt',
   ...DEMOGRAPHIC_ITEMS.map(q => q.id),
@@ -324,8 +302,6 @@ function save(text, filename, mime) {
   }
 }
 
-/* ------------------------------------------------------------------ pieces */
-
 function fmt(iso, opts, fallback) {
   try {
     const d = new Date(iso)
@@ -338,7 +314,6 @@ function fmt(iso, opts, fallback) {
 const when = iso => fmt(iso, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }, 'time not recorded')
 const shortWhen = iso => fmt(iso, { day: 'numeric', month: 'short' }, 'not recorded')
 
-/* The count prints beside the bar, so length is never the only carrier. */
 function Bar({ frac }) {
   const w = frac > 0 ? Math.max(1.2, frac * 100) : 0
   return (
@@ -397,7 +372,6 @@ function Spread({ title, note, points, counts, total, children }) {
   )
 }
 
-/* One rated item on its own scale. Never a percentage of a maximum. */
 function RatedItem({ item, sum, dist }) {
   const thin = sum != null && sum.n < MIN_REPORT
   return (
@@ -419,7 +393,7 @@ function RatedItem({ item, sum, dist }) {
   )
 }
 
-/* Read only: ui/stars is a slider, and an immovable slider traps keyboard users. */
+// Read-only stars: ui/stars is a slider, and an immovable slider traps keyboard users.
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
 
@@ -480,7 +454,6 @@ function Notice({ title, children }) {
   )
 }
 
-/* Native <details>: keyboard operable, searchable when open, no state. */
 function Fold({ summary, note, children }) {
   return (
     <details className="group mt-6 rounded-panel border border-rule bg-card">
@@ -536,7 +509,6 @@ function Respondent({ p }) {
                   {textFor(r.questionId) || 'No longer asked'}
                 </span>
               </dt>
-              {/* Never clamp reviewer prose; break-words keeps a pasted URL in the card. */}
               <dd className="mt-2 max-w-measure whitespace-pre-wrap break-words text-sec text-ink">
                 {String(r.label || r.value || '').trim() || <span className="text-ink-3">left blank</span>}
               </dd>
@@ -548,8 +520,6 @@ function Respondent({ p }) {
   )
 }
 
-/* -------------------------------------------------------------------- page */
-
 /* No sort on a composite: there is none. */
 const SORTS = {
   when:  (a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')),
@@ -559,7 +529,7 @@ const SORTS = {
 }
 
 export function Responses() {
-  /* Local records paint first; the fetch upgrades them. Gating measured CLS 0.32. */
+  // Local records paint first and the fetch upgrades them, so the page does not shift on load.
   const [status, setStatus] = React.useState('local') // local | server
   const [problem, setProblem] = React.useState(null)
   const [ephemeral, setEphemeral] = React.useState(false)
@@ -613,7 +583,6 @@ export function Responses() {
     return list
   }, [people, query, sort, onlyCommented])
 
-  /* Over everyone, never the filtered view. */
   const s = React.useMemo(() => summarise(people), [people])
 
   /* Per written question, quoted in full under its own wording. */
@@ -626,8 +595,6 @@ export function Responses() {
     })),
     [people])
 
-  /* Grouped by label, not page id: a dropped question was asked on the page
-     that is still current. */
   const retiredGroups = React.useMemo(() => {
     const by = new Map()
     people.forEach(p => p.retired.forEach(r => {
@@ -638,7 +605,6 @@ export function Responses() {
     return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [people])
 
-  /* Downloads carry everyone. questionText keeps retired wording. */
   const rows = React.useMemo(() => people.flatMap(p =>
     [...p.rows, ...p.retired].map(r => ({
       ...r,
@@ -668,7 +634,7 @@ export function Responses() {
         </div>
       </div>
 
-      {/* min-h is the taller notice, so swapping them moves nothing below. */}
+      {/* min-h fits the taller notice, so swapping notices moves nothing below. */}
       <div className="wrap min-h-[16rem]">
         {status === 'local' && (
           <Notice title="Showing this browser's records only">
@@ -689,7 +655,6 @@ export function Responses() {
           </Notice>
         )}
 
-        {/* ------------------------------------------------------- headline */}
         <section aria-label="Headline figures" className="mt-14">
           <p className="mark">Headline Figures</p>
           <p className="mt-4 max-w-measure text-sec text-ink-2">
@@ -723,7 +688,6 @@ export function Responses() {
           </div>
         </section>
 
-        {/* -------------------------------------------------- rated answers */}
         <section aria-label="Rated questions" className="mt-20">
           <p className="mark">Rated Questions</p>
           <p className="mt-4 max-w-measure text-sec text-ink-2">
@@ -736,7 +700,6 @@ export function Responses() {
           </div>
         </section>
 
-        {/* --------------------------------------------------------- rating */}
         <section aria-label="Overall rating" className="mt-20">
           <p className="mark">Overall Rating</p>
           <div className="mt-6 lg:max-w-[38rem]">
@@ -750,7 +713,6 @@ export function Responses() {
           </div>
         </section>
 
-        {/* --------------------------------------------------- demographics */}
         <section aria-label="Who answered" className="mt-20">
           <p className="mark">Bands Of Respondents</p>
           <p className="mt-4 max-w-measure text-sec text-ink-2">
@@ -777,7 +739,6 @@ export function Responses() {
           </div>
         </section>
 
-        {/* ------------------------------------------------------ the table */}
         <section aria-label="Respondents" className="mt-20">
           <p className="mark">Each Respondent</p>
 
@@ -799,7 +760,6 @@ export function Responses() {
                 <option value="code">Code, A to Z</option>
               </select>
             </Field>
-            {/* aria-pressed, not a checkbox: a view filter, not a submitted value. */}
             <button
               type="button"
               aria-pressed={onlyCommented}
@@ -832,7 +792,6 @@ export function Responses() {
           </div>
 
           {nothing ? (
-            /* Two empty states: nobody answered, or answers cannot reach here. */
             <div className="mt-8 rounded-panel border border-rule bg-card p-8">
               <h2 className="font-display text-head font-bold text-ink">
                 {status === 'server' ? 'Nobody Has Answered Yet' : 'Nothing Recorded In This Browser'}
@@ -905,7 +864,6 @@ export function Responses() {
           )}
         </section>
 
-        {/* ------------------------------------------------------ free text */}
         <section aria-label="Short answers" className="mt-20">
           <p className="mark">Short Answers</p>
           <div className="mt-6 flex flex-col gap-12">
@@ -930,7 +888,6 @@ export function Responses() {
           </div>
         </section>
 
-        {/* ---------------------------------------------------- the archive */}
         {!nothing && (
           <section aria-label="Every answer" className="mt-20">
             <p className="mark">Every Answer</p>
@@ -967,7 +924,7 @@ export function Responses() {
                             <span className="text-fine tabular-nums text-ink-3">
                               {r.questionId}
                             </span>
-                            {/* questions.js keeps the old wording. */}
+                            {/* questions.js holds the original wording of each retired question. */}
                             <span className="max-w-read font-display text-ui font-bold text-ink-2">
                               {questionText(r.questionId)}
                             </span>

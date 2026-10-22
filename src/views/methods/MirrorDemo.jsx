@@ -2,33 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { INK, N, faceMesh, patchRect, project, strokePairs } from '../mirror/mesh'
 
-/* The Mental Mirror demo on How it works. Not a person: MediaPipe's
- * canonical face (views/mirror/mesh.js), the 478 points and tessellation
- * Face Landmarker returns (signals/face-capture.js). The tags are the ones
- * the live overlay draws: Brow, Eyes, Lips, Pulse.
- *
- * One 9.6 s loop on a canvas: outline, points sweep in, a 30 s reading run
- * fast with live tags, then four bands and one Mind Score. Under
- * prefers-reduced-motion it draws the finished frame once and stops.
- *
- * 19 October (later), the owner: "they cant be the black dark thing". The
- * panel is light, the readouts in deep green mono on a white plate.
- * 20 October, the owner: "not like an LED gala mask". The mesh is drawn like
- * MediaPipe's demos: hairline tessellation, small solid points, the features
- * in one green. No glow, no blur, no contour ground, no beating patch.
- * Text on the canvas, measured in the build against the darkest pixel of
- * the ground under it (19 October):
- *   #0d2b1e values on the plate        14.4 : 1
- *   #0f5836 labels on the plate         8.1 : 1
- *   #426a58 "--" on the plate           5.8 : 1
- *   #0d2b1e score on the panel         11.0 : 1
- *   #0f5836 bottom labels on the panel  5.3 : 1
- * 20 October, the owner: "mirror looks too crazy". Calmer, same mesh: drawn
- * smaller, time runs at 0.6 speed, the head turn is half as wide, the four
- * sparks into the bands are gone, and the band colours are the site's
- * quieter inks. Labels are the body face, not mono ("AI font, remove"). */
-
-/* Real seconds per drawing second: the 9.6 s loop plays over 16 s. */
+// Mental Mirror demo on MediaPipe's canonical face (478 points). PACE is real seconds per drawing second,
+// so the 9.6 s loop plays over 16 s.
 const PACE = 0.6
 
 const W = 360, H = 440, LOOP = 9.6
@@ -53,8 +28,7 @@ const bump = (t, at, w) => Math.max(0, 1 - Math.abs(t - at) / w)
 
 const XY = new Float32Array(N * 2)
 
-/* Where every point is at time t: a slow head turn, two blinks, one brow
-   lift and a small press of the lips while the reading runs. */
+// Where every point is at time t: a slow head turn, two blinks, a brow lift and a lip press.
 function pose(m, t) {
   const live = span(t, 3, 3.4) * (1 - span(t, 6.8, 7.2))
   const blink = Math.max(bump(t, 4.3, 0.12), bump(t, 6.1, 0.12))
@@ -76,7 +50,6 @@ function draw(ctx, m, t, font) {
   const fade = 1 - span(t, 9.1, 9.55)
   ctx.globalAlpha = fade
   const { blink, brow, press } = pose(m, t)
-  /* The sweep: top of the face first, each point as the line reaches it. */
   const sweep = (t - SWEEP[0]) / (SWEEP[1] - SWEEP[0])
   const reach = m.top + (m.low - m.top) * clamp(sweep) * 1.02
   const on = sweep >= 1.05 ? null : i => m.p[i * 3 + 1] >= reach
@@ -117,7 +90,6 @@ function draw(ctx, m, t, font) {
     ctx.globalAlpha = fade
   }
 
-  /* Readouts, right column, on a white plate so their contrast is exact. */
   ctx.save()
   ctx.globalAlpha = fade; ctx.fillStyle = '#ffffff'; ctx.strokeStyle = RULE; ctx.lineWidth = 1
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(226, 18, 128, 258, 8) : ctx.rect(226, 18, 128, 258); ctx.fill()
@@ -131,7 +103,6 @@ function draw(ctx, m, t, font) {
     ['Lips', `${Math.round(12 + 3 * Math.sin(t * 2.9) + 30 * press)}%`, 3],
     ['Pulse', t < 4.6 ? '--' : `${Math.round(76 + 2.4 * Math.sin(t * 1.3))} bpm`, 3],
   ]
-  /* Full strength always: a tag not yet live shows "--" in the muted ink. */
   tags.forEach(([k, v, from], r) => {
     const y = 40 + r * 50, a = span(t, from, from + 0.4)
     ctx.fillStyle = LABEL; ctx.font = `600 11.5px ${font}`; ctx.textAlign = 'left'
@@ -209,7 +180,7 @@ export function MirrorDemo({ className }) {
       ctx.setTransform(dpr * w / W, 0, 0, dpr * w / W, 0, 0)
       draw(ctx, m, still ? STILL_T : t, font)
     }
-    /* Time only moves while the panel is on screen and the tab is visible. */
+    // Time only advances while the panel is on screen and the tab is visible.
     const tick = now => {
       raf = requestAnimationFrame(tick)
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 0
@@ -236,9 +207,6 @@ export function MirrorDemo({ className }) {
 
   return (
     <figure className={cn('m-0 mx-auto w-full max-w-[20rem]', className)}>
-      {/* A plain light panel, flat paper. 19 October, the owner: "i like the
-          mental mirror thing a lot"; 20 October, its glow and ground went and
-          it sits smaller, inside the photo pair (Methods.jsx). */}
       <div className="relative w-full overflow-hidden rounded-[10px] bg-[#f6f8f7]">
         <div ref={box} className="relative w-full">
           <canvas ref={canvas} aria-hidden="true" className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }}/>

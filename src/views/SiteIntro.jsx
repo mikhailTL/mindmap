@@ -8,15 +8,7 @@ import { studentRings } from '../lib/readings'
 import { AvatarArt } from '../account/avatars'
 import { PRO_WRAP } from '../lib/terms'
 
-/* The site's onboarding. Three short beats, then the name. The owner: "it
- * needs to start with the rainbow and reduce text as much as possible". So
- * the Mind Score rainbow opens, then where the reading comes from, then who
- * sees it; one short line each and nothing under it. No questions and no sign in here:
- * roles and accounts are asked only when the visitor opens the app. Plays on
- * every load of the landing page and every time the visitor comes back to
- * it (App.jsx decides when); Skip sits under the stage the whole time, and
- * Escape is Skip. Reduced motion keeps the beats and drops the movement. */
-
+// Site onboarding: three short beats (the Mind Score rainbow, where a reading comes from, who sees it), then the name.
 const BEAT_MS = 2600
 const BEATS = [
   { id: 'score',   line: 'Your stress, as one score.' },
@@ -25,8 +17,6 @@ const BEATS = [
 ]
 const FINAL = BEATS.length
 const NAME_MS = 1800
-
-/* ── the three pictures ─────────────────────────────────────────────────── */
 
 function PatchPicture({ still }) {
   return (
@@ -101,23 +91,17 @@ function NetworkPicture({ still }) {
 
 const PICTURE = { patch: PatchPicture, score: ScorePicture, network: NetworkPicture }
 
-/* ── the overlay ────────────────────────────────────────────────────────── */
-
-/** SiteIntro({ onDone }): onDone runs on Skip, Escape, or the end. */
 export function SiteIntro({ onDone }) {
   const reduced = useReducedMotion()
   const [beat, setBeat] = React.useState(0)
   const skipRef = React.useRef(null)
   const headId = React.useId()
 
-  /* The beats advance on their own; the name holds a moment, then the
-     site is there. */
   React.useEffect(() => {
     const id = beat >= FINAL ? setTimeout(onDone, NAME_MS) : setTimeout(() => setBeat(b => b + 1), BEAT_MS)
     return () => clearTimeout(id)
   }, [beat, onDone])
 
-  /* Modal: page scroll locked, Escape is Skip, focus starts on Skip. */
   React.useEffect(() => {
     const was = document.body.style.overflow
     document.body.style.overflow = 'hidden'

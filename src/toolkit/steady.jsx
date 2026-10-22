@@ -5,22 +5,13 @@ import { useWakeLock, buzz, useMounted, readBest, saveBest, HowTo, CountOver, us
 import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
-/* Hold Still, as a balance game.
- *
- * A marble sits in a bowl and a soft wind pushes it about. Keep it inside the
- * middle circle for the time the stage asks: 5, 8, 12, 16 and then 20
- * seconds. On a phone the tilt comes from deviceorientation, zeroed to how
- * the phone was held when the round began, so a steady hand is the whole
- * skill. On a laptop the board is a joystick: press and drag, or use the
- * arrow keys. Readings are used for the frame they arrive in and dropped. */
-
 const TARGETS = [5, 8, 12, 16, 20]
 const STAGE_MAX_S = 30
 const CLEAR_S = 1.3
 const C = 120, BOWL = 104, MARBLE = 11
-const TILT_DEG = 14                // this many degrees is a full tilt
-const PUSH = 420                   // px/s^2 at full tilt
-const DRAG_PX = 70                 // a drag this long is a full tilt
+const TILT_DEG = 14  // degrees of tilt that count as a full tilt
+const PUSH = 420  // px/s^2 at full tilt
+const DRAG_PX = 70  // a drag this long is a full tilt
 const DAMP = 1.7
 
 const one = v => (Math.round(v * 10) / 10).toFixed(1)

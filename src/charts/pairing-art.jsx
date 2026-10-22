@@ -4,22 +4,6 @@ import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { ITEMS } from '../lib/engine'
 import { cn } from '../lib/utils'
 
-/* Figures for the pairing page: the patch talking to a phone with nothing
- * between them, the screens of the real connect flow, and where the enclosure
- * sits on the arm.
- *
- * Only settled facts are drawn. The footprint is 54 mm by 36 mm, charging runs
- * through a slot in the side of the shell, and the four channels are sampled
- * once a second. Battery, adhesive, electrode build, part numbers, ingress
- * rating, weight, range and cost are all open, so nothing here shows any of
- * them, and no figure may read as a photograph: no unit has been built.
- *
- * Drawing idiom follows charts/patchstack.jsx and charts/rainbow.jsx: flat
- * opaque strokes, one fill per shape, no gradient, no blur, no partial-opacity
- * decoration. Token values are inlined as hex because an SVG attribute cannot
- * take a Tailwind class, and the phone screens are inline styles for the same
- * reason: they lay out in device points inside ui/iphone. */
-
 const INK = '#0d2b1e'      /* ink */
 const INK2 = '#2a5744'     /* ink-2 */
 const INK3 = '#426a58'     /* ink-3 */
@@ -29,24 +13,18 @@ const PAPER = '#f7faf8'
 const CARD = '#ffffff'
 const MIST = '#e3ede7'
 const WASH = '#dcefe4'     /* accent.wash */
-const BEAM = '#1d8fb0'     /* beam: 3.20 on paper, so a graphic and never a word */
+const BEAM = '#1d8fb0'  /* beam: 3.20 on paper, so graphics only */
 const ACCENT = '#157446'
 const PRESSED = '#0f5836'  /* accent.ink, the solid button's active ground */
 const LIT = '#3ecf9a'      /* accent.lit, the only green that works on ink */
 
-/* The settled footprint. Every plate and every dimension in this file is
-   scaled off these two numbers, so a drawing cannot drift from the stated
-   size. The long axis is the 54, and it lies ALONG the arm. */
+// The 54 x 36 mm footprint; every plate and dimension in this file is scaled from these.
 const MM_LONG = 54
 const MM_CROSS = 36
 
 const f = n => Number(n.toFixed(2))
 
-/* The same superellipse charts/patchstack.jsx draws the patch with, which that
-   file does not export. `a` is the half-extent across the arm and `b` the
-   half-extent along it, so a vertical drawing passes the cross dimension
-   first. k is handle length as a fraction of the radius; 0.66 keeps the sides
-   straighter than a true ellipse without reading as a stadium. */
+// Superellipse with half-extents a and b; k is handle length over radius, straighter-sided than an ellipse.
 function oval(cx, cy, a, b, k = 0.66) {
   const hx = a * k, hy = b * k
   return `M${f(cx)} ${f(cy - b)}`
@@ -56,8 +34,6 @@ function oval(cx, cy, a, b, k = 0.66) {
     + `C${f(cx - a)} ${f(cy - hy)} ${f(cx - hx)} ${f(cy - b)} ${f(cx)} ${f(cy - b)}Z`
 }
 
-/* A port that does not break the outline is a sticker, so the slot straddles
-   the silhouette on the left wall, the way patchstack.jsx draws it. */
 function Slot({ cx, cy, a, b }) {
   return (
     <>
@@ -69,8 +45,6 @@ function Slot({ cx, cy, a, b }) {
   )
 }
 
-/* Three open arcs leaving the right wall. Elliptical, not circular, so they
-   are foreshortened by the same amount as the plate they come off. */
 function Advert({ x, cy, rings, width = 2 }) {
   return (
     <g fill="none" stroke={BEAM} strokeWidth={width} strokeLinecap="round">
@@ -81,7 +55,6 @@ function Advert({ x, cy, rings, width = 2 }) {
   )
 }
 
-/* The patch in plan, long axis vertical, with its side wall under it. */
 function Plate({ cx, cy, a, b, wall }) {
   return (
     <>
@@ -92,9 +65,6 @@ function Plate({ cx, cy, a, b, wall }) {
   )
 }
 
-/* Arrowheads and witness lines, label outside. Two orientations, because
-   the arm figure has to carry both dimensions and neither is foreshortened on
-   that view. */
 function DimV({ x, y1, y2, from, size }) {
   const t = size * 0.34
   return (
@@ -120,8 +90,6 @@ function DimH({ y, x1, x2, from, size }) {
   )
 }
 
-/* ---- the hero: two objects, one link, nothing between them -------------- */
-
 const LINK_ALT =
   'A drawing of the patch on the left and a phone on the right, with three arcs of Bluetooth Low '
   + 'Energy leaving the side of the patch and reaching the phone. In the gap between them a cable '
@@ -137,9 +105,6 @@ export function WirelessLink({ className }) {
       <circle cx={cx} cy={cy} r="5" fill={ACCENT}/>
       <Advert x={cx + a} cy={cy} rings={[[16, 30], [26, 48], [36, 66]]}/>
 
-      {/* The phone is a drawing here rather than the ui/iphone mockup: at this
-          size the mockup's bezel detail is mush, and the figure is about the
-          gap between the two objects, not about the device. */}
       <rect x="316" y="28" width="108" height="168" rx="20" fill={CARD} stroke={INK} strokeWidth="1.8"/>
       <rect x="325" y="37" width="90" height="150" rx="13" fill={PAPER} stroke={RULE} strokeWidth="1"/>
       <rect x="354" y="44" width="32" height="8" rx="4" fill={INK}/>
@@ -151,9 +116,6 @@ export function WirelessLink({ className }) {
       <path d="M361 104l6 7 12-14" fill="none" stroke={ACCENT} strokeWidth="2.6"
         strokeLinecap="round" strokeLinejoin="round"/>
 
-      {/* The cable is the only shape in this file that exists to be denied. It
-          stops short of the phone on purpose: a cable drawn into the frame
-          would overlap the screen and read as part of the device. */}
       <path d="M178 150Q238 186 298 148" fill="none" stroke={RULING} strokeWidth="3.4"
         strokeLinecap="round"/>
       <rect x="170" y="142" width="12" height="16" rx="3" fill={MIST} stroke={RULING} strokeWidth="1.4"/>
@@ -172,8 +134,6 @@ export function WirelessLink({ className }) {
   )
 }
 
-/* ---- where it goes ------------------------------------------------------ */
-
 const ARM_ALT =
   `The outer face of the upper arm seen straight on, shoulder at the top and elbow at the bottom, `
   + `with the patch centred on it. The oval's long axis of ${MM_LONG} mm runs along the arm, `
@@ -190,17 +150,12 @@ export function ArmPlacement({ className }) {
   return (
     <svg viewBox="0 0 360 300" role="img" aria-label={ARM_ALT}
       className={cn('block h-auto w-full', className)} style={{ maxWidth: 360 }}>
-      {/* The limb is the one shape here that is drawn rather than calculated:
-          an arm has no arithmetic. It only has to be wider than the plate and
-          to taper the way an upper arm does. */}
       <path d="M86 -8C76 68 76 168 86 306L214 306C224 168 224 68 214 -8Z"
         fill={MIST} stroke={RULING} strokeWidth="1.4"/>
       <ellipse cx={cx} cy={cy} rx={f(a)} ry={f(b)} fill={CARD} stroke={INK} strokeWidth="1.6"/>
       <ellipse cx={cx} cy={cy} rx={f(a * 0.74)} ry={f(b * 0.82)} fill="none"
         stroke={RULE} strokeWidth="1" strokeDasharray="5 5"/>
       <circle cx={cx} cy={cy} r="5" fill={ACCENT}/>
-      {/* Centre line last, over the part: it is the arm's own axis and the
-          oval's long axis at once, which is the whole point of this view. */}
       <line x1={cx} y1="4" x2={cx} y2="296" stroke={RULING} strokeWidth="1" strokeDasharray="7 5"/>
 
       <DimV x={dimX} y1={f(cy - b)} y2={f(cy + b)} from={f(cx + a)} size={size}/>
@@ -215,8 +170,6 @@ export function ArmPlacement({ className }) {
     </svg>
   )
 }
-
-/* ---- step one: the patch on its own ------------------------------------- */
 
 const WAKE_ALT =
   'A drawing of the patch in plan, long axis vertical, with the charging slot called out on its '
@@ -243,13 +196,7 @@ function PatchWake({ height }) {
   )
 }
 
-/* ---- the screens -------------------------------------------------------- */
-/* Inline styles and device points, the way ui/phone-app.jsx does it: the
-   children of ui/iphone lay out at the device's own size and one transform
-   scales the lot, so a rem or a Tailwind class would not scale with it.
-   Screen type is set large for that reason. Every value below was taken from
-   the palette and every pair clears 4.5:1 on its own ground. */
-
+// Phone screens use inline styles in device points, because ui/iphone scales its children with one transform.
 const DISPLAY = 'Quicksand,sans-serif'
 const BODY = 'Chivo,sans-serif'
 
@@ -264,8 +211,6 @@ function Pad({ children }) {
 const H1 = { margin:0, fontFamily:DISPLAY, fontWeight:700, fontSize:33, lineHeight:1.1,
   letterSpacing:'-0.02em', color:INK }
 
-/* `tap` is step three rather than a second screen: the screen does not change
-   when a finger lands on it, only the button's own ground does. */
 function AppHome({ tap = false }) {
   return (
     <Pad>
@@ -274,12 +219,6 @@ function AppHome({ tap = false }) {
       <p style={{ margin:'10px 0 0', fontFamily:BODY, fontSize:19, lineHeight:1.4, color:INK2 }}>
         The patch connects over Bluetooth. Nothing to install.
       </p>
-      {/* The screen used to be a title, a line and then a button pushed to the
-          bottom by marginTop:auto, which left the middle of a 852-point phone
-          empty. It is an app screen, so it shows the app's real resting state:
-          the four channels named, and no reading against any of them, because
-          nothing is connected yet. It is also the honest contrast with the
-          streaming screen, which is the same four rows carrying units. */}
       <div style={{ marginTop:20, borderRadius:14, border:`1px solid ${RULE}`, background:CARD,
         padding:'15px 14px' }}>
         <p style={{ margin:0, fontFamily:BODY, fontSize:16, color:INK3 }}>No patch connected</p>
@@ -288,7 +227,6 @@ function AppHome({ tap = false }) {
           return (
             <div key={id} style={{ display:'flex', alignItems:'center', gap:12,
               marginTop: i ? 13 : 14 }}>
-              {/* Colour identifies the channel and never carries it alone. */}
               <span aria-hidden style={{ width:4, height:18, borderRadius:999, background:s.glow }}/>
               <span style={{ fontFamily:BODY, fontSize:18, color:INK2 }}>{s.name}</span>
               <span style={{ marginLeft:'auto', fontFamily:BODY, fontSize:15, color:INK3 }}>
@@ -316,9 +254,6 @@ function AppHome({ tap = false }) {
   )
 }
 
-/* The browser's own sheet, not ours: the app cannot style it, cannot read it
-   and cannot pick for you. One row, because the request is filtered to the one
-   service the patch advertises and nothing else can be listed. */
 function Chooser({ picked = false }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0 }}>
@@ -362,9 +297,6 @@ function Chooser({ picked = false }) {
   )
 }
 
-/* The two lines here are the ones lib/engine.js returns on a successful
-   connect. Do not add a battery figure, a range or a pairing time to this
-   screen: none of the three is settled. */
 function Streaming() {
   return (
     <Pad>
@@ -378,8 +310,6 @@ function Streaming() {
           return (
             <div key={id} style={{ display:'flex', alignItems:'center', gap:12,
               marginTop: i ? 15 : 0 }}>
-              {/* Colour identifies the channel and never carries it alone: the
-                  name is beside it in paper. */}
               <span aria-hidden style={{ width:4, height:20, borderRadius:999, background:s.glow }}/>
               <span style={{ fontFamily:BODY, fontSize:19, color:PAPER }}>{s.name}</span>
               <span style={{ marginLeft:'auto', fontFamily:BODY, fontSize:16, color:MIST }}>
@@ -396,11 +326,7 @@ function Streaming() {
   )
 }
 
-/* ---- one figure per step ------------------------------------------------ */
-/* 0.42 puts a 393-point screen at 165px, which is the widest phone a 390px
-   column holds beside the card's own padding. The label is the figure's text
-   alternative: ui/iphone puts role="img" on the frame, so nothing inside the
-   screen is announced. */
+// 0.42 renders a 393-point screen at 165px, which fits a 390px column with the card's padding.
 const SCALE = 0.42
 const PHONE_H = Math.round((852 + 20) * SCALE)
 
@@ -434,11 +360,6 @@ const SCREENS = {
   },
 }
 
-/* `scale` is the phone's own scale factor, not a CSS transform: the frame in
-   ui/iphone lays out at it, so the drawing stays crisp and the wake figure is
-   matched to the same height. 0.42 is the six-across page size that was; the
-   console on views/Pairing asks for 0.4, which is the largest that still clears
-   a 390px column once the card's own padding is taken off. */
 export function StepArt({ kind, scale = SCALE }) {
   if (kind === 'wake') return <PatchWake height={Math.round((852 + 20) * scale)}/>
   const s = SCREENS[kind]

@@ -7,18 +7,6 @@ import { WHO, NO_STYLES, REPLIES, CONSENT, noLine, pushbackFor, readStore, write
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, Answer, answerState, Win, leave } from '../../toolkit/game/skill'
 
-/* Saying No: a boundary builder.
- *
- * 1. Who it is with: a friend, the group, someone you are dating, a coach or
- *    teacher. Dating opens the consent card, which stays on every step.
- * 2. What you want to say no to (tap one or type it).
- * 3. How: plain no, no and a reason, no and an offer, broken record, not now.
- *    A back-up person to text if it gets hard.
- * 4. Three rounds of pushback. Hold your line, over-explain or give in;
- *    each gets a short, kind note.
- * Result: the line, how many rounds you held, and "My boundaries", a list
- * you can come back to. Stored at `mindmap.skills.outside-no`. */
-
 export const ID = 'outside-no'
 export const NoIcon = () => (
   <I><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></I>

@@ -2,8 +2,7 @@ import React from 'react'
 import * as R from '@radix-ui/react-radio-group'
 import { cn } from '../lib/utils'
 
-/* Radix RadioGroup gives the 0-4 scale roving-tabindex keyboard behaviour that
-   a row of bare inputs does not: arrow keys move within the scale, Tab leaves it. */
+// Radix RadioGroup gives the 0 to 4 scale arrow-key movement and a single tab stop.
 export function Scale({ name, legend, low, high, value, onChange }){
   return (
     <fieldset className="py-6 border-b border-rule/50">

@@ -1,8 +1,3 @@
-/* Pure logic for the School tools. No React, no storage, so every rule here
- * is tested in tests/skills-school.test.js. */
-
-/* ── Time-block planner (school-cram) ─────────────────────────────────── */
-
 export function parseTime(s) {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim())
   if (!m) return null
@@ -25,8 +20,7 @@ export function nightLabel(i, todayDow) {
   return DAYS[(todayDow + i) % 7]
 }
 
-/* How far off your guesses run: total real minutes over total guessed
-   minutes, from the last 10 logged tasks, held between 0.5 and 3. */
+// Real minutes over guessed minutes across the last 10 logged tasks, clamped to 0.5..3.
 export function learnFactor(history = []) {
   const rows = history.filter(r => r && r.est > 0 && r.actual > 0).slice(-10)
   if (!rows.length) return { factor:1, n:0 }
@@ -45,8 +39,7 @@ export function factorLine(f) {
 
 export const adjust = (est, factor = 1) => Math.max(5, Math.ceil((est * factor) / 5) * 5)
 
-/* A task longer than an hour becomes even parts of at most an hour, each a
-   multiple of 5 minutes, so one evening never has to hold all of it. */
+// Splits a task into even parts of at most `maxPiece` minutes, each a multiple of 5.
 export function splitTask(task, factor = 1, maxPiece = 60) {
   const total = adjust(task.est, factor)
   const n = Math.max(1, Math.ceil(total / maxPiece))
@@ -62,9 +55,7 @@ export function splitTask(task, factor = 1, maxPiece = 60) {
 
 const order = (a, b) => a.due - b.due || String(a.taskId).localeCompare(String(b.taskId)) || a.part - b.part
 
-/* Fill the earliest nights first, up to a cap, keeping every part before its
-   due date and in order. The cap is the smallest one that fits, found by
-   trying caps from the biggest part upward. Work lands early, never late. */
+// Fills nights in order up to `cap` minutes; null if a part would land on or after its due night.
 function fill(pieces, cap) {
   const out = []
   let night = 0, load = 0
@@ -81,12 +72,12 @@ export function autoPlan(pieces) {
   if (!pieces.length) return []
   const sorted = [...pieces].sort(order)
   const total = sorted.reduce((s, p) => s + p.mins, 0)
+  // The smallest cap that fits wins, tried upward from the largest part in 5 minute steps.
   for (let cap = Math.max(...sorted.map(p => p.mins)); cap <= total; cap += 5) {
     const r = fill(sorted, cap)
     if (r) return r
   }
-  /* Too much for the days given: everything still goes on the last night it
-     can, and the night view says so. */
+  // No cap fits: each part goes on the last night before it is due.
   return sorted.map(p => ({ ...p, night: Math.max(0, p.due - 1) }))
 }
 
@@ -107,8 +98,6 @@ export const BREAKS = {
   none:    { work:Infinity, rest:0, label:'None' },
 }
 
-/* One evening, start to finish: work in blocks, a break between blocks only
-   when more work follows. */
 export function scheduleNight(items, start, mode = '50/10') {
   const { work, rest } = BREAKS[mode] || BREAKS['50/10']
   const segments = []
@@ -128,14 +117,11 @@ export function scheduleNight(items, start, mode = '50/10') {
   return { segments, end:t, workMins }
 }
 
-/* Positive: minutes past bedtime. A bedtime at or before the start time is
-   read as after midnight. */
+// A bedtime at or before the start time is read as after midnight.
 export function minutesPastBed(end, start, bed) {
   const b = bed <= start ? bed + 1440 : bed
   return end - b
 }
-
-/* ── Source checker (school-sources) ──────────────────────────────────── */
 
 export const SOURCE_QUESTIONS = [
   { id:'who', title:'Who made it',
@@ -212,15 +198,13 @@ export function gradeSort(picks = {}) {
   return { right: results.filter(r => r.ok).length, total: SAMPLES.length, results }
 }
 
-/* ── Good enough (school-good-enough) ─────────────────────────────────── */
-
 export function readiness(must = []) {
   const total = must.length
   const done = must.filter(m => m.done).length
   return { done, total, pct: total ? done / total : 0, ready: total > 0 && done === total }
 }
 
-/* feel is 0 to 100 (how ready it feels), actual is 0 to 1 (the checklist). */
+// feel is 0 to 100; actual is the checklist share, 0 to 1.
 export function gutCheck(feel, actual) {
   const a = Math.round(actual * 100)
   if (a - feel >= 25) return { kind:'doubt',
@@ -235,8 +219,6 @@ export function mistakeEntry({ what = '', tells = '', next = '' } = {}) {
   if (!w) return null
   return { what:w, tells:tells.trim(), next:next.trim() }
 }
-
-/* ── Active learning (school-active) ──────────────────────────────────── */
 
 const STOP = new Set(['about', 'after', 'again', 'because', 'before', 'being', 'their', 'there',
   'these', 'those', 'which', 'while', 'where', 'other', 'would', 'could', 'should', 'every', 'between'])
@@ -277,9 +259,7 @@ export function notesToCards(text = '') {
     .map(l => ({ ...noteToCard(l), src:l }))
 }
 
-/* Leitner boxes: a card you get moves up a box and waits longer; one you miss
-   goes back to box 1 and comes round again today. Days, not dates, and
-   nothing counts a missed day against you. */
+// Leitner boxes: days until a card is due again in each box.
 export const WAIT = { 1:0, 2:1, 3:3, 4:7, 5:14 }
 
 export function review(card, grade, today) {

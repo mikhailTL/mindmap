@@ -4,13 +4,7 @@ import { studentRings } from '../../lib/readings'
 import { AvatarArt } from '../../account/avatars'
 import { cn } from '../../lib/utils'
 
-/* The pictures on the Counselor/Professional home. All of it is art: nothing
- * here is a reading, a count of a light or anyone's score. Each picture is
- * aria-hidden, since the card's own words say where it goes. */
-
-/* The Mind Score rainbow as a picture: four bands drawn full and bright, the
-   clouds on, and every number and scale word hidden, so it cannot be read as
-   anyone's score. */
+// Fixed full bands with every number hidden, so the picture cannot be read as anyone's score.
 const ART_FILL = [88, 74, 60, 46]
 export function RainbowArt({ size = 240, className }) {
   const rings = React.useMemo(() => studentRings().map((r, i) => ({ ...r, value: ART_FILL[i] ?? r.value })), [])
@@ -22,8 +16,6 @@ export function RainbowArt({ size = 240, className }) {
   )
 }
 
-/* Three avatars joined by a dotted thread: a family linking up. Sized in
-   percent of its own box, so it scales with the half-tile it sits in. */
 export function LinkArt({ className }) {
   return (
     <span aria-hidden className={cn('relative block aspect-[168/76] w-[168px]', className)}>
@@ -41,7 +33,6 @@ export function LinkArt({ className }) {
   )
 }
 
-/* Two speech bubbles: a question, and the answer being written. */
 export function ChatArt({ className }) {
   return (
     <svg aria-hidden viewBox="0 0 150 84" className={cn('block h-[84px] w-[150px]', className)}>
@@ -56,9 +47,6 @@ export function ChatArt({ className }) {
   )
 }
 
-/* Three of the professional tools as tilted cards, drawn rather than
-   written so they still read at half a tile: a conversation opener, a
-   grounding timer and a referral note. */
 export function ToolArt({ className }) {
   return (
     <svg aria-hidden viewBox="0 0 120 92" className={cn('block h-[92px] w-[120px] overflow-visible', className)}

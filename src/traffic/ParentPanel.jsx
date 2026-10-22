@@ -2,10 +2,7 @@ import React from 'react'
 import { LightCard, WeekGraph } from './ParentReport'
 import { useHeadsUp } from './useHeadsUp'
 
-/* Heads Up inside the parent app section: the same two teen engines, not
- * drawn, feeding the parent's light, headline, signals and week. A text
- * button opens the full Heads Up tab. */
-
+// Heads Up inside the parent app section: both teen engines run headless and feed the parent's card.
 export function HeadsUpParentPanel({ onOpen }) {
   const hu = useHeadsUp({ headless: true })
   const p = hu.parent

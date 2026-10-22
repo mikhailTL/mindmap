@@ -5,8 +5,6 @@ import {
 import { seededBaseline } from '../src/traffic/baseline.js'
 import { Light, SIGNAL, RED_AFTER_MS } from '../src/signals/light.js'
 
-/* Both teen phones, headless, under fake timers, for four loops: the same
-   scripts, the same engine and the same callout rule the page runs. */
 const LOOPS = 4
 let rec
 

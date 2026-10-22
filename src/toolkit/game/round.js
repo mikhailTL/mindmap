@@ -1,13 +1,8 @@
-/* Pure helpers for quick rounds: one card at a time, pick an answer, see
- * why. An item is { id, prompt, options:[{ id, text, ok, why? }], why? }.
- * Exactly one option should be `ok`; `why` on the item is shown after any
- * pick, `why` on an option only when that option is picked. */
-
+// Round item shape: { id, prompt, options: [{ id, text, ok, why? }], why? }, with exactly one `ok` option.
 export function rightOption(item) {
   return (item?.options || []).find(o => o.ok) || null
 }
 
-/* picks: { [itemId]: optionId } -> { right, total, clean, answered, results } */
 export function gradeRound(items = [], picks = {}) {
   const results = items.map(it => {
     const pick = picks[it.id]
@@ -19,7 +14,6 @@ export function gradeRound(items = [], picks = {}) {
   return { right, total:items.length, answered, clean: items.length > 0 && right === items.length, results }
 }
 
-/* Short words for how a round went. Never a judgement of the person. */
 export function roundLine(right, total) {
   if (!total) return ''
   if (right === total) return 'Every one right.'
@@ -28,8 +22,7 @@ export function roundLine(right, total) {
   return 'Good practice. Read why for each one.'
 }
 
-/* A stable shuffle, so the right answer is not always first and a round
-   reads the same way on a reload. */
+// Seeded Park-Miller shuffle, so option order is stable for a given seed.
 export function mixOptions(options = [], seed = 1) {
   const a = [...options]
   let s = (Math.abs(Math.floor(seed)) % 2147483646) + 1

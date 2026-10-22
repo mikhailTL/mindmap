@@ -7,12 +7,7 @@ import { shoppingList, vehicleStatus, todayISO, niceDate, leaveBy, tripCard, clo
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
-/* Home Basics: meals, laundry, car upkeep and a bus or train trip, each as a
- * card you work through and keep. Saved under `mindmap.skills.life-home`. */
-
 const ID = 'life-home'
-
-/* ── Meals ─────────────────────────────────────────────────────────────── */
 
 export const RECIPES = {
   oats: { name:'Overnight oats', kind:'No cook', mins:5,
@@ -135,8 +130,6 @@ function Meals({ data, patch, g, win }) {
   )
 }
 
-/* ── Laundry ───────────────────────────────────────────────────────────── */
-
 const FABRICS = {
   cotton: { name:'Everyday cotton', eg:'T-shirts, jeans, hoodies',
     water:'Cold or warm', cycle:'Normal', dry:'Tumble dry low or medium, or hang',
@@ -155,8 +148,7 @@ const FABRICS = {
     tip:'Wash them apart the first few times. The dye can run onto lighter clothes.' },
 }
 
-/* Care label symbols, drawn simply. Each draws its own outline; a dot is a
-   heat step and a cross is "do not". */
+// Care label symbols: a dot is a heat step and a cross means do not.
 const Tub = ({ dots = 0, hand, cross, bars = 0 }) => (
   <>
     <path d="M6 13 L9 27 H27 L30 13" /><path d="M5 13c2-2 4 2 6.5 0s4.5 2 6.5 0 4.5 2 6.5 0 4.5 2 6.5 0"/>
@@ -270,8 +262,6 @@ function Laundry({ data, patch, g, win }) {
   )
 }
 
-/* ── Car ───────────────────────────────────────────────────────────────── */
-
 const CAR_ITEMS = [
   ['oil', 'Oil change', 'Use the interval in the owner\'s manual. Many cars say every 5,000 to 10,000 miles or 6 to 12 months.', { everyMonths:'', everyMiles:'' }],
   ['tires', 'Tire pressure and tread', 'Check once a month. Use the pressure on the sticker inside the driver\'s door, not the number on the tire. Penny test: put a penny in the tread, head down. If you can see all of the head, the tread is worn.', { everyMonths:'1', everyMiles:'' }],
@@ -346,8 +336,6 @@ function dueText(s) {
     : `or at ${s.nextMiles.toLocaleString('en-US')} miles`)
   return parts.join('; ')
 }
-
-/* ── Transit ───────────────────────────────────────────────────────────── */
 
 const TRIP_STEPS = [
   ['route', 'Look up the route in the transit agency\'s app or a maps app.'],

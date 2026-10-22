@@ -15,21 +15,7 @@ import { SourceCounts, SourceIcon, SourceLine, SOURCE_NAME, countBySource, sourc
 import { STATUS_LINE, STATUS_WORD, TREND_PREV, TREND_RANGES, TREND_TITLE, figures, readingsShared, signed,
   trendDays, trendRange, trendsShared } from './metrics'
 
-/* One teen's record, opened from a card. The same layout for every teen, in
- * two clearly headed parts:
- *
- *   Today    the Mind Score on the rainbow (clouds on) with its four bands,
- *            the body today with each reading's source, the Heads Up face,
- *            and today's readings counted by source (single readings listed
- *            only when the teen shares them)
- *   Trends   week or month: a bar per day against the usual band with the
- *            Heads Up face under each day, the average and its change, the
- *            readings by source, the body as daily averages
- *
- * Then what the teen shares and the notes. Opening it writes a log line. */
-
-/* Demo figure for the settle row: days the body took longer than usual to
-   settle. A count of days and nothing finer. */
+// Demo figure: days the body took longer than usual to settle, as a count only.
 const SETTLE_DAYS = 2
 
 function Urgent({ teen }) {
@@ -79,9 +65,7 @@ function Urgent({ teen }) {
   )
 }
 
-/* Body readings, each with the source it comes from. Sweat and skin
-   temperature come from the patch only, so a teen without one has no row
-   for them rather than a blank. */
+// Sweat and skin temperature come from the patch only, so a teen without one has no row for them.
 const BODY = [
   { k: 'pulse', label: 'Resting pulse', unit: 'bpm', from: t => (t.patch ? 'patch' : 'camera') },
   { k: 'hrv', label: 'Heart rate variability', unit: 'ms', from: t => (t.patch ? 'patch' : 'camera') },
@@ -140,7 +124,6 @@ export function ProTeenDetail({ teen, initialRange = 'week', isAlert, openedAt, 
 
       {isAlert && <div className="mt-3 lg:mt-4"><Urgent teen={teen}/></div>}
 
-      {/* ── Today ─────────────────────────────────────────────────────── */}
       <section aria-labelledby="pro-today-h" className="mt-6">
         <PartHead id="pro-today-h" kind="today" title="Today" line={`${TODAY_LONG}. Readings so far today.`}
           className="[&_h2]:text-row"/>
@@ -210,7 +193,6 @@ export function ProTeenDetail({ teen, initialRange = 'week', isAlert, openedAt, 
         </div>
       </section>
 
-      {/* ── Trends ────────────────────────────────────────────────────── */}
       <section aria-labelledby="pro-trends-h" className="mt-8">
         <PartHead id="pro-trends-h" kind="trends" title="Trends" line={`${TREND_TITLE[range]}, against ${TREND_PREV[range]}.`}
           className="[&_h2]:text-row"/>

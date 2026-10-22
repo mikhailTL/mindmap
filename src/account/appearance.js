@@ -1,18 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
-/* How the app looks on this device: text size and motion. Kept in
- * localStorage, applied to <html> on load and on every change, so it holds on
- * every screen without a provider.
- *
- * Text size scales the root font size. Every size in src/lib/type-scale.js is
- * in rem, so the whole scale moves together.
- *
- * Reduce motion sets data-motion="reduce" on <html>, which a global rule
- * below stills CSS transitions and animations under. framer-motion reads only
- * the system setting; App.jsx can pass motionPreference() to MotionConfig's
- * reducedMotion for the same effect on JS animations.
- */
-
+// Text size and reduced motion for this device, kept in localStorage and applied to <html>.
+// Text size scales the root font size, and every size in lib/type-scale.js is in rem.
 const KEY = 'mindmap.appearance'
 const VERSION = 1
 
@@ -77,8 +66,7 @@ export function setAppearance(patch) {
   return state
 }
 
-/* For MotionConfig: 'always' when this device asked for less motion, else
-   'user', which follows the system setting. */
+// For MotionConfig's reducedMotion: 'always' when this device asked for less motion, otherwise the system setting.
 export const motionPreference = () => (getAppearance().motion === 'reduce' ? 'always' : 'user')
 
 function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn) }

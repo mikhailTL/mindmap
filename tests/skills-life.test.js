@@ -65,9 +65,7 @@ describe('budget', () => {
 
 describe('compound interest', () => {
   it('matches the closed formula, monthly compounding, deposits at month end', () => {
-    // 1000 at 6% for 10 years, no deposits: 1000 * (1.005)^120 = 1819.40
     expect(compound({ start:1000, monthly:0, rate:6, years:10 }).total).toBeCloseTo(1819.40, 2)
-    // 50 a month at 6% for 10 years: 50 * ((1.005^120 - 1) / 0.005) = 8193.97
     const r = compound({ start:0, monthly:50, rate:6, years:10 })
     expect(r.total).toBeCloseTo(8193.97, 2)
     expect(r.contributed).toBe(6000)
@@ -224,9 +222,9 @@ describe('interest quiz', () => {
   })
   it('uses the monthly compounding formula for the right answers', () => {
     const right = q.map(it => it.options.find(o => o.ok).value)
-    expect(right[0]).toBeCloseTo(100 * Math.pow(1 + 0.05 / 12, 120), 2)                    // 164.70
-    expect(right[1]).toBeCloseTo(25 * (Math.pow(1 + 0.05 / 12, 120) - 1) / (0.05 / 12), 2)  // 3882.06
-    expect(right[2]).toBeCloseTo(500 * Math.pow(1 + 0.24 / 12, 24), 2)                     // 804.22
+    expect(right[0]).toBeCloseTo(100 * Math.pow(1 + 0.05 / 12, 120), 2)
+    expect(right[1]).toBeCloseTo(25 * (Math.pow(1 + 0.05 / 12, 120) - 1) / (0.05 / 12), 2)
+    expect(right[2]).toBeCloseTo(500 * Math.pow(1 + 0.24 / 12, 24), 2)
   })
   it('offers simple interest as the tempting wrong answer', () => {
     expect(q[0].options.some(o => !o.ok && Math.abs(o.value - 150) < 0.001)).toBe(true)

@@ -7,13 +7,8 @@ import { cn } from '../lib/utils'
 import { cardClass } from '../ui/card'
 import { LOCATION, NOTES, PRO, SCORE, CONSENT_SHORT } from '../lib/terms'
 
-/* The student app's furniture, and the screen shown with no patch paired.
-   Students.jsx imports these primitives for the demo Today screen. */
-
-/* ── Primitives ─────────────────────────────────────────────────────────── */
-
-/* A tone is a ground and an edge, never a state. The last six are retired
-   hue names two files still index by. */
+// Shared student-app primitives, and the student screen shown with no patch paired.
+// A tone is a ground and an edge. The last six keys alias hue names that other files index by.
 export const TONES = {
   card:  'border-rule/60 bg-card',
   brand: 'border-accent/20 bg-accent-wash',
@@ -21,7 +16,6 @@ export const TONES = {
   deep:  'border-rule/60 bg-aqua-2',
   beam:  'border-beam/20 bg-beam-wash',
   paper: 'border-rule/60 bg-paper',
-  /* retired, aliased */
   lilac: 'border-rule bg-aqua',
   sky:   'border-beam/30 bg-beam-wash',
   mint:  'border-accent/30 bg-accent-wash',
@@ -30,8 +24,7 @@ export const TONES = {
   blush: 'border-rule bg-aqua',
 }
 
-/* `variant` (src/ui/card.jsx) replaces the tone when given: tint, ink, rule or
-   outline. Without it a panel is exactly what it was. */
+// `variant` (src/ui/card.jsx) replaces the tone when given: tint, ink, rule or outline.
 export function Panel({ className, tone = 'card', variant, hue = 'accent', as: As = 'section', children, ...rest }) {
   const surface = variant
     ? cn(cardClass(variant, hue), 'p-3.5 lg:p-4', variant === 'rule' && 'px-0 pb-0 pt-3 lg:px-0 lg:pb-0')
@@ -44,9 +37,6 @@ export function Panel({ className, tone = 'card', variant, hue = 'accent', as: A
   )
 }
 
-/* The module label. The owner, 18 October: the dark rule above every heading
-   read as generated, so a heading is set by weight alone. Other files that
-   want the same label import HEAD rather than `.mark`. */
 export const HEAD = 'block font-display text-ui font-bold text-ink'
 export function PanelHead({ title, meta, as: As = 'h2', className }) {
   return (
@@ -111,8 +101,6 @@ export function Greeting({ items = [], className }) {
   )
 }
 
-/* ── The "?" control ─────────────────────────────────────────────────────
-   Anything needing a paragraph goes behind this. */
 export function Why({ label = 'What this means', children, className, align = 'left' }) {
   const [open, setOpen] = React.useState(false)
   const id = React.useId()
@@ -138,8 +126,6 @@ export function Why({ label = 'What this means', children, className, align = 'l
   )
 }
 
-/* ── The one disclosure ─────────────────────────────────────────────────── */
-
 export function SeeDetails({ label = 'See details', sub, children, className, defaultOpen = false }) {
   const [open, setOpen] = React.useState(defaultOpen)
   return (
@@ -162,9 +148,6 @@ export function SeeDetails({ label = 'See details', sub, children, className, de
   )
 }
 
-/* ── The one thing the patch cannot measure ─────────────────────────────── */
-
-/* The legend for the survey, not a stored rating. */
 const FACES = [
   ['easier',      'bg-aqua',   'M8.5 14.6c1.4 1.7 5.6 1.7 7 0'],
   ['about usual', 'bg-aqua-2', 'M8.5 15h7'],
@@ -218,8 +201,6 @@ export function FeltCard({ go, className }) {
   )
 }
 
-/* ── The action row ─────────────────────────────────────────────────────── */
-
 /* Four routes the bottom bar already carries. */
 const ACTIONS = [
   ['check',    'Take a Reading',  PulseMark],
@@ -252,8 +233,6 @@ export function ActionRow({ go, className, actions = ACTIONS }) {
     </ul>
   )
 }
-
-/* ── What is shared ─────────────────────────────────────────────────────── */
 
 /* The consent model, in three rows. */
 const SCOPE = [
@@ -305,7 +284,6 @@ export function Headline({ children }) {
     leading-[1.15] tracking-tight text-ink">{children}</p>
 }
 
-/* The hero sentence: plain words, never a feeling, never over ten words. */
 export function HeroLine({ lead, under, why, whyLabel, figLabel, figure, unit, note, centred, children }) {
   return (
     <div className={cn('min-w-0', centred && 'flex flex-col items-center text-center')}>
@@ -349,9 +327,7 @@ export function AllDetail({ label = 'See every reading', children }) {
   )
 }
 
-/* ── Student, with nothing paired ───────────────────────────────────────── */
-
-/* No dial at zero: 0 is a valid score. Four empty lanes stand in. */
+// No dial at zero, since 0 is a valid score; four empty lanes stand in.
 function SilentChannels() {
   return (
     <div className="border-t border-ink">
@@ -400,7 +376,6 @@ const PAIRING = [
   ['About two weeks of wear', 'Two weeks of readings build your own normal.'],
 ]
 
-/* Real mode. No invented figure, and no dial. */
 export function StudentBody({ go, openTab }) {
   const open = route => (openTab ? openTab(route) : go(route))
   return (

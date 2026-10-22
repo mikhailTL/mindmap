@@ -4,12 +4,6 @@ import {
   PRIOR, TERMS, emptyBaseline, featuresFrom, scoreCapture, updateBaseline,
 } from '../src/signals/score.js'
 
-/* Every number the phone route reports is a distance from the same person's
-   own history. That makes the baseline the load-bearing part: get the running
-   mean or spread wrong and a calm reading reads as stress for everybody.
-   Welford keeps no history, so there is nothing to inspect after the fact,
-   which is why it is checked against a direct computation here. */
-
 const FEATURE_KEYS = ['hr', 'hrv', 'f0Mean', 'f0Cv', 'f0Instab', 'ampInstab']
 
 const directMean = xs => xs.reduce((a, x) => a + x, 0) / xs.length
@@ -29,8 +23,6 @@ const feed = (sequences, dayKeys) => {
   return b
 }
 
-/* A baseline long enough that the personal spread is used, built from values
-   that actually vary so the spread is not zero. */
 const settledBaseline = () => {
   let b = emptyBaseline()
   for (let i = 0; i < 40; i++) {
@@ -88,9 +80,6 @@ describe('Welford baseline', () => {
     expect(after.stats.hr.m).not.toBeCloseTo(before.stats.hr.m, 6)
   })
 
-  /* `days` is what the confidence band reads to decide how much to trust the
-     baseline, so it has to count days and not captures. Three readings on one
-     afternoon are not three days of normal. */
   it('counts one day per distinct day key, however many captures that day held', () => {
     const sameDay = feed({ hr: [70, 74, 66, 80, 72] }, ['mon', 'mon', 'mon', 'mon', 'mon'])
     expect(sameDay.n).toBe(5)
@@ -101,8 +90,6 @@ describe('Welford baseline', () => {
     expect(threeDays.n).toBe(5)
     expect(threeDays.days).toBe(3)
 
-    /* Extra captures on a day still sharpen the mean even though they add no
-       day, which is the comment's claim in the source. */
     expect(sameDay.stats.hr.n).toBe(5)
     expect(sameDay.stats.hr.m).toBeCloseTo(directMean([70, 74, 66, 80, 72]), 10)
   })
@@ -117,16 +104,12 @@ describe('Welford baseline', () => {
   it('ignores a channel that came back null or NaN', () => {
     const b = updateBaseline(emptyBaseline(), { hr: NaN, hrv: null, f0Mean: 175 }, 'mon')
     expect(Object.keys(b.stats)).toEqual(['f0Mean'])
-    /* n counts captures, not channels, so the capture still happened. */
     expect(b.n).toBe(1)
     expect(b.days).toBe(1)
   })
 })
 
 describe('baseline z-scores', () => {
-  /* Under five captures a personal spread is mostly measurement noise. The
-     prior's spread is borrowed instead, and the confidence band carries the
-     fact that it was borrowed. */
   it('borrows the prior mean and spread with fewer than two captures', () => {
     const r = scoreCapture({ ppg: ppgOf({ hr: 98, rmssd: undefined, hrvOk: false, quality: 1 }), voice: null, motion: stillMotion, baseline: emptyBaseline() })
     expect(zFor(r, 'hr')).toBeCloseTo((98 - PRIOR.hr.m) / PRIOR.hr.s, 10)
@@ -137,8 +120,6 @@ describe('baseline z-scores', () => {
       const b = feed({ hr: xs })
       const r = scoreCapture({ ppg: ppgOf({ hr: 98, rmssd: undefined, hrvOk: false, quality: 1 }), voice: null, motion: stillMotion, baseline: b })
       expect(zFor(r, 'hr'), `n=${xs.length}`).toBeCloseTo((98 - directMean(xs)) / PRIOR.hr.s, 10)
-      /* The personal spread is deliberately not used yet, and these samples
-         are spread wide enough that the two answers differ. */
       const ownSd = Math.sqrt(directVariance(xs))
       expect(zFor(r, 'hr')).not.toBeCloseTo((98 - directMean(xs)) / ownSd, 3)
     }
@@ -151,8 +132,6 @@ describe('baseline z-scores', () => {
     expect(zFor(r, 'hr')).toBeCloseTo((98 - directMean(xs)) / Math.sqrt(directVariance(xs)), 10)
   })
 
-  /* The model was never shown an input beyond three standard deviations, so an
-     extreme reading has to saturate rather than extrapolate. */
   it('clamps a z-score at plus or minus three', () => {
     const b = settledBaseline()
     expect(zFor(scoreCapture({ ppg: ppgOf({ hr: 500 }), voice: null, motion: stillMotion, baseline: b }), 'hr')).toBe(3)
@@ -164,8 +143,6 @@ describe('featuresFrom', () => {
   it('takes only what the capture actually produced', () => {
     expect(featuresFrom({ ppg: null, voice: null })).toEqual({})
     expect(featuresFrom({ ppg: { ok: false, hr: 99 }, voice: null })).toEqual({})
-    /* A heart rate with an unusable beat-to-beat series still gives a usable
-       rate, which is why hrvOk is separate from ok. */
     expect(featuresFrom({ ppg: { ok: true, hr: 80, rmssd: 20, hrvOk: false } })).toEqual({ hr: 80 })
     expect(featuresFrom({ ppg: { ok: true, hr: 80, rmssd: 20, hrvOk: true } })).toEqual({ hr: 80, hrv: 20 })
   })
@@ -179,9 +156,6 @@ describe('scoreCapture confidence band', () => {
     expect(r.score).toBeUndefined()
   })
 
-  /* The three shortfalls the band is built from. Each is asserted on its own,
-     against the same reading, so a widening cannot be credited to the wrong
-     cause. */
   it('widens when a channel is missing', () => {
     const baseline = settledBaseline()
     const both = scoreCapture({ ppg: ppgOf({ quality: 1 }), voice: voiceOf(), motion: stillMotion, baseline })
@@ -198,7 +172,6 @@ describe('scoreCapture confidence band', () => {
     const murky = scoreCapture({ ppg: ppgOf({ quality: 0.1 }), voice: voiceOf(), motion: stillMotion, baseline })
     expect(murky.quality).toBe(0.1)
     expect(murky.half).toBeGreaterThan(clean.half)
-    /* Quality changes only the band, never the number. */
     expect(murky.score).toBe(clean.score)
   })
 
@@ -246,15 +219,6 @@ describe('scoreCapture movement hold', () => {
     expect(Math.abs(noMotion.score - still.score)).toBeLessThanOrEqual(1)
   })
 
-  /* Documents current behaviour, which contradicts the product's central
-     claim and the hold message's own wording. On the patch route the net
-     gates: the same arousal with movement at three sigma scores about
-     twenty-six points lower. On this route movement enters the T-NAM as a
-     tenth additive curve, and that curve is monotone INCREASING, so a reading
-     taken mid-run scores HIGHER than the same reading taken at rest. `held`
-     is set and the message says the reading is "kept but not counted as
-     stress", but it is counted, and counted upward. See the finding reported
-     with this suite. */
   it('currently scores a moving reading higher than the same reading at rest', () => {
     const baseline = settledBaseline()
     const at = peak => scoreCapture({
@@ -265,19 +229,12 @@ describe('scoreCapture movement hold', () => {
     expect(at(MOVE_LIMIT_G)).toBeGreaterThan(at(0))
   })
 
-  /* The motion input is normalised to the exercise line and clamped there, so
-     the model cannot tell a brisk walk from a sprint. Everything at or above
-     0.35 g is the same input, which is why `held` is the only thing that
-     changes past the line. */
   it('saturates the motion input at the exercise line', () => {
     const baseline = settledBaseline()
     const at = peak => scoreCapture({
       ppg: ppgOf(), voice: voiceOf(), baseline,
       motion: { ok: true, peak, still: peak <= MOVE_LIMIT_G },
     })
-    /* Past the line every reading takes the formula branch, so the model's
-       saturated motion input never reaches a score. Same number at 0.5 g and
-       at 99 g, and both are marked held. */
     expect(at(0.5).score).toBe(at(99).score)
     expect(at(0.5).model.scored).toBe(false)
     expect(at(MOVE_LIMIT_G).model.scored).toBe(true)
@@ -287,10 +244,6 @@ describe('scoreCapture movement hold', () => {
 })
 
 describe('scoreCapture channel divisor', () => {
-  /* The voice divisor is the full weight total across all six terms, not the
-     total of the terms actually present. That is what stops a dropped channel
-     re-weighting the channels that remain, so the heart half of the score is
-     bit-for-bit the same whether voice arrived or not. */
   it('does not re-weight the heart terms when voice is missing', () => {
     const baseline = settledBaseline()
     const withVoice = scoreCapture({ ppg: ppgOf(), voice: voiceOf(), motion: stillMotion, baseline })
@@ -304,12 +257,6 @@ describe('scoreCapture channel divisor', () => {
     expect(allWeight).toBeCloseTo(4.4, 10)
   })
 
-  /* Documents current behaviour, which contradicts what the fixed divisor is
-     meant to guarantee. Because the voice terms are a signed addition rather
-     than a share of a divisor that shrinks with them, a voice reading BELOW
-     this person's own baseline is pulling the score down, and dropping that
-     channel removes the pull. Losing a channel therefore can and does raise
-     the score. See the finding reported with this suite. */
   it('currently lets a dropped calm voice channel raise the score', () => {
     const baseline = settledBaseline()
     const calmVoice = voiceOf({ f0Mean: 120, f0Cv: 0.1, f0Instab: 0.01, ampInstab: 0.05 })
@@ -317,8 +264,6 @@ describe('scoreCapture channel divisor', () => {
     const without = scoreCapture({ ppg: ppgOf(), voice: null, motion: stillMotion, baseline })
     expect(without.score).toBeGreaterThan(withVoice.score)
 
-    /* With a voice reading above baseline the drop lowers the score, which is
-       the direction the comment assumes holds in general. */
     const tenseVoice = voiceOf({ f0Mean: 230, f0Cv: 0.4, f0Instab: 0.05, ampInstab: 0.25 })
     const withTense = scoreCapture({ ppg: ppgOf(), voice: tenseVoice, motion: stillMotion, baseline })
     expect(without.score).toBeLessThan(withTense.score)

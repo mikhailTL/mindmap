@@ -10,13 +10,9 @@ import { toneOf } from '../pro/look'
 import { PREV, RANGE_DAYS, STATUS_WORD, displayName, isPro, metaLine, showsScore, showsTrends, statusOfTeen,
   summaryOf } from './data'
 
-/* A linked teen as a card in the Counselor/Professional's live caseload, and
- * the parts the other cards share: TeenAvatar, CardDial and StatusMark.
- *
- * TeenCard({ teen, onOpen, variant, range })   range: the figure in the dial */
-
 export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   if (teen.avatar && !isPro(variant)) return <AvatarArt id={teen.avatar} className={size}/>
+  // Without name consent the chip shows the pseudonym's last two digits.
   const label = isPro(variant) && !teen.consent?.name ? teen.pseudonym.replace(/\D/g, '').slice(-2) : teen.initial
   return (
     <span aria-hidden className={cn('grid shrink-0 place-items-center rounded-chip bg-accent-wash font-display',
@@ -24,15 +20,8 @@ export function TeenAvatar({ teen, variant, size = 'size-12' }) {
   )
 }
 
-/* The small rainbow on a card, with the Mind Score for the range in its
-   centre. The owner, 18 October: "On the parent cards for kids, it should show
-   the rainbow (small) with the mindscore, same for counselors (except kids
-   that dont share with them)". The caller decides whether the score is shared
-   and draws nothing when it is not; this only draws.
-   The bands are the day's signals for Day and their average over the days
-   for Week and Month, so the arch and the figure cover the same days. A
-   linked account sends no body signals, so a live teen's dial is the scale,
-   the usual-day mark and the figure, as on their page. */
+// Dial bands for a card: the day's bands for Day, their average over the range otherwise.
+// Linked accounts send no body signals, so a live teen gets none.
 export function cardRings(teen, range = 'day') {
   if (teen.live || !teen.days?.length) return []
   const days = teen.days.slice(-(RANGE_DAYS[range] || 1)).filter(d => d.pulse != null)
@@ -47,7 +36,6 @@ export function CardDial({ teen, range = 'day', score, size = 148, className }) 
     className={className}/>
 }
 
-/* `change`, when given, puts the up / down / level arrow beside the face. */
 export function StatusMark({ teen, range = 'week', size = 30, change = null, className }) {
   const light = statusOfTeen(teen, range)
   if (!light) return null
@@ -60,7 +48,6 @@ export function StatusMark({ teen, range = 'week', size = 30, change = null, cla
   )
 }
 
-/* Where the range's Mind Score sits against this teen's own usual range. */
 const WHEN = { day: 'today', week: 'this week', month: 'this month' }
 function usualWord(teen, v, range) {
   if (!teen.usual) return null
@@ -70,7 +57,6 @@ function usualWord(teen, v, range) {
   return `Stress is in their usual range ${when}`
 }
 
-/* The week against the 7 days before, in words. */
 function weekWords(teen) {
   const c = summaryOf(teen, 'week').change
   if (c == null) return 'Nothing earlier to compare'
@@ -79,11 +65,6 @@ function weekWords(teen) {
     : 'Same stress as last week'
 }
 
-/* The owner, 18 October: the live card is drawn like the demo
-   Counselor/Professional card (../pro/TeenCard.jsx): avatar, Heads Up face,
-   the small rainbow with the Mind Score when shared, one line against the
-   usual range, one line for the week, Open record. No sparkline, no row of
-   ranges. `range` picks the figure in the rainbow. */
 export default function TeenCard({ teen, onOpen, variant = 'parent', range = 'week', className }) {
   const s = summaryOf(teen, range)
   const light = statusOfTeen(teen, range)

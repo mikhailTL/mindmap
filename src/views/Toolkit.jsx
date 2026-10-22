@@ -18,46 +18,7 @@ import WalkItOff from '../toolkit/walk'
 import { ParentOpeners, ParentPhrasing, ParentScore, ParentRules, ParentReach } from '../toolkit/parent'
 import { SessionOpeners, NextStepGuide, GroundingTimer, TalkingWithParents, ReferralNote } from '../kit/pro'
 
-/* The Toolkit, as a router.
- *
- * `who` is 'student', 'parent' or 'pro'. `open` names an activity and comes from the
- * route table in src/views/App.jsx:
- *
- *   toolkit-breathing  -> open="breathing"   Box Breathing
- *   toolkit-ground     -> open="ground"      5-4-3-2-1 Grounding
- *   toolkit-reframe    -> open="reframe"     Thought Reframe
- *   toolkit-scan       -> open="scan"        Body Scan
- *   toolkit-move       -> open="move"        Movement Break
- *   toolkit-sigh       -> open="sigh"        Long exhale
- *   toolkit-chest      -> open="chest"       Breath counter
- *   toolkit-steady     -> open="steady"      Hold still
- *   toolkit-alert      -> open="alert"       Reaction test
- *   toolkit-pocket     -> open="pocket"      Breathing by sound
- *   toolkit-walk       -> open="walk"        Short walk
- *
- * With no `open` this renders the index. With an `open` it renders that one
- * activity as the whole screen. The eleven student activities are audience
- * independent, so a parent who lands on one gets the activity.
- *
- * The parent set has routes (toolkit-openers and the rest) and also opens in
- * place from the index when it is handed `onBack`.
- *
- * THE COUNSELOR/PROFESSIONAL SET HAS NO ROUTES YET. It opens in place by state.
- * Adding routes is five lines in App.jsx:
- *
- *   'toolkit-pro-opener'   -> <Toolkit who="pro" open="pro-opener"/>
- *   'toolkit-pro-triage'   -> <Toolkit who="pro" open="pro-triage"/>
- *   'toolkit-pro-ground'   -> <Toolkit who="pro" open="pro-ground"/>
- *   'toolkit-pro-parents'  -> <Toolkit who="pro" open="pro-parents"/>
- *   'toolkit-pro-referral' -> <Toolkit who="pro" open="pro-referral"/>
- *
- * The life skills (src/skills) open at `toolkit-<tool id>`, e.g.
- * toolkit-school-cram -> open="school-cram", for every audience.
- *
- * Nothing in this screen calls a server. The camera and microphone, where an
- * activity turns one on, are measured in the page and never recorded, and
- * nobody is told which activities a reader opened. */
-
+// `open` names an activity, passed from the toolkit-* routes in App.jsx. With no `open` the index renders.
 const ROUTED = {
   breathing: Breathing,
   ground:    Grounding,
@@ -85,9 +46,7 @@ const IN_PLACE = {
   'pro-referral': ReferralNote,
 }
 
-/* The index opens on one of five tabs: the audience's own set, then the four
-   life skills categories. The tab is kept in the address as
-   `#/toolkit?tab=<id>`, so the way back from a skill lands on its tab. */
+// The tab is kept as `#/toolkit?tab=<id>`, so the way back from a skill lands on its tab.
 const FIRST_TAB = { student:'Exercises', parent:'Your tools', pro:'Your tools' }
 const SKILL_LINE = {
   student: 'Only you see what you save.',
@@ -115,7 +74,6 @@ function Tabs({ who, tab, onTab }) {
   }
   return (
     <div className="wrap !pb-0">
-      {/* Wraps to two rows at 390 rather than scrolling a tab out of sight. */}
       <div role="tablist" aria-label="Toolkit sections" onKeyDown={onKey}
         className="flex flex-wrap gap-1.5">
         {tabs.map(t => {
@@ -136,7 +94,6 @@ function Tabs({ who, tab, onTab }) {
   )
 }
 
-/* The teen's level, badges and a tool to try next, over every teen tab. */
 function Player({ who, tab }) {
   if (who !== 'student') return null
   return <PlayerCard tab={tab === 'mine' ? 'exercise' : tab} className="mb-6"/>

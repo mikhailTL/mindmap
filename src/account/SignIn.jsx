@@ -8,20 +8,6 @@ import { AvatarChooser, field, fieldError, outline, solid } from './ui'
 import { fitsRole } from './avatar-catalog'
 import { Settings } from './Settings'
 
-/* Sign in, or create an account.
- *
- * Two modes on one screen. Sign in wants a name or email and a password.
- * Create asks who you are (four tiles: the three audiences or Other), then
- * name, email, password (8 or more characters; an old 4 to 6 digit passcode
- * still signs in), where
- * a professional works, and a picture. A conventional form on purpose:
- * labels, autocomplete, the right keypad, one inline error, focus on the
- * first field at fault.
- *
- * No server. Nothing typed here goes anywhere, so the screen never says an
- * email will arrive. The app never waits on this screen either: every start
- * screen works signed out, and the top bar's account button is the way here. */
-
 const ClipMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
@@ -59,14 +45,11 @@ const ERROR = {
 
 const labelClass = 'block font-display text-fine font-medium text-ink-2'
 
-/* `after` is the route to open once signed in, for a screen that sent the
-   reader here (the network, answering an invite); without it, the app for
-   the account's role. `bare` leaves out the settings menu under the form. */
+// after: the route to open once signed in; without it, the app for the account's role.
+// bare leaves out the settings menu under the form.
 export function SignIn({ go, note, after = null, bare = false }) {
-  /* Arriving from the front door's chooser: Create, with that role pressed. */
+  // A role chosen on the front page opens Create with that role selected.
   const preset = React.useMemo(() => takePreferredRole(), [])
-  /* Signed in, the settings under the form are this account's: its profile
-     and its network. */
   const me = useAccount()
   const [mode, setMode] = React.useState(preset ? 'create' : 'signin')
   const [role, setRole] = React.useState(preset)
@@ -75,8 +58,6 @@ export function SignIn({ go, note, after = null, bare = false }) {
   const [pass, setPass] = React.useState('')
   const [setting, setSetting] = React.useState(null)
   const [avatar, setAvatar] = React.useState(null)
-  /* Each role has its own pictures (fitsRole): a role change drops the one
-     that no longer fits. */
   React.useEffect(() => {
     setAvatar(a => (a && !fitsRole(role || 'student', a) ? null : a))
   }, [role])

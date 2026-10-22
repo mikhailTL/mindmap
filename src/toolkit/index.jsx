@@ -3,19 +3,6 @@ import { Nameplate } from './nameplates/Nameplate.jsx'
 import { SCORE } from '../lib/terms'
 import '../kit/kit.css'
 
-/* The Toolkit index, per audience.
- *
- *   student  the student exercises in three groups: Body, Mind, Phone sensors.
- *   parent   "For you" (the parent tools), then "Do it with your teen" (every
- *            student exercise).
- *   pro      "For your sessions" (the Counselor/Professional tools), then
- *            "Use in a session" (every student exercise).
- *
- * 17 October (later): each activity is a nameplate (nameplates/), a wide
- * banner with its own illustrated scene, palette and one gentle loop, so no
- * two activities look alike. The whole banner is the target. The `icon` on
- * each item stays: the player card's quest and other screens still use it. */
-
 const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
     stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
@@ -44,8 +31,7 @@ const TimerIcon   = () => <I><circle cx="12" cy="13.5" r="7"/><path d="M12 9.5v4
 const FamilyIcon  = () => <I><circle cx="8" cy="7" r="2.6"/><circle cx="16.5" cy="9" r="2"/><path d="M3.5 19a4.5 4.5 0 0 1 9 0M13 19a3.5 3.5 0 0 1 7 0"/></I>
 const NoteIcon    = () => <I><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></I>
 
-/* `items` is read by src/views/Methods.jsx for a count and by the landing's
-   Toolkit band, so the shape stays: id, route, family, icon, title, line. */
+// Also read by views/Methods.jsx and the landing Toolkit band; items keep id, route, family, icon, title, line.
 export const STUDENT_GROUPS = [
   { label:'Calm your body', items:[
     { id:'breathing', route:'toolkit-breathing', family:'sky',    icon:BreathIcon,
@@ -89,7 +75,7 @@ export const PARENT_GROUPS = [
   ]},
 ]
 
-/* No routes yet: these open in place inside Toolkit.jsx. */
+/* No routes: these open in place inside Toolkit.jsx. */
 export const PRO_GROUPS = [
   { label:'For your sessions', items:[
     { id:'pro-opener',   family:'sky',   icon:ScriptIcon, title:'Session Openers',      line:'Questions to start a check-in' },
@@ -104,8 +90,7 @@ export const STUDENT_ITEMS = STUDENT_GROUPS.flatMap(g => g.items)
 export const ALL_ITEMS = [...STUDENT_ITEMS, ...PARENT_GROUPS.flatMap(g => g.items),
                           ...PRO_GROUPS.flatMap(g => g.items)]
 
-/* The colour a tool's own screen takes, so a tile and the screen it opens
-   always match. Read by shell.jsx. */
+// Read by shell.jsx so a tool's screen matches its tile colour.
 export const FAMILY_OF = Object.fromEntries(ALL_ITEMS.map(i => [i.id, i.family]))
 
 export function Grid({ items, start = 0, onOpen = () => {} }) {
@@ -130,8 +115,6 @@ function SubHead({ children }) {
   return <h3 className="mt-7 font-display font-bold text-ink">{children}</h3>
 }
 
-/* Groups under one heading, each with its own small heading. `start` keeps
-   the arrival stagger running on across groups. */
 function Groups({ groups, start = 0, onOpen }) {
   let n = start
   return groups.map(g => {

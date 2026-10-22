@@ -2,17 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { STATUS_SUB, TIER_FILL } from './data'
 
-/* The Mind Score chart on the parent's Trends (a child's page and the Trends tab).
- *
- *   ScoreChart    Mind Score by day: columns for a week, a line with a soft
- *                 fill for a month. The usual range is a pale band behind
- *                 it, every column prints its figure, the colour follows the
- *                 day's face and the words are in the legend under it.
- *   ScoreLegend   that legend.
- *
- * Whole days only: nothing here is a single reading or a time. */
-
 const INK = '#0d2b1e', INK3 = '#426a58', GRID = '#e3ede7', BAND = '#dcefe4', BAND_EDGE = '#93b2a1', LINE = '#157446'
+// React useId values contain colons, which break url(#id) references in SVG.
 const cleanId = id => id.replace(/[^a-zA-Z0-9_-]/g, '')
 
 export function useWidth(initial = 560, min = 200) {
@@ -31,8 +22,6 @@ export function useWidth(initial = 560, min = 200) {
   return [ref, w]
 }
 
-/* ── Mind Score by day ──────────────────────────────────────────────────── */
-
 export function ScoreChart({ teen, points, kind = 'bars', selected, onPick, height = 236, className }) {
   const [ref, W] = useWidth()
   const [hover, setHover] = React.useState(null)
@@ -49,7 +38,7 @@ export function ScoreChart({ teen, points, kind = 'bars', selected, onPick, heig
   const hp = hover != null ? points[hover] : null
   const scored = points.filter(p => p.score != null)
 
-  /* The month line breaks over a day with no reading rather than bridging it. */
+  // The month line breaks over a day with no reading rather than bridging it.
   const segs = []
   let cur = []
   points.forEach((p, i) => {
@@ -144,8 +133,6 @@ export function ScoreChart({ teen, points, kind = 'bars', selected, onPick, heig
   )
 }
 
-/* The legend under a Mind Score chart: the band, then the three colours in
-   words. */
 export function ScoreLegend({ teen, className, hint }) {
   return (
     <div className={cn('flex flex-wrap items-center gap-x-5 gap-y-1.5 text-fine text-ink-2', className)}>

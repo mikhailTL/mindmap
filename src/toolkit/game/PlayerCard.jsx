@@ -10,31 +10,14 @@ import { levelFor, levelName, BADGES, badgeById, suggestNext, FINISH_POINTS, NEW
 import { BadgeIcon } from './badges'
 import { LevelEmblem, XPBar, LevelUpBanner, Confetti, useTotalTween, SPRING, SOFT } from './fx'
 
-/* The header card for the top of the student Toolkit: the level emblem
- * (its own shape and colour at every level), a bar to the next level that
- * fills with a shine, a big count of points to go, the badges as shiny
- * coins (tap one to see what it was for), and today's quest: one tool to
- * try next. Points earned since the card was last on screen fill the bar in
- * front of the reader, and a level reached drops a banner and confetti.
- *
- * There are no streaks, no days missed and nobody else's numbers anywhere
- * on it. "Today's quest" is only a suggestion: it changes with what has
- * been tried, and skipping it costs nothing.
- *
- * Mounted by the Toolkit for students only, at the top of each tab. The
- * optional `tab` makes the quest prefer a tool from the tab on screen. */
-
 const TOOLS = Object.fromEntries([
   ...STUDENT_ITEMS.map(i => [i.id, { id:i.id, title:i.title, line:i.line, family:i.family, icon:i.icon, href:'#/' + i.route }]),
   ...SKILL_TOOLS.map(t => [t.id, { id:t.id, title:t.title, line:t.line, family:t.family, icon:t.icon, href:'#/' + t.route }]),
 ])
 
-/* Three of the palette's washes (sky, lilac, coral). ink and ink-2 clear
-   4.5 : 1 on every stop. */
 const CARD_BG = 'linear-gradient(120deg, #def0fc 0%, #f6e8ff 55%, #ffe8e0 100%)'
 
-/* The total this card last showed, so a gain since then can play out. A
-   plain number: no date is kept, so nothing here can become a streak. */
+// The total shown last time, so points gained since then animate in on the next visit.
 const SEEN_KEY = 'mindmap.toolkit.seen'
 const readSeen = () => { try { const v = Number(localStorage.getItem(SEEN_KEY)); return Number.isFinite(v) && localStorage.getItem(SEEN_KEY) != null ? v : null } catch { return null } }
 const writeSeen = v => { try { localStorage.setItem(SEEN_KEY, String(v)) } catch { /* blocked: replays next time */ } }
@@ -98,8 +81,7 @@ export function PlayerCard({ className, tab = null }) {
   const total = useTotalTween(from, p.total, { delay:500,
     onLevel: l => { setLvUp(l); setBoom(b => b + 1); setTimeout(() => setLvUp(null), 3600) } })
   const gaining = total < p.total
-  /* Stored once the bar has caught up, so a card that is swapped out mid
-     fill plays the gain again next time rather than losing it. */
+  // Saved only after the bar catches up, so a fill cut short replays next time.
   React.useEffect(() => { if (!gaining) writeSeen(p.total) }, [gaining, p.total])
   const L = levelFor(total)
   const earned = p.badges.map(badgeById).filter(Boolean)

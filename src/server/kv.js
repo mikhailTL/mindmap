@@ -1,10 +1,4 @@
-/* The store behind the account API: Vercel KV (Upstash Redis over REST) in
- * production, and an in-memory map with the same five calls for tests and
- * for a deploy with no store wired, which the API reports as not configured.
- *
- * Five calls are the whole contract. Anything the API needs is built from
- * them, so the memory version is small enough to be obviously right. */
-
+// Store for the account API: Vercel KV (Upstash REST) when configured, otherwise an in-memory map with the same calls.
 export function memoryKV() {
   const m = new Map()
   const sets = new Map()
@@ -15,8 +9,7 @@ export function memoryKV() {
   }
   return {
     async get(k) { const e = alive(k); return e ? e.v : null },
-    /* opts.ex: seconds to live. opts.nx: only if absent; returns null when it
-       was already there, which is how @vercel/kv reports the same thing. */
+    // opts.ex: TTL in seconds. opts.nx: set only if absent, returning null otherwise, as @vercel/kv does.
     async set(k, v, opts = {}) {
       if (opts.nx && alive(k)) return null
       m.set(k, { v, until: opts.ex ? Date.now() + opts.ex * 1000 : 0 })
@@ -29,12 +22,9 @@ export function memoryKV() {
   }
 }
 
-/* @vercel/kv serialises JSON itself; the API keeps everything it stores as
-   plain objects and strings, so no wrapper is needed beyond the import. */
 let kvPromise = null
 export async function vercelKV() {
-  /* The Upstash marketplace integration names its variables either way
-     depending on when the store was made; both spellings are read. */
+  // The Upstash integration uses either variable prefix, depending on the store's creation date.
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
   if (!(url && token)) return null

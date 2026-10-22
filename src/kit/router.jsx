@@ -2,10 +2,7 @@ import React from 'react'
 import { Choice, Hint, Step } from './panel'
 import { vars, varsFamily } from './palette'
 
-/* Two taps in, up to two activities out. A written table, five states by three
- * lengths, and the panel says that is what it is: no model, nothing learned
- * about the reader, nothing sent. */
-
+// A fixed table, five states by three lengths, maps two taps to up to two activities.
 const STATES = [
   ['racing', 'Thoughts going fast'],
   ['wired',  'Keyed up, cannot sit still'],

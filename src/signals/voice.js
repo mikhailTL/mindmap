@@ -1,13 +1,7 @@
+// Voice prosody from a short clip: median pitch, pitch spread, and frame-to-frame pitch and loudness instability.
+// Audio is reduced to these numbers on the device and discarded.
 import { mean, median, percentile, sd } from './dsp.js'
 
-/* Prosody from a speech clip: pitch, its spread across the clip, and the
- * stability of pitch and loudness between 20 ms windows. The words are not
- * kept — audio is reduced to these numbers on the device and dropped, so
- * nothing replayable leaves the phone.
- *
- * Pitch by normalised autocorrelation, not FFT: at the 16 kHz working rate a
- * 40 ms frame holds four cycles of a 100 Hz voice, too few bins to place the
- * fundamental, and autocorrelation also survives a missing fundamental. */
 export const WORK_FS = 16000
 const FRAME_S = 0.04
 const HOP_S = 0.02
@@ -28,10 +22,7 @@ export function analyseVoice(pcm, fs) {
   }
   if (frames.length < 40) return fail('too-short', 'That clip was too short to read.')
 
-  /* Noise floor from the quietest twentieth of the clip, not a fixed number,
-     so loud and quiet rooms both get a usable threshold. The twentieth and not
-     the fifth: a clip that is 85% speech has no silence in its lowest fifth,
-     and a gate set there sits above most of the speech. */
+  // Noise floor from the 5th percentile of frame RMS, so the gate adapts to the room.
   const floor = percentile(frames.map(f => f.rms), 0.05)
   const loud = percentile(frames.map(f => f.rms), 0.95)
   if (loud < 0.004) return fail('too-quiet', 'Nothing was picked up. Speak a little louder.')
@@ -49,8 +40,7 @@ export function analyseVoice(pcm, fs) {
   const voiced = frames.filter(f => f.voiced)
   if (voiced.length < 25) return fail('no-speech', 'No steady speech in that clip.')
 
-  /* Only inside an unbroken voiced run: across a pause the "next cycle" is a
-     different word. */
+  // Instability is measured only inside unbroken voiced runs; across a pause the next frame is a different word.
   const runs = []
   let cur = []
   for (const f of frames) {
@@ -78,27 +68,16 @@ export function analyseVoice(pcm, fs) {
     ok: true, reason: null,
     f0Mean,
     f0Cv: sd(f0s) / (f0Mean || 1),
-    /* Frame-to-frame instability of pitch and loudness at the 20 ms hop. NOT
-       jitter and shimmer, which are cycle-to-cycle measures a phone mic in a
-       noisy room cannot claim. Monotonic with planted perturbation on a
-       synthetic voice (1.2, 1.4, 2.5, 8.8% for 0.2, 0.6, 1.2, 2.0% planted),
-       on a floor set by the hop. Monotonic is sufficient — the scorer reads
-       them only as z-scores. */
+    // Frame-to-frame instability at the 20 ms hop, not cycle-level jitter and shimmer.
     f0Instab: jit.length ? mean(jit) / mean(jitBase) : null,
     ampInstab: shim.length ? mean(shim) / mean(shimBase) : null,
-    /* Pause ratio and speaking rate are deliberately absent: neither moved
-       monotonically with a planted pause schedule in testing. */
     voicedS: voiced.length * HOP_S,
     durS,
     quality: Math.min(1, voiced.length / 120) * Math.min(1, mean(voiced.map(f => f.r)) / 0.6),
   }
 }
 
-/* Normalised autocorrelation over the F0_MIN..F0_MAX lag range, returning
-   { f0, r } with r the peak correlation. The winning lag is interpolated
-   across its neighbours: at 16 kHz a 200 Hz voice is 80 samples, so one sample
-   of lag error is 1.25% of the period and would swamp an instability figure
-   that lives well under 1%. */
+// Normalised autocorrelation pitch with the best lag interpolated; one sample of lag at 16 kHz is 1.25% of a 200 Hz period.
 function pitch(seg, fs) {
   const loLag = Math.floor(fs / F0_MAX), hiLag = Math.min(Math.ceil(fs / F0_MIN), seg.length - 2)
   let e0 = 0
@@ -126,8 +105,6 @@ function rms(seg) {
   return Math.sqrt(acc / seg.length)
 }
 
-/* Decimation with a short moving average in front. The mic runs at 44.1 or
-   48 kHz; nothing here needs content above 8 kHz. */
 function downsample(x, from, to) {
   const ratio = from / to
   const out = new Float32Array(Math.floor(x.length / ratio))

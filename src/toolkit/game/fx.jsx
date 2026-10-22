@@ -4,10 +4,6 @@ import { cn } from '../../lib/utils'
 import { useReduced } from '../useReduced'
 import { levelFor, levelStart, levelName } from './progress'
 
-/* The visual reward layer: bursts, confetti, level emblems, the XP bar and
- * the stars a round earns. Everything moves with transform and opacity only,
- * and every piece holds still (or draws nothing) under reduced motion. */
-
 export const PARTY = ['#f25424', '#f2248b', '#a024f2', '#2294e6', '#18a370', '#f5b82e']
 export const SPRING = { type:'spring', stiffness:420, damping:26 }
 export const SOFT = { type:'spring', stiffness:220, damping:24 }
@@ -30,8 +26,6 @@ function Shape({ kind, colour, size }) {
   )
 }
 
-/* A ring of shapes flying out from a point. `fire` changes to set it off;
-   x and y are percent of the nearest positioned box. */
 export function Burst({ fire, x = 50, y = 50, count = 12, spread = 70, colours = PARTY, size = 8 }) {
   const reduced = useReduced()
   const [live, setLive] = React.useState([])
@@ -68,8 +62,7 @@ export function Burst({ fire, x = 50, y = 50, count = 12, spread = 70, colours =
   )
 }
 
-/* Confetti that pops up from a point and falls. Put it in a box with
-   overflow hidden so nothing widens the page. */
+// Place inside an overflow-hidden box so falling pieces do not widen the page.
 export function Confetti({ fire, x = 50, y = 30, count = 46 }) {
   const reduced = useReduced()
   const [live, setLive] = React.useState(null)
@@ -101,21 +94,16 @@ export function Confetti({ fire, x = 50, y = 30, count = 46 }) {
   )
 }
 
-/* ── level emblems ─────────────────────────────────────────────────────
-
-   Each level has its own shape and colour, and one small gem around the rim
-   for every level reached, so the emblem itself shows growth. The darker
-   stop sits under the number, which white clears 4.5 : 1 on. */
-
+// Index is level - 1. The number sits on `deep`, which white clears at 4.5:1.
 const EMBLEM = [
-  { top:'#3ad69b', deep:'#0f5836', rim:'#bdf0d9' },   // 1 Starter
-  { top:'#5db8f5', deep:'#0967ab', rim:'#cfe8fb' },   // 2 Explorer
-  { top:'#3cc2d6', deep:'#11677f', rim:'#c6eef4' },   // 3 Regular
-  { top:'#c26bff', deep:'#6f09b2', rim:'#ecd4ff' },   // 4 Skilled
-  { top:'#ff9a4d', deep:'#b23009', rim:'#ffd9bf' },   // 5 Pro
-  { top:'#ff6b9e', deep:'#b2095e', rim:'#ffd0e3' },   // 6 Expert
-  { top:'#7b8cff', deep:'#2b2f9e', rim:'#d6dbff' },   // 7 Ace
-  { top:'#8a3cff', deep:'#2a1060', rim:'#f5c542' },   // 8 Legend
+  { top:'#3ad69b', deep:'#0f5836', rim:'#bdf0d9' },
+  { top:'#5db8f5', deep:'#0967ab', rim:'#cfe8fb' },
+  { top:'#3cc2d6', deep:'#11677f', rim:'#c6eef4' },
+  { top:'#c26bff', deep:'#6f09b2', rim:'#ecd4ff' },
+  { top:'#ff9a4d', deep:'#b23009', rim:'#ffd9bf' },
+  { top:'#ff6b9e', deep:'#b2095e', rim:'#ffd0e3' },
+  { top:'#7b8cff', deep:'#2b2f9e', rim:'#d6dbff' },
+  { top:'#8a3cff', deep:'#2a1060', rim:'#f5c542' },
 ]
 export const emblemColours = level => EMBLEM[(Math.max(1, level) - 1) % EMBLEM.length]
 
@@ -138,15 +126,16 @@ const scallop = (n, r, bump) => {
   }
   return d + 'Z'
 }
+// Emblem outline per level in a 100x100 box: circle, hexagon, shield, burst, star, flower, sun, crown.
 const SHAPES = [
-  'M50 6a44 44 0 1 1 0 88a44 44 0 1 1 0-88z',                                  // circle
-  poly(6, 46, null, -Math.PI / 2),                                              // hexagon
-  'M50 5l38 13v30c0 24-17 40-38 47C29 88 12 72 12 48V18z',                      // shield
-  poly(8, 47, 39),                                                               // badge burst
-  poly(10, 47, 40),                                                              // star seal
-  scallop(9, 42, 5),                                                             // flower seal
-  'M50 4l13 10 16 1 4 16 11 11-6 15 3 16-14 8-7 15-16-2-12 10-12-10-16 2-7-15-14-8 3-16-6-15 11-11 4-16 16-1z', // sun seal
-  'M14 30l14 10 10-26 12 18 12-18 10 26 14-10-4 38c0 14-14 26-32 28C30 94 18 82 18 68z', // crown shield
+  'M50 6a44 44 0 1 1 0 88a44 44 0 1 1 0-88z',
+  poly(6, 46, null, -Math.PI / 2),
+  'M50 5l38 13v30c0 24-17 40-38 47C29 88 12 72 12 48V18z',
+  poly(8, 47, 39),
+  poly(10, 47, 40),
+  scallop(9, 42, 5),
+  'M50 4l13 10 16 1 4 16 11 11-6 15 3 16-14 8-7 15-16-2-12 10-12-10-16 2-7-15-14-8 3-16-6-15 11-11 4-16 16-1z',
+  'M14 30l14 10 10-26 12 18 12-18 10 26 14-10-4 38c0 14-14 26-32 28C30 94 18 82 18 68z',
 ]
 
 export function LevelEmblem({ level = 1, size = 84, pct = null, glow = true, className, pulse = true }) {
@@ -202,9 +191,6 @@ export function LevelEmblem({ level = 1, size = 84, pct = null, glow = true, cla
           <path d="M5 0C5.6 3.6 6.4 4.4 10 5 6.4 5.6 5.6 6.4 5 10 4.4 6.4 3.6 5.6 0 5 3.6 4.4 4.4 3.6 5 0z" fill={c.top}/>
         </motion.svg>
       ))}
-      {/* The number sits on its own solid disc in the level's deep colour, so
-          white clears 4.5 : 1 on a real background rather than relying on a
-          text shadow over the light top of the gradient. */}
       <span className="absolute inset-0 grid place-items-center pb-[4%]">
         <span className="grid place-items-center rounded-full font-display font-bold tabular-nums leading-none text-white"
           style={{ width:size * 0.46, height:size * 0.46, fontSize:size * 0.28, backgroundColor:c.deep,
@@ -214,11 +200,7 @@ export function LevelEmblem({ level = 1, size = 84, pct = null, glow = true, cla
   )
 }
 
-/* ── the XP bar ─────────────────────────────────────────────────────── */
-
-/* Tween a running total from `from` to `to`, stopping briefly at each level
-   boundary so the bar fills right up before it starts again. Calls onLevel
-   with the new level as each boundary is crossed. */
+// Tweens a total from `from` to `to`, pausing at each level boundary and calling onLevel as it crosses.
 export function useTotalTween(from, to, { delay = 0, onLevel, run = true } = {}) {
   const reduced = useReduced()
   const [v, setV] = React.useState(reduced ? to : from)
@@ -257,9 +239,6 @@ export function useTotalTween(from, to, { delay = 0, onLevel, run = true } = {})
   return v
 }
 
-/* A thick bar with a gradient fill, a moving shine and a glowing tip.
-   `total` may be fractional mid tween. `gain` changing sets off sparks at
-   the tip. The fill moves with translateX inside a clipped track. */
 export function XPBar({ total = 0, gain = 0, className, tall = false, label }) {
   const reduced = useReduced()
   const L = levelFor(total)
@@ -295,7 +274,6 @@ export function XPBar({ total = 0, gain = 0, className, tall = false, label }) {
   )
 }
 
-/* "45 points to Explorer" with the number big and rolling. */
 export function ToNext({ total, className }) {
   const L = levelFor(total)
   const left = Math.max(0, Math.ceil(levelStart(L.level + 1) - total))
@@ -328,8 +306,6 @@ export function LevelUpBanner({ level, show, className }) {
     </AnimatePresence>
   )
 }
-
-/* ── stars for a round ─────────────────────────────────────────────── */
 
 export const TIER = ['', 'Bronze', 'Silver', 'Gold']
 

@@ -1,15 +1,4 @@
-/* The psychomotor vigilance task, brief form, on a phone screen.
- *
- * A counter starts at a random moment; the student taps as soon as it does;
- * the time from start to tap is one reaction time. Sixty to ninety seconds of
- * that is the PVT-B (Basner, Mollicone and Dinges 2011), which tracks the
- * ten-minute laboratory test under sleep loss (Grant 2017; Benderoth 2021).
- * A lapse is a reaction slower than 355 ms, the PVT-B threshold. A false
- * start is a tap before the counter began.
- *
- * It measures alertness and the cost of a short night. It does not measure
- * stress, and the screen that shows it says so. */
-
+// Brief psychomotor vigilance task (PVT-B, Basner 2011); a lapse is a reaction slower than 355 ms.
 export const LAPSE_MS = 355
 export const MIN_TRIALS = 5
 
@@ -24,6 +13,7 @@ export function pvtStats(trials) {
   const mean = rts.reduce((a, b) => a + b, 0) / n
   const m = n >> 1
   const median = n % 2 ? rts[m] : (rts[m - 1] + rts[m]) / 2
+  // Mean of the slowest 10% of trials.
   const k = Math.max(1, Math.round(n / 10))
   const slow = rts.slice(n - k)
   const slowest10 = slow.reduce((a, b) => a + b, 0) / slow.length
@@ -31,7 +21,6 @@ export function pvtStats(trials) {
   return { ok: true, n, falseStarts, mean, median, slowest10, lapses }
 }
 
-/* The sentence under the number. A duration, never a feeling or a cause. */
 export function pvtWords(mean, usual) {
   if (mean == null) return 'Not enough taps to say.'
   const ms = Math.round(mean)

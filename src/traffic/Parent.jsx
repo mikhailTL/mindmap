@@ -4,10 +4,7 @@ import { LampFace } from './Face'
 import { known } from './core'
 import { cn } from '../lib/utils'
 
-/* The traffic light, drawn. Colour never carries the state alone: the lit
- * lamp's position says it too (red on top, green at the bottom, as on a
- * street), every lit lamp has its face, and the word is printed beside it. */
-
+// Red on top, green at the bottom as on a street light, so position also says which lamp is lit.
 const ORDER = [Light.RED, Light.YELLOW, Light.GREEN]
 const WORD = { [Light.GREEN]: 'Green', [Light.YELLOW]: 'Yellow', [Light.RED]: 'Red' }
 export const STATE_WORD = { [Light.GREEN]: 'Calm', [Light.YELLOW]: 'Above usual', [Light.RED]: 'Stressed' }
@@ -37,8 +34,6 @@ export function LampLabel({ light, className, textClassName, words = WORD }) {
   )
 }
 
-/* Three lamps stacked in a dark housing; the live one lit with its face, the
-   other two dim and blank. `lamp` in px. */
 export function TrafficLight({ light, lamp = 46, reduced, className }) {
   const on = known(light)
   const pad = lamp * 0.22

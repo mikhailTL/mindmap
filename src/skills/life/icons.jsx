@@ -1,7 +1,6 @@
 import React from 'react'
 
-/* Tile icons for the Life tools, drawn on the toolkit's 24 unit grid with the
-   same 1.7 stroke as src/toolkit/index.jsx. */
+// 24-unit grid with the same 1.7 stroke as the toolkit icons.
 const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
     stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"

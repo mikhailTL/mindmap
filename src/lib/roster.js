@@ -1,21 +1,11 @@
-/* Demo teens for the card dashboards: a parent's children and a
- * Counselor/Professional's caseload. One generator so both dashboards, the child detail
- * view and the student's own demo read the same kind of record.
- *
- * Nothing here is a measurement. Every number is generated, deterministically,
- * from a seed per teen, and the screens that show it say "Demo".
- *
- * The Mind Score runs 0 to 100 and HIGHER MEANS MORE STRESS (the dial reads
- * 0 calm, 100 peak). Each teen has their own usual band; a day is compared
- * with that band, never with another teen. */
-
+// Deterministic demo teens for the parent and counselor dashboards. Mind Score runs 0 (calm) to 100 (peak stress).
 import { Light, SIGNAL } from '../signals/light.js'
 
 export const RANGES = Object.freeze(['day', 'week', 'month'])
 export const RANGE_LABEL = Object.freeze({ day: 'Today', week: 'This week', month: 'This month' })
 export const DAYS = 90
 
-/* A small seeded generator (mulberry32), so a teen looks the same on every load. */
+// mulberry32 seeded PRNG, so each teen renders the same on every load.
 function rng(seed) {
   let a = seed >>> 0
   return () => {
@@ -28,10 +18,7 @@ function rng(seed) {
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
 const round = v => Math.round(v)
 
-/* The demo's "today". The owner, 18 October: dates must follow the real day,
-   so in the browser (and on the server) it is the viewer's own date and the
-   demo days roll forward each day. Under the tests it stays fixed, so their
-   figures do not move. */
+// Demo dates follow the viewer's current day; under Vitest a pinned day keeps test figures stable.
 const FIXED_DAY = '2026-10-16'
 const inTests = typeof process !== 'undefined' && !!process.env?.VITEST
 const localDay = (d = new Date()) =>
@@ -43,10 +30,7 @@ const weekday = iso => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Dat
 
 const SIGNAL_KEYS = Object.keys(SIGNAL)
 
-/* One teen's record. `base` is their usual Mind Score, `drift` how far the
-   last two weeks have moved from it (positive means more stress), `swing` how
-   much a day varies, `patch` whether they wear the patch (otherwise their
-   readings come from the phone camera and the check-in questions). */
+// base: usual score; drift: shift over the last 14 days (positive is more stress); swing: daily spread; patch: wears the patch.
 export function makeTeen({ id, first, last = '', pseudonym, age, grade, seed, base = 48, drift = 0, swing = 9,
   patch = true, avatar = null, consent = { score: true, trends: true, raw: false } }) {
   const r = rng(seed)
@@ -94,8 +78,6 @@ export function makeTeen({ id, first, last = '', pseudonym, age, grade, seed, ba
     age, grade, patch, avatar, consent, usual: { lo, hi, base }, days, hours }
 }
 
-/* Mean, range and change for a range, plus the points to draw. Change is
-   against the previous range of the same length. */
 export function summary(teen, range = 'week') {
   if (range === 'day') {
     const pts = teen.hours.map(h => ({ label: h.hour > 12 ? `${h.hour - 12}p` : `${h.hour}a`, score: h.score }))
@@ -113,10 +95,8 @@ export function summary(teen, range = 'week') {
     light: worst, signals: [...new Set(cur.flatMap(d => d.signals))].slice(0, 3) }
 }
 
-/* The Heads Up face for a range. Day: today's light. Week and month: the
-   average of the daily lights (green 0, yellow 1, red 2), rounded. With no
-   range it is the week, the cards' default. */
 export const FACE_LABEL = Object.freeze({ day: 'Today', week: 'Week average', month: 'Month average' })
+// Week and month faces: mean of daily lights (green 0, yellow 1, red 2), rounded.
 const FACE_RANK = { [Light.GREEN]: 0, [Light.YELLOW]: 1, [Light.RED]: 2 }
 export function statusOf(teen, range = 'week') {
   if (range === 'day') return teen.days[teen.days.length - 1].light
@@ -136,10 +116,6 @@ export const FAMILY = Object.freeze([
   makeTeen({ id: 'leo', first: 'Leo', age: 13, grade: 8, seed: 1307, base: 41, drift: -3, patch: false, avatar: 'char-leo' }),
 ])
 
-/* A Counselor/Professional's caseload: 24 teens across grades 8 to 12, each
-   age fitting the grade (grade plus 5 or plus 6). Names are
-   invented; the pseudonym is what the screen shows until a teen's consent
-   allows the name. */
 const FIRSTS = ['Ava', 'Noah', 'Mia', 'Ethan', 'Zoe', 'Liam', 'Isla', 'Mateo', 'Nora', 'Kai', 'Lena', 'Omar',
   'Ruby', 'Theo', 'Aria', 'Jonah', 'Sana', 'Eli', 'Grace', 'Diego', 'Hana', 'Felix', 'Iris', 'Jude']
 const LASTS = ['P.', 'K.', 'R.', 'S.', 'L.', 'M.', 'T.', 'B.', 'D.', 'W.', 'C.', 'H.']

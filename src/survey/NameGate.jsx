@@ -3,26 +3,11 @@ import { Button } from '../ui/button'
 import { setVisitor } from './store'
 import { cn } from '../lib/utils'
 
-/* The consent panel, shown once, before a single answer is taken. It states
- * what is stored and what is not, and then starts the survey.
- *
- * ─── Why there is no name field here any more ───────────────────────────────
- * There was one until 13 October. It is gone, and the component keeps its old
- * export name only so that src/views/App.jsx, which this worker does not own,
- * keeps rendering the panel at the right moment. Teenagers answer this survey.
- * A first name next to an age band and a school-level band is identifying in a
- * way that none of the three is on its own, and the survey has no use for it:
- * nothing on the responses page needed a name that an opaque id does not do
- * better. store.js enforces the same thing from the other side, so passing a
- * name to setVisitor now stores nothing whatever the caller intends.
- *
- * Deliberately not a dialog role and not a focus trap. Escape starts the
- * survey, the same as the button, so the panel cannot trap a reader. */
+// Consent panel shown before the first answer. No name field; Escape starts the survey, so focus is not trapped.
 export function NameGate({ onDone, inline = false }) {
   const ref = React.useRef(null)
 
-  /* Autofocus only when this covers the page. Inline, stealing focus would
-     scroll a reader past the heading they were reading. */
+  // Autofocus only as a full-page overlay; inline it would scroll past the heading being read.
   React.useEffect(() => { if (!inline) ref.current?.focus() }, [inline])
 
   const start = () => {
@@ -41,7 +26,6 @@ export function NameGate({ onDone, inline = false }) {
         className={cn('w-full rounded-panel border border-rule bg-card p-6 sm:p-8',
           inline ? 'max-w-[42rem]' : 'max-w-[34rem] shadow-lift')}
       >
-        {/* First person singular throughout: one student, not a team. */}
         <h2 className="font-display text-sub font-bold text-ink">Anonymous Feedback</h2>
 
         <p className="mt-3 max-w-[56ch] text-sec text-ink-2">

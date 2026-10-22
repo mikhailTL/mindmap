@@ -2,8 +2,6 @@ import * as React from 'react'
 import * as ProgressPrimitive from '@radix-ui/react-progress'
 import { cn } from '@/lib/utils'
 
-/* `tone` takes the signal's own graphic colour so the bar matches the ring it
-   belongs to. Pass `label`: the bar carries no text of its own. */
 export const Progress = React.forwardRef(function Progress(
   { className, value = 0, max = 100, tone, label, ...props }, ref) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100))

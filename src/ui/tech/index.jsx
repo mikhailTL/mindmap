@@ -2,13 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import './tech.css'
 
-/* The tech register's pieces (see ./tech.css). Used by How it works (AI,
- * Machine Learning, Mental Mirror), the MindMap AI chat and the Mental Mirror
- * capture screen. Nothing here is shared with the Toolkit's sky scenes. */
-
-/* Whether `ref`'s element is on screen and the tab is visible. A coalesced
-   scroll and resize listener, not an IntersectionObserver: overflow-x: clip
-   on html and body stops observer entries arriving (ui/motion.jsx). */
+// True while the element is on screen and the tab is visible. Uses scroll/resize listeners because
+// overflow-x: clip on html and body stops IntersectionObserver entries arriving.
 export function useLive(ref) {
   const [on, setOn] = React.useState(false)
   React.useEffect(() => {
@@ -38,8 +33,6 @@ export function useLive(ref) {
   return on
 }
 
-/* The root every tech surface sits in: sets the tokens and runs or pauses
-   the motion inside it. */
 export const TechRoot = React.forwardRef(function TechRoot({ as: As = 'div', className, children, ...p }, outer) {
   const ref = React.useRef(null)
   const on = useLive(ref)
@@ -47,8 +40,7 @@ export const TechRoot = React.forwardRef(function TechRoot({ as: As = 'div', cla
   return <As ref={set} data-live={on ? 'on' : 'off'} className={cn('tech', className)} {...p}>{children}</As>
 })
 
-/* An isometric floor: a diamond of 30° lines, for a
-   drawing to stand on. `hue` is the band's colour. */
+// An isometric floor: a diamond of 30 degree lines for a drawing to stand on.
 export function IsoPlate({ className, n = 6, hue = '#157446' }) {
   const W = 240, H = W * Math.tan(Math.PI / 6), cx = W / 2, cy = H / 2
   const at = (i, j) => [cx + (i - j) * (W / 2 / n), (i + j) * (H / 2 / n)]
@@ -68,12 +60,6 @@ export function IsoPlate({ className, n = 6, hue = '#157446' }) {
   )
 }
 
-/* A band on one light colour of the site's scheme, a faint grid and one
-   still soft shape. `tone`: 'mint' (default), 'sky', 'teal', 'leaf',
-   'ocean', 'lilac', 'sun' or 'coral'. 20 October, the owner: no contour
-   lines, much less glow, so the drifting blooms and the contours are gone.
-   21 October: site bands use only the greens and blues; lilac, sun and
-   coral stay for card hues (TONE_HUE) and the app's own panels. */
 export const TONE_HUE = {
   mint: '#157446', sky: '#0967ab', teal: '#11677f', lilac: '#6f09b2', sun: '#825d07', coral: '#b23009',
   leaf: '#067049', ocean: '#1f5fae',
@@ -87,7 +73,6 @@ export function TechBand({ as = 'section', tone = 'mint', className, inner, chil
   )
 }
 
-/* Glass with a gradient edge. tone: 'mint' | 'vio' | 'coral' | 'quiet'. */
 export function Glass({ as: As = 'div', tone = 'mint', sheen = false, className, children, ...p }) {
   return (
     <As className={cn('t-glass', tone !== 'mint' && `t-glass--${tone}`, sheen && 't-sheen t-anim', className)} {...p}>

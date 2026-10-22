@@ -3,9 +3,6 @@ import { cn } from '../../lib/utils'
 import { Action } from '../../toolkit/shell'
 import { RESOURCES } from '../../app/resources'
 
-/* Pieces the Counselor/Professional tools share. Nothing here stores or sends
-   anything: every tool keeps its state in the page and forgets it on leave. */
-
 export async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text)
@@ -25,7 +22,6 @@ export async function copyText(text) {
   }
 }
 
-/* A copy button that says what happened, in words, in a live region. */
 export function CopyButton({ text, label = 'Copy', kind = 'quiet', className }) {
   const [state, setState] = React.useState('idle')
   React.useEffect(() => {
@@ -55,9 +51,7 @@ export function Label({ children, className }) {
   return <h3 className={cn('font-display text-ui font-bold text-ink', className)}>{children}</h3>
 }
 
-/* The crisis wording, kept conservative and the same everywhere it appears.
-   It points to the local emergency number and the crisis lines the site
-   already lists (src/app/resources.js), never to this app. */
+// Crisis wording points to the local emergency number and the 988 line listed in app/resources.js.
 const LINE = RESOURCES.find(r => r.id === '988')
 
 export function Crisis({ className, strong = false }) {
@@ -94,7 +88,6 @@ export function Crisis({ className, strong = false }) {
   )
 }
 
-/* A row of short sentences with a small dot in the tool's colour. */
 export function Lines({ rows, className }) {
   return (
     <ul className={cn('m-0 flex list-none flex-col p-0', className)}>

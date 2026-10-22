@@ -2,16 +2,6 @@ import React from 'react'
 import { ArrowRight, Chevron } from '../../ui/marks'
 import { cn } from '../../lib/utils'
 
-/* The cards every role home opens with. The owner, 17 October, after the
- * big-card homes: "i liked how it was before with the cards at the top, was
- * more usable". So the earlier start screen's shape comes back: a 2 x 2 grid
- * of even tiles (four across from lg), each a drawing over a one-line label
- * with a chevron. Every tile keeps its own colour and drawing, so no two look
- * alike.
- *
- * LeadCard is the screen's one callout, for the single action a role does
- * most (a student taking a reading). */
-
 export function StartGrid({ label, children, className }) {
   return (
     <nav aria-label={label} className={className}>
@@ -22,15 +12,8 @@ export function StartGrid({ label, children, className }) {
   )
 }
 
-/* tone: the tile's ground, e.g. 'bg-sky-wash'. chevron: the hue's ink.
-   art: the drawing, fitted into the panel (give it h-full w-full, or h-full
-   w-auto with an aspect, so it scales).
-
-   The owner, 19 October: "Remove the half and half stock photos on all
-   dashboards, just have icons or the imagery". So no photograph: the whole
-   tile is its own colour wash, the drawing fills the panel and the label
-   sits under it. 20 October: no contour lines; one soft white disc behind
-   the drawing instead. */
+// `tone` is the tile's ground, e.g. 'bg-sky-wash'. Give `art` h-full w-full, or h-full w-auto with an aspect,
+// so it scales into the panel.
 export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }) {
   return (
     <button type="button" onClick={onClick}
@@ -53,8 +36,6 @@ export function StartTile({ title, art, tone, onClick, chevron = 'text-accent' }
 
 export function LeadCard({ art, title, line, cta, onClick, className }) {
   return (
-    /* The light callout (.lit in input.css): owner, 19 October, "stop making
-     things dark". */
     <div className={cn('lit flex flex-wrap items-center gap-x-4 gap-y-3 p-3.5 lg:p-4', className)}>
       <span aria-hidden className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-field border border-accent/20 bg-accent-wash">
         {art}

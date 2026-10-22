@@ -7,15 +7,8 @@ import { refillStatus, visitNote, todayISO, niceDate, REFILL_SOON } from './logi
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, Win, PlayCard, leave } from '../../toolkit/game/skill'
 
-/* Own Your Health: appointment prep, a medicine list with refill dates,
- * first-aid basics and a "my health info" card. No diagnosis and no dosing
- * advice: doses are copied from the label, and every first-aid card says
- * when to call the emergency number. Saved under `mindmap.skills.life-health`. */
-
 const ID = 'life-health'
 const EMERGENCY = 'your local emergency number (911 in the US)'
-
-/* ── Appointment prep ──────────────────────────────────────────────────── */
 
 const BOOK = [
   ['find', 'Find the number: your doctor\'s office, the clinic website, or the back of your insurance card.'],
@@ -91,8 +84,6 @@ function Visit({ data, patch, g, win }) {
     </>
   )
 }
-
-/* ── Medicines ─────────────────────────────────────────────────────────── */
 
 const TIMES = [['morning', 'Morning'], ['midday', 'Midday'], ['evening', 'Evening'], ['bedtime', 'Bedtime'], ['needed', 'Only when needed']]
 const BLANK = { name:'', dose:'', times:[], refill:'', by:'' }
@@ -175,10 +166,7 @@ function Meds({ data, patch }) {
   )
 }
 
-/* ── First aid ─────────────────────────────────────────────────────────── */
-
-/* Written conservatively from standard first-aid guidance (Red Cross, NHS).
-   Every card ends with when to call the emergency number. */
+// Based on standard first-aid guidance (Red Cross, NHS); each card ends with when to call the emergency number.
 export const FIRST_AID = {
   cuts: { name:'Cuts', steps:[
       'Wash your hands. Wear gloves if you have them.',
@@ -235,9 +223,6 @@ export const FIRST_AID = {
     doctor:['Any new allergy, so you can find out the trigger and get a plan.'] },
 }
 
-/* The first-aid check: one question per card. Conservative on purpose:
-   every right answer is the standard first step, and every why says when
-   to call the emergency number. */
 export const AID_CHECK = [
   { id:'cuts', prompt:'A cut is bleeding a lot. What do you do first?',
     options:[{ id:'press', text:'Press firmly on it with a clean cloth and keep pressing', ok:true },
@@ -314,8 +299,6 @@ function FirstAid({ data, patch, g, win }) {
     </>
   )
 }
-
-/* ── My health info ────────────────────────────────────────────────────── */
 
 function Info({ data, patch }) {
   const i = { contacts: [{ id:'c1', name:'', rel:'', phone:'' }], ...(data.info || {}) }

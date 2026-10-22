@@ -23,14 +23,10 @@ import { addReading, updateReading } from '../lib/readingLog'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* Take a reading, in three local states on one screen: choose, sensors,
-   survey. Entering a reading replaces the chooser. The step guide and its
-   drawings belong to PhoneCheck, so they never sit on the chooser. */
-
+// Take a reading: the chooser, the sensor screens and the survey are three local states of one screen.
 const PANEL = 'rounded-panel border border-rule/60 bg-card'
 
-/* One line per screen and its figures. Every figure is measured elsewhere:
-   PPG_SECONDS plus VOICE_SECONDS is 45; ITEMS (lib/engine.js) holds the survey. */
+// PPG_SECONDS plus VOICE_SECONDS is 45; ITEMS (lib/engine.js) holds the survey questions.
 const SCREENS = {
   sensors: {
     title: 'Camera and microphone',
@@ -50,16 +46,9 @@ const SCREENS = {
   },
 }
 
-/* What a reading is, said once above the ways (owner, 20 October: "u have
-   to explain that its reading your stress level"). */
 export const READING_IS =
   `A reading measures your stress level right now and turns it into your ${SCORE}, from 0 calm to 100 peak.`
 
-/* The four ways in, numbered 1 to 4. The owner, 18 October: the dark survey
-   card stood out, so all four sit on the same white card and the hue lives in
-   the icon and the button only. 20 October: back to these cards from the 3D
-   objects, and in this order everywhere: Mental Mirror, phone camera,
-   Survey, patch. */
 const WAYS = [
   { id:'mirror', title:'Mental Mirror', Mark:Person,
     line:"Google's MediaPipe Face Landmarker maps 478 points on your face.",
@@ -101,8 +90,7 @@ const WAYS = [
     ] },
 ]
 
-/* Per way: the icon tile and the action. Each action clears 4.5 : 1 with
-   paper on it (sky-ink, beam-ink, accent, sun-ink). */
+// Each action colour clears 4.5:1 with paper text on it (sky-ink, beam-ink, accent, sun-ink).
 const LOOK = {
   mirror:  { tile:'bg-sky-wash text-sky-ink',       cta:'bg-sky-ink text-paper groupHoverOnly:bg-[#07507f]' },
   sensors: { tile:'bg-beam-wash text-beam-ink',     cta:'bg-beam-ink text-paper groupHoverOnly:bg-[#0b4f62]' },
@@ -111,7 +99,6 @@ const LOOK = {
 }
 const CARD = 'rounded-panel border border-rule/60 bg-card shadow-card'
 
-/* Figures in a row: each a number over a short label, spaced, no rules. */
 function Figures({ items, className }) {
   return (
     <span className={cn('flex flex-wrap gap-x-6 gap-y-2', className)}>
@@ -149,8 +136,6 @@ function Tile({ Mark, className }) {
   )
 }
 
-/* The card's top line: its number, its icon, and how long it takes. The
-   number is drawn; the list it sits in gives a screen reader the count. */
 function Top({ n, way, look }) {
   return (
     <span className="flex items-center gap-3">
@@ -165,8 +150,6 @@ function Top({ n, way, look }) {
   )
 }
 
-/* A way in. The whole card is the control and the hit area; the action
-   inside it is drawn as a button so the next step is plain. */
 const Way = React.forwardRef(function Way({ n, way, onOpen, children }, ref) {
   const look = LOOK[way.id]
   return (
@@ -188,7 +171,6 @@ const Way = React.forwardRef(function Way({ n, way, onOpen, children }, ref) {
   )
 })
 
-/* The three facts per way, behind one disclosure under the grid. */
 function Compare() {
   return (
     <SeeDetails label="Compare the four ways" className="mt-3 lg:mt-4">
@@ -210,8 +192,7 @@ function Compare() {
   )
 }
 
-/* The top of a reading. Module level: an inner component would remount the
-   back button out from under a keyboard. */
+// Module level: an inner component would remount the back button and drop keyboard focus.
 const ReadingHead = React.forwardRef(function ReadingHead({ id, onBack }, ref) {
   const s = SCREENS[id]
   return (
@@ -248,15 +229,10 @@ export function CheckInBody({ go }){
   const head = React.useRef(null)
   const from = React.useRef(null)
   const firstPaint = React.useRef(true)
-  /* True while this screen owns the history entry it pushed on entering a
-     reading, so leaving consumes that entry. */
+  // True while this screen owns the history entry it pushed on entering a reading, so leaving consumes it.
   const pushed = React.useRef(false)
-  /* The survey's log entry: added once when the last answer lands, then kept
-     in step if an answer changes. Each new start of the survey is a new
-     reading: the answers clear and a new entry is made. */
   const logged = React.useRef(null)
 
-  /* A fresh survey: no answers, and the next result is a new reading. */
   const restart = React.useCallback(() => { setAns({}); logged.current = null }, [])
 
   const open = React.useCallback(id => {
@@ -264,7 +240,6 @@ export function CheckInBody({ go }){
     from.current = id
     setDir('fwd'); setScreen(id)
     setSaid(`${SCREENS[id].title}, showing now`)
-    /* The pushed entry makes browser back mean "out of this reading". */
     try {
       history.pushState({ reading: id }, '', location.hash || '#/check')
       pushed.current = true
@@ -277,8 +252,6 @@ export function CheckInBody({ go }){
     if (pushed.current) { pushed.current = false; history.back() }
   }, [])
 
-  /* Escape and browser back both land on the chooser. Neither is listened
-     for from the chooser itself. */
   React.useEffect(() => {
     if (screen === 'choose') return
     const onKey = e => {
@@ -295,9 +268,7 @@ export function CheckInBody({ go }){
     }
   }, [screen, leave])
 
-  /* A screen change starts at the top and focuses the new screen. Returning
-     focuses the card that opened the reading, two frames after App's own
-     popstate handler focuses #main. */
+  // Returning focuses the card that opened the reading, two frames after App's popstate handler focuses #main.
   React.useEffect(() => {
     if (firstPaint.current) { firstPaint.current = false; return }
     window.scrollTo(0, 0)
@@ -312,7 +283,6 @@ export function CheckInBody({ go }){
     return () => { cancelAnimationFrame(a); cancelAnimationFrame(b) }
   }, [screen])
 
-  /* A link that has to land on a reading rather than on the chooser. */
   React.useEffect(() => {
     const want = takeReadingIntent()
     if (want === 'sensors' || want === 'survey' || want === 'mirror') open(want)
@@ -328,9 +298,8 @@ export function CheckInBody({ go }){
     }
   }, [done, r?.score])
 
-  // Answering the last item scrolls to the result; 260ms lets the card mount
-  // and the layout settle before scrollIntoView measures.
   React.useEffect(() => {
+    // 260ms lets the result card mount and the layout settle before scrollIntoView measures.
     if (screen !== 'survey' || !done || !resultRef.current) return
     const t = setTimeout(() => resultRef.current?.scrollIntoView({ block:'start' }), 260)
     return () => clearTimeout(t)
@@ -357,8 +326,6 @@ export function CheckInBody({ go }){
 
           <p className="mt-1.5 max-w-[60ch] text-meta leading-[1.45] text-ink-2">{READING_IS}</p>
 
-          {/* An ordered list: the owner, 18 October, could not tell there were
-              four ways, so they are numbered 1 to 4. */}
           <ol className="m-0 mt-4 grid list-none gap-4 p-0 lg:mt-5 lg:grid-cols-2 lg:gap-5">
             <ScrollRow as="li" index={0} className="h-full">
               <Way n={1} ref={el => { cards.current.mirror = el }} way={mirror}
@@ -372,7 +339,6 @@ export function CheckInBody({ go }){
               <Way n={3} ref={el => { cards.current.survey = el }} way={survey}
                 onOpen={() => open('survey')}>
                 <span className="mt-4 flex items-center gap-3">
-                  {/* aria-hidden: the figure beside it says the same. */}
                   <span aria-hidden className="block flex-1">
                     <Progress value={answered} max={ITEMS.length}/>
                   </span>
@@ -382,8 +348,6 @@ export function CheckInBody({ go }){
                 </span>
               </Way>
             </ScrollRow>
-            {/* Pairing is a device handshake, not a reading, so this card is
-                a panel with a control in it. */}
             <ScrollRow as="li" index={3} className="h-full">
               <section className={cn(CARD, 'flex h-full flex-col p-5 lg:p-6')}>
                 <Top n={4} way={patch} look={LOOK.patch}/>
@@ -402,8 +366,6 @@ export function CheckInBody({ go }){
             </ScrollRow>
           </ol>
           <Compare/>
-          {/* The owner, 17 October: no log or trends on this tab. They are
-              on the Trends tab, and this link goes there. */}
           <SeeTrends go={go} className="mt-5 lg:mt-6"/>
         </Stage>
       )}
@@ -412,9 +374,6 @@ export function CheckInBody({ go }){
         <Stage dir={dir}>
           <ReadingHead id="sensors" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4"><PhoneCheck go={go}/></div>
-          {/* Owner, 20 October: the camera explainer lives only here, closed,
-              below the steps ("only appear under a dropdown called 'How the
-              camera pulse check works'"). */}
           <SeeDetails label="How the camera pulse check works" className="mt-4 lg:mt-5">
             <div className={cn(PANEL, 'p-4 lg:p-6')}>
               <CameraModule className="mx-auto max-w-[66rem]"/>
@@ -436,8 +395,6 @@ export function CheckInBody({ go }){
           <ReadingHead id="survey" ref={head} onBack={leave}/>
           <div className="mt-3 lg:mt-4 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]
             xl:items-start xl:gap-4">
-            {/* The panel supplies the gutter; pt-4 because a legend sits on the
-                fieldset's top edge, so the first question needs the air. */}
             <div className={cn(PANEL, 'px-5 pt-4 lg:px-6 [&_fieldset]:border-rule/50 [&_fieldset]:py-5')}>
               {ITEMS.map((it,i)=>(
                 <ScrollRow key={it.id} index={i}
@@ -448,8 +405,7 @@ export function CheckInBody({ go }){
               ))}
             </div>
 
-            {/* min-h reserves the result's space. xl:top-[65px] is the app
-                shell's 48px bar + 1px hairline + 16px air. */}
+            {/* min-h reserves the result's space. xl:top-[65px] is the 48px app bar, its 1px hairline and 16px of air. */}
             <section ref={resultRef} aria-live="polite" data-anchor
               className={cn(PANEL, 'mt-3 min-h-[10rem] p-4 lg:p-5 xl:mt-0 xl:sticky xl:top-[65px]')}>
               {!done && (

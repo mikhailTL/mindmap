@@ -4,9 +4,6 @@ import { ROLE_PICKS, avatarEntry, fitsRole, initialsOf, isPhotoAvatar } from '..
 import { VIEWER, viewerName } from '../src/account/viewer.js'
 import { DEMO_CASELOAD, DEMO_LINKS, DEMO_PRO_PARENTS, DEMO_TEEN } from '../src/account/demo-network.js'
 
-/* Owner, 18 October: teens pick the drawings, parents initials or a photo,
-   Counselors/Professionals a photo; the demo greets the reader by role. */
-
 const PHOTO = 'data:image/jpeg;base64,' + 'A'.repeat(400)
 
 beforeEach(() => wipe())
@@ -43,8 +40,6 @@ describe('the reader’s name', () => {
   })
 })
 
-/* Owner, 18 October: drawn characters for the demo's people and the demo
-   reader, a tree for a parent, a Counselor sign, no side-on photo crops. */
 describe('the character suite', () => {
   it('draws the demo reader of each role as that role’s character', () => {
     expect(VIEWER.student.avatar).toBe('char-student')

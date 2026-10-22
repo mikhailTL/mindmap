@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { AUDIENCES, SHARING, getSharing, revokeAll, setShared } from '../src/app/store.js'
 
-/* "Days slow to settle" is a shared field, so it has to obey the consent
-   model like the rows before it: day level, on by default, switchable off
-   by the student, and listed under each audience that may see it. These
-   tests run with no window, so the slot is the in-memory copy throughout. */
-
 describe('settle sharing', () => {
   it('lists a settle row under both audiences, at day level', () => {
     for (const audience of AUDIENCES) {

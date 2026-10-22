@@ -1,11 +1,6 @@
 import * as React from 'react'
 import { cn } from '../lib/utils'
 
-/* A ruled margin note. No background, so it can sit on paper, card or mist
-   without a contrast audit per surface: ink and ink-2 clear 4.5:1 on all
-   three. The demo and no-patch notices went on 18 October: the owner wanted
-   one "?" beside the Demo toggle instead (ui/mode-toggle). */
-
 function Notice({ tag, tone, rule, inline, children, className }) {
   return (
     <span
@@ -18,8 +13,6 @@ function Notice({ tag, tone, rule, inline, children, className }) {
         className
       )}
     >
-      {/* Sentence case, no letterspacing: an all-caps tracked-out word is read
-       * letter by letter by some screen readers. */}
       <span className={cn('shrink-0 font-display font-bold', tone, inline ? 'text-fine' : 'text-tick')}>
         {tag}
       </span>

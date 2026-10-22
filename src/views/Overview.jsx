@@ -18,33 +18,13 @@ import { HeadsUp } from './audience'
 import rainbowLg from '../photos/rainbow-field.webp'
 import rainbowSm from '../photos/rainbow-field-sm.webp'
 import heroField from '../photos/hero-field.webp'
-/* The site's vocabulary. Nothing here invents a second name for any of it. */
 import {
   SCORE, NOTES, LOCATION, PRO, PRO_LC, PRO_PLURAL,
   CONSENT_SHORT,
 } from '../lib/terms'
 
-/* The owner's order: hero, the problem, what MindMap is, what makes MindMap
- * different, the rainbow picture break, the two ways in, who it is for,
- * privacy. Nothing else is on the page. The "different" band was a bento until
- * 18 October ("very cluttered"); on the 19th it came back redesigned: "i said
- * redesign not remove".
- *
- * Bands are white, green or blue; cards keep their varied hues (owner, 21
- * October: "you can have those colors on cards but not on entire page
- * backgrounds"): hero paper with the green patch tile, problem ink, what it
- * is white with sky, lilac and sun cards, two ways sky.band, who for
- * accent.wash (one sun edge on the third card), privacy turquoise #e2f2f0.
- * Measured on each ground (ink : ink.2 : ink.3 : accent : accent.ink):
- *   accent.wash 12.68 : 6.88 : 5.10 : 4.84 : 7.09
- *   #e2f2f0     13.17 : 7.15 : 5.30 : 5.03 : 7.37
- *   sky.band    12.20 : 6.62 : 4.91 : 4.66 : 6.82
- * Photographs never sit under text without an opaque ground.
- */
-
-/* The page's green section names, in page order, for the header's Overview
-   menu (owner, 18 October). Each id is on its band below; `what-is` is in
-   landing/WhatIs.jsx and `different` in landing/Different.jsx. */
+// Section ids in page order, for the header's Overview menu. `what-is` is in landing/WhatIs.jsx and
+// `different` in landing/Different.jsx.
 export const OVERVIEW_SECTIONS = [
   ['problem',   'The problem'],
   ['why',       'Why MindMap?'],
@@ -55,12 +35,6 @@ export const OVERVIEW_SECTIONS = [
   ['privacy',  'Privacy'],
 ]
 
-/* The two ways in, both on the white card (owner, 18 October: the tinted one
-   "looks like a diff section" on a phone). The patch comes first, as the
-   owner asked; `lead` gives it the green edge. Owner, 20 October: both lists
-   numbered the same way, "none of that weird bolding", and a photograph in
-   place of each drawn strip: the patch on a student's arm, and a teen looking
-   straight at the camera, the way the Mental Mirror sees a face. */
 const WAYS = [
   { id:'patch', go:'patch', title:'With the patch', cta:'See how it works', lead:true, photo:'photos-steps-patch',
     steps: ['Stick the patch on your upper arm', 'Pair it with the app once', 'Your score updates through the day'] },
@@ -72,14 +46,8 @@ const WAYS = [
     ] },
 ]
 
-/* Three stacked doors on the green band. Each is the white card with its
-   audience's colour along the top, so none blends into the band (owner,
-   18 October: the pale green one "blends in"). */
 const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
 
-/* Owner, 18 October: each card says who the audience is, not only what they
-   get ("Students WHO ARE, Parents WHO ARE, counselors WHO ARE"). The student
-   line is his sentence. `gets` names Heads Up with its traffic light. */
 const SCREENS = [
   { id:'students', title:'Students',
     who:`Students seeking proactive wellness management, recommended by a parent or ${PRO}, or in a state of mental distress.`,
@@ -98,14 +66,12 @@ const SCREENS = [
     cta:`What a ${PRO_LC} gets` },
 ]
 
-/* One line per audience. The full matrix is on the privacy page. */
 const SEES = [
   { who:'Student', sees:'Sees everything first' },
   { who:`Parent and ${PRO}`, sees:'Only what the student allows' },
 ]
 
-/* The wording is the promise. "A group under five" is the k floor; "fewer than
-   five" would be one word shorter and a different commitment. */
+// "A group under five" states the k-anonymity floor of five people.
 const NEVER = [
   'Show a parent a raw reading',
   'Report on a group under five',
@@ -115,7 +81,6 @@ const NEVER = [
   'Diagnose anything or act as a medical device',
 ]
 
-/* A wash photograph drifting against the scroll, 10% oversize so no edge shows. */
 function DriftWash({ photo, className, imgClassName, distance = 48 }) {
   return (
     <Parallax2D clip distance={distance} scale={0.03}
@@ -125,9 +90,7 @@ function DriftWash({ photo, className, imgClassName, distance = 48 }) {
   )
 }
 
-/* The hero's second button. The site routes by hash, so a plain #different
-   link would change the route; this scrolls instead, under the sticky header,
-   and jumps without animating when the reader asks for reduced motion. */
+// The site routes by hash, so a #different link would change the route; this scrolls under the sticky header.
 function toDifferent() {
   const el = document.getElementById('different')
   if (!el) return
@@ -136,11 +99,8 @@ function toDifferent() {
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - head, behavior: reduced ? 'auto' : 'smooth' })
 }
 
-/* The owner's rainbow photograph as a full bleed break between the product
-   bands and the ways in. Two dimensions of scroll: the picture rises against
-   the page and slides sideways, 24% oversize so no edge ever shows. The
-   wordmark is 42% of the picture's width, so the band is 200px tall at 390:
-   any taller and the crop cuts its first and last letters. */
+// Drawn 24% oversize so no edge shows. The wordmark is 42% of the photo's width, so the band stays 200px tall
+// at 390 to keep its first and last letters in the crop.
 function RainbowBreak() {
   return (
     <section aria-label="MindMap" className="relative isolate h-[200px] overflow-hidden sm:h-[320px]
@@ -159,10 +119,7 @@ function RainbowBreak() {
 export function Overview({ go }) {
   return (
     <main>
-      {/* -- the hero -------------------------------------------------------
-          `h-`, not `min-h-`, from lg up: min-h lets tall content push the band
-          past the fold. Under lg the two halves stack and are taller than a
-          phone, so there the band takes its own height. */}
+      {/* `h-`, not `min-h-`, from lg: min-h lets tall content push the band past the fold. */}
       <section id="hero" className="relative isolate flex flex-col overflow-hidden border-t
         border-rule bg-paper lg:h-[calc(100svh-58px)]">
 
@@ -172,9 +129,6 @@ export function Overview({ go }) {
           2xl:grid-cols-[minmax(0,50rem)_minmax(0,1fr)]">
 
           <div className="relative flex min-h-0 flex-1 flex-col justify-center py-6 lg:flex-none lg:py-0 lg:pr-10">
-            {/* The owner's field photograph, faint behind the title half. It
-                runs out to the viewport's left edge (the section clips it) and
-                a paper veil keeps the words at full contrast. */}
             <div aria-hidden className="pointer-events-none absolute inset-y-0 -left-[50vw] -right-[22px] -z-10
               sm:-right-10 lg:right-0">
               <img src={heroField} alt="" width={728} height={408} decoding="async"
@@ -184,9 +138,7 @@ export function Overview({ go }) {
             <ScrollIn as="p" className="mb-4 font-body text-[1.125rem] font-semibold text-accent-ink sm:text-[1.25rem]">
               A teen wellness app
             </ScrollIn>
-            {/* No balanced wrapping: it moves the break mid-phrase. Leading is
-                1.06, not 1.02, where the descenders of "Making your stress"
-                landed in the cap height of "readable". */}
+            {/* Leading 1.06: at 1.02 the descenders of the first line reach the cap height of the second. */}
             <h1 className="max-w-[13ch] font-display text-view font-bold leading-[1.06]
               tracking-tight text-ink [text-wrap:balance] lg:text-sect
               2xl:max-w-[11ch] 2xl:text-fig">
@@ -195,12 +147,9 @@ export function Overview({ go }) {
             <ScrollIn as="p" className="mt-5 max-w-[34ch] text-[1.125rem] font-medium leading-[1.4] text-ink">
               The world’s only wearable patch and app system designed exclusively for adolescent wellness.
             </ScrollIn>
-            {/* "Open the app" is in the header, so not repeated here. */}
             <ScrollIn className="mt-7 flex flex-wrap items-center gap-3">
               <Button onClick={() => { setMode('demo'); go('app-home?demo') }}>View the demo<span aria-hidden>→</span></Button>
-              {/* Back on 19 October (owner: "add back immediately"). It wraps
-                  rather than overflow a phone. accent.ink, not accent: over the
-                  field photograph accent measured 4.48 at 390. */}
+              {/* accent-ink, not accent: over the field photograph accent measures 4.48:1. */}
               <Button variant="ghost" className="min-h-[44px] whitespace-normal px-0 text-left text-accent-ink
                 hoverOnly:text-ink sm:ml-3" onClick={toDifferent}>
                 More than your typical stress monitoring app
@@ -208,13 +157,9 @@ export function Overview({ go }) {
             </ScrollIn>
           </div>
 
-          {/* `after` on each field is the part that lives past the wrap's right
-              edge: over 1680 the wrap stops short of the viewport. */}
           <div className="relative -mx-[22px] flex flex-1 border-t border-rule
             sm:-mx-10 lg:mx-0 lg:-mr-10 lg:border-l lg:border-t-0">
 
-            {/* The original mint green, no glow behind the patch (owner, 21
-                October: "remove the beige ... replace with the original green"). */}
             <div className="relative flex flex-1 items-center justify-center overflow-hidden
               border-r border-rule bg-accent-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
@@ -230,8 +175,6 @@ export function Overview({ go }) {
               </figure>
             </div>
 
-            {/* The one photograph on the hero, under the phone. The focal point
-                comes from lib/photos.js and the frame grows to keep faces whole. */}
             <div className="relative flex flex-1 flex-col items-center justify-center
               overflow-hidden bg-beam-wash px-4 py-8 lg:py-0
               after:absolute after:inset-y-0 after:left-full after:hidden after:w-screen
@@ -239,8 +182,6 @@ export function Overview({ go }) {
               {/* Drawn 10% oversize so the drift shows no edge. */}
               <Parallax2D clip distance={24} scale={0.02}
                 className="absolute inset-0 [&>div]:absolute [&>div]:inset-0">
-                {/* The corridor frame, restored behind the phone (owner,
-                    21 October: "undo that"). */}
                 <Frame photo="students-hallway" eager
                   alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
                   className="absolute inset-0 scale-[1.1]"/>
@@ -265,9 +206,6 @@ export function Overview({ go }) {
         </div>
       </section>
 
-      {/* -- the problem, on the one dark band -----------------------------
-          Every figure on this band is external and sourced. The figures sit
-          on a frosted panel: on the band directly they measured under AA. */}
       <Section name="The problem" id="problem" tone="ink" className="relative isolate overflow-hidden">
         {/* The photograph fades out down the band, under the figures. */}
         <DriftWash photo="student-homework" imgClassName="opacity-[0.22]"
@@ -275,14 +213,10 @@ export function Overview({ go }) {
         <SectionHead tone="ink" className="max-w-[30ch]">
           Teen stress is a global crisis often invisible until it’s too late
         </SectionHead>
+        {/* The figures sit on a frosted panel: directly on the dark band they fall under AA contrast. */}
         <ScrollIn className="mt-5 rounded-panel border border-paper/30 bg-card/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md lg:p-6">
           <ProblemFigures/>
         </ScrollIn>
-        {/* The owner's own words, 18 October, under the figures and inside
-            the band. Owner, 21 October: "Why MindMap isn't in a card anymore,
-            needs to be put into a white card". A white card on the green band,
-            the question on the left; on the right his paragraph, its last
-            sentence (the answer) set larger. Every word is his. */}
         <div id="why" className="scroll-mt-14 outline-none">
           <ScrollIn className="mt-6 grid gap-4 rounded-panel bg-card p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)]
             lg:mt-8 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-12 lg:p-10
@@ -307,17 +241,12 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- what MindMap is (views/landing/WhatIs.jsx) ---------------------- */}
       <WhatIs go={go}/>
 
-      {/* -- what makes MindMap different (views/landing/Different.jsx) ----- */}
       <Different/>
 
-      {/* -- the picture break: the owner's rainbow, in two dimensions ------ */}
       <RainbowBreak/>
 
-      {/* -- the two ways in, on blue ---------------------------------------
-          No photograph behind the band now: each card carries its own. */}
       <Section name="Getting started" id="start" tone="card"
         className="bg-sky-band [&>div>p:first-child]:text-accent-ink">
         <SectionHead>2 ways to use MindMap</SectionHead>
@@ -329,8 +258,6 @@ export function Overview({ go }) {
                 variant="plain"
                 className={cn('flex h-full w-full flex-col overflow-hidden p-0 text-left lg:flex-row',
                   w.lead && 'border-l-accent')}>
-                {/* The photograph is on top on a phone and down the card's
-                    left from lg, where its tall frame keeps face and arm in. */}
                 <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-sky-wash
                   lg:aspect-auto lg:w-[40%]">
                   <Frame wash photo={w.photo} className="absolute inset-0"/>
@@ -360,11 +287,6 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* -- the three audiences, on the mint green ---------------------------
-          From lg the cards stack in the left column and the kitchen
-          photograph is the band's right edge, faded in from the green, so no
-          card or word ever sits over a face. Under lg it is a rounded frame
-          between the lede and the cards. */}
       <Section name="Audiences" tone="card" id="screens" className="relative isolate overflow-hidden bg-accent-wash">
         <div aria-hidden className="absolute inset-y-0 right-0 -z-10 hidden w-[46%] lg:block
           [mask-image:linear-gradient(to_right,transparent,black_45%)]">
@@ -410,7 +332,6 @@ export function Overview({ go }) {
         </div>
       </Section>
 
-      {/* ── privacy, on turquoise, with a rounded photograph beside it at lg ── */}
       <Section name="Privacy" id="privacy" tone="card" className="bg-[#e2f2f0]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10
           xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
@@ -419,7 +340,6 @@ export function Overview({ go }) {
             <SectionLede>{CONSENT_SHORT}</SectionLede>
             <dl className="mt-5 grid gap-3.5 sm:grid-cols-2">
               {SEES.map((r, i) => (
-                /* Both white (owner, 18 October: "both the cards should be white"). */
                 <ScrollRow key={r.who} index={i} className={cn(cardClass('plain'), 'p-5')}>
                   <dt className="font-body text-ui font-semibold text-accent-ink">{r.who}</dt>
                   <dd className="m-0 mt-2 font-display text-head font-bold leading-[1.15] tracking-tight text-ink">

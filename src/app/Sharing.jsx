@@ -11,15 +11,7 @@ import {
   getSharing, getVersion, revokeAll, setRetention, setShared, subscribe,
 } from './store'
 
-/* The student's sharing controls. The model is store.js's SHARING table:
- * every switch starts on, a dependent row needs its parent row, a parent never
- * sees finer than a day and never Notes, Location, raw readings or anything
- * said. Those are drawn as Never rows. Crisis alerts have no switch.
- * Known disagreement: infographics.jsx marks raw readings Never for the
- * Counselor/Professional while caseload.js carries a `raw` key.
- */
-
-/* The tab's word. At text-ui both tabs fit across at 390; text-row from sm. */
+// Student sharing controls, driven by SHARING in store.js. Dependent rows need their parent row on; NeverRow items have no switch.
 const TAB_WORD = { parent: 'Parent', pro: PRO }
 
 /* Short row labels, keyed by the store's field key. */
@@ -34,8 +26,6 @@ const SHORT_NEVER = {
 }
 const label = (audience, f) => SHORT[audience]?.[f.key] || f.label
 
-/* The short row label for a field key, for screens that list what a person
-   can see (src/account/Network.jsx). */
 export function shareLabel(audience, key) {
   const f = SHARING[audience]?.fields.find(x => x.key === key)
   return f ? label(audience, f) : key
@@ -135,9 +125,6 @@ function Audience({ audience, state }) {
   )
 }
 
-/* The student's privacy screen, at route `shared`. The nav calls it
-   Privacy, so its first heading does too. `go`, when the shell passes it,
-   opens the network from the row under the heading. */
 export function SharingControls({ className, go }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const state = getSharing()

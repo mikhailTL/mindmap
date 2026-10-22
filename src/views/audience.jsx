@@ -26,23 +26,11 @@ import {
   SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
 } from '../lib/terms'
 
-/* The three audience routes: students, parents, counselors/professionals. Each
-   page is a hero, at most three sections and a closer. The consent model and
-   the wording in lib/terms.js are the facts; the layout is held to
-   docs/design-spec.md. Every frame is a licensed stock photograph of models:
-   nobody in one uses MindMap, and no alt text may say otherwise. */
-
+// The three audience pages (students, parents, counselors/professionals) and the parts they share.
 const PANEL = 'overflow-hidden rounded-panel border border-rule bg-card'
 const HEAD = 'max-w-none border-b border-rule bg-aqua px-3.5 py-2 font-display text-fine font-bold leading-tight text-ink'
 
-/* Owner, 20 October: less topography and glow, more of the light palette,
-   stock photos beside the demos. Each audience takes two light hues and
-   keeps deep green words. Owner, 21 October: full-width grounds (hero, a, b)
-   are white, green or blue only; the cards and the block behind each
-   photograph keep their varied hues. Students mint and sky, parents green
-   and sky with a sun block, counselors/professionals turquoise and sky with
-   a lilac block. Measured, ink-3 clears 4.9 : 1 on every ground here and
-   each label ink clears 5.3 on its hero. */
+// ink-3 clears 4.9:1 on every ground here, and each label ink clears 5.3:1 on its hero.
 const THEME = {
   students: { hero: 'bg-[#ecf8f2]', block: 'bg-sky-band', label: 'text-mint-ink',
     a: 'bg-sky-wash', b: 'bg-mint-wash' },
@@ -52,11 +40,6 @@ const THEME = {
     a: 'bg-sky-wash', b: 'bg-beam-wash' },
 }
 
-/* A card of labelled rows: a label and its value, never a label over a
-   paragraph. `photo` makes the card's top edge a banner. `variant` and `hue`
-   pick the surface (src/ui/card.jsx): reading notes beside a figure are a
-   `rule`, a box on a coloured band an `outline`, the one rule a page must not
-   miss a `tint`. */
 function Facts({ rows, head, photo, photoAlt, className, variant = 'plain', hue = 'accent' }) {
   const t = cardInk(variant, hue)
   const flat = variant === 'rule'
@@ -82,7 +65,6 @@ function Facts({ rows, head, photo, photoAlt, className, variant = 'plain', hue 
   )
 }
 
-/* A card of chips, one per thing the audience is never given. */
 function Chips({ head, rows, className, variant = 'plain', hue = 'accent' }) {
   const t = cardInk(variant, hue)
   return (
@@ -101,10 +83,6 @@ function Chips({ head, rows, className, variant = 'plain', hue = 'accent' }) {
   )
 }
 
-/* Every figure is the demo's, so its caption carries a small Demo tag (the
-   owner, 18 October: a tag, not a ruled line under each chart). `fill`
-   stretches it to a taller photo-and-notes column beside it and centres the
-   figure in the room, rather than leaving white space under the card. */
 function Fig({ title, children, className, fill }) {
   return (
     <figure className={cn(PANEL, 'm-0 flex flex-col', fill && 'h-full', className)}>
@@ -118,9 +96,7 @@ function Fig({ title, children, className, fill }) {
   )
 }
 
-/* A stock photograph in a rounded frame, a block of the page's second hue
-   set behind it. Spec 0d rule 4: a frame holding a face is at least 176px
-   tall, and Frame grows the box if the photograph needs more. */
+// A frame holding a face is at least 176px tall; Frame grows the box if the photograph needs more.
 function Photo({ photo, alt, block, eager, className }) {
   return (
     <div className={cn('relative pb-3 pr-3', className)}>
@@ -132,9 +108,6 @@ function Photo({ photo, alt, block, eager, className }) {
   )
 }
 
-/* A figure beside its reading notes: one column on a phone, two from lg.
-   `photo` sits over the notes, so the figure's long side carries a picture
-   rather than white space. */
 function Pair({ children, wide }) {
   return (
     <div className={cn('mt-3 grid gap-3 lg:gap-4',
@@ -157,11 +130,6 @@ function Side({ photo, alt, block, children }) {
   )
 }
 
-/* ───────────────────────────── shared page parts ───────────────────────── */
-
-/* "Heads Up" with its traffic light beside it, everywhere an audience section
-   names it (owner, 18 October). The light is still and aria-hidden; the words
-   carry the name. Also used on the Overview's audience cards. */
 export function HeadsUp({ size = 9, className }) {
   return (
     <span className={cn('whitespace-nowrap', className)}>
@@ -171,8 +139,6 @@ export function HeadsUp({ size = 9, className }) {
   )
 }
 
-/* The Heads Up band on each audience page: the name, one line, the demo, and
-   on the student page a photograph beside them. */
 function HeadsUpBand({ line, go, ground, photo, photoAlt, block }) {
   return (
     <Section tone="card" tight className={ground}>
@@ -194,9 +160,6 @@ function HeadsUpBand({ line, go, ground, photo, photoAlt, block }) {
   )
 }
 
-/* The hero: the words and the facts on the audience's first hue, a large
-   photograph on a block of its second. No drawn scene and no glow since
-   20 October. On a phone the photograph sits between the lede and the facts. */
 function Hero({ label, title, lede, go, photo, photoAlt, facts, theme }) {
   return (
     <div className={cn('border-b border-rule', theme.hero)}>
@@ -230,8 +193,7 @@ function Closer({ title, line, label, view, go, rows, ground }) {
         <div className="min-w-0">
           <SectionHead>{title}</SectionHead>
           {line && <SectionLede>{line}</SectionLede>}
-          {/* Wraps: "Open the Counselor/Professional screen" is wider than a
-              390px phone allows by half a pixel. */}
+          {/* Wraps: the longest label is half a pixel wider than a 390px phone allows. */}
           <Button size="sm" className="mt-3 max-w-full whitespace-normal text-left"
             onClick={() => go(view)}>
             {label} <ArrowRight aria-hidden/>
@@ -243,10 +205,6 @@ function Closer({ title, line, label, view, go, rows, ground }) {
   )
 }
 
-/* ═══════════════ the Mind Score and Trends, shared by all three ═════════════ */
-
-/* The sample dial, read for a parent or a counselor/professional. The dial
-   draws its own calm and peak ends and their clouds. */
 function ScoreExplain({ rings, rows, photo, photoAlt, block }) {
   return (
     <Pair>
@@ -284,7 +242,6 @@ function RangeSwitch({ ranges, value, onChange }) {
   )
 }
 
-/* The picked calendar day, said in words beside its face. */
 function PickedDay({ d }) {
   if (!d || d.score == null) return null
   return (
@@ -299,8 +256,6 @@ function PickedDay({ d }) {
   )
 }
 
-/* Trends over a sample teen: a day's curve (students only), a week of bars,
-   or a month calendar of Heads Up faces where any day can be picked. */
 function TrendsFig({ ranges }) {
   const shown = ranges.filter(r => r !== 'day' || (DATA.day && DATA.day.length))
   const [range, setRange] = React.useState(shown.includes('month') ? 'month' : shown[0])
@@ -326,10 +281,6 @@ function TrendsFig({ ranges }) {
 
 const STOCK = ['The photographs', 'These are licensed stock photos of models.']
 
-/* ═══════════════════════════════ for students ═══════════════════════════ */
-
-/* Read only; the interactive key is on the app screen. One ground step per
-   tile, in the rainbow's own order, tells the four apart. */
 const SIGNAL_GROUND = ['bg-coral-wash', 'bg-sun-wash', 'bg-mint-wash', 'bg-sky-wash']
 
 function Signals({ rings }) {
@@ -449,10 +400,7 @@ export function ForStudents({ go }) {
   )
 }
 
-/* ═══════════════════════════════ for parents ════════════════════════════ */
-
-/* Consent scope for a parent. Moving a row between these lists is a consent
-   change. */
+// Consent scope for a parent: moving a row between these lists changes what is shared.
 const SEEN = [`One ${SCORE} a day`, 'Which days ran high', 'When the patch stops reporting']
 const UNSEEN = ['Any raw reading', NOTES, LOCATION, 'Anything in real time']
 
@@ -556,13 +504,11 @@ export function ForParents({ go }) {
   )
 }
 
-/* ═══════════════════════════ for counselors/professionals ══════════════════ */
-
-/* `Bars` takes a paint, not a class; #157446 is the accent token. */
+// `Bars` takes a paint, not a class; #157446 is the accent token.
 const ACCENT = '#157446'
 const SCHOOL_WEEK = COHORT_WEEKDAY.map(d => ({ label: d.label, v: d.mean }))
 
-/* Ordered on the week's movement, as CASELOAD_DEF states above the table. */
+// Ordered on the week's movement, as CASELOAD_DEF states above the table.
 const BOARD = roster().filter(s => s.showTrend).sort((a, b) => b.velocity - a.velocity)
 const SERIES = name => CHART_DATA.pro?.[name.replace(/\D/g, '')]
 
@@ -588,7 +534,6 @@ function Caseload() {
                 Grade {s.grade}. {TIER_LABEL[s.tier]}</span>
             </th>
             <td className="hidden border-b border-rule py-2.5 pr-3 sm:table-cell">
-              {/* A blank cell reads as a bug, so a missing series is a flat rule. */}
               {SERIES(s.name)
                 ? <Spark data={SERIES(s.name)}/>
                 : <span aria-hidden className="block h-px w-16 bg-ruling"/>}
@@ -597,8 +542,6 @@ function Caseload() {
               tabular-nums text-ink-3">{s.weekAgo}</td>
             <td className="border-b border-rule py-2.5 pl-2 text-right text-num
               tabular-nums text-ink">{s.current}</td>
-            {/* The arrow carries the direction; warn and crit are not for a
-                week-on-week change. */}
             <td className={cn('border-b border-rule py-2.5 pl-2 text-right text-meta tabular-nums',
               s.velocity ? 'text-ink' : 'text-ink-3')}>
               {s.velocity > 0 ? '▲ +' : s.velocity < 0 ? '▼ ' : ''}{s.velocity}</td>
@@ -609,8 +552,7 @@ function Caseload() {
   )
 }
 
-/* k-anonymity floor: a period under K_ANONYMITY renders as a withheld row.
-   Never print a mean for a suppressed row. */
+// k-anonymity floor: a period under K_ANONYMITY renders as a withheld row with no mean.
 function SmallGroups() {
   return (
     <ul className="m-0 list-none p-0">
@@ -686,9 +628,6 @@ export function ForSchools({ go }) {
 
       <Section tone="card" tight>
         <SectionHead>Stress across all your students</SectionHead>
-        {/* Three across from lg: the chart is short, so the photograph takes
-            its own column rather than stacking over the notes. A one-person
-            frame, because the column is upright. */}
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn className="h-full">
             <Photo photo="photos-hall-denim" block="bg-beam-wash"
@@ -697,7 +636,7 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Fig title={`Average ${SCORE} by school day`}>
-              {/* Width cap: at 1360px each of the five bars is wider than it is tall. */}
+              {/* Width cap: at 1360px each of the five bars would be wider than it is tall. */}
               <Bars data={SCHOOL_WEEK} color={ACCENT} unit="school day" className="max-w-[640px]"/>
             </Fig>
           </ScrollIn>
@@ -730,8 +669,6 @@ export function ForSchools({ go }) {
         </Pair>
       </Section>
 
-      {/* Consent scope for a counselor/professional: the k-anonymity floor and
-          the audit log, both product-critical, in one section. */}
       <Section tone="card" tight>
         <SectionHead>Who can open a record</SectionHead>
         <Pair>

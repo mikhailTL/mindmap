@@ -23,38 +23,27 @@ import {
 } from '../lib/terms'
 import { TNAM_RESULTS as R } from '../signals/tnam-results'
 
-/* Same sum Methods.jsx uses for "Tested on", so the two cannot drift. */
+// Same sum Methods.jsx uses for "Tested on".
 const TESTED_ADULTS = R.per_subject.length + R.transfer.subjects
 
-/* The guided tour, in eight stops. Every stop renders the live component the
- * real screen runs, or a drawing of the real part, never a mockup. The HONESTY
- * stop lists everything on this site that is not real; keep it current.
- *
- * The current stop is NOT in the URL: the router matches the whole hash against
- * a fixed list, so `#/tour/3` lands on the overview. Deep-linking a stop means
- * changing the router first. */
-
+// The guided tour, in eight stops. The current stop is not in the URL: the router matches the whole hash
+// against a fixed list, so `#/tour/3` would land on the overview.
 const PANEL = 'overflow-hidden rounded-panel border border-rule bg-card'
 
-/* Arithmetic, not a measurement: 1 Hz over a seven-hour school day, then that
-   across one assumed caseload. Computed so stop one and stop eight agree. */
+// Arithmetic, not a measurement: 1 Hz over a seven-hour school day, across one assumed caseload.
 const SCHOOL_HOURS = 7
 const PER_DAY = SCHOOL_HOURS * 60 * 60
 const CASELOAD_ASSUMED = 400
 const num = n => n.toLocaleString('en-US')
 
-/* Every frame is a licensed stock photograph of models. Nobody in one uses
- * MindMap or wears the patch, and no alt text may imply otherwise.
- * Eager: Radix mounts only the open tab, so at most one is ever in the tree.
- * max-w-none is load-bearing against preflight's img { max-width: 100% }. */
+// Eager loading is safe: Radix mounts only the open tab. max-w-none overrides preflight's img { max-width: 100% }.
 function PhotoCard({ photo, alt, drift = false, className }) {
   const src = PHOTOS[photo]
   if (!src || !alt) return null
   const [w, h] = dims(photo)
   return (
     <div className={cn(PANEL, 'h-[152px] lg:h-[172px]', className)}>
-      {/* The photograph drifts inside its frame: 28px taller than the panel,
-          so the ±14px travel never shows an edge. */}
+      {/* 28px taller than the panel, so 14px of drift each way shows no edge. */}
       <Parallax2D className="h-full [&>div]:h-full" distance={drift ? 28 : 0} clip={false}>
         <img src={src} alt={alt} width={w} height={h} loading="eager" decoding="async"
           style={{ objectPosition: focal(photo) }}
@@ -64,8 +53,6 @@ function PhotoCard({ photo, alt, drift = false, className }) {
   )
 }
 
-/* Labelled rows: a label and its value, one line each. Reading notes beside
-   the figure, so a rule rather than a second white box (src/ui/card.jsx). */
 function Facts({ rows, className }) {
   return (
     <div className={cn(cardClass('rule', 'accent'), className)}>
@@ -79,14 +66,10 @@ function Facts({ rows, className }) {
   )
 }
 
-/* A figure's own container. A column, so a short figure can push its caption
-   to the foot with mt-auto. */
 function Fig({ children, className }) {
   return <div className={cn(PANEL, 'flex h-full flex-col p-3.5 lg:p-4', className)}>{children}</div>
 }
 
-/* ── 01 ─────────────────────────────────────────────────────────────────── */
-/* Nothing here is a statistic; the caption must keep saying so. */
 function EvidenceGap() {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   const rows = [
@@ -122,8 +105,6 @@ function EvidenceGap() {
   )
 }
 
-/* ── 02 ─────────────────────────────────────────────────────────────────── */
-/* ExplodedStack owns its own scroll motion. Do not write transforms onto `.lyr`. */
 function Hardware() {
   return (
     <figure className="m-0 flex h-full flex-col">
@@ -136,9 +117,6 @@ function Hardware() {
   )
 }
 
-/* ── 03 ─────────────────────────────────────────────────────────────────── */
-/* Copy comes from lib/sensors.js; do not retype it here. Each signal takes
-   its own trace's hue as a wash, heart to movement. */
 const SIGNAL_HUE = { heart: 'coral', sweat: 'sun', temp: 'mint', move: 'sky' }
 
 function Signals() {
@@ -164,9 +142,6 @@ function Signals() {
   )
 }
 
-/* ── 06 ─────────────────────────────────────────────────────────────────── */
-/* Read off the same fixture the console reads. No position numerals: a column
- * of ranks is a leaderboard. Order is largest change first. */
 function Caseload() {
   const moved = triage()
   const held = [...scoreOnly(), ...alertsOnly()]
@@ -210,9 +185,7 @@ function Caseload() {
   )
 }
 
-/* ── 07 ─────────────────────────────────────────────────────────────────── */
-/* Third column is a cell treatment ('demo' | 'fact'). The two differ by shape
-   and weight before hue, so the column still separates in grayscale. */
+// Third column is a cell treatment ('demo' or 'fact'), told apart by shape and weight before hue.
 const HONESTY = [
   ['The screens on this site', 'Working', 'fact',
     'Real React, running in your browser.'],
@@ -228,8 +201,6 @@ const HONESTY = [
     'No diagnosis, treatment or screening for any condition.'],
 ]
 
-/* ── 08 ─────────────────────────────────────────────────────────────────── */
-/* `from` is the provenance of the row and is never blank. */
 const SCALE_ROWS = [
   ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'The list size used on this page.'],
   ['Readings per second', '1', 'Hz', `The design target, over a ${SCHOOL_HOURS} hour school day.`],
@@ -262,10 +233,8 @@ function ScaleFigure() {
   )
 }
 
-/* ── The stops ──────────────────────────────────────────────────────────── */
-/* `art` is a function, not an element: each stop's components must mount fresh
-   on arrival, or the dial finishes counting behind a hidden panel.
-   `facts` may also be a function, where the rows are read off a fixture. */
+// `art` is a function so each stop's components mount fresh on arrival; otherwise the dial finishes counting
+// behind a hidden panel.
 const STOPS = [
   {
     id: 'problem', drift: true, nav: 'The problem',
@@ -335,7 +304,6 @@ const STOPS = [
       const band = DATA.weekBand || { hi: 1 }
       const days = DATA.week || []
       const over = days.filter(d => d.v > band.hi).length
-      /* The relationship, never a name: the same words parent-dash.jsx uses. */
       const never = ['A raw reading', NOTES, LOCATION, 'Anything said near the microphone']
       return (
         <div className="flex h-full flex-col">
@@ -366,7 +334,6 @@ const STOPS = [
     lede: `A short list, biggest ${SCORE} change first.`,
     photo: 'school-card',
     alt: 'A woman and a teenager talking on a sofa in a room lined with shelves',
-    /* Read off the roster the list draws, so a consent change cannot go stale. */
     facts: () => {
       const all = roster().length, trends = triage().length
       const partial = scoreOnly().length, alerts = alertsOnly().length
@@ -432,18 +399,15 @@ export function Tour({ go }) {
   const first = React.useRef(true)
   const stop = STOPS[i]
 
-  /* Changing stop replaces content above the control, so scroll the reader
-     back to the top. Skipped on first paint. `behavior` is explicit because
-     the global smooth scroll would otherwise animate under reduced motion. */
   React.useEffect(() => {
     if (first.current) { first.current = false; return }
+    // `behavior` is explicit: the global smooth scroll would otherwise animate under reduced motion.
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
     anchor.current?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
   }, [i])
 
   return (
     <main>
-      {/* Pale sky, not mist green (owner, 20 October: vary the green). */}
       <section className="border-t border-rule bg-sky-wash">
         <div className="wrap grid gap-3 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]
           lg:gap-4 lg:py-7">
@@ -460,8 +424,7 @@ export function Tour({ go }) {
       <section className="border-t border-rule bg-paper">
         <div className="wrap py-5 lg:py-7">
           <Tabs value={stop.id} onValueChange={v => setI(STOPS.findIndex(s => s.id === v))}>
-            {/* Radix gives the strip roving focus and arrow keys. `scroll` rather
-                than wrap: eight triggers wrap to three rows on a 390px screen. */}
+            {/* Radix gives roving focus and arrow keys. The strip scrolls, since eight triggers wrap to three rows at 390. */}
             <div ref={anchor} data-anchor>
               <TabsList scroll aria-label="Tour stops" className="gap-x-5">
                 {STOPS.map(s => (
@@ -482,13 +445,8 @@ export function Tour({ go }) {
                   <ScrollIn as="p" className="mt-1 text-sec font-medium leading-[1.35] text-ink">
                     {s.lede}
                   </ScrollIn>
-                  {/* Above the fold: the figure, then the route out. The rail of
-                      facts and the photograph sit behind See details. Two columns
-                      from lg, with the figure taking the wider track. */}
                   <div className={cn('mt-3 grid gap-3 lg:gap-4',
                     more && 'lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]')}>
-                    {/* One mover per stop: a drawing drifts; a stop whose figure
-                        is read (a list, the table) or moves itself holds still. */}
                     <ScrollIn className="min-w-0 lg:col-start-2">
                       {s.drift
                         ? <Parallax2D className="h-full [&>div]:h-full" distance={28} scale={0.02}>

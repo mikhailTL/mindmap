@@ -3,12 +3,7 @@ import { ActivityScreen, Sheet, Choice, Action } from '../../toolkit/shell'
 import { useReduced } from '../../toolkit/useReduced'
 import { Label } from './common'
 
-/* Grounding Timer: 5-4-3-2-1 run out loud with a teen in session.
- *
- * The clinician reads the line, the teen names things, and the clinician taps
- * once for each one named. A step moves on when its count is full or its time
- * runs out. Three slow breaths close it. Nothing is recorded. */
-
+// Grounding Timer: one tap per item the teen names. A step advances when its count is full or its time runs out.
 const STEPS = [
   { n:5, sense:'see',   say:'Look around. Name five things you can see.' },
   { n:4, sense:'feel',  say:'Name four things you can feel. Your feet, the chair.' },

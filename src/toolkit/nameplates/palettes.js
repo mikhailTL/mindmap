@@ -1,16 +1,4 @@
-/* One palette per toolkit nameplate.
- *
- *   fade  the open sky on the left of the banner, where the title sits. The
- *         scene's own sky starts on this colour, so the words sit in calm
- *         space rather than on a box.
- *   ink   the title. Clears 4.5 : 1 on `fade` (tests/nameplates.test.js).
- *   sub   the short line under it. Also clears 4.5 : 1 on `fade`.
- *   glow  the soft coloured shadow a card casts when a pointer is on it.
- *
- * Some banners are deep (white words), some are light (dark words), so a
- * column of them never reads as one card repeated. Kept in plain JS, apart
- * from the drawings, so the contrast test can read it without JSX. */
-
+// fade: sky behind the title. ink and sub: text, both 4.5:1 on fade. glow: hover shadow.
 export const PALETTES = {
   /* student exercises */
   breathing: { fade:'#173a6b', ink:'#ffffff', sub:'#d6e6ff', glow:'#3a6fb0' },
@@ -60,8 +48,7 @@ export const PALETTES = {
   'career-belong':   { fade:'#8a2c6b', ink:'#ffffff', sub:'#ffe0f3', glow:'#f08fc0' },
 }
 
-/* A tool added later without a palette of its own still gets a readable
-   banner: its family's deep colour with white words. */
+// Fallback for a tool without its own palette: the family's deep colour with white text.
 const BY_FAMILY = {
   coral:'#b23009', lilac:'#6f09b2', sun:'#825d07', mint:'#067049',
   sky:'#0967ab', blush:'#b2095e', aqua:'#11677f', accent:'#0f5836',
@@ -73,8 +60,7 @@ export function paletteFor(id, family) {
   return { fade, ink:'#ffffff', sub:'#ffffff', glow:fade }
 }
 
-/* WCAG relative luminance and contrast, for the test and for anyone adding
-   a palette. */
+// WCAG relative luminance and contrast ratio.
 const lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
 export function luminance(hex) {
   const h = hex.replace('#', '')

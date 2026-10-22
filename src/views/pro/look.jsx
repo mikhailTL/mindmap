@@ -4,14 +4,7 @@ import { LampFace } from '../../traffic/Face'
 import { cn } from '../../lib/utils'
 import { STATUS_WORD } from './metrics'
 
-/* The colour the Counselor/Professional screens are drawn in. Heads Up is the
- * one thing every teen has today, so its three lamps set the palette: a
- * teen's card, a day's bar and a count tile all take their hue from the lamp.
- * The colour never carries the state alone: the face is drawn and the word is
- * written beside it every time. */
-
-/* Per light: a ground for a band or tile, its border, the ink for words on
-   it, and a bar fill that clears 3 : 1 on white. */
+// Per light: band ground, border, ink for words on it, and a bar fill that clears 3:1 on white.
 export const LIGHT_TONE = Object.freeze({
   green:  { band: 'bg-mint-wash', edge: 'border-mint/45', ink: 'text-mint-ink', bar: '#18a370' },
   yellow: { band: 'bg-sun-wash',  edge: 'border-sun/45',  ink: 'text-sun-ink',  bar: '#e3a400' },
@@ -40,18 +33,13 @@ const ICON = {
   ),
 }
 
-/* The tile behind each part's icon, and the rule running from its heading.
-   Today is the lamp's own yellow with an ink icon (13 : 1); Trends is the sky
-   with a white icon, a graphic at 3.4 : 1. */
+// Today's tile is the yellow lamp with an ink icon (13:1); Trends is sky with a white icon (3.4:1, graphic).
 const PART = {
   today:  { tile: 'bg-[#ffcc00] text-ink', rule: 'bg-[#ffcc00]' },
   trends: { tile: 'bg-sky text-white', rule: 'bg-sky/50' },
   rules:  { tile: 'bg-lilac-wash text-lilac-ink', rule: 'bg-lilac/30' },
 }
 
-/* A part of the screen: Today, Trends, or the rules. The same shape every
-   time, so the change of part reads at a glance, and a different colour for
-   each, so it reads before the word does. */
 export function ProPart({ id, kind, title, line, as: As = 'h2', small = false, className }) {
   const t = PART[kind] || PART.today
   return (
@@ -68,9 +56,6 @@ export function ProPart({ id, kind, title, line, as: As = 'h2', small = false, c
   )
 }
 
-/* Today's Heads Up across a group: one tile per light, the face large, the
-   count and the word printed. Only ever drawn for five teens or more; the
-   caller checks. */
 export function LightTiles({ counts, unit = 'teens', className, label = 'Heads Up today' }) {
   return (
     <ul aria-label={label} className={cn('m-0 grid list-none grid-cols-3 gap-2 p-0 sm:gap-3', className)}>
@@ -93,9 +78,7 @@ export function LightTiles({ counts, unit = 'teens', className, label = 'Heads U
   )
 }
 
-/* The traffic light: a housing with the three lamps. `cycle` lights them one
-   at a time as a playful idle; under reduced motion all three stay lit. Pure
-   art: it shows no reading. */
+// Decorative: `cycle` lights one lamp every 1.5 s; under reduced motion all three stay lit.
 export function TrafficLight({ size = 30, horizontal = false, cycle = true, className }) {
   const reduce = useReducedMotion()
   const [on, setOn] = React.useState(0)

@@ -1,12 +1,6 @@
 import React from 'react'
 
-/* One reader for prefers-reduced-motion, because four activities need it in
- * JavaScript rather than in CSS: a pace driven by requestAnimationFrame is not
- * something a media query can collapse, and an animation handed a behaviour in
- * script overrides the stylesheet. Every activity that reads this stays
- * meaningful when it comes back true: the pacer counts in seconds instead of
- * growing, the scan steps instead of sliding, the meters hold still and report
- * a figure. */
+// prefers-reduced-motion read in JS, because requestAnimationFrame animations are not covered by a CSS media query.
 export function useReduced() {
   const [on, setOn] = React.useState(() =>
     typeof window !== 'undefined' &&

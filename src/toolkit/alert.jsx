@@ -6,19 +6,7 @@ import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, EndCard, Burst, SPRING } from './game'
 import { DidItWork } from './after'
 
-/* Reaction Test, as whack the light.
- *
- * Nine lights. After a short random wait one of them lights up; hit it as
- * fast as you can. Fifteen lights a round, about half a minute. The time
- * runs from performance.now() at the frame the light goes on to the
- * pointerdown that hits it, so no transition sits in front of it. A tap in
- * the wait is "too early" and costs nothing but the light. Space or Enter
- * hits whichever light is on, for a keyboard; 1 to 9 hit a light by place.
- *
- * The only comparison is with your own best on this device. The times are
- * kept for the end card and dropped; the best average is the one number
- * stored. */
-
+// Reaction time runs from performance.now() on the frame a light turns on to the pointerdown that hits it.
 const LIGHTS = 9
 const TRIALS = 15
 const WAIT_MIN = 700
@@ -67,7 +55,7 @@ export default function Alertness() {
   const [stage, setStage] = React.useState('intro')    // intro | count | play | end
   useTopOn(stage === 'end')
   const [lit, setLit] = React.useState(-1)
-  const [flash, setFlash] = React.useState(null)       // { i, kind: hit | early | miss }
+  const [flash, setFlash] = React.useState(null)  // { i, kind: hit | early | miss }
   const [n, setN] = React.useState(0)
   const [word, setWord] = React.useState('Wait for a light')
   const [summary, setSummary] = React.useState(null)

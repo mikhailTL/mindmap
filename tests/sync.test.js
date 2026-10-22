@@ -3,10 +3,6 @@ import { mergePulled, diffForPush, strip } from '../src/account/sync.js'
 import { toTeen, liveSummary, liveStatus, liveSourceLine, localDay } from '../src/views/family/live.js'
 import { KEY, addReading, listReadings, setReadings } from '../src/lib/readingLog.js'
 
-/* The client half of the account sync: merging the account's readings into
-   this device's log, working out what to send, and shaping a linked teen
-   from the snapshot for the dashboards. */
-
 const r = (id, over = {}) => ({ id, at: 1000 + id.charCodeAt(0), score: 50, source: 'survey', ...over })
 
 describe('mergePulled', () => {

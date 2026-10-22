@@ -6,12 +6,6 @@ import {
 } from '../src/lib/caseload.js'
 import { LOCATION, NOTES } from '../src/lib/terms.js'
 
-/* The console a counselor/professional sees is the one screen in MindMap where
-   showing the wrong row is a disclosure rather than a glitch. The module's own
-   rule is that CONSENT is the single source of truth and that every derived
-   view has to read it, so these tests check the derived views against CONSENT
-   rather than against their own copy of the answer. */
-
 const CONSENT_NAMES = Object.keys(CONSENT)
 
 describe('consent is the single source of truth', () => {
@@ -32,8 +26,6 @@ describe('consent is the single source of truth', () => {
     }
   })
 
-  /* A legal basis and a signature date are what make the record a consent
-     rather than a setting. A row missing either cannot be shown at all. */
   it('gives every record a legal basis and a signature date', () => {
     for (const [name, c] of Object.entries(CONSENT)) {
       expect(['FERPA', 'COPPA', 'Both'], name).toContain(c.basis)
@@ -43,9 +35,6 @@ describe('consent is the single source of truth', () => {
     }
   })
 
-  /* Scopes nest: trends are movement in the score, raw readings are the score
-     before it was a score. Neither can be consented without the score itself,
-     or the console would be showing a derivative of something it may not show. */
   it('never grants a narrower scope without the scope it sits inside', () => {
     for (const [name, c] of Object.entries(CONSENT)) {
       if (c.trends) expect(c.score, name).toBe(true)
@@ -60,10 +49,6 @@ describe('consent is the single source of truth', () => {
     expect(Object.values(CONSENT).filter(c => c.raw)).toHaveLength(1)
   })
 
-  /* Crisis alerts are not a key on the record. That is the structural reason a
-     guardian cannot consent them away: there is nothing to switch off. The
-     student who shared nothing else is still on the roster and still reachable
-     through alertsOnly(). */
   it('offers no consent key that could turn crisis alerts off', () => {
     for (const [name, c] of Object.entries(CONSENT)) {
       expect(Object.keys(c).sort(), name)
@@ -97,11 +82,6 @@ describe('k-anonymity', () => {
     }
   })
 
-  /* Documents current behaviour. Suppression is a flag, not a redaction: the
-     suppressed row still carries its n and its mean, so the only thing between
-     a three-student group mean and a screen is a renderer remembering to check
-     `suppressed`. Same shape as the roster, below. See the finding reported
-     with this suite. */
   it('still carries the mean on a suppressed group rather than withholding it', () => {
     const small = COHORT_PERIOD.find(r => r.suppressed)
     expect(small.mean).toBeTypeOf('number')
@@ -110,9 +90,6 @@ describe('k-anonymity', () => {
 })
 
 describe('triage board', () => {
-  /* Ordering a student by how much they moved leaks the movement. A student
-     who withheld trends therefore cannot appear in the ordered list at all,
-     and the lists have to partition the caseload so nobody is dropped. */
   it('orders only the students who consented to trends', () => {
     for (const s of triage()) expect(s.showTrend, s.name).toBe(true)
     const velocities = triage().map(s => s.velocity)
@@ -142,12 +119,6 @@ describe('triage board', () => {
     expect(tierOf(85)).toBe('crisis')
   })
 
-  /* Documents current behaviour. roster() flags rather than redacts: the
-     current score, last week's score and the velocity are all still on the
-     record of the student who consented to none of them. The module's own
-     comment calls rendering `current` without checking `showScore` a bug,
-     which is an accurate description of a shape that permits the bug. See the
-     finding reported with this suite. */
   it('still carries the score of a student who withheld it', () => {
     const silent = roster().find(s => !s.showScore)
     expect(silent.current).toBeTypeOf('number')
@@ -157,10 +128,6 @@ describe('triage board', () => {
 })
 
 describe('parent and school scope containment', () => {
-  /* Notes and Location are the two things no school-side or parent-side view
-     may ever surface, at any depth. Nothing in this module should be able to
-     carry either, whatever a renderer does with it. The two names are imported
-     from terms.js so a rename cannot quietly defeat the check. */
   const SURFACE = JSON.stringify({
     consent: CONSENT,
     roster: roster(),
@@ -181,15 +148,10 @@ describe('parent and school scope containment', () => {
     expect(LOCATION).toBe('Location')
   })
 
-  /* A raw reading is a second-by-second series. The module holds daily means
-     and week-grain figures and no sample series at all, so there is no raw
-     reading to leak even for the one student who consented to them. */
   it('holds no sample series, so there is no raw reading to surface', () => {
     for (const s of roster()) {
       for (const v of Object.values(s)) expect(Array.isArray(v)).toBe(false)
     }
-    /* profile45 is the one series the module builds, and it is daily means at
-       one point per day, not samples. */
     const series = caseload.profile45(roster()[0])
     expect(series).toHaveLength(45)
     for (const point of series) {
@@ -228,9 +190,6 @@ describe('audit log', () => {
     }
   })
 
-  /* A row with a flag that could hide it is a log that can be edited. There is
-     no such field, and the module exports no way to drop, filter or rewrite a
-     row either: AUDIT_LOG is append-only by having no other surface. */
   it('offers no field and no export that could suppress a row', () => {
     for (const r of AUDIT_LOG) {
       for (const key of ['hidden', 'visible', 'suppressed', 'deleted', 'redacted', 'internal']) {
@@ -245,9 +204,6 @@ describe('audit log', () => {
     for (const c of Object.values(CONSENT)) expect(c).not.toHaveProperty('audit')
   })
 
-  /* The crisis protocol and the log are two views of the same afternoon. If
-     they disagree, one of them is wrong and a judge or a reviewer cannot tell
-     which, so the module's own comment requires the times to match. */
   it('matches the crisis protocol step for step', () => {
     expect(PROTOCOL).toHaveLength(5)
     expect(PROTOCOL_TIMES).toHaveLength(PROTOCOL.length)
@@ -256,7 +212,6 @@ describe('audit log', () => {
     for (const step of PROTOCOL_DONE) {
       expect(times.some(t => t.endsWith(PROTOCOL_TIMES[step])), PROTOCOL_TIMES[step]).toBe(true)
     }
-    /* The last step is still open, so it must have no completed row. */
     const open = PROTOCOL_TIMES[PROTOCOL_TIMES.length - 1]
     expect(times.some(t => t.endsWith(open)), open).toBe(false)
   })
@@ -273,8 +228,6 @@ describe('audit log', () => {
       .toEqual(['Today', 'Today', 'Today', 'Today', 'Today', 'Yesterday', 'Yesterday', 'Monday'])
   })
 
-  /* A log that only records staff actions is a log a student cannot use. Both
-     a guardian's view and the student's own retention change are in it. */
   it('records what people other than staff did too', () => {
     const actors = AUDIT_LOG.map(r => r.actor)
     expect(actors.some(a => /^Guardian/.test(a))).toBe(true)
@@ -284,9 +237,6 @@ describe('audit log', () => {
 })
 
 describe('generated figures are deterministic', () => {
-  /* Nothing on this console is a measurement. Every figure is generated from
-     the student's own id, so the same student shows the same breakdown on
-     every reload and two students never share one. */
   it('gives each student a stable driver breakdown that sums to one', () => {
     for (const s of roster()) {
       const drivers = caseload.driversFor(s)
@@ -297,13 +247,6 @@ describe('generated figures are deterministic', () => {
     }
   })
 
-  /* Documents current behaviour, which the source comment contradicts: it
-     claims two names never carry the same breakdown. They do. The per-student
-     hash is folded down to six three-bit slices, (h >> i) % 7 for i in 0 to 5,
-     which throws away most of it; Student 3907 and Student 4470 land on the
-     same six slices and so on the same five drivers in the same order with the
-     same shares. Eight students, one collision. See the finding reported with
-     this suite. */
   it('currently gives two students an identical driver breakdown', () => {
     const shapes = new Map()
     for (const s of roster()) {

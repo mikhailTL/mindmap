@@ -1,8 +1,6 @@
 import React from 'react'
 
-/* The four Career tools' names, colours and icons. Kept apart from index.js
-   so a tool can read its own entry without importing every other tool. */
-
+// Kept apart from index.js so a tool can read its own entry without importing the other tools.
 const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
     stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"

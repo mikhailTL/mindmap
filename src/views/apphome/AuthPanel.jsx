@@ -5,12 +5,7 @@ import { Check } from '../../ui/marks'
 import { PASSWORD_MIN, SETTINGS, createAccount, signIn, takePreferredRole, validSecret } from '../../account/store'
 import { field, fieldError, solid } from '../../account/ui'
 
-/* Sign up or sign in, on the app home. Calls the account store; the full
- * account screen at #/signin (pictures, the chooser hand-off) stays where it
- * is. Every success lands on #/app, which is the Launch page once signed in. */
-
-/* Every account lands on #/app, the Launch page, as the owner asked; an
-   "Other" account is a real `other` one in the store. */
+// Every success lands on #/app, which is the Launch page once signed in.
 const LONG = validSecret('x'.repeat(PASSWORD_MIN))
 const PASS_HINT = LONG ? `At least ${PASSWORD_MIN} characters, or 4 to 6 digits.` : '4 to 6 digits.'
 
@@ -57,8 +52,7 @@ function Tabs({ mode, onMode }) {
 
 export function AuthPanel({ go, className }) {
   const [mode, setMode] = React.useState('signup')
-  /* The role the visitor picked in the site's onboarding, if any, is
-     pressed already; they still sign up only here, in the app. */
+  // Starts on the role picked in the site's onboarding, if any.
   const [role, setRole] = React.useState(takePreferredRole)
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')

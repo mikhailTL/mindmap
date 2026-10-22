@@ -1,11 +1,7 @@
 import { DATA } from './assets'
 
-/* What each ring is filled to: that signal's own distance from this person's
-   fourteen-day baseline, mapped to 0-100. NOT a share of the overall score,
-   and the four do not sum to it — the engine puts four z-scores through a
-   logistic, so the centre number is a blend, not an average. The detail panel
-   has to keep saying so. */
-
+// Demo ring fixtures. A ring is that signal's distance from the 14-day personal baseline on 0 to 100,
+// not a share of the overall score, which blends four z-scores through a logistic.
 export const STUDENT_RINGS = [
   { id:'heart', value:64, big:'70', reading:'70 bpm, resting level 64',
     window:'last hour', series: DATA.spark?.hr,
@@ -80,8 +76,6 @@ export const PARENT_RINGS = [
     note:'Worked out from movement, not from anything she wrote. The three short nights were the same three days that ran high.' },
 ]
 
-/* Each signal's day split into the six class periods, against that person's
-   own normal band. Drawn by the detail panel. */
 const P = ['1st','2nd','3rd','4th','5th','6th']
 const bars = (id, vals) => ({ id, bars: P.map((p, i) => ({ label:p, v: vals[i] })) })
 
@@ -101,8 +95,7 @@ export const PARENT_BARS = Object.fromEntries([
   wbars('move',  [31, 26, 34, 36, 27, 19, 21]),
 ])
 
-/* lo/hi is that person's own fourteen-day normal band, on the ring's 0-100
-   scale; `now` is where they sit against it. */
+// lo/hi is the person's 14-day normal band on the ring's 0 to 100 scale.
 export const STUDENT_BAND = {
   heart:{ lo:28, hi:52, now:64 }, sweat:{ lo:24, hi:47, now:58 },
   temp: { lo:26, hi:49, now:34 }, move: { lo:8,  hi:38, now:12 },
@@ -112,7 +105,6 @@ export const PARENT_BAND = {
   temp: { lo:28, hi:51, now:40 }, move: { lo:12, hi:42, now:28 },
 }
 
-/* Fixtures hold rows as pairs for readability; the panel wants objects. */
 const shape = (r, bars, band, unit) => ({
   ...r,
   rows: r.rows?.map(([label, value]) => ({ label, value })),

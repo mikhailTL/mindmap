@@ -2,12 +2,7 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { BADGES } from './progress'
 
-/* The badge tokens: a round coin in the badge's own colour with a white
- * line drawing on it. Each colour is a family `deep` from theme.js, which
- * white clears 4.5 : 1 on, so the drawing reads. A badge not earned yet is a
- * dashed outline with the drawing in grey: the shape is there to find, the
- * colour comes when it is earned. */
-
+// Coin colours are theme `deep` tones, so the white line drawing clears 4.5:1.
 const COLOUR = {
   first:'#0f5836', plan:'#0967ab', script:'#b23009', clean:'#825d07', firstaid:'#a8321f',
   five:'#6f09b2', ten:'#b2095e', 'all-tabs':'#11677f', 'calm-kit':'#067049',

@@ -7,14 +7,9 @@ import { analysePPG } from '../signals/ppg'
 import { addEffect } from '../app/store'
 import { effectOf } from '../signals/effect'
 
-/* Did it help: a 20-second camera pulse before an exercise and one after.
- * `phase="before"` is one outline button on the idle screen; `phase="after"`
- * is a small sheet. The before reading waits in a module map keyed by tool;
- * when the after reading lands the pair goes to the `effects` slot. Frames
- * are dropped as they arrive. No camera, a refusal or no pulse is one line. */
-
+// Optional camera pulse reading before and after an exercise; the pair is saved to the `effects` slot.
 const SECONDS = 20
-const STALE_MS = 45 * 60 * 1000       // a before reading older than this is another afternoon
+const STALE_MS = 45 * 60 * 1000  // a before reading older than this is not paired
 
 const BEFORE = new Map()
 
@@ -38,7 +33,6 @@ export function DidItWork({ tool, phase = 'after', className }) {
 
   const supported = mediaAvailable()
 
-  /* `mounted` gates every await in run: a stream that arrives late is stopped. */
   const mounted = React.useRef(true)
   React.useEffect(() => () => {
     mounted.current = false

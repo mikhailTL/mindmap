@@ -1,4 +1,4 @@
-/* Generated demo series. Replace with the live feed when the API lands. */
+// Generated demo series: the day in 10-minute steps, sensor sparklines, the week by weekday, and counselor-view weeks.
 export const CHART_DATA = {
  "day": [
   {

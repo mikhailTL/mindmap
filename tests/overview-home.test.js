@@ -4,7 +4,6 @@ import { renderToString } from 'react-dom/server'
 import { Overview } from '../src/views/Overview'
 import { PHOTOS, PHOTO_META } from '../src/lib/photos'
 
-/* Owner, 20 October, on the site home. */
 describe('Overview home', () => {
   const html = renderToString(React.createElement(Overview, { go: () => {} }))
   const band = id => {
@@ -28,7 +27,7 @@ describe('Overview home', () => {
     expect(start).not.toContain('<svg viewBox="0 0 360 120"')
   })
 
-  it('keeps Why MindMap? in the problem band, in the owner’s words, with no dark box', () => {
+  it('keeps Why MindMap? in the problem band, with no dark box', () => {
     const problem = band('problem')
     expect(problem).toContain('id="why"')
     expect(problem).toContain('Why MindMap?')
@@ -39,7 +38,6 @@ describe('Overview home', () => {
     expect(problem).not.toMatch(/id="why"[\s\S]*bg-ink p-5/)
   })
 
-  /* Owner, 21 October: "needs to be put into a white card". */
   it('sets Why MindMap? on a white card with dark ink', () => {
     const why = band('problem').split('id="why"')[1]
     expect(why).toMatch(/^[^>]*>\s*<div[^>]*class="[^"]*rounded-panel bg-card /)
@@ -47,8 +45,6 @@ describe('Overview home', () => {
     expect(why).not.toMatch(/text-(paper|mist|accent-lit)/)
   })
 
-  /* Owner, 21 October: the hero tile back to the original green; bands white,
-     green or blue ("not on entire page backgrounds"); cards keep their hues. */
   it('drops the glow behind the hero patch and keeps the bands green and blue', () => {
     expect(html).not.toContain('mm-glow')
     const hero = band('hero')

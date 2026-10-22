@@ -6,32 +6,21 @@ import { useWakeLock, buzz, useMounted, useHold, readBest, saveBest, HowTo, Coun
 import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
-/* Long Exhale, as a candle game.
- *
- * Five breaths. Each one is two sniffs in through the nose and one long,
- * slow breath out toward the phone, the cyclic sigh (Balban 2023). The
- * microphone level is read once a frame and dropped: it bends the flame, and
- * the time it stays bent is the exhale. Too hard and the flame flickers and
- * the clock waits. Holding Space, or holding the button, is the same breath
- * for a laptop or a refused microphone. No audio is kept. */
-
 const ROUNDS = 5
 const IN_S = 2
 const AGAIN_S = 1
-const WAIT_S = 6                    // how long the flame waits for a breath out
-const DROP_S = 0.45                 // quiet this long ends a breath out
-const MIN_S = 1                     // shorter is a cough, not an exhale
+const WAIT_S = 6  // how long the flame waits for a breath out
+const DROP_S = 0.45  // quiet this long ends a breath out
+const MIN_S = 1  // shorter than this is a cough, not an exhale
 const REST_S = 1.4
-const GOAL_S = 6                    // the long mark on the gauge
-const GAUGE_S = 12                  // the gauge's full length
-const HARD = 0.97                   // a level this high is a blow, not a breath
+const GOAL_S = 6
+const GAUGE_S = 12
+const HARD = 0.97  // a level this high is a blow, not a breath
 const HARD_S = 0.5
 
 const one = v => (Math.round(v * 10) / 10).toFixed(1)
 
-/* The microphone as a loudness and nothing else. Unlike the meter in
-   audio.js this hands back the raw RMS, because the game measures the room
-   during the 3 2 1 and needs a level it can compare with that. */
+// Returns raw RMS, unlike the scaled meter in audio.js, so it can be compared with the room level.
 async function openMic() {
   const C = window.AudioContext || window.webkitAudioContext
   if (!C || !navigator.mediaDevices?.getUserMedia) throw new Error('unsupported')
@@ -59,8 +48,6 @@ async function openMic() {
   return { read, stop }
 }
 
-/* The candle, the flame and the exhale gauge around them. `lean` 0 to 1
-   bends the flame; `out` hides it; `secs` fills the gauge. */
 function Candle({ lean = 0, flicker = false, out = false, secs = 0, word, sub, still, small = false }) {
   const R = 100, C = 2 * Math.PI * R
   const arc = 0.75                                    // the gauge is three quarters of a circle
@@ -146,7 +133,6 @@ export default function Sigh() {
     g.reset(); runs.current = []; calib.current = []; setSummary(null)
     document.activeElement?.blur?.()
     if (!meter.current && audioSupported() && mic !== 'none') {
-      /* asked again on Play again: the round ended and the microphone was closed */
       setMic('asking')
       try {
         const m = await openMic()
@@ -162,8 +148,6 @@ export default function Sigh() {
     setStage('count')
   }
 
-  /* While the 3 2 1 runs, the room is measured so a breath means louder
-     than this room, not louder than some fixed number. */
   React.useEffect(() => {
     if (stage !== 'count' || !meter.current) return
     let id = 0

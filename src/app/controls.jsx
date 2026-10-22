@@ -3,31 +3,7 @@ import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
 import { Check, Cross, Never } from '../ui/marks'
 
-/* The controls the four app features are built from.
- *
- * They exist as one file because a settings screen is the place a reader
- * learns what a control means: a switch that looks one way under Reminders
- * and another way under Sharing teaches them nothing twice. Every row here is
- * at least 56 tall, carries its state in a word as well as in colour, and
- * moves nothing but a transform.
- *
- * Tokens only from tailwind.config.js. Measured, on `card`:
- *   ink    15.20   label
- *   ink-2   8.25   secondary label
- *   ink-3   5.61   hint and note
- *   accent  5.80   the on state, as a word
- *   crit    6.36+  the one destructive action
- * The switch knob is `card` on `accent` (5.52) when on and carries an `ink-3`
- * edge when off (5.33 on mist), so the track reads as a control on either
- * side of a desaturated screenshot.
- */
-
-/* ── A module ───────────────────────────────────────────────────────────── */
-
-/* Each feature is a stack of these: its own card, its own edge, a heading on
-   a rule rather than floating on the canvas. `variant` and `hue` pick the
-   surface (src/ui/card.jsx); a panel whose rows show a picked state on the
-   accent wash stays plain or outline, so the pick still shows. */
+// Shared settings controls. Rows are at least 56 px tall and show state as a word as well as a colour.
 export function Panel({ title, lede, aside, children, className, id, variant, hue = 'accent' }) {
   return (
     <section id={id}
@@ -43,8 +19,6 @@ export function Panel({ title, lede, aside, children, className, id, variant, hu
     </section>
   )
 }
-
-/* ── Switch ─────────────────────────────────────────────────────────────── */
 
 function Track({ on }) {
   return (
@@ -92,9 +66,6 @@ export function SwitchRow({ label, hint, checked, onChange, disabled = false, no
   )
 }
 
-/* A row that is not a control, because the thing it names never happens. It
-   is drawn as a row rather than hidden, so the absence is visible: the
-   closed-eye icon and the word are both doing the work. */
 export function NeverRow({ label, hint }) {
   return (
     <div className="flex min-h-[56px] items-start gap-3 border-t border-rule px-4 py-3 first:border-t-0">
@@ -108,8 +79,6 @@ export function NeverRow({ label, hint }) {
   )
 }
 
-/* A row that is on and cannot be turned off. There is no switch drawn,
-   because drawing one that does not move is the dishonest version. */
 export function FixedRow({ label, hint }) {
   return (
     <div className="flex min-h-[56px] items-start gap-3 border-t border-rule px-4 py-3 first:border-t-0">
@@ -126,12 +95,7 @@ export function FixedRow({ label, hint }) {
   )
 }
 
-/* ── Choice ─────────────────────────────────────────────────────────────── */
-
-/* A radiogroup with a roving tabindex, so the whole group is one tab stop and
-   the arrows walk it. The hand-rolled radios elsewhere in this project are
-   each their own tab stop and have no arrow handling; this is the version
-   that behaves the way a screen reader user is told a radiogroup behaves. */
+// Radiogroup with a roving tabindex: one tab stop, and arrow keys move the selection.
 export function ChoiceRows({ label, value, options, onChange, className }) {
   const refs = React.useRef([])
   const index = Math.max(0, options.findIndex(o => o.value === value))
@@ -178,10 +142,6 @@ export function ChoiceRows({ label, value, options, onChange, className }) {
   )
 }
 
-/* ── Chips ──────────────────────────────────────────────────────────────── */
-
-/* Multi-select, so these are toggle buttons rather than radios. 44 square is
-   the floor and the row wraps rather than scrolling sideways at 390. */
 export function Chips({ label, options, selected, onToggle, className }) {
   return (
     <div role="group" aria-label={label} className={cn('flex flex-wrap gap-2', className)}>
@@ -203,10 +163,7 @@ export function Chips({ label, options, selected, onToggle, className }) {
   )
 }
 
-/* ── Time ───────────────────────────────────────────────────────────────── */
-
-/* text-ui is 16px, which is the floor that stops iOS Safari zooming the page
-   when the field takes focus. Do not shrink it. */
+// text-ui is 16px, the minimum that stops iOS Safari zooming the page on focus.
 export function TimeField({ label, value, onChange, disabled = false, className }) {
   const id = React.useRef(nextId()).current
   return (
@@ -221,11 +178,7 @@ export function TimeField({ label, value, onChange, disabled = false, className 
   )
 }
 
-/* ── A destructive action ───────────────────────────────────────────────── */
-
-/* Two presses, and the second one is labelled with what it does rather than
-   with the word "confirm". The arming state times out, so a button left
-   half-pressed in a pocket cannot fire later. */
+// Two-step destructive button; the armed state resets after 6 s.
 export function ArmedButton({ children, armedLabel, onConfirm, className }) {
   const [armed, setArmed] = React.useState(false)
   React.useEffect(() => {

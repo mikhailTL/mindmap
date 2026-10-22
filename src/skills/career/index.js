@@ -1,5 +1,3 @@
-/* Career (Professionalism and Future-Building): four tools, one per item in
-   the owner's list. The registry, routes and toolkit tabs read this. */
 import { META } from './meta.jsx'
 import Explore from './explore.jsx'
 import Email from './email.jsx'

@@ -16,19 +16,8 @@ import { LevelEmblem, emblemColours } from '../../../toolkit/game/fx'
 import { NOTES, PRO, PRO_WRAP, SCORE } from '../../../lib/terms'
 import { cn } from '../../../lib/utils'
 
-/* One picture per card in "What makes MindMap different", each drawn from
- * the app's own parts and demo data: the rainbow dial, the network avatars,
- * the patch, a Heads Up notification with its lamp face, the recovery curve,
- * the run-up to a test, a MindMap AI chat, the Toolkit level emblem. Owner,
- * 20 October: "revert the images to actual stuff from site, dont use the 3d
- * images or topography here, bc these are user features".
- *
- * Each picture is one role="img" with a label and fills the pane the card
- * gives it. `play` is true only for the card in front while the band is on
- * screen (never under reduced motion): the picture then plays its one short
- * motion once and rests on the finished frame, which is also what every
- * other card shows. */
-
+// Card pictures drawn from the app's own parts and demo data. `play` is true only for the front card while on screen;
+// the picture plays its motion once and rests on the finished frame.
 const EASE = [0.23, 1, 0.32, 1]
 
 const MAYA = FAMILY.find(t => t.id === 'maya') || FAMILY[0]
@@ -50,14 +39,12 @@ function Pic({ label, className, children }) {
   )
 }
 
-/* Counts up each time `play` turns on, to restart a motion by key. */
+// Counts up each time `play` turns on, so a motion restarts by key.
 function useTake(play) {
   const [n, setN] = React.useState(0)
   React.useEffect(() => { if (play) setN(v => v + 1) }, [play])
   return n
 }
-
-/* ── Mind Score: the app's rainbow dial ─────────────────────────────── */
 
 const RINGS = studentRings()
 
@@ -66,13 +53,10 @@ function ScorePic({ play }) {
   return (
     <Pic label={`Demo: the ${SCORE} dial at ${TODAY.score} out of 100, its four bands for pulse, sweat, temperature and movement.`}
       className="flex items-center justify-center px-3 pt-3">
-      {/* A new key on each take: the dial's bands and figure spring up from 0. */}
       <RainbowDial key={take} score={TODAY.score} usual={MAYA.usual?.base} rings={RINGS} size={212} compact/>
     </Pic>
   )
 }
-
-/* ── Network: teen in the middle, a switch on each link ──────────────── */
 
 function Toggle({ play, flip }) {
   const run = play && flip
@@ -126,8 +110,6 @@ function NetworkPic({ play }) {
   )
 }
 
-/* ── Patch, or the phone camera ──────────────────────────────────────── */
-
 function PatchPic({ play }) {
   const heart = SENSORS.heart.glow
   return (
@@ -165,8 +147,6 @@ function PatchPic({ play }) {
   )
 }
 
-/* ── Heads Up: the notification lands on a parent's phone ────────────── */
-
 function HeadsUpPic({ play }) {
   return (
     <Pic label={`Demo: a Heads Up notification lands on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
@@ -199,8 +179,6 @@ function HeadsUpPic({ play }) {
   )
 }
 
-/* ── Recovery: a peak, and the drop back shaded ──────────────────────── */
-
 function RecoveryPic({ play }) {
   const from = SETTLE.peakAt - 30, to = SETTLE.peakAt + DAY.usualSettle + 16
   const lo = DAY.band.lo - 2, hi = SETTLE.peak + 3, W = 100, H = 100
@@ -227,7 +205,7 @@ function RecoveryPic({ play }) {
         <span className="absolute inset-x-0 top-0 h-2 rounded-b-[3px] border-x-2 border-b-2 border-dashed border-ink-3"/>
         <span className="absolute left-full top-1 ml-1.5 whitespace-nowrap text-fine leading-none text-ink-2">usual {DAY.usualSettle}</span>
       </motion.div>
-      {/* The line draws left to right by a clip, as the stroke does not scale. */}
+      {/* The line draws left to right by a clip, since the stroke does not scale. */}
       <motion.div className="absolute inset-x-3.5 bottom-9 top-10" initial={false}
         animate={play ? { clipPath: ['inset(-8% 100% -8% 0)', 'inset(-8% 0% -8% 0)'] } : { clipPath: 'inset(-8% 0% -8% 0)' }}
         transition={{ duration: 1.4, ease: 'easeInOut' }}>
@@ -242,8 +220,7 @@ function RecoveryPic({ play }) {
   )
 }
 
-/* ── Stress before events: the climb, in 15-minute steps, to a marked test ─ */
-
+// Minutes per step in the climb to a marked test.
 const STEP = 15
 const RUN = Array.from({ length: 6 }, (_, i) => {
   const a = TEST.minute - 6 * STEP + i * STEP
@@ -282,8 +259,6 @@ function EventsPic({ play }) {
   )
 }
 
-/* ── MindMap AI: a question, a pause, a reply ────────────────────────── */
-
 const ASK = AUDIENCES.student.starters[0]
 
 function AiPic({ play }) {
@@ -319,8 +294,6 @@ function AiPic({ play }) {
     </Pic>
   )
 }
-
-/* ── Toolkit: points fill a level, and the next level opens new things ─ */
 
 const LEVEL = 3
 const OPENS = unlocksAt(LEVEL)
@@ -377,8 +350,7 @@ export const PICTURES = {
   toolkit: ToolkitPic,
 }
 
-/* CSS loops inside a picture (the dial's rain, the emblem's own CSS) hold
-   still on every card but the one in front. */
+// CSS loops inside a picture hold still on every card but the one in front.
 export const DIF_CSS = `
 .dif-card:not(.dif-play) *, .dif-card:not(.dif-play) *::before, .dif-card:not(.dif-play) *::after {
   animation-play-state: paused !important;

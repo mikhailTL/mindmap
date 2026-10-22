@@ -1,12 +1,3 @@
-/* Toolkit nameplates: a wide illustrated banner per activity.
- *
- * Each banner is a small layered scene (far, mid, near) with one gentle loop.
- * Everything that moves animates transform or opacity only. Under a fine
- * pointer the layers shift a little with the pointer (parallax, driven by
- * --px and --py set in Nameplate.jsx), the sparkles light up and the card
- * lifts. A press settles the card. A banner off screen pauses its loop, and
- * reduced motion stops every loop on its resting frame. */
-
 .np {
   --px: 0; --py: 0;
   isolation: isolate;
@@ -15,8 +6,7 @@
               box-shadow .2s var(--ease-out, cubic-bezier(0.23,1,0.32,1));
   -webkit-tap-highlight-color: transparent;
 }
-/* arriving: fill-mode backwards, so once it has played the hover and press
-   transforms below are free to apply */
+/* fill-mode backwards, so the hover and press transforms apply once it has played */
 @keyframes np-in { from { opacity: 0; transform: translateY(6px) } }
 .np-in { animation: np-in .42s cubic-bezier(0.23,1,0.32,1) backwards }
 
@@ -30,11 +20,10 @@
   .np:hover:active { transform: translateY(-1px) scale(0.985) }
 }
 
-/* the drawing: sized by the card's height, pinned to its right edge */
 .np-art { width: auto; aspect-ratio: 5 / 2; pointer-events: none }
 .np-art * { pointer-events: none }
 
-/* parallax layers */
+/* parallax layers, shifted by --px and --py set from the pointer in Nameplate.jsx */
 .np-far, .np-mid, .np-near {
   transition: transform .45s cubic-bezier(0.23,1,0.32,1);
 }
@@ -49,7 +38,6 @@
   .np:hover .np-spark { opacity: 1; transform: scale(1.35) rotate(20deg) }
 }
 
-/* ── the loops ─────────────────────────────────────────────────────── */
 .np-a { transform-box: fill-box; transform-origin: center;
   animation-duration: var(--d, 6s); animation-timing-function: ease-in-out;
   animation-iteration-count: infinite; animation-delay: var(--w, 0s); }
@@ -135,10 +123,8 @@
 .np-piece  { animation-name: np-piece }
 .np-burst  { animation-name: np-burst; animation-timing-function: ease-out }
 
-/* off screen: hold still and cost nothing */
 .np[data-off] .np-a { animation-play-state: paused }
 
-/* reduced motion: every loop stops on its resting frame, no parallax */
 @media (prefers-reduced-motion: reduce) {
   .np .np-a { animation: none !important }
   .np-far, .np-mid, .np-near { transform: none !important }

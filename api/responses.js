@@ -1,22 +1,10 @@
-/* Survey backend. POST upserts one reviewer's answers, GET returns all of
- * them. One file, no framework; expected traffic is a dozen peer reviewers.
- *
- * Two invariants that are easy to break quietly:
- *
- * 1. With no KV store configured, storage falls back to an in-process Map and
- *    every response carries `ephemeral: true`. Serverless instances are
- *    recycled and there is more than one, so that store both loses data and
- *    disagrees with itself across instances. The flag is what makes a
- *    misconfigured deploy visible instead of silently dropping answers.
- * 2. Answer content never goes to stdout — not even one console.log(body)
- *    while debugging. Errors log a fixed string, and no error response carries
- *    any part of the request that caused it. */
+// Survey backend: POST upserts one reviewer's answers, GET returns all of them.
+// Without a KV store it falls back to an in-memory Map and marks every response
+// `ephemeral: true`. Answer content is never logged.
 
 const STORE_KEY = 'mindmap:responses'
 
-/* Caps sized to the survey, not to round numbers: 21 questions exist, so 40
- * answers is twice anything legitimate, and 16 KB is about four times the
- * largest honest submission. */
+// 40 answers is twice the question count; 16 KB is about four times the largest submission.
 const MAX_BYTES = 16 * 1024
 const MAX_ANSWERS = 40
 const MAX_RESPONDENTS = 500
@@ -25,21 +13,17 @@ const LIMIT = {
   label: 160, value: 600, iso: 40,
 }
 
-/* Per-instance memory, so this does not stop a flood spread across instances.
- * It stops the realistic failure: a page stuck in a retry loop. */
+// Per-instance rate limit: catches a page stuck in a retry loop.
 const RATE_WINDOW_MS = 60000
 const RATE_MAX = 40
 
-/* Module scope is per-instance, surviving only between invocations on a warm
- * instance. Nothing here is trusted to last longer. */
+// Module scope only survives between invocations on a warm instance.
 const memory = new Map()
 const hits = new Map()
 
 let kvPromise = null
 
-/* Import guarded by try and by a runtime env check, so a project without
- * @vercel/kv installed still builds and serves off the memory fallback
- * instead of failing the deploy on a missing module. */
+// Guarded import: without @vercel/kv the build still succeeds and uses memory storage.
 async function getKV() {
   if (!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)) return null
   if (!kvPromise) {
@@ -58,15 +42,13 @@ async function getKV() {
 function send(res, code, body) {
   res.statusCode = code
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
-  /* Responses are per-request state, never a cacheable document. */
+  // Never cache responses.
   res.setHeader('Cache-Control', 'no-store')
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.end(JSON.stringify(body))
 }
 
-/* Access-Control-Allow-Origin is never sent, so a cross-origin read already
- * fails. This also refuses cross-origin *writes*, which a missing CORS header
- * would let through unread. */
+// No CORS header is sent, and cross-origin writes are refused as well.
 function sameOrigin(req) {
   const origin = req.headers.origin
   if (!origin) return true /* same-origin fetches and server-side calls send none */
@@ -78,7 +60,7 @@ function sameOrigin(req) {
   }
 }
 
-/* Constant-time enough for a shared secret typed into a URL. */
+// Constant-time comparison for the shared key.
 function keyMatches(given, expected) {
   const a = String(given || '')
   const b = String(expected || '')
@@ -88,8 +70,7 @@ function keyMatches(given, expected) {
   return diff === 0
 }
 
-/* Strips control characters and caps length. Not an HTML escape; it stops a
- * record breaking a CSV row or forging a log line downstream. */
+// Strips control characters and caps length so a value cannot break a CSV row or a log line.
 function str(v, max) {
   if (v == null) return ''
   return String(v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max)
@@ -101,8 +82,7 @@ function isoOrNow(v) {
   return Number.isFinite(t) ? new Date(t).toISOString() : new Date().toISOString()
 }
 
-/* A value is a number, a string, or the impact question's { score, note }.
- * Anything else is not a shape this survey produces. */
+// A value is a number, a string, or the impact question's { score, note }.
 function value(v) {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
   if (typeof v === 'string') return str(v, LIMIT.value)
@@ -134,7 +114,7 @@ async function readBody(req) {
   const declared = Number(req.headers['content-length'] || 0)
   if (declared > MAX_BYTES) return { tooBig: true }
 
-  /* Vercel's Node helpers may have parsed and consumed the stream already. */
+  // Vercel's Node helpers may already have parsed the body.
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     return { data: req.body }
   }
@@ -151,8 +131,7 @@ async function readBody(req) {
   try {
     for await (const chunk of req) {
       size += chunk.length
-      /* Counted as it arrives: Content-Length is a claim, and a chunked
-       * request carries none. */
+      // Count bytes as they arrive: Content-Length can be missing or wrong.
       if (size > MAX_BYTES) return { tooBig: true }
       chunks.push(chunk)
     }
@@ -168,8 +147,7 @@ function rateLimited(id) {
   const seen = (hits.get(id) || []).filter(t => now - t < RATE_WINDOW_MS)
   seen.push(now)
   hits.set(id, seen)
-  /* Unbounded growth is its own denial of service: drop cold entries once the
-   * table passes any plausible reviewer count. */
+  // Drop cold entries once the table passes any plausible reviewer count.
   if (hits.size > 2000) {
     for (const [k, v] of hits) {
       if (!v.length || now - v[v.length - 1] > RATE_WINDOW_MS) hits.delete(k)
@@ -178,7 +156,7 @@ function rateLimited(id) {
   return seen.length > RATE_MAX
 }
 
-/* -------------------------------------------------------------- storage io */
+// Storage
 
 async function readAll(kv) {
   if (!kv) return [...memory.values()]
@@ -199,8 +177,7 @@ async function readOne(kv, id) {
 
 async function writeOne(kv, id, record) {
   if (!kv) {
-    /* Memory has no eviction, so bound it here; the KV path needs no such
-     * limit. */
+    // Memory storage has no eviction, so cap it here.
     if (!memory.has(id) && memory.size >= MAX_RESPONDENTS) return false
     memory.set(id, record)
     return true
@@ -209,7 +186,7 @@ async function writeOne(kv, id, record) {
   return true
 }
 
-/* ----------------------------------------------------------------- handler */
+// Handler
 
 export default async function handler(req, res) {
   if (!sameOrigin(req)) {
@@ -221,9 +198,7 @@ export default async function handler(req, res) {
   const storage = kv ? 'kv' : 'memory'
 
   if (req.method === 'GET') {
-    /* The key lives only in the server env and in the URL the page was opened
-     * with. Obscurity, not security — see src/views/Responses.jsx and
-     * SURVEY-SETUP.md. */
+    // The read key is only in the server env and the results URL.
     const expected = process.env.RESPONSES_KEY
     if (expected && !keyMatches(req.headers['x-responses-key'], expected)) {
       return send(res, 403, { ok: false, error: 'A valid key is required to read responses.' })
@@ -278,10 +253,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    /* Upsert, so a reviewer who reloads and re-syncs stays one row. The
-     * read-modify-write races in principle, but one visitor's browser is the
-     * only writer for that key and losing the race costs one re-answered
-     * question that the next sync resends. */
+    // Upsert so a reviewer who re-syncs stays one row; one browser is the only writer per key.
     const prev = await readOne(kv, id)
     const merged = new Map((prev?.answers || []).map(a => [a.page + '/' + a.qid, a]))
     clean.forEach(a => merged.set(a.page + '/' + a.qid, a))

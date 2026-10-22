@@ -1,42 +1,13 @@
-/* Heads Up: how a teenager reacts to their phone, not what is on it.
- *
- * Other monitoring apps watch content and
- * time: which apps, which contacts, how many hours. MindMap's Heads Up
- * watches none of that. It measures HOW the teen is using the phone, from
- * signals the phone already has: how fast they scroll and how often they
- * reverse, how fast they type and how much they delete, how long a session
- * runs, how much the hand moves. Each is compared with that teen's own usual,
- * learnt over their first sessions and updated after every one. The result
- * is one light.
- *
- *   green   usual
- *   yellow  above usual; the teen sees it, the parent sees only the colour
- *   red     well above usual and sustained; the teen gets one quiet offer of
- *           a break, the parent sees the time, the length and the KIND of
- *           signal (fast scrolling, fast typing, a long run), never an app, a
- *           person or a piece of content
- *
- * Nothing here reads a message, a username, a page or an app name, and the
- * functions take only numbers. Everything is a pure function so the whole
- * loop can be tested without a phone.
- *
- * Evidence this leans on, as far as it goes: keystroke timing and deletion
- * rate track mood and agitation in adults followed for weeks (Zulueta 2018;
- * Liu 2024) and are weak on their own in teenagers (Braund 2023); the
- * adolescent passive-sensing literature pools at r = 0.12 (Nature Digital
- * Medicine 2026). So the light is a prompt to look, never a diagnosis, and
- * the index is always the teen against themself. */
-
+// Heads Up light: how the phone is used (scrolling, typing, session length, hand motion) against the teen's own baseline.
+// Inputs are numbers only; no content, app names or contacts.
 export const Light = Object.freeze({ GREEN: 'green', YELLOW: 'yellow', RED: 'red' })
 
 export const FEATURES = ['pxPerSec', 'reversals', 'medianGap', 'deletions', 'minutes', 'motion']
 
-/* Which direction counts as strain: faster scrolling, more reversals, FASTER
-   typing (a smaller gap), more deletions, longer sessions, more movement. */
+// +1 means a higher value is more strain; medianGap is -1 because a shorter gap is faster typing.
 const SIGN = { pxPerSec: 1, reversals: 1, medianGap: -1, deletions: 1, minutes: 1, motion: 1 }
 const WEIGHT = { pxPerSec: 1.0, reversals: 0.9, medianGap: 0.8, deletions: 0.8, minutes: 1.1, motion: 0.5 }
 
-/* Words for the parent and the teen: the kind of signal, never the content. */
 const KIND = {
   pxPerSec:  'fast scrolling',
   reversals: 'back-and-forth scrolling',
@@ -46,9 +17,6 @@ const KIND = {
   motion:    'a restless hand',
 }
 
-/* ── features ───────────────────────────────────────────────────────────── */
-
-/* `events` is [{ t: ms, y: px }] from scroll events in the page. */
 export function scrollFeatures(events) {
   const n = events.length
   if (n < 2) return { pxPerSec: null, reversals: null, samples: n }
@@ -67,7 +35,6 @@ export function scrollFeatures(events) {
   return { pxPerSec: secs > 0 ? dist / secs : null, reversals: moves ? flips / moves : 0, samples: n }
 }
 
-/* `keys` is [{ t: ms, del: boolean }], never the key itself. */
 export function typingFeatures(keys, pauseMs = 2000) {
   const n = keys.length
   if (n < 8) return { medianGap: null, deletions: null, keys: n }
@@ -93,10 +60,7 @@ export function sessionFeatures({ scroll = [], keys = [], startedAt = 0, endedAt
   }
 }
 
-/* ── the adaptive baseline ──────────────────────────────────────────────── */
-
-/* A running mean and variance per feature (Welford), so the teen's usual
-   moves with them and never needs a norm from anybody else. */
+// Welford running mean and variance per feature.
 export function emptyBaseline() {
   const mean = {}, m2 = {}, count = {}
   for (const f of FEATURES) { mean[f] = null; m2[f] = 0; count[f] = 0 }
@@ -124,18 +88,12 @@ export const READY_AFTER = 7
 const sd = (b, f) => {
   if (b.count[f] < 2) return null
   const v = b.m2[f] / (b.count[f] - 1)
-  /* a floor so a teen whose first week was perfectly even cannot be lit up
-     by a tiny change */
+  // Per-feature SD floor in that feature's units, so an even first week does not turn small changes into large z.
   const floor = { pxPerSec: 80, reversals: 0.06, medianGap: 20, deletions: 0.05, minutes: 4, motion: 0.02 }[f]
   return Math.max(Math.sqrt(v), floor)
 }
 
-/* ── strain ─────────────────────────────────────────────────────────────── */
-
-/* 0 to 100. Each feature's distance from the teen's usual, in their own
-   standard deviations, signed toward strain, clipped at +3, weighted and put
-   through a logistic so the middle of the scale is where most sessions sit
-   and the top is hard to reach by one feature alone. */
+// 0 to 100: weighted mean of positive z (clipped at 3) through a logistic with slope 2.2 centred at 1.1.
 export function strainIndex(features, baseline) {
   const parts = []
   for (const f of FEATURES) {
@@ -167,10 +125,7 @@ export function lightFor(index) {
   return Light.GREEN
 }
 
-/* Red needs the index to stay red for a minute, and once red it holds for
-   five minutes, so a single burst cannot flash the parent's light and the
-   teen's offer of a break does not vanish the moment they slow down.
-   `now` is ms. State: { light, since }. */
+// Red needs 60 s at red level to switch on and holds for 5 min after the last red reading.
 export const RED_AFTER_MS = 60 * 1000
 export const RED_HOLD_MS = 5 * 60 * 1000
 
@@ -191,13 +146,9 @@ export function decideLight(state, index, now) {
   return { light: want, since: now }
 }
 
-/* ── the two outputs ────────────────────────────────────────────────────── */
-
 export const NUDGE_TEXT = 'It may be time for a break. You seem stressed.'
 export const NUDGE_COOLDOWN_MS = 30 * 60 * 1000
 
-/* One quiet offer, on red only, at most every half hour. The teen can
-   dismiss it and nothing is counted against them. */
 export function nudgeFor({ light, lastNudgeAt, now }) {
   if (light !== Light.RED) return { show: false, text: null }
   if (lastNudgeAt != null && now - lastNudgeAt < NUDGE_COOLDOWN_MS) return { show: false, text: null }
@@ -212,9 +163,6 @@ const clock = ms => {
   return `${h}:${String(m).padStart(2, '0')} ${ap}`
 }
 
-/* ── Heads Up v4: what the parent sees ──────────────────────────────────── */
-
-/* The only words a parent ever sees about activity: one label per feature. */
 export const SIGNAL = Object.freeze({
   pxPerSec:  'Nervous scrolling',
   reversals: 'Scrolling back and forth',
@@ -226,8 +174,6 @@ export const SIGNAL = Object.freeze({
 
 export const SIGNAL_Z = 0.75
 
-/* Labels of the parts whose z is above 0.75, strongest (z times weight)
-   first. Takes the object strainIndex returns, or its `parts` array. */
 export function signalsFrom(strain) {
   const parts = Array.isArray(strain) ? strain : (strain && Array.isArray(strain.parts) ? strain.parts : [])
   return parts
@@ -247,18 +193,13 @@ export const HEADLINE = Object.freeze({
 
 const ALLOWED = new Set(Object.values(SIGNAL))
 
-/* What the parent's phone shows: a headline, and on red only the time and
-   the signal labels. Never a minute count, an app or content.
-   The older call shape { light, at, minutes, top } still works: `top` becomes
-   the one signal, `minutes` is ignored, and `line` / `detail` are returned
-   alongside for screens that have not moved over yet. */
 export function parentSummary(arg = {}) {
   const { light: raw, at, signals, top } = arg
   const light = raw === Light.RED || raw === Light.YELLOW ? raw : Light.GREEN
+  // Also accepts the older { light, at, minutes, top } call shape and returns line/detail for it.
   const legacy = !('signals' in arg) && ('minutes' in arg || 'top' in arg)
   const given = legacy ? (SIGNAL[top] ? [SIGNAL[top]] : []) : (Array.isArray(signals) ? signals : [])
-  /* The owner's rule: no specific phone-use detail reaches a parent unless
-     the light is red, so yellow carries the colour and the headline only. */
+  // Signal labels and the time reach the parent only on red; yellow shows the colour and headline.
   const list = light !== Light.RED ? [] : [...new Set(given.filter(l => ALLOWED.has(l)))]
   const time = light === Light.RED && typeof at === 'number' && Number.isFinite(at) ? `Red at ${clock(at)}` : null
   const out = { light, headline: HEADLINE[light], time, signals: list }

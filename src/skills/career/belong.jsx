@@ -6,16 +6,6 @@ import { STRENGTHS, WIN_PROMPTS, topStrengths, listOf, KINDS, advocacyScript, IN
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, leave } from '../../toolkit/game/skill'
 
-/* You Belong Here.
- *
- * 1 Wins       a log of real things you have done.
- * 2 Strengths  tag each win with what it shows; the top three come from
- *              evidence, not from a mood.
- * 3 Ask        a self-advocacy script: for help, for credit, for a chance.
- * 4 Try        one calculated initiative this week, with the worst case,
- *              the best case and a back-up.
- * 5 Evidence   all of it on one card. */
-
 const TOOL = META.belong
 const STEPS = [['wins', 'Wins'], ['strengths', 'Traits'], ['ask', 'Ask'], ['try', 'Try'], ['done', 'Result']]
 const ORDER = STEPS.map(s => s[0])

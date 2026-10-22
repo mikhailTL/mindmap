@@ -1,8 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* Geometry is the real device's, in points, so `scale` is a true multiplier:
-   at 1 the drawing is the size of the phone. */
+// Device geometry in points, so scale 1 draws the phone at its real size.
 const MODELS = {
   '15-pro': { w:393, h:852, r:55, island:true,  bezel:10 },
   '15':     { w:393, h:852, r:55, island:true,  bezel:11 },
@@ -27,8 +26,6 @@ export function IPhone({
   screenBg = '#ffffff',
   showHomeIndicator = true,
   label = 'The MindMap app',
-  /* true when the screen holds live controls: a group, not an image,
-     so screen readers reach the buttons and live regions inside */
   interactive = false,
   className,
   children,
@@ -47,7 +44,6 @@ export function IPhone({
       style={{
         width: W * scale,
         height: H * scale,
-        /* Children lay out at device points; one transform scales the lot. */
         ['--mm-scale']: scale,
       }}>
       <div
@@ -77,7 +73,7 @@ export function IPhone({
             <span aria-hidden style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)',
               width:210, height:30, borderRadius:'0 0 18px 18px', background:'#000', zIndex:3 }}/>
           )}
-          {/* safe areas: content must not land under the cutout or the bar */}
+          {/* Top and bottom padding keep content clear of the island or notch and the home indicator. */}
           <div style={{ flex:1, minHeight:0, paddingTop: m.island ? 60 : 44,
             paddingBottom: showHomeIndicator ? 30 : 12, display:'flex', flexDirection:'column' }}>
             {children}

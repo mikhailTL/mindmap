@@ -8,16 +8,8 @@ import { SCORE } from '../../lib/terms'
 import { NoData } from '../student/charts'
 import { RainbowDial } from '../../charts/rainbow'
 
-/* The Mind Score Log, on the student's Trends tab (src/views/student/
- * TrendsTab.jsx). Read like a glucose log: every entry by day, each with a
- * note. The trend line itself is the tab's ScoreChart. Higher means more
- * stress: 0 calm to 100 peak. The "Time in your usual range" breakdown went on
- * 18 October ("everything looks too overwhelming"): the calendar and the
- * chart above already colour each day against the usual range. */
-
+// The Mind Score Log on the student's Trends tab: every entry by day, each with a note. 0 is calm, 100 is peak.
 const PANEL = 'rounded-panel border border-rule/60 bg-card p-4 lg:p-5'
-
-/* ── The latest reading ───────────────────────────────────────────────── */
 
 function Latest({ entries, now }) {
   const last = entries[entries.length - 1]
@@ -26,8 +18,6 @@ function Latest({ entries, now }) {
   return (
     <section aria-labelledby="log-latest" className={PANEL}>
       <h3 id="log-latest" className="m-0 font-display text-head font-bold leading-tight text-ink">Latest {SCORE}</h3>
-      {/* The latest reading on the rainbow, the same dial as the student
-          screen. The up and down arrow beside it went on 18 October. */}
       <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1">
         <RainbowDial score={last.score} size={240} className="shrink-0"
           rings={ringsFor(last)}/>
@@ -45,8 +35,6 @@ function Latest({ entries, now }) {
     </section>
   )
 }
-
-/* ── Entries by day ───────────────────────────────────────────────────── */
 
 function NoteEditor({ entry, onSave, onCancel }) {
   const [text, setText] = React.useState(entry.note || '')
@@ -154,18 +142,11 @@ function ClearLog({ n }) {
   )
 }
 
-/* ── The log ──────────────────────────────────────────────────────────── */
-
-/* The log as the Trends tab shows it: every entry by day. The range is the
-   tab's own, so the chart above and this list always cover the same days.
-   The scroller is `relative` so the sr-only spans inside it are clipped by
-   it rather than stretching the page below the footer. */
+// The scroller is `relative` so the sr-only spans inside it are clipped by it rather than stretching the page.
 export function MindScoreLog({ entries, list, now, demo, setNote, rangeLabel, headRef, className, go,
   head = true }) {
   return (
     <section id="reading-log" aria-labelledby="reading-log-h" className={cn('scroll-mt-20', className)}>
-      {/* head={false}: the page gives the log its own part heading, with
-          the id reading-log-h, so the section is still named. */}
       {head && (
         <h3 id="reading-log-h" ref={headRef} tabIndex={-1} className="font-display text-head font-bold text-ink">
           {SCORE} Log

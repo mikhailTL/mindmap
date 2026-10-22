@@ -2,9 +2,6 @@ import React from 'react'
 import { LogoMark } from '../ui/logo'
 import { cn } from '../lib/utils'
 
-/* iOS conventions, drawn once for every phone on the Heads Up page. These are
- * the system's own shapes and colours, never a company's logo or wordmark. */
-
 export const IOS = {
   font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif',
   blue: '#0868d4', grey: '#e9e9eb', label: '#000000', secondary: 'rgba(60,60,67,0.78)',
@@ -19,8 +16,6 @@ export const MM = {
   body: 'Chivo, -apple-system, system-ui, sans-serif',
 }
 
-/* The MindMap app icon: the mark in white on the brand green, 7 px corners
-   at 30 px. */
 export function AppIcon({ size = 30, className }) {
   return (
     <span aria-hidden className={cn('grid shrink-0 place-items-center text-white', className)}
@@ -30,16 +25,7 @@ export function AppIcon({ size = 30, className }) {
   )
 }
 
-/* MindMap's notification. A solid paper card, a 1 px rule, 18 px corners, a
- * soft shadow and a 4 px strip down the left edge: accent green, or red on
- * the parent's red alert. The icon, then "Mind" and "Map" in the brand's two
- * inks with the time on the right, the body under, and optional actions under
- * a rule. `show` slides it down once; under reduced motion it fades.
- *
- * Where it sits: on a phone with a Dynamic Island the banner hangs just under
- * the island. The island (src/ui/iphone.jsx) is 36 pt tall at 12 pt from the
- * top of the screen, so its bottom edge is at 48 and the banner's top edge
- * goes 8 under it, in screen points. */
+// The Dynamic Island in ui/iphone.jsx is 36 pt tall, 12 pt from the top; the banner sits 8 pt below it.
 export const ISLAND_BOTTOM = 12 + 36
 export const BANNER_TOP = ISLAND_BOTTOM + 8
 
@@ -101,8 +87,6 @@ export function IosNotification({
   )
 }
 
-/* The status bar: time on the left, signal, wifi and battery on the right,
- * drawn in the current text colour so it works on light and dark screens. */
 export function StatusBar({ time = '9:41', dark = false, className }) {
   const c = dark ? '#fff' : '#000'
   return (

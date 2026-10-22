@@ -1,13 +1,4 @@
-/* The type scale. Not in tailwind.config.js, because two consumers read it and
-   must agree: Tailwind, which generates the classes, and tailwind-merge (see
-   utils.js), which has to be told these keys are font sizes. A step added to
-   one and not the other makes cn() drop a size or a colour, silently.
-
-   Headings carry separation as a RATIO over body (`sub`/`body` is 28/19
-   narrow, 40/18 wide), so retuning moves both ends together. `gap` is the
-   deliberate irregularity, between `stat` and the fluid display steps, for the
-   one figure per screen that must beat everything around it without becoming a
-   headline. */
+// Read by both the Tailwind config and tailwind-merge (utils.js), so both treat these keys as font sizes.
 export const TYPE_SCALE = {
   fine:  ['0.875rem',   { lineHeight:'1.5' }],
   note:  ['0.9375rem',  { lineHeight:'1.55' }],

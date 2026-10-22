@@ -1,15 +1,4 @@
-/* The demo's people as drawn characters, as data. No JSX, so the catalog and
- * the server can read the ids. ./Character.jsx draws them.
- *
- * Owner, 18 October: "design a suite of animated characters ... cute,
- * animated versions of teens, parents, and counselors that are used for demo
- * profile and onboarding", and Dr. Shah and Ms. Okafor "should be like a
- * clear, forward facing professional pic".
- *
- * One builder, many people: each entry picks a skin tone, a hair style and
- * colour, and a top. Nothing else changes between people, so no feature is
- * drawn differently for anyone. Every name is invented. */
-
+// Demo characters as data with no JSX, so the catalog and the server can read the ids. All names are invented.
 export const SKIN = {
   s1: ['#F8DCCB', '#E8B9A0'],
   s2: ['#F1C9A5', '#DCA580'],
@@ -32,9 +21,8 @@ export const CLOTH = {
   green: '#1F8A5B',
 }
 
-/* [id key, label, age, skin, hair style, hair colour, top, top colour, ground hue, extras]
-   age: t teen, a adult. Extras: g glasses, e earrings, f freckles, b beard,
-   l lanyard, n necklace, w lashes. `pick` teens are on a teen's own picker. */
+// Extras codes: g glasses, e earrings, f freckles, b beard, l lanyard, n necklace, w lashes.
+// pick marks the teens shown on a teen's own avatar picker.
 const T = (key, label, skin, hair, hc, top, tc, bg, x = '', pick = false) =>
   ({ key, label, role: 'student', age: 't', skin, hair, hc, top, tc, bg, x, pick })
 const A = (key, label, role, skin, hair, hc, top, tc, bg, x = '', extra = {}) =>
@@ -81,26 +69,19 @@ export const CHARACTERS = [
   A('ines',   'Ines',   'parent', 's4', 'pixie',    'brown',    'collar',   'coral', 'coral', 'we'),
   A('tom',    'Tom',    'parent', 's2', 'side',     'honey',    'sweater',  'forest','mint',  'b'),
 
-  /* Counselors/Professionals, in work clothes and facing forward. */
   A('shah',   'Dr. Shah',   'pro', 's5', 'side', 'black', 'blazer', 'navy', 'sky',   'gl', { inner: 'shirt' }),
   A('okafor', 'Ms. Okafor', 'pro', 's7', 'puff', 'black', 'blazer', 'teal', 'lilac', 'en', { inner: 'cream' }),
 
-  /* The demo reader's own picture, one per role (./viewer.js). The parent
-     one stands by a tree (owner: "something more parent like like a tree
-     avatar"); the Counselor one by a speech bubble with a heart. */
   T('student', 'Student', 's3', 'curly', 'brown', 'hoodie', 'green', 'mint'),
   A('parent', 'Parent', 'parent', 's4', 'shoulder', 'brown', 'cardigan', 'sun', 'mint', 'e', { scene: 'tree' }),
   A('counselor', 'Counselor', 'pro', 's6', 'side', 'black', 'blazer', 'charcoal', 'sky', 'l', { inner: 'white', scene: 'bubble' }),
 ]
 
-/* Two signs, not people: a tree for a parent and a speech bubble with a
-   heart for a Counselor/Professional. */
 export const EMBLEMS = [
   { key: 'tree', label: 'Tree', role: 'parent', bg: 'mint' },
   { key: 'care', label: 'Talk bubble', role: 'pro', bg: 'sky' },
 ]
 
-/* What a parent and a Counselor/Professional can pick besides a photo. */
 export const ROLE_PICKS = {
   parent: ['emblem-tree', 'char-parent'],
   pro: ['emblem-care', 'char-counselor'],

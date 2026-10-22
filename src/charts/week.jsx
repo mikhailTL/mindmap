@@ -2,39 +2,10 @@ import React from 'react'
 import { useWidth, scale } from './primitives'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 
-/* Seven days on the score's own full scale.
- *
- * WHAT IT NOW CARRIES. The chart drew three unlabelled gridlines on a floating
- * ceiling of `max(80, peak + 8)`, so the height of a bar meant something
- * different on every fixture it was handed, and the shaded band behind the
- * bars was the wearer's own usual range with neither of its two values printed
- * anywhere on the figure. It is a fixed 0 to 100 axis now, which is the range
- * the score is defined on: zero baseline, a labelled tick every 20, a minor
- * tick every 10, both band edges drawn as dashed reference lines and labelled
- * with their own value, and the unit stated on the plot.
- *
- * THE COLLISION this fixes: at 390 the above-range days printed their caret
- * and their value on one line, `▲ 64` by `▲ 68`, which at a 34px step ran the
- * two together so Thursday's marker read as part of Wednesday's number. The
- * caret is a drawn triangle on its own line above the number now, so a label
- * is only as wide as its two digits.
- *
- * 1 SVG unit = 1 CSS pixel here, because the viewBox is the measured width of
- * the container (see primitives/useWidth), so a 15px label in this file really
- * renders at 15px and SVG text is as honest as DOM text would be.
- *
- * COLOUR IS NEVER ALONE. An above-range day is amber, bold, and carries the
- * caret; an in-range day is ink-3 and plain. The legend under the plot names
- * all three marks. warn #99590c measures 5.27 : 1 on paper and 4.63 on mist,
- * ink-2 7.85, ink-3 5.33, accent 5.52, so every label here clears AA on any
- * ground this figure lands on. */
-
-const TOP = 100                       /* the score's own ceiling, never the peak */
+const TOP = 100  /* the score's own ceiling, not the week's peak */
 const MAJOR = [0, 20, 40, 60, 80, 100]
 const MINOR = [10, 30, 50, 70, 90]
 
-/* An upward caret, drawn rather than typed: a glyph in a font the reader may
-   not have is not a shape you can rely on. */
 const caret = (cx, y, w) =>
   `M${(cx - w).toFixed(1)} ${(y + w * 0.9).toFixed(1)}L${cx.toFixed(1)} ${y.toFixed(1)}`
   + `L${(cx + w).toFixed(1)} ${(y + w * 0.9).toFixed(1)}Z`
@@ -51,7 +22,7 @@ export function WeekChart({ data, band }) {
   const [ref, W] = useWidth()
   const small = W < 560
   const H = small ? 232 : 256
-  const L = small ? 40 : 50           /* holds a right-aligned "100" at 15px */
+  const L = small ? 40 : 50  /* holds a right-aligned "100" at 15px */
   const R = small ? 30 : 42           /* holds the two band-edge values */
   const T = 36, B = 36                /* T holds the caret and the value above a 100 bar */
   const y = v => scale(v, 0, TOP, H - B, T)
@@ -62,11 +33,8 @@ export function WeekChart({ data, band }) {
     <div ref={ref} className="mt-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img"
         aria-label={alt(data, band)}>
-        {/* the unit, on the figure rather than only in the caption */}
         <text x="0" y="13" className="fill-ink-3" fontSize={small ? 13 : 14}>out of 100</text>
 
-        {/* the wearer's own usual range: the shaded field, then both edges as
-            dashed reference lines, then each edge's value in the gutter */}
         <rect x={L} y={y(band.hi)} width={W - R - L} height={y(band.lo) - y(band.hi)}
           className="fill-accent opacity-[0.09]"/>
         {[band.hi, band.lo].map(v => (
@@ -78,8 +46,6 @@ export function WeekChart({ data, band }) {
           </g>
         ))}
 
-        {/* the axis: a labelled tick every 20, a minor every 10, and a zero
-            baseline that is drawn rather than implied */}
         {MINOR.map(v => (
           <line key={v} x1={L - 4} x2={L} y1={y(v)} y2={y(v)} className="stroke-ink-3" strokeWidth="1"/>
         ))}
@@ -102,8 +68,6 @@ export function WeekChart({ data, band }) {
             <g key={d.d}>
               <rect x={cx - bw / 2} y={y(d.v)} width={bw} height={(H - B) - y(d.v)} rx="3"
                 className={over ? 'fill-warn' : 'fill-ink-3'}/>
-              {/* the caret is its own line above the number, which is what
-                  keeps two adjacent above-range days from running together */}
               {over && <path d={caret(cx, num - 24, 5)} className="fill-warn"/>}
               <text x={cx} y={num} textAnchor="middle"
                 className={over ? 'fill-warn font-medium' : 'fill-ink-2'}
@@ -115,8 +79,6 @@ export function WeekChart({ data, band }) {
         })}
       </svg>
 
-      {/* The legend is DOM text, so it wraps at 390 instead of being clipped,
-          and it names every mark the plot uses. */}
       <ul aria-hidden className="m-0 mt-2 flex list-none flex-wrap gap-x-5 gap-y-1 p-0
         text-fine text-ink-3">
         <li className="flex items-center gap-2">

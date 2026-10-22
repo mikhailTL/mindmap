@@ -11,21 +11,8 @@ import { daySentence } from './sentence'
 import { WeekLamps } from './HeadsUpCard'
 import { LIGHT_MEANS, LIGHT_WORD, TEEN, teenSignal } from './demoTeen'
 
-/* The demo's today on the Trends tab: the dial with its one line, and Heads
- * Up for today and the week. The owner, 17 October: "data always goes under
- * trends section", so it lives on the Trends tab and the home is navigation
- * only. The owner, 18 October: "everything looks too overwhelming", so the
- * live signals, the "See today in detail" working and the long Heads Up
- * explainer went.
- *
- * Where the figures come from:
- *   rings      src/lib/readings.js, each signal's own distance from this
- *              person's fourteen-day normal, on a 0 to 100 scale
- *   day, band  src/lib/assets.js, injected at build time
- *   the rest   src/views/reading/demo.js, where scoreCapture is run for real
- *              on the demo capture */
-
-/* The working behind one ring of the dial, opened by tapping the ring. */
+// Demo figures: rings from lib/readings.js, the day and band from lib/assets.js, the rest from
+// views/reading/demo.js. SignalDetail opens when a dial ring is tapped.
 function SignalDetail({ ring }) {
   const s = SENSORS[ring.id] || ring
   const tone = s.glow || s.color
@@ -62,7 +49,6 @@ function HeadsUpToday({ teen, go }) {
   return (
     <Panel variant="tint" hue="sun" className="flex flex-col">
       <PanelHead as="h3" title="Heads Up" meta="your phone use"/>
-      {/* Centred in the height the dial beside it gives on a wide screen. */}
       <div className="flex flex-1 flex-col justify-center">
         <div className="mt-3 flex items-center gap-3">
           <LampFace light={today.light} size={44} glow/>
@@ -86,7 +72,6 @@ function HeadsUpToday({ teen, go }) {
   )
 }
 
-/** The demo's today on the Trends tab: the dial and its line, then Heads Up. */
 export function DemoTodayDetail({ go }) {
   const rings = studentRings()
   const [picked, setPicked] = React.useState(null)
@@ -97,7 +82,6 @@ export function DemoTodayDetail({ go }) {
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-4">
       <Panel className="relative flex flex-col justify-center overflow-hidden
         bg-gradient-to-b from-card via-card to-aqua">
-        {/* Named the way the parent and Counselor/Professional dials are. */}
         <h3 className="relative m-0 font-display text-head font-bold leading-tight text-ink">Mind Score today</h3>
         <div className="relative mt-3 flex flex-col items-center text-center">
           <RainbowDial score={TODAY.score} usual={USUAL} rings={rings}

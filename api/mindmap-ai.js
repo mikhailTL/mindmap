@@ -1,42 +1,20 @@
-/* MindMap AI. A proxy in front of Anthropic's Messages API, so the key stays
- * on the server and the system prompt cannot be replaced by the page.
- *
- * Four invariants, each easy to break quietly:
- *
- * 1. The key is read from process.env.ANTHROPIC_API_KEY and from nowhere else.
- *    It is never in this repository, never in the client bundle, never in a
- *    response body and never in a log line. There is no code path that prints
- *    it, not even truncated.
- * 2. With no key set, GET returns configured: false and POST refuses with 503
- *    and configured: false. The screen renders that as "not connected yet" and
- *    offers no input, so an unconfigured deploy cannot look like it answered.
- * 3. The system prompt is built here, from src/ai/framework.js, for the
- *    audience the request names. A `system` field in the request body is
- *    ignored. The client chooses an audience, never the rules.
- * 4. Message content never goes to stdout. Errors log a fixed string, and no
- *    error response carries any part of the request that caused it.
- *
- * Storage: none. There is no KV, no file and no module-level transcript. The
- * only thing a message is used for is the one upstream call it is part of.
- */
+// Proxy in front of Anthropic's Messages API. The key comes only from
+// ANTHROPIC_API_KEY, the system prompt is built here from src/ai/framework.js,
+// and message content is never logged or stored.
 
 import { AUDIENCES, MODEL_DEFAULT, systemPrompt } from '../src/ai/framework.js'
 
 const UPSTREAM = 'https://api.anthropic.com/v1/messages'
 const ANTHROPIC_VERSION = '2023-06-01'
 
-/* Sized to the feature, not to round numbers: a reply is capped at about 120
- * words, a question a teenager types on a phone is rarely past 600 characters,
- * and a useful thread is a dozen turns. */
+// Limits: replies of about 120 words, phone-length questions, a dozen turns.
 const MAX_BYTES = 24 * 1024
 const MAX_TURNS = 24
 const MAX_CHARS = 1200
 const MAX_TOKENS = 800
 const UPSTREAM_TIMEOUT_MS = 28000
 
-/* Per-instance, so it does not stop a flood spread across instances. It stops
- * the realistic failure: a page stuck in a retry loop, and a single visitor
- * spending the owner's key faster than he can notice. */
+// Per-instance rate limit: catches a page stuck in a retry loop, not a distributed flood.
 const RATE_WINDOW_MS = 60000
 const RATE_MAX = 12
 const hits = new Map()
@@ -49,9 +27,7 @@ function send(res, code, body) {
   res.end(JSON.stringify(body))
 }
 
-/* Access-Control-Allow-Origin is never sent, so a cross-origin read already
- * fails. This also refuses cross-origin writes, which a missing CORS header
- * would let through unread. Matches api/responses.js. */
+// No CORS header is sent, and cross-origin writes are refused as well.
 function sameOrigin(req) {
   const origin = req.headers.origin
   if (!origin) return true
@@ -73,7 +49,7 @@ function rateLimited(id) {
   const seen = (hits.get(id) || []).filter(t => now - t < RATE_WINDOW_MS)
   seen.push(now)
   hits.set(id, seen)
-  /* Unbounded growth is its own denial of service. */
+  // Bound the table so it cannot grow without limit.
   if (hits.size > 2000) {
     for (const [k, v] of hits) {
       if (!v.length || now - v[v.length - 1] > RATE_WINDOW_MS) hits.delete(k)
@@ -82,7 +58,7 @@ function rateLimited(id) {
   return seen.length > RATE_MAX
 }
 
-/* Strips control characters and caps length. Not an HTML escape. */
+// Strips control characters and caps length (not an HTML escape).
 function str(v, max) {
   if (v == null) return ''
   return String(v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ').trim().slice(0, max)
@@ -118,8 +94,7 @@ async function readBody(req) {
   try { return { data: JSON.parse(Buffer.concat(chunks).toString('utf8')) } } catch { return { bad: true } }
 }
 
-/* A turn is a role and a string. Anything else is not a shape this page
- * produces, and the upstream alternation is rebuilt rather than trusted. */
+// Rebuilds a valid user/assistant alternation from the posted turns.
 function turns(raw) {
   if (!Array.isArray(raw)) return null
   const out = []
@@ -128,20 +103,19 @@ function turns(raw) {
     const role = m.role === 'assistant' ? 'assistant' : 'user'
     const content = str(m.content, MAX_CHARS)
     if (!content) continue
-    /* Collapse a repeated role rather than sending an invalid sequence. */
+    // Merge consecutive turns from the same role.
     if (out.length && out[out.length - 1].role === role) {
       out[out.length - 1].content += '\n\n' + content
     } else {
       out.push({ role, content })
     }
   }
-  /* Anthropic requires the first turn to be a user turn. */
+  // The API requires the first turn to be from the user.
   while (out.length && out[0].role !== 'user') out.shift()
   return out.length ? out : null
 }
 
-/* One shape for "not connected", used by both methods, so the page has exactly
- * one unconfigured state to render. */
+// Shared "not configured" response for GET and POST.
 const NOT_CONFIGURED = {
   ok: false,
   configured: false,
@@ -157,8 +131,7 @@ export default async function handler(req, res) {
   const model = String(process.env.ANTHROPIC_MODEL || MODEL_DEFAULT)
   const configured = Boolean(key && key.trim())
 
-  /* The page asks this before it draws a composer. 200 either way: an
-   * unconfigured deployment is a state to render honestly, not a failure. */
+  // Returns 200 either way; the page shows a not-connected state when unconfigured.
   if (req.method === 'GET') {
     return send(res, 200, {
       ok: true,
@@ -201,8 +174,7 @@ export default async function handler(req, res) {
     })
   }
 
-  /* Built here, from the framework file, for the audience the body named. A
-   * `system` field in the request is ignored on purpose. */
+  // A `system` field in the request body is ignored.
   const system = systemPrompt(audience)
 
   const control = new AbortController()
@@ -227,7 +199,7 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     clearTimeout(timer)
-    /* Fixed strings only. The error object can carry the request. */
+    // Log a fixed string: the error object can contain the request.
     if (err?.name === 'AbortError') {
       console.error('mindmap-ai: upstream timed out')
       return send(res, 504, {
@@ -244,8 +216,7 @@ export default async function handler(req, res) {
   clearTimeout(timer)
 
   if (!upstream.ok) {
-    /* The upstream body can quote the request back, so it is read for a type
-     * and a status and then dropped. Nothing from it is forwarded. */
+    // Only the error type and status are read from the upstream body.
     let kind = ''
     try {
       const payload = await upstream.json()

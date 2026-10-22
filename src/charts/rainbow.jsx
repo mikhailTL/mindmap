@@ -3,79 +3,26 @@ import { Chevron } from '../ui/marks'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
-/* Concentric-arch score dial: one band per sensor on its own 0-100 scale.
- * The arch is aria-hidden: a 16-unit band stroke is ~20px at a sane dial
- * size, half the minimum tap target, so every band has a focusable, named
- * 56px row under it (RingList).
- * The centre number is a logistic blend of four z-scores, NOT the mean of the
- * bands. Do not label it an average.
- *
- * TWO THINGS CHANGED HERE.
- *
- * 1. `weather` IS A PROP NOW, default true. ArchWeather used to render
- *    unconditionally, so the clouds appeared on the parent dial, where design
- *    spec section 7 says they do not belong, and the parent screen had to
- *    suppress them with a CSS selector written against this file's internals
- *    (`[&_g:has(>_.mm-rain)]:hidden`). That selector breaks silently the day
- *    `mm-rain` is renamed. Pass `weather={false}` instead. The clouds
- *    themselves are flat shapes now rather than gradients, so a call site that
- *    passed `weather={false}` only to stay inside the no-gradient rule can
- *    turn them back on.
- *
- * 2. THE DIAL HAS A SCALE. It had four radii and a usual-day mark and nothing
- *    else: no axis, no tick, no labelled end, so a band's fill could be
- *    compared with the other three and with nothing absolute. There is a
- *    graduated axis outside the bands now - minor ticks every 5 points,
- *    majors every 25, numbered at 25, 50 and 75, with both ends named and
- *    numbered at the feet. The usual-day mark lands on that scale, which is
- *    what makes it a set point rather than a decoration.
- *
- * The viewBox is fixed at 320 by 232 and the radii are fixed with it:
- * views/Intro.jsx overlays its own svg on this one at the same viewBox and
- * points an arrow at RADII[0] + BAND / 2 by coordinate. Moving any of those
- * numbers silently moves that annotation off the thing it annotates. */
-
-/* BAND 16 thick, radii 18 apart, so a 2-unit gap separates the four. Red
-   outside, blue inside. Interior half-disc radius ~76 holds the score; three
-   digits need ~87px of the 152 that radius gives at the default 320 width. */
+// Fixed viewBox and radii: views/Intro.jsx overlays an arrow at RADII[0] + BAND / 2 by coordinate.
 const VW = 320, VH = 232, CX = 160, CY = 168
 const BAND = 16
 const RADII = [139, 121, 103, 85]       // outside in: heart, sweat, temp, move
-/* PLATE/EDGE are the framed backing, off unless a call site passes `plate`;
-   ink-3 on PLATE is 5.26 : 1, which keeps the foot labels and caption AA.
-   TRACK is the unfilled part of each band and, plate off, the only thing
-   drawing the arch at a low score: #93b2a1 measures 2.32 on card #ffffff down
-   to 1.81 on the palest ground a dial lands on (aqua-2 #cee8ea). Not text,
-   carries no value, so 3 : 1 does not apply. */
 const PLATE = '#e3eff2', EDGE = '#95b3ba', TRACK = '#93b2a1'
-/* The axis. ink-3 clears 4.5 : 1 as text on every ground a dial lands on -
-   card 5.61, paper 5.33, PLATE 5.26, aqua-2 4.86, mist 4.68 - so the same
-   value draws the rule, the ticks and their numbers. */
 const INK3 = '#426a58'
 
 const pol = (r, deg) => [CX + r * Math.cos(deg * Math.PI / 180), CY + r * Math.sin(deg * Math.PI / 180)]
-/* 180° is the left foot, 360° the right; increasing angle sweeps up and over. */
+// 180 degrees is the left foot, 360 the right.
 function arcPath(r, pct) {
   const to = 180 + 180 * Math.max(0.0001, Math.min(1, pct / 100))
   const [x1, y1] = pol(r, 180), [x2, y2] = pol(r, to)
   return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
 
-/* ── The scale ─────────────────────────────────────────────────────────── */
-
-/* The axis sits just outside the outer band: 149 is two units clear of its
-   147 edge, and a major tick reaching 157 still leaves three units of the
-   viewBox at the feet and eleven at the top. Nothing here can be any longer.
-   The 50 tick is the one exception, cut to three units, because its number is
-   the only one that has to live in the eleven units above the arch. */
 const AXIS_R = 149
 const MAJORS = [0, 25, 75, 100]
 const MINORS = Array.from({ length: 21 }, (_, i) => i * 5).filter(v => v % 25)
 
-/* Numbers are SVG text, sized against the rendered dial so that a 320px dial
-   and a 440px dial both print them at about 11px: SVG text in a scaled viewBox
-   would otherwise be 8px on the 248px check-in dial. 25 and 75 sit on their
-   own radius at 168, which clears both their own tick and the band. */
+// Sized against the rendered dial, so the axis numbers print near 11px at any dial size.
 const axisFont = size => Math.max(7.5, Math.min(16, (11 * 320) / size))
 
 function Axis({ font, numbers = true }) {
@@ -105,34 +52,11 @@ function Axis({ font, numbers = true }) {
   )
 }
 
-/* Each cloud is centred on a foot and tall enough that the band end
-   disappears into it; wide and flat, or it buries the first fifth of every
-   band. A cloud is unequal circles on a flat slab drawn twice: pass one
-   strokes and fills every shape in the edge colour, painting the union's outer
-   boundary only; pass two fills the same shapes on top so overlap seams cannot
-   show.
-   FLAT, AND IN THE GREEN SYSTEM. Both clouds were linearGradient fills, the
-   fair one white to the plate value and the rain one a slate #7d8b96 to
-   #4c5967, and the rain was a blue #2f7fd0. Spec 0d allows green, white and
-   turquoise only, and a gradient is on the AI-tell list, so each cloud is one
-   flat fill inside one flat rim now and the rain is `beam`, the turquoise the
-   palette already nominates for drawing rain. One fill per shape, the same
-   idiom as every other drawing in this directory.
-   Measured, on card #ffffff and on the plate #e3eff2: rim `ruling` #93b2a1
-   2.32 and 2.06, rain `beam` #1d8fb0 3.74 and 3.33, the fair cloud's own rim
-   against its white fill 2.32. None of these is text and none carries a value
-   on its own, so 3 : 1 is the only floor that applies and only the rain owes
-   it. The overcast cloud is `ink-3` #426a58 inside `ink-2` #2a5744: 5.99 on
-   card, and it is the one cloud that has to read as weather at a glance. */
 const SKY = { rain:'#1d8fb0' }
 /* fair: card inside ruling. overcast: ink-3 inside ink-2. */
 const FAIR = { fill:'#ffffff', rim:'#93b2a1' }
 const OVERCAST = { fill:'#426a58', rim:'#2a5744' }
 
-/* A cloud is drawn in its own 96 x 30 box, base line at the box bottom, so it
-   is placed by base position and foot width alone. Every circle top is at or
-   below 0 and every bottom at or above the slab, or the cloud prints with a
-   straight cut down one side. */
 const CLOUD_W = 96, CLOUD_H = 34
 const PUFFS = {
   calm: [[10,26,8],[24,21,13],[42,15,15],[64,20,14],[84,26,8],[52,27,7]],
@@ -156,16 +80,9 @@ function Cloud({ cx, base, kind, tone, rim = 1.2 }) {
   )
 }
 
-/* Feet in viewBox units: left spans x 13-83, right 237-307, centres 48 and
-   272. FOOT is 4 units inboard of each centre so a 96-wide cloud clears the
-   plate's rounded corners. BASE_Y is 8 below the band bottom, cloud top 6
-   above it, so a band needs ~5% of its length to clear the cloud. */
 const FOOT = { calm: 52, peak: 268 }
 const BASE_Y = 184
 
-/* No <defs> and no per-instance ids any more: with both clouds flat there is
-   nothing to reference, which also removes the two dials-on-one-page hazard
-   the gradient version had to guard against. */
 export function ArchWeather() {
   return (
     <g aria-hidden style={{ pointerEvents:'none' }}>
@@ -180,10 +97,7 @@ export function ArchWeather() {
   )
 }
 
-/* A spring, not a fixed-duration curve: it integrates from the current value
-   and velocity, so a target that changes mid-flight is absorbed rather than
-   restarted. Damping ratio 26 / (2 * sqrt(170)) = 0.997, critically damped,
-   no overshoot. Under reduced motion the value is set directly. */
+// Integrates from the current value and velocity. Damping ratio 26 / (2 * sqrt(170)) is about 0.997, so no overshoot.
 function useSpring(target, on = true, stiffness = 170, damping = 26) {
   const [shown, setShown] = React.useState(on ? 0 : target)
   const s = React.useRef({ x: on ? 0 : target, v: 0 })
@@ -194,8 +108,7 @@ function useSpring(target, on = true, stiffness = 170, damping = 26) {
     let raf, last
     const step = t => {
       if (last == null) last = t
-      /* Clamped: a backgrounded tab returning integrates one 64ms frame
-         rather than one of 4000ms. */
+      // Capped so a backgrounded tab resumes with one 64ms step.
       const dt = Math.min(0.064, (t - last) / 1000); last = t
       const st = s.current
       st.v += (-stiffness * (st.x - target) - damping * st.v) * dt
@@ -212,8 +125,6 @@ function useSpring(target, on = true, stiffness = 170, damping = 26) {
   return shown
 }
 
-/* Flat, opaque, round-ended: no blur, gradient or partial opacity. TRACK is
-   the unfilled remainder; see the note on the constant. */
 function Band({ r, glow, pct, dim }) {
   const shown = useSpring(pct)
   return (
@@ -225,23 +136,10 @@ function Band({ r, glow, pct, dim }) {
   )
 }
 
-/* The harm anchor: the reader's own usual day, marked on the scale.
- * A labelled threshold on a visual display cut urgent-contact intent for a
- * near-normal value from 48-58% to 35% without blunting the response to
- * extreme values. Zikmund-Fisher, B. J., Scherer, A. M., Witteman, H. O.,
- * Solomon, J. B., Exe, N. L., & Fagerlin, A. (2018). Effect of harm anchors
- * in visual displays of test results on patient perceptions of urgency about
- * near-normal values: experimental study. JMIR, 20(3), e98.
- * https://doi.org/10.2196/jmir.8889 . The finding is about a mark on the
- * scale, not a sentence under the picture.
- * The mark sits at 180 + 1.8 * usual degrees (180° = left foot, 1.8°/point
- * over the 180° sweep). Anything pointing at the usual value moves with it,
- * including the axis tick it now lands between.
- * Two strokes: one dark hairline alone disappears into the darkest band. */
+// The usual day as a mark on the scale (harm anchor: Zikmund-Fisher et al., JMIR 2018, 20(3) e98).
+// It sits at 180 + 1.8 * usual degrees.
 function UsualMark({ at }) {
   const deg = 180 + 1.8 * Math.max(0, Math.min(100, at))
-  /* Starts at the inner band's edge, not inside it: any further in and the
-     needle reached the score figure. */
   const [x1, y1] = pol(RADII[3] - BAND / 2, deg)
   const [x2, y2] = pol(RADII[0] + BAND / 2 + 6, deg)
   const line = w => <line x1={x1.toFixed(2)} y1={y1.toFixed(2)}
@@ -256,38 +154,12 @@ function UsualMark({ at }) {
   )
 }
 
-/* The default was 320, which on a 390 phone is the full column and makes the
-   score card alone most of a screen. 272 is the step down spec 0d section 6
-   asks for; the interior half-disc still gives ~129px for three digits, where
-   they need ~87, and axisFont holds the scale numbers at ~13px. Call sites
-   that pass a size are unaffected.
-
-   A PHONE CEILING WAS TRIED HERE AND TAKEN BACK OUT, which the next worker
-   should know before trying it again. Six call sites pass their own size, from
-   248 up to 430, and on a 390 phone the larger ones are the whole column:
-   capping them below 640px is the obvious way to bring the students Today band
-   under spec 0e section 14's screen and a half. It cannot be done from inside
-   this component. views/Intro.jsx overlays its own svg on this one at the same
-   320 x 232 viewBox and points an arrow at the usual-day mark BY COORDINATE,
-   and that overlay is sized by Intro's own wrapper rather than by this one, so
-   a dial narrower than the size the call site asked for leaves the arrow
-   pointing at nothing on every phone load of the walkthrough. The size has to
-   come down at the call site, where the overlay is, not here. */
-/* `compact`, off by default, is the small dial on a person's card (the
-   owner, 18 October: "it should show the rainbow (small) with the
-   mindscore"). At ~150px the 25 / 50 / 75 numbers print at 6px and the foot
-   labels, centred on the feet, run past the dial's own edge. So, compact
-   only: the ticks keep their rule but lose their numbers, the foot labels sit
-   flush with the dial's two edges at text-fine, the "out of 100" line goes
-   (the card names the range beside it) and the figure takes that room.
-   Every call site without `compact` renders as before. */
+// The centre score is a logistic blend of four z-scores, not the mean of the bands.
 export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
   plate = false, weather = true, compact = false, className }) {
   const shown = Math.round(useSpring(score))
   const boxRef = React.useRef(null)
-  /* Do not hit-test the arcs: a filtered sibling's hit area is its whole
-     filter region, and Chromium will not hit-test a transparent stroke.
-     Pointer geometry also accepts the whole annulus. */
+  // Hit-tests by pointer geometry over the whole annulus, since Chromium does not hit-test transparent strokes.
   const hit = e => {
     if (!onPick) return
     const b = boxRef.current?.getBoundingClientRect()
@@ -322,25 +194,16 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
               </React.Fragment>
             )
           })}
-          {/* after the bands, because every band paints a full-length mist
-              track over anything drawn before it */}
           <Axis font={axisFont(size)} numbers={!compact}/>
           {weather && <ArchWeather/>}
           {usual != null && <UsualMark at={usual}/>}
         </svg>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[28.5%]
           flex flex-col items-center">
-          {/* Sized to the dial, not the page: the inner band's inside edge is
-              77 of 320 viewBox units from the centre, so at 14.5% of the
-              dial's width the figure and its label always sit inside it. A
-              fixed 50px figure ran into the blue band on any dial under ~300px. */}
           <span className="font-display text-dial font-medium leading-none tracking-tight text-ink"
             style={{ fontSize: compact ? 'clamp(18px, 17cqw, 32px)' : 'clamp(18px, 14.5cqw, 50px)' }}>{shown}</span>
           {!compact && <span className="mt-[0.2em] text-tick leading-none text-ink-3" style={{ fontSize: 'clamp(10px, 4.4cqw, 14px)' }}>out of 100</span>}
         </div>
-        {/* 15% and 85% are the feet's own centres in the viewBox, so the
-            labels track the ends they name at any size. Both ends carry their
-            number as well as their word: the scale is labelled, not implied. */}
         <span aria-hidden className={cn('absolute bottom-[2.5%] whitespace-nowrap text-ink-3',
           compact ? 'left-0 text-fine leading-none' : 'left-[15%] -translate-x-1/2 text-tick')}>
           <b className="font-normal text-ink-2">0</b> calm</span>
@@ -348,15 +211,11 @@ export function RainbowDial({ score, usual, rings, onPick, picked, size = 272,
           compact ? 'right-0 text-fine leading-none' : 'left-[85%] -translate-x-1/2 text-tick')}>
           <b className="font-normal text-ink-2">100</b> peak</span>
       </div>
-      {/* No caption under the dial. The usual-day mark is drawn on the scale
-          and named in the aria-label above; design spec 0f holds the dial to
-          its key, the two foot labels. */}
     </div>
   )
 }
 
-/* One row per band, and the row is the control: the arch is aria-hidden, so
-   everything a keyboard or screen reader needs is here. Rows are 56px. */
+// One 56px row per band; the arch is aria-hidden, so these rows are the accessible controls.
 export function RainbowKey({ rings, picked, onPick, className }) {
   return (
     <ul className={cn('m-0 list-none p-0', className)}>
@@ -374,7 +233,6 @@ export function RainbowKey({ rings, picked, onPick, className }) {
               <span aria-hidden className="h-7 w-[3px] shrink-0 rounded-bar"
                 style={{ background: tone }}/>
               <span className="min-w-0 flex-1 font-display text-ui font-medium text-ink">{s.name}</span>
-              {/* the unit beside the figure, never under it */}
               <span className="flex shrink-0 items-baseline gap-1.5">
                 <span className="text-num font-medium tabular-nums leading-none text-ink">
                   {r.value}</span>
@@ -404,9 +262,6 @@ export function SensorTrace({ data, color, h = 96, className }) {
   return (
     <svg viewBox={`0 0 ${W} ${h}`} aria-hidden preserveAspectRatio="none"
       className={cn('block h-24 w-full', className)}>
-      {/* One flat wash under the line, not a ramp: no gradient anywhere in
-          this directory. The area is decoration over the line that carries
-          the values, so it owes no contrast floor of its own. */}
       <path d={`${d} L${W - p} ${h} L${p} ${h} Z`} fill={color} fillOpacity="0.12"/>
       <path d={d} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"
         strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
@@ -415,16 +270,6 @@ export function SensorTrace({ data, color, h = 96, className }) {
   )
 }
 
-/* ── Bars ─────────────────────────────────────────────────────────────────
- * One series on the score's own 0 to 100 scale.
- *
- * It was seven bars against an implied ceiling, the non-peak ones held at 42%
- * opacity. Both were wrong: there was no axis, so a bar's height was only
- * comparable with the bar beside it, and accent at 42% over paper measures
- * 1.91 : 1, under the 3 : 1 a non-text graphic owes. Every bar is the full
- * colour now, the axis is drawn and labelled, and the series average is a
- * dashed reference line with its own value, so the reader can see which
- * periods ran above this person's own day rather than only which was worst. */
 const BAR_TICKS = [0, 25, 50, 75, 100]
 const PLOT_H = 136
 
@@ -438,8 +283,6 @@ export function Bars({ data, color, unit = 'class period', className }) {
     <figure className={cn('m-0', className)}>
       <figcaption className="mark mb-3">By {unit}, out of 100</figcaption>
       <div className="flex gap-2">
-        {/* the axis labels are DOM text, not <text> in a scaled viewBox, so a
-            14px tick really is 14px in a narrow column */}
         <div aria-hidden className="relative w-7 shrink-0" style={{ height: PLOT_H }}>
           {BAR_TICKS.map(t => (
             <span key={t} style={{ bottom: `${t}%` }}
@@ -455,8 +298,6 @@ export function Bars({ data, color, unit = 'class period', className }) {
               <span key={t} aria-hidden style={{ bottom: `${t}%` }}
                 className="absolute inset-x-0 block border-t border-rule"/>
             ))}
-            {/* this person's own average across the window, drawn so the bars
-                are read against something and not only against each other */}
             <span aria-hidden style={{ bottom: `${mean}%` }}
               className="absolute inset-x-0 block border-t border-dashed border-ink-3"/>
             <div className="absolute inset-0 flex items-end gap-1.5">
@@ -491,8 +332,6 @@ export function Bars({ data, color, unit = 'class period', className }) {
   )
 }
 
-/* One value against the wearer's own normal range, on a drawn 0 to 100 axis.
-   The range used to be a grey block with neither of its edges stated. */
 export function RangeBar({ band, color, className }) {
   if (!band) return null
   const { lo, hi, now } = band
@@ -545,8 +384,6 @@ export function RangeBar({ band, color, className }) {
   )
 }
 
-/* Expands underneath rather than opening a sheet. `Bars` and `RangeBar` are
-   still exported; the marketing pages draw them. */
 export function SensorDetail({ ring, onClose }) {
   const s = SENSORS[ring.id] || ring
   const ref = React.useRef(null)

@@ -17,21 +17,11 @@ import { TEEN } from './student/demoTeen'
 import { localDay } from './family/live.js'
 import { cn } from '../lib/utils'
 
-/* The calendar: route id `calendar`, design spec 0d section 6 and 0e section
- * 18. A week and a month on one switch, each day read against the usual
- * range, beside the network the readings travel through. Each day carries
- * its Heads Up face and Mind Score, a key says what they mean, and picking a
- * day shows it under the grid. The month grid is exported (MonthCalendar)
- * and the parent's Trends draws the same one.
- * Demo figures are the student demo teen's (src/views/student/demoTeen.js),
- * generated; in real mode there are no readings and every square shows the
- * no reading dot. Colour never carries a state alone. */
-
+// Calendar route: a week or month of days, each read against the usual range, beside the reading network.
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 
-/* The usual range is the reader's own usual week, so the tolerance is
-   theirs and nobody sets it. */
-const LO = WBAND.lo, HI = WBAND.hi  // live, before a usual exists
+// Fallback range in live mode, before the reader has a usual week of their own.
+const LO = WBAND.lo, HI = WBAND.hi
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
                 'August', 'September', 'October', 'November', 'December']
@@ -39,19 +29,9 @@ const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const DOW_2 = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const DOW_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-/* Monday first, as the week series in src/lib/chartdata.js is keyed. */
+// Monday first, as the week series in src/lib/chartdata.js is keyed.
 const mondayIndex = d => (d.getDay() + 6) % 7
 
-/* ── The network ────────────────────────────────────────────────────────── */
-
-/* Readings move between the three apps only along these links, and only what
-   the teen has switched on. The links themselves are made and approved on the
-   network screen (src/account/Network.jsx); this card shows who is on them
-   and starts the invite. */
-
-/* The demo network: the student, a parent and a Counselor/Professional.
-   The reader's own row is the role word and its picture (./account/viewer.js),
-   never a demo person's name. */
 const DEMO_PEOPLE = [
   { id: 'demo-student', name: 'Maya', role: 'student', avatar: 'char-maya' },
   { id: 'demo-parent',  name: 'Elena', role: 'parent',  avatar: 'char-elena' },
@@ -65,7 +45,6 @@ const GETS = {
   pro: 'Sees what the teen approves',
 }
 
-/* The ways in, by who is reading. Every one opens the network screen. */
 const ACTIONS = {
   student: [
     ['Join a network', `Open the link your parent or ${PRO} sends you.`],
@@ -79,9 +58,8 @@ const ACTIONS = {
   ],
 }
 
-/* The link a parent sends carries the code, so opening it is all a teen
-   does: they sign in or make an account and join at once. The code is in
-   the message as well, for reading out loud. */
+// The link carries the code, so a teen who opens it joins as soon as they sign in. The code is in the text too,
+// for reading aloud.
 const inviteText = code => {
   const at = typeof location === 'undefined' ? '' : `${location.origin}${location.pathname}#/network?code=${code}`
   return `Join my MindMap network: ${at} (code ${code})`
@@ -129,7 +107,6 @@ function NetworkCard({ go, reader, real, className }) {
   const me = useAccount()
   React.useSyncExternalStore(onAccount, accountVersion, () => 0)
   const role = reader || 'student'
-  /* Demo: the worked network. Real: you, then whoever you have linked. */
   const people = real
     ? (me ? [{ ...me, you: true },
             ...listNetwork(me.id).filter(l => l.status === 'active').map(l => l.person)] : [])
@@ -195,20 +172,6 @@ function NetworkCard({ go, reader, real, className }) {
   )
 }
 
-/* ── The month ──────────────────────────────────────────────────────────── */
-
-/* MonthCalendar: a month grid with each day's Heads Up face, its Mind Score,
- * and a legend. Every day with a record is a button; picking one hands its
- * date to `onSelect`, and the screen shows that day under the grid. Used here
- * and on the parent's Trends (src/views/parent-dash.jsx).
- *
- *   days      [{ date: 'YYYY-MM-DD', score, light }], oldest first
- *   today     'YYYY-MM-DD', the last day that can be picked
- *   selected  the picked date, drawn with an ink ring
- *
- * Colour never carries a day alone: the face's mouth, the word in the
- * legend and the figure in the square all say the same thing. */
-
 export const FACE_WORD = Object.freeze({ green: 'Green', yellow: 'Yellow', red: 'Red' })
 export const FACE_MEANS = Object.freeze({
   green: 'In the usual range',
@@ -235,6 +198,7 @@ export const longDay = iso => {
   return `${DOW_LONG[(d.getUTCDay() + 6) % 7]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
 }
 
+// `days` is [{ date: 'YYYY-MM-DD', score, light }], oldest first; `today` is the last day that can be picked.
 export function MonthCalendar({ days = [], today, selected, onSelect, legend = true, className }) {
   const byDate = React.useMemo(() => new Map(days.map(d => [d.date, d])), [days])
   const first = days.length ? days[0].date : today
@@ -249,7 +213,7 @@ export function MonthCalendar({ days = [], today, selected, onSelect, legend = t
   const canNext = month < today.slice(0, 7)
   const dates = Array.from({ length: count }, (_, i) => isoOf(y, m - 1, i + 1))
   const pickable = iso => iso <= today && byDate.has(iso)
-  /* One tab stop for the grid: the picked day, else today, else the first. */
+  // One tab stop for the grid: the picked day, else today, else the first pickable day.
   const stop = [selected, today].find(d => d && d.slice(0, 7) === month && pickable(d)) || dates.find(pickable)
 
   const move = (iso, n) => {
@@ -360,10 +324,6 @@ export function CalendarLegend({ className }) {
   )
 }
 
-/* ── The week ───────────────────────────────────────────────────────────── */
-
-/* Seven rows, each with the day's face, figure and where it sits against the
-   usual range. */
 function WeekRows({ days, lo, hi, selected, onSelect }) {
   return (
     <ul className="m-0 list-none border-t border-ink p-0">
@@ -400,7 +360,6 @@ function WeekRows({ days, lo, hi, selected, onSelect }) {
   )
 }
 
-/* One picked day on the calendar route: its face, figure and readings. */
 const READ_SOURCE = { patch: 'Patch', camera: 'Phone camera', survey: 'Survey' }
 function CalendarDay({ d, usual }) {
   if (!d) return null
@@ -441,11 +400,7 @@ function CalendarDay({ d, usual }) {
   )
 }
 
-/* ── Mark an event ──────────────────────────────────────────────────────── */
-
-/* A day, a time and a word; src/signals/recovery.js works out the stress before events and
-   the recovery time around it. Marks live in the device store and never leave
-   the phone. */
+// src/signals/recovery.js works out the stress before each marked event and the recovery time after it.
 const KIND_WORD = { test: 'Test', talk: 'Presentation', game: 'Game', other: 'Other' }
 const pad2 = n => String(n).padStart(2, '0')
 const dayKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
@@ -556,11 +511,6 @@ function MarkEvent({ className }) {
   )
 }
 
-/* ── The screen ─────────────────────────────────────────────────────────── */
-
-/* Demo: the student demo teen's ninety days (src/views/student/demoTeen.js),
-   so the faces here are the ones on the Heads Up card. Live: this month to
-   today with nothing in it. */
 function useCalendarDays(real) {
   return React.useMemo(() => {
     if (!real) return { days: TEEN.days, today: TEEN.days[TEEN.days.length - 1].date, usual: TEEN.usual }
@@ -573,8 +523,6 @@ function useCalendarDays(real) {
 
 export function CalendarBody({ go, who }) {
   const [mode] = useMode()
-  /* Marks are the student's own (spec 0g), so only a student, or a reader
-     whose app is not known, gets the form. */
   const me = useAccount()
   const reader = who || (me && me.role) || null
   const canMark = !reader || reader === 'student'

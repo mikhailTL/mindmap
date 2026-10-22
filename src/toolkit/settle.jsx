@@ -6,20 +6,8 @@ import { eventsOn, getVersion, subscribe } from '../app/store'
 import { dailySettle, demoDay, runUp, settleWords } from '../signals/recovery'
 import { clock12 } from '../views/reading/demo'
 
-/* One dashboard card from the continuous patch stream: how long the body
- * took to settle after each peak today, and under a rule how far it had
- * climbed before each event the student marked. All of it comes from
- * src/signals/recovery.js and nothing here invents a figure: in the demo the
- * series is demoDay(), in real mode there is no patch stream yet and the card
- * says so.
- *
- * Every number is the wearer against themself. The sentence under the figure
- * names minutes, never a feeling, and the "?" holds the two sentences of
- * working. Events are read from the device store and never leave it. */
-
 const pad2 = n => String(n).padStart(2, '0')
 const hhmm = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`
-/* Every time a reader sees is the dashboard's 12-hour clock. */
 const clock = m => clock12(hhmm(m))
 
 /* Local YYYY-MM-DD, which is how store.js keys an event's day. */
@@ -27,13 +15,7 @@ export function dayKey(d = new Date()) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
-/* ── The settle strip ───────────────────────────────────────────────────── */
-
-/* 07:00 to 16:00 as one ruled strip. Each event is a bar from its peak minute
-   to the minute it had settled, or to the minute the next peak began when it
-   carried over. Settled bars are the brand green; carried ones are the
-   turquoise with a hatch, so the state survives greyscale. Each bar prints
-   its minutes beside it where there is room. */
+// 07:00 to 16:00. Each bar runs from a peak to the minute it settled, or to the next peak if it carried over.
 function SettleStrip({ times, span, offset }) {
   const pid = React.useId()
   const [a, b] = span
@@ -89,12 +71,8 @@ function SettleKey() {
   )
 }
 
-/* ── How your body settles ──────────────────────────────────────────────── */
-
 const WHY = 'Minutes from a peak to halfway back to usual. Slower settling goes with worry in studies of teenagers. MindMap shows the minutes, never a diagnosis.'
 
-/* One marked event as one short row: the label and clock, then the rise
-   against usual in the two hours before it and when the climb began. */
 function eventLine(ev, index, usual) {
   if (!index) return null
   const r = runUp(index, ev.minute, usual)

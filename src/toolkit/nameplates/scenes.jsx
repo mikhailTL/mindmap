@@ -1,11 +1,7 @@
 import React from 'react'
 import { Sky, Sparks, Face, Loop, wave, cloud, heart } from './kit.jsx'
 
-/* One illustrated scene per toolkit activity, keyed by tool id. Each is a
- * flat, soft, outline free drawing in three depth layers (np-far, np-mid,
- * np-near) with exactly one gentle loop that shows what the activity does.
- * `u` is a per card prefix for gradient and clip ids. */
-
+// One SVG scene per tool id, in layers np-far, np-mid and np-near; `u` prefixes gradient and clip ids per card.
 const grass = (from, to, base, tall, step = 8) => {
   let d = ''
   for (let x = from, i = 0; x < to; x += step, i++) {
@@ -24,10 +20,7 @@ const Q = ({ x, y, s = 1, fill = '#ffffff', o = 0.85 }) => (
 )
 
 export const SCENES = {
-  /* ── student exercises ─────────────────────────────────────────────── */
 
-  /* Box Breathing: a light travels round a square of moonlight, four even
-     sides of four seconds, over a night sea. */
   breathing: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#173a6b'], [0.6, '#24508f'], [1, '#3a6fb0']]}/>
@@ -52,7 +45,6 @@ export const SCENES = {
     </>
   ),
 
-  /* 5-4-3-2-1 Grounding: five things for five senses float in warm light. */
   ground: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#ffd56b'], [0.6, '#ffc54f'], [1, '#ffb03a']]}/>
@@ -91,8 +83,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Thought Reframe: inside a thought bubble the rain cloud turns into sun
-     and a rainbow, and back. */
   reframe: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#4d2380'], [0.55, '#7a3fb0'], [1, '#c46bc4']]}/>
@@ -120,7 +110,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Body Scan: a soft line of light passes down a calm, resting figure. */
   scan: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#0b5a44'], [0.6, '#138a66'], [1, '#4cc59a']]}/>
@@ -168,7 +157,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Long Exhale: a balloon slowly breathes out over a sunset sea. */
   sigh: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#6b2c55'], [0.5, '#d9566a'], [1, '#ffb067']]}/>
@@ -214,7 +202,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Hold Still: a marble rests on a lily pad; ripples spread on a still pond. */
   steady: ({ u }) => (
     <>
       <defs>
@@ -274,7 +261,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Breathing by Sound: rings of sound ripple out across a still lake. */
   pocket: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#262b80'], [0.6, '#4652c0'], [1, '#8a96f0']]}/>
@@ -299,7 +285,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Short Walk: footprints appear one by one along a path over the hills. */
   walk: ({ u }) => {
     const steps = [[166, 114, -40], [178, 109, -35], [192, 106, -50], [205, 100, -45], [218, 94, -55], [232, 88, -50], [246, 82, -60]]
     return (
@@ -327,8 +312,6 @@ export const SCENES = {
     )
   },
 
-  /* ── parent tools ──────────────────────────────────────────────────── */
-
   /* Conversation Openers: two speech bubbles take turns. */
   openers: ({ u }) => (
     <>
@@ -351,7 +334,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Opening Line Check: a note gets a friendly tick. */
   phrasing: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#5a2a8c'], [0.55, '#8a4fc0'], [1, '#c693e8']]}/>
@@ -379,7 +361,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Reading the Mind Score: a rainbow dial with a gently swaying needle. */
   score: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#0d5590'], [0.55, '#2a86c8'], [1, '#7cc4f0']]}/>
@@ -403,7 +384,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Conversation Ground Rules: six stones balanced in a calm stack. */
   rules: ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#ffe6a8'], [0.6, '#ffd98a'], [1, '#ffc76a']]}/>
@@ -428,7 +408,6 @@ export const SCENES = {
     </>
   ),
 
-  /* When to Get Help: a lighthouse beam sweeps over an evening sea. */
   reach: ({ u }) => (
     <>
       <defs>
@@ -455,9 +434,6 @@ export const SCENES = {
     </>
   ),
 
-  /* ── counselor/professional tools ────────────────────────────────────── */
-
-  /* Session Openers: a door stands open and warm light spills out. */
   'pro-opener': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#1a3f73'], [0.55, '#2c5d9e'], [1, '#5d8fd0']]}/>
@@ -474,7 +450,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Next Step Guide: a signpost on a sunny hill, the top sign turning. */
   'pro-triage': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#ffdf8f'], [0.6, '#ffcf6a'], [1, '#ffb85a']]}/>
@@ -519,7 +494,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Talking With Parents: three friendly shapes share a hill under the moon. */
   'pro-parents': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#3f2272'], [0.6, '#6a3ea8'], [1, '#a476d6']]}/>
@@ -543,7 +517,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Referral Note: a paper plane glides over soft clouds. */
   'pro-referral': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#cde9ff'], [0.6, '#b5ddff'], [1, '#9ccfff']]}/>
@@ -565,9 +538,6 @@ export const SCENES = {
     </>
   ),
 
-  /* ── life skills: school ───────────────────────────────────────────── */
-
-  /* Time-Block Planner: soft blocks stack up; the newest drops into place. */
   'school-cram': ({ u }) => {
     const B = ({ x, y, w, c }) => (
       <g><rect x={x} y={y} width={w} height="16" rx="5" fill={c}/>
@@ -591,7 +561,6 @@ export const SCENES = {
     )
   },
 
-  /* Source Checker: a magnifying glass slides across an open book. */
   'school-sources': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#e7dcff'], [0.6, '#d6c4ff'], [1, '#c3a8ff']]}/>
@@ -618,7 +587,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Good Enough Meter: a glass fills up to the line, and that is enough. */
   'school-good-enough': ({ u }) => {
     const glass = 'M204 30H248L242 96H210Z'
     return (
@@ -641,7 +609,6 @@ export const SCENES = {
     )
   },
 
-  /* Active Recall: questions float round a bulb that glows on and off. */
   'school-active': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#0f5a4a'], [0.6, '#1d8a6e'], [1, '#5cc9a2']]}/>
@@ -661,9 +628,6 @@ export const SCENES = {
     </>
   ),
 
-  /* ── life skills: outside ──────────────────────────────────────────── */
-
-  /* Feed Check: posts scroll past on a phone beside a small clock. */
   'outside-feed': ({ u }) => {
     const C = ['#ffd15c', '#ff8a65', '#7ee0a6']
     return (
@@ -720,7 +684,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Saying No: a little wall of pebbles, and the wave stops at it. */
   'outside-no': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#7a1f5c'], [0.55, '#b8407f'], [1, '#ff8fb3']]}/>
@@ -748,8 +711,6 @@ export const SCENES = {
       </g>
     </>
   ),
-
-  /* ── life skills: life ─────────────────────────────────────────────── */
 
   /* Home Basics: a little house, smoke curling from the chimney. */
   'life-home': ({ u }) => (
@@ -849,9 +810,6 @@ export const SCENES = {
     </>
   ),
 
-  /* ── life skills: career ───────────────────────────────────────────── */
-
-  /* Try a Career: a hot air balloon drifts past a mountain with a flag. */
   'career-explore': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#fff0b8'], [0.6, '#ffe08a'], [1, '#ffc96a']]}/>
@@ -875,7 +833,6 @@ export const SCENES = {
     </>
   ),
 
-  /* Professional Email: a letter slides into the mailbox and the flag lifts. */
   'career-email': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#0f4c75'], [0.6, '#2a78a8'], [1, '#6fb6dc']]}/>
@@ -931,7 +888,6 @@ export const SCENES = {
     </>
   ),
 
-  /* You Belong Here: the last puzzle piece slides into its place. */
   'career-belong': ({ u }) => (
     <>
       <Sky u={u} stops={[[0, '#8a2c6b'], [0.55, '#c24f93'], [1, '#f08fc0']]}/>
@@ -952,8 +908,6 @@ export const SCENES = {
   ),
 }
 
-/* A tool added later without its own drawing: calm hills and a sun in its
-   palette, so it still sits well in the column. */
 export function FallbackScene({ u, fade }) {
   return (
     <>

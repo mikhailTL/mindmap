@@ -1,9 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* Drawn marks, no icon library. Stroke is 1.6 at a 24 box, which matches the
-   hairline rules these sit beside. */
-
+// Stroke 1.6 in a 24 unit box, matching the hairline rules the marks sit beside.
 const S = ({ children, className, size = 20, ...rest }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
@@ -25,7 +23,6 @@ export const SweatMark  = p => <S {...p}><path d="M2 17h3.5c1.6 0 2-8 4-8s2.4 8 
 export const TempMark   = p => <S {...p}><path d="M2 8c5 0 6 2.4 10 3.6S19 14 22 16"/></S>
 export const MoveMark   = p => <S {...p}><path d="M2 12h3l1-3 1.4 6L9 12h5l1-2.4L16.4 14 18 12h4"/></S>
 
-/* Shape carries the meaning here; colour is only reinforcement. */
 export const Always     = p => <S {...p}><circle cx="12" cy="12" r="7.5" fill="currentColor" stroke="none"/></S>
 export const Sometimes  = p => <S {...p}><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5v15"/></S>
 export const Never      = p => <S {...p}><circle cx="12" cy="12" r="7.5" opacity=".45"/><path d="M7 17L17 7"/></S>
@@ -37,8 +34,6 @@ export const Bracket    = p => <S {...p}><path d="M9 4H5v16h4M15 4h4v16h-4"/></S
 export const Wave       = p => <S {...p}><path d="M2 12c3 0 3-5 6-5s3 10 6 10 3-5 8-5"/></S>
 export const Grid       = p => <S {...p}><path d="M4 4v16M12 4v16M20 4v16M4 9h16M4 15h16"/></S>
 
-/* Account marks: a person, a network of people, and the actions on an
-   account. Same 24 box, same 1.6 stroke. */
 export const Person     = p => <S {...p}><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></S>
 export const People     = p => <S {...p}><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 6.5M18.5 13.5a6 6 0 0 1 3 5.5"/></S>
 export const Key        = p => <S {...p}><circle cx="8" cy="14" r="4.5"/><path d="M11.5 10.5L20 2M16 6l2.5 2.5M13.5 8.5l2.5 2.5"/></S>
@@ -53,6 +48,5 @@ export const Bin        = p => <S {...p}><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 
 export const Camera     = p => <S {...p}><path d="M3.5 8h4l1.5-2.5h6L16.5 8h4v11h-17z"/><circle cx="12" cy="13" r="3.2"/></S>
 export const Link       = p => <S {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></S>
 
-/* Account settings marks: the about row and the other devices row. */
 export const Info       = p => <S {...p}><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></S>
 export const Devices    = p => <S {...p}><rect x="3" y="5" width="13" height="10" rx="1.5"/><path d="M7 19h5M9.5 15v4"/><rect x="17" y="9" width="4.5" height="10" rx="1.2"/></S>

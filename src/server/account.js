@@ -1,46 +1,13 @@
+// Account API: one POST endpoint dispatching on `op`; mutating replies include a full snapshot of what the account may see.
+// Secrets are scrypt-hashed with a per-account salt; session tokens are stored only as SHA-256 hashes.
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { AVATAR_ALL_IDS, isPhotoAvatar } from '../account/avatar-catalog.js'
 
-/* The account API. One POST endpoint, one `op` per request, and a snapshot
- * of everything the signed-in account may see in every mutating reply, so
- * the client never has to reconcile: it replaces its mirror with the
- * snapshot and renders.
- *
- * What the server holds, and what it never gives out:
- *   - a passcode is scrypt-hashed with a per-account salt and compared in
- *     constant time. It is never stored as digits and never returned.
- *   - a session token is 32 random bytes; the store keeps its SHA-256, so a
- *     copy of the store is not a set of working tokens. 30 days.
- *   - five wrong passcodes lock the account for fifteen minutes. A four
- *     digit passcode needs the lock; without it 10,000 guesses is a minute.
- *   - an account sees itself, the people it is linked to (name, role,
- *     picture, nothing else), its links, its one live code, and, for a
- *     parent, the professional links waiting on them.
- *   - a student's readings and sharing choices live here too, so they
- *     follow the student to any device they sign in on. A parent or a
- *     Counselor/Professional gets day figures only, and only what the student's
- *     sharing switches allow: never a note, never a single reading, never a
- *     position. A pending or declined link gets nothing. See teenFor().
- *
- * Links follow the product's consent rule exactly as the device-only store
- * did: parent-student and parent-pro are active on redeem; pro-student waits
- * until a parent with an active link to that student approves it; two of one
- * role never link.
- */
-
-/* `other` is anyone who is not one of the three audiences. It has the least
-   access there is: no link kind names it, so it can never link to anybody and
-   sees nothing but itself, like a parent linked to nobody. */
+// 'other' matches no link kind, so it cannot link and sees only itself.
 export const ROLES = ['student', 'parent', 'pro', 'other']
 export const SETTINGS = ['school', 'practice', 'other']
-/* Every picture the client offers, read from the one list both sides use
-   (src/account/avatar-catalog.js): the twelve animals and the shapes, faces
-   and patterns. An id not on it is stored as null, and the client draws the
-   initial instead. */
 export const AVATARS = AVATAR_ALL_IDS
-/* An uploaded photo (a small data URL) counts too, but never on a teen's
-   account, as in src/account/store.js. Before this, a photo was dropped on
-   sync (18 October). */
+// Uploaded photo avatars are accepted for every role except student.
 const AVATAR_SET = new Set(AVATARS)
 const avatarFor = (role, v) => (typeof v === 'string'
   && (AVATAR_SET.has(v) || (role !== 'student' && isPhotoAvatar(v))) ? v : null)
@@ -56,28 +23,25 @@ const members = l => LINK_KINDS[l.kind].map(r => l[r])
 const NAME_MAX = 40
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSCODE = /^\d{4,6}$/
-/* A secret is a password of 8 to 128 characters of any kind, or the 4 to 6
-   digit passcode every account had before passwords. Both are hashed the same
-   way. The ceiling keeps one request from buying a very long scrypt. */
+// A secret is a 4 to 6 digit passcode or an 8 to 128 character password; the cap bounds scrypt work per request.
 const SECRET_MAX = 128
 const validSecret = raw => {
   const v = String(raw ?? '')
   return PASSCODE.test(v) || (v.length >= 8 && v.length <= SECRET_MAX)
 }
+// Invite code alphabet omits I, L, O, 0 and 1, which are easy to misread.
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 6
 const CODE_RE = new RegExp('^[' + ALPHABET + ']{' + CODE_LENGTH + '}$')
 const SESSION_S = 30 * 86400
 const INVITE_S = 7 * 86400
+// Five wrong attempts lock the account for 15 min; a 4-digit passcode is otherwise guessable in about a minute.
 const LOCK_AFTER = 5
 const LOCK_MS = 15 * 60000
-/* A push of readings is up to 500 short rows, so the cap is well above the
-   8 KB an account op needs. */
 const MAX_BYTES = 96 * 1024
 const RATE_WINDOW_MS = 60000
 const RATE_MAX = 40
 
-/* Readings. Kept to the fields the student's own log has, nothing else. */
 export const READING_CAP = 500
 export const READING_SOURCES = ['camera', 'survey', 'patch', 'mirror']
 const NOTE_MAX = 280
@@ -87,17 +51,14 @@ const DAY_MS = 86400e3
 /* Days a linked parent or professional can look back over. */
 const TEEN_DAYS = 90
 
-/* What a student can share with each audience, the same keys and nesting as
-   SHARING in src/app/store.js (a test holds the two together). Every switch
-   starts on: the owner wants a parent and a professional to see a linked
-   teen's days from the start, and the teen can switch any of them off. */
+// Same keys as SHARING in src/app/store.js; every switch defaults to on.
+// SHARE_NEEDS forces a dependent switch off when its score switch is off.
 export const SHARE_KEYS = {
   parent: ['score', 'week', 'sleep', 'worn', 'settle'],
   pro: ['score', 'trends', 'raw', 'settle'],
 }
 const SHARE_NEEDS = { parent: { week: 'score' }, pro: { trends: 'score', raw: 'score' } }
-/* The band every score screen uses (src/lib/readingLog.js USUAL), until a
-   teen has three days of their own. */
+// Usual band until a teen has 3 days of readings; matches USUAL in src/lib/readingLog.js.
 const GENERAL_USUAL = { lo: 35, hi: 57, base: 46 }
 
 function cleanReading(e, t = Date.now()) {
@@ -125,8 +86,7 @@ function cleanSharing(given = {}, base = null) {
   return out
 }
 
-/* The teen's local calendar day for a time, from the offset their phone sent
-   (minutes, as Date#getTimezoneOffset gives it). */
+// tz is the phone's offset in minutes (Date#getTimezoneOffset), so days follow the teen's local calendar.
 const dayOf = (at, tz) => new Date(at - tz * 60000).toISOString().slice(0, 10)
 
 function dayFigures(items, tz) {
@@ -145,9 +105,7 @@ function dayFigures(items, tz) {
   })
 }
 
-/* The teen's own usual band: the mean of their last 30 day figures, give or
-   take their own spread, never narrower than 5. The general band until
-   there are three days. */
+// Personal usual band: mean of the last 30 day means, plus or minus their SD (at least 5 points).
 function usualOf(days) {
   const recent = days.slice(-30)
   if (recent.length < 3) return { ...GENERAL_USUAL, general: true }
@@ -179,10 +137,7 @@ function randomCode() {
   return out
 }
 
-/* The public face of an account: what another person in the network sees. */
 const pub = a => ({ id: a.id, name: a.name, role: a.role, avatar: a.avatar })
-/* What the account sees of itself. Never the hash, the salt or the lock.
-   lastSignInAt is a time only; no address is ever kept. */
 const me = a => ({ id: a.id, role: a.role, name: a.name, email: a.email, avatar: a.avatar,
                    setting: a.setting, createdAt: a.createdAt, lastSignInAt: a.lastSignInAt || null })
 
@@ -192,7 +147,7 @@ export function makeHandler({ kv }) {
     name: n => 'name:' + lower(n),
     email: e => 'email:' + cleanEmail(e),
     sess: t => 'sess:' + sha(t),
-    /* Every live session hash for an account, so one op can end them all. */
+    // Set of session hashes per account, so every session can be ended at once.
     sessions: id => 'sessions:' + id,
     inv: c => 'inv:' + c,
     invby: id => 'invby:' + id,
@@ -232,15 +187,8 @@ export function makeHandler({ kv }) {
     return s ? { ...cleanSharing(s), set: true } : { ...cleanSharing({}), set: false }
   }
 
-  /* One linked teen as a parent or a professional may see them. Day figures
-     only, each item only if the teen's switch for this audience is on:
-       score off           no days at all
-       parent week off     no usual band (whether a day ran above it)
-       parent worn off     no sources (whether the patch was on)
-       pro trends off      the latest day only, and no usual band
-       pro raw             the time of the latest reading
-     Never a note, a single reading, a reading's time for a parent, or a
-     position: none of them is in the shape below. */
+  // What a linked parent or pro sees: day figures only, filtered by the student's switches for that audience.
+  // Notes, single readings and positions are not part of this shape.
   async function teenFor(student, audience) {
     const share = (await sharingOf(student.id))[audience]
     const out = { id: student.id, name: student.name, avatar: student.avatar, sharing: share, days: [] }
@@ -257,7 +205,6 @@ export function makeHandler({ kv }) {
     return out
   }
 
-  /* Everything the signed-in account may see. Built fresh for every reply. */
   async function snapshot(a) {
     const links = await linksOf(a.id)
     const peopleIds = new Set()
@@ -307,8 +254,6 @@ export function makeHandler({ kv }) {
     await kv.sadd(K.sessions(a.id), sha(token))
     return token
   }
-  /* Ends every session but `keep` (a token hash, or null for all of them).
-     Returns how many were live. */
   async function endSessions(id, keep = null) {
     let ended = 0
     for (const h of await kv.smembers(K.sessions(id))) {
@@ -325,7 +270,6 @@ export function makeHandler({ kv }) {
     await putAccount(a)
   }
 
-  /* ── ops ── */
   const ops = {
     async create(_, b) {
       const role = b.role
@@ -338,8 +282,7 @@ export function makeHandler({ kv }) {
       if (role === 'pro' && !SETTINGS.includes(b.setting)) return { ok: false, reason: 'setting' }
       if (!validSecret(b.passcode)) return { ok: false, reason: 'passcode' }
       const id = newId()
-      /* The name and email indexes are claimed first, with nx, so two
-         requests cannot both win the same name. */
+      // Name and email indexes are claimed with nx first, so two concurrent requests cannot take the same name.
       if ((await kv.set(K.name(name), id, { nx: true })) === null) return { ok: false, reason: 'taken' }
       if (email && (await kv.set(K.email(email), id, { nx: true })) === null) {
         await kv.del(K.name(name)); return { ok: false, reason: 'taken' }
@@ -381,7 +324,6 @@ export function makeHandler({ kv }) {
       return { ok: true }
     },
 
-    /* Every other device signed out; the one asking stays signed in. */
     async signout_all(s) {
       const ended = await endSessions(s.a.id, sha(s.token))
       return { ok: true, ended }
@@ -439,8 +381,6 @@ export function makeHandler({ kv }) {
       return { ok: true }
     },
 
-    /* One live code per issuer: a new one replaces the old. Only a parent
-       or a professional issues one; a teen joins, never invites. */
     async invite(s) {
       const a = s.a
       if (a.role !== 'parent' && a.role !== 'pro') return { ok: false, reason: 'role' }
@@ -471,6 +411,7 @@ export function makeHandler({ kv }) {
       const existing = mine.find(l => members(l).includes(from.id))
       if (existing && existing.status !== 'declined') return { ok: false, reason: 'exists' }
       if (existing) { await kv.del(K.link(existing.id)); for (const m of members(existing)) await kv.srem(K.links(m), existing.id) }
+      // parent-student and parent-pro links are active at once; pro-student waits for a linked parent to approve.
       const pending = kind === 'pro-student'
       const link = {
         id: newId(), kind, student: null, parent: null, pro: null,
@@ -482,15 +423,11 @@ export function makeHandler({ kv }) {
       await kv.set(K.link(link.id), link)
       await kv.sadd(K.links(a.id), link.id)
       await kv.sadd(K.links(from.id), link.id)
-      /* The code stays live until it expires, for every other teen it was sent to. */
       return { ok: true, link, snapshot: await snapshot(a) }
     },
 
-    /* A student's own readings, merged by id: a row with an id already held
-       replaces it. `remove` drops ids, `clear` empties the log first. Only
-       the most recent READING_CAP are kept. A row that fails a check is
-       counted and dropped; the rest are kept. `tz` is the phone's offset,
-       used to put a reading on the teen's own calendar day. */
+    // Merged by id; invalid rows are counted and dropped, and only the latest READING_CAP are kept.
+    // tz must be a whole number of minutes within 14 h (840).
     async readings(s, b) {
       const a = s.a
       if (a.role !== 'student') return { ok: false, reason: 'role' }
@@ -512,8 +449,6 @@ export function makeHandler({ kv }) {
       return { ok: true, accepted, rejected, snapshot: await snapshot(a) }
     },
 
-    /* A student's sharing switches, per audience. A key left out keeps its
-       stored value; a trend or raw switch never stays on without its score. */
     async sharing(s, b) {
       const a = s.a
       if (a.role !== 'student') return { ok: false, reason: 'role' }
@@ -546,8 +481,8 @@ export function makeHandler({ kv }) {
 
   const OPEN = new Set(['create', 'signin'])
 
-  /* ── transport ── */
   const hits = new Map()
+  // Per-IP sliding window: more than RATE_MAX requests a minute get a 429.
   function limited(req) {
     const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim()
     const t = Date.now()
@@ -591,6 +526,7 @@ export function makeHandler({ kv }) {
     const body = await readBody(req)
     if (!body || typeof body !== 'object') return send(res, 400, { ok: false, reason: 'body' })
     const op = ops[body.op]
+    // ops is a plain object, so `constructor` would resolve through Object.prototype.
     if (!op || body.op === 'constructor') return send(res, 400, { ok: false, reason: 'op' })
     let session = null
     if (!OPEN.has(body.op)) {
@@ -600,7 +536,7 @@ export function makeHandler({ kv }) {
     try {
       return send(res, 200, await op(session, body))
     } catch {
-      /* A fixed string: nothing from the request reaches a log line. */
+      // Constant message, so no request content reaches the logs.
       console.error('account: op failed')
       return send(res, 500, { ok: false, reason: 'server' })
     }

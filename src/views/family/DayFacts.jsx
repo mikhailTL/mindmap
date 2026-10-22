@@ -3,11 +3,6 @@ import { LampFace } from '../../traffic/Face'
 import { cn } from '../../lib/utils'
 import { STATUS_SUB, STATUS_WORD } from './data'
 
-/* One whole day for a parent: the Heads Up face and word, the Mind Score and
- * how it sits against the usual range. Nothing more; the owner, 18 October,
- * "remove these lengthy descriptions below the calendar". Used for the day
- * picked on the calendar. Never a time, a single reading, a note or a place. */
-
 export default function DayFacts({ d, className }) {
   if (!d || d.score == null) {
     return <p className={cn('m-0 text-ui text-ink-2', className)}>No readings on this day.</p>

@@ -1,23 +1,13 @@
 import { PRO } from './terms.js'
 
-/* Counselor/Professional demo data. Two rules:
-   1. CONSENT is the single source of truth. It feeds both the Consent-tab
-      ledger and the triage board's flags, so the board cannot show a trend for
-      a student consented only to crisis alerts. Keep no second copy.
-   2. Nothing here is a measurement. Every number is generated from the scoring
-      model, deterministically, per student, which is why the per-student
-      helpers take the student as an argument. */
-
+// Demo caseload for the counselor view; every number is generated from the scoring model, none is a measurement.
+// Cohort rows with fewer than K_ANONYMITY students are suppressed.
 export const K_ANONYMITY = 5
 
-/* Consented students across the whole building. The counselor/professional's own eight are
-   below; year-group screens aggregate everyone. */
 export const SCHOOL_N = 96
 
-/* score:  may the school see a Mind Score at all
-   trends: may the school see week-over-week movement
-   Crisis alerts reach the counselor/professional either way: the one thing a guardian
-   cannot consent away, and it is stated wherever it applies. */
+// Single source for consent flags, read by both the consent ledger and the triage board.
+// Crisis alerts reach the counselor whatever these flags say.
 export const CONSENT = {
   'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Aug 22, 2025' },
   'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'FERPA', signedAt:'Aug 24, 2025' },
@@ -42,12 +32,9 @@ const SEED = [
 ]
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'moderate' : 'info'
-/* Labels name the band the Mind Score sits in, not a verdict on the student. */
 export const TIER_LABEL = { info:'Low', moderate:'Moderate', high:'High', crisis:'Urgent' }
 export const TIER_ORDER = ['crisis','high','moderate','info']
 
-/* Every student, carrying what may be shown about them. Rendering `current`
-   without checking `showScore` is a bug. */
 export const roster = () => SEED.map(s => {
   const c = CONSENT[s.name]
   const current = clamp(s.base, 5, 99), weekAgo = clamp(s.base - s.drift, 5, 99)
@@ -57,18 +44,13 @@ export const roster = () => SEED.map(s => {
     tier: c.score ? tierOf(current) : null }
 })
 
-/* Ordered by how much the Mind Score moved, so it holds only students
-   consented to trends. The rest are listed separately and unordered, because
-   ordering them would leak the thing they withheld. */
+// Only students consented to trends are ordered by change; ordering the rest would reveal what they withheld.
 export const triage = () => roster().filter(s => s.showTrend)
   .sort((a, b) => b.velocity - a.velocity)
 export const scoreOnly  = () => roster().filter(s => s.showScore && !s.showTrend)
   .sort((a, b) => b.current - a.current)
 export const alertsOnly = () => roster().filter(s => !s.showScore)
 
-/* No teacher, and no field for one. A class is a period and a subject here;
-   naming the adult who teaches it would put an invented person in a consent
-   record and would be read by nothing on any screen. */
 export const COURSES = [
   { id:'c1', name:'AP US History',      period:1 },
   { id:'c2', name:'Pre-Calculus',       period:2 },
@@ -79,8 +61,7 @@ export const COURSES = [
 ]
 const ord = n => n + (['th','st','nd','rd'][(n % 100 - n % 10 !== 10) * (n % 10)] || 'th')
 
-/* n counts consented students in that period across the school, not the
-   caseload, hence figures larger than eight. */
+// n counts consented students school-wide in that period, not this caseload.
 export const COHORT_PERIOD = COURSES.map(c => ({
   key:'p' + c.period,
   label:`${ord(c.period)} period · ${c.name}`,
@@ -98,14 +79,7 @@ export const CONSENT_LEDGER = roster().map(s => ({
   signedAt:s.signedAt, expires:s.expires,
 }))
 
-/* Times must match PROTOCOL_TIMES below. The protocol is still open at the
-   last step, so there is no "closed" row. */
-/* Every actor is a role, never a person. The three that were already roles
-   set the pattern: System, the guardian of a pseudonym, the student behind
-   one. A named professional would be an invented person in an audit trail,
-   and one role holds this console, so PRO names them. The log stays
-   attributable because a role plus a time is who did it on a console one
-   professional signs into. */
+// Times match PROTOCOL_TIMES. Actors are roles, not named people.
 export const AUDIT_LOG = [
   { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
   { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the student in person',                 subject:'Student 8241' },
@@ -134,8 +108,6 @@ export const REFERRALS = [
   { student:'Student 1184', to:PRO,opened:'Feb 18', status:'Closed' },
 ]
 
-/* Which signals account for a student's change this week. Generated per
-   student from their own id, so two names never carry the same breakdown. */
 const SIGNALS = [
   'Heartbeat less steady than their own normal',
   'Sweat spikes bunched in single lessons',
@@ -144,6 +116,7 @@ const SIGNALS = [
   'Skin temperature falling through a lesson',
   'Restlessness during seated work',
 ]
+// Deterministic per-student breakdown from a hash of id and name.
 export function driversFor(s) {
   const h = [...s.id + s.name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
   const top = SIGNALS.map((label, i) => ({ label, w: ((h >> i) % 7) + (i === 0 ? 5 : 1) }))
@@ -164,8 +137,6 @@ export const efficacyLabel = i =>
   : i.hrvDeltaPct === 0 ? `${i.name}: no measured change (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
   : `${i.name}: heartbeat steadiness ${i.hrvDeltaPct > 0 ? '+' : ''}${i.hrvDeltaPct}% (${i.sessions} session${i.sessions === 1 ? '' : 's'})`
 
-/* 45 days of daily means, built from that student's own base and drift so the
-   line ends where the board says they are today. */
 export function profile45(s) {
   const start = s.weekAgo - s.drift * 2
   let v = start, out = []

@@ -8,14 +8,7 @@ import { useMode } from '../../lib/mode'
 import { Check, Never } from '../../ui/marks'
 import { logSubjects } from './metrics'
 
-/* The Counselor/Professional's Privacy tab. The owner, 18 October: "a privacy
- * tab on taskbar for counselors, what is shared, dont overcomplicate".
- *
- * The rows come from the teen's own switches (SHARING.pro in app/store.js),
- * so this page cannot promise more than consent gives. The log is the same
- * demo log the Whole group tab reads. */
-
-/* The same switches, in the reader's words. */
+// Keys match the teen's sharing switches in SHARING.pro (src/app/store.js).
 const LABEL = {
   score: `${SCORE} and Heads Up colour`,
   trends: 'Trends, week over week',

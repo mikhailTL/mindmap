@@ -5,32 +5,11 @@ import { useReduced } from '../../toolkit/useReduced'
 import { ScrollRow } from '../../ui/motion'
 import { PRO } from '../../lib/terms'
 import { cn } from '../../lib/utils'
-/* The folder path in full: on a case-insensitive disk './different' is this file. */
+// Full folder path: on a case-insensitive disk './different' resolves to this file.
 import { PICTURES, DIF_CSS } from './different/index.js'
 
-/* What makes MindMap different: eight cards in one sideways row. Owner,
- * 20 October: "have the cards a horizontal carousel that autoscrolls, and
- * revert the images to actual stuff from site ... have it colorful and stuff
- * like it was before with cool animations but not overly overwhelming".
- *
- * Each card is a picture made of the app's own parts (./different/
- * pictures.jsx), a title and one line, on its own two-hue wash. Three looks
- * take turns so neighbours differ: `tint` (the wash is the card), `pane`
- * (white card, washed picture) and `rule` (white card, a coloured rule over
- * a washed picture). Cards are not links: there is no page per feature.
- *
- * The row moves on by one card every four seconds and runs on past the
- * eighth into a copy of the row, then jumps back to the same frame at the
- * start, so the loop has no seam. It holds while the pointer is over it,
- * while a keyboard focus is in it, while a finger is on it, while it is off
- * screen and when paused, and starts again six seconds after the last touch.
- * Under reduced motion it never moves on its own. Arrow buttons and the
- * arrow keys on the row move one card; touch swipes and snaps.
- *
- * Only the card in front plays its picture's motion, once, as it arrives.
- *
- * Order is the owner's: the score first, the network second. */
-
+// Eight cards in one row that advances a card every four seconds and pauses on hover, focus, touch or off screen.
+// It runs into a copy of the row and jumps back to the same frame, so the loop has no seam.
 export const DIFFERENT = [
   { id: 'score', title: 'Mind Score', look: 'tint', wash: ['#dcefe4', '#def0fc'], hue: '#157446',
     line: 'One daily number from our own neural network, built from your body’s signals.' },
@@ -99,8 +78,7 @@ export function Different() {
   const [cur, setCur] = React.useState(0)
   const [seen, setSeen] = React.useState(false)
   const [stopped, setStopped] = React.useState(false)
-  /* Pointer, focus and timing live in a ref: they change on every move and
-     only the timer reads them. */
+  // Pointer, focus and timing live in a ref: they change on every move and only the timer reads them.
   const s = React.useRef({ hover: false, focus: false, held: false, driving: false,
     lastMove: 0, lastTouch: 0, raf: 0, quiet: 0 })
 
@@ -118,14 +96,14 @@ export function Different() {
     }
     return best
   }
-  /* Set the scroll without a snap pulling it about, then hand snap back. */
+  // Sets the scroll with snapping off, then restores it, so snap does not pull the row about.
   const place = x => {
     const el = row.current
     el.style.scrollSnapType = 'none'
     el.scrollLeft = x
     el.style.scrollSnapType = ''
   }
-  /* On the copy of the row, jump back to the same frame on the real one. */
+  // From the copy of the row, jumps back to the same frame on the original.
   const fold = () => {
     const i = nearest()
     if (i >= N) place(posOf(i - N))
@@ -167,7 +145,7 @@ export function Different() {
 
   const touched = () => { s.current.lastTouch = performance.now() }
 
-  /* A scroll the row did not make itself is the reader's. */
+  // A scroll the row did not make itself is the reader's.
   const onScroll = () => {
     if (s.current.driving) return
     touched()

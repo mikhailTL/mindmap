@@ -5,14 +5,6 @@ import {
   removeLink, signIn, signOut, updateProfile, wipe,
 } from '../src/account/store.js'
 
-/* Accounts, links and invitations are kept on this device. These tests run
-   with no window at all, so every localStorage touch has to degrade to the
-   in-memory copy, and the whole flow has to be complete without a server:
-   a pro invites, a student redeems, a parent approves, all on one device by
-   signing in and out in turn. */
-
-/* Email is required for a parent and a professional, optional for a
-   student; a professional also says where they work. */
 const EXTRA = {
   student: {},
   parent: { email: 'dana@example.com' },
@@ -25,8 +17,6 @@ async function make(role, name, passcode = '1234', extra = {}) {
   return r.account
 }
 
-/* The parent, the student and the pro, each with an account, and the parent
-   already linked to the student through the parent's own code. */
 async function family() {
   const parent = await make('parent', 'Dana')
   const invite = createInvite()
@@ -41,7 +31,6 @@ async function family() {
   return { parent, student, pro }
 }
 
-/* Ambiguous glyphs are out of the alphabet: no 0/O, no 1/I/L. */
 const CODE = /^[A-HJ-KM-NP-Z2-9]{6}$/
 
 beforeEach(() => wipe())
@@ -284,7 +273,6 @@ describe('invites and links', () => {
     expect(r.link.kind).toBe('pro-student')
     expect(r.link.needsApprovalFrom).toBe('parent')
     expect(r.link.invitedBy).toBe(pro.id)
-    /* The same student again is already linked. */
     expect(redeemInvite(inv.code).reason).toBe('exists')
     signOut()
     await signIn('Dana', '1234')
@@ -361,7 +349,6 @@ describe('invites and links', () => {
     expect(r.link.student).toBeNull()
     expect(listNetwork(parent.id).map(l => l.person.role).sort()).toEqual(['pro', 'student'])
     expect(listNetwork(pro.id)[0].person.id).toBe(parent.id)
-    /* The other way round: a second professional redeems the parent's code. */
     const inv2 = createInvite()
     signOut()
     await make('pro', 'Ms Ortiz', '2222', { email: 'ortiz@example.com' })
@@ -407,7 +394,6 @@ describe('your data', () => {
     expect(await signIn('Sam', '2468')).toBe('wrong')
     expect(listNetwork(parent.id)).toHaveLength(0)
     expect(listNetwork(student.id)).toHaveLength(0)
-    /* The parent's export carries nothing of the deleted student. */
     await signIn('Dana', '1234')
     const out = JSON.parse(exportAll())
     expect(out.links).toHaveLength(0)

@@ -6,27 +6,11 @@ import { useWakeLock, buzz, useMounted, useHold, readBest, saveBest, HowTo, Coun
 import { useGame, GameBar, Pops, EndCard, useSvgId } from './game'
 import { DidItWork } from './after'
 
-/* Breath Counter, as a rhythm game.
- *
- * A wave scrolls across the screen: up is a breath in, down is a breath out.
- * The player's own line is drawn beside it, and each breath scores how much
- * of it was in time. The wave starts at twelve breaths a minute and slows to
- * under eight over eight breaths, with the breath out longer than the breath
- * in.
- *
- * The player's breath comes from one of two places. Holding Space or the pad
- * means "breathing in", letting go means "breathing out". Or the phone lies
- * on the chest and the tilt of the chest rising and falling is read from
- * devicemotion: gravity, smoothed, minus its slow mean, on whichever axis is
- * moving most, and whether it is going up or down. Which way is "in" depends
- * on how the phone lies, so both are tried and the better one is kept.
- * Nothing is stored; the samples are dropped as they are read. */
-
 const BREATHS = 8
-const FIRST_S = 5                   // 12 a minute
-const LAST_S = 8                    // 7.5 a minute
-const IN_SHARE = 0.4                // the breath out is the longer part
-const GRACE_S = 0.35                // either side of a turn nobody is marked
+const FIRST_S = 5  // 12 breaths a minute
+const LAST_S = 8  // 7.5 breaths a minute
+const IN_SHARE = 0.4  // the breath out is the longer part
+const GRACE_S = 0.35  // seconds either side of a turn that are not scored
 const NOW_X = 104
 const PX_S = 30
 const W = 360, H = 210
@@ -36,8 +20,7 @@ const PERIODS = Array.from({ length: BREATHS }, (_, k) => FIRST_S + (LAST_S - FI
 const STARTS = PERIODS.reduce((a, p, i) => (a.push(i ? a[i - 1] + PERIODS[i - 1] : 0), a), [])
 const TOTAL = STARTS[BREATHS - 1] + PERIODS[BREATHS - 1]
 
-/* Where the wave is at second t: which breath, in or out, its height 0 to 1,
-   and how far from the nearest turn. */
+// Wave state at second t: breath index, in or out, height 0..1 and distance from the nearest turn.
 function target(t) {
   if (t < 0 || t >= TOTAL) return { k: t < 0 ? -1 : BREATHS, inhale: false, y: 0, edge: 0 }
   let k = 0
@@ -60,7 +43,6 @@ function wavePath(from, to) {
   return d
 }
 
-/* The picture: the wave, the player's line, the now line and the two dots. */
 function Wave({ t = -1, trail = [], py = 0, matching = false, still }) {
   const from = t - NOW_X / PX_S
   const to = t + (W - NOW_X) / PX_S
@@ -195,7 +177,7 @@ export default function Chest() {
       if (hold.ref.current) tapped = true
       const M = motion.current
       const sensing = !tapped && M.on && now - M.last < 1000
-      /* both readings of the sensor are scored; the better way up wins */
+      // Which tilt direction means "in" depends on how the phone lies, so both are scored and the better one is used.
       const pol = good[0] - bad[0] >= good[1] - bad[1] ? 0 : 1
       const u = sensing ? (pol ? 1 - M.u : M.u) : (hold.ref.current ? 1 : 0)
       py += (u - py) * Math.min(1, dt * 3)

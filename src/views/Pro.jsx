@@ -19,33 +19,8 @@ import { StartGrid, StartTile } from './home/StartGrid'
 import TeenDetail from './family/TeenDetail'
 import { useLiveTeens } from './family/useLive'
 
-/* THE COUNSELOR/PROFESSIONAL APP: its home and its Trends screen.
- *
- * ProHome ('app-pro') is a way in: a greeting and four big cards, Trends,
- * Toolkit, Ask and Network. No teen's figures are on it.
- *
- * Pro ('app-pro-trends') is where the data lives. Heads Up today across the
- * group sits above two tabs. EACH TEEN (the default) is a card per teen, with
- * a toolbar to search, sort, filter, pick a range, switch to a compact list
- * and choose which figures the cards carry. Every card is split into Today
- * and Trends, and takes the colour of that teen's Heads Up light. Clicking a
- * card opens that teen's record. WHOLE GROUP is the school, the class periods
- * and the network as a whole, plus the rules every figure obeys and the log.
- * Nothing on it names one teen's figures.
- *
- * Demo shows the 24-teen sample caseload from src/lib/roster.js. Live shows
- * the teens linked to this account whose link a parent approved, from the
- * account snapshot (day figures only, and only what each teen shares),
- * refreshed every 20 seconds by useLiveSync. `empty` shows nobody, and the
- * empty state points to Network. No line here mentions a patch being missing:
- * the owner, "dont say 'No Patch' under the counselor/professional dashboard".
- *
- * The four safeguards, in RULES, sit behind the "?" beside the heading and
- * hold on both tabs. Any count across teens needs five or more. */
-
-/* Where the professional works, from their account (src/account/store.js
-   `setting`). The words on the heading change; the k-floor and the consent
-   rules do not. Signed out, the demo is a school. */
+// Counselor/Professional app. ProHome is the way in; Pro ('app-pro-trends') is the caseload, per teen or whole group.
+// Heading words per work setting (src/account/store.js `setting`). The k-floor and consent rules stay the same.
 export const SETTING_WORDS = {
   school: {
     step: 'The whole school',
@@ -67,14 +42,9 @@ export const SETTING_WORDS = {
   },
 }
 const wordsFor = me => SETTING_WORDS[(me && me.role === 'pro' && me.setting) || 'school']
-/* The line under "Start here" for a Counselor/Professional names the setting
-   they chose at sign-up: the dashboard's own `head` words, one source. A
-   student or a parent gets null. */
 export const settingLineFor = me =>
   me && me.role === 'pro' && SETTING_WORDS[me.setting] ? SETTING_WORDS[me.setting].head + '.' : null
 
-/* The four safeguards. Nothing on this dashboard can switch any of them off.
-   Do not shorten these four lines away. */
 const RULES = [
   'You see only what a teen agreed to share.',
   'A group under five shows nothing.',
@@ -84,7 +54,6 @@ const RULES = [
 
 const clock = () => new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
-/* The live-mode margin note. */
 const LiveNote = ({ children, className }) => (
   <span className={cn('inline-flex items-baseline gap-x-2.5 border-l-2 border-accent py-0.5 pl-3', className)}>
     <span className="shrink-0 font-display text-fine font-bold text-accent-ink">Live</span>
@@ -92,9 +61,7 @@ const LiveNote = ({ children, className }) => (
   </span>
 )
 
-/* Today's Heads Up across everyone who shares with you, as three tiles. A
-   group under five draws nothing; a live teen with no reading today is not
-   counted. */
+// Heads Up counts for today. A group under five draws nothing, and a live teen with no reading today is not counted.
 function todayCounts(real, liveTeens) {
   if (!real) return { counts: statusCounts(CASELOAD, 'day'), n: CASELOAD.length }
   const lit = liveTeens.map(t => t.days[t.days.length - 1]?.light).filter(Boolean)
@@ -111,8 +78,9 @@ export function Pro({ go, empty = false, view = 'caseload' }) {
   const liveTeens = real && !empty ? live.teens : []
   const [tab, setTab] = React.useState(view === 'trends' ? 'trends' : 'caseload')
   const [layout, setLayout] = useLayout()
-  const [open, setOpen] = React.useState(null)          // { teen, at }
-  const [log, setLog] = React.useState([])              // this session's lines
+  // `open` is { teen, at }; `log` holds this session's lines.
+  const [open, setOpen] = React.useState(null)
+  const [log, setLog] = React.useState([])
   const [notes, setNotes] = React.useState({})
   const [said, setSaid] = React.useState('')
   const alert = real ? null : alertTeen()
@@ -206,25 +174,16 @@ const RainbowMark = () => (
   </svg>
 )
 
-/* ── THE COUNSELOR/PROFESSIONAL HOME ───────────────────────────────────────
- *
- * A way in, not a dashboard: a greeting, then four big cards, one per part
- * of the app. No teen's figures are on it. The rainbow and the lamps are
- * pictures (see pro/HomeArt.jsx), never a reading. The one number is how many
- * teens share with you. */
-
 export function ProHome({ go }) {
   const [mode] = useMode()
   const real = mode === 'real'
   const me = useAccount()
   const live = useLiveTeens('pro')
-  /* "Welcome, Counselor" in the demo, the account's name in Live. */
   const name = useViewerName('pro')
   const setting = real ? settingLineFor(me) : SETTING_WORDS.school.head + '.'
   const n = real ? live.teens.length : CASELOAD.length
   const shares = n === 0 ? 'No teens connected yet' : n === 1 ? 'One teen shares with you' : `${n} teens share with you`
 
-  /* Cards first, as on the earlier start screen, then who shares with you. */
   return (
     <main className="wrap !pt-4 pb-12">
       <header>

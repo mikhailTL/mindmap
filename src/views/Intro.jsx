@@ -10,18 +10,15 @@ import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { getMode, setMode } from '../lib/mode'
 
-/* Spec 0e, section 15: the walkthrough plays on every load and nothing stored
-   suppresses it. Only the screenshot harness sets this key. */
+// Only the screenshot harness sets this key.
 const AUTO_KEY = 'mindmap.capture'
 
 export function captureHarness() {
   try { return window.localStorage.getItem(AUTO_KEY) === '1' } catch { return false }
 }
 
-/* Nothing is stored, so there is nothing to clear; Entry.jsx moves its store. */
 export function replayIntro() {}
 
-/* Grounds sit .044 to .083 apart in luminance; ink-3 only appears inside a plate. */
 const BEATS = [
   { ms: 6300, bg: '#e8f6f4', head: 'MindMap gives you one number for your day.' },
   { ms: 7000, bg: '#dcf0ef', head: 'The patch sticks to your upper arm.' },
@@ -33,9 +30,10 @@ const BEATS = [
     sub: 'Wear the patch, or answer a short survey. Either way you get one score a day.' },
 ]
 const LAST = BEATS.length - 1
-const EXIT_MS = 620          // matches the overlay opacity transition
+// Milliseconds. EXIT_MS matches the overlay opacity transition; OUT_MS is how early the stage leaves before its beat ends.
+const EXIT_MS = 620
 const SKIP_MS = 180
-const OUT_MS = 900           // the stage leaves this long before the beat ends
+const OUT_MS = 900
 const FADE_MS = 1500
 
 const svgProps = {
@@ -45,10 +43,10 @@ const svgProps = {
   focusable: 'false',
 }
 
-/* beam-ink: 3.96 on the lightest ground, where beam measures 2.69. */
+// beam-ink: 3.96:1 on the lightest ground, where beam measures 2.69:1.
 const PEAK = { '--logo-peak': '#11677f' }
 
-/* Deterministic; --len must cover the path length or the draw never completes. */
+// Deterministic. --len must cover the path length or the stroke draw does not complete.
 function waveLine(y, seed, amp, steps, x0, x1) {
   let d = '', len = 0, px = 0, py = 0
   for (let i = 0; i <= steps; i++) {
@@ -62,7 +60,7 @@ function waveLine(y, seed, amp, steps, x0, x1) {
   return { d, len: Math.ceil(len) + 4 }
 }
 
-/* Written to the node: as state the stage re-rendered 60x a second. */
+// Writes the number straight to the DOM node, so the stage does not re-render every frame.
 function Count({ to, ms = 1400, delay = 0, ...p }) {
   const ref = React.useRef(null)
   React.useEffect(() => {
@@ -178,9 +176,7 @@ function StageOneNumber({ still }) {
   )
 }
 
-/* Beat 2: the patch on the arm, cropped by arithmetic off the licensed plate.
-   A nested svg, not a clipPath: a clip keeps its full geometry and scrolled the
-   dialog sideways on a 390px phone. */
+// A nested svg crops the plate: a clipPath keeps its full geometry and scrolls the dialog sideways at 390px.
 const PHOTO = { w: 1024, h: 688 }
 const PATCH_AT = { x: 0.5737, y: 0.7869, w: 0.0352 }
 const PANEL = { x: 20, y: 20, w: 280, h: 200 }
@@ -389,8 +385,7 @@ function StageMark({ still }) {
 
 const STAGES = [StageOneNumber, StagePatch, StageMarkOnDial, StageShare, StageMark]
 
-/* --t is when a mark starts and --d how long, in seconds from its beat's start.
-   Reduced motion: no animation; every stage renders finished. */
+// --t is when a mark starts and --d how long, in seconds from the start of its beat.
 const CSS = `
 
 .iv-root{--iv-pace:1;--iv-dur:1}
@@ -446,7 +441,6 @@ export function Intro({ onDone }) {
   const doneRef = React.useRef(false)
   const timerRef = React.useRef(0)
 
-  /* A ref, not state: onDone must fire once however the sequence ends. */
   const finish = React.useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
@@ -478,8 +472,7 @@ export function Intro({ onDone }) {
   const goNext = React.useCallback(() => goTo(beatRef.current + 1), [goTo])
   const goPrev = React.useCallback(() => goTo(beatRef.current - 1), [goTo])
 
-  /* Boundaries come off the frame timestamp, so a backgrounded tab cannot leave
-     the headline and the rail disagreeing. Reduced motion: Back and Next are the clock. */
+  // Beat boundaries come off the frame timestamp, so a backgrounded tab cannot leave headline and rail out of step.
   React.useEffect(() => {
     if (reduced) return
     let raf = 0
@@ -513,7 +506,6 @@ export function Intro({ onDone }) {
 
   React.useEffect(() => () => clearTimeout(timerRef.current), [])
 
-  /* Scroll lock, siblings out of the accessibility tree, focus held in the dialog. */
   React.useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -674,9 +666,6 @@ export function Intro({ onDone }) {
   )
 }
 
-/* The guided tour. The real pages are the explanation; a dock at the foot
-   names each one, and the closing beat ends it. `inApp` lifts the dock over
-   the app's tab bar. */
 const STOPS = [
   { view: 'site', name: 'Overview',
     line: 'What MindMap is, and who uses it.' },
@@ -694,11 +683,11 @@ const STOPS = [
     line: 'Which students to check in with this week. Only students who agreed to share appear.' },
 ]
 
-const DWELL = 5800          // how long a page stop holds
-const CLOSE_MS = 6400       // the closing beat
-const TOUR_OUT_MS = 320     // matches the panel opacity transition
+// Milliseconds: a page stop's hold, the closing beat, and the panel opacity transition.
+const DWELL = 5800
+const CLOSE_MS = 6400
+const TOUR_OUT_MS = 320
 
-/* The closing beat alone; the sheet and the .iv-root scope travel with it. */
 export function ClosingBeat({ still }) {
   return (
     <div className="iv-root flex min-h-0 w-full flex-1 items-center justify-center px-5 py-6">
@@ -708,7 +697,7 @@ export function ClosingBeat({ still }) {
   )
 }
 
-/* Disabled label forced to ink-3 (5.61 : 1), not Button's opacity 45. */
+// Disabled label is set to ink-3 (5.61:1) rather than Button's 45% opacity.
 const dockBtn = 'min-h-[46px] shrink-0 rounded-field border border-rule bg-card px-3.5 font-display ' +
   'text-ui font-medium text-ink transition-colors duration-150 hoverOnly:bg-mist active:bg-mist ' +
   'disabled:pointer-events-none disabled:text-ink-3 sm:px-5'
@@ -716,8 +705,7 @@ const dockBtn = 'min-h-[46px] shrink-0 rounded-field border border-rule bg-card 
 export function GuidedTour({ go, onDone }) {
   const reduced = useReducedMotion()
 
-  /* Four stops are app screens, which show a start screen in real mode, so the
-     tour borrows the demo set and hands the reader's own choice back. */
+  // Four stops are app screens, empty in live mode, so the tour switches to the demo set and restores the mode after.
   React.useEffect(() => {
     const was = getMode()
     setMode('demo')
@@ -737,7 +725,6 @@ export function GuidedTour({ go, onDone }) {
   const END = STOPS.length
   const TOTAL = STOPS.length + 1
 
-  /* A ref, not state: onDone must fire once however the sequence ends. */
   const finish = React.useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
@@ -763,8 +750,7 @@ export function GuidedTour({ go, onDone }) {
   const next = React.useCallback(() => goTo(stepRef.current + 1), [goTo])
   const prev = React.useCallback(() => goTo(stepRef.current - 1), [goTo])
 
-  /* Each stop navigates before it explains; `go` or the hash, same router.
-     Focus is taken back two frames later, after the app focuses its main region. */
+  // Focus is taken back two frames after navigating, once App has focused its main region.
   React.useEffect(() => {
     const stop = STOPS[step]
     if (!stop) return

@@ -10,17 +10,6 @@ import {
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, Answer, answerState, GoalMeter, Win, leave } from '../../toolkit/game/skill'
 
-/* Say It Calmly: an I-statement and de-escalation builder.
- *
- * 1. Pick the situation (peer pressure, online bullying, friend friction,
- *    home, group project). Online bullying opens with the four safety steps.
- * 2. Build "I feel ... when ... because ... I need ...", with a live check
- *    for always/never, name calling and blame.
- * 3. Pick up to three de-escalation moves.
- * 4. Three short scenarios: pick a reply, read why.
- * Result: the script to copy and save. Saved scripts live at
- * `mindmap.skills.outside-conflict`. */
-
 export const ID = 'outside-conflict'
 export const ConflictIcon = () => (
   <I><path d="M3.5 5h10v7h-6l-4 3z"/><path d="M13.5 9h7v7.5l-3-2h-5.5v-2.5"/><path d="M7 8.5h3"/></I>

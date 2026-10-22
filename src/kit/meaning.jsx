@@ -6,23 +6,7 @@ import { SENSOR_ORDER, SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 import { SCORE } from '../lib/terms'
 
-/* Reading the Mind Score. Six things a parent reads into a high fortnight, and
- * what the reading can actually support.
- *
- * THE LEDGER. Every answer below is a version of one fact, so the fact is
- * drawn once at the top: the four things measured, the one number they become,
- * and the five things a parent will look for in it that are not in there. Both
- * columns are the real data model rather than a reassurance. The left one is
- * src/lib/sensors.js and the right one is the consent model the parent view
- * already enforces, which is why it can be stated this flatly.
- *
- * The answers open as a height transition rather than appearing, because six
- * rows that jump the page down as they open is the reader losing their place
- * six times. Radix supplies the measured height; the two keyframes are the
- * site's own, so a toolkit disclosure opens at the same speed as every other
- * one. Reduced motion collapses them to their end state and the row is simply
- * open. */
-
+// Reading the Mind Score: what goes into the score, and the things parents look for that it does not contain.
 const CARRIES = [
   ...SENSOR_ORDER.map(id => ({ k: SENSORS[id].name, v: SENSORS[id].short })),
   { k: 'One number a day', v: `The ${SCORE}, 0 to 100, for each of the last 14 days.` },

@@ -1,13 +1,7 @@
 import React from 'react'
 
-/* The app home's opening: three typed lines, then a stress trace drawn across
- * the screen that folds into the MindMap mark and lands where the real mark
- * sits. One clock (`t`, in ms) drives every frame, so Skip and reduced motion
- * are the same thing: jump to END.
- *
- * The geometry of the mark is copied from src/ui/logo.jsx LogoMark (viewBox
- * 40 x 28). If that drawing changes, change MARK, RECT and DOT_R here. */
-
+// App home opening: typed lines, then a stress trace that folds into the MindMap mark. One clock `t` (ms)
+// drives every frame, so Skip and reduced motion both jump to END.
 export const LINES = [
   { word: 'Map',     rest: ' your Mind.',    tone: 'text-accent' },
   { word: 'Support', rest: ' your Stress.',  tone: 'text-beam-ink' },
@@ -32,17 +26,14 @@ const outCubic = x => 1 - Math.pow(1 - x, 3)
 const inOutQuart = x => (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2)
 const lerp = (a, b, k) => a + (b - a) * k
 
-/* LogoMark's five points (viewBox 40 x 28). */
+/* LogoMark's five points (viewBox 40 x 28), copied from src/ui/logo.jsx: MARK, RECT and DOT_R must match it. */
 const MARK = [[10.5, 18.2], [15, 10.2], [20, 15.8], [25.4, 11], [29.5, 17.6]]
 const RECT = { x: 2, y: 4, w: 36, h: 20, rx: 10, sw: 2.2 }
 const PATH_SW = 2.3
 const DOT_R = 2.4
 
-/* The trace is a heart signal, the shape a pulse sensor draws: a flat
-   baseline, a small P wave, the sharp QRS spike, a rounded T wave, three
-   beats across the screen. Both it and the mark are resampled to the same
-   number of points spaced evenly along their length, so the fold from one
-   to the other is point for point and smooth. */
+// The trace is a heart signal: P wave, QRS spike and T wave, three beats across. Trace and mark are both
+// resampled to N points evenly spaced along their length, so the fold maps point to point.
 const N = 96
 const BEAT = [
   [0, 0], [0.08, 0], [0.12, -0.1], [0.16, -0.14], [0.2, -0.1], [0.24, 0], [0.3, 0],
@@ -117,7 +108,7 @@ function TypedLine({ line, t, at, caretUntil }) {
   )
 }
 
-/* The overlay. `box` is the real mark's viewport rect; `size` the viewport. */
+// `box` is the real mark's viewport rect; `size` is the viewport.
 export function IntroOverlay({ t, box, size, onSkip }) {
   const out = prog(t, T.out[0], T.out[1])
   const draw = outCubic(prog(t, T.draw[0], T.draw[1]))

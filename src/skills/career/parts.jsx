@@ -4,9 +4,6 @@ import { ActivityScreen, Sheet, OnDevice, Choice, Action, FIELD } from '../../to
 import { CopyButton } from '../../kit/pro/common'
 import { load, save } from './store'
 
-/* Pieces the four Career tools share: the screen, a saved state hook, a
-   step row, a labelled field, a copyable result and the closing buttons. */
-
 export { Sheet, Choice, Action, CopyButton }
 
 export const uid = () => Math.random().toString(36).slice(2, 9)
@@ -38,7 +35,6 @@ export function H({ children, className, as: As = 'h3' }) {
   return <As className={cn('font-display text-row font-bold tracking-tight text-ink', className)}>{children}</As>
 }
 
-/* A row of numbered steps. A step can be opened once it has been reached. */
 export function Steps({ steps, at, reached = 0, onGo }) {
   const i = steps.findIndex(s => s[0] === at)
   return (
@@ -106,7 +102,6 @@ export function Tick({ on, onClick, children, className }) {
   )
 }
 
-/* Done and Start again, at the end of every tool. */
 export function Finish({ onExit, onAgain, againLabel = 'Start again' }) {
   const done = () => { if (onExit) onExit(); else location.hash = '#/toolkit' }
   return (

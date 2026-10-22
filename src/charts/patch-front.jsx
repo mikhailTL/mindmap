@@ -1,18 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* The patch face on: the marketing view, NOT the accurate one.
- * views/Patch.jsx carries the engineering drawing (412 x 148 stadium, 216 x
- * 108 pod). This is a tall white oval drawn from the supplied reference. Three
- * features must stay in the same relative places: the charging tab breaking
- * the outline at the top, the pod boundary stepped in from the flange, and the
- * sensor window with its single green point at the centre of the lower face.
- * Exactly two gradients, both linear, both doing curvature. Contrast across
- * the drawing is deliberately tiny — white plastic in soft light has almost
- * none. */
-
-/* One superellipse used twice, shell and pod. k is handle length as a fraction
-   of the radius: a true ellipse is 0.552, 0.74 pushes the sides straighter. */
+// Superellipse; k is handle length over radius (0.552 is a true ellipse, 0.74 gives straighter sides).
 function oval(cx, cy, a, b, k = 0.74) {
   const hx = a * k, hy = b * k
   return `M${cx} ${cy - b}`
@@ -25,9 +14,7 @@ function oval(cx, cy, a, b, k = 0.74) {
 const SHELL = oval(120, 172, 96, 132)
 const POD   = oval(120, 172, 76, 108)
 
-/* The mark's geometry, lifted from ui/logo.jsx rather than redrawn: 36 x 20
-   stadium, two-peak ridge, terminal dot. Stroke widths are divided by S so the
-   etch stays a hairline instead of scaling with the coordinates. */
+// Logo geometry from ui/logo.jsx scaled by S; stroke widths are divided by S so the etch stays a hairline.
 const S = 2.55
 const MARK_X = 120 - (40 * S) / 2
 const MARK_Y = 150 - (28 * S) / 2
@@ -44,8 +31,6 @@ function Mark({ dx, dy, color, opacity, width }) {
   )
 }
 
-/* Groove = three offset strokes: lit lower lip, shadowed upper lip, floor of
-   the cut on top. Offsets stay sub-pixel at drawing scale. */
 function Etched({ children }) { return children }
 
 export function PatchFront({ className, size, label }) {
@@ -67,8 +52,6 @@ export function PatchFront({ className, size, label }) {
         </linearGradient>
       </defs>
 
-      {/* The charging tab, drawn before the shell so the shell covers its
-          root. A port that does not break the outline is a sticker. */}
       <g aria-hidden="true">
         <rect x="97" y="23" width="46" height="30" rx="11"
           fill="#f3f8f5" stroke="#93b2a1" strokeOpacity="0.5" strokeWidth="1.4"/>
@@ -79,8 +62,6 @@ export function PatchFront({ className, size, label }) {
         <path d={SHELL} fill="url(#pf-shell)" stroke="#93b2a1" strokeOpacity="0.62" strokeWidth="1.7"/>
         <path d="M99 44q21 7 42 0" fill="none" stroke="#c2d7ca" strokeWidth="1.1"/>
 
-        {/* pod boundary: one step, a shadow line with a lit line under it,
-            which is all a 1mm rise looks like on white plastic */}
         <path d={POD} fill="url(#pf-pod)" stroke="#c2d7ca" strokeWidth="1.1"/>
         <path d={oval(120, 173.4, 76, 108)} fill="none" stroke="#ffffff" strokeWidth="1.4"/>
         <path d={POD} fill="none" stroke="#93b2a1" strokeOpacity="0.28" strokeWidth="1"/>
@@ -91,8 +72,6 @@ export function PatchFront({ className, size, label }) {
           <Mark dx={0} dy={0} color="#93b2a1" opacity={0.72} width={3}/>
         </Etched>
 
-        {/* Satoshi — the etch on the real shell is the same lockup the site
-            is set in. */}
         <g className="font-display" textAnchor="middle" fontSize="20" fontWeight="700"
           letterSpacing="-0.5">
           <text x="120.9" y="209.2" fill="#ffffff" fillOpacity="0.95">MindMap</text>
@@ -100,7 +79,6 @@ export function PatchFront({ className, size, label }) {
           <text x="120" y="208" fill="#93b2a1" fillOpacity="0.74">MindMap</text>
         </g>
 
-        {/* sensor window, in the same place the engineering drawing puts it */}
         <circle cx="120" cy="248" r="23" fill="#f4f8f6" stroke="#c2d7ca" strokeWidth="1.1"/>
         <circle cx="120" cy="248" r="14" fill="none" stroke="#93b2a1" strokeOpacity="0.3" strokeWidth="1"/>
         <circle cx="120" cy="248" r="4.6" fill="#157446"/>

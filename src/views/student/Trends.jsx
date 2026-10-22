@@ -10,30 +10,8 @@ import { LIGHT_WORD, MONTH_LONG, TODAY, addDays, dayName, shortDate, teenSignal 
 import { SOURCE, Shape } from '../reading/marks'
 import { ScoreChart } from './charts'
 
-/* The student's Trends: a month calendar and a date range, over the demo
- * teen's ninety generated days (src/lib/roster.js).
- *
- * The owner, 17 October: "On the demo dashboard, should have calendar and
- * date ranges of mindscores and biometric data including non patch readings."
- *
- *   range      Day, Week, Month, or a custom From and To
- *   calendar   one month, each day's Mind Score coloured by the teen's OWN
- *              usual band (never anyone else's), with that day's Heads Up lamp
- *   chart      the range as a line over the usual band; tap a point to see
- *              how its readings were taken
- *   Heads Up   the range's lights and what was noticed, in the teen's words
- *
- * The owner, 18 October: "everything looks too overwhelming". The day counts
- * under the chart and its "How the colours work" note went; the calendar
- * already colours each day.
- *
- * P2's shared RangeTrend (src/views/family/RangeTrend.jsx) did not exist when
- * this was written, so the range chart here is local. */
-
-/* ── Bands: the teen against their own usual ───────────────────────────── */
-
-/* The same words as the Mind Score Log (src/views/reading/marks.jsx); `short`
-   is for the calendar key. */
+// The demo student's Trends: a range picker, a month calendar, the range chart and Heads Up,
+// over the demo teen's generated days.
 const BANDS = {
   calm: { word: 'Stress is lower than usual', short: 'Lower stress', wash: 'bg-beam-wash', bar: 'bg-beam', fill: '#2294e6', ink: 'text-sky-ink' },
   usual: { word: 'Stress is in your usual range', short: 'Usual stress', wash: 'bg-accent-wash', bar: 'bg-accent', fill: '#157446', ink: 'text-accent' },
@@ -41,15 +19,11 @@ const BANDS = {
   high: { word: 'Stress is much higher than usual', short: 'Much higher stress', wash: 'bg-coral-wash', bar: 'bg-crit', fill: '#a8321f', ink: 'text-crit' },
 }
 const BAND_ORDER = ['calm', 'usual', 'up', 'high']
+// Against the teen's own band: below is calm, up to 8 above the top is 'up', beyond that 'high'.
 export const bandKey = (v, usual) =>
   v < usual.lo ? 'calm' : v <= usual.hi ? 'usual' : v <= usual.hi + 8 ? 'up' : 'high'
-/* The band a demo day sits in, for a chart dot and the words beside it. */
 export const demoBand = usual => v => BANDS[bandKey(v, usual)]
 
-/* ── Sources ────────────────────────────────────────────────────────────── */
-
-/* The Mind Score Log's own words (src/views/reading/marks.jsx), so the two
-   panels name a source the same way. */
 const SOURCES = SOURCE
 
 /* A logged entry as a day reading: local date, 24-hour clock. */
@@ -65,13 +39,9 @@ function logByDate(log) {
   }
   return out
 }
-/* A drawn mark per source, the same shapes the Mind Score Log draws
-   (src/views/reading/marks.jsx), so the source never rests on colour. */
 export function SourceMark({ source, className }) {
   return <Shape source={source} fill="#2a5744" size={12} className={cn('shrink-0', className)}/>
 }
-
-/* ── The range ──────────────────────────────────────────────────────────── */
 
 const KINDS = [['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['custom', 'Custom']]
 
@@ -121,8 +91,6 @@ function RangePicker({ state, set, first }) {
     </div>
   )
 }
-
-/* ── The calendar ───────────────────────────────────────────────────────── */
 
 const ym = iso => iso.slice(0, 7)
 function monthDays(key) {
@@ -216,14 +184,13 @@ function MonthCalendar({ teen, byDate, span, month, setMonth, onPick }) {
   )
 }
 
-/* ── The range chart ────────────────────────────────────────────────────── */
-
 const clockOf = h => (h === 12 ? '12p' : h > 12 ? `${h - 12}p` : `${h}a`)
 const clock12 = t => {
   const [h, m] = t.split(':').map(Number)
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`
 }
 
+// Today plots hourly averages, another single day its logged readings, a longer span one point per day.
 function chartItems(teen, span, byDate) {
   if (span[0] === span[1]) {
     if (span[0] === TODAY) {
@@ -246,24 +213,18 @@ function chartItems(teen, span, byDate) {
   }))
 }
 
-/* The range as one line over the usual band (src/views/student/charts.jsx):
-   evenly spaced, a label under every few points. */
 function RangeChart({ items, usual, detail }) {
   const n = items.length
+  // About eight labels at most. The last point is labelled, so a regular label too close
+  // to it is dropped.
   const every = Math.ceil(n / 8)
   const at = k => (n > 1 ? k / (n - 1) : 0.5)
   const points = items.map((it, k) => ({ key: it.key, x: at(k), v: it.v, read: it.read, item: it }))
-  /* The last point is always labelled, so a regular label too close to it is
-     dropped rather than drawn over it. */
   const ticks = items.map((it, k) => ({ x: at(k),
     label: k === n - 1 || (k % every === 0 && n - 1 - k >= every) ? it.label : '' }))
   return <ScoreChart points={points} ticks={ticks} usual={usual} band={v => BANDS[bandKey(v, usual)]}
     label={`${SCORE} over the range`} detail={detail}/>
 }
-
-/* ── How a point was taken ──────────────────────────────────────────────
-   Shown under the chart once a point is tapped: the readings behind it, each
-   with its source. */
 
 function Taken({ item, byDate }) {
   const rs = item.source ? [{ time: item.time, source: item.source, score: item.v }]
@@ -293,8 +254,6 @@ function Taken({ item, byDate }) {
   )
 }
 
-/* ── Heads Up over the range ────────────────────────────────────────────── */
-
 function RangeHeadsUp({ days }) {
   const n = l => days.filter(d => d.light === l).length
   const freq = new Map()
@@ -320,19 +279,13 @@ function RangeHeadsUp({ days }) {
   )
 }
 
-/* ── The section ────────────────────────────────────────────────────────── */
-
 const RANGE_WORD = { day: 'Day', week: 'Last 7 days', month: 'Last 30 days', custom: 'Custom range' }
 
-/* `log`: the Mind Score Log's entries. When given, every per-reading figure
-   here (the source counts, the readings listed, a single day's line) comes
-   from the log, so this section and the log under it count the same
-   readings. `onSpan` hears the range in use, so the log can show the same
-   days. */
 export function Trends({ teen, className, bare = false, log, onSpan }) {
   const first = teen.days[0].date
   const [state, set] = React.useState({ kind: 'week', anchor: TODAY, from: addDays(TODAY, -13), to: TODAY })
   const [month, setMonth] = React.useState(ym(TODAY))
+  // With `log`, per-reading figures come from the log, so this section and the log count the same readings.
   const byDate = React.useMemo(() => {
     const logged = log && logByDate(log)
     return new Map(teen.days.map(d => [d.date, logged ? { ...d, readings: logged.get(d.date) || [] } : d]))
@@ -358,8 +311,6 @@ export function Trends({ teen, className, bare = false, log, onSpan }) {
   }
 
   return (
-    /* Its own tinted band with a part heading, rising in as it arrives, so
-       the move from today's readings to the trends is plain. */
     <ScrollIn className={className}>
     <section aria-labelledby={bare ? undefined : 'trends-h'} aria-label={bare ? 'Your days' : undefined}
       className={bare ? 'flex flex-col gap-3 lg:gap-4'

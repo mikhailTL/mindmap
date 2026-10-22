@@ -4,14 +4,8 @@ import { AUDIT_LOG, CONSENT, CONSENT_LEDGER, PROTOCOL, PROTOCOL_DONE, PROTOCOL_T
 import { SCORE, PRO_LC, CONSENT_SHORT, CONSENT_OFF } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 
-/* A child's privacy, from the parent's side: what is shared, what was signed,
- * who opened the record, and the steps after a crisis alert. Moved here from
- * the old parent dashboard, facts unchanged. Read from the same CONSENT record
- * and audit log the Counselor/Professional console reads; never a second copy.
- *
- * Every box is one shape: the same padding, a heading, then rows on a rule
- * with their text on one left edge, so no box sits out of line with the next. */
-
+// A child's privacy for the parent, read from the same CONSENT record and audit log as the
+// Counselor/Professional console.
 /* Which console record stands for each demo child. */
 const CODE_OF = { maya: 'Student 8241', leo: 'Student 2298' }
 const codeFor = teen => (CONSENT[CODE_OF[teen.id]] ? CODE_OF[teen.id] : Object.keys(CONSENT)[0])
@@ -55,8 +49,7 @@ function Switch({ on, disabled, label, onClick }) {
   )
 }
 
-/* Label and its line on the left edge, the switch on the right, both tops
-   level. Same rule and padding as every other row on this page. */
+// pt-[11px] levels the label's first line with the 44 px switch beside it.
 function ScopeRow({ label, sub, children }) {
   return (
     <li className="flex items-start justify-between gap-4 border-b border-rule py-2.5">
@@ -150,10 +143,10 @@ const minuteOf = t => {
   const [, h, m, ap] = t.match(/(\d+):(\d+)\s*([AP]M)/i)
   return ((Number(h) % 12) + (/p/i.test(ap) ? 12 : 0)) * 60 + Number(m)
 }
+// Minutes from the alert to the guardian's call step, from the logged protocol times.
 const TO_GUARDIAN = minuteOf(PROTOCOL_TIMES[GUARDIAN_STEP]) - minuteOf(PROTOCOL_TIMES[0])
 
 function CrisisPath({ code }) {
-  /* Only a child whose record holds a logged run shows its clock times. */
   const ran = AUDIT_LOG.some(r => r.subject === code && /crisis alert raised/i.test(r.action))
   return (
     <Box title="Steps after a crisis alert" meta={`${PROTOCOL.length} steps`} className="border-t-2 border-t-crit">

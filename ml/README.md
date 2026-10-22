@@ -1,4 +1,4 @@
-# ml — the neural Mind Score
+# ml: the neural Mind Score
 
 Temporal Neural Additive Model (T-NAM) on the engine's personal z-scores, with a per-person
 calibration layer fitted from check-ins. Evaluated against the production z-score formula
@@ -11,7 +11,7 @@ python3 convert_exam.py   <exam Data dir> telemetry_exam  # PhysioNet wearable e
 npx tsx export_windows.ts telemetry        windows        # the real TS engine: windows, z, formula score
 npx tsx export_windows.ts telemetry_noneeg windows_noneeg
 npx tsx export_windows.ts telemetry_exam   windows_exam
-python3 research.py                                       # experiments A–E -> results/research_full.json + weights
+python3 research.py                                       # experiments A to E -> results/research_full.json + weights
 FEATSET=ppg_only python3 research.py                      # ablations (nomotion / ppg_only / eda_only)
 npx tsx parity.ts                                         # PyTorch vs TypeScript forward pass, max |Δ| ~5e-6
 npx tsx calib_parity.ts Subject3                          # TS gradient-descent calibration == L-BFGS optimum

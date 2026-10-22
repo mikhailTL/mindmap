@@ -2,15 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { INK, N, faceMesh, patchRect, project, strokePairs } from './mesh'
 
-/* A small preview of the face mesh before the camera opens. Not a person:
- * MediaPipe's canonical face (./mesh.js), the 478 points and tessellation
- * the Face Landmarker returns, drawn the way its own demos draw them. The
- * mesh comes in top to bottom once, then the head turns slowly and blinks.
- * Runs only on screen with the tab visible; reduced motion draws one still.
- *
- * 20 October, the owner: "the mask lighting needs to look more like an
- * actual AI model ML not like an LED gala mask". No glow, no beat. */
-
+// Face mesh preview shown before the camera opens. Runs only on screen with the tab visible; reduced motion
+// draws one still frame.
 const W = 240, H = 280
 const S = 12.4, CX = 120, CY = 140 - 0.57 * S
 const IN = [0.2, 1.6]   /* the mesh comes in, seconds */
@@ -22,7 +15,7 @@ const bump = (t, at, w) => Math.max(0, 1 - Math.abs(t - at) / w)
 
 const XY = new Float32Array(N * 2)
 
-/* `u` is canvas units per CSS pixel, so lines keep their width at any size. */
+// `u` is canvas units per CSS pixel, so lines keep their width at any size.
 function draw(ctx, m, t, still, u = 1) {
   ctx.clearRect(0, 0, W, H)
   const live = still ? 0 : ease((t - LIT) / 1.2)

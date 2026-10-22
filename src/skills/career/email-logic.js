@@ -1,6 +1,3 @@
-/* Professional Email: the builder, the texting-habit checker, the STAR
- * answer and the networking notes. Pure functions, no storage. */
-
 export const PURPOSES = [
   { id:'meeting',   label:'Ask for a short chat',     subject:'Request for a short chat',
     askLabel:'What you would like',  askHint:'a 15 minute call about your job',
@@ -49,10 +46,7 @@ export function buildEmail({ purpose = 'meeting', toName, myName, about, ask, de
   return { subject: p.subject, body }
 }
 
-/* ── THE CHECKER ─────────────────────────────────────────────────────────
- * Each rule is a texting habit that reads badly in a work email. It returns
- * the habit, in a few words, and the fix. */
-
+// Checker rules: each flags a texting habit that reads badly in a work email and returns the habit and a fix.
 const GREET  = /^(dear|hi|hello|good (morning|afternoon|evening)|greetings)\b/i
 const CASUAL = /^(hey|heyy+|yo|sup|hiya|wassup)\b/i
 const SIGN   = /^(thank you|thanks|many thanks|best|best regards|kind regards|warm regards|regards|sincerely|all the best|respectfully|with thanks)\b/i
@@ -97,8 +91,6 @@ export function checkEmail(text) {
   return out
 }
 
-/* ── INTERVIEWS ─────────────────────────────────────────────────────────── */
-
 export const INTERVIEW = [
   { q:'Tell me about yourself.',              tip:'Two lines on now, one on what you have done, one on why you are here.' },
   { q:'Why do you want this role?',           tip:'Name one thing about them and one thing you want to learn.' },
@@ -122,8 +114,6 @@ export function starAnswer({ s, t, a, r } = {}) {
 
 /* Seconds to say it out loud at a calm 140 words a minute. */
 export const speakingTime = (words, wpm = 140) => words > 0 ? Math.round(words / wpm * 60) : 0
-
-/* ── NETWORKING NOTES ───────────────────────────────────────────────────── */
 
 export function thankYouNote({ toName, topic, myName, detail } = {}) {
   return [
@@ -167,8 +157,6 @@ export const ETIQUETTE = [
   ]},
 ]
 
-/* A quick round: pick the line that reads as professional. One right
-   answer each; the wrong ones carry the habits the checker flags. */
 const F = (id, prompt, right, wrong, why) => ({ id, prompt, why,
   options:[{ id:'r', text:right, ok:true }, ...wrong.map((t, i) => ({ id:'w' + i, text:t }))] })
 export const FIX_ROUND = [

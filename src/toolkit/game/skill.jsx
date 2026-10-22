@@ -3,35 +3,16 @@ import { cn } from '../../lib/utils'
 import { useGame, Pops, Score } from './parts'
 import { rightOption, gradeRound, mixOptions, roundLine } from './round'
 
-/* The game layer for the life skills tools.
- *
- * Each tool keeps doing its real job (a plan, a script, a list) and gets:
- *   <Quest>        a goal line, steps that fill as you go, and the round
- *                  score; floating +n pops land inside it
- *   <QuickRound>   one card at a time, pick an answer, instant feedback:
- *                  a drawn tick and a ring on a right answer, one soft nudge
- *                  and the better answer on a miss, then why
- *   <Answer>       the answer button QuickRound uses, for tools that run
- *                  their own practice rounds
- *   <GoalMeter>    a meter that glows once when it fills
- *   <Win>          a short "done" line that slides in
- *   useSkill(id)   useGame(id) plus hit(n, event): a pop at the thing tapped
- *
- * Colour comes from the tool's family (theme.js), through --kit-*, so a
- * tool's game pieces match its tile. Under reduced motion every piece holds
- * still and the words carry the result. */
-
-/* The --g-* colours the shared pops read, set to the tool's own family. */
+// Points the shared --g-* colours at the tool's own --kit-* family.
 export const SKILL_VARS = { '--g-main':'var(--kit-art)', '--g-ink':'var(--kit-deep)', '--g-wash':'var(--kit-tint)' }
 
-/* Where an element sits inside the nearest [data-pops] box, in percent. */
+// Position of `target` inside the nearest [data-pops] box, in percent, placed 22px above it.
 export function posFrom(target) {
   const el = target?.currentTarget || target?.target || target
   const box = el?.closest?.('[data-pops]')
   if (!el?.getBoundingClientRect || !box) return {}
   const r = el.getBoundingClientRect(), b = box.getBoundingClientRect()
   if (!b.width || !b.height) return {}
-  /* Just above the thing tapped, so the number never sits on its own fill. */
   return { x: (r.left + r.width / 2 - b.left) / b.width * 100, y: Math.max(0, r.top - b.top - 22) / b.height * 100 }
 }
 
@@ -41,8 +22,6 @@ export function useSkill(id) {
   const hit = React.useCallback((n, target, o = {}) => add(n, { ...posFrom(target), ...o }), [add])
   return { ...g, hit }
 }
-
-/* ── Quest: the goal and the steps ─────────────────────────────────────── */
 
 export function QuestBar({ game, goal, steps, at = 0, className }) {
   const n = steps?.length || 0
@@ -73,7 +52,6 @@ export function QuestBar({ game, goal, steps, at = 0, className }) {
   )
 }
 
-/* Wraps a tool's working area: the bar on top and the pops layer over it. */
 export function Quest({ game, goal, steps, at, children, className, body = 'mt-4 grid gap-4' }) {
   return (
     <div data-pops className={cn('relative', className)} style={SKILL_VARS}>
@@ -84,11 +62,7 @@ export function Quest({ game, goal, steps, at, children, className, body = 'mt-4
   )
 }
 
-/* The way out of a finished tool: back to the Toolkit, or onExit when the
-   tool was opened in place. */
 export const leave = onExit => () => { if (onExit) onExit(); else location.hash = '#/toolkit' }
-
-/* ── answers ───────────────────────────────────────────────────────────── */
 
 function Mark({ ok, ring }) {
   return (
@@ -103,8 +77,6 @@ function Mark({ ok, ring }) {
   )
 }
 
-/* state: idle | right (picked, correct) | wrong (picked, not correct) |
-   reveal (the correct one, after a miss) | dim (not picked) */
 export function Answer({ state = 'idle', onClick, children, reduced = false, className, ...rest }) {
   const locked = state !== 'idle'
   return (
@@ -138,10 +110,7 @@ export const answerState = (option, pick, rightId) =>
     : option.id === pick ? (option.id === rightId ? 'right' : 'wrong')
     : option.id === rightId ? 'reveal' : 'dim'
 
-/* ── QuickRound ────────────────────────────────────────────────────────── */
-
-/* Items as in round.js. `onDone(grade, picks)` runs on the last Next.
-   `points` is the round score for a right answer (never level points). */
+// `points` is the round score per right answer, not level points.
 export function QuickRound({ game, items, label = 'Card', seed = 1, points = 10, onDone, doneLabel = 'See how I did',
                              className, head }) {
   const [i, setI] = React.useState(0)
@@ -219,10 +188,6 @@ export function QuickRound({ game, items, label = 'Card', seed = 1, points = 10,
 
 export { roundLine, gradeRound }
 
-/* ── meters and wins ───────────────────────────────────────────────────── */
-
-/* A tall meter. The words beside it carry the value; it glows once when it
-   reaches full. */
 export function GoalMeter({ value = 0, label, right, className, reduced = false }) {
   const v = Math.max(0, Math.min(1, value || 0))
   const full = v >= 1
@@ -241,8 +206,6 @@ export function GoalMeter({ value = 0, label, right, className, reduced = false 
   )
 }
 
-/* A one-line win that slides in: "Fits before bedtime." Always the house
-   green, whatever the tool's colour, so "done" reads the same everywhere. */
 export function Win({ children, className, reduced = false }) {
   return (
     <p role="status" className={cn('flex items-center gap-2.5 rounded-[12px] bg-accent-wash p-3 font-display text-ui font-bold text-ink',
@@ -256,7 +219,6 @@ export function Win({ children, className, reduced = false }) {
   )
 }
 
-/* The way into a quick round: a bright card with one big button. */
 export function PlayCard({ title, line, onPlay, label = 'Play', className }) {
   return (
     <div className={cn('kit-ground mt-4 flex flex-wrap items-center gap-3 rounded-[18px] p-4', className)}>

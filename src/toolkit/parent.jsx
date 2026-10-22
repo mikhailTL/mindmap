@@ -5,13 +5,6 @@ import { PhraseCheck } from '../kit/phrasecheck'
 import { Meaning } from '../kit/meaning'
 import { SCORE } from '../lib/terms'
 
-/* The parent side of the Toolkit, in the same shell as the student side.
- *
- * Three of these are tools already written for this audience in src/kit/,
- * given a screen each. Two are short lists, one plain sentence a row
- * (spec 0f; rewritten plainly 18 October, owner). Nothing a parent reads here is reported
- * to their teenager or to anybody else. */
-
 const RULES = [
   'Talk during something with an end, like a drive or a walk.',
   'Start with what you noticed, not what the app shows.',

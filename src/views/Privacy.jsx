@@ -5,8 +5,7 @@ import { cardClass, cardInk } from '../ui/card'
 import { WhoSeesWhat } from '../charts/infographics'
 import { SCORE, NOTES, NOTES_DEF, LOCATION, CONSENT_SHORT } from '../lib/terms'
 
-/* Consent scope for a parent account. Moving an item between these lists is
-   a consent change, not copy. Exported so tests can assert the model. */
+// Consent scope for a parent account: moving an item between these lists changes what is shared.
 export const YOU_SEE = [
   `The ${SCORE} for each day, over weeks and months`,
   'Whether a day was above their usual',
@@ -21,9 +20,6 @@ export const YOU_NEVER = [
   'Anything they say. The microphone is never recorded or sent',
 ]
 
-/* The same promises as the two lists, as figures. No fourth may be invented.
-   Each is drawn: one day on a calendar, a file struck through, a group of
-   five people. */
 const DayDrawing = () => (
   <svg viewBox="0 0 64 56" aria-hidden className="h-12 w-14 shrink-0">
     <rect x="6" y="9" width="52" height="42" rx="6" className="fill-card stroke-sky-ink" strokeWidth="2.5"/>
@@ -66,8 +62,6 @@ const LIMITS = [
 
 const PANEL = 'rounded-panel border border-rule bg-card'
 
-/* A ruled row of three figures, each over its drawing. Rules between them,
-   not boxes around them. */
 function Figures({ items, className }) {
   return (
     <ul className={cn('m-0 grid list-none grid-cols-1 p-0 sm:grid-cols-3', className)}>
@@ -106,8 +100,7 @@ function No() {
   )
 }
 
-/* The pair takes two surfaces (src/ui/card.jsx): what is shared on the mint
-   wash, what never is as an outline, so the open side reads as the open one. */
+// Shared items sit on the mint wash and withheld items on an outline, so the open side reads as open.
 function Scope({ title, meta, items, Mark, ink, index, variant = 'plain', hue = 'accent' }) {
   return (
     <ScrollRow index={index} className="h-full">

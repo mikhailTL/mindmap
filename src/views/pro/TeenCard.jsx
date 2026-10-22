@@ -7,35 +7,17 @@ import { mainSources, SOURCE_NAME, SourceIcon } from './sources'
 import { toneOf } from './look'
 import { STATUS_WORD, figures, signed, trendsShared } from './metrics'
 
-/* The Counselor/Professional's teen card: today at a glance, nothing more.
- *
- *   who      the avatar chip, the code, grade and age
- *   today    the Heads Up face, the small rainbow with today's Mind Score,
- *            where today sits against the teen's usual range, and the week
- *            against the 7 days before
- *   Open record
- *
- * The owner, 18 October: the cards "need to be simplified ... they dont even
- * fit in one screen scroll". The bars, the day counts, the readings and the
- * body figures moved to the teen's record (TeenDetail.jsx), under Trends.
- *
- * The rainbow is for a teen who shares their score with this
- * Counselor/Professional only: "same for counselors (except kids that dont
- * share with them)". A teen whose consent withholds the score shows no
- * figure, no dial and no face. */
-
+// A teen whose consent withholds the score shows no figure, dial or face on the card.
 const scoreShared = teen => teen.consent?.score !== false
 
 const sourceWords = teen => mainSources(teen).map(k => SOURCE_NAME[k].toLowerCase()).join(' and ')
 
-/* Where today's score sits against this teen's own usual range. */
 function usualWord(teen, score) {
   if (score > teen.usual.hi) return 'Stress is higher than usual today'
   if (score < teen.usual.lo) return 'Stress is lower than usual today'
   return 'Stress is in their usual range today'
 }
 
-/* The week against the 7 days before, in words. Null without trend consent. */
 function weekWords(teen) {
   if (!trendsShared(teen)) return null
   const c = figures(teen, 'week').change
@@ -98,8 +80,6 @@ export function ProTeenCard({ teen, onOpen }) {
   )
 }
 
-/* The compact list: one row per teen, today's face, the code, today's Mind
-   Score and the week's change from the 7 days before. */
 export function ProTeenRow({ teen, onOpen }) {
   const today = teen.days[teen.days.length - 1]
   const shared = scoreShared(teen)

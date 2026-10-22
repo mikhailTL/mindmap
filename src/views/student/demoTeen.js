@@ -2,20 +2,12 @@ import { FAMILY, TODAY } from '../../lib/roster'
 import { DATA } from '../../lib/assets'
 import { SIGNAL } from '../../signals/light.js'
 
-/* The demo teen behind the student dashboard: Maya, the first child on the
- * parent's demo (roster FAMILY[0]), so the student, the parent and the
- * Counselor/Professional read the same girl.
- *
- * One change to her record: today. The dial and its sentence are drawn from
- * the demo day series (src/lib/assets DATA.day), so today's calendar cell and
- * today's hours are recomputed from that same series. Otherwise the calendar
- * would print one figure for today and the dial another. Generated, not
- * measured; the screens say "Demo". */
-
 export const DEMO_FIRST = FAMILY[0].first
 
 const avg = a => Math.round(a.reduce((s, v) => s + v, 0) / a.length)
 
+// The roster's first child with today rebuilt from the demo day series (DATA.day), so the dial
+// and today's calendar cell print the same figure.
 export const TEEN = (() => {
   const t = FAMILY[0]
   const day = DATA.day || []
@@ -35,9 +27,7 @@ export const TEEN = (() => {
 
 export { TODAY }
 
-/* Heads Up, in the teen's own words. The parent's labels (SIGNAL in
-   src/signals/light.js) are written for an adult reading about someone
-   else; the teen reads what their own hands did. */
+// Signal names in the teen's own words; SIGNAL in signals/light.js is worded for a parent.
 const TEEN_WORDS = {
   pxPerSec: 'fast scrolling',
   reversals: 'scrolling back and forth',

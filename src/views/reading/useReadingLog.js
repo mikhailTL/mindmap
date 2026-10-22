@@ -4,17 +4,14 @@ import { EVENT, KEY, demoReadings, listReadings, updateReading } from '../../lib
 import { TODAY as ROSTER_DAY } from '../../lib/roster'
 import { READ, TAKEN_AT } from './demo'
 
-/* The demo's "now": the roster's today, half an hour after the reading every
-   other demo screen shows. Fixed, so the log looks the same in every capture. */
+// The demo's "now": the roster's today, 30 minutes after the shared demo reading, fixed so the log looks the same
+// in every capture.
 const [y, m, d] = ROSTER_DAY.split('-').map(Number)
 const [th, tm] = String(TAKEN_AT).split(':').map(Number)
 export const DEMO_NOW = new Date(y, m - 1, d, th, tm + 30).getTime()
 
 const DEMO = demoReadings({ end: DEMO_NOW, last: { score: READ.score, clock: TAKEN_AT } })
 
-/** Entries oldest first, the clock the ranges end at, and a note setter.
- *  Demo mode shows the generated fortnight plus any reading actually taken;
- *  notes on generated entries live in memory only. */
 export function useReadingLog() {
   const [mode] = useMode()
   const [stored, setStored] = React.useState(() => listReadings())

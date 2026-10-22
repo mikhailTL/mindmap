@@ -1,14 +1,8 @@
 import React from 'react'
 import { Camera, Link, Person, Stack } from '../../ui/marks'
 
-/* What a reading looks like everywhere in the log. Colour says the band,
- * shape says the source, and both always sit beside words, so neither carries
- * a state on its own.
- *
- * Graphic hexes are the Tailwind tokens: crit, sun, accent, sky. Each clears
- * 3:1 on card. The `ink` classes are the same hues at text contrast. */
-/* Every band names stress; the owner, 18 October: "can never be inspecific
-   like 'A little above usual'". `short` is for legends. */
+// Graphic hexes are the crit, sun, accent and sky tokens, each 3:1 on card; the `ink` classes are the same hues
+// at text contrast. `short` is for legends.
 export const BAND = {
   high:  { word: 'Stress is much higher than usual',     short: 'Much higher stress', fill: '#a8321f', ink: 'text-crit' },
   up:    { word: 'Stress is slightly higher than usual', short: 'Higher stress',      fill: '#b5871b', ink: 'text-sun-ink' },
@@ -23,9 +17,8 @@ export const SOURCE = {
   mirror: { word: 'Mirror',        Icon: Person },
 }
 
-/* Circle for the camera, square for the survey, diamond for the patch,
-   triangle for the mirror.
-   Drawn about a centre so the chart and the list share one geometry. */
+// Circle for camera, square for survey, diamond for patch, triangle for mirror. Drawn about a centre so the chart
+// and the list share one geometry.
 export function ShapePath({ source, cx, cy, r, ...rest }) {
   if (source === 'survey') {
     const s = r * 0.9
@@ -51,7 +44,6 @@ export function Shape({ source, fill = 'currentColor', size = 14, hollow = false
   )
 }
 
-/* Times and days as a reader in the US says them. */
 export function clock(at) {
   const d = new Date(at)
   const h = d.getHours(), m = d.getMinutes()
@@ -73,9 +65,6 @@ export function when(at, now) {
     : new Date(at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
 }
 
-/* The rings a logged reading draws on the rainbow. A camera reading reads the
-   heart, so it fills the heart band; the survey fills one band of its own. A patch reading fills all four. Only the score is kept in the
-   log, so a band carries the score and never a figure that was not measured. */
 const HEART = { id: 'heart', name: 'Heart', glow: '#e11919' }
 const SELF = { id: 'self', name: 'Your answers', color: '#157446', glow: '#1d8fb0' }
 const PATCH = [['heart', 'Heart', '#e11919'], ['sweat', 'Sweat', '#e86a05'],

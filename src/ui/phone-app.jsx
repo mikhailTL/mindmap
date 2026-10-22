@@ -3,9 +3,7 @@ import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
 import { cn } from '../lib/utils'
 
-/* Three beats on a loop, built from the site's own components and demo data so
-   it cannot drift out of date. Under reduced motion the loop does not run and
-   it holds on the score. */
+// Three beats on a loop, HOLD ms each. Under reduced motion it stays on the score.
 const BEATS = ['reading', 'score', 'week']
 const HOLD = 4200
 
@@ -30,9 +28,6 @@ function Reading() {
         letterSpacing:'-0.02em', color:'#0d2b1e' }}>Hold still.</p>
       <p style={{ margin:'6px 0 0', fontFamily:'Chivo,sans-serif', fontSize:16, color:'#2a5744' }}>
         Fingertip over the camera. Twenty eight seconds left.</p>
-      {/* A light plate with a fine grid, like the app (owner, 19 October:
-          "stop making things dark"). Text on #eef8f3: ink 13.9, ink-2 7.5,
-          accent-ink 7.9. */}
       <div style={{ marginTop:22, borderRadius:14, padding:'20px 18px',
         background:'linear-gradient(rgba(21,116,70,.06) 1px, transparent 1px) 0 0 / 100% 16px, linear-gradient(180deg,#f8fcfa,#eef8f3)',
         boxShadow:'inset 0 0 0 1px rgba(21,116,70,.18), 0 10px 24px -18px rgba(13,43,30,.4)' }}>

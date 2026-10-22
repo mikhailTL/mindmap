@@ -1,30 +1,12 @@
+// Mental Mirror score: the pulse goes through the TNAM model; face cues add hand-weighted terms on personal z-scores.
 import {
   FEATURES, ORDINARY_LOGIT, SCORE_TEMPERATURE, calibratedContributions, calibratedLogit,
   forward, identityCalibration,
 } from './tnam.js'
 
-/* Mental Mirror → Mind Score.
- *
- * The face gives two kinds of input. The contactless heart rate goes into the
- * Mind Score model (tnam.js) through the same learned curve the fingertip
- * reading and the patch use, with this person's calibration gains on top. The
- * face features themselves (blink rate, brow, lips, eyes, head) enter as
- * additive terms with a hand allocation, in the same display units, because
- * no dataset exists yet to fit them against (see face.js). Each one is a
- * z-score against this person's own earlier mirror readings, so "your brow is
- * tighter than usual" is what the number means, never "tighter than other
- * people's".
- *
- * Same last step and same scale as the other three routes: an ordinary day
- * is 50, the bands are the bands. */
-
 const K = 2.4
 
-/* Direction and a starting allocation. Positive raises the score.
-   The literature on facial stress cues is consistent on direction and modest
-   on effect size: blink rate and brow activity rise under cognitive load, lip
-   pressing and jaw tension with suppressed affect, and small head movements
-   with restlessness. None of these weights has been fitted. */
+// Positive weight raises the score. Directions follow the facial-stress literature; the weights are not fitted.
 export const FACE_TERMS = [
   { id: 'blinkRate',  w: 0.55, label: 'Blink rate' },
   { id: 'browFurrow', w: 0.60, label: 'Brow tension' },
@@ -34,9 +16,7 @@ export const FACE_TERMS = [
   { id: 'earVar',     w: 0.25, label: 'Eye movement' },
 ]
 
-/* Population starting points, deliberately wide, used until this person has
-   their own history. Blink rate in blinks/min; blendshapes 0–1; headMotion in
-   face-widths per second. */
+// Priors until personal history exists: hr in bpm, blinkRate in blinks/min, blendshapes 0 to 1, headMotion in face widths/s.
 export const FACE_PRIOR = {
   hr:         { m: 76,    s: 11 },
   blinkRate:  { m: 17,    s: 7 },
@@ -55,6 +35,7 @@ export function updateFaceBaseline(baseline, features, dayKey) {
   const b = { ...baseline, stats: { ...baseline.stats } }
   for (const [k, v] of Object.entries(features)) {
     if (v == null || !Number.isFinite(v)) continue
+    // Welford running mean and variance per feature.
     const st = b.stats[k] ? { ...b.stats[k] } : { n: 0, m: 0, m2: 0 }
     st.n += 1
     const d = v - st.m
@@ -71,8 +52,7 @@ function zOf(key, value, baseline) {
   const st = baseline.stats[key]
   const prior = FACE_PRIOR[key]
   if (!st || st.n < 2) return prior ? (value - prior.m) / prior.s : 0
-  /* A floor on the spread, as the patch engine has: a very steady history
-     would otherwise turn ordinary noise into a large z. */
+  // SD floored at 30% of the prior so a very steady history does not inflate z.
   const own = st.n >= 5 ? Math.sqrt(st.m2 / (st.n - 1)) : (prior ? prior.s : 1)
   const sd = Math.max(own, prior ? 0.3 * prior.s : 1e-6)
   return sd > 0 ? (value - st.m) / sd : 0
@@ -96,14 +76,11 @@ export function scoreFace({ face, baseline = emptyFaceBaseline(), calibration = 
   for (const t of used) z[t.id] = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
   if (features.hr != null) z.hr = clamp(zOf('hr', features.hr, baseline), -3, 3)
 
-  /* Heart, through the model. Everything the face cannot read enters as 0. */
   const x = FEATURES.map(k => (k === 'hr' && z.hr != null ? z.hr : 0))
   const fw = forward(x, history)
   const cc = calibratedContributions(fw, calibration)
   const heart = z.hr != null ? (calibratedLogit(fw, calibration) - ORDINARY_LOGIT) / SCORE_TEMPERATURE : 0
 
-  /* Face terms, by hand, in display units. The divisor is the full allocation
-     so a capture missing a term cannot score higher for missing it. */
   const wTotal = FACE_TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
   const faceD = used.reduce((a, t) => a + (K * t.w * z[t.id]) / wTotal / 2, 0)
 
@@ -114,8 +91,7 @@ export function scoreFace({ face, baseline = emptyFaceBaseline(), calibration = 
   if (z.hr != null) contrib.push({ id: 'hr', ch: 'heart', label: 'Pulse', value: features.hr, z: z.hr, raw: cc.hr / SCORE_TEMPERATURE })
   for (const t of used) contrib.push({ ...t, ch: 'face', value: features[t.id], z: z[t.id], raw: (K * t.w * z[t.id]) / wTotal / 2 })
 
-  /* Band: the face channel is unfitted (a fixed widening), the pulse may be
-     missing or poor, and the person's own history may be short. */
+  // Band half-width: face, pulse and short-baseline uncertainties in quadrature, scaled by the logistic slope p(1 - p).
   const sFace = 0.35
   const sPulse = z.hr == null ? 0.45 : 0.45 * (1 - (face.hrQuality ?? 0))
   const sBaseline = 0.75 * Math.exp(-(baseline.days || 0) / 6)
@@ -147,7 +123,6 @@ const SAY = {
   eyeSquint: 'Eye tightening', headMotion: 'Restlessness', earVar: 'Eye movement',
 }
 
-/* One short line: the band, then the single biggest driver if one stands out. */
 export function faceSentence(r) {
   const b = faceBandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]

@@ -6,24 +6,6 @@ import { ActivityScreen, Choice } from './shell'
 import { DidItWork } from './after'
 import { useGame, GameBar, Pops, LevelMeter, EndCard, FillRing, SPRING, SOFT, useSvgId } from './game'
 
-/* Body Scan, rebuilt so it is obvious what to do at every moment.
- *
- *   Start      pick a pace, then Start.
- *   Each part  the part glows and pulses on a large body figure; one line
- *              says what to do ("Notice your shoulders. Breathe out and let
- *              them drop."); a ring counts down the seconds for that part.
- *              When the ring fills the scan moves on by itself, so it works
- *              with eyes half closed. Next region moves on early.
- *   Finish     on the last part the button says Finish.
- *   Check in   which part felt most tense? The answer goes on the end card
- *              with one thing to try next time.
- *
- * Points: 10 for a part held for its whole ring, 5 for a part moved on
- * early. The combo grows with each part in a row.
- *
- * SAFETY. Every line is noticing and letting go, never tensing or squeezing.
- * Any part can be skipped. Nothing is stored but the points. */
-
 const REGIONS = [
   { id:'feet',      name:'Feet',      say:'Notice your feet on the floor. Let them rest.',   tip:'Press your feet softly into the floor next time. It helps you feel settled.' },
   { id:'legs',      name:'Legs',      say:'Notice your legs. Let them feel heavy.',           tip:'Next time, let your legs feel heavy on the chair for a few breaths.' },
@@ -40,7 +22,7 @@ const PACES = [
 ]
 const NEXT_PAUSE = 1100
 
-/* Front view, one path, drawn clockwise from the top of the head. */
+// Front view outline, one path drawn clockwise from the top of the head.
 const BODY = [
   'M60 4', 'C72 4 78 12 78 22', 'C78 30 72 38 66 40', 'L66 48',
   'C82 50 94 54 98 66', 'C101 82 104 100 106 118', 'C107 126 104 132 100 132',
@@ -62,11 +44,9 @@ const SHAPES = {
   shoulders: [[0, 40, 120, 26]],
   face:      [[0, 0, 120, 40]],
 }
-/* Where the "here" marker sits for each part, in figure units. */
+// Marker position per part, in figure units.
 const MARK = { feet:[60, 222], legs:[60, 170], belly:[60, 116], chest:[60, 83], hands:[20, 120], shoulders:[60, 52], face:[60, 22] }
 
-/* The body. `cur` glows and pulses; `done` parts are filled; `tense` is
-   ringed on the end card. Decorative: the words beside it say the same. */
 function Figure({ cur = null, done = [], tense = null, className, reduced }) {
   const id = useSvgId('scan')
   const parts = Object.entries(SHAPES)
@@ -104,7 +84,6 @@ function Figure({ cur = null, done = [], tense = null, className, reduced }) {
             </g>
           )
         }))}
-        {/* soft horizontal lines between the parts, so the body reads as zones */}
         {[40, 66, 100, 132, 208].map(y => (
           <path key={y} d={`M0 ${y}H120`} stroke="#ffffff" strokeWidth="1.6" strokeDasharray="3 4" opacity="0.9"/>
         ))}
@@ -126,7 +105,6 @@ function Figure({ cur = null, done = [], tense = null, className, reduced }) {
   )
 }
 
-/* Seven short bars, one per part: done, now, still to come. */
 function Steps({ i, done }) {
   return (
     <ol className="flex gap-1" aria-label="Parts of the body">
@@ -182,7 +160,7 @@ export default function BodyScan() {
     setI(k); tRef.current = 0; setT(0); setBetween(false); g.cue('turn')
   }, [g.cue]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* The part is done: by the ring (whole) or by Next region (early). */
+  // `whole` is true when the ring filled (10 points) and false for Next region (5 points).
   const complete = React.useCallback(whole => {
     if (between) return
     setDone(d => d.includes(region.id) ? d : [...d, region.id])

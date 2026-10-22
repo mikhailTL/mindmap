@@ -1,21 +1,5 @@
+// Mental Mirror features from per-frame face records: blink rate, tension blendshapes, eye and head motion, contactless pulse.
 import { bandpass, mean, median, percentile, resample, sd, spectrum } from './dsp.js'
-
-/* The Mental Mirror: what a face gives away, as numbers.
- *
- * In: one record per camera frame from face-capture.js: the 52 blendshape
- * scores MediaPipe's Face Landmarker returns, the eye aperture and nose
- * position read off its 478 landmarks, and the mean green level of a patch of
- * forehead skin. Out: a handful of per-capture features, each one a thing a
- * person can recognise in themselves, plus a contactless heart rate.
- *
- * DOM-free, so it runs under Node against synthetic frames.
- *
- * Every feature is scored as a z-score against the same person's own
- * history, captured the same way (face-score.js). None of the face weights
- * are fitted: no public dataset pairs face video with stress labels on the
- * sensors this app already reads. UBFC-Phys (56 people, face video + the same
- * wrist device WESAD used) is the validation set; access is by request. Until
- * that is run, the face channel is a starting allocation. */
 
 export const FACE_SECONDS = 30
 export const FS = 30
@@ -31,12 +15,7 @@ const BLINK = ['eyeBlinkLeft', 'eyeBlinkRight']
 const BLINK_ON = 0.5          /* blendshape score at which a blink has started */
 const BLINK_OFF = 0.3
 const MIN_S = 12
-/* A slow phone (CPU face model, older GPU) may manage only a few frames a
-   second: headless Chromium on a software GPU gave 61 to 91 frames in 30 s,
-   right on the old 60-frame floor, so the same phone passed one reading and
-   failed the next. The face cues need about one frame a second over the
-   capture; the pulse needs at least 8 a second to see a 3 Hz beat, so below
-   that it is withheld, not guessed. */
+// Face cues need about 1 frame/s; the pulse needs at least 8 fps to resolve a 3 Hz beat.
 export const MIN_FACE_FRAMES = 30
 const MIN_FRAMES = 60
 const MIN_PULSE_FPS = 8
@@ -50,8 +29,6 @@ export function analyseFace(frames) {
   const seen = frames.filter(f => f.ok)
   if (seen.length / frames.length < 0.6) return fail('no-face', 'Your face was out of view. Try again in good light.')
 
-  /* Blink rate: rising edges on the mean of the two eye-blink scores, with a
-     hysteresis so a flicker on the threshold is not two blinks. */
   let blinks = 0, closed = false
   const blinkScore = seen.map(f => avg(f.bs, BLINK))
   for (const b of blinkScore) {
@@ -60,8 +37,6 @@ export function analyseFace(frames) {
   }
   const blinkRate = (blinks * 60) / durS
 
-  /* Tension shapes: time-averaged over the capture, blinks excluded from the
-     squint so a blink does not read as a wince. */
   const open = seen.filter((_, i) => blinkScore[i] < BLINK_OFF)
   const pool = open.length >= seen.length * 0.5 ? open : seen
   const browFurrow = mean(pool.map(f => avg(f.bs, BROW)))
@@ -70,14 +45,10 @@ export function analyseFace(frames) {
   const lipPress = mean(pool.map(f => avg(f.bs, LIP)))
   const jawForward = mean(pool.map(f => avg(f.bs, JAW)))
 
-  /* Eye aperture variability (EAR), blinks excluded: fidgeting eyes. */
   const ears = pool.map(f => f.ear).filter(Number.isFinite)
   const earVar = ears.length > 10 ? sd(ears) / (mean(ears) || 1) : 0
 
-  /* Head micro-movement: frame-to-frame nose displacement as a fraction of
-     face width, so distance from the camera cancels. */
-  /* Speeds use each step's own time, so the figure does not depend on the
-     camera's frame rate. */
+  // Nose displacement per second in face widths, so distance from the camera cancels out.
   const steps = []
   for (let i = 1; i < seen.length; i++) {
     const a = seen[i - 1], b = seen[i]
@@ -98,12 +69,7 @@ export function analyseFace(frames) {
   }
 }
 
-/* Contactless pulse from a patch of forehead skin, green channel: the blood
- * volume pulse modulates reflected green light by a few tenths of a percent.
- * Rate only. Beat-to-beat variation at 30 fps off a face is below the noise
- * floor and is not reported; the fingertip reading remains the place for it.
- * Survey of the method: McDuff, "Camera Measurement of Physiological Vital
- * Signs", 2021. */
+// The forehead green channel varies by a few tenths of a percent with blood volume. Rate only, no HRV.
 export function analyseRPPG(samples) {
   if (samples.length < MIN_FRAMES) return { ok: false, reason: 'too-short' }
   const spanS = (samples[samples.length - 1].t - samples[0].t) / 1000
@@ -126,9 +92,7 @@ export function analyseRPPG(samples) {
   const a = p[k0 - 1], b = p[k0], c = p[k0 + 1], den = a - 2 * b + c
   const d = den === 0 ? 0 : (0.5 * (a - c)) / den
   const f0 = f[k0] + Math.max(-0.5, Math.min(0.5, d)) * (f[1] - f[0])
-  /* Quality: how much of the band's power sits in the peak and its two
-     neighbours. Below 0.25 the "pulse" is as likely lighting flicker or a
-     head movement, and the rate is withheld. */
+  // Quality is the share of band power in the peak and its neighbours; below 0.25 it is likely flicker or motion.
   const peakPower = a + b + c
   const quality = inBand > 0 ? Math.min(1, peakPower / inBand) : 0
   const swing = percentile(x, 0.95) - percentile(x, 0.05)

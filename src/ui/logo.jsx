@@ -1,9 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* Everything is currentColor except the terminal dot (--logo-peak), so the
-   mark inherits whatever ground it sits on and needs no second variant. */
-
 export function LogoMark({ className, title }) {
   return (
     <svg viewBox="0 0 40 28" className={className} role={title ? 'img' : undefined}
@@ -18,14 +15,12 @@ export function LogoMark({ className, title }) {
   )
 }
 
-/* `tone` picks the green for "Map": accent on paper, accent-lit on ink. */
+// tone picks the green for "Map": accent is 2.80:1 on the ink ground, so ink uses accent-lit (7.67:1).
 export function Logo({ className, markClassName, tone = 'paper', title = 'MindMap', motto = false }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark className={cn('h-[1.15em] w-auto shrink-0', markClassName)}/>
       <span className="font-display font-bold leading-none tracking-[-0.015em]">
-        {/* accent measures 2.80:1 on ink and fails; the ink ground must use
-            accent-lit, at 7.67:1. Do not collapse these to one value. */}
         Mind<span className={tone === 'paper' ? 'text-accent' : 'text-accent-lit'}>Map</span>
       </span>
       {/* Hidden below sm: at 390 the bar has six tabs to fit. */}

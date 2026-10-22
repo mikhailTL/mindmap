@@ -1,16 +1,9 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 
-/* Where a teen's readings come from, drawn the same way on every card, row
- * and record. The owner: "u need to make it clear that its readings come from
- * the specific source". A patch teen reads from the patch; a teen without one
- * reads from the phone camera and the survey. Each source has its
- * own drawn icon, so the source never rests on colour or on a word alone. */
-
 export const SOURCE_NAME = Object.freeze({ patch: 'Patch', camera: 'Phone camera', survey: 'Survey', phone: 'Phone' })
 const TONE = { patch: 'text-accent-ink', camera: 'text-beam-ink', survey: 'text-lilac-ink', phone: 'text-beam-ink' }
 
-/* The sources a teen's readings can come from, in a fixed order. */
 export const sourcesOf = teen => (teen.patch ? ['patch', 'camera', 'survey'] : ['camera', 'survey'])
 /* The main source, the one the card's source line names. */
 export const mainSources = teen => (teen.patch ? ['patch'] : ['camera', 'survey'])
@@ -41,8 +34,6 @@ export function SourceIcon({ source, size = 18, className }) {
   )
 }
 
-/* "Readings from [patch] Patch" or "Readings from [camera] Phone camera and
-   [survey] Survey". One line, the same on every teen. */
 export function SourceLine({ teen, className, lead = 'Readings from' }) {
   const s = mainSources(teen)
   return (
@@ -60,8 +51,7 @@ export function SourceLine({ teen, className, lead = 'Readings from' }) {
   )
 }
 
-/* A count per source, every source the teen can read from, zeros included,
-   so two teens with the same kit read the same way. */
+// Every source the teen can read from is counted, zeros included, so teens with the same kit read alike.
 export function countBySource(days, list) {
   const c = Object.fromEntries(list.map(k => [k, 0]))
   for (const d of days) for (const r of d.readings) if (r.source in c) c[r.source]++

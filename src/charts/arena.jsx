@@ -5,21 +5,13 @@ import { Card } from '../ui/card'
 import { ArrowLeft, ArrowRight, ChevronDown } from '../ui/marks'
 import { createCinematic } from './cinematic'
 
-/* The interactive CAD on the hardware page.
- * Everything under public/di/arena is VENDORED — regenerated upstream, never
- * edited here. The bundle's own chrome is hidden by the stylesheet below and
- * rebuilt in the site's controls, which drive the element through its public
- * methods. The viewer already carries orbit, explode stages, shell opacity,
- * eight named views, per-component selection and two section cuts.
- * Cost: 620 KB of script, ~20 MB of geometry (9 MB over the wire). Nothing is
- * requested until the box approaches the viewport, and the script is fetched
- * once per page load however many boxes ask for it. */
+// Interactive CAD viewer. public/di/arena is a vendored bundle: its own controls are hidden by SKIN_CSS
+// and rebuilt here on the element's public methods. Nothing loads until the box nears the viewport.
 const SCRIPT = '/di/arena/mindmap-arena.js'
 const DATA   = '/di/arena/mindmap-arena.json'
 const BASE   = '/di/arena/'
 
-/* The element's colour variables are written as inline style by its own
-   setArena(), so a rule in the shadow root cannot beat them. */
+// setArena() writes these as inline style, so a shadow-root rule cannot override them; they are set after append.
 const SKIN = {
   bg:     '#e3ede7',
   ink:    '#0d2b1e',
@@ -28,8 +20,6 @@ const SKIN = {
   accent: '#157446',
 }
 
-/* Appended to the shadow root, so it lands after the bundle's own sheet and
-   wins on order at equal specificity. */
 const SKIN_CSS = `
 .shell{border:0;border-radius:0;background:transparent}
 .shell header,.shell .notice,.shell .caption,.shell .status-note{display:none!important}
@@ -57,8 +47,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 }
 `
 
-/* The eight configurations the model carries. Three stay on the face of the
-   card, five behind the disclosure; all eight call setView. */
 const VIEWS = {
   closed:    'Closed',
   exploded:  'Exploded',
@@ -79,8 +67,7 @@ const reducedMotion = () => {
   try { return matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false }
 }
 
-/* The element registers itself globally, so a second mount must not inject a
-   second copy of a 620 KB script. One promise, shared. */
+// The element registers globally, so the 620 KB script is loaded once per page however many viewers mount.
 let pending = null
 function loadViewer() {
   if (pending) return pending
@@ -97,10 +84,7 @@ function loadViewer() {
   return pending
 }
 
-/* applyState tints the selected body toward #7091e6 and draws the selection
-   box in the same periwinkle — a retired palette, inside a bundle that cannot
-   be edited. An own property on the instance runs the real method and then
-   repaints those two. */
+// applyState draws selection in periwinkle #7091e6; an own property on the instance runs it, then repaints in green.
 function greenSelection(a) {
   const any = a.objects.values().next().value
   if (!any) return
@@ -126,22 +110,16 @@ export const PatchArena = React.forwardRef(function PatchArena(
   const spin = React.useRef(0)
   const [playing, setPlaying] = React.useState(false)
   const [armed, setArmed] = React.useState(false)   /* geometry in, sequence available */
-  /* 'wait' until the box is near the viewport, 'fetch' while the script is in
-     flight, 'live' once mounted, 'error' if the script or WebGL2 is missing. */
   const [phase, setPhase] = React.useState('wait')
   const [mode, setMode] = React.useState(view)
   const [apart, setApart] = React.useState(false)
   const [turning, setTurning] = React.useState(false)
   const [more, setMore] = React.useState(false)
 
-  /* The host can swap in its own drawing the moment the model cannot load,
-     rather than show an empty stage. */
   const failed = React.useRef(onError)
   failed.current = onError
   React.useEffect(() => { if (phase === 'error') failed.current?.() }, [phase])
 
-  /* Any reader input takes hold of the model, so the sequence yields first
-     and stays yielded. */
   const hold = React.useCallback(() => { cine.current?.stop() }, [])
 
   const spinOff = React.useCallback(() => {
@@ -149,16 +127,12 @@ export const PatchArena = React.forwardRef(function PatchArena(
     if (!a?.controls) return
     a.state.rotate = false
     a.controls.autoRotate = false
-    /* the element's own Reset reads this button back, so it is kept true even
-       though the panel it lives in is not on screen */
     a.shadowRoot?.querySelector('[data-action=rotate]')?.setAttribute('aria-pressed', 'false')
     setTurning(false)
   }, [])
 
   React.useImperativeHandle(ref, () => ({
-    /* The element exposes select() publicly but not group isolation, so this
-       repeats its own "Assembly" button, falling back to the group's first
-       body if the internals move. */
+    // Group isolation is not public, so this repeats the element's Assembly button, falling back to the group's first body.
     isolateGroup(group) {
       const a = el.current
       if (!a || !a.D) return
@@ -196,40 +170,28 @@ export const PatchArena = React.forwardRef(function PatchArena(
         a.setAttribute('src', DATA)
         a.setAttribute('asset-base', BASE)
         a.setAttribute('view', view)
-        /* :host declares min-height:680px so the viewer is usable when it is
-           the page. Inside a fixed box it takes the box's height. */
+        // :host sets min-height 680px; inside a fixed box the viewer takes the box's height.
         a.style.cssText = 'display:block;height:100%;min-height:0'
         a.addEventListener('mindmap-error', () => { if (!dead) setPhase('error') })
         a.addEventListener('mindmap-view-change', e => {
           if (dead) return
           setMode(e.detail.view)
-          /* The model changes its own view (selection card "Section", the
-             walkthrough); if it lands on a demoted view the drawer opens. */
           if (!PRIMARY.includes(e.detail.view)) setMore(true)
-          /* setView writes the explode value itself and does not announce it,
-             so the take-apart control would otherwise stay lit over a model a
-             section cut had put back together. */
+          // setView changes the explode value without an event, so the take-apart state follows the view.
           setApart(e.detail.view === 'exploded')
         })
         a.addEventListener('mindmap-explode-change', e => { if (!dead) setApart(e.detail.value > 0.02) })
         a.addEventListener('pointerdown', () => { if (!dead) spinOff() }, { capture: true, passive: true })
         el.current = a
         node.append(a)
-        /* setArena() runs synchronously inside connectedCallback and writes
-           the blue studio onto inline style, so this has to land after the
-           append. */
         for (const [k, v] of Object.entries(SKIN)) a.style.setProperty('--' + k, v)
         const sheet = document.createElement('style')
         sheet.textContent = SKIN_CSS
         a.shadowRoot?.append(sheet)
         setPhase('live')
-        /* `ready` settles once the 178 bodies are in the scene; the sequence
-           writes state.explode and applyState has nothing to write it onto
-           until the geometry is there. */
         a.ready.then(() => {
           if (dead) return
-          /* The scene paints its own solid background over the page; the
-             renderer was already created with alpha. */
+          // The renderer has alpha, so clearing the scene background shows the page behind it.
           if (a.scene) a.scene.background = null
           greenSelection(a)
           a.applyState()
@@ -258,9 +220,7 @@ export const PatchArena = React.forwardRef(function PatchArena(
     }
   }, [view, spinOff])
 
-  /* No public method turns the model, so this moves the camera round the point
-     the controls already look at. Azimuth only, so a press cannot tip the
-     patch onto an edge. */
+  // No public method turns the model, so this orbits the camera about the controls target, azimuth only.
   const turn = React.useCallback(dir => {
     const a = el.current
     if (!a?.controls || !a.camera) return
@@ -325,8 +285,6 @@ export const PatchArena = React.forwardRef(function PatchArena(
   }, [playing, onPlay, spinOff])
 
   const live = phase === 'live' && armed
-  /* 44px is the control floor and text-fine the smallest step that carries a
-     control label. */
   const key = 'min-h-[44px] px-3 text-fine'
   const viewKey = id => (
     <Button key={id} size="sm" variant={mode === id && !playing ? 'solid' : 'outline'}
@@ -335,16 +293,8 @@ export const PatchArena = React.forwardRef(function PatchArena(
   )
 
   return (
-    /* shadow-raise is the site's one depth mechanism: a hard offset, no blur.
-       On the ink band it lands at 10% ink over ink and is invisible there; the
-       white surface against the dark ground is the separation instead. */
     <Card className={cn('flex w-full flex-col shadow-raise', className)}>
       <div className="grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-        {/* The stage owns its height: a fixed-height parent shared with the
-            controls collapsed the canvas to ~100px on a phone. Framing follows
-            canvas aspect — half-width = max(38mm, half-height x aspect) x 1.4
-            — so a 2.2:1 stage draws the patch at a third of its width, and
-            beside a 320px column (near 1.4:1) about two thirds across. */}
         <div className="relative order-1 h-[min(62vw,300px)] bg-mist lg:order-2
           lg:h-[min(50vh,440px)] lg:border-l lg:border-rule">
           <div ref={host} className="h-full w-full"/>
@@ -378,9 +328,6 @@ export const PatchArena = React.forwardRef(function PatchArena(
           </div>
           <span aria-hidden className="mx-1 hidden h-6 w-px bg-rule sm:block"/>
           <div role="group" aria-label="Turn the model" className="flex items-center gap-1.5">
-            {/* Icon-only: the pair of words pushes this row onto a second
-                line at 390px. The name is still on the button for screen
-                readers. */}
             <Button size="sm" variant="outline" disabled={!live} onClick={() => turn(1)}
               className={cn(key, 'min-w-[44px] px-0')}>
               <ArrowLeft/><span className="sr-only">Turn left</span>
@@ -410,9 +357,6 @@ export const PatchArena = React.forwardRef(function PatchArena(
               disabled={!live} onClick={() => takeApart(!apart)} className={key}>
               {apart ? 'Put together' : 'Take apart'}
             </Button>
-            {/* onShowAll: the part cards beside the figure isolate an
-                assembly, and without this the rail went on reading "Showing
-                only this" over a model showing everything. */}
             <Button size="sm" variant="outline" disabled={!live}
               onClick={() => { hold(); spinOff(); onShowAll?.(); try { el.current?.showAll() } catch {} }}
               className={key}>

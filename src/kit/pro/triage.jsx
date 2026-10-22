@@ -3,13 +3,7 @@ import { ActivityScreen, Sheet, Choice } from '../../toolkit/shell'
 import { LampFace } from '../../traffic/Face'
 import { Crisis, Label } from './common'
 
-/* Next Step Guide: today's light and the recent trend, mapped to a next step.
- *
- * A written table, three lights by three trends, with one override that wins
- * over all of it: if the teen has said anything about not being safe, the
- * answer is the safety protocol and the local emergency number, every time.
- * It never names a condition and never says "no action needed". */
-
+// Next Step Guide: a fixed table of three lights by three trends. A yes on the safety question overrides every cell.
 const LIGHTS = [['green', 'Green'], ['yellow', 'Yellow'], ['red', 'Red']]
 const TRENDS = [['settling', 'Settling'], ['same', 'About the same'], ['rising', 'Rising'], ['few', 'Too few days']]
 const SAFETY = [['no', 'No'], ['unasked', 'Not asked yet'], ['yes', 'Yes, or unsure']]
@@ -43,8 +37,7 @@ export function NextStepGuide({ onBack }) {
   const row = light && trend ? TABLE[light][trend === 'few' ? 'same' : trend] : null
   const askSafety = !danger && (light === 'red' || safe === 'unasked')
 
-  /* On a phone the answer sits under the questions, so bring it into view
-     when it first appears and whenever the safety answer becomes yes. */
+  // On a phone the answer sits below the questions, so it is scrolled into view when it appears.
   const out = React.useRef(null)
   const ready = danger || !!row
   React.useEffect(() => {

@@ -9,14 +9,9 @@ import { byDay, lastDays, monthDay } from './liveSeries'
 import { cn } from '../../lib/utils'
 import { LampFace } from '../../traffic/Face'
 
-/* The Trends box on the student home. The owner, 17 October: "there should
- * be a new box called Trends on the main student homepage." One card: the
- * last fourteen days as a small line over the usual band, two figures, and
- * "See your trends", which opens the Trends tab. Demo: the demo teen's days.
- * Live: the student's own readings, one point per day that has one. */
-
 const N = 14
 
+// The last 14 days: the demo teen's days, or the student's own readings as one point per day that has one.
 function useSeries() {
   const { entries, now, demo } = useReadingLog()
   return React.useMemo(() => {
@@ -66,9 +61,6 @@ export function TrendsBox({ go, className }) {
   )
 }
 
-/* The last seven days as faces: each day's Heads Up face over its average
-   Mind Score, the word beside the face for the screen reader. A day with no
-   reading shows a dash. */
 const LIGHT_WORD = { green: 'green', yellow: 'yellow', red: 'red' }
 
 export function WeekFaces({ go, className }) {

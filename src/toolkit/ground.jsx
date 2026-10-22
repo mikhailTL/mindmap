@@ -7,18 +7,6 @@ import { DidItWork } from './after'
 import { motion } from 'framer-motion'
 import { useGame, GameBar, Pops, LevelMeter, EndCard, Burst, SPRING } from './game'
 
-/* 5-4-3-2-1 Grounding, as a scavenger hunt.
- *
- * Five rounds, one per sense: find five things you see, four you hear, three
- * you feel, two you smell, one you taste. Each round deals up to eight cards
- * from that sense's deck. Find the thing in the room, tap the card, and it is
- * collected into the grid at the top. New cards swaps the ones you have not
- * found for fresh ones, so a card that does not fit the room never stalls the
- * hunt. 10 points a find, 15 for a finished sense, 25 for the whole set.
- *
- * No camera: a detector would need a model from a CDN, and the tap is the
- * point anyway. Nothing is saved but the points. */
-
 const SENSES = [
   { id:'see', n:5, name:'See', ask:'things you can see', deck:[
     'Something blue', 'Something round', 'A light', 'Something soft', 'A plant or tree',

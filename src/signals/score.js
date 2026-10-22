@@ -4,28 +4,10 @@ import {
   forward, identityCalibration,
 } from './tnam.js'
 
-/* One score, from whichever channels the phone got. Same scale as the patch
- * and self-report routes, so all three land on one dial.
- *
- * Every feature enters as a z-score against the same person's own history,
- * captured the same way. That is what lets a camera HRV index sit beside a
- * patch RMSSD: a fixed scale difference between methods cancels against each
- * method's own baseline.
- *
- * The heart terms go through the Mind Score network (tnam.js): the learned curve
- * for heart rate and the one for beat-to-beat variation, with this person's
- * calibration gains on top. The voice terms keep the hand allocation below —
- * no public dataset pairs the camera-and-microphone capture with stress
- * labels, so there is nothing to fit them against yet. */
+// Phone-capture Mind Score: heart terms go through the TNAM model, voice terms are hand-weighted; inputs are personal z-scores.
 const K = 2.4                   /* the logistic constant the other two routes use */
 
-/* The sign carries direction:
- *   heart rate up                                     -> load up
- *   beat-to-beat variation down                       -> load up (weight < 0)
- *   pitch up, pitch less steady, loudness less steady -> load up
- * Heart weights are now only used for the confidence band's channel
- * bookkeeping; their contribution to the score comes from the network. Voice
- * weights are a starting allocation, NOT fitted. */
+// The sign gives direction: positive raises the score. Voice weights are a starting allocation, not fitted.
 export const TERMS = [
   { id: 'hr',        ch: 'heart', w:  1.2, label: 'Heart rate' },
   { id: 'hrv',       ch: 'heart', w: -1.4, label: 'Beat-to-beat variation' },
@@ -35,9 +17,6 @@ export const TERMS = [
   { id: 'ampInstab', ch: 'voice', w:  0.3, label: 'Loudness steadiness' },
 ]
 
-/* Starting point before a user has history: population figures for adolescents
-   at rest, deliberately wide. The confidence band carries the fact that these
-   are borrowed. */
 export const PRIOR = {
   hr:        { m: 76,    s: 11 },
   hrv:       { m: 26,    s: 11 },     /* the camera index, not clinical RMSSD */
@@ -51,8 +30,6 @@ export function emptyBaseline() {
   return { n: 0, days: 0, stats: {}, lastDay: null }
 }
 
-/* Welford: running mean and variance without keeping the history. Only one
-   capture per day counts toward `days`; the rest still sharpen the mean. */
 export function updateBaseline(baseline, features, dayKey) {
   const b = { ...baseline, stats: { ...baseline.stats } }
   for (const [k, v] of Object.entries(features)) {
@@ -72,15 +49,13 @@ export function updateBaseline(baseline, features, dayKey) {
 function zOf(key, value, baseline) {
   const st = baseline.stats[key]
   const prior = PRIOR[key]
-  /* Under five captures a personal sd is mostly noise: use the prior's spread
-     with the personal mean. */
+  // Under 2 captures: prior mean and SD. Under 5: personal mean with the prior SD.
   if (!st || st.n < 2) return prior ? (value - prior.m) / prior.s : 0
   const sd = st.n >= 5 ? Math.sqrt(st.m2 / (st.n - 1)) : (prior ? prior.s : 1)
   const m = st.m
   return sd > 0 ? (value - m) / sd : 0
 }
 
-/* Assembles the feature set from whatever the capture produced. */
 export function featuresFrom({ ppg, voice }) {
   const f = {}
   if (ppg?.ok) {
@@ -106,9 +81,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   const z = {}
   for (const t of used) z[t.id] = clamp(zOf(t.id, features[t.id], baseline), -3, 3)
 
-  /* Heart, through the network. A signal the phone cannot read enters as 0 --
-     "at your usual" -- which is what the network was trained to tolerate. Motion
-     enters on the patch's scale, 1 = the 0.35 g line. */
+  // Missing signals enter as 0 (at usual); motion enters as peak g over the 0.35 g limit, capped at 1.
   const peakG = motion?.ok ? motion.peak : 0
   const x = FEATURES.map(k =>
     k === 'hr' && z.hr != null ? z.hr
@@ -117,33 +90,17 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
     : 0)
   const fw = forward(x, history)
   const cc = calibratedContributions(fw, calibration)
+  // Divided by the total weight of all terms, so a missing channel does not re-weight the others.
   const wTotal = TERMS.reduce((a, t) => a + Math.abs(t.w), 0)
   const byHand = t => (K * t.w * z[t.id]) / wTotal / 2
 
-  /* Over the movement line the network does not score the reading. The formula
-     does.
-
-     This is the shipped design the transfer study measured, not a safety net
-     bolted on afterwards. On real jogging data the network on its own calls 73%
-     of moving windows stressed, because its motion curve rises with movement:
-     the training set had no condition where someone exercised calmly, so
-     "moving" and "aroused" are the same thing to it. Handing moving windows to
-     the formula brings that to 30%, against the formula's own 27.5%, and costs
-     four points of the cognitive stress it still catches, 78.7% to 74.3%.
-     Figures in tnam-results.js under `confound`.
-
-     It also makes the saturation above harmless: every reading at or past the
-     line takes this branch, so the fact that 0.35 g and 2 g are the same input
-     to the network never reaches a score. */
+  // Moving readings use the hand-weighted formula. The model reads movement as arousal: on jogging data it
+  // flagged 73% of moving windows against 30% for the formula (tnam-results.js, `confound`).
   const moving = motion?.ok ? !motion.still : false
   const heart = moving
     ? used.filter(t => t.ch === 'heart').reduce((a, t) => a + byHand(t), 0)
     : (calibratedLogit(fw, calibration) - ORDINARY_LOGIT) / SCORE_TEMPERATURE
 
-  /* Voice, by hand, in the same display units. The divisor is the full weight
-     of all six terms rather than the terms present, so dropping a channel
-     cannot re-weight the ones that remain. It does remove that channel's own
-     evidence, which is the point of it being absent. */
   const voiceD = used.filter(t => t.ch === 'voice').reduce((a, t) => a + byHand(t), 0)
 
   const D = heart + voiceD
@@ -159,10 +116,7 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
     contrib.push({ id: 'temporal', ch: 'heart', w: 0, label: 'Pattern across recent readings', value: null, z: 0, raw: cc.temporal / SCORE_TEMPERATURE })
   }
 
-  /* Band. Three shortfalls widen it: missing channels, poor camera signal, and
-     a baseline too short to define this person's normal. Summed in quadrature
-     as standard deviations on S = D/K, then carried through the logistic by
-     its slope at the score — hence 100*K*p*(1-p). */
+  // Band: missing-channel, signal-quality and short-baseline SDs on S = D/K in quadrature, through the logistic slope 100*K*p*(1-p).
   const S = D / K
   const chPresent = new Set(contrib.filter(c => c.id !== 'temporal').map(c => c.ch))
   const missingW = TERMS.filter(t => !used.includes(t)).reduce((a, t) => a + Math.abs(t.w), 0)
@@ -178,7 +132,6 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   return {
     ok: true,
     score, S, contrib, features,
-    /* What the network saw, kept so a check-in answer can become a label. */
     model: { contributions: FEATURES.map(k => fw.contributions[k]), temporal: fw.temporal, logit: fw.logit,
              scored: !moving },
     calibrationLabels: calibration.n || 0,
@@ -195,7 +148,6 @@ export function scoreCapture({ ppg, voice, motion, baseline = emptyBaseline(), c
   }
 }
 
-/* Same four bands as the self-report route, so the two agree on "usual". */
 export function bandOf(n) {
   if (n < 35) return { key: 'low',   word: 'lower than usual' }
   if (n < 58) return { key: 'usual', word: 'in your usual range' }
@@ -203,7 +155,6 @@ export function bandOf(n) {
   return { key: 'high', word: 'much higher than usual' }
 }
 
-/* One sentence, then the number. Never the other way round. */
 export function sentenceFor(r) {
   const b = bandOf(r.score)
   const top = [...r.contrib].sort((a, c) => Math.abs(c.raw) - Math.abs(a.raw))[0]

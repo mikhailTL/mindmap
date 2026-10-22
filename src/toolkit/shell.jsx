@@ -5,21 +5,7 @@ import { vars } from './theme'
 import { FAMILY_OF } from './index.jsx'
 import '../kit/kit.css'
 
-/* The shell every activity renders in: a way back, the name, and the tool.
- *
- * 17 October: calm, not brutalist. Soft rounded white surfaces with the
- * site's gentle shadow, hairline rules instead of heavy ink edges, and the
- * activity's own colour family (theme.js) on its icon wash, its selected
- * choices and its primary button. Every control here is at least 48px tall.
- *
- * The way back is an anchor to `#/toolkit`: App.jsx resolves the hash, so it
- * is a real navigation with a real browser Back. Tools opened in place (the
- * parent and Counselor/Professional sets) are handed `onBack` and get a button
- * that looks the same. */
-
-/* The colour comes from the tool's tile when the tool is known, by `id` or by
-   the `#/toolkit-<id>` route it was opened on, so a tile and its screen always
-   match. `family` is the fallback. */
+// Colour from the tool's tile, by `id` or by the #/toolkit-<id> route; `family` is the fallback.
 function familyFor(id, family) {
   if (id && FAMILY_OF[id]) return FAMILY_OF[id]
   const routed = typeof location !== 'undefined' ? location.hash.replace(/^#\/?toolkit-/, '') : ''
@@ -52,7 +38,6 @@ export function ActivityScreen({ id = null, family = 'accent', title, back = '#/
   )
 }
 
-/* A white panel, for the parts of a tool somebody reads or types into. */
 export function Sheet({ className, children }) {
   return (
     <section className={cn('rounded-[18px] border border-rule bg-card p-4 shadow-card sm:p-6', className)}>
@@ -65,7 +50,6 @@ export function Note({ children, className }) {
   return <p className={cn('note', className)}>{children}</p>
 }
 
-/* The one line that says what a sensor is doing, at the point of use. */
 export function OnDevice({ children, className }) {
   return (
     <p className={cn('flex items-center gap-2 text-fine text-ink-2', className)}>
@@ -75,8 +59,6 @@ export function OnDevice({ children, className }) {
   )
 }
 
-/* A choice in a row of choices. Selection is carried by fill, weight and a
-   tick, so it survives a greyscale screenshot. */
 export function Choice({ on = false, className, children, ...rest }) {
   return (
     <button type="button" aria-pressed={on}
@@ -96,8 +78,6 @@ export function Choice({ on = false, className, children, ...rest }) {
   )
 }
 
-/* The two buttons a tool needs. `primary` is filled in the activity's own
-   colour; `quiet` is white with a hairline. Both are 52px tall. */
 export function Action({ kind = 'primary', className, ...rest }) {
   return (
     <button type="button"
@@ -112,8 +92,6 @@ export const FIELD = cn(
   'placeholder:text-ink-3 transition-colors duration-150 focus:border-[color:var(--kit-art)]'
 )
 
-/* A large horizontal meter. The word beside it carries the reading, so the
-   bar is never the only thing saying what the value is. */
 export function Meter({ value = 0, label, right, className, tall = false }) {
   const pct = Math.max(0, Math.min(100, Math.round(value * 100)))
   return (
@@ -130,10 +108,7 @@ export function Meter({ value = 0, label, right, className, tall = false }) {
   )
 }
 
-/* A camera view. Always mounted, because a <video> created at the moment a
-   stream arrives has no layout yet and iOS refuses to play into it. Hidden
-   with sr-only until there is a stream, and capped at about 60vh so the tool
-   under it stays above the fold on a laptop. */
+// Kept mounted and hidden with sr-only, because iOS will not play a stream into a <video> created with no layout.
 export const Video = React.forwardRef(function Video({ on, mirror = false, children, className }, ref) {
   return (
     <div className={cn('relative mx-auto w-full max-w-[64rem] overflow-hidden rounded-[18px]',

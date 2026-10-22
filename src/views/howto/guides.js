@@ -1,22 +1,8 @@
 import { PRO_PLURAL, PRO_WRAP } from '../../lib/terms'
 
-/* What each "How to use" guide says, per audience and per tab id.
- *
- * Every guide is three steps that together cover the whole page at a glance:
- * each step is one part of the page and how to use it. A step is a picture
- * (`art`, a key into ART in ./art.jsx) and one caption of ten words or fewer.
- * `use` is the one line on what the section is for. `go` is an optional
- * button to a related route. `tones` colour the three steps, in order; the
- * hues come from the site tokens and are mapped to literal class names in
- * ./index.jsx.
- *
- * House rules for this copy: no em dashes, no diagnostic words, nothing
- * called AI except the MindMap AI chat, no streaks, no comparison between
- * teens, and the Professional's name only ever from src/lib/terms.js.
- * Captions use the breakable spelling: the caption column is narrower than
- * "Counselor/Professional" on a phone.
- * tests/howto.test.js checks the mechanical ones. */
-
+// Copy for each How to use guide, by audience and tab id. A step is an `art` key from ./art.jsx and a caption
+// of ten words or fewer; `tones` colour the three steps in order.
+// PRO_WRAP is the breakable spelling: the caption column is narrower than "Counselor/Professional" on a phone.
 const PRO = PRO_WRAP
 const PROS = PRO_PLURAL.replace('/', '/\u200B')
 

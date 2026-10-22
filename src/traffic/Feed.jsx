@@ -3,17 +3,7 @@ import { CLIPS, SLIDE_H, scroller, OUT_CUBIC, IOS_CURVE } from './core'
 import { StatusBar, IOS } from './ios'
 import { cn } from '../lib/utils'
 
-/* A full-bleed short video feed. Each slide is one real clip, served from
- * /headsup/clips/clip-<id>.mp4, muted, looping, inline. The feed is a real
- * scroller: the script moves scrollTop frame by frame and every scroll event
- * the element fires is one sample for the engine, the same path a finger
- * would take. At most three videos decode at once.
- *
- * Handle: { go(idx, ms, kind), fresh(), freeze(on) }. `paused` holds the
- * feed still while the other phone has its turn. Under Reduce Motion no clip
- * plays; each slide shows its first frame. Invented handles only, no real
- * app's name or logo. Follow is an 8 px-corner rectangle. */
-
+// Clips are served from public/headsup/clips; BASE_URL keeps the path valid under a sub-path deploy.
 const SRC = id => `${(import.meta.env && import.meta.env.BASE_URL) || '/'}headsup/clips/clip-${id}.mp4`
 
 const STROKE = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -24,8 +14,7 @@ const More = () => <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden f
 const Camera = () => <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden {...STROKE}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.7l1.4-2h6.8l1.4 2h1.7A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-9Z"/><circle cx="12" cy="12.8" r="3.8"/></svg>
 const Note = () => <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden fill="currentColor"><path d="M9 17.5V5.2l11-2.2v12.3a3 3 0 1 1-2-2.8V7.3l-7 1.4v8.8a3 3 0 1 1-2-2.8Z"/></svg>
 
-/* The avatar's fill, darkened just enough that its white initial clears
-   4.5 : 1. */
+// WCAG relative luminance. avatarFill darkens a fill until its white initial clears 4.5:1.
 const lum = h => {
   const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
@@ -95,6 +84,7 @@ export default function Feed({ handleRef, onScroll, reduced, paused = false }) {
       props.current.onScroll?.(el.scrollTop)
       setCur(Math.max(0, Math.min(CLIPS.length - 1, Math.round(el.scrollTop / SLIDE_H))))
     }
+    // Each scroll event is one sample for the engine, the same path a finger scroll takes.
     el.addEventListener('scroll', on, { passive: true })
     return () => { el.removeEventListener('scroll', on); anim.stop() }
   }, [anim])
@@ -105,7 +95,6 @@ export default function Feed({ handleRef, onScroll, reduced, paused = false }) {
     handleRef.current = {
       go(idx, ms, kind) {
         const y = idx * SLIDE_H
-        /* Reduce Motion: a cut with a short fade, still one scroll event per move */
         if (props.current.reduced) {
           clearTimeout(fade); setCut(true)
           fade = setTimeout(() => { anim.to(y, 0); setCut(false) }, 140)
@@ -123,6 +112,7 @@ export default function Feed({ handleRef, onScroll, reduced, paused = false }) {
   return (
     <div className="absolute inset-0 bg-black" style={{ fontFamily: IOS.font }}>
       <div ref={feedRef} aria-hidden className={cn('absolute inset-0 overflow-hidden transition-opacity duration-150', cut && 'opacity-40')}>
+        {/* Only clips within one slide of the current one mount a video, so at most three decode at once. */}
         {CLIPS.map((c, i) => <Clip key={c.id} clip={c} near={Math.abs(i - cur) <= 1} current={i === cur} frozen={frozen || paused || reduced}/>)}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10">

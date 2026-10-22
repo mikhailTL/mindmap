@@ -5,27 +5,10 @@ import { Choice, FIELD, Hint, Step, riseAt } from './panel'
 import { ChevronDown, Cross } from '../ui/marks'
 import { cn } from '../lib/utils'
 
-/* Brain Dump. Write the pile down, split it into what can move today and what
- * cannot, then one physical first move on the top item only.
- *
- * THE SPLIT. One bar under the list, filling from the left as things go
- * to today and grey from the right as things go to not today, with the unsorted
- * middle closing between them. It is there because the finding of this exercise
- * is a proportion: most of a pile is not yours to move today, and a reader who
- * has just sorted eight things should be able to see that without counting. The
- * bar is two scaleX transforms on the compositor, so sorting the fifth item does
- * not relay out the list above it.
- *
- * What comes back depends on what was entered and how it was split: nothing
- * actionable, one thing, or a list that has to be ordered because it cannot
- * all be first. No text leaves the component. */
-
+// Brain Dump: up to MAX items, sorted into today and not today, then one first step for the top item.
 const MAX = 8
 let seq = 0
 
-/* The bar, plus the three figures it is a picture of. Under reduced motion the
-   segments arrive at the right proportion without travelling, which is the
-   whole of what the bar says. */
 function Split({ today, later, total }) {
   const t = total ? today / total : 0
   const l = total ? later / total : 0
@@ -71,8 +54,6 @@ export function Pile() {
   const later = items.filter(i => i.bin === 'later')
   const sorted = items.length > 0 && unsorted.length === 0
 
-  /* Order lives in `items`, so moving a today item swaps it with its
-     neighbour in that same list rather than in a copy. */
   const shift = (id, dir) => setItems(l => {
     const order = l.filter(i => i.bin === 'today')
     const at = order.findIndex(i => i.id === id)
@@ -152,9 +133,6 @@ export function Pile() {
                     <p className="min-w-0 flex-1 break-words text-body text-ink">{i.text}</p>
                     {today.length > 1 && (
                       <span className="flex shrink-0 gap-1">
-                        {/* Drawn rather than typed: ↑ and ↓ render at whatever
-                            weight the mono font has for them, which is not the
-                            weight of any other mark on this site. */}
                         <button type="button" onClick={() => shift(i.id, -1)} disabled={n === 0}
                           aria-label={`Move ${i.text} up`}
                           className="grid size-11 place-items-center rounded-field text-ink-2

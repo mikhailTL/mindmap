@@ -16,26 +16,16 @@ import { PartHead } from '../student/PartHead'
 import { STATUS_SUB, STATUS_WORD, dayLabel, dayOf, displayName, isPro, lightOf, metaLine, showsReadings, showsScore,
   sourceLine, subOf, summaryOf, usualOf } from './data'
 
-/* One teen's page, opened from their card.
- *
- * TeenDetail({ teen, onBack, variant = 'parent' | 'pro', range })
- *
- * Top to bottom: back, who and their face, today's Mind Score on the rainbow
- * dial beside that day's Heads Up, the Day / Week / Month trend, then one day
- * in detail (picked from the trend or stepped through): its readings and the
- * body signals behind the score. A parent sees whole days and plain words; a
- * Counselor/Professional sees figures with units, and single readings only when
- * the teen shares them. A parent's privacy boxes close the page. */
-
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
 const fmt = n => n.toLocaleString('en-US')
 
-/* Each of the four dial bands, 0 to 100, as the day against this teen's own
-   last thirty days: 50 is their usual, each standard deviation 18 points. */
+// Each band is the day's z-score against the teen's prior 30 days: 50 is usual and one
+// standard deviation is 18 points, clamped to 2..98.
 export function ringsFor(teen, d) {
   const z = k => (d[k] - usualOf(teen, k, d.date).mean) / usualOf(teen, k, d.date).sd
   const val = v => Math.round(clamp(50 + v * 18, 2, 98))
   const all = [
+    // Heart rises with pulse and falls with HRV; skin temperature is negated, so cooler skin raises its band.
     { id: 'heart', value: val((z('pulse') - z('hrv')) / 2) },
     { id: 'sweat', value: val(z('eda')), patch: true },
     { id: 'temp', value: val(-z('temp')), patch: true },
@@ -44,7 +34,6 @@ export function ringsFor(teen, d) {
   return all.filter(r => teen.patch || !r.patch).map(r => ({ ...r, name: SENSORS[r.id].name, glow: SENSORS[r.id].glow }))
 }
 
-/* Body signals for one day. `word` picks the plain-words line for a parent. */
 const METRICS = [
   { k: 'pulse', label: 'Pulse', unit: 'bpm', Mark: PulseMark, up: 'Faster than usual', down: 'Slower than usual' },
   { k: 'hrv', label: 'Variability', unit: 'ms', Mark: Wave, up: 'More varied than usual', down: 'Less varied than usual',
@@ -54,7 +43,6 @@ const METRICS = [
   { k: 'steps', label: 'Steps', unit: 'steps', Mark: MoveMark, up: 'More active than usual', down: 'Less active than usual' },
 ]
 
-/* Short Mind Score words for the readings table; each still names stress. */
 const SHORT = { green: 'usual stress', yellow: 'higher stress', red: 'much higher stress' }
 const SOURCE = { patch: 'Patch', camera: 'Phone camera check', survey: 'Survey' }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
@@ -87,7 +75,6 @@ function DayStepper({ teen, date, setDate, first, live = false }) {
   )
 }
 
-/* The last seven days as lamps, each one a button that picks its day. */
 function WeekLamps({ teen, date, setDate }) {
   const week = teen.days.slice(-7)
   return (
@@ -255,9 +242,6 @@ function Consent({ teen }) {
   )
 }
 
-/* The week's hardest day and two ways to start. It sits in its own
-   Recommendations part after Trends (the owner, 18 October). A parent also
-   gets the safety line. */
 export function AskAbout({ teen, variant = 'parent' }) {
   const w = summaryOf(teen, 'week')
   const over = teen.usual ? w.points.filter(p => p.score > teen.usual.hi) : []
@@ -288,12 +272,7 @@ export function AskAbout({ teen, variant = 'parent' }) {
   )
 }
 
-/* ── A linked teen, from their account ──────────────────────────────────
- *
- * The same page with what the account sends: day figures, the usual band if
- * shared, where readings came from if shared. No body signals, no hours, no
- * single readings, so those boxes are not drawn. */
-
+// Keys match the sharing switches in SHARING (src/app/store.js).
 const SHARE_WORD = {
   parent: { score: 'Mind Score for each day', week: 'Days above their usual', sleep: 'Hours slept',
             worn: 'Whether the patch was worn', settle: 'Days slow to settle' },
@@ -433,7 +412,6 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
       {score && <RangeTrend teen={teen} range={range} onRange={setRange} variant={variant}
         day={range === 'day' ? undefined : date} onDay={pickDay}/>}
 
-      {/* Its own part, after Trends (the owner, 18 October). */}
       {score && teen.usual && (
         <section aria-labelledby={recId} className="flex flex-col gap-4">
           <PartHead id={recId} as="h3" kind="recs" title="Recommendations" className="[&_h3]:text-head"/>
@@ -475,7 +453,7 @@ function DemoDetail({ teen, onBack, variant = 'parent', range: initial = 'week' 
 
   const rings = ringsFor(teen, today)
   const score = showsScore(teen, variant)
-  /* Red: the time of the highest reading that day, for the Heads Up line. */
+  // On red, the Heads Up line uses the time of that day's highest reading.
   const top = d.readings.reduce((a, r) => (r.score > a.score ? r : a), d.readings[0])
   const at = d.light === 'red' && top ? new Date(`${d.date}T${top.time}:00`).getTime() : undefined
   const pickDay = iso => {

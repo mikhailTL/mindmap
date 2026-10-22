@@ -10,19 +10,6 @@ import HeadsUpPhone from './HeadsUpPhone'
 import ChildTrends from './Trends'
 import { STATUS_SUB, lightOf, metaLine, subOf } from './data'
 
-/* One child's page for a parent, opened from their card on the home.
- *
- *   Today            Mind Score today on the rainbow, then Heads Up today.
- *   Trends           the same Trends every child gets (./Trends.jsx).
- *   Recommendations  what to ask about this week.
- *   Then the privacy box.
- *
- * The owner, 18 October, "everything looks too overwhelming": the day in
- * detail (the same day as the rainbow) and the body signal charts (the
- * rainbow's rings already say each one) are gone.
- *
- * Whole days only, never a single reading's time, a note or a place. */
-
 export default function ChildPage({ teen, onBack }) {
   const ids = React.useId()
   const days = teen.days
@@ -32,6 +19,7 @@ export default function ChildPage({ teen, onBack }) {
   const shared = teen.consent?.score !== false
   const rings = teen.live ? [] : ringsFor(teen, today)
   const top = (today.readings || []).reduce((a, r) => (!a || r.score > a.score ? r : a), null)
+  // On red, the Heads Up time is the time of today's highest reading.
   const at = today.light === 'red' && top ? new Date(`${today.date}T${top.time}:00`).getTime() : undefined
   const dateLine = teen.live ? longDate() : TODAY_LONG
 
@@ -87,8 +75,6 @@ export default function ChildPage({ teen, onBack }) {
 
         <section aria-labelledby={ids + 'hu'} className="flex flex-col rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
           <h3 id={ids + 'hu'} className="m-0 font-display text-head font-bold leading-tight text-ink">Heads Up today</h3>
-          {/* The owner, 18 October: a phone showing what was reported, never
-              what was on the screen (./HeadsUpPhone.jsx). */}
           <HeadsUpPhone className="mt-4" teen={teen} day={today} at={at}/>
         </section>
       </div>
@@ -97,8 +83,6 @@ export default function ChildPage({ teen, onBack }) {
         className="mt-6"/>
       <ChildTrends teen={teen}/>
 
-      {/* Its own part, after Trends: the owner, 18 October, "should be moved
-          to different recommendations section". */}
       {shared && (
         <section aria-labelledby={ids + 'rec'} className="mt-6 flex flex-col gap-4">
           <PartHead id={ids + 'rec'} kind="recs" title="Recommendations"/>

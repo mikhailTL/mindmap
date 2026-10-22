@@ -5,19 +5,9 @@ import { Panel, PanelHead } from '../Monitor'
 import { cn } from '../../lib/utils'
 import { LIGHT_MEANS, LIGHT_WORD, dayName, teenSignal } from './demoTeen'
 
-/* Heads Up, on the teen's own dashboard.
- *
- * The owner, 17 October: "Heads Up needs to be integrated with the student
- * dashboard and trends not only the parent." The card shows the teen their
- * own light for today and for the week (the same lamp face the Heads Up page
- * draws, with the word beside it, never colour alone), what was noticed in
- * plain words, and what their parent can see. The teen sees this before
- * anyone else does. Generated demo days, from src/lib/roster.js. */
-
 const list = a => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`)
 
-/* The week's lit days, in words: "Thursday was red: lots of deleting and a
-   restless hand." Most recent first, two at most. */
+// The two most recent non-green days of the week, newest first, in the teen's own words.
 function weekLines(days) {
   return days.filter(d => d.light !== 'green').slice(-2).reverse().map(d => {
     const what = d.signals.map(teenSignal)

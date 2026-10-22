@@ -5,7 +5,6 @@ import {
 } from '../src/traffic/baseline.js'
 import { READY_AFTER, strainIndex, lightFor, Light } from '../src/signals/light.js'
 
-/* A fake localStorage, the only thing the module touches. */
 function fakeStorage() {
   const m = new Map()
   return {

@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { countSteps, walkWords } from '../src/signals/steps.js'
 
-/* A walk as the accelerometer sees it: gravity removed, a swing of about a
-   third of a g once per stride with a firmer hump at the heel strike, a slow
-   drift from the hand, and a little sensor noise. Deterministic noise so a
-   run is repeatable. */
 function walk(stepHz, secs, hz, { spike = 0.25, swing = 0.3, noise = 0.02 } = {}) {
   const out = []
   let seed = 7

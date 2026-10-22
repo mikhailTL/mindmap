@@ -13,8 +13,6 @@ describe('What is MindMap? band', () => {
     expect((html.match(/<article/g) || []).length).toBe(3)
   })
 
-  /* Owner, 20 October: stock photographs in place of the isometric drawings,
-     the patch worn in the first two and the app in use in the third. */
   it('shows one photograph per card, each with alt text naming models', () => {
     expect((html.match(/<img /g) || []).length).toBe(3)
     expect(WHAT_IS.map(f => f.photo)).toEqual(['photos-hall-duo', 'ovw-pro-patch', 'ovw-app-bus'])
@@ -28,8 +26,6 @@ describe('What is MindMap? band', () => {
     expect(html).not.toContain('<svg class="block h-auto w-full"')
   })
 
-  /* Owner, 21 October: "Don't change the what is mindmap cards ... i like
-     the color variations on cards, preserve", but no such colour on the band. */
   it('gives the three cards three different light washes on a white band', () => {
     const hues = WHAT_IS.map(f => f.hue)
     expect(new Set(hues).size).toBe(3)
@@ -39,7 +35,7 @@ describe('What is MindMap? band', () => {
     expect(band).not.toMatch(/bg-(lilac|sun|coral|blush)/)
   })
 
-  it('leads with the owner sentence', () => {
+  it('leads with the product sentence', () => {
     expect(WHAT_IS_LEAD).toBe('MindMap is an adolescent wearable patch and app system designed for teens, parents, and Counselors/Professionals to address the teen mental health crisis at its root by measuring stress and quantifying wellness using innovative features. MindMap provides 3 main features:')
   })
 

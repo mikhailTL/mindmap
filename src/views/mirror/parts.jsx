@@ -2,9 +2,6 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { FACE_TERMS } from '../../signals/face-score'
 
-/* The pieces of the Mental Mirror screen (views/MentalMirror.jsx). Light
-   surfaces only; styles in ./mirror.css. */
-
 /* The four bands of the dial, one per group of cues. */
 export const BANDS = [
   { id: 'mirror-pulse', name: 'Pulse', glow: '#e11919', of: ['hr'] },
@@ -59,9 +56,7 @@ export function ReadsChips({ className }) {
   )
 }
 
-/* One calm ring round the face: a pale track and a solid green arc that
-   fills over the 30 seconds, eased between updates. 20 October, the owner:
-   "the green circle needs to be more calming and solid". */
+// A pale track and a solid arc that fills over the 30 seconds, eased between updates.
 export function ProgressRing({ progress = 0 }) {
   const p = Math.max(0, Math.min(100, progress))
   return (
@@ -79,8 +74,6 @@ function Wait() {
   return <span className="mm-wait" aria-label="Not in yet"><i/><i/><i/></span>
 }
 
-/* The live chips: the same figures the tags on the face show. Whether a
-   face is found is said on the status line above them. */
 export function LiveChips({ live }) {
   const found = !!live?.present
   const cells = [
@@ -103,7 +96,6 @@ export function LiveChips({ live }) {
   )
 }
 
-/* "Does this match how you feel?": one tap, calm on the left like the dial. */
 export function CheckInScale({ answered, onAnswer }) {
   if (answered) {
     return (
@@ -133,7 +125,7 @@ export function CheckInScale({ answered, onAnswer }) {
   )
 }
 
-/* A measured value in the units the old table used. */
+/* A measured value, formatted in its display unit. */
 function shown(id, v) {
   if (id === 'hr') return `${Math.round(v)} bpm`
   if (id === 'blinkRate') return `${v.toFixed(1)} per min`
@@ -142,8 +134,7 @@ function shown(id, v) {
   return `${Math.round(v * 100)}%`
 }
 
-/* What moved it: one light card per contribution, biggest first. The bar runs
-   from the centre, right raised the score and left lowered it. */
+// One card per contribution, biggest first. The bar runs from the centre: right raised the score, left lowered it.
 export function Movers({ result }) {
   const rows = [...result.contrib].sort((a, b) => Math.abs(b.raw) - Math.abs(a.raw))
   const missing = FACE_TERMS.filter(t => result.features[t.id] == null).map(t => t.label)

@@ -3,31 +3,15 @@ import { Button } from '../ui/button'
 import { OnDevice } from './shell'
 import { LevelMeter, Countdown } from './game'
 
-/* Eyes closed. The one wrapper the three sensor exercises share.
- *
- * When an exercise goes dark the screen is a plain near-black sheet with one
- * line of small text, the Screen Wake Lock keeps the display from locking
- * (which would also freeze the sensors: on both platforms page JavaScript
- * stops the moment the screen locks), and a tap anywhere ends the session.
- * Cues reach the student as sound on every phone and as vibration on the
- * phones whose browser has it, which in October 2026 means Android: Safari
- * has no Vibration API and the haptic trick through a switch input was
- * closed in iOS 26.5. The wrapper says which it is doing so nobody waits for
- * a buzz that cannot come.
- *
- * Nothing here records anything. */
-
+// Safari has no Vibration API, so iPhones get sound cues only.
 export const canVibrate = () => typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
 
-/* A short buzz where the browser has one. Returns false where it does not,
-   so a caller can fall back to a tone. */
 export function buzz(pattern = 40) {
   if (!canVibrate()) return false
   try { return !!navigator.vibrate(pattern) } catch { return false }
 }
 
-/* Hold the screen on while `on` is true. Re-requested when the page comes
-   back, because the lock is released whenever the page is hidden. */
+// The browser releases a wake lock whenever the page is hidden, so it is requested again on visibilitychange.
 export function useWakeLock(on) {
   React.useEffect(() => {
     if (!on || typeof navigator === 'undefined' || !navigator.wakeLock) return
@@ -47,8 +31,6 @@ export function useWakeLock(on) {
   }, [on])
 }
 
-/* The dark sheet. `line` is the one thing it says; `children` can carry a
-   large word or count for a student who opens one eye. Tap or key ends it. */
 export function DarkSheet({ on, line = 'Eyes closed. Tap anywhere to stop.', onStop, children }) {
   useWakeLock(on)
   React.useEffect(() => {
@@ -69,7 +51,6 @@ export function DarkSheet({ on, line = 'Eyes closed. Tap anywhere to stop.', onS
   )
 }
 
-/* The one line that says what cues a phone will give, at the point of use. */
 export function cueWords(sound) {
   const v = canVibrate()
   if (v && sound) return 'Cues by vibration and a soft tone.'
@@ -78,25 +59,13 @@ export function cueWords(sound) {
   return 'Turn sound on for cues. This phone has no vibration from the browser.'
 }
 
-/* ── Pieces the six sensor games share ─────────────────────────────────
- *
- * Each game has the same four steps: a how to play screen, a 3 2 1, the
- * round, and the end card from src/toolkit/game. What lives here is the part
- * the shared game layer does not carry: a hold input that works the same on a
- * laptop (Space) and a phone (press and hold), a personal best kept on this
- * device, and the how to play screen. */
-
-/* `true` while mounted. Every await in a game checks it before it touches
-   state, so a permission prompt that resolves after the reader left does
-   nothing. */
+// Games check this after every await, so a permission prompt that resolves after unmount does nothing.
 export function useMounted() {
   const m = React.useRef(true)
   React.useEffect(() => { m.current = true; return () => { m.current = false } }, [])
   return m
 }
 
-/* Space held, or a pointer held on whatever `bind` is spread onto. `ref`
-   is for a requestAnimationFrame loop; `held` is for drawing. */
 export function useHold(active) {
   const [held, setHeld] = React.useState(false)
   const ref = React.useRef(false)
@@ -133,8 +102,7 @@ export function useHold(active) {
   return { held, ref, bind }
 }
 
-/* A personal best per game, on this device only. Never compared with
-   anybody else and never sent. `lower` is for times where less is better. */
+// Personal best per game, on this device only; `lower` is for times where less is better.
 const BEST_KEY = 'mindmap.toolkit.bests'
 export function readBest(id) {
   try {
@@ -156,9 +124,6 @@ export function saveBest(id, value, { lower = false } = {}) {
   return { best: isNew ? value : old, isNew, before: old }
 }
 
-/* The how to play screen: a picture of the game, up to three numbered lines,
-   one Start, the level, the line that says what is measured, then anything
-   optional (the pulse check). */
 export function HowTo({ art, steps = [], onStart, startLabel = 'Start', disabled = false,
                         measured, pick, children }) {
   return (
@@ -186,7 +151,6 @@ export function HowTo({ art, steps = [], onStart, startLabel = 'Start', disabled
   )
 }
 
-/* Back to the top when a round ends, so the end card opens at its start. */
 export function useTopOn(on) {
   React.useEffect(() => { if (on) { try { window.scrollTo(0, 0) } catch { /* no window */ } } }, [on])
 }

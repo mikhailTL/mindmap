@@ -15,30 +15,6 @@ import { DEMO_CASELOAD, DEMO_LINKS, DEMO_PRO_PARENTS, DEMO_TEEN } from './demo-n
 import { Empty, IconButton, LinkMark, PersonRow, field, fieldError, outline, solid } from './ui'
 import { SignIn } from './SignIn'
 
-/* The network: teens, parents and Counselors/Professionals linked to each other.
- *
- * The flow, the same on every shape of the screen:
- *   1. A parent or a Counselor/Professional makes an invite link (a six
- *      character code inside a URL). Teens never make one. The link keeps
- *      working for every teen it is sent to, so one link gathers a family or
- *      a caseload.
- *   2. The teen opens it. Signed out, they sign in or make an account, and
- *      they join the network as soon as they are in: useAutoJoin below, run
- *      once by the app shell, redeems the code with no further press.
- *   3. The teen chooses what that person can see. Every switch starts on
- *      and the teen can turn any of it off. A Counselor/Professional link also
- *      needs a parent's OK, which is the store's rule (src/account/store.js)
- *      and the server's.
- *   4. Both of them see the connection.
- *
- * Demo mode shows the network in ./demo-network.js, from any of the three
- * sides (the Counselor/Professional's side is the whole demo caseload, Maya
- * among them), and every button works on that copy only. The reader is
- * "you" on every side, never a demo name (owner, 18 October). Live mode is the
- * real store. No reading, score or trend is shown here: only names, link
- * status and the names of what is shared.
- */
-
 const STATUS = {
   student: { active: 'Linked', pending: 'Needs a parent’s OK', declined: 'Declined' },
   parent:  { active: 'Linked', pending: 'Waiting',             declined: 'Declined' },
@@ -62,20 +38,15 @@ const REDEEM_ERROR = {
   offline:   'No connection. Check your internet and try again.',
 }
 
-/* ── The invite link ────────────────────────────────────────────────────── */
-
 const linkFor = code => {
   try { return `${window.location.origin}${window.location.pathname}#/network?code=${code}` }
   catch { return `#/network?code=${code}` }
 }
 
-/* An invite link is #/network?code=XXXXXX (or ?invite=XXXXXX before the
-   hash, the first spelling). Read once, when this module loads, which is
-   before the app reads the hash: the code is kept here and the address
-   becomes plain #/network, so the router lands on the network screen. */
+// An invite link is #/network?code=XXXXXX, or ?invite=XXXXXX before the hash. The code is read when this
+// module loads, before the router reads the hash, and the address becomes plain #/network.
 const CODE_RE = /^[A-Za-z0-9]{6}$/
-/* Kept in sessionStorage too, so a code survives the trip through sign up,
-   a reload, or the app home, until it is used. */
+// Kept in sessionStorage so the code survives sign up, a reload or the app home until it is used.
 const PENDING_KEY = 'mindmap.invite.pending'
 let pendingCode = (() => {
   try { const v = window.sessionStorage.getItem(PENDING_KEY); return v && CODE_RE.test(v) ? v : null } catch { return null }
@@ -97,19 +68,14 @@ function takeCodeFromUrl() {
 }
 if (typeof window !== 'undefined') {
   takeCodeFromUrl()
-  /* Added before the app's own listener, so it runs first when a link is
-     opened in a tab that already has the app. */
+  // Registered before the app's own listener, so it runs first when a link opens in a tab that has the app.
   try { window.addEventListener('hashchange', takeCodeFromUrl) } catch {}
 }
 const inviteFromUrl = () => pendingCode
 function clearInviteFromUrl() { pendingCode = null; keepCode(null); codeListeners.forEach(fn => fn(null)) }
 
-/* ── Joining by link, automatically ─────────────────────────────────────── */
-
-/* The result of the last automatic join, for the network screen to show:
-   { state: 'joining' } while it runs, then { ok, link, name, reason }. Each
-   result carries `by`, the account that joined, and belongs to that account
-   only: signing out, or any other account signing in, clears it. */
+// Result of the last automatic join: { state: 'joining' }, then { ok, link, name, reason, by }.
+// It belongs to the account in `by` and is cleared when another account signs in.
 let joined = null
 const joinListeners = new Set()
 const setJoined = v => { joined = v; joinListeners.forEach(fn => fn(v)) }
@@ -128,11 +94,8 @@ function useJoined(accountId) {
   return joinedFor(accountId)
 }
 
-/* Run once in the app shell. When somebody holding an invite code is signed
-   in, by signing in, by making an account, or because they already were,
-   the code is redeemed at once and the network screen opens on the result.
-   A code that fails for a reason that will not change (wrong role, own,
-   expired, unknown, already linked) is dropped; offline keeps it to retry. */
+// Run once in the app shell: redeems a held invite code as soon as someone is signed in.
+// A code that fails for a lasting reason is dropped; an offline failure keeps it for a retry.
 export function useAutoJoin(go) {
   const me = useAccount()
   const [code, setCode] = React.useState(inviteFromUrl)
@@ -147,10 +110,8 @@ export function useAutoJoin(go) {
       await ready()
       const r = await redeemInvite(code)
       busy.current = false
-      /* After the redeem, not before: the sign in form sends its reader on
-         to the app when it finishes, and this has to land last. */
+      // After the redeem, so this navigation lands after the sign in form's own.
       go?.('network')
-      /* Somebody else signed in while it ran: the result is not theirs. */
       if ((current()?.id || null) !== by) { setJoined(null); return }
       if (!r.ok && (r.reason === 'offline' || r.reason === 'signedout')) { setJoined({ ok: false, reason: r.reason, code, by }); return }
       clearInviteFromUrl()
@@ -175,8 +136,6 @@ function daysLeft(iso) {
   return d === 1 ? 'It works for 1 day.' : `It works for ${d} days.`
 }
 
-/* The link, shown whole, with Copy link and Copy code. `demo` draws a fixed
-   example and makes nothing. */
 function InviteLink({ accountId, line, demo = null, children }) {
   React.useSyncExternalStore(subscribe, getVersion, () => 0)
   const inv = demo || myInvite(accountId)
@@ -225,8 +184,6 @@ function InviteLink({ accountId, line, demo = null, children }) {
   )
 }
 
-/* A teen joins networks and never makes one: the link comes from a parent
-   or a Counselor/Professional. The code field is for a code read out loud. */
 function JoinByLink({ demo = false }) {
   return (
     <Panel title="Join a network">
@@ -241,7 +198,6 @@ function JoinByLink({ demo = false }) {
   )
 }
 
-/* For someone who has a code but not the link. */
 function CodeField({ onDone }) {
   const [code, setCode] = React.useState('')
   const [err, setErr] = React.useState(null)
@@ -280,7 +236,6 @@ function CodeField({ onDone }) {
   )
 }
 
-/* Step 2, after the automatic join: what happened, in one panel. */
 function JoinedPanel({ result, teen, onDone }) {
   if (!result) return null
   if (result.state === 'joining') {
@@ -310,8 +265,6 @@ function JoinedPanel({ result, teen, onDone }) {
   )
 }
 
-/* ── How it works ───────────────────────────────────────────────────────── */
-
 const STEPS = [
   `A parent or ${PRO} makes one invite link.`,
   'They send it to each of their teens.',
@@ -338,8 +291,6 @@ function Steps() {
   )
 }
 
-/* ── What a person can see ──────────────────────────────────────────────── */
-
 const audienceOf = role => (role === 'parent' ? 'parent' : role === 'pro' ? 'pro' : null)
 
 function seesLine(audience, keys) {
@@ -348,8 +299,6 @@ function seesLine(audience, keys) {
   return 'Sees ' + keys.map(k => shareLabel(audience, k)).join(', ')
 }
 
-/* Switches for one audience. With `keys`/`onToggle` they act on a copy (the
-   demo); without, on the real sharing store, which is per audience. */
 function ShareSwitches({ audience, keys, onToggle }) {
   React.useSyncExternalStore(onSharing, sharingVersion, () => 0)
   const real = !onToggle
@@ -368,9 +317,7 @@ function ShareSwitches({ audience, keys, onToggle }) {
   )
 }
 
-/* ── Live ───────────────────────────────────────────────────────────────── */
-
-/* Links the teen has already said yes to, on this device. */
+// Links the teen has already accepted on this device.
 const REVIEWED = 'mindmap.account.reviewed'
 function useReviewed() {
   const [ids, setIds] = React.useState(() => {
@@ -418,8 +365,6 @@ function TeenNetwork({ me, go }) {
           const audience = audienceOf(l.person.role)
           if (!audience) return null
           const pending = l.status === 'pending'
-          /* Linked already, on both sides: nothing waits on the teen, so this
-             is a chance to change what they see, not a request. */
           return (
             <Panel key={l.id} title={pending ? 'Waiting for a parent’s OK' : 'Change what they see'}
               className="border-2 border-accent">
@@ -505,8 +450,6 @@ function ProNetwork({ me }) {
   )
 }
 
-/* ── Demo ───────────────────────────────────────────────────────────────── */
-
 const DEMO_INVITE = { code: 'K7M2QX' }
 const VIEWS = [
   { value: 'student', label: 'Student' },
@@ -514,9 +457,6 @@ const VIEWS = [
   { value: 'pro',     label: PRO },
 ]
 
-/* The Counselor/Professional's side: every teen on the caseload, by grade. A grade opens to
-   its teens, each with their student code (the name the dashboards use) and
-   what that teen has chosen to share. Only the teen changes that. */
 const proSharesLine = keys => (keys.length
   ? 'Shares ' + keys.map(k => shareLabel('pro', k)).join(', ')
   : 'Shares nothing right now')
@@ -583,9 +523,7 @@ function ProCaseload({ rows, parents, onRemove, onRemoveParent }) {
 }
 
 function DemoNetwork({ who }) {
-  /* Opened from one of the three apps, the demo stays on that side: a
-     Counselor/Professional opening Network sees that side, never the teen's
-     or the parent's. Only a visit with no app behind it can switch. */
+  // Opened from one role's app, the demo stays on that role's side; only a visit with no app can switch.
   const fixed = who === 'student' || who === 'parent' || who === 'pro'
   const [view, setView] = React.useState(fixed ? who : 'student')
   const [links, setLinks] = React.useState(DEMO_LINKS)
@@ -727,8 +665,6 @@ function DemoNetwork({ who }) {
     </>
   )
 }
-
-/* ── The screen ─────────────────────────────────────────────────────────── */
 
 export function Network({ go, who }) {
   const me = useAccount()

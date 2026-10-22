@@ -10,7 +10,7 @@ A way to take a reading under the Reading tab (chooser card on route `reading`; 
 - `src/views/CheckIn.jsx` — fourth card on the chooser, `mirror` screen, intent `mirror`.
 
 ## Honesty
-- The pulse method is published (camera PPG). The expression weights are not fitted: no dataset pairs face video with stress labels on these sensors. Validation set identified: UBFC-Phys (56 people, face video + E4, social stress), access by request. Until it is run, the band stays wider; the screen does not claim validation either way (owner rule: no "not tested" lines).
+- The pulse method is published (camera PPG). The expression weights are not fitted: no dataset pairs face video with stress labels on these sensors. Validation set identified: UBFC-Phys (56 people, face video + E4, social stress), access by request. Until it is run, the band stays wider; the screen does not claim validation either way.
 - Frames are never stored or sent. Each becomes ~56 numbers and is dropped.
 
 ## Node check

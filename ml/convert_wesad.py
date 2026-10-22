@@ -4,7 +4,7 @@ Output per subject: ml/telemetry/S<N>.csv with the patch contract
     ms, hr_bpm, rmssd_ms, sdnn_ms, spo2_pct, eda_uS, temp_C, motion, contact
 plus a trailing `label` column (WESAD protocol label, mode over the second).
 
-0 in a physiological field means "not yet computed" — exactly as the firmware.
+0 in a physiological field means "not yet computed", exactly as the firmware.
 """
 import os, sys, pickle, numpy as np
 from scipy.signal import butter, filtfilt, find_peaks

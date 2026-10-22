@@ -1,26 +1,9 @@
-/* The walkthrough that runs on the patch model.
- * Nothing here calls setView(): setView writes camera.position, target and
- * frameScale in one frame and then fits, so a sequence of setView calls is a
- * slideshow of cuts. This drives camera.position, controls.target, the
- * orthographic frustum and state.explode / state.opacity, and lets
- * applyState() do the rest.
- * It rides the element's existing rAF loop rather than starting a second one:
- * el.draw is the loop body and the loop re-schedules through `this.draw`, so
- * an own property on the instance wraps it, inheriting draw()'s gates (off
- * screen via _visible, hidden tab).
- * The section is the only discrete step: a section is different triangles
- * (the manifest carries section_a and section_b cuts of 40 and 21 bodies),
- * not a moved camera, so it cannot be interpolated. */
-
-/* One turn, in seconds; the last three are dead — the camera is home. */
+// Camera walkthrough for the arena model. Drives camera, target, frustum, explode and opacity directly
+// and lets applyState() redraw. CYCLE is in seconds; the last three hold at home.
 const CYCLE = 36
 
-/* az/ele are the camera's spherical angles in degrees about the target (model
-   up is +z, so ele is off the xy plane); ty/tz the target, pad the air around
-   the assembly, ex the explode fraction, op the shell opacity. Azimuth runs
-   -53 to -413: exactly one revolution, so the last keyframe is the first
-   camera position to the bit and a cycle cannot drift. -53/ele 30 at sc 59 is
-   the manifest's Closed view; -336/14 with target y -5 its Section A-A. */
+// az/ele: camera angles in degrees about the target (+z is up). ty/tz: target. pad: framing air. ex: explode.
+// op: shell opacity. Azimuth spans exactly one turn, so the last key equals the first and the loop closes.
 const KEYS = [
   { t:  0.0, az: -53, ele: 30, ty:  0, tz:  5.0, pad: 1.03, ex: 0,    op: 1    },
   { t:  4.2, az:-108, ele: 27, ty:  0, tz:  6.0, pad: 1.11, ex: 0,    op: 1    },
@@ -34,10 +17,7 @@ const KEYS = [
   { t: 36.0, az:-413, ele: 30, ty:  0, tz:  5.0, pad: 1.03, ex: 0,    op: 1    },
 ]
 
-/* mode changes geometry, so each entry is a discrete step. 'closed' and
-   'exploded' are the same triangles and visibility rule, so that pair costs
-   nothing on screen. section_a is the real swap, placed where the shell is at
-   14% opacity. */
+// Mode changes swap geometry, so they are discrete steps; section_a is applied while the shell is at 14% opacity.
 const MODES = [
   { t:  3.6, mode: 'exploded'  },
   { t: 19.2, mode: 'section_a' },
@@ -46,17 +26,9 @@ const MODES = [
 
 const CHANNELS = ['az', 'ele', 'ty', 'tz', 'pad', 'ex', 'op']
 const D2R = Math.PI / 180
-/* Orthographic: distance only has to keep the model between the near and far
-   planes (0.01 and 4000); the frustum does the framing. */
 const RADIUS = 152
 
-/* How much world the orthographic frustum has to hold. fit()'s rule is
-   half-width = max(projected half-width, projected half-height x aspect) x
-   1.4; these are that rule's two terms for this assembly, read off what fit()
-   chooses at canvas aspects 1.369 and 0.705 — ~38mm across whichever way the
-   patch is turned, and a half-height growing 30 -> 47.5mm as the six stages
-   separate. Per-keyframe `pad` is the extra air. A fixed half-width per
-   keyframe drew the patch 1.6x too large in the 390px column. */
+// fit() uses half-width = max(half-width, half-height x aspect) x 1.4; these are its terms for this assembly, in mm.
 const HALF_W = 38
 const HALF_H_CLOSED = 30
 const HALF_H_EXPLODED = 47.5
@@ -65,12 +37,7 @@ function baseline(aspect, ex) {
   return Math.max(HALF_W, h * aspect) * 1.4
 }
 
-/* Monotone cubic (Fritsch-Carlson), one interpolator for every channel. Eased
-   lerp per segment has zero velocity at both ends, so the camera stops dead at
-   all ten keyframes; Catmull-Rom overshoots, and an overshoot on the flat tail
-   swings the camera past home. Monotone cubic has continuous velocity through
-   the interior keys and cannot overshoot — equal neighbouring keys give slope
-   zero, so the exploded hold and the end rest are dead flat. */
+// Fritsch-Carlson monotone cubic: continuous velocity through the keys and no overshoot, so flat holds stay flat.
 function monotone(xs, ys) {
   const n = xs.length
   const dx = [], d = []
@@ -78,8 +45,6 @@ function monotone(xs, ys) {
     dx.push(xs[i + 1] - xs[i])
     d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]))
   }
-  /* Both ends clamped flat rather than set to the neighbouring secant: the
-     cycle loops from a standstill, so t=0 must start from rest. */
   const m = new Array(n).fill(0)
   for (let i = 1; i < n - 1; i++) {
     if (d[i - 1] * d[i] <= 0) { m[i] = 0; continue }
@@ -108,21 +73,13 @@ export function createCinematic(el, onChange = () => {}) {
   let playing = false
   let disposed = false
   let time = 0
-  /* The clock is the sum of the gaps between frames that actually ran, each
-     capped at one second. A per-frame budget would tie sequence speed to frame
-     rate. A wall clock with not-running spans subtracted would account against
-     _visible, which is written by an IntersectionObserver whose callbacks are
-     themselves delivered on a rendering step — when that flickers the
-     accounting slips and the shot jumps backwards. */
+  // Sum of the gaps between frames that ran, each capped at 1 s, so sequence speed does not depend on frame rate.
   let clock = 0
   let lastFrame = 0
   let staged = -1          /* index of the last MODES entry applied this cycle */
 
   const $ = s => el.shadowRoot?.querySelector(s)
 
-  /* The panel names the view on screen, so changing mode must also do what
-     setView does to the header and the mode grid — and nothing it does to the
-     camera. */
   function setMode(m) {
     if (el.state.mode === m) return false
     el.state.mode = m
@@ -134,9 +91,6 @@ export function createCinematic(el, onChange = () => {}) {
     return true
   }
 
-  /* resize()'s frustum half, without its renderer.setSize() and label-canvas
-     reallocation, which would run sixty times a second for an unchanged
-     number. */
   function frustum(pad, ex) {
     const c = el.renderer?.domElement
     const w = c && c.width ? c.width : 1
@@ -167,8 +121,6 @@ export function createCinematic(el, onChange = () => {}) {
     const ex = track.ex(time), op = track.op(time)
     if (Math.abs(el.state.explode - ex) > 1e-4) { el.state.explode = ex; dirty = true }
     if (Math.abs(el.state.opacity - op) > 1e-4) { el.state.opacity = op; dirty = true }
-    /* The element's own 2600ms explode tween writes state.explode in draw()
-       and would fight this one frame for frame. */
     if (dirty) { el.transition = null; el.applyState() }
 
     const az = track.az(time) * D2R, ele = track.ele(time) * D2R
@@ -177,12 +129,10 @@ export function createCinematic(el, onChange = () => {}) {
     el.controls.target.set(0, ty, tz)
     el.camera.position.set(ce * Math.cos(az), ty + ce * Math.sin(az), tz + Math.sin(ele) * RADIUS)
 
-    /* every frame: it is what keeps the framing right when the box resizes */
     frustum(track.pad(time), ex)
   }
 
-  /* el.draw is the loop body and the loop re-schedules through `this.draw`,
-     so an own property on the instance is the whole hook. */
+  // The element's rAF loop reschedules through this.draw, so an own property on the instance hooks every frame.
   const baseDraw = el.draw.bind(el)
   el.draw = t => {
     if (playing && !el.disposed && el._visible && !document.hidden) {
@@ -193,12 +143,6 @@ export function createCinematic(el, onChange = () => {}) {
     baseDraw(t)
   }
 
-  /* draw() breaks the self-rescheduling rAF chain whenever it is entered off
-     screen or with the tab hidden, and only an intersection change or
-     visibilitychange restarts it — so a frame landing in either state while
-     the browser then stops delivering rAF leaves the model stopped with
-     nothing scheduled to notice. startLoop() carries its own not-visible,
-     not-loaded, hidden and already-running guards. */
   let watchdog = 0
   function onScreen() {
     const r = el.getBoundingClientRect()
@@ -209,10 +153,6 @@ export function createCinematic(el, onChange = () => {}) {
     clearInterval(watchdog)
     watchdog = setInterval(() => {
       if (!playing || disposed || el.disposed || document.hidden) return
-      /* _visible is written by an IntersectionObserver and observer callbacks
-         are delivered on a rendering step, so a wrong flag with nothing else
-         animating means nothing produces the rendering step that would correct
-         it. The rect is ground truth. */
       if (!el._visible && onScreen()) el._visible = true
       if (!el._frame && el._visible) { try { el.startLoop() } catch {} }
     }, 1000)
@@ -239,8 +179,6 @@ export function createCinematic(el, onChange = () => {}) {
     watch()
   }
 
-  /* Yielding leaves the model where the user caught it: no reset, no reframe,
-     no sequence frame written after their first drag. */
   function stop() {
     if (!playing) return
     playing = false
@@ -253,14 +191,10 @@ export function createCinematic(el, onChange = () => {}) {
     if (e.type === 'keydown' && (e.key === 'Tab' || e.key === 'Shift')) return
     stop()
   }
-  /* pointerdown and keydown cover a person; click covers activation arriving
-     without either — a programmatic press, or assistive technology activating
-     a control directly. Capture phase, so the sequence has yielded before the
-     viewer's own handler runs. */
+  // Any of these, in the capture phase, stops the sequence before the viewer's own handlers run.
   const EVENTS = ['pointerdown', 'wheel', 'touchstart', 'keydown', 'click']
   for (const type of EVENTS) el.addEventListener(type, yielded, { capture: true, passive: true })
 
-  /* a harness driving the page has to read the clock it is measuring */
   const api = {
     start,
     stop,

@@ -3,45 +3,24 @@ import { SignalTrace } from './infographics'
 import { SENSORS } from '../lib/sensors'
 import { cn } from '../lib/utils'
 
-/* The rear camera, exploded: photoplethysmography drawn rather than described.
- * Two constraints that are easy to break by accident:
- * 1. Plates stay face-on at a shallow oblique angle. Rotated to isometric
- *    diamonds they lose the island silhouette, which is the shape the reader
- *    is meant to recognise.
- * 2. Every step sentence is cut to EXACTLY two lines. baseY centres a pair of
- *    baselines on the 62-unit row and ROWH holds four of the six leaders level
- *    with the part they point at, so a one-line row sits high and a three-line
- *    row overflows. Re-cut inside a sentence; never change the line count. */
-
-/* Palette by hand: these are SVG paint attributes and Tailwind tokens do not
-   reach them. Values are tailwind.config.js, unchanged. */
+// SVG paint attributes cannot take Tailwind classes, so token values are written as hex.
 const INK = '#0d2b1e', INK2 = '#2a5744', INK3 = '#426a58'
 const RULE = '#c2d7ca', RULING = '#93b2a1', MIST = '#e3ede7'
 const CARD = '#ffffff', ACCENT = '#157446', WASH = '#dcefe4'
 const BEAM = '#1d8fb0', BEAMWASH = '#ddf0f8'
-/* Read out of lib/sensors.js rather than typed again. That file is the
-   per-signal spectrum the score dial is built from and is the one place in
-   the project allowed a colour outside the green system; a copy of the hex
-   here would be a second source for it and could drift. */
 const BLOOD = SENSORS.heart.glow
 
-/* One oblique projection for the whole drawing: (x, y) in a plate's own plan
-   lands at (cx + x - 0.42y, cy + 0.34y). A steeper angle turns the island into
-   a sliver and buries the lens cutouts. */
+// Oblique projection: plan point (x, y) maps to (cx + x - 0.42y, cy + 0.34y).
 const SHX = -0.42, SY = 0.34
-const CX = 530                          // the stack's centre line
-const A = 64, RAD = 22, T = 6           // plate half-side, corner radius, thickness
+const CX = 530  // the stack's centre line
+const A = 64, RAD = 22, T = 6  // plate half-side, corner radius, thickness
 
-/* Paths are built through the map below, never handed to an SVG matrix
-   transform: a matrix squashes stroke width with the geometry: at 0.34
-   vertical scale a 1.4 edge prints 0.48 across and 1.4 down. */
+// Paths are projected point by point, not with an SVG matrix, which would squash stroke widths too.
 const px = (cx, x, y) => cx + x + SHX * y
 const py = (cy, y) => cy + SY * y
 const P = (cx, cy, x, y) => `${px(cx, x, y).toFixed(1)},${py(cy, y).toFixed(1)}`
 
-/* Rounded square, corners as quadratics: quadratics survive an affine map
-   exactly, where an elliptical arc needs its radii and rotation recomputed
-   per layer. */
+// Corners are quadratics, which an affine map preserves exactly; elliptical arcs would need new radii per layer.
 function plateD(cx, cy, a, b, r, ox = 0, oy = 0) {
   const p = (x, y) => P(cx, cy, x + ox, y + oy)
   return `M${p(-a + r, -b)} L${p(a - r, -b)} Q${p(a, -b)} ${p(a, -b + r)}`
@@ -59,47 +38,32 @@ function holeD(cx, cy, ox, oy, r) {
     + ` C${p(K * r, -r)} ${p(r, -K * r)} ${p(r, 0)} Z`
 }
 
-/* The island's cutouts, in plan, once. Repeated on every layer rather than
-   reduced to the one lens the light uses. */
 const LENSES = [[-29, -29], [-29, 29], [29, 29]]
 const LENS_R = 20
 const FLASH_HOLE = [33, -24], FLASH_R = 10
 const TINY = [33, -47], TINY_R = 4.5
 
-/* Four plates 56 apart, the closest they can sit and still leave a gap the
-   beam's arrowhead fits in. */
+// Plates 56 apart: the closest spacing that still fits the beam's arrowhead between them.
 const ROW = { glass: 144, lens: 200, ir: 256, sensor: 312 }
-const PHONE = 388, ISLAND = 382        // phone body face, island top face
-const VB_H = 462                       // the drawing's own height, in its own units
+const PHONE = 388, ISLAND = 382  // phone body face, island top face
+const VB_H = 462  // drawing height in viewBox units
 
-/* The light uses the top-left camera, so the ray is one vertical line: along
-   the stack's normal is straight down in this projection. */
 const RAYX = px(CX, LENSES[0][0], LENSES[0][1])
 const faceY = cy => py(cy, LENSES[0][1])
 
-/* One path: the outline and the clip keeping the vessels inside the skin have
-   to be the same path. Every y is 0.74 of the earlier path. */
 const FINGER = 'M471.5,0 C467,29.6 468.5,63.6 476,83.6 C482,97 492.5,104.7 512.8,105.5'
   + ' C533,104.7 543.5,97 549.5,83.6 C557,63.6 558.5,29.6 554,0 Z'
 
 const PAD = { x: 513.2, y: 100, r: 16 }        // the skin actually against the glass
 const FLASH = { cx: 420, cy: 76, a: 22, r: 9, t: 5 }
 
-/* ── The step table ───────────────────────────────────────────────────────
- * Six rows of one height. `to` is where each leader arrives, always a part's
- * left edge at its own mid height, so the arrow comes in parallel to the edge
- * it names. `elbow` is where the leader turns out of its row; values differ
- * per step only to keep vertical runs off the flash and off each other.
- * TBL_TOP is set so four of the six rows land within a few units of the part
- * they point at, which lets most leaders draw as one straight horizontal.
- * Step 02 is a plain diagonal: its target is tissue, not a plate edge, and a
- * staircase into it arrived at the same height as the cover-glass leader one
- * row below. Step 03 owns two plates, so its leader forks. */
+// Step table: six rows of ROWH. Every step text is two lines: baseY centres two baselines in a row,
+// so one or three lines would misalign it with its leader.
 const TBL_X = 8, TBL_W = 344, TBL_TOP = 44, ROWH = 62
 const NUM_W = 30                       // the marker's own cell
 const TXT_X = TBL_X + NUM_W + 10
-const TBL_R = TBL_X + TBL_W            // where every leader leaves from
-const LEAD = 21                        // line leading inside a row
+const TBL_R = TBL_X + TBL_W  // where every leader leaves from
+const LEAD = 21  // line leading inside a row
 
 export const CAMERA_STEPS = [
   { id: 'flash', elbow: 378,
@@ -124,18 +88,12 @@ export const CAMERA_STEPS = [
 
 const rowTop = i => TBL_TOP + i * ROWH
 const rowMid = i => rowTop(i) + ROWH / 2
-/* Two lines centred on the row, so the marker and the first line share a
-   line and the block cannot drift off its leader. */
 const baseY = i => rowMid(i) - (LEAD / 2) + 5
-/* Out, along, then in: the last segment is horizontal and lands on a plate's
-   left edge. */
 const leadD = (s, i, [tx, ty]) =>
   s.diagonal ? `M${TBL_R},${rowMid(i)} L${tx},${ty}`
     : Math.abs(ty - rowMid(i)) < 1 ? `M${TBL_R},${rowMid(i)} H${tx}`
       : `M${TBL_R},${rowMid(i)} H${s.elbow} V${ty} H${tx}`
 
-/* Body, then face: the offset copy showing below the face is the layer's
-   thickness, and both come from the same call so they cannot lose register. */
 function Plate({ cy, face = CARD, side = MIST, a = A, b = A, r = RAD, t = T, children }) {
   return (
     <g>
@@ -146,8 +104,6 @@ function Plate({ cy, face = CARD, side = MIST, a = A, b = A, r = RAD, t = T, chi
   )
 }
 
-/* `lens` is what changes between layers; the flash and sensor windows are
-   plain openings passing through. */
 function Cutouts({ cy, lens }) {
   return (
     <g>
@@ -160,8 +116,6 @@ function Cutouts({ cy, lens }) {
   )
 }
 
-/* The grid runs along the die's own plan axes, not square to the page: a
-   page-square grid on a foreshortened face gives the projection away. */
 function SensorDie({ cy, ox, oy }) {
   const h = 16, n = 4, out = []
   for (let i = 1; i < n; i++) {
@@ -189,16 +143,11 @@ function Stack({ p }) {
   const glow = { fill: 'none', stroke: BEAMWASH, strokeWidth: '8', strokeLinecap: 'round' }
   return (
     <g>
-      {/* Where the island's two visible corners close back to if the layers
-          were stacked. */}
       <g stroke={RULING} strokeWidth="1" strokeDasharray="2 6">
         <line x1={px(CX, -A, A)} y1="168" x2={px(CX, -A, A)} y2={py(ISLAND, A)}/>
         <line x1={px(CX, A, -A)} y1="124" x2={px(CX, A, -A)} y2="358"/>
       </g>
 
-      {/* The flash, exploded to the side because it is not in the optical
-          stack, since it sits beside the lenses in the same island, which is why
-          its window is a cutout on every plate below. */}
       <path d={plateD(FLASH.cx, FLASH.cy + FLASH.t, FLASH.a, FLASH.a, FLASH.r)}
         fill={MIST} stroke={INK} strokeWidth="1.2"/>
       <path d={plateD(FLASH.cx, FLASH.cy, FLASH.a, FLASH.a, FLASH.r)}
@@ -215,8 +164,6 @@ function Stack({ p }) {
           strokeWidth="2.1" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
         <path d="M533,0 C529,23.7 534.5,55.5 538,93.2" fill="none" stroke={BLOOD}
           strokeWidth="1.8" strokeLinecap="round" opacity="0.5" className={`${p}-vein`}/>
-        {/* Across both vessels and back down to the pad: what reaches the
-            sensor is what the blood did not absorb. */}
         <path d="M468,49 C488,63 518,70 536,81 C534,91 526,97 513,101" {...glow}/>
         <path d="M468,49 C488,63 518,70 536,81 C534,91 526,97 513,101"
           {...ray} className={`${p}-ray`}/>
@@ -224,8 +171,6 @@ function Stack({ p }) {
       <path d={holeD(PAD.x, PAD.y, 0, 0, PAD.r)} fill={WASH} fillOpacity="0.8"
         stroke={INK} strokeWidth="1.3"/>
 
-      {/* Cover glass. The tint is a separate inset shape, not a translucent
-          face, so the layer below does not print through it. */}
       <Plate cy={ROW.glass}>
         <path d={plateD(CX, ROW.glass, A - 7, A - 7, RAD - 3)} fill={BEAMWASH}
           fillOpacity="0.5" stroke={INK} strokeOpacity="0.3" strokeWidth="1"/>
@@ -245,8 +190,6 @@ function Stack({ p }) {
         )}/>
       </Plate>
 
-      {/* The 45 degree hatch is the site's mark for a material zone, same as
-          the adhesive on the patch drawing. */}
       <Plate cy={ROW.ir}>
         <Cutouts cy={ROW.ir} lens={(x, y) => (
           <g>
@@ -261,9 +204,6 @@ function Stack({ p }) {
         <Cutouts cy={ROW.sensor} lens={(x, y) => <SensorDie cy={ROW.sensor} ox={x} oy={y}/>}/>
       </Plate>
 
-      {/* The phone body, sized to clear the island. No inset trim line: it
-          ran about ten units outside the island and printed as a fourth
-          parallel outline around the same corner. */}
       <path d={plateD(CX, PHONE + 9, 90, 104, 34, 18)} fill={MIST} stroke={INK} strokeWidth="1.3"/>
       <path d={plateD(CX, PHONE, 90, 104, 34, 18)} fill={CARD} stroke={INK} strokeWidth="1.5"/>
       <path d={plateD(CX, ISLAND + 4, A, A, RAD)} fill={MIST} stroke={INK} strokeWidth="1.2"/>
@@ -280,8 +220,6 @@ function Stack({ p }) {
       <path d={holeD(CX, ISLAND, FLASH_HOLE[0], FLASH_HOLE[1], 4.5)} fill={ACCENT}/>
       <path d={holeD(CX, ISLAND, TINY[0], TINY[1], TINY_R)} fill={INK} fillOpacity="0.5"/>
 
-      {/* Every segment carries an arrowhead: once the plates are solid the
-          gaps are the only place the ray can be seen. */}
       <g stroke={BEAM} strokeWidth="2.2" strokeLinecap="round" className={`${p}-ray`}>
         <line x1={RAYX} y1="106" x2={RAYX} y2={faceY(ROW.glass) - 4}
           markerEnd={`url(#${p}-tip)`}/>
@@ -303,10 +241,6 @@ function Defs({ p }) {
         markerWidth="4" markerHeight="4" orient="auto-start-reverse">
         <path d="M0 1 L9 5 L0 9 Z" fill={BEAM}/>
       </marker>
-      {/* Leader arrows in the drawing's dark grey-green, not the pale ruling
-          grey: a line followed across 250 units has to survive being looked
-          at, and it stays far enough off the turquoise that a label cannot be
-          read as the light travelling. */}
       <marker id={`${p}-lead`} viewBox="0 0 10 10" refX="8" refY="5"
         markerWidth="5" markerHeight="5" orient="auto-start-reverse">
         <path d="M0 2 L9 5 L0 8 Z" fill={INK3}/>
@@ -320,9 +254,7 @@ function Defs({ p }) {
   )
 }
 
-/* Media query as state, not CSS: the figure below mounts one of two drawings,
-   and a CSS-only answer would ship both and hide one, a second copy of a
-   200-line SVG in every payload. */
+// Media query as state, so only one of the two drawings is mounted.
 export function useNarrow(q = '(max-width: 767px)') {
   const [v, setV] = React.useState(
     () => typeof matchMedia === 'function' ? matchMedia(q).matches : false)
@@ -337,7 +269,6 @@ export function useNarrow(q = '(max-width: 767px)') {
   return v
 }
 
-/* Bands first, then rules, then text, so nothing is drawn over a sentence. */
 function StepTable({ p }) {
   return (
     <g>
@@ -359,7 +290,6 @@ function StepTable({ p }) {
               strokeWidth="1.1" strokeLinejoin="round" markerEnd={`url(#${p}-lead)`}/>
           ))}
           <circle cx={TBL_R} cy={rowMid(i)} r="2.8" fill={INK3}/>
-          {/* A plain marker, not 01 to 06 (owner, 20 October). */}
           <circle cx={TBL_X + NUM_W / 2 + 2} cy={baseY(i) - 5} r="3.5" fill={BEAM}/>
           {s.lines.map((l, j) => (
             <text key={j} x={TXT_X} y={baseY(i) + j * LEAD} fill={INK}
@@ -371,10 +301,7 @@ function StepTable({ p }) {
   )
 }
 
-/* The sensor's brightness over three and a half seconds of a 70 bpm pulse,
-   drawn from a model wave rather than typed as points: a fast dip as the
-   beat arrives, a slower climb back, and the small second notch a pulse wave
-   carries. Demo shape, not a recording. */
+// Sensor brightness over 3.5 s of a 70 bpm pulse from a model wave: fast dip, slower climb, small notch.
 const TR_W = 300, TR_H = 150, TR_SECONDS = 3.5, TR_BPM = 70
 const TR_X0 = 8, TR_X1 = TR_W - 8, TR_TOP = 22, TR_BOT = 108
 function trBright(t) {
@@ -411,7 +338,6 @@ function SensorTrace({ p }) {
       <line x1={TR_X0} y1={TR_TOP - 4} x2={TR_X1} y2={TR_TOP - 4} stroke={RULE} strokeDasharray="3 4"/>
       <path d={TR_PATH} fill="none" stroke={BEAM} strokeWidth="2.6" strokeLinecap="round"
         strokeLinejoin="round"/>
-      {/* A read head sweeping across at the speed of the trace: transform only. */}
       <line x1={TR_X0} y1={TR_TOP - 8} x2={TR_X0} y2={TR_BOT + 6} stroke={ACCENT} strokeWidth="1.5"
         strokeOpacity="0.55" className={`${p}-head`}/>
       {TR_DIPS.map((d, i) => (
@@ -437,22 +363,9 @@ export function CameraModule({ className }) {
   const narrow = useNarrow()
   return (
     <figure className={cn('m-0', className)}>
-      {/* On xl the caption is a rail beside the figure: the sensor's trace at
-          a size that reads, and one sentence. */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-center xl:gap-8">
         <div>
           <svg
-            /* Narrow crops to the drawing rather than redrawing it, so phone
-               and desktop cannot drift apart. */
-            /* HELD TO 244px ON A PHONE. The crop is 300 units wide by 470
-               tall, so at the full 358px of a 390 column it printed 561px of
-               drawing before a word of the step list, and at 288 still 451px.
-               Spec 0e section 14 caps a band at about one and a half screens
-               and this one ran to 1.95, so the cap comes down again: 244 puts
-               the drawing at 382px. The only type inside the crop is the
-               "camera island" label, which lands at 15 * 244 / 300 = 12.2px
-               and stays ink-2 on card, 8.31 : 1. Nothing else in the crop is
-               type. */
             viewBox={narrow ? `390 -4 300 ${VB_H + 8}` : `0 0 700 ${VB_H}`}
             className={cn('block w-full', narrow && 'mx-auto max-w-[244px]')}
             role="img"
@@ -461,9 +374,7 @@ export function CameraModule({ className }) {
               more with every heartbeat. What comes back crosses the cover glass, and the lens
               focuses it. The infrared filter drops the light the eye cannot see. The image
               sensor reads it thirty times a second. That number rising and falling is the pulse.">
-            {/* Keyframes live in the drawing, not input.css: the class names
-                are namespaced per instance, and two of these on one page must
-                not share a keyframe name. */}
+            {/* Class names are namespaced per instance so two drawings on one page do not share keyframes. */}
             <style>{`
               @keyframes ${p}-flow { to { stroke-dashoffset: -26 } }
               @keyframes ${p}-beat { 0%,100% { opacity:.34 } 42% { opacity:.95 } }
@@ -483,8 +394,6 @@ export function CameraModule({ className }) {
             </g>
           </svg>
 
-          {/* The steps again as HTML for the narrow crop: at 390px a 16-unit
-              sentence inside a 700-unit viewBox renders at nine pixels. */}
           {narrow && (
             <ol className="m-0 mt-4 grid list-none gap-2 p-0">
               {CAMERA_STEPS.map(s => (
@@ -497,11 +406,6 @@ export function CameraModule({ className }) {
           )}
         </div>
 
-        {/* NOT DRAWN ON A PHONE: at 390 the last step of the list already says it.
-            From md it is the drawing's last step at a size that reads: what
-            the sensor's number does over a few seconds. On xl it is a rail
-            beside the drawing, sized to fill it rather than leave a column of
-            blank card with one line of type in it. */}
         {!narrow && (
           <figcaption className="m-0 grid gap-3 border-t border-rule/60 pt-4
             md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] md:items-center md:gap-6
@@ -520,7 +424,6 @@ export function CameraModule({ className }) {
   )
 }
 
-/* ── What the phone gets, and what it does not ───────────────────────────── */
 const COVERAGE = [
   { id:'heart', name:'Heart rate',  on:true,  note:'The camera reads this.' },
   { id:'move',  name:'Movement',    on:true,  note:'The phone reads this.' },
@@ -545,24 +448,15 @@ export function SignalCoverage({ className }) {
   )
 }
 
-/* Three figures for the capture steps: each 210 x 92 in its own units,
-   rendered at 5rem of height. */
-
-/* Lines to read out loud. What is measured is the level and steadiness of a
-   voice, never the words. Exported: the capture screen and the phone mockup
-   have to offer the same lines. */
 export const SAY_LINES = [
   'The bus leaves at eight.',
   'The window faces the street.',
   'There are four chairs at the table.',
 ]
 
-/* Which finger, and over what: the pad covers the lens and the flash at once. */
 function GripFig() {
   return (
     <svg viewBox="0 0 210 96" className="block w-full max-w-[16rem]" aria-hidden>
-      {/* The pad is drawn inside the island's edges, not around them, so the
-          island stays readable under it. */}
       <rect x="6" y="6" width="70" height="70" rx="19" fill={CARD} stroke={INK} strokeWidth="1.4"/>
       <circle cx="25" cy="25" r="9" fill="none" stroke={INK2} strokeWidth="1.2"/>
       <circle cx="25" cy="57" r="9" fill="none" stroke={INK2} strokeWidth="1.2"/>
@@ -586,8 +480,6 @@ function GripFig() {
   )
 }
 
-/* Hand on the phone, forearm on the same surface behind it: a hand holding a
-   phone up cannot survive thirty seconds of stillness. */
 function RestArt() {
   const hatch = [10, 24, 38, 52, 66, 80, 94, 108, 122, 136, 150, 164, 178, 192]
   return (
@@ -618,8 +510,6 @@ function RestFig() {
   )
 }
 
-/* The struck-out speaker is the room; the distance is on a dimension line
-   because it is a measurement. */
 function QuietFig() {
   return (
     <svg viewBox="0 0 210 96" className="block w-full max-w-[16rem]" aria-hidden>

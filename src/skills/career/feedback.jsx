@@ -7,15 +7,6 @@ import { SKILLS, FEELINGS, FROM, NEXT_STEPS, splitSentences, suggestSkills, grou
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, leave } from '../../toolkit/game/skill'
 
-/* Feedback Notes.
- *
- * 1 Write   the note, close to their words, who gave it and what it was on.
- * 2 Sort    tap the parts that are facts about the work; name what it felt
- *           like it said about you. The two are shown side by side.
- * 3 Skill   rewrite it as one skill to practise.
- * 4 Next    pick one next step and a by-when.
- * 5 Notes   every saved note, grouped by skill, with what you practised. */
-
 const TOOL = META.feedback
 const STEPS = [['write', 'Write'], ['sort', 'Sort'], ['skill', 'Skill'], ['next', 'Next'], ['notes', 'Notes']]
 const ORDER = STEPS.map(s => s[0])

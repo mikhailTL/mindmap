@@ -1,11 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* One focusable slider, not five buttons: a rating has a value, and five
-   buttons give five tab stops and no value. The number is printed beside the
-   stars so nothing depends on resolving the fill. Half fill is a clip rect
-   over a second copy of the path. */
-
 const STAR = 'M12 2.4l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.4l-5.88 3.1 ' +
              '1.12-6.55L2.48 9.32l6.58-.96z'
 
@@ -38,8 +33,7 @@ export function StarRating({
   const uid = React.useId()
   const [hover, setHover] = React.useState(null)
 
-  /* Float guard: 0.5 added five times is not 2.5, and 2.4999999 renders a star
-   * at 99.996% fill and is announced as "2.4999999 out of 5". */
+  // Rounds to the step, so repeated 0.5 additions give 2.5 and not 2.4999999.
   const snap = v => {
     const n = Math.round(v / step) * step
     return Math.min(max, Math.max(step, +n.toFixed(4)))
@@ -50,7 +44,7 @@ export function StarRating({
   const fromPointer = (e, i) => {
     const r = e.currentTarget.getBoundingClientRect()
     const frac = (e.clientX - r.left) / r.width
-    /* Pointing anywhere inside star i means at least i + step. */
+    // A pointer anywhere inside star i means a value of at least i + step.
     const within = Math.max(step, Math.min(1, Math.ceil((frac - 1e-9) / step) * step))
     return snap(i + within)
   }

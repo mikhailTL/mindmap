@@ -2,12 +2,6 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { TODAY } from '../../lib/roster'
 
-/* The parts of the student screen, Today, Trends and the Log, each open on one of
- * these: an icon tile, the part's name, a rule running to the edge, and one
- * line under it. Kind 'recs' is for a Recommendations part, where a page has
- * one. Same shape both times, so the change of part reads at a
- * glance. */
-
 const ICONS = {
   today: (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9"
@@ -43,14 +37,13 @@ const TONE = {
   recs: 'bg-sun-wash text-sun-ink',
 }
 
-/* "Friday, October 16": the demo's today, and the reader's own for Live. */
 const LONG = { weekday: 'long', month: 'long', day: 'numeric' }
+// The demo's fixed today, formatted in UTC to match the roster's noon-UTC dates.
+// longDate formats the reader's own day for Live.
 export const TODAY_LONG = new Intl.DateTimeFormat('en-US', { ...LONG, timeZone: 'UTC' })
   .format(new Date(`${TODAY}T12:00:00Z`))
 export const longDate = (d = new Date()) => new Intl.DateTimeFormat('en-US', LONG).format(d)
 
-/* `action`: an optional link at the end of the heading row, such as "Take a
-   reading". `as`: the heading level, h2 unless the page already has one. */
 export function PartHead({ id, kind, title, line, action, className, as: H = 'h2' }) {
   return (
     <div className={cn('flex flex-col gap-1', className)}>

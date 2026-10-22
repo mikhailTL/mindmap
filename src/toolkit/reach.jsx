@@ -7,15 +7,9 @@ import { useMode } from '../lib/mode'
 import { clearReach, getReach, getVersion, setReachOn, subscribe } from '../app/store'
 import { homePoint, weeklyReach } from '../signals/reach'
 
-/* Reach: a dashboard card for the Week pane. One number from a week of
-   readings: how far from the student's own most common point they happened.
-   The position is asked for only when a reading finishes (PhoneCheck.jsx),
-   rounded before it is stored, and never leaves the device. No map, no place
-   name. The card reads the `reach` slot and nothing else. */
-
 export const REACH_LABEL = 'Only where you took readings. Never shared, never a map.'
 
-/* Monday 00:00 local of the week holding `now`. */
+// Monday 00:00 local time of the week containing `now`.
 export function weekStart(now = new Date()) {
   const d = new Date(now)
   d.setHours(0, 0, 0, 0)
@@ -26,9 +20,6 @@ export function weekStart(now = new Date()) {
 
 const DEMO = { thisWeek: 4.2, lastWeek: 6.0, readings: 9 }
 
-/* A ring with an arrow leaving it sideways: readings around home, and the
-   farthest one. Sideways, so it never reads as a gender sign. Same 24 box and
-   1.6 stroke as src/ui/marks. */
 function ReachMark({ className }) {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden

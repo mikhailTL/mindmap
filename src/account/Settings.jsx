@@ -8,16 +8,6 @@ import { demoSide } from './demo-network'
 import { backend, canInvite, homeFor, listNetwork, listPendingApprovals, signOut } from './store'
 import { Avatar, HelpMark, LinkMark, outline, solid } from './ui'
 
-/* Every setting the app has, under the profile card on the account page.
- *
- * Four groups, each drawn its own way so the page does not read as one
- * stack of identical panels:
- *   Your people   one wide band, the faces and two actions
- *   Account       a grid of tiles, one hue each, each opening its screen
- *   Appearance    set right here: a segmented text size and a switch
- *   About         a plain line on the canvas, with Sign out at its end
- */
-
 export const SHARING_ROUTE = { student: 'shared', parent: 'privacy', pro: 'app-pro', other: 'privacy' }
 const SHARING_LABEL = { student: 'What you share', parent: 'What a parent can see', pro: 'What teens share', other: 'How sharing works' }
 
@@ -29,8 +19,6 @@ const GroupHead = ({ id, children, aside }) => (
     {aside}
   </div>
 )
-
-/* ── Your people ────────────────────────────────────────────────────────── */
 
 function People({ me, go, demo, role }) {
   let people, linked, waiting
@@ -90,8 +78,6 @@ function People({ me, go, demo, role }) {
   )
 }
 
-/* ── Account tiles ──────────────────────────────────────────────────────── */
-
 const TILE = {
   sun:   { edge: 'hoverOnly:border-sun',   mark: 'bg-sun-wash text-sun-ink',     bar: 'bg-sun' },
   lilac: { edge: 'hoverOnly:border-lilac', mark: 'bg-lilac-wash text-lilac-ink', bar: 'bg-lilac' },
@@ -137,9 +123,7 @@ function AccountTiles({ me, go, role }) {
   )
 }
 
-/* ── Appearance ─────────────────────────────────────────────────────────── */
-
-/* A segmented control: a radiogroup with one tab stop and arrow keys. */
+// A radiogroup with one tab stop and arrow-key selection.
 export function Segmented({ label, value, options, onChange, className }) {
   const refs = React.useRef([])
   const index = Math.max(0, options.findIndex(o => o.value === value))
@@ -218,8 +202,6 @@ function Appearance() {
     </section>
   )
 }
-
-/* ── About, and the way out ─────────────────────────────────────────────── */
 
 function AboutLine({ me, go }) {
   const where = backend() === 'remote' ? 'Saved to your MindMap account' : 'Kept on this device'

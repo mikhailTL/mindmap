@@ -5,8 +5,6 @@ import {
   SIGNAL, signalsFrom, LIGHT_FACE,
 } from '../src/signals/light.js'
 
-/* ── features ───────────────────────────────────────────────────────────── */
-
 const scrollRun = (n, dtMs, dy) => Array.from({ length: n }, (_, i) => ({ t: i * dtMs, y: i * dy }))
 
 describe('scrollFeatures', () => {
@@ -50,8 +48,6 @@ describe('sessionFeatures', () => {
   })
 })
 
-/* ── the adaptive baseline ──────────────────────────────────────────────── */
-
 describe('baseline', () => {
   it('starts empty and learns the usual from sessions', () => {
     let b = emptyBaseline()
@@ -67,8 +63,6 @@ describe('baseline', () => {
     expect(b.mean.pxPerSec).toBe(300)
   })
 })
-
-/* ── strain and the light ───────────────────────────────────────────────── */
 
 const calm = { pxPerSec: 300, reversals: 0.1, medianGap: 140, deletions: 0.1, minutes: 10, motion: 0.03 }
 const learned = () => { let b = emptyBaseline(); for (let i = 0; i < 10; i++) b = updateBaseline(b, calm); return b }
@@ -117,8 +111,6 @@ describe('lightFor and decideLight', () => {
     expect(s.light).toBe(Light.GREEN)
   })
 })
-
-/* ── the nudge to the teen and the summary to the parent ───────────────── */
 
 describe('nudgeFor', () => {
   it('offers a break once on red and not again inside the cooldown', () => {

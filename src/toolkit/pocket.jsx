@@ -7,15 +7,7 @@ import { useWakeLock, useTopOn } from './dark'
 import { useGame, Score, Pops, EndCard, LevelMeter, useSvgId } from './game'
 import { DidItWork } from './after'
 
-/* Breathing by Sound: the pacer that keeps going when the phone locks, and
- * a sky that fills one star per full breath.
- *
- * The session is rendered to a WAV (src/toolkit/wav.js) ahead of the tap, so
- * Start is a synchronous audio.play() that survives the lock screen. The
- * phase is read from audio.currentTime, so word, sound and stars never drift,
- * and a phone that was locked catches up on every breath it missed the
- * moment it is opened again. */
-
+// The session is pre-rendered to a WAV (wav.js) so Start can call play() inside the tap and keep going on the lock screen.
 const MINUTES = [2, 5, 10]
 const SAY = { 'In':'Breathe in', 'Out':'Breathe out', 'Rest':'Hold', 'In again':'In again', 'Done':'Done' }
 const STAR_POINTS = 10
@@ -39,8 +31,6 @@ const Lock = p => (
 
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-/* The orb breathes; the stars around it are the breaths, lit as each one
-   ends. Under reduced motion the orb holds still and the count carries it. */
 function Sky({ phase, t, count, still, idle, stars, lit }) {
   const scale = phase === 'In' ? 0.5 + 0.5 * t
     : phase === 'Out' ? 1 - 0.5 * t
@@ -172,7 +162,6 @@ export default function Pocket() {
   }, [end])
   stopRef.current = stop
 
-  /* Start is synchronous: src is set and play() called inside the tap. */
   const start = () => {
     const a = audio.current
     if (!a || !url.current) return
@@ -203,7 +192,6 @@ export default function Pocket() {
     setGen(x => x + 1)
   }
 
-  /* The phase from audio.currentTime, once a frame while playing. */
   React.useEffect(() => {
     if (state !== 'playing') return
     let id = 0

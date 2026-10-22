@@ -8,15 +8,6 @@ import { PURPOSES, buildEmail, checkEmail, INTERVIEW, ASK_THEM, starAnswer, spea
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, QuickRound, Win, leave } from '../../toolkit/game/skill'
 
-/* Professional Email, in three parts.
- *
- * Email      purpose, recipient, ask, deadline, then a draft you can edit.
- *            The checker reads whatever is in the draft box, so it works on
- *            a message you wrote yourself too.
- * Interview  common questions and a STAR answer builder, timed at a calm
- *            140 words a minute.
- * Networking four etiquette cards and a thank-you or follow-up note. */
-
 const TOOL = META.email
 const TABS = [['practice', 'Quick round'], ['email', 'Email'], ['interview', 'Interview'], ['network', 'Networking']]
 const GOALS = {

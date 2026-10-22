@@ -1,17 +1,9 @@
+// Get Help directory in English and Spanish with read-aloud; numbers and hours come from resources.js.
 import React from 'react'
 import * as D from '@radix-ui/react-dialog'
 import { Cross } from '../ui/marks'
 import { cn } from '../lib/utils'
 import { EMERGENCY, RESOURCES, VERIFIED_ON } from './resources'
-
-/* Getting help: a directory of other organisations' numbers, reachable from
- * every app screen with no reading, no patch and no account. Numbers, hours
- * and links live in ./resources.js. Organisation names and action keywords
- * (HOME, TEEN) are never translated; a missing translation shows the English.
- * Nothing here promises confidentiality or what a service will do.
- */
-
-/* ── Marks ──────────────────────────────────────────────────────────────── */
 
 const G = p => (
   <svg viewBox="0 0 24 24" width={p.size || 18} height={p.size || 18} fill="none" aria-hidden
@@ -35,8 +27,6 @@ const StopMark = p => (
   <G {...p}><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></G>
 )
 const MARK = { call: CallMark, text: TextMark, chat: ChatMark }
-
-/* ── Languages ──────────────────────────────────────────────────────────── */
 
 const LANGS = [
   { code: 'en', label: 'English', speech: 'en-US' },
@@ -81,6 +71,7 @@ const MONTH_ES = {
   May: 'mayo', June: 'junio', July: 'julio', August: 'agosto',
   September: 'septiembre', October: 'octubre', November: 'noviembre', December: 'diciembre',
 }
+// VERIFIED_ON is formatted 'D Month YYYY'.
 function verifiedDate(code) {
   if (code === 'en') return VERIFIED_ON
   const [day, month, year] = String(VERIFIED_ON).split(' ')
@@ -88,7 +79,7 @@ function verifiedDate(code) {
   return es ? `${day} de ${es} de ${year}` : VERIFIED_ON
 }
 
-/* Keyed by the row id in resources.js; a missing line falls back to `what`. */
+// Keyed by row id in resources.js; a missing translation falls back to English, then to `what`.
 const LINE = {
   en: {
     '988': 'Helps with any crisis, including thoughts of suicide.',
@@ -120,6 +111,7 @@ const HOURS_ES = {
     'De 9 am a 7 pm del Este, de lunes a viernes',
 }
 
+// Text keywords (HOME, TEEN, START) stay in English because the services match on them.
 const ACTION_ES = {
   'Call 988': 'Llama al 988',
   'Text 988': 'Envía un mensaje al 988',
@@ -149,8 +141,6 @@ function t(code, map, key) {
   return map[key] || key
 }
 
-/* ── Reading it aloud ───────────────────────────────────────────────────── */
-
 /* Three or more digits are spoken one by one. */
 function spoken(text) {
   return String(text).replace(/\d{3,}/g, m => m.split('').join(' '))
@@ -164,6 +154,7 @@ function useSpeech(code) {
 
   React.useEffect(() => {
     if (!supported) return
+    // Some browsers load voices asynchronously, so the list is re-read on voiceschanged.
     const read = () => setVoices(synth.getVoices() || [])
     read()
     synth.addEventListener?.('voiceschanged', read)
@@ -202,8 +193,6 @@ function useSpeech(code) {
 
   return { supported, speaking, speak, stop }
 }
-
-/* ── Rows ───────────────────────────────────────────────────────────────── */
 
 const tap = cn('inline-flex min-h-[44px] items-center gap-1.5 rounded-field border px-2.5',
   'font-display text-ui font-medium transition-colors duration-150 ease')
@@ -259,8 +248,6 @@ function Resource({ r, code, copy }) {
   )
 }
 
-/* ── The content, so it can be a route as well as a sheet ───────────────── */
-
 export function HelpBody({ className, onLang }) {
   const [code, setCode] = React.useState('en')
   React.useEffect(() => { onLang?.(code) }, [code, onLang])
@@ -313,7 +300,6 @@ export function HelpBody({ className, onLang }) {
 
       <p className="mt-2.5 max-w-[66ch] text-fine text-ink-2">{copy.intro}</p>
 
-      {/* Red on purpose: the owner asked for red in emergency sections. */}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-panel
         border border-crit/40 bg-[#fbeae6] px-3.5 py-3">
         <p className="min-w-0 flex-1 basis-full text-fine font-medium text-[#7a2314] sm:basis-0">{em.line}</p>
@@ -338,8 +324,6 @@ export function HelpBody({ className, onLang }) {
     </div>
   )
 }
-
-/* ── The sheet ──────────────────────────────────────────────────────────── */
 
 export function HelpSheet({ open, onOpenChange }) {
   const [code, setCode] = React.useState('en')
@@ -377,8 +361,6 @@ export function HelpSheet({ open, onOpenChange }) {
   )
 }
 
-/* ── Trigger plus sheet ─────────────────────────────────────────────────── */
-
 /* `compact` is the top-bar spelling: icon only on a phone. */
 export function GetHelp({ compact = false, className }) {
   const [open, setOpen] = React.useState(false)
@@ -390,8 +372,6 @@ export function GetHelp({ compact = false, className }) {
           'text-paper transition-colors duration-150 ease hoverOnly:bg-[#7a2314]',
           compact ? 'w-10 px-0 sm:w-11 lg:w-auto lg:gap-2 lg:px-3' : 'px-3', className)}>
         <CallMark size={16}/>
-        {/* Compact is the app top bar: the mark alone below lg, so the
-            MindMap name fits beside it (owner, 18 October). */}
         {compact
           ? <span className="sr-only lg:not-sr-only">{COPY.en.getHelp}</span>
           : COPY.en.getHelp}

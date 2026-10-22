@@ -3,10 +3,7 @@ import * as outside from './outside/index.js'
 import * as life from './life/index.js'
 import * as career from './career/index.js'
 
-/* Life skills: the four categories the owner listed, in his order. Each
- * category folder exports CATEGORY and TOOLS; this file only joins them.
- * Every tool opens at `#/toolkit-<tool id>` and saves only on this device. */
-
+// Each category folder exports CATEGORY and TOOLS; every tool opens at #/toolkit-<tool id>.
 export const SKILL_GROUPS = [school, outside, life, career]
   .map(m => ({ ...m.CATEGORY, tools: m.TOOLS }))
 

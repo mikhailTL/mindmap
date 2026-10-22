@@ -4,9 +4,6 @@ import { makeHandler, SHARE_KEYS, READING_SOURCES, READING_CAP } from '../src/se
 import { SHARING } from '../src/app/store.js'
 import { SOURCES, CAP } from '../src/lib/readingLog.js'
 
-/* The account API, driven through its handler with a memory store: the same
-   code path production runs on Vercel KV, minus the network. */
-
 function req(method, body, token, extra = {}) {
   return {
     method, body,
@@ -106,7 +103,6 @@ describe('create and sign in', () => {
     expect((await call('me', {}, a)).statusCode).toBe(401)
     expect((await call('me', {}, c)).statusCode).toBe(401)
     expect((await call('me', {}, b)).statusCode).toBe(200)
-    /* Nothing left to end. */
     expect((await call('signout_all', {}, b)).body.ended).toBe(0)
   })
   it('delete ends every session for the account', async () => {
@@ -214,7 +210,6 @@ describe('invitations and links', () => {
     expect(r.body.ok).toBe(true)
     expect(r.body.snapshot.links[0]).toMatchObject({ kind: 'parent-student', status: 'active' })
     expect(r.body.snapshot.people.find(p => p.role === 'parent').name).toBe('Dana')
-    /* The same teen again is already linked; a second teen joins too. */
     expect((await call('redeem', { code: inv.snapshot.invite.code }, student.token)).body.reason).toBe('exists')
     const alex = (await create({ role: 'student', name: 'Alex', email: '' })).body
     expect((await call('redeem', { code: inv.snapshot.invite.code }, alex.token)).body.ok).toBe(true)
@@ -288,7 +283,6 @@ describe('readings and sharing: what follows a teen and what the people they lin
     const r = await call('readings', { tz: 240, entries: [entry('a', { note: 'Test day' }), entry('b', { at: NOW - 2 * H, score: 40 })] }, student.token)
     expect(r.body.ok).toBe(true)
     expect(r.body.accepted).toBe(2)
-    /* The same id again replaces; nothing is duplicated. */
     await call('readings', { entries: [entry('a', { score: 61, note: 'Test day' })] }, student.token)
     const again = (await call('signin', { who: 'Sam', passcode: '1234' })).body.snapshot
     expect(again.readings.map(e => e.id).sort()).toEqual(['a', 'b'])

@@ -1,59 +1,10 @@
-/* The framework behind MindMap AI, and the three audience adaptations.
- *
- * One file, read by two consumers that must agree: `api/mindmap-ai.js` builds
- * the system prompt from it on the server, and `src/ai/Ai.jsx` prints the same
- * pillars and the same source list on the screen. A reader can therefore check
- * the rules the model is held to against the rules the page claims for it.
- *
- * WHAT THIS IS NOT. It is not an FDA framework. The Food and Drug
- * Administration publishes no general adolescent mental health standards
- * framework, so no document number could be given for one, and an uncitable
- * authority on a page a judge reads is worse than no authority at all. What is
- * below is assembled from four publishers that do issue adolescent mental
- * health guidance, each named on the pillar it supports:
- *
- *   SAMHSA  Substance Abuse and Mental Health Services Administration,
- *           "National Guidelines for Child and Youth Behavioral Health Crisis
- *           Care", Publication No. PEP22-01-02-001, 2022.
- *           https://store.samhsa.gov/product/national-guidelines-child-and-youth-behavioral-health-crisis-care/pep22-01-02-001
- *   SAMHSA  "988 Suicide & Crisis Lifeline".
- *           https://www.samhsa.gov/find-help/988
- *   NIMH    National Institute of Mental Health, "Teen Depression: More Than
- *           Just Moodiness", revised 2022.
- *           https://www.nimh.nih.gov/health/publications/teen-depression
- *   NIMH    "Warning Signs of Suicide".
- *           https://www.nimh.nih.gov/health/publications/warning-signs-of-suicide
- *   AAP     American Academy of Pediatrics with the American Foundation for
- *           Suicide Prevention and NIMH, "Blueprint for Youth Suicide
- *           Prevention", 2022.
- *           https://www.aap.org/en/patient-care/blueprint-for-youth-suicide-prevention/
- *   AAP     Zuckerbrot RA et al, "Guidelines for Adolescent Depression in
- *           Primary Care (GLAD-PC): Part I and Part II", Pediatrics 141(3),
- *           2018, endorsed by the AAP.
- *           https://www.aap.org/en/news-room/news-releases/aap/2018/aap-publishes-teen-depression-guidelines-that-equip-physicians-to-tackle-mental-health-issues/
- *   CDC     Centers for Disease Control and Prevention, "Promoting Mental
- *           Health and Well-Being in Schools: An Action Guide for School and
- *           District Leaders", 2023.
- *           https://www.cdc.gov/healthyyouth/mental-health-action-guide/index.html
- *   CDC     "Youth Risk Behavior Survey Data Summary and Trends Report:
- *           2013 to 2023".
- *           https://www.cdc.gov/yrbs/dstr/index.html
- *
- * Two pillars below carry `from: 'product'`. They are MindMap's own rules, not
- * anybody's published guidance, and they say so on the screen as well as here,
- * because attributing a rule to a body that did not write it is the same
- * failure as inventing a document number.
- */
-
+// MindMap AI framework: cited sources, rule pillars and audience adaptations. Read by the server prompt
+// (api/mindmap-ai.js) and by the screen, so both show the same rules.
 import { EMERGENCY, RESOURCES } from '../app/resources.js'
 import { PRO, PRO_LC, PRO_PLURAL, SCORE } from '../lib/terms.js'
 
-/* Overridable in the Vercel project so the owner can move model without a
-   deploy of this file. Printed on the screen, so the page never names a model
-   it is not calling. */
+// Default model; the server may override it from the environment, and the screen shows the model actually called.
 export const MODEL_DEFAULT = 'claude-3-5-haiku-latest'
-
-/* ── The sources, as the page prints them ───────────────────────────────── */
 
 export const SOURCES = [
   { id: 'samhsa-crisis', body: 'SAMHSA',
@@ -92,8 +43,7 @@ export const SOURCES = [
 
 const byId = Object.fromEntries(SOURCES.map(s => [s.id, s]))
 
-/* `from` is the honest attribution: a list of source ids, or the string
-   'product' where the rule is MindMap's own. */
+// `from` lists source ids, or 'product' for MindMap's own rules with no published source.
 export const PILLARS = [
   { id: 'no-diagnosis',
     title: 'Support, Never Diagnosis',
@@ -134,8 +84,6 @@ export function pillarSources(pillar) {
   return pillar.from.map(id => byId[id]).filter(Boolean)
 }
 
-/* ── The three audiences ────────────────────────────────────────────────── */
-
 export const AUDIENCES = {
   student: {
     id: 'student',
@@ -174,11 +122,7 @@ export const AUDIENCES = {
 
 export const AUDIENCE_IDS = Object.keys(AUDIENCES)
 
-/* ── The system prompt ──────────────────────────────────────────────────── */
-
-/* The crisis lines are generated from src/app/resources.js rather than retyped
-   here, so the model offers the same numbers the Get Help directory offers and
-   a corrected number is corrected in one place. */
+// Built from src/app/resources.js, so the model and the Get Help screen give the same numbers.
 function crisisLines() {
   const rows = RESOURCES.map(r => {
     const how = r.actions.map(a => a.label).join('; ')
@@ -273,8 +217,7 @@ const ADAPTATION = {
   ].join('\n'),
 }
 
-/* One string, built on the server. The client never supplies it, so a crafted
-   request cannot replace the rules above. */
+// Built on the server only; the client does not supply the prompt.
 export function systemPrompt(audience) {
   const id = AUDIENCES[audience] ? audience : 'student'
   return SHARED() + '\n\n' + ADAPTATION[id]

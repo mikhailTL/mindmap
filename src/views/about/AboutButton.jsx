@@ -1,9 +1,5 @@
 import React from 'react'
 
-/* The About button on the app's front page. A calm outline pill in the site's
-   greens with a small open book, so it reads as something to open without
-   moving (owner, 19 October: "remove the star and the yellow outlining"). */
-
 function Book({ className }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7"

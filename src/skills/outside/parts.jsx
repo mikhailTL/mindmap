@@ -2,10 +2,6 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { ActivityScreen, Sheet, OnDevice, Action } from '../../toolkit/shell'
 
-/* Pieces the three Outside tools share: the screen, the opening two lines,
-   the step heading that takes focus when the step changes, a copy button and
-   the "only on this phone" line. */
-
 export const I = ({ children }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden focusable="false"
     stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
@@ -30,8 +26,7 @@ export function Intro({ problem, doing }) {
   )
 }
 
-/* "Step 2 of 4" and the step's name. Takes focus when it changes so a screen
-   reader and a keyboard land at the top of the new step. */
+// Takes focus when the step changes, so screen readers and keyboards land at the top of the new step.
 export function StepHead({ n, of, title, first = false }) {
   const ref = React.useRef(null)
   React.useEffect(() => {
@@ -76,15 +71,12 @@ export function CopyButton({ text, label = 'Copy' }) {
   )
 }
 
-/* A panel in the tool's own wash, for the one result a tool ends on. */
 export function Result({ className, children }) {
   return (
     <section className={cn('kit-ground rounded-[18px] p-4 sm:p-6', className)}>{children}</section>
   )
 }
 
-/* A safety panel. Always ink on white with a heavier rule, never a colour
-   that could be missed. */
 export function Safety({ title, children, className }) {
   return (
     <Sheet className={cn('border-2 border-ink-3', className)}>

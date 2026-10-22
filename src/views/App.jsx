@@ -50,15 +50,7 @@ import { MotionConfig } from 'framer-motion'
 import { motionPreference, useAppearance } from '../account/appearance'
 import { cn } from '../lib/utils'
 
-/* The route ids, fixed by spec 0e section 18 so no two workers invent
-   different ones. This file owns the table; a worker needing a route it does
-   not own names it in its report rather than adding it here.
-
-   `app-*` are the dashboards, `students`/`parents`/`pro` the pages that
-   explain them. Two ids are not in section 18 and are kept because they are
-   built, linked and reachable: `tour` (the standalone tour page) and `notes`
-   (the device-only journal, off the tab bar now that MindMap AI has its slot
-   per section 8). Both are named in this worker's report. */
+// Every route id the hash router accepts. `app-*` ids are the dashboards; the rest are site pages.
 const VIEWS = [
   /* the site */
   'site','patch','pairing','without-patch','methods','privacy','monitor','survey','responses',
@@ -68,7 +60,6 @@ const VIEWS = [
   'app','app-home','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','app-pro-privacy',
   /* inside the product */
   'reading','mirror','calendar','toolkit','ai','help','shared','app-notify',
-  /* one route per toolkit activity, spec 0d section 7 */
   'toolkit-breathing','toolkit-ground','toolkit-reframe','toolkit-scan','toolkit-move',
   'toolkit-sigh','toolkit-chest','toolkit-steady','toolkit-alert','toolkit-pocket','toolkit-walk',
   /* the five parent activities, which belong to the parent app */
@@ -77,21 +68,15 @@ const VIEWS = [
   'toolkit-pro-opener','toolkit-pro-triage','toolkit-pro-ground','toolkit-pro-parents','toolkit-pro-referral',
   /* the fifteen life skills, for every audience */
   ...SKILL_ROUTES,
-  /* kept, not in section 18 */
   'tour','notes',
-  /* accounts: sign in, the portal, its sections, and who is linked to whom */
   'signin','account','account-section','network',
 ]
 
-/* The portal's sections live at #/account/<section>. The view string keeps
-   the whole path; `idOf` folds it to the one route id the tables know. */
+// Portal sections live at #/account/<section>; idOf folds them to the one id `account-section`.
 const SECTION_RE = /^account\/(profile|passcode|sharing|data|about)$/
 const idOf = v => (SECTION_RE.test(v) ? 'account-section' : v)
 const sectionOf = v => (SECTION_RE.exec(v) || [])[1] || null
 
-/* Routes that render app screens, so the chrome switches: `reading` is the
-   student section on its reading tab, `privacy` the parent section on its
-   sharing tab, whatever the urls suggest. */
 const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','app-student','app-parent','app-pro','app-pro-trends','app-pro-privacy','reading','mirror','shared',
                            'privacy','toolkit','ai','calendar','help','monitor','notes',
                            'app-notify','toolkit-breathing','toolkit-ground','toolkit-reframe',
@@ -103,12 +88,9 @@ const APP_VIEWS = new Set(['app','app-start','student-trends','parent-trends','a
                            'toolkit-pro-parents','toolkit-pro-referral',
                            'signin','account','account-section','network', ...SKILL_ROUTES])
 
-/* The three account routes belong to whichever app the signed in account is
-   for, and otherwise to the app the reader walked in from. */
 const ACCOUNT_VIEWS = new Set(['account','account-section','network'])
 
-/* Old ids, so a link, a bookmark or another worker's button still lands. The
-   palette pushes `hub`, which is not a route. */
+// Alternate ids from external links and bookmarks, mapped to the route they open.
 const ALIAS = {
   'traffic-light': 'heads-up',
   hub: 'app',
@@ -117,12 +99,8 @@ const ALIAS = {
   'kit-student': 'toolkit', 'kit-parent': 'toolkit',
 }
 
-/* Both kit ids land on the one Toolkit route, so the audience they name is
-   carried here: `kit-parent` opens the parent Toolkit, not the teen one. */
 const KIT_OF = { 'kit-student': 'student', 'kit-parent': 'parent' }
-/* The route, without a `?…` after it: `#/network?code=ABC123` is the network
-   route, and the query stays in the address for the page (and for the
-   editor's ?edit=1, which src/editor/boot.js reads first) to read. */
+// Splits the hash at `?`. The query stays in the address for the page, and for the editor's ?edit=1.
 const hashParts = () => {
   const h = location.hash.replace(/^#\/?/, '')
   const i = h.indexOf('?')
@@ -192,9 +170,6 @@ const TITLE = {
   network:'Your network in MindMap',
 }
 
-/* Two menus, because five flat tabs plus a dropdown did not fit a laptop and
-   read as a pile. Pairing and the no-patch route are both about the patch, so
-   they live under it. */
 const PATCH = [
   ['patch',         'The patch',          'What the patch is and what it records.'],
   ['pairing',       'Pairing the patch',  'How to connect the patch to your phone.'],
@@ -207,25 +182,16 @@ const AUDIENCE = [
   ['pro',      PRO_PLURAL,  `What a ${PRO} sees across a group.`],
 ]
 
-/* Heads Up is its own tab, beside the audience menu rather than inside it. */
 const HEADS_UP = ['heads-up', 'Heads Up', 'Tells you when phone activity is causing your teen stress.']
 
-/* Which nav entry lights per view. The three patch pages share `kit`, the
-   three audience pages `who`, and every route not named here lights nothing.
-   The app routes are all in that second set: the header is not rendered over
-   them at all. */
 const SECTION = { site:'site', methods:'methods',
                   patch:'kit', pairing:'kit', 'without-patch':'kit',
                   students:'who', parents:'who', pro:'who', 'heads-up':'heads-up', survey:'survey' }
 
-/* Set by the app's "Return to site" and MindMap logo, and by the Overview menu from another page:
-   the next landing on the overview skips the site intro, once (owner,
-   18 October: "takes back to overview and skips site onboarding"). */
+// Set just before navigating to the overview, so that landing skips the site intro once.
 let skipIntro = false
 
-/* The Overview menu's jump: land on the overview if not there, then scroll to
-   the band and move focus to it. land() scrolls to the top and focuses main a
-   frame after a route change, so the jump waits past that. */
+// land() scrolls to the top and focuses main a frame after a route change, so the jump waits past it.
 function toSection(id, view, go) {
   const away = view !== 'site'
   if (away) { skipIntro = true; go('site') }
@@ -241,17 +207,13 @@ function toSection(id, view, go) {
 
 const linkClass = on => cn(
   'relative flex h-full items-center whitespace-nowrap px-2.5 font-display text-ui font-medium 2xl:px-3.5',
-  /* Colour only. `transition-colors` also covers the 2px active indicator,
-     which then fades in over 150ms after the route has already swapped. */
+  // Colour only: transition-colors would also fade in the 2px active indicator after the route swaps.
   'transition-[color] duration-100',
   'after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-[2px]',
   on ? 'text-ink after:bg-accent' : 'text-ink-2 after:bg-transparent hoverOnly:text-ink hoverOnly:after:bg-rule'
 )
 
-/* Hand-rolled menu; there is no Radix in this project. Click opens, Escape and
- * an outside press close, arrows walk the items, and close returns focus to the
- * trigger -- focus falling to <body> loses a keyboard user the page.
- */
+// Escape and an outside press close the menu, arrow keys move between items, and closing returns focus to the trigger.
 function NavMenu({ view, go, label, items: entries, section, pick }) {
   const [open, setOpen] = React.useState(false)
   const [at, setAt] = React.useState(0)
@@ -265,7 +227,6 @@ function NavMenu({ view, go, label, items: entries, section, pick }) {
     if (refocus) trigger.current?.focus()
   }, [])
 
-  /* pointerdown, not click, so a press on another nav button takes one press. */
   React.useEffect(() => {
     if (!open) return
     const away = e => { if (!wrap.current?.contains(e.target)) close(false) }
@@ -339,11 +300,7 @@ function NavMenu({ view, go, label, items: entries, section, pick }) {
   )
 }
 
-/* The phone menu. Owner, 21 October: "when u tap the menu button it
-   disappears". It was a fixed layer inside the header, whose backdrop blur
-   makes the header its containing block, so the panel sat over the button and
-   scrolled with the page. Now it hangs under the header: the button stays put
-   and turns into Close, and the page behind is dimmed and locked. */
+// The header's backdrop blur makes it the containing block for fixed children, so the panel hangs below the header.
 function Drawer({ view, go, onClose, header }) {
   const panel = React.useRef(null)
 
@@ -354,7 +311,6 @@ function Drawer({ view, go, onClose, header }) {
     root.style.overflow = 'hidden'
     if (bar > 0) root.style.paddingRight = `${bar}px`
     const sel = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])'
-    /* The header stays live, so Tab walks it and the panel, then wraps. */
     const focusable = () => Array.from(header.current?.querySelectorAll(sel) || [])
       .filter(el => el.offsetParent !== null)
     requestAnimationFrame(() => panel.current?.querySelector(sel)?.focus({ preventScroll: true }))
@@ -368,8 +324,6 @@ function Drawer({ view, go, onClose, header }) {
         e.preventDefault(); f[next].focus({ preventScroll: true })
       }
     }
-    /* The dimmed page closes it on a tap (below); this catches any other
-       layer. The header's own buttons do their own thing. */
     const away = e => { if (!header.current?.contains(e.target)) onClose(false) }
     document.addEventListener('keydown', onKey)
     document.addEventListener('pointerdown', away)
@@ -380,11 +334,8 @@ function Drawer({ view, go, onClose, header }) {
     }
   }, [onClose, header])
 
-  /* The three patch pages fold into one row, as on the desktop menu. It
-     opens by itself when one of them is the page you are on. */
   const onPatch = PATCH.some(([id]) => id === view)
   const [patchOpen, setPatchOpen] = React.useState(onPatch)
-  /* The Overview's sections fold the same way, open on the overview. */
   const onSite = view === 'site'
   const [siteOpen, setSiteOpen] = React.useState(onSite)
   const rows = [
@@ -483,8 +434,6 @@ function Header({ view, go }) {
         </button>
 
         <nav aria-label="Sections" className="hidden h-full items-stretch xl:flex">
-          {/* Owner, 18 October: a dropdown of the Overview's green section
-              names. The logo still goes to the top of the overview. */}
           <NavMenu view={view} go={go} label="Overview" items={OVERVIEW_SECTIONS} section="site"
             pick={id => toSection(id, view, go)}/>
           <NavMenu view={view} go={go} label="The patch" items={PATCH} section="kit"/>
@@ -498,9 +447,6 @@ function Header({ view, go }) {
           <button onClick={() => go('survey')}
             aria-current={view === 'survey' ? 'page' : undefined}
             className={linkClass(view === 'survey')}>Give feedback</button>
-          {/* Spec 0e, section 15: Guided tour is off the navigation. The
-              walkthrough plays on every page load, and the tour itself is the
-              fourth option in the entry chooser that opens with it. */}
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
@@ -517,8 +463,6 @@ function Header({ view, go }) {
             aria-label={menu ? 'Close the menu' : 'Open the menu'}
             className={cn('-mr-1.5 grid size-11 shrink-0 place-items-center rounded-field text-ink',
               'transition-colors duration-150 hoverOnly:bg-mist xl:hidden', menu && 'bg-mist')}>
-            {/* Inline, not the shared `Stack` mark: that one has a short third
-                rule and reads as a text-alignment icon beside a wordmark. */}
             <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none"
               stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
               <path d={menu ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'}/>
@@ -532,8 +476,6 @@ function Header({ view, go }) {
   )
 }
 
-/* Launch and the sharing screen are deliberately not destinations. `#/privacy`
-   still resolves, and lights Parent. */
 const DialMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
@@ -559,13 +501,6 @@ const CalendarMark = p => (
   </svg>
 )
 
-/* The bar belongs to whichever app you are in.
- *
- * It used to be one bar listing the three audiences, so a student standing in
- * the student app was offered a parent dashboard and a clinical console at the
- * bottom of every screen. Nobody switches audience; you are one of them. The
- * bar now lists what is inside the app you opened, and the launcher at /#/app
- * is where the three live. */
 const ShieldMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
     stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
@@ -575,11 +510,8 @@ const ShieldMark = p => (
   </svg>
 )
 
-/* One order on all three bars (owner, 18 October): Home, then the student's
-   Reading, then Trends, Toolkit, Ask, Network, and Privacy always last. */
 const APP_NAV = {
   student: [
-    /* Spoken apart from the top bar's Home, which goes to the app home. */
     ['app-student', 'Home',     PulseMark, 'Student home'],
     ['reading',     'Reading',  DialMark],
     ['student-trends', 'Trends', CalendarMark],
@@ -606,10 +538,7 @@ const APP_NAV = {
   ],
 }
 
-/* Which app a route belongs to. Five screens are shared by all three
-   audiences, so they have no fixed answer here: they belong to whichever app
-   you walked in from, which App remembers below, and the bar under them is the
-   bar you had. */
+// Shared screens are not listed: they take the app the reader opened them from (`audience` in App).
 const APP_OF = {
   'app-student': 'student', reading: 'student', mirror: 'student', shared: 'student', 'student-trends': 'student',
   'parent-trends': 'parent',
@@ -650,9 +579,7 @@ const APP_TAB = { app:null, 'app-start':null, 'student-trends':'student-trends',
                   /* Network is a tab on all three bars. */
                   signin:null, account:null, 'account-section':null, network:'network' }
 
-/* Two spellings of each screen name. At 390 the top bar also carries the help
-   button, the demo switch and the way back, so the long one would be the thing
-   that gets truncated. */
+// Short and long spelling of each screen title. At 390px the top bar has room only for the short one.
 const APP_TITLE = {
   app:            ['Welcome',          'Welcome'],
   'app-start':    ['Welcome',          'Welcome'],
@@ -686,9 +613,6 @@ const APP_TITLE = {
   'toolkit-pro-parents':  ['Parents',  'Talking With Parents'],
   'toolkit-pro-referral': ['Referral', 'Referral Note'],
   ...Object.fromEntries(SKILL_TOOLS.map(t => [t.route, ['Toolkit', t.title]])),
-  /* 'MindMap AI' is 134px at 390 in a row with 116 left, so the short
-     spelling is the tab's word and the full name is the heading on the
-     screen and this element's accessible name. */
   ai:             ['Ask',              'MindMap AI'],
   shared:         ['Privacy',          'Privacy'],
   notes:          ['Notes',            'Notes'],
@@ -705,36 +629,16 @@ const APP_TITLE = {
   network:        ['Network',          'Network'],
 }
 
-/* App shell, inherited by every app route.
- *
- *   ground  bg-beam/15 resolves to #d5eaef and is used by no marketing band.
- *           Every ink on it clears 4.5 : 1, the weakest ink-3 at 4.80, so a
- *           new ink used in here has to be checked.
- *   type    h1 is `head` (29px), h2 `row` (25px), under the smallest
- *           marketing heading (`sub`, 32px).
- */
+// bg-beam/15 resolves to #d5eaef. Every ink on it clears 4.5:1; ink-3 is the lowest at 4.80:1.
 const APP_SHELL = cn(
   'min-h-[100dvh] bg-beam/15',
-  /* Design spec 0f rule 5: the app fills a laptop. The wrap runs to 1168 at
-     1280 (the wrap's own 56px gutters) and stops at 1200 on anything wider,
-     so a 1920 display gets a laptop layout and not a 1680 one. */
+  // Caps the wrap at 1200px, so wide displays get the laptop layout.
   '[&_.wrap]:max-w-[1200px]',
-  /* `.mark` is exempt: it is a ruled 16px label marked up as a heading, and a
-     step on it would blow a hairline annotation up to 25px. */
-  /* The h1 is the top bar's title. Below sm the row also carries five
-     controls, so it steps down to `row` (22px): "Reminders" is 125px at
-     `head` and the title has 115. */
   '[&_h1:not(.mark)]:text-row sm:[&_h1:not(.mark)]:text-head [&_h2:not(.mark)]:text-row',
   '[&_h3:not(.mark)]:text-meta [&_h4:not(.mark)]:text-ui',
   '[&_.wrap]:py-6 lg:[&_.wrap]:py-8',
 )
 
-/* Selection is carried four ways and colour is only one: rule on the cell's top
- * edge, mark fills, label bolds, ink darkens -- it survives a desaturated
- * screenshot. Cells are at least 56 tall and a quarter of the row, so the
- * smallest target is 97 x 56 at 390. The inset padding keeps labels off the
- * home indicator; the spacer below the footer keeps the bar off content.
- */
 function AppTabBar({ app, view, go }) {
   const here = APP_TAB[view]
   const tabs = APP_NAV[app]
@@ -742,9 +646,6 @@ function AppTabBar({ app, view, go }) {
   if (!tabs) return null
   return (
     <nav aria-label="App screens"
-      /* Light, like the iOS tab bar (owner, 19 October: "stop making things
-         dark"): frosted white, a hairline and a soft green shadow. ink-2 on
-         white is 8.2 : 1, accent-ink on accent-wash 7.3. */
       className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-card/95 backdrop-blur-md
         shadow-[0_-10px_28px_-18px_rgba(13,43,30,.35)] pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-[40rem] list-none p-0">
@@ -755,9 +656,6 @@ function AppTabBar({ app, view, go }) {
               <button type="button" onClick={() => go(id)}
                 aria-current={on ? 'page' : undefined}
                 aria-label={spoken || undefined}
-                /* 51px tall at 390 and 67 past sm. Apple Fitness and Oura both
-                   sit near 50 on a handset, and the old 67 here took 8% of a
-                   390 x 844 screen before the top bar had its 48. */
                 className={cn('relative flex min-h-[48px] w-full flex-col items-center justify-center',
                   'gap-0.5 px-0.5 pb-1 pt-1.5 transition-colors duration-150',
                   'sm:min-h-[56px] sm:gap-1 sm:px-1 sm:pb-1.5 sm:pt-2',
@@ -787,8 +685,6 @@ function AppTabBar({ app, view, go }) {
   )
 }
 
-/* Each app's own home. The Home button goes here, never to the chooser:
-   somebody in the parent app has no business landing on the student side. */
 const HOME_OF = { student: 'app-student', parent: 'app-parent', pro: 'app-pro' }
 const ROLE_WORD = { student: 'Student', parent: 'Parent', pro: PRO }
 
@@ -821,9 +717,6 @@ function HomeButton({ go, app }) {
   )
 }
 
-/* "Switch role": the way to the start of the app as somebody else. In the
-   demo nobody signs in, so it opens the three doors; live, a different role
-   means a different account, so it signs out and opens sign in. */
 function SwitchRole({ go, className }) {
   const [mode] = useMode()
   const me = useAccount()
@@ -838,16 +731,12 @@ function SwitchRole({ go, className }) {
       className={cn('flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-field px-2 font-display',
         'text-fine font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash',
         'sm:text-ui', className)}>
-      {/* From sm to lg the bar is one full row, so the words go to the
-          screen reader only and the mark carries the button. */}
       <SwitchMark/><span className="sm:max-lg:sr-only">Switch role</span>
     </button>
   )
 }
 
-/* Two rows on a phone, one from sm. Row one is the brand and the account
-   controls; row two is where you are. From sm both rows fold into one with
-   `contents` and the order classes put them back in reading order. */
+// Two rows on a phone. From sm, `contents` folds both into one row and the order classes restore reading order.
 function AppTopBar({ view, go, app }) {
   const [short, long] = APP_TITLE[view] || ['App', 'App']
   const toSite = () => { skipIntro = true; go('site') }
@@ -855,9 +744,6 @@ function AppTopBar({ view, go, app }) {
     <div className="sticky top-0 z-40 border-b border-ink-3 bg-card">
       <div className="flex flex-col px-4 sm:h-14 sm:flex-row sm:items-center sm:gap-1 md:gap-2 md:px-10 lg:gap-3 lg:px-14">
         <div className="flex h-12 items-center gap-0.5 min-[375px]:gap-1 sm:contents">
-          {/* The corner: MindMap's mark and name, to the overview. Owner, 18
-              October: the name shows at every width; "Return to site" is in
-              the account menu, not a back arrow here. */}
           <button type="button" onClick={toSite} aria-label="MindMap, back to the site"
             className="order-1 -ml-1.5 flex min-h-[44px] shrink-0 items-center rounded-field px-1.5
               text-[1rem] text-ink transition-colors duration-150 hoverOnly:bg-mist min-[400px]:text-[1.15rem]
@@ -875,9 +761,7 @@ function AppTopBar({ view, go, app }) {
           <span aria-hidden className="order-2 hidden h-6 w-px shrink-0 bg-rule md:block"/>
           <div className="order-2 flex min-w-0 items-center gap-1">
             <HomeButton go={go} app={app}/>
-            {/* Each app route's only heading. Both spellings are in the DOM and
-                CSS picks one, so the name rides on the element. The short one
-                holds until xl, where the one-row bar has room for the long. */}
+            {/* Both spellings are in the DOM and CSS shows one, so the accessible name sits on the h1. */}
             <h1 aria-label={long}
               className="min-w-0 truncate font-display text-tick font-bold text-ink">
               <span aria-hidden className="xl:hidden">{short}</span>
@@ -891,8 +775,6 @@ function AppTopBar({ view, go, app }) {
   )
 }
 
-/* Live, each app opens only for an account of that role. The demo stays
-   open so anybody, judges included, can walk all three. */
 function RoleGate({ role, go }) {
   const me = useAccount()
   const word = ROLE_WORD[role]
@@ -923,21 +805,16 @@ function RoleGate({ role, go }) {
   )
 }
 
-/* ink-3 on the app canvas measures 4.80 : 1, so this small print still clears
-   4.5 at 14px. */
 function AppFoot() {
   return (
     <footer className="border-t border-ink-3 px-4 py-5 sm:px-10 lg:px-14">
-      {/* Two lines, ten words each at most (design spec 0f). */}
       <p className="text-fine text-ink-3">MindMap is not a medical device and gives no diagnosis.</p>
       <p className="mt-1 text-fine text-ink-3">For urgent help, call your local emergency number. MindMap · Solace Innovation</p>
     </footer>
   )
 }
 
-/* Same questions and same store as the dialog in src/survey, so an answer given
-   here is the answer the corner box counts. Unlike the dialog it has a url. */
-
+// Same questions and store as the survey dialog in src/survey, so an answer here counts there too.
 function useSurveyStore() {
   return React.useSyncExternalStore(subscribe, getVersion, () => 0)
 }
@@ -984,14 +861,7 @@ function SurveyField({ q, answer, onAnswer }) {
   return null
 }
 
-/* `sent` is read back from the store, not held here, so reopening the page after
- * a successful send does not invite a second copy. Enabled from the first
- * answer: the store stamps a partial response, so a later full one is a new
- * send rather than a no-op.
- */
 function SubmitRow({ done, total }) {
-  /* Derived from the store each render: a queued response is retried in the
-     background and the commit re-renders through the page's subscription. */
   const [busy, setBusy] = React.useState(false)
   const empty = answersFor(PAGE).length === 0
   const state = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
@@ -1001,7 +871,6 @@ function SubmitRow({ done, total }) {
     try { await submitResponse({ force: true }) } finally { setBusy(false) }
   }
 
-  /* 'queued' is saved and retried on its own, so the line is a receipt. */
   const line =
     state === 'sent' ? 'Your answers were sent. Thank you.'
       : state === 'queued' ? 'Your answers are saved and will send on their own.'
@@ -1060,8 +929,6 @@ function SurveyPage() {
         </p>
       </Section>
 
-      {/* Asked here, where the name is actually used, rather than over the whole
-          site before anyone has seen it. */}
       {!visitor && (
         <Section tone="paper" tight>
           <NameGate inline onDone={() => {
@@ -1108,11 +975,6 @@ function SurveyPage() {
   )
 }
 
-
-/* The three app routes: the start screen with nothing measured, the dashboard
-   with the worked set behind it. Students, Parents and Pro belong to other
-   workers; nothing here reaches inside them. */
-/* Live and Demo render the same homes; each draws its own Live state. */
 function StudentApp(p) {
   return <Students {...p} tab="today"/>
 }
@@ -1123,20 +985,6 @@ function ProApp(p) {
   return <ProHome go={p.go}/>
 }
 
-/* ── Two routes whose screens belong to other workers ───────────────────────
- *
- * `ai` and `calendar` exist in spec 0e section 18 and are listed there before
- * either screen was built. These two stand in so every id in the table
- * resolves today; each one is one line to replace in the route table below and
- * nothing else in this file changes.
- *
- * MindMap AI is a real model behind a server function, with the owner's key
- * (spec 0d, section 8). Until that key exists it must not claim to be
- * answering, so this page says plainly that it is not connected and offers no
- * input to type into.
- */
-/* One resolver for the hash, for `go` and for the alias table, so a link to an
-   old id lands in exactly one place. */
 const resolve = r => {
   const raw = String(r ?? '').split('?')[0]
   return ALIAS[raw] || (VIEWS.includes(raw) || SECTION_RE.test(raw) ? raw : 'site')
@@ -1144,26 +992,16 @@ const resolve = r => {
 const fromHash = () => resolve(rawHash())
 
 export function App() {
-  /* Re-renders on the Reduce motion setting, so framer-motion follows it too. */
   useAppearance()
   const [view, setView] = React.useState(fromHash)
   const mainRef = React.useRef(null)
   const [said, setSaid] = React.useState('')
-  /* Which of the three apps the shared screens belong to. The Toolkit, MindMap
-     AI, the calendar and Getting help are all reachable from more than one
-     audience, so the bar under them is the bar of the app the reader walked in
-     from rather than a guess. */
   const [audience, setAudience] = React.useState('student')
-  /* The signed in account, if any. Signing in moves the shared screens to
-     that account's app; nothing is gated on it. */
   const me = useAccount()
   const [mode] = useMode()
   React.useEffect(() => { if (me) setAudience(me.role) }, [me?.id, me?.role])
-  /* Three gates in order: title sequence, name, per-page questions. The
-     responses route is excluded from all three. */
   const admin = view === 'responses'
-  /* Navigation resets scroll, title and focus itself: focus otherwise falls to
-     <body> and the scroll position carries over from the previous screen. */
+  // Resets scroll, title and focus on every navigation; focus otherwise falls to <body>.
   const land = React.useCallback(raw => {
     const v = idOf(raw)
     if (APP_OF[v]) setAudience(APP_OF[v])
@@ -1175,7 +1013,6 @@ export function App() {
       window.ScrollTrigger?.refresh()
     })
   }, [])
-  /* Unknown views fall back to the overview rather than rendering nothing. */
   const go = React.useCallback(raw => {
     if (KIT_OF[raw]) setAudience(KIT_OF[raw])
     const v = resolve(raw)
@@ -1183,20 +1020,13 @@ export function App() {
     if (location.hash !== '#/' + v + q) history.pushState(null, '', '#/' + v + q)
     setView(v); land(v)
   }, [land])
-  /* Somebody who opened an invite link joins that network as soon as they
-     are signed in, whichever way they signed in. */
   useAutoJoin(go)
-  /* Live mode: the snapshot (linked teens, their shared days, the teen's own
-     readings) is refreshed while the tab is open, so dashboards stay current. */
   useLiveSync()
 
-  /* The site onboarding: on every load of the landing page and every time
-     the visitor comes back to it. Only the screenshot harness holds it down. */
   const [siteIntro, setSiteIntro] = React.useState(false)
   const lastView = React.useRef(null)
   React.useEffect(() => {
     if (view === 'site' && lastView.current !== 'site' && !captureHarness()) {
-      /* A skip also clears an intro left open by leaving mid-way (Back). */
       if (skipIntro) { skipIntro = false; setSiteIntro(false) }
       else setSiteIntro(true)
     }
@@ -1207,10 +1037,8 @@ export function App() {
     requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }))
   }, [])
   React.useEffect(() => {
-    /* An old id in the url is rewritten once to the id spec 0e section 18
-       fixes, so a bookmark of `#/check` keeps working and the address bar then
-       agrees with every link on the site. A bare url is left alone. */
     if (KIT_OF[rawHash()]) setAudience(KIT_OF[rawHash()])
+    // An alias id in the url is rewritten once, so the address bar matches the route that rendered.
     if (location.hash && rawHash() !== view) {
       history.replaceState(null, '', '#/' + view + hashParts()[1])
     }
@@ -1228,24 +1056,16 @@ export function App() {
   React.useEffect(() => { document.documentElement.dataset.wide = String(wide) }, [wide])
   /* The route id: a portal section folds to `account-section`. */
   const id = idOf(view)
-  /* The app home stands alone, centred, with no bar above or below: at
-     #/app-home always, and at #/app until somebody has signed in. */
   const bare = id === 'app-home' || (id === 'app' && !me)
   const inApp = APP_VIEWS.has(id) && !bare
-  /* `app` itself is the launcher and has no bar; a shared screen takes the bar
-     of the app it was opened from. */
   const appOf = APP_OF[id]
     || (ACCOUNT_VIEWS.has(id) && me ? me.role : null)
     || (SHARED_VIEWS.has(id) || ACCOUNT_VIEWS.has(id) ? audience : null)
 
-  /* Live, an app's screens need an account of that app's role. The launcher,
-     sign in and the account screens are not behind it; the demo never is. */
   const roleOf = APP_OF[id] || (SHARED_VIEWS.has(id) ? appOf : null)
   const gate = inApp && mode === 'real' && roleOf && HOME_OF[roleOf] && (!me || me.role !== roleOf)
     ? roleOf : null
 
-  /* The route table. Every id in spec 0e section 18 is here and resolves.
-     Several routes are a tab inside a section and keep their own url. */
   const V = { site:Overview,
               /* One page in three parts; each route lands on its part. */
               patch: p => <PatchHub {...p} section="patch"/>,
@@ -1261,13 +1081,9 @@ export function App() {
               'student-trends': p => <StudentTrends {...p}/>,
               'parent-trends': p => <ParentTrends {...p}/>,
               'app-start': Launch,
-              /* Start screen with nothing measured, dashboard with the worked
-                 set behind it. */
               'app-student': StudentApp,
               'app-parent':  ParentApp,
               'app-pro':     ProApp,
-              /* "View Trends": the caseload dashboard in live mode, with
-                 nobody added yet. Pro.jsx draws its own empty state. */
               'app-pro-trends': p => <Pro {...p}/>,
               'app-pro-privacy': p => <ProPrivacy {...p}/>,
               /* The student screen with every reading on it, whichever mode. */
@@ -1276,15 +1092,9 @@ export function App() {
               shared:        p => <Students {...p} tab="shared"/>,
               privacy:       p => <Parents  {...p} tab="shared"/>,
               notes: () => <NotesJournal/>,
-              /* Both bodies arrive without the app's gutters, so they get the
-                 wrap here. */
               'app-notify': () => <main className="wrap"><NotificationSettings/></main>,
-              /* The Mental Mirror on its own tab; the same screen sits on the
-                 reading chooser as the fourth way. */
               mirror: p => <main className="wrap"><MentalMirror go={p.go}/></main>,
               help: () => <main className="wrap"><HelpBody/></main>,
-              /* Owned by other workers. `toolkit` is the list; the eleven
-                 activity routes pass the activity down as `open`. */
               toolkit:             () => <Toolkit who={audience}/>,
               'toolkit-breathing': () => <Toolkit who={audience} open="breathing"/>,
               'toolkit-ground':    () => <Toolkit who={audience} open="ground"/>,
@@ -1297,13 +1107,11 @@ export function App() {
               'toolkit-alert':     () => <Toolkit who={audience} open="alert"/>,
               'toolkit-pocket':    () => <Toolkit who={audience} open="pocket"/>,
               'toolkit-walk':      () => <Toolkit who={audience} open="walk"/>,
-              /* The parent set: parent routes, so always the parent shell. */
               'toolkit-openers':   () => <Toolkit who="parent" open="openers"/>,
               'toolkit-phrasing':  () => <Toolkit who="parent" open="phrasing"/>,
               'toolkit-score':     () => <Toolkit who="parent" open="score"/>,
               'toolkit-rules':     () => <Toolkit who="parent" open="rules"/>,
               'toolkit-reach':     () => <Toolkit who="parent" open="reach"/>,
-              /* The Counselor/Professional set: always the pro shell. */
               'toolkit-pro-opener':   () => <Toolkit who="pro" open="pro-opener"/>,
               'toolkit-pro-triage':   () => <Toolkit who="pro" open="pro-triage"/>,
               'toolkit-pro-ground':   () => <Toolkit who="pro" open="pro-ground"/>,
@@ -1313,47 +1121,30 @@ export function App() {
               ...Object.fromEntries(SKILL_TOOLS.map(t => [t.route, () => <Toolkit who={audience} open={t.id}/>])),
               ai:       p => <MindMapAI {...p} who={audience}/>,
               calendar: p => <Calendar {...p} who={audience}/>,
-              /* Accounts, kept on this device. */
               signin:   SignIn,
               account:  Account,
               'account-section': p => <Account {...p} section={sectionOf(view)}/>,
               network:  p => <Network {...p} who={appOf}/> }[id]
   return (
     <MotionConfig reducedMotion={motionPreference()}>
-      {/* Not sr-only: that clips to 1x1, which audits read as a 1px tap target
-          and which leaves a keyboard user no hit area. */}
+      {/* Off-screen until focused, not sr-only: sr-only clips to 1x1 and leaves no hit area. */}
       <a href="#main"
         onClick={e => { e.preventDefault(); mainRef.current?.focus() }}
         className="absolute left-4 top-0 z-[200] -translate-y-[200%] rounded-field bg-ink px-5 py-3
           font-display text-meta font-medium text-paper transition-transform duration-150
           focus:translate-y-4">Skip to the main content</a>
-      {/* The chooser, and the guided tour behind its fourth option. It owns its
-          own fixed layers and its own session flag. */}
       <Entry go={go} enabled={!admin && !bare}/>
       {siteIntro && view === 'site' && <SiteIntro onDone={closeIntro}/>}
-      {/* The name is only ever used to label a survey answer, so it is asked
-          inside the survey now rather than across the whole site before anyone
-          has seen anything. A full-screen panel between a first-time reader and
-          the product is a cost paid by everybody to serve one page. */}
       {!inApp && !bare && <Header view={view} go={go}/>}
       <p aria-live="polite" className="sr-only text-sec">{said}</p>
-      {/* Nothing in here is clipped or transformed: a transform creates a
-          containing block and breaks the sticky columns in the reading screen. */}
-      {/* In the app the shell is a column, so a short screen (the start
-          screen, MindMap AI unconnected) keeps its foot at the bottom of the
-          viewport rather than a third of the way down a blank page. */}
+      {/* No transform on this wrapper: a transform creates a containing block and breaks the reading screen's sticky columns. */}
       <div className={cn(inApp && APP_SHELL, inApp && 'flex flex-col')}>
         {inApp && <AppTopBar view={id} go={go} app={appOf}/>}
         {inApp && !gate && <HowTo app={appOf} tab={APP_TAB[id]} go={go}/>}
         <div id="main" ref={mainRef} tabIndex={-1} className={cn('outline-none', inApp && 'flex-1')}>
           {gate ? <RoleGate role={gate} go={go}/> : <V go={go} key={view}/>}
         </div>
-        {/* Keyed by view, so leaving a page abandons a mid-answer question. */}
-        {/* Marketing routes only: on a phone this pill lands on the tab bar. */}
         {!admin && !inApp && !bare && view !== 'survey' && id !== 'heads-up' && <ReviewLauncher page={view}/>}
-        {/* The extra foot room under sm is load-bearing: the feedback pill is
-            fixed at bottom-4 right-4 and otherwise covers the disclaimer. */}
-        {/* Heads Up draws its own one-line footer, so the site footer stays off it. */}
         {inApp ? <AppFoot/> : id === 'heads-up' || bare ? null : (
           <footer className="border-t-2 border-ink bg-mist py-11 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-11">
             <div className="wrap">
@@ -1364,8 +1155,7 @@ export function App() {
             </div>
           </footer>
         )}
-        {/* Clears the fixed tab bar: its height plus the handset's bottom
-            inset. Measured: the bar is 51px at 390 and 61 at 1280. */}
+        {/* Clears the fixed tab bar (51px tall at 390, 61px at 1280) plus the bottom safe-area inset. */}
         {inApp && appOf &&
           <div aria-hidden className="h-[calc(3.5rem+env(safe-area-inset-bottom))]
             sm:h-[calc(4rem+env(safe-area-inset-bottom))]"/>}

@@ -7,17 +7,11 @@ import { IosNotification, IOS, MM, StatusBar } from './ios'
 import { KEY_OF, WEEK_PAST, USUAL_BAND, lightOfIndex, known } from './core'
 import { cn } from '../lib/utils'
 
-/* What the parent sees: the light, one headline, the time on red, and the
- * signals that are showing. Then the week as seven lamps with a bar graph
- * under them. Never a message, a video, a name, an app or a minute count.
- * Used inside the drawn parent phone and, in the site's type, as the card in
- * the parent app section. */
-
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const DAY_NAME = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Today']
 const BAR = { [Light.GREEN]: '#34c759', [Light.YELLOW]: '#ffcc00', [Light.RED]: '#ff3b30' }
 
-/* one small drawing per signal, so a row is read by its shape as well */
+// `k` is a feature key from FEATURES in signals/light.js.
 export function SignalIcon({ k, size = 20 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
   switch (k) {
@@ -52,9 +46,8 @@ export function SignalList({ signals, ios = true }) {
   )
 }
 
-/* The week: seven lamps, Monday to today, and under them one bar per day of
-   the daily peak index, 0 to 100, with the usual band shaded. Each bar
-   prints its value; the lamps follow the same values. */
+// Monday to today: one lamp and one bar per day of the daily peak index (0 to 100),
+// with the usual band shaded.
 export function WeekGraph({ today = 0, width = 345, height = 158, ios = true }) {
   const vals = [...WEEK_PAST, Math.max(0, Math.min(100, Math.round(today)))]
   const lampRow = 26, H = height, top = lampRow + 18, bottom = 22, left = 34, right = 4
@@ -108,7 +101,6 @@ export function LightCard({ light, at, signals, reduced, ios = true, lamp = 30 }
   )
 }
 
-/* The drawn parent phone. It never pauses. */
 export function ParentPhone({ light, at, signals, today, scale, reduced, banner }) {
   return (
     <IPhone interactive={false} scale={scale} screenBg="#f2f2f7" label="The parent's phone" showHomeIndicator={false}>
@@ -117,7 +109,7 @@ export function ParentPhone({ light, at, signals, today, scale, reduced, banner 
         <IosNotification show={!!banner} tone="crit" reduced={reduced}
           lead={<LampFace light="red" size={16}/>}
           body="Your teen's light turned red. Open to see the signals."/>
-        {/* room under the status bar for the red banner, so it never covers the headline */}
+        {/* 44 px clears the status bar and leaves room for the red banner above the headline. */}
         <div className="px-4 pt-[44px]">
           <h2 className="m-0 px-1 text-[34px] font-bold leading-[41px] tracking-[0.01em]" style={{ fontFamily: IOS.font }}>Heads Up</h2>
           <div className="mt-3 rounded-[12px] bg-white px-4 pb-3 pt-4" style={{ minHeight: 238 }}>

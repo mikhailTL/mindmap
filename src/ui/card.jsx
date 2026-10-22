@@ -1,19 +1,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-/* Four surface treatments, one radius, one palette. A page made of one white
-   card repeated reads as a template, so neighbours take different ones and a
-   treatment means something:
-     plain    the white card. Figures, charts, anything read closely.
-     tint     a hue's wash, a hairline in that hue, no shadow. Today, or the
-              thing a section is about.
-     rule     no box: a 3px rule in the hue on top (or left) and the content on
-              the page ground. Reading notes, rules, asides.
-     outline  transparent ground and a 1.5px edge. A box on a coloured band.
-   The dark `ink` card is gone (owner, 19 October: "stop making things
-   dark"); a callout is a tint now. Every ink step (ink, ink-2, ink-3,
-   accent, the hue inks) clears 4.5 : 1 on every wash; measured, the weakest is ink-3 on accent-wash at 5.10.
-   Tailwind needs whole class names, so each hue is spelled out. */
+// Tailwind only finds whole class names, so each hue's classes are written out.
 const TINT = {
   accent: 'border-accent/30 bg-accent-wash',
   beam:   'border-beam/30 bg-beam-wash',
@@ -39,8 +27,6 @@ const DIVIDE = {
 
 export const VARIANTS = ['plain', 'tint', 'rule', 'outline']
 
-/* The surface only: ground, edge, radius, shadow. Padding and layout stay at
-   the call site. `side` is for `rule`: 'top' (default) or 'left'. */
 export function cardClass(variant = 'plain', hue = 'accent', side = 'top') {
   switch (variant) {
     case 'tint':
@@ -64,7 +50,6 @@ export function cardInk(variant = 'plain', hue = 'accent') {
   }
 }
 
-/* CardTitle takes `as` so a title never lands outside the heading outline. */
 export const Card = React.forwardRef(function Card(
   { className, interactive = false, variant = 'plain', hue = 'accent', side = 'top', as: As = 'div', ...props }, ref) {
   return (
@@ -72,10 +57,7 @@ export const Card = React.forwardRef(function Card(
       ref={ref}
       className={cn(
         cardClass(variant, hue, side), 'text-ink overflow-hidden',
-        /* Transition properties are explicit: `transition-all` would animate
-           border-left-width, so the 3px rule would grow in from 0 instead of
-           appearing. Hover is gated to a fine pointer or the rule latches on
-           after a tap. Press squeeze is behind motion-safe:. */
+        // Transition properties are listed so border-left-width does not animate the 3px rule in from 0.
         interactive && [
           'w-full text-left cursor-pointer touch-manipulation',
           'transition-[border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]',

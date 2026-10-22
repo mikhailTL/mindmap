@@ -20,10 +20,8 @@ import { addReading } from '../lib/readingLog'
 import { FS } from '../signals/ppg'
 import { PulseChart, SeeTrends } from './student/charts'
 
-/* Camera + mic reading, no patch. Each frame becomes one number and the
-   audio six, then both are dropped. Only the resulting Mind Score is saved,
-   and it syncs to the student's account. Never buffer or persist raw media. */
-
+// Camera and mic reading without the patch. Each video frame becomes one number and the audio six features,
+// then both are dropped; only the resulting Mind Score is saved.
 const STORE = 'mindmap.phone.baseline'
 
 function loadBaseline() {
@@ -37,7 +35,7 @@ function loadBaseline() {
 function saveBaseline(b) { try { localStorage.setItem(STORE, JSON.stringify(b)) } catch {} }
 const dayKey = () => new Date().toISOString().slice(0, 10)
 
-/* Reach: one coarse position per reading, only while Reach is on. */
+// One coarse position per reading, taken only while Reach is on.
 function captureReachPoint(onDone) {
   if (!getReach().on) return
   const geo = typeof navigator !== 'undefined' ? navigator.geolocation : null
@@ -50,7 +48,7 @@ function captureReachPoint(onDone) {
   } catch { onDone(false) }
 }
 
-/* Check-in answers and their calibration, on this device. No raw signal. */
+// Check-in answers and their calibration, kept on this device.
 const CHECKINS = 'mindmap.phone.checkins'
 function loadCheckins() {
   try {
@@ -63,7 +61,7 @@ function saveCheckins(a) { try { localStorage.setItem(CHECKINS, JSON.stringify(a
 
 const PANEL = 'rounded-panel border border-rule/60 bg-card p-5 lg:p-6'
 
-/* The waveform confirms finger placement. Keep it live. */
+/* The live waveform confirms finger placement. */
 function Trace({ samples, className }) {
   const d = React.useMemo(() => {
     if (!samples?.length) return ''
@@ -96,10 +94,6 @@ function Step({ title, note, children, on }) {
   )
 }
 
-/* Before a reading. On a phone this card sits under the steps, so it stays
-   one line. On xl it sits beside a long column of steps, so it shows the
-   empty rainbow the score will land on and what the result will hold: every
-   row below is a part of the result panel further down this file. */
 const AFTER = [
   `Your ${SCORE} on the rainbow`,
   'The pulse it was read from',
@@ -141,8 +135,6 @@ function Waiting() {
   )
 }
 
-/* SAY_LINES lives in charts/camera. Only two of three are printed. */
-
 const PHASES = { idle:1, camera:1, voice:2, working:3, done:4 }
 
 export function PhoneCheck({ go }) {
@@ -168,8 +160,7 @@ export function PhoneCheck({ go }) {
     setCheckins(past)
     setCalibration(fitCalibration(past))
   }, [])
-  /* Unmounting is what stops the camera, frame loop and accelerometer.
-     captureVoice releases the mic itself when its window closes. */
+  // Unmounting stops the camera, frame loop and accelerometer; captureVoice releases the mic itself.
   React.useEffect(() => () => {
     live.current.ppg?.cancel()
     stopStream(live.current.cam?.stream)
@@ -222,7 +213,7 @@ export function PhoneCheck({ go }) {
       const next = updateBaseline(baseline, featuresFrom({ ppg, voice }), dayKey())
       setBaseline(next); saveBaseline(next)
       setResult(scored)
-      /* A held reading is shown with its reason but kept out of the log. */
+      // A held reading shows with its reason but stays out of the log.
       setLogged(scored.held ? false
         : !!addReading({ at: Date.now(), score: scored.score, source: 'camera', pulse: ppg.hr }))
       setAnswered(false)
@@ -240,7 +231,6 @@ export function PhoneCheck({ go }) {
     }
   }
 
-  /* One answer is one label; the calibration is refitted on all of them. */
   const answer = stressed => {
     if (!result?.model || result.held) return
     const next = [...checkins, { contributions: result.model.contributions, temporal: result.model.temporal, label: stressed ? 1 : 0, day: dayKey() }].slice(-200)
@@ -258,7 +248,6 @@ export function PhoneCheck({ go }) {
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] xl:items-start lg:gap-4">
       <div>
         <div className={PANEL}>
-            {/* Each note carries only what its StepFigure cannot show. */}
             <div>
               <Step on={PHASES[phase] >= 1}
                 title={`Fingertip on the camera · ${PPG_SECONDS}s`}
@@ -283,7 +272,7 @@ export function PhoneCheck({ go }) {
                 note="0 to 100, against your own normal."/>
             </div>
 
-            {/* Frames are read off this element. `display:none` would stop them. */}
+            {/* Frames are read off this element, and display:none would stop them, so it is sr-only. */}
             <video ref={videoRef} playsInline muted className="sr-only" aria-hidden tabIndex={-1}/>
 
             {phase === 'camera' && (
@@ -320,7 +309,6 @@ export function PhoneCheck({ go }) {
             )}
 
             <div className="mt-4 flex flex-wrap gap-3">
-              {/* Not "Take a reading": that is the enclosing tab's name. */}
               <Button onClick={() => run(true)} disabled={busy || !supported}>
                 {busy ? 'Reading…' : result ? 'Take another reading' : `Start the ${PPG_SECONDS + VOICE_SECONDS} second reading`}
               </Button>
@@ -341,9 +329,6 @@ export function PhoneCheck({ go }) {
           {result && (
             <>
               <div className="flex flex-col items-start gap-4">
-                {/* The owner, 17 October: a camera reading reads like patch data,
-                    the Mind Score on the rainbow, then the pulse it was read
-                    from. The heart band carries it, as on the patch dial. */}
                 <RainbowDial score={result.score} size={300}
                   rings={[{ id:'heart', name:'Heart', glow:'#e11919',
                             value: result.score, reading: result.channels.join(' + ') }]}/>
@@ -353,7 +338,6 @@ export function PhoneCheck({ go }) {
 
                   {detail?.ppg && <PulseResult ppg={detail.ppg}/>}
 
-                  {/* The band ranks with the score, never behind a disclosure. */}
                   <dl className="m-0 mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-meta">
                     <dt className="text-ink-3">Mind Score</dt>
                     <dd className="m-0 font-mono tabular-nums text-ink">{result.score} out of 100</dd>
@@ -439,8 +423,7 @@ export function PhoneCheck({ go }) {
   )
 }
 
-/* Raw values in their own units. The closing rows are load bearing: the
-   index is not a clinical RMSSD. */
+// Raw values in their own units. The closing rows state that the index is not a clinical RMSSD.
 function Readings({ detail, result }) {
   if (!detail) return null
   const { ppg, voice, move, torch } = detail
@@ -479,11 +462,6 @@ function Readings({ detail, result }) {
   )
 }
 
-/* ── The pulse, the way the Trends dashboard draws a signal ──────────── */
-
-/* The capture's own pulse wave, smoothed, as a line chart, then the two
-   figures the score was read from. Same card as the Trends dashboard: a
-   panel head, the chart, then tiles. Only after a camera reading. */
 function Tile({ label, value, unit, sub, glow }) {
   return (
     <div className="flex min-w-0 flex-col rounded-panel border p-2.5"

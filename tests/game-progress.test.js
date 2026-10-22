@@ -63,8 +63,6 @@ describe('setPick', () => {
   })
 })
 
-/* ── Wave 9: points only for finishing, level names, badges, try next ── */
-
 import { recordFinish, awardFor, levelName, LEVEL_NAMES, BADGES, badgesFor, suggestNext,
          FINISH_POINTS, NEW_TOOL_BONUS, CLEAN_BONUS } from '../src/toolkit/game/progress.js'
 import { TOOL_IDS, TABS, toolsIn } from '../src/toolkit/game/catalog.js'

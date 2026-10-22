@@ -10,16 +10,12 @@ import { cn } from '../lib/utils'
 import { Section, SectionHead } from '../ui/section'
 import { PART_ART } from '../charts/patch-parts'
 
-/* Values must match the assembly names in the GLB, or isolateGroup no-ops. */
+// Values must match the assembly names in the GLB, or isolateGroup does nothing.
 const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
-/* Each signal's card takes its own trace's hue as a wash (src/ui/card.jsx),
-   in the rainbow's order: heart, sweat, temperature, movement. */
+// Card wash per signal, in the rainbow's order: heart, sweat, temperature, movement.
 const SIGNAL_HUE = ['coral', 'sun', 'mint', 'sky']
 
-/* Only settled facts. Battery, charge time, adhesive, wear time, electrode
-   build, part numbers, ingress, weight and cost are open: no figure for any
-   of them may be added anywhere on this page. */
 const FIGURES = [
   { k: 'Along the arm',       v: '54', u: 'mm' },
   { k: 'Across the arm',      v: '36', u: 'mm' },
@@ -30,18 +26,12 @@ const FIGURES = [
 
 const OPEN = ['Battery', 'Charge time', 'Adhesive', 'Wear time', 'Weight', 'Cost']
 
-/* Titles come from views/Patch; the lines are written here so this page
-   states only settled facts. */
 const PART_LINE = {
   pod:  'Closes the stack. Charges through a slot in the side.',
   pcb:  'Holds the Bluetooth Low Energy radio.',
   base: 'Sits on the arm. All four signals read here.',
 }
 
-/* Light grounds (owner, 19 October: "stop making things dark"; 20 October:
-   "too green ... pls vary", and no topography or glow). Each part strip takes
-   its own light hue under a fine grid; the drawings on them are measured in
-   charts/patch-parts.jsx. */
 const GRID = 'linear-gradient(rgb(13 43 30 / .06) 1px, transparent 1px), '
   + 'linear-gradient(90deg, rgb(13 43 30 / .06) 1px, transparent 1px), '
 const strip = ground => ({
@@ -50,21 +40,12 @@ const strip = ground => ({
 })
 const STRIP = { pod: strip('#def0fc'), pcb: strip('#f6e8ff'), base: strip('#f5ecd7') }
 
-/* The 3D viewer needs a GPU and can sit on its loading panel forever. Its
-   controls stay disabled until the model is live, so a control still disabled
-   MODEL_WAIT after the band comes within reach means the model is down, and
-   the band drops to the exploded drawing. A model that fails outright drops
-   it at once (onError). */
+// Milliseconds. The 3D viewer keeps its controls disabled until the model is live; if they are still disabled
+// this long after the band comes into reach, the band falls back to the exploded drawing.
 const MODEL_WAIT = 8000
 
-/* The exploded drawing beside the model. Owner, 21 October: it was cut off.
-   The box was 190px tall under a full-width sheet, so the stack spilled past
-   it through the scroll. Below lg the box is taller and the sheets narrower,
-   measured to clear the box at every point of the scroll at 390 and 768;
-   the 6% shift centres the stack, which rides high in its box. */
 const BESIDE_BOX = 'h-[clamp(260px,74vw,320px)] lg:h-full lg:min-h-[240px]'
 const BESIDE_SHEET = 'w-[min(62%,210px)] sm:w-[min(52%,250px)] lg:w-[min(84%,400px)]'
-/* The same drawing standing in for the model, given the model's room. */
 const DOWN_BOX = 'h-[clamp(260px,74vw,320px)] sm:h-[360px] lg:h-[440px]'
 const DOWN_SHEET = 'w-[min(62%,210px)] sm:w-[260px] lg:w-[340px]'
 
@@ -78,7 +59,6 @@ function noWebgl2() {
   } catch { return true }
 }
 
-/* `as`: the hub (views/PatchHub) draws this inside its own <main>. */
 export function PatchPage({ as: Root = 'main' }) {
   const [picked, setPicked] = React.useState(null)
   const [down, setDown] = React.useState(false)
@@ -122,17 +102,12 @@ export function PatchPage({ as: Root = 'main' }) {
     <Root>
       <section id="model" data-anchor
         className="border-t border-rule bg-paper">
-        {/* The owner, 19 October: the CAD model is the first thing seen on
-            the patch page; 20 October: right after a compact hero
-            (views/PatchHub). */}
         <div className="wrap pb-8 pt-6 lg:pb-12 lg:pt-8">
           <SectionHead className="mt-0 max-w-[26ch]">Take the patch apart</SectionHead>
           <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]
             lg:items-stretch lg:gap-6">
             <figure className="m-0 min-w-0">
               {down ? (
-                /* The same exploded drawing, on its own, sized to clear its
-                   box. The layered drawing is in What is inside, below. */
                 <Card className="px-4 py-4 lg:px-5">
                   <ExplodedStack caption="" className={DOWN_BOX} size={DOWN_SHEET} shift="0%, 6%"/>
                 </Card>
@@ -156,8 +131,7 @@ export function PatchPage({ as: Root = 'main' }) {
               lg:grid-rows-[repeat(3,minmax(min-content,1fr))]">
               {LAYERS.map((l, idx) => {
                 const on = !down && picked === l.part
-                /* A light strip under each drawing (STRIP above).
-                   `[&_svg]:h-full` outranks the svg's own height at lg. */
+                // `[&_svg]:h-full` outranks the svg's own height attribute at lg.
                 const body = (
                   <>
                     <div style={STRIP[l.part]} className="border-b border-rule px-3 py-2.5
@@ -194,7 +168,6 @@ export function PatchPage({ as: Root = 'main' }) {
         </div>
       </section>
 
-      {/* A light turquoise ground under the four hued cards (owner, 20 October). */}
       <Section tone="card" tight className="bg-[#e2f2f0]">
         <SectionHead className="mt-0 max-w-[24ch]">What the patch records</SectionHead>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
@@ -221,7 +194,6 @@ export function PatchPage({ as: Root = 'main' }) {
           lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
           <Parallax2D distance={28} className="min-w-0">
             <Card className="min-w-0 p-3.5 lg:p-5">
-              {/* The drawing names every layer; the owner found the notes too wordy. */}
               <PatchStack brief/>
             </Card>
           </Parallax2D>

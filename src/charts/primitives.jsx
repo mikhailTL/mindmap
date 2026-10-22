@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 
-/* 1 SVG unit = 1 CSS pixel, so a declared 16px label renders at 16px on a phone. */
+// Container width in px; charts use it as the viewBox width, so 1 SVG unit is 1 CSS pixel.
 export function useWidth(fallback=720){
   const ref = React.useRef(null)
   const [w,setW] = React.useState(fallback)
@@ -25,8 +25,6 @@ export function FigHead({ title, note }){
     </div>
   )
 }
-/* Stat tile per the figure contract: label, value with unit, 12-point trend,
-   then the plain sentence that says what the number means. */
 export function Stat({ label, value, unit, trend, children, className }){
   return (
     <div className={cn('py-6 border-b border-rule sm:px-6 sm:border-l sm:border-b-0',

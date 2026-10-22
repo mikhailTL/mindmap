@@ -6,10 +6,6 @@ import { notesToCards, review, dueCards, dayNumber, buildQuestion, precision } f
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, GoalMeter, leave } from '../../toolkit/game/skill'
 
-/* Active learning. Turn notes into questions, quiz yourself on a spaced
- * schedule (a card you know waits longer, one you miss comes back today),
- * and turn "I don't get it" into a precise question for a teacher. */
-
 const ID = 'school-active'
 const EMPTY_ASK = { where:'', get:'', stuck:'', tried:'', ask:'' }
 const START = { tab:'make', notes:'', drafts:[], cards:[], ask:EMPTY_ASK, asked:[] }
@@ -65,7 +61,7 @@ function Make({ s, set, g }) {
 
 function Quiz({ s, set, g, onExit }) {
   const today = dayNumber()
-  const [run, setRun] = React.useState(null)   // { queue:[ids], i, shown, typed, tally:{got,partly,not}, retried:Set }
+  const [run, setRun] = React.useState(null)  // { queue, i, shown, typed, tally, retried }
   const due = dueCards(s.cards, today)
   const next = s.cards.length ? Math.min(...s.cards.map(c => c.due)) - today : null
 

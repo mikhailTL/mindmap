@@ -1,11 +1,5 @@
-/* Try a Career: the data and the pure logic.
- *
- * Twelve "do you like this" statements each point at one to three of eight
- * career clusters. Yes is 2, Maybe is 1, No is 0. A cluster's match is its
- * points as a share of what it could have scored, so a cluster with fewer
- * statements is not punished for it. The clusters are a starting point for
- * small tests, never a verdict. */
-
+// Answers score Yes 2, Maybe 1, No 0. A cluster's match is its points over the most it could score,
+// so clusters with fewer statements are not penalised.
 export const CLUSTERS = [
   { id:'build', name:'Build and Fix', jobs:'engineer, electrician, mechanic, architect',
     tests:[
@@ -118,8 +112,6 @@ export const GENERAL_QUESTIONS = [
   'Who else should I talk to about this?',
 ]
 
-/* A small seeded shuffle, so a list is the same every time it is drawn
-   with the same seed. */
 function shuffle(list, seed) {
   const a = [...list]
   let s = (Math.abs(Math.floor(seed)) % 2147483647) || 1
@@ -133,15 +125,14 @@ function shuffle(list, seed) {
 
 const ownQuestions = id => (CLUSTERS.find(c => c.id === id) || { questions:[] }).questions
 
-/* Two of the cluster's own questions, the rest from the general bank. */
+// Two of the cluster's own questions, the rest from the general bank.
 export function pickQuestions(clusterId, n = 5, seed = 1) {
   const own = shuffle(ownQuestions(clusterId), seed).slice(0, 2)
   const rest = shuffle(GENERAL_QUESTIONS, seed + 7).filter(q => !own.includes(q))
   return [...own, ...rest].slice(0, n)
 }
 
-/* Swap one question for the next one on the shuffled pool that is not
-   already on the list, walking forward so repeated swaps cycle. */
+// Walks forward through the shuffled pool to the next question not already listed, so repeated swaps cycle.
 export function swapQuestion(list, index, clusterId, seed = 1) {
   const order = shuffle([...ownQuestions(clusterId), ...GENERAL_QUESTIONS], seed)
   const start = Math.max(0, order.indexOf(list[index]))

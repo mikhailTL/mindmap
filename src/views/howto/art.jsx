@@ -1,15 +1,7 @@
 import React from 'react'
 import { LampFaceG } from '../../traffic/Face'
 
-/* The pictures in the "How to use" guides. Each is a 160 x 100 drawing of one
- * mechanism, small enough to read at 124px wide on a phone. They are
- * decorative: the caption beside each one carries the meaning, so every
- * drawing is aria-hidden.
- *
- * Motion is CSS keyframes on transform and opacity only (MOTION_CSS below).
- * Each animated element's resting style is the state worth seeing when motion
- * is off, so a reduced-motion reader gets a finished picture, not frame one. */
-
+// Drawings for the How to use guides, each 160 x 100. All are aria-hidden: the caption beside each carries the meaning.
 const C = {
   ink: '#0d2b1e', ink2: '#2a5744', ink3: '#426a58', rule: '#c2d7ca', ruling: '#93b2a1',
   mist: '#e3ede7', card: '#ffffff', paper: '#f7faf8',
@@ -25,6 +17,8 @@ const C = {
 }
 const FONT = 'Chivo, -apple-system, system-ui, sans-serif'
 
+// Keyframes on transform and opacity only. Each element's resting style is the finished picture,
+// which is what reduced motion shows.
 export const MOTION_CSS = `
 .ht-svg .ht-a{transform-box:fill-box;transform-origin:center}
 .ht-a{animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.2,.7,.3,1);animation-fill-mode:both}
@@ -97,8 +91,6 @@ export const MOTION_CSS = `
 .ht-still .ht-a{animation:none!important}
 @media (prefers-reduced-motion: reduce){.ht-svg .ht-a{animation:none!important}}
 `
-
-/* ── pieces ─────────────────────────────────────────────────────────────── */
 
 const a = (name, delay) => ({
   className: 'ht-a ' + name,
@@ -226,7 +218,6 @@ function Lock({ x, y, s = 1, color = C.ink2 }) {
   )
 }
 
-/* Notes, Location, raw readings: the three things a parent never sees. */
 const NoteGlyph = ({ x, y, c }) => (
   <g transform={`translate(${x} ${y})`} fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round">
     <rect x="-5" y="-6" width="10" height="12" rx="1.5"/><path d="M-2.5 -2h5M-2.5 1h5M-2.5 4h3"/>
@@ -241,14 +232,10 @@ const WaveGlyph = ({ x, y, c }) => (
   <path transform={`translate(${x} ${y})`} d="M-7 0h3l2-5 3 10 2-5h4" fill="none" stroke={c}
     strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
 )
-/* Messages, videos and apps: what a Professional never sees. */
 const ChatGlyph = ({ x, y, c }) => (
   <path transform={`translate(${x} ${y})`} d="M-6 -5h12v8h-7l-4 3v-3h-1z" fill="none" stroke={c}
     strokeWidth="1.6" strokeLinejoin="round"/>
 )
-
-
-/* ── the pictures ───────────────────────────────────────────────────────── */
 
 function Patch() {
   return (
@@ -291,8 +278,7 @@ function Cards() {
   )
 }
 
-
-/* A small face with the landmark mesh over it, centred on (x, y). */
+// A small face with the landmark mesh over it, centred on (x, y).
 function MiniFace({ x, y, s = 1 }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
@@ -307,8 +293,7 @@ function MiniFace({ x, y, s = 1 }) {
   )
 }
 
-/* The four ways to take a reading, one lit at a time, in the Reading tab's
-   order: Mental Mirror, fingertip on the camera, the survey, patch. */
+// The four ways in the Reading tab's order: Mental Mirror, fingertip on the camera, survey, patch.
 function FourWays() {
   const xs = [5, 44, 83, 122]
   return (
@@ -340,9 +325,6 @@ function FourWays() {
   )
 }
 
-/* Each way, on the phone, in the Reading tab's order: the face in front of
-   the camera, fingertip on the lens, a survey question. A bar fills as it
-   reads. */
 function HowWays() {
   return (
     <Svg>
@@ -380,7 +362,6 @@ function HowWays() {
   )
 }
 
-/* Home's first band: the dark Take a reading bar with its button. */
 function StartBar() {
   return (
     <Svg>
@@ -402,7 +383,6 @@ function StartBar() {
   )
 }
 
-/* Today on Trends: a small dial with its clouds, and the Heads Up face. */
 function TodayDial() {
   const cx = 54, cy = 72
   return (
@@ -428,7 +408,6 @@ function TodayDial() {
   )
 }
 
-/* Day, Week, Month above a calendar of Heads Up faces; a day gets picked. */
 function RangeCal() {
   const x0 = 8, y0 = 34, w = 24
   const faces = ['green', 'green', 'yellow', 'green', 'red', 'green',
@@ -455,7 +434,6 @@ function RangeCal() {
   )
 }
 
-/* The Mind Score Log: a reading a row, and a note added to one. */
 function Log() {
   const rows = [[14, 'green', '51'], [36, 'yellow', '69'], [58, 'green', '35']]
   return (
@@ -482,7 +460,6 @@ function Log() {
   )
 }
 
-/* Six tabs along the top, the lit one moving; its activities below. */
 function TabGlyph({ i, x, y, c }) {
   return (
     <g transform={`translate(${x} ${y})`} fill="none" stroke={c} strokeWidth="1.5"
@@ -539,7 +516,7 @@ function Together() {
   )
 }
 
-/* Raw readings kept 7, 30 or 90 days; Notes and Location stay locked. */
+// Raw readings kept 7, 30 or 90 days; Notes and Location stay locked.
 function KeepDays() {
   const opts = [[10, '7'], [58, '30'], [106, '90']]
   return (
@@ -563,7 +540,6 @@ function KeepDays() {
   )
 }
 
-/* The parent's network box: two teens, their Professional, one waiting. */
 function FamilyNet() {
   const tiles = [[10, 12, 'teen', C.mint], [82, 12, 'teen', C.lilac], [10, 54, 'pro'], [82, 54, 'wait']]
   return (
@@ -589,7 +565,6 @@ function FamilyNet() {
   )
 }
 
-/* A link sent from your phone to a teen and to their Professional. */
 function InviteBoth() {
   return (
     <Svg>
@@ -611,8 +586,7 @@ function InviteBoth() {
   )
 }
 
-/* Who sees what: student, parent, Professional across the top; always,
-   if the student agrees, never down the rows. */
+// Columns are student, parent and Professional; rows are always, if the student agrees, and never.
 function Table() {
   const rows = [
     ['ok', 'opt', 'opt'],
@@ -648,7 +622,6 @@ function Table() {
   )
 }
 
-/* Heads Up today: three tiles, green, yellow, red, and an urgent alert row. */
 function HeadsCount() {
   const tiles = [[8, 'green', C.mint, 0.9], [57, 'yellow', C.gold, 0.55], [106, 'red', C.coral, 0.15]]
   return (
@@ -672,7 +645,6 @@ function HeadsCount() {
   )
 }
 
-/* Each teen or Whole group: the switch slides, the view below changes. */
 function EachGroup() {
   return (
     <Svg>
@@ -705,8 +677,6 @@ function EachGroup() {
   )
 }
 
-/* Search and sort, a teen's card, Open record, and the line it writes in
-   the log. */
 function FilterOpen() {
   return (
     <Svg>
@@ -761,13 +731,10 @@ function ProTools() {
   )
 }
 
-
 const RAINBOW = [C.coral, C.gold, C.mint, C.sky, C.lilac]
 
-/* The two clouds at the rainbow's feet, as the app's dials draw them
-   (src/charts/rainbow.jsx): a white calm cloud under the left foot, a dark
-   rain cloud with turquoise rain under the right. Same puffs and slab in the
-   same 96 x 34 box, flat fills, rim drawn first so the seams never show. */
+// The dial clouds from src/charts/rainbow.jsx in a 96 x 34 box: calm under the left foot, rain under the right.
+// The rim is drawn first so the seams do not show.
 const CLOUD = {
   calm: [[10, 26, 8], [24, 21, 13], [42, 15, 15], [64, 20, 14], [84, 26, 8], [52, 27, 7]],
   peak: [[12, 25, 9], [30, 20, 14], [52, 15, 15], [74, 21, 13], [88, 27, 7], [42, 28, 6]],
@@ -798,8 +765,7 @@ function Cloud({ cx, base, kind, s }) {
   )
 }
 
-/* Both clouds for a rainbow centred on (cx, cy) whose bands run from radius
-   rIn to rOut: each cloud sits under a foot, base a little below it. */
+// Both clouds for a rainbow centred on (cx, cy) with bands from radius rIn to rOut, each just below a foot.
 function Weather({ cx, cy, rIn, rOut, s }) {
   const foot = (rIn + rOut) / 2
   return (
@@ -863,7 +829,6 @@ function Range() {
   )
 }
 
-
 const CAL = [
   'green', 'green', 'yellow', 'green', 'green',
   'green', 'red', 'green', 'yellow', 'green',
@@ -911,7 +876,6 @@ function ToolPick() {
   )
 }
 
-
 function Levels() {
   const rows = [[28, 0.9, C.mint], [50, 0.6, C.sky], [72, 0.35, C.gold]]
   return (
@@ -933,7 +897,6 @@ function Levels() {
 function Chat() {
   return (
     <Svg>
-      {/* starters to tap, then your question goes out and an answer comes */}
       {[10, 30].map((y, i) => (
         <g key={y}>
           <rect x="8" y={y} width="84" height="16" rx="6" fill={C.paper} stroke={C.rule}/>
@@ -989,8 +952,6 @@ function Help() {
     </Svg>
   )
 }
-
-
 
 function TwoAudiences() {
   return (
@@ -1068,7 +1029,6 @@ function DayCard({ x, y, light = 'green' }) {
   )
 }
 
-
 function DayView() {
   return (
     <Svg>
@@ -1102,10 +1062,8 @@ function Locked({ last = WaveGlyph }) {
   )
 }
 
-/* For a Professional: Notes, Location and messages stay locked. */
 const ProNever = () => <Locked last={ChatGlyph}/>
 
-/* The access log: a line per record opened, the newest arriving. */
 function OpenLog() {
   const rows = [[20, '2:34'], [42, '2:21'], [64, '11:02']]
   const Line = ({ y, t, fill = C.card, stroke = C.rule }) => (
@@ -1140,8 +1098,6 @@ function Opener() {
   )
 }
 
-
-
 function Roster() {
   const people = [[30, 34, C.mint], [80, 34, C.sky], [130, 34, C.lilac], [30, 74, C.coral], [80, 74, C.gold]]
   return (
@@ -1159,9 +1115,6 @@ function Roster() {
     </Svg>
   )
 }
-
-
-
 
 function TeenChoose() {
   return (
@@ -1201,9 +1154,6 @@ function Joined() {
     </Svg>
   )
 }
-
-
-
 
 export const ART = {
   startBar: StartBar,

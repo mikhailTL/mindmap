@@ -6,32 +6,26 @@ import { Frame } from '../ui/frame'
 import { SCORE } from '../lib/terms'
 import { cn } from '../lib/utils'
 
-/* About the patch, Pairing the patch and Without the patch, read top to bottom
-   on one page. The three routes ('patch', 'pairing', 'without-patch') all
-   render this, and each lands on its own part. The owner, 18 October: no
-   numbers and no loud colour bands, just titles. 20 October: "too green",
-   so each part opens on its own light ground. 21 October: green and blue
-   variations only, so sky, turquoise and the mint green. */
-
+// About, Pairing and Without the patch on one page. The routes 'patch', 'pairing' and 'without-patch' all
+// render it, and each lands on its own part.
 const PARTS = [
   { id:'about-patch',   route:'patch',         short:'About the patch',   title:'About the patch',
     line:`Sits on your upper arm, under a sleeve. Gives you one ${SCORE} a day, 0 calm to 100 peak.`,
     ground:'bg-sky-band' },
   { id:'pairing-patch', route:'pairing',       short:'Pairing',           title:'Pairing the patch',
     line:'Fully wireless, 2 minutes of setup.', ground:'bg-[#e2f2f0]' },
-  /* One line, merged from two (owner, 20 October). */
   { id:'without-patch', route:'without-patch', short:'Without the patch', title:'Without the patch',
     line:`Measure your stress right now as a ${SCORE}, 0 calm to 100 peak, with only your phone.`,
     ground:'bg-accent-wash' },
 ]
 const BY_ROUTE = Object.fromEntries(PARTS.map(p => [p.route, p]))
 
-/* The site header is 56px plus its 1px rule; the switcher sits under it. */
+// Site header height: 56px plus its 1px rule. The switcher sits under it.
 const HEAD = 57
 const BAR = 52
 const CLEAR = HEAD + BAR
 
-/* The site sets scroll-behavior: smooth on <html>; arriving must not animate. */
+// The site sets scroll-behavior: smooth on <html>, so it is switched off for this one scroll.
 function jump(y) {
   const html = document.documentElement
   const was = html.style.scrollBehavior
@@ -49,8 +43,7 @@ function topOf(id) {
 
 const targetOf = route => (route === 'patch' || !BY_ROUTE[route] ? 0 : topOf(BY_ROUTE[route].id))
 
-/* Lands on a route's part and holds it there while the page settles (fonts,
-   pictures, the app's own scroll to the top), until the reader moves. */
+// Holds a route's part in place while fonts, images and the app's own scroll-to-top settle, until the reader scrolls.
 function settle(route, done) {
   let held = true
   const place = () => {
@@ -98,14 +91,9 @@ function PartHead({ part }) {
   )
 }
 
-/* A licensed stock frame of a model with a drawing of the patch placed on
-   the upper arm: nobody shown wears or uses MindMap. */
 const ARM_ALT = 'A licensed stock photograph of a teenager in a school gym, with a drawing '
   + 'of the patch placed on the outer upper arm to show where it sits.'
 
-/* The page's hero (owner, 20 October: the title bar "is too small", and the
-   photo of the patch on the arm goes "up there"). Compact, so the CAD model
-   right below stays in the first screen. */
 function AboutHero({ part }) {
   return (
     <div className={part.ground}>
@@ -131,13 +119,12 @@ export function PatchHub({ go, section = 'patch' }) {
   const [on, setOn] = React.useState((BY_ROUTE[section] || PARTS[0]).id)
   const pick = React.useRef(null)
 
+  // go() for the route already showing remounts nothing, so the part is found again here.
   React.useLayoutEffect(() => {
     setOn((BY_ROUTE[section] || PARTS[0]).id)
     return settle(section, () => pick.current?.())
   }, [section])
 
-  /* The header menu calls go() for the route already showing: the app scrolls
-     to the top and nothing remounts, so the part is found again here. */
   React.useEffect(() => {
     let raf = 0, stop = null
     const onClick = e => {
@@ -154,7 +141,6 @@ export function PatchHub({ go, section = 'patch' }) {
     return () => { document.removeEventListener('click', onClick); cancelAnimationFrame(raf); stop?.() }
   }, [])
 
-  /* The part in view: the last one whose top has passed the switcher. */
   React.useEffect(() => {
     if (typeof IntersectionObserver !== 'function') return
     const els = PARTS.map(p => document.getElementById(p.id)).filter(Boolean)
@@ -184,7 +170,6 @@ export function PatchHub({ go, section = 'patch' }) {
         className="sticky z-40 border-b border-rule bg-paper/95 backdrop-blur-md
           supports-[backdrop-filter]:bg-paper/85"
         style={{ top: HEAD }}>
-        {/* Scrolls sideways rather than overflow on a phone narrower than 360. */}
         <div className="wrap">
         <ul className="-mx-1.5 m-0 flex h-[52px] list-none items-stretch overflow-x-auto p-0
           [scrollbar-width:none] sm:-mx-3 sm:gap-2 [&::-webkit-scrollbar]:hidden">

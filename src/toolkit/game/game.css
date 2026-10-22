@@ -1,6 +1,4 @@
-/* Motion for the shared game pieces. Under reduced motion the components
-   skip these classes in JavaScript, so nothing here needs a fallback. */
-
+/* Components skip these classes under reduced motion, so no CSS fallback is needed. */
 @keyframes g-pop {
   0%   { opacity: 0; transform: translate(-50%, 6px) scale(.85) }
   18%  { opacity: 1; transform: translate(-50%, 0) scale(1.08) }
@@ -45,8 +43,6 @@
   .g-flip.is-flipped .g-front, .g-flip:not(.is-flipped) .g-back { visibility: hidden }
 }
 
-/* ── Wave 9: life skills rounds and the player card ─────────────────── */
-
 /* A new badge arriving: a small lift and a settle. */
 @keyframes g-badge {
   0%   { opacity: 0; transform: translateY(8px) scale(.94) }
@@ -55,7 +51,6 @@
 }
 .g-badge { animation: g-badge .5s cubic-bezier(0.23,1,0.32,1) both }
 
-/* A right answer: the tick mark draws and a ring opens out from it. */
 @keyframes g-ring {
   0%   { opacity: .55; transform: scale(.6) }
   100% { opacity: 0;   transform: scale(1.9) }
@@ -64,7 +59,6 @@
 @keyframes g-draw { from { stroke-dashoffset: 24 } to { stroke-dashoffset: 0 } }
 .g-draw { stroke-dasharray: 24; animation: g-draw .32s cubic-bezier(0.23,1,0.32,1) .05s both }
 
-/* A not-quite answer: one small sideways nudge, never a shake. */
 @keyframes g-nudge {
   0%, 100% { transform: none }
   30% { transform: translateX(-4px) }
@@ -72,7 +66,6 @@
 }
 .g-nudge { animation: g-nudge .32s cubic-bezier(0.23,1,0.32,1) }
 
-/* A new card sliding in from the right, for one-at-a-time rounds. */
 @keyframes g-card {
   from { opacity: 0; transform: translateX(18px) }
   to   { opacity: 1; transform: none }
@@ -91,9 +84,6 @@
   .g-draw { stroke-dasharray: none }
 }
 
-/* ── 17 October: the reward layer ───────────────────────────────────── */
-
-/* A soft highlight that sweeps across a fill now and then. */
 @keyframes g-sheen {
   0%   { transform: translateX(-120%) skewX(-18deg) }
   55%, 100% { transform: translateX(420%) skewX(-18deg) }
@@ -117,7 +107,6 @@
   pointer-events: none;
 }
 
-/* The ring around a body part that is on now. */
 @keyframes g-breathe {
   0%, 100% { opacity: .35; transform: scale(.96) }
   50%      { opacity: .9;  transform: scale(1.04) }
@@ -129,7 +118,6 @@
   .g-breathe { animation: none !important; opacity: .7 }
 }
 
-/* A soft light passing over the part that is on now. */
 @keyframes g-throb { 0%, 100% { opacity: 0 } 50% { opacity: .32 } }
 .g-throb { animation: g-throb 3.2s ease-in-out infinite }
 @media (prefers-reduced-motion: reduce) { .g-throb { animation: none !important; opacity: 0 } }

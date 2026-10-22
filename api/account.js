@@ -1,6 +1,4 @@
-/* The account API on Vercel. All the logic is in src/server/account.js so
- * the tests drive the same handler on a memory store. With no KV store
- * wired, GET reports configured: false and the app stays device-only. */
+// Account API. The logic lives in src/server/account.js so tests can run it on a memory store.
 import { makeHandler } from '../src/server/account.js'
 import { vercelKV } from '../src/server/kv.js'
 

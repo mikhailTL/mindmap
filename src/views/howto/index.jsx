@@ -7,19 +7,8 @@ import { GUIDES, guideFor, storageKey } from './guides'
 
 export { GUIDES, guideFor, storageKey }
 
-/* "How to use" for every app tab: a 44px row under the top bar that opens
- * into three pictures of how the section works and one line on what it is
- * for. Closed by default; whether each guide was left open is remembered per
- * app and tab in localStorage, read and written inside try/catch so a private
- * window or blocked storage only costs the memory.
- *
- *   <HowTo app="student" tab="student-trends" go={go}/>
- *
- * Renders nothing for a tab with no guide. */
-
-/* Literal class names so Tailwind sees every one. wash is the picture's
-   ground, ink the step number (each ink clears 4.5 : 1 on card), dot the
-   small key in the closed row. */
+// How to use row for each app tab. Each guide's open state is stored per app and tab in localStorage.
+// Literal class names so Tailwind finds every one. Each ink clears 4.5:1 on card.
 const TONE = {
   accent: { wash: 'bg-accent-wash', ink: 'text-accent-ink', dot: 'bg-accent' },
   mint:   { wash: 'bg-mint-wash',   ink: 'text-mint-ink',   dot: 'bg-mint' },
@@ -48,7 +37,6 @@ function writeOpen(key, open) {
   }
 }
 
-/* A play triangle in a rounded square: "this shows you". */
 function PlayMark() {
   return (
     <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-sm bg-accent">
@@ -84,7 +72,6 @@ function Step({ step, n, t, last }) {
         <span className="sr-only">Step {n}: </span>
         <span>{step.cap}</span>
       </p>
-      {/* Between steps, past sm, an arrow that says "then". */}
       {!last && (
         <span aria-hidden className="absolute -right-[24px] top-[56px] hidden text-ruling sm:block lg:-right-[30px]">
           <ArrowRight size={16}/>
@@ -177,7 +164,7 @@ function Guide({ app, tab, guide, go }) {
 export function HowTo({ app, tab, go }) {
   const guide = guideFor(app, tab)
   if (!guide) return null
-  /* keyed, so moving between tabs reads that tab's remembered state afresh */
+  // Keyed by app and tab, so each tab reads its own remembered open state.
   return <Guide key={app + '.' + tab} app={app} tab={tab} guide={guide} go={go}/>
 }
 

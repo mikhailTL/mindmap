@@ -31,10 +31,8 @@ import sys
 import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 
-# ── Palette ──────────────────────────────────────────────────────────────────
-# Copied from tailwind.config.js. The comments there carry the measured
-# contrast ratios; the only rule that matters at this size is that beam is a
-# graphic and never a word.
+# Palette
+# Copied from tailwind.config.js.
 PAPER      = (0xf5, 0xfa, 0xfa)
 AQUA       = (0xed, 0xf7, 0xf7)
 INK        = (0x0b, 0x2b, 0x33)
@@ -45,10 +43,7 @@ ACCENT_LIT = (0x3f, 0xd6, 0xc4)
 BEAM       = (0x1d, 0x8f, 0xb0)
 BEAM_WASH  = (0xdd, 0xf0, 0xf8)
 
-# ── Copy ─────────────────────────────────────────────────────────────────────
-# Every line has to be true of a product with no users and no built hardware.
-# What is true: the scoring model, the two ways a reading is taken, and who it
-# was built for.
+# Copy
 HEAD_1 = 'One score a day, from a patch'
 HEAD_2 = 'or from the phone in your pocket.'
 META   = 'Built for the Congressional App Challenge'
@@ -81,7 +76,7 @@ def font(name, size, weight):
     return f
 
 
-# ── The mark ─────────────────────────────────────────────────────────────────
+# The mark
 # viewBox 0 0 40 28: a rounded capsule, a five point trace across it, and a
 # filled dot on the trace's last peak. Drawn at `ss` times the target and
 # reduced, because Pillow strokes arcs and joins without antialiasing.
@@ -115,7 +110,7 @@ def mark(width, stroke, dot, ss=SS):
     return img.resize((width, int(round(width * 28 / 40))), Image.LANCZOS)
 
 
-# ── The Open Graph card ──────────────────────────────────────────────────────
+# The Open Graph card
 def og_card():
     W, H = 1200, 630
     img = Image.new('RGB', (W, H), PAPER)
@@ -171,7 +166,7 @@ def og_card():
     return img
 
 
-# ── Icons ────────────────────────────────────────────────────────────────────
+# Icons
 def icon(size, radius_ratio, mark_ratio):
     """Accent ground, paper mark, accent-lit dot. `mark_ratio` is the mark's
     width as a fraction of the icon: a maskable icon has to keep the whole

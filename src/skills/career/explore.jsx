@@ -8,16 +8,6 @@ import { CLUSTERS, STATEMENTS, ANSWERS, TEST_KINDS, scoreClusters, pickQuestions
 import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, GoalMeter, leave } from '../../toolkit/game/skill'
 
-/* Try a Career.
- *
- * 1 Sort    twelve quick "is this you" cards.
- * 2 Pick    the three closest clusters, with how close; pick one to test.
- * 3 Plan    three experiments for this month, and a one page test plan for
- *           the tiny project.
- * 4 Ask     five questions for an informational interview, each swappable,
- *           and a short outreach message to copy.
- * 5 Result  the plan in one place. */
-
 const TOOL = META.explore
 const STEPS = [['sort', 'Sort'], ['pick', 'Pick'], ['plan', 'Plan'], ['ask', 'Ask'], ['done', 'Result']]
 const ORDER = STEPS.map(s => s[0])

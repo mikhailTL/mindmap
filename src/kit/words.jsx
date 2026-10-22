@@ -3,29 +3,7 @@ import { Button } from '../ui/button'
 import { FIELD, Hint, Readout, Step, Tag, riseAt } from './panel'
 import { cn } from '../lib/utils'
 
-/* Thought Reframe. The reader's own sentence, scanned against a fixed list of
- * absolute words, with one question attached to each.
- *
- * THE RULEBOOK. The whole list is drawn, all nineteen words, before anything
- * is typed and again with the matches lit. That is the figure, and it is here
- * for two reasons. It is the honest one: a reader can see that this is a word
- * list and a lookup, so there is nothing left for them to imagine it is. And
- * it is the useful one, because a count against a known denominator says
- * something a bare list of hits does not: three of nineteen is a different
- * sentence from nine of nineteen.
- *
- * The matched chips and the marks in the sentence light in reading order, 40ms
- * apart, which is the scan happening rather than a result appearing. Under
- * reduced motion the keyframe lands on its end state, so every match is still
- * marked.
- *
- * The scan freezes on the press. Running it live while the reader typed meant
- * the marks restaged on every keystroke, and the second half of a sentence
- * being judged before it is finished is the opposite of what this is for. */
-
-/* One row of the rulebook: the words that trigger it, and the question they
-   get. Spellings are listed separately because the scanner matches spellings,
-   and a reader looking for why "cant" lit should find "cant". */
+// Each row lists the spellings that trigger it (the scanner matches spellings) and the question they get.
 const GROUPS = [
   { words: ['always'],                     ask: 'When has it gone differently, even once?' },
   { words: ['never'],                      ask: 'Never, or not yet?' },
@@ -47,8 +25,7 @@ const COUNT = Object.keys(LIST).length
 
 const bare = t => t.toLowerCase().replace(/[^a-z']/g, '')
 
-/* Tokens keep their whitespace so the sentence can be rebuilt exactly, with
-   the matches wrapped. Two-word entries are matched on the pair. */
+// Tokens keep their whitespace so the sentence can be rebuilt with matches wrapped; two-word entries match on the pair.
 function scan(text) {
   const parts = text.split(/(\s+)/)
   const out = []
@@ -68,8 +45,6 @@ function scan(text) {
   return { out, found: [...new Set(found)] }
 }
 
-/* The rulebook, drawn. Keyed on the scanned sentence at the call site so a
-   second look replays the lighting rather than leaving it already on. */
 function Rulebook({ found }) {
   const hit = new Set(found)
   let n = -1
@@ -95,8 +70,8 @@ function Rulebook({ found }) {
 export function Absolutes() {
   const [text, setText] = React.useState('')
   const [again, setAgain] = React.useState('')
-  const [shown, setShown] = React.useState('')     // the sentence as it was when Look was pressed
-  const [run, setRun] = React.useState(0)          // replays the lighting on a second look
+  const [shown, setShown] = React.useState('')  // the sentence as typed at the moment Look is pressed
+  const [run, setRun] = React.useState(0)  // replays the lighting on a second look
   const { out, found } = React.useMemo(() => scan(shown), [shown])
   const asked = GROUPS.filter(g => g.words.some(w => found.includes(w)))
 
@@ -121,9 +96,6 @@ export function Absolutes() {
         )}
       </div>
 
-      {/* The live region is the heading and the questions, not the rulebook:
-          the rulebook remounts on every look to replay its lighting, and a
-          remounted live region would read nineteen chips out again each time. */}
       <div aria-live="polite">
         <Step className="mt-6">{!shown.trim() ? 'What it looks for'
           : found.length === 0 ? 'Your sentence, nothing matched'

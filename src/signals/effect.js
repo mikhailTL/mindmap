@@ -1,14 +1,4 @@
-/* Did it help. The loop between an exercise and a measurement.
- *
- * A pair is one tool, one camera pulse taken before it and one taken after.
- * The effect of a pair is how far the pulse fell and, where the camera
- * resolved it, how far the beat-to-beat variation rose. Ranking a tool asks
- * for at least two pairs, because one pair is one afternoon, not a pattern.
- *
- * Pure: no DOM, no store, no clock. The readings come from ppg.js by way of
- * the `effects` slot in src/app/store.js; nothing here knows where they were
- * taken or who took them. */
-
+// Before/after camera pulse pairs around each exercise, ranked by mean heart-rate drop.
 export const TOOL_NAMES = {
   breathing: 'Box Breathing',
   scan:      'Body Scan',
@@ -23,8 +13,7 @@ export const TOOL_NAMES = {
   alert:     'Reaction Test',
 }
 
-/* How a tool reads inside a sentence where its title does not: "after the
-   short walk" is three words and no noun. The rest lowercase their title. */
+// Lowercase names for tools whose title reads badly mid-sentence.
 const IN_SENTENCE = { walk: 'walk', pocket: 'sound breathing' }
 
 export const MIN_PAIRS = 2
@@ -33,9 +22,7 @@ export const toolName = tool => TOOL_NAMES[tool] || String(tool ?? '')
 
 const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
-/* Positive hrDrop: the pulse fell. Positive hrvRise: the variation rose.
-   Either RMSSD missing (the camera could not resolve it) gives a null rise,
-   never a zero: an unknown is not the same as no change. */
+// Positive hrDrop means the pulse fell. A missing RMSSD gives a null hrvRise rather than 0.
 export function effectOf(before, after) {
   const hb = num(before?.hr), ha = num(after?.hr)
   const vb = num(before?.rmssd), va = num(after?.rmssd)
@@ -47,9 +34,7 @@ export function effectOf(before, after) {
 
 const mean = a => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null)
 
-/* One row per tool, best mean pulse drop first. A tool with fewer than
-   MIN_PAIRS pairs is listed after the ranked ones with its count and null
-   means, so the card can say "1 check" without pretending to a figure. */
+// Tools with fewer than MIN_PAIRS pairs sort after the ranked ones, with null means.
 export function rankTools(pairs) {
   const byTool = new Map()
   for (const p of Array.isArray(pairs) ? pairs : []) {
@@ -80,10 +65,8 @@ export function rankTools(pairs) {
   })
 }
 
-/* A number and a tool, never a feeling. Ten words at most. */
 export function effectWords(tool, meanHrDrop) {
   const name = toolName(tool)
-  /* the name reads as words inside a sentence, so Title Case comes off */
   const lower = (IN_SENTENCE[tool] || name).toLowerCase()
   const d = num(meanHrDrop)
   if (d == null) return `Two checks after the ${lower} are needed.`

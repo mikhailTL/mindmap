@@ -4,10 +4,6 @@ import Enough from './enough.jsx'
 import Active from './active.jsx'
 import { CramIcon, SourceIcon, EnoughIcon, ActiveIcon } from './ui.jsx'
 
-/* School: academic success and executive functioning. One working tool per
- * problem the owner listed. Each Component takes { onExit } and saves only to
- * localStorage under `mindmap.skills.<id>`. */
-
 export const CATEGORY = { id:'school', title:'School', sub:'Academic success', family:'sky' }
 
 export const TOOLS = [

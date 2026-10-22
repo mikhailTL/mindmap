@@ -7,27 +7,16 @@ import { setReadingIntent } from './reading/intent'
 import { ITEMS } from '../lib/engine'
 import { FACE_SECONDS } from '../signals/face'
 
-/* Taking a reading with nothing on your arm. Each card opens its reading in
-   the app; capture instructions live there, at the point of use (PhoneCheck),
-   and are not repeated here. Owner, 21 October: the "Take a reading now"
-   block that sat under these cards was out of place, so it is gone. */
-
-/* The owner, 18 October: the Mental Mirror first, then the camera pulse
-   check, then the Survey. 45 is PPG_SECONDS plus VOICE_SECONDS. Each card
-   takes its own light hue (owner, 20 October: less green, no topography).
-   21 October: the band behind them is green, and no pink: the pulse card
-   is mint, not coral. */
 const ROUTES = [
   { id:'mirror', title:'Mental Mirror', when:`${FACE_SECONDS} seconds`, hue:'sky',
     line:"Google's MediaPipe Face Landmarker maps 478 points on your face." },
+  // 45 seconds is PPG_SECONDS plus VOICE_SECONDS.
   { id:'sensors', title:'Camera pulse check', when:'45 seconds', hue:'mint',
     line:'Reads your pulse from skin colour.' },
   { id:'ask', title:'Survey', when:'About a minute', hue:'sun',
     line:`${ITEMS.length} questions on how you feel.` },
 ]
 
-/* The camera check has no screen worth cropping before it starts, so a plain
-   drawing: a fingertip over the lens, and the pulse it reads. */
 function PulsePreview() {
   return (
     <svg viewBox="0 0 220 100" aria-hidden className="h-full w-auto">
@@ -42,7 +31,7 @@ function PulsePreview() {
   )
 }
 
-/* Crops of the app's own screens (src/lib/photos.js), shown whole. */
+// Crops of the app's own screens (src/lib/photos.js), shown whole.
 const PREVIEW = {
   mirror: <Frame photo="ppage-mirror-ui" alt="The Mental Mirror screen: a mesh of points over a face."
     className="!h-full !w-auto rounded-field border border-rule object-contain"/>,
@@ -85,8 +74,6 @@ function Route({ r, i, go }) {
   )
 }
 
-/* `as`: the hub (views/PatchHub) draws this inside its own <main>, under the
-   part's title and its one line. */
 export function WithoutPatch({ go, as: Root = 'main' }) {
   return (
     <Root>

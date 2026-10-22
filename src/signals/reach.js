@@ -1,16 +1,4 @@
-/* Reach: how far from home the week's readings happened.
- *
- * Location variance and the size of a person's daily circle track low mood
- * (Saeb 2015; Canzian and Musolesi 2015; replicated in students, Saeb
- * 2016). Those studies ran GPS in the background for weeks. A web app
- * cannot, and MindMap would not: it asks for a position only at the moment
- * a reading is taken, keeps it on the device, and derives one number from a
- * week of them. No map, no place name, nothing shared. Location is already
- * on the never-shared list for every audience and stays there.
- *
- * Home is not an address the student types. It is the densest point among
- * the readings: the one with the most other readings within 300 metres. */
-
+// Weekly distance of readings from home. Positions are taken only at reading time and stay on the device.
 const R = 6371
 
 export function haversineKm(a, b) {
@@ -22,6 +10,7 @@ export function haversineKm(a, b) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)))
 }
 
+// Home is the reading with the most other readings within radiusKm (default 300 m).
 export function homePoint(points, radiusKm = 0.3) {
   if (!points.length) return null
   let best = null, bestN = -1

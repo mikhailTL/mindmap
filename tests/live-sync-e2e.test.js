@@ -2,11 +2,6 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { memoryKV } from '../src/server/kv.js'
 import { makeHandler } from '../src/server/account.js'
 
-/* End to end on the real client code: the account store, the reading log and
-   the sync, with fetch wired to the account handler on a memory store. A
-   student signs up, joins a parent's code and takes a check-in reading; the
-   parent's next refresh carries that teen with today's mean. */
-
 const kv = memoryKV()
 const handler = makeHandler({ kv })
 let n = 0
@@ -62,7 +57,6 @@ describe('a student’s reading reaches their linked parent', () => {
     expect(liveSummary(teen, 'day').mean).toBe(51)
     expect(snap.teens[0].days.at(-1)).toMatchObject({ count: 2, min: 44, max: 58 })
 
-    /* The readings follow the student: their own snapshot carries both. */
     const own = (await direct('signin', { who: 'Sam', passcode: '2468' })).snapshot
     expect(own.readings.map(r => r.score).sort()).toEqual([44, 58])
     expect(own.sharing.parent.score).toBe(true)

@@ -4,24 +4,7 @@ import { List, Item } from '../ui/list'
 import { FIELD, Hint, Readout, Step, Tag, riseAt } from './panel'
 import { cn } from '../lib/utils'
 
-/* Opening Line Check. The sentence a parent was about to open with, matched
- * against ten written phrasings, each with a note on what it does to the
- * conversation.
- *
- * THE RULEBOOK, same figure as Thought Reframe on the student side and for the
- * same two reasons: a reader can see the whole list, so there is nothing to
- * mistake this for, and a count against ten says more than a bare list of
- * hits. The two tools are built alike on purpose. A parent and their teenager
- * comparing screens should recognise the other one's.
- *
- * The matched phrases are marked in the parent's own sentence rather than only
- * quoted underneath, because the point is which part of their line did it.
- * Marks light in reading order, 40ms apart, and the keyframe's end state is
- * the marked one, so reduced motion loses the scan and keeps every mark.
- *
- * Regular expressions over the typed text. No model, nothing learned, nothing
- * sent, and the panel says so where a reader will actually be reading. */
-
+// Opening Line Check: the sentence is matched against ten written phrasings with regular expressions. Nothing is sent.
 const PATTERNS = [
   { label: 'you always or you never',
     re: /\byou (always|never)\b/i,
@@ -61,8 +44,7 @@ const SHAPE = [
   'Offer to talk with no pressure. “I am around if you want. If not, that is fine.”',
 ]
 
-/* Matches, in the order they appear in the sentence, with overlaps dropped so
-   the marks below can be built by walking the string once. */
+// Matches in sentence order with overlaps dropped, so the marks can be built in one pass over the string.
 function run(text) {
   if (!text.trim()) return { hits: [], spans: [] }
   const hits = PATTERNS.map(p => {
@@ -78,7 +60,6 @@ function run(text) {
   return { hits, spans }
 }
 
-/* The sentence, with the phrasings that matched marked inside it. */
 function Marked({ text, spans }) {
   const out = []
   let at = 0
@@ -118,8 +99,8 @@ function Rulebook({ hits }) {
 
 export function PhraseCheck() {
   const [text, setText] = React.useState('')
-  const [shown, setShown] = React.useState('')     // the line as it was when Check was pressed
-  const [pass, setPass] = React.useState(0)        // replays the lighting on a second check
+  const [shown, setShown] = React.useState('')  // the line as typed at the moment Check is pressed
+  const [pass, setPass] = React.useState(0)  // replays the lighting on a second check
   const { hits, spans } = React.useMemo(() => run(shown), [shown])
 
   return (
@@ -138,9 +119,6 @@ export function PhraseCheck() {
           onClick={() => { setText(''); setShown('') }}>Clear</Button>}
       </div>
 
-      {/* The live region is the heading and the notes, not the rulebook: the
-          rulebook remounts on every check to replay its lighting, and a
-          remounted live region would read ten chips out again each time. */}
       <div aria-live="polite">
         <Step className="mt-6">{!shown.trim() ? 'What it looks for'
           : hits.length === 0 ? 'No phrasings matched'

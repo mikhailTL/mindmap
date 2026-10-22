@@ -1,14 +1,5 @@
-/* The Counselor/Professional caseload, as figures. Pure functions over
- * src/lib/roster.js, so the cards, the compact list, the teen detail and the
- * group charts read one set of numbers.
- *
- * CONSENT, enforced here and nowhere else in the view:
- *   consent.trends false  no change, no line, no range comparison; the
- *                         figures for the chosen range still show, since a
- *                         mean is not movement
- *   consent.raw false     no individual readings, only day figures
- * Groups under K_ANONYMITY show nothing. */
-
+// Caseload figures for the Counselor/Professional views, as pure functions over lib/roster.js,
+// so cards, list, detail and group charts read one set of numbers.
 import { CASELOAD, summary, statusOf, TODAY } from '../../lib/roster.js'
 import { K_ANONYMITY } from '../../lib/caseload.js'
 import { Light } from '../../signals/light.js'
@@ -17,16 +8,12 @@ export const RANGE_SHORT = Object.freeze({ day: 'Day', week: 'Week', month: 'Mon
 export const RANGE_NOUN = Object.freeze({ day: 'today', week: 'this week', month: 'this month' })
 const SPAN = { day: 1, week: 7, month: 30 }
 
-/* Today is always its own part now, so the Trends part reads a week or a
-   month. A stored 'day' reads as the week. */
 export const TREND_RANGES = Object.freeze([['week', 'Week'], ['month', 'Month']])
 export const trendRange = r => (r === 'month' ? 'month' : 'week')
 export const TREND_TITLE = Object.freeze({ week: 'Last 7 days', month: 'Last 30 days' })
 export const TREND_PREV = Object.freeze({ week: 'the 7 days before', month: 'the 30 days before' })
 export const trendDays = (teen, r) => teen.days.slice(r === 'month' ? -30 : -7)
 
-/* The stored range: the live cards' switch, and the range a record opens on.
-   The demo cards show today only (owner, 18 October). */
 export const cardRange = r => (r === 'day' || r === 'month' ? r : 'week')
 
 const avg = (a, k) => a.reduce((s, d) => s + d[k], 0) / Math.max(1, a.length)
@@ -36,8 +23,7 @@ const sum = (a, k) => a.reduce((s, d) => s + d[k], 0)
 export const trendsShared = teen => teen.consent.trends === true
 export const readingsShared = teen => teen.consent.raw === true
 
-/* Every figure for one teen over one range. `change` is null when the teen
-   does not share trends, so no screen can print it by accident. */
+// `change` and `points` are null without trends consent, so no screen can print them.
 export function figures(teen, range = 'week') {
   const n = SPAN[range]
   const cur = teen.days.slice(-n), prev = teen.days.slice(-2 * n, -n)
@@ -82,8 +68,7 @@ export const SORTS = Object.freeze([
 
 const byCode = (a, b) => a.pseudonym.localeCompare(b.pseudonym)
 
-/* `rise` orders only teens who share trends; the rest follow by code, never
-   by the movement they did not share. */
+// 'rise' orders only teens who share trends; the rest follow by code.
 export function sortTeens(list, sort, range) {
   const f = new Map(list.map(t => [t.id, figures(t, range)]))
   const out = [...list]
@@ -116,18 +101,13 @@ export function statusCounts(list, range = 'week') {
   return c
 }
 
-/* The demo's one open urgent alert belongs to the teen reading highest
-   today among those on red. */
 export function alertTeen(list = CASELOAD) {
   const red = list.filter(t => statusOf(t, 'day') === Light.RED)
   const pool = red.length ? red : list
   return [...pool].sort((a, b) => b.days[b.days.length - 1].score - a.days[a.days.length - 1].score)[0] || null
 }
 
-/* ── Across the whole network ─────────────────────────────────────────── */
-
-/* Mean daily Mind Score over the last `n` days, and the middle half, across
-   teens who share trends. Fewer than K_ANONYMITY teens: nothing. */
+// Daily mean and interquartile range (lo, hi) across teens who share trends; null under K_ANONYMITY.
 export function networkSeries(list = CASELOAD, n = 30) {
   const shared = list.filter(trendsShared)
   if (shared.length < K_ANONYMITY) return null
@@ -141,9 +121,8 @@ export function networkSeries(list = CASELOAD, n = 30) {
   return { n: shared.length, points: out }
 }
 
-/* The audit log in src/lib/caseload.js names the study codes of the older
-   eight-student demo. On this screen its rows are re-pointed at teens in
-   CASELOAD so the log and the cards agree. */
+// The audit log in lib/caseload.js names codes 8241 and 5512, which are not in CASELOAD;
+// they are mapped onto CASELOAD teens so the log and the cards agree.
 export function logSubjects(list = CASELOAD) {
   const alert = alertTeen(list)
   const other = list.find(t => t !== alert && readingsShared(t)) || list[0]

@@ -1,19 +1,4 @@
-/* The Mental Mirror's own register (views/MentalMirror.jsx). 20 October, the
- * owner: "looks too cheesy, u need to remove topographic glow and
- * background". So every surface is plain: white cards, hairline borders, a
- * soft neutral shadow at most. The camera feed is the only dark thing, and
- * only while it runs. The contour ground (Topo.jsx) is gone everywhere.
- *
- * Motion is transform, opacity and the ring's arc only. Under
- * prefers-reduced-motion nothing moves.
- *
- * Text sits on the white cards and chips (20 October):
- *   #0d2b1e ink        15.2 : 1
- *   #2a5744 ink-2       8.3 : 1
- *   #426a58 ink-3       6.1 : 1
- *   #157446 calm word   5.8 : 1;  #99590c warn word 5.5 : 1
- *   #b23009 error       5.4 : 1 on #ffe8e0
- *   white on #157446    5.8 : 1 */
+/* Mental Mirror styles (views/MentalMirror.jsx). Motion is transform, opacity and the ring's arc only. */
 .mm {
   --mm-ease: cubic-bezier(0.23, 1, 0.32, 1);
   color: #0d2b1e;
@@ -76,12 +61,11 @@
 .mm-wait i:nth-child(3) { animation-delay: .3s; }
 @keyframes mm-wait { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 
-/* The ring's arc moves on smoothly between the once-a-percent updates. */
+/* Eases the arc between the once-a-percent progress updates. */
 .mm-arc { transition: stroke-dashoffset .45s linear, opacity .3s var(--mm-ease); }
 
 .mm-fade { transition: opacity .45s var(--mm-ease); }
 
-/* The result arrives: a short rise, then its cards one after another. */
 .mm-reveal { animation: mm-reveal .6s var(--mm-ease) both; }
 @keyframes mm-reveal {
   from { opacity: 0; transform: translateY(10px) scale(.985); }

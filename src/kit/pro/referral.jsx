@@ -2,10 +2,6 @@ import React from 'react'
 import { ActivityScreen, Sheet, Choice, FIELD } from '../../toolkit/shell'
 import { CopyButton, Crisis, Label, TODAY_LONG } from './common'
 
-/* Referral Note: a short form that writes a plain referral note, ready to
-   paste into a letter or a record. Initials or an ID, never a full name by
-   default. Nothing typed here is saved or sent. */
-
 const TO = ['School counselor', 'Primary care doctor', 'Psychologist or therapist', 'Psychiatry', 'Other service']
 const WHEN = [
   ['routine', 'Routine'],

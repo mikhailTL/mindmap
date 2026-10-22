@@ -1,5 +1,3 @@
-/* The Counselor/Professional tools. Each is a whole screen in the Toolkit shell,
-   opened in place by Toolkit.jsx (no routes yet). */
 export { SessionOpeners } from './openers'
 export { NextStepGuide } from './triage'
 export { GroundingTimer } from './ground'

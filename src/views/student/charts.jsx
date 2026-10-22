@@ -5,20 +5,8 @@ import { USUAL, bandOf } from '../../lib/readingLog'
 import { BAND } from '../reading/marks'
 import { SCORE } from '../../lib/terms'
 
-/* The student's charts, drawn to be read at a glance: one smooth line, the
- * usual range as a soft band behind it, both axes labelled. No range bars,
- * no boxes and no whiskers. Higher means more stress, 0 calm to 100 peak.
- *
- *   ScoreChart  a Mind Score line over a day, a week or a month
- *   Sparkline   the same line, small, for the Trends box on the home screen
- *   PulseChart  the pulse wave from a camera reading
- *   TextLink    the underlined link the owner asked for ("Take a reading",
- *               "See Trends") */
-
 const INK = '#0d2b1e', INK3 = '#426a58', GRID = '#e3ede7', BAND_FILL = '#dcefe4',
   BAND_EDGE = '#93b2a1', LINE = '#157446'
-
-/* ── Links ─────────────────────────────────────────────────────────────── */
 
 export function TextLink({ onClick, children, className, arrow = false }) {
   return (
@@ -39,8 +27,6 @@ export const SeeTrends = ({ go, className, children = 'See Trends' }) => (
   <TextLink className={className} arrow onClick={() => go?.('student-trends')}>{children}</TextLink>
 )
 
-/* ── Geometry ──────────────────────────────────────────────────────────── */
-
 export function useWidth(initial = 560) {
   const ref = React.useRef(null)
   const [w, setW] = React.useState(initial)
@@ -57,9 +43,8 @@ export function useWidth(initial = 560) {
   return [ref, w]
 }
 
-/* A monotone cubic through the points (Fritsch and Carlson), so the curve
-   never overshoots a reading: a smooth line that still passes through every
-   value and never invents a peak between two of them. */
+// Monotone cubic interpolation (Fritsch and Carlson): the curve passes through every point and
+// does not overshoot between two of them.
 export function smoothPath(pts) {
   const n = pts.length
   if (!n) return ''
@@ -89,8 +74,6 @@ export function smoothPath(pts) {
 const bandFor = v => BAND[bandOf(v)]
 const fillFor = v => bandFor(v).fill
 
-/* ── The empty state ───────────────────────────────────────────────────── */
-
 export function NoData({ go, className }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-0.5 text-center', className)}>
@@ -100,22 +83,14 @@ export function NoData({ go, className }) {
   )
 }
 
-/* ── The Mind Score line ───────────────────────────────────────────────── */
-
-/**
- * points  [{ key, x (0 to 1 across the chart), v, read }], oldest first
- * ticks   [{ x, label }] under the chart
- * usual   { lo, hi }: the reader's own usual range, shaded
- * band    v => { fill, word, ink }: a dot's colour and the readout's words
- * detail  point => node: how that point's readings were taken. Shown under
- *         the chart only once a point is tapped (the owner, 18 October:
- *         "only show how readings were taken once the reading is clicked").
- */
+// points: [{ key, x (0 to 1 across), v, read }], oldest first. detail(point) renders how that
+// point was taken, shown once the point is tapped.
 export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = bandFor, label,
   className, tall = false, detail }) {
   const [ref, w] = useWidth()
   const [sel, setSel] = React.useState(null)
   const [open, setOpen] = React.useState(null)
+  // useId values contain colons, which break url(#id) references.
   const gid = 'sc' + React.useId().replace(/:/g, '')
   React.useEffect(() => { setSel(null); setOpen(null) }, [points.length, points[0]?.key])
 
@@ -228,9 +203,6 @@ export function ScoreChart({ points = [], ticks = [], usual = USUAL, go, band = 
   )
 }
 
-/* ── The small line, for the home screen ───────────────────────────────── */
-
-/** values [{ key, v, label }], oldest first; nulls are days with no reading. */
 export function Sparkline({ values = [], usual = USUAL, className, label }) {
   const [ref, w] = useWidth(300)
   const gid = 'sp' + React.useId().replace(/:/g, '')
@@ -238,8 +210,7 @@ export function Sparkline({ values = [], usual = USUAL, className, label }) {
   const iw = w - P.l - P.r, ih = H - P.t - P.b
   const n = values.length
   const x = k => P.l + (n > 1 ? k / (n - 1) : 0.5) * iw
-  /* The scale is the data and the usual band, widened to tens, so a small
-     card still shows the days moving. The band is always in view. */
+  // The y scale covers the data and the usual band, padded by 5 and rounded out to tens.
   const vs = values.filter(p => p.v != null).map(p => p.v).concat([usual.lo, usual.hi])
   const lo = Math.max(0, Math.floor((Math.min(...vs) - 5) / 10) * 10)
   const hi = Math.min(100, Math.ceil((Math.max(...vs) + 5) / 10) * 10)
@@ -282,12 +253,9 @@ export function Sparkline({ values = [], usual = USUAL, className, label }) {
   )
 }
 
-/* ── The pulse wave ────────────────────────────────────────────────────── */
-
 const PULSE = '#e11919', PULSE_FILL = '#fde3e3'
 
-/** wave: the band-passed pulse from analysePPG, `fs` samples a second. The
-    last `seconds` are drawn, so each beat is wide enough to see. */
+// wave is the band-passed pulse from analysePPG at `fs` samples a second; the last `seconds` are drawn.
 export function PulseChart({ wave = [], fs = 30, seconds = 10, className }) {
   const [ref, w] = useWidth(420)
   const gid = 'pc' + React.useId().replace(/:/g, '')
@@ -295,8 +263,7 @@ export function PulseChart({ wave = [], fs = 30, seconds = 10, className }) {
   const iw = w - P.l - P.r, ih = H - P.t - P.b
   const take = Math.min(wave.length, Math.round(seconds * fs))
   const tail = wave.slice(wave.length - take)
-  /* About three points per beat-tenth: plenty for a smooth line, and the
-     path stays short. */
+  // Thins the trace to about one point per 3 px, at least 60 points, to keep the path short.
   const step = Math.max(1, Math.floor(tail.length / Math.max(60, Math.round(iw / 3))))
   const raw = []
   for (let k = 0; k < tail.length; k += step) raw.push([k, tail[k]])

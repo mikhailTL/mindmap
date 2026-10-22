@@ -2,23 +2,7 @@ import React from 'react'
 import { Hint, Step } from './panel'
 import { cn } from '../lib/utils'
 
-/* Mood Map. A two-axis field, energy against pleasantness, and the nearest of
- * sixteen words to wherever the reader puts the dot. The word is the point:
- * "wound up" and "flat" are both bad days and they ask for opposite things.
- *
- * THE FIELD. All sixteen words are drawn as marks where they sit, so the map
- * teaches its own vocabulary: a reader can see that the bottom left is a
- * different country from the top left before they have moved anything. The
- * nearest mark grows and takes the activity's colour as the dot passes it, which is the whole
- * mechanism made visible, and a crosshair follows the dot out to the two axes
- * so the reading is legible as two values rather than one position.
- *
- * The dot tracks the finger 1:1 with no transition: a tap means put it there,
- * and a drag should stay under the thumb. Only the things that are not the
- * dot's position animate, so nothing lags the finger. Arrow keys move it in
- * steps for a keyboard, and the answer is in a live region rather than
- * announced per frame. */
-
+// Mood Map: a dot placed on an energy by pleasantness field picks the nearest of sixteen words.
 /* x: unpleasant to pleasant. y: low energy to high energy. */
 const WORDS = [
   { w:'Panicky',    x:-0.75, y: 0.90, asks:'Energy first. Resonance Breathing is the one built for this.' },
@@ -41,13 +25,10 @@ const WORDS = [
 
 const clamp = n => Math.max(-1, Math.min(1, n))
 const d2 = (x, y, w) => (x - w.x) ** 2 + (y - w.y) ** 2
-/* Both ends of the lookup, because the runner-up is information: a dot sitting
-   between two words is a real answer and a single word hides it. */
+// Sorted by distance, so the runner-up word is available as well as the nearest.
 const ranked = (x, y) => [...WORDS].sort((a, b) => d2(x, y, a) - d2(x, y, b))
 const pc = (x, y) => ({ left: `${(x + 1) * 50}%`, top: `${(1 - y) * 50}%` })
-/* The floating label is clamped away from the map's own edges so a word at the
-   far left is readable rather than clipped. The dot itself is not clamped: it
-   has to stay under the thumb. */
+// The label is clamped to 16 to 84% so an edge word is not clipped; the dot itself is not clamped.
 const labelLeft = x => `${Math.max(16, Math.min(84, (x + 1) * 50))}%`
 
 export function FeelingMap() {
@@ -104,9 +85,6 @@ export function FeelingMap() {
         <span aria-hidden className="absolute inset-x-0 top-1/2 border-t border-dashed border-ruling"/>
         <span aria-hidden className="absolute inset-y-0 left-1/2 border-l border-dashed border-ruling"/>
 
-        {/* The sixteen words, where they live. The nearest one grows and takes
-            the accent, which is the measurement made visible: the map is not
-            guessing, it is finding the closest mark. */}
         {WORDS.map(w => (
           <span key={w.w} aria-hidden style={pc(w.x, w.y)}
             className={cn('absolute block size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-chip',
@@ -114,20 +92,12 @@ export function FeelingMap() {
               found === w ? 'scale-[2.2] kit-fill' : 'bg-ink-3')}/>
         ))}
 
-        {/* The reading, out to both axes. Shown only once the dot is placed, so
-            an untouched map is the words and nothing else. */}
         {placed && (
           <>
             <span aria-hidden style={{ left: pc(pos.x, 0).left }}
               className="kit-edge absolute inset-y-0 border-l-2 opacity-50"/>
             <span aria-hidden style={{ top: pc(0, pos.y).top }}
               className="kit-edge absolute inset-x-0 border-t-2 opacity-50"/>
-            {/* The answer, written where it lives. Sixteen unlabelled dots are
-                a pattern; one of them named under the thumb is the map
-                teaching its own vocabulary as the dot moves across it. It
-                tracks the finger with no transition, like the dot, and sits
-                above the dot in the bottom quarter so it is never off the
-                bottom edge. */}
             <span aria-hidden style={{ left: labelLeft(pos.x), top: pc(0, pos.y).top }}
               className={cn('pointer-events-none absolute -translate-x-1/2 whitespace-nowrap',
                 'kit-fill rounded-chip px-2.5 py-0.5 font-display text-fine font-bold text-paper',
@@ -140,9 +110,6 @@ export function FeelingMap() {
           style={pc(pos.x, pos.y)}
           className="absolute grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center
             rounded-chip">
-          {/* A halo under the thumb, so the finger covering the dot does not
-              also cover every sign that it is being held. Opacity, which is
-              what still works when motion is reduced. */}
           <span aria-hidden className={cn('absolute size-11 rounded-chip kit-ground',
             'transition-opacity duration-150 ease-[var(--ease-out)]', held ? 'opacity-100' : 'opacity-0')}/>
           <span aria-hidden className={cn('relative block size-6 rounded-chip border-2 border-paper',
@@ -158,8 +125,6 @@ export function FeelingMap() {
       <div aria-live="polite"
         className="kit-edge mt-5 min-h-[7rem] rounded-[18px] border border-l-[6px] bg-card p-4">
         {found ? (
-          /* Keyed on the word, so a new answer arrives rather than swapping
-             under the reader's eye mid-drag. */
           <div key={found.w} className="kit-rise">
             <p className="font-display text-head font-bold text-ink">{found.w}</p>
             <p className="mt-1.5 max-w-[46ch] text-sec text-ink-2">{found.asks}</p>

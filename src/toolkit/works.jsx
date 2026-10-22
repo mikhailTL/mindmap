@@ -5,11 +5,7 @@ import { useMode } from '../lib/mode'
 import { getVersion, listEffects, subscribe } from '../app/store'
 import { rankTools, toolName } from '../signals/effect'
 
-/* What works for you. The tools ranked by the student's own pulse, from the
-   before-and-after pairs in the `effects` slot. One bar per tool, the mean
-   drop beside it, and one sentence for the tool at the top. Nothing here is
-   shared with anyone; the slot is device-only like the rest of the store. */
-
+// Tools ranked by mean pulse drop across the before-and-after pairs in the `effects` slot.
 const DEMO = [
   { tool: 'sigh',      n: 4, meanHrDrop: 6, meanHrvRise: 4 },
   { tool: 'chest',     n: 2, meanHrDrop: 5, meanHrvRise: null },

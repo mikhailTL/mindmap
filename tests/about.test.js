@@ -9,7 +9,7 @@ describe('About MindMap', () => {
   const html = renderToString(React.createElement(AboutSheet, { open: false, onClose: () => {} }))
   const text = ALL_TEXT.join('\n')
 
-  it('has the owner’s five parts, in order', () => {
+  it('has the five parts, in order', () => {
     expect(PARTS.map(p => p.title)).toEqual(
       ['The Problem', 'Why MindMap', 'Personal Experience & Research', 'What is MindMap', 'Vision'])
     let at = 0
@@ -34,7 +34,7 @@ describe('About MindMap', () => {
     expect(html).toContain('aria-label="Close"')
   })
 
-  it('pulls its highlights from the owner’s own sentences', () => {
+  it('pulls its highlights from the essay’s own sentences', () => {
     for (const s of STATS) expect(PROBLEM).toContain(s.mark)
     expect(WHY).toContain(WHY_QUOTE)
     expect(VISION[0]).toContain(VISION_MARK)

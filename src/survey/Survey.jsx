@@ -9,20 +9,7 @@ import {
   subscribe, syncPending, submitResponse, wasSent, isQueued,
 } from './store'
 
-/* One survey, opened from a box in the corner. The box appears only once the
- * reviewer has been around the site and stays away once put away; the dialog
- * saves each answer as it is given, so closing it half-done loses nothing.
- *
- * The questions are src/survey/questions.js. It is a house questionnaire with
- * no published benchmark, so nothing in here compares an answer against one,
- * and the launcher no longer says "Tell me what to fix": that prompt was
- * removed on 13 October along with the free-text question it opened. */
-
-/* An answer is a row on a ruled list, not a card: rules separate, and a bar, a
- * fill and a weight mark the chosen one. Kept byte for byte identical to the
- * page version in views/App.jsx so an answer looks the same whichever way it
- * is opened. Point values go to the store but are not printed, the label
- * already says which end of the scale it is. */
+// Matches the page version in views/App.jsx so an answer looks the same in both places.
 const pickClass = on => cn(
   'flex min-h-[44px] w-full items-center border-t border-rule pr-3 text-left',
   'font-display text-ui transition-colors duration-150 ease-out',
@@ -56,11 +43,7 @@ function ScaleControl({ q, value, onPick }) {
   )
 }
 
-/* A short written answer. Saves on blur as well as on Save, so leaving the
- * field never loses what was typed (owner, 18 October: four of these in a row,
- * and a forgotten Save would drop an answer). No Skip: every one is optional,
- * and a blank field is already a skip. Exported so the #/survey page uses the
- * same field. `bg` is the field fill on the surface it sits on. */
+// Saves on blur as well as on Save, so leaving the field keeps the text.
 export function TextAnswer({ q, initial = '', onSave, bg = 'bg-paper' }) {
   const [text, setText] = React.useState(initial)
   const saved = React.useRef(initial)
@@ -100,13 +83,9 @@ export function TextAnswer({ q, initial = '', onSave, bg = 'bg-paper' }) {
   )
 }
 
-/* Number, prompt, then "Optional" and the hint on one line under it. The
- * important question gets a larger prompt and the hint. Exported so the
- * #/survey page renders the same head. */
 export function QuestionHead({ q, size = 'text-ui' }) {
   return (
     <div className="flex items-baseline gap-x-3">
-      {/* The numeral comes from ask order, not the prompt. */}
       <span className="shrink-0 text-fine tabular-nums text-ink-3">{questionNumber(q.id)}</span>
       <div className="min-w-0">
         <p className={cn('max-w-[44ch] font-display font-bold text-ink',
@@ -122,8 +101,6 @@ export function QuestionHead({ q, size = 'text-ui' }) {
   )
 }
 
-/* One question, whichever kind it is. Shared by the page cards and the final
- * block so wording and spacing cannot drift between them. */
 function Question({ q, answer, onAnswer }) {
   if (q.kind === 'scale') {
     return <ScaleControl q={q} value={answer?.value ?? null} onPick={(v, l) => onAnswer(v, l)} />
@@ -153,17 +130,10 @@ function Question({ q, answer, onAnswer }) {
   return null
 }
 
-/* The dialog offers no CSV: Submit is the action and it mails the response.
-   src/views/Responses.jsx exports the spreadsheet. */
-
-
-/* Subscribes to the store rather than lifting state: the corner box and the
-   open survey must both see an answer the moment the other records it. */
+// Subscribes to the store so the corner box and the open dialog see each answer immediately.
 function useSurvey() {
   return React.useSyncExternalStore(subscribe, getVersion, () => 0)
 }
-
-/* ------------------------------------------------------------ the survey */
 
 const OFF_KEY = 'mindmap.review.off'
 const SEEN_KEY = 'mindmap.review.seen'
@@ -171,8 +141,7 @@ const SEEN_KEY = 'mindmap.review.seen'
 const putAway = () => { try { sessionStorage.setItem(OFF_KEY, '1') } catch {} }
 const isPutAway = () => { try { return sessionStorage.getItem(OFF_KEY) === '1' } catch { return false } }
 
-/* The box waits for three distinct routes, which on this site means the
-   reviewer has left the overview and opened something. */
+// The launcher appears after 3 distinct routes in this session.
 const SEEN_MIN = 3
 function noteVisit(page) {
   try {
@@ -188,8 +157,6 @@ function countAnswered() {
   return REQUIRED.filter(q => have.has(q.id)).length
 }
 
-/* The corner box: 56px of fixed chrome above the safe area, not a sheet, so
-   the page needs no padding for it. */
 export function ReviewLauncher({ page }) {
   useSurvey()
   const [open, setOpen] = React.useState(false)
@@ -216,14 +183,9 @@ export function ReviewLauncher({ page }) {
             onClick={() => setOpen(true)}
             className="flex min-h-[48px] items-center gap-3 px-4 text-left hoverOnly:bg-mist"
           >
-            {/* This label reports the saved tally only. Delivery is the
-                dialog's business, the box must not claim a send it has not
-                checked. */}
             <span className="font-display text-ui font-medium text-ink">
               {finished ? 'All saved, thanks' : started ? 'Finish the feedback' : 'Give feedback'}
             </span>
-            {/* No fixed count before starting: the question set can grow. Once
-                started, the live tally is read from REQUIRED. */}
             <span className="text-fine font-medium tabular-nums text-ink-3">
               {started ? `${done}/${total}` : 'A few questions'}
             </span>
@@ -267,17 +229,11 @@ function ReviewDialog({ onClose }) {
   const visitor = getVisitor()
   const complete = done >= total
 
-  /* Four states, not a boolean: without a 'sending' state the control is mute
-   * for the second or two the relay takes and gets pressed again. Derived from
-   * the store, not held here, because a queued response retries itself in the
-   * background and this has to notice. `busy` is the only local part. */
+  // Send state is derived from the store, since a queued response retries in the background.
   const [busy, setBusy] = React.useState(false)
   const send = busy ? 'sending' : wasSent() ? 'sent' : isQueued() ? 'queued' : 'idle'
 
-  /* Sends itself once the last required question is answered. Keyed on
-   * completion so it fires on the transition, and submitResponse is the real
-   * guard: it refuses once sentAt is set, so reopening a finished survey does
-   * not post a second copy. */
+  // Sends once every required question is answered; submitResponse refuses a second send after sentAt is set.
   React.useEffect(() => {
     if (!complete) return
     let alive = true
@@ -286,9 +242,7 @@ function ReviewDialog({ onClose }) {
     return () => { alive = false }
   }, [complete])
 
-  /* The explicit path, for a deliberately partial response. force overrides
-   * the once-only guard; the button disables itself after a success, so it
-   * cannot send the same response twice. */
+  // Manual send for a partial response; force bypasses the once-only guard.
   const sendNow = () => {
     setBusy(true)
     submitResponse({ force: true }).finally(() => setBusy(false))
@@ -307,7 +261,6 @@ function ReviewDialog({ onClose }) {
         ref={ref}
         className="mx-auto min-h-full w-full max-w-[42rem] bg-paper sm:min-h-0 sm:rounded-panel"
       >
-        {/* The tally only; that answers save themselves is said below, once. */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-rule bg-paper px-5 py-3.5 sm:rounded-t-panel sm:px-8">
           <div>
             <h2 className="font-display text-sub font-bold text-ink">Reviewer Feedback</h2>
@@ -319,9 +272,6 @@ function ReviewDialog({ onClose }) {
         </div>
 
         <div className="px-5 pb-9 pt-5 sm:px-8">
-          {/* Says what is stored, every time the dialog opens, and not only in
-              the consent panel: a reviewer who answered on one visit and came
-              back on another may never see that panel again. */}
           <p className="max-w-[56ch] text-sec text-ink-2">
             Answers save as you give them, so closing this loses nothing,
             and they go on to the person building MindMap once you are through.
@@ -379,9 +329,6 @@ function ReviewDialog({ onClose }) {
                 {complete ? 'Close' : 'Come back to it'}
               </Button>
             </div>
-            {/* No failure state: an undelivered response is queued and
-                retried on its own, so the reviewer gets a receipt rather than
-                a red line about the owner's activation link or relay. */}
             {send === 'queued' && (
               <p className="note mt-2.5">
                 Saved. It goes out the next time this page is open, or as soon as you are

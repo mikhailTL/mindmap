@@ -4,9 +4,6 @@ import LifeMoney from './money.jsx'
 import LifeStress from './stress.jsx'
 import LifeHealth from './health.jsx'
 
-/* Life: independence, wellness and emotional resilience. One tool per item
-   in the owner's list. Each saves to `mindmap.skills.<id>` on the device. */
-
 export const CATEGORY = { id: 'life', title: 'Life', sub: 'Wellness', family: 'mint' }
 
 export const TOOLS = [

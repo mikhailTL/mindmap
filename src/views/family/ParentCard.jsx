@@ -7,20 +7,7 @@ import { CardDial, TeenAvatar } from './TeenCard'
 import { SourceLine } from './Source'
 import { PREV, STATUS_SUB, STATUS_WORD, metaLine, statusOfTeen, subOf, summaryOf } from './data'
 
-/* One child on the parent's Trends tab: who, their Heads Up face for the
- * range picked at the top, the Mind Score for that range on a small rainbow
- * with what it means, where the readings come from, and one clear Open button
- * for their page.
- *
- * The range drives the figure as well as the face. The owner, 18 October:
- * "it needs to say trends for day week month, bc it needs to apply to
- * mindscore and everything else as well, not just heads up". Day is today's
- * Mind Score, Week the average of the last 7 days, Month of the last 30, and
- * the label above it names which, so a week's figure is never read as
- * today's. The words under it compare that same figure with the usual band.
- * Beside the face, an arrow: the Mind Score for that range up, down or level
- * against the range before it. */
-
+// The label names the range, so a 7- or 30-day average is not read as today's score.
 const FIGURE_LABEL = Object.freeze({ day: 'Mind Score today', week: 'Mind Score, last 7 days', month: 'Mind Score, last 30 days' })
 const NONE_YET = Object.freeze({ day: 'No readings yet today', week: 'No readings in the last 7 days',
   month: 'No readings in the last 30 days' })
@@ -61,8 +48,6 @@ export default function ParentCard({ teen, range = 'day', onOpen, className }) {
         ) : figure == null ? (
           <p className="m-0 mt-1.5 font-display text-ui font-bold text-ink">{NONE_YET[range]}</p>
         ) : (
-          /* The figure is the centre of the small rainbow (owner, 18 October:
-             "it should show the rainbow (small) with the mindscore"). */
           <div className="mt-2 flex items-center gap-4">
             <CardDial teen={teen} range={range} score={figure}/>
             <div className="min-w-0">

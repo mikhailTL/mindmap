@@ -2,23 +2,6 @@ import React from 'react'
 import { LIGHT_FACE } from '../signals/light.js'
 import { cn } from '../lib/utils'
 
-/* One lamp of the traffic light, and the face on it. Every lamp on every
- * Heads Up surface on the site is drawn here, so a lamp cannot be lit without
- * a face or carry a face while dark.
- *
- *   green   smile     upward arc
- *   yellow  neutral   straight line
- *   red     frown     downward arc
- *
- * The face is ink at 80 percent, stroke about 8 percent of the lamp, round
- * caps. Under 14 px the stroke is held at 1.5 px so the mouth still reads.
- * The face is decorative: the state is always written beside the lamp.
- *
- * A lit lamp glows in its own colour, as a real lamp does, from 14 px up
- * (smaller, the glow muddies the face). Pass glow={false} to turn it off.
- * The glow sits outside the face and under any words, so it never lowers the
- * contrast of the mouth or of text beside it. */
-
 export const LAMP_COLOR = Object.freeze({ green: '#34c759', yellow: '#ffcc00', red: '#ff3b30' })
 const FACE_INK = '#0d2b1e'
 
@@ -28,6 +11,7 @@ const MOUTH = {
   frown: 'M31 70 Q50 53 69 70',
 }
 
+// By default a lit lamp glows only from 14 px up; smaller, the glow blurs the face.
 const glowsAt = (glow, px) => (glow === undefined ? px >= 14 : !!glow)
 
 export function LampFace({ light = 'green', size = 24, lit = true, glow, className, style }) {
@@ -41,13 +25,8 @@ export function LampFace({ light = 'green', size = 24, lit = true, glow, classNa
   )
 }
 
-/* The same lamp as an SVG group, for drawings that place lamps themselves
-   (the week graph). Centre (cx, cy), diameter `size` in the drawing's units,
-   `px` the size it will render at, so the small-lamp stroke floor holds.
-   The glow here is a soft disc in the lamp's colour, the same reach as
-   LampFace's drop shadow, so a chart's faces match the cards'. Where faces
-   sit close in a row, draw every glow first (layer="glow") and then every
-   lamp (layer="lamp"), so no glow ever lies over a neighbour's face. */
+// SVG-group version for charts. In a row of lamps, draw every layer="glow" first and then
+// every layer="lamp", so no glow covers a neighbouring face.
 export function LampFaceG({ light = 'green', cx, cy, size, px = size, lit = true, glow, layer = 'all' }) {
   const k = size / 100
   const color = LAMP_COLOR[light] || LAMP_COLOR.green
@@ -74,6 +53,8 @@ export function LampFaceG({ light = 'green', cx, cy, size, px = size, lit = true
 function LampMarks({ light, px, lit }) {
   const color = LAMP_COLOR[light] || LAMP_COLOR.green
   const face = LIGHT_FACE[light] || 'smile'
+  // Stroke is 8 units of the 100-unit viewBox, with a 1.5 px floor (150 / px units) so the
+  // mouth still reads on small lamps.
   const sw = Math.max(8, (1.5 * 100) / px)
   const eye = Math.max(6.5, 90 / px)
   return (
@@ -90,11 +71,8 @@ function LampMarks({ light, px, lit }) {
   )
 }
 
-/* The arrow beside a Heads Up face: is the Mind Score for the range shown up,
-   down or level against the range before it of the same length. Higher means
-   more stress, so up is coral, down is green and level is ink. A solid tile
-   with a white arrow and the points in it (white clears 5 : 1 on all three),
-   and the whole of it spoken, so the colour never carries it alone. */
+// A higher Mind Score means more stress, so up is coral and down is green. White text
+// clears 5:1 on all three backgrounds.
 const DIR = {
   up:    { bg: '#b23009', d: 'M12 19.5V5M5.5 11.5L12 5l6.5 6.5', word: 'up' },
   down:  { bg: '#067049', d: 'M12 4.5V19M5.5 12.5L12 19l6.5-6.5', word: 'down' },

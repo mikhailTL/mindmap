@@ -17,31 +17,8 @@ import { ScoreChart, TakeReading } from './charts'
 import { RANGE_LABEL, byDay, clockOf, dayKey, longDay, midnight, rangeView }
   from './liveSeries'
 
-/* The student's Trends tab: the app tab "Trends", route `student-trends`.
- *
- * The owner, 17 October: "The log, trends, and mindscore data on the live app
- * for student data should be under a separate new tab on app taskbar called
- * trends ... in the Trends tab, there should be option to 'Take a Reading'
- * underlined link especially when theres no data yet, that link should be
- * shown on the trend graphs." And: "Make sure theres difference between Today
- * and Trends sections."
- *
- * So the tab is three parts with their own heads: Today (the rainbow, with
- * Heads Up in the demo; "Take a reading" at the end of its heading), Trends
- * (the Day / Week / Month line and the calendar with each day's Heads Up
- * face) and the Mind Score Log. The owner, 18 October: "everything looks too
- * overwhelming", so today's readings list (the log's Today repeats it) and
- * the trend's explainer went.
- *
- *   Demo  the demo teen's ninety days (src/views/student/Trends.jsx) and the
- *         generated fortnight of logged readings
- *   Live  the student's own readings (src/lib/readingLog.js, synced to their
- *         account). Nothing is generated: an empty range says "No data yet". */
-
-/* ── Today ─────────────────────────────────────────────────────────────── */
-
-/* The latest reading on the rainbow. Today's readings themselves are the
-   first day of the log below. */
+// The student's Trends tab (route `student-trends`): Today, Trends and the Mind Score Log.
+// Demo draws the demo teen's days; Live uses only the student's own logged readings.
 function TodayPart({ entries, now, go }) {
   const today = dayKey(now)
   const todays = entries.filter(r => dayKey(r.at) === today)
@@ -59,8 +36,6 @@ function TodayPart({ entries, now, go }) {
   }
   return <Latest entries={todays} now={now}/>
 }
-
-/* ── Live trends ───────────────────────────────────────────────────────── */
 
 const RANGES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']]
 
@@ -86,13 +61,12 @@ function RangeTabs({ value, onChange }) {
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
   'October', 'November', 'December']
 
-/* One month, each day's average Mind Score coloured against the usual range,
-   with that day's Heads Up face. A day with no reading is a dashed box. */
 function LiveCalendar({ days, now, picked, onPick }) {
   const [month, setMonth] = React.useState(() => { const d = new Date(now); return [d.getFullYear(), d.getMonth()] })
   const [y, m] = month
   const first = new Date(y, m, 1)
   const n = new Date(y, m + 1, 0).getDate()
+  // Leading nulls pad the first week to its weekday; trailing nulls fill the last row.
   const cells = Array.from({ length: first.getDay() }, () => null)
   for (let d = 1; d <= n; d++) cells.push(new Date(y, m, d).getTime())
   while (cells.length % 7) cells.push(null)
@@ -169,8 +143,6 @@ function LiveCalendar({ days, now, picked, onPick }) {
   )
 }
 
-/* Shown under the trend once a point is tapped: how its readings were
-   taken, one row each. */
 function Taken({ list, title }) {
   return (
     <div>
@@ -217,8 +189,6 @@ function LiveTrendsPart({ entries, now, go, range, setRange, anchor, setAnchor }
   )
 }
 
-/* ── The tab ───────────────────────────────────────────────────────────── */
-
 export function StudentTrendsBody({ go }) {
   const { entries, now, demo, setNote } = useReadingLog()
   const [range, setRange] = React.useState('week')
@@ -226,8 +196,7 @@ export function StudentTrendsBody({ go }) {
   /* The demo range, as the demo Trends above the log reports it. */
   const [demoSpan, setDemoSpan] = React.useState(null)
 
-  /* The log covers the same days as the trend above it, in both modes, so
-     the trend and the log count the same readings. */
+  // The log covers the same days as the trend above it, so both count the same readings.
   let list = entries, rangeLabel = 'last 14 days'
   if (demo && demoSpan) {
     list = entries.filter(r => { const k = dayKey(r.at); return k >= demoSpan.from && k <= demoSpan.to })
@@ -240,12 +209,8 @@ export function StudentTrendsBody({ go }) {
 
   return (
     <div className="flex w-full flex-col gap-3 lg:gap-4">
-      {/* The page's own "Trends" heading went on 18 October: the app bar
-          above already names the tab. */}
       <PartHead id="st-today-h" kind="today" title="Today" line={demo ? TODAY_LONG : longDate()}
         action={<TakeReading go={go}/>}/>
-      {/* The demo day moved here from the home on 17 October: the home is
-          navigation only, and all data lives on this tab. */}
       {demo ? <DemoTodayDetail go={go}/> : <TodayPart entries={entries} now={now} go={go}/>}
 
       <section aria-labelledby="st-trends-h"
@@ -258,8 +223,6 @@ export function StudentTrendsBody({ go }) {
               anchor={anchor} setAnchor={setAnchor}/>}
       </section>
 
-      {/* The owner, 18 October: the log is its own part, under Trends.
-          20 October: on soft lilac, so Today, Trends and the Log differ. */}
       <section aria-labelledby="reading-log-h"
         className="mt-4 flex flex-col gap-3 rounded-[24px] border border-lilac/20 bg-lilac-wash/60 p-3 sm:p-4
           lg:mt-6 lg:gap-4 lg:p-5">
@@ -272,8 +235,6 @@ export function StudentTrendsBody({ go }) {
   )
 }
 
-/** The app tab "Trends" (route `student-trends`), in the same shell as the
-    student's other tabs. */
 export function StudentTrends({ go }) {
   return (
     <SectionShell go={go}>

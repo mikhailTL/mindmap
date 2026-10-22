@@ -11,17 +11,6 @@ import { EndCard } from '../../toolkit/game'
 import { useSkill, Quest, Answer, answerState, leave } from '../../toolkit/game/skill'
 import { mixOptions } from '../../toolkit/game/round'
 
-/* Feed Check: a digital wellness audit.
- *
- * 1. Your apps: minutes a day and how each one leaves you feeling.
- * 2. The trick deck: five persuasive design cards, one at a time; tap which
- *    of your apps use each.
- * 3. Your attention is the product: minutes a week, ads seen at a stated
- *    rate, hours a year.
- * 4. Boundaries: app limits, phone-free times, notification cuts.
- * Result: the saved plan, with where to set it on the phone, and a link to
- * Heads Up. Stored at `mindmap.skills.outside-feed`. */
-
 export const ID = 'outside-feed'
 export const FeedIcon = () => (
   <I><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M9 7h6M9 10.5h6M9 14h4"/><path d="M10.5 18.5h3"/></I>
@@ -99,7 +88,7 @@ function Apps({ s, set }) {
   )
 }
 
-/* Three names for a trick card: the right one and two others, mixed. */
+// The right trick name plus two others, mixed.
 const namesFor = i => mixOptions([TRICKS[i], TRICKS[(i + 1) % TRICKS.length], TRICKS[(i + 3) % TRICKS.length]]
   .map(x => ({ id:x.id, text:x.name, ok:x.id === TRICKS[i].id })), i + 2)
 

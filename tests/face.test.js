@@ -3,9 +3,6 @@ import { analyseFace, analyseRPPG } from '../src/signals/face.js'
 import { scoreFace, emptyFaceBaseline, updateFaceBaseline, faceFeatures, faceSentence, FACE_PRIOR } from '../src/signals/face-score.js'
 import { coverMap, foreheadPatch, frameReady, mapX, mapY, nextTimestamp, patchPixels } from '../src/signals/face-capture.js'
 
-/* Synthetic camera frames, the shape face-capture.js records: one per camera
-   frame at `fps`, a forehead green level carrying a pulse, blink and tension
-   blendshapes, eye aperture, nose position and face width. */
 function frames({ seconds = 30, fps = 30, bpm = 72, blinkEvery = 4, brow = 0.12, lips = 0.08, squint = 0.15,
   sway = 0, pulseAmp = 0.003, seed = 1 } = {}) {
   let r = seed
@@ -105,7 +102,7 @@ describe('Mental Mirror: slow phones', () => {
 })
 
 describe('Mental Mirror: slow phones, frame floor', () => {
-  it('scores a full capture at 2 frames a second (61 to 91 frames was seen in headless Chromium)', () => {
+  it('scores a full capture at 2 frames a second', () => {
     const a = analyseFace(frames({ fps: 2 }))
     expect(a.ok).toBe(true)
     expect(a.hr).toBe(null)
@@ -173,8 +170,6 @@ describe('Mental Mirror: face-capture.js guards', () => {
   })
 
   it('maps landmarks onto the cropped, mirrored video the way object-fit: cover shows it', () => {
-    /* A portrait 480x640 phone stream in a 4:3 box 400x300: scaled to the
-       width, top and bottom cropped. */
     const m = coverMap(480, 640, 400, 300, true)
     expect(mapY(m, 0.5)).toBeCloseTo(150, 5)
     expect(mapX(m, 0.5)).toBeCloseTo(200, 5)

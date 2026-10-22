@@ -2,10 +2,6 @@ import React from 'react'
 import { ActivityScreen, Sheet, Action } from '../../toolkit/shell'
 import { CopyButton, Label } from './common'
 
-/* Talking With Parents: five steps for a conversation with a teen's parent,
-   consent first. Each step is three short lines with a tick box, so it can be
-   used as a checklist during the call. */
-
 const STEPS = [
   { name:'Before', lines:[
     'Ask the teen what they agree to share.',

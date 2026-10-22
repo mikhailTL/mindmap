@@ -1,28 +1,5 @@
-/* A whole breathing session as one sound file, made in the page.
- *
- * WHY A FILE. Page JavaScript freezes the moment a phone locks, so a pacer
- * driven by requestAnimationFrame or by oscillators started from script
- * stops at the lock screen. An HTML <audio> element the student started
- * keeps playing, and in a Home Screen web app it gets the lock screen
- * controls through the Media Session API. So the session is rendered up
- * front, every cue at its second, silence between, and handed to <audio>.
- *
- * THE CUE is the same soft cue as src/toolkit/audio.js: two sine voices a
- * fifth apart through a short raised envelope, low peak gain, no click at
- * either end. One cue at each phase change, a lower pitch for "out", a brief
- * double cue for the "in again" of cyclic sighing, and one longer cue at the
- * end so a locked phone says the session is over.
- *
- * WHAT IS IN IT. 16 kHz mono 16-bit PCM, which is 1.9 MB a minute and more
- * than enough for sines under 500 Hz. Nothing is recorded; nothing leaves the
- * page; the Blob URL is revoked when the student stops.
- *
- * The cue is rendered with an OfflineAudioContext where the page has one, so
- * the sound is the same engine the live pacer uses; where it is absent (a
- * test runner, an old browser) the same two sines are summed in plain
- * arithmetic, which is the only thing an OfflineAudioContext would do here
- * anyway. */
-
+// Renders a breathing session to a WAV so an <audio> element keeps pacing after the phone locks.
+// 16 kHz mono 16-bit PCM is plenty for sine cues under 500 Hz.
 export const RATE = 16000
 
 export const PATTERNS = {
@@ -38,9 +15,7 @@ const CUE_SECS = 0.42
 const PEAK = 0.07
 const TAIL = 1.2                      // seconds after the last phase, for the end cue
 
-/* The schedule: one entry per phase change from zero to the session's end,
-   then a 'Done' entry at the end. Pure, so the screen can derive the phase
-   from audio.currentTime without touching the file. */
+// One cue per phase change, then a 'Done' cue. Pure, so the phase can be derived from audio.currentTime.
 export function pacerSchedule(pattern = 'box', minutes = 5) {
   const p = PATTERNS[pattern] || PATTERNS.box
   const seconds = Math.max(1, Math.round(minutes * 60))
@@ -57,7 +32,6 @@ export function pacerSchedule(pattern = 'box', minutes = 5) {
   return { pattern: p.id, seconds, cues }
 }
 
-/* The phase at second `t`, with how far into it and how many seconds remain. */
 export function phaseAt(sched, t) {
   const { cues, seconds } = sched
   if (t >= seconds) return { phase:'Done', into:0, secs:0, count:0, t:1, left:0 }
@@ -73,8 +47,7 @@ export function phaseAt(sched, t) {
   }
 }
 
-/* One cue as samples, at `rate`. The envelope is the one in audio.js: up to
-   the peak by 22% of the length, then down to silence, both exponential. */
+// Same cue as audio.js: exponential rise to `peak` over the first 22%, exponential decay after, plus a fifth above at 0.45.
 function cueMath(hz, secs, peak, rate) {
   const n = Math.round(secs * rate)
   const out = new Float32Array(n)
@@ -118,7 +91,7 @@ async function cueOffline(hz, secs, peak, rate) {
 const renderCue = async (hz, secs, peak = PEAK, rate = RATE) =>
   (await cueOffline(hz, secs, peak, rate)) || cueMath(hz, secs, peak, rate)
 
-/* A 44-byte header for 16-bit mono PCM. `n` is the sample count. */
+// 44-byte RIFF header for 16-bit mono PCM; `n` is the sample count.
 export function wavHeader(view, n, rate = RATE) {
   const str = (at, s) => { for (let i = 0; i < s.length; i++) view.setUint8(at + i, s.charCodeAt(i)) }
   str(0, 'RIFF'); view.setUint32(4, 36 + n * 2, true); str(8, 'WAVE')
@@ -129,7 +102,6 @@ export function wavHeader(view, n, rate = RATE) {
   str(36, 'data'); view.setUint32(40, n * 2, true)
 }
 
-/* Write `cue` into `pcm` (Int16) at sample `at`, adding to what is there. */
 function place(pcm, cue, at) {
   const end = Math.min(pcm.length, at + cue.length)
   for (let i = at, j = 0; i < end; i++, j++) {
@@ -138,8 +110,6 @@ function place(pcm, cue, at) {
   }
 }
 
-/* The whole session as an ArrayBuffer holding a WAV. Exposed so a test can
-   check the header and the cue positions without a Blob. */
 export async function renderPacerBuffer({ pattern = 'box', minutes = 5, rate = RATE } = {}) {
   const sched = pacerSchedule(pattern, minutes)
   const n = Math.round((sched.seconds + TAIL) * rate)
@@ -158,7 +128,6 @@ export async function renderPacerBuffer({ pattern = 'box', minutes = 5, rate = R
   return { buffer: buf, schedule: sched, samples: n, rate }
 }
 
-/* The session as a Blob URL for an <audio> element. The caller revokes it. */
 export async function renderPacerWav(opts) {
   const { buffer } = await renderPacerBuffer(opts)
   return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }))

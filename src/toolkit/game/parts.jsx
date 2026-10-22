@@ -12,29 +12,18 @@ import { Burst, Confetti, LevelEmblem, XPBar, ToNext, LevelUpBanner, Stars, Coun
          useTotalTween, useSvgId, SPRING, SOFT } from './fx'
 import './game.css'
 
-
-/* ── progress as React state ─────────────────────────────────────────── */
-
 export function useProgress() {
   const [p, setP] = React.useState(readProgress)
   React.useEffect(() => subscribe(setP), [])
   return p
 }
 
-/* The CSS custom properties every game piece reads its colour from. */
 export function gameVars(themeId) {
   const t = themeById(themeId)
   return { '--g-main':t.main, '--g-ink':t.ink, '--g-wash':t.wash }
 }
 
-/* ── one session ─────────────────────────────────────────────────────── */
-
-/* useGame(tool): the score for this one session, the pops, the combo, the
-   sound and the end. `add(n, { x, y, sound, label, combo })` adds to the
-   score and floats "+n" at x/y (percent of the nearest <Pops/> box). Each add
-   grows the combo unless `combo:false`; `miss()` sets it back to zero. The
-   combo lives inside one round only and is never stored. `finish()` stores
-   the session once and returns the result the end card reads. */
+// One session: round score, pops and combo live here and are not stored; finish() stores the session once.
 export function useGame(tool) {
   const progress = useProgress()
   const reduced = useReduced()
@@ -71,10 +60,6 @@ export function useGame(tool) {
 
   const miss = React.useCallback(() => { comboRef.current = 0; setCombo(0) }, [])
 
-  /* finish({ complete, marks }): store the session once. Points come only
-     from a finish (flat, see progress.js); the round score is kept beside
-     it as `score` so the end card can show both without mixing them. An
-     early end is said outright: finish({ complete:false }). */
   const finish = React.useCallback((o = {}) => {
     if (done.current) return done.current
     const opts = o && typeof o === 'object' && !o.nativeEvent ? o : {}
@@ -98,9 +83,6 @@ export function useGame(tool) {
            progress, vars:gameVars(progress.theme), ring:progress.ring }
 }
 
-/* ── small pieces ────────────────────────────────────────────────────── */
-
-/* A white halo so a small pop stays readable over any fill it drifts across. */
 const POP_HALO = '0 0 2px #fff, 0 0 6px #fff, 0 0 10px #fff'
 
 function Flame({ className }) {
@@ -147,7 +129,6 @@ function Pop({ p, reduced }) {
   )
 }
 
-/* The floating "+10"s. Put inside a `relative` box. */
 export function Pops({ game }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-10 overflow-visible">
@@ -158,18 +139,13 @@ export function Pops({ game }) {
   )
 }
 
-/* A ring that fills. `value` 0 to 1. The ring style comes from the reader's
-   pick unless one is passed. Children sit in the middle. A soft glow rides
-   the leading end of a solid ring. */
 export function FillRing({ value = 0, ring = 'solid', className, children, thin = false, still }) {
   const reduced = useReduced()
   const gid = useSvgId('fr')
   const v = Math.max(0, Math.min(1, value))
   const R = 52, C = 2 * Math.PI * R
   const w = thin ? 7 : 11
-  /* No CSS transition: games move this every frame, and a transition that
-     restarts every frame never gets anywhere. The games' own clocks are the
-     smoothing. */
+  // No CSS transition: games update this every frame, and a transition restarted every frame lags behind.
   const ease = 'none'
   let art
   if (ring === 'dots' || ring === 'beads') {
@@ -223,7 +199,6 @@ export function FillRing({ value = 0, ring = 'solid', className, children, thin 
   )
 }
 
-/* The combo: a small flame and the count, only from two in a row. */
 export function Combo({ game, className }) {
   const n = game.combo || 0
   return (
@@ -242,8 +217,6 @@ export function Combo({ game, className }) {
   )
 }
 
-/* This round's score, with a springy bump on each add. It is called score,
-   not points: points are what a finish adds to the level, and only a finish. */
 export function Score({ game, className }) {
   return (
     <div className={cn('flex items-center gap-3 font-display text-ui font-semibold text-ink-2', className)}>
@@ -260,7 +233,6 @@ export function Score({ game, className }) {
   )
 }
 
-/* The sound pick. Off by default; the tap that turns it on also wakes audio. */
 export function SoundToggle({ className }) {
   const p = useProgress()
   if (!soundSupported()) return null
@@ -280,7 +252,6 @@ export function SoundToggle({ className }) {
   )
 }
 
-/* The row over a game: session score and combo on the left, sound on the right. */
 export function GameBar({ game, children, className }) {
   return (
     <div className={cn('flex flex-wrap items-center justify-between gap-x-3 gap-y-2', className)}>
@@ -308,7 +279,6 @@ export function LevelMeter({ className, total }) {
   )
 }
 
-/* Colours and ring styles. Locked ones say the level that opens them. */
 export function ThemePicker({ className }) {
   const p = useProgress()
   const lv = levelFor(p.total).level
@@ -355,8 +325,6 @@ export function ThemePicker({ className }) {
   )
 }
 
-/* 3, 2, 1, then onDone. One big number that springs in, inside a ring
-   that drains each second. */
 export function Countdown({ from = 3, onDone, className }) {
   const reduced = useReduced()
   const [n, setN] = React.useState(from)
@@ -386,7 +354,6 @@ export function Countdown({ from = 3, onDone, className }) {
   )
 }
 
-/* "20 for finishing, 10 for a new tool and 5 for all right." */
 const PART_WORDS = { 'Finished':'for finishing', 'New tool':'for a new tool', 'All right':'for getting every answer right' }
 function partsLine(parts = []) {
   const bits = parts.map(([k, n]) => `${n} ${PART_WORDS[k] || k.toLowerCase()}`)
@@ -399,14 +366,7 @@ const BACK_CLASS = cn('inline-flex min-h-[54px] items-center justify-center gap-
   'bg-card px-7 font-display text-ui font-semibold text-ink shadow-card transition-[background-color,transform]',
   'duration-150 motion-safe:active:scale-[0.97] hoverOnly:bg-mist')
 
-/* The results screen. In order: the stars for the round and its medal, the
-   round score rolling up, the points a finish earned flying into the level
-   bar, the bar filling (a level up drops a banner and confetti), the stats,
-   then any new badge turning over. An early end earns no points and says so
-   plainly. `stars` (1 to 3) is the tool's own judgement of the round; left
-   out, a finish is two stars and a round with every answer right is three.
-   `stats` is [[label, value], ...]. Children go under the buttons. With no
-   `onDone`, Back goes to the Toolkit. */
+// Without `stars`, a finish shows two stars and a round with every answer right shows three.
 export function EndCard({ game, title = 'Round done', stats = [], onAgain, againLabel = 'Play again',
                           onDone, doneLabel, back = '#/toolkit', stars, children, className }) {
   const r = game.result

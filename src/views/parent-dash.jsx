@@ -13,34 +13,14 @@ import { sourceOf } from './family/Source'
 import { useLiveTeens } from './family/useLive'
 import { PartHead, TODAY_LONG, longDate } from './student/PartHead'
 
-/* The parent app: Home (./family/Home.jsx: a greeting and the places to go,
- * with the network box; no figures) and Trends (every child's card with
- * their Heads Up and Mind Score, then a child picker over Day / Week / Month
- * and the calendar). A card's Open button shows that child's page, Today
- * then Trends; Back returns to the card that was opened.
- *
- * Demo shows the two sample children. Live shows the teens linked to this
- * parent's account, from the account's snapshot, refreshed every 20 seconds
- * by useLiveSync (src/account/sync.js).
- *
- * CONSENT SCOPE, never widened here: whole days only, no single reading, no
- * Notes, no Location. See src/views/family/data.js and teenFor() in
- * src/server/account.js, which never sends anything finer. */
-
-/* ParentHome({ go }): the parent's home, a navigation dashboard. */
+// Parent app screens. Consent scope is whole days only, with no single reading, Notes or Location
+// (see teenFor() in src/server/account.js).
 export function ParentHome({ go }) {
   return <ParentHomeBoard go={go}/>
 }
 
-/* The earlier name, kept for anything still importing it. */
 export const ParentDash = ParentHome
 
-/* ParentTrends({ go }): the Trends tab, in two parts with the same heads as
- * every other screen. Today: every child's card (Heads Up and Mind Score for
- * the range picked above them, the face with its arrow, the figure on a small
- * rainbow, an Open button for their page). Trends: one tab per child over that child's week, month and
- * calendar, the same layout for every child (./family/Trends.jsx). The tab
- * names where readings come from, so no source line repeats it under them. */
 export function ParentTrends({ go }) {
   const [mode] = useMode()
   const live = useLiveTeens('parent')
@@ -89,9 +69,6 @@ export function ParentTrends({ go }) {
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <h3 className="m-0 font-display text-head font-bold leading-tight text-ink">Your children</h3>
           <div className="flex items-center gap-3">
-            {/* "Trends for", not "Heads Up for": the owner, 18 October, "it needs
-                to apply to mindscore and everything else as well, not just
-                heads up". The range sets the face and the figure on every card. */}
             <span className="text-fine font-semibold text-ink-2">Trends for</span>
             <RangeSwitch compact value={range} onChange={setRange} label="Trends for, on every card"/>
           </div>
@@ -132,7 +109,6 @@ export function ParentTrends({ go }) {
   )
 }
 
-/* Live, before any teen is linked. */
 function Invite({ go, live }) {
   return (
     <div className="flex w-full flex-col gap-5">

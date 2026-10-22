@@ -6,18 +6,11 @@ import { useWidth } from './parts'
 import { STATUS_WORD } from './metrics'
 import { LIGHT_TONE } from './look'
 
-/* The charts the Counselor/Professional reads, one kind per job, the same on
- * every teen. The owner: "graphs ... should be easy to read, not like the box
- * whisker looking one u use". So: a bar per day, the teen's usual range as a
- * soft band behind the bars, both axes named, and the Heads Up face under each
- * day. No min to max bands, no whiskers. */
-
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
 const mean = a => a.reduce((s, v) => s + v, 0) / Math.max(1, a.length)
 
-/* The four dial bands for one day, each 0 to 100 against this teen's own last
-   thirty days: 50 is their usual, a standard deviation is 18 points. Sweat
-   and temperature come from the patch, so a teen without one has two bands. */
+// Each band is the day's z-score against the previous 30 days: 50 is usual, one SD is 18 points.
+// Sweat and temperature come from the patch, so a teen without one has two bands.
 export function ringsFor(teen, d = teen.days[teen.days.length - 1]) {
   const past = teen.days.slice(-31, -1)
   const z = k => {
@@ -34,8 +27,7 @@ export function ringsFor(teen, d = teen.days[teen.days.length - 1]) {
   ].filter(r => teen.patch || !r.patch).map(r => ({ ...r, name: SENSORS[r.id].name, glow: SENSORS[r.id].glow }))
 }
 
-/* A group's bands: the average of each band across the teens who have it,
-   and only where at least `k` teens do. */
+// A band's group average is shown only where at least `k` teens have that band.
 export function groupRings(teens, k) {
   const by = {}
   for (const t of teens) for (const r of ringsFor(t)) (by[r.id] = by[r.id] || []).push(r.value)
@@ -45,14 +37,13 @@ export function groupRings(teens, k) {
 
 const dayNum = iso => String(Number(iso.slice(8)))
 
-/* Daily Mind Score as bars. `days` are { date, weekday, score, light? };
-   `usual` is { lo, hi } or null. `compact` is the card's smaller version. */
 export function DailyChart({ days, usual, compact = false, faces = true, who = 'this teen', className }) {
   const [box, W] = useWidth(compact ? 320 : 640)
   const n = days.length
   const L = 34, R = 6, T = 8
   const PH = compact ? 100 : 168
   const slot = (W - L - R) / n
+  // Faces show when each day's slot is at least 11 px wide; printed values need 26 px.
   const showFaces = faces && slot >= 11
   const face = Math.min(compact ? 18 : 22, Math.floor(slot - 3))
   const FH = showFaces ? face + 8 : 0
@@ -87,8 +78,7 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
             <line x1={L} x2={W - R} y1={y(usual.hi)} y2={y(usual.hi)} strokeWidth="1" strokeDasharray="3 3" className="stroke-accent"/>
             <line x1={L} x2={W - R} y1={y(usual.lo)} y2={y(usual.lo)} strokeWidth="1" strokeDasharray="3 3" className="stroke-accent"/>
           </>}
-          {/* every face's glow first, then the faces, so a glow never covers
-              the face beside it */}
+          {/* Every glow first, then the bars and faces, so no glow covers a neighbouring face. */}
           {showFaces && days.map((d, i) => d.light && (
             <LampFaceG key={d.date} light={d.light} cx={cx(i)} cy={base + 4 + face / 2} size={face} px={face} layer="glow"/>
           ))}
@@ -96,9 +86,6 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
             const top = y(d.score), last = i === n - 1
             return (
               <g key={d.date}>
-                {/* A day with a light takes the lamp's hue; the face under the
-                    bar and the printed figure carry the meaning. Today is
-                    outlined in ink. */}
                 <rect x={cx(i) - bw / 2} y={top} width={bw} height={Math.max(1, base - top)} rx={Math.min(4, bw / 3)}
                   className={d.light ? undefined : last ? 'fill-sky-ink' : 'fill-sky'}
                   style={d.light ? { fill: LIGHT_TONE[d.light].bar } : undefined}
@@ -127,7 +114,6 @@ export function DailyChart({ days, usual, compact = false, faces = true, who = '
   )
 }
 
-/* Heads Up across a range, in counts, so a month reads at phone width too. */
 export function FaceCounts({ days, className }) {
   const c = { green: 0, yellow: 0, red: 0 }
   for (const d of days) c[d.light]++

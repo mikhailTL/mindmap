@@ -2,14 +2,8 @@ import React from 'react'
 import { cn } from '../../lib/utils'
 import { CLOTH, HAIR, SKIN } from './specs.js'
 
-/* The character suite, drawn. Flat vector in the explainer style: a round
- * head, dot eyes, a small smile, one soft shade per surface, head and
- * shoulders facing forward, in a 64 box on the same six washes as the other
- * avatars. Idle motion is a slow blink, a small head bob and a breath, on
- * transform only; it stops under reduced motion and while off screen. */
-
-/* ── colour ─────────────────────────────────────────────────────────────── */
-
+// Flat vector characters in a 64 box. Idle blink, bob and breath use transform only and stop
+// under reduced motion or off screen.
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
 const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t)
   .toString(16).padStart(2, '0')).join('')
@@ -18,8 +12,6 @@ const lite = (c, t = 0.3) => mix(c, '#ffffff', t)
 
 const EYE = '#2A2030'
 const MOUTH = '#6E2A27'
-
-/* ── motion ─────────────────────────────────────────────────────────────── */
 
 const CSS = `
 .mmc .mmc-head{transform-box:view-box;transform-origin:32px 47px;animation:mmc-bob 6s ease-in-out infinite}
@@ -50,7 +42,7 @@ function useStyles() {
   }, [])
 }
 
-/* One shared observer: a picture plays only while it is on screen. */
+// One shared IntersectionObserver: a picture animates only while it is on screen.
 let io = null
 function usePlayWhenSeen(ref) {
   React.useEffect(() => {
@@ -64,14 +56,12 @@ function usePlayWhenSeen(ref) {
   }, [ref])
 }
 
-/* A fixed offset per id, so a list of people does not blink in step. */
+// A fixed animation offset per id, so a list of people does not blink in unison.
 function offset(id) {
   let h = 7
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 997
   return -((h % 50) / 10)
 }
-
-/* ── hair ───────────────────────────────────────────────────────────────── */
 
 /* Behind the head. */
 const BACK = {
@@ -129,20 +119,15 @@ const LOCKS = {
   shoulder: c => <path fill={c} d="M19.8 27C18.6 34 18.4 40 17.6 46C19.4 47.8 22.4 47.6 23.8 46.2C22.8 41 22.4 36 22.8 31ZM44.2 27C45.4 34 45.6 40 46.4 46C44.6 47.8 41.6 47.6 40.2 46.2C41.2 41 41.6 36 41.2 31Z"/>,
 }
 
-/* Hair drawn in front of the shoulders rather than behind them. */
 const OVER = { braid: 1 }
 
-/* A soft light line across the crown, where the hair catches the light. */
 const SHINE = { long: 1, shoulder: 1, bob: 1, ponytail: 1, bun: 1, topbun: 1, puff: 1, puffs: 1, braid: 1, short: 1, mop: 1, side: 1, pixie: 1 }
-
-/* ── tops ───────────────────────────────────────────────────────────────── */
 
 const TORSO = {
   t: 'M9 66C9 54 16 48.4 25.6 47L38.4 47C48 48.4 55 54 55 66Z',
   a: 'M6.6 66C6.6 53 15 47.6 25 46.4L39 46.4C49 47.6 57.4 53 57.4 66Z',
 }
 
-/* Each top draws over the torso. `s` is the skin tone, `i` an inner colour. */
 const TOP = {
   tee: (c, s) => <>
     <path fill={s} d="M27 46.6C27.4 51.6 36.6 51.6 37 46.6Z"/>
@@ -182,8 +167,6 @@ const TOP = {
       <path fill={dark(c, 0.28)} d="M39.2 46.8L32 62.6L35.6 56.2L38 56.8L41.4 48.6Z"/></>
   },
 }
-
-/* ── the person ─────────────────────────────────────────────────────────── */
 
 const SCENE = {
   /* A small tree behind the right shoulder. */
@@ -269,8 +252,6 @@ function Person({ p }) {
   </>
 }
 
-/* ── the signs ──────────────────────────────────────────────────────────── */
-
 const EMBLEM = {
   tree: () => <>
     <ellipse cx="32" cy="54.4" rx="15" ry="3.6" fill="#18A370" opacity=".28"/>
@@ -291,15 +272,11 @@ const EMBLEM = {
   </>,
 }
 
-/* ── the picture ────────────────────────────────────────────────────────── */
-
 const WASH = {
   coral: 'fill-coral-wash', sun: 'fill-sun-wash', mint: 'fill-mint-wash',
   sky: 'fill-sky-wash', lilac: 'fill-lilac-wash', blush: 'fill-blush-wash',
 }
 
-/** CharacterArt({ entry, className }): one character or sign from the
-    catalog (kind 'char' or 'emblem'), in a circle on its wash. */
 export function CharacterArt({ entry, className }) {
   useStyles()
   const ref = React.useRef(null)

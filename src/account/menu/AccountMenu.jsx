@@ -8,15 +8,8 @@ import { ROLE_LABEL, SETTINGS, signOut, useAccount } from '../store'
 import { Avatar } from '../ui'
 import { VIEWER } from '../viewer'
 
-/* The top bar's account menu: the avatar opens a short list of places, with
- * Sign out last. Menu button pattern: the button says it has a popup and
- * whether it is open; the arrows walk the items, Home and End jump, Escape
- * and Tab close, and Escape hands focus back to the button.
- *
- * The list is portalled to <body> and placed under the button, so it sits
- * above the sticky top bar (z-40) and the fixed tab bar (z-40) alike. */
-
-/* Where "Privacy and sharing" goes for each role. */
+// Menu button pattern: arrows walk the items, Home and End jump, Escape and Tab close.
+// The list is portalled to <body> so it sits above the z-40 top and tab bars.
 export const MENU_PRIVACY = { student: 'shared', parent: 'privacy', pro: 'app-pro-privacy', other: 'privacy' }
 
 const TextSize = p => (
@@ -26,7 +19,6 @@ const TextSize = p => (
   </svg>
 )
 
-/* Each item has its own hue: the wash is the tile, the ink is the mark. */
 const HUE = {
   accent: 'bg-accent-wash text-accent-ink',
   sky:    'bg-sky-wash text-sky-ink',
@@ -38,7 +30,6 @@ const HUE = {
   ink:    'bg-mist text-ink-2',
 }
 
-/* Move to an anchor on the screen `go` lands on, once it has rendered. */
 function goToAnchor(go, view, anchor, reduce) {
   go(view)
   let tries = 0
@@ -53,9 +44,6 @@ function goToAnchor(go, view, anchor, reduce) {
   setTimeout(look, 60)
 }
 
-/* Owner, 18 October: "Return to site" lives here, last before Sign out, in
-   place of the top bar's back arrow. `toSite` lands on the overview with no
-   site intro; without it the menu just goes to the overview. */
 function itemsFor(me, go, reduce, toSite) {
   const site = { id: 'site', label: 'Return to site', Mark: ArrowLeft, hue: 'ink',
     run: toSite || (() => go('site')) }
@@ -81,8 +69,7 @@ function itemsFor(me, go, reduce, toSite) {
   ].filter(i => !i.only || i.only === me.role)
 }
 
-/* Where to draw the list: under the button, its right edge on the button's,
-   kept 8px inside the window. */
+// Under the button, right edges aligned, kept 8px inside the window.
 function place(btn) {
   if (!btn) return null
   const r = btn.getBoundingClientRect()
@@ -92,9 +79,6 @@ function place(btn) {
   return { top: r.bottom + 6, right, width, maxHeight: Math.max(200, window.innerHeight - r.bottom - 20) }
 }
 
-/* `app`: the app the reader is in. In the demo with nobody signed in, the
-   menu names them by its role word, as the home does (../viewer.js).
-   `toSite`: the top bar's way back to the overview. */
 export function AccountMenu({ go, app, toSite, className }) {
   const me = useAccount()
   const [mode] = useMode()
@@ -123,7 +107,6 @@ export function AccountMenu({ go, app, toSite, className }) {
     setOpen(true)
   }
 
-  /* Focus the first (or last) item once the list is in the document. */
   React.useEffect(() => {
     if (!open) return
     const i = startAt.current < 0 ? all.length - 1 : startAt.current
@@ -132,7 +115,6 @@ export function AccountMenu({ go, app, toSite, className }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  /* A press outside closes it; so do a resize and a scroll of the page. */
   React.useEffect(() => {
     if (!open) return
     const down = e => {
@@ -150,7 +132,6 @@ export function AccountMenu({ go, app, toSite, className }) {
     }
   }, [open, close])
 
-  /* Signing in or out while it is open rebuilds the list; close it. */
   React.useEffect(() => { setOpen(false) }, [me?.id])
 
   function onButtonKey(e) {

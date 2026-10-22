@@ -1,5 +1,4 @@
-/* Self-report scoring. Same last step as the patch engine — weighted terms
-   through a logistic — so both routes land on one scale. */
+// Self-report scoring through the same logistic (K = 2.4) as the sensor routes, so all share one 0 to 100 scale.
 export const ITEMS = [
   { id:'tension', w:1.0, q:'How tense does your body feel right now?',
     lo:'Loose',       hi:'Very tight',   up:'how tense your body feels',       dn:'how loose your body feels' },
@@ -26,6 +25,7 @@ const SUMW = ITEMS.reduce((a,b)=>a+b.w,0)
 const K = 2.4
 
 export function score(ans){
+  // Answers are 0 to 4; (a - 2) / 2 maps them to -1 to 1 around the midpoint.
   const contrib = ITEMS.map(it=>({ item:it, raw: it.w*((ans[it.id]-2)/2) }))
   const S = contrib.reduce((a,c)=>a+c.raw,0) / SUMW
   return { S, score: Math.round(100/(1+Math.exp(-K*S))), contrib }
@@ -36,7 +36,6 @@ export function band(n){
   if(n<73) return { key:'up',    word:'slightly higher than usual' }
   return          { key:'high',  word:'much higher than usual' }
 }
-/* One sentence, then the number. Never the other way round. */
 export function sentence(r){
   const b = band(r.score)
   const top = [...r.contrib].sort((a,c)=>Math.abs(c.raw)-Math.abs(a.raw))[0]
@@ -48,7 +47,7 @@ export function sentence(r){
   return { ...lead, tail }
 }
 
-/* Nordic UART — the service the MindMap firmware advertises. */
+// Nordic UART service UUID, advertised by the MindMap firmware.
 const UART = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 export async function connectPatch(){
   if(!navigator.bluetooth) return { ok:false, msg:

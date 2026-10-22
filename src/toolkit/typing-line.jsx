@@ -5,19 +5,7 @@ import { OnDevice } from './shell'
 import { recorder, fastBurst, MIN_KEYS } from '../signals/typing'
 import { addTyping, listTyping } from '../app/store'
 
-/* Typing rhythm, under MindMap's own text fields and nowhere else.
- *
- * WHAT RUNS. `useTypingRecorder` wraps `recorder()` from src/signals/typing.js:
- * every key down is handed to it as a timestamp and a deletion flag, never the
- * key. Every fourth key the last twelve are summarised into `rhythm`; the
- * summary of the whole field session is stored by `finish()` when the note or
- * check-in is sent. Nothing else is kept and nothing leaves the device.
- *
- * WHAT IT SAYS. `TypingLine` is silent until eight keys are in, and stays
- * silent unless the burst is well under the student's own usual gap. Then it
- * offers thirty seconds of breathing, once, with a one-tap yes and an easy
- * no. No streak, no judgement, no comparison with anyone else. */
-
+// recorder() in signals/typing.js gets a timestamp and a deletion flag per key, not the key itself.
 const SESSION_KEY = 'mindmap.typing.keepGoing'
 let keepGoing = false
 
@@ -92,9 +80,7 @@ export function TypingLine({ rhythm, usual, onBreath, className }) {
   )
 }
 
-/* The last fourteen field sessions as a strip of median gaps, oldest on the
-   left. A taller bar is a longer gap between keys. Each bar carries its figure
-   for a screen reader; the strip is never the only thing saying the value. */
+// Median key gap for the last 14 field sessions, oldest on the left; a taller bar is a longer gap.
 export function TypingWeek({ className }) {
   const rows = listTyping().slice(0, 14).reverse()
   const max = rows.reduce((a, r) => Math.max(a, r.medianGap), 0) || 1

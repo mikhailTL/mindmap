@@ -4,20 +4,10 @@ import { cn } from '../../lib/utils'
 import { RANGE_WORD, PREV, changeWords, fillOf, shortDate, showsHours, showsTrends, subOf,
   summaryOf } from './data'
 
-/* The Day / Week / Month trend of one teen's Mind Score, their own usual band
- * shaded behind it. Higher means more stress, 0 calm to 100 peak. A bar's
- * colour follows its light and the word for it is in the tooltip, the
- * summary under the chart and the chart's own label, never colour alone.
- *
- * A parent's Day view is one whole-day figure on a scale, not an hourly
- * curve, unless the teen has shared hour-by-hour readings. */
-
+// Day / Week / Month Mind Score trend for one teen, their usual band shaded behind it.
+// Higher means more stress: 0 calm, 100 peak.
 const INK = '#0d2b1e', INK3 = '#426a58', GRID = '#e3ede7', BAND = '#dcefe4', BAND_INK = '#0f5836', LINE = '#157446'
 
-/* ── The switch ─────────────────────────────────────────────────────────── */
-
-/* Three words on a rule; the chosen one is bold with a bar under it. A radio
-   group, so arrow keys move between them. */
 export function RangeSwitch({ value, onChange, label = 'Range', className, compact = false }) {
   const refs = React.useRef([])
   const key = (e, i) => {
@@ -50,7 +40,6 @@ export function RangeSwitch({ value, onChange, label = 'Range', className, compa
   )
 }
 
-/* ── Width of a box, for charts drawn in real pixels ─────────────────────── */
 function useWidth(initial = 560, min = 200) {
   const ref = React.useRef(null)
   const [w, setW] = React.useState(initial)
@@ -67,10 +56,7 @@ function useWidth(initial = 560, min = 200) {
   return [ref, w]
 }
 
-/* ── A whole day on one scale ───────────────────────────────────────────── */
-
-/* Today's figure as a dot on a 0 to 100 rule, yesterday as a hollow tick, the
-   usual band shaded. Used where hours are not shared. */
+// Today as a dot on a 0 to 100 rule, yesterday as a dashed tick; used when hours are not shared.
 export function DayGauge({ teen, value, prev, large = false, className }) {
   const [ref, W] = useWidth(large ? 480 : 140, large ? 200 : 48)
   const H = large ? 86 : 40
@@ -101,8 +87,6 @@ export function DayGauge({ teen, value, prev, large = false, className }) {
     </div>
   )
 }
-
-/* ── The full chart ─────────────────────────────────────────────────────── */
 
 function Chart({ teen, range, s, day, onDay }) {
   const [ref, W] = useWidth()
@@ -193,9 +177,7 @@ function Fig({ k, v, sub }) {
   )
 }
 
-/* RangeTrend({ teen, range, onRange, variant, day, onDay }). `range` and
-   `onRange` make it controlled; without them it keeps its own. `day` and
-   `onDay` let a page mark and pick one day from the week or month. */
+// `range` and `onRange` make it controlled; without them it keeps its own range.
 export default function RangeTrend({ teen, range: given, onRange, variant = 'parent', day, onDay, className, title = 'Mind Score trend' }) {
   const [own, setOwn] = React.useState('week')
   const range = given ?? own
@@ -205,7 +187,6 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
   const hours = showsHours(teen, variant)
   const above = teen.usual ? s.points.filter(p => p.score > teen.usual.hi).length : null
   const prev = teen.days[teen.days.length - 2].score
-  /* A linked teen with nothing in this range: the words, no chart. */
   const empty = s.mean == null || (range !== 'day' && !s.points.length)
 
   return (
