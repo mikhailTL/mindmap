@@ -8,6 +8,7 @@ import { IntroSky } from '../charts/intro-sky'
 import { PHOTOS } from '../lib/photos'
 import { RainbowDial } from '../charts/rainbow'
 import { studentRings } from '../lib/readings'
+import { SCORE_DEF } from '../lib/terms'
 import { getMode, setMode } from '../lib/mode'
 
 // Only the screenshot harness sets this key.
@@ -672,7 +673,7 @@ const STOPS = [
   { view: 'patch', name: 'The patch',
     line: 'The patch sits on your upper arm, recording four signals.' },
   { view: 'methods', name: 'How it works',
-    line: 'Four signals become one Mind Score, from 0 to 100.' },
+    line: SCORE_DEF },
   { view: 'app-student', name: 'The student screen', inApp: true,
     line: 'Today’s score, its four signals, and the week so far.' },
   { view: 'shared', name: 'Sharing', inApp: true,

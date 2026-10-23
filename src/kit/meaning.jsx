@@ -62,8 +62,8 @@ function Column({ title, rows, lit }) {
 export function Meaning() {
   return (
     <div>
-      <p className="max-w-[54ch] text-sec text-ink-2">The {SCORE} combines four body signals, compared to
-        your teen’s own last two weeks. Here is what it shows and what it does not.</p>
+      <p className="max-w-[54ch] text-sec text-ink-2">The {SCORE} is a simple score calculated from body signals or in-app readings to measure
+        stress consistently, 0 calm to 100 peak. Here is what it shows and what it does not.</p>
 
       <Step className="mt-5">What you see</Step>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">

@@ -2,7 +2,7 @@ import React from 'react'
 import { LAYERS, ExplodedStack } from './Patch'
 import { PatchArena } from '../charts/arena'
 import { PatchStack } from '../charts/patchstack'
-import { Parallax2D, ScrollIn, ScrollRow } from '../ui/motion'
+import { Parallax2D, ScrollRow } from '../ui/motion'
 import { Card, cardInk } from '@/ui/card'
 import { SignalTrace } from '../charts/infographics'
 import { RAINBOW } from '../lib/sensors'
@@ -15,16 +15,6 @@ const GROUP = { pod: 'Upper shell', pcb: 'PCB assembly', base: 'Skin carrier' }
 
 // Card wash per signal, in the rainbow's order: heart, sweat, temperature, movement.
 const SIGNAL_HUE = ['coral', 'sun', 'mint', 'sky']
-
-const FIGURES = [
-  { k: 'Along the arm',       v: '54', u: 'mm' },
-  { k: 'Across the arm',      v: '36', u: 'mm' },
-  { k: 'Signals',             v: '4',  u: 'at once' },
-  { k: 'Readings',            v: '1',  u: 'a second' },
-  { k: 'Learning your usual', v: '14', u: 'days' },
-]
-
-const OPEN = ['Battery', 'Charge time', 'Adhesive', 'Wear time', 'Weight', 'Cost']
 
 const PART_LINE = {
   pod:  'Closes the stack. Charges through a slot in the side.',
@@ -187,49 +177,15 @@ export function PatchPage({ as: Root = 'main' }) {
         </div>
       </Section>
 
-      {/* White between two coloured grounds. */}
-      <Section tone="card" tight>
+            <Section tone="card" tight>
         <SectionHead className="mt-0 max-w-[26ch]">What is inside</SectionHead>
-        <div className="mt-4 grid gap-3 lg:mt-5
-          lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:items-start lg:gap-4">
+        <div className="mt-4 lg:mt-5">
           <Parallax2D distance={28} className="min-w-0">
             <Card className="min-w-0 p-3.5 lg:p-5">
               <PatchStack brief/>
             </Card>
           </Parallax2D>
 
-          <ScrollIn className="lg:sticky lg:top-32">
-          <Card variant="tint" hue="lilac" className="relative p-3.5 lg:p-4">
-            <h3 className="relative font-display text-row font-bold leading-tight text-ink">
-              Decided so far
-            </h3>
-            <dl className="relative m-0 mt-2.5 grid grid-cols-2 gap-x-4 lg:grid-cols-1">
-              {FIGURES.map(f => (
-                <div key={f.k}
-                  className="flex items-baseline gap-3 border-t border-rule py-1.5
-                    first:border-t-0 lg:[&:nth-child(2)]:border-t">
-                  <dt className="min-w-0 flex-1 text-fine text-ink-2">{f.k}</dt>
-                  <dd className="m-0 shrink-0 text-row font-bold tabular-nums text-ink">
-                    {f.v}
-                    <span className="ml-1.5 font-body text-fine font-normal text-ink-2">{f.u}</span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <div className="relative mt-3 border-t border-rule pt-2.5">
-              <p className="flex items-center gap-2 text-fine font-semibold text-lilac-ink">
-                <span aria-hidden className="h-px w-3 bg-lilac-ink"/>Not decided yet</p>
-              <ul className="m-0 mt-1.5 flex list-none flex-wrap gap-1.5 p-0">
-                {OPEN.map(o => (
-                  <li key={o} className="rounded-field border border-dashed border-ruling bg-paper
-                    px-2.5 py-[3px] text-fine text-ink-2">
-                    {o}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-          </ScrollIn>
         </div>
       </Section>
 

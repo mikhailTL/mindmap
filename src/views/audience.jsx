@@ -23,7 +23,7 @@ import { cn } from '../lib/utils'
 import { cardClass, cardInk } from '../ui/card'
 import {
   CASELOAD_DEF, CASELOAD_TITLE, CONSENT_SHORT, LOCATION, NOTES, SCORE,
-  SCORE_RANGE, PRO, PRO_LC, PRO_FOR,
+  SCORE_DEF, PRO, PRO_LC, PRO_FOR,
 } from '../lib/terms'
 
 // The three audience pages (students, parents, counselors/professionals) and the parts they share.
@@ -320,7 +320,7 @@ export function ForStudents({ go }) {
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
         facts={[
-          ['One number a day', `Your ${SCORE} runs from ${SCORE_RANGE}, measured against your own usual.`],
+          ['One number a day', SCORE_DEF],
           ['You choose what is shared', 'Sharing starts on. Switch any of it off, any time.'],
           STOCK,
         ]}/>

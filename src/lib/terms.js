@@ -3,7 +3,7 @@ export const SCORE = 'Mind Score'
 export const SCORE_LC = 'Mind Score'          // it is a proper noun mid-sentence too
 export const SCORE_RANGE = '0 to 100'
 export const SCORE_DEF =
-  'One number a day, 0 to 100, measured against your own normal rather than anybody else’s.'
+  'A simple score calculated from body signals or in-app readings to measure stress consistently, 0 calm to 100 peak.'
 
 export const NOTES = 'Notes'
 export const NOTES_DEF = 'What a student writes in their own journal.'

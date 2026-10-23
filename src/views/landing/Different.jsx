@@ -3,7 +3,7 @@ import { Section, SectionHead } from '../../ui/section'
 import { ArrowLeft, ArrowRight } from '../../ui/marks'
 import { useReduced } from '../../toolkit/useReduced'
 import { ScrollRow } from '../../ui/motion'
-import { PRO } from '../../lib/terms'
+import { PRO, SCORE_DEF } from '../../lib/terms'
 import { cn } from '../../lib/utils'
 // Full folder path: on a case-insensitive disk './different' resolves to this file.
 import { PICTURES, DIF_CSS } from './different/index.js'
@@ -12,7 +12,7 @@ import { PICTURES, DIF_CSS } from './different/index.js'
 // It runs into a copy of the row and jumps back to the same frame, so the loop has no seam.
 export const DIFFERENT = [
   { id: 'score', title: 'Mind Score', look: 'tint', wash: ['#dcefe4', '#def0fc'], hue: '#157446',
-    line: 'One daily number from our own neural network, built from your body’s signals.' },
+    line: SCORE_DEF },
   { id: 'network', title: 'Support network', look: 'pane', wash: ['#ffe8e0', '#f5ecd7'], hue: '#f25424',
     line: `Link a parent and a ${PRO}. The teen decides what each one sees.` },
   { id: 'patch', title: 'Patch or phone', look: 'rule', wash: ['#fce6f1', '#f6e8ff'], hue: '#f2248b',
