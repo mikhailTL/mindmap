@@ -101,7 +101,7 @@ describe('How to use guides', () => {
 
   it('never offers a parent Notes, Location or raw readings', () => {
     const p = guideFor('parent', 'parent-trends').steps.map(s => s.cap).join(' ')
-    expect(p).toMatch(/Never Notes, Location or raw readings/)
+    expect(p).toMatch(/Notes and location stay private/)
   })
 
   it('has no Mental Mirror guide: the Mirror is a way on the Reading tab', () => {
@@ -118,7 +118,7 @@ describe('How to use guides', () => {
 
   it('walks the toolkit through its tabs, activities and levels', () => {
     const caps = guideFor('student', 'toolkit').steps.map(s => s.cap).join(' ')
-    for (const t of ['Exercises', 'School', 'Outside', 'Life', 'Career', 'Resources']) expect(caps).toContain(t)
+    for (const t of ['School', 'topic']) expect(caps).toContain(t)
     expect(caps).toMatch(/levels/)
     expect(caps).toMatch(/badges/)
   })

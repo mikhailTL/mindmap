@@ -149,8 +149,8 @@ export function FrameworkGlow({ className }) {
     <figure className={cn('m-0 mx-auto w-full max-w-[22rem]', className)}>
       <Glass tone="vio" className="px-4 py-3.5 text-center">
         <p className="font-display text-ui font-bold text-[#0d2b1e]">One framework</p>
-        <ul className="m-0 mt-2.5 flex list-none flex-wrap justify-center gap-1.5 p-0">
-          {PUBLISHERS.map(p => <li key={p} className="t-chip font-semibold">{p}</li>)}
+        <ul className="m-0 mt-2 flex list-none flex-wrap justify-center gap-x-4 gap-y-1 p-0">
+          {PUBLISHERS.map(p => <li key={p} className="text-fine font-semibold text-[#0f5836]">{p}</li>)}
         </ul>
       </Glass>
       <div className="relative h-14">

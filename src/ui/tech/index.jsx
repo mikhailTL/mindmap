@@ -88,15 +88,6 @@ export function TechTitle({ as: As = 'h2', className, children }) {
   )
 }
 
-export function Chip({ className, children, dot = false }) {
-  return (
-    <span className={cn('t-chip', className)}>
-      {dot && <span aria-hidden className="t-dot t-anim"/>}
-      {children}
-    </span>
-  )
-}
-
 /* A primary action: the accent, white text (5.8 : 1). No glow. */
 export const TechButton = React.forwardRef(function TechButton({ className, variant = 'solid', ...p }, ref) {
   return (

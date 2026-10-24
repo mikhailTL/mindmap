@@ -7,7 +7,7 @@ import { GetHelp } from '../app/Help'
 import { useTypingRecorder, TypingLine } from '../toolkit/typing-line'
 import { usualTypingGap } from '../app/store'
 import { AUDIENCES, PILLARS, SOURCES, pillarSources } from './framework'
-import { Chip, Glass, TechRoot, TechTitle } from '../ui/tech'
+import { Glass, TechRoot, TechTitle } from '../ui/tech'
 
 // Both text colours are above 7:1 on every fill used here.
 const HI = 'text-[#0d2b1e]', DIM = 'text-[#2a5744]'
@@ -48,11 +48,14 @@ const LEAVES = [
 
 function Leaves() {
   return (
-    <Glass as="section" className="overflow-hidden">
-      <div className="border-b border-rule px-4 py-3">
-        <Heading>Data sent</Heading>
-      </div>
-      <dl className="m-0 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3 text-fine
+    <Glass as="details" className="group overflow-hidden">
+      <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3
+        [&::-webkit-details-marker]:hidden">
+        <Heading>What data is sent</Heading>
+        <ChevronDown aria-hidden className="size-4 shrink-0 text-ink-2 transition-transform duration-150
+          group-open:rotate-180"/>
+      </summary>
+      <dl className="m-0 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 border-t border-rule px-4 py-3 text-fine
         sm:grid-cols-[6.5rem_minmax(0,1fr)]">
         {LEAVES.map(([k, v]) => (
           <React.Fragment key={k}>
@@ -235,7 +238,6 @@ export function MindMapAI({ who = 'student', go, className }) {
         <span aria-hidden className="t-field-shape -right-24 -top-36 size-72 sm:-right-10"/>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <TechTitle className="text-head">{spec.heading}</TechTitle>
-          {state === 'ready' && <Chip dot>Connected</Chip>}
         </div>
       </header>
 

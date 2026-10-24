@@ -108,31 +108,6 @@
   font-family: inherit;
   font-variant-numeric: tabular-nums;
 }
-.t-chip {
-  display: inline-flex; align-items: center; gap: .4rem;
-  min-height: 1.75rem;
-  padding: 0 .6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(21,116,70,.28);
-  background: #ffffff;
-  color: var(--t-label);
-  font-size: .8125rem; line-height: 1;
-}
-
-.t-dot {
-  position: relative; display: inline-block; width: .5rem; height: .5rem; border-radius: 999px;
-  background: #18a370;
-}
-.t-dot::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; background: #3ecf9a;
-  opacity: 0;
-}
-.t-dot.t-anim::after { animation: t-ping 2.2s var(--t-ease) infinite; animation-play-state: inherit; }
-@keyframes t-ping {
-  0%   { transform: scale(1); opacity: .6; }
-  80%, 100% { transform: scale(2.8); opacity: 0; }
-}
-
 /* The lane spans the full width, so translateX(%) moves a packet by a share of the figure's width. */
 .t-lane { position: absolute; left: 0; top: 0; width: 100%; height: 0; pointer-events: none; }
 .t-lane > i {

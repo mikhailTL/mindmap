@@ -125,6 +125,8 @@ const NOT_CONFIGURED = {
 // Gemini is used when GEMINI_API_KEY is set; otherwise Anthropic when ANTHROPIC_API_KEY is set.
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/'
 const GEMINI_DEFAULT = 'gemini-3.8-flash'
+// Tried in order when the configured model errors on the provider's side.
+const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash']
 
 function provider() {
   const gemini = String(process.env.GEMINI_API_KEY || '').trim()
@@ -142,7 +144,8 @@ function request(p, system, messages) {
       body: {
         systemInstruction: { parts: [{ text: system }] },
         contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-        generationConfig: { maxOutputTokens: MAX_TOKENS },
+        // Thinking tokens count toward this cap on Gemini 3 models, so it is set above MAX_TOKENS.
+        generationConfig: { maxOutputTokens: 4 * MAX_TOKENS },
       },
     }
   }
@@ -219,75 +222,95 @@ export default async function handler(req, res) {
 
   // A `system` field in the request body is ignored.
   const system = systemPrompt(audience)
-  const call = request(p, system, messages)
 
-  const control = new AbortController()
-  const timer = setTimeout(() => control.abort(), UPSTREAM_TIMEOUT_MS)
-  let upstream
-  try {
-    upstream = await fetch(call.url, {
-      method: 'POST',
-      signal: control.signal,
-      headers: call.headers,
-      body: JSON.stringify(call.body),
-    })
-  } catch (err) {
+  // Gemini tries the configured model, then the fallbacks, when a model errors on the provider's side.
+  const models = p.name === 'gemini' ? [p.model, ...GEMINI_FALLBACKS.filter(m => m !== p.model)] : [p.model]
+  let upstream = null
+  let used = p.model
+  let failure = null
+  for (const m of models) {
+    used = m
+    const call = request({ ...p, model: m }, system, messages)
+    const control = new AbortController()
+    const timer = setTimeout(() => control.abort(), UPSTREAM_TIMEOUT_MS)
+    try {
+      upstream = await fetch(call.url, {
+        method: 'POST',
+        signal: control.signal,
+        headers: call.headers,
+        body: JSON.stringify(call.body),
+      })
+    } catch (err) {
+      clearTimeout(timer)
+      // Log a fixed string: the error object can contain the request.
+      upstream = null
+      failure = err?.name === 'AbortError' ? 'timeout' : 'unreachable'
+      console.error('mindmap-ai: ' + p.name + ' ' + m + ' ' + failure)
+      continue
+    }
     clearTimeout(timer)
-    // Log a fixed string: the error object can contain the request.
-    if (err?.name === 'AbortError') {
-      console.error('mindmap-ai: upstream timed out')
+    if (upstream.ok) break
+    // Auth, quota and request-shape errors are the same on every model, so they are not retried.
+    if ([400, 401, 403, 429].includes(upstream.status)) break
+    failure = null
+    if (m !== models[models.length - 1]) {
+      console.error('mindmap-ai: ' + p.name + ' ' + m + ' status ' + upstream.status + ', trying the next model')
+    }
+  }
+
+  if (!upstream) {
+    if (failure === 'timeout') {
       return send(res, 504, {
         ok: false, configured,
         error: 'The model did not answer in time. Sending it again usually works.',
       })
     }
-    console.error('mindmap-ai: upstream unreachable')
     return send(res, 502, {
       ok: false, configured,
       error: 'The model could not be reached from the server.',
     })
   }
-  clearTimeout(timer)
 
   if (!upstream.ok) {
-    // Only the error type and status are read from the upstream body.
+    // Only the error code and status are read from the upstream body, never echoed message content.
     let kind = ''
     try {
       const payload = await upstream.json()
-      kind = String(payload?.error?.type || payload?.error?.status || '')
+      kind = String(payload?.error?.status || payload?.error?.type || payload?.error?.code || '')
     } catch {
       kind = ''
     }
-    console.error('mindmap-ai: ' + p.name + ' status ' + upstream.status + (kind ? ' ' + kind : ''))
+    const detail = (p.name + ' ' + used + ' HTTP ' + upstream.status + (kind ? ' ' + kind : '')).slice(0, 120)
+    console.error('mindmap-ai: ' + detail)
 
     if (upstream.status === 429) {
       const retry = upstream.headers.get('retry-after')
       if (retry) res.setHeader('Retry-After', retry)
       return send(res, 429, {
-        ok: false, configured,
+        ok: false, configured, detail,
         error: 'The model is rate limited right now. Wait a moment and send it again.',
       })
     }
     if (upstream.status === 401 || upstream.status === 403) {
       return send(res, 502, {
-        ok: false, configured,
+        ok: false, configured, detail,
         error: 'The server key was refused by the model provider. MindMap AI cannot answer until it is replaced.',
       })
     }
     if (upstream.status === 404) {
       return send(res, 502, {
-        ok: false, configured,
+        ok: false, configured, detail,
         error: 'The configured model name was not recognised by the provider.',
       })
     }
     if (upstream.status === 400) {
       return send(res, 400, {
-        ok: false, configured,
+        ok: false, configured, detail,
         error: 'The model refused the shape of that request.',
       })
     }
     return send(res, 502, {
-      ok: false, configured,
+      ok: false, configured, detail,
       error: 'The model returned an error. Nothing was answered.',
     })
   }
@@ -301,8 +324,8 @@ export default async function handler(req, res) {
   }
 
   if (!reply) {
-    return send(res, 502, { ok: false, configured, error: 'The model returned an empty reply.' })
+    return send(res, 502, { ok: false, configured, detail: p.name + ' ' + used + ' empty', error: 'The model returned an empty reply.' })
   }
 
-  return send(res, 200, { ok: true, configured, model, reply })
+  return send(res, 200, { ok: true, configured, model: used, reply })
 }

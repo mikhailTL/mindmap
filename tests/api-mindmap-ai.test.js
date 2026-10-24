@@ -39,3 +39,27 @@ describe('MindMap AI endpoint', () => {
     expect(sent.systemInstruction.parts[0].text.length).toBeGreaterThan(50)
   })
 })
+
+describe('MindMap AI endpoint fallbacks', () => {
+  it('tries the next Gemini model after a server error and reports the status', async () => {
+    vi.stubEnv('GEMINI_API_KEY', 'test-key'); vi.stubEnv('ANTHROPIC_API_KEY', '')
+    const fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, headers: new Map(), json: async () => ({ error: { status: 'INTERNAL' } }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, headers: new Map(),
+        json: async () => ({ candidates: [{ content: { parts: [{ text: 'OK' }] } }] }) })
+    vi.stubGlobal('fetch', fetch)
+    const { json } = await call({ method: 'POST', body: { audience: 'parent', messages: [{ role: 'user', content: 'Hi' }] } })
+    expect(json.reply).toBe('OK')
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch.mock.calls[1][0]).not.toBe(fetch.mock.calls[0][0])
+  })
+
+  it('does not retry a refused key and says which status came back', async () => {
+    vi.stubEnv('GEMINI_API_KEY', 'test-key'); vi.stubEnv('ANTHROPIC_API_KEY', '')
+    const fetch = vi.fn().mockResolvedValue({ ok: false, status: 403, headers: new Map(), json: async () => ({ error: { status: 'PERMISSION_DENIED' } }) })
+    vi.stubGlobal('fetch', fetch)
+    const { json } = await call({ method: 'POST', body: { audience: 'pro', messages: [{ role: 'user', content: 'Hi' }] } })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(json.detail).toMatch(/HTTP 403 PERMISSION_DENIED/)
+  })
+})
