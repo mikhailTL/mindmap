@@ -49,33 +49,33 @@ const WAYS = [
 const SCREEN_TOP = ['border-t-accent', 'border-t-beam', 'border-t-sun']
 
 const SCREENS = [
-  { id:'students', title:'Students',
-    who:`Students seeking proactive wellness management, recommended by a parent or ${PRO}, or in a state of mental distress.`,
+  { id:'students', title:'Teens',
+    who:`Teens seeking proactive wellness management, recommended by a parent or ${PRO}, or in a state of mental distress.`,
     gets:[`Your ${SCORE} each day.`,
       <><HeadsUp/> notices stress in how you use your phone, never what is on it. You see it first.</>],
-    cta:'What a student gets' },
+    cta:'What a teen gets' },
   { id:'parents', title:'Parents',
     who:'Parents who want to understand and support their teen’s stress without invading their privacy, or whose teen was recommended MindMap.',
     gets:['Trends by day, week and month, in plain words.',
       <><HeadsUp/> tells you when phone activity is causing your teen stress.</>],
     cta:'What a parent gets' },
   { id:'pro', title:PRO_PLURAL,
-    who:'Counselors, therapists and other professionals who support teens and want to see which students may need a check-in, with the teen’s consent.',
-    gets:['Only the students who chose to share.',
-      <>Each student’s <HeadsUp/> colour, never the content.</>],
+    who:'Counselors, therapists and other professionals who support teens and want to see which teens may need a check-in, with the teen’s consent.',
+    gets:['Only the teens who chose to share.',
+      <>Each teen’s <HeadsUp/> colour, never the content.</>],
     cta:`What a ${PRO_LC} gets` },
 ]
 
 const SEES = [
-  { who:'Student', sees:'Sees everything first' },
-  { who:`Parent and ${PRO}`, sees:'Only what the student allows' },
+  { who:'Teen', sees:'Sees everything first' },
+  { who:`Parent and ${PRO}`, sees:'Only what the teen allows' },
 ]
 
 // "A group under five" states the k-anonymity floor of five people.
 const NEVER = [
   'Show a parent a raw reading',
   'Report on a group under five',
-  'Keep data past what the student chooses',
+  'Keep data past what the teen chooses',
   'Open a record without logging it',
   'Sell or share anything',
   'Diagnose anything or act as a medical device',
@@ -183,7 +183,7 @@ export function Overview({ go }) {
               <Parallax2D clip distance={24} scale={0.02}
                 className="absolute inset-0 [&>div]:absolute [&>div]:inset-0">
                 <Frame photo="students-hallway" eager
-                  alt="Four high school students walking along a bright corridor with folders and backpacks, talking as they go"
+                  alt="Four teens walking along a bright corridor with folders and backpacks, talking as they go"
                   className="absolute inset-0 scale-[1.1]"/>
               </Parallax2D>
               <IPhone model="15-pro" scale={0.3} screenBg="#f7faf8"

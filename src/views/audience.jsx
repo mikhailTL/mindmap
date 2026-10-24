@@ -315,8 +315,8 @@ export function ForStudents({ go }) {
 
   return (
     <main>
-      <Hero go={go} label="For students" theme={th} photo="students-hallway"
-        photoAlt="Four high school students, models, walking along a bright corridor with folders and backpacks"
+      <Hero go={go} label="For teens" theme={th} photo="students-hallway"
+        photoAlt="Four teen models walking along a bright corridor with folders and backpacks"
         title="See your stress as a number"
         lede="One Mind Score a day, so you can act on your stress."
         facts={[
@@ -389,7 +389,7 @@ export function ForStudents({ go }) {
       </Section>
 
       <Closer go={go} view="app-student" ground={th.a}
-        label="Open the student screen" title="Try the student screen"
+        label="Open the teen screen" title="Try the teen screen"
         line="The demo uses sample readings."
         rows={[
           ['One screen', 'Today, Reading, Toolkit and Sharing, each a tab.'],
@@ -485,9 +485,9 @@ export function ForParents({ go }) {
             <Facts head="Who decides what is shared" variant="tint" hue="sun" rows={[
               ['Who decides', CONSENT_SHORT],
               ['Shared per person', `What your child shares with you does not go to a ${PRO_LC}.`],
-              ['Switching off', 'The student can switch sharing off at any time.'],
+              ['Switching off', 'The teen can switch sharing off at any time.'],
               ['Not a diagnosis', 'MindMap is not a medical device and does not diagnose anything.'],
-              ['No ranking', 'Your child is never compared with another student.'],
+              ['No ranking', 'Your child is never compared with another teen.'],
             ]}/>
           </ScrollIn>
         </div>
@@ -518,7 +518,7 @@ function Caseload() {
       <caption className="sr-only">{CASELOAD_TITLE}</caption>
       <thead>
         <tr className="border-b border-ink font-display text-fine font-bold text-ink-2">
-          <th scope="col" className="py-2.5 pr-3">Student</th>
+          <th scope="col" className="py-2.5 pr-3">Teen</th>
           <th scope="col" className="hidden py-2.5 pr-3 sm:table-cell">Seven weeks</th>
           <th scope="col" className="py-2.5 pl-2 text-right">Last week</th>
           <th scope="col" className="py-2.5 pl-2 text-right">This week</th>
@@ -561,12 +561,12 @@ function SmallGroups() {
           border-t border-rule py-2.5 sm:grid-cols-[minmax(0,14rem)_minmax(5rem,1fr)_4.5rem]">
           <span className="order-1 min-w-0">
             <span className="block font-display text-meta font-bold text-ink">{c.label}</span>
-            <span className="block text-fine text-ink-3">{c.n} students</span>
+            <span className="block text-fine text-ink-3">{c.n} teens</span>
           </span>
           <span className="order-3 col-span-2 sm:order-2 sm:col-span-1">
             {c.suppressed ? (
               <span className="block font-display text-fine text-ink-3">
-                Fewer than {K_ANONYMITY} students, so nothing is shown</span>
+                Fewer than {K_ANONYMITY} teens, so nothing is shown</span>
             ) : (
               <Progress value={c.mean} label={`${c.label}, average ${c.mean}`} className="h-2.5"/>
             )}
@@ -589,21 +589,21 @@ export function ForSchools({ go }) {
     <main>
       <Hero go={go} label={PRO_FOR} theme={th} photo="clinic-talk"
         photoAlt="A licensed stock photograph of a teenager talking with an adult who holds a clipboard, on a sofa by a sunlit window"
-        title="See Trends across your students"
-        lede="You see how each student who shares with you is trending, and how groups are doing."
+        title="See Trends across your teens"
+        lede="You see how each teen who shares with you is trending, and how groups are doing."
         facts={[
-          ['What you see', `Each student's ${SCORE} and the direction it moved.`],
-          ['Never shown to you', `A raw reading, ${NOTES}, ${LOCATION}, or any group under ${K_ANONYMITY} students.`],
+          ['What you see', `Each teen's ${SCORE} and the direction it moved.`],
+          ['Never shown to you', `A raw reading, ${NOTES}, ${LOCATION}, or any group under ${K_ANONYMITY} teens.`],
           STOCK,
         ]}/>
 
-      <HeadsUpBand go={go} ground={th.a} line="You see each sharing student’s colour, never the content."/>
+      <HeadsUpBand go={go} ground={th.a} line="You see each sharing teen’s colour, never the content."/>
 
       <Section tone="card" tight>
         <SectionHead>The {SCORE}</SectionHead>
         <ScoreExplain rings={rings} rows={[
           ['0 to 100', 'One number a day, from the body signals the patch reads.'],
-          ['Against their own usual', 'Each student is compared with their own usual day, never with another student.'],
+          ['Against their own usual', 'Each teen is compared with their own usual day, never with another teen.'],
           ['Calm to peak', 'The white cloud is calm. The rain cloud is peak.'],
         ]}/>
       </Section>
@@ -617,17 +617,17 @@ export function ForSchools({ go }) {
           <Side photo="student-homework" block={th.block}
             alt="A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them">
             <Facts head="How to read Trends" variant="rule" hue="beam" rows={[
-              ['Days, weeks, months', <>Each student’s {SCORE} and <HeadsUp/> face, by week or by month.</>],
+              ['Days, weeks, months', <>Each teen’s {SCORE} and <HeadsUp/> face, by week or by month.</>],
               ['Pick a day', 'Tap a day on the calendar to see its score and face.'],
-              ['Consented students only', 'You see a student only if they chose to share with you.'],
-              ['Small groups', `A group under ${K_ANONYMITY} students shows nothing.`],
+              ['Consented teens only', 'You see a teen only if they chose to share with you.'],
+              ['Small groups', `A group under ${K_ANONYMITY} teens shows nothing.`],
             ]}/>
           </Side>
         </Pair>
       </Section>
 
       <Section tone="card" tight>
-        <SectionHead>Stress across all your students</SectionHead>
+        <SectionHead>Stress across all your teens</SectionHead>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
           <ScrollIn className="h-full">
             <Photo photo="photos-hall-denim" block="bg-beam-wash"
@@ -642,9 +642,9 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Facts head="How to read the chart" variant="rule" hue="lilac" rows={[
-              ['Students in the chart', `${SCHOOL_N} students, all of whom chose to share with a ${PRO_LC}.`],
+              ['Teens in the chart', `${SCHOOL_N} teens, all of whom chose to share with a ${PRO_LC}.`],
               ['Highest day', `${peak.full} ran highest, with an average of ${peak.mean}.`],
-              ['Not a ranking', 'No single student can be picked out of this chart.'],
+              ['Not a ranking', 'No single teen can be picked out of this chart.'],
             ]}/>
           </ScrollIn>
         </div>
@@ -661,9 +661,9 @@ export function ForSchools({ go }) {
           </ScrollIn>
           <ScrollIn>
             <Facts head="Who is on the list" variant="outline" rows={[
-              ['On the list', `${BOARD.length} students, all of whom agreed to share Trends.`],
-              ['Off the list', 'Students who share only a score, or only alerts, are not listed.'],
-              ['Why change, not score', 'A student steady at 86 for a month is not a change.'],
+              ['On the list', `${BOARD.length} teens, all of whom agreed to share Trends.`],
+              ['Off the list', 'Teens who share only a score, or only alerts, are not listed.'],
+              ['Why change, not score', 'A teen steady at 86 for a month is not a change.'],
             ]}/>
           </ScrollIn>
         </Pair>
@@ -680,7 +680,7 @@ export function ForSchools({ go }) {
           <div className="flex flex-col gap-3 lg:gap-4">
             <ScrollIn>
               <Facts head="Why small groups show nothing" variant="tint" hue="lilac" rows={[
-                ['The rule', `A group needs at least ${K_ANONYMITY} students. Below that, no average is computed or shown.`],
+                ['The rule', `A group needs at least ${K_ANONYMITY} teens. Below that, no average is computed or shown.`],
                 ['Hidden here', `${suppressed} of ${COHORT_PERIOD.length} periods are under the limit.`],
                 ['Cannot be turned off', 'No setting anywhere in MindMap turns this rule off.'],
               ]}/>
@@ -689,7 +689,7 @@ export function ForSchools({ go }) {
               <Facts head="How the audit log works" variant="tint" hue="beam" rows={[
                 ['Every record opened', 'Every record you open is logged, with who opened it and when.'],
                 ['No setting turns it off', 'Nobody can switch the log off, including us.'],
-                ['Consent is per student', 'You see only what each student agreed to share.'],
+                ['Consent is per teen', 'You see only what each teen agreed to share.'],
                 ['Crisis alerts', 'A crisis alert always reaches you. No guardian can switch that off.'],
               ]}/>
             </ScrollIn>
@@ -699,7 +699,7 @@ export function ForSchools({ go }) {
 
       <Closer go={go} view="app-pro" ground={th.b} label={`Open the ${PRO} screen`}
         title={`Try the ${PRO} screen`}
-        line="The demo uses sample students."
+        line="The demo uses sample teens."
         rows={[
           ['Opens on the list', CASELOAD_TITLE + '.'],
           ['The consent tab', 'The consent tab shows what each guardian signed and when it expires.'],

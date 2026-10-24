@@ -33,20 +33,6 @@ export function LinkArt({ className }) {
   )
 }
 
-export function ChatArt({ className }) {
-  return (
-    <svg aria-hidden viewBox="0 0 150 84" className={cn('block h-[84px] w-[150px]', className)}>
-      <path d="M8 8h84a10 10 0 0 1 10 10v20a10 10 0 0 1-10 10H34l-14 12V48h-2A10 10 0 0 1 8 38V18A10 10 0 0 1 18 8z"
-        fill="#ffffff" stroke="#6f09b2" strokeWidth="2.5" strokeLinejoin="round"/>
-      <path d="M26 22h56M26 33h36" stroke="#6f09b2" strokeWidth="3" strokeLinecap="round"/>
-      <path d="M60 40h72a10 10 0 0 1 10 10v14a10 10 0 0 1-10 10h-2v10l-12-10H60a10 10 0 0 1-10-10V50a10 10 0 0 1 10-10z"
-        fill="#a024f2"/>
-      <circle cx="80" cy="57" r="4.5" fill="#fff"/><circle cx="96" cy="57" r="4.5" fill="#fff"/>
-      <circle cx="112" cy="57" r="4.5" fill="#fff"/>
-    </svg>
-  )
-}
-
 export function ToolArt({ className }) {
   return (
     <svg aria-hidden viewBox="0 0 120 92" className={cn('block h-[92px] w-[120px] overflow-visible', className)}

@@ -14,7 +14,8 @@ import { alertTeen, statusCounts } from './pro/metrics'
 import { CASELOAD } from '../lib/roster'
 import { K_ANONYMITY } from '../lib/caseload'
 import { LightTiles, TrafficLight } from './pro/look'
-import { ChatArt, LinkArt, RainbowArt, ToolArt } from './pro/HomeArt'
+import { LinkArt, RainbowArt, ToolArt } from './pro/HomeArt'
+import { AskArt } from './home/AskArt'
 import { StartGrid, StartTile } from './home/StartGrid'
 import TeenDetail from './family/TeenDetail'
 import { useLiveTeens } from './family/useLive'
@@ -196,8 +197,8 @@ export function ProHome({ go }) {
           onClick={() => go('app-pro-trends')} art={<RainbowArt size={260} className="aspect-[320/232] h-full w-auto"/>}/>
         <StartTile title="Toolkit" tone="bg-sun-wash" chevron="text-sun-ink"
           onClick={() => go('toolkit')} art={<ToolArt className="h-full w-full"/>}/>
-        <StartTile title="Ask MindMap AI" tone="bg-lilac-wash" chevron="text-lilac-ink"
-          onClick={() => go('ai')} art={<ChatArt className="h-full w-full"/>}/>
+        <StartTile title="Ask MindMap AI" tone="bg-beam-wash" chevron="text-beam-ink"
+          onClick={() => go('ai')} art={<AskArt who="pro"/>}/>
         <StartTile title="Network" tone="bg-mint-wash" chevron="text-mint-ink"
           onClick={() => go('network')} art={<LinkArt className="w-full"/>}/>
       </StartGrid>

@@ -17,7 +17,7 @@ const CARRIES_NOT = [
   { k: 'What happened', v: 'No events or reasons. A test and a fight with a friend look the same.' },
   { k: 'What was said', v: 'Your teen’s notes are private and never shown to a parent.' },
   { k: 'Where they were', v: 'Location is never shared with a parent.' },
-  { k: 'Who they were with', v: 'No one else is named, and your teen is never compared with other students.' },
+  { k: 'Who they were with', v: 'No one else is named, and your teen is never compared with other teens.' },
   { k: 'Hour by hour detail', v: 'No hours, moments or raw readings. One value per day only.' },
 ]
 

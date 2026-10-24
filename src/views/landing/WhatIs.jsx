@@ -24,7 +24,7 @@ export const WHAT_IS = [
     text: `A network support system between teens, parents, and ${PRO_PLURAL} to share data, manage different teens’ stress, and address issues at their root, as opposed to common, individualized monitoring apps. Teens have the freedom of privacy controls to decide who sees what.` },
   { id: 'app', title: 'One app for all of it', go: 'toolkit', cta: 'See the Toolkit',
     photo: 'ovw-app-bus', hue: 'sun',
-    alt: 'Two teenage models laughing on a school bus, one holding a phone, beside a phone showing the MindMap student Home screen',
+    alt: 'Two teenage models laughing on a school bus, one holding a phone, beside a phone showing the MindMap teen Home screen',
     text: 'A ‘one-stop’ application, providing tools like MindMap AI, grounded in published clinical guidance, and Heads Up, a parental tool to identify screen-related stress as it occurs. MindMap also offers many other utilities for academic success, social dynamics, wellness, and career skills.' },
 ]
 

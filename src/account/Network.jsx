@@ -439,11 +439,11 @@ function ProNetwork({ me }) {
   return (
     <div className="mt-3.5 grid grid-cols-1 gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <Groups me={me} empty="Nobody is linked yet. Send your invite link to your students and their parents."
+        <Groups me={me} empty="Nobody is linked yet. Send your invite link to your teens and their parents."
           sees={l => (l.person.role === 'student' ? 'Chooses what you see' : undefined)}/>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
-        <InviteLink accountId={me.id} line="Send it to each of your students and their parents. One link works for all of them. A parent approves each student."><CodeField/></InviteLink>
+        <InviteLink accountId={me.id} line="Send it to each of your teens and their parents. One link works for all of them. A parent approves each teen."><CodeField/></InviteLink>
         <Steps/>
       </div>
     </div>
@@ -452,7 +452,7 @@ function ProNetwork({ me }) {
 
 const DEMO_INVITE = { code: 'K7M2QX' }
 const VIEWS = [
-  { value: 'student', label: 'Student' },
+  { value: 'student', label: 'Teen' },
   { value: 'parent',  label: 'Parent' },
   { value: 'pro',     label: PRO },
 ]
@@ -656,7 +656,7 @@ function DemoNetwork({ who }) {
         <div className="grid min-w-0 grid-cols-1 gap-3 self-start lg:gap-4">
           {view === 'student' ? <JoinByLink demo/> : (
             <InviteLink demo={DEMO_INVITE}
-              line={view === 'pro' ? 'Send it to each of your students and their parents. One link works for all of them.'
+              line={view === 'pro' ? 'Send it to each of your teens and their parents. One link works for all of them.'
                 : 'Send it to each of your teens. One link works for all of them.'}/>
           )}
           <Steps/>

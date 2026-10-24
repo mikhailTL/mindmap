@@ -282,18 +282,12 @@ function PhotoPicker({ role, value, onChange, name, className, actions = null })
   )
 }
 
-export function Row({ label, hint, Mark, onClick, aside, className }) {
+export function Row({ label, hint, onClick, aside, className }) {
   return (
     <button type="button" onClick={onClick}
       className={cn('flex min-h-[56px] w-full items-center gap-3 border-t border-rule px-4 py-3',
         'text-left transition-colors duration-150 ease first:border-t-0 hoverOnly:bg-mist/50',
         'active:bg-mist/50', className)}>
-      {Mark && (
-        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-field
-          bg-accent-wash text-accent-ink">
-          <Mark size={18}/>
-        </span>
-      )}
       <span className="min-w-0 flex-1">
         <span className="block font-display text-ui font-medium text-ink">{label}</span>
         {hint && <span className="mt-0.5 block text-fine text-ink-3">{hint}</span>}

@@ -74,7 +74,7 @@ export function makeTeen({ id, first, last = '', pseudonym, age, grade, seed, ba
     hours.push({ hour: h, score: round(clamp(base + bump + (r() - 0.5) * 2 * swing * 0.7)) })
   }
   const name = last ? `${first} ${last}` : first
-  return { id, first, last, name, initial: first[0], pseudonym: pseudonym || `Student ${1000 + (seed % 9000)}`,
+  return { id, first, last, name, initial: first[0], pseudonym: pseudonym || `Teen ${1000 + (seed % 9000)}`,
     age, grade, patch, avatar, consent, usual: { lo, hi, base }, days, hours }
 }
 
@@ -125,7 +125,7 @@ export const CASELOAD = Object.freeze(FIRSTS.map((first, i) => {
   return makeTeen({
     id: 'c' + (i + 1), first, last: LASTS[i % LASTS.length], age: 13 + (i % 5) + (i % 2), grade: 8 + (i % 5),
     seed, base: round(36 + r() * 30), drift: round((r() - 0.35) * 26), swing: round(6 + r() * 8),
-    patch: r() > 0.35, pseudonym: `Student ${String(1000 + ((seed * 7919) % 9000)).padStart(4, '0')}`,
+    patch: r() > 0.35, pseudonym: `Teen ${String(1000 + ((seed * 7919) % 9000)).padStart(4, '0')}`,
     consent: { score: true, trends: r() > 0.15, raw: r() > 0.7 },
   })
 }))

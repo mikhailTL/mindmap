@@ -72,7 +72,7 @@ export const CHARACTERS = [
   A('shah',   'Dr. Shah',   'pro', 's5', 'side', 'black', 'blazer', 'navy', 'sky',   'gl', { inner: 'shirt' }),
   A('okafor', 'Ms. Okafor', 'pro', 's7', 'puff', 'black', 'blazer', 'teal', 'lilac', 'en', { inner: 'cream' }),
 
-  T('student', 'Student', 's3', 'curly', 'brown', 'hoodie', 'green', 'mint'),
+  T('student', 'Teen', 's3', 'curly', 'brown', 'hoodie', 'green', 'mint'),
   A('parent', 'Parent', 'parent', 's4', 'shoulder', 'brown', 'cardigan', 'sun', 'mint', 'e', { scene: 'tree' }),
   A('counselor', 'Counselor', 'pro', 's6', 'side', 'black', 'blazer', 'charcoal', 'sky', 'l', { inner: 'white', scene: 'bubble' }),
 ]

@@ -31,7 +31,7 @@ describe('avatars by role', () => {
 describe('the reader’s name', () => {
   it('is the role word in the demo and the account name in Live', () => {
     const me = { name: 'Dana Cruz' }
-    expect(viewerName('student', 'demo', me)).toBe('Student')
+    expect(viewerName('student', 'demo', me)).toBe('Teen')
     expect(viewerName('parent', 'demo', null)).toBe('Parent')
     expect(viewerName('pro', 'demo', null)).toBe('Counselor')
     expect(viewerName('parent', 'real', me)).toBe('Dana')

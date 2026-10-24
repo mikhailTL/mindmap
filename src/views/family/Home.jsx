@@ -5,6 +5,8 @@ import { useViewerName } from '../../account/viewer'
 import { TODAY_LONG, longDate } from '../student/PartHead'
 import NetworkBox from './NetworkBox'
 import { StartGrid, StartTile } from '../home/StartGrid'
+import { AskArt } from '../home/AskArt'
+import { LinkArt } from '../pro/HomeArt'
 
 const HUE = {
   sky:   { ground: 'bg-sky-wash',   ink: 'text-sky-ink',   art: '#2294e6', ring: 'focus-visible:outline-sky-ink' },
@@ -31,10 +33,10 @@ export default function ParentHomeBoard({ go }) {
           onClick={() => go('parent-trends')} art={<CalendarArt className="h-full w-full"/>}/>
         <StartTile title="Toolkit" tone={HUE.sun.ground} chevron={HUE.sun.ink}
           onClick={() => go('toolkit')} art={<TalkArt className="h-full w-full"/>}/>
-        <StartTile title="Ask MindMap AI" tone={HUE.lilac.ground} chevron={HUE.lilac.ink}
-          onClick={() => go('ai')} art={<AskArt className="h-full w-full"/>}/>
+        <StartTile title="Ask MindMap AI" tone="bg-beam-wash" chevron="text-beam-ink"
+          onClick={() => go('ai')} art={<AskArt who="parent"/>}/>
         <StartTile title="Network" tone={HUE.mint.ground} chevron={HUE.mint.ink}
-          onClick={() => go('network')} art={<NetArt className="h-full w-full"/>}/>
+          onClick={() => go('network')} art={<LinkArt/>}/>
       </StartGrid>
 
       <NetworkBox go={go} real={real} me={me} className="w-full"/>
@@ -64,38 +66,6 @@ function TalkArt({ className }) {
       <path d="M44 30h36a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8h-4v10L64 60H44a8 8 0 0 1-8-8V38a8 8 0 0 1 8-8z"
         fill={c} opacity="0.9"/>
       <path d="M16 22h28M16 31h18" stroke={c} strokeWidth="2.2"/>
-    </svg>
-  )
-}
-
-function AskArt({ className }) {
-  const c = HUE.lilac.art
-  return (
-    <svg viewBox="0 0 96 72" className={className} fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 6h52a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H40L24 66V52H14A10 10 0 0 1 4 42V16A10 10 0 0 1 14 6z"
-        fill="#fff" stroke={c} strokeWidth="2.2"/>
-      <path d="M33 22a7 7 0 1 1 9.5 6.5c-1.8.8-2.5 2-2.5 3.8v1.2" stroke={c} strokeWidth="3"/>
-      <circle cx="40" cy="41" r="2.2" fill={c}/>
-      <circle cx="84" cy="20" r="6" fill={c} opacity="0.85"/>
-      <circle cx="88" cy="40" r="3.5" fill={c} opacity="0.45"/>
-    </svg>
-  )
-}
-
-/* Three people, joined: the parent, a teen and their PRO. */
-function NetArt({ className }) {
-  const c = HUE.mint.art
-  const at = [[20, 52], [48, 20], [76, 52]]
-  return (
-    <svg viewBox="0 0 96 72" className={className} fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 52 48 20 76 52M20 52h56" stroke={c} strokeWidth="2.2" strokeDasharray="1 6" opacity="0.6"/>
-      {at.map(([x, y], i) => (
-        <g key={x}>
-          <circle cx={x} cy={y} r="13" fill={i === 1 ? c : '#fff'} stroke={c} strokeWidth="2.2"/>
-          <circle cx={x} cy={y - 3} r="3.6" fill={i === 1 ? '#fff' : c}/>
-          <path d={`M${x - 6} ${y + 7}a6 6 0 0 1 12 0`} fill={i === 1 ? '#fff' : c}/>
-        </g>
-      ))}
     </svg>
   )
 }

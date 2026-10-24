@@ -1,6 +1,6 @@
 import React from 'react'
 import { cn } from '../lib/utils'
-import { Bell, Chevron, Download, Exit, Grid, Info, Key } from '../ui/marks'
+import { Chevron, Download, Exit, Info } from '../ui/marks'
 import { useMode } from '../lib/mode'
 import { PRO_PLURAL } from '../lib/terms'
 import { MOTION, TEXT_SIZES, setAppearance, useAppearance } from './appearance'
@@ -79,13 +79,13 @@ function People({ me, go, demo, role }) {
 }
 
 const TILE = {
-  sun:   { edge: 'hoverOnly:border-sun',   mark: 'bg-sun-wash text-sun-ink',     bar: 'bg-sun' },
-  lilac: { edge: 'hoverOnly:border-lilac', mark: 'bg-lilac-wash text-lilac-ink', bar: 'bg-lilac' },
-  coral: { edge: 'hoverOnly:border-coral', mark: 'bg-coral-wash text-coral-ink', bar: 'bg-coral' },
-  mint:  { edge: 'hoverOnly:border-mint',  mark: 'bg-mint-wash text-mint-ink',   bar: 'bg-mint' },
+  sun:   { edge: 'hoverOnly:border-sun',       bar: 'bg-sun' },
+  lilac: { edge: 'hoverOnly:border-lilac', bar: 'bg-lilac' },
+  coral: { edge: 'hoverOnly:border-coral', bar: 'bg-coral' },
+  mint:  { edge: 'hoverOnly:border-mint',    bar: 'bg-mint' },
 }
 
-function Tile({ label, hint, Mark, hue, onClick }) {
+function Tile({ label, hint, hue, onClick }) {
   const t = TILE[hue]
   return (
     <button type="button" onClick={onClick}
@@ -93,13 +93,10 @@ function Tile({ label, hint, Mark, hue, onClick }) {
         'border border-rule bg-card p-3.5 pt-4 text-left transition-colors duration-150 active:bg-mist/50', t.edge)}>
       <span aria-hidden className={cn('absolute inset-x-0 top-0 h-1', t.bar)}/>
       <span className="flex w-full items-start justify-between gap-2">
-        <span aria-hidden className={cn('grid size-10 place-items-center rounded-field', t.mark)}>
-          <Mark size={20}/>
-        </span>
-        <Chevron aria-hidden className="mt-1 size-4 shrink-0 text-ink-3 transition-transform duration-150
+        <span className="font-display text-ui font-bold leading-tight text-ink">{label}</span>
+        <Chevron aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3 transition-transform duration-150
           groupHoverOnly:translate-x-0.5"/>
       </span>
-      <span className="mt-auto pt-3 font-display text-ui font-bold leading-tight text-ink">{label}</span>
       {hint && <span className="mt-0.5 text-fine leading-snug text-ink-3">{hint}</span>}
     </button>
   )
@@ -110,13 +107,13 @@ function AccountTiles({ me, go, role }) {
     <section aria-labelledby="set-account">
       <GroupHead id="set-account">Account and privacy</GroupHead>
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
-        {me && <Tile label="Password and sign-in" hint="Change it, sign out elsewhere" Mark={Key} hue="sun"
+        {me && <Tile label="Password and sign-in" hint="Change it, sign out elsewhere" hue="sun"
           onClick={() => go('account/passcode')}/>}
-        <Tile label="Privacy and sharing" hint={SHARING_LABEL[role]} Mark={Grid} hue="lilac"
+        <Tile label="Privacy and sharing" hint={SHARING_LABEL[role]} hue="lilac"
           onClick={() => go(SHARING_ROUTE[role])}/>
-        <Tile label="Reminders" hint="When and how MindMap reminds you" Mark={Bell} hue="coral"
+        <Tile label="Reminders" hint="When and how MindMap reminds you" hue="coral"
           onClick={() => go('app-notify')}/>
-        {me && <Tile label="Your data" hint="Download a copy or delete" Mark={Download} hue="mint"
+        {me && <Tile label="Your data" hint="Download a copy or delete" hue="mint"
           onClick={() => go('account/data')}/>}
       </div>
     </section>

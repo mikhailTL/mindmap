@@ -674,14 +674,14 @@ const STOPS = [
     line: 'The patch sits on your upper arm, recording four signals.' },
   { view: 'methods', name: 'How it works',
     line: SCORE_DEF },
-  { view: 'app-student', name: 'The student screen', inApp: true,
+  { view: 'app-student', name: 'The teen screen', inApp: true,
     line: 'Today’s score, its four signals, and the week so far.' },
   { view: 'shared', name: 'Sharing', inApp: true,
-    line: 'The student picks what is shared and can switch any of it off.' },
+    line: 'The teen picks what is shared and can switch any of it off.' },
   { view: 'app-parent', name: 'The parent screen', inApp: true,
     line: 'One score a day. Never a raw reading, Notes or Location.' },
   { view: 'app-pro', name: 'The Counselor/Professional console', inApp: true,
-    line: 'Which students to check in with this week. Only students who agreed to share appear.' },
+    line: 'Which teens to check in with this week. Only teens who agreed to share appear.' },
 ]
 
 // Milliseconds: a page stop's hold, the closing beat, and the panel opacity transition.

@@ -36,7 +36,7 @@ export const PERSONAL = [
     text: 'With the results of this research and a mission to bridge the gap isolating teens from support and growth, I began development of MindMap.' },
 ]
 
-export const WHAT_LEAD = 'MindMap is the world’s only wearable patch and app system designed exclusively for adolescent wellness. MindMap offers a vast array of features for students, parents, and adolescents including:'
+export const WHAT_LEAD = 'MindMap is the world’s only wearable patch and app system designed exclusively for adolescent wellness. MindMap offers a vast array of features for teens, parents, and adolescents including:'
 
 export const FEATURES = [
   { tag: 'Wearable patch', hue: 'mint',
@@ -52,7 +52,7 @@ export const FEATURES = [
     ] },
 ]
 
-export const WHAT_CLOSE = 'MindMap aims to benefit and ease the lives of students, parents, and Counselors/Professionals, whether through in-depth novel data analysis, or original networks connecting teens to support, MindMap is the only solution designed to reduce stigma and bring mental wellness into a positive light.'
+export const WHAT_CLOSE = 'MindMap aims to benefit and ease the lives of teens, parents, and Counselors/Professionals, whether through in-depth novel data analysis, or original networks connecting teens to support, MindMap is the only solution designed to reduce stigma and bring mental wellness into a positive light.'
 
 export const VISION = [
   'Overall, MindMap aims to ensure that no teen ever feels their invisible stress is invisible alone, turning quiet body signals and metrics into meaningful solutions and support systems that address the teen mental illness epidemic at its very root, an approach never before seen in an app.',

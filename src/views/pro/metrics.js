@@ -86,7 +86,7 @@ export function sortTeens(list, sort, range) {
 }
 
 export function filterTeens(list, { query = '', statuses = [], grade = 'all', range = 'week' } = {}) {
-  const q = query.trim().toLowerCase().replace(/^student\s*/, '')
+  const q = query.trim().toLowerCase().replace(/^(teen|student)\s*/, '')
   return list.filter(t =>
     (!q || t.pseudonym.toLowerCase().includes(q)) &&
     (!statuses.length || statuses.includes(statusOf(t, range))) &&

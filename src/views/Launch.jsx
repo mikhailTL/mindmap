@@ -6,15 +6,15 @@ import { Frame } from '../ui/frame'
 import { PRO, PRO_LC } from '../lib/terms'
 
 const ROLES = [
-  { id:'app-student', who:'Student', title:'Your Mind Score each day', cta:'Open the student screen',
+  { id:'app-student', who:'Teen', title:'Your Mind Score each day', cta:'Open the teen screen',
     photo:'student-card',
     alt:'Five teenagers walking together through a park, talking as they go' },
   { id:'app-parent', who:'Parent', title:'Trends by day, week and month', cta:'Open the parent screen',
     photo:'photos-kitchen-card',
     alt:'A mother and her teenage son cooking together in a bright kitchen' },
-  { id:'app-pro', who:PRO, title:'Students to check on', cta:`Open the ${PRO} screen`,
+  { id:'app-pro', who:PRO, title:'Teens to check on', cta:`Open the ${PRO} screen`,
     photo:'school-card',
-    alt:`A ${PRO_LC} and a student talking on a sofa` },
+    alt:`A ${PRO_LC} and a teen talking on a sofa` },
 ]
 
 function Door({ role, go }) {

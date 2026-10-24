@@ -10,7 +10,7 @@ const VERSION = 1
 // other: no link kind includes it, so it does not link and sees only itself.
 export const ROLES = ['student', 'parent', 'pro', 'other']
 
-export const ROLE_LABEL = { student: 'Student', parent: 'Parent', pro: PRO, other: 'Other' }
+export const ROLE_LABEL = { student: 'Teen', parent: 'Parent', pro: PRO, other: 'Other' }
 
 /* Where an account lands after signing in or signing out. */
 export const homeFor = role => (role === 'student' || role === 'parent' || role === 'pro' ? 'app-' + role : 'app')

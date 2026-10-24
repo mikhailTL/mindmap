@@ -54,7 +54,7 @@ const ACTIONS = {
     [`Add a ${PRO}`, 'Your teen approves what they see.'],
   ],
   pro: [
-    ['Invite your students and their parents', 'One link works for all of them. A parent approves each student.'],
+    ['Invite your teens and their parents', 'One link works for all of them. A parent approves each teen.'],
   ],
 }
 

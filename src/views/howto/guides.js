@@ -194,7 +194,7 @@ export const GUIDES = {
       tones: ['sky', 'mint', 'sun'],
       steps: [
         { art: 'proTools', cap: 'Your tools: openers, next steps, parent talks, referral notes.' },
-        { art: 'together', cap: 'Run the student exercises with a teen in the room.' },
+        { art: 'together', cap: 'Run the teen exercises together in the room.' },
         { art: 'toolTabs', cap: 'More tabs: School, Outside, Life, Career, Resources.' },
       ],
       use: 'Quick tools for before, during and after a session.',

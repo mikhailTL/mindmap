@@ -51,7 +51,7 @@ function Toolbar({ layout, setLayout, filters, setFilters, counts, disabled }) {
           <Label htmlFor="pro-q">Search</Label>
           <div className="relative">
             <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"/>
-            <input id="pro-q" type="search" value={filters.query} placeholder="Student code, like 4003"
+            <input id="pro-q" type="search" value={filters.query} placeholder="Teen code, like 4003"
               onChange={e => setFilters(f => ({ ...f, query: e.target.value }))}
               className={cn(fieldCls, 'pl-8')}/>
           </div>

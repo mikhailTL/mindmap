@@ -130,12 +130,12 @@ export function PrivacyBody({ go }) {
 
       <ScrollIn className={`${PANEL} mt-3 p-4 lg:p-5`}>
         <p className="text-meta leading-[1.4] text-ink-2">{CONSENT_SHORT}</p>
-        <p className="mt-1 text-meta leading-[1.4] text-ink-2">The student can switch sharing off at any time.</p>
+        <p className="mt-1 text-meta leading-[1.4] text-ink-2">The teen can switch sharing off at any time.</p>
         <Figures items={LIMITS} className="mt-3 border-t border-rule pt-1 sm:pt-4"/>
       </ScrollIn>
 
       <div className="mt-3 grid gap-3 lg:mt-4 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
-        <Scope index={0} title="What a Parent Can See" meta="with the student's consent"
+        <Scope index={0} title="What a Parent Can See" meta="with the teen's consent"
           items={YOU_SEE} Mark={Yes} ink="text-ink" variant="tint" hue="mint"/>
         <Scope index={1} title="What a Parent Never Sees" meta="closed to everyone"
           items={YOU_NEVER} Mark={No} ink="text-ink-2" variant="outline"/>

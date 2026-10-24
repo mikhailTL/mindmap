@@ -3,7 +3,7 @@ import { ScrollRow } from '../ui/motion'
 
 import { Headline, AllDetail, SeeDetails, Why } from './Monitor'
 import { RainbowDial } from '../charts/rainbow'
-import { ArrowRight, Camera, Link, Person, Stack } from '../ui/marks'
+import { ArrowRight, Camera, Link } from '../ui/marks'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Progress } from '../ui/progress'
@@ -22,6 +22,7 @@ import { SeeTrends } from './student/charts'
 import { addReading, updateReading } from '../lib/readingLog'
 import { SCORE, SCORE_RANGE } from '../lib/terms'
 import { cn } from '../lib/utils'
+import { PHOTOS, meta } from '../lib/photos'
 
 // Take a reading: the chooser, the sensor screens and the survey are three local states of one screen.
 const PANEL = 'rounded-panel border border-rule/60 bg-card'
@@ -50,7 +51,7 @@ export const READING_IS =
   `A reading measures your stress level right now and turns it into your ${SCORE}, from 0 calm to 100 peak.`
 
 const WAYS = [
-  { id:'mirror', title:'Mental Mirror', Mark:Person,
+  { id:'mirror', title:'Mental Mirror',
     line:"Google's MediaPipe Face Landmarker maps 478 points on your face.",
     fact:[String(FACE_SECONDS), 'seconds'],
     cta:'Open the Mirror',
@@ -59,8 +60,8 @@ const WAYS = [
       ['Reads', 'Blinks, brow, lips, eyes, small movements, and pulse from skin colour'],
       ['Needs', 'A front camera and good light'],
     ],
-    foot:'Frames become numbers, then get deleted. Students only. The score syncs to your account.' },
-  { id:'sensors', title:'Camera and microphone', Mark:Camera,
+    foot:'Frames become numbers, then get deleted. Teens only. The score syncs to your account.' },
+  { id:'sensors', title:'Camera and microphone',
     line:'Put a fingertip on the lens, then speak.',
     fact:['45', 'seconds'],
     cta:'Start',
@@ -70,7 +71,7 @@ const WAYS = [
       ['Needs', 'A camera and a microphone'],
     ],
     foot:'Frames and audio become numbers, then get deleted. The score syncs to your account.' },
-  { id:'survey', title:'Survey', Mark:Stack,
+  { id:'survey', title:'Survey',
     line:'Only needs this phone. Take it as often as you like.',
     fact:['60', 'seconds'],
     cta:'Answer',
@@ -80,7 +81,7 @@ const WAYS = [
       ['Needs', 'Only this phone'],
     ],
     foot:'Your answers become one score. The score syncs to your account.' },
-  { id:'patch', title:'Connect a patch', Mark:Link,
+  { id:'patch', title:'Connect a patch',
     line:'The patch reads pulse, sweat, temperature and movement.',
     cta:'Connect',
     spec:[
@@ -127,21 +128,47 @@ function Spec({ rows }) {
   )
 }
 
-/* The icon in its tile. */
-function Tile({ Mark, className }) {
+/* What each way looks like: the Mirror's face mesh, the fingertip on the lens, a survey question, the patch. */
+const SHOT = {
+  mirror: { key: 'ppage-mirror-ui', alt: 'The Mental Mirror screen: a face mesh of landmark points' },
+  survey: { key: 'ppage-survey-ui', alt: 'A survey question with a 0 to 4 scale' },
+  patch:  { key: 'hiw-patch-cad',   alt: 'The MindMap patch', clip: 'rounded-[50%] bg-transparent shadow-none' },
+}
+
+function Scene({ id, className }) {
+  const shot = SHOT[id]
   return (
-    <span aria-hidden className={cn('grid size-11 shrink-0 place-items-center rounded-[12px]', className)}>
-      <Mark className="size-6"/>
+    <span className={cn('flex h-[132px] w-full items-center justify-center overflow-hidden rounded-[14px] px-4 py-3',
+      className)}>
+      {shot ? (
+        <img src={PHOTOS[shot.key]} alt={shot.alt} width={meta(shot.key).w} height={meta(shot.key).h}
+          loading="lazy" decoding="async"
+          className={cn('block h-full w-auto max-w-full rounded-[10px] bg-white object-contain',
+            'shadow-[0_6px_16px_-10px_rgba(13,43,30,.45)]', shot.clip)}/>
+      ) : (
+        <svg viewBox="0 0 160 96" aria-hidden focusable="false" className="block h-full w-auto">
+          <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="8" y="6" width="56" height="84" rx="12" strokeWidth="1.8" fill="#ffffff"/>
+            <circle cx="36" cy="34" r="13" strokeWidth="1.8"/>
+            <circle cx="36" cy="34" r="5.5" strokeWidth="1.6"/>
+            <path d="M25 92V56a11 11 0 0 1 22 0v36" strokeWidth="1.8" fill="#ffffff"/>
+            <path d="M31 58q5-3 10 0" strokeWidth="1.3" opacity=".6"/>
+            <path d="M76 34h12l5-14 6 28 5-14h8l5-8 5 8h14" strokeWidth="2"/>
+            {[7, 14, 22, 12, 19, 9, 16, 6].map((h, i) => (
+              <path key={i} d={`M${80 + i * 8} ${70 - h / 2}v${h}`} strokeWidth="3"/>
+            ))}
+          </g>
+        </svg>
+      )}
     </span>
   )
 }
 
 function Top({ n, way, look }) {
   return (
-    <span className="flex items-center gap-3">
+    <span className="flex items-start gap-3">
       <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-chip border
         border-ruling bg-paper font-display text-fine font-bold tabular-nums text-ink">{n}</span>
-      <Tile Mark={way.Mark} className={look.tile}/>
       {way.fact && (
         <span className="ml-auto shrink-0 text-fine tabular-nums text-ink-3">
           {`${way.fact[0]} ${way.fact[1]}`}</span>
@@ -156,6 +183,7 @@ const Way = React.forwardRef(function Way({ n, way, onOpen, children }, ref) {
     <Card interactive as="button" type="button" ref={ref} onClick={onOpen}
       className="group flex h-full flex-col border-rule/60 p-5 lg:p-6">
       <Top n={n} way={way} look={look}/>
+      <Scene id={way.id} className={cn('mt-4', look.tile)}/>
       <span className="mt-4 block font-display text-head font-bold leading-tight text-ink">{way.title}</span>
       <span className="mt-1.5 block max-w-[38ch] text-meta leading-[1.45] text-ink-2">{way.line}</span>
       {children}
@@ -177,8 +205,7 @@ function Compare() {
       <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-4">
         {WAYS.map((way, i) => (
           <section key={way.id} className={cn(CARD, 'p-5')}>
-            <h3 className="flex items-center gap-2.5 font-display text-meta font-bold text-ink">
-              <Tile Mark={way.Mark} className={cn('size-9 [&_svg]:size-5', LOOK[way.id].tile)}/>
+            <h3 className="font-display text-meta font-bold text-ink">
               {`${i + 1}. ${way.title}`}
             </h3>
             <Spec rows={way.spec}/>
@@ -351,6 +378,7 @@ export function CheckInBody({ go }){
             <ScrollRow as="li" index={3} className="h-full">
               <section className={cn(CARD, 'flex h-full flex-col p-5 lg:p-6')}>
                 <Top n={4} way={patch} look={LOOK.patch}/>
+                <Scene id="patch" className={cn('mt-4', LOOK.patch.tile)}/>
                 <h3 className="mt-4 font-display !text-head font-bold !leading-tight text-ink">{patch.title}</h3>
                 <p className="mt-1.5 max-w-[38ch] text-meta leading-[1.45] text-ink-2">{patch.line}</p>
                 <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5">

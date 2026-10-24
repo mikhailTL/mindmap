@@ -1,34 +1,19 @@
 import React from 'react'
 import { cn } from '../lib/utils'
 import { Panel } from '../app/controls'
-import { ArrowRight, Check, People, Person, Plus } from '../ui/marks'
+import { ArrowRight, Check, Plus } from '../ui/marks'
 import { PRO_WRAP } from '../lib/terms'
 import { SECRET_MAX, SETTINGS, createAccount, current, homeFor, signIn, takePreferredRole, useAccount } from './store'
 import { AvatarChooser, field, fieldError, outline, solid } from './ui'
+import { AvatarArt } from './avatars'
 import { fitsRole } from './avatar-catalog'
 import { Settings } from './Settings'
 
-const ClipMark = p => (
-  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
-    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
-    className="shrink-0">
-    <rect x="5" y="4.5" width="14" height="16" rx="1.5"/>
-    <path d="M9 4.5V3h6v1.5M9 13l2 2 4-4"/>
-  </svg>
-)
-
-const OtherMark = p => (
-  <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
-    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0">
-    <circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>
-  </svg>
-)
-
 const TILES = [
-  { role: 'student', label: 'Student', Mark: Person },
-  { role: 'parent',  label: 'Parent',  Mark: People },
-  { role: 'pro',     label: PRO_WRAP,  Mark: ClipMark },
-  { role: 'other',   label: 'Other',   Mark: OtherMark },
+  { role: 'student', label: 'Teen',   art: ['char-student'] },
+  { role: 'parent',  label: 'Parent', art: ['char-parent'] },
+  { role: 'pro',     label: PRO_WRAP, art: ['char-counselor'] },
+  { role: 'other',   label: 'Other',  art: ['char-leo', 'char-mia'] },
 ]
 
 const ERROR = {
@@ -120,9 +105,11 @@ export function SignIn({ go, note, after = null, bare = false }) {
                     'rounded-panel border p-3 text-left transition-colors duration-150',
                     'sm:min-h-[120px] sm:p-4 lg:min-h-0 lg:flex-row lg:items-center lg:py-4',
                     on ? 'border-accent bg-accent-wash' : 'border-rule bg-card hoverOnly:border-accent')}>
-                  <span aria-hidden className={cn('grid size-9 shrink-0 place-items-center rounded-field',
-                    on ? 'bg-accent text-paper' : 'bg-accent-wash text-accent-ink')}>
-                    <t.Mark size={18}/>
+                  <span aria-hidden className="flex shrink-0 -space-x-3">
+                    {t.art.map(id => (
+                      <AvatarArt key={id} id={id} className={cn('size-12 rounded-full ring-2',
+                        on ? 'ring-accent' : 'ring-card')}/>
+                    ))}
                   </span>
                   <span className="flex w-full min-w-0 items-end justify-between gap-2 lg:items-center">
                     <span className="font-display text-ui font-bold leading-[1.22] text-ink">{t.label}</span>
@@ -162,7 +149,7 @@ export function SignIn({ go, note, after = null, bare = false }) {
                     onChange={e => { setEmail(e.target.value); if (bad('email')) setErr(null) }}
                     className={cn(field, bad('email') && fieldError)}/>
                   {role === 'student' && (
-                    <span id="signin-email-hint" className="mt-1 block text-fine text-ink-3">A student can leave this blank.</span>
+                    <span id="signin-email-hint" className="mt-1 block text-fine text-ink-3">A teen can leave this blank.</span>
                   )}
                 </div>
               )}

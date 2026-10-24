@@ -9,7 +9,7 @@ import { setPreferredRole } from '../account/store'
 /* The audience chooser shown over the site, and the guided tour behind its fourth option. */
 /* Audience names come from lib/terms.js. */
 const OPTIONS = [
-  { id: 'student', label: 'Student' },
+  { id: 'student', label: 'Teen' },
   { id: 'parent',  label: 'Parent' },
   { id: 'pro',     label: PRO },
   { id: 'tour',    label: 'Other', hint: 'A guided tour of each page' },

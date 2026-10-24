@@ -54,7 +54,7 @@ function cameraMessage(e) {
   return 'Something went wrong. Try again.'
 }
 
-const KEEP = ['Students only.', 'No picture is kept.', 'Not a diagnosis.']
+const KEEP = ['Teens only.', 'No picture is kept.', 'Not a diagnosis.']
 
 // Unmounting the broken mirror runs its cleanup, so the camera is off before the retry note shows.
 class MirrorBoundary extends React.Component {

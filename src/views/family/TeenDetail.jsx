@@ -134,7 +134,7 @@ function Readings({ teen, d, variant }) {
             ))}
           </tbody>
         </table>
-        <p className="m-0 mt-3 text-fine text-ink-3">Shown because this student shares single readings.</p>
+        <p className="m-0 mt-3 text-fine text-ink-3">Shown because this teen shares single readings.</p>
       </Box>
     )
   }
@@ -150,7 +150,7 @@ function Readings({ teen, d, variant }) {
       </ul>
       <p className="m-0 mt-3 max-w-[48ch] text-fine text-ink-2">
         {isPro(variant)
-          ? 'Times and single values need this student’s consent to share raw readings.'
+          ? 'Times and single values need this teen’s consent to share raw readings.'
           : `You see the day as a whole. Times and single readings stay with ${teen.first}.`}
       </p>
     </Box>
@@ -357,7 +357,7 @@ function LiveDetail({ teen, onBack, variant, range: initial }) {
 
   return (
     <div className="flex w-full flex-col gap-4 lg:gap-5">
-      <div><BackButton onBack={onBack} label={pro ? 'All students' : 'All children'}/></div>
+      <div><BackButton onBack={onBack} label={pro ? 'All teens' : 'All children'}/></div>
 
       <header className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
         <TeenAvatar teen={teen} variant={variant} size="size-16"/>
@@ -464,7 +464,7 @@ function DemoDetail({ teen, onBack, variant = 'parent', range: initial = 'week' 
 
   return (
     <div className="flex w-full flex-col gap-4 lg:gap-5">
-      <div><BackButton onBack={onBack} label={pro ? 'All students' : 'All children'}/></div>
+      <div><BackButton onBack={onBack} label={pro ? 'All teens' : 'All children'}/></div>
 
       <header className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel border border-rule bg-card p-5 shadow-card sm:p-6">
         <TeenAvatar teen={teen} variant={variant} size="size-16"/>
@@ -502,7 +502,7 @@ function DemoDetail({ teen, onBack, variant = 'parent', range: initial = 'week' 
               </ul>
             </>
           ) : (
-            <p className="m-0 mt-4 text-ui text-ink-2">This student shares crisis alerts only.</p>
+            <p className="m-0 mt-4 text-ui text-ink-2">This teen shares crisis alerts only.</p>
           )}
         </section>
 

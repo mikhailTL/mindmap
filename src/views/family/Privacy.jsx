@@ -7,7 +7,7 @@ import { cn } from '../../lib/utils'
 // A child's privacy for the parent, read from the same CONSENT record and audit log as the
 // Counselor/Professional console.
 /* Which console record stands for each demo child. */
-const CODE_OF = { maya: 'Student 8241', leo: 'Student 2298' }
+const CODE_OF = { maya: 'Teen 8241', leo: 'Teen 2298' }
 const codeFor = teen => (CONSENT[CODE_OF[teen.id]] ? CODE_OF[teen.id] : Object.keys(CONSENT)[0])
 
 export function Box({ title, meta, children, className }) {

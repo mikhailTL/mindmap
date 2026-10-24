@@ -114,7 +114,7 @@ const TITLE = {
   site:'MindMap, a wellbeing app for teenagers',
   patch:'The MindMap patch',
   'without-patch':'MindMap without the patch',
-  students:'MindMap for students',
+  students:'MindMap for teens',
   parents:'MindMap for parents',
   pro:`MindMap for ${PRO_PLURAL}`,
   'heads-up':'Heads Up, by MindMap',
@@ -122,7 +122,7 @@ const TITLE = {
   'app-home':'The MindMap app',
   'app-start':'Choose a screen in MindMap',
   'app-pro-trends':'Trends in MindMap',
-  'app-student':'The student screen in MindMap',
+  'app-student':'The teen screen in MindMap',
   'app-parent':'The parent screen in MindMap',
   'app-pro':`The ${PRO} screen in MindMap`,
   'app-pro-privacy':'Privacy in MindMap',
@@ -177,7 +177,7 @@ const PATCH = [
 ]
 
 const AUDIENCE = [
-  ['students', 'Students', 'What a student sees each day.'],
+  ['students', 'Teens', 'What a teen sees each day.'],
   ['parents',  'Parents',  'What a parent can and cannot see.'],
   ['pro',      PRO_PLURAL,  `What a ${PRO} sees across a group.`],
 ]
@@ -512,7 +512,7 @@ const ShieldMark = p => (
 
 const APP_NAV = {
   student: [
-    ['app-student', 'Home',     PulseMark, 'Student home'],
+    ['app-student', 'Home',     PulseMark, 'Teen home'],
     ['reading',     'Reading',  DialMark],
     ['student-trends', 'Trends', CalendarMark],
     ['toolkit',     'Toolkit',  Bracket],
@@ -686,7 +686,7 @@ function AppTabBar({ app, view, go }) {
 }
 
 const HOME_OF = { student: 'app-student', parent: 'app-parent', pro: 'app-pro' }
-const ROLE_WORD = { student: 'Student', parent: 'Parent', pro: PRO }
+const ROLE_WORD = { student: 'Teen', parent: 'Parent', pro: PRO }
 
 const HomeMark = p => (
   <svg viewBox="0 0 24 24" width={p.size || 20} height={p.size || 20} fill="none" aria-hidden
@@ -727,7 +727,7 @@ function SwitchRole({ go, className }) {
   }
   return (
     <button type="button" onClick={run}
-      title={live ? 'Sign out and sign in with another role' : `Choose Student, Parent or ${PRO}`}
+      title={live ? 'Sign out and sign in with another role' : `Choose Teen, Parent or ${PRO}`}
       className={cn('flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-field px-2 font-display',
         'text-fine font-semibold text-accent-ink transition-colors duration-150 hoverOnly:bg-accent-wash',
         'sm:text-ui', className)}>

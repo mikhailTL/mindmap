@@ -163,9 +163,9 @@ describe('parent and school scope containment', () => {
   it('never names a guardian or a student, only a pseudonym', () => {
     for (const r of CONSENT_LEDGER) {
       expect(r.guardian).toBe('Guardian')
-      expect(r.student).toMatch(/^Student \d{4}$/)
+      expect(r.student).toMatch(/^Teen \d{4}$/)
     }
-    for (const name of CONSENT_NAMES) expect(name).toMatch(/^Student \d{4}$/)
+    for (const name of CONSENT_NAMES) expect(name).toMatch(/^Teen \d{4}$/)
   })
 })
 
@@ -175,7 +175,7 @@ describe('audit log', () => {
     expect(opened.length).toBeGreaterThanOrEqual(1)
     for (const r of opened) {
       expect(r.actor.length).toBeGreaterThan(0)
-      expect(r.subject).toMatch(/^Student \d{4}$/)
+      expect(r.subject).toMatch(/^Teen \d{4}$/)
       expect(r.at.length).toBeGreaterThan(0)
     }
   })
@@ -231,7 +231,7 @@ describe('audit log', () => {
   it('records what people other than staff did too', () => {
     const actors = AUDIT_LOG.map(r => r.actor)
     expect(actors.some(a => /^Guardian/.test(a))).toBe(true)
-    expect(actors.some(a => /^Student/.test(a))).toBe(true)
+    expect(actors.some(a => /^Teen/.test(a))).toBe(true)
     expect(actors).toContain('System')
   })
 })
@@ -247,14 +247,14 @@ describe('generated figures are deterministic', () => {
     }
   })
 
-  it('currently gives two students an identical driver breakdown', () => {
+  it('gives every teen a different driver breakdown', () => {
     const shapes = new Map()
     for (const s of roster()) {
       const key = JSON.stringify(caseload.driversFor(s))
       shapes.set(key, [...(shapes.get(key) || []), s.name])
     }
     const collisions = [...shapes.values()].filter(names => names.length > 1)
-    expect(collisions).toEqual([['Student 3907', 'Student 4470']])
+    expect(collisions).toEqual([])
   })
 
   it('ends the 45-day line exactly where the board says the student is today', () => {

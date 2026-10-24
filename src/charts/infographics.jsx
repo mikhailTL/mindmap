@@ -44,18 +44,18 @@ export function SignalTrace({ kind, muted = false, className }) {
 
 // Per audience: 2 shared, 1 shared only with consent, 0 not shared.
 const WHAT = [
-  { label: `${SCORE} for the day`,        rule: 'Shared unless the student turns it off' },
-  { label: 'Which days ran high',         rule: 'Shared unless the student turns it off' },
+  { label: `${SCORE} for the day`,        rule: 'Shared unless the teen turns it off' },
+  { label: 'Which days ran high',         rule: 'Shared unless the teen turns it off' },
   { label: 'Every reading, second by second', rule: 'Never shared' },
   { label: NOTES,                         rule: 'Never shared' },
   { label: LOCATION,                      rule: 'Never shared' },
 ]
 const SEES = [
-  { who: 'Student', sees: [2, 2, 2, 2, 2] },
+  { who: 'Teen', sees: [2, 2, 2, 2, 2] },
   { who: 'Parent',  sees: [1, 1, 0, 0, 0] },
   { who: PRO,       sees: [1, 1, 0, 0, 0] },
 ]
-const STATE = { 2: 'Always', 1: 'Only if the student agrees', 0: 'Never' }
+const STATE = { 2: 'Always', 1: 'Only if the teen agrees', 0: 'Never' }
 
 function Mark({ v }) {
   return (
@@ -114,7 +114,7 @@ export function WhoSeesWhat({ className }) {
         </ul>
 
         <figcaption className="border-t border-rule px-4 py-3 text-sec text-ink-3">Crisis alerts
-          are the one exception. Students are told this before they start.</figcaption>
+          are the one exception. Teens are told this before they start.</figcaption>
       </div>
     </figure>
   )

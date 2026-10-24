@@ -18,7 +18,7 @@ export const DIFFERENT = [
   { id: 'patch', title: 'Patch or phone', look: 'rule', wash: ['#fce6f1', '#f6e8ff'], hue: '#f2248b',
     line: 'A patch designed to read pulse, sweat, temperature and movement. No patch? Use the phone camera or the Mental Mirror.' },
   { id: 'heads', title: 'Heads Up', look: 'tint', wash: ['#def0fc', '#ddf0f8'], hue: '#2294e6',
-    line: 'Tells parents when phone use shows signs of stress.' },
+    line: 'Tracks screen-related stress in a non-invasive way.' },
   { id: 'settle', title: 'Recovery time', look: 'pane', wash: ['#f6e8ff', '#fce6f1'], hue: '#a024f2',
     line: 'The patch shows how fast your body settles after a peak, and what helps.' },
   { id: 'event', title: 'Stress before events', look: 'rule', wash: ['#f5ecd7', '#ffe8e0'], hue: '#b5871b',

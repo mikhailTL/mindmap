@@ -205,7 +205,7 @@ export default function RangeTrend({ teen, range: given, onRange, variant = 'par
           <p className="m-0 max-w-[52ch] text-ui text-ink-2">No readings {range === 'day' ? 'today' : `in ${RANGE_LABEL[range].toLowerCase()}`} yet.
             {' '}{teen.first}’s Mind Score shows here after their next reading.</p>
         ) : !trends ? (
-          <p className="m-0 max-w-[52ch] text-ui text-ink-2">This student has not shared Trends. Only the score
+          <p className="m-0 max-w-[52ch] text-ui text-ink-2">This teen has not shared Trends. Only the score
             for the range is shown.</p>
         ) : range === 'day' && !hours ? (
           <>

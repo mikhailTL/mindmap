@@ -141,7 +141,7 @@ export function NetworkGlow({ className }) {
 const PUBLISHERS = ['SAMHSA', 'NIMH', 'AAP', 'CDC']
 // Lets "Counselor/Professional" break after the slash in a narrow column.
 const soft = s => s.split('/').flatMap((p, i, a) => i < a.length - 1 ? [p + '/', <wbr key={i}/>] : [p])
-const ADAPTATIONS = ['Student', 'Parent', PRO]
+const ADAPTATIONS = ['Teen', 'Parent', PRO]
 const FAN = [16.67, 50, 83.33]
 
 export function FrameworkGlow({ className }) {
@@ -168,7 +168,7 @@ export function FrameworkGlow({ className }) {
       </ul>
       <figcaption className="sr-only">
         One set of rules from these four publishers, worded for each person who reads the reply.
-        <span className="sr-only"> The rules are adapted for students, parents and {PRO_PLURAL_LC}.</span>
+        <span className="sr-only"> The rules are adapted for teens, parents and {PRO_PLURAL_LC}.</span>
       </figcaption>
     </figure>
   )

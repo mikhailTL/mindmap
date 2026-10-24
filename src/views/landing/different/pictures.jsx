@@ -149,7 +149,7 @@ function PatchPic({ play }) {
 
 function HeadsUpPic({ play }) {
   return (
-    <Pic label={`Demo: a Heads Up notification lands on a parent's phone with a yellow light: ${HEADLINE.yellow}`}>
+    <Pic label={`Demo: a Heads Up notification lands on a phone with a yellow light: ${HEADLINE.yellow}`}>
       <div className="absolute bottom-0 left-1/2 h-[136px] w-[min(214px,84%)] -translate-x-1/2 rounded-t-[26px] border-[3px] border-b-0 border-ink-2
         bg-[linear-gradient(180deg,#ffffff,#eef7fd)] shadow-[0_-8px_24px_-16px_rgba(9,103,171,.45)]">
         <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-bar bg-ink-2"/>

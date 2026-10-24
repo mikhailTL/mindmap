@@ -1,6 +1,6 @@
 import React from 'react'
 import * as C from '@radix-ui/react-collapsible'
-import { Chevron, ChevronDown, Grid, Never, PulseMark, Sometimes, Wave } from '../ui/marks'
+import { Chevron, ChevronDown, Never, Sometimes } from '../ui/marks'
 import { SignalTrace } from '../charts/infographics'
 import { SENSORS, SENSOR_ORDER } from '../lib/sensors'
 import { cn } from '../lib/utils'
@@ -203,27 +203,23 @@ export function FeltCard({ go, className }) {
 
 /* Four routes the bottom bar already carries. */
 const ACTIONS = [
-  ['check',    'Take a Reading',  PulseMark],
-  ['toolkit',  'Open the Toolkit', Wave],
-  ['calendar', 'See the Calendar', Grid],
-  ['shared',   'Who Sees What',   Sometimes],
+  ['check',    'Take a Reading'],
+  ['toolkit',  'Open the Toolkit'],
+  ['calendar', 'See the Calendar'],
+  ['shared',   'Who Sees What'],
 ]
 
 export function ActionRow({ go, className, actions = ACTIONS }) {
   return (
     <ul className={cn('m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-4',
       className)}>
-      {actions.map(([route, title, Icon]) => (
+      {actions.map(([route, title]) => (
         <li key={route} className="min-w-0">
           <button type="button" onClick={() => go(route)}
             className="group flex min-h-[56px] w-full items-center gap-2.5 rounded-panel border
-              border-rule bg-card px-2.5 py-2.5 text-left transition-colors duration-150
+              border-rule bg-card px-3.5 py-2.5 text-left transition-colors duration-150
               hoverOnly:border-accent hoverOnly:bg-accent-wash active:bg-accent-wash sm:gap-3
               sm:px-3">
-            <span aria-hidden className="flex size-8 shrink-0 items-center justify-center
-              rounded-field bg-accent-wash text-accent-ink sm:size-9">
-              <Icon size={18}/>
-            </span>
             <span className="min-w-0 flex-1 font-display text-ui font-medium leading-[1.22]
               text-ink">{title}</span>
             <Chevron aria-hidden className="size-4 shrink-0 text-accent"/>
@@ -250,7 +246,7 @@ export function SharedCard({ go, className }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PanelHead title="Who Sees What" meta="on by default" className="min-w-0 flex-1"/>
         <Why label="How sharing works" className="pt-1.5">
-          {CONSENT_SHORT} The student can switch any of it off.
+          {CONSENT_SHORT} The teen can switch any of it off.
         </Why>
       </div>
       <ul className="m-0 mt-2.5 list-none p-0">

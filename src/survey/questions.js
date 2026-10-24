@@ -17,7 +17,7 @@ export const DEMOGRAPHIC_ITEMS = [
   choice('who-age', 'Which age group are you in?',
     '19 or younger', '20 to 29', '30 to 44', '45 to 59', '60 or older', 'Rather not say'),
   choice('who-role', 'Which of these describes you best?',
-    'Student', 'Parent or guardian', 'Teacher or school staff',
+    'Teen', 'Parent or guardian', 'Teacher or school staff',
     'Doctor, nurse or counselor', 'Something else', 'Rather not say'),
   choice('who-school', 'How far have you got in school?',
     'Still in school', 'Finished high school', 'Some college, no degree yet',
@@ -151,9 +151,9 @@ export function itemById(qid) {
 
 const RETIRED = {
   site: 'Overview (no longer asked)', patch: 'The patch (no longer asked)',
-  student: 'For students (no longer asked)', parent: 'For parents (no longer asked)',
+  student: 'For teens (no longer asked)', parent: 'For parents (no longer asked)',
   pro: `${PRO_FOR} (no longer asked)`, app: 'Launch (no longer asked)',
-  'app-student': 'Student screen (no longer asked)',
+  'app-student': 'Teen screen (no longer asked)',
   'app-parent': 'Parent screen (no longer asked)',
   'app-pro': `${PRO} console (no longer asked)`,
   check: 'Take a reading (no longer asked)',

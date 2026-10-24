@@ -9,6 +9,8 @@ import { TextLink } from './charts'
 import { useViewerName } from '../../account/viewer'
 import { TODAY_LONG, longDate } from './PartHead'
 import { LeadCard, StartGrid, StartTile } from '../home/StartGrid'
+import { AskArt } from '../home/AskArt'
+import { LinkArt } from '../pro/HomeArt'
 
 const EASE = [0.23, 1, 0.32, 1]
 
@@ -76,46 +78,6 @@ function BreatheMotif({ calm, className }) {
   )
 }
 
-/* Two speech bubbles; the reply is still being written. */
-function ChatMotif({ calm, className }) {
-  return (
-    <svg viewBox="0 0 92 58" aria-hidden className={cn('block overflow-visible', className)}>
-      <path d="M8 4h44a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H20l-8 6v-6H8a7 7 0 0 1-7-7V11a7 7 0 0 1 7-7Z"
-        fill="#ffffff" stroke="#c99bf0" strokeWidth="1.4"/>
-      <path d="M12 14h34M12 21h22" stroke="#c99bf0" strokeWidth="2.4" strokeLinecap="round"/>
-      <path d="M40 26h44a7 7 0 0 1 7 7v10a7 7 0 0 1-7 7h-3v6l-8-6H40a7 7 0 0 1-7-7V33a7 7 0 0 1 7-7Z"
-        fill="#a024f2"/>
-      {[52, 62, 72].map((cx, i) => (
-        <motion.circle key={cx} cx={cx} cy="38" r="3" fill="#ffffff"
-          animate={calm ? undefined : { y: [0, -3.5, 0], opacity: [0.55, 1, 0.55] }}
-          transition={{ duration: 1.1, ease: 'easeInOut', repeat: Infinity, delay: i * 0.16 }}/>
-      ))}
-    </svg>
-  )
-}
-
-/* Three people, joined. */
-const NODES = [[18, 40], [48, 14], [78, 40]]
-function NetworkMotif({ calm, className }) {
-  return (
-    <svg viewBox="0 0 96 56" aria-hidden className={cn('block overflow-visible', className)}>
-      <path d="M18 40 48 14 78 40M18 40h60" fill="none" stroke="#f25424" strokeOpacity="0.45"
-        strokeWidth="2" strokeLinecap="round" strokeDasharray="1 6"/>
-      {NODES.map(([cx, cy], i) => (
-        <g key={cx}>
-          <motion.circle cx={cx} cy={cy} r="12" fill="#f25424" fillOpacity="0.18"
-            style={{ transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box' }}
-            animate={calm ? undefined : { scale: [1, 1.35, 1], opacity: [0.9, 0.2, 0.9] }}
-            transition={{ duration: 2.6, ease: 'easeInOut', repeat: Infinity, delay: i * 0.5 }}/>
-          <circle cx={cx} cy={cy} r="8" fill={i === 1 ? '#b23009' : '#f25424'}/>
-          <circle cx={cx} cy={cy - 2.2} r="2.4" fill="#ffffff"/>
-          <path d={`M${cx - 4} ${cy + 4.4}a4 4 0 0 1 8 0`} fill="#ffffff"/>
-        </g>
-      ))}
-    </svg>
-  )
-}
-
 function PatchStatus({ paired, go }) {
   const reduced = useReducedMotion()
   const camera = () => { setReadingIntent('sensors'); go('reading') }
@@ -168,10 +130,10 @@ const TILES = [
     Motif: RainbowMotif, motif: 'h-full w-full' },
   { id: 'toolkit', title: 'Toolkit', tone: 'bg-sun-wash', chevron: 'text-sun-ink',
     Motif: BreatheMotif, motif: 'h-full w-full' },
-  { id: 'ai', title: 'Ask MindMap AI', tone: 'bg-lilac-wash', chevron: 'text-lilac-ink',
-    Motif: ChatMotif, motif: 'h-full w-full' },
+  { id: 'ai', title: 'Ask MindMap AI', tone: 'bg-beam-wash', chevron: 'text-beam-ink',
+    Motif: () => <AskArt who="student"/>, motif: '' },
   { id: 'network', title: 'Network', tone: 'bg-coral-wash', chevron: 'text-coral-ink',
-    Motif: NetworkMotif, motif: 'h-full w-full' },
+    Motif: () => <LinkArt/>, motif: '' },
 ]
 
 export function StudentHome({ go }) {

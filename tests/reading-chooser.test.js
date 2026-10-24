@@ -24,10 +24,11 @@ describe('Reading chooser', () => {
     })
   })
 
-  it('draws the cards, not the 3D objects, and no Start here badge', () => {
+  it('draws each card with its own scene, not an icon tile, and no Start here badge', () => {
     items.forEach(li => {
       expect(li).toContain('bg-card')
-      expect(li).toContain('rounded-[12px]')
+      expect(li).toMatch(/<img |viewBox="0 0 160 96"/)
+      expect(li).not.toContain('rounded-[12px]')
     })
     expect(html).not.toContain('Start here')
   })

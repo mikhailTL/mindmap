@@ -171,7 +171,7 @@ function Caseload() {
         })}
       </ol>
       <p className="mt-3 border-t border-rule pt-2.5 font-display text-fine font-bold
-        leading-tight text-ink">Students who share less</p>
+        leading-tight text-ink">Teens who share less</p>
       <ul className="m-0 mt-2 list-none p-0">
         {held.map(s => (
           <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5
@@ -195,18 +195,18 @@ const HONESTY = [
     'Four signals against a fourteen day baseline.'],
   ['Accuracy', `Tested on ${TESTED_ADULTS} adults`, 'fact',
     'Two public lab datasets, see Machine Learning.'],
-  ['The eight students', 'Sample profiles', 'demo',
-    'Sample students with sample consent settings.'],
+  ['The eight teens', 'Sample profiles', 'demo',
+    'Sample teens with sample consent settings.'],
   ['Regulatory status', 'Not a medical device', 'fact',
     'No diagnosis, treatment or screening for any condition.'],
 ]
 
 const SCALE_ROWS = [
-  ['Students on one list', num(CASELOAD_ASSUMED), 'students', 'The list size used on this page.'],
+  ['Teens on one list', num(CASELOAD_ASSUMED), 'teens', 'The list size used on this page.'],
   ['Readings per second', '1', 'Hz', `The design target, over a ${SCHOOL_HOURS} hour school day.`],
-  ['Per student, per day', num(PER_DAY), 'readings', 'The two rows above, multiplied.'],
-  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Per student, times the list.'],
-  ['Smallest group reported', String(K_ANONYMITY), 'students', 'A smaller group shows nothing.'],
+  ['Per teen, per day', num(PER_DAY), 'readings', 'The two rows above, multiplied.'],
+  ['Across the whole list', num(CASELOAD_ASSUMED * PER_DAY), 'readings', 'Per teen, times the list.'],
+  ['Smallest group reported', String(K_ANONYMITY), 'teens', 'A smaller group shows nothing.'],
 ]
 
 function ScaleFigure() {
@@ -239,11 +239,11 @@ const STOPS = [
   {
     id: 'problem', drift: true, nav: 'The problem',
     title: 'Why stress is hard to track',
-    lede: 'An adult hears only what a student says.',
+    lede: 'An adult hears only what a teen says.',
     photo: 'photos-hall-denim',
     alt: 'A teenage girl walking down a school corridor holding a notebook and a coffee cup',
     facts: [
-      ['Compared with', `The student's own last two weeks, nobody else.`],
+      ['Compared with', `The teen's own last two weeks, nobody else.`],
       ['The photographs', 'These are licensed stock photos of models.'],
     ],
     art: EvidenceGap,
@@ -266,8 +266,8 @@ const STOPS = [
     art: Signals,
   },
   {
-    id: 'student', drift: true, nav: 'Student screen',
-    title: 'What the student sees',
+    id: 'student', drift: true, nav: 'Teen screen',
+    title: 'What the teen sees',
     lede: `One ${SCORE}, ${SCORE_RANGE}, read against their own normal.`,
     photo: 'student-homework',
     alt: 'A teenager in headphones leaning over an open notebook at a desk, a laptop and a pencil case beside them',
@@ -275,7 +275,7 @@ const STOPS = [
       ['Each ring', 'One signal against the fourteen day baseline.'],
       ['The number in the middle', 'All four signals blended.'],
       ['Every reading', `Second by second, plus their own ${NOTES}.`],
-      ['Hidden from the student', 'Nothing.'],
+      ['Hidden from the teen', 'Nothing.'],
     ],
     art: () => (
       <div className="flex h-full flex-col">
@@ -287,7 +287,7 @@ const STOPS = [
           Up since third period.</p>
       </div>
     ),
-    go: ['student', 'Open the student screen'],
+    go: ['student', 'Open the teen screen'],
   },
   {
     id: 'parent', drift: true, nav: 'Parent screen',
@@ -338,7 +338,7 @@ const STOPS = [
       const all = roster().length, trends = triage().length
       const partial = scoreOnly().length, alerts = alertsOnly().length
       return [
-        ['On the list', `${all} students.`],
+        ['On the list', `${all} teens.`],
         ['Trends shared', `${trends}, with Parental Consent.`],
         ['Score only', `${partial}, sharing a ${SCORE} but not Trends.`],
         ['Alerts only', `${alerts}, sharing crisis alerts and nothing else.`],

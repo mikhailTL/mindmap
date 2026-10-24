@@ -2,7 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { cn } from '../../lib/utils'
-import { ArrowLeft, Bell, Download, Exit, Grid, Key, People, Person, Search } from '../../ui/marks'
+
 import { useMode } from '../../lib/mode'
 import { ROLE_LABEL, SETTINGS, signOut, useAccount } from '../store'
 import { Avatar } from '../ui'
@@ -11,24 +11,6 @@ import { VIEWER } from '../viewer'
 // Menu button pattern: arrows walk the items, Home and End jump, Escape and Tab close.
 // The list is portalled to <body> so it sits above the z-40 top and tab bars.
 export const MENU_PRIVACY = { student: 'shared', parent: 'privacy', pro: 'app-pro-privacy', other: 'privacy' }
-
-const TextSize = p => (
-  <svg viewBox="0 0 24 24" width={p.size || 18} height={p.size || 18} fill="none" aria-hidden
-    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-    <path d="M3.5 18.5l4.5-12 4.5 12M5.2 14h5.6M14 18.5l3.2-8 3.3 8M15.1 15.8h4.3"/>
-  </svg>
-)
-
-const HUE = {
-  accent: 'bg-accent-wash text-accent-ink',
-  sky:    'bg-sky-wash text-sky-ink',
-  lilac:  'bg-lilac-wash text-lilac-ink',
-  sun:    'bg-sun-wash text-sun-ink',
-  beam:   'bg-beam-wash text-beam-ink',
-  coral:  'bg-coral-wash text-coral-ink',
-  blush:  'bg-blush-wash text-blush-ink',
-  ink:    'bg-mist text-ink-2',
-}
 
 function goToAnchor(go, view, anchor, reduce) {
   go(view)
@@ -45,26 +27,26 @@ function goToAnchor(go, view, anchor, reduce) {
 }
 
 function itemsFor(me, go, reduce, toSite) {
-  const site = { id: 'site', label: 'Return to site', Mark: ArrowLeft, hue: 'ink',
+  const site = { id: 'site', label: 'Return to site',
     run: toSite || (() => go('site')) }
   if (!me) {
     return [
-      { id: 'signin', label: 'Sign in or create an account', Mark: Person, hue: 'accent', run: () => go('app-home') },
-      { id: 'help', label: 'Get help', Mark: Search, hue: 'blush', run: () => go('help') },
+      { id: 'signin', label: 'Sign in or create an account', run: () => go('app-home') },
+      { id: 'help', label: 'Get help', run: () => go('help') },
       site,
     ]
   }
   return [
-    { id: 'profile', label: 'Profile', Mark: Person, hue: 'accent', run: () => go('account') },
-    { id: 'network', label: 'Network', Mark: People, hue: 'sky', run: () => go('network') },
-    { id: 'privacy', label: 'Privacy and sharing', Mark: Grid, hue: 'lilac',
+    { id: 'profile', label: 'Profile', run: () => go('account') },
+    { id: 'network', label: 'Network', run: () => go('network') },
+    { id: 'privacy', label: 'Privacy and sharing',
       run: () => go(MENU_PRIVACY[me.role] || 'privacy') },
-    { id: 'passcode', label: 'Password and sign-in', Mark: Key, hue: 'sun', run: () => go('account/passcode') },
-    { id: 'appearance', label: 'Appearance', Mark: TextSize, hue: 'beam',
+    { id: 'passcode', label: 'Password and sign-in', run: () => go('account/passcode') },
+    { id: 'appearance', label: 'Appearance',
       run: () => goToAnchor(go, 'account', 'set-appearance', reduce) },
-    { id: 'notify', label: 'Reminders', Mark: Bell, hue: 'coral', run: () => go('app-notify'), only: 'student' },
-    { id: 'data', label: 'Your data', Mark: Download, hue: 'ink', run: () => go('account/data') },
-    { id: 'help', label: 'Get help', Mark: Search, hue: 'blush', run: () => go('help') },
+    { id: 'notify', label: 'Reminders', run: () => go('app-notify'), only: 'student' },
+    { id: 'data', label: 'Your data', run: () => go('account/data') },
+    { id: 'help', label: 'Get help', run: () => go('help') },
     site,
   ].filter(i => !i.only || i.only === me.role)
 }
@@ -93,7 +75,7 @@ export function AccountMenu({ go, app, toSite, className }) {
 
   const items = itemsFor(me, go, reduce, toSite)
   const all = me
-    ? [...items, { id: 'signout', label: 'Sign out', Mark: Exit, hue: 'ink', run: () => { signOut(); go('app-home') } }]
+    ? [...items, { id: 'signout', label: 'Sign out', run: () => { signOut(); go('app-home') } }]
     : items
 
   const close = React.useCallback((refocus = true) => {
@@ -205,7 +187,6 @@ export function AccountMenu({ go, app, toSite, className }) {
           <ul id={menuId} role="menu" aria-labelledby={btnId} className="m-0 list-none p-1.5">
             {all.map((item, i) => {
               const last = item.id === 'signout'
-              const { Mark } = item
               return (
                 <React.Fragment key={item.id}>
                   {last && <li role="separator" className="mx-2 my-1.5 h-px bg-rule"/>}
@@ -217,9 +198,6 @@ export function AccountMenu({ go, app, toSite, className }) {
                         'text-left font-display text-ui font-medium text-ink outline-none',
                         'transition-colors duration-100 hoverOnly:bg-mist/70 focus-visible:bg-mist',
                         'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset active:bg-mist')}>
-                      <span aria-hidden className={cn('grid size-8 shrink-0 place-items-center rounded-sm', HUE[item.hue])}>
-                        <Mark size={18}/>
-                      </span>
                       <span className="min-w-0 flex-1">{item.label}</span>
                     </button>
                   </li>

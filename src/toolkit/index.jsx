@@ -147,7 +147,7 @@ export function ToolkitIndex({ who = 'student', onOpen = () => {} }) {
       <div className="wrap">
         <Head first title="For your sessions" line="No teen data is held in these tools."/>
         <Grid items={PRO_GROUPS.flatMap(g => g.items)} start={0} onOpen={onOpen}/>
-        <Head title="Use in a session" line="The student exercises, to run with a teen in the room."/>
+        <Head title="Use in a session" line="Exercises from the teen screen, to run with a teen in the room."/>
         <Groups groups={STUDENT_GROUPS} start={PRO_COUNT} onOpen={onOpen}/>
       </div>
     )

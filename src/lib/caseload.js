@@ -9,26 +9,26 @@ export const SCHOOL_N = 96
 // Single source for consent flags, read by both the consent ledger and the triage board.
 // Crisis alerts reach the counselor whatever these flags say.
 export const CONSENT = {
-  'Student 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Aug 22, 2025' },
-  'Student 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'FERPA', signedAt:'Aug 24, 2025' },
-  'Student 5512': { score:true,  trends:true,  raw:true,  scope:'Mind Score, weekly change, class period patterns and raw readings',    basis:'Both',  signedAt:'Sep 03, 2025' },
-  'Student 1184': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'FERPA', signedAt:'Aug 29, 2025' },
-  'Student 7736': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Sep 05, 2025' },
-  'Student 2298': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'COPPA', signedAt:'Sep 09, 2025' },
-  'Student 6053': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'Both',  signedAt:'Sep 08, 2025' },
-  'Student 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
+  'Teen 8241': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Aug 22, 2025' },
+  'Teen 3907': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'FERPA', signedAt:'Aug 24, 2025' },
+  'Teen 5512': { score:true,  trends:true,  raw:true,  scope:'Mind Score, weekly change, class period patterns and raw readings',    basis:'Both',  signedAt:'Sep 03, 2025' },
+  'Teen 1184': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'FERPA', signedAt:'Aug 29, 2025' },
+  'Teen 7736': { score:true,  trends:true,  raw:false, scope:'Mind Score, weekly change and class period patterns',                  basis:'FERPA', signedAt:'Sep 05, 2025' },
+  'Teen 2298': { score:true,  trends:true,  raw:false, scope:'Mind Score and weekly change',                                          basis:'COPPA', signedAt:'Sep 09, 2025' },
+  'Teen 6053': { score:true,  trends:false, raw:false, scope:'Mind Score and crisis alerts, no weekly change',                        basis:'Both',  signedAt:'Sep 08, 2025' },
+  'Teen 4470': { score:false, trends:false, raw:false, scope:'Crisis alerts only',                                       basis:'COPPA', signedAt:'Sep 11, 2025' },
 }
 const EXPIRES = 'Jun 12, 2026'
 
 const SEED = [
-  { id:'t1', name:'Student 8241', grade:11, base:74, drift: 11 },
-  { id:'t2', name:'Student 3907', grade:12, base:86, drift:  1 },
-  { id:'t3', name:'Student 5512', grade:11, base:58, drift: 16 },
-  { id:'t4', name:'Student 1184', grade:10, base:81, drift: -6 },
-  { id:'t5', name:'Student 7736', grade:12, base:63, drift:  4 },
-  { id:'t6', name:'Student 2298', grade:10, base:49, drift:  9 },
-  { id:'t7', name:'Student 6053', grade:11, base:71, drift: -3 },
-  { id:'t8', name:'Student 4470', grade: 9, base:55, drift:  0 },
+  { id:'t1', name:'Teen 8241', grade:11, base:74, drift: 11 },
+  { id:'t2', name:'Teen 3907', grade:12, base:86, drift:  1 },
+  { id:'t3', name:'Teen 5512', grade:11, base:58, drift: 16 },
+  { id:'t4', name:'Teen 1184', grade:10, base:81, drift: -6 },
+  { id:'t5', name:'Teen 7736', grade:12, base:63, drift:  4 },
+  { id:'t6', name:'Teen 2298', grade:10, base:49, drift:  9 },
+  { id:'t7', name:'Teen 6053', grade:11, base:71, drift: -3 },
+  { id:'t8', name:'Teen 4470', grade: 9, base:55, drift:  0 },
 ]
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 export const tierOf = s => s >= 85 ? 'crisis' : s >= 72 ? 'high' : s >= 58 ? 'moderate' : 'info'
@@ -81,20 +81,20 @@ export const CONSENT_LEDGER = roster().map(s => ({
 
 // Times match PROTOCOL_TIMES. Actors are roles, not named people.
 export const AUDIT_LOG = [
-  { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Student 8241' },
-  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the student in person',                 subject:'Student 8241' },
-  { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Student 8241' },
-  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:`Crisis alert raised, ${PRO} notified`,subject:'Student 8241' },
-  { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Student 5512' },
+  { at:'12 Sep, 2:34 PM', rel:'Today',     actor:PRO,                action:'Guardian contacted by phone',                      subject:'Teen 8241' },
+  { at:'12 Sep, 2:26 PM', rel:'Today',     actor:PRO,                action:'Checked on the teen in person',                 subject:'Teen 8241' },
+  { at:'12 Sep, 2:21 PM', rel:'Today',     actor:PRO,                action:'Acknowledged crisis alert',                        subject:'Teen 8241' },
+  { at:'12 Sep, 2:14 PM', rel:'Today',     actor:'System',           action:`Crisis alert raised, ${PRO} notified`,subject:'Teen 8241' },
+  { at:'12 Sep, 11:02 AM',rel:'Today',     actor:PRO,                action:'Opened record',                                    subject:'Teen 5512' },
   { at:'11 Sep, 4:35 PM', rel:'Yesterday', actor:PRO,                action:'Exported year-group report (no group under five)', subject:'Grade 11' },
-  { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed Trends',                                    subject:'Student 8241' },
-  { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Student 8241',     action:'Set raw readings to be kept 30 days',              subject:'Student 8241' },
+  { at:'11 Sep, 9:18 AM', rel:'Yesterday', actor:'Guardian of 8241', action:'Viewed Trends',                                    subject:'Teen 8241' },
+  { at:'8 Sep, 3:50 PM',  rel:'Monday',    actor:'Teen 8241',     action:'Set raw readings to be kept 30 days',              subject:'Teen 8241' },
 ]
 
 export const PROTOCOL = [
   'Acknowledge the alert',
-  'Find the student',
-  'Check on the student in person',
+  'Find the teen',
+  'Check on the teen in person',
   'Call the guardian',
   'Write down what happened and the next step',
 ]
@@ -102,10 +102,10 @@ export const PROTOCOL_TIMES = ['2:14 PM','2:21 PM','2:26 PM','2:34 PM','2:41 PM'
 export const PROTOCOL_DONE = [0,1,2,3]   // step five is the one still open
 
 export const REFERRALS = [
-  { student:'Student 8241', to:'Outside referral: body working harder than usual', opened:'Today',  status:'Waiting for intake' },
-  { student:'Student 5512', to:PRO,opened:'Monday', status:'Scheduled' },
-  { student:'Student 3907', to:'Outside counseling service',                      opened:'Mar 04', status:'In progress' },
-  { student:'Student 1184', to:PRO,opened:'Feb 18', status:'Closed' },
+  { student:'Teen 8241', to:'Outside referral: body working harder than usual', opened:'Today',  status:'Waiting for intake' },
+  { student:'Teen 5512', to:PRO,opened:'Monday', status:'Scheduled' },
+  { student:'Teen 3907', to:'Outside counseling service',                      opened:'Mar 04', status:'In progress' },
+  { student:'Teen 1184', to:PRO,opened:'Feb 18', status:'Closed' },
 ]
 
 const SIGNALS = [

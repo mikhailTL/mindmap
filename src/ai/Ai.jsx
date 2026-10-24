@@ -69,7 +69,7 @@ function Framework() {
   return (
     <div>
       <p className={cn('max-w-[62ch] text-fine', DIM)}>
-        One framework, three adaptations: student, parent, {PRO_LC}. The guidance each rule
+        One framework, three adaptations: teen, parent, {PRO_LC}. The guidance each rule
         rests on is named beside it.
       </p>
       <ul className="mt-3 m-0 list-none p-0">

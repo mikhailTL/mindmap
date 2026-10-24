@@ -2,7 +2,7 @@ import { useMode } from '../lib/mode'
 import { useAccount } from './store'
 
 export const VIEWER = {
-  student: { name: 'Student', avatar: 'char-student' },
+  student: { name: 'Teen', avatar: 'char-student' },
   parent:  { name: 'Parent', avatar: 'char-parent' },
   pro:     { name: 'Counselor', avatar: 'char-counselor' },
 }

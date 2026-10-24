@@ -133,7 +133,7 @@ describe('the demographics block', () => {
 
   it('covers the five roles', () => {
     const role = labels(itemById('who-role')).join(' | ').toLowerCase()
-    expect(role).toContain('student')
+    expect(role).toContain('teen')
     expect(role).toContain('parent')
     expect(role).toContain('teacher')
     expect(role).toContain('counselor')

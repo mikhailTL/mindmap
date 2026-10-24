@@ -10,7 +10,7 @@ const LONG = validSecret('x'.repeat(PASSWORD_MIN))
 const PASS_HINT = LONG ? `At least ${PASSWORD_MIN} characters, or 4 to 6 digits.` : '4 to 6 digits.'
 
 const ROLE_TILES = [
-  { id: 'student', label: 'Student' },
+  { id: 'student', label: 'Teen' },
   { id: 'parent',  label: 'Parent' },
   { id: 'pro',     label: PRO_WRAP },
   { id: 'other',   label: 'Other' },

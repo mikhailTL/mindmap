@@ -6,7 +6,7 @@ export const SCORE_DEF =
   'A simple score calculated from body signals or in-app readings to measure stress consistently, 0 calm to 100 peak.'
 
 export const NOTES = 'Notes'
-export const NOTES_DEF = 'What a student writes in their own journal.'
+export const NOTES_DEF = 'What a teen writes in their own journal.'
 export const LOCATION = 'Location'
 
 export const PRO = 'Counselor/Professional'
@@ -17,8 +17,8 @@ export const PRO_FOR = 'For Counselors/Professionals'
 /* For a narrow chip or tile: may break after the slash. */
 export const PRO_WRAP = 'Counselor/\u200BProfessional'
 
-export const CASELOAD_TITLE = 'Students to check in with'
+export const CASELOAD_TITLE = 'Teens to check in with'
 export const CASELOAD_DEF = 'Whose Mind Score moved most since last week.'
 
-export const CONSENT_SHORT = 'A guardian opens the account. The student chooses what is shared.'
-export const CONSENT_OFF = 'The student can switch any of it off, any time.'
+export const CONSENT_SHORT = 'A guardian opens the account. The teen chooses what is shared.'
+export const CONSENT_OFF = 'The teen can switch any of it off, any time.'

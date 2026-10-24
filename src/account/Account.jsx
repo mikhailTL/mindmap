@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '../lib/utils'
 import { ArmedButton, Panel } from '../app/controls'
 import { cardClass } from '../ui/card'
-import { ArrowLeft, Bin, Check, Devices, Download, Grid, Info, Key, People, Person } from '../ui/marks'
+import { ArrowLeft, Bin, Check, Devices, Download, Key } from '../ui/marks'
 import { CONSENT_SHORT } from '../lib/terms'
 import { useMode } from '../lib/mode'
 import { demoSide } from './demo-network'
@@ -23,7 +23,7 @@ const SECTIONS = {
   about:    { title: 'About MindMap' },
 }
 
-const SHARING_LABEL = { student: 'Sharing', parent: 'Sharing record', pro: 'Students', other: 'Privacy' }
+const SHARING_LABEL = { student: 'Sharing', parent: 'Sharing record', pro: 'Teens', other: 'Privacy' }
 const VERSION = APP_VERSION
 
 const WHERE = () => (backend() === 'remote' ? 'Saved to your MindMap account' : 'Kept on this device')
@@ -128,17 +128,7 @@ function Index({ me, go }) {
   )
 }
 
-const SECTION_HUE = {
-  profile:  'bg-accent-wash text-accent-ink',
-  passcode: 'bg-sun-wash text-sun-ink',
-  sharing:  'bg-lilac-wash text-lilac-ink',
-  data:     'bg-mint-wash text-mint-ink',
-  about:    'bg-beam-wash text-beam-ink',
-}
-const SECTION_MARK = { profile: Person, passcode: Key, sharing: Grid, data: Download, about: Info }
-
 function Section({ id, go, children }) {
-  const Mark = SECTION_MARK[id]
   return (
     <main className="wrap">
       <button type="button" onClick={() => go('account')}
@@ -146,12 +136,7 @@ function Section({ id, go, children }) {
           text-ui font-medium text-ink-2 transition-colors duration-150 hoverOnly:text-ink">
         <ArrowLeft aria-hidden className="size-4"/>Account
       </button>
-      <div className="mt-1 flex items-center gap-3">
-        <span aria-hidden className={cn('grid size-10 shrink-0 place-items-center rounded-field', SECTION_HUE[id])}>
-          <Mark size={20}/>
-        </span>
-        <h2 className="font-display font-bold text-ink">{SECTIONS[id].title}</h2>
-      </div>
+      <h2 className="mt-1 font-display font-bold text-ink">{SECTIONS[id].title}</h2>
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">{children}</div>
     </main>
   )
@@ -298,8 +283,8 @@ function Sharing({ me, go }) {
   return (
     <Section id="sharing" go={go}>
       <Panel title="What you share" className="self-start">
-        <Row label={SHARING_LABEL[me.role]} hint={CONSENT_SHORT} Mark={Grid} onClick={() => go(SHARING_ROUTE[me.role])}/>
-        <Row label="Network" Mark={People} aside={String(listNetwork(me.id).filter(l => l.status === 'active').length)}
+        <Row label={SHARING_LABEL[me.role]} hint={CONSENT_SHORT} onClick={() => go(SHARING_ROUTE[me.role])}/>
+        <Row label="Network" aside={String(listNetwork(me.id).filter(l => l.status === 'active').length)}
           onClick={() => go('network')}/>
       </Panel>
     </Section>
@@ -353,7 +338,7 @@ function About({ go }) {
             <span className="text-right font-display text-fine font-bold text-ink-2">{v}</span>
           </div>
         ))}
-        <Row label="Help" Mark={Info} onClick={() => go('help')}/>
+        <Row label="Help" onClick={() => go('help')}/>
       </Panel>
     </Section>
   )

@@ -4,7 +4,7 @@ import { EMERGENCY, RESOURCES } from '../app/resources.js'
 import { PRO, PRO_LC, PRO_PLURAL, SCORE } from '../lib/terms.js'
 
 // Default model; the server may override it from the environment, and the screen shows the model actually called.
-export const MODEL_DEFAULT = 'claude-3-5-haiku-latest'
+export const MODEL_DEFAULT = 'claude-haiku-5-5'
 
 export const SOURCES = [
   { id: 'samhsa-crisis', body: 'SAMHSA',
@@ -87,8 +87,8 @@ export function pillarSources(pillar) {
 export const AUDIENCES = {
   student: {
     id: 'student',
-    label: 'Student',
-    heading: 'MindMap AI for students',
+    label: 'Teen',
+    heading: 'MindMap AI for teens',
     opener: 'Ask about a day, a week, sleep, school or a worry. Answers are short on purpose.',
     starters: [
       'My sleep has been bad all week.',
@@ -197,11 +197,11 @@ const ADAPTATION = {
     'THIS READER IS A PARENT OR GUARDIAN.',
     '- Give them language to open a conversation, not a verdict on their child.',
     '- Say what the ' + SCORE + ' cannot show: it is four physiological signals against that',
-    '  student’s own baseline, not a mood, not a diagnosis and not a measure of parenting.',
+    '  teen’s own baseline, not a mood, not a diagnosis and not a measure of parenting.',
     '- Never characterise the child. You have not met them and you cannot see their readings.',
     '- Where a question is clinical, the route is their own paediatrician or primary care',
     '  clinician, which is the route the AAP-endorsed GLAD-PC guidance describes.',
-    '- Be clear that the student controls what is shared, and that notes and this conversation',
+    '- Be clear that the teen controls what is shared, and that notes and this conversation',
     '  are never shared with a parent.',
   ].join('\n'),
   pro: [
@@ -211,7 +211,7 @@ const ADAPTATION = {
     '- Describe MindMap output as sensor-derived signal against an individual baseline. It is',
     '  not a screening instrument, it is not validated against one, and it has no cutoff.',
     '- Never suggest a band, a threshold, a referral trigger or a medication.',
-    '- The check-in list orders students by how far a ' + SCORE + ' moved since last week. It is',
+    '- The check-in list orders teens by how far a ' + SCORE + ' moved since last week. It is',
     '  a change ordering, not a risk ranking, and you say so when it comes up.',
     '- Defer to their own clinical judgement and to local protocol, explicitly.',
   ].join('\n'),
