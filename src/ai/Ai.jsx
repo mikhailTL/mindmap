@@ -42,7 +42,7 @@ function Disclosure({ label, children, className }) {
 const LEAVES = [
   ['Sent', 'Your words, to MindMap’s server and on to the model.'],
   ['Not sent', `No name, reading, ${SCORE}, ${NOTES.toLowerCase()} or location.`],
-  ['Kept', 'Nothing. Leaving this screen ends the conversation.'],
+  ['Kept', 'Not by MindMap. The model provider may keep messages, so leave out names and private details.'],
   ['Shown to', `Nobody else. Not a parent, not a ${PRO_LC}.`],
 ]
 

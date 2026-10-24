@@ -1,5 +1,5 @@
-// Proxy in front of Anthropic's Messages API. The key comes only from
-// ANTHROPIC_API_KEY, the system prompt is built here from src/ai/framework.js,
+// Proxy in front of Google's Gemini API or Anthropic's Messages API. Keys come only from
+// GEMINI_API_KEY or ANTHROPIC_API_KEY, the system prompt is built here from src/ai/framework.js,
 // and message content is never logged or stored.
 
 import { AUDIENCES, MODEL_DEFAULT, systemPrompt } from '../src/ai/framework.js'
@@ -122,21 +122,64 @@ const NOT_CONFIGURED = {
   error: 'MindMap AI is not connected. No model key is set on this deployment, so nothing here is answering.',
 }
 
+// Gemini is used when GEMINI_API_KEY is set; otherwise Anthropic when ANTHROPIC_API_KEY is set.
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/'
+const GEMINI_DEFAULT = 'gemini-3.8-flash'
+
+function provider() {
+  const gemini = String(process.env.GEMINI_API_KEY || '').trim()
+  if (gemini) return { name: 'gemini', key: gemini, model: String(process.env.GEMINI_MODEL || GEMINI_DEFAULT) }
+  const anthropic = String(process.env.ANTHROPIC_API_KEY || '').trim()
+  if (anthropic) return { name: 'anthropic', key: anthropic, model: String(process.env.ANTHROPIC_MODEL || MODEL_DEFAULT) }
+  return null
+}
+
+function request(p, system, messages) {
+  if (p.name === 'gemini') {
+    return {
+      url: GEMINI_BASE + encodeURIComponent(p.model) + ':generateContent',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': p.key },
+      body: {
+        systemInstruction: { parts: [{ text: system }] },
+        contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+        generationConfig: { maxOutputTokens: MAX_TOKENS },
+      },
+    }
+  }
+  return {
+    url: UPSTREAM,
+    headers: { 'content-type': 'application/json', 'x-api-key': p.key, 'anthropic-version': ANTHROPIC_VERSION },
+    body: { model: p.model, max_tokens: MAX_TOKENS, temperature: 0.4, system, messages },
+  }
+}
+
+function replyText(p, payload) {
+  if (p.name === 'gemini') {
+    return (payload?.candidates?.[0]?.content?.parts || [])
+      .map(part => String(part?.text || '')).join('').trim()
+  }
+  return (payload?.content || [])
+    .filter(b => b?.type === 'text')
+    .map(b => String(b.text || ''))
+    .join('')
+    .trim()
+}
+
 export default async function handler(req, res) {
   if (!sameOrigin(req)) {
     return send(res, 403, { ok: false, error: 'Cross-origin requests are not accepted.' })
   }
 
-  const key = process.env.ANTHROPIC_API_KEY
-  const model = String(process.env.ANTHROPIC_MODEL || MODEL_DEFAULT)
-  const configured = Boolean(key && key.trim())
+  const p = provider()
+  const configured = Boolean(p)
+  const model = p ? p.model : null
 
   // Returns 200 either way; the page shows a not-connected state when unconfigured.
   if (req.method === 'GET') {
     return send(res, 200, {
       ok: true,
       configured,
-      model: configured ? model : null,
+      model,
       audiences: Object.keys(AUDIENCES),
       limits: { turns: MAX_TURNS, chars: MAX_CHARS, perMinute: RATE_MAX },
     })
@@ -176,26 +219,17 @@ export default async function handler(req, res) {
 
   // A `system` field in the request body is ignored.
   const system = systemPrompt(audience)
+  const call = request(p, system, messages)
 
   const control = new AbortController()
   const timer = setTimeout(() => control.abort(), UPSTREAM_TIMEOUT_MS)
   let upstream
   try {
-    upstream = await fetch(UPSTREAM, {
+    upstream = await fetch(call.url, {
       method: 'POST',
       signal: control.signal,
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': ANTHROPIC_VERSION,
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: MAX_TOKENS,
-        temperature: 0.4,
-        system,
-        messages,
-      }),
+      headers: call.headers,
+      body: JSON.stringify(call.body),
     })
   } catch (err) {
     clearTimeout(timer)
@@ -220,11 +254,11 @@ export default async function handler(req, res) {
     let kind = ''
     try {
       const payload = await upstream.json()
-      kind = String(payload?.error?.type || '')
+      kind = String(payload?.error?.type || payload?.error?.status || '')
     } catch {
       kind = ''
     }
-    console.error('mindmap-ai: upstream status ' + upstream.status + (kind ? ' ' + kind : ''))
+    console.error('mindmap-ai: ' + p.name + ' status ' + upstream.status + (kind ? ' ' + kind : ''))
 
     if (upstream.status === 429) {
       const retry = upstream.headers.get('retry-after')
@@ -260,12 +294,7 @@ export default async function handler(req, res) {
 
   let reply = ''
   try {
-    const payload = await upstream.json()
-    reply = (payload?.content || [])
-      .filter(b => b?.type === 'text')
-      .map(b => String(b.text || ''))
-      .join('')
-      .trim()
+    reply = replyText(p, await upstream.json())
   } catch {
     console.error('mindmap-ai: upstream body unreadable')
     return send(res, 502, { ok: false, configured, error: 'The model reply could not be read.' })
